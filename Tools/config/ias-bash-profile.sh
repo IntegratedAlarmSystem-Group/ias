@@ -44,6 +44,7 @@ fi
 # IAS setup
 #
 export IAS_LOGS_FOLDER=$IAS_ROOT/logs
+export IAS_CONFIG_FOLDER=$IAS_ROOT/config
 
 export PYTHONPATH="../lib/python:$IAS_ROOT/lib/python:$PYTHONPATH"
 
