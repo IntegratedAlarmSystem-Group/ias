@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- 
+     Build the entire IAS prototype 
+
+     PRE-Requisite: IAS_ROOT envirnment variable defined and pointing to 
+                             an existing folder
+-->
+<project name="BuildIAS" default="build" basedir=".">
+	
+	<property environment="env" />
+	<property name="iasRoot" value="${env.IAS_ROOT}" />
+	<available file="${iasRoot}" type="dir" property="iasRoot.exists"/>
+
+	<taskdef resource="net/sf/antcontrib/antlib.xml"/>
+	
+	<property name="iasModules" value="Tools,Logging,BasicTypes,CompElement,DistributedUnit" />
+	
+	<target name="SanityCheck">
+		<!--
+			Runs some check failing in case of error
+		-->
+		<fail unless="iasRoot.exists">
+			IAS_ROOT ${iasRoot} does not exist! 
+		</fail>
+	</target>
+	
+	<!--
+	     Sequentially runs ant in each of the the modules in ${iasModules}.
+	     The targets to ant are read from anttasks
+	-->
+	<target name="commontask" if="anttasks">
+		<echo>Running tasks ${anttasks} in ${iasModules}</echo>
+		<for list="${iasModules}" param="moduleName">
+            <sequential>
+            	<for list="${anttasks}" param="aTask">
+            		<sequential>
+            			<if>
+            				<and>
+            					<available file="@{moduleName}/${ant-folder}" type="dir" />
+            					<available file="@{moduleName}/${ant-folder}/build.xml" type="file" />
+        					</and>
+	        				<then>
+	            				<echo>Running @{aTask} in @{moduleName}/${ant-folder}...</echo>
+								<ant dir="@{moduleName}/${ant-folder}" target="@{aTask}" />
+	            			</then>
+	            			<else>
+	            				<echo>@{aTask} in @{moduleName}/${ant-folder} does not exist</echo>
+	            			</else>
+            			</if>
+						<echo>@{aTask} in @{moduleName} done.</echo>
+        			</sequential>
+        		</for>
+            </sequential>
+        </for>
+	</target>
+
+	<target name="clean">
+        <echo>Cleaning IAS modules: ${iasModules}</echo>
+		<antcall target="commontask">
+			<param name="ant-folder" value="src" />
+			<param name="anttasks" value="clean" />
+		</antcall>
+    </target>
+	
+	<target name="build" depends="SanityCheck">
+		<echo>Building IAS modules: ${iasModules}</echo>
+		<antcall target="commontask">
+			<param name="ant-folder" value="src" />
+			<param name="anttasks" value="build,install" />
+		</antcall>
+	</target>
+	
+	<target name="install" depends="SanityCheck">
+		<echo>Installing IAS modules: ${iasModules}</echo>
+		<antcall target="commontask">
+			<param name="ant-folder" value="src" />
+			<param name="anttasks" value="install" />
+		</antcall>
+	</target>
+	
+	<target name="test" depends="SanityCheck">
+		<echo>Building IAS modules: ${iasModules}</echo>
+		<antcall target="commontask">
+			<param name="ant-folder" value="test" />
+			<param name="anttasks" value="build,test" />
+		</antcall>
+	</target>
+	
+</project>

@@ -1,0 +1,52 @@
+<configuration debug="false" scan="false"  packagingData="false">
+  <!--
+  	debug: logs logback status messages
+  	scan: dynamically check if the configuration has been changed
+  	      and update the loggging without restarting the application
+  	packagingData: nicely print stack traces (expansive)  
+   -->
+   
+  <timestamp key="tStamp" datePattern="yyyy-MM-dd"/>
+
+  <shutdownHook/>
+  
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <!-- encoders are assigned the type
+         ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%file:%line] - %msg%n</pattern>
+    </encoder>
+  </appender>
+  
+   <appender 
+   	name="FILE" 
+   	class="ch.qos.logback.core.FileAppender">
+   	<append>true</append>
+   	<prudent>true</prudent> <!--  Can slow down the logging -->
+    <file>${IAS_LOGS_FOLDER}/IAS-${tStamp}.log</file>
+    <!--  
+    	In future we might want to implement the rolling policy
+    	based on time and size
+    	(#see http://logback.qos.ch/manual/appenders.html#SizeAndTimeBasedRollingPolicy)
+    	
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>mylog-%d{yyyy-MM-dd}.%i.txt</fileNamePattern>
+      <maxFileSize>100MB</maxFileSize>    
+      <maxHistory>60</maxHistory>
+      <totalSizeCap>20GB</totalSizeCap>
+    </rollingPolicy>
+    -->
+    <encoder>
+      <pattern>%d{yyyy-MM-dd'T'HH:mm:ss} %-5level [%file:%line] [%thread] %msg%n</pattern>
+      <outputPatternAsHeader>true</outputPatternAsHeader>
+    </encoder>
+  </appender>
+
+  <root level="DEBUG">
+    <appender-ref ref="STDOUT" />
+    <appender-ref ref="FILE" />
+  </root>
+  
+  <!-- logger name="IAS-Global-Logger" level="DEBUG"/ -->
+  
+</configuration>

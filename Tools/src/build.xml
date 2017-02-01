@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Tools" default="build" basedir=".">
+	<!-- Include IAS common definition -->
+	<include file="../config/CommonAnt.xml" as="ias" />
+	
+	<!-- ####################### PROPERTIES ####################### -->
+	
+	<!-- Initially sets the properties that affect the build so that they are available
+	     to the common tasks
+	-->
+	
+	<!--
+		exttools: a comma separated list of third-party jars to install
+		
+		Third party jars must be put in the <module>/extTools folder
+		and are installed in <module>lib/ExtTools during the build
+	-->
+	<property name="exttools" value="scalactic_2.11-3.0.1.jar,scalatest_2.11-3.0.1.jar" />
+	
+	<!--
+		scalaJarName: the name of the jar to build from scala sources; 
+		              if not set the build is skipped
+	     
+	     Example of property setting:
+		 <property name="scalaJarName" value="ias-basic-types.jar"/>
+	-->
+	<property name="scalaJarName" value="ias-tools.jar"/>
+	
+	<!-- ####################### TARGETS ####################### -->
+	
+	<target name="clean" depends="ias.clean" />
+	
+	<target name="install" depends="ias.install" />
+	
+	<target name="build" depends="ias.build" />
+	
+</project>

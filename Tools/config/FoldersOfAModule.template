@@ -1,0 +1,20 @@
+# The list of folders of a module
+#
+# Scripts like createModuleStructure.py do not have
+# such list hardcoded but must read it from here
+src
+src/scala
+src/java
+src/python
+test
+test/scala
+test/java
+test/python
+bin
+lib
+lib/python
+lib/ExtTools
+extTools
+classes
+config
+logs
