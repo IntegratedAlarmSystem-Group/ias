@@ -10,6 +10,11 @@ test
 test/scala
 test/java
 test/python
+test/cdb
+test/cdb/Supervisor
+test/cdb/Dasus
+test/cdb/Asce
+test/cdb/Iasio
 bin
 lib
 lib/python
