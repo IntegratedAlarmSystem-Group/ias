@@ -8,7 +8,9 @@ import org.eso.ias.prototype.input.AlarmValue;
  * In this case it is better to have java enumerations instead 
  * of scala because the twos differ too much up to the point 
  * that scala Eumeration are not usable within java sources.
- * 
+ *
+ *	TODO: avoid duplication with org.eso.ias.cdb.pojos.IasType
+ * @see org.eso.ias.cdb.pojos.IasType
  * @author acaproni
  *
  */
