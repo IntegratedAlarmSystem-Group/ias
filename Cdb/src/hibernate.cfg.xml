@@ -1,0 +1,31 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!DOCTYPE hibernate-configuration PUBLIC
+    "-//Hibernate/Hibernate Configuration DTD//EN"
+    "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+    <session-factory name="java:hibernate/SessionFactory">
+        <property name="connection.driver_class">oracle.jdbc.driver.OracleDriver</property>
+        <property name="connection.url">jdbc:oracle:thin:@iasdevel.hq.eso.org:1521:XE</property>
+        <property name="connection.username">iastest</property>
+        <property name="connection.password">test</property>
+        <property name="show_sql">true</property>
+	    <property name="current_session_context_class">thread</property>
+	    <property name="hibernate.id.new_generator_mappings">true</property>
+
+		<!-- c3p0 config http://www.hibernate.org/214.html -->
+        <property name="connection.provider_class">org.hibernate.connection.C3P0ConnectionProvider</property>        
+        <property name="hibernate.c3p0.acquire_increment">1</property>
+        <property name="hibernate.c3p0.idle_test_period">60</property>
+        <property name="hibernate.c3p0.min_size">1</property>
+        <property name="hibernate.c3p0.max_size">2</property>
+        <property name="hibernate.c3p0.max_statements">50</property>
+        <property name="hibernate.c3p0.timeout">0</property>
+        <property name="hibernate.c3p0.acquireRetryAttempts">1</property>
+        <property name="hibernate.c3p0.acquireRetryDelay">250</property>
+        
+        <!-- mapping -->
+	    <mapping class="org.eso.ias.cdb.pojos.IasDao"></mapping>
+	    <mapping class="org.eso.ias.cdb.pojos.PropertyDao"></mapping>
+	    
+    </session-factory>
+</hibernate-configuration>
