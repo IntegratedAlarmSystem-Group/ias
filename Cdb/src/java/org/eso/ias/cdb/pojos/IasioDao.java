@@ -32,6 +32,7 @@ public class IasioDao {
 	/**
 	 * Expected refresh rate
 	 */
+	@Basic(optional=false)
 	private int refreshRate;
 	
 	public IasioDao() {}
