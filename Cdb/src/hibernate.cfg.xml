@@ -8,7 +8,8 @@
         <property name="connection.url">jdbc:oracle:thin:@iasdevel.hq.eso.org:1521:XE</property>
         <property name="connection.username">iastest</property>
         <property name="connection.password">test</property>
-        <property name="show_sql">true</property>
+        <property name="hibernate.show_sql">true</property>
+        <property name="hibernate.format_sql">true</property>
 	    <property name="current_session_context_class">thread</property>
 	    <property name="hibernate.id.new_generator_mappings">true</property>
 
