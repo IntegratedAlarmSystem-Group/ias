@@ -27,6 +27,7 @@ def setProps(propsDict):
     # Environment variables
     propsDict["ias.root.folder"]=os.environ["IAS_ROOT"]
     propsDict["ias.logs.folder"]=os.environ["IAS_LOGS_FOLDER"]
+    propsDict["ias.config.folder"]=os.environ["IAS_CONFIG_FOLDER"]
     
     # Set the config file for sl4j (defined in Logging)
     logbackConfigFileName="logback.xml"
