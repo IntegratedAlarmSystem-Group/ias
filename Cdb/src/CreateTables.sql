@@ -76,7 +76,6 @@ CREATE TABLE DASU (
   CONSTRAINT DASU_SUPERVISOR_FK FOREIGN KEY (supervisor_id) REFERENCES SUPERVISOR(supervisor_id),
   CONSTRAINT DASU_Unique_SUPERVISOR UNIQUE(supervisor_id));
 
-
 /*
   The table for a ASCE
 */
