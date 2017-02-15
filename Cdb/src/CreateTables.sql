@@ -59,6 +59,23 @@ CREATE TABLE IASIO (
   CONSTRAINT IASIO_PK PRIMARY KEY(io_id),
   CONSTRAINT refreshGreaterThenZero CHECK (refreshRate>0));
 
+CREATE TABLE SUPERVISOR (
+  supervisor_id VARCHAR2(64) NOT NULL,
+  hostName VARCHAR2(64) NOT NULL,
+  logLevel VARCHAR2(10),
+  CONSTRAINT SUPERVISOR_PK PRIMARY KEY(supervisor_id));
+
+/*
+The table describing a DASU
+*/
+CREATE TABLE DASU (
+  dasu_id  VARCHAR2(64) NOT NULL,
+  logLevel VARCHAR2(10),
+  supervisor_id VARCHAR2(64) NOT NULL,
+  CONSTRAINT DASU_PK PRIMARY KEY(dasu_id),
+  CONSTRAINT DASU_SUPERVISOR_FK FOREIGN KEY (supervisor_id) REFERENCES SUPERVISOR(supervisor_id),
+  CONSTRAINT DASU_Unique_SUPERVISOR UNIQUE(supervisor_id));
+
 /*
   The table for a ASCE
 */
@@ -66,8 +83,11 @@ CREATE TABLE ASCE (
   asce_id VARCHAR(64) NOT NULL,
   tfClass VARCHAR2(96) NOT NULL,
   output_id VARCHAR2(64) NOT NULL,
+  dasu_id VARCHAR2(64) NOT NULL,
   CONSTRAINT ASCE_PK PRIMARY KEY(asce_id),
-  CONSTRAINT output_FK FOREIGN KEY (output_id) REFERENCES IASIO(io_id));
+  CONSTRAINT ASCE_output_FK FOREIGN KEY (output_id) REFERENCES IASIO(io_id),
+  CONSTRAINT ASCE_DASU_FK FOREIGN KEY (dasu_id) REFERENCES DASU(dasu_id),
+  CONSTRAINT ASCE_Unique_DASU UNIQUE(dasu_id));
   
   /*
   One ASCE can have zero to many properties.
@@ -81,5 +101,13 @@ CREATE TABLE ASCE_PROPERTY (
   CONSTRAINT ASCE_PROP_Prop_FK FOREIGN KEY(props_id) REFERENCES PROPERTY(id),
   CONSTRAINT ASCE_PROP_Asce_FK FOREIGN KEY(asce_id) REFERENCES ASCE(asce_id),
   CONSTRAINT ASCEPROPS_PK PRIMARY KEY (asce_id, props_id));
-  
+
+/*
+  This table link the ASCE to its many inputs
+*/
+CREATE TABLE ASCE_IASIO (
+  asce_id VARCHAR2(64) NOT NULL,
+  io_id  varchar2(64) NOT NULL,
+  CONSTRAINT ASCE_IASIO_ASCE_FK FOREIGN KEY(asce_id) REFERENCES ASCE(asce_id),
+  CONSTRAINT ASCE_IASIO_IASIO_FK FOREIGN KEY(io_id) REFERENCES IASIO(io_id));
   

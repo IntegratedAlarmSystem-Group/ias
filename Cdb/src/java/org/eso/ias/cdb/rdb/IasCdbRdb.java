@@ -3,11 +3,13 @@ package org.eso.ias.cdb.rdb;
 import java.io.File;
 
 import org.eso.ias.cdb.pojos.AsceDao;
+import org.eso.ias.cdb.pojos.DasuDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.LogLevelDao;
 import org.eso.ias.cdb.pojos.PropertyDao;
+import org.eso.ias.cdb.pojos.SupervisorDao;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
@@ -46,6 +48,8 @@ public class IasCdbRdb {
             sources.addAnnotatedClass(PropertyDao.class);
             sources.addAnnotatedClass(IasioDao.class);
             sources.addAnnotatedClass(AsceDao.class);
+            sources.addAnnotatedClass(DasuDao.class);
+            sources.addAnnotatedClass(SupervisorDao.class);
             Metadata data=sources.buildMetadata();
             sessionFactory=data.buildSessionFactory();
             return sessionFactory;
@@ -90,7 +94,7 @@ public class IasCdbRdb {
     	
     	Session s = getSessionFactory().openSession();
 
-    	logger.info("Persisting a IAS and 2 unrel;ated properties");
+    	logger.info("Persisting a IAS and 2 unrelated properties");
     	Transaction t = s.beginTransaction();
     	s.persist(ias);
     	s.persist(p1);
@@ -133,6 +137,8 @@ public class IasCdbRdb {
     	t3.commit();
     	s.flush();
     	
+    	
+    	
     	PropertyDao asce_p1 = new PropertyDao();
     	asce_p1.setName("ASCE prop1 Name");
     	asce_p1.setValue("ASCE prop1 Value");
@@ -146,10 +152,23 @@ public class IasCdbRdb {
     	asce.setTfClass("alma.acs.eso.org.tf.Multiplicity");
     	asce.getProps().add(asce_p1);
     	asce.getProps().add(asce_p2);
+    	asce.getInputs().add(i1);
+    	asce.getInputs().add(i3);
     	
-    	logger.info("Beginning transaction for ASCE");
+    	DasuDao dasu = new DasuDao();
+    	dasu.setId("TheIdOfTheDASU");
+    	dasu.setLogLevel(LogLevelDao.FATAL);
+    	dasu.addAsce(asce);
+    	
+    	SupervisorDao superv = new SupervisorDao();
+    	superv.setId("SupervID");
+    	superv.setHostName("iasdevel.hq.eso.org");
+    	superv.addDasu(dasu);
+    	superv.setLogLevel(LogLevelDao.ALL);
+    	
+    	logger.info("Beginning transaction for Supervisor  and its DASU and ASCE");
     	Transaction t4 = s.beginTransaction();
-    	s.persist(asce);
+    	s.persist(superv);
     	t4.commit();
     	s.flush();
     	
