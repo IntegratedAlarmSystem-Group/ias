@@ -2,6 +2,7 @@ package org.eso.ias.cdb.rdb;
 
 import java.io.File;
 
+import org.eso.ias.cdb.pojos.AsceDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
@@ -44,6 +45,7 @@ public class IasCdbRdb {
             sources.addAnnotatedClass(IasDao.class);
             sources.addAnnotatedClass(PropertyDao.class);
             sources.addAnnotatedClass(IasioDao.class);
+            sources.addAnnotatedClass(AsceDao.class);
             Metadata data=sources.buildMetadata();
             sessionFactory=data.buildSessionFactory();
             return sessionFactory;
@@ -130,6 +132,27 @@ public class IasCdbRdb {
     	s.persist(i3);
     	t3.commit();
     	s.flush();
+    	
+    	PropertyDao asce_p1 = new PropertyDao();
+    	asce_p1.setName("ASCE prop1 Name");
+    	asce_p1.setValue("ASCE prop1 Value");
+    	PropertyDao asce_p2 = new PropertyDao();
+    	asce_p2.setName("ASCE prop2 Name");
+    	asce_p2.setValue("ASCE prop2 Value");
+    	
+    	AsceDao asce = new AsceDao();
+    	asce.setId("ASCE-ID");
+    	asce.setOutput(i2);
+    	asce.setTfClass("alma.acs.eso.org.tf.Multiplicity");
+    	asce.getProps().add(asce_p1);
+    	asce.getProps().add(asce_p2);
+    	
+    	logger.info("Beginning transaction for ASCE");
+    	Transaction t4 = s.beginTransaction();
+    	s.persist(asce);
+    	t4.commit();
+    	s.flush();
+    	
     	s.close();
     	
     }
