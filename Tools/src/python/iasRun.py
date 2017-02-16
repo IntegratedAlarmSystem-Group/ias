@@ -16,13 +16,13 @@ from IASTools.FileSupport import FileSupport
 
 def setProps(propsDict):
     """
-    Define default properties to be passed to all java.scala executable.
+    Adds to the passed dictionary, the properties to be passed to all java/scala
+    executables.
     
     These properties are common to all IAS executables and can for example 
     be configuration properties.
     
     @param propsDict: A dictionary of properties in the form name:value
-    @return: A dictionary properties like { "p1name":"p1value", "p2":"v2"}
     """
     # Environment variables
     propsDict["ias.root.folder"]=os.environ["IAS_ROOT"]
@@ -40,6 +40,30 @@ def setProps(propsDict):
     
     # Add environment variables
     
+def addUserProps(propsDict,userProps):
+    """
+    Adds to the dictionary the user properties passed in the command line.
+    
+    @param propsDict: A dictionary of properties in the form name:value
+    @param userProps: a list of java properties in the form name=value
+    """
+    if userProps==None or len(userProps)==0:
+        return
+    for prop in userProps:
+        if len(prop)==0:
+            continue
+        parts=prop[0].split('=')
+        # Integrity check
+        if len(parts)!=2:
+            print "Invalid property:",prop[0]
+            print "Expected format is name=value"
+            print
+            sys.exit(-1)
+        # Is th eprop. already defined?
+        if parts[0] in propsDict:
+            print "AWARNING: overriding ",parts[0],"java property"
+            print "\told value",propsDict[parts[0]],"new value",parts[1]
+        propsDict[parts[0]]=parts[1]
     
 def formatProps(propsDict):
     """
@@ -72,6 +96,13 @@ if __name__ == '__main__':
                         action='store',
                         choices=['java', 'j', 'scala','s'],
                         required=True)
+    parser.add_argument(
+                        '-D',
+                        '--jProp',
+                        help='Set a java property: -Dname=value',
+                        nargs="+",
+                        action='append',
+                        required=False)
     parser.add_argument('className', help='The name of the class to run the program')
     parser.add_argument('params', metavar='param', nargs='*',
                     help='Command line parameters')
@@ -100,6 +131,8 @@ if __name__ == '__main__':
     # this way it is easy for the user to overrride default properties.
     props={}
     setProps(props)
+    if args.jProp is not None:
+        addUserProps(props,args.jProp)
     if len(props)>0:
         stingOfPros = formatProps(props)
         # Sort to enhance readability
