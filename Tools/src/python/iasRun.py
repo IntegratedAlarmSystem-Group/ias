@@ -61,8 +61,9 @@ def addUserProps(propsDict,userProps):
             sys.exit(-1)
         # Is th eprop. already defined?
         if parts[0] in propsDict:
-            print "AWARNING: overriding ",parts[0],"java property"
+            print "\nWARNING: overriding ",parts[0],"java property"
             print "\told value",propsDict[parts[0]],"new value",parts[1]
+            print
         propsDict[parts[0]]=parts[1]
     
 def formatProps(propsDict):
@@ -100,19 +101,34 @@ if __name__ == '__main__':
                         '-D',
                         '--jProp',
                         help='Set a java property: -Dname=value',
-                        nargs="+",
+                        nargs="*",
                         action='append',
+                        required=False)
+    parser.add_argument(
+                        '-v',
+                        '--verbose',
+                        help='Increase the verbosity of the output',
+                        action='store_true',
+                        default=False,
                         required=False)
     parser.add_argument('className', help='The name of the class to run the program')
     parser.add_argument('params', metavar='param', nargs='*',
                     help='Command line parameters')
     args = parser.parse_args()
     
+    verbose = args.verbose
+    if verbose:
+        print "\nVerbose mode ON"
+    
     # Build the command line
     if args.language=='s' or args.language=='scala':
         cmd=['scala']
+        if verbose:
+            print "Running a SCALA program" 
     else:
         cmd=['java']
+        if verbose:
+            print "Running a JAVA program"
         
     # Is the environment ok?
     # Fail fast!
@@ -138,11 +154,25 @@ if __name__ == '__main__':
         # Sort to enhance readability
         stingOfPros.sort()
         cmd.extend(formatProps(props))
+        if verbose:
+            print "java properties:"
+            for p in stingOfPros:
+                print "\t",p[2:]
+    else:
+        if (verbose):
+            print "No java properties defined"
     
     
     #add the classpath
+    theClasspath=CommonDefs.buildClasspath()
     cmd.append("-cp")
-    cmd.append(CommonDefs.buildClasspath())
+    cmd.append(theClasspath)
+    if verbose:
+        jars = theClasspath.split(":")
+        jars.sort()
+        print "Classpath:"
+        for jar in jars:
+            print "\t",jar
     
     # Add the class
     cmd.append(args.className)
@@ -151,11 +181,31 @@ if __name__ == '__main__':
     if len(args.params)>0:
         cmd.extend(args.params)
     
-    print
-    print "Going to run:"
-    print cmd
-    print
+    if verbose:
+        print "Launching",args.className,
+        if len(args.params)>0:
+            print "with params:"
+            for arg in args.params:
+                print "\t",arg
+        else:
+            print
+    
+    if verbose:
+        arrowDown =  unichr(8595)
+        delimiter = ""
+        for t in range(16):
+            delimiter = delimiter + arrowDown
+            
+        print "\n",delimiter,args.className,"output",delimiter
         
     call(cmd)
+    
+    if verbose:
+        arrowUp =  unichr(8593)
+        delimiter = ""
+        for t in range(17):
+            delimiter = delimiter + arrowUp
+        print delimiter,args.className,"done",delimiter
+        print
     
     
