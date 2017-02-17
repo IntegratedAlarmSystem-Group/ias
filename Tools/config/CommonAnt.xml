@@ -276,7 +276,8 @@
   			srcdir="${src.java.dir}" 
   			destdir="${build.java.dir}" 
   			classpathref="build.classpath"
-  			includeantruntime="false">
+  			includeantruntime="false"
+  			source="1.8">
           	<!-- addparams="-Yclosure-elim -optimise" -->
   			<include name="**/*.java"/>
   		</javac>

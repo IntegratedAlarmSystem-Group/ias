@@ -111,6 +111,13 @@ if __name__ == '__main__':
                         action='store_true',
                         default=False,
                         required=False)
+    parser.add_argument(
+                        '-a',
+                        '--assertions',
+                        help='Disable assertions',
+                        action='store_false',
+                        default=True,
+                        required=False)
     parser.add_argument('className', help='The name of the class to run the program')
     parser.add_argument('params', metavar='param', nargs='*',
                     help='Command line parameters')
@@ -124,11 +131,21 @@ if __name__ == '__main__':
     if args.language=='s' or args.language=='scala':
         cmd=['scala']
         if verbose:
-            print "Running a SCALA program" 
+            print "Running a SCALA program." 
     else:
         cmd=['java']
         if verbose:
-            print "Running a JAVA program"
+            print "Running a JAVA program."
+            
+    enableAssertions = args.assertions
+    if enableAssertions:
+        cmd.append("-ea")
+        if verbose:
+            print "Assertions are enabled."
+    else:
+        if verbose:
+            print "Assertions disabled."
+    
         
     # Is the environment ok?
     # Fail fast!
