@@ -172,12 +172,22 @@ public class IasCdbRdb {
     	t4.commit();
     	s.flush();
     	
+    	superv.setLogLevel(LogLevelDao.INFO);
+    	Transaction t5 = s.beginTransaction();
+    	s.persist(superv);
+    	t5.commit();
+    	s.flush();
+    	
     	s.close();
     	
     }
 
 	public static void main(String[] args) {
-		System.out.println("IasCdbRdb started..");
+		System.out.println("IasCdbRdb started.. ");
+		
+		for (String arg: args) {
+			System.out.println("==> "+arg);
+		}
 		
 		IasCdbRdb ias = new IasCdbRdb();
 		ias.storeIas();
