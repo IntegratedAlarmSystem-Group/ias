@@ -4,7 +4,12 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
+import org.eso.ias.cdb.json.pojos.JsonAcseDao;
+import org.eso.ias.cdb.json.pojos.JsonDasuDao;
+import org.eso.ias.cdb.json.pojos.JsonSupervisorDao;
 import org.eso.ias.cdb.pojos.AsceDao;
 import org.eso.ias.cdb.pojos.DasuDao;
 import org.eso.ias.cdb.pojos.IasDao;
@@ -44,8 +49,9 @@ public class JsonWriter implements CdbFileWriter {
 	 */
 	@Override
 	public void writeSupervisor(SupervisorDao superv, File f) throws IOException  {
+		JsonSupervisorDao jsonSup = new JsonSupervisorDao(superv);
 		ObjectMapper mapper = new ObjectMapper();
-		mapper.writeValue(f, superv);
+		mapper.writeValue(f, jsonSup);
 	}
 	
 	/**
@@ -56,8 +62,9 @@ public class JsonWriter implements CdbFileWriter {
 	 */
 	@Override
 	public void writeDasu(DasuDao dasu, File f) throws IOException {
+		JsonDasuDao jsonDasu = new JsonDasuDao(dasu);
 		ObjectMapper mapper = new ObjectMapper();
-		mapper.writeValue(f, dasu);
+		mapper.writeValue(f, jsonDasu);
 	}
 	
 	/**
@@ -68,20 +75,9 @@ public class JsonWriter implements CdbFileWriter {
 	 */
 	@Override
 	public void writeAsce(AsceDao asce, File f) throws IOException {
+		JsonAcseDao jsonAsce = new JsonAcseDao(asce);
 		ObjectMapper mapper = new ObjectMapper();
-		mapper.writeValue(f, asce);
-	}
-	
-	/**
-	 * Serialize the IASIO in the JSON file.
-	 * 
-	 * @param iasio The IASIO configuration to write in the file
-	 * @param f: the file to write
-	 */
-	@Override
-	public void writeIasio(IasioDao iasio, File f) throws IOException {
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.writeValue(f, iasio);
+		mapper.writeValue(f, jsonAsce);
 	}
 	
 	/**
@@ -107,5 +103,39 @@ public class JsonWriter implements CdbFileWriter {
 		}
 		FileOutputStream fOutStrem = new FileOutputStream(f, false);
 		return new BufferedOutputStream(fOutStrem);
+	}
+
+	/**
+	 * Serialize the IASIO in the JSON file.
+	 * 
+	 * @param iasio The IASIO configuration to write in the file
+	 * @param f: the file to write
+	 * @param append: if <code>true</code> the passed iasio is appended to the file
+	 *                otherwise a new file is created
+	 *                
+	 * @see org.eso.ias.cdb.json.CdbFileWriter#writeIasio(org.eso.ias.cdb.pojos.IasioDao, java.io.File, boolean)
+	 * @see #writeIasios(Set, File, boolean)
+	 */
+	@Override
+	public void writeIasio(IasioDao iasio, File f, boolean append) throws IOException {
+		Set<IasioDao> iasios = new HashSet<>();
+		iasios.add(iasio);
+		writeIasios(iasios,f,append);
+	}
+
+	/**
+	 * Serialize the IASIOs in the JSON file.
+	 * 
+	 * @param iasio The IASIOs to write in the file
+	 * @param f: the file to write
+	 * @param append: if <code>true</code> the passed iasios are appended to the file
+	 *                otherwise a new file is created
+	 *                
+	 * @see org.eso.ias.cdb.json.CdbFileWriter#writeIasios(java.util.Set, java.io.File, boolean)
+	 */
+	@Override
+	public void writeIasios(Set<IasioDao> iasios, File f, boolean append) throws IOException {
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.writeValue(f, iasios);
 	}
 }

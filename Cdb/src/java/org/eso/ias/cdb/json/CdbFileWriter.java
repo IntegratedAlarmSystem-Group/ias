@@ -2,6 +2,7 @@ package org.eso.ias.cdb.json;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Set;
 
 import org.eso.ias.cdb.pojos.AsceDao;
 import org.eso.ias.cdb.pojos.DasuDao;
@@ -53,6 +54,18 @@ public interface CdbFileWriter {
 	 * 
 	 * @param iasio The IASIO configuration to write in the file
 	 * @param f: the file to write
+	 * @param append: if <code>true</code> the passed iasio is appended to the file
+	 *                otherwise a new file is created
 	 */
-	public void writeIasio(IasioDao iasio, File f) throws IOException ;
+	public void writeIasio(IasioDao iasio, File f, boolean append) throws IOException ;
+	
+	/**
+	 * Write the IASIOs in the passed file.
+	 * 
+	 * @param iasios The IASIOs to write in the file
+	 * @param f: the file to write
+	 * @param append: if <code>true</code> the passed iasios are appended to the file
+	 *                otherwise a new file is created
+	 */
+	public void writeIasios(Set<IasioDao> iasios, File f, boolean append) throws IOException ;
 }

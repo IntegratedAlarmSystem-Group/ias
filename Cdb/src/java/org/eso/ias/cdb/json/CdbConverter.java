@@ -161,7 +161,7 @@ public class CdbConverter {
 		Path folder = CdbFolders.getSubfolder(jsonCdbParentFolder, CdbFolders.IASIO, true);
 		File outF = folder.resolve("iasio.json").toFile();
 		try {
-			writer.writeIasio(iasio, outF);
+			writer.writeIasio(iasio, outF,false);
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}

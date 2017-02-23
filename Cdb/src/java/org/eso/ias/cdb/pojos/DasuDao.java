@@ -89,4 +89,8 @@ public class DasuDao {
 	public void setId(String id) {
 		this.id = id;
 	}
+	
+	public Set<AsceDao> getAsces() {
+		return asces;
+	}
 }

@@ -89,4 +89,8 @@ public class SupervisorDao {
 		dasus.remove(dasu);
 		dasu.setSupervisor(null); // This won't work
 	}
+	
+	 public Set<DasuDao> getDasus() {
+		 return dasus;
+	 }
 }
