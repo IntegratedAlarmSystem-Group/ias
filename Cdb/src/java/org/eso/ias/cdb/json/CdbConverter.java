@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import org.eso.ias.cdb.pojos.AsceDao;
@@ -37,6 +40,11 @@ public class CdbConverter {
 	 * The writer to save pojos in JSON files
 	 */
 	private final JsonWriter writer = new JsonWriter();
+	
+	/**
+	 * The reader to parse JSON files
+	 */
+	private final JsonReader reader = new JsonReader();
 	
 	/**
 	 * Constructor
@@ -73,6 +81,23 @@ public class CdbConverter {
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Get the IAS from the file CDB
+	 * 
+	 * @return The IAS form the file CDB
+	 */
+	public Optional<IasDao> getIas() {
+		File inF;
+		try {
+			Path folder = CdbFolders.getSubfolder(jsonCdbParentFolder, CdbFolders.ROOT, true);
+			inF = folder.resolve("ias.json").toFile();
+		} catch (Throwable t) {
+			System.out.println("Error getting the IAS JSON file: ");
+			return Optional.empty();
+		}
+		return reader.getIas(inF);
 	}
 	
 	/**
@@ -146,14 +171,12 @@ public class CdbConverter {
 	
 	/**
 	 * Serialize the IASIO in the JSON file.
-	 * @throws IOException in case of errors creating CDB folders or wiring JSON files.
 	 * 
 	 * @param iasio The IASIO configuration to write in the file
+	 *  @throws IOException in case of errors creating CDB folders or wiring JSON files.
 	 */
 	public void serializeIasio(IasioDao iasio) throws IOException {
-		if (iasio==null) {
-			throw new NullPointerException("IAS pojo cant't be null");
-		}
+		Objects.requireNonNull(iasio,"The IASIO pojo cant't be null");
 		String iasioID=iasio.getId();
 		if (iasioID==null || iasioID.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty or null IASIO ID");
@@ -161,10 +184,44 @@ public class CdbConverter {
 		Path folder = CdbFolders.getSubfolder(jsonCdbParentFolder, CdbFolders.IASIO, true);
 		File outF = folder.resolve("iasio.json").toFile();
 		try {
-			writer.writeIasio(iasio, outF,false);
+			writer.writeIasio(iasio, outF,true);
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Serialize the IASIOs in the JSON file.
+	 * 
+	 * @param iasios The IASIOs to write in the file
+	 * @throws IOException in case of errors creating CDB folders or wiring JSON files.
+	 */
+	public void serializeIasios(Set<IasioDao> iasios) throws IOException {
+		Objects.requireNonNull(iasios,"The set of IASIO pojos cant't be null");
+		Path folder = CdbFolders.getSubfolder(jsonCdbParentFolder, CdbFolders.IASIO, true);
+		File outF = folder.resolve("iasio.json").toFile();
+		try {
+			writer.writeIasios(iasios, outF,true);
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Get the IAS from the file CDB
+	 * 
+	 * @return The IAS form the file CDB
+	 */
+	public Optional<Set<IasioDao>> getIasios() {
+		File inF;
+		try {
+			Path folder = CdbFolders.getSubfolder(jsonCdbParentFolder, CdbFolders.IASIO, true);
+			inF = folder.resolve("iasio.json").toFile();
+		} catch (Throwable t) {
+			System.out.println("Error getting the IASIOs JSON file: ");
+			return Optional.empty();
+		}
+		return reader.getIasios(inF);
 	}
 	
 	
@@ -202,10 +259,12 @@ public class CdbConverter {
 		i3.setRefreshRate(1500);
 		i3.setIasType(IasTypeDao.INT);
 		
-		System.out.println("Writing IASIOs");
-    	conv.serializeIasio(i1);
-    	conv.serializeIasio(i2);
-    	conv.serializeIasio(i3);
+		System.out.println("Writing a set of IASIOs");
+		Set<IasioDao> iasios = new HashSet<>();
+		iasios.add(i1);
+		iasios.add(i2);
+		iasios.add(i3);
+    	conv.serializeIasios(iasios);
     	
     	PropertyDao asce_p1 = new PropertyDao();
     	asce_p1.setName("ASCE prop1 Name");
@@ -238,6 +297,26 @@ public class CdbConverter {
     	conv.serializeSupervisor(superv);
     	conv.serializeDasu(dasu);
     	conv.serializeAsce(asce);
+    	System.out.println("Replacing "+i1);
+    	i1.setRefreshRate(5000);
     	conv.serializeIasio(i1);
+    	
+    	System.out.println("Reading IAS configuration from JSON file");
+    	Optional<IasDao> iasFromFile = conv.getIas();
+    	if (iasFromFile.isPresent()) {
+    		System.out.println("IAS written: "+ias);
+    		System.out.println("IAS read:    "+iasFromFile.get());
+    		System.out.println("Are the IAS equal? "+ias.equals(iasFromFile.get()));
+    	} else System.out.println("IAS NOT read");
+    	
+    	System.out.println("Reading IASIO configuration from JSON file");
+    	Optional<Set<IasioDao>> iasiosFromFile = conv.getIasios();
+    	if (iasiosFromFile.isPresent()) {
+    		System.out.println("Size of set read: "+iasiosFromFile.get().size());
+    		for (IasioDao iasio: iasiosFromFile.get()) {
+    			System.out.println(iasio);
+    			System.out.println("Are the IASIOs equal? "+iasio.equals(i1));
+    		}
+    	} else System.out.println("IASIOs NOT read");
 	}
 }

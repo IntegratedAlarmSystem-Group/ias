@@ -50,7 +50,7 @@ public interface CdbFileWriter {
 	public void writeAsce(AsceDao asce, File f) throws IOException ;
 	
 	/**
-	 * Write the IASIO in the passed file.
+	 * Write the IASIO in the file.
 	 * 
 	 * @param iasio The IASIO configuration to write in the file
 	 * @param f: the file to write
@@ -60,7 +60,7 @@ public interface CdbFileWriter {
 	public void writeIasio(IasioDao iasio, File f, boolean append) throws IOException ;
 	
 	/**
-	 * Write the IASIOs in the passed file.
+	 * Write the IASIOs in the file.
 	 * 
 	 * @param iasios The IASIOs to write in the file
 	 * @param f: the file to write
