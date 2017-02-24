@@ -1,6 +1,7 @@
 package org.eso.ias.cdb.pojos;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.Basic;
@@ -78,7 +79,12 @@ public class AsceDao {
 	}
 
 	public void setId(String id) {
-		this.id = id;
+		Objects.requireNonNull(id,"The ASCE ID can't be null");
+		String iden = id.trim();
+		if (iden.isEmpty()) {
+			throw new IllegalArgumentException("The ASCE ID can't be an empty string");
+		}
+		this.id = iden;
 	}
 
 	public String getTfClass() {
@@ -86,7 +92,12 @@ public class AsceDao {
 	}
 
 	public void setTfClass(String tfClass) {
-		this.tfClass = tfClass;
+		Objects.requireNonNull(tfClass,"The TF class of a ASCE can't be null");
+		String temp = tfClass.trim();
+		if (temp.isEmpty()) {
+			throw new IllegalArgumentException("The TF class of a ASCE can't be an empty string");
+		}
+		this.tfClass = temp;
 	}
 
 	public IasioDao getOutput() {
@@ -98,6 +109,7 @@ public class AsceDao {
 	}
 
 	public void setOutput(IasioDao output) {
+		Objects.requireNonNull(output,"The output of a ASCE can't be null");
 		this.output = output;
 	}
 
@@ -111,6 +123,35 @@ public class AsceDao {
 
 	public DasuDao getDasu() {
 		return dasu;
+	}
+	
+	/**
+	 * </code>toString()</code> prints a human readable version of the ASCE
+	 * where linked objects (like DASU, IASIOS..) are represented by their
+	 * IDs only.
+	 */
+	@Override
+	public String toString() {
+		StringBuilder ret = new StringBuilder("ASCE=[ID=");
+		ret.append(getId());
+		ret.append(", Output=");
+		ret.append(getOutput().getId());
+		ret.append(", Inputs=");
+		for (IasioDao iasio: getInputs()) {
+			ret.append(' ');
+			ret.append(iasio.getId());
+		}
+		ret.append(" TF class=");
+		ret.append(getTfClass());
+		ret.append(", DASU=");
+		ret.append(getDasu().getId());
+		ret.append(", Props=");
+		for (PropertyDao prop: getProps()) {
+			ret.append(' ');
+			ret.append(prop.toString());
+		}
+		ret.append(']');
+		return ret.toString();
 	}
 	
 }

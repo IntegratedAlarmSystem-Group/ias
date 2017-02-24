@@ -1,8 +1,7 @@
 package org.eso.ias.cdb.pojos;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.Basic;
@@ -61,7 +60,12 @@ public class SupervisorDao {
 	}
 
 	public void setId(String id) {
-		this.id = id;
+		Objects.requireNonNull(id,"The DASU ID can't be null");
+		String iden = id.trim();
+		if (iden.isEmpty()) {
+			throw new IllegalArgumentException("The DASU ID can't be an empty string");
+		}
+		this.id = iden;
 	}
 
 	public String getHostName() {
@@ -69,7 +73,12 @@ public class SupervisorDao {
 	}
 
 	public void setHostName(String host) {
-		this.hostName = host;
+		Objects.requireNonNull(host,"The host name can't be null");
+		String temp = host.trim();
+		if (temp.isEmpty()) {
+			throw new IllegalArgumentException("The DASU host name can't be an empty string");
+		}
+		this.hostName = temp;
 	}
 
 	public LogLevelDao getLogLevel() {
@@ -81,11 +90,13 @@ public class SupervisorDao {
 	}
 
 	public void addDasu(DasuDao dasu) {
+		Objects.requireNonNull(dasu,"The DASU can't be null");
 		dasus.add(dasu);
 		dasu.setSupervisor(this);
 	}
 	
 	public void removeDasu(DasuDao dasu) {
+		Objects.requireNonNull(dasu,"Cannot remove a null DASU");
 		dasus.remove(dasu);
 		dasu.setSupervisor(null); // This won't work
 	}
@@ -93,4 +104,40 @@ public class SupervisorDao {
 	 public Set<DasuDao> getDasus() {
 		 return dasus;
 	 }
+	 
+	/**
+	 * </code>toString()</code> prints a human readable version of the DASU
+	 * where linked objects (like ASCES) are represented by their IDs only.
+	 */
+	@Override
+	public String toString() {
+		StringBuilder ret = new StringBuilder("Supervisor=[ID=");
+		ret.append(getId());
+		ret.append(", logLevel=");
+		ret.append(getLogLevel());
+		ret.append(", hostName=");
+		ret.append(getHostName());
+		ret.append(", DASUs");
+		for (DasuDao dasu : getDasus()) {
+			ret.append(" ");
+			ret.append(dasu.getId());
+		}
+		ret.append(']');
+		return ret.toString();
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (this==obj) {
+			return true;
+		}
+		if (obj==null || !(obj instanceof SupervisorDao)) {
+			return false;
+		}
+		SupervisorDao superv =(SupervisorDao)obj;
+		return this.id.equals(superv.getId()) &&
+				Objects.equals(this.hostName, superv.getHostName()) &&
+				Objects.equals(this.logLevel, superv.getLogLevel()) &&
+				Objects.equals(this.getDasus(), superv.getDasus());
+	}
 }

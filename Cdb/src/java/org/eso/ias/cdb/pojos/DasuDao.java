@@ -3,6 +3,7 @@ package org.eso.ias.cdb.pojos;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.Basic;
@@ -65,11 +66,13 @@ public class DasuDao {
 	}
 
 	public void addAsce(AsceDao asce) {
+		Objects.requireNonNull(asce,"Cannot add a null ASCE to a DASU");
 		asces.add(asce);
 		asce.setDasu(this);
 	}
 	
 	public void removeAsce(AsceDao asce) {
+		Objects.requireNonNull(asce,"Cannot remove a null ASCE from a DASU");
 		asces.remove(asce);
 		asce.setDasu(null); // This won't work
 	}
@@ -87,10 +90,37 @@ public class DasuDao {
 	}
 
 	public void setId(String id) {
-		this.id = id;
+		Objects.requireNonNull(id,"The DASU ID can't be null");
+		String iden = id.trim();
+		if (iden.isEmpty()) {
+			throw new IllegalArgumentException("The DASU ID can't be an empty string");
+		}
+		this.id = iden;
 	}
 	
 	public Set<AsceDao> getAsces() {
 		return asces;
+	}
+	
+	/**
+	 * </code>toString()</code> prints a human readable version of the DASU
+	 * where linked objects (like ASCES) are represented by their
+	 * IDs only.
+	 */
+	@Override
+	public String toString() {
+		StringBuilder ret = new StringBuilder("DASU=[ID=");
+		ret.append(getId());
+		ret.append(", logLevel=");
+		ret.append(getLogLevel());
+		ret.append(", Supervisor=");
+		ret.append(getSupervisor().getId());
+		ret.append(", ASCEs");
+		for (AsceDao asce: getAsces()) {
+			ret.append(" ");
+			ret.append(asce.getId());
+		}
+		ret.append(']');
+		return ret.toString();
 	}
 }

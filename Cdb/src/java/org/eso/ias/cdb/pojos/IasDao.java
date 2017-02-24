@@ -2,7 +2,7 @@ package org.eso.ias.cdb.pojos;
 
 import java.io.Serializable;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -26,7 +26,7 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(name = "IAS")
-public class IasDao  implements Serializable {
+public class IasDao {
 	
 	@Id
 	@SequenceGenerator(name="IAS_SEQ_GENERATOR", sequenceName="IAS_SEQ_GENERATOR", allocationSize=1)
@@ -62,5 +62,37 @@ public class IasDao  implements Serializable {
 	
 	public Set<PropertyDao> getProps() {
 		return props;
+	}
+	
+	@Override
+	public boolean equals(Object object) {
+		if (this == object) {
+			return true;
+		}
+		if (object==null || !(object instanceof IasDao)) {
+			return false;
+		}
+		IasDao other = (IasDao)object;
+		if (!this.logLevel.equals(other.getLogLevel())) {
+			return false;
+		}
+		if (props.size()!=other.getProps().size()) {
+			return false;
+		}
+		return Objects.equals(this.logLevel, other.getLogLevel()) &&
+				Objects.equals(props,other.getProps());
+	}
+	
+	@Override
+	public String toString() {
+		StringBuilder ret = new StringBuilder("IAS=[");
+		ret.append("logLevel=");
+		ret.append(getLogLevel().toString());
+		for (PropertyDao prop: getProps()) {
+			ret.append(' ');
+			ret.append(prop.toString());
+		}
+		ret.append(']');
+		return ret.toString();
 	}
 }
