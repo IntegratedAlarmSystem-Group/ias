@@ -1,6 +1,5 @@
 package org.eso.ias.cdb.json;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 
@@ -21,51 +20,45 @@ public interface CdbFileWriter {
 	 * Write the ias in the passed file.
 	 * 
 	 * @param ias The IAS configuration to write in the file
-	 * @param f: the file to write
 	 */
-	public void writeIas(IasDao ias, File f) throws IOException;
+	public void writeIas(IasDao ias) throws IOException;
 	
 	/**
 	 * Write the Supervisor in the passed file.
 	 * 
 	 * @param superv The Supervisor configuration to write in the file
-	 * @param f: the file to write
 	 */
-	public void writeSupervisor(SupervisorDao superv, File f) throws IOException ;
+	public void writeSupervisor(SupervisorDao superv) throws IOException ;
 	
 	/**
 	 * Write the DASU in the passed file.
 	 * 
 	 * @param dasu The DASU configuration to write in the file
-	 * @param f: the file to write
 	 */
-	public void writeDasu(DasuDao dasu, File f) throws IOException ;
+	public void writeDasu(DasuDao dasu) throws IOException ;
 	
 	/**
 	 * Write the ASCE in the passed file.
 	 * 
 	 * @param asce The ASCE configuration to write in the file
-	 * @param f: the file to write
 	 */
-	public void writeAsce(AsceDao asce, File f) throws IOException ;
+	public void writeAsce(AsceDao asce) throws IOException ;
 	
 	/**
 	 * Write the IASIO in the file.
 	 * 
 	 * @param iasio The IASIO configuration to write in the file
-	 * @param f: the file to write
 	 * @param append: if <code>true</code> the passed iasio is appended to the file
 	 *                otherwise a new file is created
 	 */
-	public void writeIasio(IasioDao iasio, File f, boolean append) throws IOException ;
+	public void writeIasio(IasioDao iasio, boolean append) throws IOException ;
 	
 	/**
 	 * Write the IASIOs in the file.
 	 * 
 	 * @param iasios The IASIOs to write in the file
-	 * @param f: the file to write
 	 * @param append: if <code>true</code> the passed iasios are appended to the file
 	 *                otherwise a new file is created
 	 */
-	public void writeIasios(Set<IasioDao> iasios, File f, boolean append) throws IOException ;
+	public void writeIasios(Set<IasioDao> iasios, boolean append) throws IOException ;
 }

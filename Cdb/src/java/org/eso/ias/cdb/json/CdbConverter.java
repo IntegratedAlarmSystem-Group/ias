@@ -17,7 +17,6 @@ import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.LogLevelDao;
 import org.eso.ias.cdb.pojos.PropertyDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
-import org.hibernate.Transaction;
 
 /**
  * {@link CdbConverter} import/exports JSON file to from
@@ -29,22 +28,14 @@ import org.hibernate.Transaction;
 public class CdbConverter {
 	
 	/**
-	 * The parent folder of the CDB 
-	 * i.e. the folder where we expect to find CDB, CDB/DASU etc.
-	 * 
-	 * @see CdbFolders
-	 */
-	private final Path jsonCdbParentFolder;
-	
-	/**
 	 * The writer to save pojos in JSON files
 	 */
-	private final JsonWriter writer = new JsonWriter();
+	private final JsonWriter writer;
 	
 	/**
 	 * The reader to parse JSON files
 	 */
-	private final JsonReader reader = new JsonReader();
+	private final JsonReader reader;
 	
 	/**
 	 * Constructor
@@ -57,11 +48,10 @@ public class CdbConverter {
 			throw new NullPointerException("CDB parent folder can't be null nor empty");
 		}
 		Path p =   FileSystems.getDefault().getPath(jsonCdbFolder);
-		File f = p.toFile();
-		if (!f.exists() || !f.isDirectory() || !f.canWrite()) {
-			throw new IOException("Invaflid CDB parent folder "+f.getAbsolutePath());
-		}
-		this.jsonCdbParentFolder=p;
+		CdbFiles cdbFiles = new CdbJsonFiles(p);
+		writer = new JsonWriter(cdbFiles);
+		reader = new JsonReader(cdbFiles);
+		
 	}
 	
 	/**
@@ -74,10 +64,8 @@ public class CdbConverter {
 		if (ias==null) {
 			throw new NullPointerException("IAS pojo cant't be null");
 		}
-		Path folder = CdbFolders.getSubfolder(jsonCdbParentFolder, CdbFolders.ROOT, true);
-		File outF = folder.resolve("ias.json").toFile();
 		try {
-			writer.writeIas(ias, outF);
+			writer.writeIas(ias);
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
@@ -88,16 +76,8 @@ public class CdbConverter {
 	 * 
 	 * @return The IAS form the file CDB
 	 */
-	public Optional<IasDao> getIas() {
-		File inF;
-		try {
-			Path folder = CdbFolders.getSubfolder(jsonCdbParentFolder, CdbFolders.ROOT, true);
-			inF = folder.resolve("ias.json").toFile();
-		} catch (Throwable t) {
-			System.out.println("Error getting the IAS JSON file: ");
-			return Optional.empty();
-		}
-		return reader.getIas(inF);
+	public Optional<IasDao> getIas() throws IOException {
+		return reader.getIas();
 	}
 	
 	/**
@@ -114,10 +94,8 @@ public class CdbConverter {
 		if (supervisorID==null || supervisorID.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty or null supervisor ID");
 		}
-		Path folder = CdbFolders.getSubfolder(jsonCdbParentFolder, CdbFolders.SUPERVISOR, true);
-		File outF = folder.resolve(supervisorID+".json").toFile();
 		try {
-			writer.writeSupervisor(superv, outF);
+			writer.writeSupervisor(superv);
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
@@ -137,10 +115,8 @@ public class CdbConverter {
 		if (dasuID==null || dasuID.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty or null DASU ID");
 		}
-		Path folder = CdbFolders.getSubfolder(jsonCdbParentFolder, CdbFolders.DASU, true);
-		File outF = folder.resolve(dasuID+".json").toFile();
 		try {
-			writer.writeDasu(dasu, outF);
+			writer.writeDasu(dasu);
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
@@ -160,10 +136,8 @@ public class CdbConverter {
 		if (asceID==null || asceID.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty or null ASCE ID");
 		}
-		Path folder = CdbFolders.getSubfolder(jsonCdbParentFolder, CdbFolders.ASCE, true);
-		File outF = folder.resolve(asceID+".json").toFile();
 		try {
-			writer.writeAsce(asce, outF);
+			writer.writeAsce(asce);
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
@@ -181,10 +155,8 @@ public class CdbConverter {
 		if (iasioID==null || iasioID.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty or null IASIO ID");
 		}
-		Path folder = CdbFolders.getSubfolder(jsonCdbParentFolder, CdbFolders.IASIO, true);
-		File outF = folder.resolve("iasio.json").toFile();
 		try {
-			writer.writeIasio(iasio, outF,true);
+			writer.writeIasio(iasio, true);
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
@@ -198,10 +170,8 @@ public class CdbConverter {
 	 */
 	public void serializeIasios(Set<IasioDao> iasios) throws IOException {
 		Objects.requireNonNull(iasios,"The set of IASIO pojos cant't be null");
-		Path folder = CdbFolders.getSubfolder(jsonCdbParentFolder, CdbFolders.IASIO, true);
-		File outF = folder.resolve("iasio.json").toFile();
 		try {
-			writer.writeIasios(iasios, outF,true);
+			writer.writeIasios(iasios, true);
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
@@ -212,16 +182,8 @@ public class CdbConverter {
 	 * 
 	 * @return The IAS form the file CDB
 	 */
-	public Optional<Set<IasioDao>> getIasios() {
-		File inF;
-		try {
-			Path folder = CdbFolders.getSubfolder(jsonCdbParentFolder, CdbFolders.IASIO, true);
-			inF = folder.resolve("iasio.json").toFile();
-		} catch (Throwable t) {
-			System.out.println("Error getting the IASIOs JSON file: ");
-			return Optional.empty();
-		}
-		return reader.getIasios(inF);
+	public Optional<Set<IasioDao>> getIasios() throws IOException{
+		return reader.getIasios();
 	}
 	
 	

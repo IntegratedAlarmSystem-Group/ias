@@ -43,13 +43,29 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class JsonWriter implements CdbFileWriter {
 	
 	/**
+	 * <code>cdbFileNames</code> return the names o fht efiles to read
+	 */
+	private final CdbFiles cdbFileNames;
+	
+	/**
+	 * Constructor
+	 * 
+	 * @param cdbFileNames CdbFile to get the name of the file to red
+	 */
+	public JsonWriter(CdbFiles cdbFileNames) {
+		Objects.requireNonNull(cdbFileNames, "cdbFileNames can't be null");
+		this.cdbFileNames=cdbFileNames;
+	}
+	
+	/**
 	 * Serialize the ias in the JSON file.
 	 * 
 	 * @param ias The IAS configuration to write in the file
-	 * @param f: the file to write
 	 */
 	@Override
-	public void writeIas(IasDao ias, File f) throws IOException {
+	public void writeIas(IasDao ias) throws IOException {
+		File f = cdbFileNames.getIasFilePath().toFile();
+		System.out.println(f.getAbsolutePath());
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
 		mapper.writeValue(f, ias);
@@ -59,10 +75,10 @@ public class JsonWriter implements CdbFileWriter {
 	 * Serialize the Supervisor in the JSON file.
 	 * 
 	 * @param superv The Supervisor configuration to write in the file
-	 * @param f: the file to write
 	 */
 	@Override
-	public void writeSupervisor(SupervisorDao superv, File f) throws IOException  {
+	public void writeSupervisor(SupervisorDao superv) throws IOException  {
+		File f = cdbFileNames.getSuperivisorFilePath(superv.getId()).toFile();
 		JsonSupervisorDao jsonSup = new JsonSupervisorDao(superv);
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
@@ -73,10 +89,10 @@ public class JsonWriter implements CdbFileWriter {
 	 * Serialize the DASU in the JSON file.
 	 * 
 	 * @param dasu The DASU configuration to write in the file
-	 * @param f: the file to write
 	 */
 	@Override
-	public void writeDasu(DasuDao dasu, File f) throws IOException {
+	public void writeDasu(DasuDao dasu) throws IOException {
+		File f = cdbFileNames.getDasuFilePath(dasu.getId()).toFile();
 		JsonDasuDao jsonDasu = new JsonDasuDao(dasu);
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
@@ -87,10 +103,10 @@ public class JsonWriter implements CdbFileWriter {
 	 * Serialize the ASCE in the JSON file.
 	 * 
 	 * @param asce The ASCE configuration to write in the file
-	 * @param f: the file to write
 	 */
 	@Override
-	public void writeAsce(AsceDao asce, File f) throws IOException {
+	public void writeAsce(AsceDao asce) throws IOException {
+		File f = cdbFileNames.getAsceFilePath(asce.getId()).toFile();
 		JsonAcseDao jsonAsce = new JsonAcseDao(asce);
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
@@ -101,7 +117,6 @@ public class JsonWriter implements CdbFileWriter {
 	 * Serialize the IASIO in the JSON file.
 	 * 
 	 * @param iasio The IASIO configuration to write in the file
-	 * @param f: the file to write
 	 * @param append: if <code>true</code> the passed iasio is appended to the file
 	 *                otherwise a new file is created
 	 *                
@@ -109,10 +124,10 @@ public class JsonWriter implements CdbFileWriter {
 	 * @see #writeIasios(Set, File, boolean)
 	 */
 	@Override
-	public void writeIasio(IasioDao iasio, File f, boolean append) throws IOException {
+	public void writeIasio(IasioDao iasio, boolean append) throws IOException {
 		Set<IasioDao> iasios = new HashSet<>();
 		iasios.add(iasio);
-		writeIasios(iasios,f,append);
+		writeIasios(iasios,append);
 	}
 
 	/**
@@ -124,14 +139,14 @@ public class JsonWriter implements CdbFileWriter {
 	 * is replaced by that in the set.
 	 * 
 	 * @param iasio The IASIOs to write in the file
-	 * @param f: the file to write
 	 * @param append: if <code>true</code> the passed iasios are appended to the file
 	 *                otherwise a new file is created
 	 *                
 	 * @see org.eso.ias.cdb.json.CdbFileWriter#writeIasios(java.util.Set, java.io.File, boolean)
 	 */
 	@Override
-	public void writeIasios(Set<IasioDao> iasios, File f, boolean append) throws IOException {
+	public void writeIasios(Set<IasioDao> iasios, boolean append) throws IOException {
+		File f = cdbFileNames.getIasioFilePath("UnusedID").toFile();
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
 		if (!f.exists() || !append) {

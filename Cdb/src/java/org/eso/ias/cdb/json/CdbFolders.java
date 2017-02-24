@@ -28,6 +28,10 @@ import java.nio.file.Path;
  *     | IASIO.json
  * </VERBATIM>
  * 
+ * Note that <code>CdbFolders</code> only deals with the folders of the CDB 
+ * but not with the name of the files that ultimately depends on the selected format.
+ * The example shown above is for JSON files.
+ * 
  * @author acaproni
  *
  */

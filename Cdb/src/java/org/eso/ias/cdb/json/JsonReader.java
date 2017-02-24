@@ -1,6 +1,8 @@
 package org.eso.ias.cdb.json;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -20,15 +22,30 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author acaproni
  */
 public class JsonReader implements CdbFileReader {
+	
+	/**
+	 * <code>cdbFileNames</code> return the names of the files to read
+	 */
+	private final CdbFiles cdbFileNames;
+	
+	/**
+	 * Constructor
+	 * 
+	 * @param cdbFileNames CdbFile to get the name of the file to red
+	 */
+	public JsonReader(CdbFiles cdbFileNames) {
+		Objects.requireNonNull(cdbFileNames, "cdbFileNames can't be null");
+		this.cdbFileNames=cdbFileNames;
+	}
 
 	/**
 	 * Get the Ias configuration from JSON file.
 	 * 
-	 * @param f: The JSON file to read IAS configuration from
 	 * @return The ias configuration read from the JSON file 
 	 * @see CdbFileReader#getIas(File)
 	 */
-	public Optional<IasDao> getIas(File f) {
+	public Optional<IasDao> getIas() throws IOException {
+		File f = cdbFileNames.getIasFilePath().toFile();
 		if (!canReadFromFile(f)) {
 			return Optional.empty();
 		} else {
@@ -48,11 +65,11 @@ public class JsonReader implements CdbFileReader {
 	/**
 	 * Get the IASIOs from the passed file.
 	 * 
-	 * @param f: The file to read IAS configuration from
-	 * @return The IASIOs read from the file
+	 * @return The IASIOs read from the configuration file
 	 * @see CdbFileReader#getIasios(File)
 	 */
-	public Optional<Set<IasioDao>> getIasios(File f) {
+	public Optional<Set<IasioDao>> getIasios() throws IOException {
+		File f = cdbFileNames.getIasioFilePath("UnusedID").toFile();
 		if (!canReadFromFile(f)) {
 			return Optional.empty();
 		} else {

@@ -1,6 +1,6 @@
 package org.eso.ias.cdb.json;
 
-import java.io.File;
+import java.io.IOException;
 import java.util.Optional;
 import java.util.Set;
 
@@ -17,17 +17,15 @@ public interface CdbFileReader {
 	/**
 	 * Get the Ias configuration from a file file.
 	 * 
-	 * @param f: The file to read IAS configuration from
 	 * @return The ias configuration read from the file 
 	 */
-	Optional<IasDao> getIas(File f);
+	Optional<IasDao> getIas() throws IOException;
 	
 	/**
 	 * Get the IASIOs from the passed file.
 	 * 
-	 * @param f: The file to read IAS configuration from
 	 * @return The IASIOs read from the file
 	 */
-	public Optional<Set<IasioDao>> getIasios(File f) ;
+	public Optional<Set<IasioDao>> getIasios() throws IOException;
 
 }
