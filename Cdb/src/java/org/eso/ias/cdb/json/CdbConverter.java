@@ -186,7 +186,35 @@ public class CdbConverter {
 		return reader.getIasios();
 	}
 	
+	/**
+	 * Get the Supervisor from the file CDB
+	 * 
+	 * @param The id of the Supervisor
+	 * @return The Supervisor form the file CDB
+	 */
+	public Optional<SupervisorDao> getSupervisor(String id) throws IOException{
+		return reader.getSupervisor(id);
+	}
 	
+	/**
+	 * Get the ASCE from the file CDB
+	 * 
+	 * @param The id of the ASCE
+	 * @return The ASCE form the file CDB
+	 */
+	public Optional<AsceDao> getAsce(String id) throws IOException{
+		return reader.getAsce(id);
+	}
+	
+	/**
+	 * Get the DASU from the file CDB
+	 * 
+	 * @param The id of the DASU
+	 * @return The DASU form the file CDB
+	 */
+	public Optional<DasuDao> getDasu(String id) throws IOException{
+		return reader.getDasu(id);
+	}
 	
 	public static void main(String[] args) throws Exception {
 		System.out.println("Writing IAS");
@@ -241,8 +269,8 @@ public class CdbConverter {
     	asce.setTfClass("alma.acs.eso.org.tf.Multiplicity");
     	asce.getProps().add(asce_p1);
     	asce.getProps().add(asce_p2);
-    	asce.getInputs().add(i1);
-    	asce.getInputs().add(i3);
+    	asce.addInput(i1,true);
+    	asce.addInput(i3,true);
     	
     	DasuDao dasu = new DasuDao();
     	dasu.setId("TheIdOfTheDASU");
@@ -263,6 +291,8 @@ public class CdbConverter {
     	i1.setRefreshRate(5000);
     	conv.serializeIasio(i1);
     	
+    	System.out.println("================================== Now reading ==================================");
+    	
     	System.out.println("Reading IAS configuration from JSON file");
     	Optional<IasDao> iasFromFile = conv.getIas();
     	if (iasFromFile.isPresent()) {
@@ -280,5 +310,32 @@ public class CdbConverter {
     			System.out.println("Are the IASIOs equal? "+iasio.equals(i1));
     		}
     	} else System.out.println("IASIOs NOT read");
+    	
+    	System.out.println("Reading ASCE configuration from JSON file");
+    	Optional<AsceDao> a = conv.getAsce("ASCE-ID");
+    	if (a.isPresent()) {
+    		System.out.println("ASCE found!");
+    		System.out.println(a.get());
+    	} else {
+    		System.out.println("Got an empy ASCE");
+    	}
+    	
+    	System.out.println("Reading Supervisor configuration from JSON file");
+    	Optional<SupervisorDao> sup = conv.getSupervisor("SupervID");
+    	if (sup.isPresent()) {
+    		System.out.println("SUPERVISOR found!");
+    		System.out.println(sup.get());
+    	} else {
+    		System.out.println("Got an empy SUPERVISOR");
+    	}
+    	
+    	System.out.println("Reading DASU configuration from JSON file");
+    	Optional<DasuDao> optDasu = conv.getDasu("TheIdOfTheDASU");
+    	if (optDasu.isPresent()) {
+    		System.out.println("DASU found!");
+    		System.out.println(optDasu.get());
+    	} else {
+    		System.out.println("Got an empy DASU");
+    	}
 	}
 }
