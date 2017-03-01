@@ -1,5 +1,6 @@
 package org.eso.ias.cdb.json.pojos;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -21,6 +22,16 @@ public class JsonDasuDao {
 	private final DasuDao dasu;
 	
 	/**
+	 * The ID of the supervisor where this DASU run
+	 */
+	private String supervisorId;
+	
+	/**
+	 * The IDs of the ASCEs that run into this DASU
+	 */
+	private final Set<String> asceIDs;
+	
+	/**
 	 * Constructor
 	 * 
 	 * @param dasu The rdb pojo to mask
@@ -30,6 +41,16 @@ public class JsonDasuDao {
 			throw new NullPointerException("The DASU pojo can't be null");
 		}
 		this.dasu=dasu;
+		this.asceIDs=dasu.getAsces().stream().map(i -> i.getId()).collect(Collectors.toSet());
+		this.supervisorId=dasu.getSupervisor().getId();
+	}
+	
+	/**
+	 * Empty constructor
+	 */
+	public JsonDasuDao() {
+		this.dasu=new DasuDao();
+		this.asceIDs=new HashSet<>();
 	}
 
 	/**
@@ -61,7 +82,14 @@ public class JsonDasuDao {
 	 * @see org.eso.ias.cdb.pojos.DasuDao#getSupervisor()
 	 */
 	public String getSupervisorID() {
-		return dasu.getSupervisor().getId();
+		return supervisorId;
+	}
+	
+	/**
+	 * Setter
+	 */
+	public void setSupervisorID(String supervID) {
+		supervisorId=supervID;
 	}
 
 	/**
@@ -77,6 +105,43 @@ public class JsonDasuDao {
 	 * @see org.eso.ias.cdb.pojos.DasuDao#getAsces()
 	 */
 	public Set<String> getAsceIDs() {
-		return dasu.getAsces().stream().map(i -> i.getId()).collect(Collectors.toSet());
+		return asceIDs;
+	}
+	
+	/**
+	 * Setter
+	 */
+	public void setAsceIDs(Set<String> ids) {
+		asceIDs.addAll(ids);
+	}
+	
+	/**
+	 * </code>toString()</code> prints a human readable version of the DASU
+	 * where linked objects (like ASCES) are represented by their
+	 * IDs only.
+	 */
+	@Override
+	public String toString() {
+		StringBuilder ret = new StringBuilder("jsonDasuAO=[ID=");
+		ret.append(getId());
+		ret.append(", logLevel=");
+		ret.append(getLogLevel());
+		ret.append(", Supervisor=");
+		ret.append(getSupervisorID());
+		ret.append(", ASCEs={");
+		for (String asce: getAsceIDs()) {
+			ret.append(" ");
+			ret.append(asce);
+		}
+		ret.append("}]");
+		return ret.toString();
+	}
+	
+	/**
+	 * @return the {@link DasuDao} encapsulated in this object.
+	 */
+	public DasuDao toDasuDao() {
+		return this.dasu;
+//		
 	}
 }
