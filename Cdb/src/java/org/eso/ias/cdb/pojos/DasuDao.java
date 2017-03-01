@@ -1,10 +1,10 @@
 package org.eso.ias.cdb.pojos;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
+import java.util.Optional;
 
 import javax.persistence.Basic;
 import javax.persistence.CascadeType;
@@ -12,11 +12,11 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.ForeignKey;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
-import javax.persistence.ForeignKey;
 
 /**
  * The pojo for a DASU
@@ -53,7 +53,7 @@ public class DasuDao {
 	 * annotation in the {@link AsceDao} 
 	 */
 	@OneToMany(mappedBy = "dasu", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<AsceDao> asces = new HashSet<>();
+    private Map<String,AsceDao> asces = new HashMap<>();
 	
 	public DasuDao() {}
 	
@@ -67,7 +67,7 @@ public class DasuDao {
 
 	public void addAsce(AsceDao asce) {
 		Objects.requireNonNull(asce,"Cannot add a null ASCE to a DASU");
-		asces.add(asce);
+		asces.put(asce.getId(),asce);
 		asce.setDasu(this);
 	}
 	
@@ -98,8 +98,8 @@ public class DasuDao {
 		this.id = iden;
 	}
 	
-	public Set<AsceDao> getAsces() {
-		return asces;
+	public Collection<AsceDao> getAsces() {
+		return asces.values();
 	}
 	
 	/**
@@ -110,17 +110,17 @@ public class DasuDao {
 	@Override
 	public String toString() {
 		StringBuilder ret = new StringBuilder("DASU=[ID=");
-		ret.append(getId());
+		ret.append(id);
 		ret.append(", logLevel=");
-		ret.append(getLogLevel());
+		Optional.ofNullable(logLevel).ifPresent(x -> ret.append(x.toString()));
 		ret.append(", Supervisor=");
-		ret.append(getSupervisor().getId());
-		ret.append(", ASCEs");
+		Optional.ofNullable(supervisor).ifPresent(x -> ret.append(x.getId()));
+		ret.append(", ASCEs={");
 		for (AsceDao asce: getAsces()) {
 			ret.append(" ");
 			ret.append(asce.getId());
 		}
-		ret.append(']');
+		ret.append("}]");
 		return ret.toString();
 	}
 }

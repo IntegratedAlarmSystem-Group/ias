@@ -1,8 +1,10 @@
 package org.eso.ias.cdb.pojos;
 
-import java.util.HashSet;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
+import java.util.Optional;
 
 import javax.persistence.Basic;
 import javax.persistence.CascadeType;
@@ -51,7 +53,7 @@ public class SupervisorDao {
 	 * annotation in the {@link DasuDao} 
 	 */
 	@OneToMany(mappedBy = "supervisor", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<DasuDao> dasus = new HashSet<DasuDao>();
+    private Map<String,DasuDao> dasus = new HashMap<>();
 	
 	public SupervisorDao() {}
 	
@@ -89,20 +91,36 @@ public class SupervisorDao {
 		this.logLevel = logLevel;
 	}
 
+	/**
+	 * Puts the passed DASU in the list of tDASUs that
+	 * run in this supervisor
+	 * 
+	 * @param dasu The DASU to add
+	 */
 	public void addDasu(DasuDao dasu) {
 		Objects.requireNonNull(dasu,"The DASU can't be null");
-		dasus.add(dasu);
+		dasus.put(dasu.getId(),dasu);
 		dasu.setSupervisor(this);
 	}
 	
 	public void removeDasu(DasuDao dasu) {
 		Objects.requireNonNull(dasu,"Cannot remove a null DASU");
-		dasus.remove(dasu);
+		dasus.remove(dasu.getId());
 		dasu.setSupervisor(null); // This won't work
 	}
 	
-	 public Set<DasuDao> getDasus() {
-		 return dasus;
+	/**
+	 * Check if a DASU with the given key is already in the list
+	 * 
+	 * @param id The ID of the DASU to check
+	 */
+	public boolean containsDasu(String id) {
+		Objects.requireNonNull(id);
+		return dasus.containsKey(id);
+	}
+	
+	 public Collection<DasuDao> getDasus() {
+		 return dasus.values();
 	 }
 	 
 	/**
@@ -112,17 +130,17 @@ public class SupervisorDao {
 	@Override
 	public String toString() {
 		StringBuilder ret = new StringBuilder("Supervisor=[ID=");
-		ret.append(getId());
+		ret.append(id);
 		ret.append(", logLevel=");
-		ret.append(getLogLevel());
+		Optional.ofNullable(logLevel).ifPresent(x -> ret.append(x.toString()));
 		ret.append(", hostName=");
 		ret.append(getHostName());
-		ret.append(", DASUs");
+		ret.append(", DASUs={");
 		for (DasuDao dasu : getDasus()) {
 			ret.append(" ");
 			ret.append(dasu.getId());
 		}
-		ret.append(']');
+		ret.append("}]");
 		return ret.toString();
 	}
 	
