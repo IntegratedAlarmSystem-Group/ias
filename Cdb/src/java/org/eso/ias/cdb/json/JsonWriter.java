@@ -34,6 +34,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * Writes IAS structures into JSON files.
  * 
+ * To avoid recursion, objects included into pojos (for example ASCEs in a DASU)
+ * are represented by their IDs only. This is done, in practice,
+ * writing a different set of pojos (i.e. those in the <code>org.eso.ias.cdb.pojos<code>)
+ * instead of those in the <code>org.eso.ias.pojos<code>. 
+ * 
  * <P>JSON writing and parsing is done with Jackson2 
  * (http://wiki.fasterxml.com/JacksonStreamingApi)
  * 
