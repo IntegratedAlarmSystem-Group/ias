@@ -8,6 +8,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.json.pojos.JsonAcseDao;
 import org.eso.ias.cdb.json.pojos.JsonDasuDao;
 import org.eso.ias.cdb.json.pojos.JsonSupervisorDao;
@@ -31,10 +32,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * <P>JSON writing and parsing is done with Jackson2 
  * (http://wiki.fasterxml.com/JacksonStreamingApi)
  * 
- * @see CdbFileReader
+ * @see CdbReader
  * @author acaproni
  */
-public class JsonReader implements CdbFileReader {
+public class JsonReader implements CdbReader {
 	
 	/**
 	 * A holder to rebuild the objects from their IDs.
@@ -67,7 +68,7 @@ public class JsonReader implements CdbFileReader {
 	 * Get the Ias configuration from JSON file.
 	 * 
 	 * @return The ias configuration read from the JSON file 
-	 * @see CdbFileReader#getIas(File)
+	 * @see CdbReader#getIas(File)
 	 */
 	public Optional<IasDao> getIas() throws IOException {
 		File f = cdbFileNames.getIasFilePath().toFile();
@@ -92,7 +93,7 @@ public class JsonReader implements CdbFileReader {
 	 * 
 	 * @return The IASIOs read from the configuration file
 	 * @throws IOException if the IASIO file does not exist or is unreadable
-	 * @see CdbFileReader#getIasios(File)
+	 * @see CdbReader#getIasios(File)
 	 */
 	public Optional<Set<IasioDao>> getIasios() throws IOException {
 		File f = cdbFileNames.getIasioFilePath("UnusedID").toFile();

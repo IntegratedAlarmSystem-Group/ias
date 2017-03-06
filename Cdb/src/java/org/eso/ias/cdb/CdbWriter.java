@@ -1,4 +1,4 @@
-package org.eso.ias.cdb.json;
+package org.eso.ias.cdb;
 
 import java.io.IOException;
 import java.util.Set;
@@ -11,11 +11,11 @@ import org.eso.ias.cdb.pojos.SupervisorDao;
 
 /**
  * Interface to flush the content of the CDB pojos
- * to files.
+ * in the configuration database
  * 
  * @author acaproni
  */
-public interface CdbFileWriter {
+public interface CdbWriter {
 	/**
 	 * Write the ias in the passed file.
 	 * 

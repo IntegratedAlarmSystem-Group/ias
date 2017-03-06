@@ -1,4 +1,4 @@
-package org.eso.ias.cdb.json;
+package org.eso.ias.cdb;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -11,11 +11,11 @@ import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
 
 /**
- * Interface to build CDB pojos from files.
+ * Interface to build CDB pojos from the configuration database.
  * 
  * @author acaproni
  */
-public interface CdbFileReader {
+public interface CdbReader {
 	
 	/**
 	 * Get the Ias configuration from a file.

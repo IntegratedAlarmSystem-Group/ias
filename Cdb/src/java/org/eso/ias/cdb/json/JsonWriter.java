@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.eso.ias.cdb.CdbWriter;
 import org.eso.ias.cdb.json.pojos.JsonAcseDao;
 import org.eso.ias.cdb.json.pojos.JsonDasuDao;
 import org.eso.ias.cdb.json.pojos.JsonSupervisorDao;
@@ -42,10 +43,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * <P>JSON writing and parsing is done with Jackson2 
  * (http://wiki.fasterxml.com/JacksonStreamingApi)
  * 
- * @see CdbFileWriter
+ * @see CdbWriter
  * @author acaproni
  */
-public class JsonWriter implements CdbFileWriter {
+public class JsonWriter implements CdbWriter {
 	
 	/**
 	 * <code>cdbFileNames</code> return the names o fht efiles to read
@@ -125,7 +126,7 @@ public class JsonWriter implements CdbFileWriter {
 	 * @param append: if <code>true</code> the passed iasio is appended to the file
 	 *                otherwise a new file is created
 	 *                
-	 * @see org.eso.ias.cdb.json.CdbFileWriter#writeIasio(org.eso.ias.cdb.pojos.IasioDao, java.io.File, boolean)
+	 * @see org.eso.ias.cdb.CdbWriter#writeIasio(org.eso.ias.cdb.pojos.IasioDao, java.io.File, boolean)
 	 * @see #writeIasios(Set, File, boolean)
 	 */
 	@Override
@@ -147,7 +148,7 @@ public class JsonWriter implements CdbFileWriter {
 	 * @param append: if <code>true</code> the passed iasios are appended to the file
 	 *                otherwise a new file is created
 	 *                
-	 * @see org.eso.ias.cdb.json.CdbFileWriter#writeIasios(java.util.Set, java.io.File, boolean)
+	 * @see org.eso.ias.cdb.CdbWriter#writeIasios(java.util.Set, java.io.File, boolean)
 	 */
 	@Override
 	public void writeIasios(Set<IasioDao> iasios, boolean append) throws IOException {
