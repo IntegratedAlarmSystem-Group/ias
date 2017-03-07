@@ -6,10 +6,12 @@ src
 src/scala
 src/java
 src/python
+src/resources
 test
 test/scala
 test/java
 test/python
+test/resources
 test/cdb
 test/cdb/Supervisor
 test/cdb/Dasus
