@@ -11,12 +11,9 @@
 		<property environment="env" />
 		<property name="src.dir" value="${basedir}" />
 		<property name="src.java.dir" value="${basedir}/java" />
-		<!-- scala source dir is src (or test) to allow
-		     importing java files from src/java together
-		     with scala sources fromsrc/scala --> 
-		<property name="src.scala.dir" value="${basedir}" />
+		<property name="src.scala.dir" value="${basedir}/scala" />
 		<property name="src.python.dir" value="${basedir}/python" />
-		<property name="src.python.dir" value="${basedir}/python" />
+		<property name="src.resources.dir" value="${basedir}/resources" />
 		<property name="build.dir" value="../classes" />
 		<property name="build.scala.dir" value="../classes/scala" />
 		<property name="build.java.dir" value="../classes/java" />
@@ -44,6 +41,24 @@
 		<available file="${src.java.dir}" type="dir" property="src.java.dir.exists"/>
 		<available file="${src.scala.dir}" type="dir" property="src.scala.dir.exists"/>
 		<available file="${src.python.dir}" type="dir" property="src.pyhton.dir.exists"/>
+	</target>
+	
+	<!--
+		Check if the source folder for java exists
+	-->
+	<target name="javaSrcFolderCheck" depends="init-ias-environment">
+	    <condition property="java.src.folder.exists">
+	      <available file="${src.java.dir}" type="dir"/>
+	    </condition>
+	</target>
+	
+	<!--
+		Check if the source folder for scala exists
+	-->
+	<target name="scalaSrcFolderCheck" depends="init-ias-environment">
+	    <condition property="scala.src.folder.exists">
+	      <available file="${src.scala.dir}" type="dir"/>
+	    </condition>
 	</target>
 	
 	<target 
@@ -89,7 +104,7 @@
 		description="Initialization of scala build"
 		name="init-scala-build" 
 		depends="init-ias-folders,buildClasspath" 
-		if="scalaJarName">
+		if="jarName">
 		<echo>Initing scala build...</echo>
 	    <taskdef resource="scala/tools/ant/antlib.xml">
 	    	<classpath>
@@ -222,11 +237,8 @@
 	
 	<!--
 		Compile scala sources (*.scala) into ../classes
-		
-		${scalaJarName}: the name of the jar to build
-		                 if not set skip the compliation
 	-->
-	<target name="scalacompile" depends="init-scala-build" if="scalaJarName">
+	<target name="scalacompile" depends="init-scala-build,scalaSrcFolderCheck" if="scala.src.folder.exists">
 		<echo>Building scala sources in ${src.scala.dir}</echo>
 		<mkdir dir="${build.scala.dir}"/>
 		<delete>
@@ -235,37 +247,35 @@
 
   		<scalac srcdir="${src.scala.dir}" destdir="${build.scala.dir}" classpathref="build.classpath" force="changed">
           	<!-- addparams="-Yclosure-elim -optimise" -->
-  			<include name="scala/**/*.scala"/>
-	        <include name="scala/**/*.java"/>
-  			<include name="java/**/*.java"/>
+  			<include name="**/*.scala"/>
+	        <include name="**/*.java"/>
+  			<include name="${src.java.dir}/**/*.java"/>
   		</scalac>
 	</target>
 	
-	<!--
-		Build the jar from scala sources.
-		The jar is created into the lib folder of the module
+	<target name="buildJavaScala" depends="scalacompile,javacompile" if="jarName">
+		<property name="jarFileName" value="${lib.dir}/${jarName}"/>
+		<echo>Building ${jarFileName}</echo>
 		
+		<mkdir dir="${build.scala.dir}"/>
+		<mkdir dir="${build.java.dir}"/>
+		<mkdir dir="${src.resources.dir}"/>
 		
-		${scalaJarName}: the name of the jar to build
-		                 if not set skpis the build
-	-->
-	<target name="scalabuild" depends="scalacompile" if="scalaJarName">
-		<property name="scalaJarFileName" value="${lib.dir}/${scalaJarName}"/>
-		<echo>Building jar ${scalaJarFileName}</echo>
-		 <delete file="${scalaJarFileName}" />
-		 <jar destfile="${scalaJarFileName}" >
+		<jar destfile="${jarFileName}" >
 		 	<fileset dir="${build.scala.dir}" />
-		 	<fileset dir="${src.scala.dir}" includes="**/*.scala,**/*.java" />
+		 	<fileset dir="${build.java.dir}" />
+		 	<fileset dir="${src.resources.dir}"/>
+			<fileset dir="${src.dir}">
+				<include name="scala/**"/>
+				<include name="java/**"/>
+			</fileset>
 	 	</jar>
 	</target>
 	
 	<!--
 		Compile java sources (*.java) into ../classes
-		
-		${javaJarName}: the name of the jar to build
-		                 if not set skip the compliation
 	-->
-	<target name="javacompile" depends="init-ias-folders,buildClasspath" if="javaJarName">
+	<target name="javacompile" depends="init-ias-folders,buildClasspath,javaSrcFolderCheck" if="java.src.folder.exists">
 		<echo>Building java sources in ${src.java.dir}</echo>
 		<mkdir dir="${build.java.dir}"/>
 		<delete>
@@ -283,27 +293,10 @@
   		</javac>
 	</target>
 	
-	<!--
-		Build the jar from java sources.
-		The jar is created into the lib folder of the module
-		
-		
-		${javaJarName}: the name of the jar to build
-		                 if not set skpis the build
-	-->
-	<target name="javabuild" depends="javacompile" if="javaJarName">
-		<property name="javaJarFileName" value="${lib.dir}/${javaJarName}"/>
-		<echo>Building jar ${javaJarFileName}</echo>
-		 <delete file="${javaJarFileName}" />
-		 <jar destfile="${javaJarFileName}" >
-		 	<fileset dir="${build.java.dir}" />
-		 	<fileset dir="${src.java.dir}" includes="**/*.java" />
-	 	</jar>
-	</target>
 	
 	<target 
 		name="build" 
-		depends="localinstallbinaries,localInstallThirdPartyJars,scalabuild,javabuild,localInstallPyModules" />
+		depends="localinstallbinaries,localInstallThirdPartyJars,buildJavaScala,localInstallPyModules" />
 	
 	<target name="check-test-runner">
 	    <available file="runTests.sh" property="testRunnerShFile.exists"/>
