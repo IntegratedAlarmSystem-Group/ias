@@ -5,4 +5,4 @@ Some of the code in this reposotory could come from the [prototype](https://gith
 
 Website: [Integrated Alarm System](https://integratedalarmsystem-group.github.io)
 
-Browse the wiki pages for help.
+Browse the [wiki pages](https://github.com/IntegratedAlarmSystem-Group/ias/wiki) for help.
