@@ -88,7 +88,7 @@
 	<!--
 		javaJarName: the name of the jar to build from java sources; 
 	-->
-	<property name="javaJarName" value="ias-cdb.jar"/>
+	<property name="jarName" value="ias-cdb.jar"/>
 	
 	<!-- ####################### TARGETS ####################### -->
 	

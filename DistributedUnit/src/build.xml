@@ -5,7 +5,7 @@
 	<property name="iasRoot" value="${env.IAS_ROOT}" />
 	<include file="${iasRoot}/config/CommonAnt.xml" as="ias" />
 	
-	<property name="scalaJarName" value="ias-dasu.jar"/>
+	<property name="jarName" value="ias-dasu.jar"/>
 	
 	<target name="clean" depends="ias.clean" />
 		

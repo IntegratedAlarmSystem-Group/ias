@@ -18,13 +18,11 @@
 	<property name="exttools" value="scalactic_2.11-3.0.1.jar,scalatest_2.11-3.0.1.jar,junit-4.12.jar,hamcrest-core-1.3.jar" />
 	
 	<!--
-		scalaJarName: the name of the jar to build from scala sources; 
+		jarName: the name of the jar to build from scala and java sources; 
 		              if not set the build is skipped
 	     
-	     Example of property setting:
-		 <property name="scalaJarName" value="ias-basic-types.jar"/>
 	-->
-	<property name="scalaJarName" value="ias-tools.jar"/>
+	<property name="jarName" value="test.jar" />
 	
 	<!-- ####################### TARGETS ####################### -->
 	
