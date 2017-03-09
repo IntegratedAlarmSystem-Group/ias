@@ -5,7 +5,7 @@
   (as described in http://docs.jboss.org/hibernate/orm/5.2/userguide/html_single/Hibernate_User_Guide.html#associations-one-to-many)
   and realized through a link table (PROPERTY_IAS)
 */
-CREATE TABLE PROPERTY (
+CREATE TABLE PROPERTY ( --Prop table
   id NUMERIC(15) NOT NULL, 
   name VARCHAR2(255) NOT NULL, 
   value VARCHAR2(255) NOT NULL, 
