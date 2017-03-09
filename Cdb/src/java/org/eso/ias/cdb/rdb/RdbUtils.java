@@ -2,10 +2,10 @@ package org.eso.ias.cdb.rdb;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.URL;
 import java.util.Objects;
 
 import org.eso.ias.cdb.IasCdbException;
@@ -15,7 +15,6 @@ import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.PropertyDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
-import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;
@@ -57,6 +56,11 @@ public class RdbUtils {
 	 */
 	private static final String deleteTableSqlScript = "org/eso/ias/rdb/sql/DropTables.sql";
 	
+	/**
+	 * The hibernate configuration file
+	 */
+	private static final String hibernateConfig = "org/eso/ias/hibernate/config/hibernate.cfg.xml";
+	
 	
 	/**
 	 * The factory to get sessions.
@@ -66,13 +70,23 @@ public class RdbUtils {
 	 */
 	private static SessionFactory sessionFactory=null;
     
+	/**
+	 * Create the hibernate session traffic triggering the connection
+	 * with the RDB.
+	 * 
+	 * @return The hibernate session factory
+	 */
 	private static SessionFactory createSessionFactory() {
 
 		try {
 			logger.debug("Bootstrapping hibernate");
-			File configFile = new File("hibernate.cfg.xml");
+			
+			// Load the configuration from the jar
+			ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+			URL configFileURL = classloader.getResource(hibernateConfig);
 			Configuration configuration = new Configuration();
-			configuration.configure(configFile);
+			configuration.configure(configFileURL);
+
 			ServiceRegistry serviceRegistry = new StandardServiceRegistryBuilder().applySettings(configuration.getProperties()).build();
 
 			MetadataSources sources = new MetadataSources(serviceRegistry);
