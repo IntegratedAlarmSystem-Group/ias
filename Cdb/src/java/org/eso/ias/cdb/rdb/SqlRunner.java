@@ -1,7 +1,5 @@
 package org.eso.ias.cdb.rdb;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Objects;
@@ -76,10 +74,10 @@ public class SqlRunner {
 	private String removeComments(Reader source) {
 		// Clean the script from multi-line comments
 		StringBuilder ret = new StringBuilder();
-		Scanner s = new Scanner(source).useDelimiter(MultiLineComment);
+		Scanner scanner= new Scanner(source).useDelimiter(MultiLineComment);
 		try {
-			while (s.hasNext()) {
-				String nextEntry = s.next().trim();
+			while (scanner.hasNext()) {
+				String nextEntry = scanner.next().trim();
 				
 				// Remove single line comments i.e. those starting with --
 				String[] parts = nextEntry.split("\n");
@@ -91,7 +89,9 @@ public class SqlRunner {
 				}
 			}	
 		} finally {
-			s.close();
+			if (Objects.nonNull(scanner)) {
+				scanner.close();
+			}
 		}
 		
 		return ret.toString();
@@ -110,7 +110,6 @@ public class SqlRunner {
 		for (String sqlStatement: sqlStatements) {
 			String trimmed = sqlStatement.trim();
 			if (!trimmed.isEmpty()) {
-				System.out.println("SQL command to run: ["+sqlStatement+"]");
 				Query query = session.createSQLQuery(sqlStatement);
 				query.executeUpdate();	
 			}
