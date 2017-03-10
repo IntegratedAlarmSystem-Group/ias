@@ -4,6 +4,10 @@
 package org.eso.ias.cdb.rdb;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -13,6 +17,8 @@ import org.eso.ias.cdb.pojos.DasuDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
 
 /**
  * Read CDB configuration from RDB.
@@ -23,58 +29,129 @@ import org.eso.ias.cdb.pojos.SupervisorDao;
  */
 public class RdbReader implements CdbReader {
 
-	/* (non-Javadoc)
+	/**
+	 * Get the Ias configuration from a file.
+	 * <P>
+	 * In the actual implementation there must be one and only one IAS 
+	 * in the RDB so this method fails if gets more then one IAS from the
+	 * database.
+	 * <BR>TODO: there is a <A href="https://github.com/IntegratedAlarmSystem-Group/ias/issues/2">ticket</A> to change
+	 * the configuration in order to have more then one IAS with its own unique ID.  
+	 * 
+	 * @return The ias configuration read from the file 
 	 * @see org.eso.ias.cdb.CdbReader#getIas()
 	 */
 	@Override
 	public Optional<IasDao> getIas() throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+		Session s=RdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		
+		List iasdaos = s.createQuery("FROM IAS").list();
+		Set<IasDao> ret = new HashSet<>();
+		for (Iterator iterator = iasdaos.iterator(); iterator.hasNext();){
+			ret.add((IasDao)iterator.next());
+		}
+		t.commit();
+		// Check if the query returned too many IAS
+		if (ret.size()>1) {
+			throw new IllegalStateException("Too many IAS in the RDB");
+		}
+		// Return an option with the only one returned IAS
+		// or empty if the query returned none
+		return ret.stream().findAny();
 	}
 
-	/* (non-Javadoc)
+	/**
+	 * Get the IASIOs.
+	 * 
+	 * @return The IASIOs red from the file
 	 * @see org.eso.ias.cdb.CdbReader#getIasios()
 	 */
 	@Override
 	public Optional<Set<IasioDao>> getIasios() throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+		Session s=RdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		List iasios = s.createQuery("FROM IASIO").list();
+		Set<IasioDao> ret = new HashSet<>();
+		for (Iterator iterator = iasios.iterator(); iterator.hasNext();){
+			ret.add((IasioDao)iterator.next());
+		}
+		t.commit();
+		return Optional.of(ret);
 	}
 
-	/* (non-Javadoc)
+	/**
+	 * Get the IASIO with the given ID
+	 * 
+	 * @param id The ID of the IASIO to read the congiuration
+	 * @return The IASIO red from the file
 	 * @see org.eso.ias.cdb.CdbReader#getIasio(java.lang.String)
 	 */
 	@Override
 	public Optional<IasioDao> getIasio(String id) throws IOException {
+		Objects.requireNonNull(id, "The ID cant't be null");
+		if (id.isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty ID");
+		}
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	/* (non-Javadoc)
+	/**
+	 * Read the supervisor configuration from the file. 
+	 * 
+	 * @param id The not null nor empty supervisor identifier
 	 * @see org.eso.ias.cdb.CdbReader#getSupervisor(java.lang.String)
 	 */
 	@Override
 	public Optional<SupervisorDao> getSupervisor(String id) throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+		Objects.requireNonNull(id, "The ID cant't be null");
+		if (id.isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty ID");
+		}
+		Session s=RdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		SupervisorDao superv = s.get(SupervisorDao.class,id);
+		t.commit();
+		return Optional.ofNullable(superv);
 	}
 
-	/* (non-Javadoc)
+	/**
+	 * Read the ASCE configuration from the file. 
+	 * 
+	 * @param id The not null nor empty ASCE identifier
 	 * @see org.eso.ias.cdb.CdbReader#getAsce(java.lang.String)
 	 */
 	@Override
 	public Optional<AsceDao> getAsce(String id) throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+		Objects.requireNonNull(id, "The ID cant't be null");
+		if (id.isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty ID");
+		}
+		Session s=RdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		AsceDao asce = s.get(AsceDao.class,id);
+		t.commit();
+		return Optional.ofNullable(asce);
 	}
 
-	/* (non-Javadoc)
+	/**
+	 * Read the DASU configuration from the file. 
+	 * 
+	 * @param id The not null nor empty DASU identifier
 	 * @see org.eso.ias.cdb.CdbReader#getDasu(java.lang.String)
 	 */
 	@Override
 	public Optional<DasuDao> getDasu(String id) throws IOException {
-		// TODO Auto-generated method stub
-		return null;
+		Objects.requireNonNull(id, "The ID cant't be null");
+		if (id.isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty ID");
+		}
+		Session s=RdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		DasuDao dasu = s.get(DasuDao.class,id);
+		t.commit();
+		return Optional.ofNullable(dasu);
 	}
 
 }
