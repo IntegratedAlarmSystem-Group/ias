@@ -287,6 +287,7 @@
   			destdir="${build.java.dir}" 
   			classpathref="build.classpath"
   			includeantruntime="false"
+  			debug="true"
   			source="1.8">
           	<!-- addparams="-Yclosure-elim -optimise" -->
   			<include name="**/*.java"/>
