@@ -161,7 +161,6 @@ public class JsonReader implements CdbReader {
 	 */
 	public Optional<AsceDao> getAsce(String id) throws IOException {
 		Objects.requireNonNull(id, "The ASCE identifier cannot be null");
-		System.out.println("Getting ASCE "+id);
 		String cleanedID = id.trim();
 		if (cleanedID.isEmpty()) {
 			throw new IllegalArgumentException("The identifier can't be an empty string");
@@ -186,7 +185,6 @@ public class JsonReader implements CdbReader {
 		if (cleanedID.isEmpty()) {
 			throw new IllegalArgumentException("The identifier can't be an empty string");
 		}
-		System.out.println("Getting jDASU "+cleanedID);
 		Optional<JsonDasuDao> jDasuOpt = getJsonDasu(cleanedID);
 		ObjectsHolder holder = new ObjectsHolder();
 		if (jDasuOpt.isPresent()) {
@@ -203,7 +201,6 @@ public class JsonReader implements CdbReader {
 	 */
 	public Optional<SupervisorDao> getSupervisor(String id) throws IOException {
 		Objects.requireNonNull(id, "The supervisor identifier cannot be null");
-		System.out.println("Getting SUPERVISOR "+id);
 		String cleanedID = id.trim();
 		if (cleanedID.isEmpty()) {
 			throw new IllegalArgumentException("The identifier can't be an empty string");
@@ -345,7 +342,8 @@ public class JsonReader implements CdbReader {
 		
 		// Fix the inputs
 		for (String inId: jAsceDao.getInputIDs()) {
-			getIasio(inId).ifPresent(i -> asce.addInput(i, true));
+			Optional<IasioDao> iasio = getIasio(inId);
+			iasio.ifPresent(i -> asce.addInput(i, true));
 		}
 		
 		// Fix the DASU

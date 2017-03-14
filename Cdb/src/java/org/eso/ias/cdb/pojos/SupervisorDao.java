@@ -53,7 +53,7 @@ public class SupervisorDao {
 	 * annotation in the {@link DasuDao} 
 	 */
 	@OneToMany(mappedBy = "supervisor", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Map<String,DasuDao> dasus = new HashMap<>();
+    private final Map<String,DasuDao> dasus = new HashMap<>();
 	
 	public SupervisorDao() {}
 	
@@ -144,6 +144,11 @@ public class SupervisorDao {
 		return ret.toString();
 	}
 	
+	/**
+	 * <code>equals</code> check the equality of the member of this object
+	 * against the one passed in the command line but the checking of included
+	 * DASUs is limited to their IDs.
+	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (this==obj) {
@@ -153,9 +158,30 @@ public class SupervisorDao {
 			return false;
 		}
 		SupervisorDao superv =(SupervisorDao)obj;
-		return this.id.equals(superv.getId()) &&
+		
+		return  this.getDasus().size()==superv.getDasus().size() &&
+				this.id.equals(superv.getId()) &&
 				Objects.equals(this.hostName, superv.getHostName()) &&
 				Objects.equals(this.logLevel, superv.getLogLevel()) &&
-				Objects.equals(this.getDasus(), superv.getDasus());
+				Objects.equals(dasus.keySet(),superv.dasus.keySet());
 	}
+
+	/**
+	 * <code>hashCode</code> evaluate the code by the member of this object
+	 * but the replacing the included DASUs with their IDs.
+	 * 
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((dasus == null) ? 0 : dasus.keySet().hashCode());
+		result = prime * result + ((hostName == null) ? 0 : hostName.hashCode());
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		result = prime * result + ((logLevel == null) ? 0 : logLevel.hashCode());
+		return result;
+	}
+
+
 }

@@ -123,4 +123,59 @@ public class DasuDao {
 		ret.append("}]");
 		return ret.toString();
 	}
+
+	/**
+	 * <code>hashCode</code> evaluates the code by the members of this object
+	 * but the replacing the included ASCEs and SUPERVISOR with their IDs.
+	 * 
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((asces == null) ? 0 : asces.keySet().hashCode());
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		result = prime * result + ((logLevel == null) ? 0 : logLevel.hashCode());
+		result = prime * result + ((supervisor == null) ? 0 : supervisor.hashCode());
+		return result;
+	}
+
+	/**
+	 * <code>equals</code> check the equality of the members of this object
+	 * against the one passed in the command line but the checking of included
+	 * ASCEs and SUPERVISOR is limited to their IDs.
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {			
+			return true;		
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		
+		DasuDao other = (DasuDao) obj;
+		if (asces == null) {
+			if (other.asces != null)
+				return false;
+		} else if (!asces.keySet().equals(other.asces.keySet()))
+			return false;
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
+		if (logLevel != other.logLevel)
+			return false;
+		if (supervisor == null) {
+			if (other.supervisor != null)
+				return false;
+		} else if (!supervisor.getId().equals(other.supervisor.getId()))
+			return false;
+		return true;
+	}
 }

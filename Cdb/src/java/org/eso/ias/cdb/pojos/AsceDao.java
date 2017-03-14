@@ -178,5 +178,73 @@ public class AsceDao {
 		ret.append("}]");
 		return ret.toString();
 	}
+
+	/**
+	 * <code>hashCode</code> evaluates the code by the members of this object
+	 * but the replacing the included DASU and IASIOs with their IDs.
+	 * 
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((dasu == null) ? 0 : dasu.getId().hashCode());
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		result = prime * result + ((inputs == null) ? 0 : inputs.keySet().hashCode());
+		result = prime * result + ((output == null) ? 0 : output.getId().hashCode());
+		result = prime * result + ((props == null) ? 0 : props.hashCode());
+		result = prime * result + ((tfClass == null) ? 0 : tfClass.hashCode());
+		return result;
+	}
+
+	/**
+	 * <code>equals</code> check the equality of the members of this object
+	 * against the one passed in the command line but the checking of included
+	 * DASU, and IASIOs is limited to their IDs.
+	 * 
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		AsceDao other = (AsceDao) obj;
+		if (dasu == null) {
+			if (other.dasu != null)
+				return false;
+		} else if (!dasu.getId().equals(other.dasu.getId()))
+			return false;
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
+		if (inputs == null) {
+			if (other.inputs != null)
+				return false;
+		} else if (!inputs.keySet().equals(other.inputs.keySet()))
+			return false;
+		if (output == null) {
+			if (other.output != null)
+				return false;
+		} else if (!output.getId().equals(other.output.getId()))
+			return false;
+		if (props == null) {
+			if (other.props != null)
+				return false;
+		} else if (!props.equals(other.props))
+			return false;
+		if (tfClass == null) {
+			if (other.tfClass != null)
+				return false;
+		} else if (!tfClass.equals(other.tfClass))
+			return false;
+		return true;
+	}
 	
 }

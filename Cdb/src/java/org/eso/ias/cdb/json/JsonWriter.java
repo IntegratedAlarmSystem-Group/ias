@@ -49,7 +49,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class JsonWriter implements CdbWriter {
 	
 	/**
-	 * <code>cdbFileNames</code> return the names o fht efiles to read
+	 * <code>cdbFileNames</code> return the names of the files to read
 	 */
 	private final CdbFiles cdbFileNames;
 	
@@ -71,7 +71,6 @@ public class JsonWriter implements CdbWriter {
 	@Override
 	public void writeIas(IasDao ias) throws IOException {
 		File f = cdbFileNames.getIasFilePath().toFile();
-		System.out.println(f.getAbsolutePath());
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
 		mapper.writeValue(f, ias);

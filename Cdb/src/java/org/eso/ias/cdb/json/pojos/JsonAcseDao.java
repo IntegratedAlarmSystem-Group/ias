@@ -1,6 +1,7 @@
 package org.eso.ias.cdb.json.pojos;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -27,7 +28,7 @@ public class JsonAcseDao {
 	private String dasuID;
 	
 	/**
-	 * The IDs of the IASIOs i unput
+	 * The IDs of the IASIOs in input
 	 */
 	private final Set<String> inputIds;
 	
@@ -54,9 +55,14 @@ public class JsonAcseDao {
 			throw new NullPointerException("The ASCE pojo can't be null");
 		}
 		this.asce=asce;
+		
+		Objects.requireNonNull(this.asce.getDasu(), "Inavlid null DASU");
 		dasuID=this.asce.getDasu().getId();
 		this.inputIds=asce.getInputs().stream().map(i -> i.getId()).collect(Collectors.toSet());
+		Objects.requireNonNull(this.asce.getOutput(), "Inavlid null output IASIO");
 		this.outputID=this.asce.getOutput().getId();
+		
+		asce.getInputs().stream().forEach(iasio -> inputIds.add(iasio.getId()));
 	}
 
 	/**
@@ -104,7 +110,7 @@ public class JsonAcseDao {
 	 * @see org.eso.ias.cdb.pojos.AsceDao#getInputs()
 	 */
 	public Set<String> getInputIDs() {
-		return asce.getInputs().stream().map(i -> i.getId()).collect(Collectors.toSet());
+		return inputIds;
 	}
 	
 	/**

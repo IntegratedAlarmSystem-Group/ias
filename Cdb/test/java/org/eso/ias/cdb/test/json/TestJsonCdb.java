@@ -15,6 +15,7 @@ import org.eso.ias.cdb.json.CdbFolders;
 import org.eso.ias.cdb.json.CdbJsonFiles;
 import org.eso.ias.cdb.json.JsonReader;
 import org.eso.ias.cdb.json.JsonWriter;
+import org.eso.ias.cdb.pojos.AsceDao;
 import org.eso.ias.cdb.pojos.DasuDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasTypeDao;
@@ -105,31 +106,11 @@ public class TestJsonCdb {
 	}
 
 	/**
-	 * Test reading and writing of Supervisor without Dasu
+	 * Test reading and writing of Supervisor
 	 * @throws Exception
 	 */
 	@Test
-	public void testWriteSupervisorNoDasus() throws Exception {
-		
-		SupervisorDao superv = new SupervisorDao();
-		superv.setId("Supervisor-ID");
-		superv.setHostName("almadev1.alma.cl");
-		superv.setLogLevel(LogLevelDao.DEBUG);
-		
-		cdbWriter.writeSupervisor(superv);
-		assertTrue(cdbFiles.getSuperivisorFilePath(superv.getId()).toFile().exists());
-		
-		Optional<SupervisorDao> optSuperv = cdbReader.getSupervisor(superv.getId());
-		assertTrue("Got an empty Supervisor!", optSuperv.isPresent());
-		assertEquals("The Supervisors differ!", superv, optSuperv.get());
-	}
-	
-	/**
-	 * Test reading and writing of Supervisor without Dasu
-	 * @throws Exception
-	 */
-	@Test
-	public void testWriteSupervisorWithDasus() throws Exception {
+	public void testWriteSupervisor() throws Exception {
 		
 		SupervisorDao superv = new SupervisorDao();
 		superv.setId("Supervisor-ID");
@@ -149,24 +130,140 @@ public class TestJsonCdb {
 		dasu1.setLogLevel(LogLevelDao.WARN);
 		superv.addDasu(dasu2);
 		
+		// DASUs must be in the CDB as well otherwise
+		// included objects cannot be rebuilt.
+		cdbWriter.writeDasu(dasu1);
+		cdbWriter.writeDasu(dasu2);
+		
 		cdbWriter.writeSupervisor(superv);
 		assertTrue(cdbFiles.getSuperivisorFilePath(superv.getId()).toFile().exists());
+		
 		Optional<SupervisorDao> optSuperv = cdbReader.getSupervisor(superv.getId());
 		assertTrue("Got an empty Supervisor!", optSuperv.isPresent());
-		System.out.println(superv);
-		System.out.println(optSuperv.get());
 		assertEquals("The Supervisors differ!", superv, optSuperv.get());
 		
 	}
 
 	@Test
-	public void testWriteDasu() {
-		fail("Not yet implemented");
+	public void testWriteDasu() throws Exception {
+		SupervisorDao superv = new SupervisorDao();
+		superv.setId("Supervisor-ID");
+		superv.setHostName("almadev2.alma.cl");
+		superv.setLogLevel(LogLevelDao.INFO);
+		
+		// The DASU to test
+		DasuDao dasu = new DasuDao();
+		dasu.setId("DasuID1");
+		dasu.setSupervisor(superv);
+		dasu.setLogLevel(LogLevelDao.FATAL);
+		superv.addDasu(dasu);
+		
+		AsceDao asce1= new AsceDao();
+		asce1.setId("ASCE1");
+		asce1.setDasu(dasu);
+		asce1.setTfClass("org.eso.ias.tf.EqualTransferFunction");
+		IasioDao output1 = new IasioDao("OUT-ID1", "description", 456, IasTypeDao.CHAR);
+		asce1.setOutput(output1);
+		
+		AsceDao asce2= new AsceDao();
+		asce2.setId("ASCE-2");
+		asce2.setDasu(dasu);
+		IasioDao output2 = new IasioDao("ID2", "description", 1000, IasTypeDao.DOUBLE);
+		asce2.setOutput(output2);
+		asce2.setTfClass("org.eso.ias.tf.MinMaxTransferFunction");
+		AsceDao asce3= new AsceDao();
+		asce3.setId("ASCE-ID-3");
+		asce3.setDasu(dasu);
+		IasioDao output3 = new IasioDao("OUT-ID3", "desc3", 456, IasTypeDao.SHORT);
+		asce3.setOutput(output2);
+		asce3.setTfClass("org.eso.ias.tf.MaxTransferFunction");
+		
+		// Supervisor must be in the CDB as well otherwise
+		// included objects cannot be rebuilt.
+		cdbWriter.writeSupervisor(superv);
+		
+		// ASCE must be in the CDB as well otherwise
+		// included objects cannot be rebuilt.
+		cdbWriter.writeAsce(asce1);
+		cdbWriter.writeAsce(asce2);
+		cdbWriter.writeAsce(asce3);
+		
+		cdbWriter.writeIasio(output1, false);
+		cdbWriter.writeIasio(output2, true);
+		cdbWriter.writeIasio(output3, true);
+		
+		dasu.addAsce(asce1);
+		dasu.addAsce(asce2);
+		dasu.addAsce(asce3);
+		
+		// Write the DASU
+		cdbWriter.writeDasu(dasu);
+		assertTrue(cdbFiles.getDasuFilePath(dasu.getId()).toFile().exists());
+		
+		// Read the DASU from CDB and compare with what we just wrote
+		Optional<DasuDao> theDasuFromCdb = cdbReader.getDasu(dasu.getId());
+		assertTrue("Got a null DASU with ID "+dasu.getId()+" from CDB",theDasuFromCdb.isPresent());
+		assertEquals("The DAUSs differ!", dasu,theDasuFromCdb.get());
 	}
 
 	@Test
-	public void testWriteAsce() {
-		fail("Not yet implemented");
+	public void testWriteAsce() throws Exception {
+		
+		SupervisorDao superv = new SupervisorDao();
+		superv.setId("Supervisor-ID");
+		superv.setHostName("almaias.eso.org");
+		superv.setLogLevel(LogLevelDao.INFO);
+		
+		// The DASU that owns the ASCE to test
+		DasuDao dasu = new DasuDao();
+		dasu.setId("DasuID1");
+		dasu.setLogLevel(LogLevelDao.FATAL);
+		dasu.setSupervisor(superv);
+		
+		// The ASCE to test
+		AsceDao asce = new AsceDao();
+		asce.setId("ASCE-ID-For-Testsing");
+		asce.setDasu(dasu);
+		asce.setTfClass("org.eso.ias.tf.AnotherFunction");
+		
+		IasioDao output = new IasioDao("OUTPUT-ID", "One IASIO in output", 8193, IasTypeDao.BYTE);
+		asce.setOutput(output);
+		
+		// A set of inputs (one for each possible type
+		for (int t=0; t<IasTypeDao.values().length; t++) {
+			IasioDao input = new IasioDao("INPUT-ID"+t, "IASIO "+t+" in input", 1000+t*128, IasTypeDao.values()[t]);
+			asce.addInput(input, true);
+			cdbWriter.writeIasio(input, true);
+		}
+		assertEquals("Not all the inputs have bene added to the ASCE",IasTypeDao.values().length,asce.getInputs().size());
+		
+		// Adds few properties
+		PropertyDao p1 = new PropertyDao();
+		p1.setName("Prop1-Name");
+		p1.setValue("The value of P1");
+		PropertyDao p2 = new PropertyDao();
+		p2.setName("Prop2-Name");
+		p2.setValue("The value of P2");
+		PropertyDao p3 = new PropertyDao();
+		p3.setName("Prop3-Name");
+		p3.setValue("The value of P3");
+		asce.getProps().add(p1);
+		asce.getProps().add(p2);
+		asce.getProps().add(p3);
+		
+		// Included objects must be in the CDB as well otherwise
+		// included objects cannot be rebuilt in the ASCE
+		cdbWriter.writeIasio(output, true);
+		cdbWriter.writeSupervisor(superv);
+		cdbWriter.writeDasu(dasu);
+		
+		
+		cdbWriter.writeAsce(asce);
+		assertTrue(cdbFiles.getAsceFilePath(asce.getId()).toFile().exists());
+		
+		Optional<AsceDao> optAsce = cdbReader.getAsce(asce.getId());
+		assertTrue("Got a null ASCE with ID "+asce.getId()+" from CDB",optAsce.isPresent());
+		assertEquals("The ASCEs differ!", asce,optAsce.get());
 	}
 
 	/**
