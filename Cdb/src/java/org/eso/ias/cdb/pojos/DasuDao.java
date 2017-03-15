@@ -1,10 +1,10 @@
 package org.eso.ias.cdb.pojos;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.persistence.Basic;
 import javax.persistence.CascadeType;
@@ -53,7 +53,7 @@ public class DasuDao {
 	 * annotation in the {@link AsceDao} 
 	 */
 	@OneToMany(mappedBy = "dasu", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Map<String,AsceDao> asces = new HashMap<>();
+    private Set<AsceDao> asces = new HashSet<>();
 	
 	public DasuDao() {}
 	
@@ -67,7 +67,7 @@ public class DasuDao {
 
 	public void addAsce(AsceDao asce) {
 		Objects.requireNonNull(asce,"Cannot add a null ASCE to a DASU");
-		asces.put(asce.getId(),asce);
+		asces.add(asce);
 		asce.setDasu(this);
 	}
 	
@@ -98,8 +98,8 @@ public class DasuDao {
 		this.id = iden;
 	}
 	
-	public Collection<AsceDao> getAsces() {
-		return asces.values();
+	public Set<AsceDao> getAsces() {
+		return asces;
 	}
 	
 	/**
@@ -123,22 +123,19 @@ public class DasuDao {
 		ret.append("}]");
 		return ret.toString();
 	}
+	
+	public Set<String> getAscesIDs() {
+		return asces.stream().map(x -> x.getId()).collect(Collectors.toSet());
+	}
 
 	/**
-	 * <code>hashCode</code> evaluates the code by the members of this object
-	 * but the replacing the included ASCEs and SUPERVISOR with their IDs.
+	 * <code>hashCode</code> is based on unique the ID only.
 	 * 
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((asces == null) ? 0 : asces.keySet().hashCode());
-		result = prime * result + ((id == null) ? 0 : id.hashCode());
-		result = prime * result + ((logLevel == null) ? 0 : logLevel.hashCode());
-		result = prime * result + ((supervisor == null) ? 0 : supervisor.hashCode());
-		return result;
+		return Objects.hash(id);
 	}
 
 	/**
@@ -162,7 +159,7 @@ public class DasuDao {
 		if (asces == null) {
 			if (other.asces != null)
 				return false;
-		} else if (!asces.keySet().equals(other.asces.keySet()))
+		} else if (!getAscesIDs().equals(other.getAscesIDs()))
 			return false;
 		if (id == null) {
 			if (other.id != null)

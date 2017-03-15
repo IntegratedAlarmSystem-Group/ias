@@ -1,10 +1,11 @@
 package org.eso.ias.cdb.pojos;
 
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.persistence.Basic;
 import javax.persistence.CascadeType;
@@ -53,7 +54,7 @@ public class SupervisorDao {
 	 * annotation in the {@link DasuDao} 
 	 */
 	@OneToMany(mappedBy = "supervisor", cascade = CascadeType.ALL, orphanRemoval = true)
-    private final Map<String,DasuDao> dasus = new HashMap<>();
+    private Set<DasuDao> dasus = new HashSet<>();
 	
 	public SupervisorDao() {}
 	
@@ -99,7 +100,7 @@ public class SupervisorDao {
 	 */
 	public void addDasu(DasuDao dasu) {
 		Objects.requireNonNull(dasu,"The DASU can't be null");
-		dasus.put(dasu.getId(),dasu);
+		dasus.add(dasu);
 		dasu.setSupervisor(this);
 	}
 	
@@ -109,6 +110,14 @@ public class SupervisorDao {
 		dasu.setSupervisor(null); // This won't work
 	}
 	
+	public void removeDasu(String dasuId) {
+		Objects.requireNonNull(dasuId,"Invalid null DASU identifier");
+		if (dasuId.isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty DASU identifier");
+		}
+		dasus.remove(dasuId);
+	}
+	
 	/**
 	 * Check if a DASU with the given key is already in the list
 	 * 
@@ -116,12 +125,30 @@ public class SupervisorDao {
 	 */
 	public boolean containsDasu(String id) {
 		Objects.requireNonNull(id);
-		return dasus.containsKey(id);
+		if (id.isEmpty()) {
+			throw new IllegalArgumentException("The ID of DASU can't be an empty string");
+		}
+		return dasus.stream().filter(x -> x.getId().equals(id)).count()>0;
+	}
+
+	public Set<DasuDao> getDasus() {
+		return dasus;
 	}
 	
-	 public Collection<DasuDao> getDasus() {
-		 return dasus.values();
-	 }
+	
+	public Set<String> getDasusIDs() {
+		System.out.println("Supervisor "+id+": getting DASU IDs");
+		return dasus.stream().map(x -> x.getId()).collect(Collectors.toSet());
+	}
+	
+//	private Set<String> getDasusIDs(
+//			Map<String, SupervisorDao> supervisors,
+//			Map<String, DasuDao> dasus,
+//			Map<String,AsceDao> asces) {
+//		Objects.requireNonNull(supervisors,"Map of supervisors can't be null");
+//		Objects.requireNonNull(dasus,"Map of supervisors can't be null");
+//		Objects.requireNonNull(asces,"Map of supervisors can't be null");
+//	}
 	 
 	/**
 	 * </code>toString()</code> prints a human readable version of the DASU
@@ -136,10 +163,7 @@ public class SupervisorDao {
 		ret.append(", hostName=");
 		ret.append(getHostName());
 		ret.append(", DASUs={");
-		for (DasuDao dasu : getDasus()) {
-			ret.append(" ");
-			ret.append(dasu.getId());
-		}
+		dasus.forEach(x -> { ret.append(' '); ret.append(x.getId()); });
 		ret.append("}]");
 		return ret.toString();
 	}
@@ -159,28 +183,21 @@ public class SupervisorDao {
 		}
 		SupervisorDao superv =(SupervisorDao)obj;
 		
-		return  this.getDasus().size()==superv.getDasus().size() &&
+		return  this.dasus.size()==superv.dasus.size() &&
 				this.id.equals(superv.getId()) &&
 				Objects.equals(this.hostName, superv.getHostName()) &&
 				Objects.equals(this.logLevel, superv.getLogLevel()) &&
-				Objects.equals(dasus.keySet(),superv.dasus.keySet());
+				Objects.equals(this.getDasusIDs(),superv.getDasusIDs());
 	}
 
 	/**
-	 * <code>hashCode</code> evaluate the code by the member of this object
-	 * but the replacing the included DASUs with their IDs.
+	 * <code>hashCode</code> is based on the unique ID only.
 	 * 
 	 * @see java.lang.Object#hashCode()
 	 */
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((dasus == null) ? 0 : dasus.keySet().hashCode());
-		result = prime * result + ((hostName == null) ? 0 : hostName.hashCode());
-		result = prime * result + ((id == null) ? 0 : id.hashCode());
-		result = prime * result + ((logLevel == null) ? 0 : logLevel.hashCode());
-		return result;
+		return Objects.hash(id);
 	}
 
 
