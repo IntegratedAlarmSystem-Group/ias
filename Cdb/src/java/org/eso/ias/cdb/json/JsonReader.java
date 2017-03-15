@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.eso.ias.cdb.CdbReader;
+import org.eso.ias.cdb.IasCdbException;
 import org.eso.ias.cdb.json.pojos.JsonAcseDao;
 import org.eso.ias.cdb.json.pojos.JsonDasuDao;
 import org.eso.ias.cdb.json.pojos.JsonSupervisorDao;
@@ -70,8 +71,13 @@ public class JsonReader implements CdbReader {
 	 * @return The ias configuration read from the JSON file 
 	 * @see CdbReader#getIas(File)
 	 */
-	public Optional<IasDao> getIas() throws IOException {
-		File f = cdbFileNames.getIasFilePath().toFile();
+	public Optional<IasDao> getIas() throws IasCdbException {
+		File f;
+		try {
+			f= cdbFileNames.getIasFilePath().toFile();
+		} catch (IOException ioe) {
+			throw new IasCdbException("Error getting file",ioe);
+		}
 		if (!canReadFromFile(f)) {
 			return Optional.empty();
 		} else {
@@ -95,8 +101,13 @@ public class JsonReader implements CdbReader {
 	 * @throws IOException if the IASIO file does not exist or is unreadable
 	 * @see CdbReader#getIasios(File)
 	 */
-	public Optional<Set<IasioDao>> getIasios() throws IOException {
-		File f = cdbFileNames.getIasioFilePath("UnusedID").toFile();
+	public Optional<Set<IasioDao>> getIasios() throws IasCdbException {
+		File f;
+		try {
+			f = cdbFileNames.getIasioFilePath("UnusedID").toFile();
+		} catch (IOException ioe) {
+			throw new IasCdbException("Error getting file",ioe);
+		}
 		if (!canReadFromFile(f)) {
 			return Optional.empty();
 		} else {
@@ -126,7 +137,7 @@ public class JsonReader implements CdbReader {
 	 * @param id The ID of the IASIO to read the configuration
 	 * @return The IASIO red from the file
 	 */
-	public Optional<IasioDao> getIasio(String id) throws IOException {
+	public Optional<IasioDao> getIasio(String id) throws IasCdbException {
 		Objects.requireNonNull(id, "The IASIO identifier cannot be null");
 		String cleanedID = id.trim();
 		if (cleanedID.isEmpty()) {
@@ -159,17 +170,26 @@ public class JsonReader implements CdbReader {
 	 * 
 	 * @param id The not null nor empty ASCE identifier
 	 */
-	public Optional<AsceDao> getAsce(String id) throws IOException {
+	public Optional<AsceDao> getAsce(String id) throws IasCdbException {
 		Objects.requireNonNull(id, "The ASCE identifier cannot be null");
 		String cleanedID = id.trim();
 		if (cleanedID.isEmpty()) {
 			throw new IllegalArgumentException("The identifier can't be an empty string");
 		}
 		
-		Optional<JsonAcseDao> jAsceOpt = getJsonAsce(cleanedID);
+		Optional<JsonAcseDao> jAsceOpt;
+		try {
+			jAsceOpt = getJsonAsce(cleanedID);
+		} catch (IOException ioe) {
+			throw new IasCdbException("Error getting the JSON ASCE",ioe);
+		}
 		ObjectsHolder holder = new ObjectsHolder();
 		if (jAsceOpt.isPresent()) {
-			updateAsceObjects(jAsceOpt.get(), holder);
+			try {
+				updateAsceObjects(jAsceOpt.get(), holder);
+			} catch (IOException ioe) {
+				throw new IasCdbException("Error updating ASCE objects",ioe);
+			}
 		}
 		return jAsceOpt.map(x -> x.toAsceDao());
 	}
@@ -179,16 +199,25 @@ public class JsonReader implements CdbReader {
 	 * 
 	 * @param id The not null nor empty DASU identifier
 	 */
-	public Optional<DasuDao> getDasu(String id) throws IOException {
+	public Optional<DasuDao> getDasu(String id) throws IasCdbException {
 		Objects.requireNonNull(id, "The DASU identifier cannot be null");
 		String cleanedID = id.trim();
 		if (cleanedID.isEmpty()) {
 			throw new IllegalArgumentException("The identifier can't be an empty string");
 		}
-		Optional<JsonDasuDao> jDasuOpt = getJsonDasu(cleanedID);
+		Optional<JsonDasuDao> jDasuOpt;
+		try {
+			jDasuOpt = getJsonDasu(cleanedID);
+		}  catch (IOException ioe) {
+			throw new IasCdbException("Error getting JSON DASU",ioe);
+		}
 		ObjectsHolder holder = new ObjectsHolder();
 		if (jDasuOpt.isPresent()) {
-			updateDasuObjects(jDasuOpt.get(), holder);
+			try {
+				updateDasuObjects(jDasuOpt.get(), holder);
+			} catch (IOException ioe) {
+				throw new IasCdbException("Error updating DASU objects",ioe);
+			}
 		}
 		return jDasuOpt.map(x -> x.toDasuDao());
 	}
@@ -199,17 +228,26 @@ public class JsonReader implements CdbReader {
 	 * @param id The not null nor empty supervisor identifier
 	 * @throws IOException if the supervisor file does not exist or is unreadable
 	 */
-	public Optional<SupervisorDao> getSupervisor(String id) throws IOException {
+	public Optional<SupervisorDao> getSupervisor(String id) throws IasCdbException {
 		Objects.requireNonNull(id, "The supervisor identifier cannot be null");
 		String cleanedID = id.trim();
 		if (cleanedID.isEmpty()) {
 			throw new IllegalArgumentException("The identifier can't be an empty string");
 		}
 		
-		Optional<JsonSupervisorDao> jSupervOpt = getJsonSupervisor(cleanedID);
+		Optional<JsonSupervisorDao> jSupervOpt;
+		try {
+			jSupervOpt = getJsonSupervisor(cleanedID);
+		} catch (IOException ioe) {
+			throw new IasCdbException("Error getting JSON SUpervisor",ioe);
+		}
 		ObjectsHolder holder = new ObjectsHolder();
 		if (jSupervOpt.isPresent()) {
-			updateSupervisorObjects(jSupervOpt.get(), holder);
+			try {
+				updateSupervisorObjects(jSupervOpt.get(), holder);
+			} catch (IOException ioe) {
+				throw new IasCdbException("Error updating Supervisor objects",ioe);
+			}
 		}
 		return jSupervOpt.map(x -> x.toSupervisorDao());
 	}
@@ -264,8 +302,15 @@ public class JsonReader implements CdbReader {
 			return Optional.of(mapper.readValue(supervFile, JsonSupervisorDao.class));
 		}
 	}
-	
-	private void updateSupervisorObjects(JsonSupervisorDao jSupDao, ObjectsHolder holder) throws IOException {
+	/**
+	 * Update the the objects included in the JSON Supervisor
+	 * 
+	 * @param jSupDao The JSON Supervisor pojo
+	 * @param holder The holder to rebuild objects just once
+	 * @throws IOException
+	 * @throws IasCdbException
+	 */
+	private void updateSupervisorObjects(JsonSupervisorDao jSupDao, ObjectsHolder holder) throws IOException, IasCdbException {
 		Objects.requireNonNull(jSupDao, "The jSupervisor cannot be null");
 		Objects.requireNonNull(holder, "The holder cannot be null");
 		SupervisorDao superv = jSupDao.toSupervisorDao();
@@ -288,7 +333,15 @@ public class JsonReader implements CdbReader {
 		}
 	}
 	
-	private void updateDasuObjects(JsonDasuDao jDasuDao, ObjectsHolder holder) throws IOException {
+	/**
+	 * Update the the objects included in the JSON DASU
+	 * 
+	 * @param jDasuDao The JSON DASU pojo
+	 * @param holder The holder to rebuild objects just once
+	 * @throws IOException
+	 * @throws IasCdbException
+	 */
+	private void updateDasuObjects(JsonDasuDao jDasuDao, ObjectsHolder holder) throws IOException, IasCdbException {
 		Objects.requireNonNull(holder, "The holder cannot be null");
 		Objects.requireNonNull(jDasuDao, "The jDASU cannot be null");
 		DasuDao dasu = jDasuDao.toDasuDao();
@@ -329,7 +382,15 @@ public class JsonReader implements CdbReader {
 		}
 	}
 	
-	private void updateAsceObjects(JsonAcseDao jAsceDao, ObjectsHolder holder) throws IOException {
+	/**
+	 * Update the the objects included in the JSON 
+	 * 
+	 * @param jAsceDao The JSON ASCE pojo
+	 * @param holder The holder to rebuild objects just once
+	 * @throws IOException
+	 * @throws IasCdbException
+	 */
+	private void updateAsceObjects(JsonAcseDao jAsceDao, ObjectsHolder holder) throws IOException, IasCdbException {
 		Objects.requireNonNull(jAsceDao, "The jASCE cannot be null");
 		Objects.requireNonNull(holder, "The holder cannot be null");
 		AsceDao asce = jAsceDao.toAsceDao();

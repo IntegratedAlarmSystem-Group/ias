@@ -21,28 +21,28 @@ public interface CdbWriter {
 	 * 
 	 * @param ias The IAS configuration to write in the file
 	 */
-	public void writeIas(IasDao ias) throws IOException;
+	public void writeIas(IasDao ias) throws IasCdbException;
 	
 	/**
 	 * Write the Supervisor in the passed file.
 	 * 
 	 * @param superv The Supervisor configuration to write in the file
 	 */
-	public void writeSupervisor(SupervisorDao superv) throws IOException ;
+	public void writeSupervisor(SupervisorDao superv) throws IasCdbException;
 	
 	/**
 	 * Write the DASU in the passed file.
 	 * 
 	 * @param dasu The DASU configuration to write in the file
 	 */
-	public void writeDasu(DasuDao dasu) throws IOException ;
+	public void writeDasu(DasuDao dasu) throws IasCdbException;
 	
 	/**
 	 * Write the ASCE in the passed file.
 	 * 
 	 * @param asce The ASCE configuration to write in the file
 	 */
-	public void writeAsce(AsceDao asce) throws IOException ;
+	public void writeAsce(AsceDao asce) throws IasCdbException;
 	
 	/**
 	 * Write the IASIO in the file.
@@ -51,7 +51,7 @@ public interface CdbWriter {
 	 * @param append: if <code>true</code> the passed iasio is appended to the file
 	 *                otherwise a new file is created
 	 */
-	public void writeIasio(IasioDao iasio, boolean append) throws IOException ;
+	public void writeIasio(IasioDao iasio, boolean append) throws IasCdbException;
 	
 	/**
 	 * Write the IASIOs in the file.
@@ -60,5 +60,5 @@ public interface CdbWriter {
 	 * @param append: if <code>true</code> the passed iasios are appended to the file
 	 *                otherwise a new file is created
 	 */
-	public void writeIasios(Set<IasioDao> iasios, boolean append) throws IOException ;
+	public void writeIasios(Set<IasioDao> iasios, boolean append) throws IasCdbException;
 }

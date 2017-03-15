@@ -15,6 +15,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.eso.ias.cdb.CdbWriter;
+import org.eso.ias.cdb.IasCdbException;
 import org.eso.ias.cdb.json.pojos.JsonAcseDao;
 import org.eso.ias.cdb.json.pojos.JsonDasuDao;
 import org.eso.ias.cdb.json.pojos.JsonSupervisorDao;
@@ -30,6 +31,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -69,11 +71,20 @@ public class JsonWriter implements CdbWriter {
 	 * @param ias The IAS configuration to write in the file
 	 */
 	@Override
-	public void writeIas(IasDao ias) throws IOException {
-		File f = cdbFileNames.getIasFilePath().toFile();
+	public void writeIas(IasDao ias) throws IasCdbException {
+		File f;
+		try {
+			f= cdbFileNames.getIasFilePath().toFile();
+		}catch (IOException ioe) {
+			throw new IasCdbException("Error getting IAS file",ioe);
+		}
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
-		mapper.writeValue(f, ias);
+		try {
+			mapper.writeValue(f, ias);
+		} catch (Throwable t) {
+			throw new IasCdbException("Error writing JSON IAS",t);
+		}
 	}
 	
 	/**
@@ -82,12 +93,22 @@ public class JsonWriter implements CdbWriter {
 	 * @param superv The Supervisor configuration to write in the file
 	 */
 	@Override
-	public void writeSupervisor(SupervisorDao superv) throws IOException  {
-		File f = cdbFileNames.getSuperivisorFilePath(superv.getId()).toFile();
+	public void writeSupervisor(SupervisorDao superv) throws IasCdbException  {
+		File f;
+		try {
+			f = cdbFileNames.getSuperivisorFilePath(superv.getId()).toFile();
+		}catch (IOException ioe) {
+			throw new IasCdbException("Error getting Supervisor file",ioe);
+		}
+				
 		JsonSupervisorDao jsonSup = new JsonSupervisorDao(superv);
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
-		mapper.writeValue(f, jsonSup);
+		try {
+			mapper.writeValue(f, jsonSup);
+		}catch (Throwable t) {
+			throw new IasCdbException("Error writing JSON Supervisor",t);
+		}
 	}
 	
 	/**
@@ -96,12 +117,21 @@ public class JsonWriter implements CdbWriter {
 	 * @param dasu The DASU configuration to write in the file
 	 */
 	@Override
-	public void writeDasu(DasuDao dasu) throws IOException {
-		File f = cdbFileNames.getDasuFilePath(dasu.getId()).toFile();
+	public void writeDasu(DasuDao dasu) throws IasCdbException {
+		File f;
+		try { 
+			f = cdbFileNames.getDasuFilePath(dasu.getId()).toFile();
+		}catch (IOException ioe) {
+			throw new IasCdbException("Error getting DASU file",ioe);
+		}
 		JsonDasuDao jsonDasu = new JsonDasuDao(dasu);
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
-		mapper.writeValue(f, jsonDasu);
+		try {
+			mapper.writeValue(f, jsonDasu);
+		}catch (Throwable t) {
+			throw new IasCdbException("Error writing JSON DASU",t);
+		}
 	}
 	
 	/**
@@ -110,12 +140,21 @@ public class JsonWriter implements CdbWriter {
 	 * @param asce The ASCE configuration to write in the file
 	 */
 	@Override
-	public void writeAsce(AsceDao asce) throws IOException {
-		File f = cdbFileNames.getAsceFilePath(asce.getId()).toFile();
+	public void writeAsce(AsceDao asce) throws IasCdbException {
+		File f;
+		try {
+			f = cdbFileNames.getAsceFilePath(asce.getId()).toFile();
+		}catch (IOException ioe) {
+			throw new IasCdbException("Error getting ASCE file",ioe);
+		}
 		JsonAcseDao jsonAsce = new JsonAcseDao(asce);
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
-		mapper.writeValue(f, jsonAsce);
+		try {
+			mapper.writeValue(f, jsonAsce);
+		}catch (Throwable t) {
+			throw new IasCdbException("Error writing JSON ASCE",t);
+		}
 	}
 	
 	/**
@@ -129,7 +168,7 @@ public class JsonWriter implements CdbWriter {
 	 * @see #writeIasios(Set, File, boolean)
 	 */
 	@Override
-	public void writeIasio(IasioDao iasio, boolean append) throws IOException {
+	public void writeIasio(IasioDao iasio, boolean append) throws IasCdbException {
 		Set<IasioDao> iasios = new HashSet<>();
 		iasios.add(iasio);
 		writeIasios(iasios,append);
@@ -150,22 +189,53 @@ public class JsonWriter implements CdbWriter {
 	 * @see org.eso.ias.cdb.CdbWriter#writeIasios(java.util.Set, java.io.File, boolean)
 	 */
 	@Override
-	public void writeIasios(Set<IasioDao> iasios, boolean append) throws IOException {
-		File f = cdbFileNames.getIasioFilePath("UnusedID").toFile();
+	public void writeIasios(Set<IasioDao> iasios, boolean append) throws IasCdbException {
+		File f;
+		try { 
+			f = cdbFileNames.getIasioFilePath("UnusedID").toFile();
+		}catch (IOException ioe) {
+			throw new IasCdbException("Error getting IASIOs file",ioe);
+		}
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
 		if (!f.exists() || !append) {
-			mapper.writeValue(f, iasios);
+			try {
+				mapper.writeValue(f, iasios);
+			}catch (Throwable t) {
+				throw new IasCdbException("Error writing JSON IASIOs",t);
+			}
 		} else {
 			Path path = FileSystems.getDefault().getPath(f.getAbsolutePath());
 			Path parent  = path.getParent();
-			File tempF = File.createTempFile("iasio", "tmp", parent.toFile());
+			File tempF;
+			BufferedOutputStream outS;
+			try {
+				tempF = File.createTempFile("iasio", "tmp", parent.toFile());
+				outS = new BufferedOutputStream(new FileOutputStream(tempF));
+			} catch (IOException ioe) {
+				throw new IasCdbException("Error creating temporary file",ioe);
+			}
 			
 			JsonFactory jsonFactory = new JsonFactory(); 
-			JsonParser jp = jsonFactory.createParser(f);
+			JsonParser jp;
+			try {
+				jp = jsonFactory.createParser(f);
+			} catch (Throwable t) {
+				try {
+					outS.close();
+				} catch (IOException ioe) {}
+				throw new IasCdbException("Error creating the JSON parser", t);
+			} 
+			JsonGenerator jg;
+			try { 
+				jg = jsonFactory.createGenerator(outS);
+			} catch (IOException ioe) {
+				try {
+					outS.close();
+				} catch (IOException nestedIOE) {}
+				throw new IasCdbException("Error creating the JSON generator", ioe);
+			} 
 			
-			BufferedOutputStream outS = new BufferedOutputStream(new FileOutputStream(tempF));
-			JsonGenerator jg = jsonFactory.createGenerator(outS);
 			jg.setPrettyPrinter(new DefaultPrettyPrinter());
 
 			// Builds a map of IASIOs to replace existing IASIOs 
@@ -174,34 +244,50 @@ public class JsonWriter implements CdbWriter {
 						public String apply(IasioDao i) { return i.getId(); }
 					},
 					Function.<IasioDao>identity()));
-			
-			while(jp.nextToken() != JsonToken.END_ARRAY){
-				JsonToken curToken = jp.getCurrentToken();
-				if (curToken==JsonToken.START_ARRAY) {
-					jg.writeStartArray();
-				}
-				if (curToken==JsonToken.START_OBJECT) {
-					IasioDao iasioinFile = getNextIasio(jp);
-					if (iasiosMap.containsKey(iasioinFile.getId())) {
-						// The IASIO in the set replaces the one in the file
-						putNextIasio(iasiosMap.get(iasioinFile.getId()),jg);
-						iasiosMap.remove(iasioinFile.getId());
-					} else {
-						putNextIasio(iasioinFile,jg);
+			try {
+				
+				while(jp.nextToken() != JsonToken.END_ARRAY){
+					JsonToken curToken = jp.getCurrentToken();
+					if (curToken==JsonToken.START_ARRAY) {
+						jg.writeStartArray();
+					}
+					if (curToken==JsonToken.START_OBJECT) {
+						IasioDao iasioinFile = getNextIasio(jp);
+						if (iasiosMap.containsKey(iasioinFile.getId())) {
+							// The IASIO in the set replaces the one in the file
+							putNextIasio(iasiosMap.get(iasioinFile.getId()),jg);
+							iasiosMap.remove(iasioinFile.getId());
+						} else {
+							putNextIasio(iasioinFile,jg);
+						}
 					}
 				}
+				// Flushes the remaining IASIOs from the set into the file
+				for (String key: iasiosMap.keySet()) {
+					putNextIasio(iasiosMap.get(key),jg);
+				}
+				
+			} catch (IOException ioe) {
+				throw new IasCdbException("I/O Error processing JSON files",ioe);
+			} finally {
+				// Done... close everything
+				try {
+					jp.close();
+					jg.writeEndArray();
+					jg.flush();
+					jg.close();
+				} catch (IOException ioe) {
+					throw new IasCdbException("I/O Error closing JSON parser and generator",ioe);
+				}
 			}
-			// Flushes the remaining IASIOs from the set into the file
-			for (String key: iasiosMap.keySet()) {
-				putNextIasio(iasiosMap.get(key),jg);
-			}
-			// Done... close everything
-			jp.close();
-			jg.writeEndArray();
-			jg.flush();
-			jg.close();
+			
+			
 			// Remove the original file and rename the temporary file
-			Files.delete(path);
+			try {
+				Files.delete(path);
+			} catch (IOException ioe) {
+				throw new IasCdbException("Error deleting temporary file "+path,ioe);
+			}
 			tempF.renameTo(f);
 		}
 	}
