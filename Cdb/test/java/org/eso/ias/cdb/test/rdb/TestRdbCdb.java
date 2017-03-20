@@ -3,6 +3,7 @@ package org.eso.ias.cdb.test.rdb;
 import static org.junit.Assert.*;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
@@ -15,6 +16,8 @@ import org.eso.ias.cdb.rdb.RdbReader;
 import org.eso.ias.cdb.rdb.RdbUtils;
 import org.eso.ias.cdb.rdb.RdbWriter;
 import org.eso.ias.cdb.test.json.TestJsonCdb;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -64,7 +67,12 @@ public class TestRdbCdb {
 		// Clear the content of the DB
 		
 		// Remove all the tables
-		rdbUtils.dropTables();
+		try {
+			rdbUtils.dropTables();
+		} catch (Throwable t) {
+			System.out.println("Failure dropping tables. Was the RDB empty?");
+			System.out.println("Error "+t.getMessage()+" ignored");
+		}
 		
 		// The create empty tables
 		rdbUtils.createTables();
@@ -107,7 +115,18 @@ public class TestRdbCdb {
 		assertTrue("Got an empty IAS!", optIas.isPresent());
 		assertEquals("The IASs differ!", ias, optIas.get());
 		
-		System.out.println(optIas.get());
+		// Modify the IAS and save it again
+		IasDao ias2 = optIas.get();
+		ias2.setLogLevel(LogLevelDao.INFO);
+		assertTrue("Error removing a property from the IAS",ias2.getProps().remove(p1));
+		
+		cdbWriter.writeIas(ias2);
+		
+		// Get the IAS from the reader
+		Optional<IasDao> optIas2 = cdbReader.getIas();
+		assertTrue("Got an empty IAS!", optIas2.isPresent());
+		assertEquals("The IASs differ!", ias2, optIas2.get());
+		assertEquals("Wrong number of properties",1,optIas2.get().getProps().size());
 	}
 	
 	/**
@@ -132,9 +151,8 @@ public class TestRdbCdb {
 		DasuDao dasu2 = new DasuDao();
 		dasu2.setId("DasuID2");
 		dasu2.setSupervisor(superv);
-		dasu1.setLogLevel(LogLevelDao.WARN);
+		dasu2.setLogLevel(LogLevelDao.WARN);
 		superv.addDasu(dasu2);
-		
 		
 		cdbWriter.writeSupervisor(superv);
 		
@@ -142,5 +160,15 @@ public class TestRdbCdb {
 		assertTrue("Got an empty Supervisor!", optSuperv.isPresent());
 		assertEquals("The Supervisors differ!", superv, optSuperv.get());
 		
+		// Modify the supervisor then save it again
+		superv.setHostName("almadev.hq.eso.org");
+		superv.removeDasu(dasu2.getId());
+		
+		cdbWriter.writeSupervisor(superv);
+		
+		// Check if it has been updated
+		Optional<SupervisorDao> optSuperv2 = cdbReader.getSupervisor(superv.getId());
+		assertTrue("Got an empty Supervisor!", optSuperv2.isPresent());
+		assertEquals("The Supervisors differ!", superv, optSuperv2.get());
 	}
 }
