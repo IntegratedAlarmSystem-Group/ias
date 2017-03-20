@@ -33,9 +33,7 @@ if [ -z $IAS_ROOT ]; then
 fi
 
 # Check if IAS_ROOT folder exists
-if [ -d "$IAS_ROOT" ]; then
-	echo "IAS root is: ${bold}$IAS_ROOT${normal}"
-else
+if [ -z "$IAS_ROOT" ]; then
 	echo "${bold}IAS root $IAS_ROOT does not exist!${normal}"
 	((ERRORS_FOUND++))
 fi
@@ -53,6 +51,10 @@ export PATH
 
 if [ "$ERRORS_FOUND" -eq "0" ]; then 
 	echo "IAS environment ready"
+	echo "  ${bold}ROOT:   $IAS_ROOT${normal}"
+	echo "  ${bold}LOGS:   $IAS_LOGS_FOLDER${normal}"
+	echo "  ${bold}CONFIG: $IAS_CONFIG_FOLDER${normal}"
+	echo
 else
 	echo "${bold}$ERRORS_FOUND errors found.${normal} Check IAS environment!!!"
 fi
