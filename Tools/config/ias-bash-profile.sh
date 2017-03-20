@@ -29,7 +29,7 @@ if [ -z "$JRE_HOME" ]; then
 fi
 
 if [ -z "$IAS_ROOT" ]; then
-	echo "${bold}$IAS_ROOT is not defined!${normal}"
+	echo "${bold}IAS_ROOT is not defined!${normal}"
 	((ERRORS_FOUND++))
 fi
 
