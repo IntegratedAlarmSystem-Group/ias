@@ -1,3 +1,4 @@
+#!/bin/bash
 # IAS bash environnment
 
 bold=$(tput bold)
