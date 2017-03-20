@@ -28,13 +28,13 @@ if [ -z "$JRE_HOME" ]; then
 	fi
 fi
 
-if [ -z $IAS_ROOT ]; then
+if [ -z "$IAS_ROOT" ]; then
 	echo "${bold}$IAS_ROOT is not defined!${normal}"
 	((ERRORS_FOUND++))
 fi
 
 # Check if IAS_ROOT folder exists
-if [ -z "$IAS_ROOT" ]; then
+if [ ! -d "$IAS_ROOT" ]; then
 	echo "${bold}IAS root $IAS_ROOT does not exist!${normal}"
 	((ERRORS_FOUND++))
 fi
