@@ -3,7 +3,6 @@
  */
 package org.eso.ias.cdb.rdb;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
@@ -44,9 +43,10 @@ public class RdbWriter implements CdbWriter {
 		Objects.requireNonNull(ias, "The DAO object to persist can't be null");
 		Session s=rdbUtils.getSession();
 		Transaction t =s.beginTransaction();
-		s.persist(ias);
+		s.merge(ias);
 		t.commit();
 		s.flush();
+		s.close();
 	}
 
 	/**
@@ -60,9 +60,10 @@ public class RdbWriter implements CdbWriter {
 		Objects.requireNonNull(superv, "The DAO object to persist can't be null");
 		Session s=rdbUtils.getSession();
 		Transaction t =s.beginTransaction();
-		s.persist(superv);
+		s.merge(superv);
 		t.commit();
 		s.flush();
+		s.close();
 	}
 
 	/**
@@ -76,7 +77,7 @@ public class RdbWriter implements CdbWriter {
 		Objects.requireNonNull(dasu, "The DAO object to persist can't be null");
 		Session s=rdbUtils.getSession();
 		Transaction t =s.beginTransaction();
-		s.persist(dasu);
+		s.merge(dasu);
 		t.commit();
 		s.flush();
 	}
@@ -92,7 +93,7 @@ public class RdbWriter implements CdbWriter {
 		Objects.requireNonNull(asce, "The DAO object to persist can't be null");
 		Session s=rdbUtils.getSession();
 		Transaction t =s.beginTransaction();
-		s.persist(asce);
+		s.merge(asce);
 		t.commit();
 		s.flush();
 	}
@@ -128,7 +129,7 @@ public class RdbWriter implements CdbWriter {
 		Objects.requireNonNull(iasios, "The DAO object to persist can't be null");
 		Session s=rdbUtils.getSession();
 		Transaction t =s.beginTransaction();
-		iasios.stream().forEach(io -> s.persist(io));
+		iasios.stream().forEach(io -> s.merge(io));
 		t.commit();
 		s.flush();
 	}
