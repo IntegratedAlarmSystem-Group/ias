@@ -69,6 +69,8 @@
 			
 			<pathelement location="${scala-library.jar}"   />
 			<pathelement location="${build.dir}"   />
+			<pathelement location="${build.scala.dir}" />
+			<pathelement location="${build.java.dir}" />
 			
 			<fileset dir="${lib.dir}">
 		        <include name="**/*.jar" />
@@ -245,7 +247,7 @@
 			<fileset dir="${build.scala.dir}"  includes="**/*"/>
 	  	</delete>
 
-  		<scalac srcdir="${src.scala.dir}" destdir="${build.scala.dir}" classpathref="build.classpath" force="changed">
+  		<scalac srcdir="${basedir}" destdir="${build.scala.dir}" classpathref="build.classpath" force="changed">
           	<!-- addparams="-Yclosure-elim -optimise" -->
   			<include name="**/*.scala"/>
 	        <include name="**/*.java"/>
