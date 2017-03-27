@@ -98,8 +98,12 @@ public class RdbReader implements CdbReader {
 		if (id.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty ID");
 		}
-		// TODO Auto-generated method stub
-		return null;
+		
+		Session s=rdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		IasioDao iasio = s.get(IasioDao.class,id);
+		t.commit();
+		return Optional.ofNullable(iasio);
 	}
 
 	/**
