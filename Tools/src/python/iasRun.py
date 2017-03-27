@@ -85,6 +85,26 @@ def formatProps(propsDict):
         ret.append(propStr)
     return ret
 
+def javaOpts():
+    """
+    Handling of JAVA_OPTS environment variable to pass options to java executables differs
+    from scala and java:
+    * scala passes options to the java executable setting the JAVA_OPTS environment variable
+    * java does not recognize JAVA_OPTS but accepts options as parameters in the command line
+           
+    To unify the handling of java option for the 2 programming languages,
+    this method returns a list of java options (string).
+    Depending on the executable they will be passed differently.
+    
+    @return: A list of java options like ['-Xmx512M', '-Xms16M']
+    """
+    try:
+        javaOpts=os.environ["JAVA_OPTS"]
+        return javaOpts.split()
+    except:
+        # JAVA_OPTS environment variable not defined
+        return []
+
 if __name__ == '__main__':
     """
     Run a java or scala tool.
@@ -127,6 +147,9 @@ if __name__ == '__main__':
     if verbose:
         print "\nVerbose mode ON"
     
+    # Get java options from JAVA_OPTS environment variable 
+    javaOptions=javaOpts()
+    
     # Build the command line
     if args.language=='s' or args.language=='scala':
         cmd=['scala']
@@ -136,16 +159,35 @@ if __name__ == '__main__':
         cmd=['java']
         if verbose:
             print "Running a JAVA program."
-            
+    
+    # Assertions are enabled differently in java (command line) and scala ($JAVA_OPTS)
     enableAssertions = args.assertions
     if enableAssertions:
-        cmd.append("-ea")
+        javaOptions.append("-ea")
         if verbose:
             print "Assertions are enabled."
     else:
         if verbose:
             print "Assertions disabled."
+            
     
+    # Actual environment to pass to the executable
+    #
+    # It is enriched by setting JAVA_OPTS for scala
+    d = dict(os.environ)
+    
+    # Add java options (in the command line for java executables and 
+    # in JAVA_OPTS env. variable for scala)
+    if args.language=='s' or args.language=='scala':
+        s=" ".join(map(str, javaOptions))
+        if verbose:
+            print "Options to pass to the java executable",s
+            d['JAVA_OPTS']=s 
+    else:
+        for opt in javaOptions:
+            if verbose:
+                print "Adding",opt,"java option"
+            cmd.append(opt) 
         
     # Is the environment ok?
     # Fail fast!
