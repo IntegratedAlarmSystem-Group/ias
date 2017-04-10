@@ -74,7 +74,6 @@ CREATE TABLE DASU (
   supervisor_id VARCHAR2(64) NOT NULL,
   CONSTRAINT DASU_PK PRIMARY KEY(dasu_id),
   CONSTRAINT DASU_SUPERVISOR_FK FOREIGN KEY (supervisor_id) REFERENCES SUPERVISOR(supervisor_id));
-  -- CONSTRAINT DASU_Unique_SUPERVISOR UNIQUE(supervisor_id));
 
 /*
   The table for a ASCE
@@ -86,8 +85,7 @@ CREATE TABLE ASCE (
   dasu_id VARCHAR2(64) NOT NULL,
   CONSTRAINT ASCE_PK PRIMARY KEY(asce_id),
   CONSTRAINT ASCE_output_FK FOREIGN KEY (output_id) REFERENCES IASIO(io_id),
-  CONSTRAINT ASCE_DASU_FK FOREIGN KEY (dasu_id) REFERENCES DASU(dasu_id),
-  CONSTRAINT ASCE_Unique_DASU UNIQUE(dasu_id));
+  CONSTRAINT ASCE_DASU_FK FOREIGN KEY (dasu_id) REFERENCES DASU(dasu_id));
   
   /*
   One ASCE can have zero to many properties.
