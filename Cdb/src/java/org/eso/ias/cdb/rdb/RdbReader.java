@@ -76,7 +76,7 @@ public class RdbReader implements CdbReader {
 	public Optional<Set<IasioDao>> getIasios() throws IasCdbException {
 		Session s=rdbUtils.getSession();
 		Transaction t =s.beginTransaction();
-		List iasios = s.createQuery("FROM IASIO").list();
+		List iasios= s.createCriteria(IasioDao.class).list();
 		Set<IasioDao> ret = new HashSet<>();
 		for (Iterator iterator = iasios.iterator(); iterator.hasNext();){
 			ret.add((IasioDao)iterator.next());
