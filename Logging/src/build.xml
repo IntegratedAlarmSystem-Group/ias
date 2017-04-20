@@ -12,7 +12,7 @@
 	<property name="slf4j" value="slf4j-1.7.24"/>
 	<property name="logback" value="logback-1.2.1"/>
 	<property name="logback-jars" value="logback-core-1.2.1.jar,logback-classic-1.2.1.jar" />
-	<property name="scala-logging" value="scala-logging_2.11-3.5.0.jar" />
+	<property name="scala-logging" value="scala-logging_2.12-3.5.0.jar" />
 
 	<property name="exttools" value="slf4j-api-1.7.24.jar,${logback-jars},${scala-logging}" />
 	
