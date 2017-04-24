@@ -1,0 +1,11 @@
+{ 
+	"id":"Plugin-ID",
+	"sinkServer":"",
+	"sinkPort":"8192",
+	"values":[
+		{"id":"",
+		"refreshTime":"500",
+		"filter":"",
+		"filterOptions":""}]
+}
+

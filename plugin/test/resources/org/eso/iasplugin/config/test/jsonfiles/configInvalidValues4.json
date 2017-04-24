@@ -1,0 +1,11 @@
+{ 
+	"id":"",
+	"sinkServer":"iasdevel.hq.eso.org",
+	"sinkPort":"8192",
+	"values":[
+		{"id":"AValidID",
+		"refreshTime":"500",
+		"filter":"",
+		"filterOptions":""}]
+}
+
