@@ -6,6 +6,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * The java pojo with the plugin configuration.
  * <P>
@@ -15,6 +18,11 @@ import java.util.Optional;
  *
  */
 public class PluginConfig {
+	
+	/**
+	 * The logger
+	 */
+	private final Logger logger = LoggerFactory.getLogger(PluginConfig.class);
 	
 	/**
 	 * The ID of the plugin
@@ -147,28 +155,35 @@ public class PluginConfig {
 	 */
 	public boolean isValid() {
 		if (id==null || id.isEmpty()) {
+			logger.error("Invalid null or empty plugin ID");
 			return false;
 		}
 		if (sinkServer==null || sinkServer.isEmpty()) {
+			logger.error("Invalid null or empty sink server name");
 			return false;
 		}
 		if (sinkPort<=0) {
+			logger.error("Invalid sink server port number "+sinkPort);
 			return false;
 		}
 		// There must be at least one value!
 		if (values==null || values.length<=0) {
+			logger.error("No values found");
 			return false;
 		}
 		// Ensure that all the IDs of the values differ
 		if (getMapOfValues().keySet().size()!=values.length) {
+			logger.error("Some values share the same ID");
 			return false;
 		}
 		// Finally, check the validity of all the values
 		long invalidValues=getValuesAsCollection().stream().filter(v -> !v.isValid()).count();
 		if (invalidValues!=0) {
+			logger.error("Found "+invalidValues+" invalid values");
 			return false;
 		}
 		// Everything ok
+		logger.debug("Plugin "+id+" configuration is valid");
 		return true;
 		
 	}

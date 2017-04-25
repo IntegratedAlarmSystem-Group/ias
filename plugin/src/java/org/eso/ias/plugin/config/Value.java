@@ -2,6 +2,9 @@ package org.eso.ias.plugin.config;
 
 import java.util.Objects;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * The value of a monitor point or alarm
  * read from the monitored system.
@@ -10,6 +13,11 @@ import java.util.Objects;
  *
  */
 public class Value {
+	
+	/**
+	 * The logger
+	 */
+	private static final Logger logger = LoggerFactory.getLogger(Value.class);
 	
 	/**
 	 * The unique ID of the value
@@ -111,11 +119,14 @@ public class Value {
 	 */
 	public boolean isValid() {
 		if (id==null || id.isEmpty()) {
+			logger.error("Invalid null or empty value ID");
 			return false;
 		}
 		if (refreshTime<=0) {
+			logger.error("Invalid refreshTime "+refreshTime);
 			return false;
 		}
+		logger.debug("Value "+id+" configuration is valid");
 		return true;
 	}
 
