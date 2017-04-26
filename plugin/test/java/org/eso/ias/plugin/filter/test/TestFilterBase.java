@@ -106,7 +106,7 @@ public class TestFilterBase {
 			 */
 			@Override
 			public Optional<FilteredValue> apply() {
-				return null;
+				return Optional.empty();
 			}
 		}
 		
