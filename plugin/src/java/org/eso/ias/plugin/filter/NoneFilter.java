@@ -17,7 +17,7 @@ public class NoneFilter extends FilterBase {
 	 * @see Filter#apply()
 	 */
 	@Override
-	public Optional<FilteredValue> apply() {
+	public Optional<FilteredValue> applyFilter() {
 		Optional<Sample> sample=peekNewest();
 		return sample.map(s -> new FilteredValue(s.value, historySnapshot()));
 	}

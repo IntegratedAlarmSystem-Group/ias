@@ -90,6 +90,10 @@ public class NoneFilterTest {
 		public Optional<Sample> peekOldest() {
 			return super.peekOldest();
 		}
+		
+		public Optional<FilteredValue> getLastReturnedFilteredValue() {
+			return lastReturnedValue;
+		}
 	}
 	
 	/**
@@ -142,5 +146,30 @@ public class NoneFilterTest {
 		fValue = value.get();
 		assertEquals("Unexpected assignement of the value",samples.get(0).value,fValue.value);
 		assertEquals("Unexpected size of history",1,fValue.samples.size());
+	}
+	
+	/**
+	 * Test that the last returned value is correctly saved
+	 * by (@link FilterBase}
+	 * @throws Exception
+	 */
+	@Test
+	public void testLastReturnedValue() throws Exception {
+		assertFalse(defaultFilter.getLastReturnedFilteredValue().isPresent());
+		
+		Sample s = new Sample(Long.valueOf(3));
+		defaultFilter.newSample(s);
+		Optional<FilteredValue> filteredValue = defaultFilter.apply();
+		Optional<FilteredValue> lastFilteredValue =defaultFilter.getLastReturnedFilteredValue();
+		
+		assertTrue(defaultFilter.getLastReturnedFilteredValue().isPresent());
+		assertEquals(defaultFilter.getLastReturnedFilteredValue().get(),filteredValue.get());
+		
+		Thread.sleep(25);
+		Sample s2 = new Sample(Long.valueOf(9));
+		defaultFilter.newSample(s2);
+		Optional<FilteredValue> anotherFilteredValue = defaultFilter.apply();
+		assertEquals(defaultFilter.getLastReturnedFilteredValue().get(),anotherFilteredValue.get());
+		
 	}
 }

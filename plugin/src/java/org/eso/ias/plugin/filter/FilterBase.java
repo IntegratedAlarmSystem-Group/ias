@@ -13,12 +13,20 @@ import org.eso.ias.plugin.Sample;
  * The basic class for the filters.
  * <P>
  * <code>FilterBase</code> keeps a time ordered {@link #history} of samples:
- * newest items at the head of the list.
- * 
+ * newest items are in the head of the list.
  * <P>
  * Implementation of filters must take care of removing elements from the history when 
  * a new element is added ({@link #sampleAdded(Sample)}) and/or when the filtered value
- * is retrieved {@link Filter#apply()}
+ * is retrieved {@link Filter#apply()}.
+ * <P>
+ * Objects of this class stores also:
+ * <UL>
+ * 	<LI>the point in time when the last sample had been submitted ({@link #lastSampleSubmssionTime}
+ * 	<LI>the last filtered value returned applying the filter {@link #lastReturnedValue}
+ * </UL>
+ * <P>
+ * The filtering is not supposed to perform any I/O but to perform
+ * the calculation only on the samples in the history.  
  * 
  * @author acaproni
  *
@@ -37,6 +45,18 @@ public abstract class FilterBase implements Filter {
 	private final LinkedList<Sample> history = new LinkedList<>();
 	
 	/**
+	 * The point in time then the last sample has been submitted to
+	 * the filter.
+	 * This is not the timestamp of the last submitted sample.
+	 */
+	protected Optional<Long>lastSampleSubmssionTime= Optional.empty();
+	
+	/**
+	 * The last returned value of {@link #apply()}.
+	 */
+	protected Optional<FilteredValue> lastReturnedValue = Optional.empty();
+	
+	/**
 	 * <code>sampleAdded</code> is executed after adding the sample to the history
 	 * to let the implementation of a filter does any computation it might need. 
 	 * 
@@ -45,12 +65,27 @@ public abstract class FilterBase implements Filter {
 	protected abstract void sampleAdded(Sample newSample);
 	
 	/**
+	 * {@link #apply()} calls this method of the filter to get the 
+	 * filtered value and return to the caller.
+	 *  
+	 * @return
+	 */
+	protected abstract Optional<FilteredValue>applyFilter();
+	
+	/**
 	 * Apply the filter to the samples in the history 
-	 * and return the filtered value or empty if there are no samples in the history
+	 * and return the filtered value or empty if there are no samples in the history.
+	 * <P>
+	 * The calculation of the filter is delegated to {@link #applyFilter()}.
 	 * 
 	 *  @return The value after applying the filter
 	 */
-	public abstract Optional<FilteredValue>apply();
+	public final Optional<FilteredValue>apply() {
+		lastReturnedValue=applyFilter();
+		return lastReturnedValue;
+	}
+	
+	
 	
 	/**
 	 * Acquire a new sample.
@@ -59,10 +94,11 @@ public abstract class FilterBase implements Filter {
 	 * 
 	 * @param newSample
 	 */
-	public void newSample(Sample newSample) throws FilterException {
+	public final void newSample(Sample newSample) throws FilterException {
 		if (newSample==null) {
 			throw new IllegalArgumentException("A null sample is not permitted");
 		}
+		lastSampleSubmssionTime=Optional.of(System.currentTimeMillis());
 		synchronized (history) {
 			// Check that the timestamp of the new sample
 			// is more recent then that of the newest sample

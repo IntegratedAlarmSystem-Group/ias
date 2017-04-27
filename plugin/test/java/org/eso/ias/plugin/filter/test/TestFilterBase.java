@@ -102,11 +102,16 @@ public class TestFilterBase {
 			}
 
 			/* (non-Javadoc)
-			 * @see org.eso.ias.plugin.filter.FilterBase#apply()
+			 * @see org.eso.ias.plugin.filter.FilterBase#applyFilter()
 			 */
 			@Override
-			public Optional<FilteredValue> apply() {
-				return Optional.empty();
+			protected Optional<FilteredValue> applyFilter() {
+				// TODO Auto-generated method stub
+				return null;
+			}
+			
+			public Optional<Long> getLastSampleTimeStamp() {
+				return lastSampleSubmssionTime;
 			}
 		}
 		
@@ -400,6 +405,29 @@ public class TestFilterBase {
 			assertEquals(nSamples,removed);
 			assertEquals(nNewerSamples,samplesFromFilter.size());
 			
+		}
+		
+		/**
+		 * Test the setting of the submission timestamp when a 
+		 * new sample is submitted
+		 * 
+		 * @throws Exception
+		 */
+		@Test
+		public void testSubmissionTime() throws Exception {
+			assertFalse(defaultFilter.getLastSampleTimeStamp().isPresent());
+			long before = System.currentTimeMillis();
+			Sample s = new Sample(Boolean.TRUE);
+			defaultFilter.newSample(s);
+			long after = System.currentTimeMillis();
+			
+			assertTrue(defaultFilter.getLastSampleTimeStamp().isPresent());
+			Optional<Long> submissionTime = defaultFilter.getLastSampleTimeStamp();
+			assertTrue("Invalid submission time",submissionTime.get()>=before && submissionTime.get()<=after);
+			
+			// Get it again, did it change?
+			Thread.sleep(50);
+			assertEquals("The submissson timestamp should not have changed",defaultFilter.getLastSampleTimeStamp(), submissionTime);
 		}
 	}
 

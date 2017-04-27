@@ -1,6 +1,5 @@
 package org.eso.ias.plugin.filter;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
