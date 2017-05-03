@@ -14,13 +14,25 @@ import org.eso.ias.plugin.Sample;
 public class NoneFilter extends FilterBase {
 	
 	/**
+	 * Constructor
+	 * 
+	 * @param id The not <code>null</code> nor empty identifier 
+	 *           of the value produced applying the filter to the samples
+	 */
+	public NoneFilter(String id) {
+		super(id);
+	}
+
+
+	/**
 	 * @see Filter#apply()
 	 */
 	@Override
 	public Optional<FilteredValue> applyFilter() {
 		Optional<Sample> sample=peekNewest();
-		return sample.map(s -> new FilteredValue(s.value, historySnapshot()));
+		return sample.map(s -> new FilteredValue(id,s.value, historySnapshot(),s.timestamp));
 	}
+	
 
 	/**
 	 * 
