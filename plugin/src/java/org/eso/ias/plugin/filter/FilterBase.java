@@ -94,7 +94,7 @@ public abstract class FilterBase implements Filter {
 	 * 
 	 * @param newSample
 	 */
-	public final void newSample(Sample newSample) throws FilterException {
+	public final Optional<FilteredValue> newSample(Sample newSample) throws FilterException {
 		if (newSample==null) {
 			throw new IllegalArgumentException("A null sample is not permitted");
 		}
@@ -111,6 +111,7 @@ public abstract class FilterBase implements Filter {
 			}
 			history.addFirst(newSample);
 			sampleAdded(newSample);
+			return apply();
 		}
 	}
 	

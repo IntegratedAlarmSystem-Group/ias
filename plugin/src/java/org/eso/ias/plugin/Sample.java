@@ -11,7 +11,7 @@ package org.eso.ias.plugin;
 public class Sample {
 	
 	/**
-	 * The vmonitor point value or alarm red from the remote system.
+	 * The monitor point value or alarm red from the remote system.
 	 */
 	public final Object value;
 	
