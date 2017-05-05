@@ -77,7 +77,7 @@ public class MonitoredValue implements Runnable {
 	 * The last value sent to the IAS core 
 	 * (i.e. to the {@link #listener}).
 	 */
-	private Optional<FilteredValue> lastSentValue;
+	private Optional<FilteredValue> lastSentValue = Optional.empty();
 	
 	/**
 	 * The point in time when the last value has been
