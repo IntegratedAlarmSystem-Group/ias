@@ -26,5 +26,5 @@ public interface ChangeValueListener {
 	 * @param value the not <code>null</code> new value of the
 	 * @return
 	 */
-	public void monitoredValueUpdated(FilteredValue value);
+	public void monitoredValueUpdated(Optional<FilteredValue> value);
 }
