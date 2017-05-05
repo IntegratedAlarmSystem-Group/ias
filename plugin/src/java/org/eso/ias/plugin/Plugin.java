@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.config.Value;
+import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,13 +26,6 @@ import org.slf4j.LoggerFactory;
  * <P>
  * The plugin takes care of collecting, filtering and sending to the IAS
  * core of all the monitored values.
- * <P>
- * The plugin holds a map of monitored values:
- * <UL>
- * 	<LI>a timer task, based on the refresh time of the value, gets the filtered value
- *      to be sent to the IAS core and push it in a queue
- *  <LI>a thread gets monitored values from the queue and sends them to the IAS core
- * </UL>
  * <P>
  * Updates on the values of monitored point must be provided by calling {@link #updateMonitorPointValue(String, Sample)}.
  * <P>
@@ -46,7 +40,7 @@ import org.slf4j.LoggerFactory;
  *  
  * @author acaproni
  */
-public class Plugin {
+public class Plugin implements ChangeValueListener {
 	
 	/**
 	 * The thread group to which all the threads
@@ -78,8 +72,7 @@ public class Plugin {
 	 * The number of threads in the scheduled pool executor that get filtered values out of the
 	 * monitored values
 	 */
-	public static final int schedExecutorPoolSize = 
-			Integer.getInteger(SCHEDULED_POOL_SIZE_PROPNAME, defaultSchedExecutorPoolSize) <=0 ? defaultSchedExecutorPoolSize : Integer.getInteger(SCHEDULED_POOL_SIZE_PROPNAME);
+	public static final int schedExecutorPoolSize = Integer.getInteger(SCHEDULED_POOL_SIZE_PROPNAME, defaultSchedExecutorPoolSize);
 	
 	/**
 	 * The map of monitor points and alarms produced by the 
@@ -110,6 +103,7 @@ public class Plugin {
 	 */
 	private final int statsTimeInterval = Integer.getInteger(LOG_STATS_FREQUENCY_PROPNAME, defaultStatsGeneratorFrequency);
 	
+	
 	/**
 	 * The logger
 	 */
@@ -118,7 +112,7 @@ public class Plugin {
 	/**
 	 * The identifier of the plugin
 	 */
-	private final String pluginId;
+	public final String pluginId;
 	
 	/**
 	 *  The server name to send monitor point values and alarms to
@@ -179,6 +173,12 @@ public class Plugin {
 			throw new IllegalArgumentException("No monitor points definition found"); 
 		}
 		logger.info("Plugin (ID="+pluginId+") started");
+		values.forEach(v -> { 
+			try {
+			putMonitoredPoint(new MonitoredValue(v.getId(), v.getRefreshTime(), schedExecutorSvc, this));
+		}catch (Throwable t){
+			logger.error("Error adding monitor point "+v.getId(),t);
+		} });
 	}
 	
 	/**
@@ -205,7 +205,7 @@ public class Plugin {
 			Runnable r = new Runnable() {
 				@Override
 				public void run() {
-					logger.info("#Sumbitted logs"+submittedUpdates.getAndSet(0));
+					logger.info("#Submitted samples = "+submittedUpdates.getAndSet(0));
 				}
 			};
 			schedExecutorSvc.scheduleAtFixedRate(r,statsTimeInterval,statsTimeInterval,TimeUnit.MINUTES);
@@ -290,6 +290,17 @@ public class Plugin {
 			monitorPoints.put(mPoint.id, mPoint);
 			sz=monitorPoints.size();
 		}
+		logger.info("IAS plugin "+pluginId+" now manages "+sz+" monitor points");
 		return sz;
+	}
+
+	/**
+	 * TODO: this method is here for testing only and must be removed
+	 * 
+	 * @see org.eso.ias.plugin.ChangeValueListener#monitoredValueUpdated(org.eso.ias.plugin.filter.FilteredValue)
+	 */
+	@Override
+	public void monitoredValueUpdated(Optional<FilteredValue> value) {
+		logger.info("Value change "+value.toString());
 	}
 }
