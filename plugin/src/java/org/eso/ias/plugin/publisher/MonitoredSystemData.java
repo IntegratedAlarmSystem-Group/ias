@@ -44,4 +44,49 @@ public class MonitoredSystemData {
 	 */
 	public MonitoredSystemData() {}
 
+	/**
+	 * @return the systemID
+	 */
+	public String getSystemID() {
+		return SystemID;
+	}
+
+	/**
+	 * @param systemID the systemID to set
+	 */
+	public void setSystemID(String systemID) {
+		SystemID = systemID;
+	}
+
+	/**
+	 * @return the publishTime
+	 */
+	public String getPublishTime() {
+		return publishTime;
+	}
+
+	/**
+	 * @param publishTime the publishTime to set
+	 */
+	public void setPublishTime(String publishTime) {
+		this.publishTime = publishTime;
+	}
+
+	/**
+	 * @return the monitorPoints
+	 */
+	public Collection<MonitorPointData> getMonitorPoints() {
+		return monitorPoints;
+	}
+
+	/**
+	 * @param monitorPoints the monitorPoints to set
+	 */
+	public void setMonitorPoints(Collection<MonitorPointData> monitorPoints) {
+		if (this.monitorPoints!=null) {
+			this.monitorPoints.clear();
+		}
+		this.monitorPoints = monitorPoints;
+	}
+
 }
