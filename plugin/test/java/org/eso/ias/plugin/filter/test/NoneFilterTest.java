@@ -35,6 +35,11 @@ public class NoneFilterTest {
 	 */
 	public class TestFilter extends NoneFilter {
 
+		public TestFilter(String id) {
+			super(id);
+			// TODO Auto-generated constructor stub
+		}
+
 		/* (non-Javadoc)
 		 * @see org.eso.ias.plugin.filter.FilterBase#removeOldSamples(long)
 		 */
@@ -103,7 +108,7 @@ public class NoneFilterTest {
 
 	@Before
 	public void setUp() {
-		defaultFilter = new TestFilter();
+		defaultFilter = new TestFilter("TestFilter-ID");
 		assertNotNull(defaultFilter);
 		defaultFilter.clearHistory();
 		assert(defaultFilter.historySnapshot().size()==0);

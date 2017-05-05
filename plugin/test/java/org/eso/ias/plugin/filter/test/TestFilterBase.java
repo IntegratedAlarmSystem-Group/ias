@@ -34,6 +34,11 @@ public class TestFilterBase {
 		 */
 		public class TestFilter extends FilterBase {
 
+			public TestFilter(String id) {
+				super(id);
+				// TODO Auto-generated constructor stub
+			}
+
 			/* (non-Javadoc)
 			 * @see org.eso.ias.plugin.filter.FilterBase#removeOldSamples(long)
 			 */
@@ -107,7 +112,7 @@ public class TestFilterBase {
 			@Override
 			protected Optional<FilteredValue> applyFilter() {
 				// TODO Auto-generated method stub
-				return null;
+				return Optional.empty();
 			}
 			
 			public Optional<Long> getLastSampleTimeStamp() {
@@ -122,7 +127,7 @@ public class TestFilterBase {
 
 		@Before
 		public void setUp() {
-			defaultFilter = new TestFilter();
+			defaultFilter = new TestFilter("TestFilter-ID");
 			assertNotNull(defaultFilter);
 			defaultFilter.clearHistory();
 			assert(defaultFilter.historySnapshot().size()==0);
