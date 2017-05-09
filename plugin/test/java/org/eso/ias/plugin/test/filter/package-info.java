@@ -4,4 +4,4 @@
  * @author acaproni
  *
  */
-package org.eso.ias.plugin.filter.test;
+package org.eso.ias.plugin.test.filter;

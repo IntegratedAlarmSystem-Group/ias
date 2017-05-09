@@ -1,4 +1,4 @@
-package org.eso.ias.plugin.filter.test;
+package org.eso.ias.plugin.test.filter;
 
 import static org.junit.Assert.*;
 

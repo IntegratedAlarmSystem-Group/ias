@@ -1,8 +1,11 @@
-package org.eso.ias.plugin;
+package org.eso.ias.plugin.test;
 
 import java.util.Collection;
 import java.util.Vector;
 
+import org.eso.ias.plugin.Plugin;
+import org.eso.ias.plugin.PluginException;
+import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.config.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

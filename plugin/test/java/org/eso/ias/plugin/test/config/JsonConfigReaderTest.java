@@ -1,4 +1,4 @@
-package org.eso.ias.plugin.config.test;
+package org.eso.ias.plugin.test.config;
 
 import static org.junit.Assert.*;
 
