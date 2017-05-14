@@ -1,5 +1,7 @@
 package org.eso.ias.plugin.filter;
 
+import org.eso.ias.plugin.PluginException;
+
 /**
  * The exception returned by filtering
  * 
@@ -8,7 +10,7 @@ package org.eso.ias.plugin.filter;
  * @author acaproni
  *
  */
-public class FilterException extends Exception {
+public class FilterException extends PluginException  {
 
 	public FilterException() {
 	}

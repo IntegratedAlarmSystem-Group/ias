@@ -58,7 +58,7 @@ public class PluginConfigFileReader implements PluginConfigDao {
 			try {
 				ObjectMapper jackson2Mapper = new ObjectMapper();
 				PluginConfig config = jackson2Mapper.readValue(reader, PluginConfig.class);
-				logger.info("JSON Plugin configuration successfully red from "+srcName);
+				logger.info("JSON Plugin configuration successfully red from {}",srcName);
 				return config;
 			} finally {
 				reader.close();
@@ -173,9 +173,6 @@ public class PluginConfigFileReader implements PluginConfigDao {
 	 * @throws PluginConfigException If it was not possible to get the stream form the resource
 	 */
 	private static BufferedReader getReader(File file) throws PluginConfigException {
-		if (!file.canRead()) {
-			
-		}
 		InputStream inStream;
 		try {
 			inStream=new FileInputStream(file);

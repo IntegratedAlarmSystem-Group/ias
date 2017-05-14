@@ -98,6 +98,7 @@ public abstract class FilterBase implements Filter {
 	 * 
 	 *  @return The value after applying the filter
 	 */
+	@Override
 	public final Optional<FilteredValue>apply() {
 		lastReturnedValue=applyFilter();
 		return lastReturnedValue;
@@ -112,6 +113,7 @@ public abstract class FilterBase implements Filter {
 	 * 
 	 * @param newSample
 	 */
+	@Override
 	public final Optional<FilteredValue> newSample(Sample newSample) throws FilterException {
 		if (newSample==null) {
 			throw new IllegalArgumentException("A null sample is not permitted");

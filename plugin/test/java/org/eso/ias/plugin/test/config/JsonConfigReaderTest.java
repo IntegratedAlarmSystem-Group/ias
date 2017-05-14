@@ -6,7 +6,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Optional;
@@ -22,10 +21,6 @@ import org.eso.ias.plugin.config.PluginConfigFileReader;
 import org.eso.ias.plugin.config.Value;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.junit.Test;
-
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JsonConfigReaderTest {
 	
@@ -44,20 +39,7 @@ public class JsonConfigReaderTest {
 	 * The thread factory for testing
 	 */
 	private static final ThreadFactory threadFactory = new PluginThreadFactory(threadGroup);	
-	/**
-	 * Get a JSON file for testing from the jar
-	 * 
-	 * @param fileName The name of the file to get
-	 * @return
-	 * @throws Exception
-	 */
-	private BufferedReader getReader(String fileName) {
-		String resource=resourcePath+fileName;
-		InputStream inStream = getClass().getResourceAsStream(resource);
-		assertNotNull("Resource not found: "+resource, inStream);
-		// Open the file from reading
-		return new BufferedReader(new InputStreamReader(inStream));
-	}
+
 
 	/**
 	 * Read a valid configuration and check the correctness of the

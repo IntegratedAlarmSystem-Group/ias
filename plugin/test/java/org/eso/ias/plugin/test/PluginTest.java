@@ -2,7 +2,6 @@ package org.eso.ias.plugin.test;
 
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.Optional;
 
 import org.eso.ias.plugin.Plugin;
 import org.eso.ias.plugin.PluginException;
