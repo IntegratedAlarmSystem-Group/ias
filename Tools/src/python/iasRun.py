@@ -14,7 +14,7 @@ from subprocess import call
 from IASTools.FileSupport import FileSupport
 
 
-def setProps(propsDict):
+def setProps(propsDict,className):
     """
     Adds to the passed dictionary, the properties to be passed to all java/scala
     executables.
@@ -23,10 +23,12 @@ def setProps(propsDict):
     be configuration properties.
     
     @param propsDict: A dictionary of properties in the form name:value
+    @param className The name of the class to run 
     """
     # Environment variables
     propsDict["ias.root.folder"]=os.environ["IAS_ROOT"]
     propsDict["ias.logs.folder"]=os.environ["IAS_LOGS_FOLDER"]
+    propsDict["ias.logs.filename"]=className
     propsDict["ias.config.folder"]=os.environ["IAS_CONFIG_FOLDER"]
     
     # Set the config file for sl4j (defined in Logging)
@@ -205,7 +207,7 @@ if __name__ == '__main__':
     # Default and user defined properties are in a dictionary:
     # this way it is easy for the user to overrride default properties.
     props={}
-    setProps(props)
+    setProps(props, args.className)
     if args.jProp is not None:
         addUserProps(props,args.jProp)
     if len(props)>0:

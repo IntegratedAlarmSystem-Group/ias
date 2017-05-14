@@ -6,7 +6,7 @@
   	packagingData: nicely print stack traces (expansive)  
    -->
    
-  <timestamp key="tStamp" datePattern="yyyy-MM-dd"/>
+  <timestamp key="tStamp" datePattern="yyyy-MM-dd'T'HH-mm-ss"/>
 
   <shutdownHook/>
   
@@ -23,7 +23,7 @@
    	class="ch.qos.logback.core.FileAppender">
    	<append>true</append>
    	<prudent>true</prudent> <!--  Can slow down the logging -->
-    <file>${IAS_LOGS_FOLDER}/IAS-${tStamp}.log</file>
+    <file>${IAS_LOGS_FOLDER}/${ias.logs.filename}-${tStamp}.log</file>
     <!--  
     	In future we might want to implement the rolling policy
     	based on time and size
