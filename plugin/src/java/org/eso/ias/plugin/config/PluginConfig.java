@@ -163,7 +163,7 @@ public class PluginConfig {
 			return false;
 		}
 		if (sinkPort<=0) {
-			logger.error("Invalid sink server port number %d",sinkPort);
+			logger.error("Invalid sink server port number {}",sinkPort);
 			return false;
 		}
 		// There must be at least one value!
@@ -179,11 +179,11 @@ public class PluginConfig {
 		// Finally, check the validity of all the values
 		long invalidValues=getValuesAsCollection().stream().filter(v -> !v.isValid()).count();
 		if (invalidValues!=0) {
-			logger.error("Found %d invalid values",invalidValues);
+			logger.error("Found {} invalid values",invalidValues);
 			return false;
 		}
 		// Everything ok
-		logger.debug("Plugin %s configuration is valid",id);
+		logger.debug("Plugin {} configuration is valid",id);
 		return true;
 		
 	}

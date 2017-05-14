@@ -123,10 +123,10 @@ public class Value {
 			return false;
 		}
 		if (refreshTime<=0) {
-			logger.error("Invalid refreshTime %d",refreshTime);
+			logger.error("Invalid refreshTime {}",refreshTime);
 			return false;
 		}
-		logger.debug("Value %s configuration is valid",id);
+		logger.debug("Value {} configuration is valid",id);
 		return true;
 	}
 
