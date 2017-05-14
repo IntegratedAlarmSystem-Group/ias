@@ -19,8 +19,8 @@ import org.junit.Test;
  * Test the {@link FilterBase}
  * <P>
  * {@link TestFilter} class extends {@link NoneFilter} to access 
-	 * its protected methods.
-	 * 
+ * its protected methods.
+ * 
  * @author acaproni
  *
  */
@@ -130,7 +130,7 @@ public class TestFilterBase {
 			defaultFilter = new TestFilter("TestFilter-ID");
 			assertNotNull(defaultFilter);
 			defaultFilter.clearHistory();
-			assert(defaultFilter.historySnapshot().size()==0);
+			assertTrue(defaultFilter.historySnapshot().isEmpty());
 		}
 		
 		/**
@@ -233,7 +233,7 @@ public class TestFilterBase {
 			
 			List<Sample> samplesFromFilter = defaultFilter.historySnapshot(); 
 			assertTrue(checkOrder(defaultFilter.historySnapshot()));
-			assertEquals(nSamples-toRemove, defaultFilter.historySnapshot().size());
+			assertEquals((long)nSamples-toRemove, defaultFilter.historySnapshot().size());
 			// Check that the newer samples have been kept
 			for (int t=0; t<nSamples-toRemove; t++) {
 				Sample s1 = samples.get(t);
@@ -247,7 +247,7 @@ public class TestFilterBase {
 			removed = defaultFilter.removeLastSamples(100);
 			samplesFromFilter = defaultFilter.historySnapshot();
 			assertEquals(0, defaultFilter.historySnapshot().size());
-			assertEquals(nSamples-toRemove,removed);
+			assertEquals((long)nSamples-toRemove,removed);
 		}
 		
 		/**
@@ -263,7 +263,7 @@ public class TestFilterBase {
 			List<Sample> samples = submitSamples(nSamples, defaultFilter);
 			int removed = defaultFilter.keepNewest(toKeep);
 			List<Sample> samplesFromFilter = defaultFilter.historySnapshot();
-			assertEquals("Wrong number of deleted samples returned",nSamples-toKeep, removed);
+			assertEquals("Wrong number of deleted samples returned",(long)nSamples-toKeep, removed);
 			assertEquals("Wrong number of samples in history",toKeep, samplesFromFilter.size());
 			
 			// Check that the newer samples have been kept
@@ -278,7 +278,8 @@ public class TestFilterBase {
 			// history contains
 			removed = defaultFilter.keepNewest(100);
 			samplesFromFilter = defaultFilter.historySnapshot();
-			assertEquals(toKeep, defaultFilter.historySnapshot().size());
+			assertNotNull(samplesFromFilter);
+			assertEquals(toKeep, samplesFromFilter.size());
 			assertEquals(0,removed);
 		}
 		
@@ -340,7 +341,7 @@ public class TestFilterBase {
 			long now = System.currentTimeMillis();
 			Thread.sleep(100);
 			int nSamples=21;
-			List<Sample> samples = submitSamples(nSamples, defaultFilter);
+			submitSamples(nSamples, defaultFilter);
 			
 			int removed = defaultFilter.removeOldSamples(now);
 			assertEquals("Wrong number of removed samples",0,removed);
@@ -353,14 +354,14 @@ public class TestFilterBase {
 			// Second use case: create an artificial time delay between
 			// a group of samples to check that only the oldest are really removed
 			nSamples=15;
-			samples = submitSamples(nSamples, defaultFilter);
+			submitSamples(nSamples, defaultFilter);
 			Thread.sleep(10);
 			now = System.currentTimeMillis();
 			Thread.sleep(10);
 			int nNewerSamples=10;
-			List<Sample> newerSamples = submitSamples(nNewerSamples, defaultFilter);
+			submitSamples(nNewerSamples, defaultFilter);
 			samplesFromFilter = defaultFilter.historySnapshot();
-			assertEquals(nNewerSamples+nSamples,samplesFromFilter.size());
+			assertEquals((long)nNewerSamples+nSamples,samplesFromFilter.size());
 			
 			
 			removed = defaultFilter.removeOldSamples(now);
@@ -402,7 +403,7 @@ public class TestFilterBase {
 			int nNewerSamples=10;
 			List<Sample> newerSamples = submitSamples(nNewerSamples, defaultFilter);
 			samplesFromFilter = defaultFilter.historySnapshot();
-			assertEquals(nNewerSamples+nSamples,samplesFromFilter.size());
+			assertEquals((long)nNewerSamples+nSamples,samplesFromFilter.size());
 			
 			
 			removed = defaultFilter.removeOldSamples(System.currentTimeMillis()-now, TimeUnit.MILLISECONDS);
@@ -428,7 +429,8 @@ public class TestFilterBase {
 			
 			assertTrue(defaultFilter.getLastSampleTimeStamp().isPresent());
 			Optional<Long> submissionTime = defaultFilter.getLastSampleTimeStamp();
-			assertTrue("Invalid submission time",submissionTime.get()>=before && submissionTime.get()<=after);
+			Long time = submissionTime.orElseThrow(() -> new Exception("Time not present"));
+			assertTrue("Invalid submission time",time>=before && time<=after);
 			
 			// Get it again, did it change?
 			Thread.sleep(50);

@@ -122,7 +122,7 @@ public abstract class PublisherBase implements MonitorPointSender {
 			throw new IllegalArgumentException("The executor service can't be null");
 		}
 		this.executorService=executorSvc;
-		logger.info("This plugn "+pluginId+" will send monitor points to "+serverName+"@"+serverPort+" at a rate of "+throttlingTime+"msec");
+		logger.info("This plugn %s will send monitor points to %s@%d at a rate of %d msec",pluginId,serverName,serverPort,throttlingTime);
 		monitorPointsToSend.setSystemID(pluginId);
 	}
 	

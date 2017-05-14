@@ -119,7 +119,7 @@ public class MonitoredValue implements Runnable {
 		this.filter = filter;
 		this.schedExecutorSvc=executorSvc;
 		this.listener=listener;
-		logger.debug("Monitor point "+this.id+" created with a refresh rate of "+this.refreshRate+"ms");
+		logger.debug("Monitor point %s created with a refresh rate of %sms",this.id,this.refreshRate);
 	}
 
 	/**
@@ -163,16 +163,15 @@ public class MonitoredValue implements Runnable {
 	 * @param value The not <code>null</code> value to send to the IAS
 	 */
 	private void notifyListener(Optional<FilteredValue> value) {
-		assert(value!=null);
 		try {
 			listener.monitoredValueUpdated(value);
 			lastSentTimestamp=System.currentTimeMillis();
 			lastSentValue=value;
-		} catch (Throwable t) {
+		} catch (Exception e) {
 			// In case of error sending the value, we log the exception
 			// but do nothing else as we want to be ready to try to send it again
 			// later
-			logger.error("Error notifying the listener of the "+id+" monitor point change", t);
+			logger.error("Error notifying the listener of the "+id+" monitor point change", e);
 		}
 	}
 	

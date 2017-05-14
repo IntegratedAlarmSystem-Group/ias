@@ -1,7 +1,8 @@
 package org.eso.ias.plugin.test;
 
 import java.util.Collection;
-import java.util.Vector;
+import java.util.LinkedList;
+import java.util.Optional;
 
 import org.eso.ias.plugin.Plugin;
 import org.eso.ias.plugin.PluginException;
@@ -17,7 +18,7 @@ public class PluginTest  {
 	public static void main(String[] args) {
 		logger.info("PluginTest started...");
 		
-		Collection<Value> values = new Vector<>();
+		Collection<Value> values = new LinkedList<>();
 		Value v = new Value();
 		v.setId("MonitorPointID");
 		v.setRefreshTime(1500);
@@ -28,7 +29,9 @@ public class PluginTest  {
 		
 		try {
 			Thread.sleep(1000);
-		} catch (InterruptedException ie) {}
+		} catch (InterruptedException ie) {
+			Thread.currentThread().interrupt();
+		}
 		
 		Sample s = new Sample(Double.valueOf(15.5));
 		try {
@@ -40,7 +43,9 @@ public class PluginTest  {
 		
 		try {
 			Thread.sleep(10000);
-		} catch (InterruptedException ie) {}
+		} catch (InterruptedException ie) {
+			Thread.currentThread().interrupt();
+		}
 		plugin.shutdown();
 		
 		logger.info("PluginTest done.");

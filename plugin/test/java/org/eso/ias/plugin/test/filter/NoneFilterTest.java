@@ -1,13 +1,15 @@
 package org.eso.ias.plugin.test.filter;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.eso.ias.plugin.Sample;
-import org.eso.ias.plugin.filter.FilterBase;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.filter.NoneFilter;
 import org.junit.Before;
@@ -111,7 +113,7 @@ public class NoneFilterTest {
 		defaultFilter = new TestFilter("TestFilter-ID");
 		assertNotNull(defaultFilter);
 		defaultFilter.clearHistory();
-		assert(defaultFilter.historySnapshot().size()==0);
+		assertEquals(0, defaultFilter.historySnapshot().size());
 	}
 	
 
@@ -140,15 +142,14 @@ public class NoneFilterTest {
 		
 		Optional<FilteredValue> value = defaultFilter.apply();
 		assertTrue("Value not assigned to the submitted sample",value.isPresent());
-		FilteredValue fValue = value.get();
+		FilteredValue fValue = value.orElseThrow(() -> new Exception("Not present value"));
 		assertEquals("Unexpected assignement of the value",s.value,fValue.value);
 		assertEquals("Unexpected size of history",1,fValue.samples.size());
 		
 		// Submit more samples the check again
 		List<Sample> samples=TestFilterBase.submitSamples(43,defaultFilter);
 		value = defaultFilter.apply();
-		assertTrue("Value not assigned to the submitted sample",value.isPresent());
-		fValue = value.get();
+		fValue = value.orElseThrow(() -> new Exception("Value not assigned to the submitted sample"));
 		assertEquals("Unexpected assignement of the value",samples.get(0).value,fValue.value);
 		assertEquals("Unexpected size of history",1,fValue.samples.size());
 	}
@@ -165,16 +166,21 @@ public class NoneFilterTest {
 		Sample s = new Sample(Long.valueOf(3));
 		defaultFilter.newSample(s);
 		Optional<FilteredValue> filteredValue = defaultFilter.apply();
-		Optional<FilteredValue> lastFilteredValue =defaultFilter.getLastReturnedFilteredValue();
+		Optional<FilteredValue> lastReturnedilteredValue = defaultFilter.getLastReturnedFilteredValue();
 		
-		assertTrue(defaultFilter.getLastReturnedFilteredValue().isPresent());
-		assertEquals(defaultFilter.getLastReturnedFilteredValue().get(),filteredValue.get());
+		
+		FilteredValue v = filteredValue.orElseThrow(() -> new Exception("Value not present"));
+		FilteredValue lastValue = lastReturnedilteredValue.orElseThrow(() -> new Exception("Last returned filtered value not present"));
+		assertEquals(lastValue,v);
 		
 		Thread.sleep(25);
 		Sample s2 = new Sample(Long.valueOf(9));
 		defaultFilter.newSample(s2);
 		Optional<FilteredValue> anotherFilteredValue = defaultFilter.apply();
-		assertEquals(defaultFilter.getLastReturnedFilteredValue().get(),anotherFilteredValue.get());
+		FilteredValue v2 = anotherFilteredValue.orElseThrow(() -> new Exception("Value not present"));
+		lastReturnedilteredValue = defaultFilter.getLastReturnedFilteredValue();
+		FilteredValue anotherlastValue = lastReturnedilteredValue.orElseThrow(() -> new Exception("Last returned filtered value not present"));
+		assertEquals(anotherlastValue,v2);
 		
 	}
 }

@@ -160,7 +160,7 @@ public abstract class FilterBase implements Filter {
 		assert(timestamp>0);
 		synchronized (history) {
 			int size = history.size();
-			boolean ops=history.removeIf(s -> s.timestamp<=timestamp);
+			history.removeIf(s -> s.timestamp<=timestamp);
 			return size - history.size();
 		}
 	}

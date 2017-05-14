@@ -172,12 +172,12 @@ public class Plugin implements ChangeValueListener {
 		if (values==null || values.isEmpty()) {
 			throw new IllegalArgumentException("No monitor points definition found"); 
 		}
-		logger.info("Plugin (ID="+pluginId+") started");
+		logger.info("Plugin (ID=%s) started",pluginId);
 		values.forEach(v -> { 
 			try {
 			putMonitoredPoint(new MonitoredValue(v.getId(), v.getRefreshTime(), schedExecutorSvc, this));
-		}catch (Throwable t){
-			logger.error("Error adding monitor point "+v.getId(),t);
+		}catch (Exception e){
+			logger.error("Error adding monitor point "+v.getId(),e);
 		} });
 	}
 	
@@ -263,10 +263,10 @@ public class Plugin implements ChangeValueListener {
 			Optional.ofNullable(monitorPoints.get(mPointID)).
 				orElseThrow(() -> new PluginException("A monitor point with ID "+mPointID+" is not present")).
 					submitSample(s);
-		} catch (Throwable t) {
+		} catch (Exception e) {
 			disabledMonitorPoints.add(mPointID);
 			logger.error("Exception sumbitting a sample to "+mPointID+": monitor point disabled");
-			throw new PluginException("Unknown exception submitting a sample to "+mPointID+" monitor point", t);
+			throw new PluginException("Unknown exception submitting a sample to "+mPointID+" monitor point", e);
 		}
 	}
 	
@@ -290,7 +290,7 @@ public class Plugin implements ChangeValueListener {
 			monitorPoints.put(mPoint.id, mPoint);
 			sz=monitorPoints.size();
 		}
-		logger.info("IAS plugin "+pluginId+" now manages "+sz+" monitor points");
+		logger.info("IAS plugin %s now manages %d monitor points",pluginId,sz);
 		return sz;
 	}
 
@@ -301,6 +301,7 @@ public class Plugin implements ChangeValueListener {
 	 */
 	@Override
 	public void monitoredValueUpdated(Optional<FilteredValue> value) {
-		logger.info("Value change "+value.toString());
+		value.ifPresent(v -> logger.info("Value change %s",v.toString()));
+		
 	}
 }

@@ -1,8 +1,12 @@
 package org.eso.ias.plugin.test.config;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Optional;
@@ -11,6 +15,8 @@ import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.config.Value;
 import org.junit.Test;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class JsonConfigReaderTest {
@@ -28,7 +34,7 @@ public class JsonConfigReaderTest {
 	 * @return
 	 * @throws Exception
 	 */
-	private BufferedReader getReader(String fileName) throws Exception{
+	private BufferedReader getReader(String fileName) {
 		String resource=resourcePath+fileName;
 		InputStream inStream = getClass().getResourceAsStream(resource);
 		assertNotNull("Resource not found: "+resource, inStream);
@@ -43,7 +49,7 @@ public class JsonConfigReaderTest {
 	 * @throws Exception
 	 */
 	@Test
-	public void testReadConfiguration() throws Exception {
+	public void testReadConfiguration() throws JsonMappingException, JsonParseException, IOException {
 		
 		ObjectMapper jackson2Mapper = new ObjectMapper();
 		PluginConfig config = jackson2Mapper.readValue(getReader("configOk.json"), PluginConfig.class);
@@ -55,17 +61,17 @@ public class JsonConfigReaderTest {
 		assertEquals(8192,config.getSinkPort());
 		assertEquals(2, config.getValues().length);
 		
-		Optional<Value> v1 = config.getValue("AlarmID");
-		assertTrue(v1.isPresent());
-		assertEquals(500, v1.get().getRefreshTime());
-		assertEquals("",v1.get().getFilter());
-		assertEquals("",v1.get().getFilterOptions());
+		Optional<Value> v1Opt = config.getValue("AlarmID");
+		assertTrue(v1Opt.isPresent());
+		assertEquals(500, v1Opt.get().getRefreshTime());
+		assertEquals("",v1Opt.get().getFilter());
+		assertEquals("",v1Opt.get().getFilterOptions());
 		
-		Optional<Value> v2 = config.getValue("TempID");
-		assertTrue(v2.isPresent());
-		assertEquals(1500, v2.get().getRefreshTime());
-		assertEquals("Average",v2.get().getFilter());
-		assertEquals("1, 150, 5",v2.get().getFilterOptions());
+		Optional<Value> v2Opt = config.getValue("TempID");
+		assertTrue(v2Opt.isPresent());
+		assertEquals(1500, v2Opt.get().getRefreshTime());
+		assertEquals("Average",v2Opt.get().getFilter());
+		assertEquals("1, 150, 5",v2Opt.get().getFilterOptions());
 	}
 	
 	/**
@@ -75,7 +81,7 @@ public class JsonConfigReaderTest {
 	 * @throws Exception
 	 */
 	@Test
-	public void testInvalidConf() throws Exception {
+	public void testInvalidConf() throws JsonMappingException, JsonParseException, IOException {
 		ObjectMapper jackson2Mapper = new ObjectMapper();
 		PluginConfig config = jackson2Mapper.readValue(getReader("configInvalidValues.json"), PluginConfig.class);
 		assertFalse(config.isValid());
