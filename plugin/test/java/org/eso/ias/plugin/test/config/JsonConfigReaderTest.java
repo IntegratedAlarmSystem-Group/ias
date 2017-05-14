@@ -10,9 +10,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.eso.ias.plugin.config.PluginConfig;
+import org.eso.ias.plugin.config.PluginConfigException;
+import org.eso.ias.plugin.config.PluginConfigFileReader;
 import org.eso.ias.plugin.config.Value;
+import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.junit.Test;
 
 import com.fasterxml.jackson.core.JsonParseException;
@@ -27,6 +35,15 @@ public class JsonConfigReaderTest {
 	 */
 	private static final String resourcePath="/org/eso/iasplugin/config/test/jsonfiles/";
 	
+	/**
+	 * The thread group for testing
+	 */
+	private static final ThreadGroup threadGroup = new ThreadGroup("JSONReaderThreadGroup");
+	
+	/**
+	 * The thread factory for testing
+	 */
+	private static final ThreadFactory threadFactory = new PluginThreadFactory(threadGroup);	
 	/**
 	 * Get a JSON file for testing from the jar
 	 * 
@@ -49,10 +66,14 @@ public class JsonConfigReaderTest {
 	 * @throws Exception
 	 */
 	@Test
-	public void testReadConfiguration() throws JsonMappingException, JsonParseException, IOException {
+	public void testReadConfiguration() throws PluginConfigException, TimeoutException, ExecutionException, InterruptedException {
 		
-		ObjectMapper jackson2Mapper = new ObjectMapper();
-		PluginConfig config = jackson2Mapper.readValue(getReader("configOk.json"), PluginConfig.class);
+		PluginConfigFileReader jsonFileReader = new PluginConfigFileReader(resourcePath+"configOk.json", threadFactory);
+		assertNotNull(jsonFileReader);
+		Future<PluginConfig> futurePluginConfig = jsonFileReader.getPluginConfig();
+		assertNotNull(futurePluginConfig);
+		PluginConfig config = futurePluginConfig.get(1, TimeUnit.MINUTES);
+		assertNotNull(config);
 		
 		assertTrue("The passed configuration is valid",config.isValid());
 		
@@ -81,24 +102,30 @@ public class JsonConfigReaderTest {
 	 * @throws Exception
 	 */
 	@Test
-	public void testInvalidConf() throws JsonMappingException, JsonParseException, IOException {
-		ObjectMapper jackson2Mapper = new ObjectMapper();
-		PluginConfig config = jackson2Mapper.readValue(getReader("configInvalidValues.json"), PluginConfig.class);
+	public void testInvalidConf() throws PluginConfigException, InterruptedException, ExecutionException, TimeoutException {
+		
+		PluginConfigFileReader jsonFileReader = new PluginConfigFileReader(resourcePath+"configInvalidValues.json", threadFactory);
+		PluginConfig config = jsonFileReader.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config.isValid());
 		
-		PluginConfig config2 = jackson2Mapper.readValue(getReader("configInvalidValues2.json"), PluginConfig.class);
+		PluginConfigFileReader jsonFileReader2 = new PluginConfigFileReader(resourcePath+"configInvalidValues2.json", threadFactory);
+		PluginConfig config2 = jsonFileReader2.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config2.isValid());
 		
-		PluginConfig config3 = jackson2Mapper.readValue(getReader("configInvalidValues3.json"), PluginConfig.class);
+		PluginConfigFileReader jsonFileReader3 = new PluginConfigFileReader(resourcePath+"configInvalidValues3.json", threadFactory);
+		PluginConfig config3 = jsonFileReader3.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config3.isValid());
 		
-		PluginConfig config4 = jackson2Mapper.readValue(getReader("configInvalidValues4.json"), PluginConfig.class);
+		PluginConfigFileReader jsonFileReader4 = new PluginConfigFileReader(resourcePath+"configInvalidValues4.json", threadFactory);
+		PluginConfig config4 = jsonFileReader4.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config4.isValid());
 		
-		PluginConfig config5 = jackson2Mapper.readValue(getReader("configInvalidValues5.json"), PluginConfig.class);
+		PluginConfigFileReader jsonFileReader5 = new PluginConfigFileReader(resourcePath+"configInvalidValues5.json", threadFactory);
+		PluginConfig config5 = jsonFileReader5.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config5.isValid());
 		
-		PluginConfig config6 = jackson2Mapper.readValue(getReader("configInvalidValues6.json"), PluginConfig.class);
+		PluginConfigFileReader jsonFileReader6 = new PluginConfigFileReader(resourcePath+"configInvalidValues6.json", threadFactory);
+		PluginConfig config6 = jsonFileReader6.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config6.isValid());
 		
 	}
