@@ -42,37 +42,8 @@ import org.slf4j.LoggerFactory;
  */
 public class Plugin implements ChangeValueListener {
 	
-	/**
-	 * The thread group to which all the threads
-	 * created by the plugin belong
-	 */
-	private final ThreadGroup threadGroup = new ThreadGroup("Plugin thread group");
 	
-	/**
-	 * The factory to get new threads
-	 */
-	private final ThreadFactory threadFactory = new PluginThreadFactory(threadGroup);
 	
-	/**
-	 * The property to let the use set the number of threads in the scheduled thread executor
-	 */
-	public static final String SCHEDULED_POOL_SIZE_PROPNAME = "org.eso.ias.plugin.scheduledthread.poolsize";
-	
-	/**
-	 * The default number of threads in the core is a  bit less of the number of available CPUs.
-	 * 
-	 * The task executed by those threads is to get values of monitored values applying filters 
-	 * and push the values to send in a queue (the sending will be done by another thread),
-	 * so it is a pure calculation. This number should give us a proper CPU usage without stealing
-	 * all the available resources in the server.
-	 */
-	public static final int defaultSchedExecutorPoolSize = Runtime.getRuntime().availableProcessors()/2;
-	
-	/**
-	 * The number of threads in the scheduled pool executor that get filtered values out of the
-	 * monitored values
-	 */
-	public static final int schedExecutorPoolSize = Integer.getInteger(SCHEDULED_POOL_SIZE_PROPNAME, defaultSchedExecutorPoolSize);
 	
 	/**
 	 * The map of monitor points and alarms produced by the 
@@ -82,11 +53,6 @@ public class Plugin implements ChangeValueListener {
 	 * The key is the ID of the monitor point
 	 */
 	private final Map<String,MonitoredValue> monitorPoints = Collections.synchronizedMap(new HashMap<>());
-	
-	/**
-	 * The scheduled executor service
-	 */
-	private final ScheduledExecutorService schedExecutorSvc= Executors.newScheduledThreadPool(schedExecutorPoolSize, threadFactory);
 	
 	/**
 	 * The name of the property to let the plugin publish logs about frequency
