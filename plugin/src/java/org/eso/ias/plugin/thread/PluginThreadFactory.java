@@ -7,15 +7,21 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The thread factory for the plugin.
+ * The singleton thread factory for the plugin.
  * <P>
- * Each thread has a name composed of the {@link #threadName}
+ * Each thread is assigned a name composed of the {@link #threadName}
  * string plus the {@link #threadIndex} suffix.
  * 
  * @author acaproni
  *
  */
 public class PluginThreadFactory implements ThreadFactory {
+	
+	/**
+	 * The thread group to which all the threads
+	 * created by the plugin belong
+	 */
+	private final ThreadGroup threadGroup = new ThreadGroup("Plugin thread group");
 	
 	/**
 	 * The logger
@@ -29,21 +35,35 @@ public class PluginThreadFactory implements ThreadFactory {
 	private static final String threadName = "Plugin thread - ";
 	
 	/**
-	 * The factory assigns the threads to this group 
-	 */
-	private final ThreadGroup threadGroup;
-	
-	/**
 	 * The number of created threads, is appended to the {@link #threadName}
 	 * to form the name of each thread
 	 */
 	private static final AtomicInteger threadIndex = new AtomicInteger(0);
-
-	public PluginThreadFactory(ThreadGroup threadGroup) {
-		if (threadGroup==null) {
-			throw new IllegalArgumentException("The thread group can't be null");
+	
+	/**
+	 * The singleton thread factory
+	 */
+	private static PluginThreadFactory threadFactory;
+	
+	/**
+	 * Build if it is the case and return the plugin
+	 * thread factory singleton.
+	 * 
+	 * @return The thread factory instance
+	 */
+	public synchronized static ThreadFactory getThreadFactory() {
+		if (threadFactory==null) {
+			threadFactory = new PluginThreadFactory();
 		}
-		this.threadGroup=threadGroup;
+		return threadFactory;
+	}
+
+	/**
+	 * Constructor
+	 * 
+	 * @param threadGroup The group to which assign the created threads
+	 */
+	private PluginThreadFactory() {
 		logger.trace("Thread factory created");
 	}
 
