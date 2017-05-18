@@ -2,4 +2,4 @@
 iasRun.py -l j org.junit.runner.JUnitCore org.eso.ias.plugin.test.config.JsonConfigReaderTest
 iasRun.py -l j org.junit.runner.JUnitCore org.eso.ias.plugin.test.filter.TestFilterBase
 iasRun.py -l j org.junit.runner.JUnitCore org.eso.ias.plugin.test.filter.NoneFilterTest
-
+iasRun.py -l j org.junit.runner.JUnitCore org.eso.ias.plugin.test.publisher.PublisherBaseTest
