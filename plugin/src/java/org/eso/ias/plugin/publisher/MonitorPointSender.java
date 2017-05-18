@@ -25,5 +25,5 @@ public interface MonitorPointSender {
 	 * 
 	 * @param monitorPoint
 	 */
-	void offer(Optional<FilteredValue> monitorPoint);
+	void offer(Optional<FilteredValue> monitorPoint) throws PublisherException;
 }

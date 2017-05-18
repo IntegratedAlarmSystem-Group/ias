@@ -10,6 +10,9 @@ import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertEquals;
 
@@ -43,8 +46,31 @@ public class PublisherBaseTest {
 		protected void publish(MonitoredSystemData data) {
 			
 		}
+
+		/**
+		 * @see org.eso.ias.plugin.publisher.PublisherBase#setUp()
+		 */
+		@Override
+		protected void setUp() throws Exception {
+			logger.info("Initialized");
+			
+		}
+
+		/**
+		 * @see org.eso.ias.plugin.publisher.PublisherBase#tearDown()
+		 */
+		@Override
+		protected void tearDown() throws Exception {
+			logger.info("Cleaned up");
+			
+		}
 		
 	}
+	
+	/**
+	 * The logger
+	 */
+	private final static Logger logger = LoggerFactory.getLogger(PublisherTest.class);
 	
 	/**
 	 * The ID of the plugin for testing

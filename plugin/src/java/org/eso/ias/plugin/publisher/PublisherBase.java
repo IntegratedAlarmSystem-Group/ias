@@ -20,7 +20,11 @@ import org.slf4j.LoggerFactory;
  * <code>PublisherBase</code> gets all the values from the monitored system and saves them
  * in a map until the throttling time expire and then sends all of them at once.
  * The map allows to easily save only the last update for each managed monitor point.
- * 
+ * <P>
+ * <em>Life cyle</em>: 
+ * <UL>
+ * 	<LI>{@link #start()} is the first method to call to allow a correct initialization.
+ *  <LI>{@link #shutdown()} must be called when down with this object to clean the resources
  * @author acaproni
  *
  */
@@ -93,6 +97,13 @@ public abstract class PublisherBase implements MonitorPointSender {
 	 * newly submitted monitor point values.
 	 */
 	private volatile boolean closed=false;
+	
+	/**
+	 * Signal that the object has been correctly initialized.
+	 * <P>
+	 * Monitor points will not be accepted if the object has not been correctly initialized.
+	 */
+	private volatile boolean initialized=false;
 
 	/**
 	 * Constructor
@@ -122,7 +133,7 @@ public abstract class PublisherBase implements MonitorPointSender {
 			throw new IllegalArgumentException("The executor service can't be null");
 		}
 		this.executorService=executorSvc;
-		logger.info("This plugn %s will send monitor points to %s@%d at a rate of %d msec",pluginId,serverName,serverPort,throttlingTime);
+		logger.info("Plugin {} sends monitor points to {}:{} at a rate of {} msec",pluginId,serverName,serverPort,throttlingTime);
 		monitorPointsToSend.setSystemID(pluginId);
 	}
 	
@@ -134,9 +145,24 @@ public abstract class PublisherBase implements MonitorPointSender {
 	protected abstract void publish(MonitoredSystemData data);
 	
 	/**
-	 * Start the sender
+	 * Performs the initialization of the implementers of this
+	 * abstract class.
+	 * 
+	 * @throws Exception Exception returned by the implementer
 	 */
-	public void start() {
+	protected abstract void setUp() throws Exception;
+	
+	/**
+	 * Start the sender
+	 * 
+	 * @throws PublisherException in case of error initializing
+	 */
+	public synchronized void start() throws PublisherException {
+		if (initialized) {
+			// Ops double initialization!
+			throw new PublisherException("PublisherBase already initialized");
+		}
+		logger.debug("Initializing");
 		// Start the thread to send the values to the core of the IAS
 		executorService.scheduleAtFixedRate(new Runnable() {
 			
@@ -157,6 +183,39 @@ public abstract class PublisherBase implements MonitorPointSender {
 			}
 		},
 		throttlingTime, throttlingTime, TimeUnit.MILLISECONDS);
+		logger.debug("Generation of statistics activated with a frequency of {} minutes",throttlingTime);
+		logger.debug("Invoking implementers defined setUp");
+		try {
+			setUp();
+		} catch (Exception e) {
+			throw new PublisherException("Eception invoking setUp", e);
+		}
+		initialized=true;
+		logger.debug("Initialized");
+	}
+	
+	/**
+	 * Performs the cleanup of the implementers of this
+	 * abstract class
+	 * 
+	 *  @throws Exception Exception returned by the implementer
+	 */
+	protected abstract void tearDown() throws Exception;
+	
+	/**
+	 * Shuts down the server cleaning all the associated resources
+	 */
+	public synchronized void shutdown() throws PublisherException{
+		if (closed) {
+			return;
+		}
+		logger.debug("Invoking implementers defined tearDown");
+		try {
+			tearDown();
+		} catch (Exception e) {
+			throw new PublisherException("Eception invoking tearDown", e);
+		}
+		logger.debug("Shutted down");
 	}
 
 	/**
@@ -166,9 +225,12 @@ public abstract class PublisherBase implements MonitorPointSender {
 	 * @see MonitorPointSender#offer(java.util.Optional)
 	 */
 	@Override
-	public void offer(Optional<FilteredValue> monitorPoint) {
+	public void offer(Optional<FilteredValue> monitorPoint) throws PublisherException {
 		if (closed) {
 			return;
+		}
+		if (!initialized) {
+			throw new PublisherException("Publishing monitor points before initialization");
 		}
 		monitorPoint.ifPresent(mp -> monitorPoints.put(mp.id, mp));
 	}
