@@ -7,9 +7,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -17,7 +14,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.config.Value;
 import org.eso.ias.plugin.filter.FilteredValue;
-import org.eso.ias.plugin.thread.PluginThreadFactory;
+import org.eso.ias.plugin.thread.PluginScheduledExecutorSvc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -141,7 +138,7 @@ public class Plugin implements ChangeValueListener {
 		logger.info("Plugin (ID=%s) started",pluginId);
 		values.forEach(v -> { 
 			try {
-			putMonitoredPoint(new MonitoredValue(v.getId(), v.getRefreshTime(), schedExecutorSvc, this));
+			putMonitoredPoint(new MonitoredValue(v.getId(), v.getRefreshTime(), PluginScheduledExecutorSvc.getInstance(), this));
 		}catch (Exception e){
 			logger.error("Error adding monitor point "+v.getId(),e);
 		} });
@@ -174,7 +171,7 @@ public class Plugin implements ChangeValueListener {
 					logger.info("#Submitted samples = "+submittedUpdates.getAndSet(0));
 				}
 			};
-			schedExecutorSvc.scheduleAtFixedRate(r,statsTimeInterval,statsTimeInterval,TimeUnit.MINUTES);
+			PluginScheduledExecutorSvc.getInstance().scheduleAtFixedRate(r,statsTimeInterval,statsTimeInterval,TimeUnit.MINUTES);
 		}
 	}
 	
@@ -184,20 +181,9 @@ public class Plugin implements ChangeValueListener {
 	 */
 	public void shutdown() {
 		logger.info("Shutting down the threads to update and send monitor points");
-		closed.set(true);
-		schedExecutorSvc.shutdown();
-		try {
-			// Wait a while for existing tasks to terminate
-			if (!schedExecutorSvc.awaitTermination(5, TimeUnit.SECONDS)) {
-				logger.info("Not all threads terminated: trying to force the termination");
-				schedExecutorSvc.shutdownNow(); 
-				// Wait a while for tasks to respond to being cancelled
-				if (schedExecutorSvc.awaitTermination(10, TimeUnit.SECONDS))
-					System.err.println("Pool did not terminate");
-			}
-		} catch (InterruptedException ie) {
-			schedExecutorSvc.shutdownNow();
-			Thread.currentThread().interrupt();
+		boolean alreadyClosed=closed.getAndSet(true);
+		if (!alreadyClosed) {
+			PluginScheduledExecutorSvc.getInstance().shutdown();
 		}
 	}
 	

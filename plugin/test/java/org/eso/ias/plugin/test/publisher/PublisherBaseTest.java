@@ -70,9 +70,8 @@ public class PublisherBaseTest {
 	public void setUp() {
 		// Build the publisher
 		ThreadGroup threadGroup = new ThreadGroup("Plugin thread group");
-		ThreadFactory threadFactory = new PluginThreadFactory(threadGroup);
 		int poolSize = Runtime.getRuntime().availableProcessors()/2;
-		ScheduledExecutorService schedExecutorSvc= Executors.newScheduledThreadPool(poolSize, threadFactory);
+		ScheduledExecutorService schedExecutorSvc= Executors.newScheduledThreadPool(poolSize, PluginThreadFactory.getThreadFactory());
 		publisher = new PublisherTest(pluginId, pluginServerName, pluginServerPort, schedExecutorSvc);
 	}
 	

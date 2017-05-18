@@ -34,12 +34,6 @@ public class JsonConfigReaderTest {
 	 * The thread group for testing
 	 */
 	private static final ThreadGroup threadGroup = new ThreadGroup("JSONReaderThreadGroup");
-	
-	/**
-	 * The thread factory for testing
-	 */
-	private static final ThreadFactory threadFactory = new PluginThreadFactory(threadGroup);	
-
 
 	/**
 	 * Read a valid configuration and check the correctness of the
@@ -50,7 +44,7 @@ public class JsonConfigReaderTest {
 	@Test
 	public void testReadConfiguration() throws PluginConfigException, TimeoutException, ExecutionException, InterruptedException {
 		
-		PluginConfigFileReader jsonFileReader = new PluginConfigFileReader(resourcePath+"configOk.json", threadFactory);
+		PluginConfigFileReader jsonFileReader = new PluginConfigFileReader(resourcePath+"configOk.json");
 		assertNotNull(jsonFileReader);
 		Future<PluginConfig> futurePluginConfig = jsonFileReader.getPluginConfig();
 		assertNotNull(futurePluginConfig);
@@ -86,27 +80,27 @@ public class JsonConfigReaderTest {
 	@Test
 	public void testInvalidConf() throws PluginConfigException, InterruptedException, ExecutionException, TimeoutException {
 		
-		PluginConfigFileReader jsonFileReader = new PluginConfigFileReader(resourcePath+"configInvalidValues.json", threadFactory);
+		PluginConfigFileReader jsonFileReader = new PluginConfigFileReader(resourcePath+"configInvalidValues.json");
 		PluginConfig config = jsonFileReader.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config.isValid());
 		
-		PluginConfigFileReader jsonFileReader2 = new PluginConfigFileReader(resourcePath+"configInvalidValues2.json", threadFactory);
+		PluginConfigFileReader jsonFileReader2 = new PluginConfigFileReader(resourcePath+"configInvalidValues2.json");
 		PluginConfig config2 = jsonFileReader2.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config2.isValid());
 		
-		PluginConfigFileReader jsonFileReader3 = new PluginConfigFileReader(resourcePath+"configInvalidValues3.json", threadFactory);
+		PluginConfigFileReader jsonFileReader3 = new PluginConfigFileReader(resourcePath+"configInvalidValues3.json");
 		PluginConfig config3 = jsonFileReader3.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config3.isValid());
 		
-		PluginConfigFileReader jsonFileReader4 = new PluginConfigFileReader(resourcePath+"configInvalidValues4.json", threadFactory);
+		PluginConfigFileReader jsonFileReader4 = new PluginConfigFileReader(resourcePath+"configInvalidValues4.json");
 		PluginConfig config4 = jsonFileReader4.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config4.isValid());
 		
-		PluginConfigFileReader jsonFileReader5 = new PluginConfigFileReader(resourcePath+"configInvalidValues5.json", threadFactory);
+		PluginConfigFileReader jsonFileReader5 = new PluginConfigFileReader(resourcePath+"configInvalidValues5.json");
 		PluginConfig config5 = jsonFileReader5.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config5.isValid());
 		
-		PluginConfigFileReader jsonFileReader6 = new PluginConfigFileReader(resourcePath+"configInvalidValues6.json", threadFactory);
+		PluginConfigFileReader jsonFileReader6 = new PluginConfigFileReader(resourcePath+"configInvalidValues6.json");
 		PluginConfig config6 = jsonFileReader6.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config6.isValid());
 		

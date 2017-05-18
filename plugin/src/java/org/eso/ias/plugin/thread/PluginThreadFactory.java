@@ -71,7 +71,7 @@ public class PluginThreadFactory implements ThreadFactory {
 	public Thread newThread(Runnable arg0) {
 		Thread t = new Thread(threadGroup,arg0, threadName+threadIndex.incrementAndGet());
 		t.setDaemon(true);
-		logger.debug("Thread "+t.getName()+" created");
+		logger.debug("Thread {} created",t.getName());
 		return t;
 	}
 }

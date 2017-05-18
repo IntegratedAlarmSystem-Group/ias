@@ -1,12 +1,12 @@
 package org.eso.ias.plugin;
 
 import java.util.Optional;
-import java.util.concurrent.ScheduledExecutorService;
 
 import org.eso.ias.plugin.filter.Filter;
 import org.eso.ias.plugin.filter.FilterException;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.filter.NoneFilter;
+import org.eso.ias.plugin.thread.PluginScheduledExecutorSvc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +66,7 @@ public class MonitoredValue implements Runnable {
 	 * The scheduled executor service.
 	 * It is needed to get a signal when the refresh rate elapses.
 	 */
-	private final ScheduledExecutorService schedExecutorSvc;
+	private final PluginScheduledExecutorSvc schedExecutorSvc;
 	
 	/**
 	 * The listener of updates of the value of this monitored point
@@ -97,7 +97,7 @@ public class MonitoredValue implements Runnable {
 			String id, 
 			long refreshRate, 
 			Filter filter, 
-			ScheduledExecutorService executorSvc,
+			PluginScheduledExecutorSvc executorSvc,
 			ChangeValueListener listener) {
 		if (id==null || id.trim().isEmpty()) {
 			throw new IllegalArgumentException("Invalid monitored value ID");
@@ -132,7 +132,7 @@ public class MonitoredValue implements Runnable {
 	public MonitoredValue(
 			String id, 
 			long refreshRate, 
-			ScheduledExecutorService executorSvc,
+			PluginScheduledExecutorSvc executorSvc,
 			ChangeValueListener listener) {
 		this(id,refreshRate, new NoneFilter(id),executorSvc,listener);
 	}

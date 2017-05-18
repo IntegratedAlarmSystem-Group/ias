@@ -10,8 +10,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
 
+import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,21 +92,17 @@ public class PluginConfigFileReader implements PluginConfigDao {
 	 * Read the configuration from the passed reader.
 	 * 
 	 * @param reader The reader to read the JSON file with the configuration
-	 * @param threadFactory the thread factory
-	 * @param srcName The name of the reasource
+	 * @param srcName The name of the resource
 	 */
-	public PluginConfigFileReader(BufferedReader reader, ThreadFactory threadFactory, String srcName) {
+	public PluginConfigFileReader(BufferedReader reader, String srcName) {
 		if (reader==null) {
 			throw new IllegalArgumentException("The reader can't be null");
-		}
-		if (threadFactory==null) {
-			throw new IllegalArgumentException("The thread factory can't be null");
 		}
 		if (srcName==null || srcName.isEmpty()) {
 			throw new IllegalArgumentException("The resource name can't be null nor empty");
 		}
 		this.srcName=srcName;
-		exService = Executors.newSingleThreadExecutor(threadFactory);
+		exService = Executors.newSingleThreadExecutor(PluginThreadFactory.getThreadFactory());
 		
 		futurePluginConfig = startAsyncReading(reader);
 	}
@@ -117,11 +113,10 @@ public class PluginConfigFileReader implements PluginConfigDao {
 	 * The passed parameter is the resource (i.e. a file in a jar) with the configuration. 
 	 * 
 	 * @param resourceName The name of the resource containing the JSON of the configuration
-	 * @param threadFactory the thread factory
 	 * @throws PluginConfigException in case of error accessing the resource
 	 */
-	public PluginConfigFileReader(String resourceName, ThreadFactory threadFactory) throws PluginConfigException {
-		this(getReader(resourceName),threadFactory,resourceName);
+	public PluginConfigFileReader(String resourceName) throws PluginConfigException {
+		this(getReader(resourceName),resourceName);
 	}
 	
 	/**
@@ -130,11 +125,10 @@ public class PluginConfigFileReader implements PluginConfigDao {
 	 * Read the configuration from the passed file.
 	 * 
 	 * @param fileName The name of the JSON file containing the configuration
-	 * @param threadFactory the thread factory
 	 * @throws PluginConfigException in case of error opening the file
 	 */
-	public PluginConfigFileReader(File fileName, ThreadFactory threadFactory) throws PluginConfigException {
-		this(getReader(fileName),threadFactory,fileName.getAbsolutePath());
+	public PluginConfigFileReader(File fileName) throws PluginConfigException {
+		this(getReader(fileName),fileName.getAbsolutePath());
 	}
 	
 	/**
