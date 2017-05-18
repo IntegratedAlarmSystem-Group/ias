@@ -39,9 +39,6 @@ import org.slf4j.LoggerFactory;
  */
 public class Plugin implements ChangeValueListener {
 	
-	
-	
-	
 	/**
 	 * The map of monitor points and alarms produced by the 
 	 * monitored system and whose filtered values will
@@ -173,6 +170,13 @@ public class Plugin implements ChangeValueListener {
 			};
 			PluginScheduledExecutorSvc.getInstance().scheduleAtFixedRate(r,statsTimeInterval,statsTimeInterval,TimeUnit.MINUTES);
 		}
+		// Adds the shutdown hook
+		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+			@Override
+			public void run() {
+				shutdown();
+			}
+		}, "Plugin shutdown hook"));
 	}
 	
 	/**
@@ -180,9 +184,9 @@ public class Plugin implements ChangeValueListener {
 	 * to free the allocated resources. 
 	 */
 	public void shutdown() {
-		logger.info("Shutting down the threads to update and send monitor points");
 		boolean alreadyClosed=closed.getAndSet(true);
 		if (!alreadyClosed) {
+			logger.info("Shutting down the threads to update and send monitor points");
 			PluginScheduledExecutorSvc.getInstance().shutdown();
 		}
 	}
