@@ -25,7 +25,7 @@ public class MonitoredSystemData {
 	/**
 	 * The id of the plugin.
 	 */
-	private String SystemID;
+	private String systemID;
 	
 	/**
 	 * ISO-8601 formatted time when the 
@@ -48,14 +48,14 @@ public class MonitoredSystemData {
 	 * @return the systemID
 	 */
 	public String getSystemID() {
-		return SystemID;
+		return systemID;
 	}
 
 	/**
 	 * @param systemID the systemID to set
 	 */
 	public void setSystemID(String systemID) {
-		SystemID = systemID;
+		this.systemID = systemID;
 	}
 
 	/**
@@ -89,4 +89,20 @@ public class MonitoredSystemData {
 		this.monitorPoints = monitorPoints;
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder ret = new StringBuilder("Monitored System Data packet [ID=");
+		ret.append(systemID);
+		ret.append(", at ");
+		ret.append(publishTime);
+		ret.append(", ");
+		ret.append(monitorPoints.size());
+		ret.append(" monitor points: ");
+		monitorPoints.forEach( mp -> {
+			ret.append(' ');
+			ret.append(mp.toString());
+		});
+		ret.append(']');
+		return ret.toString();
+	}
 }
