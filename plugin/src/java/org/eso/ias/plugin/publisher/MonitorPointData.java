@@ -128,4 +128,20 @@ public class MonitorPointData {
 		this.id = id;
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		StringBuilder ret = new StringBuilder("MonitorPointData(id=");
+		ret.append(id);
+		ret.append(", value=");
+		ret.append(value);
+		ret.append(", filteredTime=");
+		ret.append(filteredTime);
+		ret.append(", sampleTime=");
+		ret.append(sampleTime);
+		ret.append(')');
+		return ret.toString();
+	}
 }
