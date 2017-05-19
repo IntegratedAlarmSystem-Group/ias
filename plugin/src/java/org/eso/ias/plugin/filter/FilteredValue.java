@@ -63,7 +63,7 @@ public class FilteredValue {
 			throw new IllegalArgumentException("The collection of samples can't be null");
 		}
 		if (samples.isEmpty()) {
-			throw new IllegalArgumentException("The collection of samples can't empty");
+			throw new IllegalArgumentException("The collection of samples can't be empty");
 		}
 		if (id==null || id.isEmpty()){ 
 			throw new IllegalArgumentException("Invalid null or empty ID");
