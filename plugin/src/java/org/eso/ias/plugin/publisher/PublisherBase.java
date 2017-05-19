@@ -162,6 +162,10 @@ public abstract class PublisherBase implements MonitorPointSender {
 			// Ops double initialization!
 			throw new PublisherException("PublisherBase already initialized");
 		}
+		if (closed) {
+			// Ops double initialization!
+			throw new PublisherException("Cannot initialize a closed PublisherBase");
+		}
 		logger.debug("Initializing");
 		// Start the thread to send the values to the core of the IAS
 		executorService.scheduleAtFixedRate(new Runnable() {
@@ -209,6 +213,7 @@ public abstract class PublisherBase implements MonitorPointSender {
 		if (closed) {
 			return;
 		}
+		closed=true;
 		logger.debug("Invoking implementers defined tearDown");
 		try {
 			tearDown();
