@@ -49,6 +49,26 @@ public class Plugin implements ChangeValueListener {
 	private final Map<String,MonitoredValue> monitorPoints = Collections.synchronizedMap(new HashMap<>());
 	
 	/**
+	 * The name of the property to let the plugin provide detailed statistics
+	 */
+	public static final String LOG_STATS_DETAILED_PROPNAME = "org.eso.ias.plugin.stats.detailed";
+	
+	/**
+	 * If <code>true</code>, the plugin provides detailed statistics of the updates
+	 * of the monitor point values.
+	 * <P>
+	 * Due to the definition of {@link Boolean#getBoolean(String)}, <code>deepStats</code> 
+	 * defaults to <code>false</code>.
+	 */
+	private static final boolean deepStats = Boolean.getBoolean(LOG_STATS_DETAILED_PROPNAME);
+	
+	/**
+	 * The collector of the detailed statistics
+	 */
+	private Optional<DetailedStatsCollector> detailedStatsCollector = 
+			deepStats?Optional.of(new DetailedStatsCollector()):Optional.empty();
+	
+	/**
 	 * The name of the property to let the plugin publish logs about frequency
 	 */
 	public static final String LOG_STATS_FREQUENCY_PROPNAME = "org.eso.ias.plugin.stats.frequency";
@@ -61,8 +81,7 @@ public class Plugin implements ChangeValueListener {
 	/**
 	 * The time interval (in minutes) to log usage statistics.
 	 */
-	private final int statsTimeInterval = Integer.getInteger(LOG_STATS_FREQUENCY_PROPNAME, defaultStatsGeneratorFrequency);
-	
+	private static final int statsTimeInterval = Integer.getInteger(LOG_STATS_FREQUENCY_PROPNAME, defaultStatsGeneratorFrequency);
 	
 	/**
 	 * The logger
@@ -98,8 +117,11 @@ public class Plugin implements ChangeValueListener {
 	private final AtomicLong submittedUpdates = new AtomicLong(0);
 	
 	/**
-	 * If submitting samples to a monitor points,
-	 * it is added to this list and vnever updated again.
+	 * If submitting samples to a monitor points returns an error,
+	 * it is added to this list and never updated again.
+	 * <P>
+	 * The reason to disable the update of a monitor point is to catch
+	 * errors in the implementation of the filtering. 
 	 */
 	private final Set<String> disabledMonitorPoints = new TreeSet<>();
 
@@ -166,6 +188,7 @@ public class Plugin implements ChangeValueListener {
 				@Override
 				public void run() {
 					logger.info("#Submitted samples = "+submittedUpdates.getAndSet(0));
+					detailedStatsCollector.ifPresent(detailedStats -> detailedStats.logAndReset());
 				}
 			};
 			PluginScheduledExecutorSvc.getInstance().scheduleAtFixedRate(r,statsTimeInterval,statsTimeInterval,TimeUnit.MINUTES);
@@ -192,8 +215,8 @@ public class Plugin implements ChangeValueListener {
 	}
 	
 	/**
-	 * Sends the update (the sample) to the monitor
-	 * point with the given ID
+	 * A new value of a monitor point has been provided by the monitored system: 
+	 * the value must be sent to to the monitor point with the given ID for filtering.
 	 * 
 	 * @param mPointID The ID of the monitored point to submit the sample to
 	 * @param s the new sample to submit to the monitored point
@@ -224,6 +247,8 @@ public class Plugin implements ChangeValueListener {
 			logger.error("Exception sumbitting a sample to "+mPointID+": monitor point disabled");
 			throw new PluginException("Unknown exception submitting a sample to "+mPointID+" monitor point", e);
 		}
+		// Upadates the detailed statistics, if requested
+		detailedStatsCollector.ifPresent(stats -> stats.mPointUpdated(mPointID));
 	}
 	
 	/**
@@ -251,7 +276,9 @@ public class Plugin implements ChangeValueListener {
 	}
 
 	/**
-	 * TODO: this method is here for testing only and must be removed
+	 * A  monitor point value has been updated and must be forwarded to the core of the IAS.
+	 * 
+	 * TODO: complete the implementation with statistics and the sending to the IAS
 	 * 
 	 * @see org.eso.ias.plugin.ChangeValueListener#monitoredValueUpdated(org.eso.ias.plugin.filter.FilteredValue)
 	 */
