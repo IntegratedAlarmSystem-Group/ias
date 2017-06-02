@@ -143,6 +143,10 @@ public class PublisherTestCommon implements PublisherEventsListener {
 		boolean ret = v.id==d.getId();
 		ret = ret && v.value.toString().equals(d.getValue());
 		ret = ret && iso8601dateFormat.format(new Date(v.producedTimestamp)).equals(d.getFilteredTime());
+		
+		if (!ret) {
+			logger.error("The FileteredValue {} and the MonitorPointData {} do not match!",v.toString(),d.toString());
+		}
 		return ret;
 	}
 	
