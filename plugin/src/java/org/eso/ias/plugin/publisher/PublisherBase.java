@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import org.eso.ias.plugin.filter.FilteredValue;
@@ -104,6 +105,11 @@ public abstract class PublisherBase implements MonitorPointSender {
 	 * Monitor points will not be accepted if the object has not been correctly initialized.
 	 */
 	private volatile boolean initialized=false;
+	
+	/**
+	 * The number of messages sent to the core of the IAS
+	 */
+	private final AtomicLong publishedMessages = new AtomicLong(0);
 
 	/**
 	 * Constructor
@@ -185,6 +191,7 @@ public abstract class PublisherBase implements MonitorPointSender {
 							monitorPoints.values().stream().map(v -> new MonitorPointData(v)).collect(Collectors.toList()));
 					monitorPoints.clear();
 				}
+				publishedMessages.incrementAndGet();
 				publish(monitorPointsToSend);
 			}
 		},
@@ -240,5 +247,10 @@ public abstract class PublisherBase implements MonitorPointSender {
 			throw new PublisherException("Publishing monitor points before initialization");
 		}
 		monitorPoint.ifPresent(mp -> monitorPoints.put(mp.id, mp));
+	}
+	
+	@Override
+	public long numOfMessagesSent() {
+		return publishedMessages.getAndSet(0L);
 	}
 }
