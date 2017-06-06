@@ -100,6 +100,15 @@ public abstract class PublisherBase implements MonitorPointSender {
 	private volatile boolean closed=false;
 	
 	/**
+	 * <code>stopped</code> is set and unset calling
+	 * {@link #stopSending()} and {@link #startSending()} respectively.
+	 * 
+	 * @see MonitorPointSender#stopSending()
+	 * @see MonitorPointSender#startSending()
+	 */
+	private volatile boolean stopped=false;
+	
+	/**
 	 * Signal that the object has been correctly initialized.
 	 * <P>
 	 * Monitor points will not be accepted if the object has not been correctly initialized.
@@ -155,22 +164,23 @@ public abstract class PublisherBase implements MonitorPointSender {
 	 * Performs the initialization of the implementers of this
 	 * abstract class.
 	 * 
-	 * @throws Exception Exception returned by the implementer
+	 * @throws PublisherException Exception returned by the implementer
 	 */
-	protected abstract void setUp() throws Exception;
+	protected abstract void start() throws PublisherException;
 	
 	/**
-	 * Start the sender
+	 * Initialize the publisher
 	 * 
 	 * @throws PublisherException in case of error initializing
+	 * @see MonitorPointSender#setUp()
 	 */
-	public synchronized void start() throws PublisherException {
+	public synchronized void setUp() throws PublisherException {
 		if (initialized) {
 			// Ops double initialization!
 			throw new PublisherException("PublisherBase already initialized");
 		}
 		if (closed) {
-			// Ops double initialization!
+			// Ops already closed!
 			throw new PublisherException("Cannot initialize a closed PublisherBase");
 		}
 		logger.debug("Initializing");
@@ -180,6 +190,10 @@ public abstract class PublisherBase implements MonitorPointSender {
 			@Override
 			public void run() {
 				if (monitorPoints.isEmpty()) {
+					return;
+				}
+				if (stopped) {
+					monitorPoints.clear();
 					return;
 				}
 				synchronized (iso8601dateFormat) {
@@ -194,12 +208,11 @@ public abstract class PublisherBase implements MonitorPointSender {
 				publishedMessages.incrementAndGet();
 				publish(monitorPointsToSend);
 			}
-		},
-		throttlingTime, throttlingTime, TimeUnit.MILLISECONDS);
+		},throttlingTime, throttlingTime, TimeUnit.MILLISECONDS);
 		logger.debug("Generation of statistics activated with a frequency of {} minutes",throttlingTime);
 		logger.debug("Invoking implementers defined setUp");
 		try {
-			setUp();
+			start();
 		} catch (Exception e) {
 			throw new PublisherException("Eception invoking setUp", e);
 		}
@@ -208,29 +221,30 @@ public abstract class PublisherBase implements MonitorPointSender {
 	}
 	
 	/**
-	 * Performs the cleanup of the implementers of this
-	 * abstract class
-	 * 
-	 *  @throws Exception Exception returned by the implementer
-	 */
-	protected abstract void tearDown() throws Exception;
-	
-	/**
 	 * Shuts down the server cleaning all the associated resources
+	 * 
+	 * @throws PublisherException returned by the implementer
+	 * @see MonitorPointSender#tearDown()
 	 */
-	public synchronized void shutdown() throws PublisherException{
+	public void tearDown() throws PublisherException {
 		if (closed) {
 			return;
 		}
 		closed=true;
 		logger.debug("Invoking implementers defined tearDown");
 		try {
-			tearDown();
+			shutdown();
 		} catch (Exception e) {
 			throw new PublisherException("Eception invoking tearDown", e);
 		}
 		logger.debug("Shutted down");
 	}
+	
+	/**
+	 * Performs the cleanup of the implementers of this
+	 * abstract class
+	 */
+	protected abstract void shutdown() throws PublisherException;
 
 	/**
 	 * A new value has been produced by the monitored system:
@@ -252,5 +266,32 @@ public abstract class PublisherBase implements MonitorPointSender {
 	@Override
 	public long numOfMessagesSent() {
 		return publishedMessages.getAndSet(0L);
+	}
+
+	/**
+	 * @see #stopped
+	 * @see org.eso.ias.plugin.publisher.MonitorPointSender#startSending()
+	 * 
+	 */
+	@Override
+	public void startSending() {
+		stopped=false;		
+	}
+
+	/**
+	 * @see #stopped
+	 * @see org.eso.ias.plugin.publisher.MonitorPointSender#stopSending()
+	 */
+	@Override
+	public void stopSending() {
+		stopped=true;		
+	}
+
+	/**
+	 * @see org.eso.ias.plugin.publisher.MonitorPointSender#isStopped()
+	 */
+	@Override
+	public boolean isStopped() {
+		return stopped;
 	}
 }

@@ -201,7 +201,7 @@ public class PublisherTestCommon implements PublisherEventsListener {
 		logger.debug("Releasing resource");
 		receivedValues.clear();
 		publishedValues.clear();
-		publisher.shutdown();
+		publisher.tearDown();
 
 	}
 }

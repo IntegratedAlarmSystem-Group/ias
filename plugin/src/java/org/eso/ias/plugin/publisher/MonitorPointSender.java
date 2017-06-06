@@ -22,6 +22,13 @@ import org.eso.ias.plugin.filter.FilteredValue;
  * Implementers of this class, provides the number of messages
  * sent to the core of the IAS in the last observation period
  * ({@link #numOfMessagesSent()}).
+ * <P>
+ * <EM>Life cycle:<?EM><BR><UL>
+ * 	<LI>{@link #setUp()} must be called to allocate the resources needed 
+ * for sending massages to the core of the IAS
+ *  <LI>{@link #tearDown()} must be called to release the resources: 
+ *      no more messages can be sent after calling this method
+ * </UL>
  * 
  * @author acaproni
  */
@@ -44,4 +51,46 @@ public interface MonitorPointSender {
 	 * @return The number of messages sent to the core of the IAS
 	 */
 	public long numOfMessagesSent();
+	
+	/**
+	 * Initialization method to allocate the resources needed to send
+	 * messages to the core of the IAS.
+	 * <P>
+	 * Even if the publisher is ready to send messages, no message will be
+	 * published before calling {@link #startSending()}.
+	 * 
+	 * @throws PublisherException In case of error acquiring the resources
+	 */
+	public void setUp() throws PublisherException;
+	
+	/**
+	 * Free all the resources when sending messages to the core of the IAS
+	 * is not required anymore.
+	 * 
+	 * @throws PublisherException In case of errore releasing the resources
+	 */
+	public void tearDown() throws PublisherException;
+	
+	/**
+	 * Publishing of messages begins after calling this method.
+	 * 
+	 * @see #stopSending()
+	 */
+	public void startSending();
+	
+	/**
+	 * Stop sending messages to the core of the IAS.
+	 * <P>
+	 * Updates to be published when the sender is stopped are lost forever.
+	 * 
+	 * @see #startSending()
+	 */
+	public void stopSending();
+	
+	/**
+	 * 
+	 * @return <code>true</code> is sending values to the core of the IAS
+	 *         has been stopped
+	 */
+	public boolean isStopped();
 }

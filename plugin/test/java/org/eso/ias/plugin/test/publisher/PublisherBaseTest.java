@@ -3,6 +3,7 @@ package org.eso.ias.plugin.test.publisher;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import java.util.Arrays;
 import java.util.List;
@@ -56,9 +57,8 @@ public class PublisherBaseTest extends PublisherTestCommon {
 	 */
 	@Test
 	public void testSetUp() throws PublisherException {
-		publisher.start();
+		publisher.setUp();
 		assertEquals("Not initilized", 1L, publisher.getNumOfSetUpInvocations());
-		publisher.shutdown();
 	}
 	
 	/**
@@ -66,10 +66,9 @@ public class PublisherBaseTest extends PublisherTestCommon {
 	 */
 	@Test(expected=PublisherException.class)
 	public void testSetUpTwice() throws PublisherException {
-		publisher.start();
+		publisher.setUp();
 		assertEquals("Not initilized", 1L, publisher.getNumOfSetUpInvocations());
-		publisher.start();
-		publisher.shutdown();
+		publisher.setUp();
 	}
 	
 	/**
@@ -77,7 +76,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 	 */
 	@Test(expected=PublisherException.class)
 	public void testSetUpWhenClosed() throws PublisherException {
-		publisher.start();
+		publisher.setUp();
 		assertEquals("Not initilized", 1L, publisher.getNumOfSetUpInvocations());
 		
 		// Close the publisher
@@ -86,27 +85,25 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		// if the PublisherException is thrown shuttinf down or while initializing 
 		// after the close
 		try {
-			publisher.shutdown();
+			publisher.tearDown();
 		} catch (PublisherException pe) {
 			throw new IllegalStateException("Unexpected exception while shuttig down");
 		}
-		publisher.start();
-		
-		publisher.shutdown();
+		publisher.setUp();
 	}
 	
 	/**
-	 * Test if the user provided tearDown method is invoked
+	 * Test if the user provided shutdown method is invoked
 	 * while shutting down the publisher
 	 */
 	@Test
 	public void testShutdown() throws PublisherException {
 		assertEquals("tearDown count wrong",0L,publisher.getNumOfTearDownInvocations());
-		publisher.shutdown();
+		publisher.tearDown();
 		assertEquals("tearDown not executed",1L,publisher.getNumOfTearDownInvocations());
-		publisher.shutdown();
-		publisher.shutdown();
-		publisher.shutdown();
+		publisher.tearDown();
+		publisher.tearDown();
+		publisher.tearDown();
 		assertEquals("tearDown executed more then once",1L,publisher.getNumOfTearDownInvocations());
 	}
 	
@@ -120,7 +117,8 @@ public class PublisherBaseTest extends PublisherTestCommon {
 	 */
 	@Test
 	public void testPublishOneValue() throws PublisherException {
-		publisher.start();
+		publisher.setUp();
+		publisher.startSending();
 		expectedValues = new CountDownLatch(1);
 		
 		List<Sample> samples = Arrays.asList(new Sample(Integer.valueOf(67)));
@@ -139,7 +137,6 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		assertNotNull("Expected value not published",d);
 		assertTrue("Offered and published values do not match "+v.toString()+"<->"+d.toString(), match(v,d));
 		
-		publisher.shutdown();
 	}
 	
 	/**
@@ -152,7 +149,8 @@ public class PublisherBaseTest extends PublisherTestCommon {
 	 */
 	@Test
 	public void testPublishManyValues() throws PublisherException {
-		publisher.start();
+		publisher.setUp();
+		publisher.startSending();
 		expectedValues = new CountDownLatch(5);
 		
 		List<Sample> samples = Arrays.asList(new Sample(Integer.valueOf(67)));
@@ -182,8 +180,6 @@ public class PublisherBaseTest extends PublisherTestCommon {
 			assertNotNull("Expected value not published",d);
 			assertTrue("Offered and published values do not match", match(v,d));
 		}
-		
-		publisher.shutdown();
 	}
 	
 	/**
@@ -201,7 +197,8 @@ public class PublisherBaseTest extends PublisherTestCommon {
 	 */
 	@Test
 	public void testPublishOneValueManyTimes() throws PublisherException {
-		publisher.start();
+		publisher.setUp();
+		publisher.startSending();
 		
 		final int valuesToOffer=5000;
 		
@@ -227,7 +224,69 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		MonitorPointData d = receivedValues.get(lastOffered.id);
 		assertNotNull("Expected value not published",d);
 		assertTrue("Offered and published values do not match", match(lastOffered,d));
+	}
+	
+	/**
+	 * Test the setting of the boolean to start/stop the sending
+	 * of values to the core of the IAS.
+	 *  
+	 * @throws PublisherException
+	 */
+	@Test
+	public void testStoppedBoolean() throws PublisherException {
+		publisher.setUp();
+		assertFalse(publisher.isStopped());
+		publisher.stopSending();
+		assertTrue(publisher.isStopped());
+		publisher.startSending();
+		assertFalse(publisher.isStopped());
+	}
+	
+	/**
+	 * Check if starting/stopping the publisher, effectively 
+	 * trigger the invocation or not invocation of {@link PublisherTestImpl#publish(MonitoredSystemData)}
+	 * 
+	 * @throws PublisherException
+	 */
+	@Test
+	public void testStopped() throws PublisherException {
+		publisher.setUp();
 		
-		publisher.shutdown();
+		// Check if the value is received when no stopped
+		publisher.startSending();
+		expectedValues = new CountDownLatch(1);
+		
+		List<Sample> samples = Arrays.asList(new Sample(Integer.valueOf(67)));
+		FilteredValue v = new FilteredValue("OneID", Integer.valueOf(67), samples, System.currentTimeMillis());
+		publishedValues.put(v.id,v);
+		Optional<FilteredValue> optVal = Optional.of(v);
+		publisher.offer(optVal);
+		try {
+			assertTrue(expectedValues.await(2*PublisherBase.throttlingTime, TimeUnit.MILLISECONDS));
+		} catch (InterruptedException ie) {
+			Thread.currentThread().interrupt();
+		}
+		
+		// Check if the value is NOT received when stopped
+		publisher.stopSending();
+		expectedValues = new CountDownLatch(1);
+		publishedValues.put(v.id,v);
+		publisher.offer(Optional.of(v));
+		try {
+			assertFalse(expectedValues.await(2*PublisherBase.throttlingTime, TimeUnit.MILLISECONDS));
+		} catch (InterruptedException ie) {
+			Thread.currentThread().interrupt();
+		}
+		
+		// Enable the sending again and check if the value is published
+		publisher.startSending();
+		expectedValues = new CountDownLatch(1);
+		publishedValues.put(v.id,v);
+		publisher.offer(Optional.of(v));
+		try {
+			assertTrue(expectedValues.await(2*PublisherBase.throttlingTime, TimeUnit.MILLISECONDS));
+		} catch (InterruptedException ie) {
+			Thread.currentThread().interrupt();
+		}
 	}
 }

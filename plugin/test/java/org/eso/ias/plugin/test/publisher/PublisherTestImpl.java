@@ -5,6 +5,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.MonitoredSystemData;
 import org.eso.ias.plugin.publisher.PublisherBase;
+import org.eso.ias.plugin.publisher.PublisherException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,13 +78,13 @@ public class PublisherTestImpl extends PublisherBase {
 	}
 
 	@Override
-	protected void setUp() throws Exception {
+	protected void start() throws PublisherException {
 		listener.initialized();
 		numOfSetUpInvocations++;
 	}
 
 	@Override
-	protected void tearDown() throws Exception {
+	protected void shutdown() throws PublisherException {
 		listener.closed();
 		numOfTearDownInvocations++;
 	}

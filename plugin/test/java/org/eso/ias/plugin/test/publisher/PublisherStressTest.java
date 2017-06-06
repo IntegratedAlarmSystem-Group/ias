@@ -115,7 +115,8 @@ public class PublisherStressTest extends PublisherTestCommon {
 	 */
 	@Test
 	public void stressTest() throws PublisherException, InterruptedException, ExecutionException {
-		publisher.start();
+		publisher.setUp();
+		publisher.startSending();
 		
 		int numOfValuesForEachThread=10000;
 		expectedValues = new CountDownLatch(numOfValuesForEachThread*numOfThreads);
@@ -158,5 +159,7 @@ public class PublisherStressTest extends PublisherTestCommon {
 	    		assertNotNull(d);
 	    	}
 	    }
+	    
+	    publisher.tearDown();
 	}
 }
