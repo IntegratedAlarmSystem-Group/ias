@@ -17,6 +17,7 @@ import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.plugin.publisher.MonitoredSystemData;
 import org.eso.ias.plugin.publisher.PublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
+import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,12 +25,12 @@ import org.slf4j.LoggerFactory;
 /**
  * Test the {@link PublisherBase}.
  * <P>
- * <code>PublisherBaseTest</code> instantiates a {@link PublisherTestImpl} object
+ * <code>PublisherBaseTest</code> instantiates a {@link ListenerPublisher} object
  * to be notified about events of the {@link PublisherBase}.
  * <P>
  * To check the publishing of monitor points, an arbitrary number of {@link FilteredValue} 
  * objects is sent to the {@link PublisherBase#offer(java.util.Optional)}.
- * The test checks if all the messages are routed to the {@link PublisherTestImpl} by means of a 
+ * The test checks if all the messages are routed to the {@link ListenerPublisher} by means of a 
  * {@link CountDownLatch}. Received messages are stored in a Map, for comparison with the ones
  * being offered.
  * 
@@ -108,7 +109,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 	}
 	
 	/**
-	 * Check if {@link PublisherTestImpl#publish(MonitoredSystemData)} is invoked to 
+	 * Check if {@link ListenerPublisher#publish(MonitoredSystemData)} is invoked to 
 	 * publish just one {@link FilteredValue}.
 	 * <P> 
 	 * It also checks if the offered and the received values match.
@@ -140,7 +141,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 	}
 	
 	/**
-	 * Check if {@link PublisherTestImpl#publish(MonitoredSystemData)} is invoked to 
+	 * Check if {@link ListenerPublisher#publish(MonitoredSystemData)} is invoked to 
 	 * publish all the {@link FilteredValue}.
 	 * <P> 
 	 * It also checks if the offered and the received values match.
@@ -183,7 +184,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 	}
 	
 	/**
-	 * Check if {@link PublisherTestImpl#publish(MonitoredSystemData)} is invoked to 
+	 * Check if {@link ListenerPublisher#publish(MonitoredSystemData)} is invoked to 
 	 * publish just the last sent {@link FilteredValue}.
 	 * <P> 
 	 * It also checks if the offered and the received values match.
@@ -244,7 +245,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 	
 	/**
 	 * Check if starting/stopping the publisher, effectively 
-	 * trigger the invocation or not invocation of {@link PublisherTestImpl#publish(MonitoredSystemData)}
+	 * trigger the invocation or not invocation of {@link ListenerPublisher#publish(MonitoredSystemData)}
 	 * 
 	 * @throws PublisherException
 	 */

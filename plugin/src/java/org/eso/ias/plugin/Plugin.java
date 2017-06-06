@@ -15,9 +15,12 @@ import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.config.Value;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
+import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.thread.PluginScheduledExecutorSvc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.inject.Inject;
 
 /**
  * The main class to write IAS plugins.
@@ -148,7 +151,7 @@ public class Plugin implements ChangeValueListener {
 	/**
 	 * The object that sends monitor points to the core of the IAS.
 	 */
-	private MonitorPointSender mpPublisher;
+	private final MonitorPointSender mpPublisher;
 	
 	/**
 	 * <code>errorsPublishing</code> records the number of errors
@@ -159,19 +162,22 @@ public class Plugin implements ChangeValueListener {
 	private final AtomicLong errorsPublishing= new AtomicLong(0);
 
 	/**
-	 * Build a plugin with the passed parameters
+	 * Build a plugin with the passed parameters.
 	 * 
 	 * @param id The Identifier of the plugin
 	 * @param sinkServerName The server to send 
 	 * 						 monitor point values and alarms to
 	 * @param sinkServerPort The IP port number 
 	 * @param values The list of monitor point values and alarms
+	 * @param sender The publisher of monitor point values to the IAS core
 	 */
+	@Inject
 	public Plugin(
 			String id, 
 			String sinkServerName,
 			int sinkServerPort,
-			Collection<Value> values) {
+			Collection<Value> values,
+			MonitorPointSender sender) {
 		if (id==null || id.trim().isEmpty()) {
 			throw new IllegalArgumentException("The ID can't be null nor empty");
 		}
@@ -187,6 +193,10 @@ public class Plugin implements ChangeValueListener {
 		if (values==null || values.isEmpty()) {
 			throw new IllegalArgumentException("No monitor points definition found"); 
 		}
+		if (sender==null) {
+			throw new IllegalArgumentException("No monitor point sender");
+		}
+		this.mpPublisher=sender;
 		logger.info("Plugin (ID=%s) started",pluginId);
 		values.forEach(v -> { 
 			try {
@@ -197,23 +207,31 @@ public class Plugin implements ChangeValueListener {
 	}
 	
 	/**
-	 * Build a plugin from the passed configuration
-	 * @param config
+	 * Build a plugin from the passed configuration.
+	 * 
+	 * @see Plugin#Plugin(String, String, int, Collection, MonitorPointSender)
 	 */
-	public Plugin(PluginConfig config) {
+	@Inject
+	public Plugin(PluginConfig config,MonitorPointSender sender) {
 		this(
 				config.getId(),
 				config.getSinkServer(),
 				config.getSinkPort(),
-				config.getValuesAsCollection());
+				config.getValuesAsCollection(),
+				sender);
 	}
 	
 	/**
 	 * This method must be called at the beginning
 	 * to acquire the needed resources.
+	 * 
+	 * @throws PublisherException In case of error initializing the publisher
 	 */
-	public void start() {
-		logger.info("Started");
+	public void start() throws PublisherException {
+		logger.debug("Initializing");
+		
+		mpPublisher.setUp();
+		logger.info("Publisher initialized.");
 		
 		if (statsTimeInterval>0) {
 			// Start the logger of statistics
@@ -237,6 +255,7 @@ public class Plugin implements ChangeValueListener {
 				shutdown();
 			}
 		}, "Plugin shutdown hook"));
+		logger.info("Plugin {} initialized",pluginId);
 	}
 	
 	/**
@@ -248,6 +267,17 @@ public class Plugin implements ChangeValueListener {
 		if (!alreadyClosed) {
 			logger.info("Shutting down the threads to update and send monitor points");
 			PluginScheduledExecutorSvc.getInstance().shutdown();
+			logger.info("Stopping the sending of monitor point values to the core of the IAS");
+			mpPublisher.stopSending();
+			logger.info("Clearing the publisher of monitor point values");
+			try {
+				mpPublisher.tearDown();
+			} catch (PublisherException pe) {
+				// Logs (and ignore) the error
+				logger.error("Error clearing the publisher: {}",pe.getMessage());
+				pe.printStackTrace(System.err);
+			}
+			logger.info("Plugin {} is shut down",pluginId);
 		}
 	}
 	

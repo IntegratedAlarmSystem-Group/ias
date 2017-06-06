@@ -126,6 +126,7 @@ public abstract class PublisherBase implements MonitorPointSender {
 	 * @param pluginId The identifier of the plugin
 	 * @param serverName The name of the server
 	 * @param port The port of the server
+	 * @param executorSvc The executor service
 	 */
 	public PublisherBase(
 			String pluginId,

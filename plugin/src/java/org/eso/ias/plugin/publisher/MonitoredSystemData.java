@@ -2,6 +2,9 @@ package org.eso.ias.plugin.publisher;
 
 import java.util.Collection;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * The data structure encapsulating monitor point values
  * and alarm retrieved from a monitored system and sent to the IAS core.
@@ -38,6 +41,11 @@ public class MonitoredSystemData {
 	 * system to be sent to the IAS core;
 	 */
 	private Collection<MonitorPointData> monitorPoints;
+	
+	/**
+	 * The mapper to convert this pojo ina JSON string
+	 */
+	private final ObjectMapper mapper = new ObjectMapper();
 
 	/**
 	 * Empty constructor
@@ -87,6 +95,19 @@ public class MonitoredSystemData {
 			this.monitorPoints.clear();
 		}
 		this.monitorPoints = monitorPoints;
+	}
+	
+	/**
+	 * Return a JSON string for this object.
+	 * 
+	 * @return A Json string representing this object
+	 */
+	public String toJsonString() throws PublisherException {
+		try {
+			return mapper.writeValueAsString(this);
+		} catch (JsonProcessingException jpe) {
+			throw new PublisherException("Error creating the JSON string", jpe);
+		}
 	}
 
 	@Override

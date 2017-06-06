@@ -21,6 +21,8 @@ import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.plugin.publisher.MonitoredSystemData;
 import org.eso.ias.plugin.publisher.PublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
+import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
+import org.eso.ias.plugin.publisher.impl.ListenerPublisher.PublisherEventsListener;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.junit.After;
 import org.junit.Before;
@@ -61,14 +63,14 @@ public class PublisherTestCommon implements PublisherEventsListener {
 	protected final Map<String, FilteredValue> publishedValues = Collections.synchronizedMap(new HashMap<>());
 	
 	/**
-	 * The FileterdValues sent to {@link PublisherTestImpl#publish(MonitoredSystemData)}
+	 * The FileterdValues sent to {@link ListenerPublisher#publish(MonitoredSystemData)}
 	 * to be sent to the core
 	 */
 	protected final Map<String, MonitorPointData> receivedValues = Collections.synchronizedMap(new HashMap<>());
 	
 	/**
 	 * The latch to wait for the expected number of values
-	 * to be sent to {@link PublisherTestImpl#publish(MonitoredSystemData)}.
+	 * to be sent to {@link ListenerPublisher#publish(MonitoredSystemData)}.
 	 * <P>
 	 * This is not the number of messages, but the number of {@link FilteredValue}
 	 * objects as the {@link PublisherBase} could group more values into the same
@@ -86,7 +88,7 @@ public class PublisherTestCommon implements PublisherEventsListener {
 	/**
 	 * The object to test
 	 */
-	protected PublisherTestImpl publisher;
+	protected ListenerPublisher publisher;
 	
 	/**
 	 * Generates and return a list of filtered values.
@@ -192,7 +194,7 @@ public class PublisherTestCommon implements PublisherEventsListener {
 		// Build the publisher
 		int poolSize = Runtime.getRuntime().availableProcessors()/2;
 		ScheduledExecutorService schedExecutorSvc= Executors.newScheduledThreadPool(poolSize, PluginThreadFactory.getThreadFactory());
-		publisher = new PublisherTestImpl(pluginId, pluginServerName, pluginServerPort, schedExecutorSvc,this);
+		publisher = new ListenerPublisher(pluginId, pluginServerName, pluginServerPort, schedExecutorSvc,this);
 		logger.debug("Set up");
 	}
 	
