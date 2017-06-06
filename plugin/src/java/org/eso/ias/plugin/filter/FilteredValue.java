@@ -81,8 +81,7 @@ public class FilteredValue {
 	 */
 	@Override
 	public String toString() {
-		StringBuilder ret = new StringBuilder("[");
-		ret.append("ID=");
+		StringBuilder ret = new StringBuilder("FilteredValue(ID=");
 		ret.append(id);
 		ret.append(", generated at ");
 		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
@@ -90,7 +89,7 @@ public class FilteredValue {
 		ret.append(df.format(date));
 		ret.append(", value=");
 		ret.append(value.toString());
-		ret.append(']');
+		ret.append(')');
 		return ret.toString();
 	}
 	

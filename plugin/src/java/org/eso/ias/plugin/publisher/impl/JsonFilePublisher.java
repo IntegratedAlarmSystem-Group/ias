@@ -9,17 +9,20 @@ import org.eso.ias.plugin.publisher.PublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 /**
- * A publisher that dumps messages in the passed writer.
+ * A publisher that dumps JSON messages in the passed writer.
  * <P>
  * This implementation allows to investigate the sending of monitor points
- * to the core of the IAS by looking at the file where they are all dumped.
+ * to the core of the IAS by looking at the JSON file where they are all dumped.
+ * <P>
+ * The data written in the file are the JSON representation of each message
+ * i.e. a sequence of {@link MonitoredSystemData}.
+ * As such the file is not JSON specification compliant. 
  * 
  * @author acaproni
  *
  */
-public class FilePublisher extends PublisherBase {
+public class JsonFilePublisher extends PublisherBase {
 	
 	/**
 	 * The writer to dump monitor point values into
@@ -29,7 +32,7 @@ public class FilePublisher extends PublisherBase {
 	/**
 	 * The logger
 	 */
-	private static final Logger logger = LoggerFactory.getLogger(FilePublisher.class);
+	private static final Logger logger = LoggerFactory.getLogger(JsonFilePublisher.class);
 
 	/**
 	 * Constructor
@@ -38,9 +41,9 @@ public class FilePublisher extends PublisherBase {
 	 * @param serverName The name of the server
 	 * @param port The port of the server
 	 * @param executorSvc The executor service
-	 * @param outStream The output stream
+	 * @param outStream The output stream to write JSON strings into
 	 */
-	public FilePublisher(String pluginId, String serverName, int port, ScheduledExecutorService executorSvc, BufferedWriter outWriter) {
+	public JsonFilePublisher(String pluginId, String serverName, int port, ScheduledExecutorService executorSvc, BufferedWriter outWriter) {
 		super(pluginId, serverName, port, executorSvc);
 		if (outWriter==null) {
 			throw new IllegalArgumentException("The output stream can't be null");
@@ -50,8 +53,16 @@ public class FilePublisher extends PublisherBase {
 
 	@Override
 	protected void publish(MonitoredSystemData data) {
+		String jsonString;
 		try {
-			outWriter.write(data.toString());
+			jsonString = data.toJsonString();
+		} catch (PublisherException pe) {
+			logger.error("Error getting the JSON string: {}",pe.getMessage());
+			pe.printStackTrace(System.err);
+			return;
+		}
+		try {
+			outWriter.write(jsonString);
 			outWriter.flush();
 		} catch (IOException ioe) {
 			logger.error("Error writing data: {}",ioe.getMessage());
