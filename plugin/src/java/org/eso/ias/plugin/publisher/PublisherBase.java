@@ -277,7 +277,7 @@ public abstract class PublisherBase implements MonitorPointSender {
 	@Override
 	public void startSending() {
 		stopped=false;
-		logger.info("Sneing of monitor points to the IAS has been resumed");
+		logger.info("Sending of monitor points to the IAS has been resumed");
 	}
 
 	/**
@@ -287,7 +287,7 @@ public abstract class PublisherBase implements MonitorPointSender {
 	@Override
 	public void stopSending() {
 		stopped=true;
-		logger.info("Sneing of monitor points to the IAS has been stooped");
+		logger.info("Sending of monitor points to the IAS has been stooped");
 	}
 
 	/**
