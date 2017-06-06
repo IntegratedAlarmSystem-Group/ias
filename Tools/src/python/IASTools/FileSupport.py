@@ -150,6 +150,24 @@ class FileSupport(object):
         return folders
     
     @classmethod
+    def createTmpFolder(cls):
+        """
+        Create the folder for temporary files as defined in IAS_TMP_FOLDER
+        if it does not exists ALREADY
+        
+        An exception is thrown in case of error
+        """
+        tmpFolder=environ["IAS_TMP_FOLDER"]
+        if not path.exists(tmpFolder):
+            makedirs(tmpFolder)
+        else:
+            if not path.isdir(tmpFolder):
+                raise IOError(tmpFolder+" is not a directory")
+            # Can write?
+            if not access(tmpFolder, W_OK | X_OK):
+                raise IOError(tmpFolder+" is not writable")
+        
+    @classmethod
     def createLogsFolder(cls):
         """
         Create the folder of los as defined in IAS_LOGS_FOLDER

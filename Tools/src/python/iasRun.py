@@ -28,6 +28,7 @@ def setProps(propsDict,className):
     # Environment variables
     propsDict["ias.root.folder"]=os.environ["IAS_ROOT"]
     propsDict["ias.logs.folder"]=os.environ["IAS_LOGS_FOLDER"]
+    propsDict["ias.tmp.folder"]=os.environ["IAS_TMP_FOLDER"]
     propsDict["ias.logs.filename"]=className
     propsDict["ias.config.folder"]=os.environ["IAS_CONFIG_FOLDER"]
     
@@ -199,8 +200,9 @@ if __name__ == '__main__':
         print
         sys.exit(-1)
     
-    # Create logs folder if not exists already
+    # Create tmp and logs folders if not exists already
     FileSupport.createLogsFolder()
+    FileSupport.createTmpFolder()
     
     # Add the properties
     #

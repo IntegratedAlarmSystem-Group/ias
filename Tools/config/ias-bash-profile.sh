@@ -43,6 +43,7 @@ fi
 # IAS setup
 #
 export IAS_LOGS_FOLDER=$IAS_ROOT/logs
+export IAS_TMP_FOLDER=$IAS_ROOT/tmp
 export IAS_CONFIG_FOLDER=$IAS_ROOT/config
 
 export PYTHONPATH="../lib/python:$IAS_ROOT/lib/python:$PYTHONPATH"
@@ -51,10 +52,11 @@ PATH="../bin:$IAS_ROOT/bin:$JAVA_HOME/bin:$JRE_HOME/bin:$SCALA_HOME/bin:$PATH"
 export PATH
 
 if [ "$ERRORS_FOUND" -eq "0" ]; then 
-	echo "IAS environment ready"
-	echo "  ${bold}ROOT:   $IAS_ROOT${normal}"
-	echo "  ${bold}LOGS:   $IAS_LOGS_FOLDER${normal}"
-	echo "  ${bold}CONFIG: $IAS_CONFIG_FOLDER${normal}"
+	echo "${normal}IAS environment ready"
+	echo "  ${normal}ROOT${normal}: ${bold}$IAS_ROOT${normal}"
+	echo "  ${normal}LOGS${normal}: ${bold}$IAS_LOGS_FOLDER${normal}"
+	echo "  ${normal}TMP${normal}: ${bold}$IAS_TMP_FOLDER${normal}"
+	echo "  ${normal}CONFIG${normal}: ${bold}$IAS_CONFIG_FOLDER${normal}"
 	echo
 else
 	echo "${bold}$ERRORS_FOUND errors found.${normal} Check IAS environment!!!"
