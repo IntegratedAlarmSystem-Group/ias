@@ -43,9 +43,9 @@ public class MonitoredSystemData {
 	private Collection<MonitorPointData> monitorPoints;
 	
 	/**
-	 * The mapper to convert this pojo ina JSON string
+	 * The mapper to convert this pojo in a JSON string and vice-versa
 	 */
-	private final ObjectMapper mapper = new ObjectMapper();
+	private static final ObjectMapper MAPPER = new ObjectMapper();
 
 	/**
 	 * Empty constructor
@@ -104,9 +104,22 @@ public class MonitoredSystemData {
 	 */
 	public String toJsonString() throws PublisherException {
 		try {
-			return mapper.writeValueAsString(this);
+			return MAPPER.writeValueAsString(this);
 		} catch (JsonProcessingException jpe) {
 			throw new PublisherException("Error creating the JSON string", jpe);
+		}
+	}
+	
+	/**
+	 * Builds a <code>MonitoredSystemData</code> parsing the passed JSON string
+	 * 
+	 *  @param jsonStr The JSON string to parse to build the <code>MonitoredSystemData</code>
+	 */
+	public static MonitoredSystemData fromJsonString(String jsonStr) throws PublisherException {
+		try { 
+			return MAPPER.readValue(jsonStr, MonitoredSystemData.class);
+		} catch (Exception e) {
+			throw new PublisherException("Error parsing a JSON string",e);
 		}
 	}
 
