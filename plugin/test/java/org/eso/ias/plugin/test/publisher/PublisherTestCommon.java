@@ -133,7 +133,7 @@ public class PublisherTestCommon implements PublisherEventsListener {
 	 * @param d The not <code>null</code> value to be sent to the core
 	 * @return <code>true</code> if v and d matches
 	 */
-	protected boolean match(FilteredValue v, MonitorPointData d) {
+	public static boolean match(FilteredValue v, MonitorPointData d) {
 		assertNotNull(v);
 		assertNotNull(d);
 		
@@ -144,10 +144,11 @@ public class PublisherTestCommon implements PublisherEventsListener {
 		
 		boolean ret = v.id==d.getId();
 		ret = ret && v.value.toString().equals(d.getValue());
-		ret = ret && iso8601dateFormat.format(new Date(v.producedTimestamp)).equals(d.getFilteredTime());
+		ret = ret && iso8601dateFormat.format(new Date(v.filteredTimestamp)).equals(d.getFilteredTime());
+		ret = ret && iso8601dateFormat.format(new Date(v.producedTimestamp)).equals(d.getSampleTime());
 		
 		if (!ret) {
-			logger.error("The FileteredValue {} and the MonitorPointData {} do not match!",v.toString(),d.toString());
+			logger.error("The {} and the {} do not match!",v.toString(),d.toString());
 		}
 		return ret;
 	}
