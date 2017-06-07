@@ -2,6 +2,7 @@ package org.eso.ias.plugin.publisher.impl;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.eso.ias.plugin.publisher.MonitoredSystemData;
@@ -45,9 +46,7 @@ public class JsonFilePublisher extends PublisherBase {
 	 */
 	public JsonFilePublisher(String pluginId, String serverName, int port, ScheduledExecutorService executorSvc, BufferedWriter outWriter) {
 		super(pluginId, serverName, port, executorSvc);
-		if (outWriter==null) {
-			throw new IllegalArgumentException("The output stream can't be null");
-		}
+		Objects.requireNonNull(outWriter,"The output stream can't be null");
 		this.outWriter=outWriter;
 	}
 

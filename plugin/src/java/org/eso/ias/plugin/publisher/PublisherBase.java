@@ -175,6 +175,7 @@ public abstract class PublisherBase implements MonitorPointSender {
 	 * @throws PublisherException in case of error initializing
 	 * @see MonitorPointSender#setUp()
 	 */
+	@Override
 	public synchronized void setUp() throws PublisherException {
 		if (initialized) {
 			// Ops double initialization!
@@ -227,6 +228,7 @@ public abstract class PublisherBase implements MonitorPointSender {
 	 * @throws PublisherException returned by the implementer
 	 * @see MonitorPointSender#tearDown()
 	 */
+	@Override
 	public void tearDown() throws PublisherException {
 		if (closed) {
 			return;
