@@ -170,7 +170,7 @@ public class DetailedStatsCollector {
 	public synchronized List<StatData> getAndReset() {
 		if (monitorPointsFreqs.isEmpty()) {
 			// No updates: nothing to return
-			return new ArrayList<StatData>();
+			return new ArrayList<>();
 		}
 		List<StatData> vals = new ArrayList<>(monitorPointsFreqs.values());
 		Collections.sort(vals);

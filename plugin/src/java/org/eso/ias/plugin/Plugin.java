@@ -72,13 +72,13 @@ public class Plugin implements ChangeValueListener {
 	 * Due to the definition of {@link Boolean#getBoolean(String)}, <code>deepStats</code> 
 	 * defaults to <code>false</code>.
 	 */
-	private static final boolean deepStats = Boolean.getBoolean(LOG_STATS_DETAILED_PROPNAME);
+	private static final boolean DEEP_STATISTICS = Boolean.getBoolean(LOG_STATS_DETAILED_PROPNAME);
 	
 	/**
 	 * The collector of the detailed statistics
 	 */
 	private Optional<DetailedStatsCollector> detailedStatsCollector = 
-			deepStats?Optional.of(new DetailedStatsCollector()):Optional.empty();
+			DEEP_STATISTICS?Optional.of(new DetailedStatsCollector()):Optional.empty();
 	
 	/**
 	 * The name of the property to let the plugin publish logs about frequency
@@ -93,7 +93,7 @@ public class Plugin implements ChangeValueListener {
 	/**
 	 * The time interval (in minutes) to log usage statistics.
 	 */
-	private static final int statsTimeInterval = Integer.getInteger(LOG_STATS_FREQUENCY_PROPNAME, defaultStatsGeneratorFrequency);
+	private static final int STATS_TIME_INTERVAL = Integer.getInteger(LOG_STATS_FREQUENCY_PROPNAME, defaultStatsGeneratorFrequency);
 	
 	/**
 	 * The logger
@@ -121,7 +121,7 @@ public class Plugin implements ChangeValueListener {
 	private final AtomicBoolean closed = new AtomicBoolean(false);
 	
 	/**
-	 * The number of submitted samples in the last time interval ({@link #statsTimeInterval})
+	 * The number of submitted samples in the last time interval ({@link #STATS_TIME_INTERVAL})
 	 * to be used to log statistics. Where the samples are the raw monitor point values produced by the monitored system.
 	 * <P>
 	 * More sophisticated statistics are collected by {@link DetailedStatsCollector}, if requested.
@@ -129,7 +129,7 @@ public class Plugin implements ChangeValueListener {
 	private final AtomicLong submittedSampleUpdates = new AtomicLong(0);
 	
 	/**
-	 * The number of updated monitor point values in the last time interval ({@link #statsTimeInterval})
+	 * The number of updated monitor point values in the last time interval ({@link #STATS_TIME_INTERVAL})
 	 * to be used to log statistics. Where the monitor point values are the values produced after filtering
 	 * the samples.
 	 * <BR>In general we expect that the number of {@link #submittedSampleUpdates} is greater then the number 
@@ -233,7 +233,7 @@ public class Plugin implements ChangeValueListener {
 		mpPublisher.setUp();
 		logger.info("Publisher initialized.");
 		
-		if (statsTimeInterval>0) {
+		if (STATS_TIME_INTERVAL>0) {
 			// Start the logger of statistics
 			Runnable r = new Runnable() {
 				@Override
@@ -243,10 +243,10 @@ public class Plugin implements ChangeValueListener {
 							sentMonitorPointValues.getAndSet(0L),
 							mpPublisher.numOfMessagesSent(),
 							errorsPublishing.getAndSet(0L));
-					detailedStatsCollector.ifPresent(detailedStats -> detailedStats.logAndReset());
+					detailedStatsCollector.ifPresent(DetailedStatsCollector::logAndReset);
 				}
 			};
-			PluginScheduledExecutorSvc.getInstance().scheduleAtFixedRate(r,statsTimeInterval,statsTimeInterval,TimeUnit.MINUTES);
+			PluginScheduledExecutorSvc.getInstance().scheduleAtFixedRate(r,STATS_TIME_INTERVAL,STATS_TIME_INTERVAL,TimeUnit.MINUTES);
 		}
 		// Adds the shutdown hook
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
@@ -296,7 +296,7 @@ public class Plugin implements ChangeValueListener {
 		if (mPointID==null || mPointID.trim().isEmpty()) {
 			throw new IllegalArgumentException("Invalid monitor point ID: sample rejected");
 		}
-		if (statsTimeInterval>0) {
+		if (STATS_TIME_INTERVAL>0) {
 			submittedSampleUpdates.incrementAndGet();
 		}
 		if (disabledMonitorPoints.contains(mPointID)) {
