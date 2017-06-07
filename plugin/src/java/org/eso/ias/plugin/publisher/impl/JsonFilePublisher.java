@@ -1,15 +1,10 @@
 package org.eso.ias.plugin.publisher.impl;
 
 import java.io.BufferedWriter;
-import java.io.IOException;
-import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.eso.ias.plugin.publisher.MonitoredSystemData;
-import org.eso.ias.plugin.publisher.PublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 /**
  * A publisher that dumps JSON messages in the passed writer.
  * <P>
@@ -23,18 +18,8 @@ import org.slf4j.LoggerFactory;
  * @author acaproni
  *
  */
-public class JsonFilePublisher extends PublisherBase {
+public class JsonFilePublisher extends FilePublisherBase {
 	
-	/**
-	 * The writer to dump monitor point values into
-	 */
-	private final BufferedWriter outWriter;
-	
-	/**
-	 * The logger
-	 */
-	private static final Logger logger = LoggerFactory.getLogger(JsonFilePublisher.class);
-
 	/**
 	 * Constructor
 	 * 
@@ -45,39 +30,15 @@ public class JsonFilePublisher extends PublisherBase {
 	 * @param outStream The output stream to write JSON strings into
 	 */
 	public JsonFilePublisher(String pluginId, String serverName, int port, ScheduledExecutorService executorSvc, BufferedWriter outWriter) {
-		super(pluginId, serverName, port, executorSvc);
-		Objects.requireNonNull(outWriter,"The output stream can't be null");
-		this.outWriter=outWriter;
+		super(pluginId, serverName, port, executorSvc,outWriter);
+		
 	}
-
+	
+	/**
+	 * @see org.eso.ias.plugin.publisher.impl.FilePublisherBase#buildString(org.eso.ias.plugin.publisher.MonitoredSystemData)
+	 */
 	@Override
-	protected void publish(MonitoredSystemData data) {
-		String jsonString;
-		try {
-			jsonString = data.toJsonString();
-		} catch (PublisherException pe) {
-			logger.error("Error getting the JSON string: {}",pe.getMessage());
-			pe.printStackTrace(System.err);
-			return;
-		}
-		try {
-			outWriter.write(jsonString);
-			outWriter.flush();
-		} catch (IOException ioe) {
-			logger.error("Error writing data: {}",ioe.getMessage());
-			ioe.printStackTrace(System.err);
-		}
+	protected String buildString(MonitoredSystemData data) throws PublisherException {
+		return data.toJsonString();
 	}
-
-	@Override
-	protected void start() throws PublisherException {
-		logger.info("Started");
-
-	}
-
-	@Override
-	protected void shutdown() throws PublisherException {
-		logger.info("Shutted down");
-	}
-
 }
