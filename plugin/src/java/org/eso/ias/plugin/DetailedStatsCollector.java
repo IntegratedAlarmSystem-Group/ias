@@ -187,25 +187,26 @@ public class DetailedStatsCollector {
 	 */
 	public synchronized String logAndReset() {
 		List<StatData> vals = getAndReset();
-		if (vals==null || vals.isEmpty()) {
+		if (vals==null || vals.isEmpty() || !logger.isInfoEnabled()) {
 			// No updates: nothing to log
 			return null;
-		}
+		} else {
 		
-		// Build the log message
-		StringBuilder logMsg = new StringBuilder("Stats: topmost updated monitor points:");
-		int numOfItemsToLog=MONITOR_POINTS_TO_LOG;
-		for (int n=vals.size()-1; n>=0 && numOfItemsToLog>0; n--) {
-			StatData sd = vals.get(n);
-			logMsg.append(' ');
-			logMsg.append(sd.id);
-			logMsg.append('[');
-			logMsg.append(sd.occurrences);
-			logMsg.append(']');
-			numOfItemsToLog--;
+			// Build the log message
+			StringBuilder logMsg = new StringBuilder("Stats: topmost updated monitor points:");
+			int numOfItemsToLog=MONITOR_POINTS_TO_LOG;
+			for (int n=vals.size()-1; n>=0 && numOfItemsToLog>0; n--) {
+				StatData sd = vals.get(n);
+				logMsg.append(' ');
+				logMsg.append(sd.id);
+				logMsg.append('[');
+				logMsg.append(sd.occurrences);
+				logMsg.append(']');
+				numOfItemsToLog--;
+			}
+			logger.info(logMsg.toString());
+			vals.clear();
+			return logMsg.toString();
 		}
-		logger.info(logMsg.toString());
-		vals.clear();
-		return logMsg.toString();
 	}
 }
