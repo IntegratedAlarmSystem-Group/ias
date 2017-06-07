@@ -2,6 +2,7 @@ package org.eso.ias.plugin.test.stats;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
@@ -29,7 +30,7 @@ public class DetailedStatsTest {
 	/**
 	 * The max number of monitor points collected
 	 */
-	private final int maxPointsCollected = DetailedStatsCollector.monitorPointsToLog;
+	private final int maxPointsCollected = DetailedStatsCollector.MONITOR_POINTS_TO_LOG;
 	
 	/**
 	 * the prefix of the IDs of the MPs used for testing
@@ -42,7 +43,9 @@ public class DetailedStatsTest {
 	@Before
 	public void setup() {
 		statsCollector = new DetailedStatsCollector();
-		assertNull(statsCollector.getAndReset());
+		List<StatData> statData = statsCollector.getAndReset();
+		assertNotNull(statData);
+		assertEquals(0L,statData.size());
 	}
 	
 	/**
@@ -54,14 +57,18 @@ public class DetailedStatsTest {
 		statsCollector.mPointUpdated(idPrefix);
 		List<StatData> data = statsCollector.getAndReset();
 		assertEquals(1L, data.size());
-		assertNull(statsCollector.getAndReset());
+		List<StatData> statData = statsCollector.getAndReset();
+		assertNotNull(statData);
+		assertEquals(0L,statData.size());
 		// Now send more MPs 
 		for (int t=0; t<2*maxPointsCollected; t++) {
 			statsCollector.mPointUpdated(idPrefix+t);
 		}
 		data = statsCollector.getAndReset();
 		assertEquals(2*maxPointsCollected, data.size());
-		assertNull(statsCollector.getAndReset());
+		statData = statsCollector.getAndReset();
+		assertNotNull(statData);
+		assertEquals(0L,statData.size());
 	}
 	
 	/**
@@ -96,7 +103,9 @@ public class DetailedStatsTest {
 	        }
 	    }
 		assertTrue(ordered);
-		assertNull(statsCollector.getAndReset());
+		List<StatData> statData = statsCollector.getAndReset();
+		assertNotNull(statData);
+		assertEquals(0L,statData.size());
 	}
 	
 	/**
@@ -105,7 +114,9 @@ public class DetailedStatsTest {
 	@Test
 	public void testLoggedMsg() {
 		// Nothing is logged before adding MPs
-		assertNull(statsCollector.logAndReset());
+		List<StatData> statData = statsCollector.getAndReset();
+		assertNotNull(statData);
+		assertEquals(0L,statData.size());
 		// Few Mps
 		ArrayList<Integer> occurrences = new ArrayList<>(Arrays.asList(8,9,1,3,5,10));
 		for (int t=0; t<occurrences.size(); t++) {
@@ -130,6 +141,8 @@ public class DetailedStatsTest {
 		msg = statsCollector.logAndReset();
 		part=msg.split(idPrefix+"[0-9]+");
 		assertEquals(maxPointsCollected+1,part.length);
-		assertNull(statsCollector.getAndReset());
+		statData = statsCollector.getAndReset();
+		assertNotNull(statData);
+		assertEquals(0L,statData.size());
 	}
 }

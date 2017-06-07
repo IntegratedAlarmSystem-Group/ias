@@ -140,7 +140,7 @@ public class DetailedStatsCollector {
 	/**
 	 * The number of monitor points to log
 	 */
-	public static final int monitorPointsToLog=10;
+	public static final int MONITOR_POINTS_TO_LOG=10;
 	
 	/**
 	 * The logger
@@ -161,16 +161,16 @@ public class DetailedStatsCollector {
 	}
 	
 	/**
-	 * Get the {@value #monitorPointsToLog} most frequently updated monitor points
+	 * Get the {@value #MONITOR_POINTS_TO_LOG} most frequently updated monitor points
 	 * 
 	 * @return The most frequently update monitor points (sorted ascending);
-	 *         <code>null</code> if no monitor point has been updated in the time interval
+	 *         empty if no monitor point has been updated in the time interval
 	 * 		
 	 */
 	public synchronized List<StatData> getAndReset() {
 		if (monitorPointsFreqs.isEmpty()) {
 			// No updates: nothing to return
-			return null;
+			return new ArrayList<StatData>();
 		}
 		List<StatData> vals = new ArrayList<>(monitorPointsFreqs.values());
 		Collections.sort(vals);
@@ -187,14 +187,14 @@ public class DetailedStatsCollector {
 	 */
 	public synchronized String logAndReset() {
 		List<StatData> vals = getAndReset();
-		if (vals==null) {
+		if (vals==null || vals.isEmpty()) {
 			// No updates: nothing to log
 			return null;
 		}
 		
 		// Build the log message
 		StringBuilder logMsg = new StringBuilder("Stats: topmost updated monitor points:");
-		int numOfItemsToLog=monitorPointsToLog;
+		int numOfItemsToLog=MONITOR_POINTS_TO_LOG;
 		for (int n=vals.size()-1; n>=0 && numOfItemsToLog>0; n--) {
 			StatData sd = vals.get(n);
 			logMsg.append(' ');
