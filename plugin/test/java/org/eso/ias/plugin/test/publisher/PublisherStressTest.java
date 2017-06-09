@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
-import org.eso.ias.plugin.publisher.PublisherBase;
+import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.junit.Test;
@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * <code>PublisherStressTest</code> stress the {@link PublisherBase}
+ * <code>PublisherStressTest</code> stress the {@link BufferedPublisherBase}
  * by sending a lot of {@link FilteredValue} and checking if
  * they are correctly sent to the {@link MonitorPointSender} implementation
  * to be sent to the IAS core.
@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
  * <P>
  * This stress test is done by concurrently send {@link #totValuesToOffer}
  * filtered values some with the same ID, some other with different IDs.
- * The values are concurrently offered to the {@link PublisherBase} by {@link #numOfThreads}
+ * The values are concurrently offered to the {@link BufferedPublisherBase} by {@link #numOfThreads}
  * threads (@see {@link ValuesProducer#run()}).
  * <P>
  * The stress tests in <code>PublisherStressTest</code> are far behind the specification:

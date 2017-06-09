@@ -8,6 +8,7 @@ import static org.junit.Assert.assertFalse;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -15,7 +16,7 @@ import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.plugin.publisher.MonitoredSystemData;
-import org.eso.ias.plugin.publisher.PublisherBase;
+import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
 import org.junit.Test;
@@ -23,13 +24,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Test the {@link PublisherBase}.
+ * Test the {@link BufferedPublisherBase}.
  * <P>
  * <code>PublisherBaseTest</code> instantiates a {@link ListenerPublisher} object
- * to be notified about events of the {@link PublisherBase}.
+ * to be notified about events of the {@link BufferedPublisherBase}.
  * <P>
  * To check the publishing of monitor points, an arbitrary number of {@link FilteredValue} 
- * objects is sent to the {@link PublisherBase#offer(java.util.Optional)}.
+ * objects is sent to the {@link BufferedPublisherBase#offer(java.util.Optional)}.
  * The test checks if all the messages are routed to the {@link ListenerPublisher} by means of a 
  * {@link CountDownLatch}. Received messages are stored in a Map, for comparison with the ones
  * being offered.
@@ -50,6 +51,8 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		assertEquals("Plugin-IDs differ",pluginId,publisher.pluginId);
 		assertEquals("Servers differ",pluginServerName,publisher.serverName);
 		assertEquals("Servers ports",pluginServerPort,publisher.serverPort);
+		assertEquals("Default buffer size",BufferedPublisherBase.defaultBufferSize,BufferedPublisherBase.maxBufferSize);
+		assertEquals("Default throttling time",BufferedPublisherBase.defaultThrottlingTime,BufferedPublisherBase.throttlingTime);
 	}
 
 	/**
@@ -128,7 +131,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		Optional<FilteredValue> optVal = Optional.of(v);
 		publisher.offer(optVal);
 		try {
-			assertTrue(expectedValues.await(2*PublisherBase.throttlingTime, TimeUnit.MILLISECONDS));
+			assertTrue(expectedValues.await(2*BufferedPublisherBase.throttlingTime, TimeUnit.MILLISECONDS));
 		} catch (InterruptedException ie) {
 			Thread.currentThread().interrupt();
 		}
@@ -169,7 +172,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		};
 		
 		try {
-			assertTrue(expectedValues.await(2*PublisherBase.throttlingTime, TimeUnit.MILLISECONDS));
+			assertTrue(expectedValues.await(2*BufferedPublisherBase.throttlingTime, TimeUnit.MILLISECONDS));
 		} catch (InterruptedException ie) {
 			Thread.currentThread().interrupt();
 		}
@@ -212,7 +215,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		}
 		
 		try {
-			Thread.sleep(2*PublisherBase.throttlingTime);
+			Thread.sleep(2*BufferedPublisherBase.throttlingTime);
 		} catch (InterruptedException ie) {
 			Thread.currentThread().interrupt();
 		}
@@ -263,7 +266,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		Optional<FilteredValue> optVal = Optional.of(v);
 		publisher.offer(optVal);
 		try {
-			assertTrue(expectedValues.await(2*PublisherBase.throttlingTime, TimeUnit.MILLISECONDS));
+			assertTrue(expectedValues.await(2*BufferedPublisherBase.throttlingTime, TimeUnit.MILLISECONDS));
 		} catch (InterruptedException ie) {
 			Thread.currentThread().interrupt();
 		}
@@ -274,7 +277,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		publishedValues.put(v.id,v);
 		publisher.offer(Optional.of(v));
 		try {
-			assertFalse(expectedValues.await(2*PublisherBase.throttlingTime, TimeUnit.MILLISECONDS));
+			assertFalse(expectedValues.await(2*BufferedPublisherBase.throttlingTime, TimeUnit.MILLISECONDS));
 		} catch (InterruptedException ie) {
 			Thread.currentThread().interrupt();
 		}
@@ -285,7 +288,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		publishedValues.put(v.id,v);
 		publisher.offer(Optional.of(v));
 		try {
-			assertTrue(expectedValues.await(2*PublisherBase.throttlingTime, TimeUnit.MILLISECONDS));
+			assertTrue(expectedValues.await(2*BufferedPublisherBase.throttlingTime, TimeUnit.MILLISECONDS));
 		} catch (InterruptedException ie) {
 			Thread.currentThread().interrupt();
 		}

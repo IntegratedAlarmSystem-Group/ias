@@ -16,11 +16,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Base class for publishing data to the IAS core.
+ * Base class for publishing data to the IAS core with buffering: 
+ * received monitor points are queued to be sent all at once when 
+ * <UL>
+ * 	<LI>the time interval ({@link #throttlingTime}) elapses or
+ * 	<LI>the max allowed size of the buffer has been reached
+ * </UL>
  * <P>
- * <code>PublisherBase</code> gets all the values from the monitored system and saves them
- * in a map until the throttling time expire and then sends all of them at once.
- * The map allows to easily save only the last update for each managed monitor point.
+ * <code>BufferedPublisherBase</code> gets all the values from the monitored system and saves them
+ * in a map (the buffer) until the throttling time expires or the max allowed size has been reached 
+ * and only then sends all of them at once.
+ * The map allows to easily save only the last update value for each managed monitor point preventing
+ * a misbehaving plugin to fire tons of messages per time interval.
+ * <P>
+ * Reaching the max size of the buffer, triggers the immediate sending 
+ * of the values of the monitor points. The periodic thread will continue
+ * to run. 
+ *  
  * <P>
  * <em>Life cyle</em>: 
  * <UL>
@@ -29,7 +41,7 @@ import org.slf4j.LoggerFactory;
  * @author acaproni
  *
  */
-public abstract class PublisherBase implements MonitorPointSender {
+public abstract class BufferedPublisherBase implements MonitorPointSender {
 	
 	/**
 	 * The name of the property to set the throttling sending values to the IAS (100<=msec<=1000)
@@ -46,10 +58,31 @@ public abstract class PublisherBase implements MonitorPointSender {
 			Long.getLong(THROTTLING_PROPNAME, defaultThrottlingTime)<100||Long.getLong(THROTTLING_PROPNAME, defaultThrottlingTime)>1000 ?
 					defaultThrottlingTime : Long.getLong(THROTTLING_PROPNAME, defaultThrottlingTime);
 	
+	
+	/**
+	 * The name of the property to set max dimension of monitor points to buffer
+	 */
+	public static final String MAX_BUFFER_SIZE_PROPNAME = "org.eso.ias.plugin.buffersize";
+	
+	/**
+	 * The default max size of the buffer
+	 */
+	public static final int defaultBufferSize = Integer.MAX_VALUE;
+	
+	/**
+	 * The max number of monitor point values to keep in memory in the time interval.
+	 * <P>
+	 * If the size of the buffer is greater or equal the <code>maxBufferSize</code>, the 
+	 * monitor point values are sent immediately to the core of the IAS
+	 * 
+	 */
+	public static final int maxBufferSize = Integer.getInteger(MAX_BUFFER_SIZE_PROPNAME,defaultBufferSize)<=0 ?
+			defaultBufferSize : Integer.getInteger(MAX_BUFFER_SIZE_PROPNAME,defaultBufferSize);
+	
 	/**
 	 * The logger
 	 */
-	private final Logger logger = LoggerFactory.getLogger(PublisherBase.class);
+	private final Logger logger = LoggerFactory.getLogger(BufferedPublisherBase.class);
 	
 	/**
 	 * The name of the server to send monitor points to
@@ -69,7 +102,7 @@ public abstract class PublisherBase implements MonitorPointSender {
 	/**
 	 * The map to store the monitor points received during the throttling time interval.
 	 * <P> 
-	 * The allows to save only the last received update of a monitor point if a misbehaving
+	 * A map allows to save only the last received update of a monitor point if a misbehaving
 	 * implementation is continuously updating a value.
 	 * <P>
 	 * The key is the ID of the monitor point, the value is the {@link FilteredValue} as 
@@ -102,6 +135,9 @@ public abstract class PublisherBase implements MonitorPointSender {
 	/**
 	 * <code>stopped</code> is set and unset calling
 	 * {@link #stopSending()} and {@link #startSending()} respectively.
+	 * <P>
+	 * Stopped is not paused: monitor points collected while stopped
+	 * are lost forever (i.e. never sent to the core of the IAS).
 	 * 
 	 * @see MonitorPointSender#stopSending()
 	 * @see MonitorPointSender#startSending()
@@ -128,7 +164,7 @@ public abstract class PublisherBase implements MonitorPointSender {
 	 * @param port The port of the server
 	 * @param executorSvc The executor service
 	 */
-	public PublisherBase(
+	public BufferedPublisherBase(
 			String pluginId,
 			String serverName, 
 			int port,
@@ -191,24 +227,7 @@ public abstract class PublisherBase implements MonitorPointSender {
 			
 			@Override
 			public void run() {
-				if (monitorPoints.isEmpty()) {
-					return;
-				}
-				if (stopped) {
-					monitorPoints.clear();
-					return;
-				}
-				synchronized (iso8601dateFormat) {
-					String now = iso8601dateFormat.format(new Date(System.currentTimeMillis()));
-					monitorPointsToSend.setPublishTime(now);
-				}
-				synchronized (monitorPoints) {
-					monitorPointsToSend.setMonitorPoints(
-							monitorPoints.values().stream().map(v -> new MonitorPointData(v)).collect(Collectors.toList()));
-					monitorPoints.clear();
-				}
-				publishedMessages.incrementAndGet();
-				publish(monitorPointsToSend);
+				sendMonitoredPointsToIas();
 			}
 		},throttlingTime, throttlingTime, TimeUnit.MILLISECONDS);
 		logger.debug("Generation of statistics activated with a frequency of {} minutes",throttlingTime);
@@ -220,6 +239,34 @@ public abstract class PublisherBase implements MonitorPointSender {
 		}
 		initialized=true;
 		logger.debug("Initialized");
+	}
+	
+	/**
+	 * Send the monitor points to the core of the IAS.
+	 * <P>
+	 * The method is synchronized as it can be called by 2 different threads:
+	 * when the throttling time interval elapses and if the max size
+	 * of the buffer has been reached
+	 */
+	private synchronized void sendMonitoredPointsToIas() {
+		if (monitorPoints.isEmpty()) {
+			return;
+		}
+		if (stopped) {
+			monitorPoints.clear();
+			return;
+		}
+		// No need to synchronize iso8601dateFormat that is used only 
+		// by this (already synchronized) method
+		String now = iso8601dateFormat.format(new Date(System.currentTimeMillis()));
+		monitorPointsToSend.setPublishTime(now);
+		synchronized (monitorPoints) {
+			monitorPointsToSend.setMonitorPoints(
+					monitorPoints.values().stream().map(v -> new MonitorPointData(v)).collect(Collectors.toList()));
+			monitorPoints.clear();
+		}
+		publishedMessages.incrementAndGet();
+		publish(monitorPointsToSend);
 	}
 	
 	/**
@@ -257,13 +304,17 @@ public abstract class PublisherBase implements MonitorPointSender {
 	 */
 	@Override
 	public void offer(Optional<FilteredValue> monitorPoint) throws PublisherException {
-		if (closed) {
+		if (closed || stopped) {
 			return;
 		}
 		if (!initialized) {
 			throw new PublisherException("Publishing monitor points before initialization");
 		}
 		monitorPoint.ifPresent(mp -> monitorPoints.put(mp.id, mp));
+		if (monitorPoints.size()>=maxBufferSize) {
+			// Ops the buffer size reached the maximum allowed size: send the values to the core
+			sendMonitoredPointsToIas();
+		}
 	}
 	
 	@Override
@@ -289,6 +340,7 @@ public abstract class PublisherBase implements MonitorPointSender {
 	@Override
 	public void stopSending() {
 		stopped=true;
+		monitorPoints.clear();
 		logger.info("Sending of monitor points to the IAS has been stooped");
 	}
 

@@ -19,7 +19,7 @@ import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.plugin.publisher.MonitoredSystemData;
-import org.eso.ias.plugin.publisher.PublisherBase;
+import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.impl.JsonFilePublisher;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.junit.After;
@@ -110,7 +110,7 @@ public class JsonPusblisherTest {
 		};
 		
 		// Give the publisher time to write
-		Thread.sleep(5*PublisherBase.throttlingTime);
+		Thread.sleep(5*BufferedPublisherBase.throttlingTime);
 		
 		// Read JSON data from file
 		ObjectMapper mapper = new ObjectMapper();

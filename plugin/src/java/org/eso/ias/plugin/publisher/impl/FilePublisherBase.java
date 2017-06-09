@@ -6,7 +6,7 @@ import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.eso.ias.plugin.publisher.MonitoredSystemData;
-import org.eso.ias.plugin.publisher.PublisherBase;
+import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
  * @author acaproni
  *
  */
-public abstract class FilePublisherBase extends PublisherBase {
+public abstract class FilePublisherBase extends BufferedPublisherBase {
 	
 	/**
 	 * The writer to dump monitor point values into

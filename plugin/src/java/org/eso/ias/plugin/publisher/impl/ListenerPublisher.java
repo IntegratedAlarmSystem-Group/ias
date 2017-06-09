@@ -4,23 +4,23 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.MonitoredSystemData;
-import org.eso.ias.plugin.publisher.PublisherBase;
+import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * <code>ListenerPublisher</code> is an implementation of {@link MonitorPointSender}
- * for testing the {@link PublisherBase}: monitor points are sent to the
+ * for testing the {@link BufferedPublisherBase}: monitor points are sent to the
  * listener.
  * 
  * @author acaproni
  *
  */
-public class ListenerPublisher extends PublisherBase {
+public class ListenerPublisher extends BufferedPublisherBase {
 	
 	/**
-	 * The interface to be notified about events happening in the {@link PublisherBase}.
+	 * The interface to be notified about events happening in the {@link BufferedPublisherBase}.
 	 * 
 	 * @author acaproni
 	 *
@@ -28,12 +28,12 @@ public class ListenerPublisher extends PublisherBase {
 	public interface PublisherEventsListener {
 
 		/**
-		 * Method invoked when {@link PublisherBase} invokes setUp
+		 * Method invoked when {@link BufferedPublisherBase} invokes setUp
 		 */
 		public void initialized();
 		
 		/**
-		 * Method invoked when {@link PublisherBase} invokes tearDown
+		 * Method invoked when {@link BufferedPublisherBase} invokes tearDown
 		 */
 		public void closed();
 		
@@ -83,7 +83,7 @@ public class ListenerPublisher extends PublisherBase {
 	 * @param serverName
 	 * @param port
 	 * @param executorSvc
-	 * @see PublisherBase
+	 * @see BufferedPublisherBase
 	 */
 	public ListenerPublisher(
 			String pluginId, 

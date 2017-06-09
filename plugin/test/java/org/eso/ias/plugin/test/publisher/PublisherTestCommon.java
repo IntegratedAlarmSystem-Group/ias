@@ -2,6 +2,7 @@ package org.eso.ias.plugin.test.publisher;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotNull;
 
 import java.text.SimpleDateFormat;
@@ -19,7 +20,7 @@ import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.plugin.publisher.MonitoredSystemData;
-import org.eso.ias.plugin.publisher.PublisherBase;
+import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher.PublisherEventsListener;
@@ -58,7 +59,7 @@ public class PublisherTestCommon implements PublisherEventsListener {
 	protected final int pluginServerPort = 12345;
 	
 	/**
-	 * The FileterdValues to be offered to the {@link PublisherBase}
+	 * The FileterdValues to be offered to the {@link BufferedPublisherBase}
 	 */
 	protected final Map<String, FilteredValue> publishedValues = Collections.synchronizedMap(new HashMap<>());
 	
@@ -73,7 +74,7 @@ public class PublisherTestCommon implements PublisherEventsListener {
 	 * to be sent to {@link ListenerPublisher#publish(MonitoredSystemData)}.
 	 * <P>
 	 * This is not the number of messages, but the number of {@link FilteredValue}
-	 * objects as the {@link PublisherBase} could group more values into the same
+	 * objects as the {@link BufferedPublisherBase} could group more values into the same
 	 * {@link MonitoredSystemData}.
 	 * <P>
 	 * The latch is not used by all tests.
@@ -103,7 +104,7 @@ public class PublisherTestCommon implements PublisherEventsListener {
 	 * @return a list of newly generated values ready to 
 	 *         be offered to the publisher
 	 */
-	protected List<FilteredValue> generatedFileteredValues(
+	public static List<FilteredValue> generatedFileteredValues(
 			int numOfValues, 
 			String baseId,
 			boolean singleID,
@@ -180,6 +181,9 @@ public class PublisherTestCommon implements PublisherEventsListener {
 		assertEquals("ID differs",data.getSystemID(), pluginId);
 		assertNotNull(data.getPublishTime());
 		assertFalse(data.getPublishTime().isEmpty());
+		assertTrue("There must be at least one monitor point value in a message",data.getMonitorPoints().size()>0);
+		assertTrue("The number of monitor point values in a message acn't be geater then the max size of the buffer",
+				data.getMonitorPoints().size()<=BufferedPublisherBase.maxBufferSize);
 		numOfPublishInvocation++;
 		logger.info("{} monitor points received from {}",data.getMonitorPoints().size(),data.getSystemID());
 		for (MonitorPointData d: data.getMonitorPoints()) { 
