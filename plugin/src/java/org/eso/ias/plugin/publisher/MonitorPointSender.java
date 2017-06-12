@@ -12,16 +12,8 @@ import org.eso.ias.plugin.filter.FilteredValue;
  * if it is the case, filtered for noise, it is ready to be
  * sent to the IAS core by invoking {@link #offer(Optional)}.
  * <P> 
- * To avoid flooding the network, the sender must not send
- * each value as soon as it arrives but group them and send all 
- * at once when the throttling time (msec) expires.
- * For that reason, the number of messages sent to the core is 
- * expected to be less than the number of monitor points
- * submitted by calling {@link #offer(Optional)}.
- * <P>
- * Implementers of this class, provides the number of messages
- * sent to the core of the IAS in the last observation period
- * ({@link #numOfMessagesSent()}).
+ * Implementers of this class, provides statistics collected during
+ * the last observation period ({@link #getStats()).
  * <P>
  * <EM>Life cycle:<?EM><BR><UL>
  * 	<LI>{@link #setUp()} must be called to allocate the resources needed 
@@ -35,22 +27,90 @@ import org.eso.ias.plugin.filter.FilteredValue;
 public interface MonitorPointSender {
 	
 	/**
+	 * The statistics provided by the sender in the last time interval.
+	 * 
+	 * @author acaproni
+	 *
+	 */
+	public class SenderStats {
+
+		/**
+		 * The number of messages sent to the core of the IAS.
+		 * <P>
+		 * If messages are buffered, this number will probably be
+		 * less then the number of monitor point values sent ({@link #numOfMonitorPointValuesSent}).
+		 */
+		public final long numOfMessagesSent;
+		
+		/**
+		 * The number of monitor point values sent to the core of the IAS.
+		 * 
+		 * @see #numOfMessagesSent
+		 */
+		public final long numOfMonitorPointValuesSent;
+		
+		/**
+		 * The number of monitor point values submitted to the publisher.
+		 * <P>
+		 * The number of monitor points offered to the publisher for sending in {@link MonitorPointSender#offer(Optional)}.
+		 * <BR>To reduce the network traffic and prevent misbehaving plugins from flooding the network, the publisher
+		 * can send less monitor point values then those submitted (for example sending only the last
+		 * value between all offered in the throttling interval).
+		 * 
+		 * @see #numOfMessagesSent
+		 */
+		public final long numOfMonitorPointValuesSubmitted;
+		
+		/**
+		 * The number of bytes sent to the core of the IAS
+		 * <P>
+		 * This is the total number of bytes, including header informations and so on.
+		 */
+		public final long numOfBytesSent;
+		
+		/**
+		 * The number of errors publishing monitor point values to the core of the IAS
+		 */
+		public final long numOfErrorsPublishing;
+		
+		/**
+		 * Constructor
+		 * 
+		 * @param numOfMessagesSent The number of messages sent in the last time interval
+		 * @param numOfMonitorPointValuesSent The number of monitor point values sent in the last time interval
+		 * @param numOfMonitorPointValuesSubmitted: The number of monitor point values submitted in the last time interval
+		 * @param numOfBytesSent The number of bytes sent in the last time interval
+		 */
+		public SenderStats(
+				long numOfMessagesSent,
+				long numOfMonitorPointValuesSent, 
+				long numOfMonitorPointValuesSubmitted, 
+				long numOfBytesSent,
+				long numOfErrorsPublishing) {
+			super();
+			this.numOfMessagesSent = numOfMessagesSent;
+			this.numOfMonitorPointValuesSent = numOfMonitorPointValuesSent;
+			this.numOfMonitorPointValuesSubmitted=numOfMonitorPointValuesSubmitted;
+			this.numOfBytesSent = numOfBytesSent;
+			this.numOfErrorsPublishing=numOfErrorsPublishing;
+		}
+	}
+	
+	/**
 	 * Offer a monitor point to the publisher for sending to the core
 	 * 
 	 * @param monitorPoint
 	 */
-	public void offer(Optional<FilteredValue> monitorPoint) throws PublisherException;
+	public void offer(Optional<FilteredValue> monitorPoint);
 	
 	/**
-	 * The number of messages sent to the core of the IAS
-	 * before the last invocation of this method.
+	 * The statistics collected by the publisher after the previous invocation of this method.
 	 * <P>
-	 * When this method is invoked, the counter is reset to allow to
-	 * count the messages between two consecutive invocations of this method. 
+	 * Calling this method resets all the counters. 
 	 * 
-	 * @return The number of messages sent to the core of the IAS
+	 * @return The statistics collected by the publisher
 	 */
-	public long numOfMessagesSent();
+	public SenderStats getStats();
 	
 	/**
 	 * Initialization method to allocate the resources needed to send

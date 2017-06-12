@@ -13,7 +13,7 @@ import java.util.List;
 
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.filter.FilteredValue;
-import org.eso.ias.plugin.publisher.MonitorPointData;
+import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -90,14 +90,13 @@ public class BufferedMonitoredSystemDataTest extends PublisherTestCommon {
 		long valueTimeStamp =now+150;
 		String valueTimeStampStr = iso8601dateFormat.format(new Date(valueTimeStamp));
 		String filteredTimeStampStr = iso8601dateFormat.format(new Date(filteredTimeStamp));
-		MonitorPointData value = new MonitorPointData();
-		value.setSystemID(pluginId);
+		MonitorPointDataToBuffer value = new MonitorPointDataToBuffer();
 		value.setId(valueId);
 		value.setValue(objValue.toString());
 		value.setSampleTime(valueTimeStampStr);
 		value.setFilteredTime(filteredTimeStampStr);
 		
-		Collection<MonitorPointData> values = new ArrayList<>();
+		Collection<MonitorPointDataToBuffer> values = new ArrayList<>();
 		values.add(value);
 		msData.setMonitorPoints(values);
 		
@@ -111,8 +110,7 @@ public class BufferedMonitoredSystemDataTest extends PublisherTestCommon {
 		// Comparison is based on MonitorPointData#equals()
 		//
 		// for is easy to use ;-) It works because the collection contains only one item!
-		for (MonitorPointData rcvMPData: receivedData.getMonitorPoints()) {
-			assertEquals("Wrong plugin ID in monitor point value", pluginId, rcvMPData.getSystemID());
+		for (MonitorPointDataToBuffer rcvMPData: receivedData.getMonitorPoints()) {
 			assertEquals(rcvMPData,value);
 		}
 		
@@ -132,12 +130,12 @@ public class BufferedMonitoredSystemDataTest extends PublisherTestCommon {
 		msData.setPublishTime(isoDate);
 		
 		List<Sample> samples = Arrays.asList(new Sample(Integer.valueOf(67)));
-		List<MonitorPointData> values = Arrays.asList(
-				new MonitorPointData(pluginId,new FilteredValue("FV-ID1", Integer.valueOf(67), samples, System.currentTimeMillis()+10)),
-				new MonitorPointData(pluginId,new FilteredValue("FV-ID2", Long.valueOf(123), samples, System.currentTimeMillis()+20)),
-				new MonitorPointData(pluginId,new FilteredValue("FV-ID3", "A string", samples, System.currentTimeMillis()+30)),
-				new MonitorPointData(pluginId,new FilteredValue("FV-ID4", Boolean.valueOf(true), samples, System.currentTimeMillis()+40)),
-				new MonitorPointData(pluginId,new FilteredValue("FV-ID5", Integer.valueOf(11), samples, System.currentTimeMillis()+50)));
+		List<MonitorPointDataToBuffer> values = Arrays.asList(
+				new MonitorPointDataToBuffer(new FilteredValue("FV-ID1", Integer.valueOf(67), samples, System.currentTimeMillis()+10)),
+				new MonitorPointDataToBuffer(new FilteredValue("FV-ID2", Long.valueOf(123), samples, System.currentTimeMillis()+20)),
+				new MonitorPointDataToBuffer(new FilteredValue("FV-ID3", "A string", samples, System.currentTimeMillis()+30)),
+				new MonitorPointDataToBuffer(new FilteredValue("FV-ID4", Boolean.valueOf(true), samples, System.currentTimeMillis()+40)),
+				new MonitorPointDataToBuffer(new FilteredValue("FV-ID5", Integer.valueOf(11), samples, System.currentTimeMillis()+50)));
 		
 		msData.setMonitorPoints(values);
 		
@@ -152,7 +150,6 @@ public class BufferedMonitoredSystemDataTest extends PublisherTestCommon {
 
 		values.forEach(mpd -> { 
 			assertTrue(receivedData.getMonitorPoints().contains(mpd));
-			assertEquals("Wrong plugin ID in monitor point value", pluginId, mpd.getSystemID());
 		});
 		
 		logger.info(msData.toJsonString());

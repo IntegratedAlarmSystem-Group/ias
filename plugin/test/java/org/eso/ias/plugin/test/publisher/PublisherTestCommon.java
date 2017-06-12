@@ -18,7 +18,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.filter.FilteredValue;
-import org.eso.ias.plugin.publisher.MonitorPointData;
+import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
@@ -67,7 +67,7 @@ public class PublisherTestCommon implements PublisherEventsListener {
 	 * The FileterdValues sent to {@link ListenerPublisher#publish(BufferedMonitoredSystemData)}
 	 * to be sent to the core
 	 */
-	protected final Map<String, MonitorPointData> receivedValues = Collections.synchronizedMap(new HashMap<>());
+	protected final Map<String, MonitorPointDataToBuffer> receivedValues = Collections.synchronizedMap(new HashMap<>());
 	
 	/**
 	 * The latch to wait for the expected number of values
@@ -134,7 +134,7 @@ public class PublisherTestCommon implements PublisherEventsListener {
 	 * @param d The not <code>null</code> value to be sent to the core
 	 * @return <code>true</code> if v and d matches
 	 */
-	public static boolean match(FilteredValue v, MonitorPointData d) {
+	public static boolean match(FilteredValue v, MonitorPointDataToBuffer d) {
 		assertNotNull(v);
 		assertNotNull(d);
 		
@@ -186,7 +186,7 @@ public class PublisherTestCommon implements PublisherEventsListener {
 				data.getMonitorPoints().size()<=BufferedPublisherBase.maxBufferSize);
 		numOfPublishInvocation++;
 		logger.info("{} monitor points received from {}",data.getMonitorPoints().size(),data.getSystemID());
-		for (MonitorPointData d: data.getMonitorPoints()) { 
+		for (MonitorPointDataToBuffer d: data.getMonitorPoints()) { 
 			if (expectedValues!=null) {
 				expectedValues.countDown(); 
 			}

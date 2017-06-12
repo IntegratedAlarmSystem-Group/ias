@@ -15,6 +15,7 @@ import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.config.Value;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
+import org.eso.ias.plugin.publisher.MonitorPointSender.SenderStats;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.thread.PluginScheduledExecutorSvc;
 import org.slf4j.Logger;
@@ -121,25 +122,6 @@ public class Plugin implements ChangeValueListener {
 	private final AtomicBoolean closed = new AtomicBoolean(false);
 	
 	/**
-	 * The number of submitted samples in the last time interval ({@link #STATS_TIME_INTERVAL})
-	 * to be used to log statistics. Where the samples are the raw monitor point values produced by the monitored system.
-	 * <P>
-	 * More sophisticated statistics are collected by {@link DetailedStatsCollector}, if requested.
-	 */
-	private final AtomicLong submittedSampleUpdates = new AtomicLong(0);
-	
-	/**
-	 * The number of updated monitor point values in the last time interval ({@link #STATS_TIME_INTERVAL})
-	 * to be used to log statistics. Where the monitor point values are the values produced after filtering
-	 * the samples.
-	 * <BR>In general we expect that the number of {@link #submittedSampleUpdates} is greater then the number 
-	 * of {@link #sentMonitorPointValues} because of the filtering done by the {@link MonitoredValue}.
-	 * <P>
-	 * More sophisticated statistics are collected by {@link DetailedStatsCollector}, if requested.
-	 */
-	private final AtomicLong sentMonitorPointValues = new AtomicLong(0);
-	
-	/**
 	 * If submitting samples to a monitor points returns an error,
 	 * it is added to this list and never updated again.
 	 * <P>
@@ -152,14 +134,6 @@ public class Plugin implements ChangeValueListener {
 	 * The object that sends monitor points to the core of the IAS.
 	 */
 	private final MonitorPointSender mpPublisher;
-	
-	/**
-	 * <code>errorsPublishing</code> records the number of errors
-	 * reported while sending monitor points to the core of the IAS in {@link #monitoredValueUpdated(Optional)}.
-	 * 
-	 * @see #inhibitLoggingErrorsPublishingTimeInt
-	 */
-	private final AtomicLong errorsPublishing= new AtomicLong(0);
 
 	/**
 	 * Build a plugin with the passed parameters.
@@ -238,12 +212,15 @@ public class Plugin implements ChangeValueListener {
 			Runnable r = new Runnable() {
 				@Override
 				public void run() {
-					logger.info("#Submitted samples = {}; #Monitored points sent to the IAS = {}; #Messages sent to the IAS {}; #errors publishing messages {}",
-							submittedSampleUpdates.getAndSet(0L),
-							sentMonitorPointValues.getAndSet(0L),
-							mpPublisher.numOfMessagesSent(),
-							errorsPublishing.getAndSet(0L));
-					detailedStatsCollector.ifPresent(DetailedStatsCollector::logAndReset);
+					SenderStats senderStats = mpPublisher.getStats();
+					logger.info("#Submitted samples = {}; #Monitored points sent to the IAS = {}; #Messages sent to the IAS {}; #Bytes sent to the IAS = {}; #errors publishing messages {}",
+							senderStats.numOfMonitorPointValuesSubmitted,
+							senderStats.numOfMonitorPointValuesSent,
+							senderStats.numOfMessagesSent,
+							senderStats.numOfBytesSent,
+							senderStats.numOfErrorsPublishing);
+					detailedStatsCollector.ifPresent( DetailedStatsCollector::logAndReset);
+					
 				}
 			};
 			PluginScheduledExecutorSvc.getInstance().scheduleAtFixedRate(r,STATS_TIME_INTERVAL,STATS_TIME_INTERVAL,TimeUnit.MINUTES);
@@ -295,9 +272,6 @@ public class Plugin implements ChangeValueListener {
 		}
 		if (mPointID==null || mPointID.trim().isEmpty()) {
 			throw new IllegalArgumentException("Invalid monitor point ID: sample rejected");
-		}
-		if (STATS_TIME_INTERVAL>0) {
-			submittedSampleUpdates.incrementAndGet();
 		}
 		if (disabledMonitorPoints.contains(mPointID)) {
 			return;
@@ -354,12 +328,7 @@ public class Plugin implements ChangeValueListener {
 		if (!value.isPresent()) {
 			return;
 		}
-		sentMonitorPointValues.incrementAndGet();
-		try {
-			mpPublisher.offer(value);
-		} catch (Exception e) {
-			errorsPublishing.incrementAndGet();
-		}
+		mpPublisher.offer(value);
 		logger.info("Value change %s",value.get().toString());
 		
 	}

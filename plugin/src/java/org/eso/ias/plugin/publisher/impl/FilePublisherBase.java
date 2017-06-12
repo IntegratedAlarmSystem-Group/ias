@@ -62,23 +62,19 @@ public abstract class FilePublisherBase extends BufferedPublisherBase {
 	 * @param data The data to send to the core of the IAS
 	 */
 	@Override
-	protected void publish(BufferedMonitoredSystemData data) {
+	protected long publish(BufferedMonitoredSystemData data) throws PublisherException {
 		String strToWriteOnFile=null;
-		try {
-			strToWriteOnFile=buildString(data);
-		} catch (PublisherException pe) {
-			logger.error("Error building the string to write in the file",pe);
-			return;
-		}
+		strToWriteOnFile=buildString(data);
 		if (strToWriteOnFile==null || strToWriteOnFile.isEmpty()) {
-			return;
+			return 0L;
 		}
 		try {
 			outWriter.write(strToWriteOnFile);
 			outWriter.flush();
 		} catch (IOException ioe) {
-			logger.error("Error writing dat",ioe);
+			throw new PublisherException("Error writing dat",ioe);
 		}
+		return strToWriteOnFile.length();
 	}
 
 	/**

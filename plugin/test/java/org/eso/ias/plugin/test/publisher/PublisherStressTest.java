@@ -17,7 +17,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.eso.ias.plugin.filter.FilteredValue;
-import org.eso.ias.plugin.publisher.MonitorPointData;
+import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
@@ -155,7 +155,7 @@ public class PublisherStressTest extends PublisherTestCommon {
 	    // Check if all the pushed IDs have been published
 	    for (List<FilteredValue> values: listsOfValues) {
 	    	for (FilteredValue pushedValue: values) {
-	    		MonitorPointData d = receivedValues.get(pushedValue.id);
+	    		MonitorPointDataToBuffer d = receivedValues.get(pushedValue.id);
 	    		assertNotNull(d);
 	    	}
 	    }

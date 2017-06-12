@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.filter.FilteredValue;
-import org.eso.ias.plugin.publisher.MonitorPointData;
+import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
@@ -38,12 +38,12 @@ import org.slf4j.LoggerFactory;
  * @author acaproni
  *
  */
-public class PublisherBaseTest extends PublisherTestCommon {
+public class BufferedPublisherBaseTest extends PublisherTestCommon {
 	
 	/**
 	 * The logger
 	 */
-	private final static Logger logger = LoggerFactory.getLogger(PublisherBaseTest.class);
+	private final static Logger logger = LoggerFactory.getLogger(BufferedPublisherBaseTest.class);
 	
 	@Test
 	public void testBasicData() {
@@ -137,7 +137,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		}
 		assertEquals(1L,publisher.getPublishedMonitorPoints());
 		assertEquals(publisher.getPublishedMessages(),numOfPublishInvocation);
-		MonitorPointData d = receivedValues.get(v.id);
+		MonitorPointDataToBuffer d = receivedValues.get(v.id);
 		assertNotNull("Expected value not published",d);
 		assertTrue("Offered and published values do not match "+v.toString()+"<->"+d.toString(), match(v,d));
 		
@@ -180,7 +180,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		assertEquals(publisher.getPublishedMessages(),numOfPublishInvocation);
 		
 		for (FilteredValue v: values) {
-			MonitorPointData d = receivedValues.get(v.id);
+			MonitorPointDataToBuffer d = receivedValues.get(v.id);
 			assertNotNull("Expected value not published",d);
 			assertTrue("Offered and published values do not match", match(v,d));
 		}
@@ -225,7 +225,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		assertEquals(publisher.getPublishedMessages(),numOfPublishInvocation);
 		assertEquals(publishedValues.size(), receivedValues.size());
 		
-		MonitorPointData d = receivedValues.get(lastOffered.id);
+		MonitorPointDataToBuffer d = receivedValues.get(lastOffered.id);
 		assertNotNull("Expected value not published",d);
 		assertTrue("Offered and published values do not match", match(lastOffered,d));
 	}

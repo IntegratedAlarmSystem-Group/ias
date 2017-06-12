@@ -1,6 +1,8 @@
 package org.eso.ias.plugin.publisher;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -9,7 +11,6 @@ import java.util.Optional;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.slf4j.Logger;
@@ -155,6 +156,26 @@ public abstract class BufferedPublisherBase implements MonitorPointSender {
 	 * The number of messages sent to the core of the IAS
 	 */
 	private final AtomicLong publishedMessages = new AtomicLong(0);
+	
+	/**
+	 * The number of bytes sent to the core of the IAS
+	 */
+	private final AtomicLong bytesSent = new AtomicLong(0);
+	
+	/**
+	 * The number of monitor point values sent to the core of the IAS
+	 */
+	private final AtomicLong monitorPointsSent = new AtomicLong(0);
+	
+	/**
+	 * The number of monitor point values sent to the core of the IAS
+	 */
+	private final AtomicLong monitorPointsSubmitted = new AtomicLong(0);
+	
+	/**
+	 * The number of errors while sending monitor point values to the core of the IAS
+	 */
+	private final AtomicLong numOfErrorsSending = new AtomicLong(0);
 
 	/**
 	 * Constructor
@@ -192,10 +213,14 @@ public abstract class BufferedPublisherBase implements MonitorPointSender {
 	
 	/**
 	 * Send the passed data to the core of the IAS.
+	 * <P>
+	 * This method is supposed to effectively sent the data to the core of the IAS
 	 * 
 	 * @param data The data to send to the core of the IAS
+	 * @return The number of bytes sent to the core of the IAS
+	 * @throws PublisherException In case of error publishing 
 	 */
-	protected abstract void publish(BufferedMonitoredSystemData data);
+	protected abstract long publish(BufferedMonitoredSystemData data) throws PublisherException;
 	
 	/**
 	 * Performs the initialization of the implementers of this
@@ -261,12 +286,29 @@ public abstract class BufferedPublisherBase implements MonitorPointSender {
 		String now = iso8601dateFormat.format(new Date(System.currentTimeMillis()));
 		monitorPointsToSend.setPublishTime(now);
 		synchronized (monitorPoints) {
-			monitorPointsToSend.setMonitorPoints(
-					monitorPoints.values().stream().map(v -> new MonitorPointData(pluginId,v)).collect(Collectors.toList()));
+			Collection<MonitorPointDataToBuffer> valuesToSend = new ArrayList<>(monitorPoints.values().size());
+			monitorPoints.values().forEach(mpv -> {
+				valuesToSend.add(new MonitorPointDataToBuffer(mpv));
+				monitorPointsSent.incrementAndGet();
+			});
+			monitorPointsToSend.setMonitorPoints(valuesToSend);
 			monitorPoints.clear();
 		}
 		publishedMessages.incrementAndGet();
-		publish(monitorPointsToSend);
+		try {
+			publish(monitorPointsToSend);
+		} catch (PublisherException pe) {
+			numOfErrorsSending.incrementAndGet();
+			// Errors publishing are ignored
+			if (numOfErrorsSending.get()<9) {
+				logger.error("Error publishing data",pe);
+			} else {
+				if (numOfErrorsSending.get()%10L==0) {
+					logger.error("Error publishing data (log of many other errors suppressed)",pe);
+				}
+			}
+		}
+		monitorPointsToSend.getMonitorPoints().clear();
 	}
 	
 	/**
@@ -301,25 +343,39 @@ public abstract class BufferedPublisherBase implements MonitorPointSender {
 	 * it is queued ready to be sent when the throttling time interval elapses.
 	 * 
 	 * @see MonitorPointSender#offer(java.util.Optional)
+	 * @throws IllegalStateException If the publisher has not been initialized before offering values
 	 */
 	@Override
-	public void offer(Optional<FilteredValue> monitorPoint) throws PublisherException {
+	public void offer(Optional<FilteredValue> monitorPoint) {
 		if (closed || stopped) {
 			return;
 		}
 		if (!initialized) {
-			throw new PublisherException("Publishing monitor points before initialization");
+			throw new IllegalStateException("Publishing monitor points before initialization");
 		}
-		monitorPoint.ifPresent(mp -> monitorPoints.put(mp.id, mp));
+		monitorPoint.ifPresent(mp -> {
+			monitorPoints.put(mp.id, mp);
+			monitorPointsSubmitted.incrementAndGet();
+			
+		});
 		if (monitorPoints.size()>=maxBufferSize) {
 			// Ops the buffer size reached the maximum allowed size: send the values to the core
 			sendMonitoredPointsToIas();
 		}
 	}
 	
+	/**
+	 * Retunr the statistics collected during the last time interval
+	 */
 	@Override
-	public long numOfMessagesSent() {
-		return publishedMessages.getAndSet(0L);
+	public SenderStats getStats() {
+		SenderStats ret = new SenderStats(
+				publishedMessages.getAndSet(0L), 
+				monitorPointsSent.getAndSet(0L),
+				monitorPointsSubmitted.getAndSet(0L), 
+				bytesSent.getAndSet(0L),
+				numOfErrorsSending.getAndSet(0));
+		return ret;
 	}
 
 	/**

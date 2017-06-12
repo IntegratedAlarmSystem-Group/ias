@@ -19,7 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * collects and sends the monitor points with one single message 
  * instead of one by one.
  * 
- * @see MonitorPointData
+ * @see MonitorPointDataToBuffer
  * @author acaproni
  *
  */
@@ -40,7 +40,7 @@ public class BufferedMonitoredSystemData {
 	 * The monitor points and alarms collected from the remote
 	 * system to be sent to the IAS core;
 	 */
-	private Collection<MonitorPointData> monitorPoints;
+	private Collection<MonitorPointDataToBuffer> monitorPoints;
 	
 	/**
 	 * The mapper to convert this pojo in a JSON string and vice-versa
@@ -83,14 +83,14 @@ public class BufferedMonitoredSystemData {
 	/**
 	 * @return the monitorPoints
 	 */
-	public Collection<MonitorPointData> getMonitorPoints() {
+	public Collection<MonitorPointDataToBuffer> getMonitorPoints() {
 		return monitorPoints;
 	}
 
 	/**
 	 * @param monitorPoints the monitorPoints to set
 	 */
-	public void setMonitorPoints(Collection<MonitorPointData> monitorPoints) {
+	public void setMonitorPoints(Collection<MonitorPointDataToBuffer> monitorPoints) {
 		if (this.monitorPoints!=null) {
 			this.monitorPoints.clear();
 		}

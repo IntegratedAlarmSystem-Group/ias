@@ -17,7 +17,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.filter.FilteredValue;
-import org.eso.ias.plugin.publisher.MonitorPointData;
+import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.impl.JsonFilePublisher;
@@ -120,7 +120,7 @@ public class JsonPusblisherTest {
 		
 		// Check the correctness of all the  MonitorPointData in the date 
 		// against the submitted FilteredValue-s
-		for (MonitorPointData mpd: msData.getMonitorPoints()) {
+		for (MonitorPointDataToBuffer mpd: msData.getMonitorPoints()) {
 			FilteredValue fv = mapOfValues.get(mpd.getId());
 			assertNotNull(fv);
 			PublisherTestCommon.match(fv, mpd);
