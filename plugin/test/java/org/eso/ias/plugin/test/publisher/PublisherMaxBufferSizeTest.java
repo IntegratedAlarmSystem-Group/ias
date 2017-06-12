@@ -14,8 +14,8 @@ import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.PublisherException;
-import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
-import org.eso.ias.plugin.publisher.impl.ListenerPublisher.PublisherEventsListener;
+import org.eso.ias.plugin.publisher.impl.BufferedListenerPublisher;
+import org.eso.ias.plugin.publisher.impl.BufferedListenerPublisher.PublisherEventsListener;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.junit.After;
 import org.junit.Before;
@@ -48,7 +48,7 @@ public class PublisherMaxBufferSizeTest implements PublisherEventsListener {
 	/**
 	 * The object to test
 	 */
-	protected ListenerPublisher publisher;
+	protected BufferedListenerPublisher publisher;
 	
 	private int receivedValues=0;
 	
@@ -95,7 +95,7 @@ public class PublisherMaxBufferSizeTest implements PublisherEventsListener {
 		int poolSize = Runtime.getRuntime().availableProcessors()/2;
 		ScheduledExecutorService schedExecutorSvc= Executors.newScheduledThreadPool(poolSize, PluginThreadFactory.getThreadFactory());
 		assertEquals(10L, BufferedPublisherBase.maxBufferSize);
-		publisher = new ListenerPublisher(pluginId, pluginServerName, pluginServerPort, schedExecutorSvc,this);
+		publisher = new BufferedListenerPublisher(pluginId, pluginServerName, pluginServerPort, schedExecutorSvc,this);
 		logger.debug("Set up");
 		publisher.setUp();
 		publisher.startSending();

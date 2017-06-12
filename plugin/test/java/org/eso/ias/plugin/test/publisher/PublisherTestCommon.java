@@ -22,8 +22,8 @@ import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
-import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
-import org.eso.ias.plugin.publisher.impl.ListenerPublisher.PublisherEventsListener;
+import org.eso.ias.plugin.publisher.impl.BufferedListenerPublisher;
+import org.eso.ias.plugin.publisher.impl.BufferedListenerPublisher.PublisherEventsListener;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.junit.After;
 import org.junit.Before;
@@ -89,7 +89,7 @@ public class PublisherTestCommon implements PublisherEventsListener {
 	/**
 	 * The object to test
 	 */
-	protected ListenerPublisher publisher;
+	protected BufferedListenerPublisher publisher;
 	
 	/**
 	 * Generates and return a list of filtered values.
@@ -199,7 +199,7 @@ public class PublisherTestCommon implements PublisherEventsListener {
 		// Build the publisher
 		int poolSize = Runtime.getRuntime().availableProcessors()/2;
 		ScheduledExecutorService schedExecutorSvc= Executors.newScheduledThreadPool(poolSize, PluginThreadFactory.getThreadFactory());
-		publisher = new ListenerPublisher(pluginId, pluginServerName, pluginServerPort, schedExecutorSvc,this);
+		publisher = new BufferedListenerPublisher(pluginId, pluginServerName, pluginServerPort, schedExecutorSvc,this);
 		logger.debug("Set up");
 	}
 	

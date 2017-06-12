@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
  * @author acaproni
  *
  */
-public abstract class FilePublisherBase extends BufferedPublisherBase {
+public abstract class BufferedFilePublisherBase extends BufferedPublisherBase {
 	
 	/**
 	 * The writer to dump monitor point values into
@@ -28,7 +28,7 @@ public abstract class FilePublisherBase extends BufferedPublisherBase {
 	/**
 	 * The logger
 	 */
-	private static final Logger logger = LoggerFactory.getLogger(FilePublisherBase.class);
+	private static final Logger logger = LoggerFactory.getLogger(BufferedFilePublisherBase.class);
 
 	/**
 	 * Constructor
@@ -39,7 +39,7 @@ public abstract class FilePublisherBase extends BufferedPublisherBase {
 	 * @param executorSvc The executor service
 	 * @param outStream The output stream
 	 */
-	public FilePublisherBase(String pluginId, String serverName, int port, ScheduledExecutorService executorSvc, BufferedWriter outWriter) {
+	public BufferedFilePublisherBase(String pluginId, String serverName, int port, ScheduledExecutorService executorSvc, BufferedWriter outWriter) {
 		super(pluginId, serverName, port, executorSvc);
 		Objects.requireNonNull(outWriter,"The output stream can't be null");
 		this.outWriter=outWriter;

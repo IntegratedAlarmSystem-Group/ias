@@ -18,7 +18,7 @@ import org.eso.ias.plugin.publisher.PublisherException;
  * @author acaproni
  *
  */
-public class JsonFilePublisher extends FilePublisherBase {
+public class JsonFilePublisher extends BufferedFilePublisherBase {
 	
 	/**
 	 * Constructor
@@ -35,7 +35,7 @@ public class JsonFilePublisher extends FilePublisherBase {
 	}
 	
 	/**
-	 * @see org.eso.ias.plugin.publisher.impl.FilePublisherBase#buildString(org.eso.ias.plugin.publisher.BufferedMonitoredSystemData)
+	 * @see org.eso.ias.plugin.publisher.impl.BufferedFilePublisherBase#buildString(org.eso.ias.plugin.publisher.BufferedMonitoredSystemData)
 	 */
 	@Override
 	protected String buildString(BufferedMonitoredSystemData data) throws PublisherException {
