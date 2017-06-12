@@ -327,9 +327,9 @@ public class Plugin implements ChangeValueListener {
 	public void monitoredValueUpdated(Optional<FilteredValue> value) {
 		if (!value.isPresent()) {
 			return;
+		} else {
+			mpPublisher.offer(value);
+			logger.info("Value change {}",value.map(FilteredValue::toString));
 		}
-		mpPublisher.offer(value);
-		logger.info("Value change {}",value.get().toString());
-		
 	}
 }
