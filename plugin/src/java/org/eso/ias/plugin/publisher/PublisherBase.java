@@ -274,7 +274,6 @@ public abstract class PublisherBase implements MonitorPointSender {
 		}
 		// No need to synchronize iso8601dateFormat that is used only 
 		// by this (already synchronized) method
-		String now = iso8601dateFormat.format(new Date(System.currentTimeMillis()));
 		synchronized (monitorPoints) {
 			monitorPoints.values().forEach(mpv -> {
 				MonitorPointData mpData=new MonitorPointData(pluginId,mpv);

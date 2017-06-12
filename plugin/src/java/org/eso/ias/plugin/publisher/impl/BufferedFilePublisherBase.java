@@ -63,8 +63,7 @@ public abstract class BufferedFilePublisherBase extends BufferedPublisherBase {
 	 */
 	@Override
 	protected long publish(BufferedMonitoredSystemData data) throws PublisherException {
-		String strToWriteOnFile=null;
-		strToWriteOnFile=buildString(data);
+		String strToWriteOnFile=buildString(data);
 		if (strToWriteOnFile==null || strToWriteOnFile.isEmpty()) {
 			return 0L;
 		}

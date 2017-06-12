@@ -329,7 +329,7 @@ public class Plugin implements ChangeValueListener {
 			return;
 		}
 		mpPublisher.offer(value);
-		logger.info("Value change %s",value.get().toString());
+		logger.info("Value change {}",value.get().toString());
 		
 	}
 }
