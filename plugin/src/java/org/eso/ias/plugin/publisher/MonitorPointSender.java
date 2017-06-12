@@ -149,8 +149,14 @@ public interface MonitorPointSender {
 	
 	/**
 	 * 
-	 * @return <code>true</code> is sending values to the core of the IAS
+	 * @return <code>true</code> if sending values to the core of the IAS
 	 *         has been stopped
 	 */
 	public boolean isStopped();
+	
+	/**
+	 * 
+	 * @return <code>true</code> if the sender has been closed
+	 */
+	public boolean isClosed();
 }
