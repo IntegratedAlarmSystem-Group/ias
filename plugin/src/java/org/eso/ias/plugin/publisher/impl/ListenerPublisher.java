@@ -2,11 +2,10 @@ package org.eso.ias.plugin.publisher.impl;
 
 import java.util.concurrent.ScheduledExecutorService;
 
-import org.eso.ias.plugin.publisher.MonitorPointSender;
-import org.eso.ias.plugin.publisher.PublisherBase;
-import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.MonitorPointData;
+import org.eso.ias.plugin.publisher.MonitorPointSender;
+import org.eso.ias.plugin.publisher.PublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,16 +57,10 @@ public class ListenerPublisher extends PublisherBase {
 	private final PublisherEventsListener listener;
 	
 	/**
-	 * The number of messages 
+	 * The number of published messages is the same of the number
+	 * of monitor points sent.
 	 */
 	private volatile int publishedMessages=0;
-	
-	/**
-	 * The number of published monitor points can be greater then
-	 * the number of messages published ({@link #publishedMessages}) because
-	 * of the throttling.
-	 */
-	private volatile int publishedMonitorPoints=0;
 	
 	/**
 	 * Record the number of times {@link #setUp()} has been executed
@@ -102,7 +95,6 @@ public class ListenerPublisher extends PublisherBase {
 	protected long publish(MonitorPointData mpData) throws PublisherException {
 		logger.info("Going to publish the {} monitor point of the {} subsystem",mpData.getId(),mpData.getSystemID());
 		publishedMessages++;
-		publishedMonitorPoints++;
 		listener.dataReceived(mpData);
 		return mpData.toJsonString().length();
 	}
@@ -120,20 +112,6 @@ public class ListenerPublisher extends PublisherBase {
 	}
 
 	/**
-	 * @return the publishedMessages
-	 */
-	public int getPublishedMessages() {
-		return publishedMessages;
-	}
-
-	/**
-	 * @return the publishedMonitorPoints
-	 */
-	public int getPublishedMonitorPoints() {
-		return publishedMonitorPoints;
-	}
-
-	/**
 	 * @return the numOfSetUpInvocations
 	 */
 	public int getNumOfSetUpInvocations() {
@@ -145,6 +123,13 @@ public class ListenerPublisher extends PublisherBase {
 	 */
 	public int getNumOfTearDownInvocations() {
 		return numOfTearDownInvocations;
+	}
+
+	/**
+	 * @return the publishedMessages
+	 */
+	public int getPublishedMessages() {
+		return publishedMessages;
 	}
 
 }
