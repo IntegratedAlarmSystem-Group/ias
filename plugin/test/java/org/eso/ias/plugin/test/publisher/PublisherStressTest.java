@@ -143,7 +143,7 @@ public class PublisherStressTest extends PublisherTestCommon {
 	    logger.info("{} received MonitorPointData",sum);
 	    
 	    // Give time to flush
-	    // Now all the elements in the queue have been added to a MonitoredSystemData
+	    // Now all the elements in the queue have been added to a BufferedMonitoredSystemData
 	    // but could not yet been published
 	    assertTrue("Too slow processing events",expectedValues.await(1,TimeUnit.MINUTES));
 	    

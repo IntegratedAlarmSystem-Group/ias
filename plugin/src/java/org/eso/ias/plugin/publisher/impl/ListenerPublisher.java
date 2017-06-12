@@ -3,7 +3,7 @@ package org.eso.ias.plugin.publisher.impl;
 import java.util.concurrent.ScheduledExecutorService;
 
 import org.eso.ias.plugin.publisher.MonitorPointSender;
-import org.eso.ias.plugin.publisher.MonitoredSystemData;
+import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.slf4j.Logger;
@@ -42,7 +42,7 @@ public class ListenerPublisher extends BufferedPublisherBase {
 		 * 
 		 * @param data The data published
 		 */
-		public void dataReceived(MonitoredSystemData data);
+		public void dataReceived(BufferedMonitoredSystemData data);
 	}
 	
 	/**
@@ -97,7 +97,7 @@ public class ListenerPublisher extends BufferedPublisherBase {
 	}
 	
 	@Override
-	protected void publish(MonitoredSystemData data) {
+	protected void publish(BufferedMonitoredSystemData data) {
 		logger.info("Subsystem {} is going to publish {} monitor points",data.getSystemID(),data.getMonitorPoints().size());
 		publishedMessages++;
 		publishedMonitorPoints+=data.getMonitorPoints().size();

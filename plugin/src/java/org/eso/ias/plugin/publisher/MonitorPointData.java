@@ -10,7 +10,7 @@ import org.eso.ias.plugin.filter.NoneFilter;
  * A java POJO representing a monitor point or alarm
  * to be sent to the IAS.
  * 
- * @see MonitoredSystemData
+ * @see BufferedMonitoredSystemData
  * @author acaproni
  *
  */

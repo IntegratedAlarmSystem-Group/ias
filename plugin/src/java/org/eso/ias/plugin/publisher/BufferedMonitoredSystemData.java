@@ -7,11 +7,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * The data structure encapsulating monitor point values
- * and alarm retrieved from a monitored system and sent to the IAS core.
+ * and alarm retrieved from a monitored system and to be sent to the IAS core.
  * It is composed of a global data structure (this one) plus a list
  * of monitor points.
  * <P>
- * <code>MonitoredSystemData</code> is a java POJO that is easily
+ * <code>BufferedMonitoredSystemData</code> is a java POJO that is easily
  * serializable to a string that is what the plugin sends to
  * the IAS core.
  * <P>
@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author acaproni
  *
  */
-public class MonitoredSystemData {
+public class BufferedMonitoredSystemData {
 	
 	/**
 	 * The id of the plugin.
@@ -50,7 +50,7 @@ public class MonitoredSystemData {
 	/**
 	 * Empty constructor
 	 */
-	public MonitoredSystemData() {}
+	public BufferedMonitoredSystemData() {}
 
 	/**
 	 * @return the systemID
@@ -115,9 +115,9 @@ public class MonitoredSystemData {
 	 * 
 	 *  @param jsonStr The JSON string to parse to build the <code>MonitoredSystemData</code>
 	 */
-	public static MonitoredSystemData fromJsonString(String jsonStr) throws PublisherException {
+	public static BufferedMonitoredSystemData fromJsonString(String jsonStr) throws PublisherException {
 		try { 
-			return MAPPER.readValue(jsonStr, MonitoredSystemData.class);
+			return MAPPER.readValue(jsonStr, BufferedMonitoredSystemData.class);
 		} catch (Exception e) {
 			throw new PublisherException("Error parsing a JSON string",e);
 		}

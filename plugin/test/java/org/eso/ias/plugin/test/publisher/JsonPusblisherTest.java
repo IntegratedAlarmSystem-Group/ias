@@ -18,7 +18,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.MonitorPointData;
-import org.eso.ias.plugin.publisher.MonitoredSystemData;
+import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.impl.JsonFilePublisher;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
@@ -114,7 +114,7 @@ public class JsonPusblisherTest {
 		
 		// Read JSON data from file
 		ObjectMapper mapper = new ObjectMapper();
-		MonitoredSystemData msData = mapper.readValue(jsonFile, MonitoredSystemData.class);
+		BufferedMonitoredSystemData msData = mapper.readValue(jsonFile, BufferedMonitoredSystemData.class);
 		assertEquals(SYSTEM_ID,msData.getSystemID());
 		assertEquals(values.size(),msData.getMonitorPoints().size());
 		

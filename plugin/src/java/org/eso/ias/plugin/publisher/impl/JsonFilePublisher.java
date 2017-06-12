@@ -3,7 +3,7 @@ package org.eso.ias.plugin.publisher.impl;
 import java.io.BufferedWriter;
 import java.util.concurrent.ScheduledExecutorService;
 
-import org.eso.ias.plugin.publisher.MonitoredSystemData;
+import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.PublisherException;
 /**
  * A publisher that dumps JSON messages in the passed writer.
@@ -12,7 +12,7 @@ import org.eso.ias.plugin.publisher.PublisherException;
  * to the core of the IAS by looking at the JSON file where they are all dumped.
  * <P>
  * The data written in the file are the JSON representation of each message
- * i.e. a sequence of {@link MonitoredSystemData}.
+ * i.e. a sequence of {@link BufferedMonitoredSystemData}.
  * As such the file is not JSON specification compliant. 
  * 
  * @author acaproni
@@ -35,10 +35,10 @@ public class JsonFilePublisher extends FilePublisherBase {
 	}
 	
 	/**
-	 * @see org.eso.ias.plugin.publisher.impl.FilePublisherBase#buildString(org.eso.ias.plugin.publisher.MonitoredSystemData)
+	 * @see org.eso.ias.plugin.publisher.impl.FilePublisherBase#buildString(org.eso.ias.plugin.publisher.BufferedMonitoredSystemData)
 	 */
 	@Override
-	protected String buildString(MonitoredSystemData data) throws PublisherException {
+	protected String buildString(BufferedMonitoredSystemData data) throws PublisherException {
 		return data.toJsonString();
 	}
 }

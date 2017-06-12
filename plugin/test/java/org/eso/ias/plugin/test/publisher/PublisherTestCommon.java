@@ -19,7 +19,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.MonitorPointData;
-import org.eso.ias.plugin.publisher.MonitoredSystemData;
+import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
@@ -64,18 +64,18 @@ public class PublisherTestCommon implements PublisherEventsListener {
 	protected final Map<String, FilteredValue> publishedValues = Collections.synchronizedMap(new HashMap<>());
 	
 	/**
-	 * The FileterdValues sent to {@link ListenerPublisher#publish(MonitoredSystemData)}
+	 * The FileterdValues sent to {@link ListenerPublisher#publish(BufferedMonitoredSystemData)}
 	 * to be sent to the core
 	 */
 	protected final Map<String, MonitorPointData> receivedValues = Collections.synchronizedMap(new HashMap<>());
 	
 	/**
 	 * The latch to wait for the expected number of values
-	 * to be sent to {@link ListenerPublisher#publish(MonitoredSystemData)}.
+	 * to be sent to {@link ListenerPublisher#publish(BufferedMonitoredSystemData)}.
 	 * <P>
 	 * This is not the number of messages, but the number of {@link FilteredValue}
 	 * objects as the {@link BufferedPublisherBase} could group more values into the same
-	 * {@link MonitoredSystemData}.
+	 * {@link BufferedMonitoredSystemData}.
 	 * <P>
 	 * The latch is not used by all tests.
 	 */
@@ -173,10 +173,10 @@ public class PublisherTestCommon implements PublisherEventsListener {
 	}
 
 	/**
-	 * @see org.eso.ias.plugin.test.publisher.PublisherEventsListener#dataReceived(org.eso.ias.plugin.publisher.MonitoredSystemData)
+	 * @see org.eso.ias.plugin.test.publisher.PublisherEventsListener#dataReceived(org.eso.ias.plugin.publisher.BufferedMonitoredSystemData)
 	 */
 	@Override
-	public void dataReceived(MonitoredSystemData data) {
+	public void dataReceived(BufferedMonitoredSystemData data) {
 		assertNotNull(data);
 		assertEquals("ID differs",data.getSystemID(), pluginId);
 		assertNotNull(data.getPublishTime());

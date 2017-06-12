@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
-import org.eso.ias.plugin.publisher.MonitoredSystemData;
+import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher.PublisherEventsListener;
@@ -54,11 +54,11 @@ public class PublisherMaxBufferSizeTest implements PublisherEventsListener {
 	
 	/**
 	 * The latch to wait for the expected number of values
-	 * to be sent to {@link ListenerPublisher#publish(MonitoredSystemData)}.
+	 * to be sent to {@link ListenerPublisher#publish(BufferedMonitoredSystemData)}.
 	 * <P>
 	 * This is not the number of messages, but the number of {@link FilteredValue}
 	 * objects as the {@link BufferedPublisherBase} could group more values into the same
-	 * {@link MonitoredSystemData}.
+	 * {@link BufferedMonitoredSystemData}.
 	 * <P>
 	 * The latch is not used by all tests.
 	 */
@@ -81,7 +81,7 @@ public class PublisherMaxBufferSizeTest implements PublisherEventsListener {
 	}
 
 	@Override
-	public void dataReceived(MonitoredSystemData data) {
+	public void dataReceived(BufferedMonitoredSystemData data) {
 		assertTrue(data.getMonitorPoints().size()<= BufferedPublisherBase.maxBufferSize);
 		receivedValues+=data.getMonitorPoints().size();
 		for (int t=0; t<data.getMonitorPoints().size(); t++) { 
@@ -114,7 +114,7 @@ public class PublisherMaxBufferSizeTest implements PublisherEventsListener {
 	 * max size of the buffer.
 	 * <P>
 	 * Messages are sent as fast as possible in a loop: the test is actually done in
-	 * {@link #dataReceived(MonitoredSystemData)}
+	 * {@link #dataReceived(BufferedMonitoredSystemData)}
 	 */
 	@Test
 	public void testSendManyValues() throws Exception {

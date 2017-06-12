@@ -3,7 +3,7 @@ package org.eso.ias.plugin.publisher.impl;
 import java.io.BufferedWriter;
 import java.util.concurrent.ScheduledExecutorService;
 
-import org.eso.ias.plugin.publisher.MonitoredSystemData;
+import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.PublisherException;
 
 /**
@@ -30,10 +30,10 @@ public class FilePublisher extends FilePublisherBase {
 	}
 
 	/**
-	 * @see org.eso.ias.plugin.publisher.impl.FilePublisherBase#buildString(org.eso.ias.plugin.publisher.MonitoredSystemData)
+	 * @see org.eso.ias.plugin.publisher.impl.FilePublisherBase#buildString(org.eso.ias.plugin.publisher.BufferedMonitoredSystemData)
 	 */
 	@Override
-	protected String buildString(MonitoredSystemData data) throws PublisherException {
+	protected String buildString(BufferedMonitoredSystemData data) throws PublisherException {
 		return data.toString();
 	}
 }

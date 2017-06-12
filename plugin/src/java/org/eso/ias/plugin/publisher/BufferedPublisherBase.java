@@ -124,7 +124,7 @@ public abstract class BufferedPublisherBase implements MonitorPointSender {
 	/**
 	 * The data structure to send to the core of the IAS
 	 */
-	private final MonitoredSystemData monitorPointsToSend = new MonitoredSystemData();
+	private final BufferedMonitoredSystemData monitorPointsToSend = new BufferedMonitoredSystemData();
 	
 	/**
 	 * Signal the thread that it has been closed and should reject 
@@ -195,7 +195,7 @@ public abstract class BufferedPublisherBase implements MonitorPointSender {
 	 * 
 	 * @param data The data to send to the core of the IAS
 	 */
-	protected abstract void publish(MonitoredSystemData data);
+	protected abstract void publish(BufferedMonitoredSystemData data);
 	
 	/**
 	 * Performs the initialization of the implementers of this

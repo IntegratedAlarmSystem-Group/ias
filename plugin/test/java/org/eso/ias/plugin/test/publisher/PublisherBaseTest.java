@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.MonitorPointData;
-import org.eso.ias.plugin.publisher.MonitoredSystemData;
+import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
@@ -112,7 +112,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 	}
 	
 	/**
-	 * Check if {@link ListenerPublisher#publish(MonitoredSystemData)} is invoked to 
+	 * Check if {@link ListenerPublisher#publish(BufferedMonitoredSystemData)} is invoked to 
 	 * publish just one {@link FilteredValue}.
 	 * <P> 
 	 * It also checks if the offered and the received values match.
@@ -144,7 +144,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 	}
 	
 	/**
-	 * Check if {@link ListenerPublisher#publish(MonitoredSystemData)} is invoked to 
+	 * Check if {@link ListenerPublisher#publish(BufferedMonitoredSystemData)} is invoked to 
 	 * publish all the {@link FilteredValue}.
 	 * <P> 
 	 * It also checks if the offered and the received values match.
@@ -187,7 +187,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 	}
 	
 	/**
-	 * Check if {@link ListenerPublisher#publish(MonitoredSystemData)} is invoked to 
+	 * Check if {@link ListenerPublisher#publish(BufferedMonitoredSystemData)} is invoked to 
 	 * publish just the last sent {@link FilteredValue}.
 	 * <P> 
 	 * It also checks if the offered and the received values match.
@@ -248,7 +248,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 	
 	/**
 	 * Check if starting/stopping the publisher, effectively 
-	 * trigger the invocation or not invocation of {@link ListenerPublisher#publish(MonitoredSystemData)}
+	 * trigger the invocation or not invocation of {@link ListenerPublisher#publish(BufferedMonitoredSystemData)}
 	 * 
 	 * @throws PublisherException
 	 */

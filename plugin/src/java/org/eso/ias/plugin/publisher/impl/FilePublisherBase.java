@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
 
-import org.eso.ias.plugin.publisher.MonitoredSystemData;
+import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.slf4j.Logger;
@@ -54,7 +54,7 @@ public abstract class FilePublisherBase extends BufferedPublisherBase {
 	 * @return The string to write in the file
 	 * @throws PublisherException In case of error building the string
 	 */
-	protected abstract String buildString(MonitoredSystemData data) throws PublisherException;
+	protected abstract String buildString(BufferedMonitoredSystemData data) throws PublisherException;
 	
 	/**
 	 * Send the passed data to the core of the IAS.
@@ -62,7 +62,7 @@ public abstract class FilePublisherBase extends BufferedPublisherBase {
 	 * @param data The data to send to the core of the IAS
 	 */
 	@Override
-	protected void publish(MonitoredSystemData data) {
+	protected void publish(BufferedMonitoredSystemData data) {
 		String strToWriteOnFile=null;
 		try {
 			strToWriteOnFile=buildString(data);
