@@ -98,7 +98,6 @@ public class BufferedListenerPublisher extends BufferedPublisherBase {
 	
 	@Override
 	protected long publish(BufferedMonitoredSystemData data) throws PublisherException {
-		logger.info("Subsystem {} is going to publish {} monitor points",data.getSystemID(),data.getMonitorPoints().size());
 		publishedMessages++;
 		publishedMonitorPoints+=data.getMonitorPoints().size();
 		listener.dataReceived(data);
