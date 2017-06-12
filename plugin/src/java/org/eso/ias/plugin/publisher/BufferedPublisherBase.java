@@ -262,7 +262,7 @@ public abstract class BufferedPublisherBase implements MonitorPointSender {
 		monitorPointsToSend.setPublishTime(now);
 		synchronized (monitorPoints) {
 			monitorPointsToSend.setMonitorPoints(
-					monitorPoints.values().stream().map(v -> new MonitorPointData(v)).collect(Collectors.toList()));
+					monitorPoints.values().stream().map(v -> new MonitorPointData(pluginId,v)).collect(Collectors.toList()));
 			monitorPoints.clear();
 		}
 		publishedMessages.incrementAndGet();

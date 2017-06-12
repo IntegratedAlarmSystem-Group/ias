@@ -127,7 +127,7 @@ public class BufferedMonitoredSystemData {
 	public String toString() {
 		StringBuilder ret = new StringBuilder("Monitored System Data packet [ID=");
 		ret.append(systemID);
-		ret.append(", at ");
+		ret.append(", published at ");
 		ret.append(publishTime);
 		ret.append(", ");
 		ret.append(monitorPoints.size());
