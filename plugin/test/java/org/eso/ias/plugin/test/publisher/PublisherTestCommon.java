@@ -82,7 +82,7 @@ public class PublisherTestCommon implements PublisherEventsListener {
 	protected CountDownLatch expectedValues=null;
 	
 	/**
-	 * Record the numer of times publish has been called
+	 * Record the number of times publish has been called
 	 */
 	protected int numOfPublishInvocation=0;
 	
@@ -104,7 +104,7 @@ public class PublisherTestCommon implements PublisherEventsListener {
 	 * @return a list of newly generated values ready to 
 	 *         be offered to the publisher
 	 */
-	public static List<FilteredValue> generatedFileteredValues(
+	public static List<FilteredValue> generateFileteredValues(
 			int numOfValues, 
 			String baseId,
 			boolean singleID,
@@ -128,7 +128,7 @@ public class PublisherTestCommon implements PublisherEventsListener {
 	
 	/**
 	 * Compare a {@link FilteredValue} (i.e. the value offered) with a
-	 * {@link MonitorPointData} (i.e. the value to be sent to the OAS core)
+	 * {@link MonitorPointDataToBuffer} (i.e. the value to be sent to the IAS core)
 	 *  
 	 * @param v The not <code>null</code> value offered
 	 * @param d The not <code>null</code> value to be sent to the core
@@ -186,11 +186,11 @@ public class PublisherTestCommon implements PublisherEventsListener {
 				data.getMonitorPoints().size()<=BufferedPublisherBase.maxBufferSize);
 		numOfPublishInvocation++;
 		logger.info("{} monitor points received from {}",data.getMonitorPoints().size(),data.getSystemID());
-		for (MonitorPointDataToBuffer d: data.getMonitorPoints()) { 
+		for (MonitorPointDataToBuffer d: data.getMonitorPoints()) {
+			receivedValues.put(d.getId(), d);
 			if (expectedValues!=null) {
 				expectedValues.countDown(); 
 			}
-			receivedValues.put(d.getId(), d);
 		}
 	}
 	

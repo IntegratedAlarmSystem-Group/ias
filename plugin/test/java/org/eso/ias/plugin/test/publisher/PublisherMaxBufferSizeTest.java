@@ -124,7 +124,7 @@ public class PublisherMaxBufferSizeTest implements PublisherEventsListener {
 		expectedValues = new CountDownLatch(numOfValuesToSend);
 		// Generate the values to send
 		
-		List<FilteredValue> values = PublisherTestCommon.generatedFileteredValues(numOfValuesToSend, "ID-bfzSize", false,1121 , 3);
+		List<FilteredValue> values = PublisherTestCommon.generateFileteredValues(numOfValuesToSend, "ID-bfzSize", false,1121 , 3);
 		
 		for (FilteredValue value: values) {
 			publisher.offer(Optional.of(value));

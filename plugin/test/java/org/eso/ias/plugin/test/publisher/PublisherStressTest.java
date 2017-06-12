@@ -123,7 +123,7 @@ public class PublisherStressTest extends PublisherTestCommon {
 		// Generate one list of filtered values for each thread
 		List<List<FilteredValue>> listsOfValues = new ArrayList<>();
 		for (int t=0; t<numOfThreads; t++) {
-			listsOfValues.add(generatedFileteredValues(numOfValuesForEachThread, "ID"+t+"-", false,numOfValuesForEachThread*t , 1+t));
+			listsOfValues.add(generateFileteredValues(numOfValuesForEachThread, "ID"+t+"-", false,numOfValuesForEachThread*t , 1+t));
 		}
 		
 		// Start all the threads
