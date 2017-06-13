@@ -81,7 +81,7 @@ public class PublisherStressTest extends PublisherTestCommon {
 			int published=0;
 			for (FilteredValue fv : values) {
 				publishedValues.put(fv.id, fv);
-				publisher.offer(Optional.of(fv));
+				bufferedPublisher.offer(Optional.of(fv));
 				published++;
 			}
 			logger.info("Terminating: {} values pushed",published);
@@ -115,8 +115,8 @@ public class PublisherStressTest extends PublisherTestCommon {
 	 */
 	@Test
 	public void stressTest() throws PublisherException, InterruptedException, ExecutionException {
-		publisher.setUp();
-		publisher.startSending();
+		bufferedPublisher.setUp();
+		bufferedPublisher.startSending();
 		
 		int numOfValuesForEachThread=10000;
 		expectedValues = new CountDownLatch(numOfValuesForEachThread*numOfThreads);
@@ -155,11 +155,11 @@ public class PublisherStressTest extends PublisherTestCommon {
 	    // Check if all the pushed IDs have been published
 	    for (List<FilteredValue> values: listsOfValues) {
 	    	for (FilteredValue pushedValue: values) {
-	    		MonitorPointDataToBuffer d = receivedValues.get(pushedValue.id);
+	    		MonitorPointDataToBuffer d = receivedValuesFromBufferedPub.get(pushedValue.id);
 	    		assertNotNull(d);
 	    	}
 	    }
 	    
-	    publisher.tearDown();
+	    bufferedPublisher.tearDown();
 	}
 }

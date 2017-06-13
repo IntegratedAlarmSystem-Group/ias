@@ -21,9 +21,11 @@ import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
+import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.BufferedListenerPublisher;
 import org.eso.ias.plugin.publisher.impl.BufferedListenerPublisher.PublisherEventsListener;
+import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.junit.After;
 import org.junit.Before;
@@ -32,11 +34,14 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Base class for testing the publisher.
+ * <P>
+ * <code>PublisherTestCommon</code> offers a buffered and a unbuffered
+ * publisher.
  * 
  * @author acaproni
  *
  */
-public class PublisherTestCommon implements PublisherEventsListener {
+public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias.plugin.publisher.impl.ListenerPublisher.PublisherEventsListener {
 	
 	/**
 	 * The logger
@@ -64,10 +69,16 @@ public class PublisherTestCommon implements PublisherEventsListener {
 	protected final Map<String, FilteredValue> publishedValues = Collections.synchronizedMap(new HashMap<>());
 	
 	/**
-	 * The FileterdValues sent to {@link ListenerPublisher#publish(BufferedMonitoredSystemData)}
-	 * to be sent to the core
+	 * The FileterdValues {@link ListenerPublisher#publish(BufferedMonitoredSystemData)}
+	 * to be sent to the core from the buffered publisher {@link #bufferedPublisher}
 	 */
-	protected final Map<String, MonitorPointDataToBuffer> receivedValues = Collections.synchronizedMap(new HashMap<>());
+	protected final Map<String, MonitorPointDataToBuffer> receivedValuesFromBufferedPub = Collections.synchronizedMap(new HashMap<>());
+	
+	/**
+	 * The FileterdValues {@link ListenerPublisher#publish(BufferedMonitoredSystemData)}
+	 * to be sent to the core from the buffered publisher {@link #unbufferedPublisher}
+	 */
+	protected final Map<String, MonitorPointData> receivedValuesFromUnbufferedPub = Collections.synchronizedMap(new HashMap<>());
 	
 	/**
 	 * The latch to wait for the expected number of values
@@ -82,14 +93,24 @@ public class PublisherTestCommon implements PublisherEventsListener {
 	protected CountDownLatch expectedValues=null;
 	
 	/**
-	 * Record the number of times publish has been called
+	 * Record the number of times publish has been called in the buffered publisher
 	 */
-	protected int numOfPublishInvocation=0;
+	protected int numOfPublishInvocationInBufferedPub=0;
 	
 	/**
-	 * The object to test
+	 * Record the number of times publish has been called in the unbuffered publisher
 	 */
-	protected BufferedListenerPublisher publisher;
+	protected int numOfPublishInvocationInUnbufferedPub=0;
+	
+	/**
+	 * The buffred object to test
+	 */
+	protected BufferedListenerPublisher bufferedPublisher;
+	
+	/**
+	 * The buffered object to test
+	 */
+	protected ListenerPublisher unbufferedPublisher;
 	
 	/**
 	 * Generates and return a list of filtered values.
@@ -173,6 +194,8 @@ public class PublisherTestCommon implements PublisherEventsListener {
 	}
 
 	/**
+	 * Data received from the {@link #bufferedPublisher} buffered receiver
+	 * 
 	 * @see org.eso.ias.plugin.test.publisher.PublisherEventsListener#dataReceived(org.eso.ias.plugin.publisher.BufferedMonitoredSystemData)
 	 */
 	@Override
@@ -184,14 +207,28 @@ public class PublisherTestCommon implements PublisherEventsListener {
 		assertTrue("There must be at least one monitor point value in a message",data.getMonitorPoints().size()>0);
 		assertTrue("The number of monitor point values in a message acn't be geater then the max size of the buffer",
 				data.getMonitorPoints().size()<=BufferedPublisherBase.maxBufferSize);
-		numOfPublishInvocation++;
+		numOfPublishInvocationInBufferedPub++;
 		logger.info("{} monitor points received from {}",data.getMonitorPoints().size(),data.getSystemID());
 		for (MonitorPointDataToBuffer d: data.getMonitorPoints()) {
-			receivedValues.put(d.getId(), d);
+			receivedValuesFromBufferedPub.put(d.getId(), d);
 			if (expectedValues!=null) {
 				expectedValues.countDown(); 
 			}
 		}
+	}
+	
+	/** Data received from the {@link #unbufferedPublisher} unbuffered receiver
+	 * 
+	 * @see org.eso.ias.plugin.publisher.impl.ListenerPublisher.PublisherEventsListener#dataReceived(org.eso.ias.plugin.publisher.MonitorPointData)
+	 */
+	@Override
+	public void dataReceived(MonitorPointData mpData) {
+		assertNotNull(mpData);
+		assertEquals("ID differs",mpData.getSystemID(), pluginId);
+		assertNotNull(mpData.getPublishTime());
+		assertFalse(mpData.getPublishTime().isEmpty());
+		numOfPublishInvocationInUnbufferedPub++;
+		receivedValuesFromUnbufferedPub.put(mpData.getId(), mpData);
 	}
 	
 	@Before
@@ -199,16 +236,22 @@ public class PublisherTestCommon implements PublisherEventsListener {
 		// Build the publisher
 		int poolSize = Runtime.getRuntime().availableProcessors()/2;
 		ScheduledExecutorService schedExecutorSvc= Executors.newScheduledThreadPool(poolSize, PluginThreadFactory.getThreadFactory());
-		publisher = new BufferedListenerPublisher(pluginId, pluginServerName, pluginServerPort, schedExecutorSvc,this);
+		bufferedPublisher = new BufferedListenerPublisher(pluginId, pluginServerName, pluginServerPort, schedExecutorSvc,this);
+		unbufferedPublisher = new ListenerPublisher(pluginId, pluginServerName, pluginServerPort, schedExecutorSvc,this);
 		logger.debug("Set up");
 	}
 	
 	@After
 	public void tearDown() throws PublisherException {
 		logger.debug("Releasing resource");
-		receivedValues.clear();
+		receivedValuesFromBufferedPub.clear();
 		publishedValues.clear();
-		publisher.tearDown();
-
+		bufferedPublisher.stopSending();
+		bufferedPublisher.tearDown();
+		unbufferedPublisher.stopSending();
+		unbufferedPublisher.tearDown();
+		logger.debug("tearDown complete");
 	}
+
+	
 }
