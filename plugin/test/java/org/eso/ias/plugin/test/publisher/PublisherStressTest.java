@@ -159,7 +159,5 @@ public class PublisherStressTest extends PublisherTestCommon {
 	    		assertNotNull(d);
 	    	}
 	    }
-	    
-	    bufferedPublisher.tearDown();
 	}
 }

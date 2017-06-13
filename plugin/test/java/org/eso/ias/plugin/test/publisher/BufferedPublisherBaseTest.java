@@ -70,7 +70,7 @@ public class BufferedPublisherBaseTest extends PublisherTestCommon {
 			Thread.currentThread().interrupt();
 		}
 		assertEquals(1L,bufferedPublisher.getPublishedMonitorPoints());
-		assertEquals(bufferedPublisher.getPublishedMessages(),numOfPublishInvocationInBufferedPub);
+		assertEquals(bufferedPublisher.getPublishedMessages(),numOfPublishInvocationInBufferedPub.get());
 		MonitorPointDataToBuffer d = receivedValuesFromBufferedPub.get(v.id);
 		assertNotNull("Expected value not published",d);
 		assertTrue("Offered and published values do not match "+v.toString()+"<->"+d.toString(), match(v,d));
@@ -111,7 +111,7 @@ public class BufferedPublisherBaseTest extends PublisherTestCommon {
 			Thread.currentThread().interrupt();
 		}
 		assertEquals(values.size(),bufferedPublisher.getPublishedMonitorPoints());
-		assertEquals(bufferedPublisher.getPublishedMessages(),numOfPublishInvocationInBufferedPub);
+		assertEquals(bufferedPublisher.getPublishedMessages(),numOfPublishInvocationInBufferedPub.get());
 		
 		for (FilteredValue v: values) {
 			MonitorPointDataToBuffer d = receivedValuesFromBufferedPub.get(v.id);
@@ -156,7 +156,7 @@ public class BufferedPublisherBaseTest extends PublisherTestCommon {
 		
 		logger.info("Last offered value: {}",lastOffered.toString());
 		
-		assertEquals(bufferedPublisher.getPublishedMessages(),numOfPublishInvocationInBufferedPub);
+		assertEquals(bufferedPublisher.getPublishedMessages(),numOfPublishInvocationInBufferedPub.get());
 		assertEquals(publishedValues.size(), receivedValuesFromBufferedPub.size());
 		
 		MonitorPointDataToBuffer d = receivedValuesFromBufferedPub.get(lastOffered.id);

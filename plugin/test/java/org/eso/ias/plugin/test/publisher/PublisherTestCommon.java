@@ -2,8 +2,8 @@ package org.eso.ias.plugin.test.publisher;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.text.SimpleDateFormat;
 import java.util.Collections;
@@ -15,13 +15,15 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.filter.FilteredValue;
-import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.MonitorPointData;
+import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
+import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.BufferedListenerPublisher;
 import org.eso.ias.plugin.publisher.impl.BufferedListenerPublisher.PublisherEventsListener;
@@ -35,8 +37,11 @@ import org.slf4j.LoggerFactory;
 /**
  * Base class for testing the publisher.
  * <P>
- * <code>PublisherTestCommon</code> offers a buffered and a unbuffered
- * publisher.
+ * <code>PublisherTestCommon</code> offers a buffered ({@link #bufferedPublisher})
+ * and a unbuffered ({@link #unbufferedPublisher}) publisher.
+ * <P>
+ * A more elegant solution could be that of using only one object implementing the {@link MonitorPointSender}
+ * interface.
  * 
  * @author acaproni
  *
@@ -70,7 +75,7 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 	
 	/**
 	 * The FileterdValues {@link ListenerPublisher#publish(BufferedMonitoredSystemData)}
-	 * to be sent to the core from the buffered publisher {@link #bufferedPublisher}
+	 * to be sent to the core from the buffered publisher {@link bufferedPublisher}
 	 */
 	protected final Map<String, MonitorPointDataToBuffer> receivedValuesFromBufferedPub = Collections.synchronizedMap(new HashMap<>());
 	
@@ -95,15 +100,15 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 	/**
 	 * Record the number of times publish has been called in the buffered publisher
 	 */
-	protected int numOfPublishInvocationInBufferedPub=0;
+	protected final AtomicInteger numOfPublishInvocationInBufferedPub= new AtomicInteger(0);
 	
 	/**
 	 * Record the number of times publish has been called in the unbuffered publisher
 	 */
-	protected int numOfPublishInvocationInUnbufferedPub=0;
+	protected AtomicInteger numOfPublishInvocationInUnbufferedPub= new AtomicInteger(0);
 	
 	/**
-	 * The buffred object to test
+	 * The (buffered or unbuffered) object to test
 	 */
 	protected BufferedListenerPublisher bufferedPublisher;
 	
@@ -194,7 +199,7 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 	}
 
 	/**
-	 * Data received from the {@link #bufferedPublisher} buffered receiver
+	 * Data received from the {@link bufferedPublisher} buffered receiver
 	 * 
 	 * @see org.eso.ias.plugin.test.publisher.PublisherEventsListener#dataReceived(org.eso.ias.plugin.publisher.BufferedMonitoredSystemData)
 	 */
@@ -207,7 +212,7 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 		assertTrue("There must be at least one monitor point value in a message",data.getMonitorPoints().size()>0);
 		assertTrue("The number of monitor point values in a message acn't be geater then the max size of the buffer",
 				data.getMonitorPoints().size()<=BufferedPublisherBase.maxBufferSize);
-		numOfPublishInvocationInBufferedPub++;
+		numOfPublishInvocationInBufferedPub.incrementAndGet();
 		logger.info("{} monitor points received from {}",data.getMonitorPoints().size(),data.getSystemID());
 		for (MonitorPointDataToBuffer d: data.getMonitorPoints()) {
 			receivedValuesFromBufferedPub.put(d.getId(), d);
@@ -227,7 +232,7 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 		assertEquals("ID differs",mpData.getSystemID(), pluginId);
 		assertNotNull(mpData.getPublishTime());
 		assertFalse(mpData.getPublishTime().isEmpty());
-		numOfPublishInvocationInUnbufferedPub++;
+		numOfPublishInvocationInUnbufferedPub.incrementAndGet();
 		receivedValuesFromUnbufferedPub.put(mpData.getId(), mpData);
 	}
 	
