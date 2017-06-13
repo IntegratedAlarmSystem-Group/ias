@@ -3,10 +3,12 @@ package org.eso.ias.plugin.test.publisher;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -37,7 +39,7 @@ import org.slf4j.LoggerFactory;
  * This stress test is done by concurrently send {@link #totValuesToOffer}
  * filtered values some with the same ID, some other with different IDs.
  * The values are concurrently offered to the {@link BufferedPublisherBase} by {@link #numOfThreads}
- * threads (@see {@link ValuesProducer#run()}).
+ * threads (@see {@link ValuesProducerCallable#run()}).
  * <P>
  * The stress tests in <code>PublisherStressTest</code> are far behind the specification:
  * the IAS should be able to process 50000 monitor point per second while here 
@@ -48,47 +50,6 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class BufferedPublisherStressTest extends PublisherTestCommon {
-	
-	/**
-	 * The callable to concurrently push values in the publisher
-	 * 
-	 * @author acaproni
-	 *
-	 */
-	protected class ValuesProducer implements Callable<Integer> {
-		
-		/**
-		 * The list of values to publish
-		 */
-		private final List<FilteredValue> values;
-		
-		/**
-		 * Constrcutor
-		 * @param values The list of values to publish
-		 */
-		public ValuesProducer(List<FilteredValue> values) {
-			this.values=values;
-		}
-
-		/**
-		 * Push the values in the list into the publisher
-		 * 
-		 * @see Callable#call()
-		 */
-		@Override
-		public Integer call() throws PublisherException {
-			logger.info("Going to submit {} values",values.size());
-			int published=0;
-			for (FilteredValue fv : values) {
-				publishedValues.put(fv.id, fv);
-				bufferedPublisher.offer(Optional.of(fv));
-				published++;
-			}
-			logger.info("Terminating: {} values pushed",published);
-			return Integer.valueOf(published);
-		}
-		
-	}
 	
 	/**
 	 * The logger
@@ -103,7 +64,7 @@ public class BufferedPublisherStressTest extends PublisherTestCommon {
 	/**
 	 * The executor service
 	 */
-	private ExecutorService executorSvc = Executors.newFixedThreadPool(numOfThreads,PluginThreadFactory.getThreadFactory());
+	private final ExecutorService executorSvc = Executors.newFixedThreadPool(numOfThreads,PluginThreadFactory.getThreadFactory());
 	
 	/**
 	 * Sends filtered values that have different IDs so the test passes if 
@@ -129,7 +90,7 @@ public class BufferedPublisherStressTest extends PublisherTestCommon {
 		// Start all the threads
 		List<Future<Integer>> results = new LinkedList<>();
 		for (List<FilteredValue> values: listsOfValues) {
-			Callable<Integer> callable = new ValuesProducer(values);
+			Callable<Integer> callable = new ValuesProducerCallable(bufferedPublisher,values,publishedValues);
 			Future<Integer> future = executorSvc.submit(callable);
 			results.add(future);
 		}

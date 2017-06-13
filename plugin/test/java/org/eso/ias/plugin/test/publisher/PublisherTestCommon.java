@@ -12,6 +12,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -47,6 +49,65 @@ import org.slf4j.LoggerFactory;
  *
  */
 public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias.plugin.publisher.impl.ListenerPublisher.PublisherEventsListener {
+	
+	/**
+	 * <code>ValuesProducerCallable</code> allows to concurrently push values in the publisher.
+	 * 
+	 * @author acaproni
+	 *
+	 */
+	protected class ValuesProducerCallable implements Callable<Integer> {
+		
+		/**
+		 * The publisher to offer the values to
+		 */
+		private final MonitorPointSender mpSender;
+		
+		/**
+		 * The map to save the values published for checking
+		 */
+		private final Map<String, FilteredValue> publishedValuesMap;
+		
+		/**
+		 * The list of values to publish
+		 */
+		private final List<FilteredValue> values;
+		
+		/**
+		 * Constructor
+		 * 
+		 * @param publisher The publisher to offer the values to
+		 * @param publishedValues The map to save the values published for checking
+		 */
+		public ValuesProducerCallable(MonitorPointSender publisher, List<FilteredValue> values, Map<String, FilteredValue> publishedValues) {
+			assertNotNull(publisher);
+			assertNotNull(publishedValues);
+			assertNotNull(values);
+			assertFalse(values.isEmpty());
+			this.mpSender=publisher;
+			this.publishedValuesMap=publishedValues;
+			this.values=values;
+		}
+		
+		/**
+		 * Push the values in the list into the publisher
+		 * 
+		 * @see Callable#call()
+		 */
+		@Override
+		public Integer call() throws PublisherException {
+			logger.info("Going to submit {} values",values.size());
+			int published=0;
+			for (FilteredValue fv : values) {
+				publishedValuesMap.put(fv.id, fv);
+				mpSender.offer(Optional.of(fv));
+				published++;
+			}
+			logger.info("Terminating: {} values pushed",published);
+			return Integer.valueOf(published);
+		}
+		
+	}
 	
 	/**
 	 * The logger
