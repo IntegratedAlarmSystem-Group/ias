@@ -27,7 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * <code>PublisherStressTest</code> stress the {@link BufferedPublisherBase}
+ * <code>BufferedPublisherStressTest</code> stress the {@link BufferedPublisherBase}
  * by sending a lot of {@link FilteredValue} and checking if
  * they are correctly sent to the {@link MonitorPointSender} implementation
  * to be sent to the IAS core.
@@ -47,7 +47,7 @@ import org.slf4j.LoggerFactory;
  * @author acaproni
  *
  */
-public class PublisherStressTest extends PublisherTestCommon {
+public class BufferedPublisherStressTest extends PublisherTestCommon {
 	
 	/**
 	 * The callable to concurrently push values in the publisher
@@ -93,7 +93,7 @@ public class PublisherStressTest extends PublisherTestCommon {
 	/**
 	 * The logger
 	 */
-	private static final Logger logger = LoggerFactory.getLogger(PublisherStressTest.class);
+	private static final Logger logger = LoggerFactory.getLogger(BufferedPublisherStressTest.class);
 	
 	/**
 	 * The number of threads concurrently pushing values in the publisher.
