@@ -93,7 +93,6 @@ public class ListenerPublisher extends PublisherBase {
 	
 	@Override
 	protected long publish(MonitorPointData mpData) throws PublisherException {
-		logger.info("Going to publish the {} monitor point of the {} subsystem",mpData.getId(),mpData.getSystemID());
 		publishedMessages++;
 		listener.dataReceived(mpData);
 		return mpData.toJsonString().length();
