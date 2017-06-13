@@ -295,6 +295,9 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 		assertFalse(mpData.getPublishTime().isEmpty());
 		numOfPublishInvocationInUnbufferedPub.incrementAndGet();
 		receivedValuesFromUnbufferedPub.put(mpData.getId(), mpData);
+		if (expectedValues!=null) {
+			expectedValues.countDown(); 
+		}
 	}
 	
 	@Before
