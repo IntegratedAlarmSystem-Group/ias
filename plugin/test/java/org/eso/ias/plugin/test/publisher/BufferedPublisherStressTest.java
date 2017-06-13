@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
  * The values are concurrently offered to the {@link BufferedPublisherBase} by {@link #numOfThreads}
  * threads (@see {@link ValuesProducerCallable#run()}).
  * <P>
- * The stress tests in <code>PublisherStressTest</code> are far behind the specification:
+ * The stress tests in <code>BufferedPublisherStressTest</code> are far behind the specification:
  * the IAS should be able to process 50000 monitor point per second while here 
  * we fire hundreds thousand of monitor points.
  *  
