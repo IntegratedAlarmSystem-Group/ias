@@ -147,6 +147,34 @@ public class PublisherBaseTest extends PublisherTestCommon {
 	}
 	
 	/**
+	 * Check if {@link ListenerPublisher#publish(BufferedMonitoredSystemData)} is invoked only once
+	 * to one {@link FilteredValue} (i.e. it checks for repeated publications of the same value)
+	 * 
+	 * @throws PublisherException
+	 */
+	@Test
+	public void testPublishOneValueOnlyOnce() throws PublisherException {
+		unbufferedPublisher.setUp();
+		unbufferedPublisher.startSending();
+		assertEquals(0L,unbufferedPublisher.getPublishedMessages());
+		
+		Integer val = Integer.valueOf(67);
+		List<Sample> samples = Arrays.asList(new Sample(val));
+		FilteredValue v = new FilteredValue("OneID", val, samples, System.currentTimeMillis());
+		publishedValues.put(v.id,v);
+		Optional<FilteredValue> optVal = Optional.of(v);
+		unbufferedPublisher.offer(optVal);
+		
+		
+		try {
+			Thread.sleep(10*BufferedPublisherBase.throttlingTime);
+		} catch (InterruptedException ie) {
+			Thread.currentThread().interrupt();
+		}
+		assertEquals(1L,unbufferedPublisher.getPublishedMessages());
+	}
+	
+	/**
 	 * Check if {@link ListenerPublisher#publish(BufferedMonitoredSystemData)} is invoked to 
 	 * publish all the {@link FilteredValue}.
 	 * <P> 

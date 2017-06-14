@@ -293,6 +293,7 @@ public abstract class PublisherBase implements MonitorPointSender {
 					}
 				}
 			});
+			monitorPoints.clear();
 		}
 		
 	}

@@ -17,6 +17,7 @@ import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.BufferedListenerPublisher;
+import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,6 +76,34 @@ public class BufferedPublisherBaseTest extends PublisherTestCommon {
 		assertNotNull("Expected value not published",d);
 		assertTrue("Offered and published values do not match "+v.toString()+"<->"+d.toString(), match(v,d));
 		
+	}
+	
+	/**
+	 * Check if {@link ListenerPublisher#publish(BufferedMonitoredSystemData)} is invoked only once
+	 * to one {@link FilteredValue} (i.e. it checks for repeated publications of the same value)
+	 * 
+	 * @throws PublisherException
+	 */
+	@Test
+	public void testPublishOneValueOnlyOnce() throws PublisherException {
+		bufferedPublisher.setUp();
+		bufferedPublisher.startSending();
+		assertEquals(0L,bufferedPublisher.getPublishedMessages());
+		
+		Integer val = Integer.valueOf(67);
+		List<Sample> samples = Arrays.asList(new Sample(val));
+		FilteredValue v = new FilteredValue("OneID", val, samples, System.currentTimeMillis());
+		publishedValues.put(v.id,v);
+		Optional<FilteredValue> optVal = Optional.of(v);
+		bufferedPublisher.offer(optVal);
+		
+		
+		try {
+			Thread.sleep(10*BufferedPublisherBase.throttlingTime);
+		} catch (InterruptedException ie) {
+			Thread.currentThread().interrupt();
+		}
+		assertEquals(1L,bufferedPublisher.getPublishedMessages());
 	}
 	
 	/**
