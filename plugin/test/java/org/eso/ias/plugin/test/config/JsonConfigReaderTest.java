@@ -5,21 +5,17 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.config.PluginConfigException;
 import org.eso.ias.plugin.config.PluginConfigFileReader;
+import org.eso.ias.plugin.config.Property;
 import org.eso.ias.plugin.config.Value;
-import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.junit.Test;
 
 public class JsonConfigReaderTest {
@@ -57,6 +53,23 @@ public class JsonConfigReaderTest {
 		assertEquals("iasdevel.hq.eso.org",config.getSinkServer());
 		assertEquals(8192,config.getSinkPort());
 		assertEquals(2, config.getValues().length);
+		
+		// Check the properties
+		assertEquals(2, config.getProperties().length);
+		Optional<Property> p1 = config.getProperty("a-key");
+		assertTrue(p1.isPresent());
+		System.out.println("GOT "+p1.get().getKey()+", "+p1.get().getValue());
+		assertEquals("a-key",p1.get().getKey());
+		assertEquals("itsValue",p1.get().getValue());
+		
+		Optional<Property> p2 = config.getProperty("Anotherkey");
+		assertTrue(p1.isPresent());
+		assertEquals("Anotherkey",p2.get().getKey());
+		assertEquals("AnotherValue",p2.get().getValue());
+		
+		// This property does not exist
+		Optional<Property> p3 = config.getProperty("MissingKey");
+		assertFalse(p3.isPresent());
 		
 		Optional<Value> v1Opt = config.getValue("AlarmID");
 		assertTrue(v1Opt.isPresent());

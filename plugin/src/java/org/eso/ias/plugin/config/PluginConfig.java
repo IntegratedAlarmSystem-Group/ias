@@ -1,8 +1,10 @@
 package org.eso.ias.plugin.config;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -42,7 +44,16 @@ public class PluginConfig {
 	private int sinkPort;
 	
 	/**
+	 * Additional user defined properties
+	 * 
+	 * @see Property
+	 */
+	private Property[] properties;
+	
+	/**
 	 * The values red from the monitored system
+	 * 
+	 * @see Value
 	 */
 	private Value[] values;
 
@@ -186,5 +197,36 @@ public class PluginConfig {
 		logger.debug("Plugin {} configuration is valid",id);
 		return true;
 		
+	}
+	
+	/**
+	 * 
+	 * @param key The non empty key of the property to get
+	 * @return The value of the property with the given key
+	 *         or empty if a property with the given key does not exist
+	 */
+	public Optional<Property> getProperty(String key) {
+		if (key==null || key.isEmpty()) {
+			throw new IllegalArgumentException("Invalid null or empty identifier");
+		}
+		if (properties==null) {
+			return Optional.empty();
+		}
+		List<Property> props = Arrays.asList(properties);
+		return Optional.ofNullable(props.stream().filter( prop -> prop.getKey().equals(key)).findAny().orElse(null));
+	}
+
+	/**
+	 * @return the properties
+	 */
+	public Property[] getProperties() {
+		return properties;
+	}
+
+	/**
+	 * @param properties the properties to set
+	 */
+	public void setProperties(Property[] properties) {
+		this.properties = properties;
 	}
 }
