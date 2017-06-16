@@ -1,6 +1,7 @@
 package org.eso.ias.plugin.publisher.impl;
 
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.MonitorPointData;
@@ -60,17 +61,17 @@ public class ListenerPublisher extends PublisherBase {
 	 * The number of published messages is the same of the number
 	 * of monitor points sent.
 	 */
-	private volatile int publishedMessages=0;
+	private final AtomicInteger publishedMessages=new AtomicInteger(0);
 	
 	/**
 	 * Record the number of times {@link #setUp()} has been executed
 	 */
-	private volatile int numOfSetUpInvocations=0;
+	private final AtomicInteger numOfSetUpInvocations=new AtomicInteger(0);
 	
 	/**
 	 * Record the number of times {@link #tearDown()} has been executed
 	 */
-	private volatile int numOfTearDownInvocations=0;
+	private final AtomicInteger numOfTearDownInvocations=new AtomicInteger(0);
 
 	/**
 	 * Constructor 
@@ -93,7 +94,7 @@ public class ListenerPublisher extends PublisherBase {
 	
 	@Override
 	protected long publish(MonitorPointData mpData) throws PublisherException {
-		publishedMessages++;
+		publishedMessages.incrementAndGet();
 		listener.dataReceived(mpData);
 		return mpData.toJsonString().length();
 	}
@@ -101,34 +102,34 @@ public class ListenerPublisher extends PublisherBase {
 	@Override
 	protected void start() throws PublisherException {
 		listener.initialized();
-		numOfSetUpInvocations++;
+		numOfSetUpInvocations.incrementAndGet();
 	}
 
 	@Override
 	protected void shutdown() throws PublisherException {
 		listener.closed();
-		numOfTearDownInvocations++;
+		numOfTearDownInvocations.incrementAndGet();
 	}
 
 	/**
 	 * @return the numOfSetUpInvocations
 	 */
 	public int getNumOfSetUpInvocations() {
-		return numOfSetUpInvocations;
+		return numOfSetUpInvocations.get();
 	}
 
 	/**
 	 * @return the numOfTearDownInvocations
 	 */
 	public int getNumOfTearDownInvocations() {
-		return numOfTearDownInvocations;
+		return numOfTearDownInvocations.get();
 	}
 
 	/**
 	 * @return the publishedMessages
 	 */
 	public int getPublishedMessages() {
-		return publishedMessages;
+		return publishedMessages.get();
 	}
 
 }
