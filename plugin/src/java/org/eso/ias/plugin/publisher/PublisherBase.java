@@ -1,16 +1,21 @@
 package org.eso.ias.plugin.publisher;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.eso.ias.plugin.filter.FilteredValue;
+import org.eso.ias.plugin.publisher.impl.KafkaPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -191,7 +196,7 @@ public abstract class PublisherBase implements MonitorPointSender {
 			throw new IllegalArgumentException("The sink server name can't be null nor empty");
 		}
 		this.serverName=serverName;
-		if (port<-0) {
+		if (port<0) {
 			throw new IllegalArgumentException("Invalid port number: "+port);
 		}
 		this.serverPort=port;
@@ -206,6 +211,7 @@ public abstract class PublisherBase implements MonitorPointSender {
 	 * Send the passed monitor point value to the core of the IAS.
 	 * <P>
 	 * This method is supposed to effectively send the data to the core of the IAS
+	 * but some implementation can buffer the date and send them asynchronously.
 	 * 
 	 * @param mpData The monitor point data to send to the core of the IAS
 	 * @return The number of bytes sent to the core of the IAS
@@ -238,21 +244,25 @@ public abstract class PublisherBase implements MonitorPointSender {
 			throw new PublisherException("Cannot initialize a closed PublisherBase");
 		}
 		logger.debug("Initializing");
+		
+		
+		try {
+			logger.debug("Initializing the publisher of monitor point values");
+			start();
+		} catch (Exception e) {
+			throw new PublisherException("Eception invoking setUp", e);
+		}
+		
+		
 		// Start the thread to send the values to the core of the IAS
 		executorService.scheduleAtFixedRate(new Runnable() {
-			
 			@Override
 			public void run() {
 				sendMonitoredPointsToIas();
 			}
 		},throttlingTime, throttlingTime, TimeUnit.MILLISECONDS);
 		logger.debug("Generation of statistics activated with a frequency of {} minutes",throttlingTime);
-		logger.debug("Invoking implementers defined setUp");
-		try {
-			start();
-		} catch (Exception e) {
-			throw new PublisherException("Eception invoking setUp", e);
-		}
+		
 		initialized=true;
 		logger.debug("Initialized");
 	}
@@ -401,5 +411,53 @@ public abstract class PublisherBase implements MonitorPointSender {
 	@Override
 	public boolean isClosed() {
 		return closed;
+	}
+	
+	/**
+	 * Merges the default and user provided properties in the system properties
+	 * 
+	 * @param defaultStream: The path to load default user properties;
+	 *                       <code>null</code> means no default
+	 * @parm  userStream: The path to load default user properties
+	 *                    <code>null</code> means no user defined property file
+	 */
+	protected void mergeProperties(InputStream defaultStream, InputStream userStream) throws PublisherException {
+		Properties defaultProps = new Properties();
+		if (defaultStream!=null) {
+			try {
+				defaultProps.load(defaultStream);
+			} catch (IOException ioe) {
+				throw new PublisherException("Error reading the default property file",ioe);
+			}
+		} else {
+			logger.info("No default config file provided");
+		}
+		
+		// Is there a user defined properties file?
+		Properties userProps = new Properties(defaultProps);
+		if (userStream!=null) {
+			try {
+				userProps.load(userStream);
+			} catch (IOException ioe) {
+				throw new PublisherException("Error reading the user property file",ioe);
+			}
+		} else {
+			logger.info("No user properties file provided");
+		}
+		
+		// Flushes the user defined properties (or the default ones) in the system properties
+		// if not already there (command line and JSON props take precedence!)
+		Set<String> propNames = userProps.stringPropertyNames();
+		for (String propName: propNames) {
+			if (!System.getProperties().contains(propName)) {
+				System.getProperties().put(propName, userProps.getProperty(propName));
+				logger.info("Setting property {} to val {}",propName,userProps.getProperty(propName));
+			} else {
+				logger.info("Command line property {} with value {} ovverrides the property in config files (where it has a value of {})",
+						propName,
+						System.getProperties().getProperty(propName),
+						userProps.get(propName));
+			}
+		}
 	}
 }

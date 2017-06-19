@@ -179,4 +179,22 @@ public class MonitorPointData extends MonitorPointDataToBuffer{
 			throw new PublisherException("Error creating the JSON string", jpe);
 		}
 	}
+	
+	/**
+	 * Build and return a {@link MonitorPointData} parsing the passed JSON string
+	 * @param jsonString The JSON string with the monitor point value
+	 * @return the monitor point built parsing th epassed JSON string
+	 * @throws PublisherException in case of error building th eobject
+	 */
+	public static MonitorPointData fromJsonString(String jsonString) throws PublisherException {
+		if (jsonString==null || jsonString.isEmpty()) {
+			throw new IllegalArgumentException("Invalid string");
+			
+		}
+		try {
+			return MAPPER.readValue(jsonString,MonitorPointData.class);
+		} catch (Exception e) {
+			throw new PublisherException("Error parsing the JSON string ["+jsonString+"]",e);
+		}
+	}
 }

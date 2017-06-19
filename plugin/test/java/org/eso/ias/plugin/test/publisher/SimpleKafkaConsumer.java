@@ -6,11 +6,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.errors.WakeupException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Generic Kafka consumer to get strings from a kafka topic.
+ * <P>
+ * The string are passed to the listener for further processing.
  * 
  * @author acaproni
  *
@@ -18,9 +21,31 @@ import org.slf4j.LoggerFactory;
 public class SimpleKafkaConsumer implements Runnable {
 	
 	/**
+	 * The listener to be notified of strings read 
+	 * from the kafka topic.
+	 * 
+	 * @author acaproni
+	 *
+	 */
+	public interface KafkaConsumerListener {
+		
+		/**
+		 * Consumeran event (a String) received from the kafka topic
+		 * 
+		 * @param event The string received in the topic
+		 */
+		public void consumeKafkaEvent(String event);
+	}
+	
+	/**
 	 * The logger
 	 */
 	private static final Logger logger = LoggerFactory.getLogger(SimpleKafkaConsumer.class);
+	
+	/**
+	 * The kafka group to which this consumer belongs
+	 */
+	private static final String kafkaConsumerGroup = "test";
 
 	/**
 	 * The name of the topic to get events from
@@ -40,7 +65,7 @@ public class SimpleKafkaConsumer implements Runnable {
 	/**
 	 * The time, in milliseconds, spent waiting in poll if data is not available in the buffer
 	 */
-	private static final int pollingTimeout = 500;
+	private static final int pollingTimeout = 60000;
 	
 	/**
 	 * The consumer getting events from the kafka topic
@@ -59,17 +84,29 @@ public class SimpleKafkaConsumer implements Runnable {
 	private Thread thread;
 	
 	/**
+	 * The listener of events published in the topic
+	 */
+	private final KafkaConsumerListener listener;
+	
+	/**
 	 * Constructor 
 	 * 
 	 * @param topicName The name of the topic to get events from
 	 * @param serverName The server name where the kafka broker runs
 	 * @param serverPort The port used by the kafka broker
+	 * @param listener The listener of events published in the topic
 	 */
-	public SimpleKafkaConsumer(String topicName, String serverName, int serverPort) {
+	public SimpleKafkaConsumer(String topicName, String serverName, int serverPort, KafkaConsumerListener listener) {
 		super();
 		this.topicName = topicName;
 		this.serverName = serverName;
 		this.serverPort = serverPort;
+		this.listener=listener;
+		assert(this.listener!=null);
+		logger.info("SimpleKafkaConsumer will get events from {} topic connected to kafka broker@{}:{}",
+				this.topicName,
+				this.serverName,
+				this.serverPort);
 	}
 	
 	/**
@@ -79,7 +116,7 @@ public class SimpleKafkaConsumer implements Runnable {
 		logger.info("Setting up the kafka consumer");
 		Properties props = new Properties();
 	     props.put("bootstrap.servers", serverName+":"+serverPort);
-	     props.put("group.id", "test");
+	     props.put("group.id", kafkaConsumerGroup);
 	     props.put("enable.auto.commit", "true");
 	     props.put("auto.commit.interval.ms", "1000");
 	     props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
@@ -119,8 +156,13 @@ public class SimpleKafkaConsumer implements Runnable {
 	public void run() {
 		logger.info("Thread to get events from the topic started");
 		while (!isClosed.get()) {
-	         ConsumerRecords<String, String> records = consumer.poll(pollingTimeout);
-	         records.forEach( record -> logger.info("offset = {}, key = {}, value = {}", record.offset(), record.key(), record.value()));
+	         try {
+	        	 ConsumerRecords<String, String> records = consumer.poll(pollingTimeout);
+	        	 records.forEach( record -> listener.consumeKafkaEvent(record.value()));
+	         } catch (WakeupException we) {
+	        	 break;
+	         }
+	         
 	     }
 		logger.info("Thread to get events from the topic terminated");
 	}
