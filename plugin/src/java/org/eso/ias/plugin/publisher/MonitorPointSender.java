@@ -9,7 +9,7 @@ import org.eso.ias.plugin.filter.FilteredValue;
  * to send monitor point values and alarms to the IAS core.
  * <P>
  * When a value is received from the monitored system and,
- * if it is the case, filtered for noise, it is ready to be
+ * if it is the case, filtered for noise, it is finally ready to be
  * sent to the IAS core by invoking {@link #offer(Optional)}.
  * <P> 
  * Implementers of this class, provides statistics collected during
@@ -21,6 +21,18 @@ import org.eso.ias.plugin.filter.FilteredValue;
  *  <LI>{@link #tearDown()} must be called to release the resources: 
  *      no more messages can be sent after calling this method
  * </UL>
+ * <P>
+ * Offering an item to a <code>MonitorPointSender</code> does not ensure
+ * that it is really sent to the final destination but the producer of
+ * monitor pont values is supposed to continue providing monitor point
+ * values at the proper time intervals.
+ * <BR>
+ * The sender is, in fact, totally decoupled from the core of the IAS
+ * and its functioning is not affected by the availability of the core
+ * or the transport mechanism.
+ * This allows to shutdown the transport framework or the core of
+ * the IAS without affecting the functioning of the plugin that results,
+ * de facto, totally decoupled from the IAS.
  * 
  * @author acaproni
  */
