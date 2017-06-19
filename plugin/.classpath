@@ -8,5 +8,6 @@
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/junit-4.12.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/slf4j-api-1.7.25.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/guice-4.1.0.jar"/>
+	<classpathentry kind="lib" path="extTools/kafka-clients-0.10.2.1.jar"/>
 	<classpathentry kind="output" path="lib"/>
 </classpath>
