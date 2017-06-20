@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -83,7 +84,7 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 	/**
 	 * The {@link MonitorPointData} received by the consumer
 	 */
-	private final Map<String, MonitorPointData> receivedMonitorPoints = new HashMap<>();
+	private final Map<String, MonitorPointData> receivedMonitorPoints = Collections.synchronizedMap(new HashMap<>());
 	
 	/**
 	 * Initialization
@@ -136,7 +137,7 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 		kPub.offer(Optional.of(fv));
 		
 		try {
-			assertTrue("Event not received",eventsToReceive.await(1, TimeUnit.MINUTES));
+			assertTrue("Timeout, event not received",eventsToReceive.await(2, TimeUnit.MINUTES));
 		} catch (InterruptedException ie) {
 			ie.printStackTrace();
 		}
@@ -175,7 +176,7 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 		}
 		
 		try {
-			assertTrue("Event not received",eventsToReceive.await(1, TimeUnit.MINUTES));
+			assertTrue("Timeout, events not received",eventsToReceive.await(2, TimeUnit.MINUTES));
 		} catch (InterruptedException ie) {
 			ie.printStackTrace();
 		}
