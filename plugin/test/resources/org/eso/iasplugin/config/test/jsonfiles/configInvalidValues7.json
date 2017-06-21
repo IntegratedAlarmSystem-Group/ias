@@ -1,0 +1,22 @@
+{ 
+	"id":"Plugin-ID",
+	"sinkServer":"iasdevel.hq.eso.org",
+	"sinkPort":"8192",
+	"properties": [
+		{"key":"a-key",
+		"value":"itsValue"},
+		{"key":"Anotherkey",
+		"value":"AnotherValue"},
+		{"key":"a-key",
+		"value":"REDEFINED"}],
+	"values":[
+		{"id":"AlarmID",
+		"refreshTime":"500",
+		"filter":"",
+		"filterOptions":""},
+		{"id":"TempID",
+		"refreshTime":"1500",
+		"filter":"Average",
+		"filterOptions":"1, 150, 5"}]
+}
+

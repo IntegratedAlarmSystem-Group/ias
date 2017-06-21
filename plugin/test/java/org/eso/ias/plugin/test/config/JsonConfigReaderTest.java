@@ -56,6 +56,7 @@ public class JsonConfigReaderTest {
 		
 		// Check the properties
 		assertEquals(2, config.getProperties().length);
+		assertEquals(2, config.getProps().size());
 		Optional<Property> p1 = config.getProperty("a-key");
 		assertTrue(p1.isPresent());
 		System.out.println("GOT "+p1.get().getKey()+", "+p1.get().getValue());
@@ -116,6 +117,10 @@ public class JsonConfigReaderTest {
 		PluginConfigFileReader jsonFileReader6 = new PluginConfigFileReader(resourcePath+"configInvalidValues6.json");
 		PluginConfig config6 = jsonFileReader6.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config6.isValid());
+		
+		PluginConfigFileReader jsonFileReader7 = new PluginConfigFileReader(resourcePath+"configInvalidValues7.json");
+		PluginConfig config7 = jsonFileReader7.getPluginConfig().get(1,TimeUnit.MINUTES);
+		assertFalse(config7.isValid());
 		
 	}
 

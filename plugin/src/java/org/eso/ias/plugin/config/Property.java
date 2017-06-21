@@ -1,5 +1,8 @@
 package org.eso.ias.plugin.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A POJO to pass properties to the plugin in the form <name,value>
  * 
@@ -7,6 +10,11 @@ package org.eso.ias.plugin.config;
  *
  */
 public class Property {
+	
+	/**
+	 * The logger
+	 */
+	private static final Logger logger = LoggerFactory.getLogger(Property.class);
 
 	/**
 	 * The key of the property
@@ -60,6 +68,18 @@ public class Property {
 	public void setValue(String value) {
 		assert(value!=null && !value.isEmpty());
 		this.value = value;
+	}
+	
+	public boolean isValid() {
+		if (key==null || key.isEmpty()) {
+			logger.error("Invalid null or empty property key");
+			return false;
+		}
+		if (value==null || value.isEmpty()) {
+			logger.error("Invalid null or empty value for key "+key);
+			return false;
+		}
+		return true;
 	}
 
 }

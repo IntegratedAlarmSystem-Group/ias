@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -193,6 +194,25 @@ public class PluginConfig {
 			logger.error("Found {} invalid values",invalidValues);
 			return false;
 		}
+		// Check if a property with the same key appears more then once
+		long invalidProps=0;
+		boolean duplicatedKeys=false;
+		if (properties!=null && properties.length>0) {
+			for (int t=0; t<properties.length; t++) {
+				if (!properties[t].isValid()) {
+					invalidProps++;
+				}
+				for (int j=t+1; j<properties.length; j++) {
+					if (properties[t].getKey().equals(properties[j].getKey())) {
+						duplicatedKeys=true;
+						logger.error("Invalid properties: key {} is defined more then once",properties[t].getKey());
+					}
+				}
+			}
+		}
+		if (invalidProps>0 || duplicatedKeys) {
+			return false;
+		}
 		// Everything ok
 		logger.debug("Plugin {} configuration is valid",id);
 		return true;
@@ -217,10 +237,28 @@ public class PluginConfig {
 	}
 
 	/**
-	 * @return the properties
+	 * @return the array of properties
 	 */
 	public Property[] getProperties() {
 		return properties;
+	}
+	
+	/**
+	 * Flushes and return the array of {@link Property} in a {@link Properties} object.
+	 * <P>
+	 * If the a property with the same key appears more the once, it is discarded
+	 * and a message logged. 
+	 * 
+	 * @return The properties as {@link Properties}
+	 */
+	public Properties getProps() {
+		Properties props = new Properties();
+		if (properties!=null) {
+			for (Property prop: properties) {
+				props.setProperty(prop.getKey(), prop.getValue());
+			}
+		}
+		return props;
 	}
 
 	/**
