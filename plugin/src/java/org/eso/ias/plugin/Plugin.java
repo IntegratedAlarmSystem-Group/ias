@@ -4,12 +4,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.config.Value;
@@ -318,8 +318,6 @@ public class Plugin implements ChangeValueListener {
 
 	/**
 	 * A  monitor point value has been updated and must be forwarded to the core of the IAS.
-	 * <P>
-	 * 
 	 * 
 	 * @see org.eso.ias.plugin.ChangeValueListener#monitoredValueUpdated(org.eso.ias.plugin.filter.FilteredValue)
 	 */
@@ -331,5 +329,46 @@ public class Plugin implements ChangeValueListener {
 			mpPublisher.offer(value);
 			logger.info("Value change {}",value.map(FilteredValue::toString));
 		}
+	}
+	
+	/**
+	 * Change the refresh rate of the monitor point with the passed ID.
+	 * <P>
+	 * The new refresh rate is bounded by a minimum ({@link MonitoredValue#minAllowedRefreshRate})
+	 * and a maximum ({@link MonitoredValue#maxAllowedRefreshRate}) values.
+	 * 
+	 * @param mPointId The not <code>null</code> nor empty ID of a monitored point
+	 * @param newRefreshRate the requested new refresh rate
+	 * @return the refresh rate effectively set for the monitored value
+	 * @throws PluginException if the monitored value with the passed ID does not exist
+	 */
+	public long setMonitorPointRefreshRate(String mPointId, long newRefreshRate) throws PluginException {
+		Objects.requireNonNull(mPointId, "The monitored point ID can't be null");
+		if (mPointId.isEmpty()) {
+			throw new IllegalArgumentException("The monitored point ID can't be empty");
+		}
+		MonitoredValue mVal = monitorPoints.get(mPointId);
+		if (mVal==null) {
+			throw new PluginException("Monitor point "+mPointId+" does not exist");
+		}
+		return mVal.setRefreshRate(newRefreshRate);
+	}
+	
+	/**
+	 * Enable or disable the periodic sending of notifications.
+	 * 
+	 * @param enable if <code>true</code> enables the periodic sending;
+	 * @throws PluginException if the monitored value with the passed ID does not exist            
+	 */
+	public void enableMonitorPointPeriodicNotification(String mPointId, boolean enable) throws PluginException {
+		Objects.requireNonNull(mPointId, "The monitored point ID can't be null");
+		if (mPointId.isEmpty()) {
+			throw new IllegalArgumentException("The monitored point ID can't be empty");
+		}
+		MonitoredValue mVal = monitorPoints.get(mPointId);
+		if (mVal==null) {
+			throw new PluginException("Monitor point "+mPointId+" does not exist");
+		}
+		mVal.enablePeriodicNotification(enable);
 	}
 }
