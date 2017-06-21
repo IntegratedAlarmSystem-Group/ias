@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
@@ -143,6 +144,7 @@ public class Plugin implements ChangeValueListener {
 	 * 						 monitor point values and alarms to
 	 * @param sinkServerPort The IP port number 
 	 * @param values The list of monitor point values and alarms
+	 * @parm props Additional user defined java properties
 	 * @param sender The publisher of monitor point values to the IAS core
 	 */
 	@Inject
@@ -151,6 +153,7 @@ public class Plugin implements ChangeValueListener {
 			String sinkServerName,
 			int sinkServerPort,
 			Collection<Value> values,
+			Properties props,
 			MonitorPointSender sender) {
 		if (id==null || id.trim().isEmpty()) {
 			throw new IllegalArgumentException("The ID can't be null nor empty");
@@ -170,6 +173,7 @@ public class Plugin implements ChangeValueListener {
 		if (sender==null) {
 			throw new IllegalArgumentException("No monitor point sender");
 		}
+		flushProperties(props);
 		this.mpPublisher=sender;
 		logger.info("Plugin (ID=%s) started",pluginId);
 		values.forEach(v -> { 
@@ -178,6 +182,30 @@ public class Plugin implements ChangeValueListener {
 		}catch (Exception e){
 			logger.error("Error adding monitor point "+v.getId(),e);
 		} });
+	}
+	
+	/**
+	 * Flushes the user defined properties in the System properties.
+	 * <P>
+	 * As java properties in the command line takes precedence over those defined
+	 * in the configuration, the latter do replace existing properties
+	 * 
+	 *  @param usrProps: the user properties 
+	 */
+	private void flushProperties(Properties usrProps) {
+		if (usrProps==null || usrProps.isEmpty()) {
+			return;
+		}
+		for (String key: usrProps.stringPropertyNames()) {
+			if (!System.getProperties().contains(key)) {
+				System.getProperties().setProperty(key, usrProps.getProperty(key));
+			} else {
+				logger.warn("User defined property {} already defined {}: value from configuration file {} will be discarded",
+						key,
+						System.getProperties().getProperty(key),
+						usrProps.getProperty(key));
+			}
+		}
 	}
 	
 	/**
@@ -192,6 +220,7 @@ public class Plugin implements ChangeValueListener {
 				config.getSinkServer(),
 				config.getSinkPort(),
 				config.getValuesAsCollection(),
+				config.getProps(),
 				sender);
 	}
 	
