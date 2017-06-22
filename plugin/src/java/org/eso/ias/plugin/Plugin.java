@@ -3,12 +3,16 @@ package org.eso.ias.plugin;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -18,11 +22,10 @@ import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.MonitorPointSender.SenderStats;
 import org.eso.ias.plugin.publisher.PublisherException;
-import org.eso.ias.plugin.thread.PluginScheduledExecutorSvc;
+import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.inject.Inject;
 
 /**
  * The main class to write IAS plugins.
@@ -96,26 +99,47 @@ public class Plugin implements ChangeValueListener {
 	 * The time interval (in minutes) to log usage statistics.
 	 */
 	private static final int STATS_TIME_INTERVAL = Integer.getInteger(LOG_STATS_FREQUENCY_PROPNAME, defaultStatsGeneratorFrequency);
+
+	/**
+	 * The property to let the use set the number of threads in the scheduled thread executor
+	 */
+	public static final String SCHEDULED_POOL_SIZE_PROPNAME = "org.eso.ias.plugin.scheduledthread.poolsize";
+	
+	/**
+	 * The default number of threads in the core is a  bit less of the number of available CPUs.
+	 * 
+	 * The task executed by those threads is to get values of monitored values applying filters 
+	 * and push the values to send in a queue (the sending will be done by another thread),
+	 * so it is a pure calculation. This number should give us a proper CPU usage without stealing
+	 * all the available resources in the server.
+	 */
+	public static final int defaultSchedExecutorPoolSize = Runtime.getRuntime().availableProcessors()/2;
+	
+	/**
+	 * The number of threads in the scheduled pool executor that get filtered values out of the
+	 * monitored values
+	 */
+	public static final int schedExecutorPoolSize = Integer.getInteger(SCHEDULED_POOL_SIZE_PROPNAME, defaultSchedExecutorPoolSize);
+	
+	/**
+	 * The thread factory for the plugin
+	 */
+	private final ThreadFactory threadFactory = new PluginThreadFactory();
+
+	/**
+	 * The scheduled executor service
+	 */
+	private final ScheduledExecutorService schedExecutorSvc= Executors.newScheduledThreadPool(schedExecutorPoolSize, threadFactory);
 	
 	/**
 	 * The logger
 	 */
-	private final Logger logger = LoggerFactory.getLogger(Plugin.class);
+	private static final Logger logger = LoggerFactory.getLogger(Plugin.class);
 	
 	/**
 	 * The identifier of the plugin
 	 */
 	public final String pluginId;
-	
-	/**
-	 *  The server name to send monitor point values and alarms to
-	 */
-	private final String sinkServerName;
-	
-	/**
-	 *  The IP port of the server to send monitor point values and alarms to
-	 */
-	private final int sinkServerPort;
 	
 	/**
 	 * Signal that the plugin must terminate
@@ -147,11 +171,8 @@ public class Plugin implements ChangeValueListener {
 	 * @parm props Additional user defined java properties
 	 * @param sender The publisher of monitor point values to the IAS core
 	 */
-	@Inject
 	public Plugin(
 			String id, 
-			String sinkServerName,
-			int sinkServerPort,
 			Collection<Value> values,
 			Properties props,
 			MonitorPointSender sender) {
@@ -159,14 +180,6 @@ public class Plugin implements ChangeValueListener {
 			throw new IllegalArgumentException("The ID can't be null nor empty");
 		}
 		this.pluginId=id.trim();
-		if (sinkServerPort<-0) {
-			throw new IllegalArgumentException("Invalid port number: "+sinkServerPort);
-		}
-		this.sinkServerPort=sinkServerPort;
-		if (sinkServerName==null || sinkServerName.isEmpty()) {
-			throw new IllegalArgumentException("The sink server name can't be null nor empty");
-		}
-		this.sinkServerName=sinkServerName;
 		if (values==null || values.isEmpty()) {
 			throw new IllegalArgumentException("No monitor points definition found"); 
 		}
@@ -178,7 +191,7 @@ public class Plugin implements ChangeValueListener {
 		logger.info("Plugin (ID=%s) started",pluginId);
 		values.forEach(v -> { 
 			try {
-			putMonitoredPoint(new MonitoredValue(v.getId(), v.getRefreshTime(), PluginScheduledExecutorSvc.getInstance(), this));
+			putMonitoredPoint(new MonitoredValue(v.getId(), v.getRefreshTime(), schedExecutorSvc, this));
 		}catch (Exception e){
 			logger.error("Error adding monitor point "+v.getId(),e);
 		} });
@@ -211,14 +224,15 @@ public class Plugin implements ChangeValueListener {
 	/**
 	 * Build a plugin from the passed configuration.
 	 * 
+	 * @param conf The plugin coinfiguration
+	 * @param sender The publisher of monitor point values to the IAS core
 	 * @see Plugin#Plugin(String, String, int, Collection, MonitorPointSender)
 	 */
-	@Inject
-	public Plugin(PluginConfig config,MonitorPointSender sender) {
+	public Plugin(
+			PluginConfig config,
+			MonitorPointSender sender) {
 		this(
 				config.getId(),
-				config.getSinkServer(),
-				config.getSinkPort(),
 				config.getValuesAsCollection(),
 				config.getProps(),
 				sender);
@@ -252,7 +266,7 @@ public class Plugin implements ChangeValueListener {
 					
 				}
 			};
-			PluginScheduledExecutorSvc.getInstance().scheduleAtFixedRate(r,STATS_TIME_INTERVAL,STATS_TIME_INTERVAL,TimeUnit.MINUTES);
+			schedExecutorSvc.scheduleAtFixedRate(r,STATS_TIME_INTERVAL,STATS_TIME_INTERVAL,TimeUnit.MINUTES);
 		}
 		// Adds the shutdown hook
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
@@ -271,8 +285,7 @@ public class Plugin implements ChangeValueListener {
 	public void shutdown() {
 		boolean alreadyClosed=closed.getAndSet(true);
 		if (!alreadyClosed) {
-			logger.info("Shutting down the threads to update and send monitor points");
-			PluginScheduledExecutorSvc.getInstance().shutdown();
+			shutdownExecutorSvc();
 			logger.info("Stopping the sending of monitor point values to the core of the IAS");
 			mpPublisher.stopSending();
 			logger.info("Clearing the publisher of monitor point values");
@@ -284,6 +297,34 @@ public class Plugin implements ChangeValueListener {
 				pe.printStackTrace(System.err);
 			}
 			logger.info("Plugin {} is shut down",pluginId);
+		}
+	}
+	
+	/**
+	 * This method must be called when finished using the executor  
+	 * service to free the allocated resources. 
+	 */
+	public void shutdownExecutorSvc() {
+		logger.info("Shutting down the scheduled executor service");
+		schedExecutorSvc.shutdown();
+		try {
+			// Wait a while for existing tasks to terminate
+			if (!schedExecutorSvc.awaitTermination(5, TimeUnit.SECONDS)) {
+				logger.info("Not all threads terminated: trying to force the termination");
+				List<Runnable> neverRunTasks=schedExecutorSvc.shutdownNow();
+				logger.info("{} tasks never started execution",neverRunTasks.size());
+				// Wait a while for tasks to respond to being cancelled
+				if (!schedExecutorSvc.awaitTermination(10, TimeUnit.SECONDS)) {
+					logger.error("Pool did not terminate");
+				} else {
+					logger.info("The executor successfully terminated");
+				}
+			} else {
+				logger.info("The executor successfully terminated");
+			}
+		} catch (InterruptedException ie) {
+			schedExecutorSvc.shutdownNow();
+			Thread.currentThread().interrupt();
 		}
 	}
 	
@@ -400,4 +441,20 @@ public class Plugin implements ChangeValueListener {
 		}
 		mVal.enablePeriodicNotification(enable);
 	}
+	
+	/**
+	 * @return the scheduled executor
+	 */
+	public ScheduledExecutorService getScheduledExecutorService() {
+		return schedExecutorSvc;
+	}
+
+	/**
+	 * @return the threadFactory
+	 */
+	public ThreadFactory getThreadFactory() {
+		return threadFactory;
+	}
+	
+	
 }

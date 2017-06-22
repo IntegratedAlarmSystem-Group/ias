@@ -94,7 +94,7 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 		// Build the publisher
 		logger.info("Initializing...");
 		int poolSize = Runtime.getRuntime().availableProcessors()/2;
-		schedExecutorSvc= Executors.newScheduledThreadPool(poolSize, PluginThreadFactory.getThreadFactory());
+		schedExecutorSvc= Executors.newScheduledThreadPool(poolSize, new PluginThreadFactory());
 		kPub = new KafkaPublisher(pluginId, serverName, port, schedExecutorSvc);
 		logger.info("Kafka producer initialized");
 		

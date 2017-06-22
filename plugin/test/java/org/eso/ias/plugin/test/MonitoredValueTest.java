@@ -9,6 +9,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import org.eso.ias.plugin.ChangeValueListener;
@@ -16,7 +19,7 @@ import org.eso.ias.plugin.MonitoredValue;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.filter.NoneFilter;
-import org.eso.ias.plugin.thread.PluginScheduledExecutorSvc;
+import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -40,9 +43,16 @@ public class MonitoredValueTest implements ChangeValueListener {
 	private static final Logger logger = LoggerFactory.getLogger(MonitoredValueTest.class);
 	
 	/**
+	 * The thread factory
+	 */
+	protected static ThreadFactory threadFactory = new PluginThreadFactory();
+	
+	/**
 	 * The scheduled executor service
 	 */
-	private static final PluginScheduledExecutorSvc schedExeSvc = PluginScheduledExecutorSvc.getInstance();
+	private static final ScheduledExecutorService schedExecutorSvc = Executors.newScheduledThreadPool(
+			Runtime.getRuntime().availableProcessors()/2,
+			threadFactory);
 	
 	/**
 	 * The object to test
@@ -74,7 +84,7 @@ public class MonitoredValueTest implements ChangeValueListener {
 	
 	@Before
 	public void setUp() {
-		mVal = new MonitoredValue(mValueId, refreshRate, schedExeSvc, this);
+		mVal = new MonitoredValue(mValueId, refreshRate, schedExecutorSvc, this);
 	}
 	
 	@After
@@ -85,7 +95,7 @@ public class MonitoredValueTest implements ChangeValueListener {
 	
 	@AfterClass
 	public static void shutdownAll() {
-		schedExeSvc.shutdown();
+		schedExecutorSvc.shutdown();
 	}
 	
 	/**

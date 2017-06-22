@@ -2,6 +2,7 @@ package org.eso.ias.plugin;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -10,7 +11,6 @@ import org.eso.ias.plugin.filter.Filter;
 import org.eso.ias.plugin.filter.FilterException;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.filter.NoneFilter;
-import org.eso.ias.plugin.thread.PluginScheduledExecutorSvc;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,7 +84,7 @@ public class MonitoredValue implements Runnable {
 	 * The scheduled executor service.
 	 * It is needed to get a signal when the refresh rate elapses.
 	 */
-	private final PluginScheduledExecutorSvc schedExecutorSvc;
+	private final ScheduledExecutorService schedExecutorSvc;
 	
 	/**
 	 * The listener of updates of the value of this monitored point
@@ -130,7 +130,7 @@ public class MonitoredValue implements Runnable {
 			String id, 
 			long refreshRate, 
 			Filter filter, 
-			PluginScheduledExecutorSvc executorSvc,
+			ScheduledExecutorService executorSvc,
 			ChangeValueListener listener) {
 		Objects.requireNonNull(id,"The ID can't be null");
 		if (id.trim().isEmpty()) {
@@ -158,7 +158,7 @@ public class MonitoredValue implements Runnable {
 	public MonitoredValue(
 			String id, 
 			long refreshRate, 
-			PluginScheduledExecutorSvc executorSvc,
+			ScheduledExecutorService executorSvc,
 			ChangeValueListener listener) {
 		this(id,refreshRate, new NoneFilter(id),executorSvc,listener);
 	}

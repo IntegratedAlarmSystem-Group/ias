@@ -11,11 +11,12 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.eso.ias.plugin.filter.FilteredValue;
-import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
+import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.BufferedListenerPublisher;
 import org.eso.ias.plugin.publisher.impl.BufferedListenerPublisher.PublisherEventsListener;
+import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.junit.After;
 import org.junit.Before;
@@ -93,7 +94,7 @@ public class PublisherMaxBufferSizeTest implements PublisherEventsListener {
 	public void setUp() throws Exception {
 		// Build the publisher
 		int poolSize = Runtime.getRuntime().availableProcessors()/2;
-		ScheduledExecutorService schedExecutorSvc= Executors.newScheduledThreadPool(poolSize, PluginThreadFactory.getThreadFactory());
+		ScheduledExecutorService schedExecutorSvc= Executors.newScheduledThreadPool(poolSize, new PluginThreadFactory());
 		assertEquals(10L, BufferedPublisherBase.maxBufferSize);
 		publisher = new BufferedListenerPublisher(pluginId, pluginServerName, pluginServerPort, schedExecutorSvc,this);
 		logger.debug("Set up");

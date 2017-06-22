@@ -17,6 +17,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eso.ias.plugin.Sample;
@@ -179,6 +180,18 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 	protected ListenerPublisher unbufferedPublisher;
 	
 	/**
+	 * The thread factory
+	 */
+	protected ThreadFactory threadFactory = new PluginThreadFactory();
+	
+	/**
+	 * The scheduled executor service
+	 */
+	protected ScheduledExecutorService schedExecutorSvc= Executors.newScheduledThreadPool(
+			Runtime.getRuntime().availableProcessors()/2,
+			threadFactory);
+	
+	/**
 	 * Generates and return a list of filtered values.
 	 * 
 	 * @parm n - the number of values to generate
@@ -304,7 +317,6 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 	public void setUp() {
 		// Build the publisher
 		int poolSize = Runtime.getRuntime().availableProcessors()/2;
-		ScheduledExecutorService schedExecutorSvc= Executors.newScheduledThreadPool(poolSize, PluginThreadFactory.getThreadFactory());
 		bufferedPublisher = new BufferedListenerPublisher(pluginId, pluginServerName, pluginServerPort, schedExecutorSvc,this);
 		unbufferedPublisher = new ListenerPublisher(pluginId, pluginServerName, pluginServerPort, schedExecutorSvc,this);
 		logger.debug("Set up");
@@ -319,6 +331,7 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 		bufferedPublisher.tearDown();
 		unbufferedPublisher.stopSending();
 		unbufferedPublisher.tearDown();
+		schedExecutorSvc.shutdown();
 		logger.debug("tearDown complete");
 	}
 

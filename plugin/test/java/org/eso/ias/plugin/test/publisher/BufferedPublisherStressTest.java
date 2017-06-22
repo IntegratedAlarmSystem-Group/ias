@@ -3,13 +3,10 @@ package org.eso.ias.plugin.test.publisher;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -19,11 +16,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.eso.ias.plugin.filter.FilteredValue;
+import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
-import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
-import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +60,7 @@ public class BufferedPublisherStressTest extends PublisherTestCommon {
 	/**
 	 * The executor service
 	 */
-	private final ExecutorService executorSvc = Executors.newFixedThreadPool(numOfThreads,PluginThreadFactory.getThreadFactory());
+	private final ExecutorService fixedThreadPoolExecutorSvc = Executors.newFixedThreadPool(numOfThreads,threadFactory);
 	
 	/**
 	 * Sends filtered values that have different IDs so the test passes if 
@@ -91,7 +87,7 @@ public class BufferedPublisherStressTest extends PublisherTestCommon {
 		List<Future<Integer>> results = new LinkedList<>();
 		for (List<FilteredValue> values: listsOfValues) {
 			Callable<Integer> callable = new ValuesProducerCallable(bufferedPublisher,values,publishedValues);
-			Future<Integer> future = executorSvc.submit(callable);
+			Future<Integer> future = fixedThreadPoolExecutorSvc.submit(callable);
 			results.add(future);
 		}
 		

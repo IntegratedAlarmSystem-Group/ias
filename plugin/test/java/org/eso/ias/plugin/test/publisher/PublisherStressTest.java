@@ -1,9 +1,9 @@
 package org.eso.ias.plugin.test.publisher;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -47,7 +47,7 @@ public class PublisherStressTest extends PublisherTestCommon {
 	/**
 	 * The executor service
 	 */
-	private final ExecutorService executorSvc = Executors.newFixedThreadPool(numOfThreads,PluginThreadFactory.getThreadFactory());
+	private final ExecutorService fixedPoolExecutorSvc = Executors.newFixedThreadPool(numOfThreads, new PluginThreadFactory());
 	
 	/**
 	 * Sends filtered values that have different IDs so the test passes if 
@@ -74,7 +74,7 @@ public class PublisherStressTest extends PublisherTestCommon {
 		List<Future<Integer>> results = new LinkedList<>();
 		for (List<FilteredValue> values: listsOfValues) {
 			Callable<Integer> callable = new ValuesProducerCallable(unbufferedPublisher,values,publishedValues);
-			Future<Integer> future = executorSvc.submit(callable);
+			Future<Integer> future = fixedPoolExecutorSvc.submit(callable);
 			results.add(future);
 		}
 		
@@ -140,7 +140,7 @@ public class PublisherStressTest extends PublisherTestCommon {
 		List<Future<Integer>> results = new LinkedList<>();
 		for (List<FilteredValue> values: listsOfValues) {
 			Callable<Integer> callable = new ValuesProducerCallable(unbufferedPublisher,values,publishedValues);
-			Future<Integer> future = executorSvc.submit(callable);
+			Future<Integer> future = fixedPoolExecutorSvc.submit(callable);
 			results.add(future);
 		}
 		

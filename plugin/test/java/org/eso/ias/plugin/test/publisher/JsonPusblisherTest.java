@@ -2,7 +2,6 @@ package org.eso.ias.plugin.test.publisher;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -17,9 +16,9 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.filter.FilteredValue;
-import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
+import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
 import org.eso.ias.plugin.publisher.impl.JsonFilePublisher;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.junit.After;
@@ -80,7 +79,7 @@ public class JsonPusblisherTest {
 		BufferedWriter writer = new BufferedWriter(new FileWriter(jsonFile));
 		
 		int poolSize = Runtime.getRuntime().availableProcessors()/2;
-		ScheduledExecutorService schedExecutorSvc= Executors.newScheduledThreadPool(poolSize, PluginThreadFactory.getThreadFactory());
+		ScheduledExecutorService schedExecutorSvc= Executors.newScheduledThreadPool(poolSize, new PluginThreadFactory());
 		publisher = new JsonFilePublisher(SYSTEM_ID, SERVER_NAME, PORT, schedExecutorSvc, writer);
 		publisher.setUp();
 		publisher.startSending();
