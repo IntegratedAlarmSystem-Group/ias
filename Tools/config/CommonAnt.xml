@@ -23,6 +23,7 @@
   		<property name="bin.dir" value="../bin" />
 		<property name="mods.python.dir" value="${lib.dir}/python" />
 		<property name="config.dir" value="../config" />
+		<property name="docs.dir" value="../apidocs" />
 		
 		<property name="ias.dir" value="${env.IAS_ROOT}" />
 		
@@ -99,6 +100,8 @@
   		<mkdir dir="${bin.dir}" />
 		<mkdir dir="${config.dir}" />
 		<mkdir dir="${ias.lib.ExtTools.dir}" />
+		<mkdir dir="${docs.dir}" />
+		
 	</target>
 	
 	<!-- Initialization of scala build -->
@@ -296,6 +299,9 @@
   		</javac>
 	</target>
 	
+	<target name="doc" depends="init-ias-folders,javaSrcFolderCheck" if="java.src.folder.exists">
+		<javadoc sourcepath="${src.java.dir}" destdir="${docs.dir}"/>
+	</target>
 	
 	<target 
 		name="build" 

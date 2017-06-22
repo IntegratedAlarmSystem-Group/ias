@@ -22,4 +22,6 @@
 	
 	<target name="build" depends="ias.build" />
 	
+	<target name="doc" depends="ias.doc" />
+	
 </project>
