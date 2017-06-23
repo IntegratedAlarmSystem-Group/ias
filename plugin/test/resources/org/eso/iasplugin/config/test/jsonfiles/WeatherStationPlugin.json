@@ -1,0 +1,27 @@
+{ 
+	"id":"DumbWeatherStation",
+	"sinkServer":"localhost",
+	"sinkPort":"9092",
+	"properties": [],
+	"values":[
+		{"id":"Temperature",
+		"refreshTime":"1000",
+		"filter":"",
+		"filterOptions":""},
+		{"id":"WindDirection",
+		"refreshTime":"500",
+		"filter":"",
+		"filterOptions":""},
+		{"id":"WindSpeed",
+		"refreshTime":"500",
+		"filter":"",
+		"filterOptions":""},
+		{"id":"Humidity",
+		"refreshTime":"1000",
+		"filter":"",
+		"filterOptions":""},
+		{"id":"Pressure",
+		"refreshTime":"2000",
+		"filter":"",
+		"filterOptions":""}]
+}
