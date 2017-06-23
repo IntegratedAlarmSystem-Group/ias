@@ -124,12 +124,12 @@ public class Plugin implements ChangeValueListener {
 	/**
 	 * The thread factory for the plugin
 	 */
-	private final ThreadFactory threadFactory = new PluginThreadFactory();
+	protected static final ThreadFactory threadFactory = new PluginThreadFactory();
 
 	/**
 	 * The scheduled executor service
 	 */
-	private final ScheduledExecutorService schedExecutorSvc= Executors.newScheduledThreadPool(schedExecutorPoolSize, threadFactory);
+	protected static final ScheduledExecutorService schedExecutorSvc= Executors.newScheduledThreadPool(schedExecutorPoolSize, threadFactory);
 	
 	/**
 	 * The logger
@@ -329,30 +329,43 @@ public class Plugin implements ChangeValueListener {
 	}
 	
 	/**
+	 * A new value of a monitor point has been provided by the monitored system: 
+	 * the value must be sent to to the monitor point with the given ID for filtering.
+	 * 
+	 * @param mPointID The ID of the monitored point to submit the sample to
+	 * @param value the new not <code>null</code> value to submit to the monitored point
+	 * @throws PluginException if adding the sample failed
+	 */
+	public void updateMonitorPointValue(String mPointID, Object value) throws PluginException {
+		Objects.requireNonNull(value,"Cannot update monitor point "+mPointID+" with a null value: rejected");
+		updateMonitorPointValue(mPointID,new Sample(value));
+	}
+	
+	/**
 	 * A new value of a monitor point (a new sample) has been provided by the monitored system: 
 	 * the value must be sent to to the monitor point with the given ID for filtering.
 	 * 
 	 * @param mPointID The ID of the monitored point to submit the sample to
-	 * @param s the new sample to submit to the monitored point
+	 * @param sample the new sample to submit to the monitored point
 	 * @throws PluginException if adding the sample failed
 	 */
-	public void updateMonitorPointValue(String mPointID, Sample s) throws PluginException {
+	public void updateMonitorPointValue(String mPointID, Sample sample) throws PluginException {
 		if (closed.get()) {
 			return;
 		}
-		if (mPointID==null || mPointID.trim().isEmpty()) {
-			throw new IllegalArgumentException("Invalid monitor point ID: sample rejected");
+		Objects.requireNonNull(mPointID, "The identifier of a monitor point can't be null");
+		if (mPointID.trim().isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty monitor point ID: sample rejected");
 		}
 		if (disabledMonitorPoints.contains(mPointID)) {
 			return;
 		}
-		if(s==null) {
-			throw new IllegalArgumentException("Cannot update monitor point "+mPointID+" with a null sample");
-		}
+		Objects.requireNonNull(sample,"Cannot update monitor point "+mPointID+" with a null sample: rejected");
+		
 		try {
 			Optional.ofNullable(monitorPoints.get(mPointID)).
 				orElseThrow(() -> new PluginException("A monitor point with ID "+mPointID+" is not present")).
-					submitSample(s);
+					submitSample(sample);
 		} catch (Exception e) {
 			disabledMonitorPoints.add(mPointID);
 			logger.error("Exception sumbitting a sample to "+mPointID+": monitor point disabled");
@@ -397,7 +410,8 @@ public class Plugin implements ChangeValueListener {
 			return;
 		} else {
 			mpPublisher.offer(value);
-			logger.info("Value change {}",value.map(FilteredValue::toString));
+			value.ifPresent( v -> logger.info("Filtered value {} with value {} has been forwarded for sending to the IAS",v.id,v.value.toString()));
+			
 		}
 	}
 	
@@ -445,14 +459,14 @@ public class Plugin implements ChangeValueListener {
 	/**
 	 * @return the scheduled executor
 	 */
-	public ScheduledExecutorService getScheduledExecutorService() {
+	public static ScheduledExecutorService getScheduledExecutorService() {
 		return schedExecutorSvc;
 	}
 
 	/**
 	 * @return the threadFactory
 	 */
-	public ThreadFactory getThreadFactory() {
+	public static ThreadFactory getThreadFactory() {
 		return threadFactory;
 	}
 	
