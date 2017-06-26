@@ -15,8 +15,9 @@ public class IasInt extends IASValue<Integer> {
 	 * 
 	 * @param newValue The value to set in the new IasInt
 	 * @return The new IasInt with the updated value
-	 * @see IASTypes#updateValue()
+	 * @see IASValue#updateValue(Object)
 	 */
+	@Override
 	public IasInt updateValue(Integer newValue) {
 		if (newValue==null) {
 			throw new NullPointerException("The value can't be null");
@@ -29,7 +30,6 @@ public class IasInt extends IASValue<Integer> {
 	 * 
 	 * @param newMode The mode to set in the newIasInt
 	 * @return The new IasInt with the updated mode
-	 * @see IASTypes#updateMode(OperationalMode newMode)
 	 */
 	public IasInt updateMode(OperationalMode newMode) {
 		if (newMode==null) {

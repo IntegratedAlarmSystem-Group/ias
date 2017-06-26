@@ -15,8 +15,9 @@ public class IasDouble extends IASValue<Double> {
 	 * 
 	 * @param newValue The value to set in the new IasDouble
 	 * @return The new IasDouble with the updated value
-	 * @see IASTypes#updateValue()
+	 * @see IASValue#updateValue(Object)
 	 */
+	@Override
 	public IasDouble updateValue(Double newValue) {
 		if (newValue==null) {
 			throw new NullPointerException("The value can't be null");
@@ -29,7 +30,6 @@ public class IasDouble extends IASValue<Double> {
 	 * 
 	 * @param newMode The mode to set in the new IasDouble
 	 * @return The new IasDouble with the updated mode
-	 * @see IASTypes#updateMode(OperationalMode newMode)
 	 */
 	public IasDouble updateMode(OperationalMode newMode) {
 		if (newMode==null) {

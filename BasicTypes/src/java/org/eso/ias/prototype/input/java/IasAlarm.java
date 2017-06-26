@@ -17,8 +17,9 @@ public class IasAlarm extends IASValue<AlarmValue> {
 	 * 
 	 * @param newValue The value to set in the new IASValue
 	 * @return The new IASValue with the updated value
-	 * @see IASTypes#updateValue(AlarmValue newValue)
+	 * @see IASValue#updateValue(Object)
 	 */
+	@Override
 	public IasAlarm updateValue(AlarmValue newValue) {
 		if (newValue==null) {
 			throw new NullPointerException("The value can't be null");
@@ -31,7 +32,6 @@ public class IasAlarm extends IASValue<AlarmValue> {
 	 * 
 	 * @param newMode The mode to set in the new IASValue
 	 * @return The new IASValue with the updated mode
-	 * @see IASTypes#updateMode(OperationalMode newMode)
 	 */
 	public IasAlarm updateMode(OperationalMode newMode) {
 		if (newMode==null) {

@@ -15,8 +15,9 @@ public class IasString extends IASValue<String> {
 	 * 
 	 * @param newValue The value to set in the new IasString
 	 * @return The new IasString with the updated value
-	 * @see IASTypes#updateValue()
+	 * @see IASValue#updateValue(Object)
 	 */
+	@Override
 	public IasString updateValue(String newValue) {
 		if (newValue==null) {
 			throw new NullPointerException("The value can't be null");
@@ -29,7 +30,6 @@ public class IasString extends IASValue<String> {
 	 * 
 	 * @param newMode The mode to set in the new IasString
 	 * @return The new IasString with the updated mode
-	 * @see IASTypes#updateMode(OperationalMode newMode)
 	 */
 	public IasString updateMode(OperationalMode newMode) {
 		if (newMode==null) {

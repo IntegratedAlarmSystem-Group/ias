@@ -15,8 +15,9 @@ public class IasChar extends IASValue<Character> {
 	 * 
 	 * @param newValue The value to set in the new IASValue
 	 * @return The new IasChar with the updated value
-	 * @see IASTypes#updateValue()
+	 * @see IASValue#updateValue(Object)
 	 */
+	@Override
 	public IasChar updateValue(Character newValue) {
 		if (newValue==null) {
 			throw new NullPointerException("The value can't be null");
@@ -29,7 +30,6 @@ public class IasChar extends IASValue<Character> {
 	 * 
 	 * @param newMode The mode to set in the new IASValue
 	 * @return The new IASValue with the updated mode
-	 * @see IASTypes#updateMode(OperationalMode newMode)
 	 */
 	public IasChar updateMode(OperationalMode newMode) {
 		if (newMode==null) {

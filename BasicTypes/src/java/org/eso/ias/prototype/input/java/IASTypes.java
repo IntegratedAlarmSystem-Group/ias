@@ -9,8 +9,8 @@ import org.eso.ias.prototype.input.AlarmValue;
  * of scala because the twos differ too much up to the point 
  * that scala Eumeration are not usable within java sources.
  *
- *	TODO: avoid duplication with org.eso.ias.cdb.pojos.IasType
- * @see org.eso.ias.cdb.pojos.IasType
+ * TODO: avoid duplication with org.eso.ias.cdb.pojos.IasType
+ * @see org.eso.ias.cdb.pojos.IasTypeDao
  * @author acaproni
  *
  */

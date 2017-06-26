@@ -1,13 +1,12 @@
 package org.eso.ias.prototype.input.java;
 
-import org.eso.ias.prototype.input.java.OperationalMode;
-import java.lang.StringBuilder;
 /**
  * The view of a heterogeneous inputs in the java code.
  * 
  * Objects of this class are immutable i.e. updating returns
  * a new immutable object
  * 
+ * @param T The type of the value
  * @author acaproni
  *
  */
@@ -22,6 +21,7 @@ public abstract class IASValue<T> extends IASValueBase {
 	 * Constructor
 	 * 
 	 * @param value The value of the output
+	 * @param tStamp The timestamp
 	 * @param mode The new mode of the output
 	 * @param id: The ID of this input
 	 * @param runningId: The id of this input and its parents

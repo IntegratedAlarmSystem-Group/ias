@@ -15,8 +15,9 @@ public class IasByte extends IASValue<Byte> {
 	 * 
 	 * @param newValue The value to set in the new IasByte
 	 * @return The new IasByte with the updated value
-	 * @see IASTypes#updateValue()
+	 * @see IASValue#updateValue(Object)
 	 */
+	@Override
 	public IasByte updateValue(Byte newValue) {
 		if (newValue==null) {
 			throw new NullPointerException("The value can't be null");
@@ -29,7 +30,6 @@ public class IasByte extends IASValue<Byte> {
 	 * 
 	 * @param newMode The mode to set in the new IasByte
 	 * @return The new IasByte with the updated mode
-	 * @see IASTypes#updateMode(OperationalMode newMode)
 	 */
 	public IasByte updateMode(OperationalMode newMode) {
 		if (newMode==null) {

@@ -1,8 +1,6 @@
 package org.eso.ias.prototype.input.java;
 
 import org.eso.ias.prototype.input.Identifier;
-import org.eso.ias.prototype.input.java.OperationalMode;
-import java.lang.StringBuilder;
 /**
  * The view of the untyped heterogeneous inputs in the java code.
  * 
@@ -51,6 +49,7 @@ public abstract class IASValueBase {
 	/**
 	 * Constructor
 	 * 
+	 * @param tStamp Tye timestamp
 	 * @param mode The new mode of the output
 	 * @param id: The ID of this input
 	 * @param runningId: The id of this input and its parents

@@ -15,8 +15,9 @@ public class IasFloat extends IASValue<Float> {
 	 * 
 	 * @param newValue The value to set in the new IasFloat
 	 * @return The new IasFloat with the updated value
-	 * @see IASTypes#updateValue()
+	 * @see IASValue#updateValue(Object)
 	 */
+	@Override
 	public IasFloat updateValue(Float newValue) {
 		if (newValue==null) {
 			throw new NullPointerException("The value can't be null");
@@ -29,7 +30,6 @@ public class IasFloat extends IASValue<Float> {
 	 * 
 	 * @param newMode The mode to set in the new IasFloat
 	 * @return The new IasFloat with the updated mode
-	 * @see IASTypes#updateMode(OperationalMode newMode)
 	 */
 	public IasFloat updateMode(OperationalMode newMode) {
 		if (newMode==null) {

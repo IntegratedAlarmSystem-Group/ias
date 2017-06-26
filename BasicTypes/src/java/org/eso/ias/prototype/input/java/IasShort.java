@@ -15,8 +15,9 @@ public class IasShort extends IASValue<Short> {
 	 * 
 	 * @param newValue The value to set in the new IasShort
 	 * @return The new IasFloat with the updated value
-	 * @see IASTypes#updateValue()
+	 * @see IASValue#updateValue(Object)
 	 */
+	@Override
 	public IasShort updateValue(Short newValue) {
 		if (newValue==null) {
 			throw new NullPointerException("The value can't be null");
@@ -29,7 +30,6 @@ public class IasShort extends IASValue<Short> {
 	 * 
 	 * @param newMode The mode to set in the new IasShort
 	 * @return The new IasShort with the updated mode
-	 * @see IASTypes#updateMode(OperationalMode newMode)
 	 */
 	public IasShort updateMode(OperationalMode newMode) {
 		if (newMode==null) {
