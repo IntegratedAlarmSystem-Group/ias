@@ -106,8 +106,7 @@ public class RdbWriter implements CdbWriter {
 	 * @param iasio The IASIO configuration to write in the file
 	 * @param append: if <code>true</code> the passed iasio is appended to the file
 	 *                otherwise a new file is created
-	 * @see org.eso.ias.cdb.CdbWriter#writeIasio(org.eso.ias.cdb.pojos.IasioDao, boolean)
-	 * @see {@link #writeIasios(Set, boolean)}
+	 * @see #writeIasios(Set, boolean)
 	 */
 	@Override
 	public void writeIasio(IasioDao iasio, boolean append) throws IasCdbException {
@@ -122,7 +121,7 @@ public class RdbWriter implements CdbWriter {
 	 * @param iasios The IASIOs to write in the file
 	 * @param append: if <code>true</code> the passed iasios are appended to the file
 	 *                otherwise a new file is created
-	 * @see org.eso.ias.cdb.CdbWriter#writeIasios(java.util.Set, boolean)
+	 * @see CdbWriter#writeIasios(Set, boolean)
 	 */
 	@Override
 	public void writeIasios(Set<IasioDao> iasios, boolean append) throws IasCdbException {

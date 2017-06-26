@@ -114,7 +114,7 @@ public class AsceDao {
 	/**
 	 * Add the passed input
 	 * 
-	 * @param i The IASIO to put in the map
+	 * @param io The IASIO to put in the map
 	 * @param replace If <code>true</code> replaces the old IASIO with
 	 *                this one, if already present in the map
 	 * @return <code>true</code> if the passed IASIO replace an object in the inputs list,
@@ -151,7 +151,7 @@ public class AsceDao {
 	}
 	
 	/**
-	 * </code>toString()</code> prints a human readable version of the ASCE
+	 * toString() prints a human readable version of the ASCE
 	 * where linked objects (like DASU, IASIOS..) are represented by their
 	 * IDs only.
 	 */

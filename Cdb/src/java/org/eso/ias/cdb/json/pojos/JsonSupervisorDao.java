@@ -9,7 +9,7 @@ import org.eso.ias.cdb.pojos.LogLevelDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
 
 /**
- * <code>JsonSupervisorDao</code> encapsulate a {@link SupervisorDao}
+ * JsonSupervisorDao encapsulate a {@link SupervisorDao}
  * to replaces its set of DASUs with a set of IDs.
  * 
  * @author acaproni
@@ -52,64 +52,75 @@ public class JsonSupervisorDao {
 	}
 	
 	/**
-	 * @param obj
-	 * @return
-	 * @see java.lang.Object#equals(java.lang.Object)
+	 * @param obj The object to check
+	 * @return <code>true</code> if this object is equal to the passed object
+	 * @see java.lang.Object#equals(Object)
 	 */
 	public boolean equals(Object obj) {
 		return supervisorDao.equals(obj);
 	}
 
 	/**
-	 * @return
-	 * @see org.eso.ias.cdb.pojos.SupervisorDao#getId()
+	 * Get the ID of the Supervisor
+	 * 
+	 * @return the ID of the Supervisor
+	 * @see SupervisorDao#getId()
 	 */
 	public String getId() {
 		return supervisorDao.getId();
 	}
 
 	/**
-	 * @param id
-	 * @see org.eso.ias.cdb.pojos.SupervisorDao#setId(java.lang.String)
+	 * Set the ID of the Supervisor
+	 * 
+	 * @param id the ID of the Supervisor
+	 * @see SupervisorDao#setId(java.lang.String)
 	 */
 	public void setId(String id) {
 		supervisorDao.setId(id);
 	}
 
 	/**
-	 * @return
-	 * @see org.eso.ias.cdb.pojos.SupervisorDao#getHostName()
+	 * Get the name of the host
+	 * 
+	 * @return the name of the host
+	 * @see SupervisorDao#getHostName()
 	 */
 	public String getHostName() {
 		return supervisorDao.getHostName();
 	}
 
 	/**
-	 * @param host
-	 * @see org.eso.ias.cdb.pojos.SupervisorDao#setHostName(java.lang.String)
+	 * Set the name of the host
+	 * 
+	 * @param host the name of the host
+	 * @see SupervisorDao#setHostName(java.lang.String)
 	 */
 	public void setHostName(String host) {
 		supervisorDao.setHostName(host);
 	}
 
 	/**
-	 * @return
-	 * @see org.eso.ias.cdb.pojos.SupervisorDao#getLogLevel()
+	 * Get the log level
+	 * 
+	 * @return the log level
+	 * @see SupervisorDao#getLogLevel()
 	 */
 	public LogLevelDao getLogLevel() {
 		return supervisorDao.getLogLevel();
 	}
 
 	/**
-	 * @param logLevel
-	 * @see org.eso.ias.cdb.pojos.SupervisorDao#setLogLevel(org.eso.ias.cdb.pojos.LogLevelDao)
+	 * Set the log level
+	 * @param logLevel the log level
+	 * @see SupervisorDao#setLogLevel(LogLevelDao)
 	 */
 	public void setLogLevel(LogLevelDao logLevel) {
 		supervisorDao.setLogLevel(logLevel);
 	}
 	
 	/**
-	 * Replaces DASUs in {@link #supervisorDao} with their IDs
+	 * Get the IDs of the DASUs
 	 * 
 	 * @return The IDs of the DASUs of this supervisor
 	 */
@@ -120,7 +131,7 @@ public class JsonSupervisorDao {
 	/**
 	 * Replaces DASUs in {@link #supervisorDao} with their IDs
 	 * 
-	 * @return The IDs of the DASUs of this supervisor
+	 * @param ids the IDs of the DASUs
 	 */
 	public void setDasusIDs(Set<String> ids) {
 		this.dasuIDs.addAll(ids);

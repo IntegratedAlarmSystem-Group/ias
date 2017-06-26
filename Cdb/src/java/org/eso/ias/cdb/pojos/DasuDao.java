@@ -103,7 +103,7 @@ public class DasuDao {
 	}
 	
 	/**
-	 * </code>toString()</code> prints a human readable version of the DASU
+	 * toString() prints a human readable version of the DASU
 	 * where linked objects (like ASCES) are represented by their
 	 * IDs only.
 	 */

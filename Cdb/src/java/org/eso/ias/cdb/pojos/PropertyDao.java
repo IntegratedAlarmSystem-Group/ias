@@ -11,7 +11,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 /**
- * The property in the form of <name, value>
+ * The property in the form of &lt;name, value&gt;
  * 
  * @author acaproni
  *

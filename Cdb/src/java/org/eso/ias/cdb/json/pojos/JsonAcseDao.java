@@ -66,79 +66,82 @@ public class JsonAcseDao {
 	}
 
 	/**
-	 * @return
-	 * @see org.eso.ias.cdb.pojos.AsceDao#getId()
+	 * @return The ID of the ASCE
+	 * @see AsceDao#getId()
 	 */
 	public String getId() {
 		return asce.getId();
 	}
 
 	/**
-	 * @param id
-	 * @see org.eso.ias.cdb.pojos.AsceDao#setId(java.lang.String)
+	 * @param id The ID of the ASCE
+	 * @see AsceDao#setId(String)
 	 */
 	public void setId(String id) {
 		asce.setId(id);
 	}
 
 	/**
-	 * @return
-	 * @see org.eso.ias.cdb.pojos.AsceDao#getTfClass()
+	 * @return the class name of the transfer function
+	 * @see AsceDao#getTfClass()
 	 */
 	public String getTfClass() {
 		return asce.getTfClass();
 	}
 
 	/**
-	 * @param tfClass
-	 * @see org.eso.ias.cdb.pojos.AsceDao#setTfClass(java.lang.String)
+	 * @param tfClass  the class name of the transfer function
+	 * @see AsceDao#setTfClass(String)
 	 */
 	public void setTfClass(String tfClass) {
 		asce.setTfClass(tfClass);
 	}
 
 	/**
-	 * @return
-	 * @see org.eso.ias.cdb.pojos.AsceDao#getOutput()
+	 * @return the ID of the output
+	 * @see AsceDao#getOutput()
 	 */
 	public String getOutputID() {
 		return outputID;
 	}
 
 	/**
-	 * @return
-	 * @see org.eso.ias.cdb.pojos.AsceDao#getInputs()
+	 * @return The IDs of th einputs
+	 * @see AsceDao#getInputs()
 	 */
 	public Set<String> getInputIDs() {
 		return inputIds;
 	}
 	
 	/**
-	 * @return
-	 * @see org.eso.ias.cdb.pojos.AsceDao#getInputs()
+	 * @param ids The IDs of the inputs
+	 * @see AsceDao#getInputs()
 	 */
 	public void setInputIDs(Set<String> ids) {
 		inputIds.addAll(ids);
 	}
 
 	/**
-	 * @param output
-	 * @see org.eso.ias.cdb.pojos.AsceDao#setOutput(org.eso.ias.cdb.pojos.IasioDao)
+	 * Set the ID of the output 
+	 * @param id The ID of the output
+	 * @see AsceDao#setOutput(IasioDao)
 	 */
 	public void setOutputID(String id) {
 		this.outputID=id;
 	}
 
 	/**
-	 * @return
-	 * @see org.eso.ias.cdb.pojos.AsceDao#getProps()
+	 * Get the properties
+	 * 
+	 * @return The properties
+	 * @see AsceDao#getProps()
 	 */
 	public Set<PropertyDao> getProps() {
 		return asce.getProps();
 	}
 
 	/**
-	 * Setter
+	 * Set the ID of the DASU
 	 * 
 	 * @param id The ID of the DASU where this ASCE runs
 	 */
@@ -147,15 +150,17 @@ public class JsonAcseDao {
 	}
 
 	/**
-	 * @return
-	 * @see org.eso.ias.cdb.pojos.AsceDao#getDasu()
+	 * Get the ID of the DASU
+	 * 
+	 * @return The ID of the DASU
+	 * @see AsceDao#getDasu()
 	 */
 	public String getDasuID() {
 		return dasuID;
 	}
 	
 	/**
-	 * </code>toString()</code> prints a human readable version of the ASCE
+	 * toString() prints a human readable version of the ASCE
 	 * where linked objects (like DASU, IASIOS..) are represented by their
 	 * IDs only.
 	 */

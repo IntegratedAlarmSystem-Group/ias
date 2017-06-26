@@ -2,18 +2,16 @@ package org.eso.ias.cdb.json;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileVisitOption;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 /**
  * <P>The structure of the folders and the names of the files 
  * of the CDB are described in the 
  * <A href="https://github.com/IntegratedAlarmSystem-Group/ias/wiki/ConfigurationDatabase">CDB wiki</A>:
  * 
- * <VERBATIM>
+ * <pre>
+* {@code
  * +CDB
  * 	| ias.json
  *  |+ Supervisor
@@ -30,7 +28,8 @@ import java.util.stream.Stream;
  *     | <AsceID-t>.json
  *  |+ IASIO
  *     | IASIO.json
- * </VERBATIM>
+ *     }
+ * </pre>
  * 
  * Note that <code>CdbFolders</code> only deals with the folders of the CDB 
  * but not with the name of the files that ultimately depends on the selected format.
@@ -128,6 +127,7 @@ public enum CdbFolders {
 	 * @param cdbParentPath: The path to the parent of the CDB
 	 * @param create: if <code>true</code> and the subfolder does not exist, then create it
 	 * @return the path to the subfolder.
+	 * @throws IOException If the folder is not writeable
 	 */
 	public Path getFolder(Path cdbParentPath, boolean create) throws IOException {
 		if (cdbParentPath==null) {
@@ -151,6 +151,7 @@ public enum CdbFolders {
 	/**
 	 * Check if the subfolder exists
 	 * 
+	 * @param cdbParentPath The path of the folder
 	 * @return <code>true</code> if the folder exists,
 	 * 		   <code>false</code> otherwise.
 	 */
@@ -167,6 +168,7 @@ public enum CdbFolders {
 	 * @param folder: the CDB folder to create 
 	 * @param create: if <code>true</code> and the subfolder does not exist, then create it
 	 * @return the path to the subfolder.
+	 * @throws IOException In case of error getting the path
 	 */
 	public static Path getSubfolder(Path cdbParentPath, CdbFolders folder, boolean create) throws IOException {
 		if (folder==null) {
@@ -181,6 +183,7 @@ public enum CdbFolders {
 	 * If a subfolder already exists then nothing is done
 	 * 
 	 * @param cdbParentPath: The path to the parent of the CDB
+	 * @throws IOException in case of error creating the folders
 	 */
 	public static void createFolders(Path cdbParentPath) throws IOException {
 		for (CdbFolders folder: CdbFolders.values()) {

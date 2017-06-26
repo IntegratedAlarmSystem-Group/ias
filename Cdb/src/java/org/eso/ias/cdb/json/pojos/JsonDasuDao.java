@@ -54,54 +54,66 @@ public class JsonDasuDao {
 	}
 
 	/**
-	 * @return
-	 * @see org.eso.ias.cdb.pojos.DasuDao#getLogLevel()
+	 * Return the log level of the DASU
+	 * 
+	 * @return The log level of teh DASU
+	 * @see DasuDao#getLogLevel()
 	 */
 	public LogLevelDao getLogLevel() {
 		return dasu.getLogLevel();
 	}
 
 	/**
-	 * @param logLevel
-	 * @see org.eso.ias.cdb.pojos.DasuDao#setLogLevel(org.eso.ias.cdb.pojos.LogLevelDao)
+	 * Set the log level 
+	 * 
+	 * @param logLevel The log level to set
+	 * @see DasuDao#setLogLevel(LogLevelDao)
 	 */
 	public void setLogLevel(LogLevelDao logLevel) {
 		dasu.setLogLevel(logLevel);
 	}
 
 	/**
-	 * @return
-	 * @see org.eso.ias.cdb.pojos.DasuDao#getId()
+	 * Get the ID of the DASU
+	 * 
+	 * @return the ID of the DASU
+	 * @see DasuDao#getId()
 	 */
 	public String getId() {
 		return dasu.getId();
 	}
 
 	/**
-	 * @return
-	 * @see org.eso.ias.cdb.pojos.DasuDao#getSupervisor()
+	 * Get the Id of the supervisor where this DASU is deployed
+	 * 
+	 * @return the Id of the supervisor
+	 * @see DasuDao#getSupervisor()
 	 */
 	public String getSupervisorID() {
 		return supervisorId;
 	}
 	
 	/**
-	 * Setter
+	 * Set the ID of the Supervisor
+	 * @param supervID the ID of the Supervisor
 	 */
 	public void setSupervisorID(String supervID) {
 		supervisorId=supervID;
 	}
 
 	/**
-	 * @param id
-	 * @see org.eso.ias.cdb.pojos.DasuDao#setId(java.lang.String)
+	 * Set the ID of the DASU
+	 * 
+	 * @param id the ID of the DASU
+	 * @see DasuDao#setId(java.lang.String)
 	 */
 	public void setId(String id) {
 		dasu.setId(id);
 	}
 
 	/**
-	 * @return
+	 * Get the IDs of the ASCEs running in this DASU
+	 * @return the IDs of the ASCEs
 	 * @see org.eso.ias.cdb.pojos.DasuDao#getAsces()
 	 */
 	public Set<String> getAsceIDs() {
@@ -109,14 +121,16 @@ public class JsonDasuDao {
 	}
 	
 	/**
-	 * Setter
+	 * Set the IDs of the ASCEs running in this DASU
+	 * 
+	 * @param ids the IDs of the ASCEs running in this DASU
 	 */
 	public void setAsceIDs(Set<String> ids) {
 		asceIDs.addAll(ids);
 	}
 	
 	/**
-	 * </code>toString()</code> prints a human readable version of the DASU
+	 * toString() prints a human readable version of the DASU
 	 * where linked objects (like ASCES) are represented by their
 	 * IDs only.
 	 */
@@ -142,6 +156,6 @@ public class JsonDasuDao {
 	 */
 	public DasuDao toDasuDao() {
 		return this.dasu;
-//		
+	
 	}
 }

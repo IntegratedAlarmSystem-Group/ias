@@ -191,6 +191,7 @@ public class RdbUtils {
 	 * Get a Session out of the SessionFactory
 	 * 
 	 * @return a Session
+	 * @throws IasCdbException in case of error getting the Session
 	 */
 	public synchronized Session getSession() throws IasCdbException {
 		logger.debug("Returning a new hibernate Session");

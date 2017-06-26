@@ -1,7 +1,6 @@
 package org.eso.ias.cdb.pojos;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -122,6 +121,8 @@ public class SupervisorDao {
 	 * Check if a DASU with the given key is already in the list
 	 * 
 	 * @param id The ID of the DASU to check
+	 * @return <code>true</code> if the the Supervisor contains the DASU with the give id,
+	 *         <code>false</code> otherwise
 	 */
 	public boolean containsDasu(String id) {
 		Objects.requireNonNull(id);
@@ -151,7 +152,7 @@ public class SupervisorDao {
 //	}
 	 
 	/**
-	 * </code>toString()</code> prints a human readable version of the DASU
+	 * toString() prints a human readable version of the DASU
 	 * where linked objects (like ASCES) are represented by their IDs only.
 	 */
 	@Override

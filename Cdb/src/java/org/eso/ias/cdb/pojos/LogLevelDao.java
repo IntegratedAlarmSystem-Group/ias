@@ -7,8 +7,6 @@ package org.eso.ias.cdb.pojos;
  * 
  * @author acaproni
  * 
- * @see org.apache.log4j.Level
- *
  */
 public enum LogLevelDao {
 	OFF, FATAL, ERROR, WARN, INFO, DEBUG, ALL

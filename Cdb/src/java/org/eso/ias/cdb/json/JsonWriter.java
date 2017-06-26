@@ -39,8 +39,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * 
  * To avoid recursion, objects included into pojos (for example ASCEs in a DASU)
  * are represented by their IDs only. This is done, in practice,
- * writing a different set of pojos (i.e. those in the <code>org.eso.ias.cdb.pojos<code>)
- * instead of those in the <code>org.eso.ias.pojos<code>. 
+ * writing a different set of pojos (i.e. those in the org.eso.ias.cdb.pojos)
+ * instead of those in the org.eso.ias.pojos. 
  * 
  * <P>JSON writing and parsing is done with Jackson2 
  * (http://wiki.fasterxml.com/JacksonStreamingApi)
@@ -51,7 +51,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class JsonWriter implements CdbWriter {
 	
 	/**
-	 * <code>cdbFileNames</code> return the names of the files to read
+	 * cdbFileNames return the names of the files to read
 	 */
 	private final CdbFiles cdbFileNames;
 	
@@ -164,8 +164,7 @@ public class JsonWriter implements CdbWriter {
 	 * @param append: if <code>true</code> the passed iasio is appended to the file
 	 *                otherwise a new file is created
 	 *                
-	 * @see org.eso.ias.cdb.CdbWriter#writeIasio(org.eso.ias.cdb.pojos.IasioDao, java.io.File, boolean)
-	 * @see #writeIasios(Set, File, boolean)
+	 * @see CdbWriter#writeIasio(IasioDao, boolean)
 	 */
 	@Override
 	public void writeIasio(IasioDao iasio, boolean append) throws IasCdbException {
@@ -182,11 +181,11 @@ public class JsonWriter implements CdbWriter {
 	 * <BR>If a IASIO in <code>iasios</code> already exists in the file, the latter
 	 * is replaced by that in the set.
 	 * 
-	 * @param iasio The IASIOs to write in the file
+	 * @param iasios The IASIOs to write in the file
 	 * @param append: if <code>true</code> the passed iasios are appended to the file
 	 *                otherwise a new file is created
 	 *                
-	 * @see org.eso.ias.cdb.CdbWriter#writeIasios(java.util.Set, java.io.File, boolean)
+	 * @see CdbWriter#writeIasios(Set, boolean)
 	 */
 	@Override
 	public void writeIasios(Set<IasioDao> iasios, boolean append) throws IasCdbException {
@@ -297,6 +296,7 @@ public class JsonWriter implements CdbWriter {
 	 * 
 	 * @param iasio The IASIO to write in the file
 	 * @param jg The Jakson2 generator
+	 * @throws IOException In case of error writing the IASIO
 	 */
 	private void putNextIasio(IasioDao iasio, JsonGenerator jg) throws IOException {
 		Objects.requireNonNull(iasio);
@@ -315,6 +315,7 @@ public class JsonWriter implements CdbWriter {
 	 * 
 	 * @param jp The jason parser
 	 * @return The IasioDao read from the parser if found
+	 * @throws IOException In case of error getting the next IASIO
 	 */
 	private IasioDao getNextIasio(JsonParser jp) throws IOException {
 		String iasioId=null;

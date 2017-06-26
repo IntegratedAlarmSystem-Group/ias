@@ -48,7 +48,7 @@ public class IasioDao {
 	 * @param id The identifier
 	 * @param descr The description
 	 * @param rate The refresh rate
-	 * @param typeThe IAS type
+	 * @param type The IAS type
 	 */
 	public IasioDao(String id, String descr, int rate, IasTypeDao type) {
 		Objects.requireNonNull(id, "The identifier can't be null");

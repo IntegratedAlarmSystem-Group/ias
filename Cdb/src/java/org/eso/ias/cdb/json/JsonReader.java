@@ -68,9 +68,11 @@ public class JsonReader implements CdbReader {
 	/**
 	 * Get the Ias configuration from JSON file.
 	 * 
-	 * @return The ias configuration read from the JSON file 
-	 * @see CdbReader#getIas(File)
+	 * @return The ias configuration red from the JSON file 
+	 * @see CdbReader#getIas()
+	 * @throws IasCdbException In case of error getting the IAS
 	 */
+	@Override
 	public Optional<IasDao> getIas() throws IasCdbException {
 		File f;
 		try {
@@ -98,9 +100,10 @@ public class JsonReader implements CdbReader {
 	 * Get the IASIOs from the passed file.
 	 * 
 	 * @return The IASIOs read from the configuration file
-	 * @throws IOException if the IASIO file does not exist or is unreadable
-	 * @see CdbReader#getIasios(File)
+	 * @see CdbReader#getIasios()
+	 * @throws IasCdbException In case of error getting the IASIOs
 	 */
+	@Override
 	public Optional<Set<IasioDao>> getIasios() throws IasCdbException {
 		File f;
 		try {
@@ -136,6 +139,7 @@ public class JsonReader implements CdbReader {
 	 * 
 	 * @param id The ID of the IASIO to read the configuration
 	 * @return The IASIO red from the file
+	 * @throws IasCdbException In case of error getting the IASIO
 	 */
 	public Optional<IasioDao> getIasio(String id) throws IasCdbException {
 		Objects.requireNonNull(id, "The IASIO identifier cannot be null");
@@ -169,7 +173,9 @@ public class JsonReader implements CdbReader {
 	 * Read the ASCE configuration from the file. 
 	 * 
 	 * @param id The not null nor empty ASCE identifier
+	 * @throws IasCdbException In case of error getting the ASCE
 	 */
+	@Override
 	public Optional<AsceDao> getAsce(String id) throws IasCdbException {
 		Objects.requireNonNull(id, "The ASCE identifier cannot be null");
 		String cleanedID = id.trim();
@@ -198,7 +204,9 @@ public class JsonReader implements CdbReader {
 	 * Read the DASU configuration from the file. 
 	 * 
 	 * @param id The not null nor empty DASU identifier
+	 * @throws IasCdbException In case of error getting the DASU
 	 */
+	@Override
 	public Optional<DasuDao> getDasu(String id) throws IasCdbException {
 		Objects.requireNonNull(id, "The DASU identifier cannot be null");
 		String cleanedID = id.trim();
@@ -226,8 +234,9 @@ public class JsonReader implements CdbReader {
 	 * Read the supervisor configuration from the JSON file. 
 	 * 
 	 * @param id The not null nor empty supervisor identifier
-	 * @throws IOException if the supervisor file does not exist or is unreadable
+	 * @throws IasCdbException if the supervisor file does not exist or is unreadable
 	 */
+	@Override
 	public Optional<SupervisorDao> getSupervisor(String id) throws IasCdbException {
 		Objects.requireNonNull(id, "The supervisor identifier cannot be null");
 		String cleanedID = id.trim();
@@ -258,6 +267,7 @@ public class JsonReader implements CdbReader {
 	 * @param id The id of the DASU
 	 * @return The JSON configuration of the DASU if found; 
 	 *         empty otherwise
+	 * @throws IOException In case of error getting the file
 	 */
 	private Optional<JsonDasuDao>getJsonDasu(String id) throws IOException {
 		File dasuFile =  cdbFileNames.getDasuFilePath(id).toFile();

@@ -44,7 +44,7 @@ public class SqlRunner {
 	/**
 	 * Constructor 
 	 * 
-	 * @param stream The stream to read the SQL script from
+	 * @param reader The reader to get the SQL script from
 	 */
 	public SqlRunner(Reader reader) {
 		Objects.requireNonNull(reader,"The reader can't be null");
@@ -99,6 +99,8 @@ public class SqlRunner {
 	
 	/**
 	 * Run the script on the RDB server.
+	 * 
+	 * @param session The Session
 	 */
 	public void runSQLScript(Session session) {
 		Objects.requireNonNull(session, "The session can't be null");
