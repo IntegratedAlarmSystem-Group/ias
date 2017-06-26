@@ -11,14 +11,14 @@ from IASTools.CommonDefs import CommonDefs
 
 """
 This python script generates documentation for IAS java sources
-by delegating to AcsJavadocBuilder class that in turn runs
+by delegating to IasJavadocBuilder class that in turn runs
 javadoc. 
 
 The script takes the following parameters:
-   * src folder:  the folder containing java sources (usually ACS as checked out from the repository)
+   * src folder:  the folder containing java sources (usually ias as checked out from the repository)
    * dest folder: the folder where javadoc put the HTMLs
    
-I wrote this script for the ALMA Common Software:
+I wrote this script for the ALMA Common Software times ago:
 this is a customized version for the Integrated Alarm System.
 
 @author: acaproni
@@ -27,7 +27,7 @@ this is a customized version for the Integrated Alarm System.
 
 class IasJavadocBuilder(object):
     """
-    Objects from this class generates the javadoc documentation of ACS sources
+    Objects from this class generates the javadoc documentation of IAS sources
     """
     
     def __init__(self,srcFolder,dstFolder,includeTestFolder=False,outFile=sys.stdout):
@@ -105,7 +105,7 @@ class IasJavadocBuilder(object):
         if the includeTestFolder parameter is True)
         The search is recursive because a folder can contains several modules
         
-        @param sourceFolder: root source folder (generally ACS, passed int he command line)
+        @param sourceFolder: root source folder (generally IAS, passed in the command line)
         @param includeTestFolder: True to inculde test folders in the scan 
         """
         ret = []
@@ -119,7 +119,7 @@ class IasJavadocBuilder(object):
         """
         Get the root folders of the java packages in the passed list of folders
         @param srcFolders: the list of folders containg java sources
-        @return:  the root of java packages (something like, com, alma..)
+        @return:  the root of java packages (something like, com, org,...)
         """
         ret = []
         for folder in srcFolders:
@@ -134,11 +134,11 @@ class IasJavadocBuilder(object):
         '''
         Build the command to invoke javadoc with subprocess.call.
         javadoc must be invoked with a command line like
-        javadoc -d ./html -splitIndex -windowtitle 'ACS 2016.4' -J-Xmx180m -sourcepath ./src -subpackages alma:com
+        javadoc -d ./html -splitIndex -windowtitle 'IAS 1.0' -J-Xmx180m -sourcepath ./src -subpackages org:com
         
         @param dest The destination folder where javadoc creates html
         @param srcFolders The folders containing java sources
-        @param pkgs The package roots (alma, com, cern..)
+        @param pkgs The package roots (org, com, cern..)
         @return: a list of parameteres to invoke javadoc 
         '''
         sources = ''
@@ -189,12 +189,12 @@ class IasJavadocBuilder(object):
         
 
 if __name__=="__main__":
-    # javadoc -d ./html -splitIndex -windowtitle 'ACS 2016.4' -J-Xmx180m -sourcepath ./src -subpackages alma:com
+    # javadoc -d ./html -splitIndex -windowtitle 'IAS 1.0' -J-Xmx180m -sourcepath ./src -subpackages org:com
     
     # Parse the command line
     parser = OptionParser()
     parser.add_option("-d", "--destFolder", help="HTML destination folder", default=".",action="store", type="string", dest="destFolder")
-    parser.add_option("-s", "--sourceFolder", help="ACS source folder", default=".",action="store", type="string", dest="srcFolder")
+    parser.add_option("-s", "--sourceFolder", help="IAS source folder", default=".",action="store", type="string", dest="srcFolder")
     parser.add_option("-t", "--test", help="Include java sources from test folders", action="store_true", dest="includeTest", default=False)
     (options, args) = parser.parse_args()
     
