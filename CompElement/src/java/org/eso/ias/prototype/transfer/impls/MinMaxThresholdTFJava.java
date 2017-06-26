@@ -3,6 +3,9 @@ package org.eso.ias.prototype.transfer.impls;
 import java.util.Map;
 import java.util.Properties;
 
+import org.eso.ias.prototype.compele.exceptions.PropsMisconfiguredException;
+import org.eso.ias.prototype.compele.exceptions.TypeMismatchException;
+import org.eso.ias.prototype.compele.exceptions.UnexpectedNumberOfInputsException;
 import org.eso.ias.prototype.input.AlarmValue;
 import org.eso.ias.prototype.input.Clear;
 import org.eso.ias.prototype.input.Set;
@@ -16,9 +19,7 @@ import org.eso.ias.prototype.input.java.IasInt;
 import org.eso.ias.prototype.input.java.IasLong;
 import org.eso.ias.prototype.input.java.IasShort;
 import org.eso.ias.prototype.transfer.JavaTransferExecutor;
-import org.eso.ias.prototype.compele.exceptions.PropsMisconfiguredException;
-import org.eso.ias.prototype.compele.exceptions.UnexpectedNumberOfInputsException;
-import org.eso.ias.prototype.compele.exceptions.TypeMismatchException;
+import org.eso.ias.prototype.transfer.TransferExecutor;
 
 /**
  * The TF implementing a Min/Max threshold TF  (there is also
@@ -48,7 +49,8 @@ import org.eso.ias.prototype.compele.exceptions.TypeMismatchException;
  *               becomes greater then LowOFF, then the alarm is deactivated
  *  <LI>LowON: the (low) alarm is activated when the value of the HIO is
  *             lower then LowON
- *             
+ * </UL>
+ *   
  * @author acaproni
  */
 public class MinMaxThresholdTFJava extends JavaTransferExecutor {

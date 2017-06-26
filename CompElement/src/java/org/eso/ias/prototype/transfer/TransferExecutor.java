@@ -6,7 +6,7 @@ import org.eso.ias.prototype.input.Identifier;
 
 /**
  * 
- * <code>TransferExecutor<code> is the abstract for the
+ * TransferExecutor is the abstract for the
  * implementators of the transfer function in java.
  * 
  * @author acaproni
@@ -38,6 +38,7 @@ public abstract class TransferExecutor {
 	 * 
 	 * @param cEleId: The id of the ASCE
 	 * @param cEleRunningId: the running ID of the ASCE
+	 * @param props The properties fro the executor
 	 */
 	public TransferExecutor(
 			String cEleId, 
@@ -64,6 +65,8 @@ public abstract class TransferExecutor {
 	 * User initialization code goes here. In particular long lasting operations
 	 * like reading from a database should go here while eval is supposed 
 	 * to return as soon as possible.
+	 * 
+	 * @throws Exception In case of error initializing
 	 */
 	public abstract void initialize() throws Exception;
 	
@@ -73,6 +76,8 @@ public abstract class TransferExecutor {
 	 * This life cycle method is called last, to clean up the resources.
 	 * 
 	 * It is supposed to return quickly, even if not mandatory.
+	 * 
+	 * @throws Exception In case of error shutting down
 	 */
 	public abstract void shutdown() throws Exception;
 }
