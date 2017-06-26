@@ -24,7 +24,6 @@ public interface ChangeValueListener {
 	 * the refresh time interval elapses.
 	 * 
 	 * @param value the not <code>null</code> new value of the
-	 * @return
 	 */
 	public void monitoredValueUpdated(Optional<FilteredValue> value);
 }

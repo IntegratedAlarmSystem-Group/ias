@@ -37,7 +37,7 @@ public abstract class BufferedFilePublisherBase extends BufferedPublisherBase {
 	 * @param serverName The name of the server
 	 * @param port The port of the server
 	 * @param executorSvc The executor service
-	 * @param outStream The output stream
+	 * @param outWriter The output writer
 	 */
 	public BufferedFilePublisherBase(String pluginId, String serverName, int port, ScheduledExecutorService executorSvc, BufferedWriter outWriter) {
 		super(pluginId, serverName, port, executorSvc);
@@ -77,10 +77,9 @@ public abstract class BufferedFilePublisherBase extends BufferedPublisherBase {
 	}
 
 	/**
-	 * Performs the initialization of the implementers of this
-	 * abstract class.
+	 * Performs the initialization.
 	 * 
-	 * @throws PublisherException Exception returned by the implementer
+	 * @throws PublisherException never
 	 */
 	@Override
 	protected void start() throws PublisherException {
@@ -88,8 +87,9 @@ public abstract class BufferedFilePublisherBase extends BufferedPublisherBase {
 	}
 
 	/**
-	 * Performs the cleanup of the implementers of this
-	 * abstract class
+	 * Performs the cleanup.
+	 * 
+	 * @throws PublisherException in case of error releasing the writer
 	 */
 	@Override
 	protected void shutdown() throws PublisherException {

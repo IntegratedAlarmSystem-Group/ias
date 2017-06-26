@@ -79,10 +79,13 @@ public class BufferedListenerPublisher extends BufferedPublisherBase {
 
 	/**
 	 * Constructor 
-	 * @param pluginId
-	 * @param serverName
-	 * @param port
-	 * @param executorSvc
+	 *
+	 * @param pluginId The identifier of the plugin
+	 * @param serverName The name of the server
+	 * @param port The port of the server
+	 * @param executorSvc The executor service
+	 * @param listener The listener of events
+	 * 
 	 * @see BufferedPublisherBase
 	 */
 	public BufferedListenerPublisher(
@@ -96,6 +99,12 @@ public class BufferedListenerPublisher extends BufferedPublisherBase {
 		logger.info("Created");
 	}
 	
+	/**
+	 * Send the passed data to listener.
+	 * 
+	 * @param data The data to send to the listener
+	 * @throws PublisherException never
+	 */
 	@Override
 	protected long publish(BufferedMonitoredSystemData data) throws PublisherException {
 		publishedMessages++;
@@ -104,12 +113,22 @@ public class BufferedListenerPublisher extends BufferedPublisherBase {
 		return data.toJsonString().length();
 	}
 
+	/**
+	 * Performs the initialization.
+	 * 
+	 * @throws PublisherException never
+	 */
 	@Override
 	protected void start() throws PublisherException {
 		listener.initialized();
 		numOfSetUpInvocations++;
 	}
 
+	/**
+	 * Performs the cleanup.
+	 * 
+	 * @throws PublisherException in case of error releasing the writer
+	 */
 	@Override
 	protected void shutdown() throws PublisherException {
 		listener.closed();

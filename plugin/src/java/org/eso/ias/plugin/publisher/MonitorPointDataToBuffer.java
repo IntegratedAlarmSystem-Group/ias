@@ -6,9 +6,6 @@ import java.util.Date;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.filter.NoneFilter;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 /**
  * A java POJO representing a monitor point or alarm
  * to be sent to the IAS in abuffered way.
@@ -65,7 +62,6 @@ public class MonitorPointDataToBuffer {
 	/**
 	 * Constructor
 	 * 
-	 * @param pluginID: The ID of the plugin
 	 * @param value The filtered value produced by the monitored system
 	 */
 	public MonitorPointDataToBuffer(FilteredValue value) {
@@ -85,6 +81,8 @@ public class MonitorPointDataToBuffer {
 	}
 
 	/**
+	 * Set the time of the sample 
+	 * 
 	 * @param sampleTime the sampleTime to set
 	 */
 	public void setSampleTime(String sampleTime) {
@@ -99,6 +97,8 @@ public class MonitorPointDataToBuffer {
 	}
 
 	/**
+	 * Set the filtered timestamp
+	 * 
 	 * @param filteredTime the filteredTime to set
 	 */
 	public void setFilteredTime(String filteredTime) {
@@ -113,6 +113,8 @@ public class MonitorPointDataToBuffer {
 	}
 
 	/**
+	 * Set the value of th emonitor point
+	 * 
 	 * @param value the value to set
 	 */
 	public void setValue(String value) {
@@ -120,13 +122,15 @@ public class MonitorPointDataToBuffer {
 	}
 
 	/**
-	 * @return the id
+	 * @return the id of the monitor point
 	 */
 	public String getId() {
 		return id;
 	}
 
 	/**
+	 * Set the ID of the monitor point
+	 * 
 	 * @param id the id to set
 	 */
 	public void setId(String id) {

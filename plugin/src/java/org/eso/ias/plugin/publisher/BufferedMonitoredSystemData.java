@@ -101,6 +101,8 @@ public class BufferedMonitoredSystemData {
 	 * Return a JSON string for this object.
 	 * 
 	 * @return A Json string representing this object
+	 * @throws PublisherException In case of error generating the JSON string
+	 * @return The JSON string representing this object
 	 */
 	public String toJsonString() throws PublisherException {
 		try {
@@ -114,6 +116,8 @@ public class BufferedMonitoredSystemData {
 	 * Builds a <code>MonitoredSystemData</code> parsing the passed JSON string
 	 * 
 	 *  @param jsonStr The JSON string to parse to build the <code>MonitoredSystemData</code>
+	 *  @return A  <code>BufferedMonitoredSystemData</code> object generated parsing the passed string
+	 *  @throws PublisherException In case of error parsing the string
 	 */
 	public static BufferedMonitoredSystemData fromJsonString(String jsonStr) throws PublisherException {
 		try { 

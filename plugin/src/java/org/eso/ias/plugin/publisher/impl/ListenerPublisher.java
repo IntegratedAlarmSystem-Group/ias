@@ -42,7 +42,7 @@ public class ListenerPublisher extends PublisherBase {
 		/**
 		 * Invoked when the publisher sends data
 		 * 
-		 * @param data The data published
+		 * @param mpData The data published
 		 */
 		public void dataReceived(MonitorPointData mpData);
 	}
@@ -75,11 +75,14 @@ public class ListenerPublisher extends PublisherBase {
 
 	/**
 	 * Constructor 
-	 * @param pluginId
-	 * @param serverName
-	 * @param port
-	 * @param executorSvc
-	 * @see BufferedPublisherBase
+	 * 
+	 * @param pluginId The identifier of the plugin
+	 * @param serverName The name of the server
+	 * @param port The port of the server
+	 * @param executorSvc The executor service
+	 * @param listener the listener
+	 * 
+	 * @see BufferedPublisherBase#BufferedPublisherBase(String, String, int, ScheduledExecutorService)
 	 */
 	public ListenerPublisher(
 			String pluginId, 
@@ -92,6 +95,12 @@ public class ListenerPublisher extends PublisherBase {
 		logger.info("Created");
 	}
 	
+	/**
+	 * Send the passed data to listener.
+	 * 
+	 * @param mpData The data to send to the listener
+	 * @throws PublisherException never
+	 */
 	@Override
 	protected long publish(MonitorPointData mpData) throws PublisherException {
 		publishedMessages.incrementAndGet();
@@ -99,12 +108,22 @@ public class ListenerPublisher extends PublisherBase {
 		return mpData.toJsonString().length();
 	}
 
+	/**
+	 * Performs the initialization.
+	 * 
+	 * @throws PublisherException never
+	 */
 	@Override
 	protected void start() throws PublisherException {
 		listener.initialized();
 		numOfSetUpInvocations.incrementAndGet();
 	}
 
+	/**
+	 * Performs the cleanup.
+	 * 
+	 * @throws PublisherException in case of error releasing the writer
+	 */
 	@Override
 	protected void shutdown() throws PublisherException {
 		listener.closed();

@@ -41,9 +41,8 @@ public class PluginThreadFactory implements ThreadFactory {
 	private static final AtomicLong threadIndex = new AtomicLong(0);
 
 	/**
-	 * Constructor
+	 * Empty constructor
 	 * 
-	 * @param threadGroup The group to which assign the created threads
 	 */
 	public PluginThreadFactory() {
 		logger.trace("Thread factory created");

@@ -27,7 +27,7 @@ public class JsonFilePublisher extends BufferedFilePublisherBase {
 	 * @param serverName The name of the server
 	 * @param port The port of the server
 	 * @param executorSvc The executor service
-	 * @param outStream The output stream to write JSON strings into
+	 * @param outWriter The output writer to write JSON strings into
 	 */
 	public JsonFilePublisher(String pluginId, String serverName, int port, ScheduledExecutorService executorSvc, BufferedWriter outWriter) {
 		super(pluginId, serverName, port, executorSvc,outWriter);
@@ -35,7 +35,10 @@ public class JsonFilePublisher extends BufferedFilePublisherBase {
 	}
 	
 	/**
-	 * @see org.eso.ias.plugin.publisher.impl.BufferedFilePublisherBase#buildString(org.eso.ias.plugin.publisher.BufferedMonitoredSystemData)
+	 * Build and return a JSON string representing the data
+	 * 
+	 * @return the JSON string representing the data
+	 * @see BufferedFilePublisherBase#buildString(BufferedMonitoredSystemData)
 	 */
 	@Override
 	protected String buildString(BufferedMonitoredSystemData data) throws PublisherException {

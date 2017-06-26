@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A POJO to pass properties to the plugin in the form <name,value>
+ * A POJO to pass properties to the plugin in the form &lt;name,value&gt;
  * 
  * @author acaproni
  *

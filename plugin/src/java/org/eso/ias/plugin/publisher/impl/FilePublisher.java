@@ -23,14 +23,17 @@ public class FilePublisher extends BufferedFilePublisherBase {
 	 * @param serverName The name of the server
 	 * @param port The port of the server
 	 * @param executorSvc The executor service
-	 * @param outStream The output stream
+	 * @param outWriter The output writer
 	 */
 	public FilePublisher(String pluginId, String serverName, int port, ScheduledExecutorService executorSvc, BufferedWriter outWriter) {
 		super(pluginId, serverName, port, executorSvc,outWriter);
 	}
 
 	/**
-	 * @see org.eso.ias.plugin.publisher.impl.BufferedFilePublisherBase#buildString(org.eso.ias.plugin.publisher.BufferedMonitoredSystemData)
+	 * Build and return a string representing the data
+	 * 
+	 * @return  a string representing the data
+	 * @see BufferedFilePublisherBase#buildString(BufferedMonitoredSystemData)
 	 */
 	@Override
 	protected String buildString(BufferedMonitoredSystemData data) throws PublisherException {

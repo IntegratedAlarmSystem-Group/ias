@@ -12,7 +12,7 @@ import org.eso.ias.plugin.Sample;
 /**
  * The basic class for the filters.
  * <P>
- * <code>FilterBase</code> keeps a time ordered {@link #history} of samples:
+ * FilterBase keeps a time ordered {@link #history} of samples:
  * newest items are in the head of the list.
  * <P>
  * Implementation of filters must take care of removing elements from the history when 
@@ -57,10 +57,10 @@ public abstract class FilterBase implements Filter {
 	protected Optional<FilteredValue> lastReturnedValue = Optional.empty();
 	
 	/**
-	 * <code>sampleAdded</code> is executed after adding the sample to the history
+	 * sampleAdded is executed after adding the sample to the history
 	 * to let the implementation of a filter does any computation it might need. 
 	 * 
-	 * @param newSample
+	 * @param newSample The sample to add
 	 */
 	protected abstract void sampleAdded(Sample newSample);
 	
@@ -68,7 +68,7 @@ public abstract class FilterBase implements Filter {
 	 * {@link #apply()} calls this method of the filter to get the 
 	 * filtered value and return to the caller.
 	 *  
-	 * @return
+	 * @return the filtered value 
 	 */
 	protected abstract Optional<FilteredValue>applyFilter();
 	
@@ -111,7 +111,8 @@ public abstract class FilterBase implements Filter {
 	 * <P>
 	 * The new sample is added at the head.
 	 * 
-	 * @param newSample
+	 * @param newSample The new sample to add
+	 * @return The filtered values after adding the new sample
 	 */
 	@Override
 	public final Optional<FilteredValue> newSample(Sample newSample) throws FilterException {
@@ -155,7 +156,6 @@ public abstract class FilterBase implements Filter {
 	 * is older then the passed one
 	 * 
 	 * @param timestamp The timestamp to remove samples
-	 * @param unit the time unit of the time argument
 	 * @return The number of removed samples
 	 */
 	protected int removeOldSamples(long timestamp) {
@@ -212,7 +212,7 @@ public abstract class FilterBase implements Filter {
 	}
 	
 	/**
-	 * <code>historySnapshot<.code> returns a snapshot of the actual history
+	 * <code>historySnapshot</code> returns a snapshot of the actual history
 	 * that is part of the {@link FilteredValue} returned by {@link #apply()}.
 	 * <P>
 	 * The collection is a read-only view of a copy of the .history

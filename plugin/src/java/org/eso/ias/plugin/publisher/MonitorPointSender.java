@@ -13,9 +13,10 @@ import org.eso.ias.plugin.filter.FilteredValue;
  * sent to the IAS core by invoking {@link #offer(Optional)}.
  * <P> 
  * Implementers of this class, provides statistics collected during
- * the last observation period ({@link #getStats()).
+ * the last observation period, {@link #getStats()}.
  * <P>
- * <EM>Life cycle:<?EM><BR><UL>
+ * <EM>Life cycle:</EM><BR>
+ * <UL>
  * 	<LI>{@link #setUp()} must be called to allocate the resources needed 
  * for sending massages to the core of the IAS
  *  <LI>{@link #tearDown()} must be called to release the resources: 
@@ -92,6 +93,7 @@ public interface MonitorPointSender {
 		 * @param numOfMonitorPointValuesSent The number of monitor point values sent in the last time interval
 		 * @param numOfMonitorPointValuesSubmitted: The number of monitor point values submitted in the last time interval
 		 * @param numOfBytesSent The number of bytes sent in the last time interval
+		 * @param numOfErrorsPublishing The number of errors reported while publishing 
 		 */
 		public SenderStats(
 				long numOfMessagesSent,
@@ -111,7 +113,7 @@ public interface MonitorPointSender {
 	/**
 	 * Offer a monitor point to the publisher for sending to the core
 	 * 
-	 * @param monitorPoint
+	 * @param monitorPoint The monitor point to be sent to the IAS
 	 */
 	public void offer(Optional<FilteredValue> monitorPoint);
 	
@@ -139,7 +141,7 @@ public interface MonitorPointSender {
 	 * Free all the resources when sending messages to the core of the IAS
 	 * is not required anymore.
 	 * 
-	 * @throws PublisherException In case of errore releasing the resources
+	 * @throws PublisherException In case of error releasing the resources
 	 */
 	public void tearDown() throws PublisherException;
 	

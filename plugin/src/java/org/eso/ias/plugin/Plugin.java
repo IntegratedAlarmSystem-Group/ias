@@ -164,11 +164,8 @@ public class Plugin implements ChangeValueListener {
 	 * Build a plugin with the passed parameters.
 	 * 
 	 * @param id The Identifier of the plugin
-	 * @param sinkServerName The server to send 
-	 * 						 monitor point values and alarms to
-	 * @param sinkServerPort The IP port number 
-	 * @param values The list of monitor point values and alarms
-	 * @parm props Additional user defined java properties
+	 * @param values the monitor point values
+	 * @param props The user defined properties 
 	 * @param sender The publisher of monitor point values to the IAS core
 	 */
 	public Plugin(
@@ -224,9 +221,9 @@ public class Plugin implements ChangeValueListener {
 	/**
 	 * Build a plugin from the passed configuration.
 	 * 
-	 * @param conf The plugin coinfiguration
+	 * @param config The plugin coinfiguration
 	 * @param sender The publisher of monitor point values to the IAS core
-	 * @see Plugin#Plugin(String, String, int, Collection, MonitorPointSender)
+	 * @see Plugin#Plugin(PluginConfig, MonitorPointSender)
 	 */
 	public Plugin(
 			PluginConfig config,
@@ -402,7 +399,8 @@ public class Plugin implements ChangeValueListener {
 	/**
 	 * A  monitor point value has been updated and must be forwarded to the core of the IAS.
 	 * 
-	 * @see org.eso.ias.plugin.ChangeValueListener#monitoredValueUpdated(org.eso.ias.plugin.filter.FilteredValue)
+	 * @param value The value to send to the core of the IAS
+	 * @see ChangeValueListener#monitoredValueUpdated(Optional)
 	 */
 	@Override
 	public void monitoredValueUpdated(Optional<FilteredValue> value) {
@@ -441,6 +439,7 @@ public class Plugin implements ChangeValueListener {
 	/**
 	 * Enable or disable the periodic sending of notifications.
 	 * 
+	 * @param mPointId The ID of the monitor point to enable or disable
 	 * @param enable if <code>true</code> enables the periodic sending;
 	 * @throws PluginException if the monitored value with the passed ID does not exist            
 	 */

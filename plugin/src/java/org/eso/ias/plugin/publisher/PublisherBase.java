@@ -1,6 +1,5 @@
 package org.eso.ias.plugin.publisher;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
@@ -15,7 +14,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.eso.ias.plugin.filter.FilteredValue;
-import org.eso.ias.plugin.publisher.impl.KafkaPublisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,13 +40,15 @@ import org.slf4j.LoggerFactory;
  * <UL>
  * 	<LI>{@link #start()} is the first method to call to allow a correct initialization.
  *  <LI>{@link #shutdown()} must be called when down with this object to clean the resources
+ * </UL>
+ * 
  * @author acaproni
  *
  */
 public abstract class PublisherBase implements MonitorPointSender {
 	
 	/**
-	 * The name of the property to set the throttling sending values to the IAS (100<=msec<=1000)
+	 * The name of the property to set the throttling sending values to the IAS (100&lt;=msec&lt;=1000)
 	 */
 	public static final String THROTTLING_PROPNAME = "org.eso.ias.plugin.throttling";
 	
@@ -332,6 +332,8 @@ public abstract class PublisherBase implements MonitorPointSender {
 	/**
 	 * Performs the cleanup of the implementers of this
 	 * abstract class
+	 * 
+	 * @throws PublisherException In case of error shutting down
 	 */
 	protected abstract void shutdown() throws PublisherException;
 
@@ -339,7 +341,7 @@ public abstract class PublisherBase implements MonitorPointSender {
 	 * A new value has been produced by the monitored system:
 	 * it is queued ready to be sent when the throttling time interval elapses.
 	 * 
-	 * @see MonitorPointSender#offer(java.util.Optional)
+	 * @see MonitorPointSender#offer(Optional)
 	 * @throws IllegalStateException If the publisher has not been initialized before offering values
 	 */
 	@Override
@@ -362,7 +364,9 @@ public abstract class PublisherBase implements MonitorPointSender {
 	}
 	
 	/**
-	 * Retunr the statistics collected during the last time interval
+	 * Return the statistics collected during the last time interval
+	 * 
+	 * @return the statistics collected during the last time interval
 	 */
 	@Override
 	public SenderStats getStats() {
@@ -418,8 +422,9 @@ public abstract class PublisherBase implements MonitorPointSender {
 	 * 
 	 * @param defaultStream: The path to load default user properties;
 	 *                       <code>null</code> means no default
-	 * @parm  userStream: The path to load default user properties
-	 *                    <code>null</code> means no user defined property file
+	 * @param  userStream: The path to load default user properties
+	 *                     <code>null</code> means no user defined property file
+	 * @throws PublisherException In case of error merging the properties
 	 */
 	protected void mergeProperties(InputStream defaultStream, InputStream userStream) throws PublisherException {
 		Properties defaultProps = new Properties();

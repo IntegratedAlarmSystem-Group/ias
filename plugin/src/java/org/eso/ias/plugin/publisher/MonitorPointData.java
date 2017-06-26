@@ -171,6 +171,7 @@ public class MonitorPointData extends MonitorPointDataToBuffer{
 	 * Return a JSON string for this object.
 	 * 
 	 * @return A Json string representing this object
+	 * @throws PublisherException In case of error generating the JSON string
 	 */
 	public String toJsonString() throws PublisherException {
 		try {
@@ -182,9 +183,10 @@ public class MonitorPointData extends MonitorPointDataToBuffer{
 	
 	/**
 	 * Build and return a {@link MonitorPointData} parsing the passed JSON string
+	 * 
 	 * @param jsonString The JSON string with the monitor point value
-	 * @return the monitor point built parsing th epassed JSON string
-	 * @throws PublisherException in case of error building th eobject
+	 * @return the monitor point built parsing the passed JSON string
+	 * @throws PublisherException in case of error building the object
 	 */
 	public static MonitorPointData fromJsonString(String jsonString) throws PublisherException {
 		if (jsonString==null || jsonString.isEmpty()) {
