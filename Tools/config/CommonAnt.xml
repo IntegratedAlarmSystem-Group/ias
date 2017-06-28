@@ -301,6 +301,10 @@
   		</javac>
 	</target>
 	
+	<!--
+		Generate API documentation for java delegating to
+		javadoc ant task.
+	-->
 	<target name="java-doc" depends="init-ias-folders,buildClasspath,javaSrcFolderCheck" if="java.src.folder.exists">
 		<echo>Building API javadoc in ${docs.java.dir}</echo>
 		<delete>
@@ -309,6 +313,10 @@
 		<javadoc sourcepath="${src.java.dir}" destdir="${docs.java.dir}" classpathref="build.classpath"/>
 	</target>
 	
+	<!--
+		Generate API documentation for the module
+		in the apidocs folder
+	-->
 	<target name="doc" depends="java-doc" />
 	
 	<target 
