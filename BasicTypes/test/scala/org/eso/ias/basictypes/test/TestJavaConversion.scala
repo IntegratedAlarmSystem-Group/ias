@@ -14,6 +14,7 @@ import org.eso.ias.prototype.input.java.IASValue
 import org.eso.ias.prototype.input.Clear
 import org.eso.ias.prototype.input.java.IasDouble
 import org.eso.ias.prototype.input.java.IasAlarm
+import org.eso.ias.prototype.input.java.IdentifierType
 
 /**
  * Test the conversion between HIO to IASValue and vice-versa
@@ -24,9 +25,9 @@ class TestJavaConversion  extends FlatSpec {
   def fixture = {
     new {
       // The IDs
-      val parentId = new Identifier(Some[String]("ParentID"),None)
-      val doubleHioId = new Identifier(Some[String]("DoubleID"),Option[Identifier](parentId))
-      val alarmHioId = new Identifier(Some[String]("AlarmID"),Option[Identifier](parentId))
+      val parentId = new Identifier(Some[String]("ParentID"),Some(IdentifierType.ASCE),None)
+      val doubleHioId = new Identifier(Some[String]("DoubleID"),Some(IdentifierType.DASU),Option[Identifier](parentId))
+      val alarmHioId = new Identifier(Some[String]("AlarmID"),Some(IdentifierType.MONITOR_POINT_VALUE),Option[Identifier](parentId))
       // Refresh rate
       val refRate = InOut.MinRefreshRate+10
       // Modes

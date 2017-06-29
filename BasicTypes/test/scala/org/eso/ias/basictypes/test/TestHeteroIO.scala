@@ -9,6 +9,7 @@ import org.eso.ias.prototype.input.java.IASTypes
 import org.eso.ias.prototype.input.AlarmValue
 import org.eso.ias.prototype.input.AlarmState
 import org.eso.ias.prototype.input.AckState
+import org.eso.ias.prototype.input.java.IdentifierType
 
 /**
  * Test the LongMP
@@ -17,7 +18,7 @@ import org.eso.ias.prototype.input.AckState
  */
 class TestHeteroIO extends FlatSpec {
   // The ID of the alarms built bin this test 
-  val id = new Identifier(Some[String]("LongMPID"), None)
+  val id = new Identifier(Some[String]("LongMPID"), Some(IdentifierType.IASIO),None)
   val refreshRate=InOut.MinRefreshRate+10;
   
   behavior of "A heterogeneous IO" 

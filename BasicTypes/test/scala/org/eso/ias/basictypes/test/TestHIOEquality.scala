@@ -9,12 +9,13 @@ import org.eso.ias.prototype.input.java.IASTypes
 import org.eso.ias.prototype.input.AlarmValue
 import org.eso.ias.prototype.input.AlarmState
 import org.eso.ias.prototype.input.AckState
+import org.eso.ias.prototype.input.java.IdentifierType
 
 class TestHIOEquality extends FlatSpec {
   
   def fixture = {
     new {
-      val id = new Identifier(Some[String]("TestID"), None)
+      val id = new Identifier(Some[String]("TestID"), Some[IdentifierType](IdentifierType.IASIO),None)
       val refreshRate=InOut.MinRefreshRate+10;
     }
   }
@@ -120,7 +121,7 @@ class TestHIOEquality extends FlatSpec {
     assert(hioOtherModeInt!=hioInt)
     assert(hioOtherModeInt.hashCode()!=hioInt.hashCode()) // Not required in the contract of hashCode
     
-    val id2 = new Identifier(Some[String]("AnotherID"), None)
+    val id2 = new Identifier(Some[String]("AnotherID"), Some(IdentifierType.MONITOR_POINT_VALUE),None)
     val hioOtherIDInt = new InOut[Int](Some(3),id2,f.refreshRate,OperationalMode.OPERATIONAL,Validity.Unreliable,IASTypes.INT)
     assert(hioOtherIDInt!=hioInt)
     assert(hioOtherIDInt.hashCode()!=hioInt.hashCode()) // Not required in the contract of hashCode

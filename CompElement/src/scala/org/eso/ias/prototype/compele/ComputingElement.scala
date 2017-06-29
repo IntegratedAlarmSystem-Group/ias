@@ -19,6 +19,7 @@ import scala.util.Success
 import org.eso.ias.prototype.transfer.TransferFunctionSetting
 import org.eso.ias.prototype.utils.ISO8601Helper
 import org.eso.ias.prototype.transfer.TransferFunctionLanguage
+import org.eso.ias.prototype.input.java.IdentifierType
 
 /**
  * The Integrated Alarm System Computing Element (ASCE) 
@@ -84,6 +85,7 @@ abstract class ComputingElement[T](
     val props: Some[Properties] = Some(new Properties())) 
     extends Runnable {
   
+  require(id.iDType.get==IdentifierType.ASCE)
   require(requiredInputs!=None && !requiredInputs.isEmpty,"Invalid (empty or null) list of required inputs to the component")
   require(requiredInputs.size==inputs.size,"Inconsistent size of lists of inputs")
   

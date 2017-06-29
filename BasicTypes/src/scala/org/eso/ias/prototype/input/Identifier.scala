@@ -1,5 +1,7 @@
 package org.eso.ias.prototype.input
 
+import org.eso.ias.prototype.input.java.IdentifierType
+
 /**
  * Companion object
  */
@@ -35,7 +37,7 @@ object Identifier {
  * @param id: The unique identifier
  * @param parentID: The identifier of the parent
  */
-class Identifier(val id: Some[String], val parentID: Option[Identifier]) 
+class Identifier(val id: Some[String], val iDType: Some[IdentifierType], val parentID: Option[Identifier]) 
 extends Ordered[Identifier] with Iterable[Identifier] {
   require (!id.get.isEmpty)
   require(id.get.indexOf(Identifier.separator) == -1)

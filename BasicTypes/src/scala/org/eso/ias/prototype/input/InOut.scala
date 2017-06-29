@@ -123,7 +123,7 @@ object InOut {
   val MinRefreshRate = 50;
 
   /**
-   * Check if the passed value has of the proper type
+   * Check if the passed value is of the proper type
    * 
    * @param value: The value to check they type against the iasType
    * @param iasType: The IAS type
