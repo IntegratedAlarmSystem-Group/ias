@@ -15,6 +15,8 @@ Nevertheless, joining the project will give you the opportuninty to be in contac
 As a good starting point, we suggest to read the documents whose links are at the bottom of the ¦AS home page to have a picture of the architecture and design of the project.
 You can [checkout](https://github.com/IntegratedAlarmSystem-Group), [install](https://github.com/IntegratedAlarmSystem-Group/ias/wiki/Build-and-run) and run the tool yourself.
 
+We maintain the documentation is the [wiki pages](https://github.com/IntegratedAlarmSystem-Group/ias/wiki).
+
 Being still at a very early stage of the project, the only things you can run are the tests.
 
 ## Contributing
