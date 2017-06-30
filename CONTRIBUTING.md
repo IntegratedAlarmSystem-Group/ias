@@ -38,7 +38,7 @@ Bug fixes and new features are always accompanied by one or more unit tests.
 Once your bug fix or new feature is complete and with a proper testing, [make a pull request](https://help.github.com/articles/creating-a-pull-request) in github to let the Integrated Alarm System administrators include your changes in the master branch.
 To ease our work, please ensure that your fix is up-to-date with the last content of the master branch.
 
-## Final conmsiderations
+## Final considerations
 
 We wish to thank you for interest even if at the end you decide to not join the project.
 
