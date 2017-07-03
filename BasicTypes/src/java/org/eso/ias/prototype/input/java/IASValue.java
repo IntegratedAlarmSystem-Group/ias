@@ -1,5 +1,7 @@
 package org.eso.ias.prototype.input.java;
 
+import org.eso.ias.plugin.OperationalMode;
+
 /**
  * The view of a heterogeneous inputs in the java code.
  * 

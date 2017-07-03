@@ -5,7 +5,7 @@ import org.eso.ias.prototype.transfer.TransferFunctionSetting
 import org.eso.ias.prototype.transfer.TransferFunctionLanguage
 import org.eso.ias.prototype.input.Identifier
 import org.eso.ias.prototype.input.InOut
-import org.eso.ias.prototype.input.java.OperationalMode
+import org.eso.ias.plugin.OperationalMode
 import org.eso.ias.prototype.input.Validity
 import org.eso.ias.prototype.input.java.IASTypes
 import org.eso.ias.prototype.input.AlarmValue

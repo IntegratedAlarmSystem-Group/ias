@@ -7,7 +7,7 @@ import org.eso.ias.prototype.input.AlarmValue;
 import org.eso.ias.prototype.input.Set;
 import org.eso.ias.prototype.input.java.IASValueBase;
 import org.eso.ias.prototype.input.java.IasAlarm;
-import org.eso.ias.prototype.input.java.OperationalMode;
+import org.eso.ias.plugin.OperationalMode;
 import org.eso.ias.prototype.transfer.JavaTransferExecutor;
 
 
@@ -41,7 +41,7 @@ public class TransferExecutorImpl  extends JavaTransferExecutor {
 		for (IASValueBase input: compInputs.values()) {
 			System.out.println(input);
 		}
-		IASValueBase newValue = actualOutput.updateMode(OperationalMode.SHUTDOWN);
+		IASValueBase newValue = actualOutput.updateMode(OperationalMode.SHUTTEDDOWN);
 		AlarmValue alarm = ((IasAlarm)newValue).value;
 		alarm = AlarmValue.transition(alarm, new Set()).right().get();
 		newValue=((IasAlarm)newValue).updateValue(alarm); 

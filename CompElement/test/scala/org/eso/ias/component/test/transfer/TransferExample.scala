@@ -4,9 +4,10 @@ import java.util.Properties
 
 import org.eso.ias.prototype.transfer.ScalaTransferExecutor
 import org.eso.ias.prototype.input.InOut
-import org.eso.ias.prototype.input.java.OperationalMode
+import org.eso.ias.plugin.OperationalMode
 import org.eso.ias.prototype.input.AlarmValue
 import org.eso.ias.prototype.input.Set
+
 /**
  * A scala TransferExecutor for testing purposes
  * 
@@ -44,7 +45,7 @@ class TransferExample(
     val newAlarm = AlarmValue.transition(av, new Set())
     newAlarm match {
         case Left(ex) => throw ex
-        case Right(alarm) => actualOutput.updateMode(OperationalMode.SHUTDOWN).updateValue(Some(alarm)) 
+        case Right(alarm) => actualOutput.updateMode(OperationalMode.SHUTTEDDOWN).updateValue(Some(alarm)) 
       }
   }
   

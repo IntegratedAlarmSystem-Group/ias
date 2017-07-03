@@ -1,5 +1,6 @@
 package org.eso.ias.prototype.input.java;
 
+import org.eso.ias.plugin.OperationalMode;
 import org.eso.ias.prototype.input.AlarmValue;
 
 public class IasAlarm extends IASValue<AlarmValue> {

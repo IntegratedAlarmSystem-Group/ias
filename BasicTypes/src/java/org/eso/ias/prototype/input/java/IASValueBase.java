@@ -1,5 +1,6 @@
 package org.eso.ias.prototype.input.java;
 
+import org.eso.ias.plugin.OperationalMode;
 import org.eso.ias.prototype.input.Identifier;
 /**
  * The view of the untyped heterogeneous inputs in the java code.

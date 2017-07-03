@@ -1,5 +1,6 @@
 package org.eso.ias.prototype.input.java;
 
+import org.eso.ias.plugin.OperationalMode;
 
 public class IasBool extends IASValue<Boolean> {
 	

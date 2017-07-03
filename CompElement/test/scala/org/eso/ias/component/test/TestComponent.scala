@@ -3,7 +3,7 @@ package org.eso.ias.component.test
 import org.scalatest.FlatSpec
 import org.eso.ias.prototype.input.Identifier
 import org.eso.ias.prototype.input.AlarmValue
-import org.eso.ias.prototype.input.java.OperationalMode
+import org.eso.ias.plugin.OperationalMode
 import org.eso.ias.prototype.input.Validity
 import org.eso.ias.prototype.input.AlarmState
 import org.eso.ias.prototype.input.AckState

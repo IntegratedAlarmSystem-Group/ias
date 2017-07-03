@@ -1,7 +1,7 @@
 package org.eso.ias.prototype.input
 
 import org.eso.ias.prototype.utils.ISO8601Helper
-import org.eso.ias.prototype.input.java.OperationalMode
+import org.eso.ias.plugin.OperationalMode
 import org.eso.ias.prototype.input.java.IASTypes._
 import org.eso.ias.prototype.input.java.IASTypes
 

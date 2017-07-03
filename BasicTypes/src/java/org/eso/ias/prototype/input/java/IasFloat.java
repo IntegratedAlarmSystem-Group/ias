@@ -1,5 +1,7 @@
 package org.eso.ias.prototype.input.java;
 
+import org.eso.ias.plugin.OperationalMode;
+
 public class IasFloat extends IASValue<Float> {
 	
 	public IasFloat(Float value,

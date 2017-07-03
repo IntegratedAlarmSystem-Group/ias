@@ -4,7 +4,7 @@ import org.eso.ias.prototype.input.Identifier
 import org.eso.ias.prototype.input.AlarmValue
 import org.eso.ias.prototype.input.InOut
 import scala.collection.mutable.{Map => MutableMap }
-import org.eso.ias.prototype.input.java.OperationalMode
+import org.eso.ias.plugin.OperationalMode
 import org.eso.ias.prototype.input.Validity
 import org.eso.ias.prototype.input.java.IASTypes
 import org.eso.ias.prototype.input.java.IdentifierType

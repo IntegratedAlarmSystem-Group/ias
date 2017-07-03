@@ -1,4 +1,4 @@
-package org.eso.ias.prototype.input.java;
+package org.eso.ias.plugin;
 
 /**
  * Th eoperational mode of a monitor point value
@@ -24,7 +24,7 @@ public enum OperationalMode {
 	/**
 	 * Shutted down
 	 */
-	SHUTEDDOWN, 
+	SHUTTEDDOWN, 
 	
 	/**
 	 * Maintenance
