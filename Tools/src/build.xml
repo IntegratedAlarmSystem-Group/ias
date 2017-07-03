@@ -22,7 +22,7 @@
 		              if not set the build is skipped
 	     
 	-->
-	<property name="jarName" value="test.jar" />
+	<property name="jarName" value="ias-tools.jar" />
 	
 	<!-- ####################### TARGETS ####################### -->
 	
@@ -31,5 +31,7 @@
 	<target name="install" depends="ias.install" />
 	
 	<target name="build" depends="ias.build" />
+	
+	<target name="doc" depends="ias.doc" />
 	
 </project>
