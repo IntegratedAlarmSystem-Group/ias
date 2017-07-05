@@ -9,12 +9,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.filter.FilteredValue;
@@ -24,9 +20,6 @@ import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.plugin.publisher.PublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
-import org.eso.ias.plugin.thread.PluginThreadFactory;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -131,8 +124,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		List<Sample> samples = Arrays.asList(new Sample(Integer.valueOf(67)));
 		FilteredValue v = new FilteredValue("OneID", Integer.valueOf(67), samples, System.currentTimeMillis());
 		publishedValues.put(v.id,v);
-		Optional<FilteredValue> optVal = Optional.of(v);
-		unbufferedPublisher.offer(optVal);
+		unbufferedPublisher.offer(v);
 		try {
 			assertTrue(expectedValues.await(2*BufferedPublisherBase.throttlingTime, TimeUnit.MILLISECONDS));
 		} catch (InterruptedException ie) {
@@ -162,9 +154,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		List<Sample> samples = Arrays.asList(new Sample(val));
 		FilteredValue v = new FilteredValue("OneID", val, samples, System.currentTimeMillis());
 		publishedValues.put(v.id,v);
-		Optional<FilteredValue> optVal = Optional.of(v);
-		unbufferedPublisher.offer(optVal);
-		
+		unbufferedPublisher.offer(v);
 		
 		try {
 			Thread.sleep(10*BufferedPublisherBase.throttlingTime);
@@ -199,7 +189,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 
 		for (FilteredValue v: values) {
 			publishedValues.put(v.id, v);
-			unbufferedPublisher.offer(Optional.of(v));
+			unbufferedPublisher.offer(v);
 		};
 		
 		try {
@@ -243,7 +233,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		FilteredValue lastOffered=null;
 		for (FilteredValue v: fValues) {
 			publishedValues.put(v.id,v);
-			unbufferedPublisher.offer(Optional.of(v));
+			unbufferedPublisher.offer(v);
 			lastOffered=v;
 		}
 		
@@ -298,8 +288,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		List<Sample> samples = Arrays.asList(new Sample(Integer.valueOf(67)));
 		FilteredValue v = new FilteredValue("OneID", Integer.valueOf(67), samples, System.currentTimeMillis());
 		publishedValues.put(v.id,v);
-		Optional<FilteredValue> optVal = Optional.of(v);
-		unbufferedPublisher.offer(optVal);
+		unbufferedPublisher.offer(v);
 		try {
 			assertTrue(expectedValues.await(2*BufferedPublisherBase.throttlingTime, TimeUnit.MILLISECONDS));
 		} catch (InterruptedException ie) {
@@ -310,7 +299,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		unbufferedPublisher.stopSending();
 		expectedValues = new CountDownLatch(1);
 		publishedValues.put(v.id,v);
-		unbufferedPublisher.offer(Optional.of(v));
+		unbufferedPublisher.offer(v);
 		try {
 			assertFalse(expectedValues.await(2*BufferedPublisherBase.throttlingTime, TimeUnit.MILLISECONDS));
 		} catch (InterruptedException ie) {
@@ -321,7 +310,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		unbufferedPublisher.startSending();
 		expectedValues = new CountDownLatch(1);
 		publishedValues.put(v.id,v);
-		unbufferedPublisher.offer(Optional.of(v));
+		unbufferedPublisher.offer(v);
 		try {
 			assertTrue(expectedValues.await(2*BufferedPublisherBase.throttlingTime, TimeUnit.MILLISECONDS));
 		} catch (InterruptedException ie) {

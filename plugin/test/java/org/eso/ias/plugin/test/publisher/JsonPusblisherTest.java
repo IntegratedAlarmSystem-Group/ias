@@ -2,6 +2,7 @@ package org.eso.ias.plugin.test.publisher;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -10,10 +11,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+import org.eso.ias.plugin.OperationalMode;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
@@ -96,15 +97,16 @@ public class JsonPusblisherTest {
 		
 		List<FilteredValue> values = Arrays.asList(
 				new FilteredValue("FV-ID1", Double.valueOf(6.7), samples, System.currentTimeMillis()),
-				new FilteredValue("FV-ID2", Long.valueOf(1123), samples, System.currentTimeMillis()),
-				new FilteredValue("FV-ID3", "Another string", samples, System.currentTimeMillis()),
-				new FilteredValue("FV-ID4", Boolean.valueOf(false), samples, System.currentTimeMillis()),
+				new FilteredValue("FV-ID2", Long.valueOf(1123), samples, System.currentTimeMillis(),OperationalMode.OPERATIONAL),
+				new FilteredValue("FV-ID3", "Another string", samples, System.currentTimeMillis(),OperationalMode.MAINTENANCE),
+				new FilteredValue("FV-ID4", Boolean.valueOf(false), samples, System.currentTimeMillis(),OperationalMode.STARTUP),
 				new FilteredValue("FV-ID5", Integer.valueOf(-98), samples, System.currentTimeMillis()));
 		
 		Map<String, FilteredValue> mapOfValues = new HashMap<>();
 
 		for (FilteredValue v: values) {
-			publisher.offer(Optional.of(v));
+			System.out.println("Offering "+v.toString());
+			publisher.offer(v);
 			mapOfValues.put(v.id, v);
 		};
 		
@@ -120,9 +122,10 @@ public class JsonPusblisherTest {
 		// Check the correctness of all the  MonitorPointData in the date 
 		// against the submitted FilteredValue-s
 		for (MonitorPointDataToBuffer mpd: msData.getMonitorPoints()) {
+			System.out.println(mpd.toString());
 			FilteredValue fv = mapOfValues.get(mpd.getId());
 			assertNotNull(fv);
-			PublisherTestCommon.match(fv, mpd);
+			assertTrue("Filtered value and the published data mismatch",PublisherTestCommon.match(fv, mpd));
 		}
 		// Ok, everything went fine: the JSON file can be removed
 		jsonFile.deleteOnExit();

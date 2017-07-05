@@ -6,10 +6,10 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import org.eso.ias.plugin.OperationalMode;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
@@ -61,10 +61,9 @@ public class BufferedPublisherBaseTest extends PublisherTestCommon {
 		expectedValues = new CountDownLatch(1);
 		
 		List<Sample> samples = Arrays.asList(new Sample(Integer.valueOf(67)));
-		FilteredValue v = new FilteredValue("OneID", Integer.valueOf(67), samples, System.currentTimeMillis());
+		FilteredValue v = new FilteredValue("OneID", Integer.valueOf(67), samples, System.currentTimeMillis(),OperationalMode.DEGRADED);
 		publishedValues.put(v.id,v);
-		Optional<FilteredValue> optVal = Optional.of(v);
-		bufferedPublisher.offer(optVal);
+		bufferedPublisher.offer(v);
 		try {
 			assertTrue(expectedValues.await(2*BufferedPublisherBase.throttlingTime, TimeUnit.MILLISECONDS));
 		} catch (InterruptedException ie) {
@@ -94,9 +93,7 @@ public class BufferedPublisherBaseTest extends PublisherTestCommon {
 		List<Sample> samples = Arrays.asList(new Sample(val));
 		FilteredValue v = new FilteredValue("OneID", val, samples, System.currentTimeMillis());
 		publishedValues.put(v.id,v);
-		Optional<FilteredValue> optVal = Optional.of(v);
-		bufferedPublisher.offer(optVal);
-		
+		bufferedPublisher.offer(v);
 		
 		try {
 			Thread.sleep(10*BufferedPublisherBase.throttlingTime);
@@ -131,7 +128,7 @@ public class BufferedPublisherBaseTest extends PublisherTestCommon {
 
 		for (FilteredValue v: values) {
 			publishedValues.put(v.id, v);
-			bufferedPublisher.offer(Optional.of(v));
+			bufferedPublisher.offer(v);
 		};
 		
 		try {
@@ -173,7 +170,7 @@ public class BufferedPublisherBaseTest extends PublisherTestCommon {
 		FilteredValue lastOffered=null;
 		for (FilteredValue v: fValues) {
 			publishedValues.put(v.id,v);
-			bufferedPublisher.offer(Optional.of(v));
+			bufferedPublisher.offer(v);
 			lastOffered=v;
 		}
 		

@@ -22,7 +22,7 @@ public interface Filter {
 	 * <P>
 	 * The sample offered must be newer then the newer
 	 * sample in the list i.e. the filter expects
-	 * that the samples arrive as they are produced i.e. timely ordered.
+	 * that the samples arrive ordered as they are produced i.e. timely ordered.
 	 * 
 	 * @param newSample The not-null sample to submit to the filter
 	 * @return the value after applying the filter the newly received filter

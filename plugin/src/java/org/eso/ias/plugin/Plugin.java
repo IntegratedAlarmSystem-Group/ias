@@ -51,6 +51,13 @@ import org.slf4j.LoggerFactory;
  * <BR>
  * The generation of the statistics is done by a dedicated thread that is started only
  * if the time interval is greater then 0.
+ * <P>
+ * The operational mode can be defined for the entire plugin  ({@link #pluginOperationalMode}) 
+ * or for a specific monitor point value.
+ * If the operational mode for the plugin is set, it takes priority over the operational mode 
+ * of the monitor point value (i.e. if a operational mode is set at plugin level,
+ * it will be sent as the operational mode of each monitored value independently of their settings).
+ * 
  *  
  * @author acaproni
  */
@@ -159,6 +166,15 @@ public class Plugin implements ChangeValueListener {
 	 * The object that sends monitor points to the core of the IAS.
 	 */
 	private final MonitorPointSender mpPublisher;
+	
+	/**
+	 * The operational mode of the plugin.
+	 * <P>
+	 * If set, it is used for all the monitor point and values sent
+	 * to the core of the IAS regardless of their specific
+	 * operational mode.
+	 */
+	private Optional<OperationalMode> pluginOperationalMode = Optional.empty();
 
 	/**
 	 * Build a plugin with the passed parameters.
@@ -403,14 +419,11 @@ public class Plugin implements ChangeValueListener {
 	 * @see ChangeValueListener#monitoredValueUpdated(Optional)
 	 */
 	@Override
-	public void monitoredValueUpdated(Optional<FilteredValue> value) {
-		if (!value.isPresent()) {
-			return;
-		} else {
-			mpPublisher.offer(value);
-			value.ifPresent( v -> logger.info("Filtered value {} with value {} has been forwarded for sending to the IAS",v.id,v.value.toString()));
-			
-		}
+	public void monitoredValueUpdated(FilteredValue value) {
+		Objects.requireNonNull(value, "Cannot update a null monitored value");
+		FilteredValue fv = pluginOperationalMode.map(mode -> new FilteredValue(value, mode)).orElse(value);
+		mpPublisher.offer(fv);
+		logger.info("Filtered value {} with value {} and mode {} has been forwarded for sending to the IAS",fv.id,fv.value.toString(),fv.operationalMode.toString());
 	}
 	
 	/**
@@ -469,5 +482,60 @@ public class Plugin implements ChangeValueListener {
 		return threadFactory;
 	}
 	
+	/**
+	 * Set the operational mode of the plugin overriding the
+	 * operational mode set in the monitor point values
+	 *  
+	 * @param opMode The not null operational mode of the plugin
+	 * @see #pluginOperationalMode
+	 */
+	public void setPluginOperationalMode(OperationalMode opMode) {
+		Objects.requireNonNull(opMode, "Invalid operational mode");
+		pluginOperationalMode=Optional.of(opMode);
+		logger.debug("Plugin operational mode {} (operational mode of monitor point values overridden)",pluginOperationalMode.get());
+	}
 	
+	/**
+	 * Unset the plugin operational mode so that the 
+	 * operational mode of each monitor point value is sent 
+	 * to the core of the IAS.
+	 */
+	public void unsetPluginOperationalMode() {
+		pluginOperationalMode = Optional.empty();
+		logger.debug("Operational mode of plugin will not override the operational mode of monitor point values");
+	}
+	
+	/**
+	 * Return the operational mode of the plugin.
+	 *
+	 * @return the operational mode of the plugin.
+	 */
+	public Optional<OperationalMode> getPluginOperationalMode() {
+		return pluginOperationalMode;
+	}
+	
+	/**
+	 * Set the operational mode of a monitor point value.
+	 * <P>
+	 * Note that this value is effectively sent to the core of the IAS only if
+	 * not overridden by the plugin operational mode 
+	 * 
+	 * @param mPointId the ID of the monitor point to set the operation mode
+	 * @param opMode The not <code>null</code> operational mode to set
+	 * @return The old operational mode of the monitor point
+	 * @throws PluginException if the monitored value with the passed ID does not exist
+	 * @see #pluginOperationalMode
+	 */
+	public OperationalMode setOperationalMode(String mPointId, OperationalMode opMode) throws PluginException {
+		Objects.requireNonNull(opMode, "Invalid operational mode");
+		Objects.requireNonNull(mPointId, "The ID of a monitor point can't be null");
+		if (mPointId.isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty monitor point ID");
+		}
+		MonitoredValue mVal = monitorPoints.get(mPointId);
+		if (mVal==null) {
+			throw new PluginException("Monitor point "+mPointId+" does not exist");
+		}
+		return mVal.setOperationalMode(opMode);
+	}
 }

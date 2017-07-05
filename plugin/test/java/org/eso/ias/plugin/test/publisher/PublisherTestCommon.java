@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -101,7 +100,7 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 			int published=0;
 			for (FilteredValue fv : values) {
 				publishedValuesMap.put(fv.id, fv);
-				mpSender.offer(Optional.of(fv));
+				mpSender.offer(fv);
 				published++;
 			}
 			logger.info("Terminating: {} values pushed",published);
@@ -243,10 +242,11 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 		 */
 		SimpleDateFormat iso8601dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
 		
-		boolean ret = v.id==d.getId();
+		boolean ret = v.id.equals(d.getId());
 		ret = ret && v.value.toString().equals(d.getValue());
 		ret = ret && iso8601dateFormat.format(new Date(v.filteredTimestamp)).equals(d.getFilteredTime());
 		ret = ret && iso8601dateFormat.format(new Date(v.producedTimestamp)).equals(d.getSampleTime());
+		ret = ret && v.operationalMode.toString().toUpperCase().equals(d.getOperationalMode());
 		
 		if (!ret) {
 			logger.error("The {} and the {} do not match!",v.toString(),d.toString());

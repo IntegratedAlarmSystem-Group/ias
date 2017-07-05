@@ -113,9 +113,9 @@ public interface MonitorPointSender {
 	/**
 	 * Offer a monitor point to the publisher for sending to the core
 	 * 
-	 * @param monitorPoint The monitor point to be sent to the IAS
+	 * @param monitorPoint The not <code>null</code> monitor point to be sent to the IAS
 	 */
-	public void offer(Optional<FilteredValue> monitorPoint);
+	public void offer(FilteredValue monitorPoint);
 	
 	/**
 	 * The statistics collected by the publisher after the previous invocation of this method.

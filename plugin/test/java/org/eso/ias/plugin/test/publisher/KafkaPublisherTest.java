@@ -9,7 +9,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -134,7 +133,7 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 		List<Sample> samples = Arrays.asList(new Sample(val));
 		FilteredValue fv = new FilteredValue("MP-ID", val, samples, System.currentTimeMillis());
 		
-		kPub.offer(Optional.of(fv));
+		kPub.offer(fv);
 		
 		try {
 			assertTrue("Timeout, event not received",eventsToReceive.await(2, TimeUnit.MINUTES));
@@ -172,7 +171,7 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 			String id = mpIdPrefix+t;
 			List<Sample> samples = Arrays.asList(new Sample(val));
 			FilteredValue fv = new FilteredValue(id, val, samples, System.currentTimeMillis());
-			kPub.offer(Optional.of(fv));
+			kPub.offer(fv);
 		}
 		
 		try {

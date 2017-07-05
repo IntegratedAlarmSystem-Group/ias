@@ -7,7 +7,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -177,15 +176,12 @@ public class MonitoredValueTest implements ChangeValueListener {
 	 * @see org.eso.ias.plugin.ChangeValueListener#monitoredValueUpdated(java.util.Optional)
 	 */
 	@Override
-	public void monitoredValueUpdated(Optional<FilteredValue> value) {
+	public void monitoredValueUpdated(FilteredValue value) {
 		assertNotNull(value);
-		value.ifPresent(v -> {
-			logger.info("{} value {} sent to the core of the IAS ",v.id,v.value.toString());
-			receivedValues.add(v);
-			if (countDownLatch!=null) {
-				countDownLatch.countDown();
-			}
-		});
-		
+		logger.info("{} value {} sent to the core of the IAS ",value.id,value.value.toString());
+		receivedValues.add(value);
+		if (countDownLatch!=null) {
+			countDownLatch.countDown();
+		}
 	}
 }

@@ -3,12 +3,13 @@ package org.eso.ias.plugin.publisher;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.eso.ias.plugin.OperationalMode;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.filter.NoneFilter;
 
 /**
  * A java POJO representing a monitor point or alarm
- * to be sent to the IAS in abuffered way.
+ * to be sent to the IAS in a buffered way.
  * <P>
  * A <code>MonitorPointDataToBuffer</code> will be sent encapsulated 
  * in a {@link BufferedMonitoredSystemData} i.e. for buffered publishers.
@@ -50,6 +51,13 @@ public class MonitorPointDataToBuffer {
 	protected String id;
 	
 	/**
+	 * The operational mode
+	 * 
+	 * @see OperationalMode
+	 */
+	protected String operationalMode;
+	
+	/**
 	 * ISO 8601 date formatter
 	 */
 	protected final SimpleDateFormat iso8601dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
@@ -71,6 +79,7 @@ public class MonitorPointDataToBuffer {
 			setSampleTime(iso8601dateFormat.format(new Date(value.producedTimestamp)));
 			setFilteredTime(iso8601dateFormat.format(new Date(value.filteredTimestamp)));
 		}
+		setOperationalMode(value.operationalMode.toString().toUpperCase());
 	}
 
 	/**
@@ -150,6 +159,8 @@ public class MonitorPointDataToBuffer {
 		ret.append(filteredTime);
 		ret.append(", sampleTime=");
 		ret.append(sampleTime);
+		ret.append(", operational mode=");
+		ret.append(operationalMode);
 		ret.append(')');
 		return ret.toString();
 	}
@@ -165,6 +176,7 @@ public class MonitorPointDataToBuffer {
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		result = prime * result + ((sampleTime == null) ? 0 : sampleTime.hashCode());
 		result = prime * result + ((value == null) ? 0 : value.hashCode());
+		result = prime * result + ((operationalMode == null) ? 0 : operationalMode.hashCode());
 		return result;
 	}
 
@@ -195,11 +207,30 @@ public class MonitorPointDataToBuffer {
 				return false;
 		} else if (!sampleTime.equals(other.sampleTime))
 			return false;
+		if (operationalMode == null) {
+			if (other.operationalMode != null)
+				return false;
+		} else if (!operationalMode.equals(other.operationalMode))
+			return false;
 		if (value == null) {
 			if (other.value != null)
 				return false;
 		} else if (!value.equals(other.value))
 			return false;
 		return true;
+	}
+
+	/**
+	 * @return the operationalMode
+	 */
+	public String getOperationalMode() {
+		return operationalMode;
+	}
+
+	/**
+	 * @param operationalMode the operationalMode to set
+	 */
+	public void setOperationalMode(String operationalMode) {
+		this.operationalMode = operationalMode;
 	}
 }

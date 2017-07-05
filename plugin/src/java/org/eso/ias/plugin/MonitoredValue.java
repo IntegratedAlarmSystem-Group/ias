@@ -94,8 +94,10 @@ public class MonitoredValue implements Runnable {
 	/**
 	 * The last value sent to the IAS core 
 	 * (i.e. to the {@link #listener}).
+	 * <P>
+	 * It is <code>null</code> when no value has been set.
 	 */
-	private Optional<FilteredValue> lastSentValue = Optional.empty();
+	private FilteredValue lastSentValue = null;
 	
 	/**
 	 * The point in time when the last value has been
@@ -117,6 +119,17 @@ public class MonitoredValue implements Runnable {
 	 * new sample (or the same semple).
 	 */
 	private final AtomicBoolean isPeriodicNotificationEnabled = new AtomicBoolean(true);
+	
+	/**
+	 * The operational mode of this monitored value.
+	 * <P>
+	 * Ths mode is not sent to the core of the IAS if
+	 * a plugin has a plugin operational mode set.
+	 * 
+	 * @see Plugin#setPluginOperationalMode(OperationalMode)
+	 * @see Plugin#unsetPluginOperationalMode()
+	 */
+	private OperationalMode operationalMode = OperationalMode.UNKNOWN;
 	
 	/**
 	 * Build a {@link MonitoredValue} with the passed filter
@@ -184,7 +197,7 @@ public class MonitoredValue implements Runnable {
 		if(future.getDelay(TimeUnit.MILLISECONDS)<=minAllowedRefreshRate) {
 			rescheduleTimer();
 		}
-		notifyListener(filter.newSample(s));
+		filter.newSample(s).ifPresent(filteredValue -> notifyListener(filteredValue));
 	}
 	
 	/**
@@ -192,8 +205,8 @@ public class MonitoredValue implements Runnable {
 	 * 
 	 * @param value The not <code>null</code> value to send to the IAS
 	 */
-	private void notifyListener(Optional<FilteredValue> value) {
-		assert(value!=null);
+	private void notifyListener(FilteredValue value) {
+		Objects.requireNonNull(value, "Cannot notify a null value");
 		try {
 			listener.monitoredValueUpdated(value);
 			lastSentTimestamp=System.currentTimeMillis();
@@ -267,5 +280,19 @@ public class MonitoredValue implements Runnable {
 		rescheduleTimer();
 	}
 	
-	
+	/**
+	 * Set the operational mode of this monitor point value.
+	 * <P>
+	 * Note that this value is effectively sent to the core of the IAS only if
+	 * not overridden by the plugin operational mode 
+
+	 * @param opMode The not <code>null</code> operational mode to set
+	 * @return The old operational mode of the monitor point
+	 */
+	public OperationalMode setOperationalMode(OperationalMode opMode) throws PluginException {
+		Objects.requireNonNull(opMode, "Invalid operational mode");
+		OperationalMode ret = operationalMode;
+		operationalMode= opMode;
+		return ret;
+	}
 }

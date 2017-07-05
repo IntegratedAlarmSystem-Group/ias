@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
@@ -341,22 +342,21 @@ public abstract class PublisherBase implements MonitorPointSender {
 	 * A new value has been produced by the monitored system:
 	 * it is queued ready to be sent when the throttling time interval elapses.
 	 * 
-	 * @see MonitorPointSender#offer(Optional)
+	 * @param monitorPoint The not <code>null</code> monitor point to be sent to the IAS
+	 * @see MonitorPointSender#offer(FilteredValue)
 	 * @throws IllegalStateException If the publisher has not been initialized before offering values
 	 */
 	@Override
-	public void offer(Optional<FilteredValue> monitorPoint) {
+	public void offer(FilteredValue monitorPoint) {
+		Objects.requireNonNull(monitorPoint, "Cannot get a null value");
 		if (closed || stopped) {
 			return;
 		}
 		if (!initialized) {
 			throw new IllegalStateException("Publishing monitor points before initialization");
 		}
-		monitorPoint.ifPresent(mp -> {
-			monitorPoints.put(mp.id, mp);
-			monitorPointsSubmitted.incrementAndGet();
-			
-		});
+		monitorPoints.put(monitorPoint.id, monitorPoint);
+		monitorPointsSubmitted.incrementAndGet();
 		if (monitorPoints.size()>=maxBufferSize) {
 			// Ops the buffer size reached the maximum allowed size: send the values to the core
 			sendMonitoredPointsToIas();

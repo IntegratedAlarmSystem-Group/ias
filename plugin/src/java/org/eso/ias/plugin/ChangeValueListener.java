@@ -1,7 +1,5 @@
 package org.eso.ias.plugin;
 
-import java.util.Optional;
-
 import org.eso.ias.plugin.filter.FilteredValue;
 
 /**
@@ -25,5 +23,5 @@ public interface ChangeValueListener {
 	 * 
 	 * @param value the not <code>null</code> new value of the
 	 */
-	public void monitoredValueUpdated(Optional<FilteredValue> value);
+	public void monitoredValueUpdated(FilteredValue value);
 }

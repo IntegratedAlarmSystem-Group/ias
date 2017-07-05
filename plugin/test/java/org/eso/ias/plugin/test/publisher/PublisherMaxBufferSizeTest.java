@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -128,7 +127,7 @@ public class PublisherMaxBufferSizeTest implements PublisherEventsListener {
 		List<FilteredValue> values = PublisherTestCommon.generateFileteredValues(numOfValuesToSend, "ID-bfzSize", false,1121 , 3);
 		
 		for (FilteredValue value: values) {
-			publisher.offer(Optional.of(value));
+			publisher.offer(value);
 		}
 		
 		assertTrue(expectedValues.await(10+BufferedPublisherBase.throttlingTime, TimeUnit.MILLISECONDS));
