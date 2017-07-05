@@ -15,7 +15,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import org.eso.ias.plugin.Sample;
-import org.eso.ias.plugin.filter.FilteredValue;
+import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.KafkaPublisher;
@@ -131,7 +131,7 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 		String mpId="MP-ID";
 		Long val = Long.valueOf(System.currentTimeMillis());
 		List<Sample> samples = Arrays.asList(new Sample(val));
-		FilteredValue fv = new FilteredValue("MP-ID", val, samples, System.currentTimeMillis());
+		ValueToSend fv = new ValueToSend("MP-ID", val, samples, System.currentTimeMillis());
 		
 		kPub.offer(fv);
 		
@@ -170,7 +170,7 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 			Integer val = Integer.valueOf(10+valIncrement*t);
 			String id = mpIdPrefix+t;
 			List<Sample> samples = Arrays.asList(new Sample(val));
-			FilteredValue fv = new FilteredValue(id, val, samples, System.currentTimeMillis());
+			ValueToSend fv = new ValueToSend(id, val, samples, System.currentTimeMillis());
 			kPub.offer(fv);
 		}
 		

@@ -7,13 +7,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -113,7 +113,7 @@ public abstract class PublisherBase implements MonitorPointSender {
 	 * The key is the ID of the monitor point, the value is the {@link FilteredValue} as 
 	 * returned applying the filter to a set of samples.
 	 */
-	protected final Map<String, FilteredValue>monitorPoints = Collections.synchronizedMap(new HashMap<>());
+	protected final Map<String, ValueToSend>monitorPoints = Collections.synchronizedMap(new HashMap<>());
 	
 	/**
 	 * The executor service to start the timer thread to send values to the 
@@ -347,7 +347,7 @@ public abstract class PublisherBase implements MonitorPointSender {
 	 * @throws IllegalStateException If the publisher has not been initialized before offering values
 	 */
 	@Override
-	public void offer(FilteredValue monitorPoint) {
+	public void offer(ValueToSend monitorPoint) {
 		Objects.requireNonNull(monitorPoint, "Cannot get a null value");
 		if (closed || stopped) {
 			return;

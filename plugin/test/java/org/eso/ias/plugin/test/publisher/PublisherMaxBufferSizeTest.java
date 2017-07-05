@@ -9,7 +9,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import org.eso.ias.plugin.filter.FilteredValue;
+import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
@@ -124,9 +124,9 @@ public class PublisherMaxBufferSizeTest implements PublisherEventsListener {
 		expectedValues = new CountDownLatch(numOfValuesToSend);
 		// Generate the values to send
 		
-		List<FilteredValue> values = PublisherTestCommon.generateFileteredValues(numOfValuesToSend, "ID-bfzSize", false,1121 , 3);
+		List<ValueToSend> values = PublisherTestCommon.generateValuesToSend(numOfValuesToSend, "ID-bfzSize", false,1121 , 3);
 		
-		for (FilteredValue value: values) {
+		for (ValueToSend value: values) {
 			publisher.offer(value);
 		}
 		

@@ -20,7 +20,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eso.ias.plugin.Sample;
-import org.eso.ias.plugin.filter.FilteredValue;
+import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.MonitorPointData;
@@ -66,12 +66,12 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 		/**
 		 * The map to save the values published for checking
 		 */
-		private final Map<String, FilteredValue> publishedValuesMap;
+		private final Map<String, ValueToSend> publishedValuesMap;
 		
 		/**
 		 * The list of values to publish
 		 */
-		private final List<FilteredValue> values;
+		private final List<ValueToSend> values;
 		
 		/**
 		 * Constructor
@@ -79,7 +79,7 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 		 * @param publisher The publisher to offer the values to
 		 * @param publishedValues The map to save the values published for checking
 		 */
-		public ValuesProducerCallable(MonitorPointSender publisher, List<FilteredValue> values, Map<String, FilteredValue> publishedValues) {
+		public ValuesProducerCallable(MonitorPointSender publisher, List<ValueToSend> values, Map<String, ValueToSend> publishedValues) {
 			assertNotNull(publisher);
 			assertNotNull(publishedValues);
 			assertNotNull(values);
@@ -98,7 +98,7 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 		public Integer call() throws PublisherException {
 			logger.info("Going to submit {} values",values.size());
 			int published=0;
-			for (FilteredValue fv : values) {
+			for (ValueToSend fv : values) {
 				publishedValuesMap.put(fv.id, fv);
 				mpSender.offer(fv);
 				published++;
@@ -132,7 +132,7 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 	/**
 	 * The FileterdValues to be offered to the {@link BufferedPublisherBase}
 	 */
-	protected final Map<String, FilteredValue> publishedValues = Collections.synchronizedMap(new HashMap<>());
+	protected final Map<String, ValueToSend> publishedValues = Collections.synchronizedMap(new HashMap<>());
 	
 	/**
 	 * The FileterdValues {@link ListenerPublisher#publish(BufferedMonitoredSystemData)}
@@ -150,7 +150,7 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 	 * The latch to wait for the expected number of values
 	 * to be sent to {@link ListenerPublisher#publish(BufferedMonitoredSystemData)}.
 	 * <P>
-	 * This is not the number of messages, but the number of {@link FilteredValue}
+	 * This is not the number of messages, but the number of {@link ValueToSend}
 	 * objects as the {@link BufferedPublisherBase} could group more values into the same
 	 * {@link BufferedMonitoredSystemData}.
 	 * <P>
@@ -197,19 +197,19 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 	 * @param baseId - the base of the ID of each value
 	 * @param singleID - if <code>true</code> all generated values have the same ID
 	 *                   otherwise a progressive number is appended to the baseId
-	 * @param baseValue -  the value of the FilteredValue
+	 * @param baseValue -  the value of the ValueToSend
 	 * @param valueInc - the increment of each consecutive value (if 0 all
 	 * 					 the generated values have the same baseValue value)   
 	 * @return a list of newly generated values ready to 
 	 *         be offered to the publisher
 	 */
-	public static List<FilteredValue> generateFileteredValues(
+	public static List<ValueToSend> generateValuesToSend(
 			int numOfValues, 
 			String baseId,
 			boolean singleID,
 			long baseValue,
 			long valueInc) {
-		List<FilteredValue> ret = new LinkedList<>();
+		List<ValueToSend> ret = new LinkedList<>();
 		List<Sample> samples = new LinkedList<Sample>();
 		int idCounter=0;
 		long valueCounter=baseValue;
@@ -219,21 +219,21 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 			valueCounter+=valueInc;
 			samples.clear();
 			samples.add(new Sample(Long.valueOf(value)));
-			FilteredValue fv = new FilteredValue(id, Long.valueOf(value), samples, System.currentTimeMillis());
+			ValueToSend fv = new ValueToSend(id, Long.valueOf(value), samples, System.currentTimeMillis());
 			ret.add(fv);
 		}
 		return ret;
 	}
 	
 	/**
-	 * Compare a {@link FilteredValue} (i.e. the value offered) with a
+	 * Compare a {@link ValueToSend} (i.e. the value offered) with a
 	 * {@link MonitorPointDataToBuffer} (i.e. the value to be sent to the IAS core)
 	 *  
 	 * @param v The not <code>null</code> value offered
 	 * @param d The not <code>null</code> value to be sent to the core
 	 * @return <code>true</code> if v and d matches
 	 */
-	public static boolean match(FilteredValue v, MonitorPointDataToBuffer d) {
+	public static boolean match(ValueToSend v, MonitorPointDataToBuffer d) {
 		assertNotNull(v);
 		assertNotNull(d);
 		

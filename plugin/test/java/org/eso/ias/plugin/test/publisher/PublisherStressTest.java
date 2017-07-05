@@ -16,6 +16,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
@@ -65,14 +66,14 @@ public class PublisherStressTest extends PublisherTestCommon {
 		int numOfValuesForEachThread=10000;
 		expectedValues = new CountDownLatch(numOfValuesForEachThread*numOfThreads);
 		// Generate one list of filtered values for each thread
-		List<List<FilteredValue>> listsOfValues = new ArrayList<>();
+		List<List<ValueToSend>> listsOfValues = new ArrayList<>();
 		for (int t=0; t<numOfThreads; t++) {
-			listsOfValues.add(generateFileteredValues(numOfValuesForEachThread, "ID"+t+"-", false,numOfValuesForEachThread*t , 1+t));
+			listsOfValues.add(generateValuesToSend(numOfValuesForEachThread, "ID"+t+"-", false,numOfValuesForEachThread*t , 1+t));
 		}
 		
 		// Start all the threads
 		List<Future<Integer>> results = new LinkedList<>();
-		for (List<FilteredValue> values: listsOfValues) {
+		for (List<ValueToSend> values: listsOfValues) {
 			Callable<Integer> callable = new ValuesProducerCallable(unbufferedPublisher,values,publishedValues);
 			Future<Integer> future = fixedPoolExecutorSvc.submit(callable);
 			results.add(future);
@@ -100,8 +101,8 @@ public class PublisherStressTest extends PublisherTestCommon {
 	    assertEquals(numOfValuesForEachThread*numOfThreads,publishedValues.size());
 	    
 	    // Check if all the pushed IDs have been published
-	    for (List<FilteredValue> values: listsOfValues) {
-	    	for (FilteredValue pushedValue: values) {
+	    for (List<ValueToSend> values: listsOfValues) {
+	    	for (ValueToSend pushedValue: values) {
 	    		MonitorPointDataToBuffer d = receivedValuesFromUnbufferedPub.get(pushedValue.id);
 	    		assertNotNull(d);
 	    	}
@@ -130,15 +131,15 @@ public class PublisherStressTest extends PublisherTestCommon {
 		expectedValues = new CountDownLatch(numOfValuesForEachThread*numOfThreads);
 		
 		// Generate one list of filtered values (with the same IDs) for each thread
-		List<List<FilteredValue>> listsOfValues = new ArrayList<>();
+		List<List<ValueToSend>> listsOfValues = new ArrayList<>();
 		for (int t=0; t<numOfThreads; t++) {
 			// Each list contains a value with the same id but different values
-			listsOfValues.add(generateFileteredValues(numOfValuesForEachThread, "ID"+t+"-", true,numOfValuesForEachThread*t , 1+t));
+			listsOfValues.add(generateValuesToSend(numOfValuesForEachThread, "ID"+t+"-", true,numOfValuesForEachThread*t , 1+t));
 		}
 		
 		// Start all the threads
 		List<Future<Integer>> results = new LinkedList<>();
-		for (List<FilteredValue> values: listsOfValues) {
+		for (List<ValueToSend> values: listsOfValues) {
 			Callable<Integer> callable = new ValuesProducerCallable(unbufferedPublisher,values,publishedValues);
 			Future<Integer> future = fixedPoolExecutorSvc.submit(callable);
 			results.add(future);
@@ -169,7 +170,7 @@ public class PublisherStressTest extends PublisherTestCommon {
 			assertEquals(pluginId, mpData.getSystemID());
 			assertNotNull(mpData.getPublishTime());
 			assertFalse(mpData.getPublishTime().isEmpty());
-			List<FilteredValue> values = listsOfValues.get(t);
+			List<ValueToSend> values = listsOfValues.get(t);
 			Long value = (Long)values.get(values.size()-1).value;
 			assertEquals(value.intValue(),Long.parseLong(mpData.getValue()));
 		}

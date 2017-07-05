@@ -16,7 +16,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import org.eso.ias.plugin.OperationalMode;
 import org.eso.ias.plugin.Sample;
-import org.eso.ias.plugin.filter.FilteredValue;
+import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
@@ -95,16 +95,16 @@ public class JsonPusblisherTest {
 	public void testPublishing() throws Exception {
 		List<Sample> samples = Arrays.asList(new Sample(Integer.valueOf(67)));
 		
-		List<FilteredValue> values = Arrays.asList(
-				new FilteredValue("FV-ID1", Double.valueOf(6.7), samples, System.currentTimeMillis()),
-				new FilteredValue("FV-ID2", Long.valueOf(1123), samples, System.currentTimeMillis(),OperationalMode.OPERATIONAL),
-				new FilteredValue("FV-ID3", "Another string", samples, System.currentTimeMillis(),OperationalMode.MAINTENANCE),
-				new FilteredValue("FV-ID4", Boolean.valueOf(false), samples, System.currentTimeMillis(),OperationalMode.STARTUP),
-				new FilteredValue("FV-ID5", Integer.valueOf(-98), samples, System.currentTimeMillis()));
+		List<ValueToSend> values = Arrays.asList(
+				new ValueToSend("FV-ID1", Double.valueOf(6.7), samples, System.currentTimeMillis()),
+				new ValueToSend("FV-ID2", Long.valueOf(1123), samples, System.currentTimeMillis(),OperationalMode.OPERATIONAL),
+				new ValueToSend("FV-ID3", "Another string", samples, System.currentTimeMillis(),OperationalMode.MAINTENANCE),
+				new ValueToSend("FV-ID4", Boolean.valueOf(false), samples, System.currentTimeMillis(),OperationalMode.STARTUP),
+				new ValueToSend("FV-ID5", Integer.valueOf(-98), samples, System.currentTimeMillis()));
 		
-		Map<String, FilteredValue> mapOfValues = new HashMap<>();
+		Map<String, ValueToSend> mapOfValues = new HashMap<>();
 
-		for (FilteredValue v: values) {
+		for (ValueToSend v: values) {
 			System.out.println("Offering "+v.toString());
 			publisher.offer(v);
 			mapOfValues.put(v.id, v);
@@ -123,7 +123,7 @@ public class JsonPusblisherTest {
 		// against the submitted FilteredValue-s
 		for (MonitorPointDataToBuffer mpd: msData.getMonitorPoints()) {
 			System.out.println(mpd.toString());
-			FilteredValue fv = mapOfValues.get(mpd.getId());
+			ValueToSend fv = mapOfValues.get(mpd.getId());
 			assertNotNull(fv);
 			assertTrue("Filtered value and the published data mismatch",PublisherTestCommon.match(fv, mpd));
 		}

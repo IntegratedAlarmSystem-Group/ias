@@ -15,7 +15,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.eso.ias.plugin.filter.FilteredValue;
+import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
@@ -78,14 +78,14 @@ public class BufferedPublisherStressTest extends PublisherTestCommon {
 		int numOfValuesForEachThread=10000;
 		expectedValues = new CountDownLatch(numOfValuesForEachThread*numOfThreads);
 		// Generate one list of filtered values for each thread
-		List<List<FilteredValue>> listsOfValues = new ArrayList<>();
+		List<List<ValueToSend>> listsOfValues = new ArrayList<>();
 		for (int t=0; t<numOfThreads; t++) {
-			listsOfValues.add(generateFileteredValues(numOfValuesForEachThread, "ID"+t+"-", false,numOfValuesForEachThread*t , 1+t));
+			listsOfValues.add(generateValuesToSend(numOfValuesForEachThread, "ID"+t+"-", false,numOfValuesForEachThread*t , 1+t));
 		}
 		
 		// Start all the threads
 		List<Future<Integer>> results = new LinkedList<>();
-		for (List<FilteredValue> values: listsOfValues) {
+		for (List<ValueToSend> values: listsOfValues) {
 			Callable<Integer> callable = new ValuesProducerCallable(bufferedPublisher,values,publishedValues);
 			Future<Integer> future = fixedThreadPoolExecutorSvc.submit(callable);
 			results.add(future);
@@ -110,8 +110,8 @@ public class BufferedPublisherStressTest extends PublisherTestCommon {
 	    assertEquals(numOfValuesForEachThread*numOfThreads,publishedValues.size());
 	    
 	    // Check if all the pushed IDs have been published
-	    for (List<FilteredValue> values: listsOfValues) {
-	    	for (FilteredValue pushedValue: values) {
+	    for (List<ValueToSend> values: listsOfValues) {
+	    	for (ValueToSend pushedValue: values) {
 	    		MonitorPointDataToBuffer d = receivedValuesFromBufferedPub.get(pushedValue.id);
 	    		assertNotNull(d);
 	    	}

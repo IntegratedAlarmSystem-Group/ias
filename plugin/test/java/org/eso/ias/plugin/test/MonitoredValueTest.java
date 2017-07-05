@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 import org.eso.ias.plugin.ChangeValueListener;
 import org.eso.ias.plugin.MonitoredValue;
 import org.eso.ias.plugin.Sample;
-import org.eso.ias.plugin.filter.FilteredValue;
+import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.NoneFilter;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.junit.After;
@@ -74,7 +74,7 @@ public class MonitoredValueTest implements ChangeValueListener {
 	/**
 	 * The {@link FilteredValue}s notified to the listener
 	 */
-	private final List<FilteredValue> receivedValues = new LinkedList<>();
+	private final List<ValueToSend> receivedValues = new LinkedList<>();
 	
 	/**
 	 * The identifier
@@ -133,7 +133,7 @@ public class MonitoredValueTest implements ChangeValueListener {
 		assertEquals(samplesToSend, receivedValues.size());
 		tStamp=19975;
 		for (int t=0; t<samplesToSend; t++) {
-			FilteredValue v = receivedValues.get(t);
+			ValueToSend v = receivedValues.get(t);
 			assertEquals(mValueId,v.id);
 			assertEquals(samples[t].value, v.value);
 			assertEquals(v.producedTimestamp, tStamp++);
@@ -176,7 +176,7 @@ public class MonitoredValueTest implements ChangeValueListener {
 	 * @see org.eso.ias.plugin.ChangeValueListener#monitoredValueUpdated(java.util.Optional)
 	 */
 	@Override
-	public void monitoredValueUpdated(FilteredValue value) {
+	public void monitoredValueUpdated(ValueToSend value) {
 		assertNotNull(value);
 		logger.info("{} value {} sent to the core of the IAS ",value.id,value.value.toString());
 		receivedValues.add(value);

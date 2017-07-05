@@ -18,7 +18,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.config.Value;
-import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.MonitorPointSender.SenderStats;
 import org.eso.ias.plugin.publisher.PublisherException;
@@ -419,9 +418,9 @@ public class Plugin implements ChangeValueListener {
 	 * @see ChangeValueListener#monitoredValueUpdated(Optional)
 	 */
 	@Override
-	public void monitoredValueUpdated(FilteredValue value) {
+	public void monitoredValueUpdated(ValueToSend value) {
 		Objects.requireNonNull(value, "Cannot update a null monitored value");
-		FilteredValue fv = pluginOperationalMode.map(mode -> new FilteredValue(value, mode)).orElse(value);
+		ValueToSend fv = pluginOperationalMode.map(mode -> value.withMode(mode)).orElse(value);
 		mpPublisher.offer(fv);
 		logger.info("Filtered value {} with value {} and mode {} has been forwarded for sending to the IAS",fv.id,fv.value.toString(),fv.operationalMode.toString());
 	}

@@ -12,7 +12,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.eso.ias.plugin.Sample;
-import org.eso.ias.plugin.filter.FilteredValue;
+import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.junit.Test;
@@ -131,11 +131,11 @@ public class BufferedMonitoredSystemDataTest extends PublisherTestCommon {
 		
 		List<Sample> samples = Arrays.asList(new Sample(Integer.valueOf(67)));
 		List<MonitorPointDataToBuffer> values = Arrays.asList(
-				new MonitorPointDataToBuffer(new FilteredValue("FV-ID1", Integer.valueOf(67), samples, System.currentTimeMillis()+10)),
-				new MonitorPointDataToBuffer(new FilteredValue("FV-ID2", Long.valueOf(123), samples, System.currentTimeMillis()+20)),
-				new MonitorPointDataToBuffer(new FilteredValue("FV-ID3", "A string", samples, System.currentTimeMillis()+30)),
-				new MonitorPointDataToBuffer(new FilteredValue("FV-ID4", Boolean.valueOf(true), samples, System.currentTimeMillis()+40)),
-				new MonitorPointDataToBuffer(new FilteredValue("FV-ID5", Integer.valueOf(11), samples, System.currentTimeMillis()+50)));
+				new MonitorPointDataToBuffer(new ValueToSend("FV-ID1", Integer.valueOf(67), samples, System.currentTimeMillis()+10)),
+				new MonitorPointDataToBuffer(new ValueToSend("FV-ID2", Long.valueOf(123), samples, System.currentTimeMillis()+20)),
+				new MonitorPointDataToBuffer(new ValueToSend("FV-ID3", "A string", samples, System.currentTimeMillis()+30)),
+				new MonitorPointDataToBuffer(new ValueToSend("FV-ID4", Boolean.valueOf(true), samples, System.currentTimeMillis()+40)),
+				new MonitorPointDataToBuffer(new ValueToSend("FV-ID5", Integer.valueOf(11), samples, System.currentTimeMillis()+50)));
 		
 		msData.setMonitorPoints(values);
 		

@@ -1,10 +1,8 @@
 package org.eso.ias.plugin.publisher;
 
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import org.eso.ias.plugin.filter.FilteredValue;
-import org.eso.ias.plugin.filter.NoneFilter;
+import org.eso.ias.plugin.ValueToSend;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -49,7 +47,7 @@ public class MonitorPointData extends MonitorPointDataToBuffer{
 	 * @param pluginID: The ID of the plugin
 	 * @param value The filtered value produced by the monitored system
 	 */
-	public MonitorPointData(String pluginID,FilteredValue value) {
+	public MonitorPointData(String pluginID,ValueToSend value) {
 		super(value);
 		setSystemID(pluginID);
 		synchronized (iso8601dateFormat) {

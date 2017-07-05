@@ -73,24 +73,6 @@ public abstract class FilterBase implements Filter {
 	protected abstract Optional<FilteredValue>applyFilter();
 	
 	/**
-	 * The not <code>null</code> nor empty identifier.
-	 */
-	public final String id;
-	
-	/**
-	 * Constructor
-	 * 
-	 * @param id The not <code>null</code> nor empty identifier 
-	 *           of the value produced applying the filter to the samples
-	 */
-	public FilterBase(String id) {
-		if (id==null || id.isEmpty()){ 
-			throw new IllegalArgumentException("Invalid null or empty ID");
-		}
-		this.id=id;
-	}
-	
-	/**
 	 * Apply the filter to the samples in the history 
 	 * and return the filtered value or empty if there are no samples in the history.
 	 * <P>

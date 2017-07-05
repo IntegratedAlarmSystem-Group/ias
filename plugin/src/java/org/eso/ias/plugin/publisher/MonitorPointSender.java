@@ -2,7 +2,7 @@ package org.eso.ias.plugin.publisher;
 
 import java.util.Optional;
 
-import org.eso.ias.plugin.filter.FilteredValue;
+import org.eso.ias.plugin.ValueToSend;
 
 /**
  * The <code>MonitorPointSender</code> defines the interface
@@ -115,7 +115,7 @@ public interface MonitorPointSender {
 	 * 
 	 * @param monitorPoint The not <code>null</code> monitor point to be sent to the IAS
 	 */
-	public void offer(FilteredValue monitorPoint);
+	public void offer(ValueToSend monitorPoint);
 	
 	/**
 	 * The statistics collected by the publisher after the previous invocation of this method.

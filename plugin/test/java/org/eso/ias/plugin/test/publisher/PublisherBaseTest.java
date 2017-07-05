@@ -13,6 +13,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.eso.ias.plugin.Sample;
+import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
@@ -122,7 +123,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		expectedValues = new CountDownLatch(1);
 		
 		List<Sample> samples = Arrays.asList(new Sample(Integer.valueOf(67)));
-		FilteredValue v = new FilteredValue("OneID", Integer.valueOf(67), samples, System.currentTimeMillis());
+		ValueToSend v = new ValueToSend("OneID", Integer.valueOf(67), samples, System.currentTimeMillis());
 		publishedValues.put(v.id,v);
 		unbufferedPublisher.offer(v);
 		try {
@@ -152,7 +153,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		
 		Integer val = Integer.valueOf(67);
 		List<Sample> samples = Arrays.asList(new Sample(val));
-		FilteredValue v = new FilteredValue("OneID", val, samples, System.currentTimeMillis());
+		ValueToSend v = new ValueToSend("OneID", val, samples, System.currentTimeMillis());
 		publishedValues.put(v.id,v);
 		unbufferedPublisher.offer(v);
 		
@@ -180,14 +181,14 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		
 		List<Sample> samples = Arrays.asList(new Sample(Integer.valueOf(67)));
 		
-		List<FilteredValue> values = Arrays.asList(
-				new FilteredValue("FV-ID1", Integer.valueOf(67), samples, System.currentTimeMillis()),
-				new FilteredValue("FV-ID2", Long.valueOf(123), samples, System.currentTimeMillis()),
-				new FilteredValue("FV-ID3", "A string", samples, System.currentTimeMillis()),
-				new FilteredValue("FV-ID4", Boolean.valueOf(true), samples, System.currentTimeMillis()),
-				new FilteredValue("FV-ID5", Integer.valueOf(11), samples, System.currentTimeMillis()));
+		List<ValueToSend> values = Arrays.asList(
+				new ValueToSend("FV-ID1", Integer.valueOf(67), samples, System.currentTimeMillis()),
+				new ValueToSend("FV-ID2", Long.valueOf(123), samples, System.currentTimeMillis()),
+				new ValueToSend("FV-ID3", "A string", samples, System.currentTimeMillis()),
+				new ValueToSend("FV-ID4", Boolean.valueOf(true), samples, System.currentTimeMillis()),
+				new ValueToSend("FV-ID5", Integer.valueOf(11), samples, System.currentTimeMillis()));
 
-		for (FilteredValue v: values) {
+		for (ValueToSend v: values) {
 			publishedValues.put(v.id, v);
 			unbufferedPublisher.offer(v);
 		};
@@ -200,7 +201,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		assertEquals(values.size(),unbufferedPublisher.getPublishedMessages());
 		assertEquals(unbufferedPublisher.getPublishedMessages(),numOfPublishInvocationInUnbufferedPub.get());
 		
-		for (FilteredValue v: values) {
+		for (ValueToSend v: values) {
 			MonitorPointData d = receivedValuesFromUnbufferedPub.get(v.id);
 			assertNotNull("Expected value not published",d);
 			assertTrue("Offered and published values do not match", PublisherTestCommon.match(v,d));
@@ -229,9 +230,9 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		
 		final int valuesToOffer=5000;
 		
-		List<FilteredValue> fValues = PublisherTestCommon.generateFileteredValues(valuesToOffer,"BaseID-",true,11,3);
-		FilteredValue lastOffered=null;
-		for (FilteredValue v: fValues) {
+		List<ValueToSend> fValues = PublisherTestCommon.generateValuesToSend(valuesToOffer,"BaseID-",true,11,3);
+		ValueToSend lastOffered=null;
+		for (ValueToSend v: fValues) {
 			publishedValues.put(v.id,v);
 			unbufferedPublisher.offer(v);
 			lastOffered=v;
@@ -286,7 +287,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		expectedValues = new CountDownLatch(1);
 		
 		List<Sample> samples = Arrays.asList(new Sample(Integer.valueOf(67)));
-		FilteredValue v = new FilteredValue("OneID", Integer.valueOf(67), samples, System.currentTimeMillis());
+		ValueToSend v = new ValueToSend("OneID", Integer.valueOf(67), samples, System.currentTimeMillis());
 		publishedValues.put(v.id,v);
 		unbufferedPublisher.offer(v);
 		try {

@@ -34,11 +34,6 @@ public class TestFilterBase {
 		 */
 		public class TestFilter extends FilterBase {
 
-			public TestFilter(String id) {
-				super(id);
-				// TODO Auto-generated constructor stub
-			}
-
 			/* (non-Javadoc)
 			 * @see org.eso.ias.plugin.filter.FilterBase#removeOldSamples(long)
 			 */
@@ -127,7 +122,7 @@ public class TestFilterBase {
 
 		@Before
 		public void setUp() {
-			defaultFilter = new TestFilter("TestFilter-ID");
+			defaultFilter = new TestFilter();
 			assertNotNull(defaultFilter);
 			defaultFilter.clearHistory();
 			assertTrue(defaultFilter.historySnapshot().isEmpty());

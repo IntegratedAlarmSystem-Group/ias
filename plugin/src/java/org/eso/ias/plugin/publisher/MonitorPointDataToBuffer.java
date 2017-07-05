@@ -4,7 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import org.eso.ias.plugin.OperationalMode;
-import org.eso.ias.plugin.filter.FilteredValue;
+import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.NoneFilter;
 
 /**
@@ -72,7 +72,7 @@ public class MonitorPointDataToBuffer {
 	 * 
 	 * @param value The filtered value produced by the monitored system
 	 */
-	public MonitorPointDataToBuffer(FilteredValue value) {
+	public MonitorPointDataToBuffer(ValueToSend value) {
 		setId(value.id);
 		setValue(value.value.toString());
 		synchronized (iso8601dateFormat) {

@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.eso.ias.plugin.OperationalMode;
 import org.eso.ias.plugin.Sample;
-import org.eso.ias.plugin.filter.FilteredValue;
+import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
@@ -61,7 +61,7 @@ public class BufferedPublisherBaseTest extends PublisherTestCommon {
 		expectedValues = new CountDownLatch(1);
 		
 		List<Sample> samples = Arrays.asList(new Sample(Integer.valueOf(67)));
-		FilteredValue v = new FilteredValue("OneID", Integer.valueOf(67), samples, System.currentTimeMillis(),OperationalMode.DEGRADED);
+		ValueToSend v = new ValueToSend("OneID", Integer.valueOf(67), samples, System.currentTimeMillis(),OperationalMode.DEGRADED);
 		publishedValues.put(v.id,v);
 		bufferedPublisher.offer(v);
 		try {
@@ -91,7 +91,7 @@ public class BufferedPublisherBaseTest extends PublisherTestCommon {
 		
 		Integer val = Integer.valueOf(67);
 		List<Sample> samples = Arrays.asList(new Sample(val));
-		FilteredValue v = new FilteredValue("OneID", val, samples, System.currentTimeMillis());
+		ValueToSend v = new ValueToSend("OneID", val, samples, System.currentTimeMillis());
 		publishedValues.put(v.id,v);
 		bufferedPublisher.offer(v);
 		
@@ -119,14 +119,14 @@ public class BufferedPublisherBaseTest extends PublisherTestCommon {
 		
 		List<Sample> samples = Arrays.asList(new Sample(Integer.valueOf(67)));
 		
-		List<FilteredValue> values = Arrays.asList(
-				new FilteredValue("FV-ID1", Integer.valueOf(67), samples, System.currentTimeMillis()),
-				new FilteredValue("FV-ID2", Long.valueOf(123), samples, System.currentTimeMillis()),
-				new FilteredValue("FV-ID3", "A string", samples, System.currentTimeMillis()),
-				new FilteredValue("FV-ID4", Boolean.valueOf(true), samples, System.currentTimeMillis()),
-				new FilteredValue("FV-ID5", Integer.valueOf(11), samples, System.currentTimeMillis()));
+		List<ValueToSend> values = Arrays.asList(
+				new ValueToSend("FV-ID1", Integer.valueOf(67), samples, System.currentTimeMillis()),
+				new ValueToSend("FV-ID2", Long.valueOf(123), samples, System.currentTimeMillis()),
+				new ValueToSend("FV-ID3", "A string", samples, System.currentTimeMillis()),
+				new ValueToSend("FV-ID4", Boolean.valueOf(true), samples, System.currentTimeMillis()),
+				new ValueToSend("FV-ID5", Integer.valueOf(11), samples, System.currentTimeMillis()));
 
-		for (FilteredValue v: values) {
+		for (ValueToSend v: values) {
 			publishedValues.put(v.id, v);
 			bufferedPublisher.offer(v);
 		};
@@ -139,7 +139,7 @@ public class BufferedPublisherBaseTest extends PublisherTestCommon {
 		assertEquals(values.size(),bufferedPublisher.getPublishedMonitorPoints());
 		assertEquals(bufferedPublisher.getPublishedMessages(),numOfPublishInvocationInBufferedPub.get());
 		
-		for (FilteredValue v: values) {
+		for (ValueToSend v: values) {
 			MonitorPointDataToBuffer d = receivedValuesFromBufferedPub.get(v.id);
 			assertNotNull("Expected value not published",d);
 			assertTrue("Offered and published values do not match", match(v,d));
@@ -166,9 +166,9 @@ public class BufferedPublisherBaseTest extends PublisherTestCommon {
 		
 		final int valuesToOffer=5000;
 		
-		List<FilteredValue> fValues = generateFileteredValues(valuesToOffer,"BaseID-",true,11,3);
-		FilteredValue lastOffered=null;
-		for (FilteredValue v: fValues) {
+		List<ValueToSend> fValues = generateValuesToSend(valuesToOffer,"BaseID-",true,11,3);
+		ValueToSend lastOffered=null;
+		for (ValueToSend v: fValues) {
 			publishedValues.put(v.id,v);
 			bufferedPublisher.offer(v);
 			lastOffered=v;
