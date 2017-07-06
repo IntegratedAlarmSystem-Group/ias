@@ -10,7 +10,7 @@ import org.eso.ias.plugin.ValueToSend;
  * <P>
  * When a value is received from the monitored system and,
  * if it is the case, filtered for noise, it is finally ready to be
- * sent to the IAS core by invoking {@link #offer(Optional)}.
+ * sent to the IAS core by invoking {@link #offer(ValueToSend)}
  * <P> 
  * Implementers of this class, provides statistics collected during
  * the last observation period, {@link #getStats()}.
@@ -65,7 +65,7 @@ public interface MonitorPointSender {
 		/**
 		 * The number of monitor point values submitted to the publisher.
 		 * <P>
-		 * The number of monitor points offered to the publisher for sending in {@link MonitorPointSender#offer(Optional)}.
+		 * The number of monitor points offered to the publisher for sending in {@link MonitorPointSender#offer(ValueToSend)}
 		 * <BR>To reduce the network traffic and prevent misbehaving plugins from flooding the network, the publisher
 		 * can send less monitor point values then those submitted (for example sending only the last
 		 * value between all offered in the throttling interval).

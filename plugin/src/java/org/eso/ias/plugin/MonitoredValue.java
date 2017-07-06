@@ -176,7 +176,7 @@ public class MonitoredValue implements Runnable {
 			long refreshRate, 
 			ScheduledExecutorService executorSvc,
 			ChangeValueListener listener) {
-		this(id,refreshRate, new NoneFilter(id),executorSvc,listener);
+		this(id,refreshRate, new NoneFilter(),executorSvc,listener);
 	}
 	
 	/**
@@ -292,7 +292,7 @@ public class MonitoredValue implements Runnable {
 	 * @param opMode The not <code>null</code> operational mode to set
 	 * @return The old operational mode of the monitor point
 	 */
-	public OperationalMode setOperationalMode(OperationalMode opMode) throws PluginException {
+	public OperationalMode setOperationalMode(OperationalMode opMode) {
 		Objects.requireNonNull(opMode, "Invalid operational mode");
 		OperationalMode ret = operationalMode;
 		operationalMode= opMode;

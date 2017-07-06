@@ -37,8 +37,8 @@ public class NoneFilterTest {
 	 */
 	public class TestFilter extends NoneFilter {
 
-		public TestFilter(String id) {
-			super(id);
+		public TestFilter() {
+			super();
 			// TODO Auto-generated constructor stub
 		}
 
@@ -110,7 +110,7 @@ public class NoneFilterTest {
 
 	@Before
 	public void setUp() {
-		defaultFilter = new TestFilter("TestFilter-ID");
+		defaultFilter = new TestFilter();
 		assertNotNull(defaultFilter);
 		defaultFilter.clearHistory();
 		assertEquals(0, defaultFilter.historySnapshot().size());

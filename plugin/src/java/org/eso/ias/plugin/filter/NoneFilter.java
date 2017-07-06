@@ -16,7 +16,7 @@ public class NoneFilter extends FilterBase {
 	/**
 	 * Constructor
 	 */
-	public NoneFilter(String id) {
+	public NoneFilter() {
 		super();
 	}
 

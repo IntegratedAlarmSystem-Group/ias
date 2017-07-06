@@ -343,7 +343,7 @@ public abstract class PublisherBase implements MonitorPointSender {
 	 * it is queued ready to be sent when the throttling time interval elapses.
 	 * 
 	 * @param monitorPoint The not <code>null</code> monitor point to be sent to the IAS
-	 * @see MonitorPointSender#offer(FilteredValue)
+	 * @see MonitorPointSender#offer(ValueToSend)
 	 * @throws IllegalStateException If the publisher has not been initialized before offering values
 	 */
 	@Override

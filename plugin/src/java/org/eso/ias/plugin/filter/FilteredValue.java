@@ -45,7 +45,6 @@ public class FilteredValue {
 	/**
 	 * Constructor 
 	 * 
-	 * @param id The ID of the value produced applying the filter
 	 * @param value The value to send to the IAS core
 	 * @param samples The history of samples used by the filter to produce the value
 	 * @param monitoredSystemTimestamp The timestamp when the value has been provided by the monitored system

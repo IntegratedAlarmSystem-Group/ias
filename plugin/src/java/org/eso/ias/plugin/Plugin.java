@@ -415,7 +415,7 @@ public class Plugin implements ChangeValueListener {
 	 * A  monitor point value has been updated and must be forwarded to the core of the IAS.
 	 * 
 	 * @param value The value to send to the core of the IAS
-	 * @see ChangeValueListener#monitoredValueUpdated(Optional)
+	 * @see ChangeValueListener#monitoredValueUpdated(ValueToSend)
 	 */
 	@Override
 	public void monitoredValueUpdated(ValueToSend value) {
