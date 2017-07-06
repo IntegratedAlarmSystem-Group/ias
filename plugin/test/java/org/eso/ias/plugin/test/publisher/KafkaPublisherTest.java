@@ -97,7 +97,7 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 		kPub = new KafkaPublisher(pluginId, serverName, port, schedExecutorSvc);
 		logger.info("Kafka producer initialized");
 		
-		consumer = new SimpleKafkaConsumer(KafkaPublisher.topicName, serverName, port,this);
+		consumer = new SimpleKafkaConsumer(KafkaPublisher.defaultTopicName, serverName, port,this);
 		consumer.setUp();
 		logger.info("Kafka consumer initialized");
 		
