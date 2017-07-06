@@ -97,8 +97,6 @@ public class KafkaPublisher extends PublisherBase {
 		ProducerRecord<String, String> record = new ProducerRecord<String, String>(topicName, partition,pluginId,jsonStrToSend);
 		Future<RecordMetadata> future = producer.send(record);
 		
-		logger.info("Data published on {} and key {}: [{}]",topicName,pluginId,jsonStrToSend);
-		
 		return jsonStrToSend.length();
 	}
 
