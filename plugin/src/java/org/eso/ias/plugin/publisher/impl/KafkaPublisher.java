@@ -4,8 +4,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -25,6 +23,8 @@ import org.slf4j.LoggerFactory;
  * <P>
  * <code>KafkaPublisher</code> is an unbuffered publisher because 
  * Kafka already does its own buffering and optimizations.
+ * <P>
+ * Kafka topic is hardcoded in {@link #defaultTopicName} property
  * 
  * @author acaproni
  *
@@ -52,17 +52,29 @@ public class KafkaPublisher extends PublisherBase {
 	public static final String KAFKA_PARTITION_PROP_NAME = "org.eso.ias.plugin.kafka.partition";
 	
 	/**
-	 * The partition number is mandatory and must be defined by setting the
-	 * {@value #KAFKA_PARTITION_PROP_NAME} java property.  
-	 * 
+	 * The name of the java property to set the kafka topic.
+	 * <P>
+	 * If not set, {@link #defaultTopicName} is used.
 	 */
-	private Integer partition;
+	public static final String KAFKA_TOPIC_PROP_NAME = "org.eso.ias.plugin.kafka.topic";
 	
 	/**
 	 * The topic name for kafka publisher (in the actual implementation all the 
 	 * plugins publishes on the same topic but each one has its own partition).
 	 */
-	public static final String topicName="PluginsKTopic";
+	public static final String defaultTopicName="PluginsKTopic";
+	
+	/**
+	 * The topic name red from the passed property if exists, or the default.
+	 */
+	public static final String topicName = System.getProperty(KAFKA_TOPIC_PROP_NAME)==null?defaultTopicName:System.getProperty(KAFKA_TOPIC_PROP_NAME);
+	
+	/**
+	 * The partition number is mandatory and must be defined by setting the
+	 * {@value #KAFKA_PARTITION_PROP_NAME} java property.  
+	 * 
+	 */
+	private Integer partition=null;
 	
 	/**
 	 * The kafka producer
@@ -84,6 +96,8 @@ public class KafkaPublisher extends PublisherBase {
 		// for partitioning in the topic
 		ProducerRecord<String, String> record = new ProducerRecord<String, String>(topicName, partition,pluginId,jsonStrToSend);
 		Future<RecordMetadata> future = producer.send(record);
+		
+		logger.info("Data published on {} and key {}: [{}]",topicName,pluginId,jsonStrToSend);
 		
 		return jsonStrToSend.length();
 	}
@@ -125,15 +139,19 @@ public class KafkaPublisher extends PublisherBase {
 		System.getProperties().put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 		System.getProperties().put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 		
-		// The partition number is mandatory: check if it has been defined
+		// Is there a partition number in the java properties? 
 		partition = Integer.getInteger(KAFKA_PARTITION_PROP_NAME);
 		if (partition==null) {
-			throw new PublisherException("Kafka partition not assigned ("+KAFKA_PARTITION_PROP_NAME+" java property expected)");
+			logger.info("No kafka partition given: will use the ID {} of the plugin to get the partition",pluginId);
+		} else if (partition<0) {
+			logger.warn("Invalid Kafka partition number {}: will use the ID {} of the plugin as key to get the partition",
+					partition,
+					pluginId);
+			partition=null;
+		} else {
+			logger.info("Will use kafka partition {}",partition);
 		}
-		if (partition<0) {
-			throw new PublisherException("Invalid Kafka partition number "+partition+": must be greater then 0");
-		}
-		
+		logger.info("Will use kafka topic {}",topicName);
 		producer = new KafkaProducer<>(System.getProperties());	
 		logger.info("Kafka producer initialized");
 		
