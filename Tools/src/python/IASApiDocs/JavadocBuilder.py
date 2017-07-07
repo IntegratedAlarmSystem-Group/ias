@@ -51,7 +51,7 @@ class JavadocBuilder(DocGenerator):
         @return: the code returned by calling javadoc
         """
         # Look for src (and if it is the case test) folders containing java sources
-        folders = self.getSrcPaths(self.srcFolder, self.includeTestFolder)
+        folders = self.getSrcPaths(self.srcFolder, self.includeTestFolder,"java",".java")
         
         roots = self.getJavaPackagesRoot(folders)
         
@@ -59,35 +59,6 @@ class JavadocBuilder(DocGenerator):
         cmd=self.buildJavadocCmd(self.dstFolder,folders,roots)
         
         return call(cmd,stdout=self.outFile,stderr=self.outFile)
-        
-    def containsJavaSources(self,folder):
-        '''
-        @param folder: the folder (src or test) to check if contains java sources
-        @return: True if the passed folder contains java sources
-        ''' 
-        for root, subdirs, files in os.walk(folder):
-            for file in files:
-                if file.endswith(".java"):
-                    return True
-        return False
-
-    def getSrcPaths(self,sourceFolder, includeTestFolder):
-        """
-        Scan the source folder and return a list of source folders
-        containg java files.
-        Java source can be contained into src or test (the latter is used only 
-        if the includeTestFolder parameter is True)
-        The search is recursive because a folder can contains several modules
-        
-        @param sourceFolder: root source folder (generally IAS, passed in the command line)
-        @param includeTestFolder: True to inculde test folders in the scan 
-        """
-        ret = []
-        for root, subdirs, files in os.walk(sourceFolder):
-            if root.endswith(os.path.sep+"src/java") or (includeTestFolder and root.endswith(os.path.sep+"test/java")):
-                if self.containsJavaSources(root):
-                    ret.append(root)
-        return ret
         
     def getJavaPackagesRoot(self,srcFolders):
         """
@@ -99,7 +70,7 @@ class JavadocBuilder(DocGenerator):
         for folder in srcFolders:
             directories = next(os.walk(folder))[1]
             for directory in directories:
-                if self.containsJavaSources(folder+os.sep+directory):
+                if self.containsSources(folder+os.sep+directory,".java"):
                     if ret.count(directory)==0:
                         ret.append(directory)
         return ret

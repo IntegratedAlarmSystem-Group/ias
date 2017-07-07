@@ -43,6 +43,40 @@ class DocGenerator(object):
             
         # Check if the destination folder exists
         if not os.path.exists(dst):
+            os.mkdir(dst)
+        if not os.path.exists(dst):
             raise IOError("The destination folder", dst,"does not exist")
         elif not os.path.isdir(dst):
             raise IOError("The destination folder", dst,"is not a directory")
+        
+    def containsSources(self,folder,fileExtension):
+        '''
+        @param folder: the folder (src or test) to check if contains java sources
+        @param fileExtension: the extension of the files that the folder is supposed to contain
+        @return: True if the passed folder contains java sources
+        ''' 
+        for root, subdirs, files in os.walk(folder):
+            for file in files:
+                if file.endswith(fileExtension):
+                    return True
+        return False
+        
+    def getSrcPaths(self,sourceFolder, includeTestFolder,folderName,fileExtension):
+        """
+        Scan the source folder and return a list of source folders
+        containg java files.
+        Java source can be contained into src or test (the latter is used only 
+        if the includeTestFolder parameter is True)
+        The search is recursive because a folder can contains several modules
+        
+        @param sourceFolder: root source folder (generally IAS, passed in the command line)
+        @param includeTestFolder: True to inculde test folders in the scan
+        @param  folderName: the name of the folder containing the sources like java or python 
+        @param fileExtension: the extension of the files that the folder is supposed to contain
+        """
+        ret = []
+        for root, subdirs, files in os.walk(sourceFolder):
+            if root.endswith(os.path.sep+"src/"+folderName) or (includeTestFolder and root.endswith(os.path.sep+"test/"+folderName)):
+                if self.containsSources(root,fileExtension):
+                    ret.append(root)
+        return ret
