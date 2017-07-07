@@ -87,4 +87,21 @@
 		</antcall>
 	</target>
 	
+	<target name="doc" depends="SanityCheck">
+		<delete dir="${iasRoot}/apidocs"/>
+		<mkdir dir="${iasRoot}/apidocs" />
+		<mkdir dir="${iasRoot}/apidocs/scala" />
+		<mkdir dir="${iasRoot}/apidocs/java" />
+		<mkdir dir="${iasRoot}/apidocs/python" />
+		
+		<echo>Generating API documentation</echo>
+		<exec executable="iasBuildApiDocs.py">
+		    <arg value="-d"/>
+		    <arg value="${iasRoot}/apidocs"/>
+		    <arg value="-s"/>
+			<arg value="."/>
+		</exec>
+
+	</target>
+	
 </project>
