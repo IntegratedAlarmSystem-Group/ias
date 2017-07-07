@@ -24,8 +24,8 @@
 		<property name="mods.python.dir" value="${lib.dir}/python" />
 		<property name="config.dir" value="../config" />
 		<property name="docs.java.dir" value="../apidocs/java" />
-		<property name="docs.scala.dir" value="../apidocs/java" />
-		<property name="docs.python.dir" value="../apidocs/java" />
+		<property name="docs.scala.dir" value="../apidocs/scala" />
+		<property name="docs.python.dir" value="../apidocs/python" />
 		
 		<property name="ias.dir" value="${env.IAS_ROOT}" />
 		
@@ -61,6 +61,15 @@
 	<target name="scalaSrcFolderCheck" depends="init-ias-environment">
 	    <condition property="scala.src.folder.exists">
 	      <available file="${src.scala.dir}" type="dir"/>
+	    </condition>
+	</target>
+	
+	<!--
+		Check if the source folder for python exists
+	-->
+	<target name="pythonSrcFolderCheck" depends="init-ias-environment">
+	    <condition property="python.src.folder.exists">
+	      <available file="${src.python.dir}" type="dir"/>
 	    </condition>
 	</target>
 	
@@ -102,7 +111,9 @@
   		<mkdir dir="${bin.dir}" />
 		<mkdir dir="${config.dir}" />
 		<mkdir dir="${ias.lib.ExtTools.dir}" />
-		<mkdir dir="${docs.dir}" />
+		<mkdir dir="${docs.java.dir}" />
+		<mkdir dir="${docs.scala.dir}" />
+		<mkdir dir="${docs.python.dir}" />
 		
 	</target>
 	
@@ -118,6 +129,7 @@
      			<pathelement location="${env.SCALA_HOME}/lib/scala-compiler.jar"   />
      			<!-- NEW: For scala 2.10.2 you need scala-reflect: -->
      			<pathelement location="${env.SCALA_HOME}/lib/scala-reflect.jar"   />
+	    		<pathelement location="${env.SCALA_HOME}/lib/scala-xml_2.12-1.0.6.jar"   />
       			<pathelement location="${scala-library.jar}"   />
     		</classpath>
   		</taskdef>
@@ -276,6 +288,7 @@
 				<include name="scala/**"/>
 				<include name="java/**"/>
 			</fileset>
+			<fileset file="../LGPLv3.txt" />
 	 	</jar>
 	</target>
 	
@@ -307,17 +320,52 @@
 	-->
 	<target name="java-doc" depends="init-ias-folders,buildClasspath,javaSrcFolderCheck" if="java.src.folder.exists">
 		<echo>Building API javadoc in ${docs.java.dir}</echo>
-		<delete>
-			<fileset dir="${docs.java.dir}"  includes="**/*"/>
-	  	</delete>
+		<delete dir="${docs.java.dir}"/>
+		<mkdir dir="${docs.java.dir}"/>
 		<javadoc sourcepath="${src.java.dir}" destdir="${docs.java.dir}" classpathref="build.classpath"/>
+	</target>
+	
+	<!--
+		Generate API documentation for scala delegating to
+		scaldoc ant task.
+	-->
+	<target name="scala-doc" depends="init-ias-folders,buildClasspath,scalaSrcFolderCheck,init-scala-build" if="scala.src.folder.exists">
+		<echo>Building API scaladoc in ${docs.scala.dir}</echo>
+		<delete dir="${docs.scala.dir}"/>
+		<mkdir dir="${docs.scala.dir}"/>
+
+		<scaladoc 
+			classpathref="build.classpath"
+			srcdir="${src.scala.dir}"
+			destdir="${docs.scala.dir}"
+		 	doctitle="Integrated Alarm System"
+			deprecation="yes"
+			unchecked="yes">
+	 	</scaladoc>
+	</target>
+	
+	<!--
+		Generate API documentation for python delegating to pydoc.
+	-->
+	<target name="python-doc" depends="init-ias-folders,pythonSrcFolderCheck" if="python.src.folder.exists">
+		<delete dir="${docs.python.dir}" />
+		<mkdir dir="${docs.python.dir}" />
+		<exec executable="pydoc">
+			<arg value="-w"/>
+			<arg value="python/"/>
+	  	</exec>
+		<move todir="${docs.python.dir}">
+			<fileset dir="${src.dir}">
+				<include name="**/*.html"/>
+			</fileset>
+		</move>
 	</target>
 	
 	<!--
 		Generate API documentation for the module
 		in the apidocs folder
 	-->
-	<target name="doc" depends="java-doc" />
+	<target name="doc" depends="java-doc,scala-doc,python-doc" />
 	
 	<target 
 		name="build" 
