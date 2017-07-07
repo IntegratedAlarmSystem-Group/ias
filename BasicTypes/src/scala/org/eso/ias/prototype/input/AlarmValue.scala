@@ -131,7 +131,7 @@ object AlarmValue {
    * 
    * @param a: the alarm that receives the event
    * @param e: the event to apply to the alarm
-   * @result the alarm after the event has been processed, or the
+   * @return the alarm after the event has been processed, or the
    * 				 exception thrown in case of a unallowed transition
    */
   def transition(a: AlarmValue, e: Event): Either[Exception,AlarmValue] = {
