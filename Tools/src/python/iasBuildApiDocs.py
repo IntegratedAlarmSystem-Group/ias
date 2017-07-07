@@ -10,6 +10,7 @@ import sys
 from optparse import OptionParser
 from IASApiDocs.ScaladocBuilder import ScaladocBuilder
 from IASApiDocs.JavadocBuilder import JavadocBuilder
+from IASApiDocs.PydocBuilder import PydocBuilder
 from os.path import join
 
 if __name__ == '__main__':
@@ -39,3 +40,7 @@ if __name__ == '__main__':
     print "Building javadoc"
     javaBuilder = JavadocBuilder(options.srcFolder,join(options.destFolder,"java"))
     javaBuilder.buildJavadocs()
+    
+    print "Building pydoc"
+    pythonBuilder = PydocBuilder(options.srcFolder,join(options.destFolder,"python"))
+    pythonBuilder.buildPydocs()
