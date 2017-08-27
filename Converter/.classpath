@@ -5,5 +5,9 @@
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-plugin.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-basic-types.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/slf4j-api-1.7.25.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/spring-core-4.3.9.RELEASE.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ias-cdb.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/spring-context-4.3.9.RELEASE.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/spring-beans-4.3.9.RELEASE.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -4,6 +4,7 @@ import java.security.InvalidParameterException;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
 import org.eso.ias.converter.config.MonitorPointConfiguration;
 import org.eso.ias.plugin.publisher.MonitorPointData;
@@ -11,6 +12,7 @@ import org.eso.ias.prototype.input.java.IASTypes;
 import org.eso.ias.prototype.input.java.IASValueBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 /**
  * The tool to convert raw monitor point values and alarms
@@ -24,7 +26,9 @@ import org.slf4j.LoggerFactory;
  * </ul>
  * 
  * <P>
- * The conversion needs to access the configuration database
+ * The conversion needs to access the configuration database.
+ * <P>
+ * Spring constructor-dependency injection is used mainly for testing purposes.
  * 
  * @author acaproni
  *
@@ -63,6 +67,11 @@ public class Converter implements Runnable {
 	private ConverterEngine converter;
 	
 	/**
+	 * The DAO to get the configuration from the CDB
+	 */
+	private final CdbReader cdbDAO;
+	
+	/**
 	 * The DAO to get the configuration of monitor points
 	 */
 	private IasioConfigurationDAO configDao;
@@ -74,16 +83,32 @@ public class Converter implements Runnable {
 	private CoreFeeder mpSender;
 	
 	/**
-	 * Constructor
+	 * Constructor.
+	 * <P>
+	 * Dependency injection with spring take place here.
 	 * 
 	 * @param id The not <code>null</code> nor empty ID of the converter
+	 * @param mpReader The reader to get monitor point and alarms 
+	 *        provided by remote monitored control systems
+	 * @param cdbReader The DAO of the configuration database
+	 * @param feeder The publisher of IASIO data to the core of the IAS  
 	 */
-	public Converter(String id) {
+	public Converter(
+			String id,
+			RawDataReader mpReader,
+			CdbReader cdbReader,
+			CoreFeeder feeder) {
 		Objects.requireNonNull(id);
 		if (id.isEmpty()) {
 			throw new InvalidParameterException("The ID of the converter can't be empty");
 		}
 		this.converterID=id;
+		Objects.requireNonNull(mpReader);
+		this.mpGetter=mpReader;
+		Objects.requireNonNull(cdbReader);
+		this.cdbDAO=cdbReader;
+		Objects.requireNonNull(feeder);
+		this.mpSender=feeder;
 	}
 	
 	/**
@@ -146,11 +171,26 @@ public class Converter implements Runnable {
 		logger.info("Converter {} tread terminated",converterID);
 	}
 
+	/**
+	 * Application starting point.
+	 * 
+	 * It builds a converter with the help of spring dependency injection
+	 * 
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		String id="IasConverter";
 		
+		/**
+		 * Spring stuff
+		 */
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ConverterConfig.class);
+		CdbReader cdbReader = context.getBean("cdbReader",CdbReader.class);
+		RawDataReader rawDataReader = context.getBean("rawDataReader",RawDataReader.class);
+		CoreFeeder coreFeeder = context.getBean("coreFeeder",CoreFeeder.class);
+		
 		logger.info("Converter {} started",id);
-		Converter converter = new Converter(id);
+		Converter converter = new Converter(id,rawDataReader,cdbReader,coreFeeder);
 		try {
 			converter.setUp();
 			logger.info("Converter {} initialized",id);
