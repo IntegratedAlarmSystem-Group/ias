@@ -1,5 +1,8 @@
 package org.eso.ias.prototype.input.java;
 
+import java.util.Objects;
+
+import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.prototype.input.AlarmValue;
 
 /**
@@ -34,4 +37,41 @@ public enum IASTypes {
     	this.typeClass=c;
     	this.typeName=typeName;
 	}
+    
+    public IasTypeDao toIasTypeDao() {
+    	if (this==LONG) return IasTypeDao.LONG;
+    	else if (this==INT) return IasTypeDao.INT;
+    	else if (this==SHORT) return IasTypeDao.SHORT;
+    	else if (this==BYTE) return IasTypeDao.BYTE;
+    	else if (this==DOUBLE) return IasTypeDao.DOUBLE;
+    	else if (this==FLOAT) return IasTypeDao.FLOAT;
+    	else if (this==BOOLEAN) return IasTypeDao.BOOLEAN;
+    	else if (this==CHAR) return IasTypeDao.CHAR;
+    	else if (this==STRING) return IasTypeDao.STRING;
+    	else if (this==ALARM) return IasTypeDao.ALARM;
+    	else throw new UnsupportedOperationException("Unsupported IAS type "+this.typeName);
+    }
+    
+    /**
+     * Build a IASTypes from the DAO definition
+     * 
+     * @param typeDao
+     * @return
+     */
+    public static IASTypes fromIasioDaoType(IasTypeDao typeDao) {
+    	Objects.requireNonNull(typeDao);
+    	switch (typeDao) {
+    	case LONG: return LONG;
+    	case INT: return INT;
+    	case SHORT: return SHORT;
+    	case BYTE: return BYTE;
+    	case DOUBLE: return DOUBLE;
+    	case FLOAT: return FLOAT;
+    	case BOOLEAN: return BOOLEAN;
+    	case CHAR: return CHAR;
+    	case STRING: return STRING;
+    	case ALARM: return ALARM;
+    	default: throw new UnsupportedOperationException("Unsupported DAO type "+typeDao);
+    	}
+    }
 };

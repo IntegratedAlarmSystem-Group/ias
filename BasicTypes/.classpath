@@ -9,5 +9,6 @@
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-plugin.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/scalactic_2.12-3.0.1.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/scalatest_2.12-3.0.1.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ias-cdb.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
