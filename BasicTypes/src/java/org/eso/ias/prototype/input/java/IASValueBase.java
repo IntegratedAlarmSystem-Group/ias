@@ -1,5 +1,7 @@
 package org.eso.ias.prototype.input.java;
 
+import java.util.Objects;
+
 import org.eso.ias.plugin.OperationalMode;
 import org.eso.ias.prototype.input.Identifier;
 /**
@@ -50,7 +52,7 @@ public abstract class IASValueBase {
 	/**
 	 * Constructor
 	 * 
-	 * @param tStamp Tye timestamp
+	 * @param tStamp The timestamp
 	 * @param mode The new mode of the output
 	 * @param id: The ID of this input
 	 * @param runningId: The id of this input and its parents
@@ -62,23 +64,21 @@ public abstract class IASValueBase {
 			String runningId,
 			IASTypes valueType) {
 		super();
-		if (mode==null) {
-			throw new NullPointerException("The mode can't be null");
-		}
+		Objects.requireNonNull(mode,"The mode can't be null");
+		
 		this.timestamp=tStamp;
 		this.mode = mode;
+		Objects.requireNonNull(id);
+		if (id.isEmpty()) {
+			throw new IllegalArgumentException("The ID can't be empty");
+		}
 		this.id=id;
 		this.runningId=runningId;
+		Objects.requireNonNull(valueType);
 		this.valueType=valueType;
 	}
 	
-	/**
-	 * Build a new IASValue with the passed mode
-	 * 
-	 * @param newMode The mode to set in the new IASValue
-	 * @return The new IASValue with the updated mode
-	 */
-	abstract public IASValueBase updateMode(OperationalMode newMode);
+	
 	
 	@Override
 	public String toString() {

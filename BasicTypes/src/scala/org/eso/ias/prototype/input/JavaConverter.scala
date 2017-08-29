@@ -31,33 +31,9 @@ object JavaConverter {
     require(Option[InOut[_]](io).isDefined)
     
     val ret = if (io.actualValue.value.isEmpty) {
-      io.iasType match {
-        case LONG => new IasLong(null, Long.MinValue,io.mode,io.id.id.get,io.id.runningID)
-        case INT => new IasInt(null, Long.MinValue,io.mode,io.id.id.get,io.id.runningID)
-        case SHORT => new IasShort(null, Long.MinValue,io.mode,io.id.id.get,io.id.runningID)
-        case BYTE => new IasByte(null, Long.MinValue,io.mode,io.id.id.get,io.id.runningID)
-        case DOUBLE => new IasDouble(null, Long.MinValue,io.mode,io.id.id.get,io.id.runningID)
-        case FLOAT => new IasFloat(null, Long.MinValue,io.mode,io.id.id.get,io.id.runningID)
-        case BOOLEAN => new IasBool(null, Long.MinValue,io.mode,io.id.id.get,io.id.runningID)
-        case CHAR => new IasChar(null, Long.MinValue,io.mode,io.id.id.get,io.id.runningID)
-        case STRING => new IasString(null, Long.MinValue,io.mode,io.id.id.get,io.id.runningID)
-        case ALARM=> new IasAlarm(null, Long.MinValue,io.mode,io.id.id.get,io.id.runningID)
-        case _ => throw new UnsupportedOperationException("Unsupported IAS type: "+io.iasType)
-      }
+      IASValue.buildIasValue(null, Long.MinValue,io.mode,io.id.id.get,io.id.runningID,io.iasType)
     } else {
-      io.iasType match {
-        case LONG => new IasLong(io.actualValue.value.get.asInstanceOf[Long], io.actualValue.timestamp,io.mode,io.id.id.get,io.id.runningID)
-        case INT => new IasInt(io.actualValue.value.get.asInstanceOf[Int], io.actualValue.timestamp,io.mode,io.id.id.get,io.id.runningID)
-        case SHORT => new IasShort(io.actualValue.value.get.asInstanceOf[Short], io.actualValue.timestamp,io.mode,io.id.id.get,io.id.runningID)
-        case BYTE => new IasByte(io.actualValue.value.get.asInstanceOf[Byte], io.actualValue.timestamp,io.mode,io.id.id.get,io.id.runningID)
-        case DOUBLE => new IasDouble(io.actualValue.value.get.asInstanceOf[Double], io.actualValue.timestamp,io.mode,io.id.id.get,io.id.runningID)
-        case FLOAT => new IasFloat(io.actualValue.value.get.asInstanceOf[Float], io.actualValue.timestamp,io.mode,io.id.id.get,io.id.runningID)
-        case BOOLEAN => new IasBool(io.actualValue.value.get.asInstanceOf[Boolean], io.actualValue.timestamp,io.mode,io.id.id.get,io.id.runningID)
-        case CHAR => new IasChar(io.actualValue.value.get.asInstanceOf[Char], io.actualValue.timestamp,io.mode,io.id.id.get,io.id.runningID)
-        case STRING => new IasString(io.actualValue.value.get.asInstanceOf[String], io.actualValue.timestamp,io.mode,io.id.id.get,io.id.runningID)
-        case ALARM=> new IasAlarm(io.actualValue.value.get.asInstanceOf[AlarmValue], io.actualValue.timestamp,io.mode,io.id.id.get,io.id.runningID)
-        case _ => throw new UnsupportedOperationException("Unsupported IAS type: "+io.iasType)
-      }
+      IASValue.buildIasValue(io.actualValue.value.get, io.actualValue.timestamp,io.mode,io.id.id.get,io.id.runningID,io.iasType)
     }
     ret.asInstanceOf[IASValueBase]
   }
