@@ -56,7 +56,7 @@ public abstract class IASValue<T> extends IASValueBase {
 	 * @param newMode The mode to set in the new IASValue
 	 * @return The new IASValue with the updated mode
 	 */
-	abstract public IASValueBase updateMode(OperationalMode newMode);
+	abstract public IASValue<T> updateMode(OperationalMode newMode);
 	
 	@Override
 	public String toString() {
