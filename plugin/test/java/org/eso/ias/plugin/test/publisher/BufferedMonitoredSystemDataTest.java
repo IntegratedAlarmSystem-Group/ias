@@ -24,7 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * Test the {@link BufferedMonitoredSystemData}, in particular the JSON part.
  * 
- * @author osboxes
+ * @author acaproni
  *
  */
 public class BufferedMonitoredSystemDataTest extends PublisherTestCommon {
