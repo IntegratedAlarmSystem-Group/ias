@@ -12,3 +12,4 @@ iasRun.py -l j org.junit.runner.JUnitCore org.eso.ias.plugin.test.publisher.Buff
 iasRun.py -l j org.junit.runner.JUnitCore org.eso.ias.plugin.test.publisher.JsonPusblisherTest
 iasRun.py -l j -Dorg.eso.ias.plugin.kafka.partition=0 org.junit.runner.JUnitCore org.eso.ias.plugin.test.publisher.KafkaPublisherTest
 iasRun.py -l j org.junit.runner.JUnitCore org.eso.ias.plugin.test.MonitoredValueTest
+iasRun.py -l j org.junit.runner.JUnitCore org.eso.ias.plugin.test.JsonConversionTest
