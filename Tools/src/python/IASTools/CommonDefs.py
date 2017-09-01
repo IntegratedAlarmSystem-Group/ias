@@ -61,4 +61,21 @@ class CommonDefs(object):
             return True
         except:
             return False
+    
+    @classmethod
+    def addScalaJarsToClassPath(cls,classpath):
+        """
+        Append scala jars to the passed classpath
         
+        scala jars are needed by java programs that calls scala code
+        
+        @param classpath: the classpath to add scala jars to
+        """
+        scalaLibFolder=  path.join(environ["SCALA_HOME"],"/lib")  
+        for root, subFolders, files in walk(scalaLibFolder):
+            for jarFileName in files:
+                if (jarFileName.lower().endswith('.jar')):
+                    filePath=path.join(root,jarFileName)
+                    classpath=classpath+cls.__classPathSeparator
+                    classpath=classpath+filePath
+        return classpath   

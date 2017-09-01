@@ -228,6 +228,8 @@ if __name__ == '__main__':
     
     #add the classpath
     theClasspath=CommonDefs.buildClasspath()
+    if (args.language=='j' or args.language=='java'):
+        theClasspath=CommonDefs.addScalaJarsToClassPath(theClasspath) 
     cmd.append("-cp")
     cmd.append(theClasspath)
     if verbose:
