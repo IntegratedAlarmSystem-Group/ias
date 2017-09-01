@@ -71,7 +71,7 @@ class CommonDefs(object):
         
         @param classpath: the classpath to add scala jars to
         """
-        scalaLibFolder=  path.join(environ["SCALA_HOME"],"/lib")  
+        scalaLibFolder=  path.join(environ["SCALA_HOME"],"lib")  
         for root, subFolders, files in walk(scalaLibFolder):
             for jarFileName in files:
                 if (jarFileName.lower().endswith('.jar')):
