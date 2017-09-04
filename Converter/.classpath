@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src/java"/>
+	<classpathentry kind="src" path="test/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-plugin.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-basic-types.jar"/>
@@ -9,5 +10,6 @@
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-cdb.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/spring-context-4.3.9.RELEASE.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/spring-beans-4.3.9.RELEASE.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/junit-4.12.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
