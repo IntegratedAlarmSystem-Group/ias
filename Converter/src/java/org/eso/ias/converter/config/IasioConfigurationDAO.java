@@ -1,7 +1,5 @@
 package org.eso.ias.converter.config;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 /**
  * The DAO interface to get the configuration of the DAO.
  * <P>
@@ -19,7 +17,7 @@ public interface IasioConfigurationDAO {
 	/**
 	 * Initialize the DAO
 	 */
-	public void initialize();
+	public void initialize() throws ConfigurationException;
 	
 	/**
 	 * 
@@ -29,7 +27,7 @@ public interface IasioConfigurationDAO {
 	
 	
 	/**
-	 * Get the configuration of the configuration of the monitor point
+	 * Get the configuration of the the monitor point
 	 * with the passed ID.
 	 * 
 	 * @param mpId The not <code>null</code> nor empty ID of the MP 
@@ -41,11 +39,11 @@ public interface IasioConfigurationDAO {
 	/**
 	 * Close the DAO freeing all the acquired resources
 	 */
-	public void close();
+	public void close() throws ConfigurationException;
 
 	/**
 	 * 
 	 * @return <code>true</code> if the DAO has been closed
 	 */
-	public boolean ClosedInitialized();
+	public boolean isClosed();
 }
