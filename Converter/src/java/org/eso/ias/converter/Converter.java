@@ -66,7 +66,7 @@ public class Converter implements Runnable {
 	 * The object to convert a monitor points and alarms received
 	 * by the plugins in valid IAS data type
 	 */
-	private ConverterEngine converterEngine;
+	private final ConverterEngine converterEngine;
 	
 	/**
 	 * The DAO to get the configuration from the CDB
@@ -106,6 +106,7 @@ public class Converter implements Runnable {
 		}
 		this.converterID=id;
 		Objects.requireNonNull(mpReader);
+		converterEngine = new ConverterEngineImpl(converterID);
 		this.mpGetter=mpReader;
 		Objects.requireNonNull(cdbReader);
 		this.cdbDAO=cdbReader;
