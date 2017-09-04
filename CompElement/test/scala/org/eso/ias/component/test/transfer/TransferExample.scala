@@ -5,8 +5,7 @@ import java.util.Properties
 import org.eso.ias.prototype.transfer.ScalaTransferExecutor
 import org.eso.ias.prototype.input.InOut
 import org.eso.ias.plugin.OperationalMode
-import org.eso.ias.prototype.input.AlarmValue
-import org.eso.ias.prototype.input.Set
+import org.eso.ias.plugin.AlarmSample
 
 /**
  * A scala TransferExecutor for testing purposes
@@ -16,7 +15,7 @@ import org.eso.ias.prototype.input.Set
 class TransferExample(
     cEleId: String, 
 		cEleRunningId: String,
-		props: Properties) extends ScalaTransferExecutor[AlarmValue](cEleId,cEleRunningId,props) {
+		props: Properties) extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
   
   /**
    * Intialization
@@ -36,17 +35,13 @@ class TransferExample(
     println("Scala TransferExample shutting down")
   }
   
-  def eval(compInputs: Map[String, InOut[_]], actualOutput: InOut[AlarmValue]): InOut[AlarmValue] = {
+  def eval(compInputs: Map[String, InOut[_]], actualOutput: InOut[AlarmSample]): InOut[AlarmSample] = {
     System.out.println("scala TransferExample: evaluating "+compInputs.size+" inputs");
 		System.out.println("scala TransferExample for comp. with ID="+compElementId+" and output "+actualOutput.toString());
     for (hio <- compInputs.values) println(hio.toString())
     
-    val av: AlarmValue = actualOutput.actualValue.value.get.asInstanceOf[AlarmValue]
-    val newAlarm = AlarmValue.transition(av, new Set())
-    newAlarm match {
-        case Left(ex) => throw ex
-        case Right(alarm) => actualOutput.updateMode(OperationalMode.SHUTTEDDOWN).updateValue(Some(alarm)) 
-      }
+    val newAlarm = AlarmSample.SET
+    actualOutput.updateMode(OperationalMode.SHUTTEDDOWN).updateValue(Some(newAlarm)) 
   }
   
 }

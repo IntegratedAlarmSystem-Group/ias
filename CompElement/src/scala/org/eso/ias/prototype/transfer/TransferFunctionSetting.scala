@@ -3,7 +3,6 @@ package org.eso.ias.prototype.transfer
 import java.util.Properties
 import java.util.concurrent.ThreadFactory
 import scala.util.Try
-import org.eso.ias.prototype.input.AlarmValue
 import scala.sys.SystemProperties
 
 /**

@@ -7,10 +7,8 @@ import org.eso.ias.prototype.compele.exceptions.PropsMisconfiguredException
 import org.eso.ias.prototype.compele.exceptions.UnexpectedNumberOfInputsException
 import org.eso.ias.prototype.input.java.IASTypes._
 import org.eso.ias.prototype.compele.exceptions.TypeMismatchException
-import org.eso.ias.prototype.input.AlarmValue
-import org.eso.ias.prototype.input.Set
-import org.eso.ias.prototype.input.Clear
 import MinMaxThresholdTF._
+import org.eso.ias.plugin.AlarmSample
 
 /**
  * The TF implementing a Min/Max threshold TF  (there is also
@@ -23,49 +21,49 @@ import MinMaxThresholdTF._
  * equally set if the temperature is too low or is too high but
  * cannot distinguish between the 2 cases.
  * 
- * If we want to distinguish between the 2 cases,  we need 2 ASCE having 
+ * If we want to distinguish between the 2 cases,  we need 2 ASCEs having 
  * the same input, one checking for the high value and the other checking 
  * for the low value.
  * 
- * To be generic, the value of the properties and that of the HIO 
- * are converted in double.
+ * To be generic, the value of the properties and that of the IASIO 
+ * are converted to double.
  * 
  * The value of the Min and Max thresholds are passed as properties:
  * <UL>
- * 	<LI>HighON: the (high) alarm is activated when the value of the HIO 
+ * 	<LI>HighON: the (high) alarm is activated when the value of the IASIO 
  *              is greater then HighON
- *  <LI>HighOFF: if the (high) alarm is active and the value of the HIO
+ *  <LI>HighOFF: if the (high) alarm is active and the value of the IASIO
  *               goes below HighOFF, then the alarm is deactivated
- *  <LI>LowOFF: if the (low) alarm is active and the value of the HIO
+ *  <LI>LowOFF: if the (low) alarm is active and the value of the IASIO
  *               becomes greater then LowOFF, then the alarm is deactivated
- *  <LI>LowON: the (low) alarm is activated when the value of the HIO is
+ *  <LI>LowON: the (low) alarm is activated when the value of the IASIO is
  *             lower then LowON
  *             
  * @author acaproni
  */
 class MinMaxThresholdTF(cEleId: String, cEleRunningId: String, props: Properties) 
-extends ScalaTransferExecutor[AlarmValue](cEleId,cEleRunningId,props) {
+extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
   
   /**
-   * The (high) alarm is activated when the value of the HIO 
+   * The (high) alarm is activated when the value of the IASIO 
    * is greater then HighON
    */
   lazy val highOn: Double = getValue(props, highOnPropName, Double.MaxValue)
   
   /**
-   * if the (high) alarm is active and the value of the HIO
+   * if the (high) alarm is active and the value of the IASIO
    * goes below HighOFF, then the alarm is deactivated
    */
   lazy val highOff: Double = getValue(props, highOffPropName, Double.MaxValue)
   
   /**
-   * the (low) alarm is activated when the value of the HIO is
+   * the (low) alarm is activated when the value of the IASIO is
    * lower then LowON
    */
   lazy val lowOn: Double =  getValue(props, lowOnPropName, Double.MinValue)
   
   /**
-   * if the (low) alarm is active and the value of the HIO
+   * if the (low) alarm is active and the value of the IASIO
    * becomes greater then LowOFF, then the alarm is deactivated
    */
   lazy val lowOff: Double = getValue(props, lowOffPropName, Double.MinValue)
@@ -115,26 +113,9 @@ extends ScalaTransferExecutor[AlarmValue](cEleId,cEleRunningId,props) {
   def shutdown() {}
   
   /**
-   * Gets the AlarmValue from the passed input.
-   * if the value of the input is None, it creates a new AlarmValue.
-   * 
-   * @param hio: The IO containing the AlarmValue
-   * @return the AlarmValue of the HIO (None if not defined)
-   */
-  def getAlarmValue(io: InOut[AlarmValue]): AlarmValue = {
-    require(Option[InOut[AlarmValue]](io).isDefined)
-    require(io.iasType==ALARM)
-    if (io.actualValue.value.isEmpty) {
-      new AlarmValue()
-    } else {
-      io.actualValue.value.get
-    }
-  }
-  
-  /**
    * @see ScalaTransferExecutor#eval
    */
-  def eval(compInputs: Map[String, InOut[_]], actualOutput: InOut[AlarmValue]): InOut[AlarmValue] = {
+  def eval(compInputs: Map[String, InOut[_]], actualOutput: InOut[AlarmSample]): InOut[AlarmSample] = {
     if (compInputs.size!=1) throw new UnexpectedNumberOfInputsException(compInputs.size,1)
     if (actualOutput.iasType!=ALARM) throw new TypeMismatchException(actualOutput.id.runningID,actualOutput.iasType,ALARM)
     
@@ -151,24 +132,19 @@ extends ScalaTransferExecutor[AlarmValue](cEleId,cEleRunningId,props) {
       case _ => throw new TypeMismatchException(hio.id.runningID,hio.iasType,List(LONG,INT,SHORT,BYTE,DOUBLE,FLOAT))
     }
     
-    if (hioValue>=highOn || hioValue<=lowOn) {
-      val actualOutputValue=getAlarmValue(actualOutput)
-      val newValue = AlarmValue.transition(actualOutputValue,new Set())
-      newValue match {
-        case Left(ex) => throw ex
-        case Right(alarm) => actualOutput.updateValue(Option(alarm)) 
-      }
-    } else if (hioValue<highOff && hioValue>lowOff) {
-      val actualOutputValue=getAlarmValue(actualOutput)
-      val newValue = AlarmValue.transition(actualOutputValue,new Clear())
-      newValue match {
-        case Left(ex) => throw ex
-        case Right(alarm) => actualOutput.updateValue(Option(alarm)) 
-      }
-    } else {
-      actualOutput
-    }
-    
+    // It cope with the case that the value of the actual output is not 
+    // defined (i.e. it is Optional.empty. In that case the variable
+    // is initialized to false 
+    val temp = actualOutput.actualValue.value.map { x => x==AlarmSample.SET }.orElse(Some(false))
+ 
+    // The condition is true if the value is over the limits (high on and low on)
+    // but remains set is the old values was set and the value is
+    // between high on and hiogh off or between low on and low off
+    val condition = 
+      (hioValue>=highOn || hioValue<=lowOn) ||
+      temp.get && (hioValue>=highOff || hioValue<=lowOff)
+    val newValue = AlarmSample.fromBoolean(condition)
+    actualOutput.updateValue(Option(newValue)) 
   }
   
 }

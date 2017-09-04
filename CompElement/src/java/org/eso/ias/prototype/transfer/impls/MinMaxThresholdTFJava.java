@@ -3,12 +3,10 @@ package org.eso.ias.prototype.transfer.impls;
 import java.util.Map;
 import java.util.Properties;
 
+import org.eso.ias.plugin.AlarmSample;
 import org.eso.ias.prototype.compele.exceptions.PropsMisconfiguredException;
 import org.eso.ias.prototype.compele.exceptions.TypeMismatchException;
 import org.eso.ias.prototype.compele.exceptions.UnexpectedNumberOfInputsException;
-import org.eso.ias.prototype.input.AlarmValue;
-import org.eso.ias.prototype.input.Clear;
-import org.eso.ias.prototype.input.Set;
 import org.eso.ias.prototype.input.java.IASTypes;
 import org.eso.ias.prototype.input.java.IASValueBase;
 import org.eso.ias.prototype.input.java.IasAlarm;
@@ -36,18 +34,18 @@ import org.eso.ias.prototype.transfer.TransferExecutor;
  * the same input, one checking for the high value and the other checking 
  * for the low value.
  * 
- * To be generic, the value of the properties and that of the HIO 
+ * To be generic, the value of the properties and that of the IASIO 
  * are converted in double.
  * 
  * The value of the Min and Max thresholds are passed as properties:
  * <UL>
- * 	<LI>HighON: the (high) alarm is activated when the value of the HIO 
+ * 	<LI>HighON: the (high) alarm is activated when the value of the IASIO 
  *              is greater then HighON
- *  <LI>HighOFF: if the (high) alarm is active and the value of the HIO
+ *  <LI>HighOFF: if the (high) alarm is active and the value of the IASIO
  *               goes below HighOFF, then the alarm is deactivated
- *  <LI>LowOFF: if the (low) alarm is active and the value of the HIO
+ *  <LI>LowOFF: if the (low) alarm is active and the value of the IASIO
  *               becomes greater then LowOFF, then the alarm is deactivated
- *  <LI>LowON: the (low) alarm is activated when the value of the HIO is
+ *  <LI>LowON: the (low) alarm is activated when the value of the IASIO is
  *             lower then LowON
  * </UL>
  *   
@@ -159,23 +157,7 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 	 * @see TransferExecutor#shutdown()
 	 */
 	@Override
-	public void shutdown() {
-	}
-	
-	/**
-   * Gets the AlarmValue from the passed hio.
-   * if the value of the hio is noll, it creates a new AlarmValue.
-   * 
-   * @param hio: The HIO containing the AlarmValue
-   * @return the AlarmValue of the HIO or a newly created one if it is null
-   */
-  private AlarmValue getAlarmValue(IASValueBase iasValue) {
-	  if (((IasAlarm)iasValue).value==null) {
-		  return new AlarmValue();
-	  } else {
-		  return ((IasAlarm)iasValue).value;
-	  }
-  }
+	public void shutdown() {}
 
 	/**
 	 * @see JavaTransferExecutor#eval(Map, IASValueBase)
@@ -212,18 +194,14 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 		default:
 			throw new TypeMismatchException(hio.runningId);
 		}
-
-		if (hioValue >= highOn || hioValue <= lowOn) {
-			AlarmValue actualOutputValue = getAlarmValue(actualOutput);
-			AlarmValue newValue = AlarmValue.transition(actualOutputValue, new Set()).right().get();
-			return ((IasAlarm) actualOutput).updateValue(newValue);
-		} else if (hioValue < highOff && hioValue > lowOff) {
-			AlarmValue actualOutputValue = getAlarmValue(actualOutput);
-			AlarmValue newValue = AlarmValue.transition(actualOutputValue, new Clear()).right().get();
-			return ((IasAlarm) actualOutput).updateValue(newValue);
-		} else {
-			return actualOutput;
-		}
-
+		
+		boolean wasActivated = ((IasAlarm)actualOutput).value==AlarmSample.SET;
+		
+		boolean condition = 
+				hioValue >= highOn || hioValue <= lowOn ||
+				wasActivated && (hioValue>=highOff || hioValue<=lowOff);
+				
+		AlarmSample newOutput = AlarmSample.fromBoolean(condition);
+		return ((IasAlarm) actualOutput).updateValue(newOutput);
 	}
 }

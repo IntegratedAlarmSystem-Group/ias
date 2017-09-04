@@ -3,7 +3,6 @@ package org.eso.ias.prototype.transfer
 import org.eso.ias.prototype.input.Identifier
 import org.eso.ias.prototype.input.InOut
 import org.eso.ias.prototype.compele.ComputingElement
-import org.eso.ias.prototype.input.AlarmValue
 import java.util.Properties
 import java.util.{Map => JavaMap, HashMap => JavaHashMap}
 import org.eso.ias.prototype.input.java.IASValue

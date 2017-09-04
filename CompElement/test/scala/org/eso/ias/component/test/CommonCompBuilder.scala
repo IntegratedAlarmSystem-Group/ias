@@ -1,7 +1,6 @@
 package org.eso.ias.component.test
 
 import org.eso.ias.prototype.input.Identifier
-import org.eso.ias.prototype.input.AlarmValue
 import org.eso.ias.prototype.input.InOut
 import scala.collection.mutable.{Map => MutableMap }
 import org.eso.ias.plugin.OperationalMode
