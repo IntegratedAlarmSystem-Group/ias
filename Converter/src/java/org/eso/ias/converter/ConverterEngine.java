@@ -2,7 +2,7 @@ package org.eso.ias.converter;
 
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.prototype.input.java.IASTypes;
-import org.eso.ias.prototype.input.java.IASValueBase;
+import org.eso.ias.prototype.input.java.IASValue;
 
 public interface ConverterEngine {
 	
@@ -15,6 +15,6 @@ public interface ConverterEngine {
 	 * @param type The type of the value to convert
 	 * @return The value cobverted into a IAS data type
 	 */
-	public IASValueBase translate(MonitorPointData remoteSystemData, IASTypes type);
+	public IASValue<?> translate(MonitorPointData remoteSystemData, IASTypes type);
 
 }

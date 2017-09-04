@@ -1,6 +1,6 @@
 package org.eso.ias.converter;
 
-import org.eso.ias.prototype.input.java.IASValueBase;
+import org.eso.ias.prototype.input.java.IASValue;
 
 /**
  * The interface defining the method to call to send a value
@@ -16,5 +16,5 @@ public interface CoreFeeder {
 	 * 
 	 * @param iasValue The not <code>null</code> to send to the core of the IAS
 	 */
-	public void push(IASValueBase iasValue);
+	public void push(IASValue<?> iasValue);
 }
