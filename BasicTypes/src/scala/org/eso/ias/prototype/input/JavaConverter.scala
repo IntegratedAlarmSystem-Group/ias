@@ -13,6 +13,7 @@ import org.eso.ias.prototype.input.java.IasFloat
 import org.eso.ias.prototype.input.java.IasChar
 import org.eso.ias.prototype.input.java.IasString
 import org.eso.ias.prototype.input.java.IasBool
+import org.eso.ias.plugin.AlarmSample
 
 /**
  * Converter methods from java to scala and vice-versa.
@@ -54,7 +55,7 @@ object JavaConverter {
       case BOOLEAN => updateHIOWithIasValue(hio.asInstanceOf[InOut[Boolean]],iasValue.asInstanceOf[IasBool])
       case CHAR => updateHIOWithIasValue(hio.asInstanceOf[InOut[Char]],iasValue.asInstanceOf[IasChar])
       case STRING => updateHIOWithIasValue(hio.asInstanceOf[InOut[String]],iasValue.asInstanceOf[IasString])
-      case ALARM=> updateHIOWithIasValue(hio.asInstanceOf[InOut[AlarmValue]],iasValue.asInstanceOf[IasAlarm])
+      case ALARM=> updateHIOWithIasValue(hio.asInstanceOf[InOut[AlarmSample]],iasValue.asInstanceOf[IasAlarm])
       case _ => throw new UnsupportedOperationException("Unsupported IAS type: "+hio.iasType)
     }
   }
@@ -146,8 +147,8 @@ object JavaConverter {
    * 
    * @see #updateHIOWithIasValue[T](hio: HeteroInOut, iasValue: IASValue[T])
    */
-  def updateHIOWithIasValue(hio: InOut[AlarmValue], iasValue: IasAlarm): InOut[AlarmValue] = {
-    JavaConverter.updateHIOWithIasValue[AlarmValue](hio, iasValue.asInstanceOf[IASValue[AlarmValue]])
+  def updateHIOWithIasValue(hio: InOut[AlarmSample], iasValue: IasAlarm): InOut[AlarmSample] = {
+    JavaConverter.updateHIOWithIasValue[AlarmSample](hio, iasValue.asInstanceOf[IASValue[AlarmSample]])
   }
   
   /**

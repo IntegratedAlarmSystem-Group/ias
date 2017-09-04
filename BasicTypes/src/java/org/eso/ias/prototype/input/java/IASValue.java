@@ -2,8 +2,8 @@ package org.eso.ias.prototype.input.java;
 
 import java.util.Objects;
 
+import org.eso.ias.plugin.AlarmSample;
 import org.eso.ias.plugin.OperationalMode;
-import org.eso.ias.prototype.input.AlarmValue;
 
 /**
  * The view of a heterogeneous inputs in the java code.
@@ -84,7 +84,7 @@ public abstract class IASValue<T> extends IASValueBase {
 		case BOOLEAN: return new IasBool((Boolean)value, tStamp, mode, id, runningId);
 		case CHAR: return new IasChar((Character)value, tStamp, mode, id, runningId);
 		case STRING: return new IasString((String)value, tStamp, mode, id, runningId);
-		case ALARM: return new IasAlarm((AlarmValue)value, tStamp, mode, id, runningId);
+		case ALARM: return new IasAlarm((AlarmSample )value, tStamp, mode, id, runningId);
 		default: throw new UnsupportedOperationException("Unsupported type "+valueType);
 		}
 	}

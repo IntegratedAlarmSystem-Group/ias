@@ -3,7 +3,7 @@ package org.eso.ias.prototype.input.java;
 import java.util.Objects;
 
 import org.eso.ias.cdb.pojos.IasTypeDao;
-import org.eso.ias.prototype.input.AlarmValue;
+import org.eso.ias.plugin.AlarmSample;
 
 /**
  * Java representation of the IAS types.
@@ -27,7 +27,7 @@ public enum IASTypes {
     BOOLEAN(java.lang.Boolean.class,"BooleanType"), 
     CHAR(java.lang.Character.class,"CharType"), 
     STRING(java.lang.String.class,"StringType"), 
-    ALARM(AlarmValue.class,"AlarmType");
+    ALARM(AlarmSample.class,"AlarmType");
 	
 	public final Class typeClass; 
 	

@@ -4,6 +4,7 @@ import org.eso.ias.prototype.utils.ISO8601Helper
 import org.eso.ias.plugin.OperationalMode
 import org.eso.ias.prototype.input.java.IASTypes._
 import org.eso.ias.prototype.input.java.IASTypes
+import org.eso.ias.plugin.AlarmSample
 
 /**
  * A  <code>InOut</code> holds the value of an input or output 
@@ -140,7 +141,7 @@ object InOut {
       case IASTypes.BOOLEAN =>value.isInstanceOf[Boolean]
       case IASTypes.CHAR => value.isInstanceOf[Char]
       case IASTypes.STRING => value.isInstanceOf[String]
-      case IASTypes.ALARM =>value.isInstanceOf[AlarmValue]
+      case IASTypes.ALARM =>value.isInstanceOf[AlarmSample]
       case _ => false
     }
   }

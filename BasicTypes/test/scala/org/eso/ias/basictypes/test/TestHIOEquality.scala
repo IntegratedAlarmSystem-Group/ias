@@ -6,10 +6,8 @@ import org.eso.ias.prototype.input.InOut
 import org.eso.ias.plugin.OperationalMode
 import org.eso.ias.prototype.input.Validity
 import org.eso.ias.prototype.input.java.IASTypes
-import org.eso.ias.prototype.input.AlarmValue
-import org.eso.ias.prototype.input.AlarmState
-import org.eso.ias.prototype.input.AckState
 import org.eso.ias.prototype.input.java.IdentifierType
+import org.eso.ias.plugin.AlarmSample
 
 class TestHIOEquality extends FlatSpec {
   
@@ -84,7 +82,7 @@ class TestHIOEquality extends FlatSpec {
     val hio5=doubleHIO.updateValue(Some(3.1D))
     assert(hio3.actualValue!=hio5.actualValue)
     
-    val alarmHIO = InOut(Some(new AlarmValue),f.id,f.refreshRate,OperationalMode.UNKNOWN,Validity.Unreliable,IASTypes.ALARM)
+    val alarmHIO = InOut(Some(AlarmSample.SET),f.id,f.refreshRate,OperationalMode.UNKNOWN,Validity.Unreliable,IASTypes.ALARM)
     assert(hio5.actualValue!=alarmHIO.actualValue)
     
   }
@@ -134,12 +132,12 @@ class TestHIOEquality extends FlatSpec {
     assert(hioAnotherValueInt!=hioInt)
     assert(hioAnotherValueInt.hashCode()!=hioInt.hashCode()) // Not required in the contract of hashCode
     
-    val alarm1HIO = new InOut[AlarmValue](Some(new AlarmValue),f.id,f.refreshRate,OperationalMode.UNKNOWN,Validity.Unreliable,IASTypes.ALARM)
-    val alarm2HIO = new InOut[AlarmValue](Some(new AlarmValue),f.id,f.refreshRate,OperationalMode.UNKNOWN,Validity.Unreliable,IASTypes.ALARM)
+    val alarm1HIO = new InOut[AlarmSample](Some(AlarmSample.SET),f.id,f.refreshRate,OperationalMode.UNKNOWN,Validity.Unreliable,IASTypes.ALARM)
+    val alarm2HIO = new InOut[AlarmSample](Some(AlarmSample.SET),f.id,f.refreshRate,OperationalMode.UNKNOWN,Validity.Unreliable,IASTypes.ALARM)
     assert(alarm1HIO==alarm2HIO)
     assert(alarm1HIO.hashCode()==alarm2HIO.hashCode())
     
-    val alarm3HIO = new InOut[AlarmValue](Some(AlarmValue(AlarmState.Active,false,AckState.Acknowledged)),f.id,f.refreshRate,OperationalMode.UNKNOWN,Validity.Unreliable,IASTypes.ALARM)
+    val alarm3HIO = new InOut[AlarmSample](Some(AlarmSample.CLEARED),f.id,f.refreshRate,OperationalMode.UNKNOWN,Validity.Unreliable,IASTypes.ALARM)
     assert(alarm1HIO!=alarm3HIO)
   }
 }

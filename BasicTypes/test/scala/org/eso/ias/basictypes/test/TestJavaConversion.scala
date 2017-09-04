@@ -5,16 +5,13 @@ import org.eso.ias.prototype.input.Identifier
 import org.eso.ias.plugin.OperationalMode
 import org.eso.ias.prototype.input.Validity
 import org.eso.ias.prototype.input.InOut
-import org.eso.ias.prototype.input.AlarmValue
-import org.eso.ias.prototype.input.AlarmState
-import org.eso.ias.prototype.input.AckState
 import org.eso.ias.prototype.input.java.IASTypes
 import org.eso.ias.prototype.input.JavaConverter
 import org.eso.ias.prototype.input.java.IASValue
-import org.eso.ias.prototype.input.Clear
 import org.eso.ias.prototype.input.java.IasDouble
 import org.eso.ias.prototype.input.java.IasAlarm
 import org.eso.ias.prototype.input.java.IdentifierType
+import org.eso.ias.plugin.AlarmSample
 
 /**
  * Test the conversion between HIO to IASValue and vice-versa
@@ -35,7 +32,7 @@ class TestJavaConversion  extends FlatSpec {
       val alarmMode = OperationalMode.STARTUP
       val mode = OperationalMode.OPERATIONAL
       // The values
-      val alarmValue = Some(new AlarmValue(AlarmState.Active,false,AckState.Acknowledged))
+      val alarmValue = Some(AlarmSample.SET)
       val doubleValue = Some(48.6D)
       val floatValue = Some(-11.5F)
       val longValue = Some(11L)
@@ -56,7 +53,7 @@ class TestJavaConversion  extends FlatSpec {
       val charHIO = InOut[Char](charValue,doubleHioId,refRate,mode,validity,IASTypes.CHAR)
       val stringHIO = InOut[String](stringValue,doubleHioId,refRate,mode,validity,IASTypes.STRING)
       val boolHIO = InOut[Boolean](boolValue,doubleHioId,refRate,mode,validity,IASTypes.BOOLEAN)
-      val alarmHIO = InOut[AlarmValue](alarmValue,alarmHioId,refRate,alarmMode,validity,IASTypes.ALARM)
+      val alarmHIO = InOut[AlarmSample](alarmValue,alarmHioId,refRate,alarmMode,validity,IASTypes.ALARM)
       val doubleHIO = InOut[Double](doubleValue,doubleHioId,refRate,doubleMode,validity,IASTypes.DOUBLE)
       val floatHIO = InOut[Float](floatValue,doubleHioId,refRate,mode,validity,IASTypes.FLOAT)
       
@@ -76,7 +73,7 @@ class TestJavaConversion  extends FlatSpec {
     assert(doubleVal.runningId==f.doubleHIO.id.runningID)
     assert(doubleVal.value==f.doubleHIO.actualValue.value.get)
     
-    val alarmVal = JavaConverter.inOutToIASValue[AlarmValue](f.alarmHIO).asInstanceOf[IasAlarm]
+    val alarmVal = JavaConverter.inOutToIASValue[AlarmSample](f.alarmHIO).asInstanceOf[IasAlarm]
     assert(alarmVal.value==f.alarmHIO.actualValue.value.get)
   }
   
@@ -93,13 +90,13 @@ class TestJavaConversion  extends FlatSpec {
     assert(newdoubleVal.runningId==hio.id.runningID)
     assert(newdoubleVal.value==hio.actualValue.value.get)
     
-    val alarmVal = JavaConverter.inOutToIASValue[AlarmValue](f.alarmHIO).asInstanceOf[IasAlarm]
+    val alarmVal = JavaConverter.inOutToIASValue[AlarmSample](f.alarmHIO).asInstanceOf[IasAlarm]
     val alarm = alarmVal.value
-    val newAlarm = AlarmValue.transition(alarm, new Clear())
-    val newAlarmValue = alarmVal.updateValue(newAlarm.right.get).asInstanceOf[IasAlarm]
+    val newAlarm = AlarmSample.CLEARED
+    val newAlarmValue = alarmVal.updateValue(newAlarm).asInstanceOf[IasAlarm]
     val alarmHio = JavaConverter.updateHIOWithIasValue(f.alarmHIO,newAlarmValue)
     
-    assert(alarmHio.actualValue.value.get.asInstanceOf[AlarmValue].alarmState==AlarmState.Cleared)
+    assert(alarmHio.actualValue.value.get.asInstanceOf[AlarmSample]==AlarmSample.CLEARED)
   }
   
   it must "fail updating with wrong IDs, runningIDs, type" in {

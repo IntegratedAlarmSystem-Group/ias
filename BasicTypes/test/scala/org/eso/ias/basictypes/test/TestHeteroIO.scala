@@ -6,10 +6,8 @@ import org.eso.ias.plugin.OperationalMode
 import org.eso.ias.prototype.input.Identifier
 import org.eso.ias.prototype.input.InOut
 import org.eso.ias.prototype.input.java.IASTypes
-import org.eso.ias.prototype.input.AlarmValue
-import org.eso.ias.prototype.input.AlarmState
-import org.eso.ias.prototype.input.AckState
 import org.eso.ias.prototype.input.java.IdentifierType
+import org.eso.ias.plugin.AlarmSample
 
 /**
  * Test the LongMP
@@ -128,7 +126,7 @@ class TestHeteroIO extends FlatSpec {
     val hioBool:  InOut[Boolean] = InOut(id,refreshRate,IASTypes.BOOLEAN)
     val hioChar:  InOut[Char] = InOut(id,refreshRate,IASTypes.CHAR)
     val hioString:  InOut[String] = InOut(id,refreshRate,IASTypes.STRING)
-    val hioAlarm: InOut[AlarmValue] = InOut(id,refreshRate,IASTypes.ALARM)
+    val hioAlarm: InOut[AlarmSample] = InOut(id,refreshRate,IASTypes.ALARM)
     
     // Check if all the types has been instantiated
     val listOfHIOs = List(hioLong,hioShort, hioInt,hioByte,hioDouble,hioFloat, hioBool,hioChar,hioString,hioAlarm)
@@ -143,6 +141,6 @@ class TestHeteroIO extends FlatSpec {
     hioBool.updateValue(Some(false))
     hioChar.updateValue(Some('C'))
     hioString.updateValue(Some("Test"))
-    hioAlarm.updateValue(Some(new AlarmValue(AlarmState.Active,true,AckState.New)))
+    hioAlarm.updateValue(Some(AlarmSample.SET))
   }
 }

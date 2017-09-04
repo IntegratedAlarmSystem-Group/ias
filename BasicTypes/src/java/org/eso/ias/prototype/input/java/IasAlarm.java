@@ -1,11 +1,20 @@
 package org.eso.ias.prototype.input.java;
 
+import org.eso.ias.plugin.AlarmSample;
 import org.eso.ias.plugin.OperationalMode;
-import org.eso.ias.prototype.input.AlarmValue;
 
-public class IasAlarm extends IASValue<AlarmValue> {
+/**
+ * The IASVAlue encapsulating an alarm.
+ * <P>
+ * The type of the alarm at this stage is a {@link AlarmSample}
+ * as produced by a monitored system.
+ * 
+ * @author acaproni
+ *
+ */
+public class IasAlarm extends IASValue<AlarmSample> {
 	
-	public IasAlarm(AlarmValue value,
+	public IasAlarm(AlarmSample value,
 			long tStamp,
 			OperationalMode mode,
 			String id,
@@ -21,7 +30,7 @@ public class IasAlarm extends IASValue<AlarmValue> {
 	 * @see IASValue#updateValue(Object)
 	 */
 	@Override
-	public IasAlarm updateValue(AlarmValue newValue) {
+	public IasAlarm updateValue(AlarmSample newValue) {
 		if (newValue==null) {
 			throw new NullPointerException("The value can't be null");
 		}
