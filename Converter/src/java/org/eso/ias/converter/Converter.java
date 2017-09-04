@@ -9,6 +9,7 @@ import org.eso.ias.converter.config.IasioConfigurationDAO;
 import org.eso.ias.converter.config.MonitorPointConfiguration;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.prototype.input.java.IASTypes;
+import org.eso.ias.prototype.input.java.IASValue;
 import org.eso.ias.prototype.input.java.IASValueBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +39,7 @@ public class Converter implements Runnable {
 	/**
 	 * The identifier of the converter
 	 */
-	private final String converterID;
+	public final String converterID;
 	
 	/**
 	 * The logger
@@ -62,9 +63,10 @@ public class Converter implements Runnable {
 	private RawDataReader mpGetter;
 	
 	/**
-	 * The object to convert a monitor pint in a valid IAS data type
+	 * The object to convert a monitor points and alarms received
+	 * by the plugins in valid IAS data type
 	 */
-	private ConverterEngine converter;
+	private ConverterEngine converterEngine;
 	
 	/**
 	 * The DAO to get the configuration from the CDB
@@ -160,11 +162,11 @@ public class Converter implements Runnable {
 			String mpId = mPoint.getId();
 			MonitorPointConfiguration mpConfiguration=configDao.getConfiguration(mpId);
 			if (mpConfiguration==null) {
-				logger.error("Nno configuration found for {}: raw value lost",mpId);;
+				logger.error("No configuration found for {}: raw value lost!",mpId);;
 			}
 			IASTypes iasType = mpConfiguration.mpType;
 			// Convert the monitor point in the IAS type
-			IASValueBase iasValue=converter.translate(mPoint, iasType);
+			IASValue<?> iasValue=converterEngine.translate(mPoint, iasType);
 			// Send data to the core of the IAS
 			mpSender.push(iasValue);
 		}
