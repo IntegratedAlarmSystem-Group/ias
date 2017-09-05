@@ -3,6 +3,7 @@ package org.eso.ias.converter.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,6 +12,7 @@ import java.util.Vector;
 
 import org.eso.ias.converter.ConverterEngineImpl;
 import org.eso.ias.plugin.AlarmSample;
+import org.eso.ias.plugin.OperationalMode;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.FilteredValue;
@@ -41,6 +43,11 @@ public class ConverterEngineTest {
 	 * There is one MP per each type to convert
 	 */
 	private final Map<IASTypes, MonitorPointData> mpPointsToTranslate = new HashMap<>();
+	
+	/**
+	 * ISO 8601 date formatter
+	 */
+	private final SimpleDateFormat iso8601dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
 	
 	/**
 	 * Fill the map with the MP to translate: one for each
@@ -138,10 +145,21 @@ public class ConverterEngineTest {
 		for (IASTypes iasType: mpPointsToTranslate.keySet()) {
 			MonitorPointData mpd = mpPointsToTranslate.get(iasType);
 			assertNotNull(mpd);
+			assertNotNull(mpPointsToTranslate.get(iasType).getValue());
 			
 			IASValue<?> translatedValue=engine.translate(mpd, iasType);
 			assertEquals(mpd.getId(), translatedValue.id);
 			assertEquals(iasType, translatedValue.valueType);
+			
+			Object value = translatedValue.value;
+			assertNotNull("Got null value for type "+iasType+" (expected ["+mpPointsToTranslate.get(iasType).getValue()+"])",value);
+			assertEquals(translatedValue.value.toString(),mpPointsToTranslate.get(iasType).getValue());
+			
+			OperationalMode opMode = OperationalMode.valueOf(mpd.getOperationalMode());
+			assertEquals(translatedValue.mode, opMode);
+			
+			
+			assertEquals(translatedValue.timestamp,iso8601dateFormat.parse(mpd.getSampleTime()).getTime());
 		}
 	}
 }
