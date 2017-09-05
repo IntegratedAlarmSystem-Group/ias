@@ -106,7 +106,7 @@ public class ConverterEngineImpl implements ConverterEngine {
     		break;
     	}
     	case STRING: {
-    		remoteSystemData.getValue();
+    		convertedValue=remoteSystemData.getValue();
     		break;
     	}
     	case ALARM: {
