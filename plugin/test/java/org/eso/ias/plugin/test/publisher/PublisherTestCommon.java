@@ -308,7 +308,7 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 	@Override
 	public void dataReceived(MonitorPointData mpData) {
 		assertNotNull(mpData);
-		assertEquals("ID differs",mpData.getSystemID(), pluginId);
+		assertEquals("ID differs",mpData.getPluginID(), pluginId);
 		assertNotNull(mpData.getPublishTime());
 		assertFalse(mpData.getPublishTime().isEmpty());
 		numOfPublishInvocationInUnbufferedPub.incrementAndGet();

@@ -167,7 +167,7 @@ public class PublisherStressTest extends PublisherTestCommon {
 			MonitorPointData mpData = receivedValuesFromUnbufferedPub.get(id);
 			assertNotNull(mpData);
 			assertEquals(id, mpData.getId());
-			assertEquals(pluginId, mpData.getSystemID());
+			assertEquals(pluginId, mpData.getPluginID());
 			assertNotNull(mpData.getPublishTime());
 			assertFalse(mpData.getPublishTime().isEmpty());
 			List<ValueToSend> values = listsOfValues.get(t);

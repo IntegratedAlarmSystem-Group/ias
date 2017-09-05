@@ -24,7 +24,7 @@ public class MonitorPointData extends MonitorPointDataToBuffer{
 	/**
 	 * The id of the plugin.
 	 */
-	private String systemID;
+	private String pluginID;
 	
 	/**
 	 * The id of the system monitored by the plugin.
@@ -56,7 +56,7 @@ public class MonitorPointData extends MonitorPointDataToBuffer{
 	 */
 	public MonitorPointData(String pluginID, String monitoredSystemID,ValueToSend value) {
 		super(value);
-		setSystemID(pluginID);
+		setPluginID(pluginID);
 		setMonitoredSystemID(monitoredSystemID);
 		synchronized (iso8601dateFormat) {
 			setPublishTime(iso8601dateFormat.format(new Date(System.currentTimeMillis())));
@@ -64,18 +64,18 @@ public class MonitorPointData extends MonitorPointDataToBuffer{
 	}
 	
 	/**
-	 * @return the systemID
+	 * @return the pluginID
 	 */
-	public String getSystemID() {
-		return systemID;
+	public String getPluginID() {
+		return pluginID;
 	}
 
 	/**
-	 * @param systemID the systemID to set
+	 * @param pluginID the pluginID to set
 	 */
-	public void setSystemID(String systemID) {
+	public void setPluginID(String systemID) {
 		Objects.requireNonNull(systemID);
-		this.systemID = systemID;
+		this.pluginID = systemID;
 	}
 
 	/**
@@ -100,7 +100,7 @@ public class MonitorPointData extends MonitorPointDataToBuffer{
 		StringBuilder ret = new StringBuilder("MonitorPointData(id=");
 		ret.append(id);
 		ret.append(", SystemID=");
-		ret.append(systemID);
+		ret.append(pluginID);
 		ret.append(", published at ");
 		ret.append(publishTime);
 		ret.append(", value=");
@@ -124,7 +124,7 @@ public class MonitorPointData extends MonitorPointDataToBuffer{
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		result = prime * result + ((publishTime == null) ? 0 : publishTime.hashCode());
 		result = prime * result + ((sampleTime == null) ? 0 : sampleTime.hashCode());
-		result = prime * result + ((systemID == null) ? 0 : systemID.hashCode());
+		result = prime * result + ((pluginID == null) ? 0 : pluginID.hashCode());
 		result = prime * result + ((monitoredSystemID == null) ? 0 : monitoredSystemID.hashCode());
 		result = prime * result + ((value == null) ? 0 : value.hashCode());
 		return result;
@@ -162,10 +162,10 @@ public class MonitorPointData extends MonitorPointDataToBuffer{
 				return false;
 		} else if (!sampleTime.equals(other.sampleTime))
 			return false;
-		if (systemID == null) {
-			if (other.systemID != null)
+		if (pluginID == null) {
+			if (other.pluginID != null)
 				return false;
-		} else if (!systemID.equals(other.systemID))
+		} else if (!pluginID.equals(other.pluginID))
 			return false;
 		if (monitoredSystemID == null) {
 			if (other.monitoredSystemID != null)

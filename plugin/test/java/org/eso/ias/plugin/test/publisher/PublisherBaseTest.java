@@ -135,7 +135,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		MonitorPointData d = receivedValuesFromUnbufferedPub.get(v.id);
 		assertNotNull("Expected value not published",d);
 		assertTrue("Offered and published values do not match "+v.toString()+"<->"+d.toString(), PublisherTestCommon.match(v,d));
-		assertEquals(pluginId,d.getSystemID());
+		assertEquals(pluginId,d.getPluginID());
 		assertEquals(monitoredSystemId,d.getMonitoredSystemID());
 		assertTrue(d.getPublishTime()!=null && !d.getPublishTime().isEmpty());	
 	}
@@ -206,7 +206,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 			MonitorPointData d = receivedValuesFromUnbufferedPub.get(v.id);
 			assertNotNull("Expected value not published",d);
 			assertTrue("Offered and published values do not match", PublisherTestCommon.match(v,d));
-			assertEquals(pluginId,d.getSystemID());
+			assertEquals(pluginId,d.getPluginID());
 			assertEquals(monitoredSystemId,d.getMonitoredSystemID());
 			assertTrue(d.getPublishTime()!=null && !d.getPublishTime().isEmpty());
 		}
@@ -254,7 +254,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		MonitorPointData d = receivedValuesFromUnbufferedPub.get(lastOffered.id);
 		assertNotNull("Expected value not published",d);
 		assertTrue("Offered and published values do not match", PublisherTestCommon.match(lastOffered,d));
-		assertEquals(pluginId,d.getSystemID());
+		assertEquals(pluginId,d.getPluginID());
 		assertTrue(d.getPublishTime()!=null && !d.getPublishTime().isEmpty());
 	}
 	

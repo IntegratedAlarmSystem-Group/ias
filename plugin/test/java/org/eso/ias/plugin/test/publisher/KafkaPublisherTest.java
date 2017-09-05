@@ -150,7 +150,7 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 		assertEquals(1L,receivedMonitorPoints.size());
 		MonitorPointData mpData = receivedMonitorPoints.get("MP-ID");
 		assertNotNull(mpData);
-		assertEquals(pluginId, mpData.getSystemID());
+		assertEquals(pluginId, mpData.getPluginID());
 		assertEquals(monitoredSystemId, mpData.getMonitoredSystemID());
 		assertEquals(val.longValue(), Long.parseLong(mpData.getValue()));
 	}
@@ -195,7 +195,7 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 			String id = mpIdPrefix+t;
 			MonitorPointData mpData = receivedMonitorPoints.get(id);
 			assertNotNull(mpData);
-			assertEquals(pluginId, mpData.getSystemID());
+			assertEquals(pluginId, mpData.getPluginID());
 			assertEquals(monitoredSystemId, mpData.getMonitoredSystemID());
 			assertEquals(val.intValue(), Integer.parseInt(mpData.getValue()));
 		}
