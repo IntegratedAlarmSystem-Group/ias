@@ -58,6 +58,7 @@ public class BufferedMonitoredSystemDataTest extends PublisherTestCommon {
 	public void testJsonNoValues() throws Exception {
 		BufferedMonitoredSystemData msData = new BufferedMonitoredSystemData();
 		msData.setSystemID(pluginId);
+		msData.setMonitoredSystemID("TheIdOfTheMonitoredSystem");
 		long now = System.currentTimeMillis();
 		String isoDate = iso8601dateFormat.format(new Date(now));
 		msData.setPublishTime(isoDate);
@@ -66,6 +67,7 @@ public class BufferedMonitoredSystemDataTest extends PublisherTestCommon {
 		
 		BufferedMonitoredSystemData receivedData = BufferedMonitoredSystemData.fromJsonString(jsonString);
 		assertEquals(msData.getSystemID(), receivedData.getSystemID());
+		assertEquals(msData.getMonitoredSystemID(), receivedData.getMonitoredSystemID());
 		assertEquals(msData.getPublishTime(), receivedData.getPublishTime());
 		assertNull(receivedData.getMonitorPoints());
 		
@@ -80,6 +82,7 @@ public class BufferedMonitoredSystemDataTest extends PublisherTestCommon {
 	public void testJsonOneValue() throws Exception {
 		BufferedMonitoredSystemData msData = new BufferedMonitoredSystemData();
 		msData.setSystemID(pluginId);
+		msData.setMonitoredSystemID("TheIdOfTheMonitoredSystem");
 		long now = System.currentTimeMillis();
 		String isoDate = iso8601dateFormat.format(new Date(now));
 		msData.setPublishTime(isoDate);
@@ -104,6 +107,7 @@ public class BufferedMonitoredSystemDataTest extends PublisherTestCommon {
 		
 		BufferedMonitoredSystemData receivedData = BufferedMonitoredSystemData.fromJsonString(jsonString);
 		assertEquals(msData.getSystemID(), receivedData.getSystemID());
+		assertEquals(msData.getMonitoredSystemID(), receivedData.getMonitoredSystemID());
 		assertEquals(msData.getPublishTime(), receivedData.getPublishTime());
 		assertEquals(1L,receivedData.getMonitorPoints().size());
 
@@ -125,6 +129,7 @@ public class BufferedMonitoredSystemDataTest extends PublisherTestCommon {
 	public void testJsonManyValues() throws Exception {
 		BufferedMonitoredSystemData msData = new BufferedMonitoredSystemData();
 		msData.setSystemID(pluginId);
+		msData.setMonitoredSystemID("TheIdOfTheMonitoredSystem");
 		long now = System.currentTimeMillis();
 		String isoDate = iso8601dateFormat.format(new Date(now));
 		msData.setPublishTime(isoDate);
@@ -145,6 +150,7 @@ public class BufferedMonitoredSystemDataTest extends PublisherTestCommon {
 		BufferedMonitoredSystemData receivedData = BufferedMonitoredSystemData.fromJsonString(jsonString);
 		
 		assertEquals(msData.getSystemID(), receivedData.getSystemID());
+		assertEquals(msData.getMonitoredSystemID(), receivedData.getMonitoredSystemID());
 		assertEquals(msData.getPublishTime(), receivedData.getPublishTime());
 		assertEquals(values.size(),receivedData.getMonitorPoints().size());
 

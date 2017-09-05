@@ -36,6 +36,11 @@ public class PublisherMaxBufferSizeTest implements PublisherEventsListener {
 	protected final String pluginId = "PublisheMaxBuffer-Test-ID";
 	
 	/**
+	 * The ID of system monitored by the plugin 
+	 */
+	protected final String monitoredSysId = "PublisheMaxBuffer-System-ID";
+	
+	/**
 	 * The name of a server of the plugin for testing
 	 */
 	protected final String pluginServerName = "iasdevel.eso.org";
@@ -95,7 +100,7 @@ public class PublisherMaxBufferSizeTest implements PublisherEventsListener {
 		int poolSize = Runtime.getRuntime().availableProcessors()/2;
 		ScheduledExecutorService schedExecutorSvc= Executors.newScheduledThreadPool(poolSize, new PluginThreadFactory());
 		assertEquals(10L, BufferedPublisherBase.maxBufferSize);
-		publisher = new BufferedListenerPublisher(pluginId, pluginServerName, pluginServerPort, schedExecutorSvc,this);
+		publisher = new BufferedListenerPublisher(pluginId, monitoredSysId,pluginServerName, pluginServerPort, schedExecutorSvc,this);
 		logger.debug("Set up");
 		publisher.setUp();
 		publisher.startSending();

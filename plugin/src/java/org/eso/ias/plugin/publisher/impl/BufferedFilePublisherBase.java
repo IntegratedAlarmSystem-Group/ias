@@ -34,13 +34,20 @@ public abstract class BufferedFilePublisherBase extends BufferedPublisherBase {
 	 * Constructor
 	 * 
 	 * @param pluginId The identifier of the plugin
+	 * @param monitoredSystemId The identifier of the system monitored by the plugin
 	 * @param serverName The name of the server
 	 * @param port The port of the server
 	 * @param executorSvc The executor service
 	 * @param outWriter The output writer
 	 */
-	public BufferedFilePublisherBase(String pluginId, String serverName, int port, ScheduledExecutorService executorSvc, BufferedWriter outWriter) {
-		super(pluginId, serverName, port, executorSvc);
+	public BufferedFilePublisherBase(
+			String pluginId,
+			String monitoredSystemId,
+			String serverName, 
+			int port, 
+			ScheduledExecutorService executorSvc, 
+			BufferedWriter outWriter) {
+		super(pluginId, monitoredSystemId, serverName, port, executorSvc);
 		Objects.requireNonNull(outWriter,"The output stream can't be null");
 		this.outWriter=outWriter;
 	}

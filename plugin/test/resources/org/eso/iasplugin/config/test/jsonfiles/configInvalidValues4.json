@@ -1,5 +1,6 @@
 { 
 	"id":"",
+	"monitoredSystemId":"ACS",
 	"sinkServer":"iasdevel.hq.eso.org",
 	"sinkPort":"8192",
 	"values":[

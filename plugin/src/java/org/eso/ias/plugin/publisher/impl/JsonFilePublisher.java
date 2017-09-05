@@ -24,14 +24,20 @@ public class JsonFilePublisher extends BufferedFilePublisherBase {
 	 * Constructor
 	 * 
 	 * @param pluginId The identifier of the plugin
+	 * @param monitoredSystemId The identifier of the system monitored by the plugin
 	 * @param serverName The name of the server
 	 * @param port The port of the server
 	 * @param executorSvc The executor service
 	 * @param outWriter The output writer to write JSON strings into
 	 */
-	public JsonFilePublisher(String pluginId, String serverName, int port, ScheduledExecutorService executorSvc, BufferedWriter outWriter) {
-		super(pluginId, serverName, port, executorSvc,outWriter);
-		
+	public JsonFilePublisher(
+			String pluginId, 
+			String monitoredSystemId,
+			String serverName, 
+			int port, 
+			ScheduledExecutorService executorSvc, 
+			BufferedWriter outWriter) {
+		super(pluginId, monitoredSystemId,serverName, port, executorSvc,outWriter);
 	}
 	
 	/**

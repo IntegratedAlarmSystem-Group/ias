@@ -26,6 +26,11 @@ public class JsonConversionTest {
 	 * The ID of the plugin
 	 */
 	private final String pluginID = "TheIdOfThePlugin";
+	
+	/**
+	 * The id of the system monitored by the plugin.
+	 */
+	private final String monSysID="Monitored-System-ID";
 
 	@Test
 	public void testAlarmTypeConversion() throws Exception {
@@ -39,24 +44,18 @@ public class JsonConversionTest {
 		FilteredValue fv = new FilteredValue(alarmSample, samples, System.currentTimeMillis());
 		ValueToSend vts = new ValueToSend("IASIO-ALARM-ID", fv);
 		
-		MonitorPointData mpd = new MonitorPointData(pluginID, vts);
+		MonitorPointData mpd = new MonitorPointData(pluginID, monSysID, vts);
 		String jsonRepresentation=mpd.toJsonString();
-		System.out.println("["+jsonRepresentation+"]");
 		
 		MonitorPointData mpdFromJsonStr = MonitorPointData.fromJsonString(jsonRepresentation);
 		assertEquals(mpd,mpdFromJsonStr);
-		
-		System.out.println("Alarm type:");
-		System.out.println(mpd);
-		System.out.println(mpdFromJsonStr);
 	
 		// Even if not implemented yet... Check an array of integers
 		int[] array = new int[] { 0,1,2,3,4};
 		fv = new FilteredValue(array, samples, System.currentTimeMillis());
 		vts = new ValueToSend("IASIO-INT_ARRAY-ID", fv);
-		mpd = new MonitorPointData(pluginID, vts);
+		mpd = new MonitorPointData(pluginID, monSysID, vts);
 		jsonRepresentation=mpd.toJsonString();
-		System.out.println("["+jsonRepresentation+"]");
 		mpdFromJsonStr = MonitorPointData.fromJsonString(jsonRepresentation);
 		assertEquals(mpd,mpdFromJsonStr);
 		

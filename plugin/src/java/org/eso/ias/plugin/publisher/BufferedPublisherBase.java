@@ -36,16 +36,18 @@ public abstract class BufferedPublisherBase extends PublisherBase implements Mon
 	 * Constructor
 	 * 
 	 * @param pluginId The identifier of the plugin
+	 * @param monitoredSystemId The identifier of the system monitored by the plugin
 	 * @param serverName The name of the server
 	 * @param port The port of the server
 	 * @param executorSvc The executor service
 	 */
 	public BufferedPublisherBase(
 			String pluginId,
+			String monitoredSystemId,
 			String serverName, 
 			int port,
 			ScheduledExecutorService executorSvc) {
-		super(pluginId,serverName,port,executorSvc);
+		super(pluginId,monitoredSystemId,serverName,port,executorSvc);
 	}
 	
 	/**
@@ -123,5 +125,6 @@ public abstract class BufferedPublisherBase extends PublisherBase implements Mon
 	public synchronized void setUp() throws PublisherException {
 		super.setUp();
 		monitorPointsToSend.setSystemID(pluginId);
+		monitorPointsToSend.setMonitoredSystemID(monitoredSystemId);
 	}
 }

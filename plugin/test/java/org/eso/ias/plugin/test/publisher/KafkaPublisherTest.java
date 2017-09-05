@@ -56,6 +56,11 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 	private final String pluginId="PluginForKafka";
 	
 	/**
+	 * The ID of the system monitored by the plugin 
+	 */
+	protected final String monitoredSystemId = "Kafka-Monitored-System-ID";
+	
+	/**
 	 * The name of the server where kafka runs
 	 */
 	private final String serverName="localhost";
@@ -94,7 +99,7 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 		logger.info("Initializing...");
 		int poolSize = Runtime.getRuntime().availableProcessors()/2;
 		schedExecutorSvc= Executors.newScheduledThreadPool(poolSize, new PluginThreadFactory());
-		kPub = new KafkaPublisher(pluginId, serverName, port, schedExecutorSvc);
+		kPub = new KafkaPublisher(pluginId, monitoredSystemId, serverName, port, schedExecutorSvc);
 		logger.info("Kafka producer initialized");
 		
 		consumer = new SimpleKafkaConsumer(KafkaPublisher.defaultTopicName, serverName, port,this);
@@ -145,6 +150,8 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 		assertEquals(1L,receivedMonitorPoints.size());
 		MonitorPointData mpData = receivedMonitorPoints.get("MP-ID");
 		assertNotNull(mpData);
+		assertEquals(pluginId, mpData.getSystemID());
+		assertEquals(monitoredSystemId, mpData.getMonitoredSystemID());
 		assertEquals(val.longValue(), Long.parseLong(mpData.getValue()));
 	}
 	
@@ -188,6 +195,8 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 			String id = mpIdPrefix+t;
 			MonitorPointData mpData = receivedMonitorPoints.get(id);
 			assertNotNull(mpData);
+			assertEquals(pluginId, mpData.getSystemID());
+			assertEquals(monitoredSystemId, mpData.getMonitoredSystemID());
 			assertEquals(val.intValue(), Integer.parseInt(mpData.getValue()));
 		}
 	}

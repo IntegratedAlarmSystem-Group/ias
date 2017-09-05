@@ -100,9 +100,14 @@ public abstract class PublisherBase implements MonitorPointSender {
 	public final int serverPort;
 	
 	/**
-	 * The ID of of the plugin.
+	 * The ID of the plugin.
 	 */
 	public final String pluginId;
+	
+	/**
+	 * The ID of the system monitored by the plugin.
+	 */
+	public final String monitoredSystemId;
 	
 	/**
 	 * The map to store the monitor points received during the throttling time interval.
@@ -180,12 +185,14 @@ public abstract class PublisherBase implements MonitorPointSender {
 	 * Constructor
 	 * 
 	 * @param pluginId The identifier of the plugin
+	 * @param monitoredSystemId The identifier of the system monitored by the plugin
 	 * @param serverName The name of the server
 	 * @param port The port of the server
 	 * @param executorSvc The executor service
 	 */
 	public PublisherBase(
 			String pluginId,
+			String monitoredSystemId,
 			String serverName, 
 			int port,
 			ScheduledExecutorService executorSvc) {
@@ -193,6 +200,10 @@ public abstract class PublisherBase implements MonitorPointSender {
 			throw new IllegalArgumentException("The ID can't be null nor empty");
 		}
 		this.pluginId=pluginId;
+		if (monitoredSystemId==null || monitoredSystemId.isEmpty()) {
+			throw new IllegalArgumentException("The ID of the monitored system can't be null nor empty");
+		}
+		this.monitoredSystemId=monitoredSystemId;
 		if (serverName==null || serverName.isEmpty()) {
 			throw new IllegalArgumentException("The sink server name can't be null nor empty");
 		}
@@ -287,7 +298,7 @@ public abstract class PublisherBase implements MonitorPointSender {
 		// by this (already synchronized) method
 		synchronized (monitorPoints) {
 			monitorPoints.values().forEach(mpv -> {
-				MonitorPointData mpData=new MonitorPointData(pluginId,mpv);
+				MonitorPointData mpData=new MonitorPointData(pluginId,monitoredSystemId,mpv);
 				monitorPointsSent.incrementAndGet();
 				try {
 					publishedMessages.incrementAndGet();

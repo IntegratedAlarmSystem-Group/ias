@@ -120,6 +120,11 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 	protected final String pluginId = "IAS-Publisher-Test-ID";
 	
 	/**
+	 * The ID of the system monitored bu the plugin 
+	 */
+	protected final String monitoredSystemId = "Monitored-System-ID";
+	
+	/**
 	 * The name of a server of the plugin for testing
 	 */
 	protected final String pluginServerName = "iasdev.hq.eso.org";
@@ -317,8 +322,8 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 	public void setUp() {
 		// Build the publisher
 		int poolSize = Runtime.getRuntime().availableProcessors()/2;
-		bufferedPublisher = new BufferedListenerPublisher(pluginId, pluginServerName, pluginServerPort, schedExecutorSvc,this);
-		unbufferedPublisher = new ListenerPublisher(pluginId, pluginServerName, pluginServerPort, schedExecutorSvc,this);
+		bufferedPublisher = new BufferedListenerPublisher(pluginId, monitoredSystemId, pluginServerName, pluginServerPort, schedExecutorSvc,this);
+		unbufferedPublisher = new ListenerPublisher(pluginId, monitoredSystemId,pluginServerName, pluginServerPort, schedExecutorSvc,this);
 		logger.debug("Set up");
 	}
 	

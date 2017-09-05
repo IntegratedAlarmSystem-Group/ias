@@ -77,6 +77,7 @@ public class ListenerPublisher extends PublisherBase {
 	 * Constructor 
 	 * 
 	 * @param pluginId The identifier of the plugin
+	 * @param monitoredSystemId The identifier of the system monitored by the plugin
 	 * @param serverName The name of the server
 	 * @param port The port of the server
 	 * @param executorSvc The executor service
@@ -86,11 +87,12 @@ public class ListenerPublisher extends PublisherBase {
 	 */
 	public ListenerPublisher(
 			String pluginId, 
-			String serverName, 
+			String monitoredSystemId,
+			String serverName,
 			int port, 
 			ScheduledExecutorService executorSvc,
 			PublisherEventsListener listener) {
-		super(pluginId, serverName, port, executorSvc);
+		super(pluginId, monitoredSystemId,serverName, port, executorSvc);
 		this.listener=listener;
 		logger.info("Created");
 	}

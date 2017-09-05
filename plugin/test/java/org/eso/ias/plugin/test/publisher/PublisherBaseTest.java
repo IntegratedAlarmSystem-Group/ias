@@ -136,6 +136,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		assertNotNull("Expected value not published",d);
 		assertTrue("Offered and published values do not match "+v.toString()+"<->"+d.toString(), PublisherTestCommon.match(v,d));
 		assertEquals(pluginId,d.getSystemID());
+		assertEquals(monitoredSystemId,d.getMonitoredSystemID());
 		assertTrue(d.getPublishTime()!=null && !d.getPublishTime().isEmpty());	
 	}
 	
@@ -206,6 +207,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 			assertNotNull("Expected value not published",d);
 			assertTrue("Offered and published values do not match", PublisherTestCommon.match(v,d));
 			assertEquals(pluginId,d.getSystemID());
+			assertEquals(monitoredSystemId,d.getMonitoredSystemID());
 			assertTrue(d.getPublishTime()!=null && !d.getPublishTime().isEmpty());
 		}
 	}

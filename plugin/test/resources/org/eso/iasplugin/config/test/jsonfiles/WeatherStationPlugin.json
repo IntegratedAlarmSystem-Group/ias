@@ -1,5 +1,6 @@
 { 
-	"id":"DumbWeatherStation",
+	"id":"DumbWeatherStationPlugin",
+	"monitoredSystemId":"WeatherStationSystem",
 	"sinkServer":"localhost",
 	"sinkPort":"9092",
 	"properties": [],

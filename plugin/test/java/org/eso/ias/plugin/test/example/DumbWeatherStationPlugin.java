@@ -211,6 +211,7 @@ public class DumbWeatherStationPlugin extends Plugin {
 		
 		JsonFilePublisher jsonPublisher = new JsonFilePublisher(
 				config.getId(), 
+				config.getMonitoredSystemId(),
 				config.getSinkServer(), 
 				config.getSinkPort(), 
 				Plugin.getScheduledExecutorService(), 

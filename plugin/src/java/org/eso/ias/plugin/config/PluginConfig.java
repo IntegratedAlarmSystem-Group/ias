@@ -33,6 +33,11 @@ public class PluginConfig {
 	private String id;
 	
 	/**
+	 * The ID of the system monitored by the plugin
+	 */
+	private String monitoredSystemId;
+	
+	/**
 	 * The name of the server to send monitor point values
 	 * and alarms to
 	 */
@@ -66,7 +71,9 @@ public class PluginConfig {
 	}
 
 	/**
-	 * @param id the id to set
+	 * Setter
+	 * 
+	 * @param id the id of the plugin
 	 */
 	public void setId(String id) {
 		this.id = id;
@@ -170,6 +177,10 @@ public class PluginConfig {
 			logger.error("Invalid null or empty plugin ID");
 			return false;
 		}
+		if (monitoredSystemId==null || monitoredSystemId.isEmpty()) {
+			logger.error("Invalid null or empty monitored system ID");
+			return false;
+		}
 		if (sinkServer==null || sinkServer.isEmpty()) {
 			logger.error("Invalid null or empty sink server name");
 			return false;
@@ -266,5 +277,23 @@ public class PluginConfig {
 	 */
 	public void setProperties(Property[] properties) {
 		this.properties = properties;
+	}
+
+	/**
+	 * Getter
+	 * 
+	 * @return The ID of the system monitored by the plugin
+	 */
+	public String getMonitoredSystemId() {
+		return monitoredSystemId;
+	}
+
+	/**
+	 * Setter
+	 * 
+	 * @param monitoredSystemId: The ID of the system monitored by the plugin
+	 */
+	public void setMonitoredSystemId(String monitoredSystemId) {
+		this.monitoredSystemId = monitoredSystemId;
 	}
 }

@@ -148,6 +148,11 @@ public class Plugin implements ChangeValueListener {
 	public final String pluginId;
 	
 	/**
+	 * The identifier of the system monitored by this plugin
+	 */
+	public final String monitoredSystemId;
+	
+	/**
 	 * Signal that the plugin must terminate
 	 */
 	private final AtomicBoolean closed = new AtomicBoolean(false);
@@ -179,12 +184,14 @@ public class Plugin implements ChangeValueListener {
 	 * Build a plugin with the passed parameters.
 	 * 
 	 * @param id The Identifier of the plugin
+	 * @param monitoredSystemId: the identifier of the monitored system
 	 * @param values the monitor point values
 	 * @param props The user defined properties 
 	 * @param sender The publisher of monitor point values to the IAS core
 	 */
 	public Plugin(
 			String id, 
+			String monitoredSystemId,
 			Collection<Value> values,
 			Properties props,
 			MonitorPointSender sender) {
@@ -192,6 +199,10 @@ public class Plugin implements ChangeValueListener {
 			throw new IllegalArgumentException("The ID can't be null nor empty");
 		}
 		this.pluginId=id.trim();
+		if (monitoredSystemId==null || monitoredSystemId.trim().isEmpty()) {
+			throw new IllegalArgumentException("The ID of th emonitored system can't be null nor empty");
+		}
+		this.monitoredSystemId=monitoredSystemId.trim();
 		if (values==null || values.isEmpty()) {
 			throw new IllegalArgumentException("No monitor points definition found"); 
 		}
@@ -245,6 +256,7 @@ public class Plugin implements ChangeValueListener {
 			MonitorPointSender sender) {
 		this(
 				config.getId(),
+				config.getMonitoredSystemId(),
 				config.getValuesAsCollection(),
 				config.getProps(),
 				sender);

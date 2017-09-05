@@ -1,6 +1,7 @@
 package org.eso.ias.plugin.publisher;
 
 import java.util.Collection;
+import java.util.Objects;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,6 +30,11 @@ public class BufferedMonitoredSystemData {
 	 * The id of the plugin.
 	 */
 	private String systemID;
+	
+	/**
+	 * The id of the system monitored by the plugin.
+	 */
+	private String monitoredSystemID;
 	
 	/**
 	 * ISO-8601 formatted time when the 
@@ -63,6 +69,7 @@ public class BufferedMonitoredSystemData {
 	 * @param systemID the systemID to set
 	 */
 	public void setSystemID(String systemID) {
+		Objects.requireNonNull(systemID);
 		this.systemID = systemID;
 	}
 
@@ -106,7 +113,8 @@ public class BufferedMonitoredSystemData {
 	 */
 	public String toJsonString() throws PublisherException {
 		try {
-			return MAPPER.writeValueAsString(this);
+			String ret= MAPPER.writeValueAsString(this);
+			return ret;
 		} catch (JsonProcessingException jpe) {
 			throw new PublisherException("Error creating the JSON string", jpe);
 		}
@@ -131,6 +139,8 @@ public class BufferedMonitoredSystemData {
 	public String toString() {
 		StringBuilder ret = new StringBuilder("Monitored System Data packet [ID=");
 		ret.append(systemID);
+		ret.append(", monitored system ID=");
+		ret.append(monitoredSystemID);
 		ret.append(", published at ");
 		ret.append(publishTime);
 		ret.append(", ");
@@ -142,5 +152,24 @@ public class BufferedMonitoredSystemData {
 		});
 		ret.append(']');
 		return ret.toString();
+	}
+
+	/**
+	 * Getter
+	 * 
+	 * @return The id of the system monitored by the plugin.
+	 */
+	public String getMonitoredSystemID() {
+		return monitoredSystemID;
+	}
+
+	/**
+	 * Setter
+	 * 
+	 * @param monitoredSystemID: set the id of the system monitored by the plugin.
+	 */
+	public void setMonitoredSystemID(String monitoredSystemID) {
+		Objects.requireNonNull(monitoredSystemID);
+		this.monitoredSystemID = monitoredSystemID;
 	}
 }

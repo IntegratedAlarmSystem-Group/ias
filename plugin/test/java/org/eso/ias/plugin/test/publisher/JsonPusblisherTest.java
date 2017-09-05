@@ -44,9 +44,14 @@ public class JsonPusblisherTest {
 	private JsonFilePublisher publisher;
 	
 	/**
-	 * Plugin/System identifier
+	 * Plugin identifier
 	 */
-	private static final String SYSTEM_ID = "SystemIdent";
+	private static final String PLUGIN_ID = "SystemIdent";
+	
+	/**
+	 * Monitored System identifier
+	 */
+	private static final String MONITORED_SYSTEM_ID = "MonSysIdent";
 	
 	/**
 	 * The name of the server (ignored by the JSON publisher)
@@ -67,10 +72,6 @@ public class JsonPusblisherTest {
 	 * The logger
 	 */
 	private final static Logger logger = LoggerFactory.getLogger(JsonPusblisherTest.class);
-
-	public JsonPusblisherTest() {
-		
-	}
 	
 	@Before
 	public void setUp() throws Exception {
@@ -81,7 +82,8 @@ public class JsonPusblisherTest {
 		
 		int poolSize = Runtime.getRuntime().availableProcessors()/2;
 		ScheduledExecutorService schedExecutorSvc= Executors.newScheduledThreadPool(poolSize, new PluginThreadFactory());
-		publisher = new JsonFilePublisher(SYSTEM_ID, SERVER_NAME, PORT, schedExecutorSvc, writer);
+		publisher = new JsonFilePublisher(PLUGIN_ID, MONITORED_SYSTEM_ID, SERVER_NAME, PORT, schedExecutorSvc, writer);
+		logger.info("JsonFilePublisher built for plugin {} monitoring system {}",PLUGIN_ID,MONITORED_SYSTEM_ID);
 		publisher.setUp();
 		publisher.startSending();
 	}
@@ -105,7 +107,6 @@ public class JsonPusblisherTest {
 		Map<String, ValueToSend> mapOfValues = new HashMap<>();
 
 		for (ValueToSend v: values) {
-			System.out.println("Offering "+v.toString());
 			publisher.offer(v);
 			mapOfValues.put(v.id, v);
 		};
@@ -116,13 +117,13 @@ public class JsonPusblisherTest {
 		// Read JSON data from file
 		ObjectMapper mapper = new ObjectMapper();
 		BufferedMonitoredSystemData msData = mapper.readValue(jsonFile, BufferedMonitoredSystemData.class);
-		assertEquals(SYSTEM_ID,msData.getSystemID());
+		assertEquals(PLUGIN_ID,msData.getSystemID());
+		assertEquals(MONITORED_SYSTEM_ID,msData.getMonitoredSystemID());
 		assertEquals(values.size(),msData.getMonitorPoints().size());
 		
 		// Check the correctness of all the  MonitorPointData in the date 
 		// against the submitted FilteredValue-s
 		for (MonitorPointDataToBuffer mpd: msData.getMonitorPoints()) {
-			System.out.println(mpd.toString());
 			ValueToSend fv = mapOfValues.get(mpd.getId());
 			assertNotNull(fv);
 			assertTrue("Filtered value and the published data mismatch",PublisherTestCommon.match(fv, mpd));

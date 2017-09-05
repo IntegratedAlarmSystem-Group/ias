@@ -1,6 +1,7 @@
 package org.eso.ias.plugin.publisher;
 
 import java.util.Date;
+import java.util.Objects;
 
 import org.eso.ias.plugin.ValueToSend;
 
@@ -26,6 +27,11 @@ public class MonitorPointData extends MonitorPointDataToBuffer{
 	private String systemID;
 	
 	/**
+	 * The id of the system monitored by the plugin.
+	 */
+	private String monitoredSystemID;
+	
+	/**
 	 * ISO-8601 formatted time when the 
 	 * data structure has been sent to the IAS core
 	 */
@@ -45,11 +51,13 @@ public class MonitorPointData extends MonitorPointDataToBuffer{
 	 * Constructor
 	 * 
 	 * @param pluginID: The ID of the plugin
+	 * @param monitoredSystemID: The id of the system monitored by the plugin
 	 * @param value The filtered value produced by the monitored system
 	 */
-	public MonitorPointData(String pluginID,ValueToSend value) {
+	public MonitorPointData(String pluginID, String monitoredSystemID,ValueToSend value) {
 		super(value);
 		setSystemID(pluginID);
+		setMonitoredSystemID(monitoredSystemID);
 		synchronized (iso8601dateFormat) {
 			setPublishTime(iso8601dateFormat.format(new Date(System.currentTimeMillis())));
 		}
@@ -66,6 +74,7 @@ public class MonitorPointData extends MonitorPointDataToBuffer{
 	 * @param systemID the systemID to set
 	 */
 	public void setSystemID(String systemID) {
+		Objects.requireNonNull(systemID);
 		this.systemID = systemID;
 	}
 
@@ -116,6 +125,7 @@ public class MonitorPointData extends MonitorPointDataToBuffer{
 		result = prime * result + ((publishTime == null) ? 0 : publishTime.hashCode());
 		result = prime * result + ((sampleTime == null) ? 0 : sampleTime.hashCode());
 		result = prime * result + ((systemID == null) ? 0 : systemID.hashCode());
+		result = prime * result + ((monitoredSystemID == null) ? 0 : monitoredSystemID.hashCode());
 		result = prime * result + ((value == null) ? 0 : value.hashCode());
 		return result;
 	}
@@ -157,6 +167,11 @@ public class MonitorPointData extends MonitorPointDataToBuffer{
 				return false;
 		} else if (!systemID.equals(other.systemID))
 			return false;
+		if (monitoredSystemID == null) {
+			if (other.monitoredSystemID != null)
+				return false;
+		} else if (!monitoredSystemID.equals(other.monitoredSystemID))
+			return false;
 		if (value == null) {
 			if (other.value != null)
 				return false;
@@ -196,5 +211,22 @@ public class MonitorPointData extends MonitorPointDataToBuffer{
 		} catch (Exception e) {
 			throw new PublisherException("Error parsing the JSON string ["+jsonString+"]",e);
 		}
+	}
+
+	/**
+	 * 
+	 * @return The id of the system monitored by the plugin
+	 */
+	public String getMonitoredSystemID() {
+		return monitoredSystemID;
+	}
+
+	/**
+	 * 
+	 * @param monitoredSystemID The id of the system monitored by the plugin
+	 */
+	public void setMonitoredSystemID(String monitoredSystemID) {
+		Objects.requireNonNull(monitoredSystemID);
+		this.monitoredSystemID = monitoredSystemID;
 	}
 }
