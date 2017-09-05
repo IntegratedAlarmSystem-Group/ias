@@ -82,7 +82,7 @@ public abstract class IASValueBase {
 	
 	@Override
 	public String toString() {
-		StringBuilder ret = new StringBuilder("IASValue: id=");
+		StringBuilder ret = new StringBuilder("IASValueBase: id=");
 		ret.append(id);
 		ret.append(", runningID=");
 		ret.append(runningId);
