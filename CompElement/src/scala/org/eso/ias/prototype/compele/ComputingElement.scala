@@ -82,7 +82,7 @@ abstract class ComputingElement[T](
     val props: Some[Properties] = Some(new Properties())) 
     extends Runnable {
   
-  require(id.iDType.get==IdentifierType.ASCE)
+  require(id.idType.get==IdentifierType.ASCE)
   require(requiredInputs!=None && !requiredInputs.isEmpty,"Invalid (empty or null) list of required inputs to the component")
   require(requiredInputs.size==inputs.size,"Inconsistent size of lists of inputs")
   
