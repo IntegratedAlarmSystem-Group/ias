@@ -1,25 +1,19 @@
 package org.eso.ias.prototype.input.java;
 
+import org.eso.ias.prototype.input.Identifier;
+
 /**
- * The possible types of identifier.
+ * The types of an identifier.
  * <P>
- * The identifier is composed of a unique ID plus the 
- * identifier of the owner of a IAS item like for example 
- * the output of the DASU is composed by the ID of the IASIO
- * plus the ASCE that produced it plus the DASU where it runs.
+ * There is a relationship between types, meaning that
+ * a type can have zero, one or more types of parents of a specified type.
+ * 
+ * 
  *  
  * @author acaproni
- *
+ * @see Identifier
  */
 public enum IdentifierType {
-	
-	/**
-	 * The value of a monitor point or alarm
-	 * produced by a monitored software system
-	 * <P>
-	 * For example: [ID=Wind_Direction, type={@link #MONITOR_POINT_VALUE}]
-	 */
-	MONITOR_POINT_VALUE,
 	
 	/**
 	 * The type for the monitored software system that
@@ -28,7 +22,7 @@ public enum IdentifierType {
 	 * For example: [ID=ACS, type={@link #MONITORED_SOFTWARE_SYSTEM}]
 	 * 
 	 */
-	MONITORED_SOFTWARE_SYSTEM,
+	MONITORED_SOFTWARE_SYSTEM(),
 	
 	/**
 	 * The type of a plugin that retrieved
@@ -36,20 +30,45 @@ public enum IdentifierType {
 	 * <P>
 	 * For example: [ID=ACS_Plugin, type={@link #PLUGIN}
 	 */
-	PLUGIN,
+	PLUGIN(MONITORED_SOFTWARE_SYSTEM),
 	
 	/**
-	 * The type of IASIO identifier
+	 * The type of the identifier for the converter
+	 * that translates a value or alarm produced by a remote
+	 * monitored system into a valid IAS data structure.
 	 */
-	IASIO,
+	CONVERTER(PLUGIN),
 	
 	/**
-	 * The type of a computing element identifier
+	 * The type of a supervisor identifier
 	 */
-	ASCE,
+	SUPERVISOR(),
 	
 	/**
 	 * The type of a distributed unit identifier
 	 */
-	DASU;
+	DASU(SUPERVISOR),
+	
+	/**
+	 * The type of a computing element identifier
+	 */
+	ASCE(DASU),
+	
+	/**
+	 * The type of IASIO identifier
+	 */
+	IASIO(CONVERTER,ASCE);
+	
+	/**
+	 * Possible parents of a identifier
+	 */
+	public final IdentifierType[] parents;
+	
+	/**
+	 * Constructor 
+	 * @param theParents The parents of the type
+	 */
+	private IdentifierType(IdentifierType... theParents) {
+		parents = theParents;
+	}
 }

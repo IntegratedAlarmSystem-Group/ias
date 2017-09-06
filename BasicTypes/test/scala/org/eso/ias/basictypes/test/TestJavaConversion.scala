@@ -22,9 +22,12 @@ class TestJavaConversion  extends FlatSpec {
   def fixture = {
     new {
       // The IDs
-      val parentId = new Identifier(Some[String]("ParentID"),Some(IdentifierType.ASCE),None)
-      val doubleHioId = new Identifier(Some[String]("DoubleID"),Some(IdentifierType.DASU),Option[Identifier](parentId))
-      val alarmHioId = new Identifier(Some[String]("AlarmID"),Some(IdentifierType.MONITOR_POINT_VALUE),Option[Identifier](parentId))
+      val supervId = new Identifier(Some[String]("superVID"),Some(IdentifierType.SUPERVISOR),None)
+      val dasuId = new Identifier(Some[String]("dasuVID"),Some(IdentifierType.DASU),Some(supervId))
+      val asceId = new Identifier(Some[String]("asceVID"),Some(IdentifierType.ASCE),Some(dasuId))      
+      
+      val doubleHioId = new Identifier(Some[String]("DoubleID"),Some(IdentifierType.IASIO),Option[Identifier](asceId))
+      val alarmHioId = new Identifier(Some[String]("AlarmID"),Some(IdentifierType.IASIO),Option[Identifier](asceId))
       // Refresh rate
       val refRate = InOut.MinRefreshRate+10
       // Modes

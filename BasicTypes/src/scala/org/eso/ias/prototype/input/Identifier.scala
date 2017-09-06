@@ -9,102 +9,137 @@ object Identifier {
   /**
    * The separator between the ID and the parentID to build the runningID
    */
-  val separator = ':'
+  val separator = "@"
 }
 
 /**
- * The immutable Identifier is composed of the uniqueID plus the ID of the parent.
+ * The immutable Identifier is a recursive data structure composed of a unique ID 
+ * plus the ID of the parent.
+ * The ID, in turn, is a couple with unique identifier plus the type of the identifier
+ * 
+ * The identifier (id,type) is the unique identifier of an element of the core.
+ * Even if not intuitive (and strongly discouraged), it is possible to have different elements 
+ * like for example a DASU and an ASCE with the same ids because their types differ.
  *
  * The parent of an item is the "owner" of the item itself:
  * <UL>
- * 	<LI> the owner of a monitor point is the alarm system component
- *       that receive the monitor point as input
- *  <LI> the owner of a component is the DAS where the component runs
- *  <LI> A DAS has no parent because nobody owns a DAS but they all
- *       collaborate to the functioning of the whole alarm system 
+ * 	<LI> the owner of a monitor point is the monitored system that produced it
+ *  <LI> the owner of a component is the DASU where the component runs
+ *  <LI> the owner of the DASU is the Supervisor where the DASU runs
+ *  <LI> the Supervisor has no owner, being a the top level of the inclusion
  * </UL>
  * 
- * This definition allows to have the same monitor point or component
- * connected to different part of system: they have the same ID but differs from 
- * the parent ID.
+ * Another way to think of an Identifier is a way to describe the IAS components
+ * that contribute to generate a IASIO. The identifier of all the other IAS components
+ * can be deducted in the same way.
+ * There are 2 possible way to generate a IASIO: getting a monitored value of alarm from
+ * a remote monitored system and inject into the core or the output of a ASCE/DASU.
+ * <BR>
+ * In the former case the IAS components that collaborate to produce the IASIOs are
+ * the monitored system, the plugin who gets the value, the converter that translated 
+ * the value in a IAS data structure. 
+ * In the latter case the components that collaborate to generate a IASIO are the 
+ * the Supervisor, the DASU and the ASCE.
+ * <BR>
+ * There are therefore only 2 possible types of identifiers, for the 2 cases described upon:
+ * <UL>
+ * 	<LI>Monitored system->->Plugin->Converter->IASIO
+ * 	<LI>Supervisor->DASU->ASCE->IASIO
+ * </UL> 
+ * 
+ * The constructor checks if the Identifier that is going to build is compatible
+ * with the type of the passed parent. 
+ * 
+ * This definition of the identifier shows the deployment because the parentID depends
+ * on where/how an element is calculated deployed. 
+ * The id of an item is supposed to be unique in the system: the deployment information
+ * is mostly useful for debugging as it allows to follow the computation path
+ * of a IASIO.
  * 
  * At run-time, to avoid traversing the parents, a unique ID is generated
  * in form of a string. 
  * 
  * The class is Iterable by definition as it contains a reference to the
  * Identifier of the parent.
- * 
+ *  
+ * @constructor Builds an identifier with a ID, a type and its parent  
  * @param id: The unique identifier
+ * @param iDType: The type of the identifier
  * @param parentID: The identifier of the parent
  */
-class Identifier(val id: Some[String], val iDType: Some[IdentifierType], val parentID: Option[Identifier]) 
-extends Ordered[Identifier] with Iterable[Identifier] {
+class Identifier(val id: Some[String], val idType: Some[IdentifierType], val parentID: Option[Identifier]) 
+extends {
   require (!id.get.isEmpty)
-  require(id.get.indexOf(Identifier.separator) == -1)
-  require(isAcyclic)
+  require(id.get.indexOf(Identifier.separator) == -1,"Invalid character "+Identifier.separator+" in identifier "+id.get)
+  require(isValidParentType(idType.get, parentID), "Invalid parent for "+idType.get)
    
   /**
    * The runningID, composed of the id plus the id of the parents
-   * allows to uniquely identify at object at run time
+   * allows to uniquely identify at object at run time but note
+   * that it brings deployment information so it cannot be used
+   * as a unique identifier because changing the deployment would trigger 
+   * a change of the ID.
+   * 
+   * The runningID is composed of the IDs only i.e. without
+   * the types
    */
-  val runningID = buildRunningID(Option[Identifier](this))
+  lazy val runningID = buildRunningID(Option[Identifier](this))
   
-  def iterator: Iterator[Identifier] = {
-    var last = Option[Identifier](this)
-    new Iterator[Identifier]() {
-      def hasNext: Boolean = last!=None
-      def next(): Identifier = {
-        val toRet= last
-        last = last.get.parentID
-        toRet.get
-      }
-    }
+  /**
+   * The fullRunning is the complete version of the runningID that 
+   * includes also the type of each ID.
+   * 
+   * It brings deployment information for which aoolies the same consideration of
+   * runningID
+   * 
+   * @see runningID
+   */
+  lazy val fullRunningID=buildFullRunningID(Option[Identifier](this));
+  
+  /**
+   * Check if the passed identifier is compatible
+	 * with the type of the passed parent.
+   * 
+   * As described in the constructor each type has a subset of types
+   * that can be set as parent.
+   * 
+   * @param theType: the type whose compatibility must be checked
+   * @parm parent Its parent
+   */
+  def isValidParentType(theType: IdentifierType, parent: Option[Identifier]): Boolean = {
+    parent.fold(theType.parents.length==0)(pId => theType.parents.contains(pId.idType.get))
   }
   
   /**
-   * Build the running ID from the passed id and the Identifier's of the parents.
+   * Build a string representation of the identifier and its parents
+   * formatting each identifier with the passed method
    * 
-   * @param theID: the IDentifier to build the runningID
+   * @param theID The identifier to build the string representation
+   * @param format: the function to customize the output of the identifier
+   */
+  private def buildFormattedID(theID: Option[Identifier], format: (Identifier)=>String): String = {
+    theID.fold("")( aId => aId.parentID.fold(format(aId))(pId => buildFormattedID(Some(pId),format)+Identifier.separator+format(aId)))
+  }
+  
+  /**
+   * Build the full running ID from the passed id and its the parents.
+   * 
+   * @param theID: the Identifier to build the runningID
+   * @return The running identifier of the passed identifier
+   */
+  private def buildFullRunningID(theID: Option[Identifier]): String = {
+    buildFormattedID(theID, (ide: Identifier) => "("+ide.id.get+","+ide.idType.get.toString()+")")
+  }
+  
+  /**
+   * Build the running ID from the passed id and its parents.
+   * 
+   * @param theID: the Identifier to build the runningID
    * @return The running identifier of the passed identifier
    */
   private def buildRunningID(theID: Option[Identifier]): String = {
-    if (theID.get.parentID==None) theID.get.id.get
-    else theID.get.id.get + Identifier.separator + buildRunningID(theID.get.parentID)
+    buildFormattedID(theID, (ide: Identifier) => ide.id.get)
   }
   
-  /**
-   * The list is ordered with this element being the first 
-   * element of the list and the last parent being the last
-   * item of the list
-   * 
-   * @return The ID as a list of identifiers
-   */
-  def asListOfIdentiers(): List[Identifier] = iterator.toList
-  
-  /**
-   * Check if the same ID appears more then once
-   * between the parents: if it is the case then there is a cyclic
-   * between the dependencies.
-   * 
-   * @param theID: the IDentifier to check for cycles
-   */
-  def isAcyclic(): Boolean = {
-    if (parentID==None) true
-    else {
-      val ids = asListOfIdentiers
-      !ids.exists { id => id.asListOfIdentiers().tail.contains(id) }
-    }
-  }
-  
-  /**
-   * Result of comparing this with operand that.
-   * 
-   * The comparison is delegated to the comparing of the runnigIDs strings.
-   * 
-   * @param that: The Identifier to compare with this one.
-   * @see Ordered
-   */
-  def compare(that: Identifier) = this.runningID.compare(that.runningID)
-  
-  override def toString = runningID
+  override def toString = fullRunningID
 }
