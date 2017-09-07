@@ -6,10 +6,77 @@ import org.eso.ias.prototype.input.java.IdentifierType
  * Companion object
  */
 object Identifier {
+  
   /**
-   * The separator between the ID and the parentID to build the runningID
+   * The separator between the ID and the parentID of the
+   * runningID and the fullRunningID
    */
   val separator = "@"
+  
+  /**
+   * In the fullRunningID, the id and the type are grouped
+   * together to form a couple
+   * 
+   * coupleGroupPrefix is the prexix to group them in a string
+   */
+  val coupleGroupPrefix = "("
+  
+  /**
+   * In the fullRunningID, the id and the type are grouped
+   * together to form a couple
+   * 
+   * coupleGroupSuffix is the suffix to group them in a string
+   */
+  val coupleGroupSuffix = ")"
+  
+  /**
+   * In the fullRunningID, the id and the type are grouped
+   * together to form a couple
+   * 
+   * coupleSeparator is the separator between them in a string
+   */
+  val coupleSeparator = ":"
+  
+  /**
+   * Factory method to to build a identifier
+   * from the passed fullRunningId string.
+   * 
+   * This method creates all the Identifiers specified in the
+   * string and link them in the chain of parents.
+   * 
+   * @param fullRunningId the not null nor empty fullRunningId
+   * @return a new Identifier
+   */
+  def apply(fullRunningId: String): Identifier = {
+    require(Option(fullRunningId).isDefined)
+    require(fullRunningId.size>0,"Invalid empty identifier")
+    
+    // The id and type of each element passed in the parameter
+    val identifiersDescr=fullRunningId.split(separator)
+    
+    var prevIdent: Option[Identifier] = None
+    for (couple <- identifiersDescr) {
+      // Clean the string from prefix and suffix
+      val cleanedCouple=couple.substring(Identifier.coupleGroupPrefix.size, couple.size-Identifier.coupleGroupSuffix.size)
+      // The 2 parts of the couple (id and type)
+      val identParts = cleanedCouple.split(Identifier.coupleSeparator)
+      val idStr = identParts(0)
+      val typeStr = identParts(1)
+      
+      println("PROCESSING: ("+idStr+","+typeStr+")")
+      
+      prevIdent = Some(new Identifier(Some(idStr),Some(IdentifierType.valueOf(typeStr)),prevIdent))
+    }
+    prevIdent.get
+  }
+  
+  /**
+   * Extractor
+   */
+  def unapply(id: Identifier): String = {
+    require(Option(id).isDefined)
+    id.fullRunningID
+  }
 }
 
 /**
@@ -97,6 +164,20 @@ extends {
   lazy val fullRunningID=buildFullRunningID(Option[Identifier](this));
   
   /**
+   * Auxiliary constructor, mostly to ease java/scala inter-operability.
+   * 
+   * It delegates to the constructor
+   * 
+   * @param id: the identifier
+   * @param idType the type of the identifier
+   * @parm parent the parent of the identifier, can be <code>null</code>
+   * @return a new Identifier
+   */
+  def this(id: String, idType: IdentifierType, parent: Identifier) = {
+    this(Some(id),Some(idType),Option(parent))
+  }
+  
+  /**
    * Check if the passed identifier is compatible
 	 * with the type of the passed parent.
    * 
@@ -128,7 +209,12 @@ extends {
    * @return The running identifier of the passed identifier
    */
   private def buildFullRunningID(theID: Option[Identifier]): String = {
-    buildFormattedID(theID, (ide: Identifier) => "("+ide.id.get+","+ide.idType.get.toString()+")")
+    buildFormattedID(theID, (ide: Identifier) => 
+      Identifier.coupleGroupPrefix +
+      ide.id.get +
+      Identifier.coupleSeparator + 
+      ide.idType.get.toString() +
+      Identifier.coupleGroupSuffix)
   }
   
   /**

@@ -91,12 +91,22 @@ class TestIdentifier extends FlatSpec {
     
   }
   
+  
   behavior of "The object factory (apply)"
   
   /**
    * Check the factory method with a list of tuples (IDs,types)
    */
-  it must "" in {
+  it must "allow to build a chain Identifiers" in {
+    val id1: Identifier = new Identifier(Some("monSysyId"),Some(IdentifierType.MONITORED_SOFTWARE_SYSTEM),None)
+    val id2: Identifier = new Identifier(Some("pluginId"),Some(IdentifierType.PLUGIN),Some(id1))
+    val id3: Identifier = new Identifier(Some[String]("converterId"),Some(IdentifierType.CONVERTER),Some(id2))
+    val id4: Identifier = new Identifier(Some[String]("iasioId"),Some(IdentifierType.IASIO),Some(id3))
     
+    val fullRunId = id4.fullRunningID
+    
+    val theIdent = Identifier(fullRunId)
+    assert(fullRunId==theIdent.fullRunningID)
+    assert(fullRunId==Identifier.unapply(theIdent))
   }
 }
