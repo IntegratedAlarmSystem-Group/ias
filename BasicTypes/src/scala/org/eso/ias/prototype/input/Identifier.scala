@@ -63,8 +63,6 @@ object Identifier {
       val idStr = identParts(0)
       val typeStr = identParts(1)
       
-      println("PROCESSING: ("+idStr+","+typeStr+")")
-      
       prevIdent = Some(new Identifier(Some(idStr),Some(IdentifierType.valueOf(typeStr)),prevIdent))
     }
     prevIdent.get
