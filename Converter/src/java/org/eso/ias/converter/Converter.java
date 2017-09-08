@@ -8,6 +8,7 @@ import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
 import org.eso.ias.converter.config.MonitorPointConfiguration;
 import org.eso.ias.converter.publish.CoreFeeder;
+import org.eso.ias.converter.publish.CoreFeederException;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.prototype.input.java.IASTypes;
 import org.eso.ias.prototype.input.java.IASValue;
@@ -170,7 +171,11 @@ public class Converter implements Runnable {
 			// Convert the monitor point in the IAS type
 			IASValue<?> iasValue=converterEngine.translate(mPoint, iasType);
 			// Send data to the core of the IAS
-			mpSender.push(iasValue);
+			try {
+				mpSender.push(iasValue);
+			} catch (CoreFeederException cfe) {
+				logger.error("Error sending {} to the core",iasValue.id,cfe);
+			}
 		}
 		logger.info("Converter {} tread terminated",converterID);
 	}
