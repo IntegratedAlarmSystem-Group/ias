@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src/scala"/>
+	<classpathentry kind="src" path="test/java"/>
 	<classpathentry kind="src" path="src/java"/>
 	<classpathentry kind="src" path="test/scala"/>
 	<classpathentry kind="con" path="org.scala-ide.sdt.launching.SCALA_CONTAINER"/>
@@ -10,5 +11,9 @@
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/scalactic_2.12-3.0.1.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/scalatest_2.12-3.0.1.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-cdb.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/jackson-annotations-2.8.7.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/jackson-core-2.8.7.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/jackson-databind-2.8.7.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/junit-4.12.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
