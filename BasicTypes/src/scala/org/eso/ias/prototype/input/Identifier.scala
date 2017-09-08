@@ -17,7 +17,7 @@ object Identifier {
    * In the fullRunningID, the id and the type are grouped
    * together to form a couple
    * 
-   * coupleGroupPrefix is the prexix to group them in a string
+   * coupleGroupPrefix is the prefix to group them in a string
    */
   val coupleGroupPrefix = "("
   
@@ -54,18 +54,14 @@ object Identifier {
     // The id and type of each element passed in the parameter
     val identifiersDescr=fullRunningId.split(separator)
     
-    var prevIdent: Option[Identifier] = None
-    for (couple <- identifiersDescr) {
-      // Clean the string from prefix and suffix
+    identifiersDescr.foldLeft(None: Option[Identifier])( (id, couple) => {
       val cleanedCouple=couple.substring(Identifier.coupleGroupPrefix.size, couple.size-Identifier.coupleGroupSuffix.size)
       // The 2 parts of the couple (id and type)
       val identParts = cleanedCouple.split(Identifier.coupleSeparator)
       val idStr = identParts(0)
       val typeStr = identParts(1)
-      
-      prevIdent = Some(new Identifier(Some(idStr),Some(IdentifierType.valueOf(typeStr)),prevIdent))
-    }
-    prevIdent.get
+      Option(new Identifier(Some(idStr),Some(IdentifierType.valueOf(typeStr)),id))
+    }).get
   }
   
   /**
