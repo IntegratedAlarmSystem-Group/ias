@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
 import org.eso.ias.converter.config.MonitorPointConfiguration;
+import org.eso.ias.converter.publish.CoreFeeder;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.prototype.input.java.IASTypes;
 import org.eso.ias.prototype.input.java.IASValue;
