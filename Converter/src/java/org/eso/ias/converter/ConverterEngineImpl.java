@@ -10,8 +10,10 @@ import java.util.Objects;
 import org.eso.ias.plugin.AlarmSample;
 import org.eso.ias.plugin.OperationalMode;
 import org.eso.ias.plugin.publisher.MonitorPointData;
+import org.eso.ias.prototype.input.Identifier;
 import org.eso.ias.prototype.input.java.IASTypes;
 import org.eso.ias.prototype.input.java.IASValue;
+import org.eso.ias.prototype.input.java.IdentifierType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,15 +53,30 @@ public class ConverterEngineImpl implements ConverterEngine {
 	}
 	
 	/**
+	 * /**
 	 * Build and return the running id of the passed
-	 * monitor point id
+	 * monitor point id.
+	 * <P>
+	 * The generation of the string, is delegated to the {@link Identifier}
+	 * to ensure consistency along the system.
 	 * 
-	 * @param mpID The ID of the monitor point
-	 * @param pluginID The ID of the plugin
-	 * @return the running ID of the passed monitor point
+	 * @param converterId The ID of the converter
+	 * @param pluginId The ID of the plugin
+	 * @param monitoredSystemId The ID of the monitored system
+	 * @param iasioId The ID of the monitor point value or alarm
+	 * @return
 	 */
-	private String buildRunningId(String mpID, String pluginID) {
-		return "";
+	private String  buildFullRunningId(String converterId, String pluginId, String monitoredSystemId, String iasioId) {
+		Objects.requireNonNull(monitoredSystemId);
+		Objects.requireNonNull(pluginId);
+		Objects.requireNonNull(converterId);
+		Objects.requireNonNull(iasioId);
+		
+		Identifier monSystemId = new Identifier(monitoredSystemId,IdentifierType.MONITORED_SOFTWARE_SYSTEM,null);
+		Identifier plugId = new Identifier(pluginId,IdentifierType.PLUGIN,monSystemId);
+		Identifier converterIdent = new Identifier(converterId,IdentifierType.CONVERTER,plugId);
+		Identifier iasioIdent = new Identifier(iasioId,IdentifierType.IASIO,converterIdent);
+		return iasioIdent.fullRunningID();
 	}
 
 	/**
@@ -124,12 +141,18 @@ public class ConverterEngineImpl implements ConverterEngine {
 			tStamp=System.currentTimeMillis();
 		}
 		
+		String fullrunId = buildFullRunningId(
+				converterID,
+				remoteSystemData.getPluginID(),
+				remoteSystemData.getMonitoredSystemID(),
+				remoteSystemData.getId());
+		
 		return IASValue.buildIasValue(
 				convertedValue, 
 				tStamp, 
 				OperationalMode.valueOf(remoteSystemData.getOperationalMode()), 
 				remoteSystemData.getId(), 
-				buildRunningId(remoteSystemData.getId(),remoteSystemData.getSystemID()),
+				fullrunId,
 				type);
 	}
 

@@ -2,6 +2,7 @@ package org.eso.ias.converter.test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
@@ -17,6 +18,7 @@ import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.MonitorPointData;
+import org.eso.ias.prototype.input.Identifier;
 import org.eso.ias.prototype.input.java.IASTypes;
 import org.eso.ias.prototype.input.java.IASValue;
 import org.junit.After;
@@ -31,9 +33,14 @@ public class ConverterEngineTest {
 	private final String converterIDForTest="ConverterID";
 	
 	/**
-	 * The ID of the plugin that generated the monitor point
+	 * The ID of the plugin that provided the monitor point
 	 */
 	private final String pluginId= "SimulatedPluginID";
+	
+	/**
+	 * The ID of the monitored remote system that generated the monitor point
+	 */
+	private final String monitoredSystemId="remodeSystem-ID";
 	
 	private final ConverterEngineImpl engine = new ConverterEngineImpl(converterIDForTest);
 	
@@ -65,52 +72,52 @@ public class ConverterEngineTest {
 		
 		FilteredValue fv = new FilteredValue(Integer.valueOf(1011), samples, 1000);
 		ValueToSend vts = new ValueToSend("Int-ValueToSend", fv);
-		MonitorPointData mpd = new MonitorPointData(pluginId, vts);
+		MonitorPointData mpd = new MonitorPointData(pluginId, monitoredSystemId,vts);
 		mpPointsToTranslate.put(IASTypes.INT, mpd);
 		
 		fv = new FilteredValue(Long.valueOf(110550), samples, 1100);
 		vts = new ValueToSend("Long-ValueToSend", fv);
-		mpd = new MonitorPointData(pluginId, vts);
+		mpd = new MonitorPointData(pluginId, monitoredSystemId,vts);
 		mpPointsToTranslate.put(IASTypes.LONG, mpd);
 		
 		fv = new FilteredValue(Short.valueOf((short)125), samples, 1200);
 		vts = new ValueToSend("Short-ValueToSend", fv);
-		mpd = new MonitorPointData(pluginId, vts);
+		mpd = new MonitorPointData(pluginId,monitoredSystemId, vts);
 		mpPointsToTranslate.put(IASTypes.SHORT, mpd);
 		
 		fv = new FilteredValue(Byte.valueOf((byte)5), samples, 1300);
 		vts = new ValueToSend("Byte-ValueToSend", fv);
-		mpd = new MonitorPointData(pluginId, vts);
+		mpd = new MonitorPointData(pluginId, monitoredSystemId, vts);
 		mpPointsToTranslate.put(IASTypes.BYTE, mpd);
 		
 		fv = new FilteredValue(Float.valueOf((float)133.6), samples, 1400);
 		vts = new ValueToSend("Float-ValueToSend", fv);
-		mpd = new MonitorPointData(pluginId, vts);
+		mpd = new MonitorPointData(pluginId, monitoredSystemId, vts);
 		mpPointsToTranslate.put(IASTypes.FLOAT, mpd);
 		
 		fv = new FilteredValue(Double.valueOf((double)1334433.676), samples, 1500);
 		vts = new ValueToSend("Double-ValueToSend", fv);
-		mpd = new MonitorPointData(pluginId, vts);
+		mpd = new MonitorPointData(pluginId, monitoredSystemId, vts);
 		mpPointsToTranslate.put(IASTypes.DOUBLE, mpd);
 		
 		fv = new FilteredValue(Boolean.FALSE, samples, 1600);
 		vts = new ValueToSend("Boolean-ValueToSend", fv);
-		mpd = new MonitorPointData(pluginId, vts);
+		mpd = new MonitorPointData(pluginId, monitoredSystemId, vts);
 		mpPointsToTranslate.put(IASTypes.BOOLEAN, mpd);
 		
 		fv = new FilteredValue(Character.valueOf('X'), samples, 1700);
 		vts = new ValueToSend("Char-ValueToSend", fv);
-		mpd = new MonitorPointData(pluginId, vts);
+		mpd = new MonitorPointData(pluginId, monitoredSystemId, vts);
 		mpPointsToTranslate.put(IASTypes.CHAR, mpd);
 		
 		fv = new FilteredValue("A string", samples, 1800);
 		vts = new ValueToSend("String-ValueToSend", fv);
-		mpd = new MonitorPointData(pluginId, vts);
+		mpd = new MonitorPointData(pluginId, monitoredSystemId, vts);
 		mpPointsToTranslate.put(IASTypes.STRING, mpd);
 		
 		fv = new FilteredValue(AlarmSample.SET, samples, 1900);
 		vts = new ValueToSend("Alarm-ValueToSend", fv);
-		mpd = new MonitorPointData(pluginId, vts);
+		mpd = new MonitorPointData(pluginId, monitoredSystemId, vts);
 		mpPointsToTranslate.put(IASTypes.ALARM, mpd);
 		
 	}
@@ -148,18 +155,25 @@ public class ConverterEngineTest {
 			assertNotNull(mpPointsToTranslate.get(iasType).getValue());
 			
 			IASValue<?> translatedValue=engine.translate(mpd, iasType);
+			
 			assertEquals(mpd.getId(), translatedValue.id);
 			assertEquals(iasType, translatedValue.valueType);
 			
 			Object value = translatedValue.value;
 			assertNotNull("Got null value for type "+iasType+" (expected ["+mpPointsToTranslate.get(iasType).getValue()+"])",value);
 			assertEquals(translatedValue.value.toString(),mpPointsToTranslate.get(iasType).getValue());
+			assertTrue(value.getClass()==iasType.typeClass);
 			
 			OperationalMode opMode = OperationalMode.valueOf(mpd.getOperationalMode());
 			assertEquals(translatedValue.mode, opMode);
 			
-			
 			assertEquals(translatedValue.timestamp,iso8601dateFormat.parse(mpd.getSampleTime()).getTime());
+			
+			// Check the correctness of the fullRunningID by building 
+			// the identifier that throws an exception
+			// in case of error
+			String fullRID = translatedValue.runningId;
+			Identifier id = Identifier.apply(fullRID);
 		}
 	}
 }
