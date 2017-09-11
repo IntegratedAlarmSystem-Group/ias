@@ -2,13 +2,14 @@
 .classpath
 .metadata
 
-*/.project
-*/.classpath
-*/.settings
-*/.gitignore
-*/lib/
-*/classes/
-*/bin/
+**/.project
+**/.classpath
+**/.settings
+**/.gitignore
+**/*.RELEASE
+**/bin/
+**/lib/
+**/classes/
 
 ## Project specific files:
 IntegratedAlarmSystemRoot
