@@ -1,0 +1,9 @@
+.project
+.classpath
+.metadata
+
+*/.project
+*/.classpath
+*/.settings
+*/.gitignore
+*/lib/
