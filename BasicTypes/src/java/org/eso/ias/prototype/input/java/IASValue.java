@@ -66,8 +66,8 @@ public abstract class IASValue<T> extends IASValueBase {
 		return ret.toString();
 	}
 	
-	public static IASValue buildIasValue(
-			Object value,
+	public static <X> IASValue<?> buildIasValue(
+			X value,
 			long tStamp,
 			OperationalMode mode,
 			String id,
@@ -75,17 +75,42 @@ public abstract class IASValue<T> extends IASValueBase {
 			IASTypes valueType) {
 		Objects.requireNonNull(valueType);
 		switch (valueType) {
-		case LONG: return new IasLong((Long)value, tStamp, mode, id, runningId);
- 		case INT: return new IasInt((Integer)value, tStamp, mode, id, runningId);
-		case SHORT: return new IasShort((Short)value, tStamp, mode, id, runningId);
-		case BYTE: return new IasByte((Byte)value, tStamp, mode, id, runningId);
-		case DOUBLE: return new IasDouble((Double)value, tStamp, mode, id, runningId);
-		case FLOAT: return new IasFloat((Float)value, tStamp, mode, id, runningId);
-		case BOOLEAN: return new IasBool((Boolean)value, tStamp, mode, id, runningId);
-		case CHAR: return new IasChar((Character)value, tStamp, mode, id, runningId);
-		case STRING: return new IasString((String)value, tStamp, mode, id, runningId);
-		case ALARM: return new IasAlarm((AlarmSample )value, tStamp, mode, id, runningId);
-		default: throw new UnsupportedOperationException("Unsupported type "+valueType);
+			case LONG: return new IasLong((Long)value, tStamp, mode, id, runningId);
+	 		case INT: return new IasInt((Integer)value, tStamp, mode, id, runningId);
+			case SHORT: return new IasShort((Short)value, tStamp, mode, id, runningId);
+			case BYTE: return new IasByte((Byte)value, tStamp, mode, id, runningId);
+			case DOUBLE: return new IasDouble((Double)value, tStamp, mode, id, runningId);
+			case FLOAT: return new IasFloat((Float)value, tStamp, mode, id, runningId);
+			case BOOLEAN: return new IasBool((Boolean)value, tStamp, mode, id, runningId);
+			case CHAR: return new IasChar((Character)value, tStamp, mode, id, runningId);
+			case STRING: return new IasString((String)value, tStamp, mode, id, runningId);
+			case ALARM: return new IasAlarm((AlarmSample )value, tStamp, mode, id, runningId);
+			default: throw new UnsupportedOperationException("Unsupported type "+valueType);
 		}
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((value == null) ? 0 : value.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		IASValue other = (IASValue) obj;
+		if (value == null) {
+			if (other.value != null)
+				return false;
+		} else if (!value.equals(other.value))
+			return false;
+		return true;
 	}
 }

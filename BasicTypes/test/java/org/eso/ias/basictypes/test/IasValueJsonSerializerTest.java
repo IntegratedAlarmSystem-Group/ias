@@ -5,9 +5,13 @@ import org.eso.ias.plugin.OperationalMode;
 import org.eso.ias.prototype.input.Identifier;
 import org.eso.ias.prototype.input.java.IASValue;
 import org.eso.ias.prototype.input.java.IasAlarm;
+import org.eso.ias.prototype.input.java.IasInt;
 import org.eso.ias.prototype.input.java.IasValueJsonSerializer;
 import org.eso.ias.prototype.input.java.IdentifierType;
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Test the JSON serialization of {@link IASValue}
@@ -53,27 +57,34 @@ public class IasValueJsonSerializerTest {
 	 */
 	private final IasValueJsonSerializer jsonSerializer = new IasValueJsonSerializer();
 	
-	
-
-	public IasValueJsonSerializerTest() {
-		// TODO Auto-generated constructor stub
-	}
-
 	@Test
 	public void testConversionValueToJString() throws Exception {
+		
+		String intId = "IntType-ID";
+		IasInt intIasType = new IasInt(
+			1200, 
+			1000, 
+			OperationalMode.CLOSING, 
+			intId, 
+			new Identifier(intId, IdentifierType.IASIO, convIdentifier).fullRunningID());
+		String jsonStr = jsonSerializer.iasValueToString(intIasType);
+		
+		IasInt intFromSerializer = (IasInt)jsonSerializer.valueOf(jsonStr);
+		assertNotNull(intFromSerializer);
+		assertEquals(intIasType,intFromSerializer);
+		
 		String alarmId = "AlarmType-ID";
 		IasAlarm alarm = new IasAlarm(
 			AlarmSample.SET,
-			1000,
+			1100,
 			OperationalMode.DEGRADED,
 			alarmId,
 			new Identifier(alarmId, IdentifierType.IASIO, convIdentifier).fullRunningID());
 		
-		String jsonStr = jsonSerializer.iasValueToString(alarm);
-		System.out.println(jsonStr);
+		jsonStr = jsonSerializer.iasValueToString(alarm);
 		
 		IasAlarm alarmFromSerializer = (IasAlarm)jsonSerializer.valueOf(jsonStr);
-		
+		assertNotNull(alarmFromSerializer);
 		
 	}
 	

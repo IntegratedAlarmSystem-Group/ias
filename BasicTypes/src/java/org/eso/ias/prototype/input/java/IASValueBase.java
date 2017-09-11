@@ -94,4 +94,48 @@ public abstract class IASValueBase {
 		ret.append(valueType);
 		return ret.toString();
 	}
+
+
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		result = prime * result + ((mode == null) ? 0 : mode.hashCode());
+		result = prime * result + ((runningId == null) ? 0 : runningId.hashCode());
+		result = prime * result + (int) (timestamp ^ (timestamp >>> 32));
+		result = prime * result + ((valueType == null) ? 0 : valueType.hashCode());
+		return result;
+	}
+
+
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		IASValueBase other = (IASValueBase) obj;
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
+		if (mode != other.mode)
+			return false;
+		if (runningId == null) {
+			if (other.runningId != null)
+				return false;
+		} else if (!runningId.equals(other.runningId))
+			return false;
+		if (timestamp != other.timestamp)
+			return false;
+		if (valueType != other.valueType)
+			return false;
+		return true;
+	}
 }

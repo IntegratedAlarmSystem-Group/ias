@@ -2,6 +2,8 @@ package org.eso.ias.prototype.input.java;
 
 import java.util.Objects;
 
+import org.eso.ias.plugin.AlarmSample;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -15,7 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class IasValueJsonSerializer implements IasValueStringSerializer {
 	
 	/**
-	 * The jakson 2 mapper
+	 * The jackson 2 mapper
 	 */
 	private final ObjectMapper jsonMapper = new ObjectMapper();
 
@@ -27,8 +29,9 @@ public class IasValueJsonSerializer implements IasValueStringSerializer {
 	@Override
 	public String iasValueToString(IASValue<?> iasValue) throws IasValueSerializerException {
 		Objects.requireNonNull(iasValue);
+		IasValueJsonPojo jsonPojo = new IasValueJsonPojo(iasValue);
 		try {
-			return jsonMapper.writeValueAsString(iasValue);
+			return jsonMapper.writeValueAsString(jsonPojo);
 		} catch (JsonProcessingException jpe) {
 			throw new IasValueSerializerException("Error converting "+iasValue.id+" to a JSON string",jpe);
 		}
@@ -42,7 +45,9 @@ public class IasValueJsonSerializer implements IasValueStringSerializer {
 	@Override
 	public IASValue<?> valueOf(String str)  throws IasValueSerializerException {
 		try {
-			return jsonMapper.readValue(str, IASValue.class);
+			
+			IasValueJsonPojo jsonPojo = jsonMapper.readValue(str, IasValueJsonPojo.class);
+			return jsonPojo.asIasValue();
 		} catch (Exception e) {
 			throw new IasValueSerializerException("Error converting the JSON string ["+str+"] to a IAS value",e);
 		}
