@@ -5,9 +5,18 @@ import org.eso.ias.plugin.OperationalMode;
 import org.eso.ias.prototype.input.Identifier;
 import org.eso.ias.prototype.input.java.IASValue;
 import org.eso.ias.prototype.input.java.IasAlarm;
+import org.eso.ias.prototype.input.java.IasBool;
+import org.eso.ias.prototype.input.java.IasByte;
+import org.eso.ias.prototype.input.java.IasChar;
+import org.eso.ias.prototype.input.java.IasDouble;
+import org.eso.ias.prototype.input.java.IasFloat;
 import org.eso.ias.prototype.input.java.IasInt;
+import org.eso.ias.prototype.input.java.IasLong;
+import org.eso.ias.prototype.input.java.IasShort;
+import org.eso.ias.prototype.input.java.IasString;
 import org.eso.ias.prototype.input.java.IasValueJsonSerializer;
 import org.eso.ias.prototype.input.java.IdentifierType;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -48,9 +57,7 @@ public class IasValueJsonSerializerTest {
 	/**
 	 * The identifier of the converter.
 	 */
-	Identifier convIdentifier = new Identifier(converterID, IdentifierType.CONVERTER, plIdentifier);
-	
-	
+	private Identifier convIdentifier = new Identifier(converterID, IdentifierType.CONVERTER, plIdentifier);
 	
 	/**
 	 * The object to test
@@ -73,10 +80,62 @@ public class IasValueJsonSerializerTest {
 		assertNotNull(intFromSerializer);
 		assertEquals(intIasType,intFromSerializer);
 		
+		String shortId = "ShortType-ID";
+		IasShort shortIasType = new IasShort(
+			(short)120, 
+			1100, 
+			OperationalMode.INTIALIZATION, 
+			shortId, 
+			new Identifier(shortId, IdentifierType.IASIO, convIdentifier).fullRunningID());
+		jsonStr = jsonSerializer.iasValueToString(shortIasType);
+		
+		IasShort shortFromSerializer = (IasShort)jsonSerializer.valueOf(jsonStr);
+		assertNotNull(shortFromSerializer);
+		assertEquals(shortIasType,shortFromSerializer);
+		
+		String byteId = "ByteType-ID";
+		IasByte byteIasType = new IasByte(
+			(byte)90, 
+			1200, 
+			OperationalMode.INTIALIZATION, 
+			byteId, 
+			new Identifier(byteId, IdentifierType.IASIO, convIdentifier).fullRunningID());
+		jsonStr = jsonSerializer.iasValueToString(byteIasType);
+		
+		IasByte byteFromSerializer = (IasByte)jsonSerializer.valueOf(jsonStr);
+		assertNotNull(byteFromSerializer);
+		assertEquals(byteIasType,byteFromSerializer);
+		
+		String doubleId = "ByteType-ID";
+		IasDouble doubleIasType = new IasDouble(
+			Double.valueOf(123456789.4321), 
+			1300, 
+			OperationalMode.INTIALIZATION, 
+			doubleId, 
+			new Identifier(doubleId, IdentifierType.IASIO, convIdentifier).fullRunningID());
+		jsonStr = jsonSerializer.iasValueToString(doubleIasType);
+		
+		IasDouble doubleFromSerializer = (IasDouble)jsonSerializer.valueOf(jsonStr);
+		assertNotNull(doubleFromSerializer);
+		assertEquals(doubleIasType,doubleFromSerializer);
+		
+		String floatId = "ByteType-ID";
+		IasFloat floatIasType = new IasFloat(
+			670811.81167f, 
+			1400, 
+			OperationalMode.SHUTTEDDOWN, 
+			floatId, 
+			new Identifier(floatId, IdentifierType.IASIO, convIdentifier).fullRunningID());
+		jsonStr = jsonSerializer.iasValueToString(floatIasType);
+		
+		IasFloat floatFromSerializer = (IasFloat)jsonSerializer.valueOf(jsonStr);
+		assertNotNull(floatFromSerializer);
+		assertEquals(floatIasType,floatFromSerializer);
+		
 		String alarmId = "AlarmType-ID";
 		IasAlarm alarm = new IasAlarm(
 			AlarmSample.SET,
-			1100,
+			1500,
 			OperationalMode.DEGRADED,
 			alarmId,
 			new Identifier(alarmId, IdentifierType.IASIO, convIdentifier).fullRunningID());
@@ -85,7 +144,62 @@ public class IasValueJsonSerializerTest {
 		
 		IasAlarm alarmFromSerializer = (IasAlarm)jsonSerializer.valueOf(jsonStr);
 		assertNotNull(alarmFromSerializer);
+		assertEquals(alarm,alarmFromSerializer);
 		
+		String boolId = "BooleanType-ID";
+		IasBool bool = new IasBool(
+			false,
+			1600,
+			OperationalMode.OPERATIONAL,
+			boolId,
+			new Identifier(boolId, IdentifierType.IASIO, convIdentifier).fullRunningID());
+		
+		jsonStr = jsonSerializer.iasValueToString(bool);
+		
+		IasBool boolFromSerializer = (IasBool)jsonSerializer.valueOf(jsonStr);
+		assertNotNull(boolFromSerializer);
+		assertEquals(bool,boolFromSerializer);
+		
+		String charId = "CharType-ID";
+		IasChar character = new IasChar(
+			'a',
+			1700,
+			OperationalMode.MAINTENANCE,
+			charId,
+			new Identifier(charId, IdentifierType.IASIO, convIdentifier).fullRunningID());
+		
+		jsonStr = jsonSerializer.iasValueToString(character);
+		
+		IasChar charFromSerializer = (IasChar)jsonSerializer.valueOf(jsonStr);
+		assertNotNull(charFromSerializer);
+		assertEquals(character,charFromSerializer);
+		
+		String strId = "StringType-ID";
+		IasString  str = new IasString(
+			"Test-str",
+			1800,
+			OperationalMode.UNKNOWN,
+			strId,
+			new Identifier(strId, IdentifierType.IASIO, convIdentifier).fullRunningID());
+		
+		jsonStr = jsonSerializer.iasValueToString(str);
+		
+		IasString strFromSerializer = (IasString)jsonSerializer.valueOf(jsonStr);
+		assertNotNull(strFromSerializer);
+		assertEquals(str,strFromSerializer);
+		
+		String longId = "IntType-ID";
+		IasLong longIasType = new IasLong(
+			1200L, 
+			1900, 
+			OperationalMode.CLOSING, 
+			longId, 
+			new Identifier(longId, IdentifierType.IASIO, convIdentifier).fullRunningID());
+		jsonStr = jsonSerializer.iasValueToString(longIasType);
+		
+		IasLong longFromSerializer = (IasLong)jsonSerializer.valueOf(jsonStr);
+		assertNotNull(longFromSerializer);
+		assertEquals(longIasType,longFromSerializer);
 	}
 	
 	@Test
