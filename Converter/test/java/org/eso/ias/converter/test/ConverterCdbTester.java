@@ -29,38 +29,31 @@ import org.junit.Test;
  */
 public class ConverterCdbTester {
 	
-	/**
-	 * The parent folder of the CDB is the actual folder
-	 */
-	public static final Path cdbParentPath =  FileSystems.getDefault().getPath(".");
+	
 	
 	/**
 	 * The folder struct of the CDB
 	 */
 	private CdbFiles cdbFiles;
 	
-	
-	
 	private IasioConfigurationDaoImpl configDao;
 	
 	@Before
 	public void setUp() throws Exception {
 		// Remove any CDB folder if present
-		CdbFolders.ROOT.delete(cdbParentPath);
-		assertFalse(CdbFolders.ROOT.exists(cdbParentPath));
-		cdbFiles = new CdbJsonFiles(cdbParentPath);
+		CdbFolders.ROOT.delete(CommonHelpers.cdbParentPath);
+		assertFalse(CdbFolders.ROOT.exists(CommonHelpers.cdbParentPath));
+		cdbFiles = new CdbJsonFiles(CommonHelpers.cdbParentPath);
 		CdbReader cdbReader = new JsonReader(cdbFiles);
 		configDao = new IasioConfigurationDaoImpl(cdbReader);
 		
 	}
 	
-	
-	
 	@After
 	public void tearDown() throws Exception{
 		configDao.tearDown();
-		CdbFolders.ROOT.delete(cdbParentPath);
-		assertFalse(CdbFolders.ROOT.exists(cdbParentPath));
+		CdbFolders.ROOT.delete(CommonHelpers.cdbParentPath);
+		assertFalse(CdbFolders.ROOT.exists(CommonHelpers.cdbParentPath));
 	}
 	
 	/**
