@@ -37,7 +37,7 @@ public class IasValueJsonSerializerTest {
 	/**
 	 * The identifier of the system monitored by the plugin.
 	 */
-	Identifier mSysIdentifier = new Identifier(monSysID, IdentifierType.MONITORED_SOFTWARE_SYSTEM, null);
+	private final Identifier mSysIdentifier = new Identifier(monSysID, IdentifierType.MONITORED_SOFTWARE_SYSTEM, null);
 	
 	/**
 	 * The ID of the plugin
@@ -47,7 +47,7 @@ public class IasValueJsonSerializerTest {
 	/**
 	 * The identifier of the plugin.
 	 */
-	Identifier plIdentifier = new Identifier(pluginID, IdentifierType.PLUGIN, mSysIdentifier);
+	private final Identifier plIdentifier = new Identifier(pluginID, IdentifierType.PLUGIN, mSysIdentifier);
 	
 	/**
 	 * The id of the converter.
@@ -57,7 +57,7 @@ public class IasValueJsonSerializerTest {
 	/**
 	 * The identifier of the converter.
 	 */
-	private Identifier convIdentifier = new Identifier(converterID, IdentifierType.CONVERTER, plIdentifier);
+	private final Identifier convIdentifier = new Identifier(converterID, IdentifierType.CONVERTER, plIdentifier);
 	
 	/**
 	 * The object to test
