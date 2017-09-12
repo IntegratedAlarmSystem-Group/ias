@@ -157,9 +157,20 @@ public class Converter implements Runnable {
 	@Override
 	public void run() {
 		logger.info("Converter {} tread running",converterID);
+		boolean interrupted=false;
 		while (!closed) {
 			// Get a value produced by a monitored system
-			MonitorPointData mPoint=mpGetter.get(1, TimeUnit.SECONDS);
+			MonitorPointData mPoint;
+			try {
+				mPoint=mpGetter.get(1, TimeUnit.SECONDS);
+			} catch (InterruptedException ie) {
+				interrupted=true;
+				continue;
+			} finally {
+				if (interrupted) {
+					Thread.currentThread().interrupt();
+				}
+			}
 			if (mPoint==null) {
 				continue;
 			}

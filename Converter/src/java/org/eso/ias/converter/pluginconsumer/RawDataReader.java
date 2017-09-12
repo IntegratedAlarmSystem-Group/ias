@@ -27,7 +27,8 @@ public interface RawDataReader {
 	 * @param timeunit The time unit of the timeout
 	 * @return The next value produced by the remote system 
 	 *         or <code>null</code> in case of timeout
+	 * @throws InterruptedException
 	 */
-	public MonitorPointData get(long timeout, TimeUnit timeunit);
+	public MonitorPointData get(long timeout, TimeUnit timeunit) throws InterruptedException;
 
 }
