@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Vector;
 
-import org.eso.ias.converter.ConverterEngineImpl;
+import org.eso.ias.converter.translation.ConverterEngineImpl;
 import org.eso.ias.plugin.AlarmSample;
 import org.eso.ias.plugin.OperationalMode;
 import org.eso.ias.plugin.Sample;

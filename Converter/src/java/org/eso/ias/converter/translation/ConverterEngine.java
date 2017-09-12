@@ -1,4 +1,4 @@
-package org.eso.ias.converter;
+package org.eso.ias.converter.translation;
 
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.prototype.input.java.IASTypes;

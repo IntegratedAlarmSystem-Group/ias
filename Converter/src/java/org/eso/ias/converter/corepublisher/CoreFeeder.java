@@ -1,4 +1,4 @@
-package org.eso.ias.converter.publish;
+package org.eso.ias.converter.corepublisher;
 
 import org.eso.ias.prototype.input.java.IASValue;
 

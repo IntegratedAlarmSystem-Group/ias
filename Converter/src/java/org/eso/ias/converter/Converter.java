@@ -7,12 +7,14 @@ import java.util.concurrent.TimeUnit;
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
 import org.eso.ias.converter.config.MonitorPointConfiguration;
-import org.eso.ias.converter.publish.CoreFeeder;
-import org.eso.ias.converter.publish.CoreFeederException;
+import org.eso.ias.converter.corepublisher.CoreFeeder;
+import org.eso.ias.converter.corepublisher.CoreFeederException;
+import org.eso.ias.converter.pluginconsumer.RawDataReader;
+import org.eso.ias.converter.translation.ConverterEngine;
+import org.eso.ias.converter.translation.ConverterEngineImpl;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.prototype.input.java.IASTypes;
 import org.eso.ias.prototype.input.java.IASValue;
-import org.eso.ias.prototype.input.java.IASValueBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -169,7 +171,13 @@ public class Converter implements Runnable {
 			}
 			IASTypes iasType = mpConfiguration.mpType;
 			// Convert the monitor point in the IAS type
-			IASValue<?> iasValue=converterEngine.translate(mPoint, iasType);
+			IASValue<?> iasValue=null;
+			try {
+				iasValue=converterEngine.translate(mPoint, iasType);
+			} catch (Exception cfe) {
+				logger.error("Error converting {} to a core value type",mPoint.getId());
+				continue;
+			}
 			// Send data to the core of the IAS
 			try {
 				mpSender.push(iasValue);
@@ -207,7 +215,7 @@ public class Converter implements Runnable {
 			logger.error("Error initializing the converter {}",id,e);
 			
 		}
-		
+		context.close();
 		logger.info("Converter {} terminated",id);
 	}
 

@@ -1,4 +1,4 @@
-package org.eso.ias.converter.publish;
+package org.eso.ias.converter.corepublisher;
 
 import java.util.Objects;
 
@@ -6,6 +6,15 @@ import org.eso.ias.prototype.input.java.IASValue;
 import org.eso.ias.prototype.input.java.IasValueSerializerException;
 import org.eso.ias.prototype.input.java.IasValueStringSerializer;
 
+/**
+ * An implementation of the {@link CoreFeeder} that 
+ * publishes values to a listener.
+ * <P> 
+ * This implementation allows custom implementations of publishers
+ * and is useful for testing
+ * 
+ * @author acaproni
+ */
 public class ListenerPublisher implements CoreFeeder {
 	
 	/**

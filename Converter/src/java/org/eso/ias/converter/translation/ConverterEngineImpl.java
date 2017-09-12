@@ -1,7 +1,7 @@
 /**
  * 
  */
-package org.eso.ias.converter;
+package org.eso.ias.converter.translation;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -80,7 +80,7 @@ public class ConverterEngineImpl implements ConverterEngine {
 	}
 
 	/**
-	 * @see org.eso.ias.converter.ConverterEngine#translate(org.eso.ias.plugin.publisher.MonitorPointData, org.eso.ias.prototype.input.java.IASTypes)
+	 * @see org.eso.ias.converter.translation.ConverterEngine#translate(org.eso.ias.plugin.publisher.MonitorPointData, org.eso.ias.prototype.input.java.IASTypes)
 	 */
 	@Override
 	public IASValue<?> translate(MonitorPointData remoteSystemData, IASTypes type) {

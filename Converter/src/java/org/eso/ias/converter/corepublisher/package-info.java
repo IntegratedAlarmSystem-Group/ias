@@ -6,4 +6,4 @@
  * @author acaproni
  *
  */
-package org.eso.ias.converter.publish;
+package org.eso.ias.converter.corepublisher;

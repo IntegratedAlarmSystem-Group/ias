@@ -1,4 +1,4 @@
-package org.eso.ias.converter;
+package org.eso.ias.converter.pluginconsumer;
 
 import java.util.concurrent.TimeUnit;
 

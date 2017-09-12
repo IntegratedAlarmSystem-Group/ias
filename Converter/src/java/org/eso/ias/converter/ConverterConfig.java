@@ -1,7 +1,8 @@
 package org.eso.ias.converter;
 
 import org.eso.ias.cdb.CdbReader;
-import org.eso.ias.converter.publish.CoreFeeder;
+import org.eso.ias.converter.corepublisher.CoreFeeder;
+import org.eso.ias.converter.pluginconsumer.RawDataReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

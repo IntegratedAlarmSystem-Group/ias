@@ -1,4 +1,4 @@
-package org.eso.ias.converter.publish;
+package org.eso.ias.converter.corepublisher;
 
 /**
  * The exception returned by the {@link CoreFeeder}
