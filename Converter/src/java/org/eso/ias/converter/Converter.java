@@ -3,9 +3,11 @@ package org.eso.ias.converter;
 import java.security.InvalidParameterException;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
+import org.eso.ias.converter.config.IasioConfigurationDaoImpl;
 import org.eso.ias.converter.config.MonitorPointConfiguration;
 import org.eso.ias.converter.corepublisher.CoreFeeder;
 import org.eso.ias.converter.corepublisher.CoreFeederException;
@@ -89,6 +91,15 @@ public class Converter implements Runnable {
 	private CoreFeeder mpSender;
 	
 	/**
+	 * The shutdown thread for a clean exit
+	 */
+	private Thread shutDownThread=new Thread("Converter shutdown thread") {
+		public void run() {
+			Converter.this.tearDown();
+		}
+	};
+	
+	/**
 	 * Constructor.
 	 * <P>
 	 * Dependency injection with spring take place here.
@@ -114,6 +125,7 @@ public class Converter implements Runnable {
 		this.mpGetter=mpReader;
 		Objects.requireNonNull(cdbReader);
 		this.cdbDAO=cdbReader;
+		this.configDao= new IasioConfigurationDaoImpl(cdbReader);
 		Objects.requireNonNull(feeder);
 		this.mpSender=feeder;
 	}
@@ -122,14 +134,12 @@ public class Converter implements Runnable {
 	 * Initialize the converter and start the loop
 	 */
 	public void setUp() {
-		Runtime.getRuntime().addShutdownHook(new Thread("Converter "+converterID+" shutdown thread") {
-			public void run() {
-				Converter.this.tearDown();
-			}
-		});
+		logger.info("Converter {} initializing...", converterID);
+		Runtime.getRuntime().addShutdownHook(shutDownThread);
 		converterThread = new Thread(this, "Converter "+converterID+" thread");
 		converterThread.setDaemon(true);
 		converterThread.start();
+		logger.info("Converter {} initialized", converterID);
 	}
 	
 	/**
@@ -137,6 +147,7 @@ public class Converter implements Runnable {
 	 */
 	public void tearDown() {
 		logger.info("Converter {} shutting down...", converterID);
+		Runtime.getRuntime().removeShutdownHook(shutDownThread);
 		closed=true;
 		if (converterThread.isAlive()) {
 			converterThread.interrupt();
@@ -148,6 +159,7 @@ public class Converter implements Runnable {
 				e.printStackTrace();
 			}
 		}
+		logger.info("Converter {} shutted down.", converterID);
 	}
 	
 	/**
@@ -178,7 +190,8 @@ public class Converter implements Runnable {
 			String mpId = mPoint.getId();
 			MonitorPointConfiguration mpConfiguration=configDao.getConfiguration(mpId);
 			if (mpConfiguration==null) {
-				logger.error("No configuration found for {}: raw value lost!",mpId);;
+				logger.error("No configuration found for {}: raw value lost!",mpId);
+				continue;
 			}
 			IASTypes iasType = mpConfiguration.mpType;
 			// Convert the monitor point in the IAS type
