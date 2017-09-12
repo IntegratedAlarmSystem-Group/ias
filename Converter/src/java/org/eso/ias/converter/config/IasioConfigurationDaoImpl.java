@@ -101,12 +101,12 @@ public class IasioConfigurationDaoImpl extends  ConfigurationDaoBase {
 	}
 
 	@Override
-	protected void setUp() throws Exception {
+	public void setUp() throws Exception {
 		buildConfigurationMap(cdbReader,configuration,true);
 	}
 
 	@Override
-	protected void tearDown() throws Exception {
+	public void tearDown() throws Exception {
 		configuration.clear();
 	}
 

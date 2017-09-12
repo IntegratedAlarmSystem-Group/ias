@@ -34,7 +34,7 @@ public abstract class ConfigurationDaoBase implements IasioConfigurationDAO {
 	 * 
 	 * @throws The exception returned in case of error initializing
 	 */
-	protected abstract void setUp() throws Exception;
+	public abstract void setUp() throws Exception;
 
 	/**
 	 * @see IasioConfigurationDAO#initialize()
@@ -65,7 +65,7 @@ public abstract class ConfigurationDaoBase implements IasioConfigurationDAO {
 	/**
 	 * Shuts down the DAO: the user provided closing.
 	 */
-	protected abstract void tearDown() throws Exception;
+	public abstract void tearDown() throws Exception;
 
 	/**
 	 * @see IasioConfigurationDAO#close()
