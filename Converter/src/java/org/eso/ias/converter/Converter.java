@@ -56,7 +56,7 @@ public class Converter implements Runnable {
 	 * The thread getting and converting data
 	 * @see #run()
 	 */
-	private Thread converterThread = null;
+	private final Thread converterThread;
 	
 	/**
 	 * Signal the thread to terminate
@@ -128,6 +128,9 @@ public class Converter implements Runnable {
 		this.configDao= new IasioConfigurationDaoImpl(cdbReader);
 		Objects.requireNonNull(feeder);
 		this.mpSender=feeder;
+		
+		converterThread = new Thread(this, "Converter "+converterID+" thread");
+		converterThread.setDaemon(true);
 	}
 	
 	/**
@@ -137,8 +140,7 @@ public class Converter implements Runnable {
 		logger.info("Converter {} initializing...", converterID);
 		configDao.initialize();
 		Runtime.getRuntime().addShutdownHook(shutDownThread);
-		converterThread = new Thread(this, "Converter "+converterID+" thread");
-		converterThread.setDaemon(true);
+		// Start the thread
 		converterThread.start();
 		logger.info("Converter {} initialized", converterID);
 	}
