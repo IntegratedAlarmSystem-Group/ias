@@ -51,7 +51,7 @@ public class ConverterCdbTester {
 	
 	@After
 	public void tearDown() throws Exception{
-		configDao.tearDown();
+		configDao.close();
 		CdbFolders.ROOT.delete(CommonHelpers.cdbParentPath);
 		assertFalse(CdbFolders.ROOT.exists(CommonHelpers.cdbParentPath));
 	}
@@ -63,7 +63,7 @@ public class ConverterCdbTester {
 	public void testNumberOfIasios() throws Exception {
 		int mpPointsToCreate=1500;
 		CommonHelpers.populateCDB(mpPointsToCreate,cdbFiles);
-		configDao.setUp();
+		configDao.initialize();
 		int found=0;
 		for (int t=0; t<mpPointsToCreate; t++) {
 			if (configDao.getConfiguration(CommonHelpers.buildIasId(t))!=null) {
@@ -82,7 +82,7 @@ public class ConverterCdbTester {
 	public void testIasiosDataIntegrity() throws Exception {
 		int mpPointsToCreate=2000;
 		CommonHelpers.populateCDB(mpPointsToCreate,cdbFiles);
-		configDao.setUp();
+		configDao.initialize();
 		
 		for (int t=0; t<mpPointsToCreate; t++) {
 			IasTypeDao iasType = CommonHelpers.buildIasType(t);
