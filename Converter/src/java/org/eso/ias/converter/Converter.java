@@ -3,9 +3,9 @@ package org.eso.ias.converter;
 import java.security.InvalidParameterException;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eso.ias.cdb.CdbReader;
+import org.eso.ias.converter.config.ConfigurationException;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
 import org.eso.ias.converter.config.IasioConfigurationDaoImpl;
 import org.eso.ias.converter.config.MonitorPointConfiguration;
@@ -133,8 +133,9 @@ public class Converter implements Runnable {
 	/**
 	 * Initialize the converter and start the loop
 	 */
-	public void setUp() {
+	public void setUp() throws ConfigurationException {
 		logger.info("Converter {} initializing...", converterID);
+		configDao.initialize();
 		Runtime.getRuntime().addShutdownHook(shutDownThread);
 		converterThread = new Thread(this, "Converter "+converterID+" thread");
 		converterThread.setDaemon(true);
@@ -146,6 +147,10 @@ public class Converter implements Runnable {
 	 * Shut down the loop and free the resources.
 	 */
 	public void tearDown() {
+		if (closed) {
+			logger.info("Converter {} already closed", converterID);
+			return;
+		}
 		logger.info("Converter {} shutting down...", converterID);
 		Runtime.getRuntime().removeShutdownHook(shutDownThread);
 		closed=true;
