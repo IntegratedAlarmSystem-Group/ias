@@ -13,6 +13,7 @@ import org.eso.ias.cdb.json.CdbFiles;
 import org.eso.ias.cdb.json.JsonWriter;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
+import org.eso.ias.plugin.AlarmSample;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.FilteredValue;
@@ -76,6 +77,35 @@ public class CommonHelpers {
 	 */
 	public static final String buildIasId(int n) {
 		return IasioIdPrefix+n;
+	}
+	
+	/**
+	 * Get the index of a ID created by {@link #buildIasId(int)}
+	 * 
+	 * @param id The identifier
+	 * @return The index of the identifier
+	 */
+	public static int getIndexFromId(String id) {
+		Objects.requireNonNull(id);
+		if (id.indexOf('-')==-1) {
+			throw new IllegalArgumentException("Invalid identifier format ["+id+"]");
+		}
+		String[] parts = id.split("-");
+		if (parts.length!=2) {
+			throw new IllegalArgumentException("Invalid identifier format ["+id+"]");
+		}
+		return Integer.valueOf(parts[1]);
+	}
+	
+	/**
+	 * Get the type associated to the passed identifier
+	 * 
+	 * @param if The identifier of the IASIO
+	 * @return the type of the identifier
+	 */
+	public static IasTypeDao typeOfId(String id) {
+		Objects.requireNonNull(id);
+		return buildIasType(getIndexFromId(id));
 	}
 	
 	/**
@@ -160,6 +190,28 @@ public class CommonHelpers {
 		ValueToSend valueToSend = new ValueToSend(mPointData.iasioDao.getId(), filteredValue);
 		
 		return new MonitorPointData(pluginID, monitoredSystemID, valueToSend);
+	}
+	
+	/**
+	 * Build the value of a Iasio depending on its type.
+	 * @return
+	 */
+	public static Object buildIasioValue(IasTypeDao iasioDaoType) {
+		Object value=null;
+		switch (iasioDaoType) {
+		case LONG: value = Long.valueOf(1234455667); break;
+		case INT: value =Integer.valueOf(321456); break;
+		case SHORT: value =Short.valueOf("121"); break;
+		case BYTE: value =Byte.valueOf("10"); break;
+		case DOUBLE: value =Double.valueOf(2234.6589); break;
+		case FLOAT: value =Float.valueOf(554466.8702f); break;
+		case BOOLEAN: value=Boolean.FALSE; break; 
+		case CHAR: value = Character.valueOf('X'); break;
+		case STRING: value="The string"; break;
+		case ALARM: value = AlarmSample.SET; break;
+		default: throw new UnsupportedOperationException("Unrecognized type "+iasioDaoType);
+		}
+		return value;
 	}
 	
 	/**
