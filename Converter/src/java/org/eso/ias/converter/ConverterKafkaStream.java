@@ -20,7 +20,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @author acaproni
  */
-public class ConverterKafkaStream {
+public class ConverterKafkaStream extends ConverterStream {
 	
 	/**
 	 * The logger
@@ -31,7 +31,7 @@ public class ConverterKafkaStream {
 	 * The name of the topic where plugins pushes
 	 * monitor point values and alarms
 	 */
-	private final String pluginsInputKTopicName;
+	private String pluginsInputKTopicName;
 	
 	/**
 	 * The name of the java property to get the name of the 
@@ -47,7 +47,7 @@ public class ConverterKafkaStream {
 	/**
 	 * The name of the topic to send values to the core of the IAS
 	 */
-	private final String iasCoreOutputKTopicName;
+	private String iasCoreOutputKTopicName;
 	
 	/**
 	 * The name of the java property to get thename of the 
@@ -63,17 +63,7 @@ public class ConverterKafkaStream {
 	/**
 	 * The kafka streams
 	 */
-	private final KafkaStreams streams;
-	
-	/**
-	 * The ID of the converter.
-	 * <P>
-	 * The ID of the converter identify each running converter
-	 * and is used by Kafka
-	 * 
-	 * @see #setKafkaProps()
-	 */
-	private final String converterID;
+	private KafkaStreams streams;
 	
 	/**
 	 * The default name for the topic to send values to the core
@@ -81,27 +71,22 @@ public class ConverterKafkaStream {
 	private static final String DEFAULTCOREKTOPICNAME= "IasCoreKTopic";
 	
 	/**
-	 * Constructor
+	 * Initialize the stream
 	 * 
-	 * @param converterID The ID of the converter
-	 * @param mapper The function to map the received string
-	 *               in the string to send to the core
 	 */
-	public ConverterKafkaStream(String converterID, Function<String, String> mapper) {
-		Objects.requireNonNull(mapper);
-		Objects.requireNonNull(converterID);
-		this.converterID = converterID.trim();
-		
+	public void init() {
 		
 		String inputTopicName=System.getProperty(PLUGIN_TOPIC_NAME_PROP_NAME);
 		pluginsInputKTopicName=(inputTopicName==null)?DEFAULTPLUGINSINPUTKTOPICNAME:inputTopicName;
-		String outputTopicName=System.getProperty(PLUGIN_TOPIC_NAME_PROP_NAME);
+		String outputTopicName=System.getProperty(IASCORE_TOPIC_NAME_PROP_NAME);
 		iasCoreOutputKTopicName=(outputTopicName==null)?DEFAULTCOREKTOPICNAME:outputTopicName;
 		
 		KStream<String, String> source = builder.stream(pluginsInputKTopicName);
-        source.mapValues(jString -> mapper.apply(jString)).to(iasCoreOutputKTopicName);
+        source.mapValues(jString -> getMapper().apply(jString)).to(iasCoreOutputKTopicName);
         streams = new KafkaStreams(builder, setKafkaProps());
 	}
+	
+	
 	
 	/**
 	 * Set and return the properties for the kafka stream
@@ -110,11 +95,36 @@ public class ConverterKafkaStream {
 	 */
 	private Properties setKafkaProps() {
 		Properties props = new Properties();
-		props.put(StreamsConfig.APPLICATION_ID_CONFIG, converterID);
+		props.put(StreamsConfig.APPLICATION_ID_CONFIG, getConverterID());
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         return props;
+	}
+
+	/**
+	 * Start streaming data from the kafka input topic
+	 * to the kafka output topic
+	 * 
+	 * @see org.eso.ias.converter.ConverterStream#start()
+	 */
+	@Override
+	protected void startStreaming() throws ConverterStreamException {
+		logger.debug("Starting the streaming...");
+		streams.start();
+		logger.info("Streaming activated");
+	}
+
+	/**
+	 * Stop streaming data
+	 * 
+	 * @see org.eso.ias.converter.ConverterStream#stop()
+	 */
+	@Override
+	public void stopStreaming() throws ConverterStreamException {
+		logger.debug("Stopping the streaming...");
+		streams.close();
+		logger.debug("Streaming terminated");
 	}
 
 }
