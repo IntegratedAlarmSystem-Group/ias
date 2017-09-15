@@ -119,7 +119,7 @@ public class ConverterLoopTester implements CoreFeederListener {
 		assertFalse(CdbFolders.ROOT.exists(CommonHelpers.cdbParentPath));
 		
 		ListenerPublisher listenerPublisher = new ListenerPublisher(this, new IasValueJsonSerializer());
-		converter = new Converter("ConverterID", rawDataReader, cdbReader, listenerPublisher);
+		converter = new Converter("ConverterID", rawDataReader, cdbReader, listenerPublisher,new IasValueJsonSerializer());
 	}
 	
 	@After

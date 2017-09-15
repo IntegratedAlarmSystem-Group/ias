@@ -3,6 +3,8 @@ package org.eso.ias.converter;
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.converter.corepublisher.CoreFeeder;
 import org.eso.ias.converter.pluginconsumer.RawDataReader;
+import org.eso.ias.prototype.input.java.IasValueJsonSerializer;
+import org.eso.ias.prototype.input.java.IasValueStringSerializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -26,4 +28,9 @@ public class ConverterConfig {
 	@Bean
 	public CoreFeeder coreFeeder() { 
 		return null; }
+	
+	@Bean
+	public IasValueStringSerializer iasValueStringSerialize() {
+		return new IasValueJsonSerializer();
+	}
 }

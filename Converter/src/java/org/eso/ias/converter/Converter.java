@@ -3,6 +3,7 @@ package org.eso.ias.converter;
 import java.security.InvalidParameterException;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.converter.config.ConfigurationException;
@@ -14,9 +15,11 @@ import org.eso.ias.converter.corepublisher.CoreFeederException;
 import org.eso.ias.converter.pluginconsumer.RawDataReader;
 import org.eso.ias.converter.translation.ConverterEngine;
 import org.eso.ias.converter.translation.ConverterEngineImpl;
+import org.eso.ias.converter.translation.ValueMapper;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.prototype.input.java.IASTypes;
 import org.eso.ias.prototype.input.java.IASValue;
+import org.eso.ias.prototype.input.java.IasValueStringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -85,10 +88,21 @@ public class Converter implements Runnable {
 	private IasioConfigurationDAO configDao;
 	
 	/**
+	 * The serializer to transform IASValues into strings 
+	 * to send to the core of the IAS
+	 */
+	private final IasValueStringSerializer iasValueStrSerializer;
+	
+	/**
 	 * The object to send converted monitor point values and alarms
 	 * to the core of the IAS
 	 */
 	private CoreFeeder mpSender;
+	
+	/**
+	 * The function to map the json 
+	 */
+	private final Function<String, String> mapper;
 	
 	/**
 	 * The shutdown thread for a clean exit
@@ -109,17 +123,20 @@ public class Converter implements Runnable {
 	 *        provided by remote monitored control systems
 	 * @param cdbReader The DAO of the configuration database
 	 * @param feeder The publisher of IASIO data to the core of the IAS  
+	 * @param aisValStrSerializer the serializer to map a {@link IASValue} in 
+	 *                            a string to send to the core 
 	 */
 	public Converter(
 			String id,
 			RawDataReader mpReader,
 			CdbReader cdbReader,
-			CoreFeeder feeder) {
+			CoreFeeder feeder,
+			IasValueStringSerializer iasValStrSerializer) {
 		Objects.requireNonNull(id);
-		if (id.isEmpty()) {
+		if (id.trim().isEmpty()) {
 			throw new InvalidParameterException("The ID of the converter can't be empty");
 		}
-		this.converterID=id;
+		this.converterID=id.trim();
 		Objects.requireNonNull(mpReader);
 		converterEngine = new ConverterEngineImpl(converterID);
 		this.mpGetter=mpReader;
@@ -128,6 +145,10 @@ public class Converter implements Runnable {
 		this.configDao= new IasioConfigurationDaoImpl(cdbReader);
 		Objects.requireNonNull(feeder);
 		this.mpSender=feeder;
+		
+		Objects.requireNonNull(iasValStrSerializer);
+		this.iasValueStrSerializer=iasValStrSerializer;
+		mapper = new ValueMapper(this.configDao, this.iasValueStrSerializer,id);
 		
 		converterThread = new Thread(this, "Converter "+converterID+" thread");
 		converterThread.setDaemon(true);
@@ -227,7 +248,10 @@ public class Converter implements Runnable {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		String id="IasConverter";
+		if (args.length!=1) {
+			throw new IllegalArgumentException("Missing identifier in command line");
+		}
+		String id=args[0];
 		
 		/**
 		 * Spring stuff
@@ -236,9 +260,10 @@ public class Converter implements Runnable {
 		CdbReader cdbReader = context.getBean("cdbReader",CdbReader.class);
 		RawDataReader rawDataReader = context.getBean("rawDataReader",RawDataReader.class);
 		CoreFeeder coreFeeder = context.getBean("coreFeeder",CoreFeeder.class);
+		IasValueStringSerializer valSerializer = context.getBean("iasValueStringSerializer",IasValueStringSerializer.class);
 		
 		logger.info("Converter {} started",id);
-		Converter converter = new Converter(id,rawDataReader,cdbReader,coreFeeder);
+		Converter converter = new Converter(id,rawDataReader,cdbReader,coreFeeder,valSerializer);
 		try {
 			converter.setUp();
 			logger.info("Converter {} initialized",id);
