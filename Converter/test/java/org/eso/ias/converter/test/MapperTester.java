@@ -1,32 +1,19 @@
 package org.eso.ias.converter.test;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
-import org.eso.ias.converter.ValueMapper;
-import org.eso.ias.converter.config.ConfigurationException;
-import org.eso.ias.converter.config.IasioConfigurationDAO;
-import org.eso.ias.converter.config.MonitorPointConfiguration;
-import org.eso.ias.plugin.AlarmSample;
-import org.eso.ias.plugin.Sample;
-import org.eso.ias.plugin.ValueToSend;
-import org.eso.ias.plugin.filter.FilteredValue;
-import org.eso.ias.plugin.publisher.MonitorPointData;
-import org.eso.ias.prototype.input.java.IASTypes;
-import org.eso.ias.prototype.input.java.IASValue;
-import org.eso.ias.prototype.input.java.IasValueJsonSerializer;
-import org.eso.ias.prototype.input.java.IasValueStringSerializer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+
+import org.eso.ias.converter.ValueMapper;
+import org.eso.ias.converter.config.IasioConfigurationDAO;
+import org.eso.ias.plugin.AlarmSample;
+import org.eso.ias.plugin.publisher.MonitorPointData;
+import org.eso.ias.prototype.input.java.IASTypes;
+import org.eso.ias.prototype.input.java.IASValue;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Test the mapper function i.e. the function that gets
