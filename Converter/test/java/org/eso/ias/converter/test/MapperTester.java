@@ -255,7 +255,7 @@ public class MapperTester {
 		String ret = mapper.apply(mpd.toJsonString());
 		assertNull(ret);
 		
-		// Translate another mp to be shure the previous error
+		// Translate another mp to be sure the previous error
 		// did not brake the processor
 		assertNotNull(mapper.apply(buildMonitorPointData(mpdHolders[0]).toJsonString()));
 	}
