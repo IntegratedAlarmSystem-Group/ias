@@ -6,7 +6,7 @@ import java.util.function.Function;
 
 /**
  * The interface to stream the strings received 
- * from the plugin (i.e. the stringified verion of a 
+ * from the plugin (i.e. the stringified version of a 
  * monitor point value or alarm) to strings to send 
  * to the core of the IAS (i.e. a stringified representation 
  * of a IAS value) 
@@ -22,7 +22,7 @@ public abstract class ConverterStream {
 	/**
 	 * The function to map a input string to output string
 	 */
-	private Function<String, String> mapper;
+	protected final Function<String, String> mapper;
 	
 	/**
 	 * The ID of the converter.
@@ -32,15 +32,7 @@ public abstract class ConverterStream {
 	 * 
 	 * @see #setKafkaProps()
 	 */
-	private String converterID;
-	
-	/**
-	 * Additional properties whose content
-	 * depends on the transport system defined 
-	 * in the extenders of this class)
-	 * 
-	 */
-	private Properties props;
+	protected final String converterID;
 	
 	/**
 	 * Flag to signal that the streamer has been initialized
@@ -53,29 +45,30 @@ public abstract class ConverterStream {
 	private volatile boolean started;
 	
 	/**
-	 * Constructor 
+	 * Constructor
+	 * 
+	 * @param converterID The ID of the converter.
+	 * @param mapper The function to map a input string to output string
 	 */
-	public ConverterStream() {}
-	
-	/**
-	 * Inizialize the stream
-	 * <P>
-	 * After some intialization, it delegates to 
-	 * @param converterID The ID of the converter
-	 * @param mapper The mapper to translate values id IAS data structs
-	 * @param props User defined properties
-	 * @throws ConverterStreamException in case of error initializing
-	 */
-	public void initialize(
-			String converterID, 
-			Function<String, String> mapper, 
-			Properties props) throws ConverterStreamException {
+	public ConverterStream(String converterID,Function<String, String> mapper) {
 		Objects.requireNonNull(converterID);
-		this.converterID = converterID.trim();
+		if (converterID.trim().isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty converter ID");
+		}
+		this.converterID=converterID.trim();
 		Objects.requireNonNull(mapper);
 		this.mapper=mapper;
-		Objects.requireNonNull(props);
-		this.props=props;
+	}
+	
+	/**
+	 * Initialize the stream
+	 * <P>
+	 * After some initialization, it delegates to {@link #init()}
+	 * 
+	 * @throws ConverterStreamException in case of error initializing
+	 */
+	public void initialize() throws ConverterStreamException {
+		init();
 		initialized=true;
 	}
 	
@@ -130,26 +123,5 @@ public abstract class ConverterStream {
 	 * @throws ConverterStreamException in case of error stopping
 	 */
 	protected abstract void stopStreaming() throws ConverterStreamException;
-
-	/**
-	 * @return the mapper
-	 */
-	public Function<String, String> getMapper() {
-		return mapper;
-	}
-
-	/**
-	 * @return the converterID
-	 */
-	public String getConverterID() {
-		return converterID;
-	}
-
-	/**
-	 * @return the props
-	 */
-	public Properties getProps() {
-		return props;
-	}
 
 }

@@ -14,9 +14,13 @@ import org.slf4j.LoggerFactory;
 
 /**
  * The kafka stream used by the converter to get JSON strings
- * from the plugins and sends JSON strings to the core of the IAS
+ * from the plugins and sends JSON strings to the core of the IAS.
+ * <P>
+ * The list of kafka servers to connect to and the names of
+ * the input and output topics can be passed by means of
+ * java properties ({@link #ConverterKafkaStream(Properties)})
+ * or programmatically. 
  * 
- * TODO: pass the kafka serves and ports
  * 
  * @author acaproni
  */
@@ -31,7 +35,7 @@ public class ConverterKafkaStream extends ConverterStream {
 	 * The name of the topic where plugins pushes
 	 * monitor point values and alarms
 	 */
-	private String pluginsInputKTopicName;
+	private final String pluginsInputKTopicName;
 	
 	/**
 	 * The name of the java property to get the name of the 
@@ -47,13 +51,28 @@ public class ConverterKafkaStream extends ConverterStream {
 	/**
 	 * The name of the topic to send values to the core of the IAS
 	 */
-	private String iasCoreOutputKTopicName;
+	private final String iasCoreOutputKTopicName;
 	
 	/**
 	 * The name of the java property to get thename of the 
 	 * topic where plugins push values
 	 */
 	private static final String IASCORE_TOPIC_NAME_PROP_NAME = "org.eso.ias.converter.kafka.outputstream";
+	
+	/**
+	 * The name of the property to pass the kafka servers to connect to
+	 */
+	private static final String KAFKA_SERVERS_PROP_NAME = "org.eso.ias.converter.kafka.servers";
+	
+	/**
+	 * Default list of kafka servers to connect to
+	 */
+	private static final String DEFAULTKAFKASERVERS = "localhost:9092";
+	
+	/**
+	 * The list of kafka servers to connect to
+	 */
+	private final String kafkaServers;
 	
 	/**
 	 * Kafka stream builder
@@ -71,18 +90,66 @@ public class ConverterKafkaStream extends ConverterStream {
 	private static final String DEFAULTCOREKTOPICNAME= "IasCoreKTopic";
 	
 	/**
+	 * The empty constructor gets the kafka servers, and the topics
+	 * for the streaming from the passed properties or falls
+	 * back to the defaults.
+	 * 
+	 * @param converterID The ID of the converter.
+	 * @param mapper The function to map a input string to output string
+	 * @parm props the properties to get kafka serves and topic anmes
+	 */
+	public ConverterKafkaStream(
+			String converterID,
+			Function<String, String> mapper,
+			Properties props) {
+		super(converterID,mapper);
+		Objects.requireNonNull(props);
+		kafkaServers = props.getProperty(KAFKA_SERVERS_PROP_NAME,DEFAULTKAFKASERVERS);
+		pluginsInputKTopicName=props.getProperty(PLUGIN_TOPIC_NAME_PROP_NAME, DEFAULTPLUGINSINPUTKTOPICNAME);
+		iasCoreOutputKTopicName=props.getProperty(IASCORE_TOPIC_NAME_PROP_NAME, DEFAULTCOREKTOPICNAME);
+		
+		logger.debug("Will connect to {} to send data from {} to {}",
+				kafkaServers,
+				pluginsInputKTopicName,
+				iasCoreOutputKTopicName);
+	}
+	
+	/**
+	 * Constructor
+	 * 
+	 * @param converterID The ID of the converter
+	 * @param mapper The function to map a input string to output string
+	 * @param servers The kafka servers to conncet to
+	 * @param pluginTopicName The name of the topic to get monitor points from plugins
+	 * @param iasCoreTopicName The name of the topic to send values to the core of the IAS
+	 */
+	public ConverterKafkaStream(
+			String converterID,
+			Function<String, String> mapper,
+			String servers,
+			String pluginTopicName, 
+			String iasCoreTopicName) {
+		super(converterID,mapper);
+		Objects.requireNonNull(servers);
+		kafkaServers = servers;
+		Objects.requireNonNull(pluginTopicName);
+		pluginsInputKTopicName = pluginTopicName;
+		Objects.requireNonNull(iasCoreTopicName);
+		iasCoreOutputKTopicName = iasCoreTopicName;
+		logger.debug("Will connect to {} to send data from {} to {}",
+				kafkaServers,
+				pluginsInputKTopicName,
+				iasCoreOutputKTopicName);
+	}
+	
+	/**
 	 * Initialize the stream
 	 * 
 	 */
 	public void init() {
 		
-		String inputTopicName=System.getProperty(PLUGIN_TOPIC_NAME_PROP_NAME);
-		pluginsInputKTopicName=(inputTopicName==null)?DEFAULTPLUGINSINPUTKTOPICNAME:inputTopicName;
-		String outputTopicName=System.getProperty(IASCORE_TOPIC_NAME_PROP_NAME);
-		iasCoreOutputKTopicName=(outputTopicName==null)?DEFAULTCOREKTOPICNAME:outputTopicName;
-		
 		KStream<String, String> source = builder.stream(pluginsInputKTopicName);
-        source.mapValues(jString -> getMapper().apply(jString)).to(iasCoreOutputKTopicName);
+        source.mapValues(jString -> mapper.apply(jString)).to(iasCoreOutputKTopicName);
         streams = new KafkaStreams(builder, setKafkaProps());
 	}
 	
@@ -95,8 +162,8 @@ public class ConverterKafkaStream extends ConverterStream {
 	 */
 	private Properties setKafkaProps() {
 		Properties props = new Properties();
-		props.put(StreamsConfig.APPLICATION_ID_CONFIG, getConverterID());
-        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+		props.put(StreamsConfig.APPLICATION_ID_CONFIG, converterID);
+        props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaServers);
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         return props;

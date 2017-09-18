@@ -12,10 +12,6 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class ConverterConfig {
-
-	@Bean
-	public ConverterStream converterStream() { 
-		return new ConverterKafkaStream(); }
 	
 	@Bean
 	public CdbReader cdbReader() { 

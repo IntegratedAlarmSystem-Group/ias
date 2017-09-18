@@ -1,11 +1,10 @@
-package org.eso.ias.converter.translation;
+package org.eso.ias.converter;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Objects;
 import java.util.function.Function;
 
-import org.eso.ias.converter.Converter;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
 import org.eso.ias.converter.config.MonitorPointConfiguration;
 import org.eso.ias.plugin.AlarmSample;
@@ -111,7 +110,9 @@ public class ValueMapper implements Function<String, String> {
 	}
 	
 	/**
-	 * @see org.eso.ias.converter.translation.ConverterEngine#translate(org.eso.ias.plugin.publisher.MonitorPointData, org.eso.ias.prototype.input.java.IASTypes)
+	 * Convert the {@link MonitorPointData} received by a plugin 
+	 * to a {@link IASValue} to send to the core of the IAS
+	 * 
 	 */
 	public IASValue<?> translate(MonitorPointData remoteSystemData, IASTypes type) {
 		Objects.requireNonNull(type);

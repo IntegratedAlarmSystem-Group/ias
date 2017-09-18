@@ -2,13 +2,13 @@ package org.eso.ias.converter;
 
 import java.security.InvalidParameterException;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.function.Function;
 
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.converter.config.ConfigurationException;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
 import org.eso.ias.converter.config.IasioConfigurationDaoImpl;
-import org.eso.ias.converter.translation.ValueMapper;
 import org.eso.ias.prototype.input.java.IASValue;
 import org.eso.ias.prototype.input.java.IasValueJsonSerializer;
 import org.eso.ias.prototype.input.java.IasValueStringSerializer;
@@ -99,13 +99,12 @@ public class Converter {
 	 */
 	public Converter(
 			String id,
-			CdbReader cdbReader,
-			ConverterStream stream) {
+			CdbReader cdbReader) {
 		Objects.requireNonNull(id);
 		if (id.trim().isEmpty()) {
 			throw new InvalidParameterException("The ID of the converter can't be empty");
 		}
-		this.converterID=id.trim();
+		converterID=id.trim();
 		Objects.requireNonNull(cdbReader);
 		this.cdbDAO=cdbReader;
 		this.configDao= new IasioConfigurationDaoImpl(cdbReader);
@@ -113,6 +112,7 @@ public class Converter {
 		this.iasValueStrSerializer=	new IasValueJsonSerializer();
 		
 		mapper = new ValueMapper(this.configDao, this.iasValueStrSerializer,id);
+		ConverterStream stream = new ConverterKafkaStream(converterID, mapper, new Properties());
 		this.converterStream=stream;
 	}
 	
@@ -125,7 +125,7 @@ public class Converter {
 		Runtime.getRuntime().addShutdownHook(shutDownThread);
 		// Init the strea
 		try {
-			converterStream.initialize(converterID, mapper, null);
+			converterStream.initialize();
 		} catch (ConverterStreamException cse) {
 			throw new ConfigurationException("Error initializing the stream",cse);
 		}
@@ -176,12 +176,11 @@ public class Converter {
 		 */
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ConverterConfig.class);
 		CdbReader cdbReader = context.getBean("cdbReader",CdbReader.class);
-		ConverterStream stream = context.getBean("converterStream",ConverterStream.class);
 		
 		
 		logger.info("Converter {} started",id);
 		
-		Converter converter = new Converter(id,cdbReader,stream);
+		Converter converter = new Converter(id,cdbReader);
 		try {
 			converter.setUp();
 			logger.info("Converter {} initialized",id);
