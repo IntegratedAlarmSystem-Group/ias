@@ -2,10 +2,13 @@ package org.eso.ias.kafkautils;
 
 import java.util.Objects;
 import java.util.Properties;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,6 +93,7 @@ public class SimpleStringProducer {
 	public void setUp(Properties props) {
 		Objects.requireNonNull(props);
 		props.put("bootstrap.servers", bootstrapServers);
+		props.put("acks", "all");
 		props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 		props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 		props.put("client.id",clientID);
@@ -105,26 +109,92 @@ public class SimpleStringProducer {
 	}
 	
 	/**
-	 * Pushes the passed string in the given partition and key
+	 * Asynchronously pushes a string in a kafka topic.
 	 * 
 	 * @param value The not <code>null</code> nor empty string to publish in the topic
 	 * @param partition The partition
 	 * @param key The key
-	 * @return The number of strings published so far
+	 * @throws KafkaUtilsException in case of error sending the value
 	 */
-	public int push(String value, Integer partition, String key) {
+	public void push(String value,	Integer partition,	String key) throws KafkaUtilsException {
+		push(value,partition,key,false,0,null);
+	}
+	
+	/**
+	 * Synchronously pushes the passed string in the topic
+	 * 
+	 * @param value The not <code>null</code> nor empty string to publish in the topic
+	 * @param partition The partition
+	 * @param key The key
+	 * @param timeout the time to wait if sync is set
+	 * @param unit the unit of the timeout
+	 * @throws KafkaUtilsException in case of error or timeout sending the value
+	 */
+	public void push(
+			String value, 
+			Integer partition, 
+			String key, 
+			int timeout,
+			TimeUnit unit) throws KafkaUtilsException {
+		push(value,partition,key,true,timeout,unit);
+	}
+	
+	/**
+	 * Pushes the passed string in the given partition and key.
+	 * <P>
+	 * Kafka sending is asynch. i.e. this methods returns
+	 * before the actual value is effectively published in the topic unless
+	 * the sync parameter is set to <code>true</code> in which case
+	 * send waits for the effective sending  
+	 * 
+	 * @param value The not <code>null</code> nor empty string to publish in the topic
+	 * @param partition The partition
+	 * @param key The key
+	 * @param sync If true the methods return
+	 * @param timeout the time to wait if sync is set
+	 * @param unit the unit of the timeout
+	 * @throws KafkaUtilsException in case of error or timeout sending the value 
+	 */
+	protected void push(
+			String value, 
+			Integer partition, 
+			String key, 
+			boolean sync,
+			int timeout,
+			TimeUnit unit) throws KafkaUtilsException {
 		Objects.requireNonNull(value);
 		if (value.isEmpty()) {
 			logger.info("Empty string rejected");
 		}
+		if (sync) {
+			if (timeout<=0 || unit==null) {
+				throw new IllegalArgumentException("Invalid timeout/unit args. for sync sending");
+			}
+		}
+		
 		if (closed) {
 			logger.info("Producer close: [{}] not sent",value);
+			return;
 		}
 		
 		ProducerRecord<String, String> record = new ProducerRecord<String, String>(topic, partition, key, value);
-		producer.send(record);
-		return numOfStringsSent.incrementAndGet();
+		Future<RecordMetadata> future = producer.send(record);
+		if (sync) {
+			try {
+				RecordMetadata recordMData = future.get(timeout,unit);
+				logger.info("[{}] published on partition {} of topic {} with an offset of {}",
+						value,
+						recordMData.partition(),
+						recordMData.topic(),
+						recordMData.offset());
+			} catch (Exception e) {
+				throw new KafkaUtilsException("Exception got while sending ["+value+"]",e);
+			}
+			
+		}
+		numOfStringsSent.incrementAndGet();
 	}
+	
 	
 	public int getNumOfStringsSent() {
 		return numOfStringsSent.get();

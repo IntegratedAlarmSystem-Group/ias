@@ -1,11 +1,16 @@
 package org.eso.ias.kafkautils;
 
 import java.util.Arrays;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -98,8 +103,11 @@ public class SimpleStringConsumer implements Runnable {
 	 * @param listener The listener of events published in the topic
 	 */
 	public SimpleStringConsumer(String topicName, String serverName, int serverPort, KafkaConsumerListener listener) {
-		super();
-		this.topicName = topicName;
+		Objects.requireNonNull(topicName);
+		if (topicName.trim().isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty topic name");
+		}
+		this.topicName=topicName.trim();
 		this.serverName = serverName;
 		this.serverPort = serverPort;
 		this.listener=listener;
@@ -125,6 +133,17 @@ public class SimpleStringConsumer implements Runnable {
 	     consumer = new KafkaConsumer<>(props);
 	     consumer.subscribe(Arrays.asList(topicName));
 	     logger.info("Kafka consumer subscribed to {}",topicName);
+	     Set<TopicPartition> topicPartitions = consumer.assignment();
+	     Map<TopicPartition, Long> offsets = consumer.beginningOffsets(topicPartitions);
+	     logger.info("Assigned to {} partitions",topicPartitions.size());
+	     for (TopicPartition tPart: topicPartitions) {
+	    	 logger.info("Partition {} with offset {} on topic {}: next topic to read at {}",
+	    			 tPart.partition(),
+	    			 offsets.get(tPart),
+	    			 tPart.topic(),
+	    			 consumer.position(tPart));
+	     }
+	     
 	     thread = new Thread(this,SimpleStringConsumer.class.getName()+"-Thread");
 	     thread.setDaemon(true);
 	     thread.start();
@@ -160,11 +179,19 @@ public class SimpleStringConsumer implements Runnable {
 			ConsumerRecords<String, String> records;
 	         try {
 	        	 records = consumer.poll(pollingTimeout);
+	        	 logger.info("Item read with {} records", records.count());
 	         } catch (WakeupException we) {
 	        	 continue;
 	         } 
 	         try {
-	        	 records.forEach( record -> listener.stringEventReceived(record.value()));
+	        	 for (ConsumerRecord<String, String> record: records) {
+	        		 logger.info("Notifying listener of [{}] value red from partition {} and offset {} of topic {}",
+	        				 record.value(),
+	        				 record.partition(),
+	        				 record.offset(),
+	        				 record.topic());
+	        		 listener.stringEventReceived(record.value());
+	        	 }
 	         } catch (Throwable t) {
 	        	 logger.error("Exception got processing events",t);
 	         }
