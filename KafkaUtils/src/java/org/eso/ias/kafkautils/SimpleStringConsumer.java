@@ -6,6 +6,7 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -101,6 +102,16 @@ public class SimpleStringConsumer implements Runnable {
 	 * The listener of events published in the topic
 	 */
 	private final KafkaConsumerListener listener;
+	
+	/**
+	 * The number of records received while polling
+	 */
+	private final AtomicLong processedRecords = new AtomicLong(0);
+	
+	/**
+	 * The number of strings received (a record can contain more strings)
+	 */
+	private final AtomicLong processedStrings = new AtomicLong(0);
 	
 	/**
 	 * Constructor 
@@ -229,6 +240,7 @@ public class SimpleStringConsumer implements Runnable {
 	         try {
 	        	 records = consumer.poll(pollingTimeout);
 	        	 logger.info("Item read with {} records", records.count());
+	        	 processedRecords.incrementAndGet();
 	         } catch (WakeupException we) {
 	        	 continue;
 	         } 
@@ -239,6 +251,7 @@ public class SimpleStringConsumer implements Runnable {
 	        				 record.partition(),
 	        				 record.offset(),
 	        				 record.topic());
+	        		 processedStrings.incrementAndGet();
 	        		 listener.stringEventReceived(record.value());
 	        	 }
 	         } catch (Throwable t) {
@@ -247,6 +260,20 @@ public class SimpleStringConsumer implements Runnable {
 	         
 	     }
 		logger.info("Thread to get events from the topic terminated");
+	}
+	
+	/**
+	 * @return the number of records processed
+	 */
+	public long getNumOfProcessedRecords() {
+		return processedRecords.get();
+	}
+	
+	/**
+	 * @return the number of strings processed
+	 */
+	public long getNumOfProcessedStrings() {
+		return processedStrings.get();
 	}
 
 }
