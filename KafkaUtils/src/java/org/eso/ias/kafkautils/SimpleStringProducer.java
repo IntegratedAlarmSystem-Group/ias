@@ -227,6 +227,15 @@ public class SimpleStringProducer {
 		numOfStringsSent.incrementAndGet();
 	}
 	
+	/**
+	 * Ensures all the records have been delivered to the broker
+	 * especially useful while sending records asynchronously and
+	 * want be sure they have all beel sent.
+	 */
+	public void flush() {
+		producer.flush();
+	}
+	
 	
 	public int getNumOfStringsSent() {
 		return numOfStringsSent.get();
