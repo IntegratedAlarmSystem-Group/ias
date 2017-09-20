@@ -130,6 +130,7 @@ public class SimpleStringConsumer implements Runnable {
 	     props.put("auto.commit.interval.ms", "1000");
 	     props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
 	     props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+	     props.put("auto.offset.reset","earliest");
 	     consumer = new KafkaConsumer<>(props);
 	     consumer.subscribe(Arrays.asList(topicName));
 	     logger.info("Kafka consumer subscribed to {}",topicName);
@@ -193,7 +194,7 @@ public class SimpleStringConsumer implements Runnable {
 	        		 listener.stringEventReceived(record.value());
 	        	 }
 	         } catch (Throwable t) {
-	        	 logger.error("Exception got processing events",t);
+	        	 logger.error("Exception got processing events: records lost!",t);
 	         }
 	         
 	     }
