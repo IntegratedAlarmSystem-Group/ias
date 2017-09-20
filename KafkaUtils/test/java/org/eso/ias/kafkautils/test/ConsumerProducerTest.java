@@ -96,7 +96,7 @@ public class ConsumerProducerTest implements KafkaConsumerListener {
 		consumer = new SimpleStringConsumer(topicName, "localhost", 9092, this);
 		consumer.setUp();
 		producer = new SimpleStringProducer(SimpleStringProducer.defaultBootstrapServers, topicName, "Consumer-ID");
-		producer.setUp(System.getProperties());
+		producer.setUp();
 		logger.info("Initialized.");
 	}
 	
@@ -142,7 +142,7 @@ public class ConsumerProducerTest implements KafkaConsumerListener {
 		logger.info("{} strings received",receivedStrings.size());
 		
 		// Check if the receives strings match with the strings sent
-		receivedStrings.forEach(str -> assertTrue(strsToSend.contains(str)));
+		receivedStrings.forEach(str -> assertTrue("Got a string not produced by this test: ["+str+"]",strsToSend.contains(str)));
 	}
 
 	/**

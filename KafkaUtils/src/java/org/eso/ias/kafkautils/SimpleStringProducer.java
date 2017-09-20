@@ -14,6 +14,9 @@ import org.slf4j.LoggerFactory;
 
 /**
  * SimpleStringProducer pushes strings on a Kafka topic.
+ * <P>
+ * Kafka properties are fully customizable by calling {@link #setUp(Properties)}:
+ * defaults values are used for the missing properties.
  * 
  * @author acaproni
  *
@@ -86,17 +89,46 @@ public class SimpleStringProducer {
 	}
 	
 	/**
-	 * Initialize the producer
-	 * <P>
-	 * Servers and ID passed in the constructor override those in the passed properties
+	 * Merge the default properties into the passed properties.
+	 * 
+	 * @param props The properties where missing ones are taken from the default
 	 */
-	public void setUp(Properties props) {
+	private void mergeDefaultProps(Properties props) {
 		Objects.requireNonNull(props);
+		
+		Properties defaultProps = getDefaultProps();
+		defaultProps.keySet().forEach( k -> props.putIfAbsent(k, defaultProps.get(k)));
+	}
+	
+	/**
+	 * Build and return the default properties for the consumer
+	 * @return
+	 */
+	private Properties getDefaultProps() {
+		Properties props = new Properties();
 		props.put("bootstrap.servers", bootstrapServers);
 		props.put("acks", "all");
 		props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 		props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 		props.put("client.id",clientID);
+		return props;
+	}
+	
+	/**
+	 * Initialize the producer with default properties
+	 */
+	public void setUp() {
+		setUp(getDefaultProps());
+	}
+	
+	/**
+	 * Initialize the producer with the given properties
+	 * <P>
+	 * Servers and ID passed in the constructor override those in the passed properties
+	 */
+	public void setUp(Properties props) {
+		Objects.requireNonNull(props);
+		mergeDefaultProps(props);
 		producer = new KafkaProducer<>(props);
 	}
 	

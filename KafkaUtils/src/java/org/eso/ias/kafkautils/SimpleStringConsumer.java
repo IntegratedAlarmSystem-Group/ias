@@ -20,6 +20,9 @@ import org.slf4j.LoggerFactory;
  * Generic Kafka consumer to get strings from a kafka topic.
  * <P>
  * The string are passed to the listener for further processing.
+ * <P>
+ * Kafka properties are fully customizable by calling {@link #setUp(Properties)}:
+ * defaults values are used for the missing properties.
  * 
  * @author acaproni
  *
@@ -57,6 +60,11 @@ public class SimpleStringConsumer implements Runnable {
 	 * The name of the topic to get events from
 	 */
 	private final String topicName;
+	
+	/**
+	 * The thread to cleanly close the consumer
+	 */
+	private Thread shutDownThread;
 	
 	/**
 	 * The server name where the kafka broker runs 
@@ -119,36 +127,75 @@ public class SimpleStringConsumer implements Runnable {
 	}
 	
 	/**
-	 * Initializes the consumer
+	 * Initializes the consumer with the passed kafka properties.
+	 * <P> 
+	 * The defaults are used if not passed in the parameter
+	 * 
+	 * @param userPros The user defined kafka properties
+	 */
+	public void setUp(Properties userPros) {
+		Objects.requireNonNull(userPros);
+		mergeDefaultProps(userPros);
+		consumer = new KafkaConsumer<>(userPros);
+		consumer.subscribe(Arrays.asList(topicName));
+		logger.info("Kafka consumer subscribed to {}", topicName);
+		Set<TopicPartition> topicPartitions = consumer.assignment();
+		Map<TopicPartition, Long> offsets = consumer.beginningOffsets(topicPartitions);
+		logger.info("Assigned to {} partitions", topicPartitions.size());
+		for (TopicPartition tPart : topicPartitions) {
+			logger.info("Partition {} with offset {} on topic {}: next topic to read at {}", tPart.partition(),
+					offsets.get(tPart), tPart.topic(), consumer.position(tPart));
+		}
+
+		shutDownThread = new Thread() {
+			@Override
+			public void run() {
+				tearDown();
+			}
+		};
+		Runtime.getRuntime().addShutdownHook(shutDownThread);
+
+		thread = new Thread(this, SimpleStringConsumer.class.getName() + "-Thread");
+		thread.setDaemon(true);
+		thread.start();
+		logger.info("Kafka consumer initialized");
+	}
+	
+	/**
+	 * Merge the default properties into the passed properties.
+	 * 
+	 * @param props The properties where missing ones are taken from the default
+	 */
+	private void mergeDefaultProps(Properties props) {
+		Objects.requireNonNull(props);
+		
+		Properties defaultProps = getDefaultProps();
+		defaultProps.keySet().forEach( k -> props.putIfAbsent(k, defaultProps.get(k)));
+	}
+	
+	/**
+	 * Build and return the default properties for the consumer
+	 * @return
+	 */
+	private Properties getDefaultProps() {
+		Properties props = new Properties();
+		props.put("bootstrap.servers", serverName + ":" + serverPort);
+		props.put("group.id", kafkaConsumerGroup);
+		props.put("enable.auto.commit", "true");
+		props.put("auto.commit.interval.ms", "1000");
+		props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+		props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
+		props.put("auto.offset.reset", "earliest");
+		return props;
+	}
+	
+	/**
+	 * Initializes the consumer with default kafka properties
 	 */
 	public void setUp() {
 		logger.info("Setting up the kafka consumer");
-		Properties props = new Properties();
-	     props.put("bootstrap.servers", serverName+":"+serverPort);
-	     props.put("group.id", kafkaConsumerGroup);
-	     props.put("enable.auto.commit", "true");
-	     props.put("auto.commit.interval.ms", "1000");
-	     props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-	     props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-	     props.put("auto.offset.reset","earliest");
-	     consumer = new KafkaConsumer<>(props);
-	     consumer.subscribe(Arrays.asList(topicName));
-	     logger.info("Kafka consumer subscribed to {}",topicName);
-	     Set<TopicPartition> topicPartitions = consumer.assignment();
-	     Map<TopicPartition, Long> offsets = consumer.beginningOffsets(topicPartitions);
-	     logger.info("Assigned to {} partitions",topicPartitions.size());
-	     for (TopicPartition tPart: topicPartitions) {
-	    	 logger.info("Partition {} with offset {} on topic {}: next topic to read at {}",
-	    			 tPart.partition(),
-	    			 offsets.get(tPart),
-	    			 tPart.topic(),
-	    			 consumer.position(tPart));
-	     }
-	     
-	     thread = new Thread(this,SimpleStringConsumer.class.getName()+"-Thread");
-	     thread.setDaemon(true);
-	     thread.start();
-	     logger.info("Kafka consumer initialized");
+		
+		setUp(getDefaultProps());
 	}
 	
 	/**
@@ -157,6 +204,7 @@ public class SimpleStringConsumer implements Runnable {
 	public void tearDown() {
 		logger.info("Closing...");
 		isClosed.set(true);
+		Runtime.getRuntime().removeShutdownHook(shutDownThread);
 		consumer.wakeup();
 		try {
 			thread.join();
