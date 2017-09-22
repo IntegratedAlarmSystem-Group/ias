@@ -46,7 +46,7 @@ public class ConverterKafkaStream extends ConverterStream {
 	/**
 	 * The default name for the topic where plugins push values
 	 */
-	private static final String DEFAULTPLUGINSINPUTKTOPICNAME = "PluginsKTopic";
+	public static final String DEFAULTPLUGINSINPUTKTOPICNAME = "PluginsKTopic";
 	
 	/**
 	 * The name of the topic to send values to the core of the IAS
@@ -87,7 +87,7 @@ public class ConverterKafkaStream extends ConverterStream {
 	/**
 	 * The default name for the topic to send values to the core
 	 */
-	private static final String DEFAULTCOREKTOPICNAME= "IasCoreKTopic";
+	public static final String DEFAULTCOREKTOPICNAME= "IasCoreKTopic";
 	
 	/**
 	 * The empty constructor gets the kafka servers, and the topics
