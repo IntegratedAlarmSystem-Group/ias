@@ -68,14 +68,9 @@ public class SimpleStringConsumer implements Runnable {
 	private Thread shutDownThread;
 	
 	/**
-	 * The server name where the kafka broker runs 
+	 * The servers of the kafka broker runs 
 	 */
-	private final String serverName;
-	
-	/**
-	 * The port used by the kafka broker 
-	 */
-	private final int serverPort;
+	private final String kafkaServers;
 	
 	/**
 	 * The time, in milliseconds, spent waiting in poll if data is not available in the buffer
@@ -116,25 +111,23 @@ public class SimpleStringConsumer implements Runnable {
 	/**
 	 * Constructor 
 	 * 
+	 * @param servers The kafka servers to connect to
 	 * @param topicName The name of the topic to get events from
-	 * @param serverName The server name where the kafka broker runs
-	 * @param serverPort The port used by the kafka broker
 	 * @param listener The listener of events published in the topic
 	 */
-	public SimpleStringConsumer(String topicName, String serverName, int serverPort, KafkaConsumerListener listener) {
+	public SimpleStringConsumer(String servers, String topicName, KafkaConsumerListener listener) {
+		Objects.requireNonNull(servers);
+		this.kafkaServers = servers;
 		Objects.requireNonNull(topicName);
 		if (topicName.trim().isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty topic name");
 		}
 		this.topicName=topicName.trim();
-		this.serverName = serverName;
-		this.serverPort = serverPort;
+		Objects.requireNonNull(listener);
 		this.listener=listener;
-		assert(this.listener!=null);
-		logger.info("SimpleKafkaConsumer will get events from {} topic connected to kafka broker@{}:{}",
+		logger.info("SimpleKafkaConsumer will get events from {} topic connected to kafka broker@{}",
 				this.topicName,
-				this.serverName,
-				this.serverPort);
+				this.kafkaServers);
 	}
 	
 	/**
@@ -190,7 +183,7 @@ public class SimpleStringConsumer implements Runnable {
 	 */
 	private Properties getDefaultProps() {
 		Properties props = new Properties();
-		props.put("bootstrap.servers", serverName + ":" + serverPort);
+		props.put("bootstrap.servers", kafkaServers);
 		props.put("group.id", kafkaConsumerGroup);
 		props.put("enable.auto.commit", "true");
 		props.put("auto.commit.interval.ms", "1000");
