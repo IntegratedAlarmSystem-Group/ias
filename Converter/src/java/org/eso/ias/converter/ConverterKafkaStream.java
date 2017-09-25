@@ -147,10 +147,11 @@ public class ConverterKafkaStream extends ConverterStream {
 	 * 
 	 */
 	public void init() {
-		
+		logger.debug("Initializing...");
 		KStream<String, String> source = builder.stream(pluginsInputKTopicName);
-        source.mapValues(jString -> mapper.apply(jString)).to(iasCoreOutputKTopicName);
+        source.mapValues(jString -> mapper.apply(jString)).filter((key,value) -> value!=null && !value.isEmpty()).to(iasCoreOutputKTopicName);
         streams = new KafkaStreams(builder, setKafkaProps());
+        logger.debug("Initialized.");
 	}
 	
 	
