@@ -1,11 +1,21 @@
 package org.eso.ias.converter.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
@@ -19,12 +29,20 @@ import org.eso.ias.converter.ConverterKafkaStream;
 import org.eso.ias.kafkautils.SimpleStringConsumer;
 import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener;
 import org.eso.ias.kafkautils.SimpleStringProducer;
+import org.eso.ias.plugin.AlarmSample;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.prototype.input.java.IASTypes;
 import org.eso.ias.prototype.input.java.IASValue;
+import org.eso.ias.prototype.input.java.IasValueJsonSerializer;
+import org.eso.ias.prototype.input.java.IasValueSerializerException;
+import org.eso.ias.prototype.input.java.IasValueStringSerializer;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Test the kafka streaming by pushing string as they were
@@ -58,7 +76,75 @@ import org.junit.Test;
  * @author acaproni
  *
  */
-public class TestKafkaStreaming extends ConverterTestBase implements KafkaConsumerListener {
+public class TestKafkaStreaming extends ConverterTestBase {
+	
+	public static class TestStringConsumer implements KafkaConsumerListener {
+		
+		/**
+		 * The values received i.e. those
+		 * translated by the converter
+		 */
+		private List<IASValue<?>> valuesReceived = Collections.synchronizedList(new ArrayList<>(numOfMPointsToSend));
+		
+		/**
+		 * To translate JSON string into {@link IASValue}
+		 */
+		private IasValueStringSerializer iasSerializer = new  IasValueJsonSerializer();
+		
+		/**
+		 * The count down latch to signal the number of events received
+		 */
+		private AtomicReference<CountDownLatch> coundownLatch = new AtomicReference<CountDownLatch>(null);
+		
+		/**
+		 * Preprare to get the passed number of events
+		 * 
+		 * @param n The number of events to receive
+		 * @return the latch to wait for events reception
+		 */
+		public synchronized CountDownLatch reset(int n) {
+			if (n<=0) {
+				throw new IllegalArgumentException("Invalid number of events to wait for");
+			}
+			valuesReceived.clear();
+			coundownLatch.set(new CountDownLatch(n));
+			return coundownLatch.get();
+		}
+		
+		/**
+		 * @see org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener#stringEventReceived(java.lang.String)
+		 */
+		@Override
+		public synchronized void stringEventReceived(String event) {
+			logger.info("Event received [{}]",event);
+			IASValue<?> iasValue;
+			try {
+				iasValue = iasSerializer.valueOf(event);
+				valuesReceived.add(iasValue);
+				CountDownLatch latch = coundownLatch.get();
+				if (latch!=null) {
+					latch.countDown();
+				}
+			} catch (IasValueSerializerException avse) {
+				logger.error("Exception pasing [{]] into a IASValue",event);
+			}
+			
+		}
+		
+		/**
+		 * 
+		 * @return The number of events received
+		 */
+		public int numOfEventsReceived() {
+			return valuesReceived.size();
+		}
+		
+	}
+	
+	/**
+	 * The conumer of events
+	 */
+	private static final TestStringConsumer eventsConsumer = new TestStringConsumer();
 	
 	/**
 	 * The identifier of the converter
@@ -80,6 +166,48 @@ public class TestKafkaStreaming extends ConverterTestBase implements KafkaConsum
 	 * Default list of servers
 	 */
 	public static final String defaultKafkaBootstrapServers="localhost:9092";
+	
+	/**
+	 * The logger
+	 */
+	private final static Logger logger = LoggerFactory.getLogger(TestKafkaStreaming.class);
+	
+	/**
+	 * The number of monitor point to send to the converter
+	 */
+	private static final int numOfMPointsToSend = 5000;
+	
+	/**
+	 * The {@link MonitorPointData} to send to the converter
+	 */
+	private final MonitorPointDataHolder[] mpdToSend = buildMPDToSend(numOfMPointsToSend);
+	
+	/**
+	 * The parent folder is the actual folder
+	 */
+	public static final Path cdbParentPath =  FileSystems.getDefault().getPath(".");
+	
+	/**
+	 * The directory structure for the JSON CDB
+	 */
+	private CdbJsonFiles cdbFiles;
+	
+	/**
+	 * The converter to test
+	 */
+	private Converter converter;
+	
+	/**
+	 * The producer to push mpoints in input to the converter
+	 */
+	private static SimpleStringProducer mPointsProducer;
+	
+	/**
+	 * The consumer to get IASValue published by the converter
+	 */
+	private static SimpleStringConsumer mPointsConsumer;
+	
+	
 	
 	/**
 	 * Build the {@link MonitorPointData} to send to the converter
@@ -110,40 +238,30 @@ public class TestKafkaStreaming extends ConverterTestBase implements KafkaConsum
 		return ret;
 	}
 	
-	/**
-	 * The number of monitor point to send to the converter
-	 */
-	private static final int numOfMPointsToSend = 10;
+	@BeforeClass
+	public static void classInitializer() throws Exception {
+		// Build the consumer that takes out of the kafka topic
+		// the output of the converter
+		mPointsConsumer = new SimpleStringConsumer(
+				defaultKafkaBootstrapServers,
+				ConverterKafkaStream.DEFAULTCOREKTOPICNAME,
+				eventsConsumer);
+		mPointsConsumer.setUp();
+		
+		// Build the producer that pushes monitor point
+		// in the kafka topic
+		mPointsProducer = new SimpleStringProducer(
+				defaultKafkaBootstrapServers,
+				ConverterKafkaStream.DEFAULTPLUGINSINPUTKTOPICNAME,
+				"TestKafkaStreamProducer");
+		mPointsProducer.setUp();
+	}
 	
-	/**
-	 * The {@link MonitorPointData} to send to the converter
-	 */
-	private final MonitorPointDataHolder[] mpdToSend = buildMPDToSend(numOfMPointsToSend);
-	
-	/**
-	 * The parent folder is the actual folder
-	 */
-	public static final Path cdbParentPath =  FileSystems.getDefault().getPath(".");
-	
-	/**
-	 * The directory structure for the JSON CDB
-	 */
-	private CdbJsonFiles cdbFiles;
-	
-	/**
-	 * The converter to test
-	 */
-	private Converter converter;
-	
-	/**
-	 * The producer to push mpoints in input to the converter
-	 */
-	private SimpleStringProducer mPointsProducer;
-	
-	/**
-	 * The consumer to get IASValue published by the converter
-	 */
-	private SimpleStringConsumer mPointsConsumer;
+	@AfterClass
+	public static void classCleanup() throws Exception {
+		mPointsConsumer.tearDown();
+		mPointsProducer.tearDown();
+	}
 	
 	/**
 	 * Initialization
@@ -170,21 +288,7 @@ public class TestKafkaStreaming extends ConverterTestBase implements KafkaConsum
 		converter = new Converter(converterID, cdbReader);
 		converter.setUp();
 		
-		// Build the consumer that takes out of the kafka topic
-		// the output of the converter
-		mPointsConsumer = new SimpleStringConsumer(
-				defaultKafkaBootstrapServers,
-				ConverterKafkaStream.DEFAULTCOREKTOPICNAME,
-				this);
-		mPointsConsumer.setUp();
 		
-		// Build the producer that pushes monitor point
-		// in the kafka topic
-		mPointsProducer = new SimpleStringProducer(
-				defaultKafkaBootstrapServers,
-				ConverterKafkaStream.DEFAULTPLUGINSINPUTKTOPICNAME,
-				"TestKafkaStreamProducer");
-		mPointsProducer.setUp();
 	}
 	
 	/**
@@ -193,8 +297,7 @@ public class TestKafkaStreaming extends ConverterTestBase implements KafkaConsum
 	@After
 	public void tearDown() throws Exception {
 		converter.tearDown();
-		mPointsConsumer.tearDown();
-		mPointsProducer.tearDown();
+	
 	}
 	
 	/**
@@ -208,22 +311,69 @@ public class TestKafkaStreaming extends ConverterTestBase implements KafkaConsum
 	 */
 	@Test
 	public void testTranslationNumber() throws Exception {
+		logger.info("testTranslationNumber....");
+		CountDownLatch latch = eventsConsumer.reset(numOfMPointsToSend);
+		Thread.sleep(5000);
 		// Pushes all the monitor point in the plugin topic
 		for (MonitorPointDataHolder mpdh: mpdToSend) {
 			MonitorPointData mpd = buildMonitorPointData(mpdh);
 			String mpdString = mpd.toJsonString();
 			mPointsProducer.push(mpdString, null, mpdh.id);
+			logger.debug("MPD{} sent",mpd.getId());
 		}
 		mPointsProducer.flush();
+		logger.info("{} strings sent",numOfMPointsToSend);
+		logger.info("Waiting for the events from the converter...");
+		assertTrue("Not all events received!",latch.await(1, TimeUnit.MINUTES));
+		assertEquals(numOfMPointsToSend,eventsConsumer.numOfEventsReceived());
+		logger.info("Test done");
 		
 	}
-
-	/* (non-Javadoc)
-	 * @see org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener#stringEventReceived(java.lang.String)
+	
+	/**
+	 * Check that all the {@link MonitorPointData} published in the kafka
+	 * topic are effectively translated and published in the core topic.
+	 * <P>
+	 * Correctness of translation is tested somewhere else but this test
+	 * repeats at least some of the checking.
+	 * 
+	 * @throws Exception
 	 */
-	@Override
-	public void stringEventReceived(String event) {
-		System.out.println("====>"+event);
+	@Test
+	public void testUnknowMPoints() throws Exception {
+		logger.info("testUnknowMPoints starting....");
+		Thread.sleep(5000);
+		CountDownLatch latch =eventsConsumer.reset(2);
+		
+		// Pushes 2 unknown monitor points
+		MonitorPointDataHolder unknown1 = new MonitorPointDataHolder("UNKNOWN-ID1", Long.MAX_VALUE, System.currentTimeMillis(), IASTypes.LONG);
+		MonitorPointData mpd = buildMonitorPointData(unknown1);
+		String mpdString = mpd.toJsonString();
+		mPointsProducer.push(mpdString, null, unknown1.id);
+		
+		MonitorPointDataHolder unknown2 = new MonitorPointDataHolder("UNKNOWN-ID2", AlarmSample.SET, System.currentTimeMillis(), IASTypes.ALARM);
+		mpd = buildMonitorPointData(unknown2);
+		mpdString = mpd.toJsonString();
+		mPointsProducer.push(mpdString, null, unknown2.id);
+		
+		assertFalse("Should not have received any value!",latch.await(1, TimeUnit.MINUTES));
+		assertEquals(0,eventsConsumer.numOfEventsReceived());
+		
+		// After the error.. Does the translation still work?
+		latch=eventsConsumer.reset(numOfMPointsToSend);
+		// Pushes all the monitor point in the plugin topic
+		for (MonitorPointDataHolder mpdh: mpdToSend) {
+			mpd = buildMonitorPointData(mpdh);
+			mpdString = mpd.toJsonString();
+			mPointsProducer.push(mpdString, null, mpdh.id);
+			logger.debug("MPD{} sent",mpd.getId());
+		}
+		mPointsProducer.flush();
+		logger.info("{} strings sent",numOfMPointsToSend);
+		logger.info("Waiting for the events from the converter...");
+		assertTrue("Not all events received!",latch.await(1, TimeUnit.MINUTES));
+		assertEquals(numOfMPointsToSend,eventsConsumer.numOfEventsReceived());
+		logger.info("Test done");
 		
 	}
 }
