@@ -13,5 +13,6 @@
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/junit-4.12.jar"/>
 	<classpathentry kind="lib" path="extTools/kafka-streams-0.11.0.1.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/kafka-clients-0.11.0.0.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ias-kafka-tools.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
