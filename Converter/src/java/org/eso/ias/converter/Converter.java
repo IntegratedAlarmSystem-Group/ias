@@ -2,21 +2,16 @@ package org.eso.ias.converter;
 
 import java.security.InvalidParameterException;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.Properties;
+import java.util.function.Function;
 
 import org.eso.ias.cdb.CdbReader;
+import org.eso.ias.converter.config.ConfigurationException;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
 import org.eso.ias.converter.config.IasioConfigurationDaoImpl;
-import org.eso.ias.converter.config.MonitorPointConfiguration;
-import org.eso.ias.converter.corepublisher.CoreFeeder;
-import org.eso.ias.converter.corepublisher.CoreFeederException;
-import org.eso.ias.converter.pluginconsumer.RawDataReader;
-import org.eso.ias.converter.translation.ConverterEngine;
-import org.eso.ias.converter.translation.ConverterEngineImpl;
-import org.eso.ias.plugin.publisher.MonitorPointData;
-import org.eso.ias.prototype.input.java.IASTypes;
 import org.eso.ias.prototype.input.java.IASValue;
+import org.eso.ias.prototype.input.java.IasValueJsonSerializer;
+import org.eso.ias.prototype.input.java.IasValueStringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -25,7 +20,8 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
  * The tool to convert raw monitor point values and alarms
  * coming from plugins into IAS data type to be processed by the core.
  * <P>
- * The converter consists of a never-ending tool that
+ * The converter runs a never-ending loop 
+ * that consists of:
  * <UL>
  * 	<LI>get one value produced by the remote system
  * 	<LI>convert the value in the corresponding IAS data type
@@ -40,7 +36,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
  * @author acaproni
  *
  */
-public class Converter implements Runnable {
+public class Converter {
 	
 	/**
 	 * The identifier of the converter
@@ -53,26 +49,9 @@ public class Converter implements Runnable {
 	private final static Logger logger = LoggerFactory.getLogger(Converter.class);
 	
 	/**
-	 * The thread getting and converting data
-	 * @see #run()
-	 */
-	private Thread converterThread = null;
-	
-	/**
 	 * Signal the thread to terminate
 	 */
 	private volatile boolean closed=false;
-	
-	/**
-	 * The object to get data from the remote monitored systems
-	 */
-	private RawDataReader mpGetter;
-	
-	/**
-	 * The object to convert a monitor points and alarms received
-	 * by the plugins in valid IAS data type
-	 */
-	private final ConverterEngine converterEngine;
 	
 	/**
 	 * The DAO to get the configuration from the CDB
@@ -85,10 +64,21 @@ public class Converter implements Runnable {
 	private IasioConfigurationDAO configDao;
 	
 	/**
-	 * The object to send converted monitor point values and alarms
-	 * to the core of the IAS
+	 * The serializer to transform IASValues into strings 
+	 * to send to the core of the IAS
 	 */
-	private CoreFeeder mpSender;
+	private final IasValueStringSerializer iasValueStrSerializer;
+	
+	/**
+	 * The stream to get values from the plugins and
+	 * sends them to the core of the IAS in the proper format
+	 */
+	private final ConverterStream converterStream;
+	
+	/**
+	 * The function to map the json 
+	 */
+	private final Function<String, String> mapper;
 	
 	/**
 	 * The shutdown thread for a clean exit
@@ -105,40 +95,46 @@ public class Converter implements Runnable {
 	 * Dependency injection with spring take place here.
 	 * 
 	 * @param id The not <code>null</code> nor empty ID of the converter
-	 * @param mpReader The reader to get monitor point and alarms 
-	 *        provided by remote monitored control systems
 	 * @param cdbReader The DAO of the configuration database
-	 * @param feeder The publisher of IASIO data to the core of the IAS  
 	 */
 	public Converter(
 			String id,
-			RawDataReader mpReader,
-			CdbReader cdbReader,
-			CoreFeeder feeder) {
+			CdbReader cdbReader) {
 		Objects.requireNonNull(id);
-		if (id.isEmpty()) {
+		if (id.trim().isEmpty()) {
 			throw new InvalidParameterException("The ID of the converter can't be empty");
 		}
-		this.converterID=id;
-		Objects.requireNonNull(mpReader);
-		converterEngine = new ConverterEngineImpl(converterID);
-		this.mpGetter=mpReader;
+		converterID=id.trim();
 		Objects.requireNonNull(cdbReader);
 		this.cdbDAO=cdbReader;
 		this.configDao= new IasioConfigurationDaoImpl(cdbReader);
-		Objects.requireNonNull(feeder);
-		this.mpSender=feeder;
+		
+		this.iasValueStrSerializer=	new IasValueJsonSerializer();
+		
+		mapper = new ValueMapper(this.configDao, this.iasValueStrSerializer,id);
+		ConverterStream stream = new ConverterKafkaStream(converterID, mapper, new Properties());
+		this.converterStream=stream;
 	}
 	
 	/**
 	 * Initialize the converter and start the loop
 	 */
-	public void setUp() {
+	public void setUp() throws ConfigurationException {
 		logger.info("Converter {} initializing...", converterID);
+		configDao.initialize();
 		Runtime.getRuntime().addShutdownHook(shutDownThread);
-		converterThread = new Thread(this, "Converter "+converterID+" thread");
-		converterThread.setDaemon(true);
-		converterThread.start();
+		// Init the strea
+		try {
+			converterStream.initialize();
+		} catch (ConverterStreamException cse) {
+			throw new ConfigurationException("Error initializing the stream",cse);
+		}
+		// Start the thread
+		try {
+			converterStream.start();
+		} catch (Exception e) {
+			throw new ConfigurationException("Error activating the stream",e);
+		}
 		logger.info("Converter {} initialized", converterID);
 	}
 	
@@ -146,70 +142,20 @@ public class Converter implements Runnable {
 	 * Shut down the loop and free the resources.
 	 */
 	public void tearDown() {
+		if (closed) {
+			logger.info("Converter {} already closed", converterID);
+			return;
+		}
 		logger.info("Converter {} shutting down...", converterID);
 		Runtime.getRuntime().removeShutdownHook(shutDownThread);
+
 		closed=true;
-		if (converterThread.isAlive()) {
-			converterThread.interrupt();
-			try {
-				converterThread.join(60000);
-				logger.info("Converter {} thread terminated", converterID);
-			} catch (InterruptedException e) {
-				logger.error("Converter {}: exception got while waiting for thread termination", converterID,e);
-				e.printStackTrace();
-			}
+		try {
+			converterStream.stop();
+		}  catch (Exception e) {
+			logger.error("Converter {}: exception got while terminating the streaming", converterID,e);
 		}
 		logger.info("Converter {} shutted down.", converterID);
-	}
-	
-	/**
-	 * The loop to get and convert values received from plugins.
-	 * 
-	 */
-	@Override
-	public void run() {
-		logger.info("Converter {} tread running",converterID);
-		boolean interrupted=false;
-		while (!closed) {
-			// Get a value produced by a monitored system
-			MonitorPointData mPoint;
-			try {
-				mPoint=mpGetter.get(1, TimeUnit.SECONDS);
-			} catch (InterruptedException ie) {
-				interrupted=true;
-				continue;
-			} finally {
-				if (interrupted) {
-					Thread.currentThread().interrupt();
-				}
-			}
-			if (mPoint==null) {
-				continue;
-			}
-			// Get the configuration from the CDB
-			String mpId = mPoint.getId();
-			MonitorPointConfiguration mpConfiguration=configDao.getConfiguration(mpId);
-			if (mpConfiguration==null) {
-				logger.error("No configuration found for {}: raw value lost!",mpId);
-				continue;
-			}
-			IASTypes iasType = mpConfiguration.mpType;
-			// Convert the monitor point in the IAS type
-			IASValue<?> iasValue=null;
-			try {
-				iasValue=converterEngine.translate(mPoint, iasType);
-			} catch (Exception cfe) {
-				logger.error("Error converting {} to a core value type",mPoint.getId());
-				continue;
-			}
-			// Send data to the core of the IAS
-			try {
-				mpSender.push(iasValue);
-			} catch (CoreFeederException cfe) {
-				logger.error("Error sending {} to the core",iasValue.id,cfe);
-			}
-		}
-		logger.info("Converter {} tread terminated",converterID);
 	}
 
 	/**
@@ -220,18 +166,21 @@ public class Converter implements Runnable {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		String id="IasConverter";
+		if (args.length!=1) {
+			throw new IllegalArgumentException("Missing identifier in command line");
+		}
+		String id=args[0];
 		
 		/**
 		 * Spring stuff
 		 */
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ConverterConfig.class);
 		CdbReader cdbReader = context.getBean("cdbReader",CdbReader.class);
-		RawDataReader rawDataReader = context.getBean("rawDataReader",RawDataReader.class);
-		CoreFeeder coreFeeder = context.getBean("coreFeeder",CoreFeeder.class);
+		
 		
 		logger.info("Converter {} started",id);
-		Converter converter = new Converter(id,rawDataReader,cdbReader,coreFeeder);
+		
+		Converter converter = new Converter(id,cdbReader);
 		try {
 			converter.setUp();
 			logger.info("Converter {} initialized",id);

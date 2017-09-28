@@ -86,7 +86,7 @@ public class IasioConfigurationDaoImpl extends  ConfigurationDaoBase {
 		int len = iasios.map(s -> s.size()).orElse(0);
 		logger.info("Got the configuration of {} IASIOS",len);
 		iasios.ifPresent( s -> s.forEach(iasioDao -> addConfiguration(iasioDao)));
-		logger.info("[] IASIO configurations in cache",configuration.size());
+		logger.info("{} IASIO configurations in cache",configuration.size());
 	}
 	
 	/**
@@ -97,17 +97,21 @@ public class IasioConfigurationDaoImpl extends  ConfigurationDaoBase {
 	private void addConfiguration(IasioDao iasio) {
 		MonitorPointConfiguration mpConf = new MonitorPointConfiguration(IASTypes.fromIasioDaoType(iasio.getIasType()));
 		configuration.put(iasio.getId(), mpConf);
-		logger.debug("{} IASIO configuration added in cache",iasio.getId());
+		logger.debug("[{}] IASIO configuration added in cache; {} IASIOs in cache",iasio.getId(),configuration.size());
 	}
 
 	@Override
-	public void setUp() throws Exception {
+	protected void setUp() throws Exception {
+		logger.debug("Setting up...");
 		buildConfigurationMap(cdbReader,configuration,true);
+		logger.debug("Ready");
 	}
 
 	@Override
-	public void tearDown() throws Exception {
+	protected void tearDown() throws Exception {
+		logger.debug("Shutting down...");
 		configuration.clear();
+		logger.debug("Closed");
 	}
 
 	@Override

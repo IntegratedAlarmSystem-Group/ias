@@ -1,8 +1,6 @@
 package org.eso.ias.converter;
 
 import org.eso.ias.cdb.CdbReader;
-import org.eso.ias.converter.corepublisher.CoreFeeder;
-import org.eso.ias.converter.pluginconsumer.RawDataReader;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -14,16 +12,9 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class ConverterConfig {
-
-	@Bean
-	public RawDataReader rawDataReader() { 
-		return null; }
 	
 	@Bean
 	public CdbReader cdbReader() { 
 		return null; }
 	
-	@Bean
-	public CoreFeeder coreFeeder() { 
-		return null; }
 }
