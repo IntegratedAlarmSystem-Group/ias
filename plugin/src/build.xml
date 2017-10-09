@@ -12,8 +12,6 @@
 	-->
 	<property name="jarName" value="ias-plugin.jar"/>
 	
-	<property name="exttools" value="kafka-clients-0.11.0.1.jar" />
-	
 	<!-- ####################### TARGETS ####################### -->
 	
 	<target name="clean" depends="ias.clean" />

@@ -12,7 +12,7 @@
 		jarName: the name of the jar to build from java sources; 
 	-->
 	<property name="jarName" value="ias-kafka-tools.jar"/>
-	
+
 	<!-- ####################### TARGETS ####################### -->
 	
 	<target name="clean" depends="ias.clean" />
