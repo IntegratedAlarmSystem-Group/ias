@@ -196,7 +196,7 @@ public class SimpleStringProducer {
 			TimeUnit unit) throws KafkaUtilsException {
 		Objects.requireNonNull(value);
 		if (value.isEmpty()) {
-			logger.info("Empty string rejected");
+			throw new KafkaUtilsException("Cannot send empty strings");
 		}
 		if (sync) {
 			if (timeout<=0 || unit==null) {

@@ -232,14 +232,14 @@ public class SimpleStringConsumer implements Runnable {
 			ConsumerRecords<String, String> records;
 	         try {
 	        	 records = consumer.poll(pollingTimeout);
-	        	 logger.info("Item read with {} records", records.count());
+	        	 logger.debug("Item read with {} records", records.count());
 	        	 processedRecords.incrementAndGet();
 	         } catch (WakeupException we) {
 	        	 continue;
 	         } 
 	         try {
 	        	 for (ConsumerRecord<String, String> record: records) {
-	        		 logger.info("Notifying listener of [{}] value red from partition {} and offset {} of topic {}",
+	        		 logger.debug("Notifying listener of [{}] value red from partition {} and offset {} of topic {}",
 	        				 record.value(),
 	        				 record.partition(),
 	        				 record.offset(),
