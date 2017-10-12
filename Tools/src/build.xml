@@ -33,7 +33,7 @@
 		Third party jars must be put in the <module>/extTools folder
 		and are installed in <module>lib/ExtTools during the build
 	-->
-	<property name="exttools" value="${spring-core.jar},${spring-context.jar},${spring-beans.jar},${spring-aop.jar},${spring-expression.jar},commons-logging-1.2.jar,scalactic_2.12-3.0.1.jar,scalatest_2.12-3.0.1.jar,junit-4.12.jar,hamcrest-core-1.3.jar" />
+	<property name="exttools" value="${spring-core.jar},${spring-context.jar},${spring-beans.jar},${spring-aop.jar},${spring-expression.jar},commons-logging-1.2.jar,scalactic_2.12-3.0.1.jar,scalatest_2.12-3.0.1.jar,junit-4.12.jar,hamcrest-core-1.3.jar,kafka-clients-0.11.0.1.jar" />
 	
 	<!--
 		jarName: the name of the jar to build from scala and java sources; 
