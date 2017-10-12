@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -47,7 +48,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Test the kafka streaming by pushing string as they were
  * published by plugins and getting strings 
- * in the topic use by the core.
+ * in the topic used by the core.
  * <P>
  * {@link #mPointsProducer} pushes the strings in the kafka topic 
  * (the same way a plugins does). 
@@ -175,7 +176,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
 	/**
 	 * The number of monitor point to send to the converter
 	 */
-	private static final int numOfMPointsToSend = 5000;
+	private static final int numOfMPointsToSend = 50;
 	
 	/**
 	 * The {@link MonitorPointData} to send to the converter
@@ -246,7 +247,13 @@ public class TestKafkaStreaming extends ConverterTestBase {
 				defaultKafkaBootstrapServers,
 				ConverterKafkaStream.DEFAULTCOREKTOPICNAME,
 				eventsConsumer);
-		mPointsConsumer.setUp();
+		Properties props = new Properties();
+		props.put("auto.offset.reset", "latest");
+		mPointsConsumer.setUp(props);
+
+		// Start getting events
+		mPointsConsumer.seekToEnd();
+		mPointsConsumer.startGettingEvents();
 		
 		// Build the producer that pushes monitor point
 		// in the kafka topic
@@ -288,7 +295,6 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		converter = new Converter(converterID, cdbReader);
 		converter.setUp();
 		
-		
 	}
 	
 	/**
@@ -296,8 +302,8 @@ public class TestKafkaStreaming extends ConverterTestBase {
 	 */
 	@After
 	public void tearDown() throws Exception {
+		logger.info("Shutting down the converter");
 		converter.tearDown();
-	
 	}
 	
 	/**
@@ -313,7 +319,6 @@ public class TestKafkaStreaming extends ConverterTestBase {
 	public void testTranslationNumber() throws Exception {
 		logger.info("testTranslationNumber....");
 		CountDownLatch latch = eventsConsumer.reset(numOfMPointsToSend);
-		Thread.sleep(5000);
 		// Pushes all the monitor point in the plugin topic
 		for (MonitorPointDataHolder mpdh: mpdToSend) {
 			MonitorPointData mpd = buildMonitorPointData(mpdh);
@@ -342,7 +347,6 @@ public class TestKafkaStreaming extends ConverterTestBase {
 	@Test
 	public void testUnknowMPoints() throws Exception {
 		logger.info("testUnknowMPoints starting....");
-		Thread.sleep(5000);
 		CountDownLatch latch =eventsConsumer.reset(2);
 		
 		// Pushes 2 unknown monitor points
@@ -356,12 +360,14 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		mpdString = mpd.toJsonString();
 		mPointsProducer.push(mpdString, null, unknown2.id);
 		
+		logger.info("Waiting for unkonwn monitor point that should never arrived");
 		assertFalse("Should not have received any value!",latch.await(1, TimeUnit.MINUTES));
 		assertEquals(0,eventsConsumer.numOfEventsReceived());
 		
 		// After the error.. Does the translation still work?
 		latch=eventsConsumer.reset(numOfMPointsToSend);
 		// Pushes all the monitor point in the plugin topic
+		logger.info("Pushing some mPoint to check if it works after the error");
 		for (MonitorPointDataHolder mpdh: mpdToSend) {
 			mpd = buildMonitorPointData(mpdh);
 			mpdString = mpd.toJsonString();

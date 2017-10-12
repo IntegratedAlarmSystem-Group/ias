@@ -129,6 +129,9 @@ public class ConsumerProducerTest implements KafkaConsumerListener {
 		consumer.setUp();
 		producer = new SimpleStringProducer(SimpleStringProducer.defaultBootstrapServers, topicName, "Consumer-ID");
 		producer.setUp();
+		
+		consumer.seekToEnd();
+		consumer.startGettingEvents();
 		logger.info("Initialized.");
 	}
 	

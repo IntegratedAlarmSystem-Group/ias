@@ -1,12 +1,14 @@
 package org.eso.ias.kafkautils;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -24,7 +26,7 @@ import org.slf4j.LoggerFactory;
  * <P>
  * Kafka properties are fully customizable by calling {@link #setUp(Properties)}:
  * defaults values are used for the missing properties.
- * 
+ *
  * @author acaproni
  *
  */
@@ -87,11 +89,17 @@ public class SimpleStringConsumer implements Runnable {
 	 * consumer has been closed
 	 */
 	private volatile AtomicBoolean isClosed=new AtomicBoolean(false);
+
+	/**
+	 * The boolean set to <code>true</code> when the
+	 * consumer has been initialized
+	 */
+	private volatile AtomicBoolean isInitialized=new AtomicBoolean(false);
 	
 	/**
 	 * The thread getting data from the topic
 	 */
-	private Thread thread;
+	private final AtomicReference<Thread> thread = new AtomicReference<>(null);
 	
 	/**
 	 * The listener of events published in the topic
@@ -133,12 +141,15 @@ public class SimpleStringConsumer implements Runnable {
 	/**
 	 * Initializes the consumer with the passed kafka properties.
 	 * <P> 
-	 * The defaults are used if not passed in the parameter
+	 * The defaults are used if not found in the parameter
 	 * 
 	 * @param userPros The user defined kafka properties
 	 */
-	public void setUp(Properties userPros) {
+	public synchronized void setUp(Properties userPros) {
 		Objects.requireNonNull(userPros);
+		if (isInitialized.get()) {
+			throw new IllegalStateException("Already initialized");
+		}
 		mergeDefaultProps(userPros);
 		consumer = new KafkaConsumer<>(userPros);
 		consumer.subscribe(Arrays.asList(topicName));
@@ -158,11 +169,49 @@ public class SimpleStringConsumer implements Runnable {
 			}
 		};
 		Runtime.getRuntime().addShutdownHook(shutDownThread);
-
-		thread = new Thread(this, SimpleStringConsumer.class.getName() + "-Thread");
-		thread.setDaemon(true);
-		thread.start();
+		
+		isInitialized.set(true);
 		logger.info("Kafka consumer initialized");
+	}
+
+	/**
+	 * Start polling events from the kafka channel
+	 */
+	public synchronized void startGettingEvents() {
+		if (!isInitialized.get()) {
+			throw new IllegalStateException("Not initialized");
+		}
+		if (thread.get()!=null) {
+			logger.error("Cannot start receiving: already receiving events!");
+			return;
+		}
+		Thread getterThread = new Thread(this, SimpleStringConsumer.class.getName() + "-Thread");
+		getterThread.setDaemon(true);
+		thread.set(getterThread);
+		getterThread.start();
+	}
+	
+	/*
+	 * Stop geting events from the kafka channel.
+	 * <P>
+	 * The user cannot stop the getting of the events because this is 
+	 * part of the shutdown.
+	 */
+	private synchronized void stopGettingEvents() {
+		if (thread.get()==null) {
+			logger.error("Cannot stop receiving events as I am not receiving events!");
+			return;
+		}		
+		consumer.wakeup();
+		try {
+			thread.get().join(60000);
+			if (thread.get().isAlive()) {
+				logger.error("The thread to get events did not exit");
+			}
+		} catch (InterruptedException ie) {
+			Thread.currentThread().interrupt();
+		}
+		thread.set(null);
 	}
 	
 	/**
@@ -192,6 +241,20 @@ public class SimpleStringConsumer implements Runnable {
 		props.put("auto.offset.reset", "earliest");
 		return props;
 	}
+
+	/**
+	 * Moves to the end of the topic
+	 */
+	public void seekToEnd() {
+		consumer.seekToEnd(new ArrayList<TopicPartition>());
+	}
+
+	/**
+         * Moves to the end of the topic
+        */
+        public void seekToBeginning() {
+                consumer.seekToBeginning(new ArrayList<TopicPartition>());
+        }
 	
 	/**
 	 * Initializes the consumer with default kafka properties
@@ -205,18 +268,15 @@ public class SimpleStringConsumer implements Runnable {
 	/**
 	 * Close and cleanup the consumer
 	 */
-	public void tearDown() {
+	public synchronized void tearDown() {
+		if (isClosed.get()) {
+			logger.debug("Consumer already closed");
+			return;
+		}
 		logger.info("Closing...");
 		isClosed.set(true);
 		Runtime.getRuntime().removeShutdownHook(shutDownThread);
-		consumer.wakeup();
-		try {
-			thread.join();
-		} catch (InterruptedException ie) {
-			Thread.currentThread().interrupt();
-		}
-		logger.info("Closing the consumer");
-		consumer.close();
+		stopGettingEvents();
 		logger.info("Consumer cleaned up");
 	}
 
@@ -252,6 +312,8 @@ public class SimpleStringConsumer implements Runnable {
 	         }
 	         
 	     }
+		logger.info("Closing the consumer");
+		consumer.close();
 		logger.info("Thread to get events from the topic terminated");
 	}
 	
