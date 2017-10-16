@@ -14,6 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eso.ias.kafkautils.SimpleStringConsumer;
 import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener;
+import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
 import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.junit.After;
 import org.junit.Before;
@@ -123,15 +124,14 @@ public class ConsumerProducerTest implements KafkaConsumerListener {
 	 * Initialize
 	 */
 	@Before
-	public void setUp() {
+	public void setUp() throws Exception {
 		logger.info("Initializing...");
 		consumer = new SimpleStringConsumer(SimpleStringProducer.defaultBootstrapServers, topicName, this);
 		consumer.setUp();
 		producer = new SimpleStringProducer(SimpleStringProducer.defaultBootstrapServers, topicName, "Consumer-ID");
 		producer.setUp();
 		
-		consumer.seekToEnd();
-		consumer.startGettingEvents();
+		consumer.startGettingEvents(StartPosition.END);
 		logger.info("Initialized.");
 	}
 	

@@ -1,15 +1,17 @@
 package org.eso.ias.kafkautils;
 
-import java.util.Arrays;
 import java.util.ArrayList;
-import java.util.Map;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Objects;
 import java.util.Properties;
-import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.kafka.clients.consumer.ConsumerRebalanceListener;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -26,11 +28,36 @@ import org.slf4j.LoggerFactory;
  * <P>
  * Kafka properties are fully customizable by calling {@link #setUp(Properties)}:
  * defaults values are used for the missing properties.
+ * <P><EM>Life cycle</em>: after {@link #setUp()} oe {@link #setUp(Properties)}
+ *                         must be called to initialize the object; 
+ *                         {@link #tearDown()} must be called when finished using the object;
+ *                         {@link #startGettingEvents(StartPosition)} must be called to start
+ *                         polling events from the kafka topic
  *
+ * {@link #startGettingEvents(StartPosition)} returns when the consumer has been assigned to
+ * at least one partition. There are situations when the partitions assigned to the consumer
+ * can be revoked and reassigned like for example when another consumer subscribe or disconnect
+ * as the assignment of consumers to partitions is left to kafka in this version.
+ * 
  * @author acaproni
  *
  */
 public class SimpleStringConsumer implements Runnable {
+	
+	/**
+	 * The start position when connecting to a kafka topic
+	 * for reading strings
+	 * 
+	 * @author acaproni
+	 */
+	public enum StartPosition {
+		// The default position, usually set in kafka configurations
+		DEFAULT,
+		// Get events from the beginning of the partition
+		BEGINNING,
+		// Get events from the end of the partition
+		END
+	}
 	
 	/**
 	 * The listener to be notified of strings read 
@@ -117,6 +144,23 @@ public class SimpleStringConsumer implements Runnable {
 	private final AtomicLong processedStrings = new AtomicLong(0);
 	
 	/**
+	 * The position to start reading from
+	 */
+	private StartPosition startReadingPos = StartPosition.DEFAULT; 
+	
+	/**
+	 * Max time to wait for the assignement of partitions before polling
+	 * (in minutes)
+	 */
+	private static final int waitForPartitionsTimeout = 3;
+	
+	/**
+	 * The latch to wait until the consumer has been initialized and
+	 * is effectively polling for events
+	 */
+	private final CountDownLatch polling = new CountDownLatch(1);
+	
+	/**
 	 * Constructor 
 	 * 
 	 * @param servers The kafka servers to connect to
@@ -152,15 +196,6 @@ public class SimpleStringConsumer implements Runnable {
 		}
 		mergeDefaultProps(userPros);
 		consumer = new KafkaConsumer<>(userPros);
-		consumer.subscribe(Arrays.asList(topicName));
-		logger.info("Kafka consumer subscribed to {}", topicName);
-		Set<TopicPartition> topicPartitions = consumer.assignment();
-		Map<TopicPartition, Long> offsets = consumer.beginningOffsets(topicPartitions);
-		logger.info("Assigned to {} partitions", topicPartitions.size());
-		for (TopicPartition tPart : topicPartitions) {
-			logger.info("Partition {} with offset {} on topic {}: next topic to read at {}", tPart.partition(),
-					offsets.get(tPart), tPart.topic(), consumer.position(tPart));
-		}
 
 		shutDownThread = new Thread() {
 			@Override
@@ -175,9 +210,19 @@ public class SimpleStringConsumer implements Runnable {
 	}
 
 	/**
-	 * Start polling events from the kafka channel
+	 * Start polling events from the kafka channel.
+	 * <P>
+	 * This method starts the thread that polls the kafka topic 
+	 * and returns after the consumer has been assigned to at least 
+	 * one partition. 
+	 * 
+	 * @param startReadingFrom: Starting position in the kafka partition
+	 * @throws KafkaUtilsException: in case of timeout subscribing to the kafkatopic
+	 * @see StartPosition
 	 */
-	public synchronized void startGettingEvents() {
+	public synchronized void startGettingEvents(StartPosition startReadingFrom) 
+	throws KafkaUtilsException {
+		Objects.requireNonNull(startReadingFrom);
 		if (!isInitialized.get()) {
 			throw new IllegalStateException("Not initialized");
 		}
@@ -185,14 +230,25 @@ public class SimpleStringConsumer implements Runnable {
 			logger.error("Cannot start receiving: already receiving events!");
 			return;
 		}
+		startReadingPos = startReadingFrom;
 		Thread getterThread = new Thread(this, SimpleStringConsumer.class.getName() + "-Thread");
 		getterThread.setDaemon(true);
 		thread.set(getterThread);
 		getterThread.start();
+		
+		try {
+			if (!polling.await(waitForPartitionsTimeout, TimeUnit.MINUTES)) {
+				throw new KafkaUtilsException("Timed out while waiting for assignemn to kafka partitions");
+			}
+		} catch (InterruptedException e) {
+			logger.warn("Interrupted");
+			Thread.currentThread().interrupt();
+			throw new KafkaUtilsException("Interrupted while waiting for assignemn to kafka partitions", e);
+		}
 	}
 	
-	/*
-	 * Stop geting events from the kafka channel.
+	/**
+	 * Stop getting events from the kafka topic.
 	 * <P>
 	 * The user cannot stop the getting of the events because this is 
 	 * part of the shutdown.
@@ -238,23 +294,9 @@ public class SimpleStringConsumer implements Runnable {
 		props.put("auto.commit.interval.ms", "1000");
 		props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
 		props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-		props.put("auto.offset.reset", "earliest");
+		props.put("auto.offset.reset", "latest");
 		return props;
 	}
-
-	/**
-	 * Moves to the end of the topic
-	 */
-	public void seekToEnd() {
-		consumer.seekToEnd(new ArrayList<TopicPartition>());
-	}
-
-	/**
-         * Moves to the end of the topic
-        */
-        public void seekToBeginning() {
-                consumer.seekToBeginning(new ArrayList<TopicPartition>());
-        }
 	
 	/**
 	 * Initializes the consumer with default kafka properties
@@ -288,6 +330,47 @@ public class SimpleStringConsumer implements Runnable {
 	@Override
 	public void run() {
 		logger.info("Thread to get events from the topic started");
+		
+		if (startReadingPos==StartPosition.DEFAULT) {
+			consumer.subscribe(Arrays.asList(topicName));
+		} else {
+			consumer.subscribe(Arrays.asList(topicName), new ConsumerRebalanceListener() {
+				
+				/**
+				 * Returns a string of topics and partitions contained in the
+				 * passed collection
+				 * 
+				 * @param parts The partitions to generate the string from
+				 * @return a string of topic:partition
+				 */
+				private String formatPartitionsStr(Collection<TopicPartition> parts) {
+					String partitions = "";
+					for (TopicPartition topicPartition: parts ) {
+						partitions=partitions+topicPartition.topic()+":"+topicPartition.partition()+" ";
+					}
+					return partitions;
+				}
+				
+				@Override
+				public void onPartitionsRevoked(Collection<TopicPartition> parts) {
+					logger.info("Partition(s) revoked: {}",formatPartitionsStr(parts));
+					
+				}
+				
+				@Override
+				public void onPartitionsAssigned(Collection<TopicPartition> parts) {
+					logger.info("Consumer assigned to {} partition(s): {}",parts.size(),formatPartitionsStr(parts));
+					if (startReadingPos==StartPosition.BEGINNING) {
+						consumer.seekToBeginning(new ArrayList<>());
+					} else {
+						consumer.seekToEnd(new ArrayList<>());
+					}
+					polling.countDown();
+				}
+			});
+		}
+		
+		logger.debug("Start polling loop");
 		while (!isClosed.get()) {
 			ConsumerRecords<String, String> records;
 	         try {

@@ -29,6 +29,7 @@ import org.eso.ias.converter.Converter;
 import org.eso.ias.converter.ConverterKafkaStream;
 import org.eso.ias.kafkautils.SimpleStringConsumer;
 import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener;
+import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
 import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.eso.ias.plugin.AlarmSample;
 import org.eso.ias.plugin.publisher.MonitorPointData;
@@ -252,8 +253,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		mPointsConsumer.setUp(props);
 
 		// Start getting events
-		mPointsConsumer.seekToEnd();
-		mPointsConsumer.startGettingEvents();
+		mPointsConsumer.startGettingEvents(StartPosition.END);
 		
 		// Build the producer that pushes monitor point
 		// in the kafka topic
