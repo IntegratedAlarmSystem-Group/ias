@@ -24,6 +24,4 @@
 
 	<target name="test" depends="ias.test" />
 	
-	<target name="test" depends="ias.test" />
-	
 </project>
