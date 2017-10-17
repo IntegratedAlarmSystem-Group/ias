@@ -18,6 +18,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.apache.kafka.streams.kstream.ValueMapper;
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
 import org.eso.ias.cdb.json.CdbJsonFiles;
@@ -292,7 +293,8 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		CdbReader cdbReader = new JsonReader(cdbFiles);
 		
 		// Finally builds the converter
-		converter = new Converter(converterID, cdbReader);
+		converter = new Converter(converterID, cdbReader, new ConverterKafkaStream(converterID, new Properties()));
+		
 		converter.setUp();
 		
 	}
