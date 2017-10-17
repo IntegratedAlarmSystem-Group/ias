@@ -167,6 +167,7 @@ public class ConverterKafkaStream extends ConverterStream {
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaServers);
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
+		props.put("auto.offset.reset", "latest");
         return props;
 	}
 
@@ -189,7 +190,7 @@ public class ConverterKafkaStream extends ConverterStream {
 	 * @see org.eso.ias.converter.ConverterStream#stop()
 	 */
 	@Override
-	public void stopStreaming() throws ConverterStreamException {
+	protected void stopStreaming() throws ConverterStreamException {
 		logger.debug("Stopping the streaming...");
 		streams.close();
 		logger.debug("Streaming terminated");
