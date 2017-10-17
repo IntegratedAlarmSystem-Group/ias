@@ -9,7 +9,6 @@ import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.converter.config.ConfigurationException;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
 import org.eso.ias.converter.config.IasioConfigurationDaoImpl;
-import org.eso.ias.prototype.input.java.IASValue;
 import org.eso.ias.prototype.input.java.IasValueJsonSerializer;
 import org.eso.ias.prototype.input.java.IasValueStringSerializer;
 import org.slf4j.Logger;
