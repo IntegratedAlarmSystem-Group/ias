@@ -95,10 +95,12 @@ public class Converter {
 	 * 
 	 * @param id The not <code>null</code> nor empty ID of the converter
 	 * @param cdbReader The DAO of the configuration database
+	 * @param converterStream The stream to convert monitor point data into IAS values
 	 */
 	public Converter(
 			String id,
-			CdbReader cdbReader) {
+			CdbReader cdbReader,
+			ConverterStream converterStream) {
 		Objects.requireNonNull(id);
 		if (id.trim().isEmpty()) {
 			throw new InvalidParameterException("The ID of the converter can't be empty");
@@ -111,8 +113,9 @@ public class Converter {
 		this.iasValueStrSerializer=	new IasValueJsonSerializer();
 		
 		mapper = new ValueMapper(this.configDao, this.iasValueStrSerializer,id);
-		ConverterStream stream = new ConverterKafkaStream(converterID, mapper, new Properties());
-		this.converterStream=stream;
+		
+		Objects.requireNonNull(converterStream);
+		this.converterStream=converterStream;
 	}
 	
 	/**
@@ -122,9 +125,9 @@ public class Converter {
 		logger.info("Converter {} initializing...", converterID);
 		configDao.initialize();
 		Runtime.getRuntime().addShutdownHook(shutDownThread);
-		// Init the strea
+		// Init the stream
 		try {
-			converterStream.initialize();
+			converterStream.initialize(mapper);
 		} catch (ConverterStreamException cse) {
 			throw new ConfigurationException("Error initializing the stream",cse);
 		}
@@ -176,10 +179,10 @@ public class Converter {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ConverterConfig.class);
 		CdbReader cdbReader = context.getBean("cdbReader",CdbReader.class);
 		
-		
+		ConverterStream converterStream = context.getBean(ConverterStream.class,id, new Properties());
 		logger.info("Converter {} started",id);
 		
-		Converter converter = new Converter(id,cdbReader);
+		Converter converter = new Converter(id,cdbReader,converterStream);
 		try {
 			converter.setUp();
 			logger.info("Converter {} initialized",id);

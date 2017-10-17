@@ -21,7 +21,7 @@ public abstract class ConverterStream {
 	/**
 	 * The function to map a input string to output string
 	 */
-	protected final Function<String, String> mapper;
+	protected Function<String, String> mapper;
 	
 	/**
 	 * The ID of the converter.
@@ -49,14 +49,12 @@ public abstract class ConverterStream {
 	 * @param converterID The ID of the converter.
 	 * @param mapper The function to map a input string to output string
 	 */
-	public ConverterStream(String converterID,Function<String, String> mapper) {
+	public ConverterStream(String converterID) {
 		Objects.requireNonNull(converterID);
 		if (converterID.trim().isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty converter ID");
 		}
 		this.converterID=converterID.trim();
-		Objects.requireNonNull(mapper);
-		this.mapper=mapper;
 	}
 	
 	/**
@@ -66,10 +64,12 @@ public abstract class ConverterStream {
 	 * 
 	 * @throws ConverterStreamException in case of error initializing
 	 */
-	public void initialize() throws ConverterStreamException {
+	public void initialize(Function<String, String> mapper) throws ConverterStreamException {
 		if (initialized) {
 			throw new ConverterStreamException("Already initialized");
 		}
+		Objects.requireNonNull(mapper);
+		this.mapper=mapper;
 		try {
 			init();
 		} catch (Exception e) {

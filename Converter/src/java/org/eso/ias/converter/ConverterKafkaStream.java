@@ -95,14 +95,12 @@ public class ConverterKafkaStream extends ConverterStream {
 	 * back to the defaults.
 	 * 
 	 * @param converterID The ID of the converter.
-	 * @param mapper The function to map a input string to output string
 	 * @parm props the properties to get kafka serves and topic anmes
 	 */
 	public ConverterKafkaStream(
 			String converterID,
-			Function<String, String> mapper,
 			Properties props) {
-		super(converterID,mapper);
+		super(converterID);
 		Objects.requireNonNull(props);
 		kafkaServers = props.getProperty(KAFKA_SERVERS_PROP_NAME,DEFAULTKAFKASERVERS);
 		pluginsInputKTopicName=props.getProperty(PLUGIN_TOPIC_NAME_PROP_NAME, DEFAULTPLUGINSINPUTKTOPICNAME);
@@ -118,18 +116,16 @@ public class ConverterKafkaStream extends ConverterStream {
 	 * Constructor
 	 * 
 	 * @param converterID The ID of the converter
-	 * @param mapper The function to map a input string to output string
 	 * @param servers The kafka servers to conncet to
 	 * @param pluginTopicName The name of the topic to get monitor points from plugins
 	 * @param iasCoreTopicName The name of the topic to send values to the core of the IAS
 	 */
 	public ConverterKafkaStream(
 			String converterID,
-			Function<String, String> mapper,
 			String servers,
 			String pluginTopicName, 
 			String iasCoreTopicName) {
-		super(converterID,mapper);
+		super(converterID);
 		Objects.requireNonNull(servers);
 		kafkaServers = servers;
 		Objects.requireNonNull(pluginTopicName);
