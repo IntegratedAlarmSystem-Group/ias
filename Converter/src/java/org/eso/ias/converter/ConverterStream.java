@@ -1,7 +1,6 @@
 package org.eso.ias.converter;
 
 import java.util.Objects;
-import java.util.Properties;
 import java.util.function.Function;
 
 /**
@@ -68,7 +67,14 @@ public abstract class ConverterStream {
 	 * @throws ConverterStreamException in case of error initializing
 	 */
 	public void initialize() throws ConverterStreamException {
-		init();
+		if (initialized) {
+			throw new ConverterStreamException("Already initialized");
+		}
+		try {
+			init();
+		} catch (Exception e) {
+			throw new ConverterStreamException("Exception initializing",e);
+		}
 		initialized=true;
 	}
 	
@@ -89,7 +95,7 @@ public abstract class ConverterStream {
 	 */
 	public void start() throws ConverterStreamException {
 		if (!initialized) {
-			throw new IllegalStateException("Stream not initialized");
+			throw new ConverterStreamException("Stream not initialized");
 		}
 		startStreaming();
 		started=true;
