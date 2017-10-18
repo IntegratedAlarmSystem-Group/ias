@@ -45,7 +45,7 @@ public class Converter {
 	/**
 	 * The logger
 	 */
-	private final static Logger logger = LoggerFactory.getLogger(Converter.class);
+	private static final Logger logger = LoggerFactory.getLogger(Converter.class);
 	
 	/**
 	 * Signal the thread to terminate
@@ -83,6 +83,7 @@ public class Converter {
 	 * The shutdown thread for a clean exit
 	 */
 	private Thread shutDownThread=new Thread("Converter shutdown thread") {
+		@Override
 		public void run() {
 			Converter.this.tearDown();
 		}

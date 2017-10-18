@@ -16,7 +16,7 @@ public abstract class ConfigurationDaoBase implements IasioConfigurationDAO {
 	/**
 	 * The logger
 	 */
-	private final static Logger logger = LoggerFactory.getLogger(ConfigurationDaoBase.class);
+	private static final Logger logger = LoggerFactory.getLogger(ConfigurationDaoBase.class);
 	
 	/**
 	 * <code>true</code> if the DAO has been initialized
@@ -34,7 +34,7 @@ public abstract class ConfigurationDaoBase implements IasioConfigurationDAO {
 	 * 
 	 * @throws The exception returned in case of error initializing
 	 */
-	protected abstract void setUp() throws Exception;
+	protected abstract void setUp() throws ConfigurationException;
 
 	/**
 	 * @see IasioConfigurationDAO#initialize()
@@ -59,13 +59,10 @@ public abstract class ConfigurationDaoBase implements IasioConfigurationDAO {
 		return initialized.get();
 	}
 
-	@Override
-	public abstract MonitorPointConfiguration getConfiguration(String mpId);
-	
 	/**
 	 * Shuts down the DAO: the user provided closing.
 	 */
-	protected abstract void tearDown() throws Exception;
+	protected abstract void tearDown() throws ConfigurationException;
 
 	/**
 	 * @see IasioConfigurationDAO#close()

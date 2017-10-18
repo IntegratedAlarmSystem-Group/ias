@@ -2,7 +2,6 @@ package org.eso.ias.converter;
 
 import java.util.Objects;
 import java.util.Properties;
-import java.util.function.Function;
 
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
@@ -29,7 +28,7 @@ public class ConverterKafkaStream extends ConverterStream {
 	/**
 	 * The logger
 	 */
-	private final static Logger logger = LoggerFactory.getLogger(ConverterKafkaStream.class);
+	private static final Logger logger = LoggerFactory.getLogger(ConverterKafkaStream.class);
 	
 	/**
 	 * The name of the topic where plugins pushes

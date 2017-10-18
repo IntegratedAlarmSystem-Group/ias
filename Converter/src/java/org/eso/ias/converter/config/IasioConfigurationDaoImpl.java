@@ -41,7 +41,7 @@ public class IasioConfigurationDaoImpl extends  ConfigurationDaoBase {
 	/**
 	 * The logger
 	 */
-	private final static Logger logger = LoggerFactory.getLogger(IasioConfigurationDaoImpl.class);
+	private static final Logger logger = LoggerFactory.getLogger(IasioConfigurationDaoImpl.class);
 	
 	/**
 	 * The map with the configuration.
@@ -83,8 +83,7 @@ public class IasioConfigurationDaoImpl extends  ConfigurationDaoBase {
 		}
 		logger.info("Reading IASIOs configuration from CDB...");
 		Optional<Set<IasioDao>> iasios = cdbReader.getIasios();
-		int len = iasios.map(s -> s.size()).orElse(0);
-		logger.info("Got the configuration of {} IASIOS",len);
+		logger.info("Got the configuration of {} IASIOS",iasios.map( Set::size).orElse(0));
 		iasios.ifPresent( s -> s.forEach(iasioDao -> addConfiguration(iasioDao)));
 		logger.info("{} IASIO configurations in cache",configuration.size());
 	}
@@ -101,14 +100,18 @@ public class IasioConfigurationDaoImpl extends  ConfigurationDaoBase {
 	}
 
 	@Override
-	protected void setUp() throws Exception {
+	protected void setUp() throws ConfigurationException {
 		logger.debug("Setting up...");
-		buildConfigurationMap(cdbReader,configuration,true);
+		try {
+			buildConfigurationMap(cdbReader,configuration,true);
+		} catch (IasCdbException ice) {
+			throw new ConfigurationException("Esception building the configuration map",ice);
+		}
 		logger.debug("Ready");
 	}
 
 	@Override
-	protected void tearDown() throws Exception {
+	protected void tearDown() throws ConfigurationException {
 		logger.debug("Shutting down...");
 		configuration.clear();
 		logger.debug("Closed");
