@@ -84,7 +84,7 @@ public class SimpleStringConsumer implements Runnable {
 	/**
 	 * The kafka group to which this consumer belongs
 	 */
-	private static final String kafkaConsumerGroup = "test";
+	private static final String KAFKA_CONSUMER_GROUP = "test";
 
 	/**
 	 * The name of the topic to get events from
@@ -104,7 +104,7 @@ public class SimpleStringConsumer implements Runnable {
 	/**
 	 * The time, in milliseconds, spent waiting in poll if data is not available in the buffer
 	 */
-	private static final int pollingTimeout = 60000;
+	private static final int POLLING_TIMEOUT = 60000;
 	
 	/**
 	 * The consumer getting events from the kafka topic
@@ -152,7 +152,7 @@ public class SimpleStringConsumer implements Runnable {
 	 * Max time to wait for the assignement of partitions before polling
 	 * (in minutes)
 	 */
-	private static final int waitForPartitionsTimeout = 3;
+	private static final int WAIT_FOR_PARTITIONS_TIMEOUT = 3;
 	
 	/**
 	 * The latch to wait until the consumer has been initialized and
@@ -237,7 +237,7 @@ public class SimpleStringConsumer implements Runnable {
 		getterThread.start();
 		
 		try {
-			if (!polling.await(waitForPartitionsTimeout, TimeUnit.MINUTES)) {
+			if (!polling.await(WAIT_FOR_PARTITIONS_TIMEOUT, TimeUnit.MINUTES)) {
 				throw new KafkaUtilsException("Timed out while waiting for assignemn to kafka partitions");
 			}
 		} catch (InterruptedException e) {
@@ -289,7 +289,7 @@ public class SimpleStringConsumer implements Runnable {
 	private Properties getDefaultProps() {
 		Properties props = new Properties();
 		props.put("bootstrap.servers", kafkaServers);
-		props.put("group.id", kafkaConsumerGroup);
+		props.put("group.id", KAFKA_CONSUMER_GROUP);
 		props.put("enable.auto.commit", "true");
 		props.put("auto.commit.interval.ms", "1000");
 		props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
@@ -374,7 +374,7 @@ public class SimpleStringConsumer implements Runnable {
 		while (!isClosed.get()) {
 			ConsumerRecords<String, String> records;
 	         try {
-	        	 records = consumer.poll(pollingTimeout);
+	        	 records = consumer.poll(POLLING_TIMEOUT);
 	        	 logger.debug("Item read with {} records", records.count());
 	        	 processedRecords.incrementAndGet();
 	         } catch (WakeupException we) {

@@ -36,7 +36,7 @@ public class SimpleStringProducer {
 	/**
 	 * Default list of servers
 	 */
-	public static final String defaultBootstrapServers="localhost:9092";
+	public static final String DEFAULT_BOOTSTRAP_SERVERS="localhost:9092";
 	
 	/**
 	 * The topic to send strings to
@@ -198,10 +198,8 @@ public class SimpleStringProducer {
 		if (value.isEmpty()) {
 			throw new KafkaUtilsException("Cannot send empty strings");
 		}
-		if (sync) {
-			if (timeout<=0 || unit==null) {
+		if (sync && (timeout<=0 || unit==null)) {
 				throw new IllegalArgumentException("Invalid timeout/unit args. for sync sending");
-			}
 		}
 		
 		if (closed) {
