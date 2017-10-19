@@ -2,7 +2,10 @@ package org.eso.ias.cdb.json;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -88,10 +91,8 @@ public class JsonReader implements CdbReader {
 			try {
 				IasDao ias = mapper.readValue(f, IasDao.class);
 				return Optional.of(ias);
-			} catch (Throwable t) {
-				System.out.println("Error reading IAS from "+f.getAbsolutePath()+ ": "+t.getMessage());
-				t.printStackTrace();
-				return Optional.empty();
+			} catch (Exception e) {
+				throw new IasCdbException("Error reading IAS from "+f.getAbsolutePath(),e);
 			}
 		}
 	}
@@ -233,7 +234,7 @@ public class JsonReader implements CdbReader {
 	/**
 	 * Read the supervisor configuration from the JSON file. 
 	 * 
-	 * @param id The not null nor empty supervisor identifier
+	 * @param id The not <code>null</code> nor empty supervisor identifier
 	 * @throws IasCdbException if the supervisor file does not exist or is unreadable
 	 */
 	@Override
@@ -254,7 +255,7 @@ public class JsonReader implements CdbReader {
 		if (jSupervOpt.isPresent()) {
 			try {
 				updateSupervisorObjects(jSupervOpt.get(), holder);
-			} catch (IOException ioe) {
+			} catch (IOException|IasCdbException ioe) {
 				throw new IasCdbException("Error updating Supervisor objects",ioe);
 			}
 		}
@@ -334,6 +335,8 @@ public class JsonReader implements CdbReader {
 					Optional<JsonDasuDao> jDasu = getJsonDasu(dasuId);
 					if (jDasu.isPresent()) {
 						updateDasuObjects(jDasu.get(), holder);
+					} else {
+						throw new IasCdbException("Inconsistent Supervisor record: DASU ["+dasuId+"] not found in CDB");
 					}
 					optDasu = jDasu.map(d -> d.toDasuDao());
 				}
@@ -368,6 +371,8 @@ public class JsonReader implements CdbReader {
 				Optional<JsonSupervisorDao> jSup = getJsonSupervisor(jDasuDao.getSupervisorID());
 				if (jSup.isPresent()) {
 					updateSupervisorObjects(jSup.get(), holder);
+				} else {
+					throw new IasCdbException("Inconsistent DASU record: Supervisor ["+jDasuDao.getSupervisorID()+"] not found in CDB");
 				}
 				sup = jSup.map(x -> x.toSupervisorDao());
 				sup.ifPresent( s -> holder.supervisors.put(jDasuDao.getSupervisorID(), s));
@@ -384,6 +389,8 @@ public class JsonReader implements CdbReader {
 				Optional<JsonAcseDao> jAsce = getJsonAsce(asceID);
 				if (jAsce.isPresent()) {
 					updateAsceObjects(jAsce.get(), holder);
+				} else {
+					throw new IasCdbException("Inconsistent DASU record: ASCE ["+asceID+"] not found in CDB");
 				}
 				asce= jAsce.map( a -> a.toAsceDao());
 				asce.ifPresent(a -> holder.asces.put(asceID, a));
@@ -414,8 +421,12 @@ public class JsonReader implements CdbReader {
 		// Fix the inputs
 		for (String inId: jAsceDao.getInputIDs()) {
 			Optional<IasioDao> iasio = getIasio(inId);
-			iasio.ifPresent(i -> asce.addInput(i, true));
-		}
+			if (iasio.isPresent()) { 
+				asce.addInput(iasio.get(), true);
+			} else {
+				throw new IasCdbException("Inconsistent ASCE record: IASIO ["+inId+"] not found in CDB");
+			}
+		} 
 		
 		// Fix the DASU
 		Optional<DasuDao> optDasu = Optional.ofNullable(holder.dasus.get(jAsceDao.getDasuID()));
@@ -423,10 +434,66 @@ public class JsonReader implements CdbReader {
 			Optional<JsonDasuDao> jDasu=getJsonDasu(jAsceDao.getDasuID());
 			if (jDasu.isPresent()) {
 				updateDasuObjects(jDasu.get(), holder);
+			} else {
+				throw new IasCdbException("Inconsistent ASCE record: DASU ["+jAsceDao.getDasuID()+"] not found in CDB");
 			}
 			optDasu = jDasu.map(x -> x.toDasuDao());
 			optDasu.ifPresent(d -> holder.dasus.put(jAsceDao.getDasuID(), d));
 		}
 		optDasu.ifPresent(d -> asce.setDasu(d));
+	}
+	
+	/**
+	 * Return the DASUs belonging to the given Supervisor.
+	 * 
+	 * @param id The not <code>null</code> nor empty identifier of the supervisor
+	 * @return A set of DASUs running in the supervisor with the passed id
+	 * @throws IasCdbException in case of error reading CDB or if the 
+	 *                         supervisor with the give identifier does not exist
+	 */
+	public Set<DasuDao> getDasusForSupervisor(String id) throws IasCdbException {
+		Objects.requireNonNull(id, "The ID cant't be null");
+		if (id.isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty ID");
+		}
+		Optional<SupervisorDao> superv = getSupervisor(id);
+		Set<DasuDao> ret = superv.orElseThrow(() -> new IasCdbException("Supervisor ["+id+"] not dound")).getDasus();
+		return (ret==null)? new HashSet<>() : ret;
+	}
+	
+	/**
+	 * Return the ASCEs belonging to the given DASU.
+	 * 
+	 * @param id The not <code>null</code> nor empty identifier of the supervisor
+	 * @return A set of DASUs running in the supervisor with the passed id
+	 * @throws IasCdbException in case of error reading CDB or if the 
+	 *                         DASU with the give identifier does not exist
+	 */
+	public Set<AsceDao> getAscesForDasu(String id) throws IasCdbException {
+		Objects.requireNonNull(id, "The ID cant't be null");
+		if (id.isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty ID");
+		}
+		Optional<DasuDao> dasu = getDasu(id);
+		Set<AsceDao> ret = dasu.orElseThrow(() -> new IasCdbException("DASU ["+id+"] not dound")).getAsces();
+		return (ret==null)? new HashSet<>() : ret;
+	}
+	
+	/**
+	 * Return the IASIOs in input to the given ASCE.
+	 * 
+	 * @param id The not <code>null</code> nor empty identifier of the ASCE
+	 * @return A set of IASIOs running in the ASCE with the passed id
+	 * @throws IasCdbException in case of error reading CDB or if the 
+	 *                         ASCE with the give identifier does not exist
+	 */
+	public Collection<IasioDao> getIasiosForAsce(String id) throws IasCdbException {
+		Objects.requireNonNull(id, "The ID cant't be null");
+		if (id.isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty ID");
+		}
+		Optional<AsceDao> asce = getAsce(id);
+		Collection<IasioDao> ret = asce.orElseThrow(() -> new IasCdbException("ASCE ["+id+"] not dound")).getInputs();
+		return (ret==null)? new ArrayList<>() : ret;
 	}
 }

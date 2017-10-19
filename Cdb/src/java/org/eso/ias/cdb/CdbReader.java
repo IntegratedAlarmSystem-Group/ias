@@ -1,5 +1,6 @@
 package org.eso.ias.cdb;
 
+import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 
@@ -17,9 +18,9 @@ import org.eso.ias.cdb.pojos.SupervisorDao;
 public interface CdbReader {
 	
 	/**
-	 * Get the Ias configuration from a file.
+	 * Get the Ias configuration from a CDB.
 	 * 
-	 * @return The ias configuration read from the file 
+	 * @return The ias configuration read from the CDB 
 	 * @throws IasCdbException In case of error getting the IAS
 	 */
 	Optional<IasDao> getIas() throws IasCdbException;
@@ -27,7 +28,7 @@ public interface CdbReader {
 	/**
 	 * Get the IASIOs.
 	 * 
-	 * @return The IASIOs red from the file
+	 * @return The IASIOs red from the CDB
 	 * @throws IasCdbException In case of error getting the IASIOs
 	 */
 	public Optional<Set<IasioDao>> getIasios() throws IasCdbException;
@@ -35,23 +36,23 @@ public interface CdbReader {
 	/**
 	 * Get the IASIO with the given ID
 	 * 
-	 * @param id The ID of the IASIO to read the congiuration
-	 * @return The IASIO red from the file
+	 * @param id The ID of the IASIO to read the configuration
+	 * @return The IASIO red from the CDB
 	 * @throws IasCdbException In case of error getting the IASIO
 	 */
 	public Optional<IasioDao> getIasio(String id) throws IasCdbException;
 	
 	/**
-	 * Read the supervisor configuration from the file. 
+	 * Read the supervisor configuration from the CDB. 
 	 * 
 	 * @param id The not null nor empty supervisor identifier
-	 * @return The Supervisor red from the file
+	 * @return The Supervisor red from the CDB
 	 * @throws IasCdbException In case of error getting the Supervisor
 	 */
 	public Optional<SupervisorDao> getSupervisor(String id) throws IasCdbException;
 	
 	/**
-	 * Read the ASCE configuration from the file. 
+	 * Read the ASCE configuration from the CDB. 
 	 * 
 	 * @param id The not null nor empty ASCE identifier
 	 * @return The ASCE red from the file
@@ -60,12 +61,42 @@ public interface CdbReader {
 	public Optional<AsceDao> getAsce(String id) throws IasCdbException;
 	
 	/**
-	 * Read the DASU configuration from the file. 
+	 * Read the DASU configuration from the CDB. 
 	 * 
 	 * @param id The not null nor empty DASU identifier
 	 * @return The DASU red from the file
 	 * @throws IasCdbException In case of error getting the DASU
 	 */
 	public Optional<DasuDao> getDasu(String id) throws IasCdbException;
+	
+	/**
+	 * Return the DASUs belonging to the given Supervisor.
+	 * 
+	 * @param id The not <code>null</code> nor empty identifier of the supervisor
+	 * @return A set of DASUs running in the supervisor with the passed id
+	 * @throws IasCdbException in case of error reading CDB or if the 
+	 *                         supervisor with the give identifier does not exist
+	 */
+	public Set<DasuDao> getDasusForSupervisor(String id) throws IasCdbException;
+	
+	/**
+	 * Return the ASCEs belonging to the given DASU.
+	 * 
+	 * @param id The not <code>null</code> nor empty identifier of the DASU
+	 * @return A set of ASCEs running in the DASU with the passed id
+	 * @throws IasCdbException in case of error reading CDB or if the 
+	 *                         DASU with the give identifier does not exist
+	 */
+	public Set<AsceDao> getAscesForDasu(String id) throws IasCdbException;
+	
+	/**
+	 * Return the IASIOs in input to the given ASCE.
+	 * 
+	 * @param id The not <code>null</code> nor empty identifier of the ASCE
+	 * @return A set of IASIOs running in the ASCE with the passed id
+	 * @throws IasCdbException in case of error reading CDB or if the 
+	 *                         ASCE with the give identifier does not exist
+	 */
+	public Collection<IasioDao> getIasiosForAsce(String id) throws IasCdbException;
 
 }

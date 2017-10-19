@@ -1,0 +1,7 @@
+[
+	{"id":"iasioID-4","shortDesc":"IASIO 4","iasType":"DOUBLE","refreshRate":1100},
+	{"id":"iasioID-2","shortDesc":"IASIO 2","iasType":"SHORT","refreshRate":600},
+	{"id":"iasioID-1","shortDesc":"IASIO 1","iasType":"INT","refreshRate":350},
+	{"id":"iasioID-0","shortDesc":"IASIO 0","iasType":"LONG","refreshRate":100},
+	{"id":"iasioID-3","shortDesc":"IASIO 3","iasType":"BYTE","refreshRate":850}
+]

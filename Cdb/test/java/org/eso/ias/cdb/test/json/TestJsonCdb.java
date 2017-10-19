@@ -4,9 +4,12 @@ import static org.junit.Assert.*;
 
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
@@ -29,6 +32,10 @@ import org.junit.Test;
 
 /**
  * Test reading and writing of JSON CDB.
+ * <P>
+ * Some tests, write the CDB and then read data out of it.
+ * <BR>Other tests instead uses the JSON CDB contained in testCdb
+ * whose description is in testCdb/ReadMe.txt
  * 
  * @author acaproni
  *
@@ -370,6 +377,89 @@ public class TestJsonCdb {
 		// Check if all IASIOs match with the ones in the sets
 		set.stream().forEach(x -> assertTrue(optSet4.get().contains(x)));
 		set2.stream().forEach(x -> assertFalse(optSet4.get().contains(x)));
+	}
+	
+	/**
+	 * Test the getting of DASUs belonging to a given supervisor
+	 * <P>
+	 * This test runs against the JSON CDB contained in testCdb
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetDasusOfSupervisor() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./testCdb");
+		cdbFiles = new CdbJsonFiles(path);
+		cdbReader = new JsonReader(cdbFiles);
+		// Get the DASUs of a Supervisor that has none
+		Set<DasuDao> dasus = cdbReader.getDasusForSupervisor("Supervisor-ID2");
+		assertTrue(dasus.isEmpty());
+		// Get the DASUs of a Supervisor that has one
+		dasus = cdbReader.getDasusForSupervisor("Supervisor-ID1");
+		assertEquals(1,dasus.size());
+		Iterator<DasuDao> iter = dasus.iterator();
+		DasuDao dasu = iter.next();
+		assertEquals("DasuID1",dasu.getId());
+		// Get the DASUs of a Supervisor that has three
+		dasus = cdbReader.getDasusForSupervisor("Supervisor-ID3");
+		assertEquals(3,dasus.size());
+		Set<String> dasuIds = dasus.stream().map(d -> d.getId()).collect(Collectors.toSet());
+		assertEquals(3,dasuIds.size());
+		dasus.forEach( d -> assertTrue(d.getId().equals("DasuID2") || d.getId().equals("DasuID3")||d.getId().equals("DasuID4")));
+	}
+	
+	/**
+	 * Test the getting of ASCEs belonging to a given DASU
+	 * <P>
+	 * This test runs against the JSON CDB contained in testCdb
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetAscesOfDasu() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./testCdb");
+		cdbFiles = new CdbJsonFiles(path);
+		cdbReader = new JsonReader(cdbFiles);
+		
+		// Get the ASCE of DasuID1 that has no ASCE
+		Set<AsceDao> asces = cdbReader.getAscesForDasu("DasuID1");
+		assertTrue(asces.isEmpty());
+		// Get the ASCEs of DasuID2 that contains ASCE-ID1
+		asces = cdbReader.getAscesForDasu("DasuID2");
+		assertEquals(1, asces.size());
+		asces.forEach( asce -> assertEquals("ASCE-ID1",asce.getId()));
+		
+		// Get the ASCE of DasuID3 that has 3 ASCEs
+		asces = cdbReader.getAscesForDasu("DasuID3");
+		assertEquals(3, asces.size());
+		Set<String> asceIds = asces.stream().map(d -> d.getId()).collect(Collectors.toSet());
+		assertEquals(3, asceIds.size());
+		asces.forEach( a -> assertTrue(a.getId().equals("ASCE-ID2") || a.getId().equals("ASCE-ID3") || a.getId().equals("ASCE-ID4")));
+	}
+	
+	/**
+	 * Test the getting of IASIOs belonging to a given ASCE
+	 * <P>
+	 * This test runs against the JSON CDB contained in testCdb
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetIasiosOfAsce() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./testCdb");
+		cdbFiles = new CdbJsonFiles(path);
+		cdbReader = new JsonReader(cdbFiles);
+		
+		// Get the IASIOs of ASCE-ID4 that has 3 inputs
+		Collection<IasioDao> iasios = cdbReader.getIasiosForAsce("ASCE-ID4");
+		assertEquals(3,iasios.size());
+		Set<String> iosIds = iasios.stream().map(d -> d.getId()).collect(Collectors.toSet());
+		assertEquals(3,iosIds.size());
+		iosIds.forEach( a -> assertTrue(a.equals("iasioID-2") || a.equals("iasioID-3") || a.equals("iasioID-4")));
+		
+		// Get the IASIOs of ASCE-ID3 that has 2 inputs
+		iasios = cdbReader.getIasiosForAsce("ASCE-ID3");
+		assertEquals(2,iasios.size());
 	}
 
 }

@@ -3,6 +3,7 @@ package org.eso.ias.cdb.test.rdb;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -285,7 +286,6 @@ public class TestRdbCdb {
 	 * @throws Exception
 	 */
 	@Test
-	
 	public void testAsce() throws Exception {
 		// The supervisor where the DASU containing the ASCE runs
 		SupervisorDao superv = new SupervisorDao();
@@ -349,5 +349,200 @@ public class TestRdbCdb {
 		assertEquals("The ASCEs differ!", asce, asceFromRdb.get());
 		assertEquals("The number of inputs of the ASCE differ!", iasios.size(), asceFromRdb.get().getInputs().size());
 		assertEquals("The number of properties of the ASCE differ!", 2, asceFromRdb.get().getProps().size());
+	}
+	
+	/**
+	 * Build the CDB with the same 
+	 * structure of that defined for the JSON implementation
+	 * and described in testCdb/ReadMe.txt
+	 * 
+	 * @throws Exception
+	 */
+	private void buildCDB() throws Exception {
+		// Prepare the CDB
+		
+		// First the IASIOs
+		Set<IasioDao> iasios = new HashSet<>();
+		IasioDao ioOut = new IasioDao("IASIO-OUT", "description of output", 1234, IasTypeDao.ALARM);
+		iasios.add(ioOut);
+		// The 5 inputs of the ASCEs
+		IasioDao ioIn1 = new IasioDao("iasioID-1", "input-1", 100, IasTypeDao.DOUBLE);
+		iasios.add(ioIn1);
+		IasioDao ioIn2 = new IasioDao("iasioID-2", "input-2", 200, IasTypeDao.INT);
+		iasios.add(ioIn2);
+		IasioDao ioIn3 = new IasioDao("iasioID-3", "input-3", 300, IasTypeDao.BOOLEAN);
+		iasios.add(ioIn3);
+		IasioDao ioIn4 = new IasioDao("iasioID-4", "input-4", 400, IasTypeDao.ALARM);
+		iasios.add(ioIn4);
+		cdbWriter.writeIasios(iasios, true);
+		
+		// The supervisor with one DASU 
+		SupervisorDao superv = new SupervisorDao();
+		superv.setId("Supervisor-ID1");
+		superv.setHostName("almaias.hq.eso.org");
+		superv.setLogLevel(LogLevelDao.DEBUG);
+		
+		// A DASU 
+		DasuDao dasu = new DasuDao();
+		dasu.setId("DasuID1");
+		dasu.setLogLevel(LogLevelDao.DEBUG);
+		dasu.setSupervisor(superv);
+				
+		superv.addDasu(dasu);
+		
+		cdbWriter.writeSupervisor(superv);
+		cdbWriter.writeDasu(dasu);
+		
+		// Another supervisor without DASU
+		SupervisorDao superv2 = new SupervisorDao();
+		superv2.setId("Supervisor-ID2");
+		superv2.setHostName("almaias.hq.eso.org");
+		superv2.setLogLevel(LogLevelDao.DEBUG);
+		cdbWriter.writeSupervisor(superv2);
+		
+		// Another supervisor without 3 DASUs
+		SupervisorDao superv3 = new SupervisorDao();
+		superv3.setId("Supervisor-ID3");
+		superv3.setHostName("almaias.hq.eso.org");
+		superv3.setLogLevel(LogLevelDao.DEBUG);
+		cdbWriter.writeSupervisor(superv3);
+		
+		// A DASU 
+		DasuDao dasu2 = new DasuDao();
+		dasu2.setId("DasuID2");
+		dasu2.setLogLevel(LogLevelDao.DEBUG);
+		dasu2.setSupervisor(superv3);
+		
+		// The ASCE for DASU2
+		AsceDao asce = new AsceDao();
+		asce.setTfClass("org.eso.TfTest");
+		asce.setId("ASCE-ID1");
+		asce.setDasu(dasu);
+		asce.setOutput(ioOut);
+		asce.addInput(ioIn1, false);
+		asce.addInput(ioIn2, false);
+		dasu2.addAsce(asce);
+		cdbWriter.writeDasu(dasu2);
+		
+		
+		// A DASU 
+		DasuDao dasu3 = new DasuDao();
+		dasu3.setId("DasuID3");
+		dasu3.setLogLevel(LogLevelDao.DEBUG);
+		dasu3.setSupervisor(superv3);
+		
+		
+		// A ASCE for  DasuID3
+		AsceDao asce2 = new AsceDao();
+		asce2.setTfClass("org.eso.TfTest");
+		asce2.setId("ASCE-ID2");
+		asce2.setDasu(dasu3);
+		asce2.setOutput(ioOut);
+		dasu3.addAsce(asce2);
+		
+		// A ASCE for  DasuID3
+		AsceDao asce3 = new AsceDao();
+		asce3.setTfClass("org.eso.TfTest");
+		asce3.setId("ASCE-ID3");
+		asce3.setDasu(dasu3);
+		asce3.setOutput(ioOut);
+		asce3.addInput(ioIn1, false);
+		asce3.addInput(ioIn2, false);
+		dasu3.addAsce(asce3);
+		
+		// A ASCE for  DasuID3
+		AsceDao asce4 = new AsceDao();
+		asce4.setTfClass("org.eso.TfTest");
+		asce4.setId("ASCE-ID4");
+		asce4.setDasu(dasu3);
+		asce4.setOutput(ioOut);
+		asce4.addInput(ioIn2, false);
+		asce4.addInput(ioIn3, false);
+		asce4.addInput(ioIn4, false);
+		dasu3.addAsce(asce4);
+		
+		cdbWriter.writeDasu(dasu3);
+		
+		// A DASU 
+		DasuDao dasu4 = new DasuDao();
+		dasu4.setId("DasuID4");
+		dasu4.setLogLevel(LogLevelDao.DEBUG);
+		dasu4.setSupervisor(superv3);
+		cdbWriter.writeDasu(dasu4);
+	}
+	
+	/**
+	 * Test the getting of the DAUS of a supervisor
+	 */
+	@Test
+	public void testGetDasusOfSupervisor() throws Exception {
+		buildCDB();
+		
+		// The test starts below
+		Set<DasuDao> dasus=cdbReader.getDasusForSupervisor("Supervisor-ID1");
+		assertEquals(1, dasus.size());
+		for (DasuDao dasu: dasus) {
+			assertEquals("DasuID1",dasu.getId());
+		}
+		
+		dasus=cdbReader.getDasusForSupervisor("Supervisor-ID2");
+		assertEquals(0, dasus.size());
+		
+		dasus=cdbReader.getDasusForSupervisor("Supervisor-ID3");
+		assertEquals(3, dasus.size());
+		for (DasuDao dasu: dasus) {
+			assertTrue(dasu.getId().equals("DasuID2") || dasu.getId().equals("DasuID3") || dasu.getId().equals("DasuID4"));
+		}
+	}
+	
+	/**
+	 * Test the getting of the DAUS of a supervisor
+	 */
+	@Test
+	public void testGetAscesOfDasu() throws Exception {
+		buildCDB();
+		
+		// The test starts below
+		Set<AsceDao> asces=cdbReader.getAscesForDasu("DasuID1");
+		assertEquals(0, asces.size());
+		
+		asces=cdbReader.getAscesForDasu("DasuID2");
+		assertEquals(1, asces.size());
+		for (AsceDao asce: asces) {
+			assertTrue(asce.getId().equals("ASCE-ID1"));
+		}
+		
+		asces=cdbReader.getAscesForDasu("DasuID3");
+		assertEquals(3, asces.size());
+		for (AsceDao asce: asces) {
+			assertTrue(asce.getId().equals("ASCE-ID2") || asce.getId().equals("ASCE-ID3") || asce.getId().equals("ASCE-ID4"));
+		}
+	}
+	
+	/**
+	 * Test the getting of the DAUS of a supervisor
+	 */
+	@Test
+	public void testGetInputsOfAsce() throws Exception {
+		buildCDB();
+		
+		// The test starts below
+		Collection<IasioDao> iasios=cdbReader.getIasiosForAsce("ASCE-ID1");
+		assertEquals(2, iasios.size());
+		for (IasioDao iasio: iasios) {
+			assertTrue(iasio.getId().equals("iasioID-1") || iasio.getId().equals("iasioID-2"));
+		}
+		
+		iasios=cdbReader.getIasiosForAsce("ASCE-ID3");
+		assertEquals(2, iasios.size());
+		for (IasioDao iasio: iasios) {
+			assertTrue(iasio.getId().equals("iasioID-1") || iasio.getId().equals("iasioID-2"));
+		}
+		
+		iasios=cdbReader.getIasiosForAsce("ASCE-ID4");
+		assertEquals(3, iasios.size());
+		for (IasioDao iasio: iasios) {
+			assertTrue(iasio.getId().equals("iasioID-2") || iasio.getId().equals("iasioID-3") || iasio.getId().equals("iasioID-4"));
+		}
 	}
 }
