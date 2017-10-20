@@ -4,4 +4,4 @@
  * 
  * @author acaproni
  */
-package org.eso.ias.prototype.dasu.executorthread;
+package org.eso.ias.dasu.executorthread;
