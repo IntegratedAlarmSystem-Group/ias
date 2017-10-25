@@ -29,6 +29,10 @@
         <!-- mapping -->
 	    <mapping class="org.eso.ias.cdb.pojos.IasDao"></mapping>
 	    <mapping class="org.eso.ias.cdb.pojos.PropertyDao"></mapping>
+	    <mapping class="org.eso.ias.cdb.pojos.IasioDao"></mapping>
+		<mapping class="org.eso.ias.cdb.pojos.AsceDao"></mapping>
+		<mapping class="org.eso.ias.cdb.pojos.DasuDao"></mapping>
+		<mapping class="org.eso.ias.cdb.pojos.SupervisorDao"></mapping>
 	    
     </session-factory>
 </hibernate-configuration>
