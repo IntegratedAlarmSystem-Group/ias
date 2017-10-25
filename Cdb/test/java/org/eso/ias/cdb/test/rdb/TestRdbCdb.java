@@ -26,6 +26,8 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Test reading and writing data from/to 
@@ -62,6 +64,11 @@ public class TestRdbCdb {
 	 * The reader for the CDB RDB
 	 */
 	private final CdbWriter cdbWriter = new RdbWriter();
+	
+	/**
+	 * The logger
+	 */
+	private final Logger logger = LoggerFactory.getLogger(TestRdbCdb.class);
 
 	/**
 	 * @throws java.lang.Exception
@@ -98,6 +105,7 @@ public class TestRdbCdb {
 	 */
 	@Test
 	public void testIas() throws Exception {
+		logger.info("testIas");
 		IasDao ias = new IasDao();
 		ias.setLogLevel(LogLevelDao.DEBUG);
 		
@@ -139,7 +147,7 @@ public class TestRdbCdb {
 	 */
 	@Test
 	public void testSupervisor() throws Exception {
-		
+		logger.info("testSupervisor");
 		SupervisorDao superv = new SupervisorDao();
 		superv.setId("Supervisor-ID");
 		superv.setHostName("almadev2.alma.cl");
@@ -183,6 +191,7 @@ public class TestRdbCdb {
 	 */
 	@Test
 	public void testIasio() throws Exception {
+		logger.info("testIasio");
 		IasioDao io = new IasioDao("IO-ID", "IASIO description", 125, IasTypeDao.INT);
 		cdbWriter.writeIasio(io, true);
 		
@@ -198,6 +207,7 @@ public class TestRdbCdb {
 	 */
 	@Test
 	public void testIasios() throws Exception {
+		logger.info("testIasios");
 		IasioDao io1 = new IasioDao("IO-ID1", "IASIO descr1", 125, IasTypeDao.INT);
 		IasioDao io2 = new IasioDao("IO-ID2", "IASIO descr2", 150, IasTypeDao.ALARM);
 		IasioDao io3= new IasioDao("IO-ID3", "IASIO descr3", 250, IasTypeDao.BOOLEAN);
@@ -224,6 +234,7 @@ public class TestRdbCdb {
 	 */
 	@Test
 	public void testDasu() throws Exception {
+		logger.info("testDasu");
 		// Test the reading/writing od a DASU with no ASCEs
 		SupervisorDao superv = new SupervisorDao();
 		superv.setId("SupervID");
@@ -287,6 +298,7 @@ public class TestRdbCdb {
 	 */
 	@Test
 	public void testAsce() throws Exception {
+		logger.info("testAsce");
 		// The supervisor where the DASU containing the ASCE runs
 		SupervisorDao superv = new SupervisorDao();
 		superv.setId("SuperID");
@@ -359,6 +371,7 @@ public class TestRdbCdb {
 	 * @throws Exception
 	 */
 	private void buildCDB() throws Exception {
+		logger.info("Building the CDB");
 		// Prepare the CDB
 		
 		// First the IASIOs
@@ -469,6 +482,8 @@ public class TestRdbCdb {
 		dasu4.setLogLevel(LogLevelDao.DEBUG);
 		dasu4.setSupervisor(superv3);
 		cdbWriter.writeDasu(dasu4);
+		
+		logger.info("CDB built");
 	}
 	
 	/**
@@ -476,6 +491,7 @@ public class TestRdbCdb {
 	 */
 	@Test
 	public void testGetDasusOfSupervisor() throws Exception {
+		logger.info("testGetDasusOfSupervisor");
 		buildCDB();
 		
 		// The test starts below
@@ -500,6 +516,7 @@ public class TestRdbCdb {
 	 */
 	@Test
 	public void testGetAscesOfDasu() throws Exception {
+		logger.info("testGetAscesOfDasu");
 		buildCDB();
 		
 		// The test starts below
@@ -524,6 +541,7 @@ public class TestRdbCdb {
 	 */
 	@Test
 	public void testGetInputsOfAsce() throws Exception {
+		logger.info("testGetInputsOfAsce");
 		buildCDB();
 		
 		// The test starts below
