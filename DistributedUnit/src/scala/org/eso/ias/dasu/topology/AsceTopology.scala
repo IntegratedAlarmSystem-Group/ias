@@ -13,16 +13,16 @@ import scala.collection.JavaConverters.collectionAsScalaIterable
  * @author acaproni
  */
 class AsceTopology(
-    id: Some[String], 
-    ins: Some[List[String]], 
-    out: Some[String]) {
-  
-  val identifier = id.get
+    val identifier: String, 
+    val inputs: Set[String], 
+    val output: String) {
+  require(Option(identifier).isDefined)
   require(identifier.size>0,"Invalid ASCE identifier")
-  val inputs = ins.get
+  require(Option(inputs).isDefined)
   require(inputs.size>0,"An ASCE must have inputs")
-  val output = out.get
+  require(Option(output).isDefined)
   require(output.size>0,"Invalid output identifier")
+  
   // Consistency check
   require(!inputs.contains(output),"The same IASIO can't be input and output of the same ASCE")
   
@@ -32,9 +32,9 @@ class AsceTopology(
    */
   def this(asceDao: AsceDao) = {
     this(
-        Some(asceDao.getId()),
-        Some(collectionAsScalaIterable(asceDao.getInputs()).map(iasid => iasid.getId).toList),
-        Some(asceDao.getOutput().getId()))
+        asceDao.getId(),
+        collectionAsScalaIterable(asceDao.getInputs()).map(iasid => iasid.getId).toSet,
+        asceDao.getOutput().getId())
   }
   
   /** Check if this ASCE is connected to the passed one
