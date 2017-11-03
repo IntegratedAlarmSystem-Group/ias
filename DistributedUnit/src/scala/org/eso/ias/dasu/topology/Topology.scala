@@ -1,7 +1,5 @@
 package org.eso.ias.dasu.topology
 
-import jdk.nashorn.internal.runtime.regexp.joni.constants.NodeType
-
 /** The topology to forward IASIOs to ASCEs.
  * 
  * Objects of this class contains all information to move IASIOs 
@@ -45,24 +43,30 @@ class Topology(
    *  One of The ASCE must produce the output of the DASU
    */
   val asceOutputs: Set[String] = asces.map(asce => asce.output).toSet
+  require(asceOutputs.contains(dasuOutputId),"The output of the DASU is not produced by any of its ASCEs")
+  
+  // Check if the output produced by the ASCEs running in this DASU
+  // is used by other ASCEs in this same DASU. The only exception is
+  // output produced by the last ASCE that is the output of the DASU itself
+  require(asces.map(_.output).filterNot(_==dasuOutputId).toSet.subsetOf(asces.flatMap(_.inputs).toSet),
+      "The ouput produced by some ASCEs of this DASU is unused")
   
   /** The inputs of the DASU
    * 
    * The inputs of the DASU are all the inputs of the ASCEs running
-   * in the DASU that comes from IASIO queue (i.e. not produced
+   * in the DASU that come from IASIO queue (i.e. not produced
    * by ASCEs running in the DASU).
    */
   val dasuInputs: Set[String] = asces.flatMap(asce => asce.inputs).filterNot(asceOutputs.contains).toSet
-  require(asceOutputs.contains(dasuOutputId))
 
   /** The trees of nodes from the inputs to the output of the DASU
    *   
    * There is one tree for each input of the DASU: each tree terminates
    * to the output of the DASU, if there are no cycles
    */
-  require(isACyclic())
+  require(isACyclic(),"Invalid cyclic graph")
   val trees: Set[Node] = buildTrees()
-  trees.foreach(tree => require(checkLastNodeId(tree,dasuOutputId)))
+  trees.foreach(tree => assert(checkLastNodeId(tree,dasuOutputId)))
 
   /** A linearized version of the nodes in the topology:
    *  
