@@ -47,7 +47,7 @@ class AsceTopology(
   }
   
   /**
-   * Check if the passed IASIO is a required inpud
+   * Check if the passed IASIO is a required input
    * 
    * @parm iasioId the ID of the IASIO to check
    * @return true if the IASIO with the passed ID is an input of the ASCE
