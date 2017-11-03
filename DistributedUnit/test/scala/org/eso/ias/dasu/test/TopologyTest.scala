@@ -35,7 +35,7 @@ class TopologyTest extends FlatSpec {
   behavior of "The DASU topology"
   
   
-  it must "catch the inputs of the DAUS from all the ASCEs" in {
+  it must "catch the inputs of the DASU from all the ASCEs" in {
     // This test uses another topology for testing a specific case
     val asce1: AsceTopology = new AsceTopology("ASCE1-ID",Set("IN1","IN2","IN3"),"ASCE1-OUT")
     val asce2: AsceTopology = new AsceTopology("ASCE2-ID",Set("ASCE1-OUT","IN2","IN4","IN5"),"ASCE2-OUT")
@@ -87,6 +87,13 @@ class TopologyTest extends FlatSpec {
     assertThrows[IllegalArgumentException] {
       val anotherTopology = new Topology(List(asce1,asce2,asce3,asce4,asce5),"DASU-ID","ASCE5-OUT")
     }
+  }
+  
+  it must "correctly build the levels" in {
+    assert(topology.levels.size==topology.maxDepth)
+    assert(topology.levels(0)==Set[String]("ASCE6-ID"))
+    assert(topology.levels(1)==Set[String]("ASCE4-ID","ASCE5-ID"))
+    assert(topology.levels(2)==Set[String]("ASCE1-ID","ASCE2-ID","ASCE3-ID"))
   }
   
 }
