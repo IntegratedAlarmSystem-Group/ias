@@ -160,11 +160,19 @@ public class TestRdbCdb {
 		dasu1.setLogLevel(LogLevelDao.FATAL);
 		superv.addDasu(dasu1);
 		
+		IasioDao dasuOut1 = new IasioDao("DASU-OUT-1", "descr", 831, IasTypeDao.ALARM);
+		cdbWriter.writeIasio(dasuOut1, true);
+		dasu1.setOutput(dasuOut1);
+		
 		DasuDao dasu2 = new DasuDao();
 		dasu2.setId("DasuID2");
 		dasu2.setSupervisor(superv);
 		dasu2.setLogLevel(LogLevelDao.WARN);
 		superv.addDasu(dasu2);
+		
+		IasioDao dasuOut2 = new IasioDao("DASU-OUT-2", "descr", 831, IasTypeDao.DOUBLE);
+		cdbWriter.writeIasio(dasuOut2, true);
+		dasu2.setOutput(dasuOut2);
 		
 		cdbWriter.writeSupervisor(superv);
 		
@@ -246,6 +254,10 @@ public class TestRdbCdb {
 		dasuNoASCEs.setLogLevel(LogLevelDao.DEBUG);
 		dasuNoASCEs.setSupervisor(superv);
 		
+		IasioDao dasuNoASCEsOut = new IasioDao("DASU-OUT-1", "descr", 1500, IasTypeDao.ALARM);
+		cdbWriter.writeIasio(dasuNoASCEsOut, true);
+		dasuNoASCEs.setOutput(dasuNoASCEsOut);
+		
 		superv.addDasu(dasuNoASCEs);
 		
 		cdbWriter.writeSupervisor(superv);
@@ -261,8 +273,12 @@ public class TestRdbCdb {
 		dasuWithASCEs.setLogLevel(LogLevelDao.WARN);
 		dasuWithASCEs.setSupervisor(superv);
 		
+		IasioDao dasuWithASCEsOut = new IasioDao("DASU-OUT-1", "descr", 1500, IasTypeDao.ALARM);
+		cdbWriter.writeIasio(dasuNoASCEsOut, true);
+		dasuWithASCEs.setOutput(dasuWithASCEsOut);
+		
 		// Output of ASCE1
-		IasioDao ioAsce1Out = new IasioDao("IASIO-OUT-1", "descr", 1500, IasTypeDao.DOUBLE);
+		IasioDao ioAsce1Out = new IasioDao("IASIO-OUT-2", "descr", 1500, IasTypeDao.DOUBLE);
 		cdbWriter.writeIasio(ioAsce1Out, true);
 		
 		// ASCE1
@@ -288,6 +304,7 @@ public class TestRdbCdb {
 		cdbWriter.writeDasu(dasuWithASCEs);
 		Optional<DasuDao> dasuWithAscesFromRdb = cdbReader.getDasu("A-DASU-With-ASCEs");
 		assertTrue("Got an empty DASU!", dasuWithAscesFromRdb.isPresent());
+		assertEquals(dasuWithASCEs.getOutput().getId(),dasuWithAscesFromRdb.get().getOutput().getId());
 		assertEquals("The DASUs differ!", dasuWithASCEs, dasuWithAscesFromRdb.get());
 		assertEquals("The number of ASCEs in the DASU is wrong",2, dasuWithAscesFromRdb.get().getAsces().size());
 	}
@@ -310,6 +327,10 @@ public class TestRdbCdb {
 		dasu.setId("A-DASU-For-Testing");
 		dasu.setLogLevel(LogLevelDao.DEBUG);
 		dasu.setSupervisor(superv);
+		
+		IasioDao dasuOut = new IasioDao("DASU-OUT-1", "descr", 831, IasTypeDao.ALARM);
+		cdbWriter.writeIasio(dasuOut, true);
+		dasu.setOutput(dasuOut);
 		
 		superv.addDasu(dasu);
 		
@@ -400,6 +421,7 @@ public class TestRdbCdb {
 		dasu.setId("DasuID1");
 		dasu.setLogLevel(LogLevelDao.DEBUG);
 		dasu.setSupervisor(superv);
+		dasu.setOutput(ioOut);
 				
 		superv.addDasu(dasu);
 		
@@ -425,6 +447,7 @@ public class TestRdbCdb {
 		dasu2.setId("DasuID2");
 		dasu2.setLogLevel(LogLevelDao.DEBUG);
 		dasu2.setSupervisor(superv3);
+		dasu2.setOutput(ioIn3);
 		
 		// The ASCE for DASU2
 		AsceDao asce = new AsceDao();
@@ -443,6 +466,7 @@ public class TestRdbCdb {
 		dasu3.setId("DasuID3");
 		dasu3.setLogLevel(LogLevelDao.DEBUG);
 		dasu3.setSupervisor(superv3);
+		dasu3.setOutput(ioIn3);
 		
 		
 		// A ASCE for  DasuID3
@@ -481,6 +505,7 @@ public class TestRdbCdb {
 		dasu4.setId("DasuID4");
 		dasu4.setLogLevel(LogLevelDao.DEBUG);
 		dasu4.setSupervisor(superv3);
+		dasu4.setOutput(ioIn4);
 		cdbWriter.writeDasu(dasu4);
 		
 		logger.info("CDB built");
