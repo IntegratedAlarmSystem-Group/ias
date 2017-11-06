@@ -129,13 +129,20 @@ public class TestJsonCdb {
 		dasu1.setId("DasuID1");
 		dasu1.setSupervisor(superv);
 		dasu1.setLogLevel(LogLevelDao.FATAL);
+		IasioDao dasuOutIasio1 = new IasioDao("DASU_OUTPUT1", "desc-dasu-out", 921, IasTypeDao.ALARM);
+		dasu1.setOutput(dasuOutIasio1);
 		superv.addDasu(dasu1);
 		
 		DasuDao dasu2 = new DasuDao();
 		dasu2.setId("DasuID2");
 		dasu2.setSupervisor(superv);
 		dasu1.setLogLevel(LogLevelDao.WARN);
+		IasioDao dasuOutIasio2 = new IasioDao("DASU_OUTPUT2", "desc-dasu-out", 921, IasTypeDao.LONG);
+		dasu2.setOutput(dasuOutIasio2);
 		superv.addDasu(dasu2);
+		
+		cdbWriter.writeIasio(dasuOutIasio1, false);
+		cdbWriter.writeIasio(dasuOutIasio2, true);
 		
 		// DASUs must be in the CDB as well otherwise
 		// included objects cannot be rebuilt.
@@ -185,6 +192,9 @@ public class TestJsonCdb {
 		asce3.setOutput(output2);
 		asce3.setTfClass("org.eso.ias.tf.MaxTransferFunction");
 		
+		IasioDao dasuOutIasio = new IasioDao("DASU_OUTPUT", "desc-dasu-out", 921, IasTypeDao.ALARM);
+		dasu.setOutput(dasuOutIasio);
+		
 		// Supervisor must be in the CDB as well otherwise
 		// included objects cannot be rebuilt.
 		cdbWriter.writeSupervisor(superv);
@@ -198,6 +208,7 @@ public class TestJsonCdb {
 		cdbWriter.writeIasio(output1, false);
 		cdbWriter.writeIasio(output2, true);
 		cdbWriter.writeIasio(output3, true);
+		cdbWriter.writeIasio(dasuOutIasio, true);
 		
 		dasu.addAsce(asce1);
 		dasu.addAsce(asce2);
@@ -210,7 +221,8 @@ public class TestJsonCdb {
 		// Read the DASU from CDB and compare with what we just wrote
 		Optional<DasuDao> theDasuFromCdb = cdbReader.getDasu(dasu.getId());
 		assertTrue("Got a null DASU with ID "+dasu.getId()+" from CDB",theDasuFromCdb.isPresent());
-		assertEquals("The DAUSs differ!", dasu,theDasuFromCdb.get());
+		assertEquals("The DASUs differ!", dasu,theDasuFromCdb.get());
+		assertEquals(theDasuFromCdb.get().getOutput().getId(), dasuOutIasio.getId());
 	}
 
 	@Test
@@ -226,6 +238,9 @@ public class TestJsonCdb {
 		dasu.setId("DasuID1");
 		dasu.setLogLevel(LogLevelDao.FATAL);
 		dasu.setSupervisor(superv);
+
+		IasioDao dasuOutIasio = new IasioDao("DASU_OUTPUT", "desc-dasu-out", 921, IasTypeDao.ALARM);
+		dasu.setOutput(dasuOutIasio);
 		
 		// The ASCE to test
 		AsceDao asce = new AsceDao();
@@ -261,6 +276,7 @@ public class TestJsonCdb {
 		// Included objects must be in the CDB as well otherwise
 		// included objects cannot be rebuilt in the ASCE
 		cdbWriter.writeIasio(output, true);
+		cdbWriter.writeIasio(dasuOutIasio, true);
 		cdbWriter.writeSupervisor(superv);
 		cdbWriter.writeDasu(dasu);
 		
@@ -270,6 +286,7 @@ public class TestJsonCdb {
 		
 		Optional<AsceDao> optAsce = cdbReader.getAsce(asce.getId());
 		assertTrue("Got a null ASCE with ID "+asce.getId()+" from CDB",optAsce.isPresent());
+		assertEquals(asce.getOutput(),optAsce.get().getOutput());
 		assertEquals("The ASCEs differ!", asce,optAsce.get());
 	}
 

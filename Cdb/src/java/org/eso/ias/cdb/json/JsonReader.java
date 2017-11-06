@@ -397,6 +397,9 @@ public class JsonReader implements CdbReader {
 			}
 			asce.ifPresent(a -> dasu.addAsce(a));
 		}
+		
+		// Fix output IASIO
+		getIasio(jDasuDao.getOutputId()).ifPresent(o -> dasu.setOutput(o));
 	}
 	
 	/**

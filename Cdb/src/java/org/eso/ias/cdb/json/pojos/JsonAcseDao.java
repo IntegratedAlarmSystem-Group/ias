@@ -168,9 +168,9 @@ public class JsonAcseDao {
 	public String toString() {
 		StringBuilder ret = new StringBuilder("jsonAsceDAO=[ID=");
 		ret.append(getId());
-		ret.append(", Output=");
+		ret.append("], Output=");
 		ret.append(outputID);
-		ret.append(", Inputs={");
+		ret.append("], Inputs={");
 		for (String inputId: inputIds) {
 			ret.append(' ');
 			ret.append(inputId);
