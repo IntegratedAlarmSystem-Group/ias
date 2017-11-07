@@ -40,14 +40,9 @@ public enum IdentifierType {
 	CONVERTER(PLUGIN),
 	
 	/**
-	 * The type of a supervisor identifier
-	 */
-	SUPERVISOR(),
-	
-	/**
 	 * The type of a distributed unit identifier
 	 */
-	DASU(SUPERVISOR),
+	DASU(),
 	
 	/**
 	 * The type of a computing element identifier

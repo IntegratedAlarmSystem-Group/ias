@@ -82,7 +82,7 @@ abstract class ComputingElement[T](
     val props: Some[Properties] = Some(new Properties())) 
     extends Runnable {
   
-  require(id.idType.get==IdentifierType.ASCE)
+  require(id.idType==IdentifierType.ASCE)
   require(requiredInputs!=None && !requiredInputs.isEmpty,"Invalid (empty or null) list of required inputs to the component")
   require(requiredInputs.size==inputs.size,"Inconsistent size of lists of inputs")
   
@@ -305,7 +305,7 @@ abstract class ComputingElement[T](
   def initialize(stpe: ScheduledThreadPoolExecutor): Unit = {
     require(Option[ScheduledThreadPoolExecutor](stpe).isDefined)
     
-    tfSetting.initialize(id.id.get, id.runningID, props.get)
+    tfSetting.initialize(id.id, id.runningID, props.get)
     
     this.synchronized {
       threadExecutor=Some[ScheduledThreadPoolExecutor](stpe)
@@ -348,18 +348,20 @@ abstract class ComputingElement[T](
    * @param hio: The new value of the input
    */
   def inputChanged(hio: Some[InOut[_]]) {
-    if (!requiredInputs.contains(hio.get.id.id.get)) {
-      throw new IllegalStateException("Trying to pass a MP to a component that does not want it: "+hio.get.id.id.get+" not in "+requiredInputs.mkString(", "))
+    if (!requiredInputs.contains(hio.get.id.id)) {
+      throw new IllegalStateException("Trying to pass a MP to a component that does not want it: "+hio.get.id.id+" not in "+requiredInputs.mkString(", "))
     }
     newInputs.synchronized {
       // Check if actualInputs already contains this HIO and it they matches
       // We do not want to add twice the same HIO unless it changed, of course
-      val actualHIO = inputs.get(hio.get.id.id.get)
+      val actualHIO = inputs.get(hio.get.id.id)
       if (actualHIO.isDefined && actualHIO.get!=hio.get) {
-        newInputs(hio.get.id.id.get)=hio.get
+        newInputs(hio.get.id.id)=hio.get
       }
     }
   }
 }
 
-
+object ComputingElement {
+  
+}

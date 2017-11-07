@@ -13,6 +13,9 @@ import org.eso.ias.prototype.input.java.IasAlarm
 import org.eso.ias.prototype.input.java.IdentifierType
 import org.eso.ias.plugin.AlarmSample
 
+// The following import is required by the usage of the fixture
+import language.reflectiveCalls
+
 /**
  * Test the conversion between HIO to IASValue and vice-versa
  */
@@ -22,12 +25,11 @@ class TestJavaConversion  extends FlatSpec {
   def fixture = {
     new {
       // The IDs
-      val supervId = new Identifier(Some[String]("superVID"),Some(IdentifierType.SUPERVISOR),None)
-      val dasuId = new Identifier(Some[String]("dasuVID"),Some(IdentifierType.DASU),Some(supervId))
-      val asceId = new Identifier(Some[String]("asceVID"),Some(IdentifierType.ASCE),Some(dasuId))      
+      val dasuId = new Identifier("dasuVID",IdentifierType.DASU,None)
+      val asceId = new Identifier("asceVID",IdentifierType.ASCE,Option(dasuId))      
       
-      val doubleHioId = new Identifier(Some[String]("DoubleID"),Some(IdentifierType.IASIO),Option[Identifier](asceId))
-      val alarmHioId = new Identifier(Some[String]("AlarmID"),Some(IdentifierType.IASIO),Option[Identifier](asceId))
+      val doubleHioId = new Identifier("DoubleID",IdentifierType.IASIO,Option[Identifier](asceId))
+      val alarmHioId = new Identifier("AlarmID",IdentifierType.IASIO,Option[Identifier](asceId))
       // Refresh rate
       val refRate = InOut.MinRefreshRate+10
       // Modes
@@ -72,7 +74,7 @@ class TestJavaConversion  extends FlatSpec {
     assert(doubleVal.valueType==f.doubleHIO.iasType)
     assert(doubleVal.mode==f.doubleHIO.mode)
     assert(doubleVal.timestamp==f.doubleHIO.actualValue.timestamp)
-    assert(doubleVal.id==f.doubleHIO.id.id.get)
+    assert(doubleVal.id==f.doubleHIO.id.id)
     assert(doubleVal.runningId==f.doubleHIO.id.runningID)
     assert(doubleVal.value==f.doubleHIO.actualValue.value.get)
     
@@ -89,7 +91,7 @@ class TestJavaConversion  extends FlatSpec {
     
     assert(newdoubleVal.valueType==hio.iasType)
     assert(newdoubleVal.mode==hio.mode)
-    assert(newdoubleVal.id==hio.id.id.get)
+    assert(newdoubleVal.id==hio.id.id)
     assert(newdoubleVal.runningId==hio.id.runningID)
     assert(newdoubleVal.value==hio.actualValue.value.get)
     

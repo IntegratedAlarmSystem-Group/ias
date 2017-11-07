@@ -15,14 +15,13 @@ import org.eso.ias.plugin.AlarmSample
  * @author acaproni
  */
 class TestHeteroIO extends FlatSpec {
-  val superId =  new Identifier(Some("SupervId"),Some(IdentifierType.SUPERVISOR),None)
-  val dasuId =  new Identifier(Some("DasuId"),Some(IdentifierType.DASU),Some(superId))
-  val asceId =  new Identifier(Some("AsceId"),Some(IdentifierType.ASCE),Some(dasuId))
+  val dasuId =  new Identifier("DasuId",IdentifierType.DASU,None)
+  val asceId =  new Identifier("AsceId",IdentifierType.ASCE,Some(dasuId))
   
   // The ID of the alarms built in this test
   //
   // This test os all about the conversion
-  val id = new Identifier(Some("LongMPID"), Some(IdentifierType.IASIO),Some(asceId))
+  val id = new Identifier("LongMPID", IdentifierType.IASIO,Some(asceId))
   val refreshRate=InOut.MinRefreshRate+10;
   
   behavior of "A heterogeneous IO" 
