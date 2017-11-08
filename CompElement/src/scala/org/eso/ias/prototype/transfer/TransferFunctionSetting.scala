@@ -231,17 +231,27 @@ class TransferFunctionSetting(
 object TransferFunctionSetting {
   
   /**
-   * The name of the property to set maxTolerableTFTime
+   * The name of the property to set MaxTolerableTFTime
    */
-  val MaxTFTimePropName="ias.prototype.asce.transfer.maxexectime"
+  val MaxTFTimePropName="org.eso.ias.asce.transfer.maxexectime"
   
   /**
    * If the execution time of the TF is higher the this value
    * the the state of the ASCE changes. At the present we do 
    * not block the execution but in future we could prefer to block
    * slow TFs unless it is a transient problem.
-   * 
-   * For the prototype it is enough to monitor.
    */
   lazy val MaxTolerableTFTime : Int=new SystemProperties().getOrElse(MaxTFTimePropName,"1000").toInt // msec
+  
+  /**
+   * The name of the property to set MaxAcceptableSlowDuration
+   */
+  val MaxAcceptableSlowDurationPropName = "org.eso.ias.asce.transfer.maxtimeinslow"
+  
+  /**
+   * If the TF is slow responding for more then the amount of seconds
+   * of  MaxAcceptableSlowDuration then the TF is marked as broken and 
+   * will not be executed anymore
+   */
+  lazy val MaxAcceptableSlowDuration = new SystemProperties().getOrElse(MaxAcceptableSlowDurationPropName,"30").toInt
 }
