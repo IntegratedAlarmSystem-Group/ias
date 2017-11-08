@@ -90,7 +90,7 @@ abstract class ComputingElement[T](
     val requiredInputs: List[String],
     val tfSetting: TransferFunctionSetting,
     val props: Option[Map[String,String]]) 
-    extends Runnable {
+    {
   require(Option(id)!=None,"Invalid identifier")
   require(id.idType==IdentifierType.ASCE)
   require(Option(requiredInputs)!=None && !requiredInputs.isEmpty,"Invalid (empty or null) list of required inputs to the component")
