@@ -14,9 +14,9 @@ abstract class FiniteStateMachineState[T <: Enumeration](val state: T)
 object AsceStates extends Enumeration {
   type State = Value
   
-  val Initing = Value("Initializing") // Initializing
+  val Initializing = Value("Initializing") // Initializing: start state
   val Healthy = Value("Running") // Everything OK
-  val TFBroken = Value("TF broken") // The transfer function is too broken
+  val TFBroken = Value("TF broken") // The transfer function is broken
   val TFSlow = Value("TF slow") // The transfer function is slow
   val ShuttingDown = Value("Shutting down") // The ASCE is shutting down
   val Closed = Value("Closed") // Closed i.e. shutdown complete
@@ -30,7 +30,7 @@ object AsceStates extends Enumeration {
    * When the state of the ASCE is in
    * this list, the transfer function is not executed
    */
-  val inhibitorStates = Set(Initing, TFBroken, ShuttingDown, Closed)
+  val inhibitorStates = Set(Initializing, TFBroken, ShuttingDown, Closed)
 }
 
 /**
@@ -83,7 +83,7 @@ class InvalidAsceStateTransitionException(
 /**
  * The ASCE state 
  */
-class ComputingElementState(val actualState: AsceStates.State = AsceStates.Initing) {
+class ComputingElementState(val actualState: AsceStates.State = AsceStates.Initializing) {
   
   /**
    * @return true if the TF can be executed in the current state
@@ -108,9 +108,10 @@ object ComputingElementState {
    */
   def transition(asceState: ComputingElementState, e: ASCEStateEvent): ComputingElementState = {
     asceState.actualState match {
-      case AsceStates.Initing =>
+      case AsceStates.Initializing =>
         e match {
           case Initialized() => new ComputingElementState(AsceStates.Healthy)
+          case Broken() => new ComputingElementState(AsceStates.TFBroken)
           case Shutdown()  => new ComputingElementState(AsceStates.ShuttingDown)
           case _ => throw new InvalidAsceStateTransitionException(asceState.actualState,e)
         }

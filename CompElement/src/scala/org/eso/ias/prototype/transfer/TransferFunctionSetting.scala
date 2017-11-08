@@ -4,6 +4,7 @@ import java.util.Properties
 import java.util.concurrent.ThreadFactory
 import scala.util.Try
 import scala.sys.SystemProperties
+import org.ias.prototype.logging.IASLogger
 
 /**
  * Implemented types of transfer functions
@@ -61,6 +62,9 @@ class TransferFunctionSetting(
    */
   var transferExecutor: Option[TransferExecutor] = None
   
+  /** The logger */
+  private val logger = IASLogger.getLogger(this.getClass)
+  
   override def toString(): String = {
     "Transfer function implemented in "+language+" by "+className
   }
@@ -81,7 +85,7 @@ class TransferFunctionSetting(
       // Wait for the termination
       shutdownThread.join(1500)
       if (shutdownThread.isAlive()) {
-        println("User provided shutdown did not terminate in 1.5 sec.") 
+        logger.warn("User provided shutdown did not terminate in 1.5 sec.") 
       }
     }
     isShutDown=true
@@ -103,10 +107,10 @@ class TransferFunctionSetting(
   def initialize(
       asceId: String,
       asceRunningId: String,
-      props: Properties) = {
-    require(Option[String](asceId).isDefined)
-    require(Option[String](asceRunningId).isDefined)
-    require(Option[Properties](props).isDefined)
+      props: Option[Map[String,String]]) = {
+    require(Option(asceId).isDefined,"Invalid ASCE id")
+    require(Option(asceRunningId).isDefined,"Invalid ASCE running id")
+    require(Option(props).isDefined)
     assert(!initialized)
     
     // Load the class
@@ -118,7 +122,7 @@ class TransferFunctionSetting(
     // as it is a common practice for testing
     if (tfExecutorClass.isDefined) {
       this.synchronized{
-        transferExecutor = instantiateExecutor(tfExecutorClass,asceId,asceRunningId,props: Properties)
+        transferExecutor = instantiateExecutor(tfExecutorClass,asceId,asceRunningId,props)
       }
     }
     
@@ -127,7 +131,6 @@ class TransferFunctionSetting(
       threadFactory.newThread(new Runnable() {
         def run() {
           initialized=initExecutor(transferExecutor)
-          println("Initialized="+initialized)
         }
       }).start()
     }
@@ -145,8 +148,7 @@ class TransferFunctionSetting(
       true
     } catch {
         case e: Throwable => 
-          println("Exception caught initializing "+className+": "+e.getMessage)
-          e.printStackTrace()
+          logger.error("Exception caught initializing {}",className,e)
           false
       }
   }
@@ -162,8 +164,7 @@ class TransferFunctionSetting(
       executor.get.shutdown()
     } catch {
         case e: Throwable => 
-          println("Exception caught shutting down "+className+": "+e.getMessage)
-          e.printStackTrace()
+          logger.warn("Exception caught shutting down {}",className,e)
       }
   }
   
@@ -177,8 +178,7 @@ class TransferFunctionSetting(
         Option[Class[_]](this.getClass.getClassLoader().loadClass(name))
       } catch {
         case e: Throwable => 
-          println("Exception caught loading "+name+": "+e.getMessage)
-          e.printStackTrace()
+          logger.error("Exception caught loading {}",e)
           None
       }
   }
@@ -197,11 +197,11 @@ class TransferFunctionSetting(
       executorClass: Option[Class[_]],
       asceId: String,
       asceRunningId: String,
-      props: Properties): Option[TransferExecutor] = {
+      props: Option[Map[String,String]]): Option[TransferExecutor] = {
     assert(executorClass.isDefined)
-    require(Option[String](asceId).isDefined)
-    require(Option[String](asceRunningId).isDefined)
-    require(Option[Properties](props).isDefined)
+    require(Option(asceId).isDefined)
+    require(Option(asceRunningId).isDefined)
+    require(Option(props).isDefined)
     // Go through the constructors and instantiate the executor
     //
     // We can suppose that the executor has more the one c'tor
@@ -222,8 +222,7 @@ class TransferFunctionSetting(
       ret
     } catch {
         case e: Throwable => 
-          println("Exception caught instantiating the executor: "+e.getMessage)
-          e.printStackTrace()
+          logger.error("Exception caught instantiating the executor",e)
           None
       }
   }
