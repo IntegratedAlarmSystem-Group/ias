@@ -87,7 +87,6 @@ class TestComponent extends FlatSpec {
        None) with JavaTransfer[AlarmSample]
     
     assert(comp.id==compId)
-    assert(comp.inputs.size==requiredInputIDs.size)
     assert(comp.output.id==outId)
   }
   
