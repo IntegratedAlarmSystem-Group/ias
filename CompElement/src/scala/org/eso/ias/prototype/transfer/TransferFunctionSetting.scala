@@ -113,8 +113,11 @@ class TransferFunctionSetting(
     require(Option(props).isDefined)
     assert(!initialized)
     
+    logger.info("Initializing the TF {}",className)
+    
     // Load the class
     val tfExecutorClass: Option[Class[_]] = loadClass(className)
+    logger.debug("Class {} loaded",className)
      
     // Go through the constructors and instantiate the executor
     //
@@ -128,9 +131,12 @@ class TransferFunctionSetting(
     
     // Init the executor if it has been correctly instantiated 
     if (transferExecutor.isDefined) {
+      logger.debug("Constructor of {} instantiated",className)
       threadFactory.newThread(new Runnable() {
         def run() {
+          logger.debug("Async initializing the executor of {}",className)
           initialized=initExecutor(transferExecutor)
+          logger.info("Async initialization of the executor of {} terminated",className)
         }
       }).start()
     }
@@ -147,7 +153,7 @@ class TransferFunctionSetting(
       executor.get.initialize()
       true
     } catch {
-        case e: Throwable => 
+        case e: Exception => 
           logger.error("Exception caught initializing {}",className,e)
           false
       }
@@ -163,7 +169,7 @@ class TransferFunctionSetting(
     try {
       executor.get.shutdown()
     } catch {
-        case e: Throwable => 
+        case e: Exception => 
           logger.warn("Exception caught shutting down {}",className,e)
       }
   }
@@ -202,6 +208,10 @@ class TransferFunctionSetting(
     require(Option(asceId).isDefined)
     require(Option(asceRunningId).isDefined)
     require(Option(props).isDefined)
+    
+    val javaProps: Properties = new Properties()
+    props.foreach( properties => properties.keySet.foreach(k => javaProps.put(k, props.get(k))))
+    
     // Go through the constructors and instantiate the executor
     //
     // We can suppose that the executor has more the one c'tor
@@ -213,9 +223,9 @@ class TransferFunctionSetting(
       for {ctor <-ctors 
           paramTypes = ctor.getParameterTypes()
           if paramTypes.size==3} {        
-            ctorFound=(paramTypes(0)==asceId.getClass && paramTypes(1)==asceRunningId.getClass && paramTypes(2)==props.getClass)
+            ctorFound=(paramTypes(0)==asceId.getClass && paramTypes(1)==asceRunningId.getClass && paramTypes(2)==javaProps.getClass)
             if (ctorFound) {
-              val args = Array[AnyRef](asceId,asceRunningId,props)
+              val args = Array[AnyRef](asceId,asceRunningId,javaProps)
               ret = Some(ctor.newInstance(args:_*).asInstanceOf[TransferExecutor])
             }
           }
