@@ -12,5 +12,8 @@
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/scalatest_2.12-3.0.4.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-cdb.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-basic-types.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ias-logging.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/scala-logging_2.12-3.5.0.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/slf4j-api-1.7.25.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
