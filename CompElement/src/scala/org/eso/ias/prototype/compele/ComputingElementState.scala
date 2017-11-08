@@ -21,11 +21,6 @@ object AsceStates extends Enumeration {
   val ShuttingDown = Value("Shutting down") // The ASCE is shutting down
   val Closed = Value("Closed") // Closed i.e. shutdown complete
   
-  // The alarm has been set by the alarm source
-  val Active = Value("Active") 
-  // The alarm has been cleared by the alarm source
-  val Cleared = Value("Cleared") 
-  
   /**
    * When the state of the ASCE is in
    * this list, the transfer function is not executed
