@@ -83,9 +83,8 @@ class TestComponent extends FlatSpec {
        compId,
        output,
        requiredInputIDs,
-       actualInputs,
        tfSetting,
-       Some[Properties](new Properties())) with JavaTransfer[AlarmSample]
+       None) with JavaTransfer[AlarmSample]
     
     assert(comp.id==compId)
     assert(comp.inputs.size==requiredInputIDs.size)

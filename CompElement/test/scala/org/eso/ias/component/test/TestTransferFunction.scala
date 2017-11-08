@@ -28,10 +28,10 @@ class TestTransferFunction extends FlatSpec {
     
     val numOfInputs = 5
     
-    // The ID of the DASU where the components runs
+    /** The ID of the DASU where the components runs */
     val dasId = new Identifier("DAS-ID",IdentifierType.DASU,None)
     
-    // The ID of the component running into the DAS
+    /** The ID of the component running into the DASU */
     val compID = new Identifier("COMP-ID",IdentifierType.ASCE,Option(dasId))
     
     // The refresh rate of the component
@@ -86,9 +86,8 @@ class TestTransferFunction extends FlatSpec {
        compID,
        output,
        requiredInputIDs,
-       inputsMPs,
        javaTFSetting,
-       Some[Properties](new Properties())) with JavaTransfer[AlarmSample]
+       None) with JavaTransfer[AlarmSample]
     
     
     // Instantiate one ASCE with a scala TF implementation
@@ -100,9 +99,8 @@ class TestTransferFunction extends FlatSpec {
        compID,
        output,
        requiredInputIDs,
-       inputsMPs,
        scalaTFSetting,
-       Some[Properties](new Properties())) with ScalaTransfer[AlarmSample]
+       None) with ScalaTransfer[AlarmSample]
     
      // Instantiate one ASCE with a scala TF implementation
     val brokenScalaTFSetting =new TransferFunctionSetting(
@@ -113,9 +111,8 @@ class TestTransferFunction extends FlatSpec {
        compID,
        output,
        requiredInputIDs,
-       inputsMPs,
        brokenScalaTFSetting,
-       Some[Properties](new Properties())) with ScalaTransfer[AlarmSample]
+       None) with ScalaTransfer[AlarmSample]
   }
   
   behavior of "The Component transfer function"
@@ -126,31 +123,24 @@ class TestTransferFunction extends FlatSpec {
    */
   it must "set the validity to the lower value" in new CompBuilder {
     val component: ComputingElement[AlarmSample] = javaComp
-    javaComp.initialize(new ScheduledThreadPoolExecutor(2))
+    javaComp.initialize()
     assert(component.output.validity==Validity.Unreliable)
     
     val keys=inputsMPs.keys.toList.sorted
     keys.foreach { key  => {
       val changedMP = inputsMPs(key).updateValidity(Validity.Reliable)
-      javaComp.inputChanged(Some(changedMP))
+      javaComp.update(List(changedMP))
       } 
     }
-    // Leave time to run the TF
-    System.out.println("Giving time to run the TF...")
-    Thread.sleep(3000)
-    
     javaComp.shutdown()
     assert(component.output.validity==Validity.Reliable)
   }
   
   it must "run the java TF executor" in new CompBuilder {
-    val stpe: ScheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(5)
-    javaComp.initialize(stpe)
-    Thread.sleep(5000)
+    javaComp.initialize()
     // Change one input to trigger the TF
     val changedMP = inputsMPs(inputsMPs.keys.head).updateValidity(Validity.Reliable)
-    javaComp.inputChanged(Some(changedMP))
-    Thread.sleep(5000)
+    javaComp.update(List(changedMP))
     javaComp.shutdown()
     println(javaComp.output.actualValue.toString())
     val alarm = javaComp.output.actualValue.value.get.asInstanceOf[AlarmSample]
@@ -158,14 +148,10 @@ class TestTransferFunction extends FlatSpec {
   }
   
   it must "run the scala TF executor" in new CompBuilder {
-    val stpe: ScheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(5)
-    scalaComp.initialize(stpe)
-    println("Sleeping")
-    Thread.sleep(5000)
+    scalaComp.initialize()
     // Change one input to trigger the TF
     val changedMP = inputsMPs(inputsMPs.keys.head).updateValidity(Validity.Reliable)
-    scalaComp.inputChanged(Some(changedMP))
-    Thread.sleep(5000)
+    scalaComp.update(List(changedMP))
     scalaComp.shutdown()
     
     println(scalaComp.output.actualValue.toString())
@@ -174,15 +160,11 @@ class TestTransferFunction extends FlatSpec {
   }
   
   it must "detect a broken scala TF executor" in new CompBuilder {
-    val stpe: ScheduledThreadPoolExecutor = new ScheduledThreadPoolExecutor(5)
-    brokenTFScalaComp.initialize(stpe)
-    println("Sleeping")
-    Thread.sleep(5000)
+    brokenTFScalaComp.initialize()
     assert(brokenTFScalaComp.getState()==AsceStates.Healthy)
     // Change one input to trigger the TF
     val changedMP = inputsMPs(inputsMPs.keys.head).updateValidity(Validity.Reliable)
-    brokenTFScalaComp.inputChanged(Some(changedMP))
-    Thread.sleep(5000)
+    brokenTFScalaComp.update(List(changedMP))
     assert(brokenTFScalaComp.getState()==AsceStates.TFBroken)
     brokenTFScalaComp.shutdown()
   }

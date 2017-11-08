@@ -40,7 +40,7 @@ class TestTransferFunctionSetting extends FlatSpec {
   it must "load, initialize and shutdown a java TF" in new TFBuilder {
     assert(!javaTF.initialized)
     assert(!javaTF.isShutDown)
-    javaTF.initialize("ASCE-ID", "ASCE-running-ID", System.getProperties)
+    javaTF.initialize("ASCE-ID", "ASCE-running-ID", None)
     Thread.sleep(500)
     assert(javaTF.initialized)
     assert(!javaTF.isShutDown)
@@ -56,7 +56,7 @@ class TestTransferFunctionSetting extends FlatSpec {
   it must "load, initialize and shutdown a scala TF" in new TFBuilder {
     assert(!scalaTF.initialized)
     assert(!scalaTF.isShutDown)
-    scalaTF.initialize("ASCE-ID", "ASCE-running-ID", System.getProperties)
+    scalaTF.initialize("ASCE-ID", "ASCE-running-ID", None)
     Thread.sleep(500)
     assert(scalaTF.initialized)
     assert(!scalaTF.isShutDown)
