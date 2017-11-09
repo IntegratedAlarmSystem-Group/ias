@@ -223,7 +223,6 @@ abstract class ComputingElement[T](
   private[this] def updateTheValidity(
       theInputs: MutableMap[String, InOut[_]], 
       actualOutput: InOut[T]) : InOut[T] = {
-    System.out.println("ComputingElementBase.updateOutputWithValidity(...)")
     val newValidity = Validity.min(theInputs.values.map(_.validity).toList)
     actualOutput.updateValidity(newValidity)
   }
@@ -312,7 +311,7 @@ abstract class ComputingElement[T](
     }
     state=newState
     // Always update the validity
-    output=updateTheValidity(inputs, newOut)  
+    output=updateTheValidity(inputs, newOut)
     (output,state.actualState)
   }
   

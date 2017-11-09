@@ -1,5 +1,6 @@
 package org.eso.ias.prototype.transfer.impls;
 
+import java.util.Enumeration;
 import java.util.Map;
 import java.util.Properties;
 
@@ -170,7 +171,7 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 
 		// Get the input
 		IASValueBase hio = compInputs.values().iterator().next();
-
+		
 		double hioValue;
 		switch (hio.valueType) {
 		case LONG:
@@ -200,6 +201,7 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 		boolean condition = 
 				hioValue >= highOn || hioValue <= lowOn ||
 				wasActivated && (hioValue>=highOff || hioValue<=lowOff);
+				
 				
 		AlarmSample newOutput = AlarmSample.fromBoolean(condition);
 		return ((IasAlarm) actualOutput).updateValue(newOutput);

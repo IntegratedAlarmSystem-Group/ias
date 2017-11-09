@@ -3,8 +3,8 @@ package org.eso.ias.prototype.transfer
 import java.util.Properties
 import java.util.concurrent.ThreadFactory
 import scala.util.Try
-import scala.sys.SystemProperties
 import org.ias.prototype.logging.IASLogger
+import scala.sys.SystemProperties
 
 /**
  * Implemented types of transfer functions
@@ -210,7 +210,7 @@ class TransferFunctionSetting(
     require(Option(props).isDefined)
     
     val javaProps: Properties = new Properties()
-    props.foreach( properties => properties.keySet.foreach(k => javaProps.put(k, props.get(k))))
+    props.get.keySet.foreach(k => javaProps.setProperty(k, props.get.get(k).get))
     
     // Go through the constructors and instantiate the executor
     //
