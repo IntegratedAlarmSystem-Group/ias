@@ -210,7 +210,7 @@ class TransferFunctionSetting(
     require(Option(props).isDefined)
     
     val javaProps: Properties = new Properties()
-    props.get.keySet.foreach(k => javaProps.setProperty(k, props.get.get(k).get))
+    props.foreach(_.keySet.foreach(k => javaProps.setProperty(k, props.get.get(k).get)))
     
     // Go through the constructors and instantiate the executor
     //
