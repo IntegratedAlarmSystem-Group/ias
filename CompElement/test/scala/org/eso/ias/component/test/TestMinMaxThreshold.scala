@@ -68,18 +68,18 @@ class TestMinMaxThreshold extends FlatSpec {
         commons.threadFactory)
     
     
-    val props: Properties= new Properties()
-    props.put(MinMaxThresholdTF.highOnPropName, "50")
-    props.put(MinMaxThresholdTF.highOffPropName, "25")
-    props.put(MinMaxThresholdTF.lowOffPropName, "-10")
-    props.put(MinMaxThresholdTF.lowOnPropName, "-20")
+    val props: Map[String,String]= Map(
+        MinMaxThresholdTF.highOnPropName -> "50",
+        MinMaxThresholdTF.highOffPropName -> "25",
+        MinMaxThresholdTF.lowOffPropName -> "-10",
+        MinMaxThresholdTF.lowOnPropName -> "-20")
     
     val scalaComp: ComputingElement[AlarmSample] = new ComputingElement[AlarmSample](
        commons.compID,
        commons.output.asInstanceOf[InOut[AlarmSample]],
        commons.requiredInputIDs,
        scalaTFSetting,
-       None) with ScalaTransfer[AlarmSample]
+       Option(props)) with ScalaTransfer[AlarmSample]
     
     try {
       testCode(scalaComp,commons.inputsMPs)
@@ -104,18 +104,18 @@ class TestMinMaxThreshold extends FlatSpec {
         commons.threadFactory)
     
     
-    val props: Properties= new Properties()
-    props.put(MinMaxThresholdTFJava.highOnPropName, "50")
-    props.put(MinMaxThresholdTFJava.highOffPropName, "25")
-    props.put(MinMaxThresholdTFJava.lowOffPropName, "-10")
-    props.put(MinMaxThresholdTFJava.lowOnPropName, "-20")
+    val props: Map[String,String]= Map(
+        MinMaxThresholdTFJava.highOnPropName -> "50",
+        MinMaxThresholdTFJava.highOffPropName -> "25",
+        MinMaxThresholdTFJava.lowOffPropName -> "-10",
+        MinMaxThresholdTFJava.lowOnPropName -> "-20")
     
     val javaComp: ComputingElement[AlarmSample] = new ComputingElement[AlarmSample](
        commons.compID,
        commons.output.asInstanceOf[InOut[AlarmSample]],
        commons.requiredInputIDs,
        javaTFSetting,
-       None) with JavaTransfer[AlarmSample]
+       Option(props)) with JavaTransfer[AlarmSample]
     
     try {
       testCode(javaComp,commons.inputsMPs)
@@ -219,6 +219,7 @@ class TestMinMaxThreshold extends FlatSpec {
   
   it must "run the java Min/Max TF executor" in withJavaComp { (javaComp, inputsMPs) =>
     javaComp.initialize()
+    Thread.sleep(1000)
     // Change the input to trigger the TF
     val changedMP = inputsMPs(inputsMPs.keys.head).asInstanceOf[InOut[Long]].updateValue(Some(5L))
     javaComp.update(List(changedMP))
