@@ -52,6 +52,7 @@ public class JsonReader implements CdbReader {
 		public final Map<String,AsceDao> asces = new HashMap<>();
 		public final Map<String,DasuDao> dasus = new HashMap<>();
 		public final Map<String,SupervisorDao> supervisors = new HashMap<>();
+		public final Map<String, TransferFunctionDao> transferFunctions = new HashMap<>();
 	}
 	
 	/**
@@ -445,6 +446,19 @@ public class JsonReader implements CdbReader {
 			optDasu.ifPresent(d -> holder.dasus.put(jAsceDao.getDasuID(), d));
 		}
 		optDasu.ifPresent(d -> asce.setDasu(d));
+		
+		// Fix the transfer function
+		Optional<TransferFunctionDao> tfOpt = Optional.ofNullable(holder.transferFunctions.get(jAsceDao.getTransferFunctionID()));
+		if (!tfOpt.isPresent()) {
+			Optional<TransferFunctionDao> jTF = getTransferFunction(jAsceDao.getTransferFunctionID());
+			if (jTF.isPresent()) {
+				asce.setTransferFunction(jTF.get());
+				holder.transferFunctions.put(jAsceDao.getTransferFunctionID(), jTF.get());
+			} else {
+				throw new IasCdbException("Inconsistent ASCE record: TF ["+jAsceDao.getTransferFunctionID()+"] not found in CDB");
+			}
+			
+		}
 	}
 	
 	/**

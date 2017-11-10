@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 
 import org.eso.ias.cdb.pojos.AsceDao;
 import org.eso.ias.cdb.pojos.PropertyDao;
-import org.eso.ias.cdb.pojos.TransferFunctionDao;
 
 /**
  * Pojos for JSON that replaces objects inclusion in the ASCE with their IDS.
@@ -39,6 +38,11 @@ public class JsonAcseDao {
 	private String outputID;
 	
 	/**
+	 * The ID of the transfer function
+	 */
+	private String transferFunctionID;
+	
+	/**
 	 * Empty constructor 
 	 */
 	public JsonAcseDao() {
@@ -62,6 +66,7 @@ public class JsonAcseDao {
 		this.inputIds=asce.getInputs().stream().map(i -> i.getId()).collect(Collectors.toSet());
 		Objects.requireNonNull(this.asce.getOutput(), "Inavlid null output IASIO");
 		this.outputID=this.asce.getOutput().getId();
+		this.transferFunctionID=this.asce.getTransferFunction().getClassName();
 		
 		asce.getInputs().stream().forEach(iasio -> inputIds.add(iasio.getId()));
 	}
@@ -80,22 +85,6 @@ public class JsonAcseDao {
 	 */
 	public void setId(String id) {
 		asce.setId(id);
-	}
-
-	/**
-	 * @return the class name of the transfer function
-	 * @see AsceDao#getTfClass()
-	 */
-	public TransferFunctionDao getTransferFunction() {
-		return asce.getTransferFunction();
-	}
-
-	/**
-	 * @param tfClass  the class name of the transfer function
-	 * @see AsceDao#setTfClass(String)
-	 */
-	public void setTransferFunction(TransferFunctionDao transferFunction) {
-		asce.setTransferFunction(transferFunction);
 	}
 
 	/**
@@ -176,11 +165,9 @@ public class JsonAcseDao {
 			ret.append(' ');
 			ret.append(inputId);
 		}
-		ret.append("} TF={class name=");
-		ret.append(getTransferFunction().getClassName());
-		ret.append(", language=");
-		ret.append(getTransferFunction().getImplLang());
-		ret.append("}, DASU=");
+		ret.append("} TF=");
+		ret.append(transferFunctionID);
+		ret.append(", DASU=");
 		ret.append(dasuID);
 		ret.append(", Props={");
 		for (PropertyDao prop: getProps()) {
@@ -198,5 +185,13 @@ public class JsonAcseDao {
 	 */
 	public AsceDao toAsceDao() {
 		return this.asce;
+	}
+
+	public String getTransferFunctionID() {
+		return transferFunctionID;
+	}
+
+	public void setTransferFunctionID(String transferFunctionID) {
+		this.transferFunctionID = transferFunctionID;
 	}
 }

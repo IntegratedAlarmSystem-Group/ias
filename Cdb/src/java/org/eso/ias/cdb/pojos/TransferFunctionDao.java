@@ -117,4 +117,14 @@ public class TransferFunctionDao {
 	public Set<AsceDao> getAsces() {
 		return asces;
 	}
+	
+	@Override
+	public String toString() {
+		StringBuilder ret = new StringBuilder("TF=[className=");
+		ret.append(className);
+		ret.append(", ImplLang=");
+		ret.append(implLang);
+		ret.append("]");
+		return ret.toString();
+	}
 }

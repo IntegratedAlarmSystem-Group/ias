@@ -162,9 +162,11 @@ public class AsceDao {
 			ret.append(' ');
 			ret.append(iasio.getId());
 		}
-		ret.append("}, TF class=");
-		ret.append(transferFunction);
-		ret.append(", DASU=");
+		ret.append("}, TF class={ className");
+		ret.append(transferFunction.getClassName());
+		ret.append(", implLang=");
+		ret.append(transferFunction.getImplLang());
+		ret.append("}, DASU=");
 		Optional.ofNullable(dasu).ifPresent(x -> ret.append(x.getId()));
 		ret.append(", Props={");
 		for (PropertyDao prop: props) {
