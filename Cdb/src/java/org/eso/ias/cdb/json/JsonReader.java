@@ -21,6 +21,7 @@ import org.eso.ias.cdb.pojos.DasuDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
+import org.eso.ias.cdb.pojos.TransferFunctionDao;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -498,5 +499,11 @@ public class JsonReader implements CdbReader {
 		Optional<AsceDao> asce = getAsce(id);
 		Collection<IasioDao> ret = asce.orElseThrow(() -> new IasCdbException("ASCE ["+id+"] not dound")).getInputs();
 		return (ret==null)? new ArrayList<>() : ret;
+	}
+
+	@Override
+	public Optional<TransferFunctionDao> getTransferFunction(String tf_id) throws IasCdbException {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

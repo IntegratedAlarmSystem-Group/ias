@@ -26,6 +26,8 @@ import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.LogLevelDao;
 import org.eso.ias.cdb.pojos.PropertyDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
+import org.eso.ias.cdb.pojos.TFLanguageDao;
+import org.eso.ias.cdb.pojos.TransferFunctionDao;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -172,25 +174,38 @@ public class TestJsonCdb {
 		dasu.setLogLevel(LogLevelDao.FATAL);
 		superv.addDasu(dasu);
 		
+		TransferFunctionDao tfDao = new TransferFunctionDao();
+		tfDao.setClassName("org.eso.ias.tf.Threshold");
+		tfDao.setImplLang(TFLanguageDao.SCALA);
+		
 		AsceDao asce1= new AsceDao();
 		asce1.setId("ASCE1");
 		asce1.setDasu(dasu);
-		asce1.setTfClass("org.eso.ias.tf.EqualTransferFunction");
+		asce1.setTransferFunction(tfDao);
 		IasioDao output1 = new IasioDao("OUT-ID1", "description", 456, IasTypeDao.CHAR);
 		asce1.setOutput(output1);
+		
+		TransferFunctionDao tfDao2 = new TransferFunctionDao();
+		tfDao2.setClassName("org.eso.ias.tf.Min");
+		tfDao2.setImplLang(TFLanguageDao.SCALA);
 		
 		AsceDao asce2= new AsceDao();
 		asce2.setId("ASCE-2");
 		asce2.setDasu(dasu);
 		IasioDao output2 = new IasioDao("ID2", "description", 1000, IasTypeDao.DOUBLE);
 		asce2.setOutput(output2);
-		asce2.setTfClass("org.eso.ias.tf.MinMaxTransferFunction");
+		asce2.setTransferFunction(tfDao2);
+		
+		TransferFunctionDao tfDao3 = new TransferFunctionDao();
+		tfDao3.setClassName("org.eso.ias.tf.Max");
+		tfDao3.setImplLang(TFLanguageDao.JAVA);
+		
 		AsceDao asce3= new AsceDao();
 		asce3.setId("ASCE-ID-3");
 		asce3.setDasu(dasu);
 		IasioDao output3 = new IasioDao("OUT-ID3", "desc3", 456, IasTypeDao.SHORT);
 		asce3.setOutput(output2);
-		asce3.setTfClass("org.eso.ias.tf.MaxTransferFunction");
+		asce3.setTransferFunction(tfDao3);
 		
 		IasioDao dasuOutIasio = new IasioDao("DASU_OUTPUT", "desc-dasu-out", 921, IasTypeDao.ALARM);
 		dasu.setOutput(dasuOutIasio);
@@ -209,6 +224,10 @@ public class TestJsonCdb {
 		cdbWriter.writeIasio(output2, true);
 		cdbWriter.writeIasio(output3, true);
 		cdbWriter.writeIasio(dasuOutIasio, true);
+		
+		cdbWriter.writeTransferFunction(tfDao);
+		cdbWriter.writeTransferFunction(tfDao2);
+		cdbWriter.writeTransferFunction(tfDao3);
 		
 		dasu.addAsce(asce1);
 		dasu.addAsce(asce2);
@@ -242,11 +261,15 @@ public class TestJsonCdb {
 		IasioDao dasuOutIasio = new IasioDao("DASU_OUTPUT", "desc-dasu-out", 921, IasTypeDao.ALARM);
 		dasu.setOutput(dasuOutIasio);
 		
+		TransferFunctionDao tfDao1 = new TransferFunctionDao();
+		tfDao1.setClassName("org.eso.ias.tf.Threshold");
+		tfDao1.setImplLang(TFLanguageDao.JAVA);
+		
 		// The ASCE to test
 		AsceDao asce = new AsceDao();
 		asce.setId("ASCE-ID-For-Testsing");
 		asce.setDasu(dasu);
-		asce.setTfClass("org.eso.ias.tf.AnotherFunction");
+		asce.setTransferFunction(tfDao1);
 		
 		IasioDao output = new IasioDao("OUTPUT-ID", "One IASIO in output", 8193, IasTypeDao.BYTE);
 		asce.setOutput(output);
@@ -279,6 +302,7 @@ public class TestJsonCdb {
 		cdbWriter.writeIasio(dasuOutIasio, true);
 		cdbWriter.writeSupervisor(superv);
 		cdbWriter.writeDasu(dasu);
+		cdbWriter.writeTransferFunction(tfDao1);
 		
 		
 		cdbWriter.writeAsce(asce);

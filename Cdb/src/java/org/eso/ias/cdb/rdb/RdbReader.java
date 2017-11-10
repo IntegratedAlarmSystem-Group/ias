@@ -19,6 +19,7 @@ import org.eso.ias.cdb.pojos.DasuDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
+import org.eso.ias.cdb.pojos.TransferFunctionDao;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
@@ -55,7 +56,7 @@ public class RdbReader implements CdbReader {
 		
 		List<IasDao> iasdaos = (List<IasDao>)s.createQuery("FROM IasDao").list();
 		Set<IasDao> ret = new HashSet<>();
-		for (Iterator iterator = iasdaos.iterator(); iterator.hasNext();){
+		for (Iterator<IasDao> iterator = iasdaos.iterator(); iterator.hasNext();){
 			ret.add((IasDao)iterator.next());
 		}
 		t.commit();
@@ -144,6 +145,26 @@ public class RdbReader implements CdbReader {
 		AsceDao asce = s.get(AsceDao.class,id);
 		t.commit();
 		return Optional.ofNullable(asce);
+	}
+	
+	/**
+	 * Read the transfer function configuration from the CDB. 
+	 * 
+	 * @param id The not <code>null</code> nor empty transfer function identifier
+	 * @return The transfer function red from the CDB
+	 * @see org.eso.ias.cdb.CdbReader#getTransferFunction(String)
+	 */
+	@Override
+	public Optional<TransferFunctionDao> getTransferFunction(String tf_id) throws IasCdbException {
+		Objects.requireNonNull(tf_id, "The ID of the TF cant't be null");
+		if (tf_id.isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty TF ID");
+		}
+		Session s=rdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		TransferFunctionDao tf = s.get(TransferFunctionDao.class,tf_id);
+		t.commit();
+		return Optional.ofNullable(tf);
 	}
 
 	/**

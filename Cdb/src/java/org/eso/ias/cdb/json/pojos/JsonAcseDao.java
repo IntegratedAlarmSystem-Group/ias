@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.eso.ias.cdb.pojos.AsceDao;
 import org.eso.ias.cdb.pojos.PropertyDao;
+import org.eso.ias.cdb.pojos.TransferFunctionDao;
 
 /**
  * Pojos for JSON that replaces objects inclusion in the ASCE with their IDS.
@@ -85,16 +86,16 @@ public class JsonAcseDao {
 	 * @return the class name of the transfer function
 	 * @see AsceDao#getTfClass()
 	 */
-	public String getTfClass() {
-		return asce.getTfClass();
+	public TransferFunctionDao getTransferFunction() {
+		return asce.getTransferFunction();
 	}
 
 	/**
 	 * @param tfClass  the class name of the transfer function
 	 * @see AsceDao#setTfClass(String)
 	 */
-	public void setTfClass(String tfClass) {
-		asce.setTfClass(tfClass);
+	public void setTransferFunction(TransferFunctionDao transferFunction) {
+		asce.setTransferFunction(transferFunction);
 	}
 
 	/**
@@ -175,9 +176,11 @@ public class JsonAcseDao {
 			ret.append(' ');
 			ret.append(inputId);
 		}
-		ret.append("} TF class=");
-		ret.append(getTfClass());
-		ret.append(", DASU=");
+		ret.append("} TF={class name=");
+		ret.append(getTransferFunction().getClassName());
+		ret.append(", language=");
+		ret.append(getTransferFunction().getImplLang());
+		ret.append("}, DASU=");
 		ret.append(dasuID);
 		ret.append(", Props={");
 		for (PropertyDao prop: getProps()) {

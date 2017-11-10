@@ -25,6 +25,7 @@ import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
+import org.eso.ias.cdb.pojos.TransferFunctionDao;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -343,5 +344,11 @@ public class JsonWriter implements CdbWriter {
 		}
 		IasioDao ret = new IasioDao(iasioId,iasioDesc,iasioRate,IasTypeDao.valueOf(iasioType));
 		return ret;
+	}
+
+	@Override
+	public void writeTransferFunction(TransferFunctionDao transferFunction) throws IasCdbException {
+		// TODO Auto-generated method stub
+		
 	}
 }

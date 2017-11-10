@@ -22,6 +22,10 @@ import java.util.Objects;
  *     | <DasuID-1>.json
  *     | ...
  *     | <DasuID-m>.json
+ *  |+ TF
+ *     | <TFID-1>.json
+ *     | ...
+ *     | <TFID-x>.json
  *  |+ ASCE
  *     | <AsceID-1>.json
  *     | ...
@@ -44,7 +48,8 @@ public enum CdbFolders {
 	SUPERVISOR("Supervisor"),
 	DASU("DASU"),
 	ASCE("ASCE"),
-	IASIO("IASIO");
+	IASIO("IASIO"),
+	TF("TF");
 	
 	/**
 	 *  The name of the folder

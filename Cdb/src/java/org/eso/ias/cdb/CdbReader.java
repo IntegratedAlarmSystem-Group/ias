@@ -9,6 +9,7 @@ import org.eso.ias.cdb.pojos.DasuDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
+import org.eso.ias.cdb.pojos.TransferFunctionDao;
 
 /**
  * Interface to build CDB pojos from the configuration database.
@@ -50,6 +51,14 @@ public interface CdbReader {
 	 * @throws IasCdbException In case of error getting the Supervisor
 	 */
 	public Optional<SupervisorDao> getSupervisor(String id) throws IasCdbException;
+	
+	/**
+	 * Read the transfer function configuration from the CDB. 
+	 * 
+	 * @param id The not <code>null</code> nor empty transfer function identifier
+	 * @return The transfer function red from the CDB
+	 */
+	public Optional<TransferFunctionDao> getTransferFunction(String tf_id) throws IasCdbException;
 	
 	/**
 	 * Read the ASCE configuration from the CDB. 

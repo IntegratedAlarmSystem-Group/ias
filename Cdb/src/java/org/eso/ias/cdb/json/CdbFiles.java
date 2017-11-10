@@ -40,6 +40,16 @@ public interface CdbFiles {
 	
 	/**
 	 * 
+	 * @param tfID The ID of the transfer function
+	 * 
+	 * @return The path for the configuration of the TF
+	 * 		with the passed ID 
+	 * @throws IOException In case of IO error getting the path 
+	 */
+	public Path getTFFilePath(String tfID) throws IOException;
+	
+	/**
+	 * 
 	 * @param asceID The ID of the ASCE
 	 * 
 	 * @return The path for the configuration of the ASCE

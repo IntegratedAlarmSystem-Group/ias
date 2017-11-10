@@ -40,15 +40,15 @@ public class AsceDao {
 	 * The DASU that runs this ASCE 
 	 */
 	@ManyToOne
-    @JoinColumn(name = "dasu_id", foreignKey = @ForeignKey(name = "dasu_id")
-    )
+    @JoinColumn(name = "dasu_id", foreignKey = @ForeignKey(name = "dasu_id"))
     private DasuDao dasu;
 	
 	/**
-	 * The jvm class of the transfer function
+	 * The transfer function
 	 */
-	@Basic(optional=false)
-	private String tfClass;
+	@ManyToOne
+	@JoinColumn(name = "transf_fun_id", foreignKey = @ForeignKey(name = "transf_fun_id"))
+	private TransferFunctionDao transferFunction;
 	
 	/**
 	 * The IASIOs in input to the ASCE.
@@ -90,17 +90,13 @@ public class AsceDao {
 		this.id = iden;
 	}
 
-	public String getTfClass() {
-		return tfClass;
+	public TransferFunctionDao getTransferFunction() {
+		return transferFunction;
 	}
 
-	public void setTfClass(String tfClass) {
-		Objects.requireNonNull(tfClass,"The TF class of a ASCE can't be null");
-		String temp = tfClass.trim();
-		if (temp.isEmpty()) {
-			throw new IllegalArgumentException("The TF class of a ASCE can't be an empty string");
-		}
-		this.tfClass = temp;
+	public void setTransferFunction(TransferFunctionDao transferFunction) {
+		Objects.requireNonNull(transferFunction,"The TF of a ASCE can't be null");
+		this.transferFunction = transferFunction;
 	}
 
 	public IasioDao getOutput() {
@@ -167,7 +163,7 @@ public class AsceDao {
 			ret.append(iasio.getId());
 		}
 		ret.append("}, TF class=");
-		ret.append(tfClass);
+		ret.append(transferFunction);
 		ret.append(", DASU=");
 		Optional.ofNullable(dasu).ifPresent(x -> ret.append(x.getId()));
 		ret.append(", Props={");
@@ -234,10 +230,10 @@ public class AsceDao {
 				return false;
 		} else if (!props.equals(other.props))
 			return false;
-		if (tfClass == null) {
-			if (other.tfClass != null)
+		if (transferFunction == null) {
+			if (other.transferFunction != null)
 				return false;
-		} else if (!tfClass.equals(other.tfClass))
+		} else if (!transferFunction.equals(other.transferFunction))
 			return false;
 		return true;
 	}
