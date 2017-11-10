@@ -503,7 +503,27 @@ public class JsonReader implements CdbReader {
 
 	@Override
 	public Optional<TransferFunctionDao> getTransferFunction(String tf_id) throws IasCdbException {
-		// TODO Auto-generated method stub
-		return null;
+		Objects.requireNonNull(tf_id);
+		if (tf_id.isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty TF ID");
+		}
+		File f;
+		try {
+			f= cdbFileNames.getTFFilePath(tf_id).toFile();
+		} catch (IOException ioe) {
+			throw new IasCdbException("Error getting file",ioe);
+		}
+		if (!canReadFromFile(f)) {
+			return Optional.empty();
+		} else {
+			// Parse the file in a JSON pojo
+			ObjectMapper mapper = new ObjectMapper();
+			try {
+				TransferFunctionDao tfDao = mapper.readValue(f, TransferFunctionDao.class);
+				return Optional.of(tfDao);
+			} catch (Exception e) {
+				throw new IasCdbException("Error reading TF from "+f.getAbsolutePath(),e);
+			}
+		}
 	}
 }

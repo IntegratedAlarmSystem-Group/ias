@@ -502,5 +502,26 @@ public class TestJsonCdb {
 		iasios = cdbReader.getIasiosForAsce("ASCE-ID3");
 		assertEquals(2,iasios.size());
 	}
+	
+	/**
+	 * Test the writing and reading of the transfer function
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testWriteTansferFunction() throws Exception {
+		TransferFunctionDao tfDao1 = new TransferFunctionDao("org.eso.ias.tf.Test",TFLanguageDao.SCALA);
+		TransferFunctionDao tfDao2 = new TransferFunctionDao("org.eso.ias.tf.MinMax",TFLanguageDao.JAVA);
+		
+		cdbWriter.writeTransferFunction(tfDao1);
+		cdbWriter.writeTransferFunction(tfDao2);
+		
+		Optional<TransferFunctionDao> optTF1 = cdbReader.getTransferFunction(tfDao1.getClassName());
+		assertTrue(optTF1.isPresent());
+		assertEquals(tfDao1, optTF1.get());
+		Optional<TransferFunctionDao> optTF2 = cdbReader.getTransferFunction(tfDao2.getClassName());
+		assertTrue(optTF2.isPresent());
+		assertEquals(tfDao2, optTF2.get());
+	}
 
 }

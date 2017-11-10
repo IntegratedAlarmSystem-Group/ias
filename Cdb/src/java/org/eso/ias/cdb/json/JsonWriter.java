@@ -348,7 +348,19 @@ public class JsonWriter implements CdbWriter {
 
 	@Override
 	public void writeTransferFunction(TransferFunctionDao transferFunction) throws IasCdbException {
-		// TODO Auto-generated method stub
-		
+		Objects.requireNonNull(transferFunction);
+		File f;
+		try {
+			f = cdbFileNames.getTFFilePath(transferFunction.getClassName()).toFile();
+		}catch (IOException ioe) {
+			throw new IasCdbException("Error getting TF file",ioe);
+		}
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
+		try {
+			mapper.writeValue(f, transferFunction);
+		}catch (Throwable t) {
+			throw new IasCdbException("Error writing JSON TF",t);
+		}
 	}
 }
