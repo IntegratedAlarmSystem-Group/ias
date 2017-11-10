@@ -23,6 +23,8 @@ import scala.collection.JavaConverters
 import org.eso.ias.cdb.pojos.IasioDao
 import org.eso.ias.prototype.input.java.IASValue
 import org.ias.prototype.logging.IASLogger
+import org.eso.ias.cdb.pojos.TFLanguageDao
+import org.eso.ias.prototype.transfer.ScalaTransfer
 
 /**
  * The Integrated Alarm System Computing Element (ASCE) 
@@ -317,29 +319,45 @@ abstract class ComputingElement[T](
   
 }
 
-//object ComputingElement {
-//  
-//  def apply[T](
-//      asceDao: AsceDao, 
-//      dasuId: Identifier, 
-//      properties: Option[Properties]): ComputingElement[T] = {
-//    require(Option(dasuId).isDefined,"Invalid null DASU identifier")
-//    require(dasuId.idType==IdentifierType.DASU,"The ASCE runs into a DASU: wrong owner identifer passed "+dasuId.id)
-//    require(Option(asceDao).isDefined,"Invalid ASCE configuration")
-//    
-//    // Build the ID of the ASCE
-//    val asceId = new Identifier(asceDao.getId,IdentifierType.ASCE,Option(dasuId))
-//    
-//    // Build the output
-//    val outputId = new Identifier(asceDao.getOutput.getId,IdentifierType.IASIO,Option(asceId))
-//    val out = new InOut[T](
-//        outputId,
-//        asceDao.getOutput.getRefreshRate,
-//        IASTypes.fromIasioDaoType(asceDao.getOutput.getIasType))
-//        
-//    val inputsIasioDaos: List[IasioDao] = JavaConverters.collectionAsScalaIterable(asceDao.getInputs).toList
-//    val reqInputs: List[String] = inputsIasioDaos.map(_.getId)
-//    
-//  }
-//  
-//}
+/**
+ * The ComputingElement object to build a ComputingElement from the AsceDao red from the CDB
+ */
+object ComputingElement {
+  
+  /**
+   * build a ComputingElement from the AsceDao red from the CDB
+   * 
+   * @param asceDao the configuration of the ASCE red from the CDB
+   * @param dasuId the identifier of the DASU where the ASCE runs
+   * @param properties a optional set of properties
+   */
+  def apply[T](
+      asceDao: AsceDao, 
+      dasuId: Identifier, 
+      properties: Option[Map[String,String]]): ComputingElement[T] = {
+    require(Option(dasuId).isDefined,"Invalid null DASU identifier")
+    require(dasuId.idType==IdentifierType.DASU,"The ASCE runs into a DASU: wrong owner identifer passed "+dasuId.id)
+    require(Option(asceDao).isDefined,"Invalid ASCE configuration")
+    
+    // Build the ID of the ASCE
+    val asceId = new Identifier(asceDao.getId,IdentifierType.ASCE,Option(dasuId))
+    
+    // Build the output
+    val outputId = new Identifier(asceDao.getOutput.getId,IdentifierType.IASIO,Option(asceId))
+    val out = new InOut[T](
+        outputId,
+        asceDao.getOutput.getRefreshRate,
+        IASTypes.fromIasioDaoType(asceDao.getOutput.getIasType))
+        
+    val inputsIasioDaos: List[IasioDao] = JavaConverters.collectionAsScalaIterable(asceDao.getInputs).toList
+    val reqInputs: List[String] = inputsIasioDaos.map(_.getId)
+    
+    val tfLanguage = if (asceDao.getTransferFunction.getImplLang==TFLanguageDao.JAVA) TransferFunctionLanguage.java else TransferFunctionLanguage.scala
+    val tfSettings = new TransferFunctionSetting(
+        asceDao.getTransferFunction.getClassName,
+        tfLanguage, new CompEleThreadFactory(asceId.fullRunningID))
+    
+    if (tfLanguage==TransferFunctionLanguage.java) new ComputingElement[T](asceId,out, reqInputs, tfSettings, properties) with JavaTransfer[T]
+    else new ComputingElement[T](asceId,out, reqInputs, tfSettings, properties) with ScalaTransfer[T]
+  }
+}
