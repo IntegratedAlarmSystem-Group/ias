@@ -107,7 +107,7 @@ class TransferFunctionSetting(
   def initialize(
       asceId: String,
       asceRunningId: String,
-      props: Option[Map[String,String]]) = {
+      props: Properties) = {
     require(Option(asceId).isDefined,"Invalid ASCE id")
     require(Option(asceRunningId).isDefined,"Invalid ASCE running id")
     require(Option(props).isDefined)
@@ -203,14 +203,11 @@ class TransferFunctionSetting(
       executorClass: Option[Class[_]],
       asceId: String,
       asceRunningId: String,
-      props: Option[Map[String,String]]): Option[TransferExecutor] = {
+      props: Properties): Option[TransferExecutor] = {
     assert(executorClass.isDefined)
     require(Option(asceId).isDefined)
     require(Option(asceRunningId).isDefined)
     require(Option(props).isDefined)
-    
-    val javaProps: Properties = new Properties()
-    props.foreach(_.keySet.foreach(k => javaProps.setProperty(k, props.get.get(k).get)))
     
     // Go through the constructors and instantiate the executor
     //
@@ -223,9 +220,9 @@ class TransferFunctionSetting(
       for {ctor <-ctors 
           paramTypes = ctor.getParameterTypes()
           if paramTypes.size==3} {        
-            ctorFound=(paramTypes(0)==asceId.getClass && paramTypes(1)==asceRunningId.getClass && paramTypes(2)==javaProps.getClass)
+            ctorFound=(paramTypes(0)==asceId.getClass && paramTypes(1)==asceRunningId.getClass && paramTypes(2)==props.getClass)
             if (ctorFound) {
-              val args = Array[AnyRef](asceId,asceRunningId,javaProps)
+              val args = Array[AnyRef](asceId,asceRunningId,props)
               ret = Some(ctor.newInstance(args:_*).asInstanceOf[TransferExecutor])
             }
           }

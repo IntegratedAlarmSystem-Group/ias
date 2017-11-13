@@ -4,6 +4,7 @@ import org.scalatest.FlatSpec
 import java.util.concurrent.ThreadFactory
 import org.eso.ias.prototype.transfer.TransferFunctionSetting
 import org.eso.ias.prototype.transfer.TransferFunctionLanguage
+import java.util.Properties
 
 /**
  * Test the TransferFunctionSetting
@@ -40,7 +41,7 @@ class TestTransferFunctionSetting extends FlatSpec {
   it must "load, initialize and shutdown a java TF" in new TFBuilder {
     assert(!javaTF.initialized)
     assert(!javaTF.isShutDown)
-    javaTF.initialize("ASCE-ID", "ASCE-running-ID", None)
+    javaTF.initialize("ASCE-ID", "ASCE-running-ID", new Properties())
     Thread.sleep(500)
     assert(javaTF.initialized)
     assert(!javaTF.isShutDown)
@@ -56,7 +57,7 @@ class TestTransferFunctionSetting extends FlatSpec {
   it must "load, initialize and shutdown a scala TF" in new TFBuilder {
     assert(!scalaTF.initialized)
     assert(!scalaTF.isShutDown)
-    scalaTF.initialize("ASCE-ID", "ASCE-running-ID", None)
+    scalaTF.initialize("ASCE-ID", "ASCE-running-ID", new Properties())
     Thread.sleep(500)
     assert(scalaTF.initialized)
     assert(!scalaTF.isShutDown)

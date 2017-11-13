@@ -67,19 +67,18 @@ class TestMinMaxThreshold extends FlatSpec {
         TransferFunctionLanguage.scala,
         commons.threadFactory)
     
-    
-    val props: Map[String,String]= Map(
-        MinMaxThresholdTF.highOnPropName -> "50",
-        MinMaxThresholdTF.highOffPropName -> "25",
-        MinMaxThresholdTF.lowOffPropName -> "-10",
-        MinMaxThresholdTF.lowOnPropName -> "-20")
+    val props = new Properties()
+    props.put(MinMaxThresholdTF.highOnPropName, "50")
+    props.put(MinMaxThresholdTF.highOffPropName, "25")
+    props.put(MinMaxThresholdTF.lowOffPropName, "-10")
+    props.put(MinMaxThresholdTF.lowOnPropName, "-20")
     
     val scalaComp: ComputingElement[AlarmSample] = new ComputingElement[AlarmSample](
        commons.compID,
        commons.output.asInstanceOf[InOut[AlarmSample]],
        commons.requiredInputIDs,
        scalaTFSetting,
-       Option(props)) with ScalaTransfer[AlarmSample]
+       props) with ScalaTransfer[AlarmSample]
     
     try {
       testCode(scalaComp,commons.inputsMPs)
@@ -104,18 +103,18 @@ class TestMinMaxThreshold extends FlatSpec {
         commons.threadFactory)
     
     
-    val props: Map[String,String]= Map(
-        MinMaxThresholdTFJava.highOnPropName -> "50",
-        MinMaxThresholdTFJava.highOffPropName -> "25",
-        MinMaxThresholdTFJava.lowOffPropName -> "-10",
-        MinMaxThresholdTFJava.lowOnPropName -> "-20")
+    val props = new Properties()
+    props.put(MinMaxThresholdTFJava.highOnPropName,"50")
+    props.put(MinMaxThresholdTFJava.highOffPropName, "25")
+    props.put(MinMaxThresholdTFJava.lowOffPropName, "-10")
+    props.put(MinMaxThresholdTFJava.lowOnPropName, "-20")
     
     val javaComp: ComputingElement[AlarmSample] = new ComputingElement[AlarmSample](
        commons.compID,
        commons.output.asInstanceOf[InOut[AlarmSample]],
        commons.requiredInputIDs,
        javaTFSetting,
-       Option(props)) with JavaTransfer[AlarmSample]
+       props) with JavaTransfer[AlarmSample]
     
     try {
       testCode(javaComp,commons.inputsMPs)
@@ -129,7 +128,7 @@ class TestMinMaxThreshold extends FlatSpec {
   it must "Correctly load, init and shutdown the TF executor" in withScalaTransferSetting { scalaMinMaxTF =>
     assert(!scalaMinMaxTF.initialized)
     assert(!scalaMinMaxTF.isShutDown)
-    scalaMinMaxTF.initialize("ASCE-MinMaxTF-ID", "ASCE-running-ID", None)
+    scalaMinMaxTF.initialize("ASCE-MinMaxTF-ID", "ASCE-running-ID", new Properties())
     Thread.sleep(500)
     assert(scalaMinMaxTF.initialized)
     assert(!scalaMinMaxTF.isShutDown)
@@ -207,7 +206,7 @@ class TestMinMaxThreshold extends FlatSpec {
   it must "Correctly load, init and shutdown the TF executor" in withJavaTransferSetting { javaMinMaxTF =>
     assert(!javaMinMaxTF.initialized)
     assert(!javaMinMaxTF.isShutDown)
-    javaMinMaxTF.initialize("ASCE-MinMaxTF-ID", "ASCE-running-ID", None)
+    javaMinMaxTF.initialize("ASCE-MinMaxTF-ID", "ASCE-running-ID", new Properties())
     Thread.sleep(500)
     assert(javaMinMaxTF.initialized)
     assert(!javaMinMaxTF.isShutDown)

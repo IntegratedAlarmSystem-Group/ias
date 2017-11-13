@@ -87,7 +87,7 @@ class TestTransferFunction extends FlatSpec {
        output,
        requiredInputIDs,
        javaTFSetting,
-       None) with JavaTransfer[AlarmSample]
+       new Properties()) with JavaTransfer[AlarmSample]
     
     
     // Instantiate one ASCE with a scala TF implementation
@@ -100,7 +100,7 @@ class TestTransferFunction extends FlatSpec {
        output,
        requiredInputIDs,
        scalaTFSetting,
-       None) with ScalaTransfer[AlarmSample]
+       new Properties()) with ScalaTransfer[AlarmSample]
     
      // Instantiate one ASCE with a scala TF implementation
     val brokenScalaTFSetting =new TransferFunctionSetting(
@@ -112,7 +112,7 @@ class TestTransferFunction extends FlatSpec {
        output,
        requiredInputIDs,
        brokenScalaTFSetting,
-       None) with ScalaTransfer[AlarmSample]
+       new Properties()) with ScalaTransfer[AlarmSample]
   }
   
   behavior of "The Component transfer function"

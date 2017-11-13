@@ -81,7 +81,7 @@ import org.eso.ias.prototype.transfer.ScalaTransfer
  *                        during the life time of the component.
  * @param tfSetting: The definition of the implementation of the transfer function
  *                   that manipulates the inputs to produce the new output
- * @param props: the properties to pass to this component and the TF
+ * @param props: the java properties to pass to this component and the TF
  * 
  * @see AlarmSystemComponent
  * @author acaproni
@@ -91,11 +91,12 @@ abstract class ComputingElement[T](
     var output: InOut[T],
     val requiredInputs: List[String],
     val tfSetting: TransferFunctionSetting,
-    val props: Option[Map[String,String]]) 
+    val props: Properties) 
     {
   require(Option(id)!=None,"Invalid identifier")
   require(id.idType==IdentifierType.ASCE)
   require(Option(requiredInputs)!=None && !requiredInputs.isEmpty,"Invalid (empty or null) list of required inputs to the component")
+  require(Option(props).isDefined,"Invalid null properties")
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
@@ -334,10 +335,11 @@ object ComputingElement {
   def apply[T](
       asceDao: AsceDao, 
       dasuId: Identifier, 
-      properties: Option[Map[String,String]]): ComputingElement[T] = {
+      properties: Properties): ComputingElement[T] = {
     require(Option(dasuId).isDefined,"Invalid null DASU identifier")
     require(dasuId.idType==IdentifierType.DASU,"The ASCE runs into a DASU: wrong owner identifer passed "+dasuId.id)
     require(Option(asceDao).isDefined,"Invalid ASCE configuration")
+    require(Option(properties).isDefined,"Invalid properties")
     
     // Build the ID of the ASCE
     val asceId = new Identifier(asceDao.getId,IdentifierType.ASCE,Option(dasuId))
