@@ -96,4 +96,12 @@ class TopologyTest extends FlatSpec {
     assert(topology.levels(2)==Set[String]("ASCE1-ID","ASCE2-ID","ASCE3-ID"))
   }
   
+  it must "correctly return the ID of the ASCE that produces the output" in {
+    val asceId3 = topology.asceProducingOutput(asce3.output)
+    assert(asceId3.isDefined && asce3.identifier==asceId3.get)
+    
+    val asceId6 =topology.asceProducingOutput(asce6.output)
+    assert(asceId6.isDefined && asceId6.get==asce6.identifier)
+  }
+  
 }

@@ -45,6 +45,9 @@ class Topology(
   val asceOutputs: Set[String] = asces.map(asce => asce.output).toSet
   require(asceOutputs.contains(dasuOutputId),"The output of the DASU is not produced by any of its ASCEs")
   
+  // Ensure that the output produced by one ASCE is not produced by any other ASCE
+  require(asces.size==asceOutputs.size,"Number of outputs of ASCEs and number of ASCEs mismatch")
+  
   // Check if the output produced by the ASCEs running in this DASU
   // is used by other ASCEs in this same DASU. The only exception is
   // output produced by the last ASCE that is the output of the DASU itself
@@ -413,6 +416,15 @@ class Topology(
     }
     
     allocate(dasuInputs,Set[String](),Nil)
+  }
+  
+  /**
+   * @return the ID, if any, of the ASCE that produces the passed output ID
+   */
+  def asceProducingOutput(outputId: String): Option[String] = {
+    require(Option(outputId).isDefined && !outputId.isEmpty(),"Invalid output identifier")
+    
+    asces.find(_.output==outputId).map(_.identifier)
   }
   
 }
