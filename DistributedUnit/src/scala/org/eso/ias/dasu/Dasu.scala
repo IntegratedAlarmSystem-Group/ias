@@ -16,6 +16,7 @@ import org.eso.ias.cdb.pojos.AsceDao
 import org.eso.ias.prototype.compele.ComputingElement
 import org.eso.ias.prototype.compele.ComputingElementState
 import org.eso.ias.prototype.compele.AsceStates
+import org.eso.ias.prototype.input.InOut
 
 /**
  * The Distributed Alarm System Unit or DASU
@@ -91,6 +92,37 @@ class Dasu(val id: String) {
   // - Start the loop:
   //  - Get IASIOs and forward them to the ASCEs
   //  - Get and send to the IASIO queue the output of the DASU
+  
+  /**
+   * Propagates the inputs received from the BSDB to each of the ASCEs
+   * in the DASU generating the output of the entire DASU.
+   * 
+   * THis method runs after the refresh time interval elapses.
+   * All the iasios collected in the time interval will be passed to the first level of the ASCEs
+   * and up till the last ASCE generates the output of the DASU itself.
+   * Each ASCE runs the TF and produces another output to be propagated to the next level.
+   * The last level is the only one ASCE that produces the output of the DASU
+   * to be sent to the BSDB.
+   * 
+   * @param iasios the iasios received from the BDSB in the last time interval
+   * @return the IASIO to send back to the BSDB
+   */
+  def propagateIasios(iasios: Set[InOut[_]]): Option[InOut[_]] = {
+      
+      def updateOneAsce(asceId: String, iasios: Set[InOut[_]]): Option[InOut[_]] = {
+        val requiredInputs = dasuTopology.inputsOfAsce(asceId)
+        val inputs = iasios.filter( p => requiredInputs.contains(p.id.id))
+        asces.get(asceId).map(x => x.update(inputs)._1)
+      }
+      
+      def updateOneLevel(asces: Set[String], iasios: Set[InOut[_]]): Set[InOut[_]] = {
+        asces.foldLeft(iasios){ (s: Set[InOut[_]], id: String) => s + updateOneAsce(id, iasios).get}
+      }
+      
+      val outputs = dasuTopology.levels.foldLeft(iasios){ (s: Set[InOut[_]], ids: Set[String]) => s ++ updateOneLevel(ids, iasios) }
+      
+      outputs.find(_.id.id==dasuOutputId)
+  }
   
   
 }
