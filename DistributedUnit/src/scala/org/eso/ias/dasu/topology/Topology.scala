@@ -419,12 +419,28 @@ class Topology(
   }
   
   /**
+   * Return the ID of the ASCE whose output has the passed ID.
+   * 
+   * @param outputId The id of the of the output
    * @return the ID, if any, of the ASCE that produces the passed output ID
    */
   def asceProducingOutput(outputId: String): Option[String] = {
     require(Option(outputId).isDefined && !outputId.isEmpty(),"Invalid output identifier")
     
     asces.find(_.output==outputId).map(_.identifier)
+  }
+  
+  /**
+   * Return the inputs requested by the ASCE with the passed ID
+   * 
+   * @param the ID of the ASCE
+   * @return the input accepted by the ASCE with the passed ID
+   */
+   def inputsOfAsce(asceId: String): Option[Set[String]] = {
+    require(Option(asceId).isDefined && !asceId.isEmpty(),"Invalid ASCE ID")
+    require(asces.exists(_.identifier==asceId),"The ASCE "+asceId+" does not run in the DASU "+dasuId)
+    
+     asces.find(_.identifier==asceId).map(_.inputs)
   }
   
 }
