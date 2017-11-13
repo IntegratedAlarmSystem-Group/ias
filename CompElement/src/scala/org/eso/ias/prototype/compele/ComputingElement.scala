@@ -296,7 +296,7 @@ abstract class ComputingElement[T](
    * @param iasios: The new inputs received from the DASU
    * @return the new output generated applying the TF to the inputs
    */
-  def update(iasios: List[InOut[_]]): (InOut[T], AsceStates.State) = {
+  def update(iasios: Set[InOut[_]]): (InOut[T], AsceStates.State) = {
     require(Option(iasios).isDefined)
     
     assert(
