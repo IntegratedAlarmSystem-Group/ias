@@ -8,6 +8,7 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
+import org.eso.ias.kafkautils.KafkaHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +46,7 @@ public class ConverterKafkaStream extends ConverterStream {
 	/**
 	 * The default name for the topic where plugins push values
 	 */
-	public static final String DEFAULTPLUGINSINPUTKTOPICNAME = "PluginsKTopic";
+	public static final String DEFAULTPLUGINSINPUTKTOPICNAME = KafkaHelper.PLUGINS_TOPIC_NAME;
 	
 	/**
 	 * The name of the topic to send values to the core of the IAS
@@ -84,11 +85,6 @@ public class ConverterKafkaStream extends ConverterStream {
 	private KafkaStreams streams;
 	
 	/**
-	 * The default name for the topic to send values to the core
-	 */
-	public static final String DEFAULTCOREKTOPICNAME= "IasCoreKTopic";
-	
-	/**
 	 * The empty constructor gets the kafka servers, and the topics
 	 * for the streaming from the passed properties or falls
 	 * back to the defaults.
@@ -103,7 +99,7 @@ public class ConverterKafkaStream extends ConverterStream {
 		Objects.requireNonNull(props);
 		kafkaServers = props.getProperty(KAFKA_SERVERS_PROP_NAME,DEFAULTKAFKASERVERS);
 		pluginsInputKTopicName=props.getProperty(PLUGIN_TOPIC_NAME_PROP_NAME, DEFAULTPLUGINSINPUTKTOPICNAME);
-		iasCoreOutputKTopicName=props.getProperty(IASCORE_TOPIC_NAME_PROP_NAME, DEFAULTCOREKTOPICNAME);
+		iasCoreOutputKTopicName=props.getProperty(IASCORE_TOPIC_NAME_PROP_NAME, KafkaHelper.IASIOs_TOPIC_NAME);
 		
 		logger.debug("Will connect to {} to send data from {} to {}",
 				kafkaServers,
