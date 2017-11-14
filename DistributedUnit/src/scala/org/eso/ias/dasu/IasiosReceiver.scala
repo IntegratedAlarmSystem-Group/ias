@@ -13,6 +13,7 @@ import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition
 import org.eso.ias.converter.ConverterKafkaStream
 import scala.util.Try
 import java.util.Properties
+import org.eso.ias.kafkautils.KafkaHelper
 
 /**
  * Objects of this class gets IASIOs from the BSDB.
@@ -53,8 +54,8 @@ class IasiosReceiver(
   logger.debug("Receiver of DASU [{}] is initializing the consumer of events from the BSDB",dasuIdentifier.id)
   /** The  consumer receing events from the BSDB */
   val consumer: SimpleStringConsumer = new SimpleStringConsumer(
-      IasiosReceiver.DEFAULT_BOOTSTRAP_SERVERS,
-      ConverterKafkaStream.DEFAULTCOREKTOPICNAME,
+      KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
+      KafkaHelper.IASIOs_TOPIC_NAME,
       this)
   val props: Properties = System.getProperties()
   props.put("group.id",dasuIdentifier.id)

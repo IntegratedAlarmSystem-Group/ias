@@ -44,11 +44,6 @@ public class ConverterKafkaStream extends ConverterStream {
 	private static final String PLUGIN_TOPIC_NAME_PROP_NAME = "org.eso.ias.converter.kafka.inputstream";
 	
 	/**
-	 * The default name for the topic where plugins push values
-	 */
-	public static final String DEFAULTPLUGINSINPUTKTOPICNAME = KafkaHelper.PLUGINS_TOPIC_NAME;
-	
-	/**
 	 * The name of the topic to send values to the core of the IAS
 	 */
 	private final String iasCoreOutputKTopicName;
@@ -98,7 +93,7 @@ public class ConverterKafkaStream extends ConverterStream {
 		super(converterID);
 		Objects.requireNonNull(props);
 		kafkaServers = props.getProperty(KAFKA_SERVERS_PROP_NAME,DEFAULTKAFKASERVERS);
-		pluginsInputKTopicName=props.getProperty(PLUGIN_TOPIC_NAME_PROP_NAME, DEFAULTPLUGINSINPUTKTOPICNAME);
+		pluginsInputKTopicName=props.getProperty(PLUGIN_TOPIC_NAME_PROP_NAME, KafkaHelper.PLUGINS_TOPIC_NAME);
 		iasCoreOutputKTopicName=props.getProperty(IASCORE_TOPIC_NAME_PROP_NAME, KafkaHelper.IASIOs_TOPIC_NAME);
 		
 		logger.debug("Will connect to {} to send data from {} to {}",

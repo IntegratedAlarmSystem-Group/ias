@@ -18,6 +18,7 @@ import org.eso.ias.prototype.compele.ComputingElementState
 import org.eso.ias.prototype.compele.AsceStates
 import org.eso.ias.prototype.input.InOut
 import org.eso.ias.kafkautils.SimpleStringProducer
+import org.eso.ias.kafkautils.KafkaHelper
 
 /**
  * The Distributed Alarm System Unit or DASU
@@ -94,8 +95,8 @@ class Dasu(val id: String) {
     
   /** The sender of the produced IASIO to the BSDB */
   val outputSender: SimpleStringProducer = new SimpleStringProducer(
-      SimpleStringProducer.DEFAULT_BOOTSTRAP_SERVERS,
-      "CoreTopic",
+      KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
+      KafkaHelper.IASIOs_TOPIC_NAME,
       dasuIdentifier.id)
   
   // - Connect to the IASIOs queue (input and output)
