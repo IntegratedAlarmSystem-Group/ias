@@ -12,5 +12,7 @@
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-cdb.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-basic-types.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-asce.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ias-kafka-tools.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ias-converter.jar"/>
 	<classpathentry kind="output" path="lib"/>
 </classpath>
