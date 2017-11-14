@@ -12,6 +12,7 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.PartitionInfo;
+import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.plugin.publisher.PublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
@@ -60,9 +61,9 @@ public class KafkaPublisher extends PublisherBase {
 	
 	/**
 	 * The topic name for kafka publisher (in the actual implementation all the 
-	 * plugins publishes on the same topic but each one has its own partition).
+	 * plugins publish on the same topic but each one has its own partition).
 	 */
-	public static final String defaultTopicName="PluginsKTopic";
+	public static final String defaultTopicName=KafkaHelper.PLUGINS_TOPIC_NAME;
 	
 	/**
 	 * The topic name red from the passed property if exists, or the default.
