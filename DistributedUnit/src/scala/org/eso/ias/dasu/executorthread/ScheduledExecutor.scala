@@ -4,11 +4,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.lang.Runtime
 import scala.util.control.NonFatal
 
-/**
- * The scheduled executor for the transfer functions of the ASCEs.
- * 
- * There is one such executor for all the ASCEs running in the same DASU.
- */
+/** The scheduled executor for the transfer functions of the DASU. */
 class ScheduledExecutor extends ScheduledThreadPoolExecutor(ScheduledExecutor.getCoreSize()) {
 }
 
