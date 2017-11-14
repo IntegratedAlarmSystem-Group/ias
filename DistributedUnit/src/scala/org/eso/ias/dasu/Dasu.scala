@@ -17,6 +17,7 @@ import org.eso.ias.prototype.compele.ComputingElement
 import org.eso.ias.prototype.compele.ComputingElementState
 import org.eso.ias.prototype.compele.AsceStates
 import org.eso.ias.prototype.input.InOut
+import org.eso.ias.kafkautils.SimpleStringProducer
 
 /**
  * The Distributed Alarm System Unit or DASU
@@ -87,6 +88,15 @@ class Dasu(val id: String) {
   val refreshRate = asceDaos.find(_.getId==dasuOutputId).map(asce => asce.getOutput().getRefreshRate())
   require(Option(refreshRate).isDefined,"Refresh rate not found!")
   logger.info("The DASU [{}] produces the output [{}} at a rate of {}ms",id,dasuOutputId,""+refreshRate.get)
+  
+  /** The receiver of IASIOs from the BSDB */
+  val inputsReceiver: IasiosReceiver = new IasiosReceiver(dasuTopology.dasuInputs,dasuIdentifier)
+    
+  /** The sender of the produced IASIO to the BSDB */
+  val outputSender: SimpleStringProducer = new SimpleStringProducer(
+      SimpleStringProducer.DEFAULT_BOOTSTRAP_SERVERS,
+      "CoreTopic",
+      dasuIdentifier.id)
   
   // - Connect to the IASIOs queue (input and output)
   // - Start the loop:
