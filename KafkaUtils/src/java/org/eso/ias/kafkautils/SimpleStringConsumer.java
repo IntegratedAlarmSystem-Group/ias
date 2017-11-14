@@ -82,11 +82,6 @@ public class SimpleStringConsumer implements Runnable {
 	private static final Logger logger = LoggerFactory.getLogger(SimpleStringConsumer.class);
 	
 	/**
-	 * The kafka group to which this consumer belongs
-	 */
-	private static final String KAFKA_CONSUMER_GROUP = "test";
-
-	/**
 	 * The name of the topic to get events from
 	 */
 	private final String topicName;
@@ -289,7 +284,7 @@ public class SimpleStringConsumer implements Runnable {
 	private Properties getDefaultProps() {
 		Properties props = new Properties();
 		props.put("bootstrap.servers", kafkaServers);
-		props.put("group.id", KAFKA_CONSUMER_GROUP);
+		props.put("group.id", KafkaHelper.DEFAULT_CONSUMER_GROUP);
 		props.put("enable.auto.commit", "true");
 		props.put("auto.commit.interval.ms", "1000");
 		props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");

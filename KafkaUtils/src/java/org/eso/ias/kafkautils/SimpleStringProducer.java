@@ -34,11 +34,6 @@ public class SimpleStringProducer {
 	private final String bootstrapServers;
 	
 	/**
-	 * Default list of servers
-	 */
-	public static final String DEFAULT_BOOTSTRAP_SERVERS="localhost:9092";
-	
-	/**
 	 * The topic to send strings to
 	 */
 	private final String topic;
