@@ -5,6 +5,8 @@ import org.eso.ias.plugin.OperationalMode
 import org.eso.ias.prototype.input.java.IASTypes._
 import org.eso.ias.prototype.input.java.IASTypes
 import org.eso.ias.plugin.AlarmSample
+import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.prototype.input.java.IdentifierType
 
 /**
  * A  <code>InOut</code> holds the value of an input or output 
@@ -34,7 +36,7 @@ import org.eso.ias.plugin.AlarmSample
  * @author acaproni
  */
 case class InOut[A](
-    value: Option[A],
+    value: Option[_ >: A],
     val id: Identifier,
     val refreshRate: Int,    
     val mode: OperationalMode,
@@ -85,7 +87,7 @@ case class InOut[A](
    * 
    * @param newValue: The new value of the monitor point
    */
-  def updateValue(newValue: Option[A]): InOut[A] = update(newValue,validity)
+  def updateValue[B >: A](newValue: Option[B]): InOut[A] = update(newValue,validity)
   
   /**
    * Update the value and validity of the monitor point
@@ -94,7 +96,7 @@ case class InOut[A](
    * @param valid: the new validity
    * @return A new InOut with updated value and validity
    */
-  def update(newValue: Option[A], valid: Validity.Value): InOut[A] = {
+  def update[B >: A](newValue: Option[B], valid: Validity.Value): InOut[A] = {
     if (newValue==actualValue.value && valid==validity) this 
     else InOut(newValue,id,refreshRate,mode,valid,iasType)
   }
@@ -107,6 +109,22 @@ case class InOut[A](
   def updateValidity(valid: Validity.Value): InOut[A] = {
     if (valid==validity) this
     else this.copy(validity=valid)
+  }
+  
+  /**
+   * Update the value of this IASIO with the IASValue received from the
+   * BSDB
+   * 
+   * TODO: the validity must also be updated when it will be sent 
+   *       by the plugin (@see Issue #19 on github)
+   */
+  def update[B >: IASValue[A]](iasValue: B): InOut[A] = {
+    val v = iasValue.asInstanceOf[IASValue[A]]
+    require(Option(iasValue).isDefined,"Cannot update from a undefined IASIO")
+    require(v.id==this.id.id,"Identifier mismatch: received "+v.id+", expected "+this.id.id)
+    assert(v.valueType==this.iasType)
+    
+    updateValue(Option[A](v.value)).updateMode(v.mode)
   }
 }
 
@@ -146,10 +164,42 @@ object InOut {
     }
   }
   
+  /**
+   * Build a InOut with no initial value neither a mode.
+   * 
+   * Such a IASIO is useful when it is expected but has not yet been sent
+   * by the BSDB or a ASCE: we know that it exists but we do not know its 
+   * initial values.
+   * 
+   * @param id the identifier
+   * @param refreshRate the refresh rate of this IASIO
+   * @param iasType the type of the value of the IASIO
+   * @return a InOut initially empty
+   */
   def apply[T](id: Identifier,
     refreshRate: Int,
     iasType: IASTypes): InOut[T] = {
     InOut[T](None,id,refreshRate,OperationalMode.UNKNOWN,Validity.Unreliable,iasType)
+  }
+  
+  /**
+   * Build a IASIO from a IASVAlue received from the BDSB.
+   * 
+   * @param iasValue the value received from the BSDB
+   * @param refreshRate the refresh rate of this IASIO
+   * @param parentIdentifier the parent identifier
+   * @return the IASIO generated from the passed IASValue
+   */
+  def apply[T](iasValue: IASValue[T], refreshRate: Int) = {
+    val id = Identifier(iasValue.runningId)
+    val value = Option[T](iasValue.value)
+    // TODO: the validity should be set by the plugins (or other DASUs) i.e.
+    //       be part of the IASValue. Setting a value as Reliable by default does 
+    //       not work (@see Issue #19 on github)
+    val validity = Validity.Reliable
+    val mode = iasValue.mode
+    val iasType = iasValue.valueType
+    new InOut[T](value, id,refreshRate ,mode, validity,iasType)
   }
 
 }
