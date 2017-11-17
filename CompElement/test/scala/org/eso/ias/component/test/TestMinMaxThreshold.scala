@@ -17,6 +17,7 @@ import org.eso.ias.prototype.transfer.impls.MinMaxThresholdTFJava
 import org.eso.ias.prototype.transfer.ScalaTransfer
 import org.eso.ias.prototype.transfer.JavaTransfer
 import org.eso.ias.plugin.AlarmSample
+import org.eso.ias.prototype.input.JavaConverter
 
 class TestMinMaxThreshold extends FlatSpec {
   
@@ -52,7 +53,7 @@ class TestMinMaxThreshold extends FlatSpec {
     }
   }
   
-  def withScalaComp(testCode: (ComputingElement[AlarmSample], MutableMap[String, InOut[_]]) => Any) {
+  def withScalaComp(testCode: (ComputingElement[AlarmSample], Set[InOut[_]]) => Any) {
     val commons = new CommonCompBuilder(
         "TestMinMAxThreshold-DASU-ID",
         "TestMinMAxThreshold-ASCE-ID",
@@ -76,7 +77,7 @@ class TestMinMaxThreshold extends FlatSpec {
     val scalaComp: ComputingElement[AlarmSample] = new ComputingElement[AlarmSample](
        commons.compID,
        commons.output.asInstanceOf[InOut[AlarmSample]],
-       commons.requiredInputIDs,
+       commons.inputsMPs,
        scalaTFSetting,
        props) with ScalaTransfer[AlarmSample]
     
@@ -87,7 +88,7 @@ class TestMinMaxThreshold extends FlatSpec {
     }
   }
   
-  def withJavaComp(testCode: (ComputingElement[AlarmSample], MutableMap[String, InOut[_]]) => Any) {
+  def withJavaComp(testCode: (ComputingElement[AlarmSample], Set[InOut[_]]) => Any) {
     val commons = new CommonCompBuilder(
         "TestMinMAxThreshold-DASU-ID",
         "TestMinMAxThreshold-ASCE-ID",
@@ -112,7 +113,7 @@ class TestMinMaxThreshold extends FlatSpec {
     val javaComp: ComputingElement[AlarmSample] = new ComputingElement[AlarmSample](
        commons.compID,
        commons.output.asInstanceOf[InOut[AlarmSample]],
-       commons.requiredInputIDs,
+       commons.inputsMPs,
        javaTFSetting,
        props) with JavaTransfer[AlarmSample]
     
@@ -160,44 +161,44 @@ class TestMinMaxThreshold extends FlatSpec {
     scalaComp.initialize()
     Thread.sleep(1000)
     // Change the input to trigger the TF
-    val changedMP = inputsMPs(inputsMPs.keys.head).asInstanceOf[InOut[Long]].updateValue(Some(5L))
-    scalaComp.update(Set(changedMP))
+    val changedMP = inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(5L))
+    scalaComp.update(Set(changedMP).map(mp => JavaConverter.inOutToIASValue(mp)))
     assert(checkAlarmActivation(scalaComp,AlarmSample.CLEARED))
     
     // Activate high
-    scalaComp.update(Set(inputsMPs(inputsMPs.keys.head).asInstanceOf[InOut[Long]].updateValue(Some(100L))))
+    scalaComp.update(List(inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(100L))))
     assert(checkAlarmActivation(scalaComp,AlarmSample.SET))
     
     // Increase does not deactivate the alarm
-    scalaComp.update(Set(inputsMPs(inputsMPs.keys.head).asInstanceOf[InOut[Long]].updateValue(Some(150L))))
+    scalaComp.update(List(inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(150L))))
     assert(checkAlarmActivation(scalaComp,AlarmSample.SET))
     
     // Decreasing without passing HighOn does not deactivate
-    scalaComp.update(Set(inputsMPs(inputsMPs.keys.head).asInstanceOf[InOut[Long]].updateValue(Some(40L))))
+    scalaComp.update(List(inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(40L))))
     assert(checkAlarmActivation(scalaComp,AlarmSample.SET))
     
     // Below HighOff deactivate the alarm
-    scalaComp.update(Set(inputsMPs(inputsMPs.keys.head).asInstanceOf[InOut[Long]].updateValue(Some(10L))))
+    scalaComp.update(List(inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(10L))))
     assert(checkAlarmActivation(scalaComp,AlarmSample.CLEARED))
     
     // Below LowOff but not passing LowOn does not activate
-    scalaComp.update(Set(inputsMPs(inputsMPs.keys.head).asInstanceOf[InOut[Long]].updateValue(Some(-15L))))
+    scalaComp.update(List(inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(-15L))))
     assert(checkAlarmActivation(scalaComp,AlarmSample.CLEARED))
     
     // Passing LowOn activate
-    scalaComp.update(Set(inputsMPs(inputsMPs.keys.head).asInstanceOf[InOut[Long]].updateValue(Some(-30L))))
+    scalaComp.update(List(inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(-30L))))
     assert(checkAlarmActivation(scalaComp,AlarmSample.SET))
     
     // Decreasing more remain activate
-    scalaComp.update(Set(inputsMPs(inputsMPs.keys.head).asInstanceOf[InOut[Long]].updateValue(Some(-40L))))
+    scalaComp.update(List(inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(-40L))))
     assert(checkAlarmActivation(scalaComp,AlarmSample.SET))
     
     // Increasing but not passing LowOff remains active
-    scalaComp.update(Set(inputsMPs(inputsMPs.keys.head).asInstanceOf[InOut[Long]].updateValue(Some(-15L))))
+    scalaComp.update(List(inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(-15L))))
     assert(checkAlarmActivation(scalaComp,AlarmSample.SET))
     
     // Passing LowOff deactivate
-    scalaComp.update(Set(inputsMPs(inputsMPs.keys.head).asInstanceOf[InOut[Long]].updateValue(Some(0L))))
+    scalaComp.update(List(inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(0L))))
     assert(checkAlarmActivation(scalaComp,AlarmSample.CLEARED))
   }
   
@@ -220,44 +221,44 @@ class TestMinMaxThreshold extends FlatSpec {
     javaComp.initialize()
     Thread.sleep(1000)
     // Change the input to trigger the TF
-    val changedMP = inputsMPs(inputsMPs.keys.head).asInstanceOf[InOut[Long]].updateValue(Some(5L))
-    javaComp.update(Set(changedMP))
+    val changedMP = inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(5L))
+    javaComp.update(List(changedMP))
     assert(checkAlarmActivation(javaComp,AlarmSample.CLEARED))
     
     // Activate high
-    javaComp.update(Set(inputsMPs(inputsMPs.keys.head).asInstanceOf[InOut[Long]].updateValue(Some(100L))))
+    javaComp.update(List(inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(100L))))
     assert(checkAlarmActivation(javaComp,AlarmSample.SET))
     
     // Increase does not deactivate the alarm
-    javaComp.update(Set(inputsMPs(inputsMPs.keys.head).asInstanceOf[InOut[Long]].updateValue(Some(150L))))
+    javaComp.update(List(inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(150L))))
     assert(checkAlarmActivation(javaComp,AlarmSample.SET))
     
     // Decreasing without passing HighOn does not deactivate
-    javaComp.update(Set(inputsMPs(inputsMPs.keys.head).asInstanceOf[InOut[Long]].updateValue(Some(40L))))
+    javaComp.update(List(inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(40L))))
     assert(checkAlarmActivation(javaComp,AlarmSample.SET))
     
     // Below HighOff deactivate the alarm
-    javaComp.update(Set(inputsMPs(inputsMPs.keys.head).asInstanceOf[InOut[Long]].updateValue(Some(10L))))
+    javaComp.update(List(inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(10L))))
     assert(checkAlarmActivation(javaComp,AlarmSample.CLEARED))
     
     // Below LowOff but not passing LowOn does not activate
-    javaComp.update(Set(inputsMPs(inputsMPs.keys.head).asInstanceOf[InOut[Long]].updateValue(Some(-15L))))
+    javaComp.update(List(inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(-15L))))
     assert(checkAlarmActivation(javaComp,AlarmSample.CLEARED))
     
     // Passing LowOn activate
-    javaComp.update(Set(inputsMPs(inputsMPs.keys.head).asInstanceOf[InOut[Long]].updateValue(Some(-30L))))
+    javaComp.update(List(inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(-30L))))
     assert(checkAlarmActivation(javaComp,AlarmSample.SET))
     
     // Decreasing more remain activate
-    javaComp.update(Set(inputsMPs(inputsMPs.keys.head).asInstanceOf[InOut[Long]].updateValue(Some(-40L))))
+    javaComp.update(List(inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(-40L))))
     assert(checkAlarmActivation(javaComp,AlarmSample.SET))
     
     // Increasing but not passing LowOff remains active
-    javaComp.update(Set(inputsMPs(inputsMPs.keys.head).asInstanceOf[InOut[Long]].updateValue(Some(-15L))))
+    javaComp.update(List(inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(-15L))))
     assert(checkAlarmActivation(javaComp,AlarmSample.SET))
     
     // Passing LowOff deactivate
-    javaComp.update(Set(inputsMPs(inputsMPs.keys.head).asInstanceOf[InOut[Long]].updateValue(Some(0L))))
+    javaComp.update(List(inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(0L))))
     assert(checkAlarmActivation(javaComp,AlarmSample.CLEARED))
   }
   

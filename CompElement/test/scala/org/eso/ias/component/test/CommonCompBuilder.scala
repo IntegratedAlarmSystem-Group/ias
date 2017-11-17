@@ -7,6 +7,7 @@ import org.eso.ias.plugin.OperationalMode
 import org.eso.ias.prototype.input.Validity
 import org.eso.ias.prototype.input.java.IASTypes
 import org.eso.ias.prototype.input.java.IdentifierType
+import org.eso.ias.prototype.input.java.IASValue
 
 /**
  * A common helper class to build data structures for testing
@@ -22,12 +23,12 @@ class CommonCompBuilder(
     asceId: String,
     outputId: String,
     outputType: IASTypes,
-    inputTypes: List[IASTypes]) {
+    inputTypes: Set[IASTypes]) {
   require(Option[String](dasuId).isDefined)
   require(Option[String](asceId).isDefined)
   require(Option[String](outputId).isDefined)
   require(Option[IASTypes](outputType).isDefined)
-  require(Option[List[IASTypes]](inputTypes).isDefined)
+  require(Option[Set[IASTypes]](inputTypes).isDefined)
 
   // The thread factory used by the setting to async
   // initialize and shutdown the TF objects
@@ -50,19 +51,15 @@ class CommonCompBuilder(
     mpRefreshRate,
     outputType)
 
-  // The Map of inputs
-  val inputsMPs = MutableMap[String,InOut[_]]()
-  
-  // Create the IASIOs in input
-  var i = 0
-  for (hioType <- inputTypes) {
-    val id = new Identifier(("INPUT-HIO-ID#"+i), IdentifierType.IASIO,compID)
-    i = i + 1
-    val hio = InOut(id, mpRefreshRate, hioType)
-    inputsMPs += (hio.id.id-> hio)
-  }
+  // The Map of IASValues for updating the inputs to the ASCE
+  val inputsMPs: Set[InOut[_]]  = inputTypes.zip(1 to inputTypes.size).map( a => {
+     InOut(
+         new Identifier(("INPUT-HIO-ID#"+a._2), IdentifierType.IASIO,compID), 
+         mpRefreshRate, 
+         a._1)
+  })
      
-  val requiredInputIDs: List[String] = inputsMPs.keys.toList
+  val requiredInputIDs: Set[String] = inputsMPs.map(_.id.id)
   
   /**
    * Auxiliary constructor to help instantiating a component
@@ -82,6 +79,6 @@ class CommonCompBuilder(
     outputType: IASTypes,
     numOfInputs: Int,
     hioType: IASTypes) {
-    this(dasuId,asceId,outputId, outputType,List.fill(numOfInputs)(hioType))
+    this(dasuId,asceId,outputId, outputType,List.fill(numOfInputs)(hioType).toSet)
   }
 }

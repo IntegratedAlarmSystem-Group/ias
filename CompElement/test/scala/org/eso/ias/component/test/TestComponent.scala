@@ -17,6 +17,7 @@ import org.eso.ias.prototype.transfer.ScalaTransfer
 import org.eso.ias.prototype.transfer.JavaTransfer
 import org.eso.ias.prototype.input.java.IdentifierType
 import org.eso.ias.plugin.AlarmSample
+import org.eso.ias.prototype.input.java.IASValue
 
 /**
  * Test the basic functionalities of the IAS Component,
@@ -61,7 +62,7 @@ class TestComponent extends FlatSpec {
       OperationalMode.UNKNOWN,
       Validity.Unreliable,
       IASTypes.ALARM)
-  val actualInputs: MutableMap[String, InOut[_]] = MutableMap(mp1.id.id-> mp1,mp2.id.id-> mp2)
+  val actualInputs: Set[InOut[_]] = Set(mp1,mp2)
   
   behavior of "A Component"
   
@@ -82,7 +83,7 @@ class TestComponent extends FlatSpec {
     val comp: ComputingElement[AlarmSample] = new ComputingElement[AlarmSample](
        compId,
        output,
-       requiredInputIDs,
+       actualInputs,
        tfSetting,
        new Properties()) with JavaTransfer[AlarmSample]
     

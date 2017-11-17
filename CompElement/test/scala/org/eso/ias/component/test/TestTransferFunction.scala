@@ -85,7 +85,7 @@ class TestTransferFunction extends FlatSpec {
     val javaComp: ComputingElement[AlarmSample] = new ComputingElement[AlarmSample](
        compID,
        output,
-       requiredInputIDs,
+       inputsMPs.values.toSet,
        javaTFSetting,
        new Properties()) with JavaTransfer[AlarmSample]
     
@@ -98,7 +98,7 @@ class TestTransferFunction extends FlatSpec {
     val scalaComp: ComputingElement[AlarmSample] = new ComputingElement[AlarmSample](
        compID,
        output,
-       requiredInputIDs,
+       inputsMPs.values.toSet,
        scalaTFSetting,
        new Properties()) with ScalaTransfer[AlarmSample]
     
@@ -110,7 +110,7 @@ class TestTransferFunction extends FlatSpec {
     val brokenTFScalaComp: ComputingElement[AlarmSample] = new ComputingElement[AlarmSample](
        compID,
        output,
-       requiredInputIDs,
+       inputsMPs.values.toSet,
        brokenScalaTFSetting,
        new Properties()) with ScalaTransfer[AlarmSample]
   }
@@ -127,11 +127,9 @@ class TestTransferFunction extends FlatSpec {
     assert(component.output.validity==Validity.Unreliable)
     
     val keys=inputsMPs.keys.toList.sorted
-    keys.foreach { key  => {
-      val changedMP = inputsMPs(key).updateValidity(Validity.Reliable)
-      javaComp.update(Set(changedMP))
-      } 
-    }
+    val newChangedMp = inputsMPs.values.map(inout =>  inout.updateValidity(Validity.Reliable))
+    newChangedMp.foreach(i => println("\t Submitting "+i.id.id+" with validity "+i.validity))
+    javaComp.update(newChangedMp.toList)
     javaComp.shutdown()
     assert(component.output.validity==Validity.Reliable)
   }
@@ -140,7 +138,7 @@ class TestTransferFunction extends FlatSpec {
     javaComp.initialize()
     // Change one input to trigger the TF
     val changedMP = inputsMPs(inputsMPs.keys.head).updateValidity(Validity.Reliable)
-    javaComp.update(Set(changedMP))
+    javaComp.update(List(changedMP))
     javaComp.shutdown()
     println(javaComp.output.actualValue.toString())
     val alarm = javaComp.output.actualValue.value.get.asInstanceOf[AlarmSample]
@@ -151,7 +149,7 @@ class TestTransferFunction extends FlatSpec {
     scalaComp.initialize()
     // Change one input to trigger the TF
     val changedMP = inputsMPs(inputsMPs.keys.head).updateValidity(Validity.Reliable)
-    scalaComp.update(Set(changedMP))
+    scalaComp.update(List(changedMP))
     scalaComp.shutdown()
     
     println(scalaComp.output.actualValue.toString())
@@ -164,7 +162,7 @@ class TestTransferFunction extends FlatSpec {
     assert(brokenTFScalaComp.getState()==AsceStates.Healthy)
     // Change one input to trigger the TF
     val changedMP = inputsMPs(inputsMPs.keys.head).updateValidity(Validity.Reliable)
-    brokenTFScalaComp.update(Set(changedMP))
+    brokenTFScalaComp.update(List(changedMP))
     assert(brokenTFScalaComp.getState()==AsceStates.TFBroken)
     brokenTFScalaComp.shutdown()
   }
