@@ -198,12 +198,15 @@ extends {
    * that can be set as parent.
    * 
    * @param theType: the type whose compatibility must be checked
-   * @parm parent Its parent
+   * @param parent Its parent
    */
   def isValidParentType(theType: IdentifierType, parent: Option[Identifier]): Boolean = {
-    parent.fold(theType.parents.length==0)(pId => theType.parents.contains(pId.idType))
-  }
-  
+    (theType, parent) match {
+      case (IdentifierType.IASIO, None) => true // Unknown parent of IASIOs in the ASCE before they arrive
+      case (x, None) => x.parents.length==0
+      case (x, y) => x.parents.contains(y.get.idType)
+    }
+    
   /**
    * Build a string representation of the identifier and its parents
    * formatting each identifier with the passed method
