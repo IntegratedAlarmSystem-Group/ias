@@ -206,6 +206,7 @@ extends {
       case (x, None) => x.parents.length==0
       case (x, y) => x.parents.contains(y.get.idType)
     }
+  }
     
   /**
    * Build a string representation of the identifier and its parents
