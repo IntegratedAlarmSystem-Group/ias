@@ -28,7 +28,7 @@ object JavaConverter {
    * @param hio: the HIO to convert to java IASValue
    * @return The java value version of the passed HIO 
    */
-  def inOutToIASValue[T](io: InOut[_]): IASValueBase = {
+  def inOutToIASValue[T](io: InOut[_]): IASValue[_] = {
     require(Option[InOut[_]](io).isDefined)
     
     val ret = if (io.actualValue.value.isEmpty) {
@@ -36,7 +36,7 @@ object JavaConverter {
     } else {
       IASValue.buildIasValue(io.actualValue.value.get, io.actualValue.timestamp,io.mode,io.id.id,io.id.runningID,io.iasType)
     }
-    ret.asInstanceOf[IASValueBase]
+    ret
   }
   
   /**
