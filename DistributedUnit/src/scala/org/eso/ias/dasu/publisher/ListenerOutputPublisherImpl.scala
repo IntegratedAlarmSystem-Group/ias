@@ -1,0 +1,48 @@
+package org.eso.ias.dasu.publisher
+
+import org.eso.ias.prototype.input.InOut
+import scala.util.Try
+import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.prototype.input.java.IasValueStringSerializer
+import org.eso.ias.prototype.input.JavaConverter
+
+/**
+ * The ListenerOutputPublisherImpl publisher forwards the output 
+ * to the listener as a IASValue or as a String if a string serializer 
+ * is passed in the constructor.
+ * 
+ * The [[InOut]] is converted to a IASValue before being published.
+ * 
+ * @constructor build a new output publisher that forwards IASIOS 
+ *              to the listener
+ * @param listener the listener of events
+ * @param stringSerializer the serializer to convert IASValues to string
+ *                         if None the output is not converted to a string and not
+ *                         sent to [[OutputListener.outputStringifiedEvent]]
+ */
+class ListenerOutputPublisherImpl (
+    val listener: OutputListener,
+    val stringSerializer: Option[IasValueStringSerializer])
+    extends OutputPublisher {
+  require(Option(listener).isDefined,"Invalid listener")
+  
+  def publishValue(iasValue: IASValue[_]): Try[Unit] = Try(listener.outputEvent(iasValue))
+  
+  def publishStringValue(str: Option[String]): Try[Unit] = Try(str.foreach(x => listener.outputStringifiedEvent(x)))
+  
+  /**
+   * Sends the output to the listener the output.
+   * 
+   * @param iaisio the not null IASIO to publish converted as IASValue
+   * @return a try to let the caller aware of errors publishing
+   */
+  def publish(iasio: InOut[_]): Try[Unit] = {
+    assert(Option(iasio).isDefined,"Invalid IASIO to publish")
+    val iasValue = JavaConverter.inOutToIASValue(iasio)
+    val stringifiedIasValue = stringSerializer.map(_.iasValueToString(iasValue))
+    
+    publishValue(iasValue).flatMap(x => publishStringValue(stringifiedIasValue))
+    
+  }
+  
+}
