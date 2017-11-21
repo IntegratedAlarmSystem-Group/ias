@@ -3,15 +3,24 @@ package org.eso.ias.dasu.executorthread
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.lang.Runtime
 import scala.util.control.NonFatal
+import scala.util.Try
 
 /** The scheduled executor for the transfer functions of the DASU. 
  *  
  *  @constructor Builds the scheduled executor
  *  @param dasuID the identifier of the DASU
+ *  @param coreSize the size of the core of the scheduled executor
  *  */
-class ScheduledExecutor(dasuId: String) extends ScheduledThreadPoolExecutor(
-    ScheduledExecutor.getCoreSize(),
-    new DasuThreadFactory(dasuId)) {
+class ScheduledExecutor(dasuId: String, coreSize: Int) 
+extends ScheduledThreadPoolExecutor(coreSize, new DasuThreadFactory(dasuId)) {
+  
+  
+  /**
+   * Build a scheduled executor taking the core size from java properties or using the default
+   */
+  def this(dasuId: String) {
+    this(dasuId,ScheduledExecutor.getCoreSize())
+  }
 }
 
 object ScheduledExecutor {
@@ -19,7 +28,12 @@ object ScheduledExecutor {
   /**
    * The name of the property to set the number of cores in the thread executor
    */
-  val CoreSizePropName = "ias.prototype.dasu.threadpoolcoresize"
+  val CoreSizePropName = "ias.dasu.threadpoolcoresize"
+  
+  /**
+   * The default size of the pool
+   */
+  lazy val CorePoolSizeDefaultValue = Runtime.getRuntime().availableProcessors()/2
   
   /**
    * Get the size of the core from the java property or from
@@ -27,15 +41,10 @@ object ScheduledExecutor {
    */
   def getCoreSize(): Int = {
     // Check if the java property has been set in the environment
-    import scala.sys.SystemProperties
-    val props = new SystemProperties()
-    val coreFromProps: String = props.getOrElse(CoreSizePropName,{Runtime.getRuntime().availableProcessors().toString})
-    try {
-      coreFromProps.toInt
-    } catch {
-       case NonFatal(e) => 
-         println("Malformed property "+CoreSizePropName+": "+coreFromProps)
-         Runtime.getRuntime().availableProcessors()
-    }
+    import java.util.Properties
+    val props = System.getProperties()
+    val coreFromProps = props.getProperty(CoreSizePropName,"")
+    Try(coreFromProps.toInt).getOrElse(CorePoolSizeDefaultValue)
   }
+  
 }
