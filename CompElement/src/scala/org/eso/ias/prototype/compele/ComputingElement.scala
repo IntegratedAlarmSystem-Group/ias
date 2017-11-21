@@ -311,7 +311,11 @@ abstract class ComputingElement[T](
    * @return the new output generated applying the TF to the inputs
    */
   def update(iasValues: Set[IASValue[_]]): (InOut[T], AsceStates.State) = {
-    require(Option(iasValues).isDefined)
+    require(Option(iasValues).isDefined,"Set of inputs not defined")
+    
+    // Ensure that there is at least one input in the set
+    assert(!iasValues.isEmpty,"Cannot update with an empty set of IASIOs")
+ 
     
     // Check if the passed set of IASIOs contains at least one IASIO that is 
     // not accepted by the ASCE
