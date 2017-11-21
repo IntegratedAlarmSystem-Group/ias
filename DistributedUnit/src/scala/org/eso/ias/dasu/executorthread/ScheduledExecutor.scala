@@ -4,8 +4,14 @@ import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.lang.Runtime
 import scala.util.control.NonFatal
 
-/** The scheduled executor for the transfer functions of the DASU. */
-class ScheduledExecutor extends ScheduledThreadPoolExecutor(ScheduledExecutor.getCoreSize()) {
+/** The scheduled executor for the transfer functions of the DASU. 
+ *  
+ *  @constructor Builds the scheduled executor
+ *  @param dasuID the identifier of the DASU
+ *  */
+class ScheduledExecutor(dasuId: String) extends ScheduledThreadPoolExecutor(
+    ScheduledExecutor.getCoreSize(),
+    new DasuThreadFactory(dasuId)) {
 }
 
 object ScheduledExecutor {

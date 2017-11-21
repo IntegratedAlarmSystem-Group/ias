@@ -1,0 +1,14 @@
+[
+	{
+		"id":"Temperature",
+		"shortDesc":"Simulated temperature",
+		"iasType":"DOUBLE",
+		"refreshRate":1000
+	},
+	{
+		"id":"ThresholdAlarm",
+		"shortDesc":"Temperature over the limit",
+		"iasType":"ALARM",
+		"refreshRate":1000
+	}
+]

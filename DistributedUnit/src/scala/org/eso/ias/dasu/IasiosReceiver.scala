@@ -20,11 +20,11 @@ import org.eso.ias.kafkautils.KafkaHelper
  * 
  * The receiver gets all the IASIOs published in the BSDB queues
  * and discards those not required by the DASU.
- * The filtering is based on the ID of the received IASValues: 
+ * The filtering is based on the IDs of the IASValues: 
  * the JSON string is converted in a IASValue then its identifier
- * is checked against the possible inputs and accepted or discarded.
- * This is not the most efficient way as it requires to parse the IASIOs
- * to decide if a value must be rejected.
+ * is checked against the possible inputs and finally accepted or discarded.
+ * This is not the most efficient way as it requires to parse JSON strings
+ * to decide if a value must be accepted or rejected.
  * 
  * IasiosReceiver objects store the IASValue received in the last time interval
  * in a map so that the last received values, override the oldest ones.
