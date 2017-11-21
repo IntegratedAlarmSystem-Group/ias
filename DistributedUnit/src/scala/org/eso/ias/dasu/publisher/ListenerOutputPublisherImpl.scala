@@ -33,12 +33,11 @@ class ListenerOutputPublisherImpl (
   /**
    * Sends the output to the listener the output.
    * 
-   * @param iaisio the not null IASIO to publish converted as IASValue
+   * @param iasValue the not null value to publish converted as IASValue
    * @return a try to let the caller aware of errors publishing
    */
-  override def publish(iasio: InOut[_]): Try[Unit] = {
-    assert(Option(iasio).isDefined,"Invalid IASIO to publish")
-    val iasValue = JavaConverter.inOutToIASValue(iasio)
+  override def publish(iasValue: IASValue[_]): Try[Unit] = {
+    assert(Option(iasValue).isDefined,"Invalid IASIO to publish")
     val stringifiedIasValue = stringSerializer.map(_.iasValueToString(iasValue))
     
     publishValue(iasValue).flatMap(x => publishStringValue(stringifiedIasValue))

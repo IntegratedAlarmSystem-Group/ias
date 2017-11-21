@@ -1,6 +1,6 @@
 package org.eso.ias.dasu
 
-import org.eso.ias.prototype.input.InOut
+import org.eso.ias.prototype.input.java.IASValue
 
 /** A listener of inputs like the DASU */
 trait InputsListener {
@@ -9,5 +9,5 @@ trait InputsListener {
    *  
    *  @param iasios the inputs received
    */
-  def inputsReceived(iasios: Set[InOut[_]]);
+  def inputsReceived(iasios: Set[IASValue[_]]);
 }

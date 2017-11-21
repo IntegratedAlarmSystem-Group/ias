@@ -19,6 +19,8 @@ import org.eso.ias.prototype.compele.AsceStates
 import org.eso.ias.prototype.input.InOut
 import org.eso.ias.kafkautils.SimpleStringProducer
 import org.eso.ias.dasu.publisher.OutputPublisher
+import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.prototype.input.JavaConverter
 
 /**
  * The Distributed Alarm System Unit or DASU
@@ -37,7 +39,7 @@ class Dasu(
   require(Option(outputPublisher).isDefined,"Invalid output publisher")
   
   /** The logger */
-  private val logger = IASLogger.getLogger(this.getClass);
+  private val logger = IASLogger.getLogger(this.getClass)
   
   /** The identifier of the DASU
    *  
@@ -115,21 +117,30 @@ class Dasu(
    * @param iasios the IASIOs received from the BDSB in the last time interval
    * @return the IASIO to send back to the BSDB
    */
-  def propagateIasios(iasios: Set[InOut[_]]): Option[InOut[_]] = {
+  def propagateIasios(iasios: Set[IASValue[_]]): Option[IASValue[_]] = {
       
-      def updateOneAsce(asceId: String, iasios: Set[InOut[_]]): Option[InOut[_]] = {
+      // Updates one ASCE i.e. runs its TF passing the inputs
+      // Return the output of the ASCE
+      def updateOneAsce(asceId: String, iasios: Set[IASValue[_]]): Option[IASValue[_]] = {
         val requiredInputs = dasuTopology.inputsOfAsce(asceId)
-        val inputs = iasios.filter( p => requiredInputs.contains(p.id.id))
-        asces.get(asceId).map(x => x.update(inputs)._1)
+        assert(requiredInputs.isDefined,"No inputs required by "+asceId)
+        println("\tASCE required inputs "+requiredInputs.get.mkString(", "))
+        println("\tAvailable inputs "+iasios.mkString(", "))
+        val inputs: Set[IASValue[_]] = iasios.filter( p => requiredInputs.get.contains(p.id))
+        println("\tAccepted inputs "+inputs.mkString(", "))
+        val inOutOpt = asces.get(asceId).map(x => x.update(inputs)._1)
+        inOutOpt.map(JavaConverter.inOutToIASValue(_))
       }
       
-      def updateOneLevel(asces: Set[String], iasios: Set[InOut[_]]): Set[InOut[_]] = {
-        asces.foldLeft(iasios){ (s: Set[InOut[_]], id: String) => s + updateOneAsce(id, iasios).get}
+      // Run the TFs of all the ASCE of one level
+      // Returns the inputs plus all the outputs produced by the ACSEs
+      def updateOneLevel(asces: Set[String], iasios: Set[IASValue[_]]): Set[IASValue[_]] = {
+        asces.foldLeft(iasios){ (s: Set[IASValue[_]], id: String) => s + updateOneAsce(id, iasios).get}
       }
       
-      val outputs = dasuTopology.levels.foldLeft(iasios){ (s: Set[InOut[_]], ids: Set[String]) => s ++ updateOneLevel(ids, iasios) }
+      val outputs = dasuTopology.levels.foldLeft(iasios){ (s: Set[IASValue[_]], ids: Set[String]) => s ++ updateOneLevel(ids, iasios) }
       
-      outputs.find(_.id.id==dasuOutputId)
+      outputs.find(_.id==dasuOutputId)
   }
   
   /**
@@ -138,9 +149,10 @@ class Dasu(
    * @param iasios the inputs received
    * @see InputsListener
    */
-  override def inputsReceived(iasios: Set[InOut[_]]) {
+  override def inputsReceived(iasios: Set[IASValue[_]]) {
+    println("Updating with "+iasios.size+" inputs")
     val before = System.currentTimeMillis()
-    val newOutput = propagateIasios(iasios: Set[InOut[_]])
+    val newOutput = propagateIasios(iasios)
     val executionTime = System.currentTimeMillis()-before
     
     newOutput.foreach( output => outputPublisher.publish(output) )

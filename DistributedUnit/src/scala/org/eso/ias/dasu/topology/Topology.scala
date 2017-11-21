@@ -1,6 +1,7 @@
 package org.eso.ias.dasu.topology
 
 import org.eso.ias.cdb.pojos.AsceDao
+import org.ias.prototype.logging.IASLogger
 
 /** The topology to forward IASIOs to ASCEs.
  * 
@@ -37,6 +38,9 @@ class Topology(
   require(Option(asces).isDefined)
   require(Option(dasuId).isDefined)
   require(Option(dasuOutputId).isDefined)
+  
+  /** The logger */
+  private val logger = IASLogger.getLogger(this.getClass)
   
   /** The output produced by all ASCEs 
    *  
