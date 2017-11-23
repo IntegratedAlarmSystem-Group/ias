@@ -104,12 +104,12 @@ class TimeScheduler(dasuDao: DasuDao) {
   /** The time interval to publish statistics in msecs */ 
   val statsTimeInterval = Dasu.StatisticsTimeInterval*1000
   if (statsTimeInterval>0) {
-    logger.info("Will generate stats for DASU [{}] every {} minutes",dasuId, statsTimeInterval)
+    logger.info(f"Will generate stats for DASU [$dasuId%s] every $statsTimeInterval minutes")
   } else {
     logger.info("Will NOT generate stats for DASU [{}]",dasuId)
   }
   
-  logger.error("DASU [{}]: automatic refresh of output every ms {} ", dasuId,minRefreshRate-margin)
+  logger.error(f"DASU [$dasuId%s]: automatic refresh of output every ms ${minRefreshRate-margin} ")
   
   /**
    * Calculate the aprox mean of last executions.
