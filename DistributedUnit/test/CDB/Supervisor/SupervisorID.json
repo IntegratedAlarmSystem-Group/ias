@@ -2,5 +2,5 @@
 	"logLevel":"INFO",
 	"id":"SupervisorID",
 	"hostName":"almaias.eso.org",
-	"dasusIDs":["DasuWithOneASCE"]
+	"dasusIDs":["DasuWithOneASCE","DasuWith5ASCEs"]
 }
