@@ -93,7 +93,7 @@ class TimeScheduler(dasuDao: DasuDao) {
   
   
   /** The number of iterations executed so far */
-  private var iterationsRun = 0
+  private var iterationsRun = 0L
   
   /** The average execution time */
   private var avgExecutionTime = 0.0
@@ -123,10 +123,10 @@ class TimeScheduler(dasuDao: DasuDao) {
    * @param sample the new sample
    * @param the number of iterations
    */
-  private def mean(actMean: Double, sample: Int, iter: Int): Double = { actMean +(sample-actMean)/iter }
+  private def mean(actMean: Double, sample: Int, iter: Long): Double = { actMean +(sample-actMean)/iter }
   
   /**
-   * Calculate the time interval to update the output
+   * Calculate the time interval in msec to update the output.
    * 
    * @param lastExecTime the execution time (msec) taken to update the output in the last run
    * @return the time (msec) to start calculating the output
@@ -134,7 +134,11 @@ class TimeScheduler(dasuDao: DasuDao) {
   def getNextRefreshTime(lastExecTime: Int): Int = {
     require(Option(lastExecTime).isDefined && lastExecTime>0,"Invalid execution time")
     
-    iterationsRun+=1
+    iterationsRun =  iterationsRun match {
+      case Long.MaxValue => avgExecutionTime=0.0; 0L
+      case n => n+1
+    }
+    
     avgExecutionTime=mean(avgExecutionTime,lastExecTime,iterationsRun)
     
     // publish a log of stats if the time interval elapsed
