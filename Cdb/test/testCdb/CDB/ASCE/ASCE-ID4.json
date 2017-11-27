@@ -6,6 +6,6 @@
 		{"name":"Prop2-Name","value":"The value of P2"},
 		{"name":"Prop3-Name","value":"The value of P3"}],
 	"id":"ASCE-ID4",
-	"transferFunctionID":"org.eso.ias.tf.AnotherFunction",
+	"transferFunctionID":"org.eso.ias.tf.TestMinMax",
 	"inputIDs":["iasioID-2","iasioID-3","iasioID-4"]
 }

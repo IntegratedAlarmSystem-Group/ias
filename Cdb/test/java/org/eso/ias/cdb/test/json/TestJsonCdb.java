@@ -476,6 +476,24 @@ public class TestJsonCdb {
 		Set<String> asceIds = asces.stream().map(d -> d.getId()).collect(Collectors.toSet());
 		assertEquals(3, asceIds.size());
 		asces.forEach( a -> assertTrue(a.getId().equals("ASCE-ID2") || a.getId().equals("ASCE-ID3") || a.getId().equals("ASCE-ID4")));
+		
+		// Check the transfer functions
+		for (AsceDao asce: asces) {
+			String asceId = asce.getId();
+			TransferFunctionDao tfDao = asce.getTransferFunction();
+			assertNotNull(tfDao);
+			String className = tfDao.getClassName();
+			assertNotNull(className);
+			TFLanguageDao language = tfDao.getImplLang();
+			assertNotNull(language);
+			if (asceId.equals("ASCE-ID2") || asceId.equals("ASCE-ID3")) {
+				assertEquals("org.eso.ias.tf.AnotherFunction",className);
+				assertEquals(TFLanguageDao.SCALA, language);
+			} else if (asceId.equals("ASCE-ID4")) {
+				assertEquals("org.eso.ias.tf.TestMinMax",className);
+				assertEquals(TFLanguageDao.JAVA, language);
+			}
+		}
 	}
 	
 	/**

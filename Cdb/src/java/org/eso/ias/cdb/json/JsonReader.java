@@ -448,16 +448,18 @@ public class JsonReader implements CdbReader {
 		optDasu.ifPresent(d -> asce.setDasu(d));
 		
 		// Fix the transfer function
-		Optional<TransferFunctionDao> tfOpt = Optional.ofNullable(holder.transferFunctions.get(jAsceDao.getTransferFunctionID()));
+		String tfID= jAsceDao.getTransferFunctionID();
+		Optional<TransferFunctionDao> tfOpt = Optional.ofNullable(holder.transferFunctions.get(tfID));
 		if (!tfOpt.isPresent()) {
-			Optional<TransferFunctionDao> jTF = getTransferFunction(jAsceDao.getTransferFunctionID());
+			Optional<TransferFunctionDao> jTF = getTransferFunction(tfID);
 			if (jTF.isPresent()) {
 				asce.setTransferFunction(jTF.get());
 				holder.transferFunctions.put(jAsceDao.getTransferFunctionID(), jTF.get());
 			} else {
 				throw new IasCdbException("Inconsistent ASCE record: TF ["+jAsceDao.getTransferFunctionID()+"] not found in CDB");
 			}
-			
+		} else {
+			asce.setTransferFunction(tfOpt.get());
 		}
 	}
 	
@@ -493,7 +495,7 @@ public class JsonReader implements CdbReader {
 			throw new IllegalArgumentException("Invalid empty ID");
 		}
 		Optional<DasuDao> dasu = getDasu(id);
-		Set<AsceDao> ret = dasu.orElseThrow(() -> new IasCdbException("DASU ["+id+"] not dound")).getAsces();
+		Set<AsceDao> ret = dasu.orElseThrow(() -> new IasCdbException("DASU ["+id+"] not found")).getAsces();
 		return (ret==null)? new HashSet<>() : ret;
 	}
 	
