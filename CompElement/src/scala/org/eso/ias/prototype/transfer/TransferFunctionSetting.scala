@@ -5,6 +5,8 @@ import java.util.concurrent.ThreadFactory
 import scala.util.Try
 import org.ias.prototype.logging.IASLogger
 import scala.sys.SystemProperties
+import scala.util.Success
+import scala.util.Failure
 
 /**
  * Implemented types of transfer functions
@@ -83,9 +85,9 @@ class TransferFunctionSetting(
       })
       shutdownThread.start()
       // Wait for the termination
-      shutdownThread.join(1500)
+      shutdownThread.join(10000)
       if (shutdownThread.isAlive()) {
-        logger.warn("User provided shutdown did not terminate in 1.5 sec.") 
+        logger.warn("User provided shutdown did not terminate in 10 secs.") 
       }
     }
     isShutDown=true
@@ -107,7 +109,7 @@ class TransferFunctionSetting(
   def initialize(
       asceId: String,
       asceRunningId: String,
-      props: Properties) = {
+      props: Properties): Boolean = {
     require(Option(asceId).isDefined,"Invalid ASCE id")
     require(Option(asceRunningId).isDefined,"Invalid ASCE running id")
     require(Option(props).isDefined)
@@ -116,41 +118,44 @@ class TransferFunctionSetting(
     logger.info("Initializing the TF {}",className)
     
     // Load the class
-    val tfExecutorClass: Option[Class[_]] = loadClass(className)
-    logger.debug("Class {} loaded",className)
-     
-    // Go through the constructors and instantiate the executor
-    //
-    // We can suppose that the executor has more the one c'tor
-    // as it is a common practice for testing
-    if (tfExecutorClass.isDefined) {
-      this.synchronized{
-        transferExecutor = instantiateExecutor(tfExecutorClass,asceId,asceRunningId,props)
+    val tfExecutorClass: Try[Class[_]] = Try((this.getClass.getClassLoader().loadClass(className)))
+    transferExecutor = tfExecutorClass match {
+      case Failure(e) => logger.error("Error loading {}",className,e); None
+      case Success(tec) => this.synchronized {
+        instantiateExecutor(tec, asceId, asceRunningId, props)
       }
     }
     
-    // Init the executor if it has been correctly instantiated 
-    if (transferExecutor.isDefined) {
-      logger.debug("Constructor of {} instantiated",className)
-      threadFactory.newThread(new Runnable() {
-        def run() {
-          logger.debug("Async initializing the executor of {}",className)
-          initialized=initExecutor(transferExecutor)
-          logger.info("Async initialization of the executor of {} terminated",className)
+    transferExecutor.foreach( te => {
+      logger.debug("TF of type {} instantiated", className)
+      val thread = threadFactory.newThread(new Runnable() {
+          def run() {
+            logger.debug("Async initializing the executor of {}", className)
+            initialized = initExecutor(te)
+          }
+        })
+        thread.start()
+        thread.join(60000)
+        if (thread.isAlive()) {
+          logger.warn("User provided shutdown did not terminate in 60 secs.") 
+        } else {
+         logger.info("Async initialization of the executor of {} terminated", className) 
         }
-      }).start()
-    }
+    })
+    transferExecutor.isDefined
+    
   }
 
   /**
    * Initialize the passed executor
    * 
    * @param executor: The executor to initialize
+   * @return true if the TE has been correctly initialized, false otherwise
    */
-  private[this] def initExecutor(executor: Option[TransferExecutor]): Boolean = {
-    require(executor.isDefined)
+  private[this] def initExecutor(executor: TransferExecutor): Boolean = {
+    require(Option(executor).isDefined)
     try {
-      executor.get.initialize()
+      executor.initialize()
       true
     } catch {
         case e: Exception => 
@@ -173,65 +178,46 @@ class TransferFunctionSetting(
           logger.warn("Exception caught shutting down {}",className,e)
       }
   }
-  
-  /**
-   * Dynamically load the class
-   * 
-   * @param name: the name of the class to load
-   */
-  private[this] def loadClass(name: String): Option[Class[_]] = {
-    try {
-        Option[Class[_]](this.getClass.getClassLoader().loadClass(name))
-      } catch {
-        case e: Throwable => 
-          logger.error("Exception caught loading {}",e)
-          None
-      }
-  }
-  
+
   /**
    * Instantiate the executor of the passed class
-   * 
+   *
    * @param executorClass: the class of the executor to instantiate
    * @param asceId: the ID of the ASCE
    * @param asceRunningId: the runningID of the ASCE
    * @param props: the user defined properties
-   * @return The instantiated object
-   * 
+   * @return The instantiated executor
+   *
    */
   private[this] def instantiateExecutor(
-      executorClass: Option[Class[_]],
-      asceId: String,
-      asceRunningId: String,
-      props: Properties): Option[TransferExecutor] = {
-    assert(executorClass.isDefined)
-    require(Option(asceId).isDefined)
-    require(Option(asceRunningId).isDefined)
+    executorClass: Class[_],
+    asceId: String,
+    asceRunningId: String,
+    props: Properties): Option[TransferExecutor] = {
+    assert(Option(executorClass).isDefined)
+    require(Option(asceId).isDefined && asceId.size>0)
+    require(Option(asceRunningId).isDefined && asceRunningId.size>0)
     require(Option(props).isDefined)
-    
-    // Go through the constructors and instantiate the executor
-    //
-    // We can suppose that the executor has more the one c'tor
-    // as it is a common practice for testing
-    try {
-      val ctors = executorClass.get.getConstructors()
-      var ctorFound=false
-      var ret: Option[TransferExecutor] = None
-      for {ctor <-ctors 
-          paramTypes = ctor.getParameterTypes()
-          if paramTypes.size==3} {        
-            ctorFound=(paramTypes(0)==asceId.getClass && paramTypes(1)==asceRunningId.getClass && paramTypes(2)==props.getClass)
-            if (ctorFound) {
-              val args = Array[AnyRef](asceId,asceRunningId,props)
-              ret = Some(ctor.newInstance(args:_*).asInstanceOf[TransferExecutor])
-            }
-          }
-      ret
-    } catch {
-        case e: Throwable => 
-          logger.error("Exception caught instantiating the executor",e)
-          None
-      }
+
+    // Get the constructor with 3 parameters
+    val ctors = executorClass.getConstructors().filter(c => c.getParameterTypes().size == 3)
+    // Get the constructor
+    val ctor = ctors.find(c =>
+      c.getParameterTypes()(0) == asceId.getClass &&
+        c.getParameterTypes()(1) == asceRunningId.getClass &&
+        c.getParameterTypes()(2) == props.getClass)
+
+    val instance = Try(ctor.map(c => {
+      // The arguments to pass to the constructor
+      val args = Array[AnyRef](asceId, asceRunningId, props)
+      // Invoke the constructor to build the TransferExecutor
+      c.newInstance(args: _*).asInstanceOf[TransferExecutor]
+    }))
+
+    instance match {
+      case Success(te) => te
+      case Failure(x) => logger.error("Error building the transfer function", x); None
+    }
   }
 }
 
