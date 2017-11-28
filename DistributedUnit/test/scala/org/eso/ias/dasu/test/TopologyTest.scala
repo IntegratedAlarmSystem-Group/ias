@@ -91,9 +91,9 @@ class TopologyTest extends FlatSpec {
   
   it must "correctly build the levels" in {
     assert(topology.levels.size==topology.maxDepth)
-    assert(topology.levels(0)==Set[String]("ASCE6-ID"))
+    assert(topology.levels(2)==Set[String]("ASCE6-ID"))
     assert(topology.levels(1)==Set[String]("ASCE4-ID","ASCE5-ID"))
-    assert(topology.levels(2)==Set[String]("ASCE1-ID","ASCE2-ID","ASCE3-ID"))
+    assert(topology.levels(0)==Set[String]("ASCE1-ID","ASCE2-ID","ASCE3-ID"))
   }
   
   it must "correctly return the ID of the ASCE that produces the output" in {
