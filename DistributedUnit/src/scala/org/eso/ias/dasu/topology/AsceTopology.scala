@@ -55,4 +55,14 @@ class AsceTopology(
   def isRequiredInput(iasioId: String) = {
     inputs.contains(iasioId)
   }
+  
+  override def toString = {
+    val ret = new StringBuilder("ASCE [")
+    ret.append(identifier)
+    ret.append("]:  output=")
+    ret.append(output)
+    ret.append(", inputs=")
+    ret.append(inputs.toList.sorted.mkString(", "))
+    ret.toString()
+  }
 }
