@@ -18,6 +18,7 @@ import org.eso.ias.prototype.transfer.JavaTransfer
 import org.eso.ias.prototype.transfer.ScalaTransfer
 import org.eso.ias.prototype.input.java.IdentifierType
 import org.eso.ias.plugin.AlarmSample
+import org.ias.prototype.logging.IASLogger
 
 class TestTransferFunction extends FlatSpec {
   
@@ -115,6 +116,9 @@ class TestTransferFunction extends FlatSpec {
        new Properties()) with ScalaTransfer[AlarmSample]
   }
   
+  /** The logger */
+  private val logger = IASLogger.getLogger(this.getClass)
+  
   behavior of "The Component transfer function"
   
   /**
@@ -128,42 +132,70 @@ class TestTransferFunction extends FlatSpec {
     
     val keys=inputsMPs.keys.toList.sorted
     val newChangedMp = inputsMPs.values.map(inout =>  inout.updateValidity(Validity.Reliable))
-    newChangedMp.foreach(i => println("\t Submitting "+i.id.id+" with validity "+i.validity))
+    newChangedMp.foreach(i => logger.info("Submitting {} with validity {}",i.id.id,i.validity.toString()))
     javaComp.update(newChangedMp.toList)
     javaComp.shutdown()
     assert(component.output.validity==Validity.Reliable)
   }
   
   it must "run the java TF executor" in new CompBuilder {
-    javaComp.initialize()
-    // Change one input to trigger the TF
-    val changedMP = inputsMPs(inputsMPs.keys.head).updateValidity(Validity.Reliable)
-    javaComp.update(List(changedMP))
+    assert(javaComp.initialize()==AsceStates.InputsUndefined)
+    // Send all the possible inputs to check if the state changes and the ASCE runs the TF
+    inputsMPs.keys.foreach( k => {
+      val inout = inputsMPs(k)
+      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.update(Option(AlarmSample.SET), Validity.Reliable)
+        else inout.update(Option(-5L), Validity.Reliable)
+      inputsMPs(k)=newIasio
+    })
+    
+    // Send the inputs
+    val result = javaComp.update(inputsMPs.values.toList)
+    assert(result._2==AsceStates.Healthy)
+    
     javaComp.shutdown()
-    println(javaComp.output.actualValue.toString())
+    logger.info("Actual value = {}",javaComp.output.actualValue.toString())
     val alarm = javaComp.output.actualValue.value.get.asInstanceOf[AlarmSample]
     assert(alarm==AlarmSample.SET)
   }
   
   it must "run the scala TF executor" in new CompBuilder {
-    scalaComp.initialize()
-    // Change one input to trigger the TF
-    val changedMP = inputsMPs(inputsMPs.keys.head).updateValidity(Validity.Reliable)
-    scalaComp.update(List(changedMP))
+    assert(scalaComp.initialize()==AsceStates.InputsUndefined)
+    
+    // Send all the possible inputs to check if the state changes and the ASCE runs the TF
+    inputsMPs.keys.foreach( k => {
+      val inout = inputsMPs(k)
+      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.update(Option(AlarmSample.SET), Validity.Reliable)
+        else inout.update(Option(-5L), Validity.Reliable)
+      inputsMPs(k)=newIasio
+    })
+    
+    // Send the inputs
+    val result = scalaComp.update(inputsMPs.values.toList)
+    assert(result._2==AsceStates.Healthy)
+    
     scalaComp.shutdown()
     
-    println(scalaComp.output.actualValue.toString())
+    logger.info("Actual value = {}",scalaComp.output.actualValue.toString())
     val alarm = scalaComp.output.actualValue.value.get.asInstanceOf[AlarmSample]
     assert(alarm==AlarmSample.SET)
   }
   
   it must "detect a broken scala TF executor" in new CompBuilder {
     brokenTFScalaComp.initialize()
-    assert(brokenTFScalaComp.getState()==AsceStates.Healthy)
-    // Change one input to trigger the TF
-    val changedMP = inputsMPs(inputsMPs.keys.head).updateValidity(Validity.Reliable)
-    brokenTFScalaComp.update(List(changedMP))
+    assert(brokenTFScalaComp.getState()==AsceStates.InputsUndefined)
+    // Send all the possible inputs to check if the state changes and the ASCE runs the TF
+    inputsMPs.keys.foreach( k => {
+      val inout = inputsMPs(k)
+      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.update(Option(AlarmSample.SET), Validity.Reliable)
+        else inout.update(Option(-5L), Validity.Reliable)
+      inputsMPs(k)=newIasio
+    })
+    
+    // Send the inputs and get the result
+    val result = brokenTFScalaComp.update(inputsMPs.values.toList)
+    assert(result._2==AsceStates.TFBroken)
     assert(brokenTFScalaComp.getState()==AsceStates.TFBroken)
+    
     brokenTFScalaComp.shutdown()
   }
   

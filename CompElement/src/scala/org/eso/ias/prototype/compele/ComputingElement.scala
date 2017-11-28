@@ -133,7 +133,9 @@ abstract class ComputingElement[T](
   @volatile protected[compele] var state: ComputingElementState =  new ComputingElementState
   
   /**
-   * The inputs that produced the output
+   * The inputs that produced the output.
+   * This map is initially populated with IASIOs not yet initialized
+   * that have a empty value.
    * 
    * When the DASU sends the last received IASIOs, this map is
    * updated with the new values and a new output is produced
@@ -272,15 +274,14 @@ abstract class ComputingElement[T](
    * 
    * @return The state of the ASCE after the initialization
    */
-  def initialize(): ComputingElementState = {
+  def initialize(): AsceStates.State = {
     assert(state.actualState==AsceStates.Initializing)
-    try {
-      tfSetting.initialize(id.id, id.runningID, props)
-      state = ComputingElementState.transition(state, new Initialized())
-    } catch { 
-      case e: Exception => state = ComputingElementState.transition(state, new Broken())
+    state = if (tfSetting.initialize(id.id, id.runningID, props)) {
+      ComputingElementState.transition(state, new Initialized())
+    } else { 
+      ComputingElementState.transition(state, new Broken())
     }
-    state
+    state.actualState
   }
   
   /**
@@ -305,17 +306,16 @@ abstract class ComputingElement[T](
   
   /**
    * The DASU sent a new set of inputs: they replace the old inputs and
-   * trigger the execution of the TF to create a new output 
+   * trigger the execution of the TF to create a new output.
+   * If some of the inputs of the ASCE is not yet initialized, it has a null/empty
+   * value and the ASCE cannot run the TF neither produce the output.
    * 
    * @param iasValues the new inputs received from the DASU
-   * @return the new output generated applying the TF to the inputs
+   * @return the new output generated applying the TF to the inputs and the new state of the ASCE
+   *         The otput is None if at least one of the inputs has not yet been initialized
    */
-  def update(iasValues: Set[IASValue[_]]): (InOut[T], AsceStates.State) = {
+  def update(iasValues: Set[IASValue[_]]): (Option[InOut[T]], AsceStates.State) = {
     require(Option(iasValues).isDefined,"Set of inputs not defined")
-    
-    // Ensure that there is at least one input in the set
-    assert(!iasValues.isEmpty,"Cannot update with an empty set of IASIOs")
- 
     
     // Check if the passed set of IASIOs contains at least one IASIO that is 
     // not accepted by the ASCE
@@ -325,9 +325,16 @@ abstract class ComputingElement[T](
         
     // Does the passed set contains 2 IASIOs with the same ID?
     assert(!iasValues.exists(i => iasValues.count(_.id==i.id)>1),"There cant 2 IASIOs with the same ID in the passed set of inputs!")
+    
+    logger.debug("New set of inputs for {}: [{}]",id.id,iasValues.map(v => v.id).mkString(", "))
         
     // Updates the map with the passed IASIOs
     iasValues.foreach(iasio => inputs.get(iasio.id).map( _.update(iasio)).foreach(i => inputs.put(i.id.id,i)))
+    
+    // If all the inputs have been initialized, change the state to be able to run the TF
+    if (state.actualState==AsceStates.InputsUndefined && inputs.values.forall(i => i.value.isDefined)) {
+      state = ComputingElementState.transition(state, new InputsInitialized())
+    }
     
     val (newOut, newState) = if (state.canRunTF()) {
       lastOutputUpdateTStamp=System.currentTimeMillis()
@@ -338,7 +345,8 @@ abstract class ComputingElement[T](
     state=newState
     // Always update the validity
     _output=updateTheValidity(inputs.values, newOut)
-    (output,state.actualState)
+    
+    (output.value.map( o => output),state.actualState)
   }
   
   /**
@@ -348,7 +356,7 @@ abstract class ComputingElement[T](
    * 
    * @param iasios  the new inputs
    */
-  def update(iasios: List[InOut[_]]): (InOut[T], AsceStates.State) = {
+  def update(iasios: List[InOut[_]]): (Option[InOut[T]], AsceStates.State) = {
     update(iasios.map(iasio => JavaConverter.inOutToIASValue(iasio)).toSet)
   }
   
@@ -375,6 +383,10 @@ object ComputingElement {
     require(Option(asceDao).isDefined,"Invalid ASCE configuration")
     require(Option(properties).isDefined,"Invalid properties")
     
+    val logger = IASLogger.getLogger(ComputingElement.getClass)
+    
+    logger.info("ComputingElement factory setting up parameters for {}",asceDao.getId)
+    
     // Build the ID of the ASCE
     val asceId = new Identifier(asceDao.getId,IdentifierType.ASCE,Option(dasuId))
     
@@ -384,9 +396,11 @@ object ComputingElement {
         outputId,
         asceDao.getOutput.getRefreshRate,
         IASTypes.fromIasioDaoType(asceDao.getOutput.getIasType))
+    logger.info("ComputingElement {} produces output {}",asceDao.getId,outputId.id)
         
     val inputsIasioDaos: Set[IasioDao] = JavaConverters.collectionAsScalaIterable(asceDao.getInputs).toSet
     val reqInputs: Set[String] = inputsIasioDaos.map(_.getId)
+    logger.info("ComputingElement {} inputs are [{}]",asceDao.getId,reqInputs.mkString(", "))
     
     val tfLanguage = if (asceDao.getTransferFunction.getImplLang==TFLanguageDao.JAVA) TransferFunctionLanguage.java else TransferFunctionLanguage.scala
     val tfSettings = new TransferFunctionSetting(
