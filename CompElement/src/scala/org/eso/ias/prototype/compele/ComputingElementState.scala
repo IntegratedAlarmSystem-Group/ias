@@ -15,6 +15,7 @@ object AsceStates extends Enumeration {
   type State = Value
   
   val Initializing = Value("Initializing") // Initializing: start state
+  val InputsUndefined = Value("InputsUndefined") // Some of the inputs have a null value and the TF cannot be run
   val Healthy = Value("Running") // Everything OK
   val TFBroken = Value("TF broken") // The transfer function is broken
   val TFSlow = Value("TF slow") // The transfer function is slow
@@ -25,7 +26,7 @@ object AsceStates extends Enumeration {
    * When the state of the ASCE is in
    * this list, the transfer function is not executed
    */
-  val inhibitorStates = Set(Initializing, TFBroken, ShuttingDown, Closed)
+  val inhibitorStates = Set(Initializing, InputsUndefined, TFBroken, ShuttingDown, Closed)
 }
 
 /**
@@ -34,10 +35,18 @@ object AsceStates extends Enumeration {
 trait ASCEStateEvent
 
 /**
- *  The ASCE has been initialized i.e. at least
+ *  The ASCE has been initialized:
  *  the TF class has been loaded and intialized
+ *  and the ASCE is ready to produce the output
  */
 case class Initialized() extends ASCEStateEvent
+
+/**
+ *  All the possible inputs of the ASCE have been initialized:
+ *  the TF can run and the ASCE can produce the putput
+ */
+case class InputsInitialized() extends ASCEStateEvent
+
 
 /**
  * The user provided TF is broken 
@@ -105,8 +114,14 @@ object ComputingElementState {
     asceState.actualState match {
       case AsceStates.Initializing =>
         e match {
-          case Initialized() => new ComputingElementState(AsceStates.Healthy)
+          case Initialized() => new ComputingElementState(AsceStates.InputsUndefined)
           case Broken() => new ComputingElementState(AsceStates.TFBroken)
+          case Shutdown()  => new ComputingElementState(AsceStates.ShuttingDown)
+          case _ => throw new InvalidAsceStateTransitionException(asceState.actualState,e)
+        }
+      case AsceStates.InputsUndefined => 
+        e match {
+          case InputsInitialized() => new ComputingElementState(AsceStates.Healthy)
           case Shutdown()  => new ComputingElementState(AsceStates.ShuttingDown)
           case _ => throw new InvalidAsceStateTransitionException(asceState.actualState,e)
         }
