@@ -15,5 +15,6 @@
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-kafka-tools.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-converter.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-tools.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ias-plugin.jar"/>
 	<classpathentry kind="output" path="lib"/>
 </classpath>
