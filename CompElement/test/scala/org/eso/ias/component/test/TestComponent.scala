@@ -18,6 +18,7 @@ import org.eso.ias.prototype.transfer.JavaTransfer
 import org.eso.ias.prototype.input.java.IdentifierType
 import org.eso.ias.plugin.AlarmSample
 import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.prototype.compele.AsceStates
 
 /**
  * Test the basic functionalities of the IAS Component,
@@ -66,7 +67,7 @@ class TestComponent extends FlatSpec {
   
   behavior of "A Component"
   
-  it must "be correctly initialized" in {
+  it must "catch an error instantiating a wrong TF class" in {
     val output = InOut[AlarmSample](
       None,
       outId,
@@ -76,6 +77,7 @@ class TestComponent extends FlatSpec {
       IASTypes.ALARM)
     
     val threadaFactory = new CompEleThreadFactory("Test-runninId")
+    // A transfer function that does not exist
     val tfSetting =new TransferFunctionSetting(
         "org.eso.ias.prototype.transfer.TransferExecutorImpl",
         TransferFunctionLanguage.java,
@@ -89,6 +91,46 @@ class TestComponent extends FlatSpec {
     
     assert(comp.id==compId)
     assert(comp.output.id==outId)
+    
+    // A newly created ASCE haa a state equal to Initializing
+    assert(comp.getState()==AsceStates.Initializing)
+    
+    // After an error in the initialization, the state changes to TFBroken
+    comp.initialize()
+    assert(comp.getState()==AsceStates.TFBroken)
+  }
+  
+  it must "correctly instantiate the TF" in {
+    val output = InOut[AlarmSample](
+      None,
+      outId,
+      mpRefreshRate,
+      OperationalMode.UNKNOWN,
+      Validity.Unreliable,
+      IASTypes.ALARM)
+    
+    val threadaFactory = new CompEleThreadFactory("Test-runninId")
+    // A transfer function that does not exist
+    val tfSetting =new TransferFunctionSetting(
+        "org.eso.ias.prototype.transfer.impls.MultiplicityTF",
+        TransferFunctionLanguage.java,
+        threadaFactory)
+    val comp: ComputingElement[AlarmSample] = new ComputingElement[AlarmSample](
+       compId,
+       output,
+       actualInputs,
+       tfSetting,
+       new Properties()) with JavaTransfer[AlarmSample]
+    
+    assert(comp.id==compId)
+    assert(comp.output.id==outId)
+    
+    // A newly created ASCE haa a state equal to Initializing
+    assert(comp.getState()==AsceStates.Initializing)
+    
+    // After a correct initialization, the state changes to InputsUndefined
+    comp.initialize()
+    assert(comp.getState()==AsceStates.InputsUndefined)
   }
   
 }
