@@ -62,7 +62,7 @@ class Dasu7ASCEsTest extends FlatSpec with OutputListener {
   val cdbFiles = new CdbJsonFiles(cdbParentPath)
   val cdbReader: CdbReader = new JsonReader(cdbFiles)
   
-  val dasuId = "DasuWith5ASCEs"
+  val dasuId = "DasuWith7ASCEs"
   
   val stringSerializer = Option(new IasValueJsonSerializer)
   val outputPublisher: OutputPublisher = new ListenerOutputPublisherImpl(this,stringSerializer)
@@ -100,14 +100,12 @@ class Dasu7ASCEsTest extends FlatSpec with OutputListener {
   val iasValuesReceived = new ListBuffer[IASValue[_]]
   
   val lock = new ReentrantLock()
-  val eventProcessed = lock.newCondition()
   val eventArrived = lock.newCondition()
   
   /** Notifies about a new output produced by the DASU */
   override def outputEvent(output: IASValue[_]) {
     logger.info("Event received from DASU: ",output.id)
     lock.lock()
-    eventProcessed.await()
     eventsReceived.incrementAndGet();
     logger.info("Output received [{}]", output.id)
     iasValuesReceived.append(output)
@@ -137,7 +135,6 @@ class Dasu7ASCEsTest extends FlatSpec with OutputListener {
     logger.debug("Waiting for an event from the DASU")
     lock.lock()
     eventArrived.await(10, TimeUnit.SECONDS)
-    eventProcessed.signal()
     lock.unlock()
     logger.debug("Reception of new event from DASU notifed")
   }
@@ -147,7 +144,8 @@ class Dasu7ASCEsTest extends FlatSpec with OutputListener {
   it must "produce outputs when receives sets of inputs" in {
     logger.info("Submitting a set with only one temp {} in nominal state",inputTemperature1ID.id)
     val inputs: Set[IASValue[_]] = Set(buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,0))
-    // Submit the inputs
+    // Submit the inputs but we do not expect any output before
+    // the DASU receives all the inputs
     inputsListener.inputsReceived(inputs)
     println("Set submitted")
     waitForNewEvent()
@@ -159,6 +157,19 @@ class Dasu7ASCEsTest extends FlatSpec with OutputListener {
     println("Another empty set submitted")
     waitForNewEvent()
     assert(iasValuesReceived.size==0)
+    
+    // Submit the other inputs and then we expect the DASU to
+    // produce the output
+    val setOfInputs: Set[IASValue[_]] = {
+      val v1=buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,5)
+      val v2=buildValue(inputTemperature2ID.id, inputTemperature2ID.fullRunningID,6)
+      val v3=buildValue(inputTemperature3ID.id, inputTemperature3ID.fullRunningID,7)
+      val v4=buildValue(inputTemperature4ID.id, inputTemperature4ID.fullRunningID,8)
+      Set(v1,v2,v3,v4)
+    }
+    inputsListener.inputsReceived(setOfInputs)
+    waitForNewEvent()
+    assert(iasValuesReceived.size==1)
     
   }
   

@@ -1,5 +1,5 @@
 {
-	"dasuID":"DasuWith5ASCEs",
+	"dasuID":"DasuWith7ASCEs",
 	"outputID":"TooManyHighTempAlarm",
 	"props":[{"name":"org.eso.ias.tf.mutliplicity.threshold","value":"3"}],
 	"id":"ASCE-AlarmsThreshold",
