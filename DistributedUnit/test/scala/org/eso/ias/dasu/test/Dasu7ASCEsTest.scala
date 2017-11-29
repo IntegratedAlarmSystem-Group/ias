@@ -170,6 +170,9 @@ class Dasu7ASCEsTest extends FlatSpec with OutputListener {
     inputsListener.inputsReceived(setOfInputs)
     waitForNewEvent()
     assert(iasValuesReceived.size==1)
+    val outputProducedByDasu = iasValuesReceived.last
+    assert(outputProducedByDasu.valueType==IASTypes.ALARM)
+    assert(outputProducedByDasu.value.asInstanceOf[AlarmSample]== AlarmSample.CLEARED)
     
     //Submit a new set of inputs to trigger the alarm in the output of the DASU
     val setOfInputs2: Set[IASValue[_]] = {
@@ -182,7 +185,9 @@ class Dasu7ASCEsTest extends FlatSpec with OutputListener {
     inputsListener.inputsReceived(setOfInputs2)
     waitForNewEvent()
     assert(iasValuesReceived.size==2)
-    
+    val outputProducedByDasu2 = iasValuesReceived.last
+    assert(outputProducedByDasu2.valueType==IASTypes.ALARM)
+    assert(outputProducedByDasu2.value.asInstanceOf[AlarmSample]== AlarmSample.SET)
   }
   
 }
