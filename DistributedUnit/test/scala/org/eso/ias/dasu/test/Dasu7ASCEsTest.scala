@@ -52,7 +52,7 @@ import org.eso.ias.plugin.AlarmSample
  * The configurations of DASU, ASCE, TF and IASIOs are all stored 
  * in the CDB folder.
  */
-class Dasu5ASCEsTest extends FlatSpec with OutputListener {
+class Dasu7ASCEsTest extends FlatSpec with OutputListener {
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass);
