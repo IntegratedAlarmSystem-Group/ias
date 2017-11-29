@@ -27,7 +27,7 @@ import scala.util.Try
  * - m = min refresh rate (minRefreshRate) between all possible inputs
  *       and the output of the ASCE
  * - e = average execution time of the TF
- * - a - a margin to anticipate the cgeneration of the output to reduce
+ * - a - a margin to anticipate the generation of the output to reduce
  *       the risk to be too late
  * the next refresh must be scheduled in m-e-a msecs.
  * 
@@ -89,7 +89,7 @@ class TimeScheduler(dasuDao: DasuDao) {
   val minRefreshRate = outputRefreshTime.min(minRefreshRateOfInputs).max(minAllowedRefreshRate)
   
   /** The refresh rate taking into account the  margin */
-  val normalizedRefreshRate = minRefreshRate-margin.max(minAllowedRefreshRate)
+  val normalizedRefreshRate = (minRefreshRate-margin).max(minAllowedRefreshRate)
   
   
   /** The number of iterations executed so far */
@@ -123,7 +123,7 @@ class TimeScheduler(dasuDao: DasuDao) {
    * @param sample the new sample
    * @param the number of iterations
    */
-  private def mean(actMean: Double, sample: Int, iter: Long): Double = { actMean +(sample-actMean)/iter }
+  private def mean(actMean: Double, sample: Long, iter: Long): Double = { actMean +(sample-actMean)/iter }
   
   /**
    * Calculate the time interval in msec to update the output.
@@ -131,7 +131,7 @@ class TimeScheduler(dasuDao: DasuDao) {
    * @param lastExecTime the execution time (msec) taken to update the output in the last run
    * @return the time (msec) to start calculating the output
    */
-  def getNextRefreshTime(lastExecTime: Int): Int = {
+  def getNextRefreshTime(lastExecTime: Long): Int = {
     require(Option(lastExecTime).isDefined && lastExecTime>0,"Invalid execution time")
     
     iterationsRun =  iterationsRun match {
