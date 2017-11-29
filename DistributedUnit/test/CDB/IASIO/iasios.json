@@ -59,6 +59,18 @@
             "iasType":"ALARM",
             "refreshRate":1000
     },
+    {
+            "id":"ASCE-AvgTemp",
+            "shortDesc":"Average of the 4 temps",
+            "iasType":"DOUBLE",
+            "refreshRate":750
+    },
+    {
+            "id":"ASCE-AvgTempAlarm",
+            "shortDesc":"Average temperatures alarm",
+            "iasType":"ALARM",
+            "refreshRate":1000
+    },
 	{
             "id":"TooManyHighTempAlarm",
             "shortDesc":"Too many active alarms",

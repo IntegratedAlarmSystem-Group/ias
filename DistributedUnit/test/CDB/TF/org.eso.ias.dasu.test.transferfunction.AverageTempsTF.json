@@ -1,0 +1,5 @@
+{
+	"className" : "org.eso.ias.dasu.test.transferfunction.AverageTempsTF",
+	"implLang" : "SCALA"
+}
+

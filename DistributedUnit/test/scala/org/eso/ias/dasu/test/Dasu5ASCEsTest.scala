@@ -28,15 +28,26 @@ import org.eso.ias.prototype.input.java.IasAlarm
 import org.eso.ias.plugin.AlarmSample
 
 /**
- * Test the DASU with 5 ASCEs (in 2 levels).
+ * Test the DASU with 7 ASCEs (in 3 levels).
+ * There i sno special meaning between connections as this is a test 
+ * to check if the flow of inputs and outputs is hendled correctly.
+ * However this also shows a way to reuse transfer functions (multiplicity
+ * and threshold are part of the ComputingElemnt) plus a user defined one,
+ * the AverageTempsTF.
+ * In a real case we probably do not want to have so many ASCEs but
+ * it is perfectly allowed.
  * 
- * At th ebottom level, there are 4 ASCEs that get a temperature and 
- * check it against the MinMahThreshold.
- * All 4 alarms poroduced by those ASCEs are the input of the ASCE_AlarmsThreshold,
- * in the next and last level, that applies the multiplicity with a threshold of 3
+ * The logs of the test show the topology of the ASCEs of this test.
+ * At the bottom level, there is one ASCE, that takes all the for temperatures and returns their
+ * average values. This is just to provide an example of a synthetic parameter.
+ * At the middle there are 5 ASCEs that get a temperature and 
+ * check it against the a threshold to generate alarms. One of such temperatures
+ * is the average produced at level .
+ * All 5 alarms produced by the ASCEs are sent in input to the last ASCE_AlarmsThreshold,
+ * in the second and last level: this ASCE applies the multiplicity with a threshold of 3
  * 
- * The DASU takes in punt 4 temperatures and produces an alarm if at least
- * three of them are out of the nominal range.
+ * The DASU takes in input 4 temperatures, calculates their average and produces an alarm
+ * if at least three of them are out of the nominal range.
  * 
  * The configurations of DASU, ASCE, TF and IASIOs are all stored 
  * in the CDB folder.
