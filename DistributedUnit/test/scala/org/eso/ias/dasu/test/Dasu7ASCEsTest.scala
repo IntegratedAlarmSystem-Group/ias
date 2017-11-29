@@ -99,18 +99,11 @@ class Dasu7ASCEsTest extends FlatSpec with OutputListener {
   
   val iasValuesReceived = new ListBuffer[IASValue[_]]
   
-  val lock = new ReentrantLock()
-  val eventArrived = lock.newCondition()
-  
   /** Notifies about a new output produced by the DASU */
   override def outputEvent(output: IASValue[_]) {
     logger.info("Event received from DASU: ",output.id)
-    lock.lock()
     eventsReceived.incrementAndGet();
-    logger.info("Output received [{}]", output.id)
     iasValuesReceived.append(output)
-    eventArrived.signal()
-    lock.unlock()
   }
   
   /** Notifies about a new output produced by the DASU 
@@ -130,15 +123,6 @@ class Dasu7ASCEsTest extends FlatSpec with OutputListener {
         fullRunningID)
   }
   
-  /** Wait for a new event (output) produced by the DASU */
-  def waitForNewEvent() {
-    logger.debug("Waiting for an event from the DASU")
-    lock.lock()
-    eventArrived.await(10, TimeUnit.SECONDS)
-    lock.unlock()
-    logger.debug("Reception of new event from DASU notifed")
-  }
-  
   behavior of "The DASU"
   
   it must "produce outputs when receives sets of inputs" in {
@@ -148,14 +132,12 @@ class Dasu7ASCEsTest extends FlatSpec with OutputListener {
     // the DASU receives all the inputs
     inputsListener.inputsReceived(inputs)
     println("Set submitted")
-    waitForNewEvent()
     assert(iasValuesReceived.size==0)
     
     // Submit a set with Temperature 1 in a non nominal state
     logger.info("Submitting a set with only one temp {} in NON nominal state",inputTemperature1ID.id)
     inputsListener.inputsReceived(Set(buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,100)))
     println("Another empty set submitted")
-    waitForNewEvent()
     assert(iasValuesReceived.size==0)
     
     // Submit the other inputs and then we expect the DASU to
@@ -168,7 +150,6 @@ class Dasu7ASCEsTest extends FlatSpec with OutputListener {
       Set(v1,v2,v3,v4)
     }
     inputsListener.inputsReceived(setOfInputs)
-    waitForNewEvent()
     assert(iasValuesReceived.size==1)
     val outputProducedByDasu = iasValuesReceived.last
     assert(outputProducedByDasu.valueType==IASTypes.ALARM)
@@ -183,7 +164,6 @@ class Dasu7ASCEsTest extends FlatSpec with OutputListener {
       Set(v1,v2,v3,v4)
     }
     inputsListener.inputsReceived(setOfInputs2)
-    waitForNewEvent()
     assert(iasValuesReceived.size==2)
     val outputProducedByDasu2 = iasValuesReceived.last
     assert(outputProducedByDasu2.valueType==IASTypes.ALARM)
