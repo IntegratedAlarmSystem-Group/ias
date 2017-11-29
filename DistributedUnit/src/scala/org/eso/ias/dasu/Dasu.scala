@@ -24,6 +24,7 @@ import org.eso.ias.prototype.input.JavaConverter
 import org.eso.ias.dasu.executorthread.ScheduledExecutor
 import scala.util.Try
 import java.util.concurrent.atomic.AtomicLong
+import java.util.Properties
 
 /**
  * The Distributed Alarm System Unit or DASU.
@@ -98,8 +99,11 @@ class Dasu(
   
   // Instantiate the ASCEs
   val asces: Map[String, ComputingElement[_]] = {
-    val addToMapFunc = (m: Map[String, ComputingElement[_]], asce: AsceDao) => 
-      m + (asce.getId -> ComputingElement(asce,dasuIdentifier,System.getProperties()))
+    val addToMapFunc = (m: Map[String, ComputingElement[_]], asce: AsceDao) => {
+      val propsForAsce = new Properties()
+      asce.getProps.forEach(p => propsForAsce.setProperty(p.getName, p.getValue))
+      m + (asce.getId -> ComputingElement(asce,dasuIdentifier,propsForAsce))
+    }
     asceDaos.foldLeft(Map[String,ComputingElement[_]]())(addToMapFunc)
   }
   logger.info("DASU [{}] ASCEs loaded: [{}]",id, asces.keys.mkString(", "))
@@ -162,10 +166,11 @@ class Dasu(
       
       // Updates one ASCE i.e. runs its TF passing the inputs
       // Return the output of the ASCE
-      def updateOneAsce(asceId: String, iasios: Set[IASValue[_]]): Option[IASValue[_]] = {
+      def updateOneAsce(asceId: String, asceInputs: Set[IASValue[_]]): Option[IASValue[_]] = {
+        
         val requiredInputs = dasuTopology.inputsOfAsce(asceId)
         assert(requiredInputs.isDefined,"No inputs required by "+asceId)
-        val inputs: Set[IASValue[_]] = iasios.filter( p => requiredInputs.get.contains(p.id))
+        val inputs: Set[IASValue[_]] = asceInputs.filter( p => requiredInputs.get.contains(p.id))
         // Get the ASCE with the given ID 
         val asceOpt = asces.get(asceId)
         assert(asceOpt.isDefined,"ASCE "+asceId+" NOT found!")
@@ -176,15 +181,16 @@ class Dasu(
       
       // Run the TFs of all the ASCEs in one level
       // Returns the inputs plus all the outputs produced by the ACSEs
-      def updateOneLevel(asces: Set[String], iasios: Set[IASValue[_]]): Set[IASValue[_]] = {
-        asces.foldLeft(iasios) ( 
+      def updateOneLevel(asces: Set[String], levelInputs: Set[IASValue[_]]): Set[IASValue[_]] = {
+        
+        asces.foldLeft(levelInputs) ( 
           (s: Set[IASValue[_]], id: String ) => {
-            val output = updateOneAsce(id, iasios) 
+            val output = updateOneAsce(id, levelInputs) 
             if (output.isDefined) s+output.get
             else s})
       }
       
-      val outputs = dasuTopology.levels.foldLeft(iasios){ (s: Set[IASValue[_]], ids: Set[String]) => s ++ updateOneLevel(ids, iasios) }
+      val outputs = dasuTopology.levels.foldLeft(iasios){ (s: Set[IASValue[_]], ids: Set[String]) => s ++ updateOneLevel(ids, s) }
       
       // TODO: update the validity
       outputs.find(_.id==dasuOutputId)
