@@ -171,6 +171,18 @@ class Dasu7ASCEsTest extends FlatSpec with OutputListener {
     waitForNewEvent()
     assert(iasValuesReceived.size==1)
     
+    //Submit a new set of inputs to trigger the alarm in the output of the DASU
+    val setOfInputs2: Set[IASValue[_]] = {
+      val v1=buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,100)
+      val v2=buildValue(inputTemperature2ID.id, inputTemperature2ID.fullRunningID,100)
+      val v3=buildValue(inputTemperature3ID.id, inputTemperature3ID.fullRunningID,100)
+      val v4=buildValue(inputTemperature4ID.id, inputTemperature4ID.fullRunningID,8)
+      Set(v1,v2,v3,v4)
+    }
+    inputsListener.inputsReceived(setOfInputs2)
+    waitForNewEvent()
+    assert(iasValuesReceived.size==2)
+    
   }
   
 }
