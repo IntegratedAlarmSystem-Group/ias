@@ -1,10 +1,10 @@
 package org.eso.ias.websocketutils;
 
-import java.net.URI;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CountDownLatch;
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
-import org.eclipse.jetty.websocket.client.WebSocketClient;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
+import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eso.ias.kafkautils.SimpleStringConsumer;
 import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener;
@@ -12,67 +12,83 @@ import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class WebSocketSender {
+@WebSocket(maxTextMessageSize = 64 * 1024)
+public class WebSocketSender implements KafkaConsumerListener {
 	
 	/**
-	 * Web socket client
+	 * Signal to prevent the web socket from closing before a set of pending operations are performed
 	 */
-	WebSocketClient client = new WebSocketClient();
-	
-	/**
-	 * Topic defined to send messages to the IAS Core to the IAS Web Server
-	 */
-	String KafkaTopic = "test";
-	
-	/**
-	 * Custom socket  
-	 */
-	SimpleCustomSocket socket = new SimpleCustomSocket(this.KafkaTopic);
-	
-	/**
-	 * Web Server URI
-	 */
-	String webserverUri = "ws://localhost:8765/core/";
-	
-	URI uri;
-	
-	ClientUpgradeRequest request = new ClientUpgradeRequest();
-	
-	/**
-	 * WebSocket session required to send messages to the Web server
-	 */
-	Session session;
-	
+	private final CountDownLatch closeLatch = new CountDownLatch(1);
 	/**
 	 * The logger
 	 */
 	private static final Logger logger = LoggerFactory.getLogger(WebSocketSender.class);
-
-	
 	/**
-	 * Initializes the WebSocket
+	 * WebSocket session required to send messages to the Web server
 	 */
-	public void run() {
-		try {
-			this.uri = new URI(this.webserverUri);
-			this.client.start();
-		    this.client.connect(this.socket, this.uri, this.request);
-		    logger.info("Connecting to : " + uri.toString());
-		    while(this.socket.session==null) {
-		    	TimeUnit.MILLISECONDS.sleep(100);
-		    }
-		}
-		catch( Exception e) {
-			logger.error("Error on WebSocket connection");
-		}
+	public Session session;
+	/**
+	 * IAS Core Kafka Consumer to get messages from the Core
+	 */
+	SimpleStringConsumer consumer;
+	
+
+	public WebSocketSender(String kafkaTopic) {
+		this.consumer = new SimpleStringConsumer(SimpleStringProducer.DEFAULT_BOOTSTRAP_SERVERS, kafkaTopic, this);
 	}
 	
+	/**
+	 * Operations performed on connection close
+	 * 
+	 * @param statusCode
+	 * @param reason
+	 */
+	@OnWebSocketClose
+	public void onClose(int statusCode, String reason) {
+	   logger.info("WebSocket connection closed:" + statusCode + ", " + reason);
+	   this.session = null;
+	   this.closeLatch.countDown(); // trigger latch
+	   this.consumer.tearDown();
+	   System.exit(0); // TODO: Add WebServer reconnection 
+	}
+
+	/**
+	 * Operations performed on connection start
+	 * 
+	 * @param session 
+	 */
+	@OnWebSocketConnect
+	public void onConnect(Session session) {
+	   logger.info("WebSocket got connect: %s%n",session);
+	   this.session = session;
+	   try {
+	       this.consumer.setUp();		
+	       this.consumer.startGettingEvents(StartPosition.END);
+		   this.session.getRemote().sendStringByFuture( "{\"text\": \""+ "Hola" +"\"}" );
+	       logger.info("Starting to listen events\n");
+	   }
+	   catch (Throwable t) {
+	       logger.error("WebSocket couldn't send the message",t);
+	   }
+	}
 	
-	public static void main(String[] args) throws Exception {
-		
-		WebSocketSender ws = new WebSocketSender();
-		ws.run();
-		
+	/**
+	 * This method could get notifications for messages
+	 * published before depending on the log and offset
+	 * retention times. Therefore it discards the strings
+	 * not published by this test
+	 * @throws Exception 
+	 *  
+	 * @see org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener#stringEventReceived(java.lang.String)
+	 */
+	@Override
+	public synchronized void stringEventReceived(String event) {
+		try {
+			this.session.getRemote().sendStringByFuture( "{\"text\": \""+ event +"\"}" );
+		}
+		catch (Exception e){
+			logger.error("Cannot send messages to the Web Server", e);
+		}	
 	}
 
 }
