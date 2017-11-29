@@ -317,7 +317,7 @@ class Topology(
    */
   def printTree(node: Node):String = {
     val ret = new StringBuilder(node.toString())
-    ret.append("isLinear=")
+    ret.append(" isLinear=")
     ret.append(isLinearTree(node))
     val childStrs: List[String] = node.neighbors.map(n => printTree(n))
     if (!childStrs.isEmpty) {
