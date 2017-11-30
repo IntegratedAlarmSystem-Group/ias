@@ -44,6 +44,7 @@ import org.eso.ias.prototype.input.java.IASValue
      */
     def sendInputs(iasios: Set[IASValue[_]]) = {
       require(Option(iasios).isDefined)
-      this.listener.foreach(l => l.inputsReceived(iasios))
+      val iasiosToSend = iasios.filter(iasio => acceptedInputs.contains(iasio.id))
+      this.listener.foreach(l => l.inputsReceived(iasiosToSend))
     }
   }
