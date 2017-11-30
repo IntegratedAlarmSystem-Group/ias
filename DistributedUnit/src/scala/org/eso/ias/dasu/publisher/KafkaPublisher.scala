@@ -27,6 +27,8 @@ extends OutputPublisher {
   require(Option(kafkaProducer).isDefined)
   require(Option(props).isDefined)
   
+  
+  
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
   
@@ -74,7 +76,7 @@ object KafkaPublisher {
    * @param props additional set of properties
    */
   def apply(dasuId: String, kafkaTopic: String, kafkaServers: String, props: Properties): KafkaPublisher = {
-    val kafkaStringProducer = new SimpleStringProducer(kafkaServers,kafkaTopic,dasuId)
+    val kafkaStringProducer = new SimpleStringProducer(kafkaServers,kafkaTopic,dasuId+"Producer")
     new KafkaPublisher(dasuId,kafkaStringProducer,props)
   }
   
