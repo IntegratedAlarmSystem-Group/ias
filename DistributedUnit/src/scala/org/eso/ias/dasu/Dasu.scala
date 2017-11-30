@@ -31,6 +31,9 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.TimeUnit
 import org.eso.ias.dasu.subscriber.InputsListener
+import org.eso.ias.dasu.subscriber.InputSubscriber
+import scala.util.Failure
+import scala.util.Success
 
 /**
  * The Distributed Alarm System Unit or DASU.
@@ -41,6 +44,9 @@ import org.eso.ias.dasu.subscriber.InputsListener
  * At a first glance it seems enough to check the validity of the last set of inputs to assign 
  * the validity of the output.
  * 
+ * The DASU is initialized in the constructor but to let it start processing events,
+ * the start() method must be called.
+ * 
  * The DASU must update the output even if it does not receive any input
  * to refresh the output and send it to the BSDB.
  * After generating the output, the DASU schedules a timer task for refreshing
@@ -49,6 +55,9 @@ import org.eso.ias.dasu.subscriber.InputsListener
  * The calculation of the point in time to refresh the output is delegated to [[TimeScheduler]].
  * The refresh of the output when no inputs arrive must be explicitly activate
  * and can be suspended resumed at any time.
+ * 
+ * The automatic refresh of the output when no new input arrive is not active by default
+ * but need to be activated by calling enableAutoRefreshOfOutput()
  * 
  * Newly received inputs are immediately processed unless they arrive so often
  * to risk to have the CPU running at 100%.
@@ -67,15 +76,18 @@ import org.eso.ias.dasu.subscriber.InputsListener
  * @constructor create a DASU with the given identifier
  * @param id is the identifier of the DASU
  * @param outputPublisher the publisher to send the output
+ * @param inputSubscriber the subscriber getting events to be processed 
  * @param cdbReader the CDB reader to get the configuration of the DASU from the CDB
 
  */
 class Dasu(
     val id: String,
     private val outputPublisher: OutputPublisher,
+    private val inputSubscriber: InputSubscriber,
     cdbReader: CdbReader)
     extends InputsListener with Runnable {
   require(Option(outputPublisher).isDefined,"Invalid output publisher")
+  require(Option(inputSubscriber).isDefined,"Invalid input subscriber")
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
@@ -171,7 +183,19 @@ class Dasu(
   /** The task that refreshes the output */
   val refreshTask: AtomicReference[ScheduledFuture[_]] = new AtomicReference[ScheduledFuture[_]]()
   
-  outputPublisher.initialize()
+  logger.debug("DASU [{}] initializing the publisher", id)
+  val outputPublisherInitialized = outputPublisher.initialize()
+  outputPublisherInitialized match {
+    case Failure(f) => logger.error("DASU [{}] failed to initialize the publisher: NO output will be produced", id,f)
+    case Success(s) => logger.info("DASU [{}] publisher successfully initialized",id)
+  }
+  logger.debug("DASU [{}] initializing the subscriber", id)
+  
+  val inputSubscriberInitialized = inputSubscriber.initialize()
+  inputSubscriberInitialized match {
+    case Failure(f) => logger.error("DASU [{}] failed to initialize the subscriber: NO input will be processed", id,f)
+    case Success(s) => logger.info("DASU [{}] subscriber successfully initialized",id)
+  }
   logger.info("DASU [{}] built", id)
   
   /**
@@ -256,6 +280,20 @@ class Dasu(
       newOutput.foreach( output => {
         outputPublisher.publish(output) 
         logger.debug("DASU [{}]: output published",id)})
+    }
+  }
+  
+  /** 
+   *  Start getting events from the inputs subscriber
+   *  to produce the output
+   */
+  def start() = {
+    if (inputSubscriberInitialized.isSuccess) {
+      val started = inputSubscriber.start(this, dasuTopology.dasuInputs)
+      started match {
+        case Failure(f) => logger.error("DASU [{}] failed to start getting events: NO input will be processed", id,f)
+        case Success(s) => logger.info("DASU [{}] now ready to process events",id)
+      }
     }
   }
   
