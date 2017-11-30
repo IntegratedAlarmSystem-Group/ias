@@ -32,6 +32,8 @@ extends KafkaConsumerListener with InputSubscriber {
   require(Option(topicName).isDefined && !dasuId.isEmpty())
   require(Option(props).isDefined)
   
+  props.setProperty("group.id", dasuId)
+  
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
   
