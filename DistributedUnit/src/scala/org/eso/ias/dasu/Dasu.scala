@@ -107,6 +107,7 @@ class Dasu(
     require(dasuOptional.isPresent(),"DASU ["+id+"] configuration not found on cdb")
     dasuOptional.get
   }
+  // TODO: release CDB resources
   logger.debug("DASU [{}] configuration red from CDB",id)
   
   /**
@@ -196,6 +197,8 @@ class Dasu(
     case Failure(f) => logger.error("DASU [{}] failed to initialize the subscriber: NO input will be processed", id,f)
     case Success(s) => logger.info("DASU [{}] subscriber successfully initialized",id)
   }
+  
+  addsShutDownHook()
   logger.info("DASU [{}] built", id)
   
   /**
@@ -344,6 +347,22 @@ class Dasu(
           id,
           timeScheduler.normalizedRefreshRate.toString())
     }
+  }
+  
+  /** Adds a shutdown hook to cleanup resources before exiting */
+  def addsShutDownHook() = {
+      Runtime.getRuntime().addShutdownHook(new Thread() {
+        override def run() = {
+          logger.info("DASU [{}]: releasing resources", id)
+          logger.debug("DASU [{}]: stopping the auto-refresh of the output", id)
+          Try(disableAutoRefreshOfOutput())
+          logger.debug("DASU [{}]: releasing the subscriber", id)
+          Try(inputSubscriber.cleanUp())
+          logger.debug("DASU [{}]: releasing the publisher", id)
+          Try(outputPublisher.cleanUp())
+          logger.info("DASU [{}]: shutted down",id)
+        }
+    })
   }
 }
 
