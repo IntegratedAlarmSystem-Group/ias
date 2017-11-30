@@ -127,7 +127,7 @@ public class ConsumerProducerTest implements KafkaConsumerListener {
 	@Before
 	public void setUp() throws Exception {
 		logger.info("Initializing...");
-		consumer = new SimpleStringConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, topicName, this);
+		consumer = new SimpleStringConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, topicName, "PubSub-Test",this);
 		consumer.setUp();
 		producer = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, topicName, "Consumer-ID");
 		producer.setUp();
