@@ -122,17 +122,21 @@ public class SimpleStringProducer {
 	 * Servers and ID passed in the constructor override those in the passed properties
 	 */
 	public void setUp(Properties props) {
+		logger.info("Producer [{}] is building the kafka producer",clientID);
 		Objects.requireNonNull(props);
 		mergeDefaultProps(props);
 		producer = new KafkaProducer<>(props);
+		logger.info("Kafka producer [{}] built",clientID);
 	}
 	
 	/**
 	 * Closes the producer
 	 */
 	public void tearDown() {
+		logger.info("Closing kafka producer [{}]",clientID);
 		closed=true;
 		producer.close();
+		logger.info("Kafka producer [{}] closed",clientID);
 	}
 	
 	/**
@@ -198,7 +202,7 @@ public class SimpleStringProducer {
 		}
 		
 		if (closed) {
-			logger.info("Producer close: [{}] not sent",value);
+			logger.info("Producer [{}] close: [{}] not sent",clientID,value);
 			return;
 		}
 		
@@ -207,7 +211,8 @@ public class SimpleStringProducer {
 		if (sync) {
 			try {
 				RecordMetadata recordMData = future.get(timeout,unit);
-				logger.info("[{}] published on partition {} of topic {} with an offset of {}",
+				logger.info("[{}] published [{}] on partition {} of topic {} with an offset of {}",
+						clientID,
 						value,
 						recordMData.partition(),
 						recordMData.topic(),
