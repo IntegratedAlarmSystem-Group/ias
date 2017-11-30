@@ -67,6 +67,7 @@ class KafkaDasuWithKafka extends FlatSpec with KafkaConsumerListener {
   val eventsListener = new SimpleStringConsumer(
       KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
       KafkaHelper.IASIOs_TOPIC_NAME,
+      "DasuWithKafka-TestSub",
       this)
   logger.debug("initializing the event listener")
   val props = new Properties()

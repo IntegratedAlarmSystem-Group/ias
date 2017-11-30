@@ -56,6 +56,7 @@ class IasiosReceiver(
   val consumer: SimpleStringConsumer = new SimpleStringConsumer(
       KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
       KafkaHelper.IASIOs_TOPIC_NAME,
+      dasuIdentifier.id,
       this)
   val props: Properties = System.getProperties()
   props.put("group.id",dasuIdentifier.id)

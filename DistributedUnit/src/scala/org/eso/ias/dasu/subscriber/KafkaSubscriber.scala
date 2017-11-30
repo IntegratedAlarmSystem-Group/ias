@@ -41,7 +41,7 @@ extends KafkaConsumerListener with InputSubscriber {
   private val jsonSerializer = new IasValueJsonSerializer()
   
   /** The Kafka consumer */
-  private val kafkaConsumer = new SimpleStringConsumer(serversList, topicName, this)
+  private val kafkaConsumer = new SimpleStringConsumer(serversList, topicName, dasuId, this)
   
   /** The listener of events */
   private var listener: Option[InputsListener] = None
