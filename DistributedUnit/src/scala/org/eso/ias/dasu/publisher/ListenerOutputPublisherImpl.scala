@@ -5,6 +5,7 @@ import scala.util.Try
 import org.eso.ias.prototype.input.java.IASValue
 import org.eso.ias.prototype.input.java.IasValueStringSerializer
 import org.eso.ias.prototype.input.JavaConverter
+import scala.util.Success
 
 /**
  * The ListenerOutputPublisherImpl publisher forwards the output 
@@ -29,6 +30,20 @@ class ListenerOutputPublisherImpl (
   def publishValue(iasValue: IASValue[_]): Try[Unit] = Try(listener.outputEvent(iasValue))
   
   def publishStringValue(str: Option[String]): Try[Unit] = Try(str.foreach(x => listener.outputStringifiedEvent(x)))
+  
+  /**
+   * Initialize the publisher.
+   * 
+   * @see OutputPublisher.initialize()
+   */
+  override def initialize(): Try[Unit] = { new Success(()) }
+  
+  /**
+   * Release all the acquired resources.
+   * 
+   * @see OutputPublisher.cleanUp()
+   */
+  override def cleanUp(): Try[Unit] = { new Success(()) }
   
   /**
    * Sends the output to the listener the output.

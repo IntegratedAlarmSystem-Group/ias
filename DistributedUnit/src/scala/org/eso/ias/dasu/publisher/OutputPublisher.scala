@@ -9,8 +9,28 @@ import org.eso.ias.prototype.input.java.IASValue
  * 
  * The DASU keeps publishing the output even in case of error.
  * 
+ * initialize() must be called before the subscriber is
+ * ready to publish events.
+ * cleanUp() must be called before terminating with the subscriber to let it 
+ * release all the acquired resources.
  */
 trait OutputPublisher {
+  
+  /** 
+   *  Initialize the subscriber.
+   *  
+   *  The subscriber is supposed to acquire the resource and do all
+   *  the initialization to be ready to publish IASValues. 
+   *  
+   *  @return Success or Failure if the initialization went well 
+   *          or encountered a problem  
+   */
+  def initialize(): Try[Unit]
+  
+  /**
+   * Release all the acquired resources.
+   */
+  def cleanUp(): Try[Unit]
   
   /**
    * Publish the output.
