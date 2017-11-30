@@ -5,13 +5,19 @@ import scala.util.Try
 import org.eso.ias.prototype.input.java.IasValueJsonSerializer
 import java.io.Writer
 import org.ias.prototype.logging.IASLogger
+import scala.util.Success
 
 /**
  * The publisher of IASValues produced by the DASU
- * in a JSON format.
+ * in a JSON-like format.
  * 
- * The JSON output is composed of records of IASValues like
- * [ IASV1, IASV2, IASV3,...]
+ * The JSON output is composed of records of IASV-n JSON string of the IASValues like
+ * IASV1
+ * IASV2
+ * IASV3
+ * 
+ * The format of a true JSON file is [ IASV1, IASV2, IASV3,...]
+ * 
  * The ideal solution would be to let Jackson2 write the array of IASValues
  * passing one item at a time but, browsing the net, it does not seem as easy
  * as I expected.  
@@ -20,9 +26,6 @@ import org.ias.prototype.logging.IASLogger
  */
 class JsonWriterPublisher(val writer: Writer) extends OutputPublisher {
   require(Option(writer).isDefined)
-  
-  /** Flag to know when to write the separator */
-  private[this] var firstRecordWritten = false
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
@@ -35,21 +38,14 @@ class JsonWriterPublisher(val writer: Writer) extends OutputPublisher {
    * 
    * @see OutputPublisher.initialize()
    */
-  override def initialize(): Try[Unit] = {
-    Try(writer.write('['))
-  }
+  override def initialize(): Try[Unit] = Success(())
   
   /**
    * Release all the acquired resources.
    * 
    * @see OutputPublisher.cleanUp()
    */
-  override def cleanUp(): Try[Unit] = { 
-    Try(writer.write(']'))
-   }
-  
-  /** Writes the separator */
-  private def writeSeparator(): Try[Unit] = Try(if (firstRecordWritten)(writer.write(",\n")))
+  override def cleanUp(): Try[Unit] = Success(())
   
   /**
    * Publish the output.
@@ -59,6 +55,9 @@ class JsonWriterPublisher(val writer: Writer) extends OutputPublisher {
    */
   def publish(iasio: IASValue[_]): Try[Unit] = {
     require(Option(iasio).isDefined)
-    writeSeparator().map(x => Try{ writer.write(jsonSerializer.iasValueToString(iasio)); firstRecordWritten=true})
+    Try{ 
+      writer.write(jsonSerializer.iasValueToString(iasio)) 
+      writer.write('\n')
+    }
   }
 }
