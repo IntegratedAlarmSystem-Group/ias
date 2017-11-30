@@ -169,7 +169,8 @@ class Dasu(
   
   /** The task that refreshes the output */
   val refreshTask: AtomicReference[ScheduledFuture[_]] = new AtomicReference[ScheduledFuture[_]]()
-
+  
+  outputPublisher.initialize()
   logger.info("DASU [{}] built", id)
   
   /**
