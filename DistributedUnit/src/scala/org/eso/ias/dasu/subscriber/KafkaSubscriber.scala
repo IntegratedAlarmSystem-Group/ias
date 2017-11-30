@@ -116,6 +116,7 @@ extends KafkaConsumerListener with InputSubscriber {
     require(Option(acceptedInputs).isDefined)
     require(!acceptedInputs.isEmpty,"The list of IDs of accepted inputs can' be empty")
     this.acceptedInputs++=acceptedInputs
+    this.listener = Option(listener)
     logger.info("The subscriber of DASU [{}] will start getting events",dasuId)
     Try {
       kafkaConsumer.startGettingEvents(StartPosition.END)
