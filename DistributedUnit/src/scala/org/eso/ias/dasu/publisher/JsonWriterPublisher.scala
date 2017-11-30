@@ -58,6 +58,7 @@ class JsonWriterPublisher(val writer: Writer) extends OutputPublisher {
     Try{ 
       writer.write(jsonSerializer.iasValueToString(iasio)) 
       writer.write('\n')
+      writer.flush()
     }
   }
 }
