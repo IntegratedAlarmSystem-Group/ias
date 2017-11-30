@@ -18,7 +18,7 @@ import org.eso.ias.prototype.input.java.IdentifierType
 import org.eso.ias.plugin.OperationalMode
 import org.eso.ias.prototype.input.InOut
 import org.eso.ias.prototype.input.JavaConverter
-import org.eso.ias.dasu.InputsListener
+import org.eso.ias.dasu.subscriber.InputsListener
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.TimeUnit
@@ -67,10 +67,10 @@ class Dasu7ASCEsTest extends FlatSpec with OutputListener {
   val stringSerializer = Option(new IasValueJsonSerializer)
   val outputPublisher: OutputPublisher = new ListenerOutputPublisherImpl(this,stringSerializer)
   
+  val inputsProvider = new TestInputSubscriber()
+  
   // The DASU to test
-  val dasu = new Dasu(dasuId,outputPublisher,cdbReader)
-  // The DASU is also the inputs listener
-  val inputsListener = dasu.asInstanceOf[InputsListener]
+  val dasu = new Dasu(dasuId,outputPublisher,inputsProvider,cdbReader)
   
   // The identifer of the monitor system that produces the temperature in input to teh DASU
   val monSysId = new Identifier("MonitoredSystemID",IdentifierType.MONITORED_SOFTWARE_SYSTEM)
@@ -126,17 +126,19 @@ class Dasu7ASCEsTest extends FlatSpec with OutputListener {
   behavior of "The DASU"
   
   it must "produce outputs when receives sets of inputs" in {
+    // Start the getting of events in the DASU
+    dasu.start()
     logger.info("Submitting a set with only one temp {} in nominal state",inputTemperature1ID.id)
     val inputs: Set[IASValue[_]] = Set(buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,0))
     // Submit the inputs but we do not expect any output before
     // the DASU receives all the inputs
-    inputsListener.inputsReceived(inputs)
+    inputsProvider.sendInputs(inputs)
     println("Set submitted")
     assert(iasValuesReceived.size==0)
     
     // Submit a set with Temperature 1 in a non nominal state
     logger.info("Submitting a set with only one temp {} in NON nominal state",inputTemperature1ID.id)
-    inputsListener.inputsReceived(Set(buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,100)))
+    inputsProvider.sendInputs(Set(buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,100)))
     println("Another empty set submitted")
     assert(iasValuesReceived.size==0)
     
@@ -149,7 +151,7 @@ class Dasu7ASCEsTest extends FlatSpec with OutputListener {
       val v4=buildValue(inputTemperature4ID.id, inputTemperature4ID.fullRunningID,8)
       Set(v1,v2,v3,v4)
     }
-    inputsListener.inputsReceived(setOfInputs)
+    inputsProvider.sendInputs(setOfInputs)
     assert(iasValuesReceived.size==1)
     val outputProducedByDasu = iasValuesReceived.last
     assert(outputProducedByDasu.valueType==IASTypes.ALARM)
@@ -163,7 +165,7 @@ class Dasu7ASCEsTest extends FlatSpec with OutputListener {
       val v4=buildValue(inputTemperature4ID.id, inputTemperature4ID.fullRunningID,8)
       Set(v1,v2,v3,v4)
     }
-    inputsListener.inputsReceived(setOfInputs2)
+    inputsProvider.sendInputs(setOfInputs2)
     assert(iasValuesReceived.size==2)
     val outputProducedByDasu2 = iasValuesReceived.last
     assert(outputProducedByDasu2.valueType==IASTypes.ALARM)

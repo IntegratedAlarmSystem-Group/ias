@@ -18,7 +18,11 @@ import org.eso.ias.prototype.input.java.IdentifierType
 import org.eso.ias.plugin.OperationalMode
 import org.eso.ias.prototype.input.InOut
 import org.eso.ias.prototype.input.JavaConverter
-import org.eso.ias.dasu.InputsListener
+import org.eso.ias.dasu.subscriber.InputsListener
+import org.eso.ias.dasu.subscriber.InputSubscriber
+import scala.util.Success
+import scala.util.Try
+import scala.collection.mutable.{HashSet => MutableSet}
 
 /**
  * Test the DASU with one ASCE and the MinMaxThreshold TF.
@@ -43,10 +47,10 @@ class DasuOneASCETest extends FlatSpec with OutputListener {
   val stringSerializer = Option(new IasValueJsonSerializer)
   val outputPublisher: OutputPublisher = new ListenerOutputPublisherImpl(this,stringSerializer)
   
+  val inputsProvider = new TestInputSubscriber()
+  
   // The DASU to test
-  val dasu = new Dasu(dasuId,outputPublisher,cdbReader)
-  // The DASU is also the inputs listener
-  val inputsListener = dasu.asInstanceOf[InputsListener]
+  val dasu = new Dasu(dasuId,outputPublisher,inputsProvider,cdbReader)
   
   // The identifer of the monitor system that produces the temperature in input to teh DASU
   val monSysId = new Identifier("MonitoredSystemID",IdentifierType.MONITORED_SOFTWARE_SYSTEM)
@@ -81,9 +85,11 @@ class DasuOneASCETest extends FlatSpec with OutputListener {
   behavior of "The DASU"
   
   it must "produce the output when a new set inputs is notified" in {
+    // Start the getting of events in the DASU
+    dasu.start()
     val inputs: Set[IASValue[_]] = Set(buildValue(0))
     // Sumbit the inputs
-    inputsListener.inputsReceived(inputs)
+    inputsProvider.sendInputs(inputs)
   }
   
 }
