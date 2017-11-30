@@ -1,10 +1,9 @@
 package org.eso.ias.dasu.subscriber
 
 import scala.util.Try
-import org.eso.ias.dasu.InputsListener
 
 /** 
- *  InputSubscriber get events from differents sources
+ *  InputSubscriber get events from different sources
  *  and send them to the InputsListener 
  */
 trait InputSubscriber {

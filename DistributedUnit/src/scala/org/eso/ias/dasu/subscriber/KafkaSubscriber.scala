@@ -8,7 +8,6 @@ import java.util.Properties
 import org.eso.ias.kafkautils.KafkaHelper
 import scala.util.Try
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition
-import org.eso.ias.dasu.InputsListener
 import scala.collection.mutable.{HashSet => MutableSet}
 
 /** 

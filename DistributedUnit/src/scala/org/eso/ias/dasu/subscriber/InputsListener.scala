@@ -1,4 +1,4 @@
-package org.eso.ias.dasu
+package org.eso.ias.dasu.subscriber
 
 import org.eso.ias.prototype.input.java.IASValue
 
