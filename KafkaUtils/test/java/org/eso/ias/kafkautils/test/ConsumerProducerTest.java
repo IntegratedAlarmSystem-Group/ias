@@ -12,6 +12,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.SimpleStringConsumer;
 import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener;
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
@@ -126,9 +127,9 @@ public class ConsumerProducerTest implements KafkaConsumerListener {
 	@Before
 	public void setUp() throws Exception {
 		logger.info("Initializing...");
-		consumer = new SimpleStringConsumer(SimpleStringProducer.DEFAULT_BOOTSTRAP_SERVERS, topicName, this);
+		consumer = new SimpleStringConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, topicName, "PubSub-Test",this);
 		consumer.setUp();
-		producer = new SimpleStringProducer(SimpleStringProducer.DEFAULT_BOOTSTRAP_SERVERS, topicName, "Consumer-ID");
+		producer = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, topicName, "Consumer-ID");
 		producer.setUp();
 		
 		consumer.startGettingEvents(StartPosition.END);

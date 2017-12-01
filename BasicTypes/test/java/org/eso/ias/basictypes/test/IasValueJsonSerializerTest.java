@@ -16,8 +16,10 @@ import org.eso.ias.prototype.input.java.IasShort;
 import org.eso.ias.prototype.input.java.IasString;
 import org.eso.ias.prototype.input.java.IasValueJsonSerializer;
 import org.eso.ias.prototype.input.java.IdentifierType;
-import org.junit.Before;
 import org.junit.Test;
+
+import scala.None;
+import scala.Option;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -37,7 +39,7 @@ public class IasValueJsonSerializerTest {
 	/**
 	 * The identifier of the system monitored by the plugin.
 	 */
-	private final Identifier mSysIdentifier = new Identifier(monSysID, IdentifierType.MONITORED_SOFTWARE_SYSTEM, null);
+	private final Identifier mSysIdentifier = new Identifier(monSysID, IdentifierType.MONITORED_SOFTWARE_SYSTEM);
 	
 	/**
 	 * The ID of the plugin

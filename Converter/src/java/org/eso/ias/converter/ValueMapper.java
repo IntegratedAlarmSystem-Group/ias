@@ -102,7 +102,7 @@ public class ValueMapper implements Function<String, String> {
 		Objects.requireNonNull(converterId);
 		Objects.requireNonNull(iasioId);
 		
-		Identifier monSystemId = new Identifier(monitoredSystemId,IdentifierType.MONITORED_SOFTWARE_SYSTEM,null);
+		Identifier monSystemId = new Identifier(monitoredSystemId,IdentifierType.MONITORED_SOFTWARE_SYSTEM);
 		Identifier plugId = new Identifier(pluginId,IdentifierType.PLUGIN,monSystemId);
 		Identifier converterIdent = new Identifier(converterID,IdentifierType.CONVERTER,plugId);
 		Identifier iasioIdent = new Identifier(iasioId,IdentifierType.IASIO,converterIdent);

@@ -1,0 +1,8 @@
+{
+	"dasuID":"DasuWith7ASCEs",
+	"outputID":"TooManyHighTempAlarm",
+	"props":[{"name":"org.eso.ias.tf.mutliplicity.threshold","value":"3"}],
+	"id":"ASCE-AlarmsThreshold",
+	"transferFunctionID":"org.eso.ias.prototype.transfer.impls.MultiplicityTF",
+	"inputIDs":["ASCE-Temp1-Alarm","ASCE-Temp2-Alarm","ASCE-Temp3-Alarm","ASCE-Temp4-Alarm","ASCE-AvgTempAlarm"]
+}

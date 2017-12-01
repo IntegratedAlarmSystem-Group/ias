@@ -1,0 +1,12 @@
+{
+	"dasuID":"DasuWith7ASCEs",
+	"outputID":"ASCE-Temp3-Alarm",
+	"props":[
+		{"name":"org.eso.ias.tf.minmaxthreshold.highOn","value":"50"},
+		{"name":"org.eso.ias.tf.minmaxthreshold.highOff","value":"25"},
+		{"name":"org.eso.ias.tf.minmaxthreshold.lowOn","value":"-20"},
+		{"name":"org.eso.ias.tf.minmaxthreshold.lowOff","value":"-10"}],
+	"id":"ASCE-Temp3",
+	"transferFunctionID":"org.eso.ias.prototype.transfer.impls.MinMaxThresholdTF",
+	"inputIDs":["Temperature3"]
+}

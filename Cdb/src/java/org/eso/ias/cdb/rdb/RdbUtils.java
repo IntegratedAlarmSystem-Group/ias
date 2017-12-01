@@ -16,6 +16,7 @@ import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.PropertyDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
+import org.eso.ias.cdb.pojos.TransferFunctionDao;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;
@@ -149,6 +150,7 @@ public class RdbUtils {
 			// Load the configuration from the jar
 			ClassLoader classloader = Thread.currentThread().getContextClassLoader();
 			URL configFileURL = classloader.getResource(hibernateConfig);
+        	logger.info("Hibernate config file: {}",configFileURL.toString());
 			Configuration configuration = new Configuration();
 			configuration.configure(configFileURL);
 
@@ -158,6 +160,7 @@ public class RdbUtils {
 			sources.addAnnotatedClass(IasDao.class);
 			sources.addAnnotatedClass(PropertyDao.class);
 			sources.addAnnotatedClass(IasioDao.class);
+			sources.addAnnotatedClass(TransferFunctionDao.class);
 			sources.addAnnotatedClass(AsceDao.class);
 			sources.addAnnotatedClass(DasuDao.class);
 			sources.addAnnotatedClass(SupervisorDao.class);

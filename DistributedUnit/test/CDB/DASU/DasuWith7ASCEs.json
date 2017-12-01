@@ -1,0 +1,14 @@
+{
+	"asceIDs":[
+		"ASCE-Temp1",
+		"ASCE-Temp2",
+		"ASCE-Temp3",
+		"ASCE-Temp4",
+		"ASCE-AverageTemps",
+		"ASCE-AvgTempsAlarm",
+		"ASCE-AlarmsThreshold"],
+	"outputId":"TooManyHighTempAlarm",
+	"logLevel":"FATAL",
+	"id":"DasuWith7ASCEs",
+	"supervisorID":"SupervisorID"
+}

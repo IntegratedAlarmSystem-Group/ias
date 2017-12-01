@@ -28,6 +28,7 @@ import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.converter.Converter;
 import org.eso.ias.converter.ConverterKafkaStream;
+import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.SimpleStringConsumer;
 import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener;
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
@@ -247,7 +248,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		// the output of the converter
 		mPointsConsumer = new SimpleStringConsumer(
 				defaultKafkaBootstrapServers,
-				ConverterKafkaStream.DEFAULTCOREKTOPICNAME,
+				KafkaHelper.IASIOs_TOPIC_NAME,
 				eventsConsumer);
 		Properties props = new Properties();
 		props.put("auto.offset.reset", "latest");
@@ -260,7 +261,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		// in the kafka topic
 		mPointsProducer = new SimpleStringProducer(
 				defaultKafkaBootstrapServers,
-				ConverterKafkaStream.DEFAULTPLUGINSINPUTKTOPICNAME,
+				KafkaHelper.PLUGINS_TOPIC_NAME,
 				"TestKafkaStreamProducer");
 		mPointsProducer.setUp();
 	}

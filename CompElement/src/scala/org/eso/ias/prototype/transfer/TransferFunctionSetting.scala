@@ -3,7 +3,10 @@ package org.eso.ias.prototype.transfer
 import java.util.Properties
 import java.util.concurrent.ThreadFactory
 import scala.util.Try
+import org.ias.prototype.logging.IASLogger
 import scala.sys.SystemProperties
+import scala.util.Success
+import scala.util.Failure
 
 /**
  * Implemented types of transfer functions
@@ -61,6 +64,9 @@ class TransferFunctionSetting(
    */
   var transferExecutor: Option[TransferExecutor] = None
   
+  /** The logger */
+  private val logger = IASLogger.getLogger(this.getClass)
+  
   override def toString(): String = {
     "Transfer function implemented in "+language+" by "+className
   }
@@ -79,9 +85,9 @@ class TransferFunctionSetting(
       })
       shutdownThread.start()
       // Wait for the termination
-      shutdownThread.join(1500)
+      shutdownThread.join(10000)
       if (shutdownThread.isAlive()) {
-        println("User provided shutdown did not terminate in 1.5 sec.") 
+        logger.warn("User provided shutdown did not terminate in 10 secs.") 
       }
     }
     isShutDown=true
@@ -103,50 +109,57 @@ class TransferFunctionSetting(
   def initialize(
       asceId: String,
       asceRunningId: String,
-      props: Properties) = {
-    require(Option[String](asceId).isDefined)
-    require(Option[String](asceRunningId).isDefined)
-    require(Option[Properties](props).isDefined)
+      props: Properties): Boolean = {
+    require(Option(asceId).isDefined,"Invalid ASCE id")
+    require(Option(asceRunningId).isDefined,"Invalid ASCE running id")
+    require(Option(props).isDefined)
     assert(!initialized)
     
+    logger.info("Initializing the TF {}",className)
+    
     // Load the class
-    val tfExecutorClass: Option[Class[_]] = loadClass(className)
-     
-    // Go through the constructors and instantiate the executor
-    //
-    // We can suppose that the executor has more the one c'tor
-    // as it is a common practice for testing
-    if (tfExecutorClass.isDefined) {
-      this.synchronized{
-        transferExecutor = instantiateExecutor(tfExecutorClass,asceId,asceRunningId,props: Properties)
+    val tfExecutorClass: Try[Class[_]] = Try((this.getClass.getClassLoader().loadClass(className)))
+    transferExecutor = tfExecutorClass match {
+      case Failure(e) => logger.error("Error loading {}",className,e); None
+      case Success(tec) => this.synchronized {
+        instantiateExecutor(tec, asceId, asceRunningId, props)
       }
     }
     
-    // Init the executor if it has been correctly instantiated 
-    if (transferExecutor.isDefined) {
-      threadFactory.newThread(new Runnable() {
-        def run() {
-          initialized=initExecutor(transferExecutor)
-          println("Initialized="+initialized)
+    transferExecutor.foreach( te => {
+      logger.debug("TF of type {} instantiated", className)
+      val thread = threadFactory.newThread(new Runnable() {
+          def run() {
+            logger.debug("Async initializing the executor of {}", className)
+            initialized = initExecutor(te)
+          }
+        })
+        thread.start()
+        thread.join(60000)
+        if (thread.isAlive()) {
+          logger.warn("User provided shutdown did not terminate in 60 secs.") 
+        } else {
+         logger.info("Async initialization of the executor of {} terminated", className) 
         }
-      }).start()
-    }
+    })
+    transferExecutor.isDefined
+    
   }
 
   /**
    * Initialize the passed executor
    * 
    * @param executor: The executor to initialize
+   * @return true if the TE has been correctly initialized, false otherwise
    */
-  private[this] def initExecutor(executor: Option[TransferExecutor]): Boolean = {
-    require(executor.isDefined)
+  private[this] def initExecutor(executor: TransferExecutor): Boolean = {
+    require(Option(executor).isDefined)
     try {
-      executor.get.initialize()
+      executor.initialize()
       true
     } catch {
-        case e: Throwable => 
-          println("Exception caught initializing "+className+": "+e.getMessage)
-          e.printStackTrace()
+        case e: Exception => 
+          logger.error("Exception caught initializing {}",className,e)
           false
       }
   }
@@ -161,88 +174,77 @@ class TransferFunctionSetting(
     try {
       executor.get.shutdown()
     } catch {
-        case e: Throwable => 
-          println("Exception caught shutting down "+className+": "+e.getMessage)
-          e.printStackTrace()
+        case e: Exception => 
+          logger.warn("Exception caught shutting down {}",className,e)
       }
   }
-  
-  /**
-   * Dynamically load the class
-   * 
-   * @param name: the name of the class to load
-   */
-  private[this] def loadClass(name: String): Option[Class[_]] = {
-    try {
-        Option[Class[_]](this.getClass.getClassLoader().loadClass(name))
-      } catch {
-        case e: Throwable => 
-          println("Exception caught loading "+name+": "+e.getMessage)
-          e.printStackTrace()
-          None
-      }
-  }
-  
+
   /**
    * Instantiate the executor of the passed class
-   * 
+   *
    * @param executorClass: the class of the executor to instantiate
    * @param asceId: the ID of the ASCE
    * @param asceRunningId: the runningID of the ASCE
    * @param props: the user defined properties
-   * @return The instantiated object
-   * 
+   * @return The instantiated executor
+   *
    */
   private[this] def instantiateExecutor(
-      executorClass: Option[Class[_]],
-      asceId: String,
-      asceRunningId: String,
-      props: Properties): Option[TransferExecutor] = {
-    assert(executorClass.isDefined)
-    require(Option[String](asceId).isDefined)
-    require(Option[String](asceRunningId).isDefined)
-    require(Option[Properties](props).isDefined)
-    // Go through the constructors and instantiate the executor
-    //
-    // We can suppose that the executor has more the one c'tor
-    // as it is a common practice for testing
-    try {
-      val ctors = executorClass.get.getConstructors()
-      var ctorFound=false
-      var ret: Option[TransferExecutor] = None
-      for {ctor <-ctors 
-          paramTypes = ctor.getParameterTypes()
-          if paramTypes.size==3} {        
-            ctorFound=(paramTypes(0)==asceId.getClass && paramTypes(1)==asceRunningId.getClass && paramTypes(2)==props.getClass)
-            if (ctorFound) {
-              val args = Array[AnyRef](asceId,asceRunningId,props)
-              ret = Some(ctor.newInstance(args:_*).asInstanceOf[TransferExecutor])
-            }
-          }
-      ret
-    } catch {
-        case e: Throwable => 
-          println("Exception caught instantiating the executor: "+e.getMessage)
-          e.printStackTrace()
-          None
-      }
+    executorClass: Class[_],
+    asceId: String,
+    asceRunningId: String,
+    props: Properties): Option[TransferExecutor] = {
+    assert(Option(executorClass).isDefined)
+    require(Option(asceId).isDefined && asceId.size>0)
+    require(Option(asceRunningId).isDefined && asceRunningId.size>0)
+    require(Option(props).isDefined)
+
+    // Get the constructor with 3 parameters
+    val ctors = executorClass.getConstructors().filter(c => c.getParameterTypes().size == 3)
+    // Get the constructor
+    val ctor = ctors.find(c =>
+      c.getParameterTypes()(0) == asceId.getClass &&
+        c.getParameterTypes()(1) == asceRunningId.getClass &&
+        c.getParameterTypes()(2) == props.getClass)
+
+    val instance = Try(ctor.map(c => {
+      // The arguments to pass to the constructor
+      val args = Array[AnyRef](asceId, asceRunningId, props)
+      // Invoke the constructor to build the TransferExecutor
+      c.newInstance(args: _*).asInstanceOf[TransferExecutor]
+    }))
+
+    instance match {
+      case Success(te) => te
+      case Failure(x) => logger.error("Error building the transfer function", x); None
+    }
   }
 }
 
 object TransferFunctionSetting {
   
   /**
-   * The name of the property to set maxTolerableTFTime
+   * The name of the property to set MaxTolerableTFTime
    */
-  val MaxTFTimePropName="ias.prototype.asce.transfer.maxexectime"
+  val MaxTFTimePropName="org.eso.ias.asce.transfer.maxexectime"
   
   /**
    * If the execution time of the TF is higher the this value
    * the the state of the ASCE changes. At the present we do 
    * not block the execution but in future we could prefer to block
    * slow TFs unless it is a transient problem.
-   * 
-   * For the prototype it is enough to monitor.
    */
   lazy val MaxTolerableTFTime : Int=new SystemProperties().getOrElse(MaxTFTimePropName,"1000").toInt // msec
+  
+  /**
+   * The name of the property to set MaxAcceptableSlowDuration
+   */
+  val MaxAcceptableSlowDurationPropName = "org.eso.ias.asce.transfer.maxtimeinslow"
+  
+  /**
+   * If the TF is slow responding for more then the amount of seconds
+   * of  MaxAcceptableSlowDuration then the TF is marked as broken and 
+   * will not be executed anymore
+   */
+  lazy val MaxAcceptableSlowDuration = new SystemProperties().getOrElse(MaxAcceptableSlowDurationPropName,"30").toInt
 }

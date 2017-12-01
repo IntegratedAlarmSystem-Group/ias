@@ -8,6 +8,8 @@ import org.eso.ias.prototype.input.InOut
 import org.eso.ias.prototype.input.java.IASTypes
 import org.eso.ias.prototype.input.java.IdentifierType
 import org.eso.ias.plugin.AlarmSample
+import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.prototype.input.java.IasLong
 
 /**
  * Test the LongMP
@@ -15,14 +17,13 @@ import org.eso.ias.plugin.AlarmSample
  * @author acaproni
  */
 class TestHeteroIO extends FlatSpec {
-  val superId =  new Identifier(Some("SupervId"),Some(IdentifierType.SUPERVISOR),None)
-  val dasuId =  new Identifier(Some("DasuId"),Some(IdentifierType.DASU),Some(superId))
-  val asceId =  new Identifier(Some("AsceId"),Some(IdentifierType.ASCE),Some(dasuId))
+  val dasuId =  new Identifier("DasuId",IdentifierType.DASU,None)
+  val asceId =  new Identifier("AsceId",IdentifierType.ASCE,Some(dasuId))
   
   // The ID of the alarms built in this test
   //
   // This test os all about the conversion
-  val id = new Identifier(Some("LongMPID"), Some(IdentifierType.IASIO),Some(asceId))
+  val id = new Identifier("LongMPID", IdentifierType.IASIO,Some(asceId))
   val refreshRate=InOut.MinRefreshRate+10;
   
   behavior of "A heterogeneous IO" 
@@ -148,5 +149,39 @@ class TestHeteroIO extends FlatSpec {
     hioChar.updateValue(Some('C'))
     hioString.updateValue(Some("Test"))
     hioAlarm.updateValue(Some(AlarmSample.SET))
+  }
+  
+  it must "build and update from a passed IASValues" in {
+    
+    val monitoredSysId= new Identifier("MonSysId",IdentifierType.MONITORED_SOFTWARE_SYSTEM,None)
+    val puginId = new Identifier("PluginId",IdentifierType.PLUGIN,Option(monitoredSysId))
+    val converterId = new Identifier("ConverterId",IdentifierType.CONVERTER,Option(puginId))
+    val iasioId = new Identifier("IasioId",IdentifierType.IASIO,Option(converterId))
+    
+    // Build the IASIO from the passed IASValue
+    val iasValue = new IasLong(821L,System.currentTimeMillis(),OperationalMode.INTIALIZATION,"IasioId",converterId.fullRunningID)
+    val inOut = InOut(iasValue,3000)
+    
+    assert(inOut.iasType==iasValue.valueType)
+    assert(inOut.value.isDefined)
+    assert(inOut.value.get.asInstanceOf[Long]==iasValue.value.asInstanceOf[Long])
+    assert(inOut.mode==iasValue.mode)
+    
+    // Update a IASIO with no value with a passed IASIO
+    val iasio: InOut[_] = InOut(iasioId,5500,IASTypes.LONG)
+    val newiasIo = iasio.update(iasValue)
+    assert(newiasIo.iasType==iasValue.valueType)
+    assert(newiasIo.value.isDefined)
+    assert(newiasIo.value.get.asInstanceOf[Long]==iasValue.value.asInstanceOf[Long])
+    assert(newiasIo.mode==iasValue.mode)
+    
+    // Update with another value
+    val iasValue2 = new IasLong(113142L,System.currentTimeMillis(),OperationalMode.OPERATIONAL,"IasioId",converterId.fullRunningID)
+    val newiasIo2 = iasio.update(iasValue2)
+    assert(newiasIo2.iasType==iasValue2.valueType)
+    assert(newiasIo2.value.isDefined)
+    assert(newiasIo2.value.get==iasValue2.value)
+    assert(newiasIo2.mode==iasValue2.mode)
+    
   }
 }

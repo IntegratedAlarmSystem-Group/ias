@@ -33,13 +33,15 @@ object IASLogger {
    */
   def getLogger(name: String) = Logger(name)
   
+  def getLogger(c: java.lang.Class[_]) = Logger(c)
+  
   /**
    * Print the status of the logger in the stdout
    * for debugging purposes
    * 
    * logback configuration file can be tweaked to automatically
    * print debug information even if there is no error by setting 
-   * the debug attirbute of the configuration tag to true 
+   * the debug attribute of the configuration tag to true 
    */
   def printLoggerStatus() {
     val iLoggerFactory: ILoggerFactory = LoggerFactory.getILoggerFactory()

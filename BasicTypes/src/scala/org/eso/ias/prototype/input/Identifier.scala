@@ -51,8 +51,11 @@ object Identifier {
     require(Option(fullRunningId).isDefined)
     require(fullRunningId.size>0,"Invalid empty identifier")
     
+    println("Building IDentifier from "+fullRunningId)
+    
     // The id and type of each element passed in the parameter
     val identifiersDescr=fullRunningId.split(separator)
+    println("Splitted strings "+identifiersDescr.mkString(","))
     
     identifiersDescr.foldLeft(None: Option[Identifier])( (id, couple) => {
       val cleanedCouple=couple.substring(Identifier.coupleGroupPrefix.size, couple.size-Identifier.coupleGroupSuffix.size)
@@ -60,7 +63,7 @@ object Identifier {
       val identParts = cleanedCouple.split(Identifier.coupleSeparator)
       val idStr = identParts(0)
       val typeStr = identParts(1)
-      Option(new Identifier(Some(idStr),Some(IdentifierType.valueOf(typeStr)),id))
+      Option(new Identifier(idStr,IdentifierType.valueOf(typeStr),id))
     }).get
   }
   
@@ -128,11 +131,13 @@ object Identifier {
  * @param iDType: The type of the identifier
  * @param parentID: The identifier of the parent
  */
-class Identifier(val id: Some[String], val idType: Some[IdentifierType], val parentID: Option[Identifier]) 
+class Identifier(val id: String, val idType: IdentifierType, val parentID: Option[Identifier]) 
 extends {
-  require (!id.get.isEmpty)
-  require(id.get.indexOf(Identifier.separator) == -1,"Invalid character "+Identifier.separator+" in identifier "+id.get)
-  require(isValidParentType(idType.get, parentID), "Invalid parent for "+idType.get)
+  require (Option(id).isDefined,"Invalid null Dasu ID")
+  require(!id.isEmpty(),"Invalid empty identifier")
+  require(id.indexOf(Identifier.separator) == -1,"Invalid character "+Identifier.separator+" in identifier "+id)
+  require(Option(idType).isDefined,"Invalid identifier type")
+  require(isValidParentType(idType, parentID), "Invalid parent for "+idType)
    
   /**
    * The runningID, composed of the id plus the id of the parents
@@ -162,13 +167,27 @@ extends {
    * 
    * It delegates to the constructor
    * 
-   * @param id: the identifier
-   * @param idType the type of the identifier
+   * @param id: the not <code>null</code> nor empty identifier
+   * @param idType the not <code>null</code> nor empty type of the identifier
    * @parm parent the parent of the identifier, can be <code>null</code>
    * @return a new Identifier
    */
   def this(id: String, idType: IdentifierType, parent: Identifier) = {
-    this(Some(id),Some(idType),Option(parent))
+    this(id,idType,Option(parent))
+  }
+  
+  /**
+   * Auxiliary constructor of an identifier without parent, 
+   * mostly to ease java/scala inter-operability.
+   * 
+   * It delegates to the constructor
+   * 
+   * @param id: the not <code>null</code> nor empty identifier
+   * @param idType the not <code>null</code> nor empty type of the identifier
+   * @return a new Identifier
+   */
+  def this(id: String, idType: IdentifierType) = {
+    this(id,idType,None)
   }
   
   /**
@@ -179,12 +198,16 @@ extends {
    * that can be set as parent.
    * 
    * @param theType: the type whose compatibility must be checked
-   * @parm parent Its parent
+   * @param parent Its parent
    */
   def isValidParentType(theType: IdentifierType, parent: Option[Identifier]): Boolean = {
-    parent.fold(theType.parents.length==0)(pId => theType.parents.contains(pId.idType.get))
+    (theType, parent) match {
+      case (IdentifierType.IASIO, None) => true // Unknown parent of IASIOs in the ASCE before they arrive
+      case (x, None) => x.parents.length==0
+      case (x, y) => x.parents.contains(y.get.idType)
+    }
   }
-  
+    
   /**
    * Build a string representation of the identifier and its parents
    * formatting each identifier with the passed method
@@ -205,9 +228,9 @@ extends {
   private def buildFullRunningID(theID: Option[Identifier]): String = {
     buildFormattedID(theID, (ide: Identifier) => 
       Identifier.coupleGroupPrefix +
-      ide.id.get +
+      ide.id +
       Identifier.coupleSeparator + 
-      ide.idType.get.toString() +
+      ide.idType.toString() +
       Identifier.coupleGroupSuffix)
   }
   
@@ -218,7 +241,7 @@ extends {
    * @return The running identifier of the passed identifier
    */
   private def buildRunningID(theID: Option[Identifier]): String = {
-    buildFormattedID(theID, (ide: Identifier) => ide.id.get)
+    buildFormattedID(theID, (ide: Identifier) => ide.id)
   }
   
   override def toString = fullRunningID

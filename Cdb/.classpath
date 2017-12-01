@@ -5,10 +5,10 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/hibernate-core-5.0.11.Final.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/hibernate-jpa-2.1-api-1.0.0.Final.jar"/>
-	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/slf4j-api-1.7.22.jar"/>
 	<classpathentry kind="lib" path="lib/ExtTools/jackson-annotations-2.8.7.jar"/>
 	<classpathentry kind="lib" path="lib/ExtTools/jackson-databind-2.8.7.jar"/>
 	<classpathentry kind="lib" path="lib/ExtTools/jackson-core-2.8.7.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/slf4j-api-1.7.25.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

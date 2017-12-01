@@ -28,15 +28,15 @@ object JavaConverter {
    * @param hio: the HIO to convert to java IASValue
    * @return The java value version of the passed HIO 
    */
-  def inOutToIASValue[T](io: InOut[_]): IASValueBase = {
+  def inOutToIASValue[T](io: InOut[_]): IASValue[_] = {
     require(Option[InOut[_]](io).isDefined)
     
     val ret = if (io.actualValue.value.isEmpty) {
-      IASValue.buildIasValue(null, Long.MinValue,io.mode,io.id.id.get,io.id.runningID,io.iasType)
+      IASValue.buildIasValue(null, Long.MinValue,io.mode,io.id.id,io.id.runningID,io.iasType)
     } else {
-      IASValue.buildIasValue(io.actualValue.value.get, io.actualValue.timestamp,io.mode,io.id.id.get,io.id.runningID,io.iasType)
+      IASValue.buildIasValue(io.actualValue.value.get, io.actualValue.timestamp,io.mode,io.id.id,io.id.runningID,io.iasType)
     }
-    ret.asInstanceOf[IASValueBase]
+    ret
   }
   
   /**
@@ -165,8 +165,8 @@ object JavaConverter {
     if (hio.iasType!=iasValue.valueType) {
       throw new IllegalStateException("Type mismatch for HIO "+hio.id.runningID+": "+hio.iasType+"!="+iasValue.valueType)
     }
-    if (hio.id.id.get!=iasValue.id) {
-      throw new IllegalStateException("ID mismatch for HIO "+hio.id.runningID+": "+hio.id.id.get+"!="+iasValue.id)
+    if (hio.id.id!=iasValue.id) {
+      throw new IllegalStateException("ID mismatch for HIO "+hio.id.runningID+": "+hio.id.id+"!="+iasValue.id)
     }
     if (hio.id.runningID!=iasValue.runningId) {
       throw new IllegalStateException("Running ID mismatch for HIO "+hio.id.runningID+": "+hio.id.runningID+"!="+iasValue.runningId)
