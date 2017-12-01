@@ -22,6 +22,7 @@ import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener
 import org.eso.ias.prototype.input.java.IasValueJsonSerializer
 import scala.util.Try
 import scala.collection.mutable.ListBuffer
+import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition
 
 /**
  * test if the DASU is capable to get events from
@@ -73,6 +74,7 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener {
   val props = new Properties()
   props.setProperty("group.id", "DasuTest-groupID")
   eventsListener.setUp(props)
+  eventsListener.startGettingEvents(StartPosition.END)
   
   val stringPublisher = new SimpleStringProducer(
       KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
@@ -120,8 +122,10 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener {
     // Give some time...
     Try(Thread.sleep(5000))
     
-    assert(iasValuesReceived.size==1)
-    
+    // We sent one IASIO but the listener must have received 2:
+    // - the one we sent
+    // the one produced by the DASU
+    assert(iasValuesReceived.size==2)
     
     logger.info("Cleaning up the event listener")
     eventsListener.tearDown()
