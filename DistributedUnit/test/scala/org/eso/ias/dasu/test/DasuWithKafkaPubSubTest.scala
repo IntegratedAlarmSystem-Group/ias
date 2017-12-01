@@ -35,7 +35,7 @@ import scala.collection.mutable.ListBuffer
  * inputs to the DASU and one subscriber to catch if the output
  * produced by the DASU has been pushed in the kafka queue 
  */
-class KafkaDasuWithKafka extends FlatSpec with KafkaConsumerListener {
+class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener {
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass);
   
