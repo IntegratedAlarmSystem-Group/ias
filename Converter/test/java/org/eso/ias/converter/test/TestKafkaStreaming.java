@@ -249,6 +249,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		mPointsConsumer = new SimpleStringConsumer(
 				defaultKafkaBootstrapServers,
 				KafkaHelper.IASIOs_TOPIC_NAME,
+				"KafkaConverterTest",
 				eventsConsumer);
 		Properties props = new Properties();
 		props.put("auto.offset.reset", "latest");
