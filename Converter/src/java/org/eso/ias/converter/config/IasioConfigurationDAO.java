@@ -16,6 +16,8 @@ public interface IasioConfigurationDAO {
 	
 	/**
 	 * Initialize the DAO
+	 * 
+	 * @throws ConfigurationException in case of error initializing
 	 */
 	public void initialize() throws ConfigurationException;
 	
@@ -38,6 +40,8 @@ public interface IasioConfigurationDAO {
 	
 	/**
 	 * Close the DAO freeing all the acquired resources
+	 * 
+	 * @throws ConfigurationException in case of  error closing
 	 */
 	public void close() throws ConfigurationException;
 

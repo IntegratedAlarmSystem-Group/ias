@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
  * <P>
  * The list of kafka servers to connect to and the names of
  * the input and output topics can be passed by means of
- * java properties ({@link #ConverterKafkaStream(Properties)})
+ * java properties ({@link #ConverterKafkaStream(String, Properties)})
  * or programmatically. 
  * 
  * 
@@ -85,7 +85,7 @@ public class ConverterKafkaStream extends ConverterStream {
 	 * back to the defaults.
 	 * 
 	 * @param converterID The ID of the converter.
-	 * @parm props the properties to get kafka serves and topic anmes
+	 * @param props the properties to get kafka serves and topic anmes
 	 */
 	public ConverterKafkaStream(
 			String converterID,

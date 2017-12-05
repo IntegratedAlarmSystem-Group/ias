@@ -120,6 +120,8 @@ public class SimpleStringProducer {
 	 * Initialize the producer with the given properties
 	 * <P>
 	 * Servers and ID passed in the constructor override those in the passed properties
+	 * 
+	 * @param props user defined properties
 	 */
 	public void setUp(Properties props) {
 		logger.info("Producer [{}] is building the kafka producer",clientID);

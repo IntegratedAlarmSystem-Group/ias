@@ -68,7 +68,7 @@ public class KafkaHelper {
 	 * not found from the System properties. If the value is not found in both
 	 * properties sets then the default is returned.
 	 * 
-	 * @userProps the user defined properties
+	 * @param userProps the user defined properties
 	 * @param propName the name of the property to retrieve
 	 * @param defaultValue the default value if the property is not found
 	 * @return the value of the property

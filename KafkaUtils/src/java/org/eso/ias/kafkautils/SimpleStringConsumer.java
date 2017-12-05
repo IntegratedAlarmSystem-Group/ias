@@ -226,9 +226,8 @@ public class SimpleStringConsumer implements Runnable {
 	 * and returns after the consumer has been assigned to at least 
 	 * one partition. 
 	 * 
-	 * @param startReadingFrom: Starting position in the kafka partition
-	 * @throws KafkaUtilsException: in case of timeout subscribing to the kafkatopic
-	 * @see StartPosition
+	 * @param startReadingFrom Starting position in the kafka partition
+	 * @throws KafkaUtilsException in case of timeout subscribing to the kafkatopic
 	 */
 	public synchronized void startGettingEvents(StartPosition startReadingFrom) 
 	throws KafkaUtilsException {

@@ -150,7 +150,7 @@ public class RdbReader implements CdbReader {
 	/**
 	 * Read the transfer function configuration from the CDB. 
 	 * 
-	 * @param id The not <code>null</code> nor empty transfer function identifier
+	 * @param tf_id The not <code>null</code> nor empty transfer function identifier
 	 * @return The transfer function red from the CDB
 	 * @see org.eso.ias.cdb.CdbReader#getTransferFunction(String)
 	 */

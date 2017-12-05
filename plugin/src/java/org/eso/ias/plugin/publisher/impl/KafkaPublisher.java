@@ -90,7 +90,6 @@ public class KafkaPublisher extends PublisherBase {
 	 * @param serverName The name of the server
 	 * @param port The port of the server
 	 * @param executorSvc The executor service
-	 * @param outWriter The output writer
 	 */
 	public KafkaPublisher(
 			String pluginId,

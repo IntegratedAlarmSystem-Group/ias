@@ -18,6 +18,7 @@ public class ConfigurationException extends Exception {
 	/**
 	 * Constructor
 	 * 
+	 * @param message the message of the exception
 	 * @see Exception
 	 */
 	public ConfigurationException(String message) {
@@ -27,6 +28,7 @@ public class ConfigurationException extends Exception {
 	/**
 	 * Constructor
 	 * 
+	 * @param cause the cause of the exception
 	 * @see Exception
 	 */
 	public ConfigurationException(Throwable cause) {
@@ -36,6 +38,8 @@ public class ConfigurationException extends Exception {
 	/**
 	 * Constructor
 	 * 
+	 * @param message the message of the exception
+	 * @param cause the cause of the exception
 	 * @see Exception
 	 */
 	public ConfigurationException(String message, Throwable cause) {
@@ -45,6 +49,10 @@ public class ConfigurationException extends Exception {
 	/**
 	 * Constructor
 	 * 
+	 * @param message the message of the exception
+	 * @param cause the cause of the exception
+	 * @param enableSuppression whether or not suppression is enabled or disabled
+     * @param writableStackTrace - whether or not the stack trace should be writable
 	 * @see Exception
 	 */
 	public ConfigurationException(String message, Throwable cause, boolean enableSuppression,

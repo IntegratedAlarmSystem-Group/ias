@@ -55,8 +55,9 @@ public interface CdbReader {
 	/**
 	 * Read the transfer function configuration from the CDB. 
 	 * 
-	 * @param id The not <code>null</code> nor empty transfer function identifier
-	 * @return The transfer function red from the CDB
+	 * @param tf_id The not <code>null</code> nor empty transfer function identifier
+	 * @return The transfer function read from the CDB
+	 * @throws IasCdbException in case of error reading from the CDB
 	 */
 	public Optional<TransferFunctionDao> getTransferFunction(String tf_id) throws IasCdbException;
 	

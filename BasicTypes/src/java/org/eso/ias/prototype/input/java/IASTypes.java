@@ -55,8 +55,8 @@ public enum IASTypes {
     /**
      * Build a IASTypes from the DAO definition
      * 
-     * @param typeDao
-     * @return
+     * @param typeDao the IasTypeDao
+     * @return the related IASTypes for the passed type DAO
      */
     public static IASTypes fromIasioDaoType(IasTypeDao typeDao) {
     	Objects.requireNonNull(typeDao);

@@ -113,6 +113,9 @@ public class ValueMapper implements Function<String, String> {
 	 * Convert the {@link MonitorPointData} received by a plugin 
 	 * to a {@link IASValue} to send to the core of the IAS
 	 * 
+	 * @param remoteSystemData the monitor point to translate
+	 * @param type the type of the monitor point
+	 * @return the IASValue corresponding on the monitor point
 	 */
 	public IASValue<?> translate(MonitorPointData remoteSystemData, IASTypes type) {
 		Objects.requireNonNull(type);
