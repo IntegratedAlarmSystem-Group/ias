@@ -121,6 +121,8 @@ public class Converter {
 	
 	/**
 	 * Initialize the converter and start the loop
+	 * 
+	 * @throws ConfigurationException in case of error in the configuration
 	 */
 	public void setUp() throws ConfigurationException {
 		logger.info("Converter {} initializing...", converterID);
@@ -166,7 +168,7 @@ public class Converter {
 	 * 
 	 * It builds a converter with the help of spring dependency injection
 	 * 
-	 * @param args
+	 * @param args arguments
 	 */
 	public static void main(String[] args) {
 		if (args.length!=1) {

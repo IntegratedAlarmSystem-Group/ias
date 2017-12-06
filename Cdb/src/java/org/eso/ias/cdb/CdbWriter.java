@@ -1,5 +1,6 @@
 package org.eso.ias.cdb;
 
+import java.util.Optional;
 import java.util.Set;
 
 import org.eso.ias.cdb.pojos.AsceDao;
@@ -7,6 +8,7 @@ import org.eso.ias.cdb.pojos.DasuDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
+import org.eso.ias.cdb.pojos.TransferFunctionDao;
 
 /**
  * Interface to flush the content of the CDB pojos
@@ -38,6 +40,14 @@ public interface CdbWriter {
 	 * @throws IasCdbException In case of error writing the DASU
 	 */
 	public void writeDasu(DasuDao dasu) throws IasCdbException;
+	
+	/**
+	 *  Write the transfer function to the CDB
+	 *  
+	 *  @param transferFunction The TF configuration to write in the file
+	 *  @throws IasCdbException In case of error writing the TF
+	 */
+	public void writeTransferFunction(TransferFunctionDao transferFunction) throws IasCdbException;
 	
 	/**
 	 * Write the ASCE in the passed file.

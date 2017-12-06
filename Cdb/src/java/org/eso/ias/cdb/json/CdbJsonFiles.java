@@ -131,4 +131,13 @@ public class CdbJsonFiles implements CdbFiles {
 	public Path getIasioFilePath(String iasioID)  throws IOException{
 		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.IASIO, true).resolve("iasios.json");
 	}
+
+	@Override
+	public Path getTFFilePath(String tfID) throws IOException {
+		Objects.requireNonNull(tfID, "Invalid null TF ID");
+		if (tfID.isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty TF ID");
+		}
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.TF, true).resolve(tfID+".json");
+	}
 }

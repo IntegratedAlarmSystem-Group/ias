@@ -28,8 +28,6 @@ public abstract class ConverterStream {
 	 * <P>
 	 * The ID of the converter uniquely identify each running 
 	 * converter
-	 * 
-	 * @see #setKafkaProps()
 	 */
 	protected final String converterID;
 	
@@ -47,7 +45,6 @@ public abstract class ConverterStream {
 	 * Constructor
 	 * 
 	 * @param converterID The ID of the converter.
-	 * @param mapper The function to map a input string to output string
 	 */
 	public ConverterStream(String converterID) {
 		Objects.requireNonNull(converterID);
@@ -62,6 +59,7 @@ public abstract class ConverterStream {
 	 * <P>
 	 * After some initialization, it delegates to {@link #init()}
 	 * 
+	 * @param mapper the function to map inputs to outputs
 	 * @throws ConverterStreamException in case of error initializing
 	 */
 	public void initialize(Function<String, String> mapper) throws ConverterStreamException {

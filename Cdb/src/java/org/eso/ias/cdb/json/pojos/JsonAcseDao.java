@@ -38,6 +38,11 @@ public class JsonAcseDao {
 	private String outputID;
 	
 	/**
+	 * The ID of the transfer function
+	 */
+	private String transferFunctionID;
+	
+	/**
 	 * Empty constructor 
 	 */
 	public JsonAcseDao() {
@@ -61,6 +66,7 @@ public class JsonAcseDao {
 		this.inputIds=asce.getInputs().stream().map(i -> i.getId()).collect(Collectors.toSet());
 		Objects.requireNonNull(this.asce.getOutput(), "Inavlid null output IASIO");
 		this.outputID=this.asce.getOutput().getId();
+		this.transferFunctionID=this.asce.getTransferFunction().getClassName();
 		
 		asce.getInputs().stream().forEach(iasio -> inputIds.add(iasio.getId()));
 	}
@@ -79,22 +85,6 @@ public class JsonAcseDao {
 	 */
 	public void setId(String id) {
 		asce.setId(id);
-	}
-
-	/**
-	 * @return the class name of the transfer function
-	 * @see AsceDao#getTfClass()
-	 */
-	public String getTfClass() {
-		return asce.getTfClass();
-	}
-
-	/**
-	 * @param tfClass  the class name of the transfer function
-	 * @see AsceDao#setTfClass(String)
-	 */
-	public void setTfClass(String tfClass) {
-		asce.setTfClass(tfClass);
 	}
 
 	/**
@@ -168,15 +158,15 @@ public class JsonAcseDao {
 	public String toString() {
 		StringBuilder ret = new StringBuilder("jsonAsceDAO=[ID=");
 		ret.append(getId());
-		ret.append(", Output=");
+		ret.append("], Output=");
 		ret.append(outputID);
-		ret.append(", Inputs={");
+		ret.append("], Inputs={");
 		for (String inputId: inputIds) {
 			ret.append(' ');
 			ret.append(inputId);
 		}
-		ret.append("} TF class=");
-		ret.append(getTfClass());
+		ret.append("} TF=");
+		ret.append(transferFunctionID);
 		ret.append(", DASU=");
 		ret.append(dasuID);
 		ret.append(", Props={");
@@ -195,5 +185,13 @@ public class JsonAcseDao {
 	 */
 	public AsceDao toAsceDao() {
 		return this.asce;
+	}
+
+	public String getTransferFunctionID() {
+		return transferFunctionID;
+	}
+
+	public void setTransferFunctionID(String transferFunctionID) {
+		this.transferFunctionID = transferFunctionID;
 	}
 }

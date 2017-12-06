@@ -10,6 +10,8 @@ import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.LogLevelDao;
 import org.eso.ias.cdb.pojos.PropertyDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
+import org.eso.ias.cdb.pojos.TFLanguageDao;
+import org.eso.ias.cdb.pojos.TransferFunctionDao;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
@@ -149,7 +151,7 @@ public class IasCdbRdb {
     	AsceDao asce = new AsceDao();
     	asce.setId("ASCE-ID");
     	asce.setOutput(i2);
-    	asce.setTfClass("alma.acs.eso.org.tf.Multiplicity");
+    	asce.setTransferFunction(new TransferFunctionDao("org.class",TFLanguageDao.JAVA));
     	asce.getProps().add(asce_p1);
     	asce.getProps().add(asce_p2);
     	asce.getInputs().add(i1);

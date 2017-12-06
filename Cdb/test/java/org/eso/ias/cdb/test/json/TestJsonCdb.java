@@ -4,9 +4,12 @@ import static org.junit.Assert.*;
 
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
@@ -23,12 +26,18 @@ import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.LogLevelDao;
 import org.eso.ias.cdb.pojos.PropertyDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
+import org.eso.ias.cdb.pojos.TFLanguageDao;
+import org.eso.ias.cdb.pojos.TransferFunctionDao;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 /**
  * Test reading and writing of JSON CDB.
+ * <P>
+ * Some tests, write the CDB and then read data out of it.
+ * <BR>Other tests instead uses the JSON CDB contained in testCdb
+ * whose description is in testCdb/ReadMe.txt
  * 
  * @author acaproni
  *
@@ -122,13 +131,20 @@ public class TestJsonCdb {
 		dasu1.setId("DasuID1");
 		dasu1.setSupervisor(superv);
 		dasu1.setLogLevel(LogLevelDao.FATAL);
+		IasioDao dasuOutIasio1 = new IasioDao("DASU_OUTPUT1", "desc-dasu-out", 921, IasTypeDao.ALARM);
+		dasu1.setOutput(dasuOutIasio1);
 		superv.addDasu(dasu1);
 		
 		DasuDao dasu2 = new DasuDao();
 		dasu2.setId("DasuID2");
 		dasu2.setSupervisor(superv);
 		dasu1.setLogLevel(LogLevelDao.WARN);
+		IasioDao dasuOutIasio2 = new IasioDao("DASU_OUTPUT2", "desc-dasu-out", 921, IasTypeDao.LONG);
+		dasu2.setOutput(dasuOutIasio2);
 		superv.addDasu(dasu2);
+		
+		cdbWriter.writeIasio(dasuOutIasio1, false);
+		cdbWriter.writeIasio(dasuOutIasio2, true);
 		
 		// DASUs must be in the CDB as well otherwise
 		// included objects cannot be rebuilt.
@@ -158,25 +174,41 @@ public class TestJsonCdb {
 		dasu.setLogLevel(LogLevelDao.FATAL);
 		superv.addDasu(dasu);
 		
+		TransferFunctionDao tfDao = new TransferFunctionDao();
+		tfDao.setClassName("org.eso.ias.tf.Threshold");
+		tfDao.setImplLang(TFLanguageDao.SCALA);
+		
 		AsceDao asce1= new AsceDao();
 		asce1.setId("ASCE1");
 		asce1.setDasu(dasu);
-		asce1.setTfClass("org.eso.ias.tf.EqualTransferFunction");
+		asce1.setTransferFunction(tfDao);
 		IasioDao output1 = new IasioDao("OUT-ID1", "description", 456, IasTypeDao.CHAR);
 		asce1.setOutput(output1);
+		
+		TransferFunctionDao tfDao2 = new TransferFunctionDao();
+		tfDao2.setClassName("org.eso.ias.tf.Min");
+		tfDao2.setImplLang(TFLanguageDao.SCALA);
 		
 		AsceDao asce2= new AsceDao();
 		asce2.setId("ASCE-2");
 		asce2.setDasu(dasu);
 		IasioDao output2 = new IasioDao("ID2", "description", 1000, IasTypeDao.DOUBLE);
 		asce2.setOutput(output2);
-		asce2.setTfClass("org.eso.ias.tf.MinMaxTransferFunction");
+		asce2.setTransferFunction(tfDao2);
+		
+		TransferFunctionDao tfDao3 = new TransferFunctionDao();
+		tfDao3.setClassName("org.eso.ias.tf.Max");
+		tfDao3.setImplLang(TFLanguageDao.JAVA);
+		
 		AsceDao asce3= new AsceDao();
 		asce3.setId("ASCE-ID-3");
 		asce3.setDasu(dasu);
 		IasioDao output3 = new IasioDao("OUT-ID3", "desc3", 456, IasTypeDao.SHORT);
 		asce3.setOutput(output2);
-		asce3.setTfClass("org.eso.ias.tf.MaxTransferFunction");
+		asce3.setTransferFunction(tfDao3);
+		
+		IasioDao dasuOutIasio = new IasioDao("DASU_OUTPUT", "desc-dasu-out", 921, IasTypeDao.ALARM);
+		dasu.setOutput(dasuOutIasio);
 		
 		// Supervisor must be in the CDB as well otherwise
 		// included objects cannot be rebuilt.
@@ -191,6 +223,11 @@ public class TestJsonCdb {
 		cdbWriter.writeIasio(output1, false);
 		cdbWriter.writeIasio(output2, true);
 		cdbWriter.writeIasio(output3, true);
+		cdbWriter.writeIasio(dasuOutIasio, true);
+		
+		cdbWriter.writeTransferFunction(tfDao);
+		cdbWriter.writeTransferFunction(tfDao2);
+		cdbWriter.writeTransferFunction(tfDao3);
 		
 		dasu.addAsce(asce1);
 		dasu.addAsce(asce2);
@@ -203,7 +240,8 @@ public class TestJsonCdb {
 		// Read the DASU from CDB and compare with what we just wrote
 		Optional<DasuDao> theDasuFromCdb = cdbReader.getDasu(dasu.getId());
 		assertTrue("Got a null DASU with ID "+dasu.getId()+" from CDB",theDasuFromCdb.isPresent());
-		assertEquals("The DAUSs differ!", dasu,theDasuFromCdb.get());
+		assertEquals("The DASUs differ!", dasu,theDasuFromCdb.get());
+		assertEquals(theDasuFromCdb.get().getOutput().getId(), dasuOutIasio.getId());
 	}
 
 	@Test
@@ -219,12 +257,19 @@ public class TestJsonCdb {
 		dasu.setId("DasuID1");
 		dasu.setLogLevel(LogLevelDao.FATAL);
 		dasu.setSupervisor(superv);
+
+		IasioDao dasuOutIasio = new IasioDao("DASU_OUTPUT", "desc-dasu-out", 921, IasTypeDao.ALARM);
+		dasu.setOutput(dasuOutIasio);
+		
+		TransferFunctionDao tfDao1 = new TransferFunctionDao();
+		tfDao1.setClassName("org.eso.ias.tf.Threshold");
+		tfDao1.setImplLang(TFLanguageDao.JAVA);
 		
 		// The ASCE to test
 		AsceDao asce = new AsceDao();
 		asce.setId("ASCE-ID-For-Testsing");
 		asce.setDasu(dasu);
-		asce.setTfClass("org.eso.ias.tf.AnotherFunction");
+		asce.setTransferFunction(tfDao1);
 		
 		IasioDao output = new IasioDao("OUTPUT-ID", "One IASIO in output", 8193, IasTypeDao.BYTE);
 		asce.setOutput(output);
@@ -254,8 +299,10 @@ public class TestJsonCdb {
 		// Included objects must be in the CDB as well otherwise
 		// included objects cannot be rebuilt in the ASCE
 		cdbWriter.writeIasio(output, true);
+		cdbWriter.writeIasio(dasuOutIasio, true);
 		cdbWriter.writeSupervisor(superv);
 		cdbWriter.writeDasu(dasu);
+		cdbWriter.writeTransferFunction(tfDao1);
 		
 		
 		cdbWriter.writeAsce(asce);
@@ -263,6 +310,7 @@ public class TestJsonCdb {
 		
 		Optional<AsceDao> optAsce = cdbReader.getAsce(asce.getId());
 		assertTrue("Got a null ASCE with ID "+asce.getId()+" from CDB",optAsce.isPresent());
+		assertEquals(asce.getOutput(),optAsce.get().getOutput());
 		assertEquals("The ASCEs differ!", asce,optAsce.get());
 	}
 
@@ -370,6 +418,128 @@ public class TestJsonCdb {
 		// Check if all IASIOs match with the ones in the sets
 		set.stream().forEach(x -> assertTrue(optSet4.get().contains(x)));
 		set2.stream().forEach(x -> assertFalse(optSet4.get().contains(x)));
+	}
+	
+	/**
+	 * Test the getting of DASUs belonging to a given supervisor
+	 * <P>
+	 * This test runs against the JSON CDB contained in testCdb
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetDasusOfSupervisor() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./testCdb");
+		cdbFiles = new CdbJsonFiles(path);
+		cdbReader = new JsonReader(cdbFiles);
+		// Get the DASUs of a Supervisor that has none
+		Set<DasuDao> dasus = cdbReader.getDasusForSupervisor("Supervisor-ID2");
+		assertTrue(dasus.isEmpty());
+		// Get the DASUs of a Supervisor that has one
+		dasus = cdbReader.getDasusForSupervisor("Supervisor-ID1");
+		assertEquals(1,dasus.size());
+		Iterator<DasuDao> iter = dasus.iterator();
+		DasuDao dasu = iter.next();
+		assertEquals("DasuID1",dasu.getId());
+		// Get the DASUs of a Supervisor that has three
+		dasus = cdbReader.getDasusForSupervisor("Supervisor-ID3");
+		assertEquals(3,dasus.size());
+		Set<String> dasuIds = dasus.stream().map(d -> d.getId()).collect(Collectors.toSet());
+		assertEquals(3,dasuIds.size());
+		dasus.forEach( d -> assertTrue(d.getId().equals("DasuID2") || d.getId().equals("DasuID3")||d.getId().equals("DasuID4")));
+	}
+	
+	/**
+	 * Test the getting of ASCEs belonging to a given DASU
+	 * <P>
+	 * This test runs against the JSON CDB contained in testCdb
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetAscesOfDasu() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./testCdb");
+		cdbFiles = new CdbJsonFiles(path);
+		cdbReader = new JsonReader(cdbFiles);
+		
+		// Get the ASCE of DasuID1 that has no ASCE
+		Set<AsceDao> asces = cdbReader.getAscesForDasu("DasuID1");
+		assertTrue(asces.isEmpty());
+		// Get the ASCEs of DasuID2 that contains ASCE-ID1
+		asces = cdbReader.getAscesForDasu("DasuID2");
+		assertEquals(1, asces.size());
+		asces.forEach( asce -> assertEquals("ASCE-ID1",asce.getId()));
+		
+		// Get the ASCE of DasuID3 that has 3 ASCEs
+		asces = cdbReader.getAscesForDasu("DasuID3");
+		assertEquals(3, asces.size());
+		Set<String> asceIds = asces.stream().map(d -> d.getId()).collect(Collectors.toSet());
+		assertEquals(3, asceIds.size());
+		asces.forEach( a -> assertTrue(a.getId().equals("ASCE-ID2") || a.getId().equals("ASCE-ID3") || a.getId().equals("ASCE-ID4")));
+		
+		// Check the transfer functions
+		for (AsceDao asce: asces) {
+			String asceId = asce.getId();
+			TransferFunctionDao tfDao = asce.getTransferFunction();
+			assertNotNull(tfDao);
+			String className = tfDao.getClassName();
+			assertNotNull(className);
+			TFLanguageDao language = tfDao.getImplLang();
+			assertNotNull(language);
+			if (asceId.equals("ASCE-ID2") || asceId.equals("ASCE-ID3")) {
+				assertEquals("org.eso.ias.tf.AnotherFunction",className);
+				assertEquals(TFLanguageDao.SCALA, language);
+			} else if (asceId.equals("ASCE-ID4")) {
+				assertEquals("org.eso.ias.tf.TestMinMax",className);
+				assertEquals(TFLanguageDao.JAVA, language);
+			}
+		}
+	}
+	
+	/**
+	 * Test the getting of IASIOs belonging to a given ASCE
+	 * <P>
+	 * This test runs against the JSON CDB contained in testCdb
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetIasiosOfAsce() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./testCdb");
+		cdbFiles = new CdbJsonFiles(path);
+		cdbReader = new JsonReader(cdbFiles);
+		
+		// Get the IASIOs of ASCE-ID4 that has 3 inputs
+		Collection<IasioDao> iasios = cdbReader.getIasiosForAsce("ASCE-ID4");
+		assertEquals(3,iasios.size());
+		Set<String> iosIds = iasios.stream().map(d -> d.getId()).collect(Collectors.toSet());
+		assertEquals(3,iosIds.size());
+		iosIds.forEach( a -> assertTrue(a.equals("iasioID-2") || a.equals("iasioID-3") || a.equals("iasioID-4")));
+		
+		// Get the IASIOs of ASCE-ID3 that has 2 inputs
+		iasios = cdbReader.getIasiosForAsce("ASCE-ID3");
+		assertEquals(2,iasios.size());
+	}
+	
+	/**
+	 * Test the writing and reading of the transfer function
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testWriteTansferFunction() throws Exception {
+		TransferFunctionDao tfDao1 = new TransferFunctionDao("org.eso.ias.tf.Test",TFLanguageDao.SCALA);
+		TransferFunctionDao tfDao2 = new TransferFunctionDao("org.eso.ias.tf.MinMax",TFLanguageDao.JAVA);
+		
+		cdbWriter.writeTransferFunction(tfDao1);
+		cdbWriter.writeTransferFunction(tfDao2);
+		
+		Optional<TransferFunctionDao> optTF1 = cdbReader.getTransferFunction(tfDao1.getClassName());
+		assertTrue(optTF1.isPresent());
+		assertEquals(tfDao1, optTF1.get());
+		Optional<TransferFunctionDao> optTF2 = cdbReader.getTransferFunction(tfDao2.getClassName());
+		assertTrue(optTF2.isPresent());
+		assertEquals(tfDao2, optTF2.get());
 	}
 
 }

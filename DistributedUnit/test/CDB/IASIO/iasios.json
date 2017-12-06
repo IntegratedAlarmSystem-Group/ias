@@ -1,0 +1,80 @@
+[
+	{
+		"id":"Temperature",
+		"shortDesc":"Simulated temperature",
+		"iasType":"DOUBLE",
+		"refreshRate":1000
+	},
+	{
+		"id":"ThresholdAlarm",
+		"shortDesc":"Temperature over the limit",
+		"iasType":"ALARM",
+		"refreshRate":1000
+	},
+	{
+            "id":"Temperature1",
+            "shortDesc":"Simulated temperature-1",
+            "iasType":"DOUBLE",
+            "refreshRate":500
+    },
+    {
+            "id":"ASCE-Temp1-Alarm",
+            "shortDesc":"Temp 1 out of range",
+            "iasType":"ALARM",
+            "refreshRate":1000
+    },
+	{
+            "id":"Temperature2",
+            "shortDesc":"Simulated temperature-2",
+            "iasType":"DOUBLE",
+            "refreshRate":750
+    },
+    {
+            "id":"ASCE-Temp2-Alarm",
+            "shortDesc":"Temp 2 out of range",
+            "iasType":"ALARM",
+            "refreshRate":1000
+    },
+	{
+            "id":"Temperature3",
+            "shortDesc":"Simulated temperature-3",
+            "iasType":"DOUBLE",
+            "refreshRate":1000
+    },
+    {
+            "id":"ASCE-Temp3-Alarm",
+            "shortDesc":"Temp 3 out of range",
+            "iasType":"ALARM",
+            "refreshRate":1000
+    },
+	{
+            "id":"Temperature4",
+            "shortDesc":"Simulated temperature-4",
+            "iasType":"DOUBLE",
+            "refreshRate":500
+    },
+    {
+            "id":"ASCE-Temp4-Alarm",
+            "shortDesc":"Temp 4 out of range",
+            "iasType":"ALARM",
+            "refreshRate":1000
+    },
+    {
+            "id":"ASCE-AvgTemp",
+            "shortDesc":"Average of the 4 temps",
+            "iasType":"DOUBLE",
+            "refreshRate":750
+    },
+    {
+            "id":"ASCE-AvgTempAlarm",
+            "shortDesc":"Average temperatures alarm",
+            "iasType":"ALARM",
+            "refreshRate":1000
+    },
+	{
+            "id":"TooManyHighTempAlarm",
+            "shortDesc":"Too many active alarms",
+            "iasType":"ALARM",
+            "refreshRate":1000
+    }
+]

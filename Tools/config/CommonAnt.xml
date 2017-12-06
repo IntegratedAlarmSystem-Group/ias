@@ -140,6 +140,9 @@
 	<target name="clean" depends="init-ias-environment">
 		<echo>Cleaning... ${build.dir}</echo>
 		<delete includeEmptyDirs="true" quiet="true">
+			<fileset dir="${src.dir}" includes="**/*.pyc" defaultexcludes="no"/>
+		</delete>
+		<delete includeEmptyDirs="true" quiet="true">
 			<fileset dir="${build.dir}" includes="**/*" defaultexcludes="no"/>
 		</delete>
 		<delete includeEmptyDirs="true" quiet="true">
@@ -264,7 +267,7 @@
 			<fileset dir="${build.scala.dir}"  includes="**/*"/>
 	  	</delete>
 
-  		<scalac srcdir="${basedir}" destdir="${build.scala.dir}" classpathref="build.classpath" force="changed">
+  		<scalac srcdir="${basedir}" destdir="${build.scala.dir}" classpathref="build.classpath" force="changed" addparams="-feature -deprecation">
           	<!-- addparams="-Yclosure-elim -optimise" -->
   			<include name="**/*.scala"/>
 	        <include name="**/*.java"/>

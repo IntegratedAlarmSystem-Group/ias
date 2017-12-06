@@ -2,7 +2,7 @@ package org.eso.ias.prototype.compele.exceptions
 
 import org.eso.ias.prototype.input.java.IASTypes
 import java.util.Collection
-import scala.collection.JavaConversions
+import scala.collection.JavaConverters
 
 /**
  * Exception thrown by the TF executor when the type
@@ -47,7 +47,7 @@ extends Exception(message) {
    * @param expectedType: the possible types of the HIO
    */
   def this(hioId: String, actualType: IASTypes, expectedTypes: Collection[IASTypes]) {
-    this(hioId,actualType,JavaConversions.collectionAsScalaIterable[IASTypes](expectedTypes))
+    this(hioId,actualType,JavaConverters.collectionAsScalaIterable[IASTypes](expectedTypes))
   }
   
 }

@@ -138,7 +138,6 @@ public class SupervisorDao {
 	
 	
 	public Set<String> getDasusIDs() {
-		System.out.println("Supervisor "+id+": getting DASU IDs");
 		return dasus.stream().map(x -> x.getId()).collect(Collectors.toSet());
 	}
 	

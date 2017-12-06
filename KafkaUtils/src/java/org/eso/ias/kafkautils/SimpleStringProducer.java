@@ -34,11 +34,6 @@ public class SimpleStringProducer {
 	private final String bootstrapServers;
 	
 	/**
-	 * Default list of servers
-	 */
-	public static final String DEFAULT_BOOTSTRAP_SERVERS="localhost:9092";
-	
-	/**
 	 * The topic to send strings to
 	 */
 	private final String topic;
@@ -125,19 +120,25 @@ public class SimpleStringProducer {
 	 * Initialize the producer with the given properties
 	 * <P>
 	 * Servers and ID passed in the constructor override those in the passed properties
+	 * 
+	 * @param props user defined properties
 	 */
 	public void setUp(Properties props) {
+		logger.info("Producer [{}] is building the kafka producer",clientID);
 		Objects.requireNonNull(props);
 		mergeDefaultProps(props);
 		producer = new KafkaProducer<>(props);
+		logger.info("Kafka producer [{}] built",clientID);
 	}
 	
 	/**
 	 * Closes the producer
 	 */
 	public void tearDown() {
+		logger.info("Closing kafka producer [{}]",clientID);
 		closed=true;
 		producer.close();
+		logger.info("Kafka producer [{}] closed",clientID);
 	}
 	
 	/**
@@ -203,7 +204,7 @@ public class SimpleStringProducer {
 		}
 		
 		if (closed) {
-			logger.info("Producer close: [{}] not sent",value);
+			logger.info("Producer [{}] close: [{}] not sent",clientID,value);
 			return;
 		}
 		
@@ -212,7 +213,8 @@ public class SimpleStringProducer {
 		if (sync) {
 			try {
 				RecordMetadata recordMData = future.get(timeout,unit);
-				logger.info("[{}] published on partition {} of topic {} with an offset of {}",
+				logger.info("[{}] published [{}] on partition {} of topic {} with an offset of {}",
+						clientID,
 						value,
 						recordMData.partition(),
 						recordMData.topic(),

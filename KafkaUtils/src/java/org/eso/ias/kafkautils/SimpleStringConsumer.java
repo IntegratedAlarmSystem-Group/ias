@@ -82,14 +82,17 @@ public class SimpleStringConsumer implements Runnable {
 	private static final Logger logger = LoggerFactory.getLogger(SimpleStringConsumer.class);
 	
 	/**
-	 * The kafka group to which this consumer belongs
-	 */
-	private static final String KAFKA_CONSUMER_GROUP = "test";
-
-	/**
 	 * The name of the topic to get events from
 	 */
 	private final String topicName;
+	
+	/**
+	 * The ID of the consumer
+	 * 
+	 * Needed for writing logs as it can happen to have more then
+	 * one consumer logging messages 
+	 */
+	private final String consumerID;
 	
 	/**
 	 * The thread to cleanly close the consumer
@@ -165,9 +168,10 @@ public class SimpleStringConsumer implements Runnable {
 	 * 
 	 * @param servers The kafka servers to connect to
 	 * @param topicName The name of the topic to get events from
+	 * @param consumerID the ID of the conumer
 	 * @param listener The listener of events published in the topic
 	 */
-	public SimpleStringConsumer(String servers, String topicName, KafkaConsumerListener listener) {
+	public SimpleStringConsumer(String servers, String topicName, String consumerID, KafkaConsumerListener listener) {
 		Objects.requireNonNull(servers);
 		this.kafkaServers = servers;
 		Objects.requireNonNull(topicName);
@@ -175,9 +179,15 @@ public class SimpleStringConsumer implements Runnable {
 			throw new IllegalArgumentException("Invalid empty topic name");
 		}
 		this.topicName=topicName.trim();
+		Objects.requireNonNull(consumerID);
+		if (consumerID.trim().isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty consumer ID");
+		}
+		this.consumerID=consumerID.trim();
 		Objects.requireNonNull(listener);
 		this.listener=listener;
-		logger.info("SimpleKafkaConsumer will get events from {} topic connected to kafka broker@{}",
+		logger.info("SimpleKafkaConsumer [{}] will get events from {} topic connected to kafka broker@{}",
+				consumerID,
 				this.topicName,
 				this.kafkaServers);
 	}
@@ -206,7 +216,7 @@ public class SimpleStringConsumer implements Runnable {
 		Runtime.getRuntime().addShutdownHook(shutDownThread);
 		
 		isInitialized.set(true);
-		logger.info("Kafka consumer initialized");
+		logger.info("Kafka consumer [{}] initialized",consumerID);
 	}
 
 	/**
@@ -216,9 +226,8 @@ public class SimpleStringConsumer implements Runnable {
 	 * and returns after the consumer has been assigned to at least 
 	 * one partition. 
 	 * 
-	 * @param startReadingFrom: Starting position in the kafka partition
-	 * @throws KafkaUtilsException: in case of timeout subscribing to the kafkatopic
-	 * @see StartPosition
+	 * @param startReadingFrom Starting position in the kafka partition
+	 * @throws KafkaUtilsException in case of timeout subscribing to the kafkatopic
 	 */
 	public synchronized void startGettingEvents(StartPosition startReadingFrom) 
 	throws KafkaUtilsException {
@@ -227,7 +236,7 @@ public class SimpleStringConsumer implements Runnable {
 			throw new IllegalStateException("Not initialized");
 		}
 		if (thread.get()!=null) {
-			logger.error("Cannot start receiving: already receiving events!");
+			logger.error("Consumer [{}] cannot start receiving: already receiving events!",consumerID);
 			return;
 		}
 		startReadingPos = startReadingFrom;
@@ -241,9 +250,9 @@ public class SimpleStringConsumer implements Runnable {
 				throw new KafkaUtilsException("Timed out while waiting for assignemn to kafka partitions");
 			}
 		} catch (InterruptedException e) {
-			logger.warn("Interrupted");
+			logger.warn("Consumer [{}] Interrupted",consumerID);
 			Thread.currentThread().interrupt();
-			throw new KafkaUtilsException("Interrupted while waiting for assignemn to kafka partitions", e);
+			throw new KafkaUtilsException(consumerID+" interrupted while waiting for assignemn to kafka partitions", e);
 		}
 	}
 	
@@ -255,14 +264,14 @@ public class SimpleStringConsumer implements Runnable {
 	 */
 	private synchronized void stopGettingEvents() {
 		if (thread.get()==null) {
-			logger.error("Cannot stop receiving events as I am not receiving events!");
+			logger.error("[{}] cannot stop receiving events as I am not receiving events!",consumerID);
 			return;
 		}		
 		consumer.wakeup();
 		try {
 			thread.get().join(60000);
 			if (thread.get().isAlive()) {
-				logger.error("The thread to get events did not exit");
+				logger.error("The thread of [{}] to get events did not exit",consumerID);
 			}
 		} catch (InterruptedException ie) {
 			Thread.currentThread().interrupt();
@@ -289,7 +298,7 @@ public class SimpleStringConsumer implements Runnable {
 	private Properties getDefaultProps() {
 		Properties props = new Properties();
 		props.put("bootstrap.servers", kafkaServers);
-		props.put("group.id", KAFKA_CONSUMER_GROUP);
+		props.put("group.id", KafkaHelper.DEFAULT_CONSUMER_GROUP);
 		props.put("enable.auto.commit", "true");
 		props.put("auto.commit.interval.ms", "1000");
 		props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
@@ -302,7 +311,7 @@ public class SimpleStringConsumer implements Runnable {
 	 * Initializes the consumer with default kafka properties
 	 */
 	public void setUp() {
-		logger.info("Setting up the kafka consumer");
+		logger.info("Setting up the kafka consumer [{}]",consumerID);
 		
 		setUp(getDefaultProps());
 	}
@@ -312,14 +321,14 @@ public class SimpleStringConsumer implements Runnable {
 	 */
 	public synchronized void tearDown() {
 		if (isClosed.get()) {
-			logger.debug("Consumer already closed");
+			logger.debug("Consumer [{}] already closed",consumerID);
 			return;
 		}
-		logger.info("Closing...");
+		logger.info("Closing consumer [{}]...",consumerID);
 		isClosed.set(true);
 		Runtime.getRuntime().removeShutdownHook(shutDownThread);
 		stopGettingEvents();
-		logger.info("Consumer cleaned up");
+		logger.info("Consumer [{}] cleaned up",consumerID);
 	}
 
 	/**
@@ -329,7 +338,7 @@ public class SimpleStringConsumer implements Runnable {
 	 */
 	@Override
 	public void run() {
-		logger.info("Thread to get events from the topic started");
+		logger.info("Thread of consumer [{}] to get events from the topic started",consumerID);
 		
 		if (startReadingPos==StartPosition.DEFAULT) {
 			consumer.subscribe(Arrays.asList(topicName));
@@ -353,13 +362,16 @@ public class SimpleStringConsumer implements Runnable {
 				
 				@Override
 				public void onPartitionsRevoked(Collection<TopicPartition> parts) {
-					logger.info("Partition(s) revoked: {}",formatPartitionsStr(parts));
+					logger.info("Partition(s) of consumer [{}] revoked: {}",consumerID, formatPartitionsStr(parts));
 					
 				}
 				
 				@Override
 				public void onPartitionsAssigned(Collection<TopicPartition> parts) {
-					logger.info("Consumer assigned to {} partition(s): {}",parts.size(),formatPartitionsStr(parts));
+					logger.info("Consumer [{}] assigned to {} partition(s): {}",
+							consumerID,
+							parts.size(),
+							formatPartitionsStr(parts));
 					if (startReadingPos==StartPosition.BEGINNING) {
 						consumer.seekToBeginning(new ArrayList<>());
 					} else {
@@ -370,19 +382,20 @@ public class SimpleStringConsumer implements Runnable {
 			});
 		}
 		
-		logger.debug("Start polling loop");
+		logger.debug("Cosumer [{}] : start polling loop",consumerID);
 		while (!isClosed.get()) {
 			ConsumerRecords<String, String> records;
 	         try {
 	        	 records = consumer.poll(POLLING_TIMEOUT);
-	        	 logger.debug("Item read with {} records", records.count());
+	        	 logger.debug("Consumer [{}] got an event read with {} records", consumerID, records.count());
 	        	 processedRecords.incrementAndGet();
 	         } catch (WakeupException we) {
 	        	 continue;
 	         } 
 	         try {
 	        	 for (ConsumerRecord<String, String> record: records) {
-	        		 logger.debug("Notifying listener of [{}] value red from partition {} and offset {} of topic {}",
+	        		 logger.debug("Consumer [{}]: notifying listener of [{}] value red from partition {} and offset {} of topic {}",
+	        				 consumerID,
 	        				 record.value(),
 	        				 record.partition(),
 	        				 record.offset(),
@@ -391,13 +404,13 @@ public class SimpleStringConsumer implements Runnable {
 	        		 listener.stringEventReceived(record.value());
 	        	 }
 	         } catch (Throwable t) {
-	        	 logger.error("Exception got processing events: records lost!",t);
+	        	 logger.error("Consumer [{}] got an exception got processing events: records lost!",consumerID,t);
 	         }
 	         
 	     }
-		logger.info("Closing the consumer");
+		logger.info("Closing the consumer [{}]",consumerID);
 		consumer.close();
-		logger.info("Thread to get events from the topic terminated");
+		logger.info("Thread of [{}] to get events from the topic terminated",consumerID);
 	}
 	
 	/**

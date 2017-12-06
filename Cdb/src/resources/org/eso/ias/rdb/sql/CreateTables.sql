@@ -59,6 +59,9 @@ CREATE TABLE IASIO (
   CONSTRAINT IASIO_PK PRIMARY KEY(io_id),
   CONSTRAINT refreshGreaterThenZero CHECK (refreshRate>0));
 
+  /*
+    The Supervisor 
+   */
 CREATE TABLE SUPERVISOR (
   supervisor_id VARCHAR2(64) NOT NULL,
   hostName VARCHAR2(64) NOT NULL,
@@ -70,22 +73,30 @@ The table describing a DASU
 */
 CREATE TABLE DASU (
   dasu_id  VARCHAR2(64) NOT NULL,
-  logLevel VARCHAR2(10),
+  logLevel VARCHAR2(16),
   supervisor_id VARCHAR2(64) NOT NULL,
+  output_id VARCHAR2(64) NOT NULL,
   CONSTRAINT DASU_PK PRIMARY KEY(dasu_id),
-  CONSTRAINT DASU_SUPERVISOR_FK FOREIGN KEY (supervisor_id) REFERENCES SUPERVISOR(supervisor_id));
+  CONSTRAINT DASU_SUPERVISOR_FK FOREIGN KEY (supervisor_id) REFERENCES SUPERVISOR(supervisor_id),
+  CONSTRAINT DASU_OUTPUT_FK FOREIGN KEY(output_id) REFERENCES IASIO(io_id));
+  
+CREATE TABLE TRANSFER_FUNC (
+	className_id VARCHAR2(64) NOT NULL,
+	implLang VARCHAR2(16),
+	CONSTRAINT TFUNC_PK PRIMARY KEY(className_id));
 
 /*
   The table for a ASCE
 */
 CREATE TABLE ASCE ( 
   asce_id VARCHAR(64) NOT NULL,
-  tfClass VARCHAR2(96) NOT NULL,
+  transf_fun_id VARCHAR2(96) NOT NULL,
   output_id VARCHAR2(64) NOT NULL,
   dasu_id VARCHAR2(64) NOT NULL,
   CONSTRAINT ASCE_PK PRIMARY KEY(asce_id),
   CONSTRAINT ASCE_output_FK FOREIGN KEY (output_id) REFERENCES IASIO(io_id),
-  CONSTRAINT ASCE_DASU_FK FOREIGN KEY (dasu_id) REFERENCES DASU(dasu_id));
+  CONSTRAINT ASCE_DASU_FK FOREIGN KEY (dasu_id) REFERENCES DASU(dasu_id),
+  CONSTRAINT ASCE_TRANSFUN_FK FOREIGN KEY(transf_fun_id) REFERENCES TRANSFER_FUNC(className_id));
   
   /*
   One ASCE can have zero to many properties.

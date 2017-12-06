@@ -71,7 +71,7 @@ public class MonitorPointData extends MonitorPointDataToBuffer{
 	}
 
 	/**
-	 * @param pluginID the pluginID to set
+	 * @param systemID the pluginID to set
 	 */
 	public void setPluginID(String systemID) {
 		Objects.requireNonNull(systemID);

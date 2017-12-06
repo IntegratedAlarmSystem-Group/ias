@@ -83,7 +83,7 @@ public class ListenerPublisher extends PublisherBase {
 	 * @param executorSvc The executor service
 	 * @param listener the listener
 	 * 
-	 * @see BufferedPublisherBase#BufferedPublisherBase(String, String, int, ScheduledExecutorService)
+	 * @see BufferedPublisherBase#BufferedPublisherBase(String, String, String, int, ScheduledExecutorService)
 	 */
 	public ListenerPublisher(
 			String pluginId, 

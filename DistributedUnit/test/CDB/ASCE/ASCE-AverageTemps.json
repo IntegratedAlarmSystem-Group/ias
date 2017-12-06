@@ -1,0 +1,8 @@
+{
+	"dasuID":"DasuWith7ASCEs",
+	"outputID":"ASCE-AvgTemp",
+	"props":[],
+	"id":"ASCE-AverageTemps",
+	"transferFunctionID":"org.eso.ias.dasu.test.transferfunction.AverageTempsTF",
+	"inputIDs":["Temperature1","Temperature2","Temperature3","Temperature4"]
+}

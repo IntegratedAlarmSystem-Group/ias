@@ -1,5 +1,6 @@
 //src/java=main
 //src/scala=main
+//test/java=tests
 //test/scala=tests
 P=
 Xcheckinit=false
@@ -33,8 +34,8 @@ optimise=false
 recompileOnMacroDef=true
 relationsDebug=false
 scala.compiler.additionalParams=
-scala.compiler.installation=2.11
-scala.compiler.sourceLevel=2.11
+scala.compiler.installation=-1489517024
+scala.compiler.sourceLevel=2.12
 scala.compiler.useProjectSettings=true
 stopBuildOnError=true
 target=jvm-1.8

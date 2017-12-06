@@ -12,6 +12,7 @@
         <property name="hibernate.format_sql">true</property>
 	    <property name="current_session_context_class">thread</property>
 	    <property name="hibernate.id.new_generator_mappings">true</property>
+	    <property name = "hibernate.dialect">org.hibernate.dialect.Oracle10gDialect</property>
 
 		<!-- c3p0 config http://www.hibernate.org/214.html -->
         <property name="connection.provider_class">org.hibernate.connection.C3P0ConnectionProvider</property>        
@@ -29,6 +30,10 @@
         <!-- mapping -->
 	    <mapping class="org.eso.ias.cdb.pojos.IasDao"></mapping>
 	    <mapping class="org.eso.ias.cdb.pojos.PropertyDao"></mapping>
-	    
+	    <mapping class="org.eso.ias.cdb.pojos.IasioDao"></mapping>
+	    <mapping class="org.eso.ias.cdb.pojos.TransferFunctionDao"></mapping>
+		<mapping class="org.eso.ias.cdb.pojos.AsceDao"></mapping>
+		<mapping class="org.eso.ias.cdb.pojos.DasuDao"></mapping>
+		<mapping class="org.eso.ias.cdb.pojos.SupervisorDao"></mapping>
     </session-factory>
 </hibernate-configuration>

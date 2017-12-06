@@ -25,6 +25,7 @@ import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
+import org.eso.ias.cdb.pojos.TransferFunctionDao;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -343,5 +344,23 @@ public class JsonWriter implements CdbWriter {
 		}
 		IasioDao ret = new IasioDao(iasioId,iasioDesc,iasioRate,IasTypeDao.valueOf(iasioType));
 		return ret;
+	}
+
+	@Override
+	public void writeTransferFunction(TransferFunctionDao transferFunction) throws IasCdbException {
+		Objects.requireNonNull(transferFunction);
+		File f;
+		try {
+			f = cdbFileNames.getTFFilePath(transferFunction.getClassName()).toFile();
+		}catch (IOException ioe) {
+			throw new IasCdbException("Error getting TF file",ioe);
+		}
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
+		try {
+			mapper.writeValue(f, transferFunction);
+		}catch (Throwable t) {
+			throw new IasCdbException("Error writing JSON TF",t);
+		}
 	}
 }

@@ -15,6 +15,7 @@ import org.eso.ias.cdb.pojos.DasuDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
+import org.eso.ias.cdb.pojos.TransferFunctionDao;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
@@ -28,12 +29,12 @@ import org.hibernate.Transaction;
 public class RdbWriter implements CdbWriter {
 	
 	/**
-	 * Helper object to reand and write the RDB
+	 * Helper object to read and write the RDB
 	 */
 	private final RdbUtils rdbUtils = RdbUtils.getRdbUtils();
 
 	/**
-	 * Write the ias in the passed file.
+	 * Write the ias in the CDB.
 	 * 
 	 * @param ias The IAS configuration to write in the file
 	 * @see org.eso.ias.cdb.CdbWriter#writeIas(org.eso.ias.cdb.pojos.IasDao)
@@ -50,7 +51,7 @@ public class RdbWriter implements CdbWriter {
 	}
 
 	/**
-	 * Write the Supervisor in the passed file.
+	 * Write the Supervisor in the CDB.
 	 * 
 	 * @param superv The Supervisor configuration to write in the file
 	 * @see org.eso.ias.cdb.CdbWriter#writeSupervisor(org.eso.ias.cdb.pojos.SupervisorDao)
@@ -67,7 +68,7 @@ public class RdbWriter implements CdbWriter {
 	}
 
 	/**
-	 *  Write the DASU in the passed file.
+	 *  Write the DASU in the CDB.
 	 * 
 	 * @param dasu The DASU configuration to write in the file
 	 * @see org.eso.ias.cdb.CdbWriter#writeDasu(org.eso.ias.cdb.pojos.DasuDao)
@@ -83,7 +84,7 @@ public class RdbWriter implements CdbWriter {
 	}
 
 	/**
-	 * Write the ASCE in the passed file.
+	 * Write the ASCE in the CDB.
 	 * 
 	 * @param asce The ASCE configuration to write in the file
 	 * @see org.eso.ias.cdb.CdbWriter#writeAsce(org.eso.ias.cdb.pojos.AsceDao)
@@ -99,7 +100,7 @@ public class RdbWriter implements CdbWriter {
 	}
 
 	/**
-	 * Write the IASIO in the file.
+	 * Write the IASIO in the CDB.
 	 * <P>
 	 * This method delegates to {@link #writeIasios(Set, boolean)}
 	 * 
@@ -116,7 +117,7 @@ public class RdbWriter implements CdbWriter {
 	}
 
 	/**
-	 * Write the IASIOs in the file.
+	 * Write the IASIOs in the CDB.
 	 * 
 	 * @param iasios The IASIOs to write in the file
 	 * @param append: if <code>true</code> the passed iasios are appended to the file
@@ -129,6 +130,22 @@ public class RdbWriter implements CdbWriter {
 		Session s=rdbUtils.getSession();
 		Transaction t =s.beginTransaction();
 		iasios.stream().forEach(io -> s.merge(io));
+		t.commit();
+		s.flush();
+	}
+
+	/**
+	 * Write the transfer function in the CDB
+	 * 
+	 * @param tf The transfer function to write in the CDB
+	 * @see CdbWriter#writeTransferFunction(TransferFunctionDao)
+	 */
+	@Override
+	public void writeTransferFunction(TransferFunctionDao tf) throws IasCdbException {
+		Objects.requireNonNull(tf, "The TF object to persist can't be null");
+		Session s=rdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		s.merge(tf);
 		t.commit();
 		s.flush();
 	}

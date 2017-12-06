@@ -3,6 +3,8 @@
  */
 package org.eso.ias.cdb.rdb;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -17,6 +19,7 @@ import org.eso.ias.cdb.pojos.DasuDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
+import org.eso.ias.cdb.pojos.TransferFunctionDao;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
@@ -53,7 +56,7 @@ public class RdbReader implements CdbReader {
 		
 		List<IasDao> iasdaos = (List<IasDao>)s.createQuery("FROM IasDao").list();
 		Set<IasDao> ret = new HashSet<>();
-		for (Iterator iterator = iasdaos.iterator(); iterator.hasNext();){
+		for (Iterator<IasDao> iterator = iasdaos.iterator(); iterator.hasNext();){
 			ret.add((IasDao)iterator.next());
 		}
 		t.commit();
@@ -88,7 +91,7 @@ public class RdbReader implements CdbReader {
 	/**
 	 * Get the IASIO with the given ID
 	 * 
-	 * @param id The ID of the IASIO to read the congiuration
+	 * @param id The ID of the IASIO to read the configuration
 	 * @return The IASIO red from the file
 	 * @see org.eso.ias.cdb.CdbReader#getIasio(java.lang.String)
 	 */
@@ -107,7 +110,7 @@ public class RdbReader implements CdbReader {
 	}
 
 	/**
-	 * Read the supervisor configuration from the file. 
+	 * Read the supervisor configuration from the CDB. 
 	 * 
 	 * @param id The not null nor empty supervisor identifier
 	 * @see org.eso.ias.cdb.CdbReader#getSupervisor(java.lang.String)
@@ -126,7 +129,7 @@ public class RdbReader implements CdbReader {
 	}
 
 	/**
-	 * Read the ASCE configuration from the file. 
+	 * Read the ASCE configuration from the CDB. 
 	 * 
 	 * @param id The not null nor empty ASCE identifier
 	 * @see org.eso.ias.cdb.CdbReader#getAsce(java.lang.String)
@@ -143,9 +146,29 @@ public class RdbReader implements CdbReader {
 		t.commit();
 		return Optional.ofNullable(asce);
 	}
+	
+	/**
+	 * Read the transfer function configuration from the CDB. 
+	 * 
+	 * @param tf_id The not <code>null</code> nor empty transfer function identifier
+	 * @return The transfer function red from the CDB
+	 * @see org.eso.ias.cdb.CdbReader#getTransferFunction(String)
+	 */
+	@Override
+	public Optional<TransferFunctionDao> getTransferFunction(String tf_id) throws IasCdbException {
+		Objects.requireNonNull(tf_id, "The ID of the TF cant't be null");
+		if (tf_id.isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty TF ID");
+		}
+		Session s=rdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		TransferFunctionDao tf = s.get(TransferFunctionDao.class,tf_id);
+		t.commit();
+		return Optional.ofNullable(tf);
+	}
 
 	/**
-	 * Read the DASU configuration from the file. 
+	 * Read the DASU configuration from the CDB. 
 	 * 
 	 * @param id The not null nor empty DASU identifier
 	 * @see org.eso.ias.cdb.CdbReader#getDasu(java.lang.String)
@@ -161,6 +184,62 @@ public class RdbReader implements CdbReader {
 		DasuDao dasu = s.get(DasuDao.class,id);
 		t.commit();
 		return Optional.ofNullable(dasu);
+	}
+	
+	/**
+	 * Return the DASUs belonging to the given Supervisor.
+	 * 
+	 * @param id The not <code>null</code> nor empty identifier of the supervisor
+	 * @return A set of DASUs running in the supervisor with the passed id
+	 * @throws IasCdbException in case of error reading CDB or if the 
+	 *                         supervisor with the give identifier does not exist
+	 */
+	@Override
+	public Set<DasuDao> getDasusForSupervisor(String id) throws IasCdbException {
+		Objects.requireNonNull(id, "The ID cant't be null");
+		if (id.isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty ID");
+		}
+		Optional<SupervisorDao> superv = getSupervisor(id);
+		Set<DasuDao> ret = superv.orElseThrow(() -> new IasCdbException("Supervisor ["+id+"] not dound")).getDasus();
+		return (ret==null)? new HashSet<>() : ret;
+	}
+	
+	/**
+	 * Return the ASCEs belonging to the given DASU.
+	 * 
+	 * @param id The not <code>null</code> nor empty identifier of the supervisor
+	 * @return A set of DASUs running in the DASU with the passed id
+	 * @throws IasCdbException in case of error reading CDB or if the 
+	 *                         DASU with the give identifier does not exist
+	 */
+	@Override
+	public Set<AsceDao> getAscesForDasu(String id) throws IasCdbException {
+		Objects.requireNonNull(id, "The ID cant't be null");
+		if (id.isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty ID");
+		}
+		Optional<DasuDao> dasu = getDasu(id);
+		Set<AsceDao> ret = dasu.orElseThrow(() -> new IasCdbException("DASU ["+id+"] not dound")).getAsces();
+		return (ret==null)? new HashSet<>() : ret;
+	}
+	
+	/**
+	 * Return the IASIOs in input to the given ASCE.
+	 * 
+	 * @param id The not <code>null</code> nor empty identifier of the ASCE
+	 * @return A set of IASIOs running in the ASCE with the passed id
+	 * @throws IasCdbException in case of error reading CDB or if the 
+	 *                         ASCE with the give identifier does not exist
+	 */
+	public Collection<IasioDao> getIasiosForAsce(String id) throws IasCdbException {
+		Objects.requireNonNull(id, "The ID cant't be null");
+		if (id.isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty ID");
+		}
+		Optional<AsceDao> asce = getAsce(id);
+		Collection<IasioDao> ret = asce.orElseThrow(() -> new IasCdbException("ASCE ["+id+"] not dound")).getInputs();
+		return (ret==null)? new ArrayList<>() : ret;
 	}
 
 }

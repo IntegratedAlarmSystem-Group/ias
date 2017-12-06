@@ -8,6 +8,7 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.kstream.KStreamBuilder;
+import org.eso.ias.kafkautils.KafkaHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +18,7 @@ import org.slf4j.LoggerFactory;
  * <P>
  * The list of kafka servers to connect to and the names of
  * the input and output topics can be passed by means of
- * java properties ({@link #ConverterKafkaStream(Properties)})
+ * java properties ({@link #ConverterKafkaStream(String, Properties)})
  * or programmatically. 
  * 
  * 
@@ -41,11 +42,6 @@ public class ConverterKafkaStream extends ConverterStream {
 	 * topic where plugins push values
 	 */
 	private static final String PLUGIN_TOPIC_NAME_PROP_NAME = "org.eso.ias.converter.kafka.inputstream";
-	
-	/**
-	 * The default name for the topic where plugins push values
-	 */
-	public static final String DEFAULTPLUGINSINPUTKTOPICNAME = "PluginsKTopic";
 	
 	/**
 	 * The name of the topic to send values to the core of the IAS
@@ -84,17 +80,12 @@ public class ConverterKafkaStream extends ConverterStream {
 	private KafkaStreams streams;
 	
 	/**
-	 * The default name for the topic to send values to the core
-	 */
-	public static final String DEFAULTCOREKTOPICNAME= "IasCoreKTopic";
-	
-	/**
 	 * The empty constructor gets the kafka servers, and the topics
 	 * for the streaming from the passed properties or falls
 	 * back to the defaults.
 	 * 
 	 * @param converterID The ID of the converter.
-	 * @parm props the properties to get kafka serves and topic anmes
+	 * @param props the properties to get kafka serves and topic anmes
 	 */
 	public ConverterKafkaStream(
 			String converterID,
@@ -102,8 +93,8 @@ public class ConverterKafkaStream extends ConverterStream {
 		super(converterID);
 		Objects.requireNonNull(props);
 		kafkaServers = props.getProperty(KAFKA_SERVERS_PROP_NAME,DEFAULTKAFKASERVERS);
-		pluginsInputKTopicName=props.getProperty(PLUGIN_TOPIC_NAME_PROP_NAME, DEFAULTPLUGINSINPUTKTOPICNAME);
-		iasCoreOutputKTopicName=props.getProperty(IASCORE_TOPIC_NAME_PROP_NAME, DEFAULTCOREKTOPICNAME);
+		pluginsInputKTopicName=props.getProperty(PLUGIN_TOPIC_NAME_PROP_NAME, KafkaHelper.PLUGINS_TOPIC_NAME);
+		iasCoreOutputKTopicName=props.getProperty(IASCORE_TOPIC_NAME_PROP_NAME, KafkaHelper.IASIOs_TOPIC_NAME);
 		
 		logger.debug("Will connect to {} to send data from {} to {}",
 				kafkaServers,

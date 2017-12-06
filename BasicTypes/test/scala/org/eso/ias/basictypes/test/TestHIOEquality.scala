@@ -9,15 +9,17 @@ import org.eso.ias.prototype.input.java.IASTypes
 import org.eso.ias.prototype.input.java.IdentifierType
 import org.eso.ias.plugin.AlarmSample
 
+// The following import is required by the usage of the fixture
+import language.reflectiveCalls
+
 class TestHIOEquality extends FlatSpec {
   
   def fixture = {
     new {
-      val supervId = new Identifier(Some[String]("superVID"),Some(IdentifierType.SUPERVISOR),None)
-      val dasuId = new Identifier(Some[String]("dasuVID"),Some(IdentifierType.DASU),Some(supervId))
-      val asceId = new Identifier(Some[String]("asceVID"),Some(IdentifierType.ASCE),Some(dasuId))
+      val dasuId = new Identifier("dasuVID",IdentifierType.DASU,None)
+      val asceId = new Identifier("asceVID",IdentifierType.ASCE,Option(dasuId))
       
-      val id = new Identifier(Some[String]("TestID"), Some[IdentifierType](IdentifierType.IASIO),Some(asceId))
+      val id = new Identifier("TestID", IdentifierType.IASIO,Option(asceId))
       val refreshRate=InOut.MinRefreshRate+10;
     }
   }
@@ -26,8 +28,9 @@ class TestHIOEquality extends FlatSpec {
   
   it must "properly recognize if 2 values are equal" in {
     val f = fixture
-    val hioInt = new InOut[Int](Some(3),f.id,f.refreshRate,OperationalMode.UNKNOWN,Validity.Unreliable,IASTypes.INT)
-    val newHIO = new InOut[Int](Some(3),f.id,f.refreshRate,OperationalMode.UNKNOWN,Validity.Unreliable,IASTypes.INT)
+    
+    val hioInt = new InOut[Int](Some[Int](3),f.id,f.refreshRate,OperationalMode.UNKNOWN,Validity.Unreliable,IASTypes.INT)
+    val newHIO = new InOut[Int](Some[Int](3),f.id,f.refreshRate,OperationalMode.UNKNOWN,Validity.Unreliable,IASTypes.INT)
     
     val v1 = hioInt.actualValue.value
     assert(v1.isDefined)
@@ -123,7 +126,7 @@ class TestHIOEquality extends FlatSpec {
     assert(hioOtherModeInt!=hioInt)
     assert(hioOtherModeInt.hashCode()!=hioInt.hashCode()) // Not required in the contract of hashCode
     
-    val id2 = new Identifier(Some[String]("AnotherID"), Some(IdentifierType.MONITORED_SOFTWARE_SYSTEM),None)
+    val id2 = new Identifier("AnotherID", IdentifierType.MONITORED_SOFTWARE_SYSTEM,None)
     val hioOtherIDInt = new InOut[Int](Some(3),id2,f.refreshRate,OperationalMode.OPERATIONAL,Validity.Unreliable,IASTypes.INT)
     assert(hioOtherIDInt!=hioInt)
     assert(hioOtherIDInt.hashCode()!=hioInt.hashCode()) // Not required in the contract of hashCode

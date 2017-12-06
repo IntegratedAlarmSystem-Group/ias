@@ -102,7 +102,7 @@ public class ValueMapper implements Function<String, String> {
 		Objects.requireNonNull(converterId);
 		Objects.requireNonNull(iasioId);
 		
-		Identifier monSystemId = new Identifier(monitoredSystemId,IdentifierType.MONITORED_SOFTWARE_SYSTEM,null);
+		Identifier monSystemId = new Identifier(monitoredSystemId,IdentifierType.MONITORED_SOFTWARE_SYSTEM);
 		Identifier plugId = new Identifier(pluginId,IdentifierType.PLUGIN,monSystemId);
 		Identifier converterIdent = new Identifier(converterID,IdentifierType.CONVERTER,plugId);
 		Identifier iasioIdent = new Identifier(iasioId,IdentifierType.IASIO,converterIdent);
@@ -113,6 +113,9 @@ public class ValueMapper implements Function<String, String> {
 	 * Convert the {@link MonitorPointData} received by a plugin 
 	 * to a {@link IASValue} to send to the core of the IAS
 	 * 
+	 * @param remoteSystemData the monitor point to translate
+	 * @param type the type of the monitor point
+	 * @return the IASValue corresponding on the monitor point
 	 */
 	public IASValue<?> translate(MonitorPointData remoteSystemData, IASTypes type) {
 		Objects.requireNonNull(type);
