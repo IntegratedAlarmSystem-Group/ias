@@ -10,6 +10,7 @@ import sys
 import os
 import shutil
 from subprocess import call
+from glob import glob
 from IASApiDocs.DocGenerator import DocGenerator
 
 class PydocBuilder(DocGenerator):
@@ -45,6 +46,67 @@ class PydocBuilder(DocGenerator):
         
         return ret 
         
+    def buildIndex(self,folder):
+        """
+        Build the index.thm file needed by github web server.
+        
+        The index will simply list the generated html files
+        
+        @param folder: the folder containing html files to index
+        """
+        print "Generating index in",folder
+        
+        htmlFilePaths = glob(folder+"/*.html")
+        htmlFiles = []
+        for f in htmlFilePaths:
+            parts = f.split("/")
+            fileName = parts[len(parts)-1]
+            htmlFiles.append(fileName)
+        htmlFiles.sort()
+        
+        # Look for python modules that can be taken from
+        # file names having 2 dots like IASApiDocs.DocGenerator.html
+        pyModules = []
+        for f in htmlFiles:
+            parts = f.split(".")
+            if (len(parts)>2):
+                if (parts[0] not in pyModules):
+                    pyModules.append(parts[0])
+        pyModules.sort()
+        print "Python modules",pyModules
+        
+        msg = "<!DOCTYPE html><html>\n<body>\n"
+        msg += "\t<h1>IAS python API</h1>\n"
+        msg += "\t<h2>Scripts</h2>\n"
+        msg += "\t<UL>\n"
+        
+        for f in htmlFiles:
+            parts = f.split(".")
+            if (len(parts)==2):
+                if parts[0] not in pyModules:
+                    noExtension=os.path.splitext(f)[0]
+                    msg+= '\t\t<LI><A href="'+f+'">'+noExtension+'</A>\n'
+        msg += "\t</UL>\n"
+        
+        msg += "\t<h2>Modules</h2>\n"
+        for m in pyModules:
+            msg +="\t\t<h3>"+m+"</h3>\n"
+            msg += "\t\t<UL>\n"
+            for f in htmlFiles:
+                parts = f.split(".")
+                if (parts[0]==m):
+                    noExtension=os.path.splitext(f)[0]
+                    msg+= '\t\t\t<LI><A href="'+f+'">'+noExtension+'</A>\n'
+            msg += "\t\t</UL>\n"
+        
+        msg+= "</body>\n"
+        
+        text_file = open(folder+"/index.html", "w")
+        text_file.write(msg)
+        text_file.close()
+        
+        print folder+"/index.html written"
+    
     def buildPydocs(self):
         """
         Build the pydocs 
@@ -78,5 +140,6 @@ class PydocBuilder(DocGenerator):
             print "Changing folder back to",oldWD
             os.chdir(oldWD)
         
+        self.buildIndex(self.dstFolder)
         return ret
         
