@@ -9,42 +9,42 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class WSClient {
-	
+
 	/**
 	 * Web socket client
 	 */
 	WebSocketClient client = new WebSocketClient();
-	
+
 	/**
 	 * Topic defined to send messages to the IAS Core to the IAS Web Server
 	 */
 	String KafkaTopic = "test";
-	
+
 	/**
-	 * Custom socket  
+	 * Custom socket
 	 */
 	WebSocketSender socket = new WebSocketSender(this.KafkaTopic);
-	
+
 	/**
 	 * Web Server URI
 	 */
-	String webserverUri = "ws://localhost:8765/core/";
-	
+	String webserverUri = "ws://localhost:8000/core/";
+
 	URI uri;
-	
+
 	ClientUpgradeRequest request = new ClientUpgradeRequest();
-	
+
 	/**
 	 * WebSocket session required to send messages to the Web server
 	 */
 	Session session;
-	
+
 	/**
 	 * The logger
 	 */
 	private static final Logger logger = LoggerFactory.getLogger(WSClient.class);
 
-	
+
 	/**
 	 * Initializes the WebSocket
 	 */
@@ -62,13 +62,13 @@ public class WSClient {
 			logger.error("Error on WebSocket connection");
 		}
 	}
-	
-	
+
+
 	public static void main(String[] args) throws Exception {
-		
+
 		WSClient ws = new WSClient();
 		ws.run();
-		
+
 	}
 
 }
