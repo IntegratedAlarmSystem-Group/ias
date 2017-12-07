@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 
 import org.eso.ias.plugin.filter.FilteredValue;
+import org.eso.ias.prototype.input.java.OperationalMode;
 
 /**
  * The value to send to the core of the IAS.

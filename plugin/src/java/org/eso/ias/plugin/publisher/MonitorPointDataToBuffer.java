@@ -3,7 +3,6 @@ package org.eso.ias.plugin.publisher;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import org.eso.ias.plugin.OperationalMode;
 import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.NoneFilter;
 
@@ -56,6 +55,13 @@ public class MonitorPointDataToBuffer {
 	 * @see OperationalMode
 	 */
 	protected String operationalMode;
+	
+	/**
+	 * The validity
+	 * 
+	 * @see IasValidity
+	 */
+	protected String validity;
 	
 	/**
 	 * ISO 8601 date formatter
@@ -232,5 +238,19 @@ public class MonitorPointDataToBuffer {
 	 */
 	public void setOperationalMode(String operationalMode) {
 		this.operationalMode = operationalMode;
+	}
+
+	/**
+	 * @return the validity
+	 */
+	public String getValidity() {
+		return validity;
+	}
+
+	/**
+	 * param validity the validity
+	 */
+	public void setValidity(String validity) {
+		this.validity = validity;
 	}
 }

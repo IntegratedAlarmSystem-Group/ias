@@ -1,15 +1,14 @@
 package org.eso.ias.prototype.input.java;
 
-import org.eso.ias.plugin.OperationalMode;
-
 public class IasFloat extends IASValue<Float> {
 	
 	public IasFloat(Float value,
 			long tStamp,
 			OperationalMode mode,
+			IasValidity iasValidity,
 			String id,
 			String runningId) {
-		super(value,tStamp,mode,id,runningId,IASTypes.FLOAT);
+		super(value,tStamp,mode,iasValidity,id,runningId,IASTypes.FLOAT);
 	}
 	
 	/**
@@ -24,7 +23,7 @@ public class IasFloat extends IASValue<Float> {
 		if (newValue==null) {
 			throw new NullPointerException("The value can't be null");
 		}
-		return new IasFloat(newValue,System.currentTimeMillis(),mode,id,runningId);
+		return new IasFloat(newValue,System.currentTimeMillis(),mode,iasValidity,id,runningId);
 	}
 	
 	/**
@@ -37,7 +36,7 @@ public class IasFloat extends IASValue<Float> {
 		if (newMode==null) {
 			throw new NullPointerException("The mode can't be null");
 		}
-		return new IasFloat(value,System.currentTimeMillis(),newMode,id,runningId);
+		return new IasFloat(value,System.currentTimeMillis(),newMode,iasValidity,id,runningId);
 	}
 
 }

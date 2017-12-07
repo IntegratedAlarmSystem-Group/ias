@@ -1,10 +1,12 @@
 package org.eso.ias.prototype.input
 
 import org.eso.ias.prototype.utils.ISO8601Helper
-import org.eso.ias.plugin.OperationalMode
+import org.eso.ias.prototype.input.java.OperationalMode
 import org.eso.ias.prototype.input.java.IASTypes._
 import org.eso.ias.prototype.input.java.IASTypes
-import org.eso.ias.plugin.AlarmSample
+import org.eso.ias.prototype.input.java.IasValidity
+import org.eso.ias.prototype.input.java.IasValidity._
+import org.eso.ias.prototype.input.java.AlarmSample
 import org.eso.ias.prototype.input.java.IASValue
 import org.eso.ias.prototype.input.java.IdentifierType
 
@@ -47,30 +49,15 @@ case class InOut[A](
     val id: Identifier,
     val refreshRate: Int,    
     val mode: OperationalMode,
-    val validity: Validity.Value,
+    val validity: Validity,
     val iasType: IASTypes) {
   require(Option[Identifier](id).isDefined,"The identifier must be defined")
   require(refreshRate>=InOut.MinRefreshRate,"Invalid refresh rate (too low): "+refreshRate)
-  require(Option[Validity.Value](validity).isDefined,"Undefined validity is not allowed")
+  require(Option(validity).isDefined,"Undefined validity is not allowed")
   require(Option[IASTypes](iasType).isDefined,"The type must be defined")
   
   val  actualValue: InOutValue[A] = new InOutValue(value)
   if (actualValue.value.isDefined) require(InOut.checkType(actualValue.value.get,iasType),"Type mismatch: ["+actualValue.value.get+"] is not "+iasType)
-  
-  /**
-   * Auxiliary constructor for the case when the InOut has no value
-   * associated
-   * 
-   * @param id: The unique ID of the monitor point
-   * @param refreshRate: The expected refresh rate (msec) of this monitor point
-   *                     (to be used to assess its validity)
- * @param iasType: is the IAS type of this InOut
-   */
-  def this(id: Identifier,
-    refreshRate: Int,
-    iasType: IASTypes) {
-    this(None,id,refreshRate,OperationalMode.UNKNOWN,Validity.Unreliable,iasType)
-  }
   
   override def toString(): String = {
     "Monitor point " + id.toString() +" of IAS type " +iasType+"\n\t" +  
@@ -103,7 +90,7 @@ case class InOut[A](
    * @param valid: the new validity
    * @return A new InOut with updated value and validity
    */
-  def update[B >: A](newValue: Option[B], valid: Validity.Value): InOut[A] = {
+  def update[B >: A](newValue: Option[B], valid: Validity): InOut[A] = {
     if (newValue==actualValue.value && valid==validity) this 
     else InOut(newValue,id,refreshRate,mode,valid,iasType)
   }
@@ -113,7 +100,7 @@ case class InOut[A](
    * 
    * @param valid: The new validity of the monitor point
    */
-  def updateValidity(valid: Validity.Value): InOut[A] = {
+  def updateValidity(valid: Validity): InOut[A] = {
     if (valid==validity) this
     else this.copy(validity=valid)
   }
@@ -186,7 +173,7 @@ object InOut {
   def apply[T](id: Identifier,
     refreshRate: Int,
     iasType: IASTypes): InOut[T] = {
-    InOut[T](None,id,refreshRate,OperationalMode.UNKNOWN,Validity.Unreliable,iasType)
+    InOut[T](None,id,refreshRate,OperationalMode.UNKNOWN,UNRELIABLE,iasType)
   }
   
   /**
@@ -203,7 +190,7 @@ object InOut {
     // TODO: the validity should be set by the plugins (or other DASUs) i.e.
     //       be part of the IASValue. Setting a value as Reliable by default does 
     //       not work (@see Issue #19 on github)
-    val validity = Validity.Reliable
+    val validity = Validity(iasValue.iasValidity)
     val mode = iasValue.mode
     val iasType = iasValue.valueType
     new InOut[T](value, id,refreshRate ,mode, validity,iasType)
