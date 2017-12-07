@@ -180,12 +180,14 @@ class TestHeteroIO extends FlatSpec {
     assert(newiasIo.mode==iasValue.mode)
     
     // Update with another value
-    val iasValue2 = new IasLong(113142L,System.currentTimeMillis(),OperationalMode.OPERATIONAL,RELIABLE,"IasioId",converterId.fullRunningID)
+    val iasValue2 = new IasLong(113142L,System.currentTimeMillis(),OperationalMode.OPERATIONAL,UNRELIABLE,"IasioId",converterId.fullRunningID)
     val newiasIo2 = iasio.update(iasValue2)
     assert(newiasIo2.iasType==iasValue2.valueType)
     assert(newiasIo2.value.isDefined)
     assert(newiasIo2.value.get==iasValue2.value)
     assert(newiasIo2.mode==iasValue2.mode)
-    
+    assert(newiasIo2.validity.iasValidity==iasValue2.iasValidity)
   }
+  
+
 }
