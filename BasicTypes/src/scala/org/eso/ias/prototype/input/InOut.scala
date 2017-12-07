@@ -118,7 +118,7 @@ case class InOut[A](
     require(v.id==this.id.id,"Identifier mismatch: received "+v.id+", expected "+this.id.id)
     assert(v.valueType==this.iasType)
     
-    updateValue(Option[A](v.value)).updateMode(v.mode)
+    updateValue(Option[A](v.value)).updateMode(v.mode).updateValidity(v.iasValidity)
   }
 }
 
