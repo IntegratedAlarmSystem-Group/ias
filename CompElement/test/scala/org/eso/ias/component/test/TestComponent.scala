@@ -2,7 +2,7 @@ package org.eso.ias.component.test
 
 import org.scalatest.FlatSpec
 import org.eso.ias.prototype.input.Identifier
-import org.eso.ias.plugin.OperationalMode
+import org.eso.ias.prototype.input.java.OperationalMode
 import org.eso.ias.prototype.input.Validity
 import scala.collection.mutable.HashMap
 import org.eso.ias.prototype.input.java.IASTypes
@@ -16,9 +16,10 @@ import org.eso.ias.prototype.compele.ComputingElement
 import org.eso.ias.prototype.transfer.ScalaTransfer
 import org.eso.ias.prototype.transfer.JavaTransfer
 import org.eso.ias.prototype.input.java.IdentifierType
-import org.eso.ias.plugin.AlarmSample
+import org.eso.ias.prototype.input.java.AlarmSample
 import org.eso.ias.prototype.input.java.IASValue
 import org.eso.ias.prototype.compele.AsceStates
+import org.eso.ias.prototype.input.java.IasValidity._
 
 /**
  * Test the basic functionalities of the IAS Component,
@@ -51,7 +52,7 @@ class TestComponent extends FlatSpec {
       mpI1Identifier,
       mpRefreshRate,
       OperationalMode.UNKNOWN,
-      Validity.Unreliable,
+      UNRELIABLE,
       IASTypes.ALARM)
   
   // The ID of the second MP
@@ -61,7 +62,7 @@ class TestComponent extends FlatSpec {
       mpI2Identifier,
       mpRefreshRate,
       OperationalMode.UNKNOWN,
-      Validity.Unreliable,
+      UNRELIABLE,
       IASTypes.ALARM)
   val actualInputs: Set[InOut[_]] = Set(mp1,mp2)
   
@@ -73,7 +74,7 @@ class TestComponent extends FlatSpec {
       outId,
       mpRefreshRate,
       OperationalMode.UNKNOWN,
-      Validity.Unreliable,
+      UNRELIABLE,
       IASTypes.ALARM)
     
     val threadaFactory = new CompEleThreadFactory("Test-runninId")
@@ -106,7 +107,7 @@ class TestComponent extends FlatSpec {
       outId,
       mpRefreshRate,
       OperationalMode.UNKNOWN,
-      Validity.Unreliable,
+      UNRELIABLE,
       IASTypes.ALARM)
     
     val threadaFactory = new CompEleThreadFactory("Test-runninId")

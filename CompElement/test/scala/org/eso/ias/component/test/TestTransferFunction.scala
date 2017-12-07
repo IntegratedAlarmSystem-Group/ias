@@ -3,7 +3,7 @@ package org.eso.ias.component.test
 import org.scalatest.FlatSpec
 import org.eso.ias.prototype.input.InOut
 import org.eso.ias.prototype.input.Identifier
-import org.eso.ias.plugin.OperationalMode
+import org.eso.ias.prototype.input.java.OperationalMode
 import org.eso.ias.prototype.input.Validity
 import org.eso.ias.prototype.compele.ComputingElement
 import org.eso.ias.prototype.input.java.IASTypes
@@ -17,8 +17,9 @@ import org.eso.ias.prototype.compele.AsceStates
 import org.eso.ias.prototype.transfer.JavaTransfer
 import org.eso.ias.prototype.transfer.ScalaTransfer
 import org.eso.ias.prototype.input.java.IdentifierType
-import org.eso.ias.plugin.AlarmSample
+import org.eso.ias.prototype.input.java.AlarmSample
 import org.ias.prototype.logging.IASLogger
+import org.eso.ias.prototype.input.java.IasValidity._
 
 class TestTransferFunction extends FlatSpec {
   
@@ -46,7 +47,7 @@ class TestTransferFunction extends FlatSpec {
       outId,
       mpRefreshRate, 
       OperationalMode.OPERATIONAL,
-      Validity.Unreliable, IASTypes.ALARM)
+      Validity(UNRELIABLE), IASTypes.ALARM)
       
     // The IDs of the monitor points in input 
     // to pass when building a Component
@@ -64,7 +65,7 @@ class TestTransferFunction extends FlatSpec {
           mpId,
           mpRefreshRate,
           OperationalMode.OPERATIONAL,
-          Validity.Unreliable, IASTypes.ALARM)
+          UNRELIABLE, IASTypes.ALARM)
       } else {
         val mpVal = 1L
         InOut[Long](
@@ -72,7 +73,7 @@ class TestTransferFunction extends FlatSpec {
           mpId,
           mpRefreshRate,
           OperationalMode.OPERATIONAL,
-          Validity.Unreliable, IASTypes.LONG)
+          UNRELIABLE, IASTypes.LONG)
       }
       inputsMPs+=(mp.id.id -> mp)
     }
@@ -128,14 +129,14 @@ class TestTransferFunction extends FlatSpec {
   it must "set the validity to the lower value" in new CompBuilder {
     val component: ComputingElement[AlarmSample] = javaComp
     javaComp.initialize()
-    assert(component.output.validity==Validity.Unreliable)
+    assert(component.output.validity==Validity(UNRELIABLE))
     
     val keys=inputsMPs.keys.toList.sorted
-    val newChangedMp = inputsMPs.values.map(inout =>  inout.updateValidity(Validity.Reliable))
+    val newChangedMp = inputsMPs.values.map(inout =>  inout.updateValidity(Validity(RELIABLE)))
     newChangedMp.foreach(i => logger.info("Submitting {} with validity {}",i.id.id,i.validity.toString()))
     javaComp.update(newChangedMp.toList)
     javaComp.shutdown()
-    assert(component.output.validity==Validity.Reliable)
+    assert(component.output.validity==Validity(RELIABLE))
   }
   
   it must "run the java TF executor" in new CompBuilder {
@@ -143,8 +144,8 @@ class TestTransferFunction extends FlatSpec {
     // Send all the possible inputs to check if the state changes and the ASCE runs the TF
     inputsMPs.keys.foreach( k => {
       val inout = inputsMPs(k)
-      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.update(Option(AlarmSample.SET), Validity.Reliable)
-        else inout.update(Option(-5L), Validity.Reliable)
+      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.update(Option(AlarmSample.SET), RELIABLE)
+        else inout.update(Option(-5L), RELIABLE)
       inputsMPs(k)=newIasio
     })
     
@@ -164,8 +165,8 @@ class TestTransferFunction extends FlatSpec {
     // Send all the possible inputs to check if the state changes and the ASCE runs the TF
     inputsMPs.keys.foreach( k => {
       val inout = inputsMPs(k)
-      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.update(Option(AlarmSample.SET), Validity.Reliable)
-        else inout.update(Option(-5L), Validity.Reliable)
+      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.update(Option(AlarmSample.SET), RELIABLE)
+        else inout.update(Option(-5L), RELIABLE)
       inputsMPs(k)=newIasio
     })
     
@@ -186,8 +187,8 @@ class TestTransferFunction extends FlatSpec {
     // Send all the possible inputs to check if the state changes and the ASCE runs the TF
     inputsMPs.keys.foreach( k => {
       val inout = inputsMPs(k)
-      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.update(Option(AlarmSample.SET), Validity.Reliable)
-        else inout.update(Option(-5L), Validity.Reliable)
+      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.update(Option(AlarmSample.SET), RELIABLE)
+        else inout.update(Option(-5L), RELIABLE)
       inputsMPs(k)=newIasio
     })
     
