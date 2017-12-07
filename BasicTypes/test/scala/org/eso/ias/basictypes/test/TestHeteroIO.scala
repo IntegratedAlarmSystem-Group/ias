@@ -2,15 +2,15 @@ package org.eso.ias.basictypes.test
 
 import org.scalatest.FlatSpec
 import org.eso.ias.prototype.input.Validity
-import org.eso.ias.plugin.OperationalMode
 import org.eso.ias.prototype.input.Identifier
 import org.eso.ias.prototype.input.InOut
 import org.eso.ias.prototype.input.java.IASTypes
 import org.eso.ias.prototype.input.java.IdentifierType
-import org.eso.ias.plugin.AlarmSample
 import org.eso.ias.prototype.input.java.IASValue
 import org.eso.ias.prototype.input.java.IasLong
 import org.eso.ias.prototype.input.java.IasValidity._
+import org.eso.ias.prototype.input.java.OperationalMode
+import org.eso.ias.prototype.input.java.AlarmSample
 
 /**
  * Test the LongMP

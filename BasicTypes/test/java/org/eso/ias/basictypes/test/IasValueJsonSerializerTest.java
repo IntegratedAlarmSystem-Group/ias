@@ -1,7 +1,7 @@
 package org.eso.ias.basictypes.test;
 
-import org.eso.ias.plugin.AlarmSample;
-import org.eso.ias.plugin.OperationalMode;
+import org.eso.ias.prototype.input.java.AlarmSample;
+import org.eso.ias.prototype.input.java.OperationalMode;
 import org.eso.ias.prototype.input.Identifier;
 import org.eso.ias.prototype.input.java.IASValue;
 import org.eso.ias.prototype.input.java.IasAlarm;
