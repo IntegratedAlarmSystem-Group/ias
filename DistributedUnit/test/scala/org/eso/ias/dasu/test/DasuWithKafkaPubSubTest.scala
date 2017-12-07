@@ -14,7 +14,7 @@ import org.eso.ias.prototype.input.Identifier
 import org.eso.ias.prototype.input.java.IASValue
 import org.eso.ias.prototype.input.java.IasDouble
 import org.eso.ias.prototype.input.java.IdentifierType
-import org.eso.ias.plugin.OperationalMode
+import org.eso.ias.prototype.input.java.OperationalMode
 import org.eso.ias.kafkautils.SimpleStringConsumer
 import org.eso.ias.kafkautils.KafkaHelper
 import org.eso.ias.kafkautils.SimpleStringProducer
@@ -23,6 +23,7 @@ import org.eso.ias.prototype.input.java.IasValueJsonSerializer
 import scala.util.Try
 import scala.collection.mutable.ListBuffer
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition
+import org.eso.ias.prototype.input.java.IasValidity._
 
 /**
  * test if the DASU is capable to get events from
@@ -98,6 +99,7 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener {
         d,
         System.currentTimeMillis(),
         OperationalMode.OPERATIONAL,
+        UNRELIABLE,
         inputID.id,
         inputID.fullRunningID)
   }
