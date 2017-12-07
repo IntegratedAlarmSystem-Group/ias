@@ -66,6 +66,9 @@ class Validity(val iasValidity: IasValidity) extends Ordered[Validity] {
     val validities = iasValues.map(_.iasValidity) +iasValidity
     Validity.minValidity(validities)
   }
+  
+  
+  override def toString() = iasValidity.toString()
 }
 
 object Validity {
