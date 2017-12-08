@@ -33,7 +33,7 @@ import org.eso.ias.kafkautils.SimpleStringConsumer;
 import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener;
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
 import org.eso.ias.kafkautils.SimpleStringProducer;
-import org.eso.ias.plugin.AlarmSample;
+import org.eso.ias.prototype.input.java.AlarmSample;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.prototype.input.java.IASTypes;
 import org.eso.ias.prototype.input.java.IASValue;
