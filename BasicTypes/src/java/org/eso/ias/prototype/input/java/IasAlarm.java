@@ -1,8 +1,5 @@
 package org.eso.ias.prototype.input.java;
 
-import org.eso.ias.plugin.AlarmSample;
-import org.eso.ias.plugin.OperationalMode;
-
 /**
  * The IASVAlue encapsulating an alarm.
  * <P>
@@ -17,9 +14,10 @@ public class IasAlarm extends IASValue<AlarmSample> {
 	public IasAlarm(AlarmSample value,
 			long tStamp,
 			OperationalMode mode,
+			IasValidity iasValidity,
 			String id,
 			String runningId) {
-		super(value,tStamp,mode,id,runningId,IASTypes.ALARM);
+		super(value,tStamp,mode,iasValidity,id,runningId,IASTypes.ALARM);
 	}
 	
 	/**
@@ -34,7 +32,7 @@ public class IasAlarm extends IASValue<AlarmSample> {
 		if (newValue==null) {
 			throw new NullPointerException("The value can't be null");
 		}
-		return new IasAlarm(newValue,System.currentTimeMillis(),mode,id,runningId);
+		return new IasAlarm(newValue,System.currentTimeMillis(),mode,iasValidity,id,runningId);
 	}
 	
 	/**
@@ -47,7 +45,7 @@ public class IasAlarm extends IASValue<AlarmSample> {
 		if (newMode==null) {
 			throw new NullPointerException("The mode can't be null");
 		}
-		return new IasAlarm(value,System.currentTimeMillis(),newMode,id,runningId);
+		return new IasAlarm(value,System.currentTimeMillis(),newMode,iasValidity,id,runningId);
 	}
 
 }

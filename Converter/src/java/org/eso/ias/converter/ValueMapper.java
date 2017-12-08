@@ -7,16 +7,17 @@ import java.util.function.Function;
 
 import org.eso.ias.converter.config.IasioConfigurationDAO;
 import org.eso.ias.converter.config.MonitorPointConfiguration;
-import org.eso.ias.plugin.AlarmSample;
-import org.eso.ias.plugin.OperationalMode;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.prototype.input.Identifier;
+import org.eso.ias.prototype.input.java.AlarmSample;
 import org.eso.ias.prototype.input.java.IASTypes;
 import org.eso.ias.prototype.input.java.IASValue;
+import org.eso.ias.prototype.input.java.IasValidity;
 import org.eso.ias.prototype.input.java.IasValueSerializerException;
 import org.eso.ias.prototype.input.java.IasValueStringSerializer;
 import org.eso.ias.prototype.input.java.IdentifierType;
+import org.eso.ias.prototype.input.java.OperationalMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -184,7 +185,8 @@ public class ValueMapper implements Function<String, String> {
 		return IASValue.buildIasValue(
 				convertedValue, 
 				tStamp, 
-				OperationalMode.valueOf(remoteSystemData.getOperationalMode()), 
+				OperationalMode.valueOf(remoteSystemData.getOperationalMode()),
+				IasValidity.valueOf(remoteSystemData.getValidity()),
 				remoteSystemData.getId(), 
 				fullrunId,
 				type);

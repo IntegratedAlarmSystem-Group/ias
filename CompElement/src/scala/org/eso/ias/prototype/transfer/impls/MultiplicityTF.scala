@@ -10,7 +10,7 @@ import scala.util.control.NonFatal
 import org.eso.ias.prototype.compele.exceptions.UnexpectedNumberOfInputsException
 import org.eso.ias.prototype.compele.exceptions.TypeMismatchException
 import org.eso.ias.prototype.compele.exceptions.TypeMismatchException
-import org.eso.ias.plugin.AlarmSample
+import org.eso.ias.prototype.input.java.AlarmSample
 
 /**
  * Implements the Multiplicity transfer function.

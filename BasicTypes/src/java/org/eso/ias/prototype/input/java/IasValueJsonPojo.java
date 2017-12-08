@@ -2,9 +2,6 @@ package org.eso.ias.prototype.input.java;
 
 import java.util.Objects;
 
-import org.eso.ias.plugin.AlarmSample;
-import org.eso.ias.plugin.OperationalMode;
-
 /**
  * A java pojo to serialize/deserialize {@link IASValue} objects.
  * <P>
@@ -34,6 +31,11 @@ public class IasValueJsonPojo {
 	 * The operational mode
 	 */
 	private OperationalMode mode;
+	
+	/**
+	 * The validity
+	 */
+	private IasValidity iasValidity;
 	 
 	/**
 	 * The ID of this input
@@ -69,6 +71,7 @@ public class IasValueJsonPojo {
 		id=iasValue.id;
 		fullRunningId=iasValue.runningId;
 		valueType=iasValue.valueType;
+		iasValidity=iasValue.iasValidity;
 	}
 
 	public String getValue() {
@@ -137,7 +140,15 @@ public class IasValueJsonPojo {
 			case ALARM: theValue=AlarmSample.valueOf(value); break;
 			default: throw new UnsupportedOperationException("Unsupported type "+valueType);
 		}
-		return IASValue.buildIasValue(theValue, tStamp, mode, id, fullRunningId, valueType);
+		return IASValue.buildIasValue(theValue, tStamp, mode, iasValidity,id, fullRunningId, valueType);
+	}
+
+	public IasValidity getIasValidity() {
+		return iasValidity;
+	}
+
+	public void setIasValidity(IasValidity iasValidity) {
+		this.iasValidity = iasValidity;
 	}
 
 }

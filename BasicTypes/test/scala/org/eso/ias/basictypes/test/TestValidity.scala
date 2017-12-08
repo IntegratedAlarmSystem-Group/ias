@@ -2,6 +2,9 @@ package org.eso.ias.basictypes.test
 
 import org.scalatest.FlatSpec
 import org.eso.ias.prototype.input.Validity
+import org.eso.ias.prototype.input.java.IasValidity
+import org.eso.ias.prototype.input.java.IasValidity._
+
 
 /**
  * Test the Validity
@@ -11,38 +14,25 @@ import org.eso.ias.prototype.input.Validity
 class TestValidity extends FlatSpec {
   
   "Only Reliable" must "be valid" in {
-    val values = Validity.values
+    val values = IasValidity.values
     
     for (value <- values) {
-      if (!Validity.ValueOrdering.equiv(value,Validity.Reliable)) assert(!Validity.isValid(value))
+      val validity = Validity(value)
+      if (validity.iasValidity!=IasValidity.RELIABLE) assert(!validity.isValid())
+      else assert(validity.isValid())
     }
-    assert(Validity.isValid(Validity.Reliable))
   }
   
-  "Validity.min(list)" must "always return the min validity" in {
+  "Validity.minValidity(Set)" must "always return the min validity" in {
     // Build few "interesting" lists to submit to Validity.min
-    val l1= List(Validity.Reliable,Validity.Reliable,Validity.Reliable,Validity.Reliable,Validity.Reliable)
-    assert(Validity.min(l1)==Validity.Reliable)
+    val l1= Set(RELIABLE)
+    assert(Validity.minValidity(l1)==Validity(RELIABLE))
     
-    val l2= List(Validity.Unreliable,Validity.Unreliable,Validity.Unreliable,Validity.Unreliable)
-    assert(Validity.min(l2)==Validity.Unreliable)
+    val l2= Set(UNRELIABLE)
+    assert(Validity.minValidity(l2)==Validity(UNRELIABLE))
     
-    val l3= List(Validity.Reliable,Validity.Unreliable,Validity.Reliable,Validity.Unreliable,Validity.Reliable)
-    assert(Validity.min(l3)==Validity.Unreliable)
-    
-    val l4= List(Validity.Unreliable,Validity.Reliable,Validity.Reliable,Validity.Reliable,Validity.Reliable)
-    assert(Validity.min(l4)==Validity.Unreliable)
-    
-    val l5= List(Validity.Reliable,Validity.Reliable,Validity.Reliable,Validity.Reliable,Validity.Unreliable)
-    assert(Validity.min(l5)==Validity.Unreliable)
-    
-    val l6= List(Validity.Reliable,Validity.Reliable,Validity.Unreliable,Validity.Reliable,Validity.Reliable)
-    assert(Validity.min(l6)==Validity.Unreliable)
-    
-  }
-  
-  it must "return Reliable for an empty list" in {
-    assert(Validity.min(Nil)==Validity.Reliable)
+    val l3= Set(RELIABLE,UNRELIABLE)
+    assert(Validity.minValidity(l3)==Validity(UNRELIABLE))
   }
   
 }

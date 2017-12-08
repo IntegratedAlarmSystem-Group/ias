@@ -6,8 +6,8 @@ import java.util.Properties;
 import org.eso.ias.prototype.input.java.IASValue;
 import org.eso.ias.prototype.input.java.IASValueBase;
 import org.eso.ias.prototype.input.java.IasAlarm;
-import org.eso.ias.plugin.AlarmSample;
-import org.eso.ias.plugin.OperationalMode;
+import org.eso.ias.prototype.input.java.AlarmSample;
+import org.eso.ias.prototype.input.java.OperationalMode;
 import org.eso.ias.prototype.transfer.JavaTransferExecutor;
 
 

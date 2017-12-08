@@ -14,11 +14,12 @@ import org.ias.prototype.logging.IASLogger
 import java.nio.file.FileSystems
 import org.eso.ias.prototype.input.java.IasDouble
 import org.eso.ias.prototype.input.java.IdentifierType
-import org.eso.ias.plugin.OperationalMode
 import java.io.File
 import scala.io.Source
 import org.eso.ias.prototype.input.java.IASTypes
-import org.eso.ias.plugin.AlarmSample
+import org.eso.ias.prototype.input.java.OperationalMode._
+import org.eso.ias.prototype.input.java.AlarmSample
+import org.eso.ias.prototype.input.java.IasValidity._
 
 /** 
  *  Test the writing of the output of the DASU
@@ -57,7 +58,8 @@ class JsonPublisherTest extends FlatSpec {
     new IasDouble(
         d,
         System.currentTimeMillis(),
-        OperationalMode.OPERATIONAL,
+        OPERATIONAL,
+        UNRELIABLE,
         inputID.id,
         inputID.fullRunningID)
   }

@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
+import org.eso.ias.plugin.filter.Filter.ValidatedSample;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.MonitorPointData;
@@ -31,6 +32,7 @@ import org.eso.ias.plugin.publisher.impl.BufferedListenerPublisher;
 import org.eso.ias.plugin.publisher.impl.BufferedListenerPublisher.PublisherEventsListener;
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
+import org.eso.ias.prototype.input.java.IasValidity;
 import org.junit.After;
 import org.junit.Before;
 import org.slf4j.Logger;
@@ -215,7 +217,7 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 			long baseValue,
 			long valueInc) {
 		List<ValueToSend> ret = new LinkedList<>();
-		List<Sample> samples = new LinkedList<Sample>();
+		List<ValidatedSample> samples = new LinkedList<>();
 		int idCounter=0;
 		long valueCounter=baseValue;
 		for (int t=0; t<numOfValues; t++) {
@@ -223,7 +225,7 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 			long value=valueCounter;
 			valueCounter+=valueInc;
 			samples.clear();
-			samples.add(new Sample(Long.valueOf(value)));
+			samples.add(new ValidatedSample(new Sample(Long.valueOf(value)),IasValidity.RELIABLE));
 			ValueToSend fv = new ValueToSend(id, Long.valueOf(value), samples, System.currentTimeMillis());
 			ret.add(fv);
 		}
@@ -252,6 +254,7 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 		ret = ret && iso8601dateFormat.format(new Date(v.filteredTimestamp)).equals(d.getFilteredTime());
 		ret = ret && iso8601dateFormat.format(new Date(v.producedTimestamp)).equals(d.getSampleTime());
 		ret = ret && v.operationalMode.toString().toUpperCase().equals(d.getOperationalMode());
+		ret = ret && v.iasValidity.toString().toUpperCase().equals(d.getValidity());
 		
 		if (!ret) {
 			logger.error("The {} and the {} do not match!",v.toString(),d.toString());

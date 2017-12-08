@@ -2,9 +2,6 @@ package org.eso.ias.prototype.input.java;
 
 import java.util.Objects;
 
-import org.eso.ias.plugin.AlarmSample;
-import org.eso.ias.plugin.OperationalMode;
-
 /**
  * The view of a heterogeneous inputs in the java code.
  * 
@@ -35,10 +32,11 @@ public abstract class IASValue<T> extends IASValueBase {
 	protected IASValue(T value,
 			long tStamp,
 			OperationalMode mode,
+			IasValidity iasValidity,
 			String id,
 			String runningId,
 			IASTypes valueType) {
-		super(tStamp,mode,id,runningId,valueType);
+		super(tStamp,mode,iasValidity,id,runningId,valueType);
 		this.value = value;
 	}
 	
@@ -70,21 +68,22 @@ public abstract class IASValue<T> extends IASValueBase {
 			X value,
 			long tStamp,
 			OperationalMode mode,
+			IasValidity iasValidity,
 			String id,
 			String runningId,
 			IASTypes valueType) {
 		Objects.requireNonNull(valueType);
 		switch (valueType) {
-			case LONG: return new IasLong((Long)value, tStamp, mode, id, runningId);
-	 		case INT: return new IasInt((Integer)value, tStamp, mode, id, runningId);
-			case SHORT: return new IasShort((Short)value, tStamp, mode, id, runningId);
-			case BYTE: return new IasByte((Byte)value, tStamp, mode, id, runningId);
-			case DOUBLE: return new IasDouble((Double)value, tStamp, mode, id, runningId);
-			case FLOAT: return new IasFloat((Float)value, tStamp, mode, id, runningId);
-			case BOOLEAN: return new IasBool((Boolean)value, tStamp, mode, id, runningId);
-			case CHAR: return new IasChar((Character)value, tStamp, mode, id, runningId);
-			case STRING: return new IasString((String)value, tStamp, mode, id, runningId);
-			case ALARM: return new IasAlarm((AlarmSample )value, tStamp, mode, id, runningId);
+			case LONG: return new IasLong((Long)value, tStamp, mode,iasValidity, id, runningId);
+	 		case INT: return new IasInt((Integer)value, tStamp, mode, iasValidity, id, runningId);
+			case SHORT: return new IasShort((Short)value, tStamp, mode, iasValidity, id, runningId);
+			case BYTE: return new IasByte((Byte)value, tStamp, mode, iasValidity, id, runningId);
+			case DOUBLE: return new IasDouble((Double)value, tStamp, mode, iasValidity, id, runningId);
+			case FLOAT: return new IasFloat((Float)value, tStamp, mode, iasValidity, id, runningId);
+			case BOOLEAN: return new IasBool((Boolean)value, tStamp, mode, iasValidity, id, runningId);
+			case CHAR: return new IasChar((Character)value, tStamp, mode, iasValidity, id, runningId);
+			case STRING: return new IasString((String)value, tStamp, mode, iasValidity, id, runningId);
+			case ALARM: return new IasAlarm((AlarmSample )value, tStamp, mode, iasValidity, id, runningId);
 			default: throw new UnsupportedOperationException("Unsupported type "+valueType);
 		}
 	}

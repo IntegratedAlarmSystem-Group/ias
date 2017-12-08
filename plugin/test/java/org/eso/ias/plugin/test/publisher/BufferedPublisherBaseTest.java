@@ -9,9 +9,11 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import org.eso.ias.plugin.OperationalMode;
+import org.eso.ias.prototype.input.java.IasValidity;
+import org.eso.ias.prototype.input.java.OperationalMode;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
+import org.eso.ias.plugin.filter.Filter.ValidatedSample;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
@@ -60,8 +62,14 @@ public class BufferedPublisherBaseTest extends PublisherTestCommon {
 		bufferedPublisher.startSending();
 		expectedValues = new CountDownLatch(1);
 		
-		List<Sample> samples = Arrays.asList(new Sample(Integer.valueOf(67)));
-		ValueToSend v = new ValueToSend("OneID", Integer.valueOf(67), samples, System.currentTimeMillis(),OperationalMode.DEGRADED);
+		List<ValidatedSample> samples = Arrays.asList(new ValidatedSample(new Sample(Integer.valueOf(67)),IasValidity.RELIABLE));
+		ValueToSend v = new ValueToSend(
+				"OneID", 
+				Integer.valueOf(67), 
+				samples, 
+				System.currentTimeMillis(),
+				OperationalMode.DEGRADED,
+				IasValidity.RELIABLE);
 		publishedValues.put(v.id,v);
 		bufferedPublisher.offer(v);
 		try {
@@ -90,7 +98,7 @@ public class BufferedPublisherBaseTest extends PublisherTestCommon {
 		assertEquals(0L,bufferedPublisher.getPublishedMessages());
 		
 		Integer val = Integer.valueOf(67);
-		List<Sample> samples = Arrays.asList(new Sample(val));
+		List<ValidatedSample> samples = Arrays.asList(new ValidatedSample(new Sample(val),IasValidity.RELIABLE));
 		ValueToSend v = new ValueToSend("OneID", val, samples, System.currentTimeMillis());
 		publishedValues.put(v.id,v);
 		bufferedPublisher.offer(v);
@@ -117,7 +125,7 @@ public class BufferedPublisherBaseTest extends PublisherTestCommon {
 		bufferedPublisher.startSending();
 		expectedValues = new CountDownLatch(5);
 		
-		List<Sample> samples = Arrays.asList(new Sample(Integer.valueOf(67)));
+		List<ValidatedSample> samples = Arrays.asList(new ValidatedSample(new Sample(Integer.valueOf(67)),IasValidity.RELIABLE));
 		
 		List<ValueToSend> values = Arrays.asList(
 				new ValueToSend("FV-ID1", Integer.valueOf(67), samples, System.currentTimeMillis()),

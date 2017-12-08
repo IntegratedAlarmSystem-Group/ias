@@ -15,7 +15,7 @@ import org.eso.ias.prototype.input.java.IASValue
 import org.eso.ias.prototype.input.java.IasDouble
 import org.eso.ias.prototype.input.Identifier
 import org.eso.ias.prototype.input.java.IdentifierType
-import org.eso.ias.plugin.OperationalMode
+import org.eso.ias.prototype.input.java.OperationalMode
 import org.eso.ias.prototype.input.InOut
 import org.eso.ias.prototype.input.JavaConverter
 import org.eso.ias.dasu.subscriber.InputsListener
@@ -25,7 +25,8 @@ import java.util.concurrent.TimeUnit
 import scala.collection.mutable.ListBuffer
 import org.eso.ias.prototype.input.java.IASTypes
 import org.eso.ias.prototype.input.java.IasAlarm
-import org.eso.ias.plugin.AlarmSample
+import org.eso.ias.prototype.input.java.AlarmSample
+import org.eso.ias.prototype.input.java.IasValidity._
 
 /**
  * Test the DASU with 7 ASCEs (in 3 levels).
@@ -119,6 +120,7 @@ class Dasu7ASCEsTest extends FlatSpec with OutputListener {
         d,
         System.currentTimeMillis(),
         OperationalMode.OPERATIONAL,
+        UNRELIABLE,
         id,
         fullRunningID)
   }

@@ -242,7 +242,7 @@ abstract class ComputingElement[T](
   private[this] def updateTheValidity(
       theInputs: Iterable[InOut[_]], 
       actualOutput: InOut[T]) : InOut[T] = {
-    val newValidity = Validity.min(theInputs.map(_.validity).toList)
+    val newValidity = Validity.minValidity(theInputs.map(_.validity.iasValidity).toSet)
     actualOutput.updateValidity(newValidity)
   }
   
@@ -392,7 +392,7 @@ object ComputingElement {
     
     // Build the output
     val outputId = new Identifier(asceDao.getOutput.getId,IdentifierType.IASIO,Option(asceId))
-    val out = new InOut[T](
+    val out = InOut[T](
         outputId,
         asceDao.getOutput.getRefreshRate,
         IASTypes.fromIasioDaoType(asceDao.getOutput.getIasType))

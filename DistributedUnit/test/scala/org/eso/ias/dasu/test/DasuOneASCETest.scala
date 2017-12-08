@@ -15,7 +15,7 @@ import org.eso.ias.prototype.input.java.IASValue
 import org.eso.ias.prototype.input.java.IasDouble
 import org.eso.ias.prototype.input.Identifier
 import org.eso.ias.prototype.input.java.IdentifierType
-import org.eso.ias.plugin.OperationalMode
+import org.eso.ias.prototype.input.java.OperationalMode
 import org.eso.ias.prototype.input.InOut
 import org.eso.ias.prototype.input.JavaConverter
 import org.eso.ias.dasu.subscriber.InputsListener
@@ -23,6 +23,7 @@ import org.eso.ias.dasu.subscriber.InputSubscriber
 import scala.util.Success
 import scala.util.Try
 import scala.collection.mutable.{HashSet => MutableSet}
+import org.eso.ias.prototype.input.java.IasValidity._
 
 /**
  * Test the DASU with one ASCE and the MinMaxThreshold TF.
@@ -78,6 +79,7 @@ class DasuOneASCETest extends FlatSpec with OutputListener {
         d,
         System.currentTimeMillis(),
         OperationalMode.OPERATIONAL,
+        UNRELIABLE,
         inputID.id,
         inputID.fullRunningID)
   }

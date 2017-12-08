@@ -4,10 +4,10 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.Properties;
 
-import org.eso.ias.plugin.AlarmSample;
 import org.eso.ias.prototype.compele.exceptions.PropsMisconfiguredException;
 import org.eso.ias.prototype.compele.exceptions.TypeMismatchException;
 import org.eso.ias.prototype.compele.exceptions.UnexpectedNumberOfInputsException;
+import org.eso.ias.prototype.input.java.AlarmSample;
 import org.eso.ias.prototype.input.java.IASTypes;
 import org.eso.ias.prototype.input.java.IASValueBase;
 import org.eso.ias.prototype.input.java.IasAlarm;

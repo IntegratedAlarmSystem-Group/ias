@@ -8,7 +8,7 @@ import org.eso.ias.prototype.compele.exceptions.UnexpectedNumberOfInputsExceptio
 import org.eso.ias.prototype.input.java.IASTypes._
 import org.eso.ias.prototype.compele.exceptions.TypeMismatchException
 import MinMaxThresholdTF._
-import org.eso.ias.plugin.AlarmSample
+import org.eso.ias.prototype.input.java.AlarmSample
 
 /**
  * The TF implementing a Min/Max threshold TF  (there is also

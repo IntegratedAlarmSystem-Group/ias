@@ -2,7 +2,7 @@ package org.eso.ias.basictypes.test
 
 import org.scalatest.FlatSpec
 import org.eso.ias.prototype.input.Identifier
-import org.eso.ias.plugin.OperationalMode
+import org.eso.ias.prototype.input.java.OperationalMode
 import org.eso.ias.prototype.input.Validity
 import org.eso.ias.prototype.input.InOut
 import org.eso.ias.prototype.input.java.IASTypes
@@ -11,10 +11,11 @@ import org.eso.ias.prototype.input.java.IASValue
 import org.eso.ias.prototype.input.java.IasDouble
 import org.eso.ias.prototype.input.java.IasAlarm
 import org.eso.ias.prototype.input.java.IdentifierType
-import org.eso.ias.plugin.AlarmSample
+import org.eso.ias.prototype.input.java.AlarmSample
 
 // The following import is required by the usage of the fixture
 import language.reflectiveCalls
+import org.eso.ias.prototype.input.java.IasValidity._
 
 /**
  * Test the conversion between HIO to IASValue and vice-versa
@@ -49,7 +50,7 @@ class TestJavaConversion  extends FlatSpec {
       val boolValue = Some(false)
       
       // Validity
-      val validity = Validity.Reliable
+      val validity = Validity(RELIABLE)
       // The HIOs
       val longHIO = InOut[Long](longValue,doubleHioId,refRate,mode,validity,IASTypes.LONG)
       val intHIO = InOut[Int](intValue,doubleHioId,refRate,mode,validity,IASTypes.INT)
@@ -86,7 +87,7 @@ class TestJavaConversion  extends FlatSpec {
     val f = fixture
     
     val doubleVal = JavaConverter.inOutToIASValue[Double](f.doubleHIO).asInstanceOf[IasDouble]
-    val newdoubleVal = new IasDouble(doubleVal.value+8.5,System.currentTimeMillis(),OperationalMode.OPERATIONAL,doubleVal.id,doubleVal.runningId)
+    val newdoubleVal = new IasDouble(doubleVal.value+8.5,System.currentTimeMillis(),OperationalMode.OPERATIONAL,UNRELIABLE,doubleVal.id,doubleVal.runningId)
     val hio = JavaConverter.updateHIOWithIasValue(f.doubleHIO,newdoubleVal)
     
     assert(newdoubleVal.valueType==hio.iasType)
@@ -112,6 +113,7 @@ class TestJavaConversion  extends FlatSpec {
         doubleVal.value,
         doubleVal.timestamp,
         doubleVal.mode,
+        UNRELIABLE,
         doubleVal.id+"WRONG!",
         doubleVal.runningId)
     
@@ -123,6 +125,7 @@ class TestJavaConversion  extends FlatSpec {
         doubleVal.value,
         doubleVal.timestamp,
         doubleVal.mode,
+        UNRELIABLE,
         doubleVal.id,
         doubleVal.runningId+"WRONG!")
     assertThrows[IllegalStateException] {

@@ -2,14 +2,15 @@ package org.eso.ias.basictypes.test
 
 import org.scalatest.FlatSpec
 import org.eso.ias.prototype.input.Validity
-import org.eso.ias.plugin.OperationalMode
 import org.eso.ias.prototype.input.Identifier
 import org.eso.ias.prototype.input.InOut
 import org.eso.ias.prototype.input.java.IASTypes
 import org.eso.ias.prototype.input.java.IdentifierType
-import org.eso.ias.plugin.AlarmSample
 import org.eso.ias.prototype.input.java.IASValue
 import org.eso.ias.prototype.input.java.IasLong
+import org.eso.ias.prototype.input.java.IasValidity._
+import org.eso.ias.prototype.input.java.OperationalMode
+import org.eso.ias.prototype.input.java.AlarmSample
 
 /**
  * Test the LongMP
@@ -29,15 +30,18 @@ class TestHeteroIO extends FlatSpec {
   behavior of "A heterogeneous IO" 
   
   it must "have an ID" in {
-    val mp: InOut[Long] = new InOut(id,refreshRate,IASTypes.LONG)
+    val mp: InOut[Long] = InOut(id,refreshRate,IASTypes.LONG)
     
     assert (!mp.actualValue.value.isDefined)
     assert(mp.mode == OperationalMode.UNKNOWN)
-    assert(mp.validity == Validity.Unreliable)
+    
+    println("mpValidity="+mp.validity.iasValidity);
+    
+    assert(mp.validity == Validity(UNRELIABLE))
   }
   
   it must "Have the same ID after changing other props" in {
-    val mp: InOut[Long] = new InOut(id,refreshRate,IASTypes.LONG)
+    val mp: InOut[Long] = InOut(id,refreshRate,IASTypes.LONG)
     
     // Change the value of the previous MP
     val mp2 = mp.updateValue(Some(3L))
@@ -47,15 +51,15 @@ class TestHeteroIO extends FlatSpec {
     // Trivial check of timestamp update
     assert(mp2.actualValue.timestamp > 0 && mp2.actualValue.timestamp<=System.currentTimeMillis() )
     assert(mp2.mode == OperationalMode.UNKNOWN)
-    assert(mp2.validity == Validity.Unreliable)
+    assert(mp2.validity == Validity(UNRELIABLE))
     
     // Change validity of the previous MP
-    val mp3 = mp2.updateValidity(Validity.Reliable)
+    val mp3 = mp2.updateValidity(Validity(RELIABLE))
     assert(mp3.id == mp.id)
     assert(mp3.actualValue.value.isDefined)
     assert(mp3.actualValue.value.get  == mp2.actualValue.value.get)
     assert(mp3.mode == mp2.mode)
-    assert(mp3.validity == Validity.Reliable)
+    assert(mp3.validity == Validity(RELIABLE))
     
     // Change mode of the previous MP
     val mp4 = mp3.updateMode(OperationalMode.OPERATIONAL)
@@ -67,18 +71,18 @@ class TestHeteroIO extends FlatSpec {
   }
   
   it must "allow to update the value" in {
-    val mp: InOut[Long] = new InOut(id,refreshRate,IASTypes.LONG)
+    val mp: InOut[Long] = InOut(id,refreshRate,IASTypes.LONG)
     val mpUpdatedValue = mp.updateValue(Some(5L))
     assert(mpUpdatedValue.actualValue.value.get==5L,"The values differ")    
   }
   
   it must "allow to update the validity" in {
-    val mp: InOut[Long] = new InOut(id,refreshRate,IASTypes.LONG)
-    val mpUpdatedValidityRelaible = mp.updateValidity(Validity.Reliable)
-    assert(mpUpdatedValidityRelaible.validity==Validity.Reliable,"The validities differ")
+    val mp: InOut[Long] = InOut(id,refreshRate,IASTypes.LONG)
+    val mpUpdatedValidityRelaible = mp.updateValidity(Validity(RELIABLE))
+    assert(mpUpdatedValidityRelaible.validity==Validity(RELIABLE),"The validities differ")
     
-    val mpUpdatedValidityUnRelaible = mp.updateValidity(Validity.Unreliable)
-    assert(mpUpdatedValidityUnRelaible.validity==Validity.Unreliable,"The validities differ")
+    val mpUpdatedValidityUnRelaible = mp.updateValidity(Validity(UNRELIABLE))
+    assert(mpUpdatedValidityUnRelaible.validity==Validity(UNRELIABLE),"The validities differ")
   }
   
   it must "allow to update the mode" in {
@@ -89,9 +93,9 @@ class TestHeteroIO extends FlatSpec {
   
   it must "allow to update the value and validity at once" in {
     val mp: InOut[Long] = InOut(id,refreshRate,IASTypes.LONG)
-    val mpUpdated = mp.update(Some(15L),Validity.Reliable)
+    val mpUpdated = mp.update(Some(15L),Validity(RELIABLE))
     assert(mpUpdated.actualValue.value.get==15L,"The values differ")
-    assert(mpUpdated.validity==Validity.Reliable,"The validities differ")
+    assert(mpUpdated.validity==Validity(RELIABLE),"The validities differ")
   }
   
   it must "return the same object if values, validity or mode did not change" in {
@@ -103,10 +107,10 @@ class TestHeteroIO extends FlatSpec {
     assert(upValAgain.actualValue.value.get==10L,"The value differ")
     assert(upVal eq upValAgain,"Unexpected new object after updating the value\n"+upVal.toString()+"\n"+upValAgain.toString())
     
-    val upValidity = mp.updateValidity(Validity.Reliable)
-    assert(upValidity.validity==Validity.Reliable,"The validity differ")
-    val upValidityAgain = upValidity.updateValidity(Validity.Reliable)
-    assert(upValidityAgain.validity==Validity.Reliable,"The validity differ")
+    val upValidity = mp.updateValidity(Validity(RELIABLE))
+    assert(upValidity.validity==Validity(RELIABLE),"The validity differ")
+    val upValidityAgain = upValidity.updateValidity(Validity(RELIABLE))
+    assert(upValidityAgain.validity==Validity(RELIABLE),"The validity differ")
     assert(upValidityAgain eq upValidity,"Unexpected new object after updating the validity")
     
     val upMode = mp.updateMode(OperationalMode.STARTUP)
@@ -115,8 +119,8 @@ class TestHeteroIO extends FlatSpec {
     assert(upModeAgain.mode==OperationalMode.STARTUP,"The mode differ")
     assert(upMode eq upModeAgain,"Unexpected new object after updating the mode")
         
-    val mpUpdated = mp.update(Some(15L),Validity.Unreliable)
-    val mpUpdated2 = mpUpdated.update(Some(15L),Validity.Unreliable)
+    val mpUpdated = mp.update(Some(15L),Validity(UNRELIABLE))
+    val mpUpdated2 = mpUpdated.update(Some(15L),Validity(UNRELIABLE))
     assert(mpUpdated eq mpUpdated2,"Unexpected new object after updating value and validity")
     
   }
@@ -159,7 +163,7 @@ class TestHeteroIO extends FlatSpec {
     val iasioId = new Identifier("IasioId",IdentifierType.IASIO,Option(converterId))
     
     // Build the IASIO from the passed IASValue
-    val iasValue = new IasLong(821L,System.currentTimeMillis(),OperationalMode.INTIALIZATION,"IasioId",converterId.fullRunningID)
+    val iasValue = new IasLong(821L,System.currentTimeMillis(),OperationalMode.INTIALIZATION,RELIABLE,"IasioId",converterId.fullRunningID)
     val inOut = InOut(iasValue,3000)
     
     assert(inOut.iasType==iasValue.valueType)
@@ -176,12 +180,14 @@ class TestHeteroIO extends FlatSpec {
     assert(newiasIo.mode==iasValue.mode)
     
     // Update with another value
-    val iasValue2 = new IasLong(113142L,System.currentTimeMillis(),OperationalMode.OPERATIONAL,"IasioId",converterId.fullRunningID)
+    val iasValue2 = new IasLong(113142L,System.currentTimeMillis(),OperationalMode.OPERATIONAL,UNRELIABLE,"IasioId",converterId.fullRunningID)
     val newiasIo2 = iasio.update(iasValue2)
     assert(newiasIo2.iasType==iasValue2.valueType)
     assert(newiasIo2.value.isDefined)
     assert(newiasIo2.value.get==iasValue2.value)
     assert(newiasIo2.mode==iasValue2.mode)
-    
+    assert(newiasIo2.validity.iasValidity==iasValue2.iasValidity)
   }
+  
+
 }
