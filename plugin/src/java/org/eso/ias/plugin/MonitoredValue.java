@@ -243,6 +243,7 @@ public class MonitoredValue implements Runnable {
 		}
 		ValidatedSample validatedSample = new ValidatedSample(s, calcValidity());
 		filter.newSample(validatedSample).ifPresent(filteredValue -> notifyListener(new ValueToSend(id,filteredValue,operationalMode)));
+		lastSubmittedTimestamp=System.currentTimeMillis();
 	}
 	
 	/**
