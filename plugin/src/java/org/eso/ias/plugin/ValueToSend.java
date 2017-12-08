@@ -5,7 +5,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
+import org.eso.ias.plugin.filter.Filter.ValidatedSample;
 import org.eso.ias.plugin.filter.FilteredValue;
+import org.eso.ias.prototype.input.java.IasValidity;
 import org.eso.ias.prototype.input.java.OperationalMode;
 
 /**
@@ -15,7 +17,7 @@ import org.eso.ias.prototype.input.java.OperationalMode;
  * to send to the IAS after the filtering to avoid sending spurious values.
  * <P>
  * The <code>ValueToSend</code> adds more information not produced by the
- * filtering, like the operational mode or the identifier. 
+ * filtering, like the operational mode, the validity and the identifier. 
  * 
  * <P><code>ValueToSend</code> is immutable.
  * 
@@ -34,6 +36,11 @@ public class ValueToSend extends FilteredValue {
 	 * (it is overridden by the plugin operational mode, if set)
 	 */
 	public final OperationalMode operationalMode;
+	
+	/**
+	 * The validity
+	 */
+	public final IasValidity iasValidity;
 
 	/**
 	 * Constructor 
@@ -43,8 +50,15 @@ public class ValueToSend extends FilteredValue {
 	 * @param samples The history of samples used by the filter to produce the value
 	 * @param monitoredSystemTimestamp The timestamp when the value has been provided by the monitored system
 	 * @param opMode The operational mode
+	 * @param iasValidity The validity
 	 */
-	public ValueToSend(String id, Object value, List<Sample> samples, long monitoredSystemTimestamp, OperationalMode opMode) {
+	public ValueToSend(
+			String id, 
+			Object value, 
+			List<ValidatedSample> samples, 
+			long monitoredSystemTimestamp, 
+			OperationalMode opMode,
+			IasValidity iasValidity) {
 		super(value, samples, monitoredSystemTimestamp);
 		Objects.requireNonNull(opMode,"Invalid null operational mode");
 		Objects.requireNonNull(id,"Invalid null ID");
@@ -53,18 +67,20 @@ public class ValueToSend extends FilteredValue {
 		}
 		this.id=id;
 		this.operationalMode=opMode;
+		this.iasValidity=iasValidity;
 	}
 	
 	/**
-	 * Builds a ValueToSend with a unknown operational mode.
+	 * Builds a ValueToSend with a unknown operational mode
+	 * and unreliable.
 	 *  
-	 *  @param id The ID of the value
+	 * @param id The ID of the value
 	 * @param value The value to send to the IAS core
 	 * @param samples The history of samples used by the filter to produce the value
 	 * @param monitoredSystemTimestamp The timestamp when the value has been provided by the monitored system
 	 */
-	public ValueToSend(String id, Object value, List<Sample> samples, long monitoredSystemTimestamp) {
-		this(id,value, samples, monitoredSystemTimestamp,OperationalMode.UNKNOWN);
+	public ValueToSend(String id, Object value, List<ValidatedSample> samples, long monitoredSystemTimestamp) {
+		this(id,value, samples, monitoredSystemTimestamp,OperationalMode.UNKNOWN,IasValidity.UNRELIABLE);
 	}
 	
 	/**
@@ -73,22 +89,32 @@ public class ValueToSend extends FilteredValue {
 	 * @param id The ID of the value 
 	 * @param filteredValue The value produced applying the filter
 	 * @param opMode The operational mode
+	 * @param iasValidity The validity
 	 */
-	public ValueToSend(String id, FilteredValue filteredValue, OperationalMode opMode) {
-		this(id,filteredValue.value,filteredValue.samples, filteredValue.producedTimestamp,opMode);
+	public ValueToSend(
+			String id, 
+			FilteredValue filteredValue, 
+			OperationalMode opMode) {
+		this(id,filteredValue.value,filteredValue.samples, filteredValue.producedTimestamp,opMode,filteredValue.validity);
 	}
-	
-	/**
-	 * Builds a <code>ValueToSend</code> from the passed <code>FilteredValue</code>
-	 * and a unknown operational mode.
-	 * 
-	 * @param id The ID of the value 
-	 * @param filteredValue The value produced applying the filter
-	 */
-	public ValueToSend(String id, FilteredValue filteredValue) {
-		this(id,filteredValue.value,filteredValue.samples, filteredValue.producedTimestamp,OperationalMode.UNKNOWN);
-	}
-
+//	
+//	/**
+//	 * Builds a <code>ValueToSend</code> from the passed <code>FilteredValue</code>
+//	 * with a unknown operational mode and unreliable.
+//	 * 
+//	 * @param id The ID of the value 
+//	 * @param filteredValue The value produced applying the filter
+//	 */
+//	public ValueToSend(String id, FilteredValue filteredValue) {
+//		this(
+//				id,
+//				filteredValue.value,
+//				filteredValue.samples, 
+//				filteredValue.producedTimestamp,
+//				OperationalMode.UNKNOWN,
+//				IasValidity.UNRELIABLE);
+//	}
+//
 	/**
 	 * Builds and return a new <code>ValueToSend</code> with the assigned 
 	 * operational mode.
@@ -97,8 +123,19 @@ public class ValueToSend extends FilteredValue {
 	 * @return The new value with the passed operational mode
 	 */
 	public ValueToSend withMode(OperationalMode opMode) {
-		return new ValueToSend(this.id, this.value, this.samples, this.producedTimestamp,opMode);
+		return new ValueToSend(id, value, samples, producedTimestamp,opMode,iasValidity);
 	}
+//	
+//	/**
+//	 * Builds and return a new <code>ValueToSend</code> with the assigned 
+//	 * validity.
+//	 * 
+//	 * @param iasValidity  The validity
+//	 * @return The new value with the passed validity
+//	 */
+//	public ValueToSend withValidity(IasValidity iasValidity) {
+//		return new ValueToSend(id, value, samples, producedTimestamp,operationalMode,iasValidity);
+//	}
 	
 	/**
 	 * 
@@ -116,6 +153,8 @@ public class ValueToSend extends FilteredValue {
 		ret.append(value.toString());
 		ret.append(", operational mode=");
 		ret.append(operationalMode.toString());
+		ret.append(", validity=");
+		ret.append(iasValidity.toString());
 		ret.append(')');
 		return ret.toString();
 	}

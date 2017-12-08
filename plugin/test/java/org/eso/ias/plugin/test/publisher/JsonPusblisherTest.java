@@ -14,9 +14,11 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+import org.eso.ias.prototype.input.java.IasValidity;
 import org.eso.ias.prototype.input.java.OperationalMode;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
+import org.eso.ias.plugin.filter.Filter.ValidatedSample;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
@@ -95,13 +97,13 @@ public class JsonPusblisherTest {
 
 	@Test
 	public void testPublishing() throws Exception {
-		List<Sample> samples = Arrays.asList(new Sample(Integer.valueOf(67)));
+		List<ValidatedSample> samples = Arrays.asList(new ValidatedSample(new Sample(Integer.valueOf(67)),IasValidity.RELIABLE));
 		
 		List<ValueToSend> values = Arrays.asList(
 				new ValueToSend("FV-ID1", Double.valueOf(6.7), samples, System.currentTimeMillis()),
-				new ValueToSend("FV-ID2", Long.valueOf(1123), samples, System.currentTimeMillis(),OperationalMode.OPERATIONAL),
-				new ValueToSend("FV-ID3", "Another string", samples, System.currentTimeMillis(),OperationalMode.MAINTENANCE),
-				new ValueToSend("FV-ID4", Boolean.valueOf(false), samples, System.currentTimeMillis(),OperationalMode.STARTUP),
+				new ValueToSend("FV-ID2", Long.valueOf(1123), samples, System.currentTimeMillis(),OperationalMode.OPERATIONAL,IasValidity.RELIABLE),
+				new ValueToSend("FV-ID3", "Another string", samples, System.currentTimeMillis(),OperationalMode.MAINTENANCE,IasValidity.UNRELIABLE),
+				new ValueToSend("FV-ID4", Boolean.valueOf(false), samples, System.currentTimeMillis(),OperationalMode.STARTUP,IasValidity.RELIABLE),
 				new ValueToSend("FV-ID5", Integer.valueOf(-98), samples, System.currentTimeMillis()));
 		
 		Map<String, ValueToSend> mapOfValues = new HashMap<>();
@@ -126,6 +128,8 @@ public class JsonPusblisherTest {
 		for (MonitorPointDataToBuffer mpd: msData.getMonitorPoints()) {
 			ValueToSend fv = mapOfValues.get(mpd.getId());
 			assertNotNull(fv);
+			System.out.println("FV="+fv.toString());
+			System.out.println("MPD="+mpd.toString());
 			assertTrue("Filtered value and the published data mismatch",PublisherTestCommon.match(fv, mpd));
 		}
 		// Ok, everything went fine: the JSON file can be removed

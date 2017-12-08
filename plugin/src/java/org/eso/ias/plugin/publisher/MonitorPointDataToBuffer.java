@@ -86,6 +86,7 @@ public class MonitorPointDataToBuffer {
 			setFilteredTime(iso8601dateFormat.format(new Date(value.filteredTimestamp)));
 		}
 		setOperationalMode(value.operationalMode.toString().toUpperCase());
+		setValidity(value.iasValidity.toString().toUpperCase());
 	}
 
 	/**
@@ -167,6 +168,8 @@ public class MonitorPointDataToBuffer {
 		ret.append(sampleTime);
 		ret.append(", operational mode=");
 		ret.append(operationalMode);
+		ret.append(", validity=");
+		ret.append(validity);
 		ret.append(')');
 		return ret.toString();
 	}
@@ -183,6 +186,7 @@ public class MonitorPointDataToBuffer {
 		result = prime * result + ((sampleTime == null) ? 0 : sampleTime.hashCode());
 		result = prime * result + ((value == null) ? 0 : value.hashCode());
 		result = prime * result + ((operationalMode == null) ? 0 : operationalMode.hashCode());
+		result = prime * result + ((validity == null) ? 0 : validity.hashCode());
 		return result;
 	}
 
@@ -217,6 +221,11 @@ public class MonitorPointDataToBuffer {
 			if (other.operationalMode != null)
 				return false;
 		} else if (!operationalMode.equals(other.operationalMode))
+			return false;
+		if (validity == null) {
+			if (other.validity != null)
+				return false;
+		} else if (!validity.equals(other.validity))
 			return false;
 		if (value == null) {
 			if (other.value != null)
