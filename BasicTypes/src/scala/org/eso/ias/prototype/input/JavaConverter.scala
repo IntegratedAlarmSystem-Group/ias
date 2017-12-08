@@ -13,7 +13,7 @@ import org.eso.ias.prototype.input.java.IasFloat
 import org.eso.ias.prototype.input.java.IasChar
 import org.eso.ias.prototype.input.java.IasString
 import org.eso.ias.prototype.input.java.IasBool
-import org.eso.ias.plugin.AlarmSample
+import org.eso.ias.prototype.input.java.AlarmSample
 
 /**
  * Converter methods from java to scala and vice-versa.
@@ -32,9 +32,22 @@ object JavaConverter {
     require(Option[InOut[_]](io).isDefined)
     
     val ret = if (io.actualValue.value.isEmpty) {
-      IASValue.buildIasValue(null, Long.MinValue,io.mode,io.id.id,io.id.runningID,io.iasType)
+      IASValue.buildIasValue(
+          null, 
+          Long.MinValue,io.mode,
+          io.validity.iasValidity,
+          io.id.id,
+          io.id.runningID,
+          io.iasType)
     } else {
-      IASValue.buildIasValue(io.actualValue.value.get, io.actualValue.timestamp,io.mode,io.id.id,io.id.runningID,io.iasType)
+      IASValue.buildIasValue(
+          io.actualValue.value.get, 
+          io.actualValue.timestamp,
+          io.mode,
+          io.validity.iasValidity,
+          io.id.id,
+          io.id.runningID,
+          io.iasType)
     }
     ret
   }

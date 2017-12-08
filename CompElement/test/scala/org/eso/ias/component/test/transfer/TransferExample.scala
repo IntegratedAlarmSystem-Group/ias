@@ -4,8 +4,8 @@ import java.util.Properties
 
 import org.eso.ias.prototype.transfer.ScalaTransferExecutor
 import org.eso.ias.prototype.input.InOut
-import org.eso.ias.plugin.OperationalMode
-import org.eso.ias.plugin.AlarmSample
+import org.eso.ias.prototype.input.java.OperationalMode
+import org.eso.ias.prototype.input.java.AlarmSample
 
 /**
  * A scala TransferExecutor for testing purposes

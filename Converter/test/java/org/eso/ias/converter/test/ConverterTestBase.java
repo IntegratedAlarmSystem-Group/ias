@@ -9,15 +9,18 @@ import java.util.Objects;
 import org.eso.ias.converter.config.ConfigurationException;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
 import org.eso.ias.converter.config.MonitorPointConfiguration;
-import org.eso.ias.plugin.AlarmSample;
+import org.eso.ias.prototype.input.java.AlarmSample;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
+import org.eso.ias.plugin.filter.Filter.ValidatedSample;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.prototype.input.java.IASTypes;
 import org.eso.ias.prototype.input.java.IASValue;
+import org.eso.ias.prototype.input.java.IasValidity;
 import org.eso.ias.prototype.input.java.IasValueJsonSerializer;
 import org.eso.ias.prototype.input.java.IasValueStringSerializer;
+import org.eso.ias.prototype.input.java.OperationalMode;
 
 /**
  * A base class providing common utlity methods used
@@ -240,10 +243,10 @@ public class ConverterTestBase {
 	 */
 	protected MonitorPointData buildMonitorPointData(MonitorPointDataHolder mpHolder) {
 		Objects.requireNonNull(mpHolder);
-		List<Sample> samples = new ArrayList<>();
-		samples.add(new Sample(mpHolder.value));
+		List<ValidatedSample> samples = new ArrayList<>();
+		samples.add(new ValidatedSample(new Sample(mpHolder.value),IasValidity.RELIABLE));
 		FilteredValue fv = new FilteredValue(mpHolder.value, samples, mpHolder.timestamp);
-		ValueToSend vts = new ValueToSend(mpHolder.id, fv);
+		ValueToSend vts = new ValueToSend(mpHolder.id, fv,OperationalMode.DEGRADED);
 		return new MonitorPointData(pluginID, monitoredSystemID, vts);
 	}
 

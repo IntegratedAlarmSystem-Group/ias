@@ -5,8 +5,11 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import org.eso.ias.plugin.Sample;
+import org.eso.ias.plugin.filter.Filter.ValidatedSample;
+import org.eso.ias.prototype.input.java.IasValidity;
 
 /**
  * The value returned after applying the filter.
@@ -25,7 +28,7 @@ public class FilteredValue {
 	 * does nothing only has one sample but the value generated averaging 
 	 * many sample sample contains that many sample.
 	 */
-	public final List<Sample> samples;
+	public final List<ValidatedSample> samples;
 	
 	/**
 	 * The value obtained applying the filter to the samples
@@ -43,13 +46,24 @@ public class FilteredValue {
 	public final long producedTimestamp;
 	
 	/**
+	 * The validity
+	 * <P>
+	 * The validity of the filtered value depends on the validity of all
+	 * the samples it uses to generate the value
+	 */
+	public final IasValidity validity;
+	
+	/**
 	 * Constructor 
 	 * 
 	 * @param value The value to send to the IAS core
 	 * @param samples The history of samples used by the filter to produce the value
 	 * @param monitoredSystemTimestamp The timestamp when the value has been provided by the monitored system
 	 */
-	public FilteredValue(Object value, List<Sample> samples, long monitoredSystemTimestamp) {
+	public FilteredValue(
+			Object value, 
+			List<ValidatedSample> samples, 
+			long monitoredSystemTimestamp) {
 		Objects.requireNonNull(value,"The filtered value can't be null");
 		Objects.requireNonNull(samples,"The collection of samples can't be null");
 		
@@ -60,6 +74,8 @@ public class FilteredValue {
 		this.filteredTimestamp=System.currentTimeMillis();
 		this.samples=Collections.unmodifiableList(samples);
 		this.producedTimestamp=monitoredSystemTimestamp;
+		Stream<ValidatedSample> stream = samples.stream();
+		this.validity = stream.allMatch(x -> x.validity==IasValidity.RELIABLE)?IasValidity.RELIABLE:IasValidity.UNRELIABLE;
 	}
 	
 	/**

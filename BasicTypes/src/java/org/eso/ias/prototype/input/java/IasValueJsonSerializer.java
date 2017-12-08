@@ -2,8 +2,6 @@ package org.eso.ias.prototype.input.java;
 
 import java.util.Objects;
 
-import org.eso.ias.plugin.AlarmSample;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 

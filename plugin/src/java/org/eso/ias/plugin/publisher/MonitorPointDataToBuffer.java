@@ -3,7 +3,6 @@ package org.eso.ias.plugin.publisher;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import org.eso.ias.plugin.OperationalMode;
 import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.NoneFilter;
 
@@ -58,6 +57,13 @@ public class MonitorPointDataToBuffer {
 	protected String operationalMode;
 	
 	/**
+	 * The validity
+	 * 
+	 * @see IasValidity
+	 */
+	protected String validity;
+	
+	/**
 	 * ISO 8601 date formatter
 	 */
 	protected final SimpleDateFormat iso8601dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
@@ -80,6 +86,7 @@ public class MonitorPointDataToBuffer {
 			setFilteredTime(iso8601dateFormat.format(new Date(value.filteredTimestamp)));
 		}
 		setOperationalMode(value.operationalMode.toString().toUpperCase());
+		setValidity(value.iasValidity.toString().toUpperCase());
 	}
 
 	/**
@@ -161,6 +168,8 @@ public class MonitorPointDataToBuffer {
 		ret.append(sampleTime);
 		ret.append(", operational mode=");
 		ret.append(operationalMode);
+		ret.append(", validity=");
+		ret.append(validity);
 		ret.append(')');
 		return ret.toString();
 	}
@@ -177,6 +186,7 @@ public class MonitorPointDataToBuffer {
 		result = prime * result + ((sampleTime == null) ? 0 : sampleTime.hashCode());
 		result = prime * result + ((value == null) ? 0 : value.hashCode());
 		result = prime * result + ((operationalMode == null) ? 0 : operationalMode.hashCode());
+		result = prime * result + ((validity == null) ? 0 : validity.hashCode());
 		return result;
 	}
 
@@ -212,6 +222,11 @@ public class MonitorPointDataToBuffer {
 				return false;
 		} else if (!operationalMode.equals(other.operationalMode))
 			return false;
+		if (validity == null) {
+			if (other.validity != null)
+				return false;
+		} else if (!validity.equals(other.validity))
+			return false;
 		if (value == null) {
 			if (other.value != null)
 				return false;
@@ -232,5 +247,19 @@ public class MonitorPointDataToBuffer {
 	 */
 	public void setOperationalMode(String operationalMode) {
 		this.operationalMode = operationalMode;
+	}
+
+	/**
+	 * @return the validity
+	 */
+	public String getValidity() {
+		return validity;
+	}
+
+	/**
+	 * param validity the validity
+	 */
+	public void setValidity(String validity) {
+		this.validity = validity;
 	}
 }

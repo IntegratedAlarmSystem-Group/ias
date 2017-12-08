@@ -3,7 +3,6 @@ package org.eso.ias.prototype.input.java;
 import java.util.Objects;
 
 import org.eso.ias.cdb.pojos.IasTypeDao;
-import org.eso.ias.plugin.AlarmSample;
 
 /**
  * Java representation of the IAS types.

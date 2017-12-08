@@ -2,7 +2,6 @@ package org.eso.ias.prototype.input.java;
 
 import java.util.Objects;
 
-import org.eso.ias.plugin.OperationalMode;
 import org.eso.ias.prototype.input.Identifier;
 /**
  * The view of the untyped heterogeneous inputs in the java code.
@@ -26,6 +25,11 @@ public abstract class IASValueBase {
 	 * @see OperationalMode
 	 */
 	public final OperationalMode mode;
+	
+	/**
+	 * The validity
+	 */
+	public final IasValidity iasValidity;
 	
 	/**
 	 * The identifier of the input
@@ -60,14 +64,17 @@ public abstract class IASValueBase {
 	 */
 	protected IASValueBase(long tStamp,
 			OperationalMode mode,
+			IasValidity iasValidity,
 			String id,
 			String runningId,
 			IASTypes valueType) {
 		super();
 		Objects.requireNonNull(mode,"The mode can't be null");
+		Objects.requireNonNull(iasValidity,"The validity can't be null");
 		
 		this.timestamp=tStamp;
 		this.mode = mode;
+		this.iasValidity=iasValidity;
 		Objects.requireNonNull(id);
 		if (id.isEmpty()) {
 			throw new IllegalArgumentException("The ID can't be empty");
@@ -103,6 +110,7 @@ public abstract class IASValueBase {
 		int result = 1;
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		result = prime * result + ((mode == null) ? 0 : mode.hashCode());
+		result = prime * result + ((iasValidity == null) ? 0 : iasValidity.hashCode());
 		result = prime * result + ((runningId == null) ? 0 : runningId.hashCode());
 		result = prime * result + (int) (timestamp ^ (timestamp >>> 32));
 		result = prime * result + ((valueType == null) ? 0 : valueType.hashCode());
@@ -126,6 +134,8 @@ public abstract class IASValueBase {
 		} else if (!id.equals(other.id))
 			return false;
 		if (mode != other.mode)
+			return false;
+		if (iasValidity!=other.iasValidity)
 			return false;
 		if (runningId == null) {
 			if (other.runningId != null)

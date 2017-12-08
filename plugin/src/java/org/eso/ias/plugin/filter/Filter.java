@@ -1,8 +1,10 @@
 package org.eso.ias.plugin.filter;
 
+import java.util.Objects;
 import java.util.Optional;
 
 import org.eso.ias.plugin.Sample;
+import org.eso.ias.prototype.input.java.IasValidity;
 
 /**
  * The interface defining filter to apply to a monitored value 
@@ -12,6 +14,33 @@ import org.eso.ias.plugin.Sample;
  *
  */
 public interface Filter {
+	
+	/**
+	 * The sample enriched with its validity
+	 * 
+	 * @author acaproni
+	 *
+	 */
+	public class ValidatedSample extends Sample {
+		
+		/**
+		 * The validity of the sample
+		 */
+		public final IasValidity  validity;
+
+		/**
+		 * Constructor
+		 * 
+		 * @param s The sample
+		 * @param validity The validity
+		 */
+		public ValidatedSample(Sample s, IasValidity  validity) {
+			super(s.value, s.timestamp);
+			Objects.requireNonNull(validity);
+			this.validity = validity;
+		}
+
+	}
 
 	/**
 	 * Acquire a new sample and recalculate the value
@@ -28,7 +57,7 @@ public interface Filter {
 	 * @return the value after applying the filter the newly received filter
 	 * @throws FilterException If the sample is not timely ordered
 	 */
-	public Optional<FilteredValue> newSample(Sample newSample) throws FilterException;
+	public Optional<FilteredValue> newSample(ValidatedSample newSample) throws FilterException;
 	
 	/**
 	 * Apply the filter to the samples already in the history 

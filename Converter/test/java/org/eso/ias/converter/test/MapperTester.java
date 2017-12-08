@@ -7,7 +7,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.eso.ias.converter.ValueMapper;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
-import org.eso.ias.plugin.AlarmSample;
+import org.eso.ias.prototype.input.java.AlarmSample;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.prototype.input.java.IASTypes;
 import org.eso.ias.prototype.input.java.IASValue;

@@ -13,7 +13,9 @@ import java.util.List;
 
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
+import org.eso.ias.plugin.filter.Filter.ValidatedSample;
 import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
+import org.eso.ias.prototype.input.java.IasValidity;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -29,12 +31,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class BufferedMonitoredSystemDataTest extends PublisherTestCommon {
 	
-	/**
-	 * The mapper to convert java pojos to JSON strings
-	 * and vice-versa
-	 */
-	private final ObjectMapper mapper = new ObjectMapper();
-
 	/**
 	 * The logger
 	 */
@@ -134,7 +130,7 @@ public class BufferedMonitoredSystemDataTest extends PublisherTestCommon {
 		String isoDate = iso8601dateFormat.format(new Date(now));
 		msData.setPublishTime(isoDate);
 		
-		List<Sample> samples = Arrays.asList(new Sample(Integer.valueOf(67)));
+		List<ValidatedSample> samples = Arrays.asList(new ValidatedSample(new Sample(Integer.valueOf(67)),IasValidity.RELIABLE));
 		List<MonitorPointDataToBuffer> values = Arrays.asList(
 				new MonitorPointDataToBuffer(new ValueToSend("FV-ID1", Integer.valueOf(67), samples, System.currentTimeMillis()+10)),
 				new MonitorPointDataToBuffer(new ValueToSend("FV-ID2", Long.valueOf(123), samples, System.currentTimeMillis()+20)),

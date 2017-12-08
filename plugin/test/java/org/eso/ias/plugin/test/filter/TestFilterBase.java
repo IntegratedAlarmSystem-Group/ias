@@ -9,9 +9,11 @@ import java.util.concurrent.TimeUnit;
 
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.filter.Filter;
+import org.eso.ias.plugin.filter.Filter.ValidatedSample;
 import org.eso.ias.plugin.filter.FilterBase;
 import org.eso.ias.plugin.filter.FilterException;
 import org.eso.ias.plugin.filter.FilteredValue;
+import org.eso.ias.prototype.input.java.IasValidity;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -66,7 +68,7 @@ public class TestFilterBase {
 			 * @see org.eso.ias.plugin.filter.FilterBase#historySnapshot()
 			 */
 			@Override
-			public List<Sample> historySnapshot() {
+			public List<ValidatedSample> historySnapshot() {
 				return super.historySnapshot();
 			}
 
@@ -74,7 +76,7 @@ public class TestFilterBase {
 			 * @see org.eso.ias.plugin.filter.FilterBase#peekNewest()
 			 */
 			@Override
-			public Optional<Sample> peekNewest() {
+			public Optional<ValidatedSample> peekNewest() {
 				return super.peekNewest();
 			}
 
@@ -90,7 +92,7 @@ public class TestFilterBase {
 			 * @see org.eso.ias.plugin.filter.FilterBase#peekOldest()
 			 */
 			@Override
-			public Optional<Sample> peekOldest() {
+			public Optional<ValidatedSample> peekOldest() {
 				return super.peekOldest();
 			}
 
@@ -98,7 +100,7 @@ public class TestFilterBase {
 			 * @see org.eso.ias.plugin.filter.FilterBase#sampleAdded(org.eso.ias.plugin.Sample)
 			 */
 			@Override
-			protected void sampleAdded(Sample newSample) {
+			protected void sampleAdded(ValidatedSample newSample) {
 			}
 
 			/* (non-Javadoc)
@@ -135,15 +137,16 @@ public class TestFilterBase {
 		 * @ param f The filter to submit samples to
 		 * @return The timely ordered list of submitted samples
 		 */
-		public static List<Sample> submitSamples(int n, Filter f) 
+		public static List<ValidatedSample> submitSamples(int n, Filter f) 
 				throws FilterException, InterruptedException {
 			assert(n>0);
-			LinkedList<Sample> ret = new LinkedList<>();
+			LinkedList<ValidatedSample> ret = new LinkedList<>();
 			for (int t = 0; t <n; t++) {
 				String value ="Test-"+t;
 				Sample s = new Sample(value);
-				f.newSample(s);
-				ret.addFirst(s);
+				ValidatedSample vs = new ValidatedSample(s, IasValidity.RELIABLE);
+				f.newSample(vs);
+				ret.addFirst(vs);
 				Thread.sleep(25);
 			}
 			return ret;
@@ -155,7 +158,7 @@ public class TestFilterBase {
 		 * @param samples The list to check
 		 * @return True if the list is ordered 
 		 */
-		public static boolean checkOrder(List<Sample> samples) {
+		public static boolean checkOrder(List<ValidatedSample> samples) {
 			// Check the order of the timestamps of the samples
 			for (int t=1; t<samples.size(); t++) {
 				if (samples.get(t-1).timestamp<=samples.get(t).timestamp) {
@@ -175,7 +178,7 @@ public class TestFilterBase {
 			// Add n ordered samples
 			int n =10;
 			submitSamples(n, defaultFilter);
-			List<Sample> samples = defaultFilter.historySnapshot();
+			List<ValidatedSample> samples = defaultFilter.historySnapshot();
 			assertEquals(n,samples.size());
 			
 			// Check the order of the timestamps of the samples
@@ -190,9 +193,9 @@ public class TestFilterBase {
 		 */
 		@Test(expected=FilterException.class)
 		public void testAddingOldSample() throws Exception {
-			Sample oldest = new Sample("OLD");
+			ValidatedSample oldest = new ValidatedSample(new Sample("OLD"),IasValidity.RELIABLE);
 			Thread.sleep(125);
-			Sample newest = new Sample("NEW");
+			ValidatedSample newest = new ValidatedSample(new Sample("NEW"),IasValidity.RELIABLE);
 			
 			// Add in the wrong order
 			defaultFilter.newSample(newest);
@@ -221,12 +224,12 @@ public class TestFilterBase {
 		public void removeNSamples() throws Exception {
 			int nSamples=25;
 			int toRemove=12;
-			List<Sample> samples = submitSamples(nSamples, defaultFilter);
+			List<ValidatedSample> samples = submitSamples(nSamples, defaultFilter);
 			
 			int removed = defaultFilter.removeLastSamples(toRemove);
 			assertEquals("Wrong number of removed samples",toRemove,removed);
 			
-			List<Sample> samplesFromFilter = defaultFilter.historySnapshot(); 
+			List<ValidatedSample> samplesFromFilter = defaultFilter.historySnapshot(); 
 			assertTrue(checkOrder(defaultFilter.historySnapshot()));
 			assertEquals((long)nSamples-toRemove, defaultFilter.historySnapshot().size());
 			// Check that the newer samples have been kept
@@ -255,9 +258,9 @@ public class TestFilterBase {
 		public void testKeepNewest() throws Exception {
 			int nSamples=25;
 			int toKeep=7;
-			List<Sample> samples = submitSamples(nSamples, defaultFilter);
+			List<ValidatedSample> samples = submitSamples(nSamples, defaultFilter);
 			int removed = defaultFilter.keepNewest(toKeep);
-			List<Sample> samplesFromFilter = defaultFilter.historySnapshot();
+			List<ValidatedSample> samplesFromFilter = defaultFilter.historySnapshot();
 			assertEquals("Wrong number of deleted samples returned",(long)nSamples-toKeep, removed);
 			assertEquals("Wrong number of samples in history",toKeep, samplesFromFilter.size());
 			
@@ -286,9 +289,9 @@ public class TestFilterBase {
 		@Test
 		public void testPeekNewest() throws Exception {
 			int nSamples=10;
-			List<Sample> samples = submitSamples(nSamples, defaultFilter);
+			List<ValidatedSample> samples = submitSamples(nSamples, defaultFilter);
 			
-			Optional<Sample> newest = defaultFilter.peekNewest();
+			Optional<ValidatedSample> newest = defaultFilter.peekNewest();
 			assertTrue(newest.isPresent());
 			assertEquals(samples.get(0).timestamp, newest.get().timestamp);
 			assertEquals(samples.get(0).value, newest.get().value);
@@ -308,9 +311,9 @@ public class TestFilterBase {
 		@Test
 		public void testPeekOldest() throws Exception {
 			int nSamples=10;
-			List<Sample> samples = submitSamples(nSamples, defaultFilter);
+			List<ValidatedSample> samples = submitSamples(nSamples, defaultFilter);
 			
-			Optional<Sample> oldest = defaultFilter.peekOldest();
+			Optional<ValidatedSample> oldest = defaultFilter.peekOldest();
 			assertTrue(oldest.isPresent());
 			assertEquals(samples.get(samples.size()-1).timestamp, oldest.get().timestamp);
 			assertEquals(samples.get(samples.size()-1).value, oldest.get().value);
@@ -341,7 +344,7 @@ public class TestFilterBase {
 			int removed = defaultFilter.removeOldSamples(now);
 			assertEquals("Wrong number of removed samples",0,removed);
 			
-			List<Sample> samplesFromFilter = defaultFilter.historySnapshot(); 
+			List<ValidatedSample> samplesFromFilter = defaultFilter.historySnapshot(); 
 			assertEquals(nSamples,samplesFromFilter.size());
 			
 			defaultFilter.clearHistory();
@@ -378,12 +381,12 @@ public class TestFilterBase {
 			long now = System.currentTimeMillis();
 			Thread.sleep(1000);
 			int nSamples=10;
-			List<Sample> samples = submitSamples(nSamples, defaultFilter);
+			List<ValidatedSample> samples = submitSamples(nSamples, defaultFilter);
 			
 			int removed = defaultFilter.removeOldSamples(System.currentTimeMillis()-now, TimeUnit.MILLISECONDS);
 			assertEquals("Wrong number of removed samples",0,removed);
 			
-			List<Sample> samplesFromFilter = defaultFilter.historySnapshot(); 
+			List<ValidatedSample> samplesFromFilter = defaultFilter.historySnapshot(); 
 			assertEquals(nSamples,samplesFromFilter.size());
 			
 			defaultFilter.clearHistory();
@@ -396,7 +399,7 @@ public class TestFilterBase {
 			now = System.currentTimeMillis();
 			Thread.sleep(100);
 			int nNewerSamples=10;
-			List<Sample> newerSamples = submitSamples(nNewerSamples, defaultFilter);
+			List<ValidatedSample> newerSamples = submitSamples(nNewerSamples, defaultFilter);
 			samplesFromFilter = defaultFilter.historySnapshot();
 			assertEquals((long)nNewerSamples+nSamples,samplesFromFilter.size());
 			
@@ -418,7 +421,7 @@ public class TestFilterBase {
 		public void testSubmissionTime() throws Exception {
 			assertFalse(defaultFilter.getLastSampleTimeStamp().isPresent());
 			long before = System.currentTimeMillis();
-			Sample s = new Sample(Boolean.TRUE);
+			ValidatedSample s = new ValidatedSample(new Sample(Boolean.TRUE),IasValidity.RELIABLE);
 			defaultFilter.newSample(s);
 			long after = System.currentTimeMillis();
 			
