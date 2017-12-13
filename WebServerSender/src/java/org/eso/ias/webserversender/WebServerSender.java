@@ -8,7 +8,7 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class WSClient {
+public class WebServerSender {
 
 	/**
 	 * Web socket client
@@ -23,7 +23,7 @@ public class WSClient {
 	/**
 	 * Custom socket
 	 */
-	WebSocketSender socket = new WebSocketSender(this.KafkaTopic);
+	KafkaWebSocketConnector connector = new KafkaWebSocketConnector(this.KafkaTopic);
 
 	/**
 	 * Web Server URI
@@ -42,7 +42,7 @@ public class WSClient {
 	/**
 	 * The logger
 	 */
-	private static final Logger logger = LoggerFactory.getLogger(WSClient.class);
+	private static final Logger logger = LoggerFactory.getLogger(WebServerSender.class);
 
 
 	/**
@@ -52,9 +52,9 @@ public class WSClient {
 		try {
 			this.uri = new URI(this.webserverUri);
 			this.client.start();
-		    this.client.connect(this.socket, this.uri, this.request);
+		    this.client.connect(this.connector, this.uri, this.request);
 		    logger.info("Connecting to : " + uri.toString());
-		    while(this.socket.session==null) {
+		    while(this.connector.session==null) {
 		    	TimeUnit.MILLISECONDS.sleep(100);
 		    }
 		}
@@ -66,7 +66,7 @@ public class WSClient {
 
 	public static void main(String[] args) throws Exception {
 
-		WSClient ws = new WSClient();
+		WebServerSender ws = new WebServerSender();
 		ws.run();
 
 	}

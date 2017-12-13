@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @WebSocket(maxTextMessageSize = 64 * 1024)
-public class WebSocketSender implements KafkaConsumerListener {
+public class KafkaWebSocketConnector implements KafkaConsumerListener {
 
 	/**
 	 * Signal to prevent the web socket from closing before a set of pending operations are performed
@@ -22,7 +22,7 @@ public class WebSocketSender implements KafkaConsumerListener {
 	/**
 	 * The logger
 	 */
-	private static final Logger logger = LoggerFactory.getLogger(WebSocketSender.class);
+	private static final Logger logger = LoggerFactory.getLogger(KafkaWebSocketConnector.class);
 	/**
 	 * WebSocket session required to send messages to the Web server
 	 */
@@ -33,7 +33,7 @@ public class WebSocketSender implements KafkaConsumerListener {
 	SimpleStringConsumer consumer;
 
 
-	public WebSocketSender(String kafkaTopic) {
+	public KafkaWebSocketConnector(String kafkaTopic) {
 		this.consumer = new SimpleStringConsumer(SimpleStringProducer.DEFAULT_BOOTSTRAP_SERVERS, kafkaTopic, this);
 	}
 
