@@ -1,4 +1,4 @@
-package org.eso.ias.websocketutils;
+package org.eso.ias.webserversender;
 
 import java.net.URI;
 import java.util.concurrent.TimeUnit;

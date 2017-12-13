@@ -1,4 +1,4 @@
-package org.eso.ias.websocketutils;
+package org.eso.ias.webserversender;
 
 import java.util.concurrent.CountDownLatch;
 import org.eclipse.jetty.websocket.api.Session;
