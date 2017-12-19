@@ -11,6 +11,14 @@
 		jarName: the name of the jar to build from java sources;
 	-->
 	<property name="jarName" value="ias-webserver-sender.jar"/>
+	
+	<!-- 
+		Dependencies
+	-->
+	<property name="jetty-jars" value="jetty-client-9.4.7.v20170914.jar,jetty-http-9.4.7.v20170914.jar,jetty-io-9.4.7.v20170914.jar,jetty-util-9.4.7.v20170914.jar"/>
+	<property name="websocket-jars" value="websocket-api-9.4.7.v20170914.jar,websocket-common-9.4.7.v20170914.jar,websocket-client-9.4.7.v20170914.jar"/>
+	<property name="exttools" value="${jetty-jars},${websocket-jars}" />
+		
 
 	<!-- ####################### TARGETS ####################### -->
 
