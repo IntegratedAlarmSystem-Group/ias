@@ -41,7 +41,7 @@ extends KafkaConsumerListener with InputSubscriber {
   private val jsonSerializer = new IasValueJsonSerializer()
   
   /** The Kafka consumer */
-  private val kafkaConsumer = new SimpleStringConsumer(serversList, topicName, dasuId, this)
+  private val kafkaConsumer = new SimpleStringConsumer(serversList, topicName, dasuId)
   
   /** The listener of events */
   private var listener: Option[InputsListener] = None
@@ -120,7 +120,7 @@ extends KafkaConsumerListener with InputSubscriber {
     this.listener = Option(listener)
     logger.info("The subscriber of DASU [{}] will start getting events",dasuId)
     Try {
-      kafkaConsumer.startGettingEvents(StartPosition.END)
+      kafkaConsumer.startGettingEvents(StartPosition.END,this)
       logger.info("The subscriber of DASU [{}] is polling events from kafka",dasuId)
     }
   }
