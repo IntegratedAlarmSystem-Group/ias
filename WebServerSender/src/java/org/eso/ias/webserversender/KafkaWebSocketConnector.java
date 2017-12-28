@@ -47,7 +47,7 @@ public class KafkaWebSocketConnector implements KafkaConsumerListener {
 	public KafkaWebSocketConnector(String id, String kafkaTopic) {
     this.id = id;
 		// this.consumer = new SimpleStringConsumer(SimpleStringProducer.DEFAULT_BOOTSTRAP_SERVERS, kafkaTopic, this.id, this);
-		this.consumer = new SimpleStringConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, kafkaTopic, this.id, this);
+		this.consumer = new SimpleStringConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, kafkaTopic, this.id);
 	}
 
 	/**
@@ -76,7 +76,7 @@ public class KafkaWebSocketConnector implements KafkaConsumerListener {
 	   this.session = session;
 	   try {
 	       this.consumer.setUp();
-	       this.consumer.startGettingEvents(StartPosition.END);
+	       this.consumer.startGettingEvents(StartPosition.END, this);
 		  //  this.session.getRemote().sendStringByFuture( "{\"text\": \""+ "Hola" +"\"}" );
 	       logger.info("Starting to listen events\n");
 	   }

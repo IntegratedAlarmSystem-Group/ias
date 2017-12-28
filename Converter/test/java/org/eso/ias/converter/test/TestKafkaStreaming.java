@@ -249,14 +249,13 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		mPointsConsumer = new SimpleStringConsumer(
 				defaultKafkaBootstrapServers,
 				KafkaHelper.IASIOs_TOPIC_NAME,
-				"KafkaConverterTest",
-				eventsConsumer);
+				"KafkaConverterTest");
 		Properties props = new Properties();
 		props.put("auto.offset.reset", "latest");
 		mPointsConsumer.setUp(props);
 
 		// Start getting events
-		mPointsConsumer.startGettingEvents(StartPosition.END);
+		mPointsConsumer.startGettingEvents(StartPosition.END,eventsConsumer);
 		
 		// Build the producer that pushes monitor point
 		// in the kafka topic

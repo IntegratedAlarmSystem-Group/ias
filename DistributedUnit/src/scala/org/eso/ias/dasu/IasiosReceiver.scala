@@ -56,8 +56,7 @@ class IasiosReceiver(
   val consumer: SimpleStringConsumer = new SimpleStringConsumer(
       KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
       KafkaHelper.IASIOs_TOPIC_NAME,
-      dasuIdentifier.id,
-      this)
+      dasuIdentifier.id)
   val props: Properties = System.getProperties()
   props.put("group.id",dasuIdentifier.id)
   consumer.setUp(props)
@@ -104,7 +103,7 @@ class IasiosReceiver(
    */
   def start(): Try[Unit] = {
     logger.info("Receiver of DASU [{}]: will ask the consumer to get events from BSDB",dasuIdentifier.id)
-    Try[Unit](consumer.startGettingEvents(StartPosition.END))
+    Try[Unit](consumer.startGettingEvents(StartPosition.END,this))
   }
   
   /**
