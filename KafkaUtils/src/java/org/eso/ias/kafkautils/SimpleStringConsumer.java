@@ -134,7 +134,7 @@ public class SimpleStringConsumer implements Runnable {
 	/**
 	 * The listener of events published in the topic
 	 */
-	private final KafkaConsumerListener listener;
+	private KafkaConsumerListener listener;
 
 	/**
 	 * The number of records received while polling
@@ -169,9 +169,8 @@ public class SimpleStringConsumer implements Runnable {
 	 * @param servers The kafka servers to connect to
 	 * @param topicName The name of the topic to get events from
 	 * @param consumerID the ID of the consumer
-	 * @param listener The listener of events published in the topic
 	 */
-	public SimpleStringConsumer(String servers, String topicName, String consumerID, KafkaConsumerListener listener) {
+	public SimpleStringConsumer(String servers, String topicName, String consumerID) {
 		Objects.requireNonNull(servers);
 		this.kafkaServers = servers;
 		Objects.requireNonNull(topicName);
@@ -184,8 +183,6 @@ public class SimpleStringConsumer implements Runnable {
 			throw new IllegalArgumentException("Invalid empty consumer ID");
 		}
 		this.consumerID=consumerID.trim();
-		Objects.requireNonNull(listener);
-		this.listener=listener;
 		logger.info("SimpleKafkaConsumer [{}] will get events from {} topic connected to kafka broker@{}",
 				consumerID,
 				this.topicName,
@@ -227,11 +224,14 @@ public class SimpleStringConsumer implements Runnable {
 	 * one partition.
 	 *
 	 * @param startReadingFrom Starting position in the kafka partition
+	 * @param listener The listener of events published in the topic
 	 * @throws KafkaUtilsException in case of timeout subscribing to the kafkatopic
 	 */
-	public synchronized void startGettingEvents(StartPosition startReadingFrom)
+	public synchronized void startGettingEvents(StartPosition startReadingFrom, KafkaConsumerListener listener)
 	throws KafkaUtilsException {
 		Objects.requireNonNull(startReadingFrom);
+		Objects.requireNonNull(listener);
+		this.listener=listener;
 		if (!isInitialized.get()) {
 			throw new IllegalStateException("Not initialized");
 		}
@@ -401,7 +401,7 @@ public class SimpleStringConsumer implements Runnable {
 	        				 record.offset(),
 	        				 record.topic());
 	        		 processedStrings.incrementAndGet();
-	        		 listener.stringEventReceived(record.value());
+	        		 notifyListener(record.value());
 	        	 }
 	         } catch (Throwable t) {
 	        	 logger.error("Consumer [{}] got an exception got processing events: records lost!",consumerID,t);
@@ -411,6 +411,15 @@ public class SimpleStringConsumer implements Runnable {
 		logger.info("Closing the consumer [{}]",consumerID);
 		consumer.close();
 		logger.info("Thread of [{}] to get events from the topic terminated",consumerID);
+	}
+	
+	/**
+	 * Notify the passed string to the listener. 
+	 * 
+	 * @param strToNotify The string to notify to the listener 
+	 */
+	protected void notifyListener(String strToNotify) {
+		listener.stringEventReceived(strToNotify);
 	}
 
 	/**
