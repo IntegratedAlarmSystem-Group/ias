@@ -114,6 +114,7 @@ implements KafkaConsumerListener {
 	public void startGettingEvents(StartPosition startReadingFrom, IasioListener listener)
 	throws KafkaUtilsException {
 		Objects.requireNonNull(listener);
+		this.iasioListener=listener;
 		stringConsumer.startGettingEvents(startReadingFrom, this);
 	}
 
@@ -129,13 +130,14 @@ implements KafkaConsumerListener {
 		try {
 			iasio = serializer.valueOf(event);
 		} catch (Exception e) {
-			logger.error("Error deserializing the string [{}]: value lost",event,e);
+			logger.error("Error building the IASValue from the string [{}]: value lost",event,e);
+			return;
 		}
 		if (acceptedIds.contains(iasio.id) || acceptedIds.isEmpty()) {
 			try {
 				iasioListener.iasioReceived(iasio);
 			} catch (Exception e) {
-				logger.error("Error sending the IASValue [{}] to the listener: value lost",iasio.toString(),e);
+				logger.error("Error notifying the IASValue [{}] to the listener: value lost",iasio.toString(),e);
 			}
 		}
 	}
