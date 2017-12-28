@@ -1,6 +1,5 @@
 package org.eso.ias.dasu.subscriber
 
-import org.eso.ias.kafkautils.SimpleStringConsumer
 import org.ias.prototype.logging.IASLogger
 import org.eso.ias.prototype.input.java.IasValueJsonSerializer
 import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener
@@ -9,6 +8,9 @@ import org.eso.ias.kafkautils.KafkaHelper
 import scala.util.Try
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition
 import scala.collection.mutable.{HashSet => MutableSet}
+import org.eso.ias.kafkautils.KafkaIasiosConsumer
+import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener
+import org.eso.ias.prototype.input.java.IASValue
 
 /** 
  *  Read IASValues from the kafka queue 
@@ -26,7 +28,7 @@ class KafkaSubscriber(
     serversList: String,
     topicName: String,
     val props: Properties) 
-extends KafkaConsumerListener with InputSubscriber {
+extends IasioListener with InputSubscriber {
   require(Option(dasuId).isDefined && !dasuId.isEmpty())
   require(Option(serversList).isDefined && !dasuId.isEmpty())
   require(Option(topicName).isDefined && !dasuId.isEmpty())
@@ -41,7 +43,7 @@ extends KafkaConsumerListener with InputSubscriber {
   private val jsonSerializer = new IasValueJsonSerializer()
   
   /** The Kafka consumer */
-  private val kafkaConsumer = new SimpleStringConsumer(serversList, topicName, dasuId)
+  private val kafkaConsumer = new KafkaIasiosConsumer(serversList, topicName, dasuId)
   
   /** The listener of events */
   private var listener: Option[InputsListener] = None
@@ -76,12 +78,11 @@ extends KafkaConsumerListener with InputSubscriber {
 	 * @param event The string received in the topic
 	 * @see KafkaConsumerListener
 	 */
-	override def stringEventReceived(event: String) = {
+	override def iasioReceived(iasValue: IASValue[_]) = {
 	  try {
-	    val iasValue = jsonSerializer.valueOf(event)
 	    if (acceptedInputs.contains(iasValue.id)) listener.foreach( l => l.inputsReceived(Set(iasValue)))
 	  } catch {
-	    case e: Exception => logger.error("Subscriber of DASU [{}] got an error processing this event [{}]", dasuId,event,e)
+	    case e: Exception => logger.error("Subscriber of DASU [{}] got an error processing event [{}]", dasuId,iasValue.toString(),e)
 	  }
 	}
   
