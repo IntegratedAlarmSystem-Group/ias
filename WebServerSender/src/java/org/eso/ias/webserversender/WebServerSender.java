@@ -58,8 +58,8 @@ public class WebServerSender {
 	public WebServerSender(String id, String kafkaTopic, String webserverUri) {
 		this.id = id;
 		this.kafkaTopic = kafkaTopic;
-		this.uri = new URI(webserverUri);
-    	this.connector = new KafkaWebSocketConnector(this.id, this.kafkaTopic);
+		this.webserverUri = webserverUri;
+		this.connector = new KafkaWebSocketConnector(this.id, this.kafkaTopic);
 	}
 
 	/**
@@ -67,16 +67,21 @@ public class WebServerSender {
 	 */
 	public void run() {
 		try {
+			this.uri = new URI(this.webserverUri);
 			this.client.start();
-		    this.client.connect(this.connector, this.uri, this.request);
-		    logger.info("Connecting to : " + uri.toString());
-		    while(this.connector.session==null) {
-		    	TimeUnit.MILLISECONDS.sleep(100);
-		    }
+			this.client.connect(this.connector, this.uri, this.request);
+			logger.info("Connecting to : " + uri.toString());
+			while(this.connector.session==null) {
+				TimeUnit.MILLISECONDS.sleep(100);
+			}
 		}
 		catch( Exception e) {
 			logger.error("Error on WebSocket connection");
 		}
+	}
+
+	public void stop() {
+		this.client.stop();
 	}
 
 	public static void main(String[] args) throws Exception {
