@@ -19,6 +19,7 @@ import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer;
 import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener;
+import org.eso.ias.kafkautils.KafkaIasiosProducer;
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
 import org.eso.ias.prototype.input.java.IASTypes;
 import org.eso.ias.prototype.input.java.IASValue;
@@ -33,12 +34,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A test to check if the filtered listener effectively discard the
- * IASIOs whose IDs do not match with the passed filter.
+ * A test to 
+ * <UL>
+ * 	<LI>check if the filtered listener effectively discard the IASIOs whose IDs do not match with the passed filter
+ * 	<LI>test publishing of IASValues by {@link KafkaIasiosProducer}
+ * </UL>
  * <P>
  * The test is performed by publishing strings obtained deserializing IASValues
  * and checking what is received by the listener.
- * 
+ * <P>
  * @author acaproni
  */
 public class FilteredConsumerTest implements IasioListener {
@@ -56,7 +60,7 @@ public class FilteredConsumerTest implements IasioListener {
 	/**
 	 * The producer to publish IASValues (strings)
 	 */
-	private SimpleStringProducer producer;
+	private KafkaIasiosProducer producer;
 	
 	/**
 	 * The topic to send to and receive strings from
@@ -94,7 +98,7 @@ public class FilteredConsumerTest implements IasioListener {
 		consumer = new KafkaIasiosConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, topicName, "FilteredConsumser-Test");
 		consumer.setUp();
 		receivedIasios.clear();
-		producer = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, topicName, "Consumer-ID");
+		producer = new KafkaIasiosProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, topicName, "Consumer-ID",serializer);
 		producer.setUp();
 		
 		logger.info("Initialized.");
@@ -146,8 +150,7 @@ public class FilteredConsumerTest implements IasioListener {
 					id, 
 					"RunningID", 
 					IASTypes.LONG);
-			String iasioStr = serializer.iasValueToString(iasio);
-			producer.push(iasioStr,null,iasioStr);
+			producer.push(iasio);
 		}
 	}
 	
