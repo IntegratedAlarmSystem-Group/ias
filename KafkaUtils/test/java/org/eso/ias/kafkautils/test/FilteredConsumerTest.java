@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer;
@@ -132,6 +134,26 @@ public class FilteredConsumerTest implements IasioListener {
 	}
 	
 	/**
+	 * Build and return the IASValues to publish from their IDs
+	 * 
+	 * @param ids The Ids of the IASValues to build 
+	 * @return The IASValues to publish
+	 */
+	public Collection<IASValue<?>> buildValues(List<String> ids) {
+		Objects.requireNonNull(ids);
+		return ids.stream().map(id -> 
+			IASValue.buildIasValue(
+					10L, 
+					System.currentTimeMillis(), 
+					OperationalMode.OPERATIONAL, 
+					IasValidity.RELIABLE, 
+					id, 
+					"RunningID", 
+					IASTypes.LONG)
+		).collect(Collectors.toList());
+	}
+	
+	/**
 	 * Publishes in the kafka topic, the IASValues with the passed IDs.
 	 * This method creates the IASValues then publishes them: for this test
 	 * to pass what is important are only the IDs of the IASValue but not
@@ -141,17 +163,8 @@ public class FilteredConsumerTest implements IasioListener {
 	 */
 	private void publishIasValues(List<String> ids) throws Exception {
 		Objects.requireNonNull(ids);
-		for (String id: ids) {
-			IASValue<?> iasio = IASValue.buildIasValue(
-					10L, 
-					System.currentTimeMillis(), 
-					OperationalMode.OPERATIONAL, 
-					IasValidity.RELIABLE, 
-					id, 
-					"RunningID", 
-					IASTypes.LONG);
-			producer.push(iasio);
-		}
+		Collection<IASValue<?>> values = buildValues(ids);
+		producer.push(values);
 	}
 	
 	/**
@@ -230,5 +243,4 @@ public class FilteredConsumerTest implements IasioListener {
 		assertTrue(checkIds(receivedIasios, idsOfIasios));
 		logger.info("Test testIasioConsumerWithFilters done");
 	}
-
 }
