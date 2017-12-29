@@ -17,7 +17,6 @@ import org.eso.ias.prototype.compele.ComputingElement
 import org.eso.ias.prototype.compele.ComputingElementState
 import org.eso.ias.prototype.compele.AsceStates
 import org.eso.ias.prototype.input.InOut
-import org.eso.ias.kafkautils.SimpleStringProducer
 import org.eso.ias.dasu.publisher.OutputPublisher
 import org.eso.ias.prototype.input.java.IASValue
 import org.eso.ias.prototype.input.JavaConverter
