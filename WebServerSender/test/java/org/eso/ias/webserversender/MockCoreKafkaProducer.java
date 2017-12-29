@@ -14,8 +14,8 @@ public class MockCoreKafkaProducer {
 		SimpleStringProducer producer = new SimpleStringProducer("localhost:9092", "test", "PID1");
 		producer.setUp();
 
-    String msg2 = "{\"value\":\"SET\",\"tStamp\":1600,\"mode\":\"OPERATIONAL\",\"id\":\"AlarmType-ID\",\"fullRunningId\":\"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(AlarmType-ID:IASIO)\",\"valueType\":\"ALARM\"}";
-    String msg1 = "{\"value\":\"CLEARED\",\"tStamp\":1600,\"mode\":\"MAINTENANCE\",\"id\":\"AlarmType-ID\",\"fullRunningId\":\"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(AlarmType-ID:IASIO)\",\"valueType\":\"ALARM\"}";
+		String msg1 = "{\"value\":\"SET\",\"mode\":\"OPERATIONAL\",\"iasValidity\":\"RELIABLE\",\"id\":\"AlarmType-ID\",\"fullRunningId\":\"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(AlarmType-ID:IASIO)\",\"valueType\":\"ALARM\",\"tStamp\":";
+		String msg2 = "{\"value\":\"CLEARED\",\"mode\":\"MAINTENANCE\",\"iasValidity\":\"RELIABLE\",\"id\":\"AlarmType-ID\",\"fullRunningId\":\"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(AlarmType-ID:IASIO)\",\"valueType\":\"ALARM\",\"tStamp\":";
 
 		String aux;
 
@@ -35,8 +35,8 @@ public class MockCoreKafkaProducer {
 
 					counter = 0;
 				}
-
-				producer.push(msg1, null, msg1);
+				String msg = msg1 + Long.toString(System.currentTimeMillis()) + "}";
+				producer.push(msg, null, msg);
 				producer.flush();
 
 			} catch (InterruptedException e) {

@@ -16,10 +16,10 @@ import org.slf4j.LoggerFactory;
 @WebSocket(maxTextMessageSize = 64 * 1024)
 public class KafkaWebSocketConnector implements KafkaConsumerListener {
 
-  /**
-   * Identifier
-   */
-  String id;
+	/**
+	 * Identifier
+	 */
+	String id;
 
 	/**
 	 * Signal to prevent the web socket from closing before a set of pending operations are performed
@@ -38,15 +38,14 @@ public class KafkaWebSocketConnector implements KafkaConsumerListener {
 	 */
 	SimpleStringConsumer consumer;
 
-  /**
+	/**
 	 * Constructor
 	 *
-   * @param id Identifier of the KafkaWebSocketConnector
+   	 * @param id Identifier of the KafkaWebSocketConnector
 	 * @param kafkaTopic Topic defined to send messages to the IAS Core to the IAS Web Server
 	 */
 	public KafkaWebSocketConnector(String id, String kafkaTopic) {
-    this.id = id;
-		// this.consumer = new SimpleStringConsumer(SimpleStringProducer.DEFAULT_BOOTSTRAP_SERVERS, kafkaTopic, this.id, this);
+    	this.id = id;
 		this.consumer = new SimpleStringConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, kafkaTopic, this.id);
 	}
 
@@ -77,7 +76,6 @@ public class KafkaWebSocketConnector implements KafkaConsumerListener {
 	   try {
 	       this.consumer.setUp();
 	       this.consumer.startGettingEvents(StartPosition.END, this);
-		  //  this.session.getRemote().sendStringByFuture( "{\"text\": \""+ "Hola" +"\"}" );
 	       logger.info("Starting to listen events\n");
 	   }
 	   catch (Throwable t) {

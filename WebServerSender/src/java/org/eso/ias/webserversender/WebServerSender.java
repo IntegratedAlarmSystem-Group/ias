@@ -10,10 +10,10 @@ import org.slf4j.LoggerFactory;
 
 public class WebServerSender {
 
-  /**
-   * Identifier
-   */
-  String id;
+	/**
+	 * Identifier
+	 */
+	String id;
 
 	/**
 	 * Web socket client
@@ -23,7 +23,7 @@ public class WebServerSender {
 	/**
 	 * Topic defined to send messages to the IAS Core to the IAS Web Server
 	 */
-	String kafkaTopic = "test";
+	String kafkaTopic;
 
 	/**
 	 * Custom socket
@@ -33,7 +33,7 @@ public class WebServerSender {
 	/**
 	 * Web Server URI
 	 */
-	String webserverUri = "ws://localhost:8000/core/";
+	String webserverUri;
 
 	URI uri;
 
@@ -49,25 +49,24 @@ public class WebServerSender {
 	 */
 	private static final Logger logger = LoggerFactory.getLogger(WebServerSender.class);
 
-  /**
+  	/**
 	 * Constructor
 	 *
 	 * @param id Identifier of the WebServerSender
 	 * @param kafkaTopic Topic defined to send messages to the IAS Core to the IAS Web Server
 	 */
-	public WebServerSender(String id, String kafkaTopic) {
+	public WebServerSender(String id, String kafkaTopic, String webserverUri) {
 		this.id = id;
 		this.kafkaTopic = kafkaTopic;
-    this.connector = new KafkaWebSocketConnector(this.id, this.kafkaTopic);
+		this.uri = new URI(webserverUri);
+    	this.connector = new KafkaWebSocketConnector(this.id, this.kafkaTopic);
 	}
-
 
 	/**
 	 * Initializes the WebSocket
 	 */
 	public void run() {
 		try {
-			this.uri = new URI(this.webserverUri);
 			this.client.start();
 		    this.client.connect(this.connector, this.uri, this.request);
 		    logger.info("Connecting to : " + uri.toString());
@@ -80,10 +79,9 @@ public class WebServerSender {
 		}
 	}
 
-
 	public static void main(String[] args) throws Exception {
 
-		WebServerSender ws = new WebServerSender("WebServerSender", "test");
+		WebServerSender ws = new WebServerSender("WebServerSender", "test", "ws://localhost:8000/core/");
 		ws.run();
 
 	}
