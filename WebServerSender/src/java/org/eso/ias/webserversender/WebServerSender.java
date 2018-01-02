@@ -81,7 +81,12 @@ public class WebServerSender {
 	}
 
 	public void stop() {
-		this.client.stop();
+		try {
+			this.client.stop();
+		}
+		catch( Exception e) {
+			logger.error("Error on Websocket stop");
+		}
 	}
 
 	public static void main(String[] args) throws Exception {

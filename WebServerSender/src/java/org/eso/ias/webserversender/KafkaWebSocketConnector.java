@@ -1,13 +1,13 @@
 package org.eso.ias.webserversender;
 
 import java.util.concurrent.CountDownLatch;
+
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.SimpleStringConsumer;
-import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener;
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
 import org.slf4j.Logger;
