@@ -74,6 +74,7 @@ public class WebServerSender {
 			while(this.connector.session==null) {
 				TimeUnit.MILLISECONDS.sleep(100);
 			}
+			logger.debug("Connection started!");
 		}
 		catch( Exception e) {
 			logger.error("Error on WebSocket connection");
@@ -83,6 +84,7 @@ public class WebServerSender {
 	public void stop() {
 		try {
 			this.client.stop();
+			logger.debug("Connection stopped!");
 		}
 		catch( Exception e) {
 			logger.error("Error on Websocket stop");
