@@ -48,6 +48,6 @@ public class JsonFilePublisher extends BufferedFilePublisherBase {
 	 */
 	@Override
 	protected String buildString(BufferedMonitoredSystemData data) throws PublisherException {
-		return data.toJsonString();
+		return data.toJsonString()+"\n";
 	}
 }
