@@ -69,7 +69,7 @@ public class IasValueJsonPojo {
 		tStamp=iasValue.timestamp;
 		mode=iasValue.mode;
 		id=iasValue.id;
-		fullRunningId=iasValue.runningId;
+		fullRunningId=iasValue.fullRunningId;
 		valueType=iasValue.valueType;
 		iasValidity=iasValue.iasValidity;
 	}

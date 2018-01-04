@@ -23,7 +23,7 @@ public class IasInt extends IASValue<Integer> {
 		if (newValue==null) {
 			throw new NullPointerException("The value can't be null");
 		}
-		return new IasInt(newValue,System.currentTimeMillis(),mode,iasValidity,id,runningId);
+		return new IasInt(newValue,System.currentTimeMillis(),mode,iasValidity,id,fullRunningId);
 	}
 	
 	/**
@@ -36,6 +36,6 @@ public class IasInt extends IASValue<Integer> {
 		if (newMode==null) {
 			throw new NullPointerException("The mode can't be null");
 		}
-		return new IasInt(value,System.currentTimeMillis(),newMode,iasValidity,id,runningId);
+		return new IasInt(value,System.currentTimeMillis(),newMode,iasValidity,id,fullRunningId);
 	}
 }

@@ -23,7 +23,7 @@ public class IasBool extends IASValue<Boolean> {
 		if (newValue==null) {
 			throw new NullPointerException("The value can't be null");
 		}
-		return new IasBool(newValue,System.currentTimeMillis(),mode,iasValidity,id,runningId);
+		return new IasBool(newValue,System.currentTimeMillis(),mode,iasValidity,id,fullRunningId);
 	}
 	
 	/**
@@ -36,7 +36,7 @@ public class IasBool extends IASValue<Boolean> {
 		if (newMode==null) {
 			throw new NullPointerException("The mode can't be null");
 		}
-		return new IasBool(value,System.currentTimeMillis(),newMode,iasValidity,id,runningId);
+		return new IasBool(value,System.currentTimeMillis(),newMode,iasValidity,id,fullRunningId);
 	}
 
 }

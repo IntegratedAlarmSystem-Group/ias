@@ -23,7 +23,7 @@ public class IasChar extends IASValue<Character> {
 		if (newValue==null) {
 			throw new NullPointerException("The value can't be null");
 		}
-		return new IasChar(newValue,System.currentTimeMillis(),mode,iasValidity,id,runningId);
+		return new IasChar(newValue,System.currentTimeMillis(),mode,iasValidity,id,fullRunningId);
 	}
 	
 	/**
@@ -36,7 +36,7 @@ public class IasChar extends IASValue<Character> {
 		if (newMode==null) {
 			throw new NullPointerException("The mode can't be null");
 		}
-		return new IasChar(value,System.currentTimeMillis(),newMode,iasValidity,id,runningId);
+		return new IasChar(value,System.currentTimeMillis(),newMode,iasValidity,id,fullRunningId);
 	}
 
 }

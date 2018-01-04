@@ -32,7 +32,7 @@ public class IasAlarm extends IASValue<AlarmSample> {
 		if (newValue==null) {
 			throw new NullPointerException("The value can't be null");
 		}
-		return new IasAlarm(newValue,System.currentTimeMillis(),mode,iasValidity,id,runningId);
+		return new IasAlarm(newValue,System.currentTimeMillis(),mode,iasValidity,id,fullRunningId);
 	}
 	
 	/**
@@ -45,7 +45,7 @@ public class IasAlarm extends IASValue<AlarmSample> {
 		if (newMode==null) {
 			throw new NullPointerException("The mode can't be null");
 		}
-		return new IasAlarm(value,System.currentTimeMillis(),newMode,iasValidity,id,runningId);
+		return new IasAlarm(value,System.currentTimeMillis(),newMode,iasValidity,id,fullRunningId);
 	}
 
 }

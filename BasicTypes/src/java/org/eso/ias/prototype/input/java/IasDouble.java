@@ -23,7 +23,7 @@ public class IasDouble extends IASValue<Double> {
 		if (newValue==null) {
 			throw new NullPointerException("The value can't be null");
 		}
-		return new IasDouble(newValue,System.currentTimeMillis(),mode,iasValidity,id,runningId);
+		return new IasDouble(newValue,System.currentTimeMillis(),mode,iasValidity,id,fullRunningId);
 	}
 	
 	/**
@@ -36,7 +36,7 @@ public class IasDouble extends IASValue<Double> {
 		if (newMode==null) {
 			throw new NullPointerException("The mode can't be null");
 		}
-		return new IasDouble(value,System.currentTimeMillis(),newMode,iasValidity,id,runningId);
+		return new IasDouble(value,System.currentTimeMillis(),newMode,iasValidity,id,fullRunningId);
 	}
 
 }

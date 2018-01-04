@@ -44,7 +44,7 @@ public abstract class IASValueBase {
 	 * 
 	 * @see Identifier
 	 */
-	public final String runningId;
+	public final String fullRunningId;
 	
 	/**
 	 * The IAS representation of the type of this input.
@@ -83,7 +83,7 @@ public abstract class IASValueBase {
 		if (!Identifier.checkFullRunningIdFormat(fullRunningId)) {
 			throw new IllegalArgumentException("Invalid full running ID ["+fullRunningId+"]");
 		}
-		this.runningId=fullRunningId;
+		this.fullRunningId=fullRunningId;
 		Objects.requireNonNull(valueType);
 		this.valueType=valueType;
 	}
@@ -95,7 +95,7 @@ public abstract class IASValueBase {
 		StringBuilder ret = new StringBuilder("IASValueBase: id=");
 		ret.append(id);
 		ret.append(", runningID=");
-		ret.append(runningId);
+		ret.append(fullRunningId);
 		ret.append(", timestamp=");
 		ret.append(timestamp);
 		ret.append(", mode=");
@@ -114,7 +114,7 @@ public abstract class IASValueBase {
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		result = prime * result + ((mode == null) ? 0 : mode.hashCode());
 		result = prime * result + ((iasValidity == null) ? 0 : iasValidity.hashCode());
-		result = prime * result + ((runningId == null) ? 0 : runningId.hashCode());
+		result = prime * result + ((fullRunningId == null) ? 0 : fullRunningId.hashCode());
 		result = prime * result + (int) (timestamp ^ (timestamp >>> 32));
 		result = prime * result + ((valueType == null) ? 0 : valueType.hashCode());
 		return result;
@@ -140,10 +140,10 @@ public abstract class IASValueBase {
 			return false;
 		if (iasValidity!=other.iasValidity)
 			return false;
-		if (runningId == null) {
-			if (other.runningId != null)
+		if (fullRunningId == null) {
+			if (other.fullRunningId != null)
 				return false;
-		} else if (!runningId.equals(other.runningId))
+		} else if (!fullRunningId.equals(other.fullRunningId))
 			return false;
 		if (timestamp != other.timestamp)
 			return false;

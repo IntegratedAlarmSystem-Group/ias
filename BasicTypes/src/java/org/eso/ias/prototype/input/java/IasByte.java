@@ -23,7 +23,7 @@ public class IasByte extends IASValue<Byte> {
 		if (newValue==null) {
 			throw new NullPointerException("The value can't be null");
 		}
-		return new IasByte(newValue,System.currentTimeMillis(),mode,iasValidity,id,runningId);
+		return new IasByte(newValue,System.currentTimeMillis(),mode,iasValidity,id,fullRunningId);
 	}
 	
 	/**
@@ -36,7 +36,7 @@ public class IasByte extends IASValue<Byte> {
 		if (newMode==null) {
 			throw new NullPointerException("The mode can't be null");
 		}
-		return new IasByte(value,System.currentTimeMillis(),newMode,iasValidity,id,runningId);
+		return new IasByte(value,System.currentTimeMillis(),newMode,iasValidity,id,fullRunningId);
 	}
 
 }
