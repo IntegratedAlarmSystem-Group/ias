@@ -51,11 +51,8 @@ object Identifier {
     require(Option(fullRunningId).isDefined)
     require(fullRunningId.size>0,"Invalid empty identifier")
     
-    println("Building IDentifier from "+fullRunningId)
-    
     // The id and type of each element passed in the parameter
     val identifiersDescr=fullRunningId.split(separator)
-    println("Splitted strings "+identifiersDescr.mkString(","))
     
     identifiersDescr.foldLeft(None: Option[Identifier])( (id, couple) => {
       val cleanedCouple=couple.substring(Identifier.coupleGroupPrefix.size, couple.size-Identifier.coupleGroupSuffix.size)
