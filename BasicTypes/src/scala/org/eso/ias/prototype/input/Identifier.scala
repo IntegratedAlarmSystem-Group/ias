@@ -136,6 +136,9 @@ extends {
   require (Option(id).isDefined,"Invalid null Dasu ID")
   require(!id.isEmpty(),"Invalid empty identifier")
   require(id.indexOf(Identifier.separator) == -1,"Invalid character "+Identifier.separator+" in identifier "+id)
+  require(id.indexOf(Identifier.coupleSeparator) == -1,"Invalid character "+Identifier.coupleSeparator+" in identifier "+id)
+  require(id.indexOf(Identifier.coupleGroupSuffix) == -1,"Invalid character "+Identifier.coupleGroupSuffix+" in identifier "+id)
+  require(id.indexOf(Identifier.coupleGroupPrefix) == -1,"Invalid character "+Identifier.coupleGroupPrefix+" in identifier "+id)
   require(Option(idType).isDefined,"Invalid identifier type")
   require(isValidParentType(idType, parentID), "Invalid parent for "+idType)
    
