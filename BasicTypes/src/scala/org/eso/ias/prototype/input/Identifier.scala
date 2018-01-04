@@ -38,6 +38,25 @@ object Identifier {
   val coupleSeparator = ":"
   
   /**
+   * The regular expression of the fullRunning ID
+   */
+  val fullRunningIdRegExp = {
+    val idRegExp = """[^:^\(^\).]+"""
+    val coupleRegExp = """\("""+idRegExp+"+:"+idRegExp+"""\)"""
+    coupleRegExp + "(@"+coupleRegExp+")*"
+  }
+  
+  /**
+   * Check if the passed full running id string has the proper format
+   * 
+   * @param frid The full running id string to check
+   */
+  def checkFullRunningIdFormat(frid: String): Boolean = {
+    require(Option(frid).isDefined)
+    frid.matches(fullRunningIdRegExp)
+  }
+  
+  /**
    * Factory method to to build a identifier
    * from the passed fullRunningId string.
    * 
@@ -49,7 +68,7 @@ object Identifier {
    */
   def apply(fullRunningId: String): Identifier = {
     require(Option(fullRunningId).isDefined)
-    require(fullRunningId.size>0,"Invalid empty identifier")
+    require(checkFullRunningIdFormat(fullRunningId),"Invalid fullRunningId format")
     
     // The id and type of each element passed in the parameter
     val identifiersDescr=fullRunningId.split(separator)

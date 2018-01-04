@@ -26,7 +26,7 @@ public abstract class IASValue<T> extends IASValueBase {
 	 * @param tStamp The timestamp
 	 * @param mode The new mode of the output
 	 * @param id: The ID of this input
-	 * @param runningId: The id of this input and its parents
+	 * @param fullRunningId: The full running id of this input and its parents
 	 * @param valueType: the IAS type of this input
 	 */
 	protected IASValue(T value,
@@ -34,9 +34,9 @@ public abstract class IASValue<T> extends IASValueBase {
 			OperationalMode mode,
 			IasValidity iasValidity,
 			String id,
-			String runningId,
+			String fullRunningId,
 			IASTypes valueType) {
-		super(tStamp,mode,iasValidity,id,runningId,valueType);
+		super(tStamp,mode,iasValidity,id,fullRunningId,valueType);
 		this.value = value;
 	}
 	

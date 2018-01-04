@@ -39,8 +39,8 @@ public abstract class IASValueBase {
 	public final String id;
 	
 	/**
-	 * The identifier of the input concatenated with
-	 * that of its parents
+	 * The full identifier of the input concatenated with
+	 * that of its parents.
 	 * 
 	 * @see Identifier
 	 */
@@ -66,7 +66,7 @@ public abstract class IASValueBase {
 			OperationalMode mode,
 			IasValidity iasValidity,
 			String id,
-			String runningId,
+			String fullRunningId,
 			IASTypes valueType) {
 		super();
 		Objects.requireNonNull(mode,"The mode can't be null");
@@ -80,7 +80,10 @@ public abstract class IASValueBase {
 			throw new IllegalArgumentException("The ID can't be empty");
 		}
 		this.id=id;
-		this.runningId=runningId;
+		if (!Identifier.checkFullRunningIdFormat(fullRunningId)) {
+			throw new IllegalArgumentException("Invalid full running ID ["+fullRunningId+"]");
+		}
+		this.runningId=fullRunningId;
 		Objects.requireNonNull(valueType);
 		this.valueType=valueType;
 	}
