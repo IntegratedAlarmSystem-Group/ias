@@ -23,6 +23,7 @@ import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener;
 import org.eso.ias.kafkautils.KafkaIasiosProducer;
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
+import org.eso.ias.prototype.input.Identifier;
 import org.eso.ias.prototype.input.java.IASTypes;
 import org.eso.ias.prototype.input.java.IASValue;
 import org.eso.ias.prototype.input.java.IasValidity;
@@ -141,14 +142,14 @@ public class FilteredConsumerTest implements IasioListener {
 	 */
 	public Collection<IASValue<?>> buildValues(List<String> ids) {
 		Objects.requireNonNull(ids);
+		String frId = Identifier.coupleGroupPrefix()+"ID"+Identifier.coupleSeparator()+"IASIO"+Identifier.coupleGroupSuffix();
 		return ids.stream().map(id -> 
 			IASValue.buildIasValue(
 					10L, 
 					System.currentTimeMillis(), 
 					OperationalMode.OPERATIONAL, 
 					IasValidity.RELIABLE, 
-					id, 
-					"RunningID", 
+					frId, 
 					IASTypes.LONG)
 		).collect(Collectors.toList());
 	}

@@ -99,7 +99,6 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener {
         System.currentTimeMillis(),
         OperationalMode.OPERATIONAL,
         UNRELIABLE,
-        inputID.id,
         inputID.fullRunningID)
   }
   

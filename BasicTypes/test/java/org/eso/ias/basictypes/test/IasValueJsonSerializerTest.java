@@ -73,7 +73,6 @@ public class IasValueJsonSerializerTest {
 			1000, 
 			OperationalMode.CLOSING,
 			IasValidity.RELIABLE,
-			intId, 
 			new Identifier(intId, IdentifierType.IASIO, convIdentifier).fullRunningID());
 		String jsonStr = jsonSerializer.iasValueToString(intIasType);
 		
@@ -87,7 +86,6 @@ public class IasValueJsonSerializerTest {
 			1100, 
 			OperationalMode.INTIALIZATION, 
 			IasValidity.RELIABLE,
-			shortId, 
 			new Identifier(shortId, IdentifierType.IASIO, convIdentifier).fullRunningID());
 		jsonStr = jsonSerializer.iasValueToString(shortIasType);
 		
@@ -101,7 +99,6 @@ public class IasValueJsonSerializerTest {
 			1200, 
 			OperationalMode.INTIALIZATION, 
 			IasValidity.UNRELIABLE,
-			byteId, 
 			new Identifier(byteId, IdentifierType.IASIO, convIdentifier).fullRunningID());
 		jsonStr = jsonSerializer.iasValueToString(byteIasType);
 		
@@ -115,7 +112,6 @@ public class IasValueJsonSerializerTest {
 			1300, 
 			OperationalMode.INTIALIZATION, 
 			IasValidity.UNRELIABLE,
-			doubleId, 
 			new Identifier(doubleId, IdentifierType.IASIO, convIdentifier).fullRunningID());
 		jsonStr = jsonSerializer.iasValueToString(doubleIasType);
 		
@@ -129,7 +125,6 @@ public class IasValueJsonSerializerTest {
 			1400, 
 			OperationalMode.SHUTTEDDOWN, 
 			IasValidity.RELIABLE,
-			floatId, 
 			new Identifier(floatId, IdentifierType.IASIO, convIdentifier).fullRunningID());
 		jsonStr = jsonSerializer.iasValueToString(floatIasType);
 		
@@ -143,7 +138,6 @@ public class IasValueJsonSerializerTest {
 			1500,
 			OperationalMode.DEGRADED,
 			IasValidity.RELIABLE,
-			alarmId,
 			new Identifier(alarmId, IdentifierType.IASIO, convIdentifier).fullRunningID());
 		
 		jsonStr = jsonSerializer.iasValueToString(alarm);
@@ -158,7 +152,6 @@ public class IasValueJsonSerializerTest {
 			1600,
 			OperationalMode.OPERATIONAL,
 			IasValidity.RELIABLE,
-			boolId,
 			new Identifier(boolId, IdentifierType.IASIO, convIdentifier).fullRunningID());
 		
 		jsonStr = jsonSerializer.iasValueToString(bool);
@@ -173,7 +166,6 @@ public class IasValueJsonSerializerTest {
 			1700,
 			OperationalMode.MAINTENANCE,
 			IasValidity.UNRELIABLE,
-			charId,
 			new Identifier(charId, IdentifierType.IASIO, convIdentifier).fullRunningID());
 		
 		jsonStr = jsonSerializer.iasValueToString(character);
@@ -188,7 +180,6 @@ public class IasValueJsonSerializerTest {
 			1800,
 			OperationalMode.UNKNOWN,
 			IasValidity.UNRELIABLE,
-			strId,
 			new Identifier(strId, IdentifierType.IASIO, convIdentifier).fullRunningID());
 		
 		jsonStr = jsonSerializer.iasValueToString(str);
@@ -203,7 +194,6 @@ public class IasValueJsonSerializerTest {
 			1900, 
 			OperationalMode.CLOSING, 
 			IasValidity.RELIABLE,
-			longId, 
 			new Identifier(longId, IdentifierType.IASIO, convIdentifier).fullRunningID());
 		jsonStr = jsonSerializer.iasValueToString(longIasType);
 		

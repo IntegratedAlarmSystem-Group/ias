@@ -185,7 +185,7 @@ object InOut {
    * @return the IASIO generated from the passed IASValue
    */
   def apply[T](iasValue: IASValue[T], refreshRate: Int) = {
-    val id = Identifier(iasValue.runningId)
+    val id = Identifier(iasValue.fullRunningId)
     val value = Option[T](iasValue.value)
     // TODO: the validity should be set by the plugins (or other DASUs) i.e.
     //       be part of the IASValue. Setting a value as Reliable by default does 

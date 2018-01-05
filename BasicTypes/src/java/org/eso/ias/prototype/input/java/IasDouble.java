@@ -6,9 +6,8 @@ public class IasDouble extends IASValue<Double> {
 			long tStamp,
 			OperationalMode mode,
 			IasValidity iasValidity,
-			String id,
-			String runningId) {
-		super(value,tStamp,mode,iasValidity,id,runningId,IASTypes.DOUBLE);
+			String fullRunningId) {
+		super(value,tStamp,mode,iasValidity,fullRunningId,IASTypes.DOUBLE);
 	}
 	
 	/**
@@ -23,7 +22,7 @@ public class IasDouble extends IASValue<Double> {
 		if (newValue==null) {
 			throw new NullPointerException("The value can't be null");
 		}
-		return new IasDouble(newValue,System.currentTimeMillis(),mode,iasValidity,id,runningId);
+		return new IasDouble(newValue,System.currentTimeMillis(),mode,iasValidity,fullRunningId);
 	}
 	
 	/**
@@ -36,7 +35,7 @@ public class IasDouble extends IASValue<Double> {
 		if (newMode==null) {
 			throw new NullPointerException("The mode can't be null");
 		}
-		return new IasDouble(value,System.currentTimeMillis(),newMode,iasValidity,id,runningId);
+		return new IasDouble(value,System.currentTimeMillis(),newMode,iasValidity,fullRunningId);
 	}
 
 }
