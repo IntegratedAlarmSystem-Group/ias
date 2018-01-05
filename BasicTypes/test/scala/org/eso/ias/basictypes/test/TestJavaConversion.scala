@@ -87,7 +87,7 @@ class TestJavaConversion  extends FlatSpec {
     val f = fixture
     
     val doubleVal = JavaConverter.inOutToIASValue[Double](f.doubleHIO).asInstanceOf[IasDouble]
-    val newdoubleVal = new IasDouble(doubleVal.value+8.5,System.currentTimeMillis(),OperationalMode.OPERATIONAL,UNRELIABLE,doubleVal.id,doubleVal.fullRunningId)
+    val newdoubleVal = new IasDouble(doubleVal.value+8.5,System.currentTimeMillis(),OperationalMode.OPERATIONAL,UNRELIABLE,doubleVal.fullRunningId)
     val hio = JavaConverter.updateHIOWithIasValue(f.doubleHIO,newdoubleVal)
     
     assert(newdoubleVal.valueType==hio.iasType)
@@ -103,23 +103,6 @@ class TestJavaConversion  extends FlatSpec {
     val alarmHio = JavaConverter.updateHIOWithIasValue(f.alarmHIO,newAlarmValue)
     
     assert(alarmHio.actualValue.value.get.asInstanceOf[AlarmSample]==AlarmSample.CLEARED)
-  }
-  
-  it must "fail updating with wrong IDs, runningIDs, type" in {
-    val f = fixture
-    val doubleVal = JavaConverter.inOutToIASValue(f.doubleHIO).asInstanceOf[IasDouble]
-    // Build a IASValue with another ID
-    val newDoubleValueWrongId = new IasDouble(
-        doubleVal.value,
-        doubleVal.timestamp,
-        doubleVal.mode,
-        UNRELIABLE,
-        doubleVal.id+"WRONG!",
-        doubleVal.fullRunningId)
-    
-    assertThrows[IllegalStateException] {
-      JavaConverter.updateHIOWithIasValue(f.doubleHIO, newDoubleValueWrongId)
-    }
   }
   
 }
