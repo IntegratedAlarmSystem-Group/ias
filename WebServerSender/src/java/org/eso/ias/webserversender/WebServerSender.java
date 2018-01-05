@@ -72,7 +72,7 @@ public class WebServerSender {
 			this.client.connect(this.connector, this.uri, this.request);
 			logger.info("Connecting to : " + uri.toString());
 			while(this.connector.session==null) {
-				TimeUnit.MILLISECONDS.sleep(1000);
+				TimeUnit.MILLISECONDS.sleep(100);
 			}
 			logger.debug("Connection started!");
 		}
