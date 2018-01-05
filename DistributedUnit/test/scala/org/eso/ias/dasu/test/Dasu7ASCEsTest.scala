@@ -121,7 +121,6 @@ class Dasu7ASCEsTest extends FlatSpec with OutputListener {
         System.currentTimeMillis(),
         OperationalMode.OPERATIONAL,
         UNRELIABLE,
-        id,
         fullRunningID)
   }
   

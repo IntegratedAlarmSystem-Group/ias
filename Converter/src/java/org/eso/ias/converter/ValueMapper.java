@@ -187,7 +187,6 @@ public class ValueMapper implements Function<String, String> {
 				tStamp, 
 				OperationalMode.valueOf(remoteSystemData.getOperationalMode()),
 				IasValidity.valueOf(remoteSystemData.getValidity()),
-				remoteSystemData.getId(), 
 				fullrunId,
 				type);
 	}
