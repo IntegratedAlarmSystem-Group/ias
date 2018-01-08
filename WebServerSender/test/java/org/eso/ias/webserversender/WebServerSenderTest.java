@@ -10,6 +10,7 @@ import java.util.Date;
 import java.text.SimpleDateFormat;
 
 import org.eso.ias.webserversender.WebServerSender;
+import org.eso.ias.webserversender.WebServerSender.WebServerSenderListener;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
@@ -29,10 +30,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 
 
-public class WebServerSenderTest {
+public class WebServerSenderTest implements WebServerSenderListener {
 	private WebServerSender webServerSender;
 	
 	private String[] messages;
@@ -66,36 +68,13 @@ public class WebServerSenderTest {
 	private final List<String> receivedMessages = Collections.synchronizedList(new ArrayList<>());
 
 	
-	public void runWebServerSender(String kafkaTopic, String webserverUri) throws InterruptedException {
-		webServerSender = new WebServerSender("WebServerSender", kafkaTopic, webserverUri);
-		senderThread = new Thread() {
-			public void run() {
-				// Initialize Sender
-				try {
-					webServerSender.run();
-				}
-				catch(Exception e) {
-					e.printStackTrace();
-				}
-				
-				// Check constantly if the thread is interrupted
-				while(!Thread.currentThread().isInterrupted()){
-					try {
-						Thread.sleep(500);
-					}
-					catch( InterruptedException e) {
-						Thread.currentThread().interrupt();
-					}
-				}
-				
-				webServerSender.stop();
-			}
-		};
-		
-		senderThread.start();
-		logger.info("WebServerSender initialized");
-		numOfMessagesToReceive.await(5, TimeUnit.SECONDS);
-	}
+//	public void runWebServerSender(String kafkaTopic, String webserverUri) throws InterruptedException {
+//		webServerSender = new WebServerSender("WebServerSender", kafkaTopic, webserverUri);
+//		senderThread = new Thread(webServerSender);
+//		senderThread.start();
+//		logger.info("WebServerSender initialized");
+//		numOfMessagesToReceive.await(5, TimeUnit.SECONDS);
+//	}
 	
 //	public void runWebsocketServer() throws Exception {
 //		serverThread = new Thread() {
@@ -150,9 +129,18 @@ public class WebServerSenderTest {
 //		logger.info("WebSocket server initialized");
 //	}
 
+	
+	public synchronized void stringEventSent( String event) {
+		logger.info("\n*******************\n*************" + event);
+		numOfMessagesToReceive.countDown();
+		receivedMessages.add(event);
+	}
+	
 	@Before
 	public void setUp() throws Exception {
 		String kafkaTopic = "test";
+		String webserverUri = "ws://localhost:8081/";
+
 		
 		logger.info("Initializing...");
 		messagesNumber = 6;
@@ -160,6 +148,10 @@ public class WebServerSenderTest {
 		
 		producer = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, kafkaTopic, "ProducerTest");
 		producer.setUp();
+		
+		webServerSender = new WebServerSender("WebServerSender", kafkaTopic, webserverUri, null);
+		webServerSender.run();
+		logger.info("WebServerSender initialized");
 		
 //		this.runWebServerSender(kafkaTopic, webserverUri);
 		logger.info("Initialized.");
@@ -174,12 +166,8 @@ public class WebServerSenderTest {
 
 	@Test
 	public void testWebServerSender() throws Exception {
-		
-		String kafkaTopic = "test";
-		
-		String webserverUri = "ws://localhost:8081/";
-		
-		this.runWebServerSender(kafkaTopic, webserverUri);
+			
+//		this.runWebServerSender(kafkaTopic, webserverUri);
 		
 		int messagesDelivered = 0;	
 		this.messages = new String[messagesNumber];
@@ -196,17 +184,25 @@ public class WebServerSenderTest {
 			// an exception in case of error
 			try {
 				producer.push(messages[i], null, messages[i]);
+				producer.flush();
 				messagesDelivered += 1;
 			}
 			catch (Exception e) {
 				logger.error("Message was not deliver");
 			}
 		}
-		producer.flush();
+
 		logger.info("{} messages delivered", messagesDelivered);
 		assertEquals(messagesDelivered, messagesNumber);
 		
-		numOfMessagesToReceive.await(5, TimeUnit.SECONDS);
+		if (!numOfMessagesToReceive.await(10, TimeUnit.SECONDS)) {
+//			logger.error("TIMEOUT received "+receivedMessages.size()+" instead of "+nrOfStrings);
+			for (String str: messages) {
+				if (!receivedMessages.contains(str)) {
+					logger.error("[{}] never received",str);
+				}
+			}
+		}
 		senderThread.interrupt();
 	}
 	

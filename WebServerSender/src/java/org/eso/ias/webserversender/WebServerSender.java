@@ -17,7 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @WebSocket(maxTextMessageSize = 64 * 1024)
-public class WebServerSender implements KafkaConsumerListener {
+public class WebServerSender implements KafkaConsumerListener, Runnable {
 
 	/**
 	 * Identifier
@@ -57,7 +57,14 @@ public class WebServerSender implements KafkaConsumerListener {
 	 * The logger
 	 */
 	private static final Logger logger = LoggerFactory.getLogger(WebServerSender.class);
+	
+	public interface WebServerSenderListener {
+		
+		public void stringEventSent(String event);
+	}
 
+	WebServerSenderListener listener;
+	
 	/**
 	 * Constructor
 	 *
@@ -66,10 +73,11 @@ public class WebServerSender implements KafkaConsumerListener {
 	 * TODO: Add servers to the arguments instead of use the default ones
 	 * @param webserverUri 
 	 */
-	public WebServerSender(String id, String kafkaTopic, String webserverUri) {
+	public WebServerSender(String id, String kafkaTopic, String webserverUri, WebServerSenderListener listener) {
     	this.id = id;
     	this.kafkaTopic = kafkaTopic;
 		this.webserverUri = webserverUri;
+		this.listener = listener;
 		this.consumer = new SimpleStringConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, kafkaTopic, this.id);
 	}
 
@@ -119,6 +127,7 @@ public class WebServerSender implements KafkaConsumerListener {
 	public synchronized void stringEventReceived(String event) {
 		try {
 			this.session.getRemote().sendStringByFuture( event );
+			this.notifyListener(event);
 		}
 		catch (Exception e){
 			logger.error("Cannot send messages to the Web Server", e);
@@ -138,9 +147,24 @@ public class WebServerSender implements KafkaConsumerListener {
 			}
 			logger.debug("Connection started!");
 		}
+		catch( InterruptedException e) {
+			this.stop();
+		}
 		catch( Exception e) {
 			logger.error("Error on WebSocket connection");
 		}
+		
+//		// Check constantly if the thread is interrupted
+//		while(!Thread.currentThread().isInterrupted()){
+//			try {
+//				Thread.sleep(500);
+//			}
+//			catch( InterruptedException e) {
+//				Thread.currentThread().interrupt();
+//			}
+//		}
+		
+		
 	}
 
 	/**
@@ -149,6 +173,7 @@ public class WebServerSender implements KafkaConsumerListener {
 	public void stop() {
 		try {
 			this.client.stop();
+			logger.info("\n\n**************************Stopped!**********************************");
 			logger.debug("Connection stopped!");
 		}
 		catch( Exception e) {
@@ -156,10 +181,24 @@ public class WebServerSender implements KafkaConsumerListener {
 		}
 	}
 
+	/**
+	 * Notify the passed string to the listener. 
+	 * 
+	 * @param strToNotify The string to notify to the listener 
+	 */
+	protected void notifyListener(String strToNotify) {
+		if(listener != null) {
+			listener.stringEventSent(strToNotify);
+		}
+		
+	}
+	
+
+	
 	public static void main(String[] args) throws Exception {
 
-		WebServerSender ws = new WebServerSender("WebServerSender", "test", "ws://localhost:8000/core/");
-		ws.run();
+//		WebServerSender ws = new WebServerSender("WebServerSender", "test", "ws://localhost:8000/core/" );
+//		ws.run();
 
 	}
 
