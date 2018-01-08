@@ -8,7 +8,7 @@ import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 public class WebSocketTest {
 
     public static void main(String[] args) throws Exception {
-        Server server = new Server(8080);
+        Server server = new Server(8081);
         WebSocketHandler wsHandler = new WebSocketHandler() {
             @Override
             public void configure(WebSocketServletFactory factory) {
