@@ -154,17 +154,6 @@ public class WebServerSender implements KafkaConsumerListener, Runnable {
 			logger.error("Error on WebSocket connection");
 		}
 		
-//		// Check constantly if the thread is interrupted
-//		while(!Thread.currentThread().isInterrupted()){
-//			try {
-//				Thread.sleep(500);
-//			}
-//			catch( InterruptedException e) {
-//				Thread.currentThread().interrupt();
-//			}
-//		}
-		
-		
 	}
 
 	/**
@@ -173,7 +162,6 @@ public class WebServerSender implements KafkaConsumerListener, Runnable {
 	public void stop() {
 		try {
 			this.client.stop();
-			logger.info("\n\n**************************Stopped!**********************************");
 			logger.debug("Connection stopped!");
 		}
 		catch( Exception e) {
