@@ -25,12 +25,12 @@ trait OutputPublisher {
    *  @return Success or Failure if the initialization went well 
    *          or encountered a problem  
    */
-  def initialize(): Try[Unit]
+  def initializePublisher(): Try[Unit]
   
   /**
    * Release all the acquired resources.
    */
-  def cleanUp(): Try[Unit]
+  def cleanUpPublisher(): Try[Unit]
   
   /**
    * Publish the output.

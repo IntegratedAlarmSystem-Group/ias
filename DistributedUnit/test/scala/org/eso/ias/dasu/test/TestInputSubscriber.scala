@@ -19,10 +19,10 @@ import org.eso.ias.prototype.input.java.IASValue
     private val acceptedInputs = MutableSet[String]()
       
     /** Initialize */
-    def initialize(): Try[Unit] = Success(())
+    def initializeSubscriber(): Try[Unit] = Success(())
   
     /** CleanUp and release the resources */
-    def cleanUp(): Try[Unit] = Success(())
+    def cleanUpSubscriber(): Try[Unit] = Success(())
     
     /**
      * Start to get events and forward them to the listener.
@@ -32,7 +32,7 @@ import org.eso.ias.prototype.input.java.IASValue
      * @param listener the listener of events
      * @param acceptedInputs the IDs of the inputs accepted by the listener
      */
-    def start(listener: InputsListener, acceptedInputs: Set[String]): Try[Unit] = {
+    def startSubscriber(listener: InputsListener, acceptedInputs: Set[String]): Try[Unit] = {
       this.listener=Option(listener)
       this.acceptedInputs++=acceptedInputs
       Success(())

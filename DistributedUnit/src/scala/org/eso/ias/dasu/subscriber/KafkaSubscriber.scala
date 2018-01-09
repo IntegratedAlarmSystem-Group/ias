@@ -87,7 +87,7 @@ extends IasioListener with InputSubscriber {
 	}
   
   /** Initialize the subscriber */
-  def initialize(): Try[Unit] = {
+  def initializeSubscriber(): Try[Unit] = {
     logger.info("Initializing subscriber of DASU [{}]",dasuId)
     Try{ 
       kafkaConsumer.setUp(props)
@@ -96,7 +96,7 @@ extends IasioListener with InputSubscriber {
   }
   
   /** CleanUp and release the resources */
-  def cleanUp(): Try[Unit] = {
+  def cleanUpSubscriber(): Try[Unit] = {
     logger.info("Cleaning up subscriber of DASU [{}]",dasuId)
     Try{
       kafkaConsumer.tearDown()
@@ -113,7 +113,7 @@ extends IasioListener with InputSubscriber {
    * @param listener the listener of events
    * @param acceptedInputs the IDs of the inputs accepted by the listener
    */
-  def start(listener: InputsListener, acceptedInputs: Set[String]): Try[Unit] = {
+  def startSubscriber(listener: InputsListener, acceptedInputs: Set[String]): Try[Unit] = {
     require(Option(listener).isDefined)
     require(Option(acceptedInputs).isDefined)
     require(!acceptedInputs.isEmpty,"The list of IDs of accepted inputs can' be empty")

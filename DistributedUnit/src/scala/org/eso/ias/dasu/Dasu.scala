@@ -184,14 +184,14 @@ class Dasu(
   val refreshTask: AtomicReference[ScheduledFuture[_]] = new AtomicReference[ScheduledFuture[_]]()
   
   logger.debug("DASU [{}] initializing the publisher", id)
-  val outputPublisherInitialized = outputPublisher.initialize()
+  val outputPublisherInitialized = outputPublisher.initializePublisher()
   outputPublisherInitialized match {
     case Failure(f) => logger.error("DASU [{}] failed to initialize the publisher: NO output will be produced", id,f)
     case Success(s) => logger.info("DASU [{}] publisher successfully initialized",id)
   }
   logger.debug("DASU [{}] initializing the subscriber", id)
   
-  val inputSubscriberInitialized = inputSubscriber.initialize()
+  val inputSubscriberInitialized = inputSubscriber.initializeSubscriber()
   inputSubscriberInitialized match {
     case Failure(f) => logger.error("DASU [{}] failed to initialize the subscriber: NO input will be processed", id,f)
     case Success(s) => logger.info("DASU [{}] subscriber successfully initialized",id)
@@ -291,7 +291,7 @@ class Dasu(
    */
   def start() = {
     if (inputSubscriberInitialized.isSuccess) {
-      val started = inputSubscriber.start(this, dasuTopology.dasuInputs)
+      val started = inputSubscriber.startSubscriber(this, dasuTopology.dasuInputs)
       started match {
         case Failure(f) => logger.error("DASU [{}] failed to start getting events: NO input will be processed", id,f)
         case Success(s) => logger.info("DASU [{}] now ready to process events",id)
@@ -356,9 +356,9 @@ class Dasu(
           logger.debug("DASU [{}]: stopping the auto-refresh of the output", id)
           Try(disableAutoRefreshOfOutput())
           logger.debug("DASU [{}]: releasing the subscriber", id)
-          Try(inputSubscriber.cleanUp())
+          Try(inputSubscriber.cleanUpSubscriber())
           logger.debug("DASU [{}]: releasing the publisher", id)
-          Try(outputPublisher.cleanUp())
+          Try(outputPublisher.cleanUpPublisher())
           logger.info("DASU [{}]: shutted down",id)
         }
     })

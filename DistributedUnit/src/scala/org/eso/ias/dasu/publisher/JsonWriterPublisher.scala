@@ -38,14 +38,14 @@ class JsonWriterPublisher(val writer: Writer) extends OutputPublisher {
    * 
    * @see OutputPublisher.initialize()
    */
-  override def initialize(): Try[Unit] = Success(())
+  override def initializePublisher(): Try[Unit] = Success(())
   
   /**
    * Release all the acquired resources.
    * 
    * @see OutputPublisher.cleanUp()
    */
-  override def cleanUp(): Try[Unit] = Success(())
+  override def cleanUpPublisher(): Try[Unit] = Success(())
   
   /**
    * Publish the output.
