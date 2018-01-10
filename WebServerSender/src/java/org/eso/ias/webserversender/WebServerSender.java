@@ -181,12 +181,10 @@ public class WebServerSender implements KafkaConsumerListener, Runnable {
 		
 	}
 	
-
-	
 	public static void main(String[] args) throws Exception {
 
-//		WebServerSender ws = new WebServerSender("WebServerSender", "test", "ws://localhost:8000/core/" );
-//		ws.run();
+		WebServerSender ws = new WebServerSender("WebServerSender", "test", "ws://localhost:8000/core/", null);
+		ws.run();
 
 	}
 
