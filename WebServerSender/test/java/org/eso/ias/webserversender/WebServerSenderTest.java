@@ -1,10 +1,15 @@
 package org.eso.ias.webserversender;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.websocket.server.WebSocketHandler;
 import org.junit.After;
@@ -15,7 +20,15 @@ import org.slf4j.LoggerFactory;
 import static org.junit.Assert.assertEquals;
 
 import org.eso.ias.kafkautils.KafkaHelper;
+import org.eso.ias.kafkautils.KafkaIasiosProducer;
 import org.eso.ias.kafkautils.SimpleStringProducer;
+import org.eso.ias.prototype.input.Identifier;
+import org.eso.ias.prototype.input.java.IASTypes;
+import org.eso.ias.prototype.input.java.IASValue;
+import org.eso.ias.prototype.input.java.IasValidity;
+import org.eso.ias.prototype.input.java.IasValueJsonSerializer;
+import org.eso.ias.prototype.input.java.IasValueStringSerializer;
+import org.eso.ias.prototype.input.java.OperationalMode;
 import org.eso.ias.webserversender.WebServerSender;
 import org.eso.ias.webserversender.WebServerSender.WebServerSenderListener;
 import org.eso.ias.webserversender.WebSocketServerHandler.WebSocketServerListener;
@@ -51,9 +64,9 @@ public class WebServerSenderTest {
 	private int messagesNumber;
 
 	/**
-	* Array of messages to be used in the test
+	* Collection of Iasios to be used in the test
 	*/
-	private String[] messages;
+	private Collection<IASValue<?>> iasios;
 
 	/**
 	 * The WebServerSender we are testing
@@ -68,7 +81,7 @@ public class WebServerSenderTest {
 	/**
 	 * A mock producer to publish messages to the KafkaQueue
 	 */
-	private SimpleStringProducer producer;
+	private KafkaIasiosProducer producer;
 
 	/**
 	 * The logger
@@ -76,8 +89,8 @@ public class WebServerSenderTest {
 	private static final Logger logger = LoggerFactory.getLogger(WebServerSenderTest.class);
 
 	/**
-	* Countdown of the messages sent by the WebServerSender
-	*/
+	 * Countdown of the messages sent by the WebServerSender
+	 */
 	private CountDownLatch numOfMessagesToSend;
 
 	/**
@@ -86,10 +99,10 @@ public class WebServerSenderTest {
 	private CountDownLatch numOfMessagesToReceive;
 
 	/**
-	* The list of strings sent by the sender.
-	* <P>
-	* It contains only the strings that this test produced
-	*/
+	 * The list of strings sent by the sender.
+	 * <P>
+	 * It contains only the strings that this test produced
+	 */
 	private final List<String> sentMessages = Collections.synchronizedList(new ArrayList<>());
 
 	/**
@@ -100,6 +113,13 @@ public class WebServerSenderTest {
 	private final List<String> receivedMessages = Collections.synchronizedList(new ArrayList<>());
 
 	/**
+	 * The serializer/deserializer to convert the string
+	 * received by the BSDB in a IASValue
+	 */
+	private final IasValueStringSerializer serializer = new IasValueJsonSerializer();
+	
+	
+	/**
 	 * Auxiliary method to start the mock Server
 	 */
 	private void runServer() throws Exception {
@@ -107,8 +127,8 @@ public class WebServerSenderTest {
         WebSocketHandler wsHandler = new WebSocketServerHandler();
         WebSocketServerListener listener = new WebSocketServerListener(){
         	public void stringEventSent(String event) {
-        		numOfMessagesToReceive.countDown();
         		receivedMessages.add(event);
+        		numOfMessagesToReceive.countDown();
         	};
         };
         WebSocketServerHandler.setListener(listener);
@@ -123,13 +143,44 @@ public class WebServerSenderTest {
 	private void runSender() throws Exception {
         WebServerSenderListener listener = new WebServerSenderListener(){
         	public void stringEventSent(String event) {
-        		numOfMessagesToSend.countDown();
         		sentMessages.add(event);
+        		numOfMessagesToSend.countDown();
         	};
         };
 		this.webServerSender = new WebServerSender("WebServerSender", this.kafkaTopic, this.webserverUri, listener);
 		this.webServerSender.run();
 		logger.info("WebServerSender initialized...");
+	}
+	
+	/**
+	 * Build the full running ID from the passed id
+	 * 
+	 * @param id The Id of the IASIO
+	 * @return he full running ID 
+	 */
+	private String buildFullRunningID(String id) {
+		return Identifier.coupleGroupPrefix()+id+Identifier.coupleSeparator()+"IASIO"+Identifier.coupleGroupSuffix();
+	}
+	
+	/**
+	 * Build and return the IASValues of the given type to publish from the passed IDs
+	 * 
+	 * @param ids The Ids of the IASValues to build 
+	 * @param value the value of the IASValues
+	 * @param type the type of the IASValues
+	 * @return The IASValues to publish
+	 */
+	public Collection<IASValue<?>> buildValues(List<String> ids, Object value, IASTypes type) {
+		Objects.requireNonNull(ids);
+		return ids.stream().map(id ->  
+			IASValue.buildIasValue(
+					value, 
+					System.currentTimeMillis(), 
+					OperationalMode.OPERATIONAL, 
+					IasValidity.RELIABLE, 
+					buildFullRunningID(id),
+					type)
+		).collect(Collectors.toList());
 	}
 
 	/**
@@ -140,18 +191,14 @@ public class WebServerSenderTest {
 		logger.info("Starting Test Initialization");
 
 		this.messagesNumber = 6;
-		this.messages = new String[messagesNumber];
-		this.messages[0] = "{\"value\":\"SET\",\"mode\":\"OPERATIONAL\",\"iasValidity\":\"RELIABLE\",\"id\":\"AlarmType-ID\",\"fullRunningId\":\"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(AlarmType-ID:IASIO)\",\"valueType\":\"ALARM\",\"tStamp\":1000}";
-		this.messages[1] = "{\"value\":\"CLEARED\",\"mode\":\"MAINTENANCE\",\"iasValidity\":\"RELIABLE\",\"id\":\"AlarmType-ID\",\"fullRunningId\":\"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(AlarmType-ID:IASIO)\",\"valueType\":\"ALARM\",\"tStamp\":1000}";
-		this.messages[2] = "{\"value\":\"SET\",\"mode\":\"OPERATIONAL\",\"iasValidity\":\"RELIABLE\",\"id\":\"AlarmType-ID\",\"fullRunningId\":\"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(AlarmType-ID:IASIO)\",\"valueType\":\"ALARM\",\"tStamp\":1000}";
-		this.messages[3] = "{\"value\":\"CLEARED\",\"mode\":\"MAINTENANCE\",\"iasValidity\":\"RELIABLE\",\"id\":\"AlarmType-ID\",\"fullRunningId\":\"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(AlarmType-ID:IASIO)\",\"valueType\":\"ALARM\",\"tStamp\":1000}";
-		this.messages[4] = "{\"value\":\"SET\",\"mode\":\"OPERATIONAL\",\"iasValidity\":\"RELIABLE\",\"id\":\"AlarmType-ID\",\"fullRunningId\":\"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(AlarmType-ID:IASIO)\",\"valueType\":\"ALARM\",\"tStamp\":1000}";
-		this.messages[5] = "{\"value\":\"CLEARED\",\"mode\":\"MAINTENANCE\",\"iasValidity\":\"RELIABLE\",\"id\":\"AlarmType-ID\",\"fullRunningId\":\"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(AlarmType-ID:IASIO)\",\"valueType\":\"ALARM\",\"tStamp\":1000}";
+		List<String> idsOfLongs = new LinkedList<>();
+		for (int i=0; i<this.messagesNumber; i++) idsOfLongs.add("ID-TypeLong-"+i);
+		this.iasios = buildValues(idsOfLongs, 10L, IASTypes.LONG);
 
 		this.numOfMessagesToReceive = new CountDownLatch(messagesNumber);
 		this.numOfMessagesToSend = new CountDownLatch(messagesNumber);
 
-		this.producer = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, kafkaTopic, "ProducerTest");
+		this.producer = new KafkaIasiosProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, kafkaTopic, "ProducerTest", this.serializer);
 		this.producer.setUp();
 
 		this.runServer();
@@ -171,11 +218,9 @@ public class WebServerSenderTest {
 		int messagesDelivered = 0;
 
 		// Act:
-		for (int i = 0; i < messagesNumber; i++) {
-			// Sends the messages synchronously to get
-			// an exception in case of error
+		for (IASValue<?> value: this.iasios) { 
 			try {
-				this.producer.push(messages[i], null, messages[i]);
+				this.producer.push(value);
 				this.producer.flush();
 				messagesDelivered += 1;
 			}
@@ -187,17 +232,17 @@ public class WebServerSenderTest {
 		logger.info("{} messages delivered", messagesDelivered);
 
 		if (!this.numOfMessagesToSend.await(10, TimeUnit.SECONDS)) {
-			for (String str: messages) {
-				if (!this.receivedMessages.contains(str)) {
-					logger.error("[{}] never sent by the sender",str);
+			for (IASValue<?> value: this.iasios) {
+				if (!this.sentMessages.contains(value)) {
+					logger.error("[{}] never sent by the sender",serializer.iasValueToString(value));
 				}
 			}
 		}
 
 		if (!this.numOfMessagesToReceive.await(10, TimeUnit.SECONDS)) {
-			for (String str: messages) {
-				if (!this.receivedMessages.contains(str)) {
-					logger.error("[{}] never received by the server",str);
+			for (IASValue<?> value: this.iasios) {
+				if (!this.receivedMessages.contains(serializer.iasValueToString(value))) {
+					logger.error("[{}] never received by the server",serializer.iasValueToString(value));
 				}
 			}
 		}

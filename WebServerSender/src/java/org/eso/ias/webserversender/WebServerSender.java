@@ -10,14 +10,17 @@ import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.eso.ias.kafkautils.KafkaHelper;
-import org.eso.ias.kafkautils.SimpleStringConsumer;
-import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener;
+import org.eso.ias.kafkautils.KafkaIasiosConsumer;
+import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener;
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
+import org.eso.ias.prototype.input.java.IasValueJsonSerializer;
+import org.eso.ias.prototype.input.java.IasValueStringSerializer;
+import org.eso.ias.prototype.input.java.IASValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @WebSocket(maxTextMessageSize = 64 * 1024)
-public class WebServerSender implements KafkaConsumerListener, Runnable {
+public class WebServerSender implements IasioListener, Runnable {
 
 	/**
 	 * Identifier
@@ -32,7 +35,7 @@ public class WebServerSender implements KafkaConsumerListener, Runnable {
 	/**
 	 * IAS Core Kafka Consumer to get messages from the Core
 	 */
-	SimpleStringConsumer consumer;
+	KafkaIasiosConsumer consumer;
 	
 	/**
 	 * Web socket client
@@ -52,6 +55,12 @@ public class WebServerSender implements KafkaConsumerListener, Runnable {
 	URI uri;
 
 	ClientUpgradeRequest request = new ClientUpgradeRequest();
+	
+	/**
+	 * The serializer/deserializer to convert the string
+	 * received by the BSDB in a IASValue
+	*/
+	private final IasValueJsonSerializer serializer = new IasValueJsonSerializer();
 
 	/**
 	 * The logger
@@ -78,7 +87,7 @@ public class WebServerSender implements KafkaConsumerListener, Runnable {
     	this.kafkaTopic = kafkaTopic;
 		this.webserverUri = webserverUri;
 		this.listener = listener;
-		this.consumer = new SimpleStringConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, kafkaTopic, this.id);
+		this.consumer = new KafkaIasiosConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, kafkaTopic, this.id);
 	}
 
 	/**
@@ -124,10 +133,11 @@ public class WebServerSender implements KafkaConsumerListener, Runnable {
 	 * @see org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener#stringEventReceived(java.lang.String)
 	 */
 	@Override
-	public synchronized void stringEventReceived(String event) {
+	public synchronized void iasioReceived(IASValue<?> event) {
 		try {
-			this.session.getRemote().sendStringByFuture( event );
-			this.notifyListener(event);
+			String value = serializer.iasValueToString(event);
+			this.session.getRemote().sendStringByFuture(value);
+			this.notifyListener(value);
 		}
 		catch (Exception e){
 			logger.error("Cannot send messages to the Web Server", e);
