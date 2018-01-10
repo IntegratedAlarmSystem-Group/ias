@@ -5,3 +5,4 @@ iasRun.py -l s org.scalatest.run org.eso.ias.basictypes.test.TestIdentifier
 iasRun.py -l s org.scalatest.run org.eso.ias.basictypes.test.TestJavaConversion
 iasRun.py -l s org.scalatest.run org.eso.ias.basictypes.test.TestHIOEquality
 iasRun.py -l j org.junit.runner.JUnitCore org.eso.ias.basictypes.test.IasValueJsonSerializerTest
+iasRun.py -l j org.junit.runner.JUnitCore org.eso.ias.basictypes.test.IASValueTest

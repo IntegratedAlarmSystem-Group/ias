@@ -34,7 +34,7 @@ public class DumbWeatherStationPlugin extends Plugin {
 	 * The path from the resources where JSON files for
 	 * testing have been saved
 	 */
-	private static final String resourcePath="/org/eso/iasplugin/config/test/jsonfiles/";
+	public static final String resourcePath="/org/eso/iasplugin/config/test/jsonfiles/";
 	
 	/**
 	 * The future of the loop
@@ -194,7 +194,7 @@ public class DumbWeatherStationPlugin extends Plugin {
 			logger.error("Execution error",ee);
 			System.exit(-1);
 		}
-		logger.info("Configuration successfully red");
+		logger.info("Configuration successfully read");
 		
 		// Create the file in the IAS temporary folder
 		String tmpFolderName = System.getProperty("ias.tmp.folder",".");

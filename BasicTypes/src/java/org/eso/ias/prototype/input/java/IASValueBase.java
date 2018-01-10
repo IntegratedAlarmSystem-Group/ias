@@ -39,12 +39,12 @@ public abstract class IASValueBase {
 	public final String id;
 	
 	/**
-	 * The identifier of the input concatenated with
-	 * that of its parents
+	 * The full identifier of the input concatenated with
+	 * that of its parents.
 	 * 
 	 * @see Identifier
 	 */
-	public final String runningId;
+	public final String fullRunningId;
 	
 	/**
 	 * The IAS representation of the type of this input.
@@ -58,15 +58,13 @@ public abstract class IASValueBase {
 	 * 
 	 * @param tStamp The timestamp
 	 * @param mode The new mode of the output
-	 * @param id: The ID of this input
 	 * @param runningId: The id of this input and its parents
 	 * @param valueType: the IAS type of this input
 	 */
 	protected IASValueBase(long tStamp,
 			OperationalMode mode,
 			IasValidity iasValidity,
-			String id,
-			String runningId,
+			String fullRunningId,
 			IASTypes valueType) {
 		super();
 		Objects.requireNonNull(mode,"The mode can't be null");
@@ -75,14 +73,18 @@ public abstract class IASValueBase {
 		this.timestamp=tStamp;
 		this.mode = mode;
 		this.iasValidity=iasValidity;
-		Objects.requireNonNull(id);
-		if (id.isEmpty()) {
-			throw new IllegalArgumentException("The ID can't be empty");
+		if (!Identifier.checkFullRunningIdFormat(fullRunningId)) {
+			throw new IllegalArgumentException("Invalid full running ID ["+fullRunningId+"]");
 		}
-		this.id=id;
-		this.runningId=runningId;
+		this.fullRunningId=fullRunningId;
 		Objects.requireNonNull(valueType);
 		this.valueType=valueType;
+		
+		// Get the ID from the passed full running id
+		String[] parts = this.fullRunningId.split(Identifier.separator());
+		String lastCouple = parts[parts.length-1];
+		String[] coupleParts = lastCouple.split(Identifier.coupleSeparator());
+		this.id=coupleParts[0].substring(Identifier.coupleGroupPrefix().length());
 	}
 	
 	
@@ -92,7 +94,7 @@ public abstract class IASValueBase {
 		StringBuilder ret = new StringBuilder("IASValueBase: id=");
 		ret.append(id);
 		ret.append(", runningID=");
-		ret.append(runningId);
+		ret.append(fullRunningId);
 		ret.append(", timestamp=");
 		ret.append(timestamp);
 		ret.append(", mode=");
@@ -111,7 +113,7 @@ public abstract class IASValueBase {
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		result = prime * result + ((mode == null) ? 0 : mode.hashCode());
 		result = prime * result + ((iasValidity == null) ? 0 : iasValidity.hashCode());
-		result = prime * result + ((runningId == null) ? 0 : runningId.hashCode());
+		result = prime * result + ((fullRunningId == null) ? 0 : fullRunningId.hashCode());
 		result = prime * result + (int) (timestamp ^ (timestamp >>> 32));
 		result = prime * result + ((valueType == null) ? 0 : valueType.hashCode());
 		return result;
@@ -137,10 +139,10 @@ public abstract class IASValueBase {
 			return false;
 		if (iasValidity!=other.iasValidity)
 			return false;
-		if (runningId == null) {
-			if (other.runningId != null)
+		if (fullRunningId == null) {
+			if (other.fullRunningId != null)
 				return false;
-		} else if (!runningId.equals(other.runningId))
+		} else if (!fullRunningId.equals(other.fullRunningId))
 			return false;
 		if (timestamp != other.timestamp)
 			return false;

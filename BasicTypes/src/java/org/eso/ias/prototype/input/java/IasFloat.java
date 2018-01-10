@@ -6,9 +6,8 @@ public class IasFloat extends IASValue<Float> {
 			long tStamp,
 			OperationalMode mode,
 			IasValidity iasValidity,
-			String id,
-			String runningId) {
-		super(value,tStamp,mode,iasValidity,id,runningId,IASTypes.FLOAT);
+			String fullRunningId) {
+		super(value,tStamp,mode,iasValidity,fullRunningId,IASTypes.FLOAT);
 	}
 	
 	/**
@@ -23,7 +22,7 @@ public class IasFloat extends IASValue<Float> {
 		if (newValue==null) {
 			throw new NullPointerException("The value can't be null");
 		}
-		return new IasFloat(newValue,System.currentTimeMillis(),mode,iasValidity,id,runningId);
+		return new IasFloat(newValue,System.currentTimeMillis(),mode,iasValidity,fullRunningId);
 	}
 	
 	/**
@@ -36,7 +35,7 @@ public class IasFloat extends IASValue<Float> {
 		if (newMode==null) {
 			throw new NullPointerException("The mode can't be null");
 		}
-		return new IasFloat(value,System.currentTimeMillis(),newMode,iasValidity,id,runningId);
+		return new IasFloat(value,System.currentTimeMillis(),newMode,iasValidity,fullRunningId);
 	}
 
 }

@@ -80,7 +80,6 @@ class DasuOneASCETest extends FlatSpec with OutputListener {
         System.currentTimeMillis(),
         OperationalMode.OPERATIONAL,
         UNRELIABLE,
-        inputID.id,
         inputID.fullRunningID)
   }
   

@@ -60,7 +60,6 @@ class JsonPublisherTest extends FlatSpec {
         System.currentTimeMillis(),
         OPERATIONAL,
         UNRELIABLE,
-        inputID.id,
         inputID.fullRunningID)
   }
   

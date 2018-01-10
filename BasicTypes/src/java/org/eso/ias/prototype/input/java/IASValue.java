@@ -25,18 +25,16 @@ public abstract class IASValue<T> extends IASValueBase {
 	 * @param value The value of the output
 	 * @param tStamp The timestamp
 	 * @param mode The new mode of the output
-	 * @param id: The ID of this input
-	 * @param runningId: The id of this input and its parents
+	 * @param fullRunningId: The full running id of this input and its parents
 	 * @param valueType: the IAS type of this input
 	 */
 	protected IASValue(T value,
 			long tStamp,
 			OperationalMode mode,
 			IasValidity iasValidity,
-			String id,
-			String runningId,
+			String fullRunningId,
 			IASTypes valueType) {
-		super(tStamp,mode,iasValidity,id,runningId,valueType);
+		super(tStamp,mode,iasValidity,fullRunningId,valueType);
 		this.value = value;
 	}
 	
@@ -64,26 +62,36 @@ public abstract class IASValue<T> extends IASValueBase {
 		return ret.toString();
 	}
 	
+	/**
+	 * Factory method to build IASValues of the passed type.
+	 * 
+	 * @param value The value
+	 * @param tStamp The timestamp
+	 * @param mode The operartional mode
+	 * @param iasValidity The validity
+	 * @param fullRunningId Full running ID
+	 * @param valueType The type of the value
+	 * @return A IasValue initialized with teh passed parameters
+	 */
 	public static <X> IASValue<?> buildIasValue(
 			X value,
 			long tStamp,
 			OperationalMode mode,
 			IasValidity iasValidity,
-			String id,
-			String runningId,
+			String fullRunningId,
 			IASTypes valueType) {
 		Objects.requireNonNull(valueType);
 		switch (valueType) {
-			case LONG: return new IasLong((Long)value, tStamp, mode,iasValidity, id, runningId);
-	 		case INT: return new IasInt((Integer)value, tStamp, mode, iasValidity, id, runningId);
-			case SHORT: return new IasShort((Short)value, tStamp, mode, iasValidity, id, runningId);
-			case BYTE: return new IasByte((Byte)value, tStamp, mode, iasValidity, id, runningId);
-			case DOUBLE: return new IasDouble((Double)value, tStamp, mode, iasValidity, id, runningId);
-			case FLOAT: return new IasFloat((Float)value, tStamp, mode, iasValidity, id, runningId);
-			case BOOLEAN: return new IasBool((Boolean)value, tStamp, mode, iasValidity, id, runningId);
-			case CHAR: return new IasChar((Character)value, tStamp, mode, iasValidity, id, runningId);
-			case STRING: return new IasString((String)value, tStamp, mode, iasValidity, id, runningId);
-			case ALARM: return new IasAlarm((AlarmSample )value, tStamp, mode, iasValidity, id, runningId);
+			case LONG: return new IasLong((Long)value, tStamp, mode,iasValidity, fullRunningId);
+	 		case INT: return new IasInt((Integer)value, tStamp, mode, iasValidity, fullRunningId);
+			case SHORT: return new IasShort((Short)value, tStamp, mode, iasValidity, fullRunningId);
+			case BYTE: return new IasByte((Byte)value, tStamp, mode, iasValidity, fullRunningId);
+			case DOUBLE: return new IasDouble((Double)value, tStamp, mode, iasValidity, fullRunningId);
+			case FLOAT: return new IasFloat((Float)value, tStamp, mode, iasValidity, fullRunningId);
+			case BOOLEAN: return new IasBool((Boolean)value, tStamp, mode, iasValidity, fullRunningId);
+			case CHAR: return new IasChar((Character)value, tStamp, mode, iasValidity, fullRunningId);
+			case STRING: return new IasString((String)value, tStamp, mode, iasValidity, fullRunningId);
+			case ALARM: return new IasAlarm((AlarmSample )value, tStamp, mode, iasValidity, fullRunningId);
 			default: throw new UnsupportedOperationException("Unsupported type "+valueType);
 		}
 	}

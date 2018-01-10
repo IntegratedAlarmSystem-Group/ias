@@ -36,8 +36,7 @@ object JavaConverter {
           null, 
           Long.MinValue,io.mode,
           io.validity.iasValidity,
-          io.id.id,
-          io.id.runningID,
+          io.id.fullRunningID,
           io.iasType)
     } else {
       IASValue.buildIasValue(
@@ -45,8 +44,7 @@ object JavaConverter {
           io.actualValue.timestamp,
           io.mode,
           io.validity.iasValidity,
-          io.id.id,
-          io.id.runningID,
+          io.id.fullRunningID,
           io.iasType)
     }
     ret
@@ -181,8 +179,8 @@ object JavaConverter {
     if (hio.id.id!=iasValue.id) {
       throw new IllegalStateException("ID mismatch for HIO "+hio.id.runningID+": "+hio.id.id+"!="+iasValue.id)
     }
-    if (hio.id.runningID!=iasValue.runningId) {
-      throw new IllegalStateException("Running ID mismatch for HIO "+hio.id.runningID+": "+hio.id.runningID+"!="+iasValue.runningId)
+    if (hio.id.fullRunningID!=iasValue.fullRunningId) {
+      throw new IllegalStateException("Running ID mismatch for HIO "+hio.id.fullRunningID+": "+hio.id.runningID+"!="+iasValue.fullRunningId)
     }
     // Finally, update the HIO
     hio.updateMode(iasValue.mode).updateValue(Option[T](iasValue.value))

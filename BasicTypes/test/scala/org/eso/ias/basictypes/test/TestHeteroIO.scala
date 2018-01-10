@@ -23,7 +23,7 @@ class TestHeteroIO extends FlatSpec {
   
   // The ID of the alarms built in this test
   //
-  // This test os all about the conversion
+  // This test is all about the conversion
   val id = new Identifier("LongMPID", IdentifierType.IASIO,Some(asceId))
   val refreshRate=InOut.MinRefreshRate+10;
   
@@ -163,7 +163,7 @@ class TestHeteroIO extends FlatSpec {
     val iasioId = new Identifier("IasioId",IdentifierType.IASIO,Option(converterId))
     
     // Build the IASIO from the passed IASValue
-    val iasValue = new IasLong(821L,System.currentTimeMillis(),OperationalMode.INTIALIZATION,RELIABLE,"IasioId",converterId.fullRunningID)
+    val iasValue = new IasLong(821L,System.currentTimeMillis(),OperationalMode.INTIALIZATION,RELIABLE,iasioId.fullRunningID)
     val inOut = InOut(iasValue,3000)
     
     assert(inOut.iasType==iasValue.valueType)
@@ -180,7 +180,7 @@ class TestHeteroIO extends FlatSpec {
     assert(newiasIo.mode==iasValue.mode)
     
     // Update with another value
-    val iasValue2 = new IasLong(113142L,System.currentTimeMillis(),OperationalMode.OPERATIONAL,UNRELIABLE,"IasioId",converterId.fullRunningID)
+    val iasValue2 = new IasLong(113142L,System.currentTimeMillis(),OperationalMode.OPERATIONAL,UNRELIABLE,iasio.id.fullRunningID)
     val newiasIo2 = iasio.update(iasValue2)
     assert(newiasIo2.iasType==iasValue2.valueType)
     assert(newiasIo2.value.isDefined)
