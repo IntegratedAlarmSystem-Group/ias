@@ -1,37 +1,33 @@
 package org.eso.ias.webserversender;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.Date;
-import java.text.SimpleDateFormat;
-
-import org.eso.ias.webserversender.WebServerSender;
-import org.eso.ias.webserversender.WebServerSender.WebServerSenderListener;
-import org.eso.ias.webserversender.WebSocketServerHandler.WebSocketServerListener;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketError;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
-import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eclipse.jetty.websocket.server.WebSocketHandler;
-import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
-import org.eso.ias.kafkautils.KafkaHelper;
-import org.eso.ias.kafkautils.KafkaUtilsException;
-import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 
+import org.eso.ias.kafkautils.KafkaHelper;
+import org.eso.ias.kafkautils.SimpleStringProducer;
+import org.eso.ias.webserversender.WebServerSender;
+import org.eso.ias.webserversender.WebServerSender.WebServerSenderListener;
+import org.eso.ias.webserversender.WebSocketServerHandler.WebSocketServerListener;
+
+/**
+ * Test that, when messages are published to the Kafka queue,
+ * the WebServerSender can read them and send them to the WebServer through 
+ * a Websocket connection
+ * 
+ * @author Inria Chile
+ *
+ */
 public class WebServerSenderTest {
 
 	/**
@@ -164,8 +160,9 @@ public class WebServerSenderTest {
 	}
 
 	/**
-	 * Test if when messages are published to the Kafka queue,
-	 * the WebServerSender can read them and send them to the WebServer through Websockets
+	 * Test that when messages are published to the Kafka queue,
+	 * the WebServerSender can read them and send them to the WebServer through 
+	 *  a Websocket connection
 	 */
 	@Test
 	public void testWebServerSender() throws Exception {
