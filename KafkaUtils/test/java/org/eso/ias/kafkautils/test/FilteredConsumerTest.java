@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -24,6 +25,7 @@ import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener;
 import org.eso.ias.kafkautils.KafkaIasiosProducer;
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
 import org.eso.ias.prototype.input.Identifier;
+import org.eso.ias.prototype.input.java.AlarmSample;
 import org.eso.ias.prototype.input.java.IASTypes;
 import org.eso.ias.prototype.input.java.IASValue;
 import org.eso.ias.prototype.input.java.IasValidity;
@@ -121,36 +123,61 @@ public class FilteredConsumerTest implements IasioListener {
 
 	@Override
 	public void iasioReceived(IASValue<?> event) {
-		System.out.println("\nVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV");
 		assertNotNull(event);
-		System.out.println(">1");
 		processedMessages.incrementAndGet();
-		System.out.println(">2");
 		receivedIasios.add(event);
-		System.out.println(">3");
 		numOfEventsToReceive.countDown();
-		System.out.println(">4");
-		System.out.println("\n-------------------------------");
 		logger.info("Event of id [{}] received",event.id);
 	}
 	
 	/**
+	 * Build the full running ID from the passed id
+	 * 
+	 * @param id The Id of the IASIO
+	 * @return he full running ID 
+	 */
+	private String buildFullRunningID(String id) {
+		return Identifier.coupleGroupPrefix()+id+Identifier.coupleSeparator()+"IASIO"+Identifier.coupleGroupSuffix();
+	}
+	
+	/**
 	 * Build and return the IASValues to publish from their IDs
+	 * and assigning a different type to each value 
 	 * 
 	 * @param ids The Ids of the IASValues to build 
 	 * @return The IASValues to publish
 	 */
 	public Collection<IASValue<?>> buildValues(List<String> ids) {
 		Objects.requireNonNull(ids);
-		String frId = Identifier.coupleGroupPrefix()+"ID"+Identifier.coupleSeparator()+"IASIO"+Identifier.coupleGroupSuffix();
-		return ids.stream().map(id -> 
+		return ids.stream().map(id ->  
 			IASValue.buildIasValue(
 					10L, 
 					System.currentTimeMillis(), 
 					OperationalMode.OPERATIONAL, 
 					IasValidity.RELIABLE, 
-					frId, 
+					buildFullRunningID(id),
 					IASTypes.LONG)
+		).collect(Collectors.toList());
+	}
+	
+	/**
+	 * Build and return the IASValues of the given type to publish from the passed IDs
+	 * 
+	 * @param ids The Ids of the IASValues to build 
+	 * @param value the value of the IASValues
+	 * @param type the type of the IASValues
+	 * @return The IASValues to publish
+	 */
+	public Collection<IASValue<?>> buildValues(List<String> ids, Object value, IASTypes type) {
+		Objects.requireNonNull(ids);
+		return ids.stream().map(id ->  
+			IASValue.buildIasValue(
+					value, 
+					System.currentTimeMillis(), 
+					OperationalMode.OPERATIONAL, 
+					IasValidity.RELIABLE, 
+					buildFullRunningID(id),
+					type)
 		).collect(Collectors.toList());
 	}
 	
@@ -216,7 +243,7 @@ public class FilteredConsumerTest implements IasioListener {
 	 * @throws Exception
 	 */
 	@Test
-	public void testIasioConsumerWithFilters() throws Exception {
+	public void testIasioConsumerWithIDsFilters() throws Exception {
 		logger.info("Test testIasioConsumerWithFilters started");
 		
 		
@@ -224,7 +251,7 @@ public class FilteredConsumerTest implements IasioListener {
 		Set<String> idsOfIasios = new HashSet<>();
 		for (int i=1; i<50; i++) idsOfIasios.add("ID-"+i);
 		// Set the filter
-		consumer.setFilter(idsOfIasios);
+		consumer.setFilter(idsOfIasios,null);
 		
 		// The IASValues to submit are more then the accepted IDs
 		List<String> idsToSubmit  = new ArrayList<String>(idsOfIasios);
@@ -243,5 +270,159 @@ public class FilteredConsumerTest implements IasioListener {
 		assertEquals(idsOfIasios.size(), receivedIasios.size());
 		assertTrue(checkIds(receivedIasios, idsOfIasios));
 		logger.info("Test testIasioConsumerWithFilters done");
+	}
+	
+	/**
+	 * Test the {@link KafkaIasiosConsumer} when filtering by type
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testIasioConsumerWithITypesFilters() throws Exception {
+		logger.info("Test testIasioConsumerWithITypesFilters started");
+		
+		
+		// Accepted types
+		Set<IASTypes> typesOfIasios = new HashSet<>();
+		typesOfIasios.add(IASTypes.LONG);
+		typesOfIasios.add(IASTypes.ALARM);
+		
+		// Accepted longs
+		List<String> idsOfLongs = new LinkedList<>();
+		for (int i=1; i<60; i++) idsOfLongs.add("ID-TypeLong-"+i);
+		Collection<IASValue<?>> longIasios = buildValues(idsOfLongs, 10L, IASTypes.LONG);
+		
+		// Accepted alarms
+		List<String> idsOfAlarms = new LinkedList<>();
+		for (int i=1; i<75; i++) idsOfAlarms.add("ID-TypeAlarm-"+i);
+		Collection<IASValue<?>> alarmIasios = buildValues(idsOfAlarms, 10L, IASTypes.LONG);
+		
+		// Rejected boolean
+		List<String> idsOfbooleans = new LinkedList<>();
+		for (int i=1; i<100; i++) idsOfbooleans.add("ID-TypeBool-"+i);
+		Collection<IASValue<?>> boolIasios = buildValues(idsOfbooleans, Boolean.TRUE, IASTypes.BOOLEAN);
+		
+		// Rejected doubles
+		List<String> idsOfdoubles=new LinkedList<>();
+		for (int i=1; i<100; i++) idsOfdoubles.add("ID-TypeBool-"+i);
+		Collection<IASValue<?>> doubleIasios = buildValues(idsOfdoubles, Double.valueOf(10.5), IASTypes.DOUBLE);
+		
+		// Set the filter by types
+		consumer.setFilter(null,typesOfIasios);
+		
+		// The IASValues to submit are more then the accepted IDs
+		List<IASValue<?>> valuesToSubmit  = new ArrayList<>();
+		valuesToSubmit.addAll(longIasios); // accepted
+		valuesToSubmit.addAll(boolIasios); // rejected
+		valuesToSubmit.addAll(alarmIasios); // accepted
+		valuesToSubmit.addAll(doubleIasios); // rejected
+		int expected = longIasios.size()+alarmIasios.size();
+		
+		// Start getting events
+		consumer.startGettingEvents(StartPosition.END,this);
+		
+		// Push the values
+		logger.info("Going to submit {} IASValues and expect to be notified of {}",valuesToSubmit.size(),expected);
+		producer.push(valuesToSubmit);
+		
+		// We should have a timeout since we expect to receive less values then those submitted
+		numOfEventsToReceive = new CountDownLatch(valuesToSubmit.size());
+
+		logger.info("Waiting for events (timeout expected)....");
+		
+		assertFalse(numOfEventsToReceive.await(10, TimeUnit.SECONDS));
+		
+		assertEquals(expected, receivedIasios.size());
+		
+		// Check types
+		for (IASValue<?> value: receivedIasios) {
+			assertTrue(typesOfIasios.contains(value.valueType));
+		}
+		
+		logger.info("Test testIasioConsumerWithITypesFilters done");
+	}
+	
+	/**
+	 * Test the {@link KafkaIasiosConsumer} when filtering by Ids and types
+	 * <P>
+	 * This test replicates what is done by the test by filtering only but
+	 * adding few IDs to restrict even more
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testIasioConsumerWithITypesAndIds() throws Exception {
+		logger.info("Test testIasioConsumerWithITypesAndIds started");
+		
+		
+		// Accepted types
+		Set<IASTypes> typesOfIasios = new HashSet<>();
+		typesOfIasios.add(IASTypes.LONG);
+		typesOfIasios.add(IASTypes.ALARM);
+		
+		// Accepted longs
+		List<String> idsOfLongs = new LinkedList<>();
+		for (int i=1; i<60; i++) idsOfLongs.add("ID-TypeLong-"+i);
+		Collection<IASValue<?>> longIasios = buildValues(idsOfLongs, 10L, IASTypes.LONG);
+		
+		// Accepted alarms
+		List<String> idsOfAlarms = new LinkedList<>();
+		for (int i=1; i<75; i++) idsOfAlarms.add("ID-TypeAlarm-"+i);
+		Collection<IASValue<?>> alarmIasios = buildValues(idsOfAlarms, AlarmSample.SET, IASTypes.ALARM);
+		
+		// Rejected boolean
+		List<String> idsOfbooleans = new LinkedList<>();
+		for (int i=1; i<100; i++) idsOfbooleans.add("ID-TypeBool-"+i);
+		Collection<IASValue<?>> boolIasios = buildValues(idsOfbooleans, Boolean.TRUE, IASTypes.BOOLEAN);
+		
+		// Rejected doubles
+		List<String> idsOfdoubles=new LinkedList<>();
+		for (int i=1; i<100; i++) idsOfdoubles.add("ID-TypeBool-"+i);
+		Collection<IASValue<?>> doubleIasios = buildValues(idsOfdoubles, Double.valueOf(10.5), IASTypes.DOUBLE);
+		
+		// The IDs to accept
+		Set<String> accpetedIDs = new HashSet<>();
+		for (int t=10; t<33; t++) {
+			accpetedIDs.add("ID-TypeLong-"+t);
+		}
+		for (int t=25; t<45; t++) {
+			accpetedIDs.add("ID-TypeAlarm-"+t);
+		}
+		
+		// Set the filter by types
+		consumer.setFilter(accpetedIDs,typesOfIasios);
+		
+		// The IASValues to submit are more then the accepted IDs
+		List<IASValue<?>> valuesToSubmit  = new ArrayList<>();
+		valuesToSubmit.addAll(longIasios); // accepted
+		valuesToSubmit.addAll(boolIasios); // rejected
+		valuesToSubmit.addAll(alarmIasios); // accepted
+		valuesToSubmit.addAll(doubleIasios); // rejected
+		
+		int expected = Math.min(longIasios.size()+alarmIasios.size(), accpetedIDs.size());
+		
+		// Start getting events
+		consumer.startGettingEvents(StartPosition.END,this);
+		
+		// Push the values
+		logger.info("Going to submit {} IASValues and expect to be notified of {}",valuesToSubmit.size(),expected);
+		producer.push(valuesToSubmit);
+		
+		// We should have a timeout since we expect to receive less values then those submitted
+		numOfEventsToReceive = new CountDownLatch(valuesToSubmit.size());
+
+		logger.info("Waiting for events (timeout expected)....");
+		
+		assertFalse(numOfEventsToReceive.await(10, TimeUnit.SECONDS));
+		
+		assertEquals(expected, receivedIasios.size());
+		
+		// Check types and Ids
+		for (IASValue<?> value: receivedIasios) {
+			assertTrue(typesOfIasios.contains(value.valueType));
+			assertTrue(accpetedIDs.contains(value.id));
+		}
+		
+		logger.info("Test testIasioConsumerWithITypesAndIds done");
 	}
 }
