@@ -34,43 +34,43 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 public class WebServerSenderTest {
+
 	private WebServerSender webServerSender;
-	
+
+	private Server server;
+
 	private String[] messages;
-	
+
 	private int messagesNumber;
-	
-	private Thread senderThread;
-	
-	private Thread serverThread;
-	
+
 	/**
 	 * The producer to publish events
 	 */
 	private SimpleStringProducer producer;
-	
+
 	/**
 	 * The logger
 	 */
-	private static final Logger logger = LoggerFactory.getLogger(WebServerSenderTest.class);
+	// private static final Logger logger = LoggerFactory.getLogger(WebServerSenderTest.class);
+	private static final Logger logger = LoggerFactory.getLogger("");
 
 	/**
 	 * The number of events to wait for
 	 */
 	private CountDownLatch numOfMessagesToReceive;
-	
+
 	/**
 	 * The number of events to wait for
 	 */
 	private CountDownLatch numOfMessagesToSend;
-	
+
 	/**
 	 * The list of strings received by the server.
 	 * <P>
 	 * It contains only the strings that this test produced
 	 */
 	private final List<String> receivedMessages = Collections.synchronizedList(new ArrayList<>());
-	
+
 	/**
 	 * The list of strings sent by the sender.
 	 * <P>
@@ -80,7 +80,7 @@ public class WebServerSenderTest {
 
 
 	public void runServer() throws Exception {
-		Server server = new Server(8081);
+		server = new Server(8081);
         WebSocketHandler wsHandler = new WebSocketServerHandler();
         WebSocketServerListener listener = new WebSocketServerListener(){
         	public void stringEventSent(String event) {
@@ -94,7 +94,7 @@ public class WebServerSenderTest {
         server.setHandler(wsHandler);
 		server.start();
 	}
-	
+
 	public void runSender(String kafkaTopic, String webserverUri) throws Exception {
         WebServerSenderListener listener = new WebServerSenderListener(){
         	public void stringEventSent(String event) {
@@ -106,7 +106,7 @@ public class WebServerSenderTest {
 		webServerSender.run();
 		logger.info("WebServerSender initialized");
 	}
-	
+
 	@Before
 	public void setUp() throws Exception {
 		String kafkaTopic = "test";
@@ -116,17 +116,16 @@ public class WebServerSenderTest {
 		messagesNumber = 6;
 		numOfMessagesToReceive = new CountDownLatch(messagesNumber);
 		numOfMessagesToSend = new CountDownLatch(messagesNumber);
-		
+
 		this.runServer();
-		
+
 		producer = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, kafkaTopic, "ProducerTest");
 		producer.setUp();
-		
+
 		this.runSender(kafkaTopic, webserverUri);
-		
 		logger.info("Initialized.");
 	}
-	
+
 	@After
 	public void tearDown() throws Exception {
 		logger.info("Closing...");
@@ -136,8 +135,9 @@ public class WebServerSenderTest {
 
 	@Test
 	public void testWebServerSender() throws Exception {
-		
-		int messagesDelivered = 0;	
+
+		// Arrange
+		int messagesDelivered = 0;
 		this.messages = new String[messagesNumber];
 		this.messages[0] = "{\"value\":\"SET\",\"mode\":\"OPERATIONAL\",\"iasValidity\":\"RELIABLE\",\"id\":\"AlarmType-ID\",\"fullRunningId\":\"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(AlarmType-ID:IASIO)\",\"valueType\":\"ALARM\",\"tStamp\":1000}";
 		this.messages[1] = "{\"value\":\"CLEARED\",\"mode\":\"MAINTENANCE\",\"iasValidity\":\"RELIABLE\",\"id\":\"AlarmType-ID\",\"fullRunningId\":\"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(AlarmType-ID:IASIO)\",\"valueType\":\"ALARM\",\"tStamp\":1000}";
@@ -145,9 +145,10 @@ public class WebServerSenderTest {
 		this.messages[3] = "{\"value\":\"CLEARED\",\"mode\":\"MAINTENANCE\",\"iasValidity\":\"RELIABLE\",\"id\":\"AlarmType-ID\",\"fullRunningId\":\"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(AlarmType-ID:IASIO)\",\"valueType\":\"ALARM\",\"tStamp\":1000}";
 		this.messages[4] = "{\"value\":\"SET\",\"mode\":\"OPERATIONAL\",\"iasValidity\":\"RELIABLE\",\"id\":\"AlarmType-ID\",\"fullRunningId\":\"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(AlarmType-ID:IASIO)\",\"valueType\":\"ALARM\",\"tStamp\":1000}";
 		this.messages[5] = "{\"value\":\"CLEARED\",\"mode\":\"MAINTENANCE\",\"iasValidity\":\"RELIABLE\",\"id\":\"AlarmType-ID\",\"fullRunningId\":\"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(AlarmType-ID:IASIO)\",\"valueType\":\"ALARM\",\"tStamp\":1000}";
-		
+
+		// Act:
 		logger.info("Start to send messages");
-		for (int i = 0; i< messagesNumber; i++) {
+		for (int i = 0; i < messagesNumber; i++) {
 			// Sends the messages synchronously to get
 			// an exception in case of error
 			try {
@@ -161,8 +162,7 @@ public class WebServerSenderTest {
 		}
 
 		logger.info("{} messages delivered", messagesDelivered);
-		assertEquals(messagesDelivered, messagesNumber);
-		
+
 		if (!numOfMessagesToSend.await(10, TimeUnit.SECONDS)) {
 			for (String str: messages) {
 				if (!receivedMessages.contains(str)) {
@@ -170,7 +170,7 @@ public class WebServerSenderTest {
 				}
 			}
 		}
-		
+
 		if (!numOfMessagesToReceive.await(10, TimeUnit.SECONDS)) {
 			for (String str: messages) {
 				if (!receivedMessages.contains(str)) {
@@ -178,12 +178,16 @@ public class WebServerSenderTest {
 				}
 			}
 		}
-		
-		assertEquals(receivedMessages.size(), messagesNumber);
-		assertEquals(sentMessages.size(), messagesNumber);
-		//senderThread.interrupt();
+		logger.info("{} messages received", receivedMessages.size());
+		webServerSender.stop();
+		server.stop();
+
+		// Assert:
+		assertEquals("Some messages were not received", messagesNumber, receivedMessages.size());
+		assertEquals("Some messages were not published in the Kafka Queue", messagesNumber, messagesDelivered);
+		assertEquals("Some messages were not sent", messagesNumber, sentMessages.size());
 	}
-	
+
 	public static void main(String [] args) throws Exception {
 		WebServerSenderTest test = new WebServerSenderTest();
 		test.testWebServerSender();
