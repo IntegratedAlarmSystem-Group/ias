@@ -308,6 +308,9 @@ class DasuImpl (
     Try(outputPublisher.cleanUpPublisher())
     logger.info("DASU [{}]: cleaned up",id)
   }
+  
+  /** The inputs ofthe DASU */
+  def getInputs(): Set[String] = dasuTopology.dasuInputs
 }
 
 object DasuImpl {

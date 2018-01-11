@@ -80,8 +80,8 @@ abstract class Dasu(val dasuIdentifier: Identifier) extends InputsListener {
   /** The ID of the DASU */
   val id = dasuIdentifier.id
   
-  /** The topology of the ASCEs running in the DASU */
-  val dasuTopology: Topology
+  /** The inputs ofthe DASU */
+  def getInputs(): Set[String]
   
   
   /**
