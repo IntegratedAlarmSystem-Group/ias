@@ -197,7 +197,6 @@ class Dasu(
     case Success(s) => logger.info("DASU [{}] subscriber successfully initialized",id)
   }
   
-  addsShutDownHook()
   logger.info("DASU [{}] built", id)
   
   /**
@@ -348,20 +347,18 @@ class Dasu(
     }
   }
   
-  /** Adds a shutdown hook to cleanup resources before exiting */
-  def addsShutDownHook() = {
-      Runtime.getRuntime().addShutdownHook(new Thread() {
-        override def run() = {
-          logger.info("DASU [{}]: releasing resources", id)
-          logger.debug("DASU [{}]: stopping the auto-refresh of the output", id)
-          Try(disableAutoRefreshOfOutput())
-          logger.debug("DASU [{}]: releasing the subscriber", id)
-          Try(inputSubscriber.cleanUpSubscriber())
-          logger.debug("DASU [{}]: releasing the publisher", id)
-          Try(outputPublisher.cleanUpPublisher())
-          logger.info("DASU [{}]: shutted down",id)
-        }
-    })
+  /**
+   * Release all the resources before exiting
+   */
+  def cleanUp() {
+    logger.info("DASU [{}]: releasing resources", id)
+    logger.debug("DASU [{}]: stopping the auto-refresh of the output", id)
+    Try(disableAutoRefreshOfOutput())
+    logger.debug("DASU [{}]: releasing the subscriber", id)
+    Try(inputSubscriber.cleanUpSubscriber())
+    logger.debug("DASU [{}]: releasing the publisher", id)
+    Try(outputPublisher.cleanUpPublisher())
+    logger.info("DASU [{}]: cleaned up",id)
   }
 }
 
