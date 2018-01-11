@@ -20,6 +20,7 @@ import org.eso.ias.prototype.input.java.IASTypes
 import org.eso.ias.prototype.input.java.OperationalMode._
 import org.eso.ias.prototype.input.java.AlarmSample
 import org.eso.ias.prototype.input.java.IasValidity._
+import org.eso.ias.dasu.DasuImpl
 
 /** 
  *  Test the writing of the output of the DASU
@@ -42,8 +43,12 @@ class JsonPublisherTest extends FlatSpec {
   
   val inputsProvider = new DirectInputSubscriber()
   
+  // Build the Identifier
+  val supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR,None)
+  val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervId)
+  
   // The DASU
-  val dasu = new Dasu(dasuId,outputPublisher,inputsProvider,cdbReader)
+  val dasu = new DasuImpl(dasuIdentifier,outputPublisher,inputsProvider,cdbReader)
   
   // The identifer of the monitor system that produces the temperature in input to teh DASU
   val monSysId = new Identifier("MonitoredSystemID",IdentifierType.MONITORED_SOFTWARE_SYSTEM)
