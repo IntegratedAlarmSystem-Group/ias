@@ -1,6 +1,7 @@
 package org.eso.ias.prototype.input
 
 import org.eso.ias.prototype.input.java.IdentifierType
+import org.eso.ias.prototype.input.java.IASTypes
 
 /**
  * Companion object
@@ -264,4 +265,20 @@ extends {
   }
   
   override def toString = fullRunningID
+  
+  /**
+   * Search and return in this Identifier or in its parent
+   * the id of the given type,, if any.
+   * 
+   * @return the ID of the identifier of the given type 
+   */
+  def getIdOfType(idTypeToSearch: IdentifierType): Option[String] = {
+     require(Option(idTypeToSearch).isDefined,"Cannot search for an undefined identifier type")
+     
+     if (idTypeToSearch==idType) {
+       Some(id)
+     } else {
+       parentID.flatMap(p => p.getIdOfType(idTypeToSearch))
+     }
+  }
 }
