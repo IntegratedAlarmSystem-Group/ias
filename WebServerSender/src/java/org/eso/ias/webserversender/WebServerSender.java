@@ -1,6 +1,7 @@
 package org.eso.ias.webserversender;
 
 import java.net.URI;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jetty.websocket.api.Session;
@@ -15,7 +16,6 @@ import org.eso.ias.kafkautils.KafkaIasiosConsumer;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener;
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
 import org.eso.ias.prototype.input.java.IasValueJsonSerializer;
-import org.eso.ias.prototype.input.java.IasValueStringSerializer;
 import org.eso.ias.prototype.input.java.IASValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,14 +54,9 @@ public class WebServerSender implements IasioListener, Runnable {
 	String webserverUri;
 	
 	/**
-	 * 
+	 * Same as the webserverUri but as a URI object 
 	 */
 	URI uri;
-	
-	/**
-	 * 
-	 */
-	ClientUpgradeRequest request = new ClientUpgradeRequest();
 	
 	/**
 	 * The serializer/deserializer to convert the string
@@ -88,6 +83,11 @@ public class WebServerSender implements IasioListener, Runnable {
 	 * by the WebServer sender.
 	 */
 	WebServerSenderListener listener;
+	
+	/**
+	 * Count down to wait until the connection is established
+	 */
+	private CountDownLatch connectionReady;
 	
 	/**
 	 * Constructor
@@ -128,6 +128,7 @@ public class WebServerSender implements IasioListener, Runnable {
 	public void onConnect(Session session) {
 	   logger.info("WebSocket got connect: %s%n",session);
 	   this.session = session;
+	   this.connectionReady.countDown();
 	   try {
 	       this.consumer.setUp();
 	       this.consumer.startGettingEvents(StartPosition.END, this);
@@ -169,11 +170,13 @@ public class WebServerSender implements IasioListener, Runnable {
 	 */
 	public void run() {
 		try {
+			this.connectionReady = new CountDownLatch(1);
 			this.uri = new URI(this.webserverUri);
 			this.client.start();
-			this.client.connect(this, this.uri, this.request);
-			while(this.session==null) {
-				TimeUnit.MILLISECONDS.sleep(100);
+			this.client.connect(this, this.uri, new ClientUpgradeRequest());
+			if(!this.connectionReady.await(1, TimeUnit.MINUTES)) {
+				logger.error("WebSocketSender cannot establish the connection with the server.");
+				System.exit(1); 
 			}
 			logger.debug("Connection started!");
 		}
