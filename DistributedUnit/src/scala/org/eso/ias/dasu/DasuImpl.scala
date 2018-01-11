@@ -45,10 +45,10 @@ class DasuImpl (
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
   
-  logger.info("Building DASU [{}] with running id {}",id,dasuIdentifier.fullRunningID)
-  
   /** The ID of the DASU */
   val id = dasuIdentifier.id
+  
+  logger.info("Building DASU [{}] with running id {}",id,dasuIdentifier.fullRunningID)
   
   // Read configuration from CDB
   val dasuDao = {
