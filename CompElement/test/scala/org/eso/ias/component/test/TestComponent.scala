@@ -91,7 +91,7 @@ class TestComponent extends FlatSpec {
        tfSetting,
        new Properties()) with JavaTransfer[AlarmSample]
     
-    assert(comp.id==compId)
+    assert(comp.asceIdentifier==compId)
     assert(comp.output.id==outId)
     
     // A newly created ASCE haa a state equal to Initializing
@@ -124,7 +124,7 @@ class TestComponent extends FlatSpec {
        tfSetting,
        new Properties()) with JavaTransfer[AlarmSample]
     
-    assert(comp.id==compId)
+    assert(comp.asceIdentifier==compId)
     assert(comp.output.id==outId)
     
     // A newly created ASCE haa a state equal to Initializing
