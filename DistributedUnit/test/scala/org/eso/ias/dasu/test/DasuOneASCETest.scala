@@ -48,7 +48,7 @@ class DasuOneASCETest extends FlatSpec with OutputListener {
   val stringSerializer = Option(new IasValueJsonSerializer)
   val outputPublisher: OutputPublisher = new ListenerOutputPublisherImpl(this,stringSerializer)
   
-  val inputsProvider = new TestInputSubscriber()
+  val inputsProvider = new DirectInputSubscriber()
   
   // The DASU to test
   val dasu = new Dasu(dasuId,outputPublisher,inputsProvider,cdbReader)

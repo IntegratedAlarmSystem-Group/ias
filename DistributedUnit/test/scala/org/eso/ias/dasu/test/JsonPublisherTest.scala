@@ -40,7 +40,7 @@ class JsonPublisherTest extends FlatSpec {
   val writer = new FileWriter(outputFile)
   val outputPublisher = new JsonWriterPublisher(writer)
   
-  val inputsProvider = new TestInputSubscriber()
+  val inputsProvider = new DirectInputSubscriber()
   
   // The DASU
   val dasu = new Dasu(dasuId,outputPublisher,inputsProvider,cdbReader)
