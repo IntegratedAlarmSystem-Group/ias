@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
@@ -48,12 +49,18 @@ public class WebServerSender implements IasioListener, Runnable {
 	String kafkaTopic;
 
 	/**
-	 * Web Server URI
+	 * Web Server URI as String
 	 */
 	String webserverUri;
-
+	
+	/**
+	 * 
+	 */
 	URI uri;
-
+	
+	/**
+	 * 
+	 */
 	ClientUpgradeRequest request = new ClientUpgradeRequest();
 	
 	/**
@@ -67,11 +74,19 @@ public class WebServerSender implements IasioListener, Runnable {
 	 */
 	private static final Logger logger = LoggerFactory.getLogger(WebServerSender.class);
 	
+	/**
+	 * The interface of the listener to be notified of Strings received
+	 * by the WebServer sender.
+	 */
 	public interface WebServerSenderListener {
 		
 		public void stringEventSent(String event);
 	}
-
+	
+	/**
+	 * The listener to be notified of Strings received
+	 * by the WebServer sender.
+	 */
 	WebServerSenderListener listener;
 	
 	/**
@@ -81,6 +96,7 @@ public class WebServerSender implements IasioListener, Runnable {
 	 * @param kafkaTopic Topic defined to send messages to the IAS Core to the IAS Web Server
 	 * TODO: Add servers to the arguments instead of use the default ones
 	 * @param webserverUri 
+	 * @param listener The listener of the messages received by the server
 	 */
 	public WebServerSender(String id, String kafkaTopic, String webserverUri, WebServerSenderListener listener) {
     	this.id = id;
@@ -101,7 +117,6 @@ public class WebServerSender implements IasioListener, Runnable {
 	   logger.info("WebSocket connection closed:" + statusCode + ", " + reason);
 	   this.session = null;
 	   this.consumer.tearDown();
-	   //System.exit(0); // TODO: Add WebServer reconnection
 	}
 
 	/**
@@ -122,6 +137,11 @@ public class WebServerSender implements IasioListener, Runnable {
 	       logger.error("WebSocket couldn't send the message",t);
 	   }
 	}
+	
+	@OnWebSocketMessage
+    public void onMessage(String message) {
+		notifyListener(message);
+    }
 
 	/**
 	 * This method could get notifications for messages

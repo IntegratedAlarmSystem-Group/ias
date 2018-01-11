@@ -18,6 +18,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaIasiosProducer;
@@ -97,7 +99,12 @@ public class WebServerSenderTest {
 	 * Countdown of the messages received by the Mock Server
 	 */
 	private CountDownLatch numOfMessagesToReceive;
-
+	
+	/**
+	 * Countdown to initialize the test when the server is ready
+	 */
+	private CountDownLatch serverReady;
+	
 	/**
 	 * The list of strings sent by the sender.
 	 * <P>
@@ -118,7 +125,7 @@ public class WebServerSenderTest {
 	 */
 	private final IasValueStringSerializer serializer = new IasValueJsonSerializer();
 
-
+	
 	/**
 	 * Auxiliary method to start the mock Server
 	 */
@@ -143,14 +150,13 @@ public class WebServerSenderTest {
 	private void runSender() throws Exception {
         WebServerSenderListener listener = new WebServerSenderListener(){
         	public void stringEventSent(String event) {
-        		sentMessages.add(event);
-				try {
-					Thread.sleep(500);
-				}
-				catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-        		numOfMessagesToSend.countDown();
+        		if(event.equals("Hello")) {
+        			serverReady.countDown();
+        		}
+        		else {
+	        		sentMessages.add(event);
+	        		numOfMessagesToSend.countDown();
+	        	}
         	};
         };
 		this.webServerSender = new WebServerSender("WebServerSender", this.kafkaTopic, this.webserverUri, listener);
@@ -195,7 +201,7 @@ public class WebServerSenderTest {
 	@Before
 	public void setUp() throws Exception {
 		logger.info("Starting Test Initialization");
-
+		
 		this.messagesNumber = 6;
 		List<String> idsOfLongs = new LinkedList<>();
 		for (int i=0; i<this.messagesNumber; i++) idsOfLongs.add("ID-TypeLong-"+i);
@@ -203,12 +209,17 @@ public class WebServerSenderTest {
 
 		this.numOfMessagesToReceive = new CountDownLatch(messagesNumber);
 		this.numOfMessagesToSend = new CountDownLatch(messagesNumber);
-
+		this.serverReady = new CountDownLatch(1);
+		
 		this.producer = new KafkaIasiosProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, kafkaTopic, "ProducerTest", this.serializer);
 		this.producer.setUp();
 
 		this.runServer();
 		this.runSender();
+	
+		Boolean status = this.serverReady.await(10, TimeUnit.SECONDS);
+		assertTrue("Server and sender never connected", status);
+
 		logger.info("Test Initialization Completed.");
 	}
 
@@ -239,7 +250,7 @@ public class WebServerSenderTest {
 
 		if (!this.numOfMessagesToSend.await(10, TimeUnit.SECONDS)) {
 			for (IASValue<?> value: this.iasios) {
-				if (!this.sentMessages.contains(value)) {
+				if (!this.sentMessages.contains(serializer.iasValueToString(value))) {
 					logger.error("[{}] never sent by the sender",serializer.iasValueToString(value));
 				}
 			}
@@ -256,7 +267,7 @@ public class WebServerSenderTest {
 		// Assert:
 		logger.info("Test Execution Completed");
 		logger.info("Summary:");
-		logger.info("- [{}] messages were published in the Kafka queue",this.sentMessages.size());
+		logger.info("- [{}] messages were published in the Kafka queue",messagesDelivered);
 		logger.info("- [{}] messages were send by the WebServerSender",this.sentMessages.size());
 		logger.info("- [{}] messages were received by the Mock Server",this.receivedMessages.size());
 		assertEquals("Some messages were not published in the Kafka Queue by Mock Producer", messagesNumber, messagesDelivered);
