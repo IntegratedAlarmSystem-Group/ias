@@ -35,9 +35,9 @@ import org.eso.ias.webserversender.WebSocketServerHandler.WebSocketServerListene
 
 /**
  * Test that, when messages are published to the Kafka queue,
- * the WebServerSender can read them and send them to the WebServer through 
+ * the WebServerSender can read them and send them to the WebServer through
  * a Websocket connection
- * 
+ *
  * @author Inria Chile
  *
  */
@@ -117,8 +117,8 @@ public class WebServerSenderTest {
 	 * received by the BSDB in a IASValue
 	 */
 	private final IasValueStringSerializer serializer = new IasValueJsonSerializer();
-	
-	
+
+
 	/**
 	 * Auxiliary method to start the mock Server
 	 */
@@ -144,6 +144,12 @@ public class WebServerSenderTest {
         WebServerSenderListener listener = new WebServerSenderListener(){
         	public void stringEventSent(String event) {
         		sentMessages.add(event);
+				try {
+					Thread.sleep(500);
+				}
+				catch (InterruptedException e) {
+					e.printStackTrace();
+				}
         		numOfMessagesToSend.countDown();
         	};
         };
@@ -151,33 +157,33 @@ public class WebServerSenderTest {
 		this.webServerSender.run();
 		logger.info("WebServerSender initialized...");
 	}
-	
+
 	/**
 	 * Build the full running ID from the passed id
-	 * 
+	 *
 	 * @param id The Id of the IASIO
-	 * @return he full running ID 
+	 * @return he full running ID
 	 */
 	private String buildFullRunningID(String id) {
 		return Identifier.coupleGroupPrefix()+id+Identifier.coupleSeparator()+"IASIO"+Identifier.coupleGroupSuffix();
 	}
-	
+
 	/**
 	 * Build and return the IASValues of the given type to publish from the passed IDs
-	 * 
-	 * @param ids The Ids of the IASValues to build 
+	 *
+	 * @param ids The Ids of the IASValues to build
 	 * @param value the value of the IASValues
 	 * @param type the type of the IASValues
 	 * @return The IASValues to publish
 	 */
 	public Collection<IASValue<?>> buildValues(List<String> ids, Object value, IASTypes type) {
 		Objects.requireNonNull(ids);
-		return ids.stream().map(id ->  
+		return ids.stream().map(id ->
 			IASValue.buildIasValue(
-					value, 
-					System.currentTimeMillis(), 
-					OperationalMode.OPERATIONAL, 
-					IasValidity.RELIABLE, 
+					value,
+					System.currentTimeMillis(),
+					OperationalMode.OPERATIONAL,
+					IasValidity.RELIABLE,
 					buildFullRunningID(id),
 					type)
 		).collect(Collectors.toList());
@@ -208,7 +214,7 @@ public class WebServerSenderTest {
 
 	/**
 	 * Test that when messages are published to the Kafka queue,
-	 * the WebServerSender can read them and send them to the WebServer through 
+	 * the WebServerSender can read them and send them to the WebServer through
 	 *  a Websocket connection
 	 */
 	@Test
@@ -218,7 +224,7 @@ public class WebServerSenderTest {
 		int messagesDelivered = 0;
 
 		// Act:
-		for (IASValue<?> value: this.iasios) { 
+		for (IASValue<?> value: this.iasios) {
 			try {
 				this.producer.push(value);
 				this.producer.flush();
@@ -246,13 +252,16 @@ public class WebServerSenderTest {
 				}
 			}
 		}
-		logger.info("{} messages received", this.receivedMessages.size());
 
 		// Assert:
+		logger.info("Test Execution Completed");
+		logger.info("Summary:");
+		logger.info("- [{}] messages were published in the Kafka queue",this.sentMessages.size());
+		logger.info("- [{}] messages were send by the WebServerSender",this.sentMessages.size());
+		logger.info("- [{}] messages were received by the Mock Server",this.receivedMessages.size());
 		assertEquals("Some messages were not published in the Kafka Queue by Mock Producer", messagesNumber, messagesDelivered);
 		assertEquals("Some messages were not sent by the WebServerSender", messagesNumber, this.sentMessages.size());
 		assertEquals("Some messages were not received by the Mock Server", messagesNumber, this.receivedMessages.size());
-		logger.info("Test Execution Completed");
 	}
 
 	/**
