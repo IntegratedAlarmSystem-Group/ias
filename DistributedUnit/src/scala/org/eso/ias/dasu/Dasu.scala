@@ -73,13 +73,12 @@ import scala.util.Success
  * we will not use it unless we will need it.  
  * 
  * @constructor create a DASU with the given identifier
- * @param id is the identifier of the DASU
- * @param outputPublisher the publisher to send the output
- * @param inputSubscriber the subscriber getting events to be processed 
- * @param cdbReader the CDB reader to get the configuration of the DASU from the CDB
-
+ * @param dasuIdentifier the identifier of the DASU
  */
-abstract class Dasu extends InputsListener {
+abstract class Dasu(val dasuIdentifier: Identifier) extends InputsListener {
+  
+  /** The ID of the DASU */
+  val id = dasuIdentifier.id
   
   
   /**

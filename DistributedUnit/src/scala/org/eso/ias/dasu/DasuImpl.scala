@@ -30,13 +30,19 @@ import org.eso.ias.cdb.pojos.DasuDao
 
 /**
  * The implementation of the DASU
+ * 
+ * @param the identifier of the DASU
+ * @param outputPublisher the publisher to send the output
+ * @param inputSubscriber the subscriber getting events to be processed 
+ * @param cdbReader the CDB reader to get the configuration of the DASU from the CDB
+ * 
  */
 class DasuImpl (
-    val dasuIdentifier: Identifier,
+    dasuIdentifier: Identifier,
     private val outputPublisher: OutputPublisher,
     private val inputSubscriber: InputSubscriber,
     cdbReader: CdbReader)
-    extends Dasu with Runnable {
+    extends Dasu(dasuIdentifier) with Runnable {
   require(Option(dasuIdentifier).isDefined,"Invalid Identifier")
   require(dasuIdentifier.idType==IdentifierType.DASU,"Invalid identifier type for DASU")
   require(Option(outputPublisher).isDefined,"Invalid output publisher")
@@ -45,9 +51,6 @@ class DasuImpl (
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
-  
-  /** The ID of the DASU */
-  val id = dasuIdentifier.id
   
   logger.info("Building DASU [{}] with running id {}",id,dasuIdentifier.fullRunningID)
   
