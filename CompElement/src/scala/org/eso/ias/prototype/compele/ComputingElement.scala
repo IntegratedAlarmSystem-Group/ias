@@ -110,7 +110,7 @@ abstract class ComputingElement[T](
   /** The ID of the ASCE */
   val id = asceIdentifier.id
   
-  logger.info("ASCE [{}] built with running id {}",id,asceIdentifier.fullRunningID)
+  logger.info("Building ASCE [{}] with running id {}",id,asceIdentifier.fullRunningID)
   
   /**
    * The programming language of this TF is abstract
@@ -163,6 +163,8 @@ abstract class ComputingElement[T](
   
   /** Getter for the private _output */
   def output = _output
+  
+  logger.info("ASCE [{}] built",id)
   
   /**
    * Update the output by running the user provided script/class against the inputs.
