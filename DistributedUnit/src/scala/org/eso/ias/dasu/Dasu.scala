@@ -83,23 +83,6 @@ abstract class Dasu(val dasuIdentifier: Identifier) extends InputsListener {
   /** The inputs ofthe DASU */
   def getInputs(): Set[String]
   
-  
-  /**
-   * Propagates the inputs received from the BSDB to each of the ASCEs
-   * in the DASU generating the output of the entire DASU.
-   * 
-   * THis method runs after the refresh time interval elapses.
-   * All the iasios collected in the time interval will be passed to the first level of the ASCEs
-   * and up till the last ASCE generates the output of the DASU itself.
-   * Each ASCE runs the TF and produces another output to be propagated to the next level.
-   * The last level is the only one ASCE that produces the output of the DASU
-   * to be sent to the BSDB.
-   * 
-   * @param iasios the IASIOs received from the BDSB in the last time interval
-   * @return the IASIO to send back to the BSDB
-   */
-  def propagateIasios(iasios: Set[IASValue[_]]): Option[IASValue[_]];
-  
   /** 
    *  Start getting events from the inputs subscriber
    *  to produce the output

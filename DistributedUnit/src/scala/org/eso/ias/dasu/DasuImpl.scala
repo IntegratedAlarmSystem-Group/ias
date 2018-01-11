@@ -167,7 +167,7 @@ class DasuImpl (
    * @param iasios the IASIOs received from the BDSB in the last time interval
    * @return the IASIO to send back to the BSDB
    */
-  def propagateIasios(iasios: Set[IASValue[_]]): Option[IASValue[_]] = {
+  private def propagateIasios(iasios: Set[IASValue[_]]): Option[IASValue[_]] = {
       
       // Updates one ASCE i.e. runs its TF passing the inputs
       // Return the output of the ASCE
