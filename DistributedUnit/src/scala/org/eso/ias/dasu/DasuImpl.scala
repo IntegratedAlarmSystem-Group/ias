@@ -26,6 +26,7 @@ import org.eso.ias.prototype.compele.AsceStates
 import org.eso.ias.dasu.executorthread.ScheduledExecutor
 import org.eso.ias.prototype.input.JavaConverter
 import java.util.concurrent.TimeUnit
+import org.eso.ias.cdb.pojos.DasuDao
 
 /**
  * The implementation of the DASU
@@ -303,5 +304,37 @@ class DasuImpl (
     logger.debug("DASU [{}]: releasing the publisher", id)
     Try(outputPublisher.cleanUpPublisher())
     logger.info("DASU [{}]: cleaned up",id)
+  }
+}
+
+object DasuImpl {
+  
+  /**
+   * Factory method to build a DasuImpl
+   * 
+   * @param dasuDao: the configuration of the DASU from the CDB
+   * @param supervidentifier: the identifier of the supervisor that runs the dasu
+   * @param outputPublisher: the producer to send outputs of DASUs to the BSDB
+   * @param inputSubscriber: the consumer to get values from the BSDB
+   * @param cdbReader: the CDB reader
+   */
+  def apply(
+    dasuDao: DasuDao, 
+    supervidentifier: Identifier, 
+    outputPublisher: OutputPublisher,
+    inputSubscriber: InputSubscriber,
+    cdbReader: CdbReader): DasuImpl = {
+    
+    require(Option(dasuDao).isDefined)
+    require(Option(supervidentifier).isDefined)
+    require(Option(outputPublisher).isDefined)
+    require(Option(inputSubscriber).isDefined)
+    require(Option(cdbReader).isDefined)
+   
+    val dasuId = dasuDao.getId
+    
+    val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervidentifier)
+    
+    new DasuImpl(dasuIdentifier,outputPublisher,inputSubscriber,cdbReader)
   }
 }
