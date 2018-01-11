@@ -151,29 +151,29 @@ class Supervisor(
     val inputsOfSupervisor = dasus.values.foldLeft(Set.empty[String])( (s, dasu) => s ++ dasu.dasuTopology.dasuInputs)
     inputSubscriber.startSubscriber(this, inputsOfSupervisor)
     
-    // TODO: activate auto refresh of output in the DASUs
+    dasus.values.foreach(dasu => dasu.enableAutoRefreshOfOutput())
   }
-  
+
   /**
    * Release all the resources
    */
   def cleanUp() = synchronized {
-    
+
     val alreadyCleaned = cleanedUp.getAndSet(true)
     if (!alreadyCleaned) {
-      logger.info("Cleaning up supervisor [{}]",id)
-      
+      logger.info("Cleaning up supervisor [{}]", id)
+
       logger.debug("Supervisor [{}]: removing the shutdown hook", id)
-    Runtime.getRuntime().removeShutdownHook(shutDownThread)
-    
-    logger.debug("Releasing DASUs running in the supervisor [{}]",id)
-    dasus.values.foreach(_.cleanUp)
-    
-    logger.debug("Supervisor [{}]: releasing the subscriber", id)
-    Try(inputSubscriber.cleanUpSubscriber())
-    logger.debug("Supervisor [{}]: releasing the publisher", id)
-    Try(outputPublisher.cleanUpPublisher())
-    logger.info("Supervisor [{}]: cleaned up",id)
+      Runtime.getRuntime().removeShutdownHook(shutDownThread)
+
+      logger.debug("Releasing DASUs running in the supervisor [{}]", id)
+      dasus.values.foreach(_.cleanUp)
+
+      logger.debug("Supervisor [{}]: releasing the subscriber", id)
+      Try(inputSubscriber.cleanUpSubscriber())
+      logger.debug("Supervisor [{}]: releasing the publisher", id)
+      Try(outputPublisher.cleanUpPublisher())
+      logger.info("Supervisor [{}]: cleaned up", id)
     }
   }
   
@@ -201,13 +201,6 @@ class Supervisor(
       }
     })
   }
-  
-  // Activate the DASUs and get the list of IASIOs the want to receive
-  // Connect to the input kafka topic passing the IDs of the IASIOs
-  
-  // Start the loop:
-  // - get IASIOs, forward to the DASUs
-  // - publish the IASOs produced by the DASU in the kafka topic
   
   /** 
    *  The Supervisor acts as publisher for the DASU
