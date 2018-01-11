@@ -18,7 +18,8 @@ class TestHIOEquality extends FlatSpec {
   
   def fixture = {
     new {
-      val dasuId = new Identifier("dasuVID",IdentifierType.DASU,None)
+      val supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR,None)
+      val dasuId = new Identifier("dasuVID",IdentifierType.DASU,supervId)
       val asceId = new Identifier("asceVID",IdentifierType.ASCE,Option(dasuId))
       
       val id = new Identifier("TestID", IdentifierType.IASIO,Option(asceId))

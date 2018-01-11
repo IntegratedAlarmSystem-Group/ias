@@ -32,9 +32,11 @@ class CommonCompBuilder(
   // The thread factory used by the setting to async
   // initialize and shutdown the TF objects
   val threadFactory = new TestThreadFactory()
+
   
-  // The ID of the DASU where the components runs
-  val dasId = new Identifier(dasuId,IdentifierType.DASU,None)
+  // The ID of the SUPERVISOR and the DASU where the components runs
+  val supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR,None)
+  val dasId = new Identifier(dasuId,IdentifierType.DASU,supervId)
 
   // The ID of the component running into the DASU
   val compID = new Identifier(asceId,IdentifierType.ASCE,Option(dasId))

@@ -26,7 +26,8 @@ class TestJavaConversion  extends FlatSpec {
   def fixture = {
     new {
       // The IDs
-      val dasuId = new Identifier("dasuVID",IdentifierType.DASU,None)
+      val supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR,None)
+      val dasuId = new Identifier("dasuVID",IdentifierType.DASU,supervId)
       val asceId = new Identifier("asceVID",IdentifierType.ASCE,Option(dasuId))      
       
       val doubleHioId = new Identifier("DoubleID",IdentifierType.IASIO,Option[Identifier](asceId))

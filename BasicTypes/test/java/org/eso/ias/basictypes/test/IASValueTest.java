@@ -26,7 +26,8 @@ public class IASValueTest {
 	public void testId() throws Exception {
 		String valId="testIdentifier";
 		Option<Identifier> none = Option.apply(null);
-		Identifier dasuId =  new Identifier("DasuId",IdentifierType.DASU,none);
+		Identifier supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR,none);
+		Identifier dasuId =  new Identifier("DasuId",IdentifierType.DASU,new Some(supervId));
 		Identifier asceId =  new Identifier("AsceId",IdentifierType.ASCE,new Some(dasuId));
 		Identifier id = new Identifier(valId, IdentifierType.IASIO,new Some(asceId));
 		

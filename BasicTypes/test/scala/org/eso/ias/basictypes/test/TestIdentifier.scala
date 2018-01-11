@@ -26,8 +26,8 @@ class TestIdentifier extends FlatSpec {
   it must "forbid to instantiate a ID with a parent of the wrong type" in {
     val msId=new Identifier("monSysyId",IdentifierType.MONITORED_SOFTWARE_SYSTEM,None)
     
-    
-    val dasuId = new Identifier("dasuId",IdentifierType.DASU,None)
+    val supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR,None)
+    val dasuId = new Identifier("dasuId",IdentifierType.DASU,supervId)
     
     val plId=new Identifier("pluginId",IdentifierType.PLUGIN,Option(msId))
     val convId=new Identifier("converterId",IdentifierType.CONVERTER,Option(plId))

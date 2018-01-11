@@ -29,7 +29,8 @@ import org.eso.ias.prototype.input.java.IasValidity._
 class TestComponent extends FlatSpec {
   
   // The ID of the DASU where the components runs
-  val dasId = new Identifier("DAS-ID",IdentifierType.DASU,None)
+  val supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR,None)
+  val dasId = new Identifier("DAS-ID",IdentifierType.DASU,supervId)
   
   // The ID of the component to test
   val compId = new Identifier("ComponentId",IdentifierType.ASCE,Option[Identifier](dasId))
