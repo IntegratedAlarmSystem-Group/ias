@@ -80,7 +80,7 @@ abstract class Dasu(val dasuIdentifier: Identifier) extends InputsListener {
   /** The ID of the DASU */
   val id = dasuIdentifier.id
   
-  /** The inputs ofthe DASU */
+  /** The inputs of the DASU */
   def getInputs(): Set[String]
   
   /** 
@@ -103,6 +103,14 @@ abstract class Dasu(val dasuIdentifier: Identifier) extends InputsListener {
    * while the validity could change.
    */
   def enableAutoRefreshOfOutput()
+  
+  /**
+   * Updates the output with the inputs received
+   * 
+   * @param iasios the inputs received
+   * @see InputsListener
+   */
+  override def inputsReceived(iasios: Set[IASValue[_]])
   
   /**
    * Release all the resources before exiting
