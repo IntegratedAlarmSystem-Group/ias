@@ -80,6 +80,9 @@ abstract class Dasu(val dasuIdentifier: Identifier) extends InputsListener {
   /** The ID of the DASU */
   val id = dasuIdentifier.id
   
+  /** The topology of the ASCEs running in the DASU */
+  val dasuTopology: Topology
+  
   
   /**
    * Propagates the inputs received from the BSDB to each of the ASCEs
