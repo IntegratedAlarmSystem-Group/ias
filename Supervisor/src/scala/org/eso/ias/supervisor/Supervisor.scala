@@ -43,18 +43,26 @@ import java.util.concurrent.CountDownLatch
  *    they produce to the supervisor that, in turn, forward each of them to its own publisher.
  * 
  * The same interfaces, InputSubscriber and OutputPublisher, 
- * are used by DASUs and Supervisors in this way a DASu can be easily tested
+ * are used by DASUs and Supervisors in this way a DASU can be easily tested
  * directly connected to Kafka (for example) without the need to have
  * it running into a Supervisor.
  * 
- * @param id the identifier of the Supervisor
- * @param cdbReader the reader to get the configuration from the CDB
+ * DASUs are built by invoking the dasufactory passed in the constructor: 
+ * test can let the Supervisor run with their mockup implementation of a DASU.
+ * 
+ * @param supervisorIdentifier the identifier of the Supervisor
+ * @param outputPublisher the publisher to send the output
+ * @param inputSubscriber the subscriber getting events to be processed 
+ * @param cdbReader the CDB reader to get the configuration of the DASU from the CDB
+ * @param dasuFactory: factory to build DASU 
  */
+
 class Supervisor(
     val supervisorIdentifier: Identifier,
     private val outputPublisher: OutputPublisher,
     private val inputSubscriber: InputSubscriber,
-    cdbReader: CdbReader) 
+    cdbReader: CdbReader,
+    dasuFactory: (DasuDao, Identifier, OutputPublisher, InputSubscriber, CdbReader) => Dasu) 
     extends InputsListener with InputSubscriber with  OutputPublisher {
   require(Option(supervisorIdentifier).isDefined,"Invalid Supervisor identifier")
   require(Option(outputPublisher).isDefined,"Invalid output publisher")
@@ -101,7 +109,7 @@ class Supervisor(
   logger.info("{} DASUs to run in [{}]: {}",dasuDaos.size.toString(),id,dasuDaos.map(d => d.getId()).mkString(", "))
   
   // Build all the DASUs
-  val dasus: Map[String, Dasu] = dasuDaos.foldLeft(Map.empty[String,Dasu])((m, dasuDao) => m + (dasuDao.getId -> DasuImpl(dasuDao,supervisorIdentifier,this,this,cdbReader)))
+  val dasus: Map[String, Dasu] = dasuDaos.foldLeft(Map.empty[String,Dasu])((m, dasuDao) => m + (dasuDao.getId -> dasuFactory(dasuDao,supervisorIdentifier,this,this,cdbReader)))
   
   /**
    * The IDs of the DASUs instantiated in the Supervisor
@@ -148,10 +156,10 @@ class Supervisor(
    *         Failure otherwise 
    */
   def start(): Try[Unit] = {
+    dasus.values.foreach(dasu => dasu.enableAutoRefreshOfOutput())
+    
     val inputsOfSupervisor = dasus.values.foldLeft(Set.empty[String])( (s, dasu) => s ++ dasu.dasuTopology.dasuInputs)
     inputSubscriber.startSubscriber(this, inputsOfSupervisor)
-    
-    dasus.values.foreach(dasu => dasu.enableAutoRefreshOfOutput())
   }
 
   /**
@@ -283,8 +291,10 @@ object Supervisor {
     // The identifier of the supervisor
     val identifier = new Identifier(supervisorId, IdentifierType.SUPERVISOR, None)
     
+    val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber, cr: CdbReader) => DasuImpl(dd,i,op,id,cr)
+    
     // Build the supervisor
-    val supervisor = new Supervisor(identifier,outputPublisher,inputsProvider,reader)
+    val supervisor = new Supervisor(identifier,outputPublisher,inputsProvider,reader,factory)
     
     val started = supervisor.start()
     started match {
