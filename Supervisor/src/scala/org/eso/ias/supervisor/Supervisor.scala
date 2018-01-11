@@ -13,11 +13,26 @@ import scala.util.Success
 import scala.util.Try
 import org.eso.ias.prototype.input.java.IASValue
 import org.eso.ias.dasu.subscriber.InputsListener
+import org.eso.ias.dasu.Dasu
+import org.eso.ias.cdb.pojos.SupervisorDao
+import org.eso.ias.prototype.input.java.IasValueJsonSerializer
+import scala.util.Failure
+import java.util.concurrent.atomic.AtomicBoolean
+import org.eso.ias.prototype.input.Identifier
+import org.eso.ias.dasu.DasuImpl
+import org.eso.ias.dasu.publisher.KafkaPublisher
+import org.eso.ias.dasu.subscriber.KafkaSubscriber
+import org.eso.ias.prototype.input.java.IdentifierType
+import java.util.concurrent.CountDownLatch
 
 /**
  * A Supervisor is the container to run several DASUs into the same JVM.
  * 
- * The Supervisor gets IASIOs from a InputSubscriber and publisches
+ * The Supervisor blindly forward inputs to each DASU and sent the oupts to the BSDB 
+ * without adding any other heuristic: things like for updating validities when an input
+ * is not refreshed are not part of the Supervisor.
+ * 
+ * The Supervisor gets IASIOs from a InputSubscriber and publishes
  * IASValues to the BSDB by means of a OutputPublisher.
  * The Supervisor itself is the publisher and subscriber for the DASUs i.e.
  * the Supervisor acts as a bridge:
@@ -36,26 +51,157 @@ import org.eso.ias.dasu.subscriber.InputsListener
  * @param cdbReader the reader to get the configuration from the CDB
  */
 class Supervisor(
-    val id: String,
+    val supervisorIdentifier: Identifier,
     private val outputPublisher: OutputPublisher,
     private val inputSubscriber: InputSubscriber,
-    cdbReader: CdbReader) extends InputSubscriber with OutputPublisher {
-  require(Option(id).isDefined && !id.isEmpty,"Invalid Supervisor identifier")
+    cdbReader: CdbReader) 
+    extends InputsListener with InputSubscriber with  OutputPublisher {
+  require(Option(supervisorIdentifier).isDefined,"Invalid Supervisor identifier")
   require(Option(outputPublisher).isDefined,"Invalid output publisher")
   require(Option(inputSubscriber).isDefined,"Invalid input subscriber")
+  require(Option(cdbReader).isDefined,"Invalid CDB reader")
+  
+  /** The ID of the Supervisor */
+  val id = supervisorIdentifier.id
   
   /** The logger */
   val logger = IASLogger.getLogger(Supervisor.getClass)
-  logger.info("Building Supervisor [{}]",id)
+  
+  logger.info("Building Supervisor [{}] with fullRunningId [{}]",id,supervisorIdentifier.fullRunningID)
+  
+  
+  // Initialize the consumer and exit in case of error 
+  val inputSubscriberInitialized = inputSubscriber.initializeSubscriber()
+  inputSubscriberInitialized match {
+    case Failure(f) => logger.error("Supervisor [{}] failed to initialize the consumer", id,f);
+                       System.exit(-1)
+    case Success(s) => logger.info("Supervisor [{}] subscriber successfully initialized",id)
+  }
+  
+  // Initialize the producer and exit in case of error 
+  val outputProducerInitialized = outputPublisher.initializePublisher()
+  outputProducerInitialized match {
+    case Failure(f) => logger.error("Supervisor [{}] failed to initialize the producer", id,f);
+                       System.exit(-2)
+    case Success(s) => logger.info("Supervisor [{}] subscriber successfully initialized",id)
+  }
+  
+  // Get the configuration of the supervisor from the CDB
+  val supervDao : SupervisorDao = {
+    val supervDaoOpt = cdbReader.getSupervisor(id)
+    require(supervDaoOpt.isPresent(),"Supervisor ["+id+"] configuration not found on cdb")
+    supervDaoOpt.get
+  }
   
   /**
-   * The DASUs to run in the Supervisor
+   * Gets the definitions of the DASUs to run in the Supervisor from the CDB
    */
-  val dasus = JavaConverters.asScalaSet(cdbReader.getDasusForSupervisor(id))
-  require(dasus.size>0,"No DASUs to run in Supervisor "+id)
-  logger.info("{} DASUs to run in [{}]: {}",dasus.size.toString(),id,dasus.map(d => d.getId()).mkString(", "))
+  val dasuDaos: Set[DasuDao] = JavaConverters.asScalaSet(cdbReader.getDasusForSupervisor(id)).toSet
+  require(dasuDaos.size>0,"No DASUs to run in Supervisor "+id)
+  logger.info("{} DASUs to run in [{}]: {}",dasuDaos.size.toString(),id,dasuDaos.map(d => d.getId()).mkString(", "))
   
-  // Get the list of DASus to activate from CDB
+  // Build all the DASUs
+  val dasus: Map[String, Dasu] = dasuDaos.foldLeft(Map.empty[String,Dasu])((m, dasuDao) => m + (dasuDao.getId -> DasuImpl(dasuDao,supervisorIdentifier,this,this,cdbReader)))
+  
+  /**
+   * The IDs of the DASUs instantiated in the Supervisor
+   */
+  val dasuIds = dasuDaos.map(_.getId)
+  
+  // TODO: close the cdbReader and free the resources (@see Issue #25)
+  
+  /**
+   * Associate each DASU with the Set of inputs it needs.
+   * 
+   * the key is the ID of the DASU, the value is 
+   * the set of inputs to send to the DASU
+   */
+  val iasiosToDasusMap: Map[String, Set[String]] = startDasus()
+  
+  val cleanedUp = new AtomicBoolean(false) // Avoid cleaning up twice
+  val shutDownThread=addsShutDownHook()
+  
+  logger.info("Supervisor [{}] built",id)
+  
+  /**
+   * Start each DASU and gets the list of inputs it needs to forward to the ASCEs
+   * 
+   * Invoking start to a DASU triggers the initialization of its input subscriber
+   * that it is implemented by this Supervisor so, ultimately, 
+   * each DASU calls Supervisor#startSubscriber.
+   * This method, calls Dasu#start() just to be and independent of the
+   * implementation of Dasu#start() itself.
+   */
+  private def startDasus(): Map[String, Set[String]] = {
+    dasus.values.foreach(_.start())
+    
+    val fun = (m: Map[String, Set[String]], d: Dasu) => m + (d.id -> d.dasuTopology.dasuInputs)
+    dasus.values.foldLeft(Map.empty[String, Set[String]])(fun)
+  }
+  
+  /**
+   * Start the loop:
+   * - get events from the BSDB
+   * - forward events to the DASUs
+   * 
+   * @return Success if the there were no errors starting the supervisor, 
+   *         Failure otherwise 
+   */
+  def start(): Try[Unit] = {
+    val inputsOfSupervisor = dasus.values.foldLeft(Set.empty[String])( (s, dasu) => s ++ dasu.dasuTopology.dasuInputs)
+    inputSubscriber.startSubscriber(this, inputsOfSupervisor)
+    
+    // TODO: activate auto refresh of output in the DASUs
+  }
+  
+  /**
+   * Release all the resources
+   */
+  def cleanUp() = synchronized {
+    
+    val alreadyCleaned = cleanedUp.getAndSet(true)
+    if (!alreadyCleaned) {
+      logger.info("Cleaning up supervisor [{}]",id)
+      
+      logger.debug("Supervisor [{}]: removing the shutdown hook", id)
+    Runtime.getRuntime().removeShutdownHook(shutDownThread)
+    
+    logger.debug("Releasing DASUs running in the supervisor [{}]",id)
+    dasus.values.foreach(_.cleanUp)
+    
+    logger.debug("Supervisor [{}]: releasing the subscriber", id)
+    Try(inputSubscriber.cleanUpSubscriber())
+    logger.debug("Supervisor [{}]: releasing the publisher", id)
+    Try(outputPublisher.cleanUpPublisher())
+    logger.info("Supervisor [{}]: cleaned up",id)
+    }
+  }
+  
+    /** Adds a shutdown hook to cleanup resources before exiting */
+  private def addsShutDownHook(): Thread = {
+    val t = new Thread() {
+        override def run() = {
+          cleanUp()
+        }
+    }
+    Runtime.getRuntime().addShutdownHook(t)
+    t
+  }
+  
+  /** 
+   *  Notify the DASUs of new inputs received from the consumer
+   *  
+   *  @param iasios the inputs received
+   */
+  def inputsReceived(iasios: Set[IASValue[_]]) {
+    dasus.values.foreach(dasu => {
+      val iasiosToSend = iasios.filter(iasio => iasiosToDasusMap(dasu.id).contains(iasio.id))
+      if (!iasiosToSend.isEmpty) {
+        dasu.inputsReceived(iasiosToSend)
+      }
+    })
+  }
+  
   // Activate the DASUs and get the list of IASIOs the want to receive
   // Connect to the input kafka topic passing the IDs of the IASIOs
   
@@ -124,14 +270,33 @@ class Supervisor(
 }
 
 object Supervisor {
-  
-  
-  
+
+  /** 
+   *  Application: run a Supervisor with the passed ID and 
+   *  kafka producer and consumer.
+   *  
+   *  Kill to terminate.
+   */
   def main(args: Array[String]) = {
     require(!args.isEmpty,"Missing identifier in command line")
     val supervisorId = args(0)
     
     val cdbFiles: CdbFiles = new CdbJsonFiles("../test")
     val reader: CdbReader = new JsonReader(cdbFiles)
+    
+    val outputPublisher: OutputPublisher = KafkaPublisher(supervisorId,System.getProperties)
+    val inputsProvider: InputSubscriber = new KafkaSubscriber(supervisorId,System.getProperties)
+    
+    // The identifier of the supervisor
+    val identifier = new Identifier(supervisorId, IdentifierType.SUPERVISOR, None)
+    
+    // Build the supervisor
+    val supervisor = new Supervisor(identifier,outputPublisher,inputsProvider,reader)
+    
+    val started = supervisor.start()
+    started match {
+      case Success(_) => val latch = new CountDownLatch(1); latch.await();
+      case Failure(ex) => System.err.println("Error starting the supervisor: "+ex.getMessage)
+    }
   }
 }
