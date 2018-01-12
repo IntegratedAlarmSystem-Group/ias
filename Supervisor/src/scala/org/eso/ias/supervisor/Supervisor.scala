@@ -129,6 +129,9 @@ class Supervisor(
   val cleanedUp = new AtomicBoolean(false) // Avoid cleaning up twice
   val shutDownThread=addsShutDownHook()
   
+  /** Flag to know if the Supervisor has been started */
+  val started = new AtomicBoolean(false)
+  
   logger.info("Supervisor [{}] built",id)
   
   /**
@@ -143,7 +146,7 @@ class Supervisor(
   private def startDasus(): Map[String, Set[String]] = {
     dasus.values.foreach(_.start())
     
-    val fun = (m: Map[String, Set[String]], d: Dasu) => m + (d.id -> d.dasuTopology.dasuInputs)
+    val fun = (m: Map[String, Set[String]], d: Dasu) => m + (d.id -> d.getInputs())
     dasus.values.foldLeft(Map.empty[String, Set[String]])(fun)
   }
   
@@ -156,10 +159,16 @@ class Supervisor(
    *         Failure otherwise 
    */
   def start(): Try[Unit] = {
-    dasus.values.foreach(dasu => dasu.enableAutoRefreshOfOutput())
-    
-    val inputsOfSupervisor = dasus.values.foldLeft(Set.empty[String])( (s, dasu) => s ++ dasu.dasuTopology.dasuInputs)
-    inputSubscriber.startSubscriber(this, inputsOfSupervisor)
+    val alreadyStarted = started.getAndSet(true) 
+    if (!alreadyStarted) {
+      logger.info("Starting Supervisor [{}]",id)
+      dasus.values.foreach(dasu => dasu.enableAutoRefreshOfOutput())
+      val inputsOfSupervisor = dasus.values.foldLeft(Set.empty[String])( (s, dasu) => s ++ dasu.getInputs())
+      inputSubscriber.startSubscriber(this, inputsOfSupervisor)
+    } else {
+      logger.warn("Supervisor [{}] already started",id)
+      new Failure(new Exception("Supervisor already started"))
+    }
   }
 
   /**
@@ -170,9 +179,6 @@ class Supervisor(
     val alreadyCleaned = cleanedUp.getAndSet(true)
     if (!alreadyCleaned) {
       logger.info("Cleaning up supervisor [{}]", id)
-
-      logger.debug("Supervisor [{}]: removing the shutdown hook", id)
-      Runtime.getRuntime().removeShutdownHook(shutDownThread)
 
       logger.debug("Releasing DASUs running in the supervisor [{}]", id)
       dasus.values.foreach(_.cleanUp)
@@ -202,6 +208,9 @@ class Supervisor(
    *  @param iasios the inputs received
    */
   def inputsReceived(iasios: Set[IASValue[_]]) {
+    
+    val receivedIds = iasios.map(i => i.id)
+    
     dasus.values.foreach(dasu => {
       val iasiosToSend = iasios.filter(iasio => iasiosToDasusMap(dasu.id).contains(iasio.id))
       if (!iasiosToSend.isEmpty) {
