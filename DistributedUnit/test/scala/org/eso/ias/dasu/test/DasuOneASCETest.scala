@@ -25,6 +25,7 @@ import scala.util.Try
 import scala.collection.mutable.{HashSet => MutableSet}
 import org.eso.ias.prototype.input.java.IasValidity._
 import org.eso.ias.dasu.DasuImpl
+import org.eso.ias.dasu.publisher.DirectInputSubscriber
 
 /**
  * Test the DASU with one ASCE and the MinMaxThreshold TF.

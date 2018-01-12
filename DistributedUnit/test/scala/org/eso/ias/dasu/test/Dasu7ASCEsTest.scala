@@ -28,6 +28,7 @@ import org.eso.ias.prototype.input.java.IasAlarm
 import org.eso.ias.prototype.input.java.AlarmSample
 import org.eso.ias.prototype.input.java.IasValidity._
 import org.eso.ias.dasu.DasuImpl
+import org.eso.ias.dasu.publisher.DirectInputSubscriber
 
 /**
  * Test the DASU with 7 ASCEs (in 3 levels).

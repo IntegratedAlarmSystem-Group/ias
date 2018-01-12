@@ -21,6 +21,7 @@ import org.eso.ias.prototype.input.java.OperationalMode._
 import org.eso.ias.prototype.input.java.AlarmSample
 import org.eso.ias.prototype.input.java.IasValidity._
 import org.eso.ias.dasu.DasuImpl
+import org.eso.ias.dasu.publisher.DirectInputSubscriber
 
 /** 
  *  Test the writing of the output of the DASU

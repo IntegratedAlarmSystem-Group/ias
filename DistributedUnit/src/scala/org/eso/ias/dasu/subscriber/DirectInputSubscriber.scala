@@ -1,4 +1,4 @@
-package org.eso.ias.dasu.test
+package org.eso.ias.dasu.publisher
 
 import org.eso.ias.dasu.subscriber.InputSubscriber
 import scala.collection.mutable.{HashSet => MutableSet}
