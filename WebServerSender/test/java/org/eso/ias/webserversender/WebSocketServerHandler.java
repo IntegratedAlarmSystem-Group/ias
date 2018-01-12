@@ -46,7 +46,7 @@ public class WebSocketServerHandler extends WebSocketHandler {
     public void onConnect(Session session) {
         System.out.println("Connect: " + session.getRemoteAddress().getAddress());
         try {
-            session.getRemote().sendString("Hello Webbrowser");
+            session.getRemote().sendString("Hello");
         } catch (IOException e) {
             e.printStackTrace();
         }

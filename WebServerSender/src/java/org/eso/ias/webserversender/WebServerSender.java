@@ -1,23 +1,27 @@
 package org.eso.ias.webserversender;
 
 import java.net.URI;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.eso.ias.kafkautils.KafkaHelper;
-import org.eso.ias.kafkautils.SimpleStringConsumer;
-import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener;
+import org.eso.ias.kafkautils.KafkaIasiosConsumer;
+import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener;
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
+import org.eso.ias.prototype.input.java.IasValueJsonSerializer;
+import org.eso.ias.prototype.input.java.IASValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @WebSocket(maxTextMessageSize = 64 * 1024)
-public class WebServerSender implements KafkaConsumerListener, Runnable {
+public class WebServerSender implements IasioListener, Runnable {
 
 	/**
 	 * Identifier
@@ -32,7 +36,7 @@ public class WebServerSender implements KafkaConsumerListener, Runnable {
 	/**
 	 * IAS Core Kafka Consumer to get messages from the Core
 	 */
-	SimpleStringConsumer consumer;
+	KafkaIasiosConsumer consumer;
 	
 	/**
 	 * Web socket client
@@ -45,25 +49,45 @@ public class WebServerSender implements KafkaConsumerListener, Runnable {
 	String kafkaTopic;
 
 	/**
-	 * Web Server URI
+	 * Web Server URI as String
 	 */
 	String webserverUri;
-
+	
+	/**
+	 * Same as the webserverUri but as a URI object 
+	 */
 	URI uri;
-
-	ClientUpgradeRequest request = new ClientUpgradeRequest();
+	
+	/**
+	 * The serializer/deserializer to convert the string
+	 * received by the BSDB in a IASValue
+	*/
+	private final IasValueJsonSerializer serializer = new IasValueJsonSerializer();
 
 	/**
 	 * The logger
 	 */
 	private static final Logger logger = LoggerFactory.getLogger(WebServerSender.class);
 	
+	/**
+	 * The interface of the listener to be notified of Strings received
+	 * by the WebServer sender.
+	 */
 	public interface WebServerSenderListener {
 		
 		public void stringEventSent(String event);
 	}
-
+	
+	/**
+	 * The listener to be notified of Strings received
+	 * by the WebServer sender.
+	 */
 	WebServerSenderListener listener;
+	
+	/**
+	 * Count down to wait until the connection is established
+	 */
+	private CountDownLatch connectionReady;
 	
 	/**
 	 * Constructor
@@ -72,13 +96,14 @@ public class WebServerSender implements KafkaConsumerListener, Runnable {
 	 * @param kafkaTopic Topic defined to send messages to the IAS Core to the IAS Web Server
 	 * TODO: Add servers to the arguments instead of use the default ones
 	 * @param webserverUri 
+	 * @param listener The listener of the messages received by the server
 	 */
 	public WebServerSender(String id, String kafkaTopic, String webserverUri, WebServerSenderListener listener) {
     	this.id = id;
     	this.kafkaTopic = kafkaTopic;
 		this.webserverUri = webserverUri;
 		this.listener = listener;
-		this.consumer = new SimpleStringConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, kafkaTopic, this.id);
+		this.consumer = new KafkaIasiosConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, kafkaTopic, this.id);
 	}
 
 	/**
@@ -92,7 +117,6 @@ public class WebServerSender implements KafkaConsumerListener, Runnable {
 	   logger.info("WebSocket connection closed:" + statusCode + ", " + reason);
 	   this.session = null;
 	   this.consumer.tearDown();
-	   //System.exit(0); // TODO: Add WebServer reconnection
 	}
 
 	/**
@@ -104,6 +128,7 @@ public class WebServerSender implements KafkaConsumerListener, Runnable {
 	public void onConnect(Session session) {
 	   logger.info("WebSocket got connect: %s%n",session);
 	   this.session = session;
+	   this.connectionReady.countDown();
 	   try {
 	       this.consumer.setUp();
 	       this.consumer.startGettingEvents(StartPosition.END, this);
@@ -113,6 +138,11 @@ public class WebServerSender implements KafkaConsumerListener, Runnable {
 	       logger.error("WebSocket couldn't send the message",t);
 	   }
 	}
+	
+	@OnWebSocketMessage
+    public void onMessage(String message) {
+		notifyListener(message);
+    }
 
 	/**
 	 * This method could get notifications for messages
@@ -124,10 +154,11 @@ public class WebServerSender implements KafkaConsumerListener, Runnable {
 	 * @see org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener#stringEventReceived(java.lang.String)
 	 */
 	@Override
-	public synchronized void stringEventReceived(String event) {
+	public synchronized void iasioReceived(IASValue<?> event) {
 		try {
-			this.session.getRemote().sendStringByFuture( event );
-			this.notifyListener(event);
+			String value = serializer.iasValueToString(event);
+			this.session.getRemote().sendStringByFuture(value);
+			this.notifyListener(value);
 		}
 		catch (Exception e){
 			logger.error("Cannot send messages to the Web Server", e);
@@ -139,11 +170,13 @@ public class WebServerSender implements KafkaConsumerListener, Runnable {
 	 */
 	public void run() {
 		try {
+			this.connectionReady = new CountDownLatch(1);
 			this.uri = new URI(this.webserverUri);
 			this.client.start();
-			this.client.connect(this, this.uri, this.request);
-			while(this.session==null) {
-				TimeUnit.MILLISECONDS.sleep(100);
+			this.client.connect(this, this.uri, new ClientUpgradeRequest());
+			if(!this.connectionReady.await(1, TimeUnit.MINUTES)) {
+				logger.error("WebSocketSender cannot establish the connection with the server.");
+				System.exit(1); 
 			}
 			logger.debug("Connection started!");
 		}
