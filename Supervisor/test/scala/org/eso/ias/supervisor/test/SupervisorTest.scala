@@ -18,168 +18,230 @@ import java.nio.file.FileSystems
 import org.eso.ias.prototype.input.java.OperationalMode
 import org.eso.ias.prototype.input.java.IasValidity
 import org.eso.ias.prototype.input.java.IASTypes
+import scala.collection.mutable.ArrayBuffer
 
-class SupervisorTest extends FlatSpec with OutputListener {
-  
+// The following import is required by the usage of the fixture
+import language.reflectiveCalls
+
+class SupervisorTest extends FlatSpec {
+
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass);
-  
-  val stringSerializer = Option(new IasValueJsonSerializer)  
-  val outputPublisher: OutputPublisher = new ListenerOutputPublisherImpl(this,stringSerializer)
-  
-  val inputsProvider = new DirectInputSubscriber()
-  
-  // Build the CDB reader
-  val cdbParentPath =  FileSystems.getDefault().getPath(".");
-  val cdbFiles = new CdbJsonFiles(cdbParentPath)
-  val cdbReader: CdbReader = new JsonReader(cdbFiles)
-  
-  val supervIdentifier = new Identifier("SupervisorID",IdentifierType.SUPERVISOR,None)
-  
-  /**
-   * @see OutputListener
-   */
-  def outputStringifiedEvent(outputStr: String) {}
-  
-  /**
-   * @see OutputListener
-   */
-  def outputEvent(output: IASValue[_]) {}
-  
+
+  /** Fixture to build same type of objects for the tests */
+  def fixture =
+    new {
+
+      val stringSerializer = Option(new IasValueJsonSerializer)
+
+      /**
+       * Events i.e. outputs received
+       */
+      val outputEventsreceived = new ArrayBuffer[IASValue[_]]
+
+      /**
+       * Stringified outputs received
+       */
+      val stringEventsreceived = new ArrayBuffer[String]
+
+      val outputListener = new OutputListener {
+        /**
+         * @see OutputListener
+         */
+        def outputStringifiedEvent(outputStr: String) {
+          stringEventsreceived.append(outputStr)
+        }
+
+        /**
+         * @see OutputListener
+         */
+        def outputEvent(output: IASValue[_]) {
+          outputEventsreceived.append(output)
+        }
+      }
+
+      val outputPublisher: OutputPublisher = new ListenerOutputPublisherImpl(outputListener, stringSerializer)
+
+      val inputsProvider = new DirectInputSubscriber()
+
+      // Build the CDB reader
+      val cdbParentPath = FileSystems.getDefault().getPath(".");
+      val cdbFiles = new CdbJsonFiles(cdbParentPath)
+      val cdbReader: CdbReader = new JsonReader(cdbFiles)
+
+      val supervIdentifier = new Identifier("SupervisorID", IdentifierType.SUPERVISOR, None)
+
+      /** The supervisor to test */
+      val supervisor = new Supervisor(
+        supervIdentifier,
+        outputPublisher,
+        inputsProvider,
+        cdbReader,
+        DasuMock.apply)
+
+    }
+
   behavior of "The Supervisor"
-  
+
   it must "instantiate the DASUs defined in the CDB" in {
-    val supervisor = new Supervisor(
-        supervIdentifier,
-        outputPublisher,
-        inputsProvider,
-        cdbReader,
-        DasuMock.apply
-        )
+    val f = fixture
     // There are 3 DASUs
-    assert(supervisor.dasuIds.size==3)
-    assert(supervisor.dasuIds.forall(id => id=="Dasu1" || id=="Dasu2" || id=="Dasu3"))
+    assert(f.supervisor.dasuIds.size == 3)
+    assert(f.supervisor.dasuIds.forall(id => id == "Dasu1" || id == "Dasu2" || id == "Dasu3"))
   }
-  
+
   it must "properly associate inputs to DASUs" in {
-    val supervisor = new Supervisor(
-        supervIdentifier,
-        outputPublisher,
-        inputsProvider,
-        cdbReader,
-        DasuMock.apply
-        )
-    val inputsToDasu1 = supervisor.iasiosToDasusMap("Dasu1")
-    assert(inputsToDasu1.size==5*10) // 5 inputs for each ASCE running in the DASU
+    val f = fixture
+    val inputsToDasu1 = f.supervisor.iasiosToDasusMap("Dasu1")
+    assert(inputsToDasu1.size == 5 * 10) // 5 inputs for each ASCE running in the DASU
     assert(inputsToDasu1.forall(id => id.contains("Dasu1")))
-    
-    val inputsToDasu2 = supervisor.iasiosToDasusMap("Dasu2")
-    assert(inputsToDasu2.size==5*15) // 5 inputs for each ASCE running in the DASU
+
+    val inputsToDasu2 = f.supervisor.iasiosToDasusMap("Dasu2")
+    assert(inputsToDasu2.size == 5 * 15) // 5 inputs for each ASCE running in the DASU
     assert(inputsToDasu2.forall(id => id.contains("Dasu2")))
-    
-    val inputsToDasu3 = supervisor.iasiosToDasusMap("Dasu3")
-    assert(inputsToDasu3.size==5*8) // 5 inputs for each ASCE running in the DASU
+
+    val inputsToDasu3 = f.supervisor.iasiosToDasusMap("Dasu3")
+    assert(inputsToDasu3.size == 5 * 8) // 5 inputs for each ASCE running in the DASU
     assert(inputsToDasu3.forall(id => id.contains("Dasu3")))
   }
-  
+
   it must "start each DASU" in {
-    val supervisor = new Supervisor(
-        supervIdentifier,
-        outputPublisher,
-        inputsProvider,
-        cdbReader,
-        DasuMock.apply
-        )
-    assert(supervisor.start().isSuccess)
-    
-    val dasus = supervisor.dasus.values
-    dasus.foreach(d => assert(d.asInstanceOf[DasuMock].numOfStarts.get()==1) )
-    
-    supervisor.cleanUp()
+    val f = fixture
+    assert(f.supervisor.start().isSuccess)
+
+    val dasus = f.supervisor.dasus.values
+    dasus.foreach(d => assert(d.asInstanceOf[DasuMock].numOfStarts.get() == 1))
+
+    f.supervisor.cleanUp()
   }
-  
+
   it must "clean up each DASU" in {
-    val supervisor = new Supervisor(
-        supervIdentifier,
-        outputPublisher,
-        inputsProvider,
-        cdbReader,
-        DasuMock.apply
-        )
-    assert(supervisor.start().isSuccess)
-    
-    supervisor.cleanUp()
-    
-    val dasus = supervisor.dasus.values
-    dasus.foreach(d => assert(d.asInstanceOf[DasuMock].numOfCleanUps.get()==1) )
+    val f = fixture
+    assert(f.supervisor.start().isSuccess)
+
+    f.supervisor.cleanUp()
+
+    val dasus = f.supervisor.dasus.values
+    dasus.foreach(d => assert(d.asInstanceOf[DasuMock].numOfCleanUps.get() == 1))
   }
-  
+
   it must "activate the auto refresh of the output of each DASU" in {
-    val supervisor = new Supervisor(
-        supervIdentifier,
-        outputPublisher,
-        inputsProvider,
-        cdbReader,
-        DasuMock.apply
-        )
-    assert(supervisor.start().isSuccess)
-    
-    val dasus = supervisor.dasus.values
-    dasus.foreach(d => assert(d.asInstanceOf[DasuMock].numOfEnableAutorefresh.get()==1) )
-    
-    supervisor.cleanUp()
+    val f = fixture
+    assert(f.supervisor.start().isSuccess)
+
+    val dasus = f.supervisor.dasus.values
+    dasus.foreach(d => assert(d.asInstanceOf[DasuMock].numOfEnableAutorefresh.get() == 1))
+
+    f.supervisor.cleanUp()
   }
-  
+
   it must "properly forward IASIOs do DASUs" in {
-    val supervisor = new Supervisor(
-        supervIdentifier,
-        outputPublisher,
-        inputsProvider,
-        cdbReader,
-        DasuMock.apply
-        )
-    
-    // DASU should receive the following IASIOs
+    val f = fixture
+    assert(f.supervisor.start().isSuccess)
+
+    // NO DASU should receive the following IASIOs
     val Sup2Id = new Identifier("AnotherSupervID", IdentifierType.SUPERVISOR, None)
     val DasuId = new Identifier("DASU-Id", IdentifierType.DASU, Sup2Id)
     val AsceId = new Identifier("ASCE-Id", IdentifierType.ASCE, DasuId)
-    val iasiosToSend = for (i <-1 to 20) yield {
-      val iasValueId = new Identifier("IASIO-Id"+i, IdentifierType.IASIO, AsceId)
+    val iasiosToSend = for (i <- 1 to 20) yield {
+      val iasValueId = new Identifier("IASIO-Id" + i, IdentifierType.IASIO, AsceId)
       IASValue.buildIasValue(
-          10L, System.currentTimeMillis(), 
-          OperationalMode.OPERATIONAL, 
-          IasValidity.RELIABLE, 
-          iasValueId.fullRunningID, 
-          IASTypes.LONG)
+        10L, System.currentTimeMillis(),
+        OperationalMode.OPERATIONAL,
+        IasValidity.RELIABLE,
+        iasValueId.fullRunningID,
+        IASTypes.LONG)
     }
-    inputsProvider.sendInputs(iasiosToSend.toSet)
-    val dasus = supervisor.dasus.values
-    dasus.foreach(d => assert(d.asInstanceOf[DasuMock].inputsReceivedFromSuperv.isEmpty) )
-    
+    assert(iasiosToSend.toSet.size == 20)
+
+    logger.info(
+      "Sending {} inputs to the supervisor: {}",
+      iasiosToSend.size.toString(),
+      iasiosToSend.map(i => i.id).mkString(", "))
+
+    f.inputsProvider.sendInputs(iasiosToSend.toSet)
+    val dasus = f.supervisor.dasus.values
+    dasus.foreach(d => assert(d.asInstanceOf[DasuMock].inputsReceivedFromSuperv.isEmpty))
+
     // Only DASU2 should receive the followings
     //
-    // The format of the input iof this DASU is ASCEXOnDasu2-IDY-In
+    // The format of the input of this DASU is ASCEXOnDasu2-IDY-In
     val iasioForDasu2 = for {
-      i <-1 to 15
+      i <- 1 to 15
       x <- 1 to 5
-      id = "ASCE"+i+"OnDasu2-ID"+ x+"-In"
-      } yield {
-        val iasValueId = new Identifier(id, IdentifierType.IASIO, AsceId)
-        IASValue.buildIasValue(
-          10L, System.currentTimeMillis(), 
-          OperationalMode.OPERATIONAL, 
-          IasValidity.RELIABLE, 
-          iasValueId.fullRunningID, 
-          IASTypes.LONG)
+      id = "ASCE" + i + "OnDasu2-ID" + x + "-In"
+    } yield {
+      val iasValueId = new Identifier(id, IdentifierType.IASIO, AsceId)
+      IASValue.buildIasValue(
+        10L, System.currentTimeMillis(),
+        OperationalMode.OPERATIONAL,
+        IasValidity.RELIABLE,
+        iasValueId.fullRunningID,
+        IASTypes.LONG)
+    }
+
+    val iasioForDasu2Set = iasioForDasu2.toSet
+    val ids = iasioForDasu2Set.map(i => i.id)
+
+    logger.info("Sending {} iasios {}", ids.size.toString, ids.mkString(", "))
+    f.inputsProvider.sendInputs(iasioForDasu2Set)
+    assert(f.supervisor.dasus("Dasu1").asInstanceOf[DasuMock].inputsReceivedFromSuperv.isEmpty)
+    assert(f.supervisor.dasus("Dasu2").asInstanceOf[DasuMock].inputsReceivedFromSuperv.size == 15 * 5)
+    assert(f.supervisor.dasus("Dasu3").asInstanceOf[DasuMock].inputsReceivedFromSuperv.isEmpty)
+  }
+  
+  // Sends some input to DASU1 and DASU3 and check if the
+  // supervisor published their output (bit no output must be
+  // produced by DASU2)
+  it must "publish the output" in {
+    
+    val f = fixture
+    assert(f.supervisor.start().isSuccess)
+    
+    val Sup2Id = new Identifier("AnotherSupervID", IdentifierType.SUPERVISOR, None)
+    val DasuId = new Identifier("DASU-Id", IdentifierType.DASU, Sup2Id)
+    val AsceId = new Identifier("ASCE-Id", IdentifierType.ASCE, DasuId)
+    
+    // Few IASIOs for DASU1
+    //
+    // The format of the input of this DASU is ASCEXOnDasu1-IDY-In
+    val iasioForDasu1 = for {
+      i <- 1 to 8 // ASCEs
+      x <- 1 to 3
+      id = "ASCE" + i + "OnDasu1-ID" + x + "-In"
+    } yield {
+      val iasValueId = new Identifier(id, IdentifierType.IASIO, AsceId)
+      IASValue.buildIasValue(
+        10L, System.currentTimeMillis(),
+        OperationalMode.OPERATIONAL,
+        IasValidity.RELIABLE,
+        iasValueId.fullRunningID,
+        IASTypes.LONG)
     }
     
-    val iasioForDasu2Set = iasioForDasu2.toSet
-    val ids = iasioForDasu2Set.map(i =>i.id)
-     
-    logger.info("Sending: {}",ids.mkString(", "))
-    inputsProvider.sendInputs(iasioForDasu2Set)
-    assert(supervisor.dasus("Dasu1").asInstanceOf[DasuMock].inputsReceivedFromSuperv.isEmpty) 
-    assert(supervisor.dasus("Dasu2").asInstanceOf[DasuMock].inputsReceivedFromSuperv.size==15*5)
-    assert(supervisor.dasus("Dasu3").asInstanceOf[DasuMock].inputsReceivedFromSuperv.isEmpty)
+    // And for DASU3
+    val iasioForDasu3 = for {
+      i <- 1 to 5 // ASCEs
+      x <- 1 to 4
+      id = "ASCE" + i + "OnDasu3-ID" + x + "-In"
+    } yield {
+      val iasValueId = new Identifier(id, IdentifierType.IASIO, AsceId)
+      IASValue.buildIasValue(
+        10L, System.currentTimeMillis(),
+        OperationalMode.OPERATIONAL,
+        IasValidity.RELIABLE,
+        iasValueId.fullRunningID,
+        IASTypes.LONG)
+    }
+
+    val iasioForDasusSet = iasioForDasu1.toSet ++ iasioForDasu3.toSet
+    val ids = iasioForDasusSet.map(i => i.id)
+
+    logger.info("Sending {} iasios {}", ids.size.toString, ids.mkString(", "))
+    f.inputsProvider.sendInputs(iasioForDasusSet)
+    
+    assert(f.outputEventsreceived.size==2)
+    assert(f.stringEventsreceived.size==2)
+    assert(f.stringEventsreceived.forall(s => s.contains("Dasu1")||s.contains("Dasu3")))
   }
 }

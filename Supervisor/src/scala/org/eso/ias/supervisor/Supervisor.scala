@@ -77,6 +77,20 @@ class Supervisor(
   
   logger.info("Building Supervisor [{}] with fullRunningId [{}]",id,supervisorIdentifier.fullRunningID)
   
+  // Get the configuration of the supervisor from the CDB
+  val supervDao : SupervisorDao = {
+    val supervDaoOpt = cdbReader.getSupervisor(id)
+    require(supervDaoOpt.isPresent(),"Supervisor ["+id+"] configuration not found on cdb")
+    supervDaoOpt.get
+  }
+  logger.info("Supervisor [{}] configuration retrived from CDB",id)
+  
+  /**
+   * Gets the definitions of the DASUs to run in the Supervisor from the CDB
+   */
+  val dasuDaos: Set[DasuDao] = JavaConverters.asScalaSet(cdbReader.getDasusForSupervisor(id)).toSet
+  require(dasuDaos.size>0,"No DASUs to run in Supervisor "+id)
+  logger.info("Supervisor [{}], {} DASUs to run: {}",id,dasuDaos.size.toString(),dasuDaos.map(d => d.getId()).mkString(", "))
   
   // Initialize the consumer and exit in case of error 
   val inputSubscriberInitialized = inputSubscriber.initializeSubscriber()
@@ -91,22 +105,8 @@ class Supervisor(
   outputProducerInitialized match {
     case Failure(f) => logger.error("Supervisor [{}] failed to initialize the producer", id,f);
                        System.exit(-2)
-    case Success(s) => logger.info("Supervisor [{}] subscriber successfully initialized",id)
+    case Success(s) => logger.info("Supervisor [{}] producer successfully initialized",id)
   }
-  
-  // Get the configuration of the supervisor from the CDB
-  val supervDao : SupervisorDao = {
-    val supervDaoOpt = cdbReader.getSupervisor(id)
-    require(supervDaoOpt.isPresent(),"Supervisor ["+id+"] configuration not found on cdb")
-    supervDaoOpt.get
-  }
-  
-  /**
-   * Gets the definitions of the DASUs to run in the Supervisor from the CDB
-   */
-  val dasuDaos: Set[DasuDao] = JavaConverters.asScalaSet(cdbReader.getDasusForSupervisor(id)).toSet
-  require(dasuDaos.size>0,"No DASUs to run in Supervisor "+id)
-  logger.info("{} DASUs to run in [{}]: {}",dasuDaos.size.toString(),id,dasuDaos.map(d => d.getId()).mkString(", "))
   
   // Build all the DASUs
   val dasus: Map[String, Dasu] = dasuDaos.foldLeft(Map.empty[String,Dasu])((m, dasuDao) => m + (dasuDao.getId -> dasuFactory(dasuDao,supervisorIdentifier,this,this,cdbReader)))
@@ -115,6 +115,7 @@ class Supervisor(
    * The IDs of the DASUs instantiated in the Supervisor
    */
   val dasuIds = dasuDaos.map(_.getId)
+  logger.info("Supervisor [{}] built {} DASUs: {}",id, dasus.size.toString(),dasuIds.mkString(", "))
   
   // TODO: close the cdbReader and free the resources (@see Issue #25)
   
@@ -125,6 +126,7 @@ class Supervisor(
    * the set of inputs to send to the DASU
    */
   val iasiosToDasusMap: Map[String, Set[String]] = startDasus()
+  logger.info("Supervisor [{}] associated IASIOs IDs to DASUs", id)
   
   val cleanedUp = new AtomicBoolean(false) // Avoid cleaning up twice
   val shutDownThread=addsShutDownHook()
@@ -161,10 +163,10 @@ class Supervisor(
   def start(): Try[Unit] = {
     val alreadyStarted = started.getAndSet(true) 
     if (!alreadyStarted) {
-      logger.info("Starting Supervisor [{}]",id)
+      logger.debug("Starting Supervisor [{}]",id)
       dasus.values.foreach(dasu => dasu.enableAutoRefreshOfOutput())
       val inputsOfSupervisor = dasus.values.foldLeft(Set.empty[String])( (s, dasu) => s ++ dasu.getInputs())
-      inputSubscriber.startSubscriber(this, inputsOfSupervisor)
+      inputSubscriber.startSubscriber(this, inputsOfSupervisor).flatMap(s => Try(logger.debug("Supervisor [{}] started",id)))
     } else {
       logger.warn("Supervisor [{}] already started",id)
       new Failure(new Exception("Supervisor already started"))
@@ -178,7 +180,7 @@ class Supervisor(
 
     val alreadyCleaned = cleanedUp.getAndSet(true)
     if (!alreadyCleaned) {
-      logger.info("Cleaning up supervisor [{}]", id)
+      logger.debug("Cleaning up supervisor [{}]", id)
 
       logger.debug("Releasing DASUs running in the supervisor [{}]", id)
       dasus.values.foreach(_.cleanUp)
@@ -213,6 +215,7 @@ class Supervisor(
     
     dasus.values.foreach(dasu => {
       val iasiosToSend = iasios.filter(iasio => iasiosToDasusMap(dasu.id).contains(iasio.id))
+      val idsOfIasiosToSend = iasiosToSend.map(_.id)
       if (!iasiosToSend.isEmpty) {
         dasu.inputsReceived(iasiosToSend)
       }
@@ -265,7 +268,7 @@ class Supervisor(
   def cleanUpSubscriber(): Try[Unit] = new Success(())
   
   /**
-   * The Supervisor has its own subscriber get events from: the list of
+   * The Supervisor has its own subscriber to get events from: the list of
    * IDs to be accepted is composed of the IDs accepted by each DASUs.
    * 
    * Each DASU calls this method when ready to accept IASIOs; the Supervisor
@@ -276,7 +279,9 @@ class Supervisor(
    * @param listener the listener of events
    * @param acceptedInputs the IDs of the inputs accepted by the listener
    */
-  def startSubscriber(listener: InputsListener, acceptedInputs: Set[String]): Try[Unit] = new Success(())
+  def startSubscriber(listener: InputsListener, acceptedInputs: Set[String]): Try[Unit] = {
+    new Success(())
+  }
 }
 
 object Supervisor {

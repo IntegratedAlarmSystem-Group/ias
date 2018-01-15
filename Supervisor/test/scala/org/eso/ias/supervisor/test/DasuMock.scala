@@ -16,6 +16,10 @@ import scala.util.Success
 import scala.collection.mutable.ArrayBuffer
 import org.ias.prototype.logging.IASLogger
 import scala.collection.JavaConverters
+import org.eso.ias.prototype.input.java.AlarmSample
+import org.eso.ias.prototype.input.java.OperationalMode
+import org.eso.ias.prototype.input.java.IasValidity
+import org.eso.ias.prototype.input.java.IASTypes
 
 
 /** 
@@ -31,7 +35,8 @@ class DasuMock(
     dasuIdentifier: Identifier,
     private val outputPublisher: OutputPublisher,
     private val inputSubscriber: InputSubscriber,
-    cdbReader: CdbReader)
+    cdbReader: CdbReader,
+    outputIdentifier: Identifier)
 extends Dasu(dasuIdentifier) {
   
   /** The logger */
@@ -65,12 +70,23 @@ extends Dasu(dasuIdentifier) {
   
   /** The inputs of the DASU */
   val inputsOfTheDasu: Set[String] = getInputsFromCDB(cdbReader)
-  logger.info("{} inputs required by Mock_DASU [{}]: {}", inputsOfTheDasu.size.toString(), dasuIdentifier.id,inputsOfTheDasu.mkString(", ")) 
+  logger.info("{} inputs required by Mock_DASU [{}]: {}", inputsOfTheDasu.size.toString(), dasuIdentifier.id,inputsOfTheDasu.mkString(", "))
+  
+  /** The output published when inputs are received */
+  val output = IASValue.buildIasValue(
+      AlarmSample.SET, 
+      System.currentTimeMillis(), 
+      OperationalMode.OPERATIONAL, 
+      IasValidity.RELIABLE, 
+      outputIdentifier.fullRunningID, 
+      IASTypes.ALARM)
+  
   
   logger.info("Mock-DASU [{}] built", dasuIdentifier.id)
   
   /**
    * Updates the output with the inputs received
+   * and simulate the sending of the output
    * 
    * @param iasios the inputs received
    * @see InputsListener
@@ -81,6 +97,9 @@ extends Dasu(dasuIdentifier) {
       inputsReceivedFromSuperv.append(id)
       if (!getInputs().contains(id)) unexpectedInputsReceived.append(id)
       })
+      
+      // Publish the simulated output
+      outputPublisher.publish(output)
   }
 
   /**
@@ -176,6 +195,10 @@ object DasuMock {
     
     val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervidentifier)
     
-    new DasuMock(dasuIdentifier,outputPublisher,inputSubscriber,cdbReader)
+    val asceId = new Identifier("ASCE_ID_RUNTIME_GENERATED",IdentifierType.ASCE,dasuIdentifier)
+    
+    val outputId = new Identifier(dasuDao.getOutput.getId,IdentifierType.IASIO,asceId)
+    
+    new DasuMock(dasuIdentifier,outputPublisher,inputSubscriber,cdbReader,outputId)
   }  
 }
