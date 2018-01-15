@@ -65,7 +65,7 @@ extends Dasu(dasuIdentifier) {
   
   /** The inputs of the DASU */
   val inputsOfTheDasu: Set[String] = getInputsFromCDB(cdbReader)
-  logger.info("Inputs required by Mock_DASU [{}]: {}", dasuIdentifier.id,inputsOfTheDasu.mkString(", ")) 
+  logger.info("{} inputs required by Mock_DASU [{}]: {}", inputsOfTheDasu.size.toString(), dasuIdentifier.id,inputsOfTheDasu.mkString(", ")) 
   
   logger.info("Mock-DASU [{}] built", dasuIdentifier.id)
   
