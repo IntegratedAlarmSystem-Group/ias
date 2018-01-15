@@ -16,7 +16,7 @@ import org.eso.ias.prototype.input.java.IASValue
  *  Read IASValues from the kafka queue 
  *  and forward them to the DASU for processing.
  *  
- *  KafkaSubscriber delegates to SimpleStringConsumer.
+ *  KafkaSubscriber delegates to KafkaIasiosConsumer.
  *  
  *  @param dasuId the identifier of the DASU
  *  @param serversList the list of kafka brojkers to connect to
