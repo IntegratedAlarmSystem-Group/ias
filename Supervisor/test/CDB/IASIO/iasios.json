@@ -1,4 +1,8 @@
 [
+	{ "id":"Dasu1-OutID", "shortDesc":"sd", "iasType":"ALARM", "refreshRate":100 },
+	{ "id":"Dasu2-OutID", "shortDesc":"sd", "iasType":"ALARM", "refreshRate":100 },
+	{ "id":"Dasu3-OutID", "shortDesc":"sd", "iasType":"ALARM", "refreshRate":100 },
+	
 	{ "id":"ASCEOnDasu1-ID1-Out", "shortDesc":"sd", "iasType":"ALARM", "refreshRate":100 },
 	{ "id":"ASCEOnDasu1-ID2-Out", "shortDesc":"sd", "iasType":"ALARM", "refreshRate":100 },
 	{ "id":"ASCEOnDasu1-ID3-Out", "shortDesc":"sd", "iasType":"ALARM", "refreshRate":100 },

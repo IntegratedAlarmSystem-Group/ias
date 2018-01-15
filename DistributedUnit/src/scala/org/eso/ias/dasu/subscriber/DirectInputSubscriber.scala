@@ -6,6 +6,7 @@ import scala.util.Success
 import scala.util.Try
 import org.eso.ias.dasu.subscriber.InputsListener
 import org.eso.ias.prototype.input.java.IASValue
+import org.ias.prototype.logging.IASLogger
 
 /** 
  *  The input subscriber to send event to the DASU
@@ -14,6 +15,9 @@ import org.eso.ias.prototype.input.java.IASValue
  *  submit inputs that will be immediately sent to the listener.
  */
 class DirectInputSubscriber extends InputSubscriber {
+  
+  /** The logger */
+  val logger = IASLogger.getLogger(this.getClass)
   
   /** The listener of events */
   private var listener: Option[InputsListener] = None
@@ -36,6 +40,7 @@ class DirectInputSubscriber extends InputSubscriber {
    * @param acceptedInputs the IDs of the inputs accepted by the listener
    */
   def startSubscriber(listener: InputsListener, acceptedInputs: Set[String]): Try[Unit] = {
+    logger.info("Starting subscriber with accepted inputs {}",acceptedInputs.mkString)
     this.listener=Option(listener)
     this.acceptedInputs++=acceptedInputs
     Success(())
