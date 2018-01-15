@@ -1,0 +1,8 @@
+{
+	"dasuID":"DasuTemperature",
+	"outputID":"TemperatureAlarm",
+	"props":[],
+	"id":"AsceTemperature",
+	"transferFunctionID":"org.eso.ias.prototype.transfer.impls.MinMaxThresholdTF",
+	"inputIDs":["Temperature"]
+}
