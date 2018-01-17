@@ -1,7 +1,11 @@
 {
 	"dasuID":"DasuStrenght",
 	"outputID":"StrenghtAlarm",
-	"props":[],
+	"props":[
+		{"name":"org.eso.ias.tf.minmaxthreshold.highOn","value":"50"},
+		{"name":"org.eso.ias.tf.minmaxthreshold.highOff","value":"40"},
+		{"name":"org.eso.ias.tf.minmaxthreshold.lowOn","value":"-30"},
+		{"name":"org.eso.ias.tf.minmaxthreshold.lowOff","value":"-25"}],
 	"id":"AsceStrenght",
 	"transferFunctionID":"org.eso.ias.prototype.transfer.impls.MinMaxThresholdTF",
 	"inputIDs":["Strenght"]
