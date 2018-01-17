@@ -237,8 +237,8 @@
 	{ "id":"ASCE8OnDasu3-ID4-In", "shortDesc":"sd", "iasType":"ALARM", "refreshRate":100 },
 	{ "id":"ASCE8OnDasu3-ID5-In", "shortDesc":"sd", "iasType":"ALARM", "refreshRate":100 },
 	
-	{ "id":"TemperatureAlarm", "shortDesc":"Temperature too high", "iasType":"ALARM", "refreshRate":1000 }
-	{ "id":"StrenghtAlarm", "shortDesc":"Too strong", "iasType":"ALARM", "refreshRate":1000 },	
+	{ "id":"TemperatureAlarm", "shortDesc":"Temperature too high", "iasType":"ALARM", "refreshRate":1000 },
+	{ "id":"StrenghtAlarm", "shortDesc":"Too strong", "iasType":"ALARM", "refreshRate":1000 },
 	{ "id":"Strenght", "shortDesc":"Strenght", "iasType":"DOUBLE", "refreshRate":1000 },
 	{ "id":"Temperature", "shortDesc":"Temperature", "iasType":"DOUBLE", "refreshRate":1000 }
 ]
