@@ -91,6 +91,14 @@ class DasuOneASCETest extends FlatSpec with OutputListener {
   
   behavior of "The DASU"
   
+  it must "return the correct list of input and ASCE IDs" in {
+    assert(dasu.getInputIds().size==1)
+    assert(dasu.getInputIds().forall(s => s=="Temperature"))
+    
+    assert(dasu.getAsceIds().size==1)
+    assert(dasu.getAsceIds().forall(s => s=="ASCE-ID1"))
+  }
+  
   it must "produce the output when a new set inputs is notified" in {
     // Start the getting of events in the DASU
     dasu.start()

@@ -80,8 +80,11 @@ abstract class Dasu(val dasuIdentifier: Identifier) extends InputsListener {
   /** The ID of the DASU */
   val id = dasuIdentifier.id
   
-  /** The inputs of the DASU */
-  def getInputs(): Set[String]
+  /** The IDs of the inputs of the DASU */
+  def getInputIds(): Set[String]
+  
+  /** The IDs of the ASCEs running in the DASU  */
+  def getAsceIds(): Set[String]
   
   /** 
    *  Start getting events from the inputs subscriber

@@ -309,8 +309,11 @@ class DasuImpl (
     logger.info("DASU [{}]: cleaned up",id)
   }
   
-  /** The inputs ofthe DASU */
-  def getInputs(): Set[String] = dasuTopology.dasuInputs
+  /** The inputs of the DASU */
+  def getInputIds(): Set[String] = dasuTopology.dasuInputs
+  
+  /** The IDs of the ASCEs running in the DASU  */
+  def getAsceIds(): Set[String] = asces.keys.toSet
 }
 
 object DasuImpl {

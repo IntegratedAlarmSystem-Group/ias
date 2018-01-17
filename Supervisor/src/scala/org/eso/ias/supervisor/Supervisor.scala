@@ -148,7 +148,7 @@ class Supervisor(
   private def startDasus(): Map[String, Set[String]] = {
     dasus.values.foreach(_.start())
     
-    val fun = (m: Map[String, Set[String]], d: Dasu) => m + (d.id -> d.getInputs())
+    val fun = (m: Map[String, Set[String]], d: Dasu) => m + (d.id -> d.getInputIds())
     dasus.values.foldLeft(Map.empty[String, Set[String]])(fun)
   }
   
@@ -165,7 +165,7 @@ class Supervisor(
     if (!alreadyStarted) {
       logger.debug("Starting Supervisor [{}]",id)
       dasus.values.foreach(dasu => dasu.enableAutoRefreshOfOutput())
-      val inputsOfSupervisor = dasus.values.foldLeft(Set.empty[String])( (s, dasu) => s ++ dasu.getInputs())
+      val inputsOfSupervisor = dasus.values.foldLeft(Set.empty[String])( (s, dasu) => s ++ dasu.getInputIds())
       inputSubscriber.startSubscriber(this, inputsOfSupervisor).flatMap(s => Try(logger.debug("Supervisor [{}] started",id)))
     } else {
       logger.warn("Supervisor [{}] already started",id)

@@ -130,7 +130,34 @@ class Dasu7ASCEsTest extends FlatSpec with OutputListener {
         fullRunningID)
   }
   
-  behavior of "The DASU"
+  behavior of "The DASU with 7 ASCEs"
+  
+  it must "return the correct list of input and ASCE IDs" in {
+    
+    // The inputs of the DASU is not composed by the inputs of all ASCEs
+    // but by the only inputs of the ASCEs not produced by other ASCEs 
+    // running in the DASU or, to say in another way,
+    // by the inputs of the ASCEs that are read from the BSDB
+    val inputs = Set(
+        "Temperature1", 
+        "Temperature2", 
+        "Temperature3", 
+        "Temperature4")
+    assert(dasu.getInputIds().size==inputs.size)
+    assert(dasu.getInputIds().forall(inputs.contains(_)))
+    
+    val asces = Set(
+        "ASCE-Temp1",
+  		"ASCE-Temp2",
+  		"ASCE-Temp3",
+  		"ASCE-Temp4",
+  		"ASCE-AverageTemps",
+  		"ASCE-AvgTempsAlarm",
+  		"ASCE-AlarmsThreshold")
+    
+    assert(dasu.getAsceIds().size==asces.size)
+    assert(dasu.getAsceIds().forall(asces.contains(_)))
+  }
   
   it must "produce outputs when receives sets of inputs" in {
     // Start the getting of events in the DASU
