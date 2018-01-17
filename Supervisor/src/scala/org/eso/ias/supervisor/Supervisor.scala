@@ -153,6 +153,19 @@ class Supervisor(
   }
   
   /**
+   * Enable or diable the auto-refresh of the outputs in the DASUs
+   * 
+   * @param enable if true enable the autorefresh, otherwise disable the autorefresh
+   */
+  def enableAutoRefreshOfOutput(enable: Boolean) {
+    if (enable) {
+      dasus.values.foreach(dasu => dasu.enableAutoRefreshOfOutput())
+    } else {
+      dasus.values.foreach(dasu => dasu.disableAutoRefreshOfOutput())
+    }
+  }
+  
+  /**
    * Start the loop:
    * - get events from the BSDB
    * - forward events to the DASUs
