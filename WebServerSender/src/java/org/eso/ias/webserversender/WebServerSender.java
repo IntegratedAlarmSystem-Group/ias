@@ -229,7 +229,7 @@ public class WebServerSender implements IasioListener, Runnable {
 	
 	public static void main(String[] args) throws Exception {
 
-		WebServerSender ws = new WebServerSender("WebServerSender", "test", "ws://localhost:8000/core/", null);
+		WebServerSender ws = new WebServerSender("WebServerSender", "ws://localhost:8000/core/", null);
 		ws.run();
 
 	}
