@@ -1,0 +1,15 @@
+{
+	"asceIDs":[
+		"ASCEOnDasu3-ID1",
+		"ASCEOnDasu3-ID2",
+		"ASCEOnDasu3-ID3",
+		"ASCEOnDasu3-ID4",
+		"ASCEOnDasu3-ID5",
+		"ASCEOnDasu3-ID6",
+		"ASCEOnDasu3-ID7",
+		"ASCEOnDasu3-ID8"],
+	"outputId":"Dasu3-OutID",
+	"logLevel":"FATAL",
+	"id":"Dasu3",
+	"supervisorID":"SupervisorID"
+}

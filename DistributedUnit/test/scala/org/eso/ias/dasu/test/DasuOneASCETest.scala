@@ -24,6 +24,8 @@ import scala.util.Success
 import scala.util.Try
 import scala.collection.mutable.{HashSet => MutableSet}
 import org.eso.ias.prototype.input.java.IasValidity._
+import org.eso.ias.dasu.DasuImpl
+import org.eso.ias.dasu.publisher.DirectInputSubscriber
 
 /**
  * Test the DASU with one ASCE and the MinMaxThreshold TF.
@@ -48,10 +50,14 @@ class DasuOneASCETest extends FlatSpec with OutputListener {
   val stringSerializer = Option(new IasValueJsonSerializer)
   val outputPublisher: OutputPublisher = new ListenerOutputPublisherImpl(this,stringSerializer)
   
-  val inputsProvider = new TestInputSubscriber()
+  val inputsProvider = new DirectInputSubscriber()
+  
+  // Build the Identifier
+  val supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR,None)
+  val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervId)
   
   // The DASU to test
-  val dasu = new Dasu(dasuId,outputPublisher,inputsProvider,cdbReader)
+  val dasu = new DasuImpl(dasuIdentifier,outputPublisher,inputsProvider,cdbReader)
   
   // The identifer of the monitor system that produces the temperature in input to teh DASU
   val monSysId = new Identifier("MonitoredSystemID",IdentifierType.MONITORED_SOFTWARE_SYSTEM)
@@ -84,6 +90,14 @@ class DasuOneASCETest extends FlatSpec with OutputListener {
   }
   
   behavior of "The DASU"
+  
+  it must "return the correct list of input and ASCE IDs" in {
+    assert(dasu.getInputIds().size==1)
+    assert(dasu.getInputIds().forall(s => s=="Temperature"))
+    
+    assert(dasu.getAsceIds().size==1)
+    assert(dasu.getAsceIds().forall(s => s=="ASCE-ID1"))
+  }
   
   it must "produce the output when a new set inputs is notified" in {
     // Start the getting of events in the DASU

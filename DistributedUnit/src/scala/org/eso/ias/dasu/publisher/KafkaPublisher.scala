@@ -38,14 +38,14 @@ extends OutputPublisher {
    *  @return Success or Failure if the initialization went well 
    *          or encountered a problem  
    */
-  override def initialize(): Try[Unit] = {
+  override def initializePublisher(): Try[Unit] = {
     Try(kafkaProducer.setUp(props))
   }
   
   /**
    * Release all the acquired kafka resources.
    */
-  override def cleanUp(): Try[Unit] = {
+  override def cleanUpPublisher(): Try[Unit] = {
     Try(kafkaProducer.tearDown())
   }
   

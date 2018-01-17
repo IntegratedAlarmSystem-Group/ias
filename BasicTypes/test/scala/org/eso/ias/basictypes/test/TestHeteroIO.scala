@@ -18,7 +18,8 @@ import org.eso.ias.prototype.input.java.AlarmSample
  * @author acaproni
  */
 class TestHeteroIO extends FlatSpec {
-  val dasuId =  new Identifier("DasuId",IdentifierType.DASU,None)
+  val supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR,None)
+  val dasuId =  new Identifier("DasuId",IdentifierType.DASU,supervId)
   val asceId =  new Identifier("AsceId",IdentifierType.ASCE,Some(dasuId))
   
   // The ID of the alarms built in this test

@@ -118,7 +118,12 @@ public class SimpleStringConsumer implements Runnable {
 	 * The boolean set to <code>true</code> when the
 	 * consumer has been closed
 	 */
-	private volatile AtomicBoolean isClosed=new AtomicBoolean(false);
+	private AtomicBoolean isClosed=new AtomicBoolean(false);
+	
+	/**
+	 * A flag signaling that the shutdown is in progress
+	 */
+	private AtomicBoolean isShuttingDown=new AtomicBoolean(false);
 
 	/**
 	 * The boolean set to <code>true</code> when the
@@ -207,6 +212,7 @@ public class SimpleStringConsumer implements Runnable {
 		shutDownThread = new Thread() {
 			@Override
 			public void run() {
+				isShuttingDown.set(true);
 				tearDown();
 			}
 		};
@@ -326,7 +332,9 @@ public class SimpleStringConsumer implements Runnable {
 		}
 		logger.info("Closing consumer [{}]...",consumerID);
 		isClosed.set(true);
-		Runtime.getRuntime().removeShutdownHook(shutDownThread);
+		if (!isShuttingDown.get()) {
+			Runtime.getRuntime().removeShutdownHook(shutDownThread);
+		}
 		stopGettingEvents();
 		logger.info("Consumer [{}] cleaned up",consumerID);
 	}

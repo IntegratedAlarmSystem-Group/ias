@@ -27,6 +27,8 @@ import org.eso.ias.prototype.input.java.IASTypes
 import org.eso.ias.prototype.input.java.IasAlarm
 import org.eso.ias.prototype.input.java.AlarmSample
 import org.eso.ias.prototype.input.java.IasValidity._
+import org.eso.ias.dasu.DasuImpl
+import org.eso.ias.dasu.publisher.DirectInputSubscriber
 
 /**
  * Test the DASU with 7 ASCEs (in 3 levels).
@@ -68,10 +70,14 @@ class Dasu7ASCEsTest extends FlatSpec with OutputListener {
   val stringSerializer = Option(new IasValueJsonSerializer)
   val outputPublisher: OutputPublisher = new ListenerOutputPublisherImpl(this,stringSerializer)
   
-  val inputsProvider = new TestInputSubscriber()
+  val inputsProvider = new DirectInputSubscriber()
+  
+  // Build the Identifier
+  val supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR,None)
+  val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervId)
   
   // The DASU to test
-  val dasu = new Dasu(dasuId,outputPublisher,inputsProvider,cdbReader)
+  val dasu = new DasuImpl(dasuIdentifier,outputPublisher,inputsProvider,cdbReader)
   
   // The identifer of the monitor system that produces the temperature in input to teh DASU
   val monSysId = new Identifier("MonitoredSystemID",IdentifierType.MONITORED_SOFTWARE_SYSTEM)
@@ -124,7 +130,34 @@ class Dasu7ASCEsTest extends FlatSpec with OutputListener {
         fullRunningID)
   }
   
-  behavior of "The DASU"
+  behavior of "The DASU with 7 ASCEs"
+  
+  it must "return the correct list of input and ASCE IDs" in {
+    
+    // The inputs of the DASU is not composed by the inputs of all ASCEs
+    // but by the only inputs of the ASCEs not produced by other ASCEs 
+    // running in the DASU or, to say in another way,
+    // by the inputs of the ASCEs that are read from the BSDB
+    val inputs = Set(
+        "Temperature1", 
+        "Temperature2", 
+        "Temperature3", 
+        "Temperature4")
+    assert(dasu.getInputIds().size==inputs.size)
+    assert(dasu.getInputIds().forall(inputs.contains(_)))
+    
+    val asces = Set(
+        "ASCE-Temp1",
+  		"ASCE-Temp2",
+  		"ASCE-Temp3",
+  		"ASCE-Temp4",
+  		"ASCE-AverageTemps",
+  		"ASCE-AvgTempsAlarm",
+  		"ASCE-AlarmsThreshold")
+    
+    assert(dasu.getAsceIds().size==asces.size)
+    assert(dasu.getAsceIds().forall(asces.contains(_)))
+  }
   
   it must "produce outputs when receives sets of inputs" in {
     // Start the getting of events in the DASU

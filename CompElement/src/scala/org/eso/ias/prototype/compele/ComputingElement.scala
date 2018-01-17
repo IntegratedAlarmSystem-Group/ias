@@ -94,20 +94,23 @@ import org.eso.ias.prototype.input.JavaConverter
  * @author acaproni
  */
 abstract class ComputingElement[T](
-    val id: Identifier,
+    val asceIdentifier: Identifier,
     private var _output: InOut[T],
     initialInputs: Set[InOut[_]],
     val tfSetting: TransferFunctionSetting,
     val props: Properties) {
-  require(Option(id)!=None,"Invalid identifier")
-  require(id.idType==IdentifierType.ASCE)
+  require(Option(asceIdentifier)!=None,"Invalid identifier")
+  require(asceIdentifier.idType==IdentifierType.ASCE)
   require(Option(initialInputs)!=None && !initialInputs.isEmpty,"Invalid (empty or null) set of required inputs to the component")
   require(Option(props).isDefined,"Invalid null properties")
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
   
-  logger.info("ASCE [{}] built with running id {}",id.id,id.fullRunningID)
+  /** The ID of the ASCE */
+  val id = asceIdentifier.id
+  
+  logger.info("Building ASCE [{}] with running id {}",id,asceIdentifier.fullRunningID)
   
   /**
    * The programming language of this TF is abstract
@@ -161,6 +164,8 @@ abstract class ComputingElement[T](
   /** Getter for the private _output */
   def output = _output
   
+  logger.info("ASCE [{}] built",id)
+  
   /**
    * Update the output by running the user provided script/class against the inputs.
    * This is actually the core of the ASCE.
@@ -194,14 +199,14 @@ abstract class ComputingElement[T](
     val startedAt=System.currentTimeMillis()
     
     val ret = try {
-      transfer(immutableMapOfInputs,id,actualOutput)
+      transfer(immutableMapOfInputs,asceIdentifier,actualOutput)
     } catch { case e: Exception => Left(e) }
     
     val endedAt=System.currentTimeMillis()
     
     ret match {
       case Left(ex) =>
-        logger.error("TF of [{}] inhibited for the time being",id,ex)
+        logger.error("TF of [{}] inhibited for the time being",asceIdentifier,ex)
         // Change the state so that the TF is never executed again
         (actualOutput,ComputingElementState.transition(actualState, new Broken()))
       case Right(v) => 
@@ -276,7 +281,7 @@ abstract class ComputingElement[T](
    */
   def initialize(): AsceStates.State = {
     assert(state.actualState==AsceStates.Initializing)
-    state = if (tfSetting.initialize(id.id, id.runningID, props)) {
+    state = if (tfSetting.initialize(id, asceIdentifier.runningID, props)) {
       ComputingElementState.transition(state, new Initialized())
     } else { 
       ComputingElementState.transition(state, new Broken())
@@ -326,7 +331,7 @@ abstract class ComputingElement[T](
     // Does the passed set contains 2 IASIOs with the same ID?
     assert(!iasValues.exists(i => iasValues.count(_.id==i.id)>1),"There cant 2 IASIOs with the same ID in the passed set of inputs!")
     
-    logger.debug("New set of inputs for {}: [{}]",id.id,iasValues.map(v => v.id).mkString(", "))
+    logger.debug("New set of inputs for {}: [{}]",id,iasValues.map(v => v.id).mkString(", "))
         
     // Updates the map with the passed IASIOs
     iasValues.foreach(iasio => inputs.get(iasio.id).map( _.update(iasio)).foreach(i => inputs.put(i.id.id,i)))

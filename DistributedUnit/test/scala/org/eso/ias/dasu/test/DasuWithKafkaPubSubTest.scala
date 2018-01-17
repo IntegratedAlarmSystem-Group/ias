@@ -24,6 +24,7 @@ import scala.util.Try
 import scala.collection.mutable.ListBuffer
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition
 import org.eso.ias.prototype.input.java.IasValidity._
+import org.eso.ias.dasu.DasuImpl
 
 /**
  * test if the DASU is capable to get events from
@@ -53,8 +54,12 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener {
   
   val inputsProvider = new KafkaSubscriber(dasuId, new Properties())
   
+  // Build the Identifier
+  val supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR,None)
+  val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervId)
+  
   // The DASU
-  val dasu = new Dasu(dasuId,outputPublisher,inputsProvider,cdbReader)
+  val dasu = new DasuImpl(dasuIdentifier,outputPublisher,inputsProvider,cdbReader)
   
   // The identifer of the monitor system that produces the temperature in input to teh DASU
   val monSysId = new Identifier("MonitoredSystemID",IdentifierType.MONITORED_SOFTWARE_SYSTEM)

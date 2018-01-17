@@ -26,8 +26,8 @@ class TestIdentifier extends FlatSpec {
   it must "forbid to instantiate a ID with a parent of the wrong type" in {
     val msId=new Identifier("monSysyId",IdentifierType.MONITORED_SOFTWARE_SYSTEM,None)
     
-    
-    val dasuId = new Identifier("dasuId",IdentifierType.DASU,None)
+    val supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR,None)
+    val dasuId = new Identifier("dasuId",IdentifierType.DASU,supervId)
     
     val plId=new Identifier("pluginId",IdentifierType.PLUGIN,Option(msId))
     val convId=new Identifier("converterId",IdentifierType.CONVERTER,Option(plId))
@@ -83,6 +83,34 @@ class TestIdentifier extends FlatSpec {
     assert(!id4.runningID.isEmpty())
     assert(id4.runningID.endsWith(id4.id))
     assert(id4.runningID.startsWith(id1.id))
+    
+  }
+  
+  /**
+   * Check the getIdOfType that return id id of the identifier or
+   * one of its parent of the given, if any
+   */
+  it must "Return the id by the passed type" in {
+    val monSysId: Identifier = new Identifier("monSysyId",IdentifierType.MONITORED_SOFTWARE_SYSTEM,None)
+    val pluginId: Identifier = new Identifier("pluginId",IdentifierType.PLUGIN,Option(monSysId))
+    val convId: Identifier = new Identifier("converterId",IdentifierType.CONVERTER,Option(pluginId))
+    val iasioId: Identifier = new Identifier("iasioId",IdentifierType.IASIO,Option(convId))
+    
+    val i1 = iasioId.getIdOfType(IdentifierType.IASIO)
+    assert (i1.isDefined)
+    assert(i1.get=="iasioId")
+    
+    assert(iasioId.getIdOfType(IdentifierType.SUPERVISOR).isEmpty)
+    
+    val i2 = iasioId.getIdOfType(IdentifierType.PLUGIN)
+    assert(i2.isDefined)
+    assert(i2.get=="pluginId")
+    
+    val i3 = monSysId.getIdOfType(IdentifierType.MONITORED_SOFTWARE_SYSTEM)
+    assert(i3.isDefined)
+    assert(i3.get=="monSysyId")
+    
+    assert(monSysId.getIdOfType(IdentifierType.ASCE).isEmpty)
     
   }
   

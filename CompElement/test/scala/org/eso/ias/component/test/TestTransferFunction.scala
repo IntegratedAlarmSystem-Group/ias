@@ -31,7 +31,8 @@ class TestTransferFunction extends FlatSpec {
     val numOfInputs = 5
     
     /** The ID of the DASU where the components runs */
-    val dasId = new Identifier("DAS-ID",IdentifierType.DASU,None)
+    val supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR,None)
+    val dasId = new Identifier("DAS-ID",IdentifierType.DASU,supervId)
     
     /** The ID of the component running into the DASU */
     val compID = new Identifier("COMP-ID",IdentifierType.ASCE,Option(dasId))
