@@ -36,9 +36,13 @@ import java.util.concurrent.TimeUnit
 import org.scalatest.BeforeAndAfter
 import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener
 import org.scalatest.BeforeAndAfterAll
+import java.util.concurrent.atomic.AtomicReference
 
 /**
- * Test the Supervisor connected to the BSDB.
+ * Test the Supervisor connected to the kafka BSDB.
+ * 
+ * Note that supervisor, IASIOs producer and consumer are created once
+ * at the beginning of the test and reused along the different tests
  *
  * The configuration of this Supervisor is in the JSON CDB.
  *
@@ -60,7 +64,7 @@ import org.scalatest.BeforeAndAfterAll
  *
  * The test submit some IASIOs and checks what is published in the BSDB.
  */
-class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll {
+class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with BeforeAndAfter {
 
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
@@ -129,6 +133,14 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll {
 
   // Build the supervisor
   val supervisor = new Supervisor(supervisorId, outputPublisher, inputConsumer, cdbReader, factory)
+  
+  val latchRef: AtomicReference[CountDownLatch] = new AtomicReference
+  
+  before {
+    receivedIasValues.clear()
+  }
+  
+  after {}
 
   override def beforeAll() {
     logger.info("Before...")
@@ -145,6 +157,10 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll {
       def iasioReceived(value: IASValue[_]) {
         logger.info("IASValue received {}: [{}]", value.id, value.toString())
         receivedIasValues.append(value)
+        val latch = latchRef.get
+        if (latch!=null) {
+          latch.countDown()
+        }
         logger.info("{} events in the queue", receivedIasValues.size.toString())
       }
     }
@@ -153,6 +169,8 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll {
     
     // .get returns the value from this Success or throws the exception if this is a Failure.
     supervisor.start().get
+    
+    supervisor.enableAutoRefreshOfOutput(false)
     
     logger.info("Before done.")
   }
@@ -188,6 +206,9 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll {
   }
 
   it must "produce the output when a value is submitted to the BSDB" in {
+    val latch = new CountDownLatch(2)
+    latchRef.set(latch)
+    
     val iasio = buildIasioToSubmit(temperatureID, 5);
 
     // Desable the autorefresh to avoid replication
@@ -198,6 +219,8 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll {
     // plus the output produced by the DASU
     logger.info("Publishing IASValue [{}]", iasio.id)
     iasiosProducer.push(iasio)
+    
+    assert(latch.await(1, TimeUnit.MINUTES))
 
     // Wait until the output is produced
     logger.info("Waiting for the output from the DASU...")
