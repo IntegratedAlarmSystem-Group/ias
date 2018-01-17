@@ -68,6 +68,19 @@ extends Dasu(dasuIdentifier) {
    */
   val unexpectedInputsReceived: ArrayBuffer[String] = ArrayBuffer.empty[String]
   
+  /** DASU configuration from CDB */
+  lazy val dasuDao = {
+    val dasuOptional = cdbReader.getDasu(dasuIdentifier.id)
+    require(dasuOptional.isPresent(), "DASU [" + dasuIdentifier.id+ "] configuration not found on cdb")
+    logger.debug("DASU [{}] configuration read from CDB", dasuIdentifier.id)
+    dasuOptional.get
+  }
+  
+  /**
+   * The configuration of the ASCEs that run in the DASU
+   */
+  lazy val asceDaos = JavaConverters.asScalaSet(dasuDao.getAsces).toList
+  
   /** The inputs of the DASU */
   val inputsOfTheDasu: Set[String] = getInputsFromCDB(cdbReader)
   logger.info("{} inputs required by Mock_DASU [{}]: {}", inputsOfTheDasu.size.toString(), dasuIdentifier.id,inputsOfTheDasu.mkString(", "))
@@ -82,6 +95,8 @@ extends Dasu(dasuIdentifier) {
       IASTypes.ALARM)
   
   
+  // TODO release cdb resources
+      
   logger.info("Mock-DASU [{}] built", dasuIdentifier.id)
   
   /**
@@ -95,7 +110,7 @@ extends Dasu(dasuIdentifier) {
     iasios.foreach(iasio => {
       val id = iasio.id
       inputsReceivedFromSuperv.append(id)
-      if (!getInputs().contains(id)) unexpectedInputsReceived.append(id)
+      if (!getInputIds().contains(id)) unexpectedInputsReceived.append(id)
       })
       
       // Publish the simulated output
@@ -111,20 +126,6 @@ extends Dasu(dasuIdentifier) {
    * @return the inputs of the DASU
    */
   private def getInputsFromCDB(reader: CdbReader): Set[String] = {
-    // Read configuration from CDB
-    val dasuDao = {
-      val dasuOptional = cdbReader.getDasu(id)
-      require(dasuOptional.isPresent(), "DASU [" + id + "] configuration not found on cdb")
-      dasuOptional.get
-    }
-    // TODO: release CDB resources
-    logger.debug("DASU [{}] configuration red from CDB", id)
-
-    /**
-     * The configuration of the ASCEs that run in the DASU
-     */
-    val asceDaos = JavaConverters.asScalaSet(dasuDao.getAsces).toList
-    
     asceDaos.foldLeft(Set.empty[String])( (s, aDao) => {
       val asceInputs = JavaConverters.collectionAsScalaIterable(aDao.getInputs).map(i => i.getId).toSet
       logger.info("Inputs of ASCE [{}] running in Mock_DASU [{}]: {}", aDao.getId, dasuIdentifier.id,asceInputs.mkString(", "))
@@ -133,8 +134,10 @@ extends Dasu(dasuIdentifier) {
   }
   
   /** The inputs of the DASU */
-  def getInputs(): Set[String] = inputsOfTheDasu
+  def getInputIds(): Set[String] = inputsOfTheDasu
   
+  /** The IDs of the ASCEs running in the DASU  */
+  def getAsceIds(): Set[String] = asceDaos.map(_.getId).toSet
   
   /** 
    *  Start getting events from the inputs subscriber
