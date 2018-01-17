@@ -32,144 +32,175 @@ import org.eso.ias.prototype.input.java.IasValidity
 import org.eso.ias.prototype.input.java.IASTypes
 import scala.collection.mutable.ListBuffer
 
+import java.util.concurrent.TimeUnit
+import org.scalatest.BeforeAndAfter
+import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener
+import org.scalatest.BeforeAndAfterAll
+
 /**
  * Test the Supervisor connected to the BSDB.
- * 
+ *
  * The configuration of this Supervisor is in the JSON CDB.
- * 
+ *
  * The supervisor runs 2 DASU with one ASCE each and
- * checks the generation of the output by its DASUs and their ASCEs 
+ * checks the generation of the output by its DASUs and their ASCEs
  * when some input is read from the kafka topic.
- * 
+ *
  * This test is meant to check the loop only so each DASU has only one ASCE
  * that run the MinMaxTF against one input only. This way the CDB is simple.
- * 
- * The test 
+ *
+ * The test
  * - runs the supervisor
  * - run a producer of IASIOs in the BSDB (iasiosProducer): this is to
  *   submit IASIOs to the Supervisor as if they have been produced by DASU
  *   or plugins
  * - run a IASIOs consumer (iasiosConsumer) that listen to all the IASIOs
- *   written in the BDSB i.e. those published by the producer and 
+ *   written in the BDSB i.e. those published by the producer and
  *   those published by the DASUs running in the Supervisor
- *   
+ *
  * The test submit some IASIOs and checks what is published in the BSDB.
  */
-class SupervisorWithKafkaTest extends IasioListener {
-  
+class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll {
+
   /** The logger */
-  private val logger = IASLogger.getLogger(this.getClass);
-  
-  /** All the values read from the BASD */
-  val receivedIasValues = new ListBuffer[IASValue[_]]()
-  
-  /** The serializer to JSON strings */
-  val serializer: IasValueStringSerializer = new IasValueJsonSerializer()
-  
-  /** 
-   *  The IASIOs producer submits IASIOs to the kafka topic i.e. to the BSDB:
-   *  these IASIOs will be received and processed by the DASU running in the Supervisor
-   *   
-   */
-  val iasiosProducer = new KafkaIasiosProducer(
-      KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
-      KafkaHelper.IASIOs_TOPIC_NAME,
-      "SupervisorWithKafka-Producer",
-      serializer)
-  iasiosProducer.setUp()
-  logger.info("Testing producer started")
-  
-  /**
-   * The kafka consumer gets all the IASIOs written in the IASIO kafka topic
-   * 
-   * It means that it will get the IASIOs submitted by iasiosProducer and those
-   * produced by the DASUs running in the Supervisor.
-   * 
-   * To have finer control over the test, we do not setup filters
-   * to this consumer
-   */
-  val iasiosConsumer = new KafkaIasiosConsumer(
-      KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
-      KafkaHelper.IASIOs_TOPIC_NAME,
-      "SupervisorWithKafka-Consumer")
-  iasiosConsumer.setUp()
-  logger.info("Testing consumer started")
-  
-  iasiosConsumer.startGettingEvents(StartPosition.END, this)
-  
-  val monSysId = new Identifier("MonitoredSystemID",IdentifierType.MONITORED_SOFTWARE_SYSTEM,None)
-  val pluginId = new Identifier("SimulatedPluginID",IdentifierType.PLUGIN,monSysId)
-  val converterId = new Identifier("ConverterID",IdentifierType.CONVERTER,pluginId)
-  
+  private val logger = IASLogger.getLogger(this.getClass)
+
+  val monSysId = new Identifier("MonitoredSystemID", IdentifierType.MONITORED_SOFTWARE_SYSTEM, None)
+  val pluginId = new Identifier("SimulatedPluginID", IdentifierType.PLUGIN, monSysId)
+  val converterId = new Identifier("ConverterID", IdentifierType.CONVERTER, pluginId)
+
   /** The ID of the temeprature processed by a DASU of the Supervisor */
-  val temperatureID = new Identifier("Temperature",IdentifierType.IASIO,converterId)
-  
+  val temperatureID = new Identifier("Temperature", IdentifierType.IASIO, converterId)
+
   /** The ID of the strenght processed by a DASU of the Supervisor */
-  val strenghtID = new Identifier("Strenght",IdentifierType.IASIO,converterId)
-  
-  
+  val strenghtID = new Identifier("Strenght", IdentifierType.IASIO, converterId)
+
   /** The identifier of the supervisor */
   val supervisorId = new Identifier("SupervisorWithKafka", IdentifierType.SUPERVISOR, None)
-  
+
   // The JSON CDB reader
   val cdbParentPath = FileSystems.getDefault().getPath(".");
   val cdbFiles = new CdbJsonFiles(cdbParentPath)
   val cdbReader: CdbReader = new JsonReader(cdbFiles)
-  
+
+  /** The serializer to JSON strings */
+  val serializer: IasValueStringSerializer = new IasValueJsonSerializer()
+
+  /**
+   *  The IASIOs producer submits IASIOs to the kafka topic i.e. to the BSDB:
+   *  these IASIOs will be received and processed by the DASU running in the Supervisor
+   *
+   */
+  val iasiosProducer = new KafkaIasiosProducer(
+    KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
+    KafkaHelper.IASIOs_TOPIC_NAME,
+    "SupervisorWithKafka-Producer",
+    serializer)
+  iasiosProducer.setUp()
+  logger.info("Testing producer started")
+
+  /** All the values read from the BSDB */
+  val receivedIasValues = new ListBuffer[IASValue[_]]()
+
+  /**
+   * The kafka consumer gets all the IASIOs written in the IASIO kafka topic
+   *
+   * It means that it will get the IASIOs submitted by iasiosProducer and those
+   * produced by the DASUs running in the Supervisor.
+   *
+   * To have finer control over the test, we do not setup filters
+   * to this consumer
+   */
+  val iasiosConsumer = new KafkaIasiosConsumer(
+    KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
+    KafkaHelper.IASIOs_TOPIC_NAME,
+    "SupervisorWithKafka-Consumer")
+  iasiosConsumer.setUp()
+  logger.info("Testing consumer started")
+
   /** The kafka publisher used by the supervisor to send the output of the DASUs to the BSDB*/
   val outputPublisher: OutputPublisher = KafkaPublisher(supervisorId.id, new Properties())
-  
+
   /** The kafka consumer gets AISValues from the BSDB */
   val inputConsumer: InputSubscriber = new KafkaSubscriber(supervisorId.id, new Properties())
-  
-  /** The test uses real DASu i.e. the factory instantiates a DasuImpl */
-  val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber, cr: CdbReader) => DasuImpl(dd,i,op,id,cr)
-  
-  /** Signal the supervisor to terminate */
-  val latch = new CountDownLatch(1)
-  
-  // Build the supervisor
-  val supervisor = new Supervisor(supervisorId,outputPublisher,inputConsumer,cdbReader,factory)
-  
-  val started = supervisor.start()
-  assert(started.isSuccess)
 
-  runTest()
-  
-  /**
-   * A value has been read from the BSDB
-   * i.e. it has been received by iasiosConsumer
-   */
-  def iasioReceived(value: IASValue[_]) {
-    logger.info("IASValue received {}",value.id)
-    receivedIasValues.append(value)
-  }
-  
-  /**
-   * Run the test
-   */
-  def runTest() {
+  /** The test uses real DASu i.e. the factory instantiates a DasuImpl */
+  val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber, cr: CdbReader) => DasuImpl(dd, i, op, id, cr)
+
+  // Build the supervisor
+  val supervisor = new Supervisor(supervisorId, outputPublisher, inputConsumer, cdbReader, factory)
+
+  override def beforeAll() {
+    logger.info("Before...")
+    /**
+     * The listener of IASValues published in the BSDB
+     * It receives the values sent by the test as well as the outputs
+     * of the DASUs running in the supervisor
+     */
+    val iasioListener = new IasioListener {
+      /**
+       * A value has been read from the BSDB
+       * i.e. it has been received by iasiosConsumer
+       */
+      def iasioReceived(value: IASValue[_]) {
+        logger.info("IASValue received {}: [{}]", value.id, value.toString())
+        receivedIasValues.append(value)
+        logger.info("{} events in the queue", receivedIasValues.size.toString())
+      }
+    }
+
+    iasiosConsumer.startGettingEvents(StartPosition.END, iasioListener)
     
+    // .get returns the value from this Success or throws the exception if this is a Failure.
+    supervisor.start().get
+    
+    logger.info("Before done.")
   }
-  
+
+  override def afterAll() {
+    logger.info("After...")
+    iasiosProducer.tearDown()
+    iasiosConsumer.tearDown()
+    supervisor.cleanUp()
+    logger.info("Before done")
+  }
+
   /**
    * Build a IASVlaue to submit to the BSDB
    */
   def buildIasioToSubmit(identifier: Identifier, value: Double) = {
     IASValue.buildIasValue(
-        value, 
-        System.currentTimeMillis(), 
-        OperationalMode.OPERATIONAL, 
-        IasValidity.RELIABLE, 
-        identifier.fullRunningID, 
-        IASTypes.DOUBLE)
+      value,
+      System.currentTimeMillis(),
+      OperationalMode.OPERATIONAL,
+      IasValidity.RELIABLE,
+      identifier.fullRunningID,
+      IASTypes.DOUBLE)
   }
-  
-  /**
-   * Signal the supervisor to terminate
-   */
-  def terminate() {
-    logger.info("Request to terminate notified")
-    latch.countDown()
+
+  behavior of "The Supervisor with Kafka input/ouput"
+
+  it must "activate 2 DASUs with one ASCE each" in {
+    val latch = new CountDownLatch(1)
+    assert(supervisor.dasus.values.size == 2)
+
+    assert(supervisor.dasus.values.forall(d => d.getAsceIds().size == 1))
   }
+
+  it must "produce the output when a value is submitted to the BSDB" in {
+    val iasio = buildIasioToSubmit(temperatureID, 5);
+
+    // Desable the autorefresh to avoid replication
+    logger.info("Disabling auto-refresh of the output by the DASU")
+    supervisor.enableAutoRefreshOfOutput(false)
+
+    // We expect to see in the BSDB the iasio (iasio) we just sent
+    // plus the output produced by the DASU
+    logger.info("Publishing IASValue [{}]", iasio.id)
+    iasiosProducer.push(iasio)
+
+    // Wait until the output is produced
+    logger.info("Waiting for the output from the DASU...")
+  }
+
 }
