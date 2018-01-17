@@ -220,10 +220,45 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
     logger.info("Publishing IASValue [{}]", iasio.id)
     iasiosProducer.push(iasio)
     
-    assert(latch.await(1, TimeUnit.MINUTES))
-
     // Wait until the output is produced
     logger.info("Waiting for the output from the DASU...")
+    assert(latch.await(1, TimeUnit.MINUTES))
+    
+    val receivedIds=receivedIasValues.map(_.id)
+    
+    assert(receivedIds.forall(id => id==temperatureID.id || id=="TemperatureAlarm"))
+
+    
+  }
+  
+  it must "produce the output of both DASUs when values are submitted to the BSDB" in {
+    val latch = new CountDownLatch(4)
+    latchRef.set(latch)
+    
+    val iasioTemp = buildIasioToSubmit(temperatureID, 5);
+    val iasioStrenght = buildIasioToSubmit(strenghtID, 10);
+
+    // Desable the autorefresh to avoid replication
+    logger.info("Disabling auto-refresh of the output by the DASU")
+    supervisor.enableAutoRefreshOfOutput(false)
+
+    // We expect to see in the BSDB the iasio (iasio) we just sent
+    // plus the output produced by the DASU
+    logger.info("Publishing IASValues {} and {}", iasioTemp.id, iasioStrenght.id)
+    iasiosProducer.push(iasioTemp)
+    iasiosProducer.push(iasioStrenght)
+    
+    // Wait until the output is produced
+    logger.info("Waiting for the output from the DASU...")
+    assert(latch.await(1, TimeUnit.MINUTES))
+    
+    val receivedIds=receivedIasValues.map(_.id)
+    
+    assert(receivedIds.forall(id =>
+        id==temperatureID.id || 
+        id=="TemperatureAlarm" ||
+        id==strenghtID.id ||
+        id=="StrenghtAlarm"))
   }
 
 }
