@@ -1,20 +1,43 @@
 package org.eso.ias.webserversender;
 
 import java.net.URI;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
 import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
+import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
+import org.eso.ias.kafkautils.KafkaHelper;
+import org.eso.ias.kafkautils.KafkaIasiosConsumer;
+import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener;
+import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
+import org.eso.ias.prototype.input.java.IasValueJsonSerializer;
+import org.eso.ias.prototype.input.java.IASValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class WebServerSender {
+@WebSocket(maxTextMessageSize = 64 * 1024)
+public class WebServerSender implements IasioListener, Runnable {
 
-  /**
-   * Identifier
-   */
-  String id;
-
+	/**
+	 * Identifier
+	 */
+	String id;
+	
+	/**
+	 * WebSocket session required to send messages to the Web server
+	 */
+	public Session session;
+	
+	/**
+	 * IAS Core Kafka Consumer to get messages from the Core
+	 */
+	KafkaIasiosConsumer consumer;
+	
 	/**
 	 * Web socket client
 	 */
@@ -23,67 +46,177 @@ public class WebServerSender {
 	/**
 	 * Topic defined to send messages to the IAS Core to the IAS Web Server
 	 */
-	String kafkaTopic = "test";
+	String kafkaTopic;
 
 	/**
-	 * Custom socket
+	 * Web Server URI as String
 	 */
-	KafkaWebSocketConnector connector;
-
+	String webserverUri;
+	
 	/**
-	 * Web Server URI
+	 * Same as the webserverUri but as a URI object 
 	 */
-	String webserverUri = "ws://localhost:8000/core/";
-
 	URI uri;
-
-	ClientUpgradeRequest request = new ClientUpgradeRequest();
-
+	
 	/**
-	 * WebSocket session required to send messages to the Web server
-	 */
-	Session session;
+	 * The serializer/deserializer to convert the string
+	 * received by the BSDB in a IASValue
+	*/
+	private final IasValueJsonSerializer serializer = new IasValueJsonSerializer();
 
 	/**
 	 * The logger
 	 */
 	private static final Logger logger = LoggerFactory.getLogger(WebServerSender.class);
-
-  /**
+	
+	/**
+	 * The interface of the listener to be notified of Strings received
+	 * by the WebServer sender.
+	 */
+	public interface WebServerSenderListener {
+		
+		public void stringEventSent(String event);
+	}
+	
+	/**
+	 * The listener to be notified of Strings received
+	 * by the WebServer sender.
+	 */
+	WebServerSenderListener listener;
+	
+	/**
+	 * Count down to wait until the connection is established
+	 */
+	private CountDownLatch connectionReady;
+	
+	/**
 	 * Constructor
 	 *
-	 * @param id Identifier of the WebServerSender
+   	 * @param id Identifier of the KafkaWebSocketConnector
 	 * @param kafkaTopic Topic defined to send messages to the IAS Core to the IAS Web Server
+	 * TODO: Add servers to the arguments instead of use the default ones
+	 * @param webserverUri 
+	 * @param listener The listener of the messages received by the server
 	 */
-	public WebServerSender(String id, String kafkaTopic) {
-		this.id = id;
-		this.kafkaTopic = kafkaTopic;
-    this.connector = new KafkaWebSocketConnector(this.id, this.kafkaTopic);
+	public WebServerSender(String id, String kafkaTopic, String webserverUri, WebServerSenderListener listener) {
+    	this.id = id;
+    	this.kafkaTopic = kafkaTopic;
+		this.webserverUri = webserverUri;
+		this.listener = listener;
+		this.consumer = new KafkaIasiosConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, kafkaTopic, this.id);
 	}
 
+	/**
+	 * Operations performed on connection close
+	 *
+	 * @param statusCode
+	 * @param reason
+	 */
+	@OnWebSocketClose
+	public void onClose(int statusCode, String reason) {
+	   logger.info("WebSocket connection closed:" + statusCode + ", " + reason);
+	   this.session = null;
+	   this.consumer.tearDown();
+	}
 
+	/**
+	 * Operations performed on connection start
+	 *
+	 * @param session
+	 */
+	@OnWebSocketConnect
+	public void onConnect(Session session) {
+	   logger.info("WebSocket got connect: %s%n",session);
+	   this.session = session;
+	   this.connectionReady.countDown();
+	   try {
+	       this.consumer.setUp();
+	       this.consumer.startGettingEvents(StartPosition.END, this);
+	       logger.info("Starting to listen events\n");
+	   }
+	   catch (Throwable t) {
+	       logger.error("WebSocket couldn't send the message",t);
+	   }
+	}
+	
+	@OnWebSocketMessage
+    public void onMessage(String message) {
+		notifyListener(message);
+    }
+
+	/**
+	 * This method could get notifications for messages
+	 * published before depending on the log and offset
+	 * retention times. Therefore it discards the strings
+	 * not published by this test
+	 * @throws Exception
+	 *
+	 * @see org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener#stringEventReceived(java.lang.String)
+	 */
+	@Override
+	public synchronized void iasioReceived(IASValue<?> event) {
+		try {
+			String value = serializer.iasValueToString(event);
+			this.session.getRemote().sendStringByFuture(value);
+			this.notifyListener(value);
+		}
+		catch (Exception e){
+			logger.error("Cannot send messages to the Web Server", e);
+		}
+	}
+	
 	/**
 	 * Initializes the WebSocket
 	 */
 	public void run() {
 		try {
+			this.connectionReady = new CountDownLatch(1);
 			this.uri = new URI(this.webserverUri);
 			this.client.start();
-		    this.client.connect(this.connector, this.uri, this.request);
-		    logger.info("Connecting to : " + uri.toString());
-		    while(this.connector.session==null) {
-		    	TimeUnit.MILLISECONDS.sleep(100);
-		    }
+			this.client.connect(this, this.uri, new ClientUpgradeRequest());
+			if(!this.connectionReady.await(1, TimeUnit.MINUTES)) {
+				logger.error("WebSocketSender cannot establish the connection with the server.");
+				System.exit(1); 
+			}
+			logger.debug("Connection started!");
+		}
+		catch( InterruptedException e) {
+			this.stop();
 		}
 		catch( Exception e) {
 			logger.error("Error on WebSocket connection");
 		}
+		
 	}
 
+	/**
+	 * Shutdown the WebSocket client
+	 */
+	public void stop() {
+		try {
+			this.client.stop();
+			logger.debug("Connection stopped!");
+		}
+		catch( Exception e) {
+			logger.error("Error on Websocket stop");
+		}
+	}
 
+	/**
+	 * Notify the passed string to the listener. 
+	 * 
+	 * @param strToNotify The string to notify to the listener 
+	 */
+	protected void notifyListener(String strToNotify) {
+		if(listener != null) {
+			listener.stringEventSent(strToNotify);
+		}
+		
+	}
+	
 	public static void main(String[] args) throws Exception {
 
-		WebServerSender ws = new WebServerSender("WebServerSender", "test");
+		WebServerSender ws = new WebServerSender("WebServerSender", "test", "ws://localhost:8000/core/", null);
 		ws.run();
 
 	}
