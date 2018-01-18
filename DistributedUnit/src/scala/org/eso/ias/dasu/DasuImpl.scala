@@ -157,7 +157,7 @@ class DasuImpl (
    * Propagates the inputs received from the BSDB to each of the ASCEs
    * in the DASU generating the output of the entire DASU.
    * 
-   * THis method runs after the refresh time interval elapses.
+   * This method runs after the refresh time interval elapses.
    * All the iasios collected in the time interval will be passed to the first level of the ASCEs
    * and up till the last ASCE generates the output of the DASU itself.
    * Each ASCE runs the TF and produces another output to be propagated to the next level.

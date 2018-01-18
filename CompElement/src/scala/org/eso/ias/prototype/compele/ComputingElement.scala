@@ -317,7 +317,7 @@ abstract class ComputingElement[T](
    * 
    * @param iasValues the new inputs received from the DASU
    * @return the new output generated applying the TF to the inputs and the new state of the ASCE
-   *         The otput is None if at least one of the inputs has not yet been initialized
+   *         The output is None if at least one of the inputs has not yet been initialized
    */
   def update(iasValues: Set[IASValue[_]]): (Option[InOut[T]], AsceStates.State) = {
     require(Option(iasValues).isDefined,"Set of inputs not defined")
