@@ -94,7 +94,6 @@ public class WebServerSender implements IasioListener, Runnable {
 	 *
    	 * @param id Identifier of the KafkaWebSocketConnector
 	 * @param kafkaTopic Topic defined to send messages to the IAS Core to the IAS Web Server
-	 * TODO: Add servers to the arguments instead of use the default ones
 	 * @param webserverUri 
 	 * @param listener The listener of the messages received by the server
 	 */
@@ -104,6 +103,20 @@ public class WebServerSender implements IasioListener, Runnable {
 		this.webserverUri = webserverUri;
 		this.listener = listener;
 		this.consumer = new KafkaIasiosConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, kafkaTopic, this.id);
+	}
+	
+	/**
+	 * Constructor
+	 *
+   	 * @param id Identifier of the KafkaWebSocketConnector
+	 * @param webserverUri 
+	 * @param listener The listener of the messages received by the server
+	 */
+	public WebServerSender(String id, String webserverUri, WebServerSenderListener listener) {
+    	this.id = id;
+		this.webserverUri = webserverUri;
+		this.listener = listener;
+		this.consumer = new KafkaIasiosConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, KafkaHelper.IASIOs_TOPIC_NAME, this.id);
 	}
 
 	/**
@@ -216,7 +229,7 @@ public class WebServerSender implements IasioListener, Runnable {
 	
 	public static void main(String[] args) throws Exception {
 
-		WebServerSender ws = new WebServerSender("WebServerSender", "test", "ws://localhost:8000/core/", null);
+		WebServerSender ws = new WebServerSender("WebServerSender", "ws://localhost:8000/core/", null);
 		ws.run();
 
 	}
