@@ -46,11 +46,11 @@ import org.eso.ias.prototype.input.java.IdentifierType
  */
 case class InOut[A](
     value: Option[_ >: A],
-    val id: Identifier,
-    val refreshRate: Int,    
-    val mode: OperationalMode,
-    val validity: Validity,
-    val iasType: IASTypes) {
+    id: Identifier,
+    refreshRate: Int,    
+    mode: OperationalMode,
+    validity: Validity,
+    iasType: IASTypes) {
   require(Option[Identifier](id).isDefined,"The identifier must be defined")
   require(refreshRate>=InOut.MinRefreshRate,"Invalid refresh rate (too low): "+refreshRate)
   require(Option(validity).isDefined,"Undefined validity is not allowed")
@@ -187,9 +187,6 @@ object InOut {
   def apply[T](iasValue: IASValue[T], refreshRate: Int) = {
     val id = Identifier(iasValue.fullRunningId)
     val value = Option[T](iasValue.value)
-    // TODO: the validity should be set by the plugins (or other DASUs) i.e.
-    //       be part of the IASValue. Setting a value as Reliable by default does 
-    //       not work (@see Issue #19 on github)
     val validity = Validity(iasValue.iasValidity)
     val mode = iasValue.mode
     val iasType = iasValue.valueType
