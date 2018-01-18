@@ -197,7 +197,6 @@ class DasuImpl (
       
       val outputs = dasuTopology.levels.foldLeft(iasios){ (s: Set[IASValue[_]], ids: Set[String]) => s ++ updateOneLevel(ids, s) }
       
-      // TODO: update the validity!!!
       outputs.find(_.id==dasuOutputId)
   }
   
