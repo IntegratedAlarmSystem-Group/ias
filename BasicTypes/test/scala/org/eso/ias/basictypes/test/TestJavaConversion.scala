@@ -53,16 +53,16 @@ class TestJavaConversion  extends FlatSpec {
       // Validity
       val validity = Validity(RELIABLE)
       // The HIOs
-      val longHIO = InOut[Long](longValue,doubleHioId,refRate,mode,validity,IASTypes.LONG)
-      val intHIO = InOut[Int](intValue,doubleHioId,refRate,mode,validity,IASTypes.INT)
-      val shortHIO = InOut[Short](shortValue,doubleHioId,refRate,mode,validity,IASTypes.SHORT)
-      val byteHIO = InOut[Byte](byteValue,doubleHioId,refRate,mode,validity,IASTypes.BYTE)
-      val charHIO = InOut[Char](charValue,doubleHioId,refRate,mode,validity,IASTypes.CHAR)
-      val stringHIO = InOut[String](stringValue,doubleHioId,refRate,mode,validity,IASTypes.STRING)
-      val boolHIO = InOut[Boolean](boolValue,doubleHioId,refRate,mode,validity,IASTypes.BOOLEAN)
-      val alarmHIO = InOut[AlarmSample](alarmValue,alarmHioId,refRate,alarmMode,validity,IASTypes.ALARM)
-      val doubleHIO = InOut[Double](doubleValue,doubleHioId,refRate,doubleMode,validity,IASTypes.DOUBLE)
-      val floatHIO = InOut[Float](floatValue,doubleHioId,refRate,mode,validity,IASTypes.FLOAT)
+      val longHIO = InOut[Long](longValue,System.currentTimeMillis(),doubleHioId,refRate,mode,validity,IASTypes.LONG)
+      val intHIO = InOut[Int](intValue,System.currentTimeMillis(),doubleHioId,refRate,mode,validity,IASTypes.INT)
+      val shortHIO = InOut[Short](shortValue,System.currentTimeMillis(),doubleHioId,refRate,mode,validity,IASTypes.SHORT)
+      val byteHIO = InOut[Byte](byteValue,System.currentTimeMillis(),doubleHioId,refRate,mode,validity,IASTypes.BYTE)
+      val charHIO = InOut[Char](charValue,System.currentTimeMillis(),doubleHioId,refRate,mode,validity,IASTypes.CHAR)
+      val stringHIO = InOut[String](stringValue,System.currentTimeMillis(),doubleHioId,refRate,mode,validity,IASTypes.STRING)
+      val boolHIO = InOut[Boolean](boolValue,System.currentTimeMillis(),doubleHioId,refRate,mode,validity,IASTypes.BOOLEAN)
+      val alarmHIO = InOut[AlarmSample](alarmValue,System.currentTimeMillis(),alarmHioId,refRate,alarmMode,validity,IASTypes.ALARM)
+      val doubleHIO = InOut[Double](doubleValue,System.currentTimeMillis(),doubleHioId,refRate,doubleMode,validity,IASTypes.DOUBLE)
+      val floatHIO = InOut[Float](floatValue,System.currentTimeMillis(),doubleHioId,refRate,mode,validity,IASTypes.FLOAT)
       
       // Ensure we are testing all possible types
       val hios = List (longHIO,intHIO,shortHIO,byteHIO,charHIO,stringHIO,boolHIO,alarmHIO,doubleHIO,floatHIO)
@@ -75,13 +75,13 @@ class TestJavaConversion  extends FlatSpec {
     val doubleVal = JavaConverter.inOutToIASValue[Double](f.doubleHIO).asInstanceOf[IasDouble]
     assert(doubleVal.valueType==f.doubleHIO.iasType)
     assert(doubleVal.mode==f.doubleHIO.mode)
-    assert(doubleVal.timestamp==f.doubleHIO.actualValue.timestamp)
+    assert(doubleVal.timestamp==f.doubleHIO.timestamp)
     assert(doubleVal.id==f.doubleHIO.id.id)
     assert(doubleVal.fullRunningId==f.doubleHIO.id.fullRunningID)
-    assert(doubleVal.value==f.doubleHIO.actualValue.value.get)
+    assert(doubleVal.value==f.doubleHIO.value.get)
     
     val alarmVal = JavaConverter.inOutToIASValue[AlarmSample](f.alarmHIO).asInstanceOf[IasAlarm]
-    assert(alarmVal.value==f.alarmHIO.actualValue.value.get)
+    assert(alarmVal.value==f.alarmHIO.value.get)
   }
   
   it must "Update a HIO with the values from a IASValue" in {
@@ -95,7 +95,7 @@ class TestJavaConversion  extends FlatSpec {
     assert(newdoubleVal.mode==hio.mode)
     assert(newdoubleVal.id==hio.id.id)
     assert(newdoubleVal.fullRunningId==hio.id.fullRunningID)
-    assert(newdoubleVal.value==hio.actualValue.value.get)
+    assert(newdoubleVal.value==hio.value.get)
     
     val alarmVal = JavaConverter.inOutToIASValue[AlarmSample](f.alarmHIO).asInstanceOf[IasAlarm]
     val alarm = alarmVal.value
@@ -103,7 +103,7 @@ class TestJavaConversion  extends FlatSpec {
     val newAlarmValue = alarmVal.updateValue(newAlarm).asInstanceOf[IasAlarm]
     val alarmHio = JavaConverter.updateHIOWithIasValue(f.alarmHIO,newAlarmValue)
     
-    assert(alarmHio.actualValue.value.get.asInstanceOf[AlarmSample]==AlarmSample.CLEARED)
+    assert(alarmHio.value.get.asInstanceOf[AlarmSample]==AlarmSample.CLEARED)
   }
   
 }

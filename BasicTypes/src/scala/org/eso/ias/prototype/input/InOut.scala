@@ -33,6 +33,7 @@ import org.eso.ias.prototype.input.java.IdentifierType
  * <code>InOut</code> is immutable.
  * 
  * @param actualValue: the actual value of this InOut (can be undefined) 
+ * @param timestamp: the time when this value has been set
  * @param id: The unique ID of the monitor point
  * @param refreshRate: The expected refresh rate (msec) of this monitor point
  *                     (to be used to assess its validity)
@@ -46,6 +47,7 @@ import org.eso.ias.prototype.input.java.IdentifierType
  */
 case class InOut[A](
     value: Option[_ >: A],
+    timestamp: Long,
     id: Identifier,
     refreshRate: Int,    
     mode: OperationalMode,
@@ -56,14 +58,24 @@ case class InOut[A](
   require(Option(validity).isDefined,"Undefined validity is not allowed")
   require(Option[IASTypes](iasType).isDefined,"The type must be defined")
   
-  val  actualValue: InOutValue[A] = new InOutValue(value)
-  if (actualValue.value.isDefined) require(InOut.checkType(actualValue.value.get,iasType),"Type mismatch: ["+actualValue.value.get+"] is not "+iasType)
+  value.foreach(v => require(InOut.checkType(v,iasType),"Type mismatch: ["+v+"] is not "+iasType))
   
   override def toString(): String = {
-    "Monitor point " + id.toString() +" of IAS type " +iasType+"\n\t" +  
-    mode.toString() + "\n\t" +
-    validity.toString() +"\n\t" +
-    (if (actualValue.value.isEmpty) "No value" else "Value: "+actualValue.value.get.toString())
+    val ret = new StringBuilder("Monitor point ")
+    ret.append(id.toString())
+    ret.append(" of IAS type ")
+    ret.append(iasType)
+    ret.append("\n\t")
+    ret.append(mode.toString())
+    ret.append("\n\t")
+    ret.append(validity.toString())
+    ret.append("\n\t")
+    if (value.isEmpty) {
+      ret.append("No value")
+    } else {
+       ret.append("Value: "+value.get.toString())
+    }
+    ret.toString()
   }
   
   /**
@@ -73,7 +85,7 @@ case class InOut[A](
    */
   def updateMode(newMode: OperationalMode): InOut[A] = {
     if (newMode==mode) this
-    else this.copy(mode=newMode)
+    else this.copy(mode=newMode,timestamp=System.currentTimeMillis())
   }
   
   /**
@@ -91,8 +103,8 @@ case class InOut[A](
    * @return A new InOut with updated value and validity
    */
   def update[B >: A](newValue: Option[B], valid: Validity): InOut[A] = {
-    if (newValue==actualValue.value && valid==validity) this 
-    else InOut(newValue,id,refreshRate,mode,valid,iasType)
+    if (newValue==value && valid==validity) this 
+    else InOut(newValue,System.currentTimeMillis(),id,refreshRate,mode,valid,iasType)
   }
   
   /**
@@ -102,7 +114,7 @@ case class InOut[A](
    */
   def updateValidity(valid: Validity): InOut[A] = {
     if (valid==validity) this
-    else this.copy(validity=valid)
+    else this.copy(validity=valid,timestamp=System.currentTimeMillis())
   }
   
   /**
@@ -118,7 +130,7 @@ case class InOut[A](
     require(v.id==this.id.id,"Identifier mismatch: received "+v.id+", expected "+this.id.id)
     assert(v.valueType==this.iasType)
     
-    updateValue(Option[A](v.value)).updateMode(v.mode).updateValidity(v.iasValidity)
+    InOut(v,this.refreshRate)
   }
 }
 
@@ -173,7 +185,7 @@ object InOut {
   def apply[T](id: Identifier,
     refreshRate: Int,
     iasType: IASTypes): InOut[T] = {
-    InOut[T](None,id,refreshRate,OperationalMode.UNKNOWN,UNRELIABLE,iasType)
+    InOut[T](None,System.currentTimeMillis(),id,refreshRate,OperationalMode.UNKNOWN,UNRELIABLE,iasType)
   }
   
   /**
@@ -187,10 +199,11 @@ object InOut {
   def apply[T](iasValue: IASValue[T], refreshRate: Int) = {
     val id = Identifier(iasValue.fullRunningId)
     val value = Option[T](iasValue.value)
+    val tStamp = iasValue.timestamp
     val validity = Validity(iasValue.iasValidity)
     val mode = iasValue.mode
     val iasType = iasValue.valueType
-    new InOut[T](value, id,refreshRate ,mode, validity,iasType)
+    new InOut[T](value, tStamp,id,refreshRate ,mode, validity,iasType)
   }
 
 }

@@ -31,7 +31,7 @@ object JavaConverter {
   def inOutToIASValue[T](io: InOut[_]): IASValue[_] = {
     require(Option[InOut[_]](io).isDefined)
     
-    val ret = if (io.actualValue.value.isEmpty) {
+    val ret = if (io.value.isEmpty) {
       IASValue.buildIasValue(
           null, 
           Long.MinValue,io.mode,
@@ -40,8 +40,8 @@ object JavaConverter {
           io.iasType)
     } else {
       IASValue.buildIasValue(
-          io.actualValue.value.get, 
-          io.actualValue.timestamp,
+          io.value.get, 
+          io.timestamp,
           io.mode,
           io.validity.iasValidity,
           io.id.fullRunningID,
