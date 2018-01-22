@@ -57,7 +57,7 @@ class DasuOneASCETest extends FlatSpec with OutputListener {
   val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervId)
   
   // The DASU to test
-  val dasu = new DasuImpl(dasuIdentifier,outputPublisher,inputsProvider,cdbReader)
+  val dasu = new DasuImpl(dasuIdentifier,outputPublisher,inputsProvider,cdbReader,1)
   
   // The identifer of the monitor system that produces the temperature in input to teh DASU
   val monSysId = new Identifier("MonitoredSystemID",IdentifierType.MONITORED_SOFTWARE_SYSTEM)
