@@ -341,6 +341,7 @@ abstract class ComputingElement[T](
       state = ComputingElementState.transition(state, new InputsInitialized())
     }
     
+    // Apply the transfer function to the inputs
     val (newOut, newState) = if (state.canRunTF()) {
       lastOutputUpdateTStamp=System.currentTimeMillis()
       transfer(Map.empty++inputs,output,state)
