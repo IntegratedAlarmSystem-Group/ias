@@ -26,7 +26,7 @@ class StatsCollector(
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
   
-  logger.info("Building the time scheduler for DASU [{}]",dasuId)
+  logger.info("Building the statistics collector for DASU [{}]",dasuId)
   
   val margin = {
     val prop = Option(System.getProperties.getProperty(TimeScheduler.MarginPropName))
@@ -50,7 +50,7 @@ class StatsCollector(
     logger.warn("Generation of stats for DASU [{}] disabled",dasuId)
   }
   
-  logger.info("DASU [{}] time scheduler built",dasuId)
+  logger.info("DASU [{}] statistics collector built",dasuId)
   
   /**
    * Calculate the (aprox) mean of last executions.
