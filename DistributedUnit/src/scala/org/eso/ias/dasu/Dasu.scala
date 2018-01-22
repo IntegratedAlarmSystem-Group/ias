@@ -35,50 +35,48 @@ import scala.util.Failure
 import scala.util.Success
 
 /**
- * The Distributed Alarm System Unit or DASU.
+ * The Distributed Alarm System Unit (DASU).
  * 
  * The DASU, once notified of new inputs received from the BSDB (or other sources),
- * sends the IASIOs to the ASCEs to produce the output.
+ * forwards the IASIOs to the ASCEs to produce the output.
  * If no new inputs arrived the DASU generate the output anyhow to notify that the DASU is alive.
  * At a first glance it seems enough to check the validity of the last set of inputs to assign 
  * the validity of the output.
  * 
- * The DASU is initialized in the constructor but to let it start processing events,
+ * The DASU is initialized in the constructor: to let it start processing events,
  * the start() method must be called.
  * 
  * The DASU must update the output even if it does not receive any input
  * to refresh the output and send it to the BSDB.
- * After generating the output, the DASU schedules a timer task for refreshing
- * the output. This task must be executed only if no inputs arrive before otherwise
- * must be cancelled and anew scheduled.
- * The calculation of the point in time to refresh the output is delegated to [[TimeScheduler]].
- * The refresh of the output when no inputs arrive must be explicitly activate
- * and can be suspended resumed at any time.
- * 
- * The automatic refresh of the output when no new input arrive is not active by default
- * but need to be activated by calling enableAutoRefreshOfOutput()
+ * The automatic refresh of the output when no new inputs arrive is not active by default
+ * but need to be activated by calling enableAutoRefreshOfOutput(true).
  * 
  * Newly received inputs are immediately processed unless they arrive so often
- * to risk to have the CPU running at 100%.
- * Normally the DASU has a thread that refreshes the output even if there are no inputs:
- * it must be explicitly started by invoking autoUpdateOfOutput that will normally be done by the 
- * Supervisor.
- * In the case that the automatic refresh rate of the input has been activated, newly received
- * inputs are immediately processed only if the next refresh is not scheduled before
- * the minimum allowed refresh rate. If it is the case then the inputs are buffered 
- * and will be processed later.
- * This is a very easy strategy that avoids rescheduling the refresh after 
- * each publication of the output. 
- * [[TimeScheduler]] was thought to implement a more complex heuristic but
- * we will not use it unless we will need it.  
+ * to need the CPU running at 100%. In this case the DASU delayed the evaluation
+ * of the output collecting the inputs intil the throttling time interval elapses.
  * 
  * @constructor create a DASU with the given identifier
  * @param dasuIdentifier the identifier of the DASU
  */
 abstract class Dasu(val dasuIdentifier: Identifier) extends InputsListener {
   
+  /** The logger */
+  private val logger = IASLogger.getLogger(this.getClass)
+  
   /** The ID of the DASU */
   val id = dasuIdentifier.id
+  
+  /**
+   * The minimum allowed refresh rate when a flow of inputs arrive (i.e. the throttiling) 
+   * is given by [[TimeScheduler.DefaultMinAllowedRefreshRate]] 
+   * if not overridden by a java property
+   */
+  val throttling = {
+    val prop = Option(System.getProperties.getProperty(Dasu.MinAllowedRefreshRatePropName))
+    prop.map(s => Try(s.toInt).getOrElse(Dasu.DefaultMinAllowedRefreshRate)).getOrElse(Dasu.DefaultMinAllowedRefreshRate).abs.toLong
+  }
+  logger.debug("Output calculation throttling of DASU [{}] set to {}",id,throttling.toString())
+      
   
   /** The IDs of the inputs of the DASU */
   def getInputIds(): Set[String]
@@ -93,19 +91,13 @@ abstract class Dasu(val dasuIdentifier: Identifier) extends InputsListener {
   def start(): Try[Unit]
   
   /**
-   * Deactivate the automatic update of the output
-   * in case no new inputs arrive.
-   */
-  def disableAutoRefreshOfOutput()
-  
-  /**
-   * Activate the automatic update of the output
+   * Enable/disable the automatic update of the output
    * in case no new inputs arrive.
    * 
    * Most likely, the value of the output remains the same 
    * while the validity could change.
    */
-  def enableAutoRefreshOfOutput()
+  def enableAutoRefreshOfOutput(enable: Boolean)
   
   /**
    * Updates the output with the inputs received
@@ -121,17 +113,11 @@ abstract class Dasu(val dasuIdentifier: Identifier) extends InputsListener {
   def cleanUp()
 }
 
+/** Companion object */
 object Dasu {
-  /** The time interval to log statistics (minutes) */
-  val DeafaultStatisticsTimeInterval = 10
+  /** The minimum possible refresh rate */
+  val DefaultMinAllowedRefreshRate = 250
   
-  /** The name of the java property to set the statistics generation time interval */
-  val StatisticsTimeIntervalPropName = "ias.dasu.stats.timeinterval"
-  
-  /** The actual time interval to log statistics (minutes) */
-  val StatisticsTimeInterval: Int = {
-    val prop = Option(System.getProperties.getProperty(StatisticsTimeIntervalPropName))
-    prop.map(s => Try(s.toInt).getOrElse(DeafaultStatisticsTimeInterval)).getOrElse(DeafaultStatisticsTimeInterval).abs
-  }
-  
+  /** The name of the java property to set the minimum allowed refresh rate */
+  val MinAllowedRefreshRatePropName = "ias.dasu.min.allowed.output.refreshrate"
 }

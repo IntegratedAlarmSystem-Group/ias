@@ -29,25 +29,36 @@ import java.util.concurrent.TimeUnit
 import org.eso.ias.cdb.pojos.DasuDao
 
 /**
- * The implementation of the DASU
+ * The implementation of the DASU.
+ * 
+ * A DASU normally has 2 threads running:
+ * - the automatic resending of the output when no new input arrives
+ * - a thread for the throttling to avoid that processing too many 
+ *   inputs takes 100% CPU
+ *   
+ * 
+ * 
  * 
  * @param the identifier of the DASU
  * @param outputPublisher the publisher to send the output
  * @param inputSubscriber the subscriber getting events to be processed 
  * @param cdbReader the CDB reader to get the configuration of the DASU from the CDB
- * 
+ * @param autoSendTimeInterval refresh rate (msec) to automatically send the output  
+ *                             when no new inputs have been received
  */
 class DasuImpl (
     dasuIdentifier: Identifier,
     private val outputPublisher: OutputPublisher,
     private val inputSubscriber: InputSubscriber,
-    cdbReader: CdbReader)
-    extends Dasu(dasuIdentifier) with Runnable {
+    cdbReader: CdbReader,
+    val autoSendTimeInterval: Long)
+    extends Dasu(dasuIdentifier) {
   require(Option(dasuIdentifier).isDefined,"Invalid Identifier")
   require(dasuIdentifier.idType==IdentifierType.DASU,"Invalid identifier type for DASU")
   require(Option(outputPublisher).isDefined,"Invalid output publisher")
   require(Option(inputSubscriber).isDefined,"Invalid input subscriber")
   require(Option(cdbReader).isDefined,"Invalid CDB reader")
+  require(Option(autoSendTimeInterval).isDefined && autoSendTimeInterval>0,"Invalid auto-send time interval")
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
@@ -104,40 +115,73 @@ class DasuImpl (
   require(asceThatProducesTheOutput.isDefined && !asceThatProducesTheOutput.isEmpty,"ASCE producing output not found")
   logger.info("The output [{}] of the DASU [{}] is produced by [{}] ASCE",dasuOutputId,id,asceThatProducesTheOutput.get)
   
-  // Get the required refresh rate i.e. the rate to produce the output 
-  // of the DASU that is given by the ASCE that produces such IASIO
-  val refreshRate = asceDaos.find(_.getOutput.getId==dasuOutputId).map(asce => asce.getOutput().getRefreshRate())
-  require(refreshRate.isDefined,"Refresh rate not found!")
-  logger.info("The DASU [{}] produces the output [{}] at a rate of {}ms",id,dasuOutputId,""+refreshRate.get)
+  // The refresh rate of the output
+  // (it is the refresh rate of the IASIO of the ASCE that produces the output of the DASU)
+  val outputRefreshRate = asceDaos.find(_.getOutput.getId==dasuOutputId).map(asce => asce.getOutput().getRefreshRate())
+  require(outputRefreshRate.isDefined,"Refresh rate of the output not found!")
   
   /**
-   * Values received in input from plugins or other DASUs (BSDB)
+   * Values that have been received in input from plugins or other DASUs (BSDB)
    * and not yet processed
+   * 
+   * TODO: protect the map against access from multiple thrads
    */
   val notYetProcessedInputs: MutableMap[String,IASValue[_]] = MutableMap()
+  
+  /** 
+   *  The last sent output:
+   *  this is sent again if no new inputs arrives and the autoSendTimerTask is running
+   */
+  val lastSentOutput = new AtomicReference[Option[IASValue[_]]](None)
+  
+  /** 
+   *  The point in time when the output has been sent to the
+   *  BSDB either due to new inputs or auto-refresh
+   */
+  val lastSentTime = new AtomicLong(0)
   
   /** The thread executor service */
   val scheduledExecutor = new ScheduledExecutor(id)
   
-  /** 
-   *  The helper to schedule the next refresh of the output
-   *  when no inputs have been received
-   */
-  val timeScheduler: TimeScheduler = new TimeScheduler(dasuDao)
-  
-  /**
-   * The point in time when the output has been generated
-   * for the last time
-   */
-  val lastUpdateTime = new AtomicLong(Long.MinValue)
-  
-  /** True if the automatic refresh of the output has been enabled */
+  /** True if the automatic re-sending of the output has been enabled */
   val timelyRefreshing = new AtomicBoolean(false)
   
-  /** The task that refreshes the output */
-  val refreshTask: AtomicReference[ScheduledFuture[_]] = new AtomicReference[ScheduledFuture[_]]()
   
-  logger.debug("DASU [{}] initializing the publisher", id)
+  
+  /** 
+   *  The task to delay the generation the output 
+   *  when new inputs must be processed 
+   */
+  val throttlingTask = new AtomicReference[Option[ScheduledFuture[_]]](None)
+  
+  /**
+   * The Runnable to update the output when it is delayed by the throttling
+   */
+  val delayedUpdateTask = new Runnable {
+      override def run() = updateAndPublishOutput()
+  }
+  
+  /**
+   * The point in time of the last time when 
+   * the output has been generated and published
+   */
+  val lastUpdateTime = new AtomicLong(0)
+  
+  /** 
+   *  The task that timely send the last computed output
+   *  when no new inputs arrived: initially disabled, must be enabled 
+   *  invoking enableAutoRefreshOfOutput.
+   *  
+   *  If a new output is generated before this time interval elapses,
+   *  this task is delayed of the duration of autoSendTimeInterval msecs.  
+   */
+  val autoSendTimerTask: AtomicReference[ScheduledFuture[_]] = new AtomicReference[ScheduledFuture[_]]()
+  
+  /** Closed: the DASU does not process inputs */
+  val closed = new AtomicBoolean(false)
+  
+  logger.debug("DASU [{}]: initializing the publisher", id)
+  
   val outputPublisherInitialized = outputPublisher.initializePublisher()
   outputPublisherInitialized match {
     case Failure(f) => logger.error("DASU [{}] failed to initialize the publisher: NO output will be produced", id,f)
@@ -151,7 +195,29 @@ class DasuImpl (
     case Success(s) => logger.info("DASU [{}] subscriber successfully initialized",id)
   }
   
+  /** The generator of statistics */
+  val statsCollector = new StatsCollector(id)
+  
   logger.info("DASU [{}] built", id)
+  
+  /**
+   * Reschedule the auto send time interval if the output is generated before
+   * the autoSendTimeInterval elapses.
+   */
+  private def rescheduleAutoSendTimeInterval() = synchronized {
+    val autoSendIsEnabled = timelyRefreshing.get()
+    if (autoSendIsEnabled) {
+      
+      val lastTimerScheduledFeature: Option[ScheduledFuture[_]] = Option(autoSendTimerTask.get)
+      lastTimerScheduledFeature.foreach(_.cancel(false))
+      val runnable = new Runnable {
+            /** The task to refresh the output when no new inputs have been received */
+            override def run() = publishOutput()
+        }
+        val newTask=scheduledExecutor.scheduleWithFixedDelay(runnable, autoSendTimeInterval, autoSendTimeInterval, TimeUnit.MILLISECONDS)
+        autoSendTimerTask.set(newTask)
+    }
+  }
   
   /**
    * Propagates the inputs received from the BSDB to each of the ASCEs
@@ -195,46 +261,75 @@ class DasuImpl (
             else s})
       }
       
-      val outputs = dasuTopology.levels.foldLeft(iasios){ (s: Set[IASValue[_]], ids: Set[String]) => s ++ updateOneLevel(ids, s) }
-      
-      outputs.find(_.id==dasuOutputId)
+      if (!closed.get) {
+        val outputs = dasuTopology.levels.foldLeft(iasios){ (s: Set[IASValue[_]], ids: Set[String]) => s ++ updateOneLevel(ids, s) }
+        outputs.find(_.id==dasuOutputId)
+      } else {
+        None
+      }
   }
   
   /**
-   * Updates the output with the inputs received
+   * Updates the output with new inputs have been received from the BSDB.
+   * 
+   * This method is not invoked while automatically re-sending the last computed value.
+   * Such value is in fact stored into lastSentOutput and does not trigger
+   * a recalculation by the DASU. 
    * 
    * @param iasios the inputs received
    * @see InputsListener
    */
   override def inputsReceived(iasios: Set[IASValue[_]]) = synchronized {
+    assert(iasios.size>0)
     
-    // Merge the inputs with the buffered ones to keep ony the last update
+    // Merge the inputs with the buffered ones to keep only the last updated values
     iasios.foreach(iasio => notYetProcessedInputs.put(iasio.id,iasio))
-    if (!timelyRefreshing.get || // Send immediately 
-        refreshTask.get().getDelay(TimeUnit.MILLISECONDS)<=0 || // Timer task
-        // Or execute only if does not happen more often then the minAllowedRefreshRate:
-        (
-            // The delay from last execution is greater then minAllowedRefreshRate
-            System.currentTimeMillis()-lastUpdateTime.get()>=timeScheduler.minAllowedRefreshRate &&
-            // Next timer task will happen later then minAllowedRefreshRate
-            refreshTask.get().getDelay(TimeUnit.MILLISECONDS)>timeScheduler.minAllowedRefreshRate
-        )) {
-      val before = System.currentTimeMillis()
-      val newOutput = propagateIasios(notYetProcessedInputs.values.toSet)
-      val after = System.currentTimeMillis()
-      lastUpdateTime.set(after)
-      notYetProcessedInputs.clear()
-      // We ignore the next execution time provided by the TimeScheduler
-      // with the disadvantage that the TimeScheduler takes into account
-      // the average execution time to produce the output
-      // We call getNextRefreshTime because it publish statistics 
-      // that could help debugging
-      timeScheduler.getNextRefreshTime(after-before)
-      
-      newOutput.foreach( output => {
-        outputPublisher.publish(output) 
-        logger.debug("DASU [{}]: output published",id)})
+    
+    // The new output must be immediately recalculated and sent unless 
+    // * the throttling is already in place (i.e. calculation already delayed)
+    // * the last value has been updated shortly before 
+    //   (i.e. the calculation must be delayed and the throttling activated)
+    val now = System.currentTimeMillis()
+    val afterEndOfThrottling = now>lastUpdateTime.get+throttling
+    val beforeEndOfThrottling = !afterEndOfThrottling
+    val throttlingIsScheduled = throttlingTask.get().isDefined && !throttlingTask.get().get.isDone()
+    
+    (throttlingIsScheduled, beforeEndOfThrottling) match {
+      case (true, true) =>  {} // delayed: do nothing
+      case (true, false) | (false, false) =>  delayedUpdateTask.run() // send immediately
+      case (false, true) => 
+        val delay = lastSentTime.get+throttling-now
+        val schedFeature = scheduledExecutor.schedule(delayedUpdateTask,delay,TimeUnit.MILLISECONDS)
+        throttlingTask.set(Some(schedFeature))
     }
+  }
+  
+  /**
+   * Publish the output to the BSDB
+   */
+  def publishOutput() {
+    lastSentOutput.get.foreach( output => {
+        outputPublisher.publish(output)
+        lastSentTime.set(System.currentTimeMillis())
+        logger.debug("DASU [{}]: output published",id)
+    })
+  }
+  
+  /**
+   * Update the output with the set of inputs collected so far
+   * and send the output to the BSDB.
+   * 
+   * The method delegates the calculation to propapgateIasios
+   */
+  private def updateAndPublishOutput() = {
+    val before = System.currentTimeMillis()
+    lastSentOutput.set(propagateIasios(notYetProcessedInputs.values.toSet))
+    val after = System.currentTimeMillis()
+    lastUpdateTime.set(after)
+    notYetProcessedInputs.clear()
+    publishOutput() 
+    rescheduleAutoSendTimeInterval()
+    statsCollector.updateStats(after-before)
   }
   
   /** 
@@ -245,52 +340,27 @@ class DasuImpl (
     inputSubscriberInitialized.map(x => inputSubscriber.startSubscriber(this, dasuTopology.dasuInputs))
   }
   
-  /** The task to refresh the output when no new inputs have been received */
-  override def run() = {
-    inputsReceived(Set())
-  }
-  
-  /** Cancel the timer task */
-  private def cancelTimerTask() =  synchronized {
-    val oldTask: Option[ScheduledFuture[_]] = Option(refreshTask.getAndSet(null))
-    oldTask.foreach(task => task.cancel(false))
-    
-  }
-  
   /**
-   * Deactivate the automatic update of the output
-   * in case no new inputs arrive.
-   */
-  def disableAutoRefreshOfOutput() = synchronized {
-    val isEnabled = timelyRefreshing.getAndSet(false)
-    if (isEnabled) {
-      cancelTimerTask()
-      logger.info("Dasu [{}]: automatic refresh of output disabled",id)
-    }
-  }
-  
-  /**
-   * Activate the automatic update of the output
+   * Enable/disable the automatic update of the output
    * in case no new inputs arrive.
    * 
    * Most likely, the value of the output remains the same 
    * while the validity could change.
    */
-  def enableAutoRefreshOfOutput() = synchronized {
-    val alreadyActive = timelyRefreshing.getAndSet(true)
-    if (alreadyActive) {
-      logger.warn("DASU [{}]: automatic refresh of output already ative",id)
-    } else {
-      cancelTimerTask()
-      val newTask=scheduledExecutor.scheduleWithFixedDelay(
-          this, 
-          timeScheduler.normalizedRefreshRate, 
-          timeScheduler.normalizedRefreshRate,
-          TimeUnit.MILLISECONDS)
-      refreshTask.set(newTask)
-      logger.info("Dasu [{}]: automatic refresh of output enabled at intervals of {} msecs",
-          id,
-          timeScheduler.normalizedRefreshRate.toString())
+  def enableAutoRefreshOfOutput(enable: Boolean) = synchronized {
+    val alreadyEnabled = timelyRefreshing.getAndSet(enable)
+    (enable, alreadyEnabled) match {
+      case (true, true) => 
+        logger.warn("DASU [{}]: automatic refresh of output already ative",id)
+      case (true, false) => 
+        rescheduleAutoSendTimeInterval()
+        logger.info("DASU [{}]: automatic refresh of output enabled at intervals of {} msecs (aprox)",id, autoSendTimeInterval.toString())
+      case (false , _) => 
+        val oldTask: Option[ScheduledFuture[_]] = Option(autoSendTimerTask.getAndSet(null))
+        oldTask.foreach(task => {
+          task.cancel(false)
+          logger.info("DASU [{}]: automatic refresh of output disaabled",id)  
+        })
     }
   }
   
@@ -298,14 +368,19 @@ class DasuImpl (
    * Release all the resources before exiting
    */
   def cleanUp() {
-    logger.info("DASU [{}]: releasing resources", id)
-    logger.debug("DASU [{}]: stopping the auto-refresh of the output", id)
-    Try(disableAutoRefreshOfOutput())
-    logger.debug("DASU [{}]: releasing the subscriber", id)
-    Try(inputSubscriber.cleanUpSubscriber())
-    logger.debug("DASU [{}]: releasing the publisher", id)
-    Try(outputPublisher.cleanUpPublisher())
-    logger.info("DASU [{}]: cleaned up",id)
+    val alreadyClosed = closed.getAndSet(true)
+    if (alreadyClosed) {
+      logger.warn("DASU [{}]: already cleaned up!", id)
+    } else {
+      logger.info("DASU [{}]: releasing resources", id)
+      logger.debug("DASU [{}]: stopping the auto-refresh of the output", id)
+      Try(enableAutoRefreshOfOutput(false))
+      logger.debug("DASU [{}]: releasing the subscriber", id)
+      Try(inputSubscriber.cleanUpSubscriber())
+      logger.debug("DASU [{}]: releasing the publisher", id)
+      Try(outputPublisher.cleanUpPublisher())
+      logger.info("DASU [{}]: cleaned up",id)  
+    }
   }
   
   /** The inputs of the DASU */
@@ -325,24 +400,28 @@ object DasuImpl {
    * @param outputPublisher: the producer to send outputs of DASUs to the BSDB
    * @param inputSubscriber: the consumer to get values from the BSDB
    * @param cdbReader: the CDB reader
+   * @param autoSendTimeInterval refresh rate (msec) to automatically send the output  
+   *                             when no new inputs have been received
    */
   def apply(
     dasuDao: DasuDao, 
     supervidentifier: Identifier, 
     outputPublisher: OutputPublisher,
     inputSubscriber: InputSubscriber,
-    cdbReader: CdbReader): DasuImpl = {
+    cdbReader: CdbReader,
+    autoSendTimeInterval: Long): DasuImpl = {
     
     require(Option(dasuDao).isDefined)
     require(Option(supervidentifier).isDefined)
     require(Option(outputPublisher).isDefined)
     require(Option(inputSubscriber).isDefined)
     require(Option(cdbReader).isDefined)
+    require(Option(autoSendTimeInterval).isDefined)
    
     val dasuId = dasuDao.getId
     
     val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervidentifier)
     
-    new DasuImpl(dasuIdentifier,outputPublisher,inputSubscriber,cdbReader)
+    new DasuImpl(dasuIdentifier,outputPublisher,inputSubscriber,cdbReader,autoSendTimeInterval)
   }
 }
