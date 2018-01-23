@@ -76,7 +76,12 @@ object Validity {
   /**
    * Build a Validity from the the IasValidity
    */
-  def apply(iasValidity: IasValidity): Validity = new Validity(iasValidity)
+  def apply(iasValidity: IasValidity): Validity = IasValidityToValidity(iasValidity)
+  
+  /**
+   * Unapply simmetric to apply
+   */
+  def unapply(validity: Validity): IasValidity =  ValidityToIasValidity(validity)
   
   /**
    * Implicit conversion from Validity to IasValidity
@@ -86,7 +91,7 @@ object Validity {
   /**
    * Implicit conversion from  IasValidity to Validity
    */
-  implicit def IasValidityToValidity(iasValidity: IasValidity) = Validity(iasValidity)
+  implicit def IasValidityToValidity(iasValidity: IasValidity) = new Validity(iasValidity)
   
   /**
    * Return the lower validity between all
