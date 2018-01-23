@@ -86,7 +86,7 @@ object Validity {
   /**
    * Implicit conversion from  IasValidity to Validity
    */
-  implicit def ValidityToIasValidity(iasValidity: IasValidity) = Validity(iasValidity)
+  implicit def IasValidityToValidity(iasValidity: IasValidity) = Validity(iasValidity)
   
   /**
    * Return the lower validity between all
