@@ -38,16 +38,20 @@ import org.scalatest.BeforeAndAfter
  */
 class DasuOneASCETest extends FlatSpec  with BeforeAndAfter {
   
-  val f = new DausOneAsceCommon
+  val f = new DausOneAsceCommon(1000)
   
   before {
-    f.dasu = Some(new DasuImpl(f.dasuIdentifier,f.outputPublisher,f.inputsProvider,f.cdbReader,1000))
+    f.outputValuesReceived.clear()
+    f.outputValuesReceived.clear()
+    f.dasu = f.buildDasu()
     f.dasu.get.start()
   }
   
   after {
     f.dasu.get.cleanUp()
     f.dasu = None
+    f.outputValuesReceived.clear()
+    f.outputValuesReceived.clear()
   }
   
   behavior of "The DASU"
