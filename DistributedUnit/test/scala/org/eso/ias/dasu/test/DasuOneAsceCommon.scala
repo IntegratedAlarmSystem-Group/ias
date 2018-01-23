@@ -17,7 +17,7 @@ import org.eso.ias.prototype.input.java.IasValidity._
 import org.eso.ias.prototype.input.java.OperationalMode
 import org.eso.ias.dasu.publisher.ListenerOutputPublisherImpl
 import org.eso.ias.dasu.publisher.OutputListener
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.ArrayBuffer
 
 /**
  * Setup the DASU with one ASCE as it is reused by more 
@@ -66,12 +66,12 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Long) extends OutputListener {
   /**
    * The output, formatted as strings, published by the DASU 
    */
-  val outputStringsReceived = new ListBuffer[String]()
+  val outputStringsReceived = new ArrayBuffer[String]()
   
   /**
    * The output values published by the DASU 
    */
-  val outputValuesReceived = new ListBuffer[IASValue[_]]()
+  val outputValuesReceived = new ArrayBuffer[IASValue[_]]()
   
   /** Notifies about a new output produced by the DASU 
    *  formatted as String
