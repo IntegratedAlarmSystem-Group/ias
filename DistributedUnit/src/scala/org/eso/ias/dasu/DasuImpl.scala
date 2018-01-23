@@ -137,8 +137,11 @@ class DasuImpl (
   /** 
    *  The point in time when the output has been sent to the
    *  BSDB either due to new inputs or auto-refresh
+   *  
+   *  It is better to initialize at the actual timestamp
+   *  for the calculation of the throttling in inputsReceived 
    */
-  val lastSentTime = new AtomicLong(0)
+  val lastSentTime = new AtomicLong(System.currentTimeMillis())
   
   /** The thread executor service */
   val scheduledExecutor = new ScheduledExecutor(id)
@@ -146,7 +149,8 @@ class DasuImpl (
   /** True if the automatic re-sending of the output has been enabled */
   val timelyRefreshing = new AtomicBoolean(false)
   
-  
+  /** True if the DASU has been started */
+  val started = new AtomicBoolean(false)
   
   /** 
    *  The task to delay the generation the output 
@@ -158,7 +162,10 @@ class DasuImpl (
    * The Runnable to update the output when it is delayed by the throttling
    */
   val delayedUpdateTask = new Runnable {
-      override def run() = updateAndPublishOutput()
+      override def run() = {
+        logger.info("DASU [{}] running the throttling task",id)
+        updateAndPublishOutput()
+      }
   }
   
   /**
@@ -281,7 +288,7 @@ class DasuImpl (
    */
   override def inputsReceived(iasios: Set[IASValue[_]]) = synchronized {
     assert(iasios.size>0)
-    
+        
     // Merge the inputs with the buffered ones to keep only the last updated values
     iasios.foreach(iasio => notYetProcessedInputs.put(iasio.id,iasio))
     
@@ -295,10 +302,12 @@ class DasuImpl (
     val throttlingIsScheduled = throttlingTask.get().isDefined && !throttlingTask.get().get.isDone()
     
     (throttlingIsScheduled, beforeEndOfThrottling) match {
-      case (true, true) =>  {} // delayed: do nothing
-      case (true, false) | (false, false) =>  delayedUpdateTask.run() // send immediately
+      case (true, true) =>  {}
+                          // delayed: do nothing
+      case (true, false) | (false, false) =>  
+        updateAndPublishOutput() // send immediately
       case (false, true) => 
-        val delay = lastSentTime.get+throttling-now
+        val delay =  throttling+now-lastSentTime.get
         val schedFeature = scheduledExecutor.schedule(delayedUpdateTask,delay,TimeUnit.MILLISECONDS)
         throttlingTask.set(Some(schedFeature))
     }
@@ -322,6 +331,7 @@ class DasuImpl (
    * The method delegates the calculation to propapgateIasios
    */
   private def updateAndPublishOutput() = {
+        
     val before = System.currentTimeMillis()
     lastSentOutput.set(propagateIasios(notYetProcessedInputs.values.toSet))
     val after = System.currentTimeMillis()
@@ -337,7 +347,13 @@ class DasuImpl (
    *  to produce the output
    */
   def start(): Try[Unit] = {
-    inputSubscriberInitialized.map(x => inputSubscriber.startSubscriber(this, dasuTopology.dasuInputs))
+    val alreadyStarted = started.getAndSet(true)
+    if (!alreadyStarted) {
+      logger.debug("DASU [{}] starting", id)
+      inputSubscriberInitialized.map(x => inputSubscriber.startSubscriber(this, dasuTopology.dasuInputs))
+    } else {
+      new Failure(new Exception("DASU already started"))
+    }
   }
   
   /**
