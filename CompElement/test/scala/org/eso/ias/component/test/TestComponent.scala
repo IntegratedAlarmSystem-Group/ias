@@ -48,8 +48,9 @@ class TestComponent extends FlatSpec {
   
   // The ID of the first MP
   val mpI1Identifier = new Identifier(requiredInputIDs(0),IdentifierType.IASIO,Option(compId))
-  val mp1 = InOut[AlarmSample](
+  val mp1 = new InOut[AlarmSample](
       None,
+      System.currentTimeMillis(),
       mpI1Identifier,
       mpRefreshRate,
       OperationalMode.UNKNOWN,
@@ -58,8 +59,9 @@ class TestComponent extends FlatSpec {
   
   // The ID of the second MP
   val mpI2Identifier = new Identifier(requiredInputIDs(1),IdentifierType.IASIO,Option(compId))
-  val mp2 = InOut[AlarmSample](
+  val mp2 = new InOut[AlarmSample](
       None,
+      System.currentTimeMillis(),
       mpI2Identifier,
       mpRefreshRate,
       OperationalMode.UNKNOWN,
@@ -70,8 +72,9 @@ class TestComponent extends FlatSpec {
   behavior of "A Component"
   
   it must "catch an error instantiating a wrong TF class" in {
-    val output = InOut[AlarmSample](
+    val output = new InOut[AlarmSample](
       None,
+      System.currentTimeMillis(),
       outId,
       mpRefreshRate,
       OperationalMode.UNKNOWN,
@@ -103,8 +106,9 @@ class TestComponent extends FlatSpec {
   }
   
   it must "correctly instantiate the TF" in {
-    val output = InOut[AlarmSample](
+    val output = new InOut[AlarmSample](
       None,
+      System.currentTimeMillis(),
       outId,
       mpRefreshRate,
       OperationalMode.UNKNOWN,

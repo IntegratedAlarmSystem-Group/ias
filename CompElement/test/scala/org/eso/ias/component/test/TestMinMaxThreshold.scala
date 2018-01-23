@@ -150,10 +150,10 @@ class TestMinMaxThreshold extends FlatSpec {
     val hio = asce.output
     assert(hio.iasType==IASTypes.ALARM)
     
-    val res = hio.actualValue.value.map { av => av==alarmState }.orElse(Some(false))
+    val res = hio.value.map { av => av==alarmState }.orElse(Some(false))
     
-    hio.actualValue.value.isDefined && 
-    hio.actualValue.value.get.asInstanceOf[AlarmSample]==alarmState
+    hio.value.isDefined && 
+    hio.value.get.asInstanceOf[AlarmSample]==alarmState
     
   }
   

@@ -123,19 +123,19 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
     val hio = compInputs.values.head
     
     val hioValue: Double = hio.iasType match {
-      case LONG => hio.actualValue.value.get.asInstanceOf[Long].toDouble
-      case INT => hio.actualValue.value.get.asInstanceOf[Int].toDouble
-      case SHORT => hio.actualValue.value.get.asInstanceOf[Short].toDouble
-      case BYTE => hio.actualValue.value.get.asInstanceOf[Byte].toDouble
-      case DOUBLE => hio.actualValue.value.get.asInstanceOf[Double]
-      case FLOAT => hio.actualValue.value.get.asInstanceOf[Float].toDouble
+      case LONG => hio.value.get.asInstanceOf[Long].toDouble
+      case INT => hio.value.get.asInstanceOf[Int].toDouble
+      case SHORT => hio.value.get.asInstanceOf[Short].toDouble
+      case BYTE => hio.value.get.asInstanceOf[Byte].toDouble
+      case DOUBLE => hio.value.get.asInstanceOf[Double]
+      case FLOAT => hio.value.get.asInstanceOf[Float].toDouble
       case _ => throw new TypeMismatchException(hio.id.runningID,hio.iasType,List(LONG,INT,SHORT,BYTE,DOUBLE,FLOAT))
     }
     
     // It cope with the case that the value of the actual output is not 
     // defined (i.e. it is Optional.empty. In that case the variable
     // is initialized to false 
-    val temp = actualOutput.actualValue.value.map { x => x==AlarmSample.SET }.orElse(Some(false))
+    val temp = actualOutput.value.map { x => x==AlarmSample.SET }.orElse(Some(false))
  
     // The condition is true if the value is over the limits (high on and low on)
     // but remains set is the old values was set and the value is

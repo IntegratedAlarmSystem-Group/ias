@@ -34,12 +34,12 @@ extends ScalaTransferExecutor[Double] (cEleId,cEleRunningId,props) {
     val inputs = compInputs.values
     val values = inputs.map( input => {
       input.iasType match {
-        case LONG => input.actualValue.value.get.asInstanceOf[Long].toDouble
-        case INT => input.actualValue.value.get.asInstanceOf[Int].toDouble
-        case SHORT => input.actualValue.value.get.asInstanceOf[Short].toDouble
-        case BYTE => input.actualValue.value.get.asInstanceOf[Byte].toDouble
-        case DOUBLE => input.actualValue.value.get.asInstanceOf[Double]
-        case FLOAT => input.actualValue.value.get.asInstanceOf[Float].toDouble
+        case LONG => input.value.get.asInstanceOf[Long].toDouble
+        case INT => input.value.get.asInstanceOf[Int].toDouble
+        case SHORT => input.value.get.asInstanceOf[Short].toDouble
+        case BYTE => input.value.get.asInstanceOf[Byte].toDouble
+        case DOUBLE => input.value.get.asInstanceOf[Double]
+        case FLOAT => input.value.get.asInstanceOf[Float].toDouble
         case _ => throw new TypeMismatchException(input.id.runningID,input.iasType,List(LONG,INT,SHORT,BYTE,DOUBLE,FLOAT))
       }
     })
