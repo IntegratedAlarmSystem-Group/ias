@@ -84,8 +84,7 @@ case class InOut[A](
    * @param newMode: The new mode of the monitor point
    */
   def updateMode(newMode: OperationalMode): InOut[A] = {
-    if (newMode==mode) this
-    else this.copy(mode=newMode,timestamp=System.currentTimeMillis())
+    this.copy(mode=newMode,timestamp=System.currentTimeMillis())
   }
   
   /**
@@ -103,8 +102,7 @@ case class InOut[A](
    * @return A new InOut with updated value and validity
    */
   def update[B >: A](newValue: Option[B], valid: Validity): InOut[A] = {
-    if (newValue==value && valid==validity) this 
-    else InOut(newValue,System.currentTimeMillis(),id,refreshRate,mode,valid,iasType)
+    InOut(newValue,System.currentTimeMillis(),id,refreshRate,mode,valid,iasType)
   }
   
   /**
@@ -113,8 +111,7 @@ case class InOut[A](
    * @param valid: The new validity of the monitor point
    */
   def updateValidity(valid: Validity): InOut[A] = {
-    if (valid==validity) this
-    else this.copy(validity=valid,timestamp=System.currentTimeMillis())
+    this.copy(validity=valid,timestamp=System.currentTimeMillis())
   }
   
   /**

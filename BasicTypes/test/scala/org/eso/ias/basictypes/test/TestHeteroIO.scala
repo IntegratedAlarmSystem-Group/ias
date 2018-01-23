@@ -99,31 +99,29 @@ class TestHeteroIO extends FlatSpec {
     assert(mpUpdated.validity==Validity(RELIABLE),"The validities differ")
   }
   
-  it must "return the same object if values, validity or mode did not change" in {
+  it must "always update the tiemstamp when updatingvalue, validity or mode" in {
     val mp: InOut[Long] = InOut(id,refreshRate,IASTypes.LONG)
     
     val upVal = mp.updateValue(Some(10L))
     assert(upVal.value.get==10L,"The values differ")
+    Thread.sleep(5) // be sure to update with another timestamp
     val upValAgain = upVal.updateValue(Some(10L))
     assert(upValAgain.value.get==10L,"The value differ")
-    assert(upVal eq upValAgain,"Unexpected new object after updating the value\n"+upVal.toString()+"\n"+upValAgain.toString())
+    assert(upVal.timestamp!=upValAgain.timestamp,"Timestamps not updated")
     
     val upValidity = mp.updateValidity(Validity(RELIABLE))
     assert(upValidity.validity==Validity(RELIABLE),"The validity differ")
+    Thread.sleep(5) // be sure to update with another timestamp
     val upValidityAgain = upValidity.updateValidity(Validity(RELIABLE))
     assert(upValidityAgain.validity==Validity(RELIABLE),"The validity differ")
-    assert(upValidityAgain eq upValidity,"Unexpected new object after updating the validity")
+    assert(upValidityAgain.timestamp!=upValidity.timestamp,"Timestamps not updated")
     
     val upMode = mp.updateMode(OperationalMode.STARTUP)
     assert(upMode.mode==OperationalMode.STARTUP,"The mode differ")
+    Thread.sleep(5) // be sure to update with another timestamp
     val upModeAgain = upMode.updateMode(OperationalMode.STARTUP)
     assert(upModeAgain.mode==OperationalMode.STARTUP,"The mode differ")
-    assert(upMode eq upModeAgain,"Unexpected new object after updating the mode")
-        
-    val mpUpdated = mp.update(Some(15L),Validity(UNRELIABLE))
-    val mpUpdated2 = mpUpdated.update(Some(15L),Validity(UNRELIABLE))
-    assert(mpUpdated eq mpUpdated2,"Unexpected new object after updating value and validity")
-    
+    assert(upMode.timestamp!=upModeAgain.timestamp,"Timestamp not updated")
   }
   
   it must "support all types" in {
