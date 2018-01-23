@@ -26,6 +26,7 @@ import scala.collection.mutable.{HashSet => MutableSet}
 import org.eso.ias.prototype.input.java.IasValidity._
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.dasu.publisher.DirectInputSubscriber
+import org.scalatest.BeforeAndAfter
 
 /**
  * Test the DASU with one ASCE and the MinMaxThreshold TF.
@@ -35,76 +36,35 @@ import org.eso.ias.dasu.publisher.DirectInputSubscriber
  * The configurations of DASU, ASCE, TF and IASIOs are all stored 
  * in the CDB folder.
  */
-class DasuOneASCETest extends FlatSpec with OutputListener {
+class DasuOneASCETest extends FlatSpec  with BeforeAndAfter {
   
-  /** The logger */
-  private val logger = IASLogger.getLogger(this.getClass);
+  val f = new DausOneAsceCommon
   
-  // Build the CDB reader
-  val cdbParentPath =  FileSystems.getDefault().getPath(".");
-  val cdbFiles = new CdbJsonFiles(cdbParentPath)
-  val cdbReader: CdbReader = new JsonReader(cdbFiles)
-  
-  val dasuId = "DasuWithOneASCE"
-  
-  val stringSerializer = Option(new IasValueJsonSerializer)
-  val outputPublisher: OutputPublisher = new ListenerOutputPublisherImpl(this,stringSerializer)
-  
-  val inputsProvider = new DirectInputSubscriber()
-  
-  // Build the Identifier
-  val supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR,None)
-  val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervId)
-  
-  // The DASU to test
-  val dasu = new DasuImpl(dasuIdentifier,outputPublisher,inputsProvider,cdbReader,1)
-  
-  // The identifer of the monitor system that produces the temperature in input to teh DASU
-  val monSysId = new Identifier("MonitoredSystemID",IdentifierType.MONITORED_SOFTWARE_SYSTEM)
-  // The identifier of the plugin
-  val pluginId = new Identifier("PluginID",IdentifierType.PLUGIN,monSysId)
-  // The identifier of the converter
-  val converterId = new Identifier("ConverterID",IdentifierType.CONVERTER,pluginId)
-  // The ID of the monitor point in unput (it matched the ID in theJSON file)
-  val inputID = new Identifier("Temperature", IdentifierType.IASIO,converterId)
-  
-  /** Notifies about a new output produced by the DASU */
-  override def outputEvent(output: IASValue[_]) {
-    logger.info("Output received [{}]", output.id)
+  before {
+    f.dasu = Some(new DasuImpl(f.dasuIdentifier,f.outputPublisher,f.inputsProvider,f.cdbReader,1000))
+    f.dasu.get.start()
   }
   
-  /** Notifies about a new output produced by the DASU 
-   *  formatted as String
-   */
-  override def outputStringifiedEvent(outputStr: String) = {
-    logger.info("JSON output received [{}]", outputStr)
-  }
-  
-  def buildValue(d: Double): IASValue[_] = {
-    new IasDouble(
-        d,
-        System.currentTimeMillis(),
-        OperationalMode.OPERATIONAL,
-        UNRELIABLE,
-        inputID.fullRunningID)
+  after {
+    f.dasu.get.cleanUp()
+    f.dasu = None
   }
   
   behavior of "The DASU"
   
   it must "return the correct list of input and ASCE IDs" in {
-    assert(dasu.getInputIds().size==1)
-    assert(dasu.getInputIds().forall(s => s=="Temperature"))
+    assert(f.dasu.get.getInputIds().size==1)
+    assert(f.dasu.get.getInputIds().forall(s => s=="Temperature"))
     
-    assert(dasu.getAsceIds().size==1)
-    assert(dasu.getAsceIds().forall(s => s=="ASCE-ID1"))
+    assert(f.dasu.get.getAsceIds().size==1)
+    assert(f.dasu.get.getAsceIds().forall(s => s=="ASCE-ID1"))
   }
   
   it must "produce the output when a new set inputs is notified" in {
     // Start the getting of events in the DASU
-    dasu.start()
-    val inputs: Set[IASValue[_]] = Set(buildValue(0))
+    val inputs: Set[IASValue[_]] = Set(f.buildValue(0))
     // Sumbit the inputs
-    inputsProvider.sendInputs(inputs)
+    f.inputsProvider.sendInputs(inputs)
   }
   
 }
