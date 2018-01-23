@@ -127,9 +127,12 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
 
   /** The kafka consumer gets AISValues from the BSDB */
   val inputConsumer: InputSubscriber = new KafkaSubscriber(supervisorId.id, new Properties())
+  
+  /** The auto-refresh time interval (msecs) */
+  val autorefreshTimeInterval = 1000L;
 
   /** The test uses real DASu i.e. the factory instantiates a DasuImpl */
-  val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber, cr: CdbReader) => DasuImpl(dd, i, op, id, cr)
+  val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber, cr: CdbReader) => DasuImpl(dd, i, op, id, cr,1000)
 
   // Build the supervisor
   val supervisor = new Supervisor(supervisorId, outputPublisher, inputConsumer, cdbReader, factory)
