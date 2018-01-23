@@ -40,7 +40,7 @@ class DirectInputSubscriber extends InputSubscriber {
    * @param acceptedInputs the IDs of the inputs accepted by the listener
    */
   def startSubscriber(listener: InputsListener, acceptedInputs: Set[String]): Try[Unit] = {
-    logger.info("Starting subscriber with accepted inputs {}",acceptedInputs.mkString)
+    logger.info("Starting subscriber with accepted IDs {}",acceptedInputs.mkString(", "))
     this.listener=Option(listener)
     this.acceptedInputs++=acceptedInputs
     Success(())
