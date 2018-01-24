@@ -55,7 +55,7 @@ class Validity(val iasValidity: IasValidity) extends Ordered[Validity] {
   override def hashCode: Int = iasValidity.hashCode()
   
   /**
-   * Return the lower validity between the actual validity and
+   * Return the lowest validity between the actual validity and
    * the validities of the passed IASIOs
    * 
    * @param iasValues the IASValues to evaluate the new validity
@@ -94,7 +94,7 @@ object Validity {
   implicit def IasValidityToValidity(iasValidity: IasValidity) = new Validity(iasValidity)
   
   /**
-   * Return the lower validity between all
+   * Return the lowest validity between all
    * the validities of the passed IASIOs
    * 
    * @param iasValues the validities to evaluate the new validity
