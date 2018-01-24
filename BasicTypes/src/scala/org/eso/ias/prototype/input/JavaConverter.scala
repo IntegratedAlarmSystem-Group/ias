@@ -35,7 +35,7 @@ object JavaConverter {
       IASValue.buildIasValue(
           null, 
           Long.MinValue,io.mode,
-          io.validity.iasValidity,
+          io.getValidity().iasValidity,
           io.id.fullRunningID,
           io.iasType)
     } else {
@@ -43,7 +43,7 @@ object JavaConverter {
           io.value.get, 
           io.timestamp,
           io.mode,
-          io.validity.iasValidity,
+          io.getValidity().iasValidity,
           io.id.fullRunningID,
           io.iasType)
     }

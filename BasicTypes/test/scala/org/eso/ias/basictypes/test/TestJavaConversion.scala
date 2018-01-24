@@ -51,7 +51,7 @@ class TestJavaConversion  extends FlatSpec {
       val boolValue = Some(false)
       
       // Validity
-      val validity = Validity(RELIABLE)
+      val validity = Some(Validity(RELIABLE))
       // The HIOs
       val longHIO = InOut[Long](longValue,System.currentTimeMillis(),doubleHioId,refRate,mode,validity,IASTypes.LONG)
       val intHIO = InOut[Int](intValue,System.currentTimeMillis(),doubleHioId,refRate,mode,validity,IASTypes.INT)

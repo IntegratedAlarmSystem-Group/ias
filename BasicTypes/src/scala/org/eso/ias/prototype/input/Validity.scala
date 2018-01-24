@@ -56,7 +56,7 @@ class Validity(val iasValidity: IasValidity) extends Ordered[Validity] {
   
   /**
    * Return the lowest validity between the actual validity and
-   * the validities of the passed IASIOs
+   * the validities of the passed values
    * 
    * @param iasValues the IASValues to evaluate the new validity
    * @return the minimum validity
@@ -64,7 +64,7 @@ class Validity(val iasValidity: IasValidity) extends Ordered[Validity] {
   def minValidity(iasValues: Set[IASValue[_]]) : Validity = {
     require(Option(iasValues).isDefined,"Invalid set of values")
     val validities = iasValues.map(_.iasValidity) +iasValidity
-    Validity.minValidity(validities)
+    Validity.minValidity(validities).get
   }
   
   
@@ -95,14 +95,18 @@ object Validity {
   
   /**
    * Return the lowest validity between all
-   * the validities of the passed IASIOs
+   * the validities of the passed validities
    * 
    * @param iasValues the validities to evaluate the new validity
-   * @return the minimum validity
+   * @return the minimum validity if the passed set is not empty, None otherwise
    */
-  def minValidity(iasValidities: Set[IasValidity]) : Validity = {
+  def minValidity(iasValidities: Set[IasValidity]) : Option[Validity] = {
     require(Option(iasValidities).isDefined,"Invalid set of validities")
     
-    Validity(iasValidities.map(Validity(_)).min)
+    if (iasValidities.isEmpty) {
+      None
+    } else {
+      Some(Validity(iasValidities.map(Validity(_)).min))
+    }
   }
 }

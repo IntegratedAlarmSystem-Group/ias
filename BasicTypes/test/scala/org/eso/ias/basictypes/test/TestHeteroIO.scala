@@ -36,13 +36,11 @@ class TestHeteroIO extends FlatSpec {
     assert (!mp.value.isDefined)
     assert(mp.mode == OperationalMode.UNKNOWN)
     
-    println("mpValidity="+mp.validity.iasValidity);
-    
-    assert(mp.validity == Validity(UNRELIABLE))
+    assert(mp.minDependantValidity == None)
   }
   
   it must "Have the same ID after changing other props" in {
-    val mp: InOut[Long] = InOut(id,refreshRate,IASTypes.LONG)
+    val mp: InOut[Long] = new InOut(None, System.currentTimeMillis(),id,refreshRate,OperationalMode.OPERATIONAL,Some(RELIABLE),IASTypes.LONG)
     
     // Change the value of the previous MP
     val mp2 = mp.updateValue(Some(3L))
@@ -50,17 +48,19 @@ class TestHeteroIO extends FlatSpec {
     assert(mp2.value.isDefined)
     assert(mp2.value.get == 3L)
     // Trivial check of timestamp update
-    assert(mp2.timestamp > 0 && mp2.timestamp<=System.currentTimeMillis() )
-    assert(mp2.mode == OperationalMode.UNKNOWN)
-    assert(mp2.validity == Validity(UNRELIABLE))
+    assert(mp2.timestamp>=mp.timestamp)
+    assert(mp2.mode == OperationalMode.OPERATIONAL)
+    assert(mp2.minDependantValidity.isDefined)
+    assert(mp2.minDependantValidity.get == Validity(RELIABLE))
     
     // Change validity of the previous MP
-    val mp3 = mp2.updateValidity(Validity(RELIABLE))
+    val mp3 = mp2.updateMinDependantValidity(Set(Validity(UNRELIABLE)))
     assert(mp3.id == mp.id)
     assert(mp3.value.isDefined)
     assert(mp3.value.get  == mp2.value.get)
     assert(mp3.mode == mp2.mode)
-    assert(mp3.validity == Validity(RELIABLE))
+    assert(mp3.minDependantValidity.isDefined)
+    assert(mp3.minDependantValidity.get == Validity(UNRELIABLE))
     
     // Change mode of the previous MP
     val mp4 = mp3.updateMode(OperationalMode.OPERATIONAL)
@@ -68,7 +68,8 @@ class TestHeteroIO extends FlatSpec {
     assert(mp4.value.isDefined)
     assert(mp4.value.get  == mp3.value.get)
     assert(mp4.mode == OperationalMode.OPERATIONAL)
-    assert(mp4.validity == mp3.validity)
+    assert(mp4.minDependantValidity.isDefined)
+    assert(mp4.minDependantValidity.get == mp3.minDependantValidity.get)
   }
   
   it must "allow to update the value" in {
@@ -77,13 +78,14 @@ class TestHeteroIO extends FlatSpec {
     assert(mpUpdatedValue.value.get==5L,"The values differ")    
   }
   
-  it must "allow to update the validity" in {
+  it must "allow to update the dependant validity" in {
     val mp: InOut[Long] = InOut(id,refreshRate,IASTypes.LONG)
-    val mpUpdatedValidityRelaible = mp.updateValidity(Validity(RELIABLE))
-    assert(mpUpdatedValidityRelaible.validity==Validity(RELIABLE),"The validities differ")
+    assert(mp.minDependantValidity==None)
+    val mpUpdatedValidityRelaible = mp.updateMinDependantValidity(Set(Validity(RELIABLE)))
+    assert(mpUpdatedValidityRelaible.minDependantValidity.get==Validity(RELIABLE),"The validities differ")
     
-    val mpUpdatedValidityUnRelaible = mp.updateValidity(Validity(UNRELIABLE))
-    assert(mpUpdatedValidityUnRelaible.validity==Validity(UNRELIABLE),"The validities differ")
+    val mpUpdatedValidityUnRelaible = mp.updateMinDependantValidity(Set(Validity(UNRELIABLE)))
+    assert(mpUpdatedValidityUnRelaible.minDependantValidity.get==Validity(UNRELIABLE),"The validities differ")
   }
   
   it must "allow to update the mode" in {
@@ -94,12 +96,12 @@ class TestHeteroIO extends FlatSpec {
   
   it must "allow to update the value and validity at once" in {
     val mp: InOut[Long] = InOut(id,refreshRate,IASTypes.LONG)
-    val mpUpdated = mp.update(Some(15L),Validity(RELIABLE))
+    val mpUpdated = mp.updateValue(Some(15L),Option(Validity(RELIABLE)))
     assert(mpUpdated.value.get==15L,"The values differ")
-    assert(mpUpdated.validity==Validity(RELIABLE),"The validities differ")
+    assert(mpUpdated.minDependantValidity.get==Validity(RELIABLE),"The validities differ")
   }
   
-  it must "always update the tiemstamp when updatingvalue, validity or mode" in {
+  it must "always update the timestamp when updating value or mode but not minDepValidity" in {
     val mp: InOut[Long] = InOut(id,refreshRate,IASTypes.LONG)
     
     val upVal = mp.updateValue(Some(10L))
@@ -109,12 +111,12 @@ class TestHeteroIO extends FlatSpec {
     assert(upValAgain.value.get==10L,"The value differ")
     assert(upVal.timestamp!=upValAgain.timestamp,"Timestamps not updated")
     
-    val upValidity = mp.updateValidity(Validity(RELIABLE))
-    assert(upValidity.validity==Validity(RELIABLE),"The validity differ")
+    val upValidity = mp.updateMinDependantValidity(Set(Validity(RELIABLE)))
+    assert(upValidity.minDependantValidity.get==Validity(RELIABLE),"The validity differ")
     Thread.sleep(5) // be sure to update with another timestamp
-    val upValidityAgain = upValidity.updateValidity(Validity(RELIABLE))
-    assert(upValidityAgain.validity==Validity(RELIABLE),"The validity differ")
-    assert(upValidityAgain.timestamp!=upValidity.timestamp,"Timestamps not updated")
+    val upValidityAgain = upValidity.updateMinDependantValidity(Set(Validity(UNRELIABLE)))
+    assert(upValidityAgain.minDependantValidity.get==Validity(UNRELIABLE),"The validity differ")
+    assert(upValidityAgain.timestamp==upValidity.timestamp,"Timestamps must not be updated")
     
     val upMode = mp.updateMode(OperationalMode.STARTUP)
     assert(upMode.mode==OperationalMode.STARTUP,"The mode differ")
@@ -170,7 +172,7 @@ class TestHeteroIO extends FlatSpec {
     assert(inOut.value.get.asInstanceOf[Long]==iasValue.value.asInstanceOf[Long])
     assert(inOut.mode==iasValue.mode)
     
-    // Update a IASIO with no value with a passed IASIO
+    // Update a IASIO with no value with a passed IASValue
     val iasio: InOut[_] = InOut(iasioId,5500,IASTypes.LONG)
     val newiasIo = iasio.update(iasValue)
     assert(newiasIo.iasType==iasValue.valueType)
@@ -185,8 +187,6 @@ class TestHeteroIO extends FlatSpec {
     assert(newiasIo2.value.isDefined)
     assert(newiasIo2.value.get==iasValue2.value)
     assert(newiasIo2.mode==iasValue2.mode)
-    assert(newiasIo2.validity.iasValidity==iasValue2.iasValidity)
   }
-  
 
 }
