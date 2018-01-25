@@ -321,6 +321,9 @@ public class WebServerSenderTest {
 		this.numOfMessagesToReceive = new CountDownLatch(messagesNumber/2);
 		this.numOfMessagesToSend = new CountDownLatch(messagesNumber/2);
 
+		Boolean status = this.serverReady.await(10, TimeUnit.SECONDS);
+		assertTrue("Sender did not reconnect to Server", status);
+
 		// Send the other half of the messages:
 		while(iterator.hasNext()) {
 			try {

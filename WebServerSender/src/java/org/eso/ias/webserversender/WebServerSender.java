@@ -27,21 +27,21 @@ public class WebServerSender implements IasioListener, Runnable {
 	 * Identifier
 	 */
 	String id;
-	
+
 	/**
 	 * WebSocket session required to send messages to the Web server
 	 */
 	public Session session;
-	
+
 	/**
 	 * IAS Core Kafka Consumer to get messages from the Core
 	 */
 	KafkaIasiosConsumer consumer;
-	
+
 	/**
 	 * Web socket client
 	 */
-	WebSocketClient client = new WebSocketClient();
+	WebSocketClient client;
 
 	/**
 	 * Topic defined to send messages to the IAS Core to the IAS Web Server
@@ -52,12 +52,12 @@ public class WebServerSender implements IasioListener, Runnable {
 	 * Web Server URI as String
 	 */
 	String webserverUri;
-	
+
 	/**
-	 * Same as the webserverUri but as a URI object 
+	 * Same as the webserverUri but as a URI object
 	 */
 	URI uri;
-	
+
 	/**
 	 * The serializer/deserializer to convert the string
 	 * received by the BSDB in a IASValue
@@ -68,33 +68,33 @@ public class WebServerSender implements IasioListener, Runnable {
 	 * The logger
 	 */
 	private static final Logger logger = LoggerFactory.getLogger(WebServerSender.class);
-	
+
 	/**
 	 * The interface of the listener to be notified of Strings received
 	 * by the WebServer sender.
 	 */
 	public interface WebServerSenderListener {
-		
+
 		public void stringEventSent(String event);
 	}
-	
+
 	/**
 	 * The listener to be notified of Strings received
 	 * by the WebServer sender.
 	 */
 	WebServerSenderListener listener;
-	
+
 	/**
 	 * Count down to wait until the connection is established
 	 */
 	private CountDownLatch connectionReady;
-	
+
 	/**
 	 * Constructor
 	 *
    	 * @param id Identifier of the KafkaWebSocketConnector
 	 * @param kafkaTopic Topic defined to send messages to the IAS Core to the IAS Web Server
-	 * @param webserverUri 
+	 * @param webserverUri
 	 * @param listener The listener of the messages received by the server
 	 */
 	public WebServerSender(String id, String kafkaTopic, String webserverUri, WebServerSenderListener listener) {
@@ -104,12 +104,12 @@ public class WebServerSender implements IasioListener, Runnable {
 		this.listener = listener;
 		this.consumer = new KafkaIasiosConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, kafkaTopic, this.id);
 	}
-	
+
 	/**
 	 * Constructor
 	 *
    	 * @param id Identifier of the KafkaWebSocketConnector
-	 * @param webserverUri 
+	 * @param webserverUri
 	 * @param listener The listener of the messages received by the server
 	 */
 	public WebServerSender(String id, String webserverUri, WebServerSenderListener listener) {
@@ -129,7 +129,8 @@ public class WebServerSender implements IasioListener, Runnable {
 	public void onClose(int statusCode, String reason) {
 	   logger.info("WebSocket connection closed:" + statusCode + ", " + reason);
 	   this.session = null;
-	   this.consumer.tearDown();
+	   logger.info("Trying to reconnect");
+	   this.run();
 	}
 
 	/**
@@ -151,7 +152,7 @@ public class WebServerSender implements IasioListener, Runnable {
 	       logger.error("WebSocket couldn't send the message",t);
 	   }
 	}
-	
+
 	@OnWebSocketMessage
     public void onMessage(String message) {
 		notifyListener(message);
@@ -170,42 +171,57 @@ public class WebServerSender implements IasioListener, Runnable {
 	public synchronized void iasioReceived(IASValue<?> event) {
 		try {
 			String value = serializer.iasValueToString(event);
+			logger.info("Attempting to send value: "+ value);
 			this.session.getRemote().sendStringByFuture(value);
+			logger.info("Value sent");
 			this.notifyListener(value);
 		}
 		catch (Exception e){
 			logger.error("Cannot send messages to the Web Server", e);
 		}
 	}
-	
-	/**
-	 * Initializes the WebSocket
-	 */
-	public void run() {
+
+	public void connect() throws Exception {
+		this.uri = new URI(this.webserverUri);
+		this.session = null;
+		this.connectionReady = new CountDownLatch(1);
+		this.client = new WebSocketClient();
+		this.client.start();
 		try {
-			this.connectionReady = new CountDownLatch(1);
-			this.uri = new URI(this.webserverUri);
-			this.client.start();
 			this.client.connect(this, this.uri, new ClientUpgradeRequest());
-			if(!this.connectionReady.await(1, TimeUnit.MINUTES)) {
-				logger.error("WebSocketSender cannot establish the connection with the server.");
-				System.exit(1); 
+			if(!this.connectionReady.await(2, TimeUnit.SECONDS)) {
+				logger.info("WebSocketSender could not establish the connection with the server.");
+				logger.info("Trying to reconnect");
+				this.connect();
 			}
-			logger.debug("Connection started!");
 		}
 		catch( InterruptedException e) {
-			this.stop();
+			logger.info("Connection Interrupted, trying to reconnect");
+			this.connect();
 		}
-		catch( Exception e) {
-			logger.error("Error on WebSocket connection");
-		}
-		
+		logger.debug("Connection started!");
 	}
 
 	/**
-	 * Shutdown the WebSocket client
+	 * Initializes the WebSocket connection
+	 */
+	public void run() {
+		try {
+			this.connect();
+		}
+		catch( Exception e) {
+			logger.error("Error on WebSocket connection");
+			this.stop();
+		}
+
+	}
+
+	/**
+	 * Shutdown the WebSocket client and Kafka consumer
 	 */
 	public void stop() {
+		this.session = null;
+ 		this.consumer.tearDown();
 		try {
 			this.client.stop();
 			logger.debug("Connection stopped!");
@@ -216,17 +232,17 @@ public class WebServerSender implements IasioListener, Runnable {
 	}
 
 	/**
-	 * Notify the passed string to the listener. 
-	 * 
-	 * @param strToNotify The string to notify to the listener 
+	 * Notify the passed string to the listener.
+	 *
+	 * @param strToNotify The string to notify to the listener
 	 */
 	protected void notifyListener(String strToNotify) {
 		if(listener != null) {
 			listener.stringEventSent(strToNotify);
 		}
-		
+
 	}
-	
+
 	public static void main(String[] args) throws Exception {
 
 		WebServerSender ws = new WebServerSender("WebServerSender", "ws://localhost:8000/core/", null);
