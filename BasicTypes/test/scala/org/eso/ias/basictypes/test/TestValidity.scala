@@ -26,13 +26,13 @@ class TestValidity extends FlatSpec {
   "Validity.minValidity(Set)" must "always return the min validity" in {
     // Build few "interesting" lists to submit to Validity.min
     val l1= Set(RELIABLE)
-    assert(Validity.minValidity(l1).get==Validity(RELIABLE))
+    assert(Validity.minValidity(l1)==Validity(RELIABLE))
     
     val l2= Set(UNRELIABLE)
-    assert(Validity.minValidity(l2).get==Validity(UNRELIABLE))
+    assert(Validity.minValidity(l2)==Validity(UNRELIABLE))
     
     val l3= Set(RELIABLE,UNRELIABLE)
-    assert(Validity.minValidity(l3).get==Validity(UNRELIABLE))
+    assert(Validity.minValidity(l3)==Validity(UNRELIABLE))
   }
   
 }
