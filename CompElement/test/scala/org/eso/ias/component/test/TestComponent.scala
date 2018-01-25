@@ -54,7 +54,7 @@ class TestComponent extends FlatSpec {
       mpI1Identifier,
       mpRefreshRate,
       OperationalMode.UNKNOWN,
-      UNRELIABLE,
+      None,
       IASTypes.ALARM)
   
   // The ID of the second MP
@@ -65,7 +65,7 @@ class TestComponent extends FlatSpec {
       mpI2Identifier,
       mpRefreshRate,
       OperationalMode.UNKNOWN,
-      UNRELIABLE,
+      None,
       IASTypes.ALARM)
   val actualInputs: Set[InOut[_]] = Set(mp1,mp2)
   
@@ -78,7 +78,7 @@ class TestComponent extends FlatSpec {
       outId,
       mpRefreshRate,
       OperationalMode.UNKNOWN,
-      UNRELIABLE,
+      None,
       IASTypes.ALARM)
     
     val threadaFactory = new CompEleThreadFactory("Test-runninId")
@@ -112,7 +112,7 @@ class TestComponent extends FlatSpec {
       outId,
       mpRefreshRate,
       OperationalMode.UNKNOWN,
-      UNRELIABLE,
+      None,
       IASTypes.ALARM)
     
     val threadaFactory = new CompEleThreadFactory("Test-runninId")
