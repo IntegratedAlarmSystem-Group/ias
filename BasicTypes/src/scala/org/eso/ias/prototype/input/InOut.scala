@@ -119,7 +119,6 @@ case class InOut[A](
    * Update the inherited validity, i.e. the validity received from a IASValue
    */
   def updatedInheritedValidity(validity: Option[Validity]):InOut[A] = {
-    assert(if (validity.isDefined) fromIasValueValidity.isDefined else fromIasValueValidity==None)
     this.copy(timestamp=System.currentTimeMillis(), fromIasValueValidity=validity)
   }
 
