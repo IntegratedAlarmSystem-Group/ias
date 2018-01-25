@@ -11,6 +11,7 @@ import org.eso.ias.prototype.input.java.IasLong
 import org.eso.ias.prototype.input.java.IasValidity._
 import org.eso.ias.prototype.input.java.OperationalMode
 import org.eso.ias.prototype.input.java.AlarmSample
+import org.eso.ias.prototype.input.java.IasValidity
 
 /**
  * Test the LongMP
@@ -171,6 +172,7 @@ class TestHeteroIO extends FlatSpec {
     assert(inOut.value.isDefined)
     assert(inOut.value.get.asInstanceOf[Long]==iasValue.value.asInstanceOf[Long])
     assert(inOut.mode==iasValue.mode)
+    assert(inOut.minDependantValidity.isEmpty)
     
     // Update a IASIO with no value with a passed IASValue
     val iasio: InOut[_] = InOut(iasioId,5500,IASTypes.LONG)
@@ -179,6 +181,7 @@ class TestHeteroIO extends FlatSpec {
     assert(newiasIo.value.isDefined)
     assert(newiasIo.value.get.asInstanceOf[Long]==iasValue.value.asInstanceOf[Long])
     assert(newiasIo.mode==iasValue.mode)
+    assert(newiasIo.minDependantValidity.isEmpty)
     
     // Update with another value
     val iasValue2 = new IasLong(113142L,System.currentTimeMillis(),OperationalMode.OPERATIONAL,UNRELIABLE,iasio.id.fullRunningID)
@@ -187,6 +190,89 @@ class TestHeteroIO extends FlatSpec {
     assert(newiasIo2.value.isDefined)
     assert(newiasIo2.value.get==iasValue2.value)
     assert(newiasIo2.mode==iasValue2.mode)
+    assert(newiasIo2.minDependantValidity.isEmpty)
+  }
+  
+  it must "correctly evaluate the validity without dependants IASIOs" in {
+    val iasioId = new Identifier("IasioId",IdentifierType.IASIO,Option(asceId))
+    
+    val refreshRate = 500
+    
+    val iasio = new InOut[AlarmSample] (
+    Some(AlarmSample.SET),
+    System.currentTimeMillis(),
+    iasioId,
+    refreshRate,    
+    OperationalMode.OPERATIONAL,
+    None,
+    IASTypes.ALARM)
+    
+    // Newly created, the update time is before the refresh rate
+    assert(iasio.getValidity()==Validity(IasValidity.RELIABLE))
+    
+    // After refreshRate msec without update the IASIO
+    // becomes invalid
+    Thread.sleep(2*refreshRate)
+    assert(iasio.getValidity()==Validity(IasValidity.UNRELIABLE))
+    
+    // After updating the value, the monitor point is valid again
+    val updatedValue = iasio.updateValue(Option(AlarmSample.SET))
+    assert(updatedValue.getValidity()==Validity(IasValidity.RELIABLE))
+    Thread.sleep(2*refreshRate)
+    assert(updatedValue.getValidity()==Validity(IasValidity.UNRELIABLE))
+    
+    // After updating the mode, the monitor point is valid again
+    val updatedMode = updatedValue.updateMode(OperationalMode.OPERATIONAL)
+    assert(updatedMode.getValidity()==Validity(IasValidity.RELIABLE))
+    Thread.sleep(2*refreshRate)
+    assert(updatedMode.getValidity()==Validity(IasValidity.UNRELIABLE))
+    
+  }
+  
+  it must "correctly evaluate the validity with dependants IASIOs" in {
+    val iasioId = new Identifier("IasioId",IdentifierType.IASIO,Option(asceId))
+    
+    val refreshRate = 500
+    
+    val iasio = new InOut[AlarmSample] (
+    Some(AlarmSample.SET),
+    System.currentTimeMillis(),
+    iasioId,
+    refreshRate,    
+    OperationalMode.OPERATIONAL,
+    None,
+    IASTypes.ALARM)
+    
+    // Newly created, the update time is before the refresh rate
+    assert(iasio.getValidity()==Validity(IasValidity.RELIABLE))
+    
+    // Update the dependants
+    val newIasio = iasio.updateMinDependantValidity(Set(Validity(IasValidity.RELIABLE)))
+    assert(newIasio.getValidity()==Validity(IasValidity.RELIABLE))
+    Thread.sleep(2*refreshRate)
+    assert(newIasio.getValidity()==Validity(IasValidity.UNRELIABLE))
+    
+    // Updating the dependants only does not change the validity
+    // because it does not affect the timestamp
+    val newIasio2 = newIasio.updateMinDependantValidity(Set(Validity(IasValidity.RELIABLE)))
+    assert(newIasio.getValidity()==Validity(IasValidity.UNRELIABLE))
+    
+    // Update the value to make the IASIO valid again
+    val updatedValue = newIasio2.updateValue(Option(AlarmSample.SET))
+    assert(updatedValue.getValidity()==Validity(IasValidity.RELIABLE))
+    assert(updatedValue.minDependantValidity.isDefined)
+    assert(updatedValue.minDependantValidity.get==Validity(IasValidity.RELIABLE))
+    Thread.sleep(2*refreshRate)
+    assert(updatedValue.getValidity()==Validity(IasValidity.UNRELIABLE))
+    
+    // Update the value and set an invalid dependants
+    val updatedValue2 = updatedValue.updateValue(Option(AlarmSample.SET),Option(Validity(IasValidity.UNRELIABLE)))
+    assert(updatedValue2.getValidity()==Validity(IasValidity.UNRELIABLE))
+    assert(updatedValue2.minDependantValidity.isDefined)
+    assert(updatedValue2.minDependantValidity.get==Validity(IasValidity.UNRELIABLE))
+    // Waiting does not improve of course
+    Thread.sleep(2*refreshRate)
+    assert(updatedValue2.getValidity()==Validity(IasValidity.UNRELIABLE))
   }
 
 }
