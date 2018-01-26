@@ -27,6 +27,8 @@ import org.eso.ias.dasu.executorthread.ScheduledExecutor
 import org.eso.ias.prototype.input.JavaConverter
 import java.util.concurrent.TimeUnit
 import org.eso.ias.cdb.pojos.DasuDao
+import org.eso.ias.prototype.input.Validity
+import org.eso.ias.prototype.input.java.IasValidity
 
 /**
  * The implementation of the DASU.
@@ -111,9 +113,15 @@ class DasuImpl (
   logger.info("DASU [{}]: ASCEs initialized",id)
   
   // The ASCE that produces the output of the DASU
-  val asceThatProducesTheOutput = dasuTopology.asceProducingOutput(dasuOutputId)
-  require(asceThatProducesTheOutput.isDefined && !asceThatProducesTheOutput.isEmpty,"ASCE producing output not found")
-  logger.info("The output [{}] of the DASU [{}] is produced by [{}] ASCE",dasuOutputId,id,asceThatProducesTheOutput.get)
+  val idOfAsceThatProducesTheOutput = {
+    val idOpt=dasuTopology.asceProducingOutput(dasuOutputId)
+    require(idOpt.isDefined && !idOpt.isEmpty,"ASCE producing output not found")
+    idOpt.get
+  }
+  logger.info("The output [{}] of the DASU [{}] is produced by [{}] ASCE",dasuOutputId,id,idOfAsceThatProducesTheOutput)
+  
+  /** The ASCE that produces the output */
+  val asceThatProducesTheOutput = asces(idOfAsceThatProducesTheOutput)
   
   // The refresh rate of the output
   // (it is the refresh rate of the IASIO of the ASCE that produces the output of the DASU)
@@ -124,15 +132,21 @@ class DasuImpl (
    * Values that have been received in input from plugins or other DASUs (BSDB)
    * and not yet processed
    * 
-   * TODO: protect the map against access from multiple thrads
+   * TODO: protect the map against access from multiple threads
    */
   val notYetProcessedInputs: MutableMap[String,IASValue[_]] = MutableMap()
   
   /** 
-   *  The last sent output:
-   *  this is sent again if no new inputs arrives and the autoSendTimerTask is running
+   *  The last calculated output
    */
-  val lastSentOutput = new AtomicReference[Option[IASValue[_]]](None)
+  val lastCalculatedOutput = new AtomicReference[Option[IASValue[_]]](None)
+  
+  /** 
+   *  The last sent output and validity
+   *  this is sent again if no new inputs arrives and the autoSendTimerTask is running
+   *  and the validity did not change since the last sending
+   */
+  val lastSentOutputAndValidity = new AtomicReference[Option[Tuple2[IASValue[_], IasValidity]]](None)
   
   /** 
    *  The point in time when the output has been sent to the
@@ -219,7 +233,7 @@ class DasuImpl (
       lastTimerScheduledFeature.foreach(_.cancel(false))
       val runnable = new Runnable {
             /** The task to refresh the output when no new inputs have been received */
-            override def run() = publishOutput()
+            override def run() = publishOutput(None)
         }
         val newTask=scheduledExecutor.scheduleWithFixedDelay(runnable, autoSendTimeInterval, autoSendTimeInterval, TimeUnit.MILLISECONDS)
         autoSendTimerTask.set(newTask)
@@ -244,7 +258,7 @@ class DasuImpl (
       
       // Updates one ASCE i.e. runs its TF passing the inputs
       // Return the output of the ASCE
-      def updateOneAsce(asceId: String, asceInputs: Set[IASValue[_]]): Option[IASValue[_]] = {
+      def updateOneAsce(asceId: String, asceInputs: Set[IASValue[_]]): IASValue[_] = {
         
         val requiredInputs = dasuTopology.inputsOfAsce(asceId)
         assert(requiredInputs.isDefined,"No inputs required by "+asceId)
@@ -253,8 +267,8 @@ class DasuImpl (
         val asceOpt = asces.get(asceId)
         assert(asceOpt.isDefined,"ASCE "+asceId+" NOT found!")
         val asce: ComputingElement[_] = asceOpt.get
-        val asceOutputOpt: Option[InOut[_]] = asce.update(inputs)._1
-        asceOutputOpt.map (inout => JavaConverter.inOutToIASValue(inout))
+        val updateRes: Tuple3[InOut[_],Validity, AsceStates.State] = asce.update(inputs)
+        JavaConverter.inOutToIASValue(updateRes._1,updateRes._2)
       }
       
       // Run the TFs of all the ASCEs in one level
@@ -264,8 +278,7 @@ class DasuImpl (
         asces.foldLeft(levelInputs) ( 
           (s: Set[IASValue[_]], id: String ) => {
             val output = updateOneAsce(id, levelInputs) 
-            if (output.isDefined) s+output.get
-            else s})
+            s+output})
       }
       
       if (!closed.get) {
@@ -314,13 +327,55 @@ class DasuImpl (
   }
   
   /**
-   * Publish the output to the BSDB
+   * Publish the passed output to the BSDB.
+   * 
+   * The value effectively sent to the BSDB depends on the 
+   * passed parameter and the last sent value.
+   * 
+   * The calculated output has the validity calculated when it has been produced;
+   * if the calculatedoutput is empty, the validity must be updated as the
+   * validity of one of the inputs could have been changed in the mean time 
+   * 
+   * @param calculatedOutput the last calculated output (it has the last validity)
+   *                         it is empty if this method has been called
+   *                         without calculating an output (automatic sending for example)
    */
-  def publishOutput() {
-    lastSentOutput.get.foreach( output => {
-        outputPublisher.publish(output)
+  def publishOutput(calculatedOutput: Option[IASValue[_]]) {
+    
+    val valueAndValidityToSend: Option[Tuple2[IASValue[_],IasValidity]] = 
+      ( calculatedOutput, lastSentOutputAndValidity.get) match {
+        case ( None, Some(sentVal)) =>
+          // Automatic sending of the last value
+          Option(sentVal._1,asceThatProducesTheOutput.getOutput()._2.iasValidity)
+        case ( Some(calc), _) =>
+          // Newly calculated value takes precedence
+          Option(calc, calc.iasValidity)
+        case ( None, None ) => None
+    }
+    
+    
+    valueAndValidityToSend.foreach( valueAndValidity => {
+      // Shall we update the validity?
+      val valueToSendWithLastValidity= if (valueAndValidity._1.iasValidity==valueAndValidity._2) {
+        valueAndValidity._1  
+      } else {
+        IASValue.buildIasValue(
+            valueAndValidity._1.value, 
+            System.currentTimeMillis(), 
+            valueAndValidity._1.mode, 
+            valueAndValidity._2, // Set the actual validity 
+            valueAndValidity._1.fullRunningId, 
+            valueAndValidity._1.valueType)
+      }
+      
+      // Finally send the value but only if the value of the IASValue ios not null!
+      Option(valueToSendWithLastValidity.value).foreach( _ => {
+        outputPublisher.publish(valueToSendWithLastValidity)
         lastSentTime.set(System.currentTimeMillis())
-        logger.debug("DASU [{}]: output published",id)
+        lastSentOutputAndValidity.set(Some((valueToSendWithLastValidity,valueAndValidity._2)))
+        logger.debug("DASU [{}]: output published",id)  
+      })
+         
     })
   }
   
@@ -333,11 +388,11 @@ class DasuImpl (
   private def updateAndPublishOutput() = {
         
     val before = System.currentTimeMillis()
-    lastSentOutput.set(propagateIasios(notYetProcessedInputs.values.toSet))
+    lastCalculatedOutput.set(propagateIasios(notYetProcessedInputs.values.toSet))
     val after = System.currentTimeMillis()
     lastUpdateTime.set(after)
     notYetProcessedInputs.clear()
-    publishOutput() 
+    publishOutput(lastCalculatedOutput.get) 
     rescheduleAutoSendTimeInterval()
     statsCollector.updateStats(after-before)
   }

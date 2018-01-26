@@ -277,7 +277,7 @@ class Dasu7ASCEsTest extends FlatSpec {
     assert(f.dasu.statsCollector.iterationsRun.get.toInt==2)
     assert(f.iasValuesReceived.size==1) // Only one output has been published
     
-    val outputProducedByDasu = f.dasu.lastSentOutput.get
+    val outputProducedByDasu = f.dasu.lastCalculatedOutput.get
     assert(outputProducedByDasu.isDefined)
     assert(outputProducedByDasu.get.valueType==IASTypes.ALARM)
     assert(outputProducedByDasu.get.value.asInstanceOf[AlarmSample]== AlarmSample.SET)
