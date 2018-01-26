@@ -24,6 +24,7 @@ import org.eso.ias.dasu.publisher.KafkaPublisher
 import org.eso.ias.dasu.subscriber.KafkaSubscriber
 import org.eso.ias.prototype.input.java.IdentifierType
 import java.util.concurrent.CountDownLatch
+import org.eso.ias.cdb.rdb.RdbReader
 
 /**
  * A Supervisor is the container to run several DASUs into the same JVM.
@@ -299,18 +300,35 @@ class Supervisor(
 
 object Supervisor {
 
-  /** 
-   *  Application: run a Supervisor with the passed ID and 
+  /** Build the usage message */
+  def printUsage() = {
+		"""Usage: Supervisor Supervisor-ID [-jcdb JSON-CDB-PATH]
+		-jcdb force the usage of the JSON CDB
+		   * Supervisor-ID: the identifier of the supervisor
+		   * JSON-CDB-PATH: the path of the JSON CDB"""
+	}
+
+  /**
+   *  Application: run a Supervisor with the passed ID and
    *  kafka producer and consumer.
-   *  
+   *
    *  Kill to terminate.
    */
   def main(args: Array[String]) = {
-    require(!args.isEmpty,"Missing identifier in command line")
+    require(!args.isEmpty, "Missing identifier in command line")
+    require(args.size == 1 || args.size == 3, "Invalid command line params\n" + printUsage())
+    require(if(args.size == 3) args(1)=="-jcdb" else true, "Invalid command line params\n" + printUsage())
     val supervisorId = args(0)
-    
-    val cdbFiles: CdbFiles = new CdbJsonFiles("../test")
-    val reader: CdbReader = new JsonReader(cdbFiles)
+
+    val reader: CdbReader = {
+      if (args.size == 3) {
+        val cdbFiles: CdbFiles = new CdbJsonFiles(args(2))
+        new JsonReader(cdbFiles)
+
+      } else {
+        new RdbReader()
+      }
+    }
     
     val outputPublisher: OutputPublisher = KafkaPublisher(supervisorId,System.getProperties)
     val inputsProvider: InputSubscriber = new KafkaSubscriber(supervisorId,System.getProperties)
