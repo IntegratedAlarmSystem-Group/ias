@@ -141,8 +141,9 @@ if __name__ == '__main__':
                         action='store_false',
                         default=True,
                         required=False)
+    
     parser.add_argument('className', help='The name of the class to run the program')
-    parser.add_argument('params', metavar='param', nargs='*',
+    parser.add_argument('params', nargs=argparse.REMAINDER,
                     help='Command line parameters')
     args = parser.parse_args()
     
