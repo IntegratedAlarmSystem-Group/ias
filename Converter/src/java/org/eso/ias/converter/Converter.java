@@ -1,11 +1,15 @@
 package org.eso.ias.converter;
 
+import java.io.File;
 import java.security.InvalidParameterException;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.function.Function;
 
 import org.eso.ias.cdb.CdbReader;
+import org.eso.ias.cdb.json.CdbFiles;
+import org.eso.ias.cdb.json.CdbJsonFiles;
+import org.eso.ias.cdb.json.JsonReader;
 import org.eso.ias.converter.config.ConfigurationException;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
 import org.eso.ias.converter.config.IasioConfigurationDaoImpl;
@@ -162,6 +166,13 @@ public class Converter {
 		}
 		logger.info("Converter {} shutted down.", converterID);
 	}
+	
+	private static void printUsage() {
+		System.out.println("Usage: Converter Convert-ID [-jcdb JSON-CDB-PATH]");
+		System.out.println("-jcdb force the usage of the JSON CDB");
+		System.out.println("   * Convert-ID: the identifier of the converter");
+		System.out.println("   * JSON-CDB-PATH: the path of the JSON CDB\n");
+	}
 
 	/**
 	 * Application starting point.
@@ -171,18 +182,47 @@ public class Converter {
 	 * @param args arguments
 	 */
 	public static void main(String[] args) {
-		if (args.length!=1) {
-			throw new IllegalArgumentException("Missing identifier in command line");
+		if (args.length!=1 && args.length!=3) {
+			printUsage();
+			System.exit(-1);
 		}
 		String id=args[0];
+		
+		CdbReader cdbReader = null;
 		
 		/**
 		 * Spring stuff
 		 */
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ConverterConfig.class);
-		CdbReader cdbReader = context.getBean("cdbReader",CdbReader.class);
+		
+		if (args.length==3) {
+			String cmdLineSwitch = args[1];
+			if (cmdLineSwitch.compareTo("-jcdb")!=0) {
+				printUsage();
+				System.exit(-2);
+			}
+			String cdbPath = args[2];
+			File f = new File(cdbPath);
+			if (!f.isDirectory() || !f.canRead()) {
+				System.err.println("Invalid file path "+cdbPath);
+				System.exit(-3);
+			}
+			
+			CdbFiles cdbFiles=null; 
+			try { 
+				cdbFiles= new CdbJsonFiles(f);
+			} catch (Exception e) {
+				System.err.println("Error initializing JSON CDB "+e.getMessage());
+				System.exit(-4);
+			}
+			cdbReader = new JsonReader(cdbFiles);
+		} else {	
+			// Get from dependency injection
+			cdbReader = context.getBean("cdbReader",CdbReader.class);
+		}
 		
 		ConverterStream converterStream = context.getBean(ConverterStream.class,id, new Properties());
+		
 		logger.info("Converter {} started",id);
 		
 		Converter converter = new Converter(id,cdbReader,converterStream);
