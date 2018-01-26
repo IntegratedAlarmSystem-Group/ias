@@ -34,8 +34,8 @@ import org.slf4j.LoggerFactory;
  * core of all the monitored values.
  * <P>
  * Updates on the values of monitored point must be provided by calling {@link #updateMonitorPointValue(String, Sample)}.
- * <P
- * >Some terminology helps better understanding the methods and data structures:
+ * <P>
+ * Some terminology helps better understanding the methods and data structures:
  * <UL>
  * 	<LI><em>sample</em>: the value of a monitor point read from the monitored system; 
  *      samples are notified to {@link MonitoredValue}
