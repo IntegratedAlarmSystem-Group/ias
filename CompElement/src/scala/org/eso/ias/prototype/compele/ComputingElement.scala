@@ -103,6 +103,7 @@ abstract class ComputingElement[T](
   require(asceIdentifier.idType==IdentifierType.ASCE)
   require(Option(initialInputs)!=None && !initialInputs.isEmpty,"Invalid (empty or null) set of required inputs to the component")
   require(Option(props).isDefined,"Invalid null properties")
+  require(Option(_output).isDefined,"Initial output cannot be null")
   
   assert(initialInputs.forall(_.fromIasValueValidity.isEmpty))
   assert(_output.fromIasValueValidity.isEmpty)
@@ -304,12 +305,13 @@ abstract class ComputingElement[T](
    * value and the ASCE cannot run the TF neither produce the output.
    * 
    * @param iasValues the new inputs received from the DASU
-   * @return A couple with 2 fields:
+   * @return A tuple with 3 fields:
    * 			   1) the new output generated applying the TF to the inputs and the new state of the ASCE
    *            The output is None if at least one of the inputs has not yet been initialized
-   *         2) the state of the ASCE
+   *         2) the actual validity
+   *         3) the state of the ASCE
    */
-  def update(iasValues: Set[IASValue[_]]): Tuple2[InOut[T], AsceStates.State] = {
+  def update(iasValues: Set[IASValue[_]]): Tuple3[InOut[T],Validity, AsceStates.State] = {
     require(Option(iasValues).isDefined,"Set of inputs not defined")
     
     // Check if the passed set of IASIOs contains at least one IASIO that is 
@@ -334,12 +336,14 @@ abstract class ComputingElement[T](
       lastOutputUpdateTStamp=System.currentTimeMillis()
       transfer(Map.empty++inputs,output,state)
     } else {
-      (output,state)
+      ( output,state)
     }
     state=newState
-    _output=newOut;
+    _output=newOut
     
-    (output,state.actualState)
+    val validity = _output.getValidity(Some(inputs.values.toSet))
+    
+    (output, validity, state.actualState)
   }
   
   /**

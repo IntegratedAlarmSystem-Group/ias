@@ -169,9 +169,9 @@ class TestTransferFunction extends FlatSpec {
       inputsMPs(k)=newIasio
     })
     
-    // Send the inputs
+    // Send all the inputs
     val result = javaComp.update(convert(inputsMPs.values.toSet))
-    assert(result._2==AsceStates.Healthy)
+    assert(result._3==AsceStates.Healthy)
     assert(result._1.value.isDefined)
     
     javaComp.shutdown()
@@ -196,7 +196,7 @@ class TestTransferFunction extends FlatSpec {
     // Send the inputs
     val result = scalaComp.update(convert(inputsMPs.values.toSet))
     println("XXXX "+result._2.toString())
-    assert(result._2==AsceStates.Healthy)
+    assert(result._3==AsceStates.Healthy)
     
     scalaComp.shutdown()
     
@@ -218,7 +218,7 @@ class TestTransferFunction extends FlatSpec {
     
     // Send the inputs and get the result
     val result = brokenTFScalaComp.update(convert(inputsMPs.values.toSet))
-    assert(result._2==AsceStates.TFBroken)
+    assert(result._3==AsceStates.TFBroken)
     assert(brokenTFScalaComp.getState()==AsceStates.TFBroken)
     
     brokenTFScalaComp.shutdown()
