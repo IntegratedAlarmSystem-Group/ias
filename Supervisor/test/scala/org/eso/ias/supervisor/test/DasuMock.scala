@@ -149,19 +149,19 @@ extends Dasu(dasuIdentifier) {
   }
   
   /**
-   * Deactivate the automatic update of the output
-   * in case no new inputs arrive.
-   */
-  def disableAutoRefreshOfOutput() = numOfDisableAutorefresh.incrementAndGet()
-  
-  /**
-   * Activate the automatic update of the output
+   * Enable/Disable the automatic update of the output
    * in case no new inputs arrive.
    * 
    * Most likely, the value of the output remains the same 
    * while the validity could change.
    */
-  def enableAutoRefreshOfOutput() = numOfEnableAutorefresh.incrementAndGet()
+  override def enableAutoRefreshOfOutput(enable: Boolean) = {
+    if (enable) {
+      numOfEnableAutorefresh.incrementAndGet()
+    } else {
+      numOfDisableAutorefresh.incrementAndGet()
+    }
+  }
   
   /**
    * Release all the resources before exiting

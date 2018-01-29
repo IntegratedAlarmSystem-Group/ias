@@ -76,8 +76,8 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
     val numOfActiveAlarms = for {
       hio <- compInputs.values
       if (hio.iasType==ALARM)
-      if (hio.actualValue.value.isDefined)
-      alarmValue = hio.actualValue.value.get.asInstanceOf[AlarmSample]
+      if (hio.value.isDefined)
+      alarmValue = hio.value.get.asInstanceOf[AlarmSample]
       if (alarmValue==AlarmSample.SET)} activeAlarms=activeAlarms+1
     
     actualOutput.updateValue(Some(AlarmSample.fromBoolean(activeAlarms>=threshold)))

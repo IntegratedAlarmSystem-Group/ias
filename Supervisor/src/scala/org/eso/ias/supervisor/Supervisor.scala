@@ -24,6 +24,7 @@ import org.eso.ias.dasu.publisher.KafkaPublisher
 import org.eso.ias.dasu.subscriber.KafkaSubscriber
 import org.eso.ias.prototype.input.java.IdentifierType
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import org.eso.ias.cdb.rdb.RdbReader
 
 /**
@@ -159,11 +160,7 @@ class Supervisor(
    * @param enable if true enable the autorefresh, otherwise disable the autorefresh
    */
   def enableAutoRefreshOfOutput(enable: Boolean) {
-    if (enable) {
-      dasus.values.foreach(dasu => dasu.enableAutoRefreshOfOutput())
-    } else {
-      dasus.values.foreach(dasu => dasu.disableAutoRefreshOfOutput())
-    }
+      dasus.values.foreach(dasu => dasu.enableAutoRefreshOfOutput(enable))
   }
   
   /**
@@ -178,7 +175,7 @@ class Supervisor(
     val alreadyStarted = started.getAndSet(true) 
     if (!alreadyStarted) {
       logger.debug("Starting Supervisor [{}]",id)
-      dasus.values.foreach(dasu => dasu.enableAutoRefreshOfOutput())
+      dasus.values.foreach(dasu => dasu.enableAutoRefreshOfOutput(true))
       val inputsOfSupervisor = dasus.values.foldLeft(Set.empty[String])( (s, dasu) => s ++ dasu.getInputIds())
       inputSubscriber.startSubscriber(this, inputsOfSupervisor).flatMap(s => Try(logger.debug("Supervisor [{}] started",id)))
     } else {
@@ -299,6 +296,7 @@ class Supervisor(
 }
 
 object Supervisor {
+  
 
   /** Build the usage message */
   def printUsage() = {
@@ -336,7 +334,7 @@ object Supervisor {
     // The identifier of the supervisor
     val identifier = new Identifier(supervisorId, IdentifierType.SUPERVISOR, None)
     
-    val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber, cr: CdbReader) => DasuImpl(dd,i,op,id,cr)
+    val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber, cr: CdbReader) => DasuImpl(dd,i,op,id,cr,RefreshTimeIntervalMSecs)
     
     // Build the supervisor
     val supervisor = new Supervisor(identifier,outputPublisher,inputsProvider,reader,factory)
@@ -347,4 +345,28 @@ object Supervisor {
       case Failure(ex) => System.err.println("Error starting the supervisor: "+ex.getMessage)
     }
   }
+  
+  /**
+   * The name of the property to override the auto send time interval
+   * read from the CDB
+   */
+  val AutoSendPropName = "ias.supervisor.autosend.time"
+  
+  /**
+   * The time interval to automatically send the last calculated output
+   * in seconds
+   */
+  val AutoSendTimeIntervalDefault = 5
+  
+  /**
+   * The auto-send time interval (seconds) read from the passed java property
+   * or, if the property is not set, the default value
+   */
+  lazy val RefreshTimeIntervalSeconds = Integer.getInteger(AutoSendPropName,AutoSendTimeIntervalDefault)
+  
+  /**
+   * The auto-send time interval (msecs) read from the passed java property
+   * or, if the property is not set, the default value
+   */
+  lazy val RefreshTimeIntervalMSecs = TimeUnit.MILLISECONDS.convert(RefreshTimeIntervalSeconds.toLong, TimeUnit.SECONDS)
 }

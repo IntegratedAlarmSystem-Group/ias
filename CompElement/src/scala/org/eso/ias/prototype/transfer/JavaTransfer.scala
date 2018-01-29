@@ -29,11 +29,10 @@ trait JavaTransfer[T] extends ComputingElement[T] {
   private[this] def flushOnJavaMap(
       inputs: Map[String, InOut[_]]): JavaMap[String, IASValueBase] = {
     val map: JavaMap[String, IASValueBase] = new JavaHashMap[String, IASValueBase]()
-    for (key <-inputs.keySet) {
-      val hio = inputs(key)
-      val iasVal = JavaConverter.inOutToIASValue(hio)
-      map.put(key,iasVal)
-    }
+    
+    inputs.values.foreach(iasio => {
+      map.put(iasio.id.id,JavaConverter.inOutToIASValue(iasio,iasio.getValidity(None)))
+    })
     map
   }
   
@@ -48,12 +47,14 @@ trait JavaTransfer[T] extends ComputingElement[T] {
       id: Identifier,
       actualOutput: InOut[T]): Either[Exception,InOut[T]] = {
     
-    val map: JavaMap[String, IASValueBase] = flushOnJavaMap(inputs)
-    val newOutput=tfSetting.transferExecutor.get.asInstanceOf[JavaTransferExecutor].eval(map,JavaConverter.inOutToIASValue(actualOutput))
-    val x=JavaConverter.updateHIOWithIasValue(actualOutput, newOutput).asInstanceOf[InOut[T]]
     try { 
       val map: JavaMap[String, IASValueBase] = flushOnJavaMap(inputs)
-      val newOutput=tfSetting.transferExecutor.get.asInstanceOf[JavaTransferExecutor].eval(map,JavaConverter.inOutToIASValue(actualOutput))
+      val newOutput=tfSetting.transferExecutor.get.asInstanceOf[JavaTransferExecutor].
+      eval(
+          map,
+          JavaConverter.inOutToIASValue(
+              actualOutput,
+              actualOutput.getValidity(Option(inputs.values.toSet))))
       Right(JavaConverter.updateHIOWithIasValue(actualOutput, newOutput).asInstanceOf[InOut[T]])
     
     } catch { case e:Exception => Left(e) }

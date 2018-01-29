@@ -55,8 +55,8 @@ class Validity(val iasValidity: IasValidity) extends Ordered[Validity] {
   override def hashCode: Int = iasValidity.hashCode()
   
   /**
-   * Return the lower validity between the actual validity and
-   * the validities of the passed IASIOs
+   * Return the lowest validity between the actual validity and
+   * the validities of the passed values
    * 
    * @param iasValues the IASValues to evaluate the new validity
    * @return the minimum validity
@@ -76,7 +76,12 @@ object Validity {
   /**
    * Build a Validity from the the IasValidity
    */
-  def apply(iasValidity: IasValidity): Validity = new Validity(iasValidity)
+  def apply(iasValidity: IasValidity): Validity = IasValidityToValidity(iasValidity)
+  
+  /**
+   * Unapply simmetric to apply
+   */
+  def unapply(validity: Validity): IasValidity =  ValidityToIasValidity(validity)
   
   /**
    * Implicit conversion from Validity to IasValidity
@@ -86,17 +91,18 @@ object Validity {
   /**
    * Implicit conversion from  IasValidity to Validity
    */
-  implicit def ValidityToIasValidity(iasValidity: IasValidity) = Validity(iasValidity)
+  implicit def IasValidityToValidity(iasValidity: IasValidity) = new Validity(iasValidity)
   
   /**
-   * Return the lower validity between all
-   * the validities of the passed IASIOs
+   * Return the lowest validity between all
+   * the validities of the passed validities
    * 
-   * @param iasValues the validities to evaluate the new validity
-   * @return the minimum validity
+   * @param iasValues the non empty set of validities to evaluate the new validity
+   * @return the minimum validity between all the validities in the passed set
    */
   def minValidity(iasValidities: Set[IasValidity]) : Validity = {
     require(Option(iasValidities).isDefined,"Invalid set of validities")
+    require(!iasValidities.isEmpty,"Cannot evaluate the min validity of an empty set of validities")
     
     Validity(iasValidities.map(Validity(_)).min)
   }

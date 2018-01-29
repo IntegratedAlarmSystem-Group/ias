@@ -22,7 +22,7 @@ import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
  * Filtering is based on the ID of the IASIOs _and_ IASValue type: 
  * - if the ID of the received String is contained in {@link #acceptedIds}
  *   then the IASIO is forwarded to the listener otherwise is rejected.
- * - if the ID of the received String is contained in {@link #acceptedtypes}
+ * - if the type of the {@link IASValue} is contained in {@link #acceptedtypes}
  *   then the IASIO is forwarded to the listener otherwise is rejected.
  * 
  * <BR>If the caller does not set any filter, then all the received IASIOs 

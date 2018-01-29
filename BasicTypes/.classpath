@@ -15,5 +15,6 @@
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/junit-4.12.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/scalactic_2.12-3.0.4.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/scalatest_2.12-3.0.4.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ias-logging.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
