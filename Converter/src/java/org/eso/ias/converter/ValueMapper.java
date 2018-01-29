@@ -172,7 +172,7 @@ public class ValueMapper implements Function<String, String> {
 		try { 
 			tStamp=iso8601dateFormat.parse(remoteSystemData.getSampleTime()).getTime();
 		} catch (ParseException pe) {
-			logger.error("Cannot parse the IASO 8601 timestamp {}: using actual time instad",remoteSystemData.getSampleTime());
+			logger.error("Cannot parse the ISO 8601 timestamp {}: using actual time instead",remoteSystemData.getSampleTime());
 			tStamp=System.currentTimeMillis();
 		}
 		
