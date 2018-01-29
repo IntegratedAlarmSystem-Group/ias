@@ -368,5 +368,5 @@ object Supervisor {
    * The auto-send time interval (msecs) read from the passed java property
    * or, if the property is not set, the default value
    */
-  lazy val RefreshTimeIntervalMSecs = TimeUnit.MICROSECONDS.convert(RefreshTimeIntervalSeconds.toLong, TimeUnit.SECONDS)
+  lazy val RefreshTimeIntervalMSecs = TimeUnit.MILLISECONDS.convert(RefreshTimeIntervalSeconds.toLong, TimeUnit.SECONDS)
 }
