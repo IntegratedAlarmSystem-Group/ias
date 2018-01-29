@@ -57,6 +57,11 @@ public class WebServerSender implements IasioListener, Runnable {
 	 * Same as the webserverUri but as a URI object
 	 */
 	URI uri;
+	
+	/**
+	 * Time in seconds to wait before attempt to reconnect 
+	 */
+	int reconnectionInterval = 2;
 
 	/**
 	 * The serializer/deserializer to convert the string
@@ -103,6 +108,7 @@ public class WebServerSender implements IasioListener, Runnable {
 		this.webserverUri = webserverUri;
 		this.listener = listener;
 		this.consumer = new KafkaIasiosConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, kafkaTopic, this.id);
+		this.consumer.setUp();
 	}
 
 	/**
@@ -117,6 +123,7 @@ public class WebServerSender implements IasioListener, Runnable {
 		this.webserverUri = webserverUri;
 		this.listener = listener;
 		this.consumer = new KafkaIasiosConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, KafkaHelper.IASIOs_TOPIC_NAME, this.id);
+		this.consumer.setUp();
 	}
 
 	/**
@@ -127,10 +134,15 @@ public class WebServerSender implements IasioListener, Runnable {
 	 */
 	@OnWebSocketClose
 	public void onClose(int statusCode, String reason) {
-	   logger.info("WebSocket connection closed:" + statusCode + ", " + reason);
+	   logger.info("WebSocket connection closed. status: " + statusCode + ", reason: " + reason);
 	   this.session = null;
-	   logger.info("Trying to reconnect");
-	   this.run();
+	   if (statusCode != 1001) {
+		   logger.info("Trying to reconnect");
+		   this.run();
+	   }
+	   else {
+		   logger.info("WebServerSender was stopped");
+	   }
 	}
 
 	/**
@@ -140,13 +152,12 @@ public class WebServerSender implements IasioListener, Runnable {
 	 */
 	@OnWebSocketConnect
 	public void onConnect(Session session) {
-	   logger.info("WebSocket got connect: %s%n",session);
+	   logger.info("WebSocket got connect. remoteAdress: " + session.getRemoteAddress());
 	   this.session = session;
 	   this.connectionReady.countDown();
 	   try {
-	       this.consumer.setUp();
 	       this.consumer.startGettingEvents(StartPosition.END, this);
-	       logger.info("Starting to listen events\n");
+	       logger.info("Starting to listen events");
 	   }
 	   catch (Throwable t) {
 	       logger.error("WebSocket couldn't send the message",t);
@@ -172,48 +183,43 @@ public class WebServerSender implements IasioListener, Runnable {
 		try {
 			String value = serializer.iasValueToString(event);
 			logger.info("Attempting to send value: "+ value);
-			this.session.getRemote().sendStringByFuture(value);
-			logger.info("Value sent");
-			this.notifyListener(value);
+			if (this.session != null) {
+				this.session.getRemote().sendStringByFuture(value);
+				logger.info("Value sent");
+				this.notifyListener(value);
+			}
+			else {
+				logger.debug("No server available to send message: " + value);
+			}
 		}
 		catch (Exception e){
-			logger.error("Cannot send messages to the Web Server", e);
+			logger.error("Error sending message to the Web Server", e);
 		}
 	}
 
-	public void connect() throws Exception {
-		this.uri = new URI(this.webserverUri);
-		this.session = null;
-		this.connectionReady = new CountDownLatch(1);
-		this.client = new WebSocketClient();
-		this.client.start();
-		try {
-			this.client.connect(this, this.uri, new ClientUpgradeRequest());
-			if(!this.connectionReady.await(2, TimeUnit.SECONDS)) {
-				logger.info("WebSocketSender could not establish the connection with the server.");
-				logger.info("Trying to reconnect");
-				this.connect();
-			}
-		}
-		catch( InterruptedException e) {
-			logger.info("Connection Interrupted, trying to reconnect");
-			this.connect();
-		}
-		logger.debug("Connection started!");
-	}
 
 	/**
 	 * Initializes the WebSocket connection
 	 */
 	public void run() {
 		try {
-			this.connect();
+			this.uri = new URI(this.webserverUri);
+			this.session = null;
+			this.connectionReady = new CountDownLatch(1);
+			this.client = new WebSocketClient();
+			this.client.start();
+			this.client.connect(this, this.uri, new ClientUpgradeRequest());
+			if(!this.connectionReady.await(this.reconnectionInterval, TimeUnit.SECONDS)) {
+				logger.info("WebSocketSender could not establish the connection with the server.");
+				logger.info("Trying to reconnect");
+				this.run();
+			}
+			logger.debug("Connection started!");
 		}
 		catch( Exception e) {
-			logger.error("Error on WebSocket connection");
+			logger.error("Error on WebSocket connection", e);
 			this.stop();
 		}
-
 	}
 
 	/**
@@ -221,7 +227,7 @@ public class WebServerSender implements IasioListener, Runnable {
 	 */
 	public void stop() {
 		this.session = null;
- 		this.consumer.tearDown();
+		this.consumer.tearDown();
 		try {
 			this.client.stop();
 			logger.debug("Connection stopped!");
@@ -229,6 +235,7 @@ public class WebServerSender implements IasioListener, Runnable {
 		catch( Exception e) {
 			logger.error("Error on Websocket stop");
 		}
+
 	}
 
 	/**
@@ -242,12 +249,19 @@ public class WebServerSender implements IasioListener, Runnable {
 		}
 
 	}
+	
+	/**
+	 * Set the time to wait before attempt to reconnect
+	 * 
+	 * @param interval time in seconds
+	 */
+	public void setReconnectionInverval(int interval) {
+		this.reconnectionInterval = interval;
+	}
 
 	public static void main(String[] args) throws Exception {
-
 		WebServerSender ws = new WebServerSender("WebServerSender", "ws://localhost:8000/core/", null);
-		ws.run();
-
+		ws.run();	
 	}
 
 }
