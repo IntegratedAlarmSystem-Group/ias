@@ -67,11 +67,11 @@ public abstract class IASValue<T> extends IASValueBase {
 	 * 
 	 * @param value The value
 	 * @param tStamp The timestamp
-	 * @param mode The operartional mode
+	 * @param mode The operational mode
 	 * @param iasValidity The validity
 	 * @param fullRunningId Full running ID
 	 * @param valueType The type of the value
-	 * @return A IasValue initialized with teh passed parameters
+	 * @return A IasValue initialized with the passed parameters
 	 */
 	public static <X> IASValue<?> buildIasValue(
 			X value,

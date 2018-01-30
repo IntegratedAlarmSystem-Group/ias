@@ -14,9 +14,9 @@ extends TransferExecutor(cEleId,cEleRunningId,props) {
 	 * Produces the output of the component by evaluating the inputs.
 	 * 
 	 * <EM>IMPLEMENTATION NOTE</EM>
-	 * The {@link HeteroInOut} is immutable. The easiest way to produce
+	 * The {@link InOut} is immutable. The easiest way to produce
 	 * the output to return is to execute the methods of the actualOutput
-	 * that return a new HeteroInOut.
+	 * that returns a new InOut.
 	 * 
 	 * @param compInputs: the inputs to the ASCE
 	 * @param actualOutput: the actual output of the ASCE

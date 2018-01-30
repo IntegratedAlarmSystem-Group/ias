@@ -103,6 +103,10 @@ abstract class ComputingElement[T](
   require(asceIdentifier.idType==IdentifierType.ASCE)
   require(Option(initialInputs)!=None && !initialInputs.isEmpty,"Invalid (empty or null) set of required inputs to the component")
   require(Option(props).isDefined,"Invalid null properties")
+  require(Option(_output).isDefined,"Initial output cannot be null")
+  
+  assert(initialInputs.forall(_.fromIasValueValidity.isEmpty))
+  assert(_output.fromIasValueValidity.isEmpty)
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
@@ -162,7 +166,7 @@ abstract class ComputingElement[T](
   lazy val isOutputAnAlarm = !isOutputASyntheticParam
   
   /** Getter for the private _output */
-  def output = _output
+  def output: InOut[T] = _output
   
   logger.info("ASCE [{}] built",id)
   
@@ -192,7 +196,7 @@ abstract class ComputingElement[T](
   private def transfer(
       immutableMapOfInputs: Map[String, InOut[_]], 
       actualOutput: InOut[T],
-      actualState: ComputingElementState): (InOut[T], ComputingElementState) = {
+      actualState: ComputingElementState): Tuple2[InOut[T], ComputingElementState] = {
     
     assert(actualState.canRunTF(),"Wrong state "+actualState.toString+" to run the TF")
     
@@ -235,21 +239,6 @@ abstract class ComputingElement[T](
       inputs: Map[String, InOut[_]], 
       id: Identifier,
       actualOutput: InOut[T]) : Either[Exception,InOut[T]]
-  
-  /**
-   * Update the validity of the passed actualOutput  from the validity
-   * of its inputs.
-   * 
-   * @param theInputs: The inputs, sorted by their IDs 
-   * @param actualOutput: the actual output
-   * @return The new output with the validity updated
-   */
-  private[this] def updateTheValidity(
-      theInputs: Iterable[InOut[_]], 
-      actualOutput: InOut[T]) : InOut[T] = {
-    val newValidity = Validity.minValidity(theInputs.map(_.validity.iasValidity).toSet)
-    actualOutput.updateValidity(newValidity)
-  }
   
   override def toString() = {
     val outStr: StringBuilder = new StringBuilder("State of ASCE [")
@@ -316,10 +305,13 @@ abstract class ComputingElement[T](
    * value and the ASCE cannot run the TF neither produce the output.
    * 
    * @param iasValues the new inputs received from the DASU
-   * @return the new output generated applying the TF to the inputs and the new state of the ASCE
-   *         The otput is None if at least one of the inputs has not yet been initialized
+   * @return A tuple with 3 fields:
+   * 			   1) the new output generated applying the TF to the inputs and the new state of the ASCE
+   *            The output is None if at least one of the inputs has not yet been initialized
+   *         2) the actual validity
+   *         3) the state of the ASCE
    */
-  def update(iasValues: Set[IASValue[_]]): (Option[InOut[T]], AsceStates.State) = {
+  def update(iasValues: Set[IASValue[_]]): Tuple3[InOut[T],Validity, AsceStates.State] = {
     require(Option(iasValues).isDefined,"Set of inputs not defined")
     
     // Check if the passed set of IASIOs contains at least one IASIO that is 
@@ -331,42 +323,39 @@ abstract class ComputingElement[T](
     // Does the passed set contains 2 IASIOs with the same ID?
     assert(!iasValues.exists(i => iasValues.count(_.id==i.id)>1),"There cant 2 IASIOs with the same ID in the passed set of inputs!")
     
-    logger.debug("New set of inputs for {}: [{}]",id,iasValues.map(v => v.id).mkString(", "))
-        
     // Updates the map with the passed IASIOs
-    iasValues.foreach(iasio => inputs.get(iasio.id).map( _.update(iasio)).foreach(i => inputs.put(i.id.id,i)))
+    iasValues.foreach(iasVal => inputs.get(iasVal.id).map( _.update(iasVal)).foreach(i => inputs.put(i.id.id,i)))
     
     // If all the inputs have been initialized, change the state to be able to run the TF
     if (state.actualState==AsceStates.InputsUndefined && inputs.values.forall(i => i.value.isDefined)) {
       state = ComputingElementState.transition(state, new InputsInitialized())
     }
     
+    // Apply the transfer function to the inputs
     val (newOut, newState) = if (state.canRunTF()) {
       lastOutputUpdateTStamp=System.currentTimeMillis()
       transfer(Map.empty++inputs,output,state)
     } else {
-      (output,state)
+      ( output,state)
     }
     state=newState
-    // Always update the validity
-    _output=updateTheValidity(inputs.values, newOut)
+    _output=newOut
     
-    (output.value.map( o => output),state.actualState)
+    val validity = _output.getValidity(Some(inputs.values.toSet))
+    
+    (output, validity, state.actualState)
   }
   
   /**
-   * Update the output of the ACS when the inputs is a set of IASIOs.
+   * Return the last computed output and its validity updated
+   * with the current value of the inputs.
    * 
-   * This method is here mostly for testing and delegate to  update(iasValues: Set[IASValue[_]])
-   * 
-   * @param iasios  the new inputs
+   * @return the output and its validity
    */
-  def update(iasios: List[InOut[_]]): (Option[InOut[T]], AsceStates.State) = {
-    update(iasios.map(iasio => JavaConverter.inOutToIASValue(iasio)).toSet)
+  def getOutput(): Tuple2[InOut[_], Validity] = {
+    (output, output.getValidity(Some(inputs.values.toSet)))
   }
-  
 }
-
 /**
  * The ComputingElement object to build a ComputingElement from the AsceDao red from the CDB
  */
@@ -422,4 +411,5 @@ object ComputingElement {
     if (tfLanguage==TransferFunctionLanguage.java) new ComputingElement[T](asceId,out, initialIasios, tfSettings, properties) with JavaTransfer[T]
     else new ComputingElement[T](asceId,out, initialIasios, tfSettings, properties) with ScalaTransfer[T]
   }
+
 }

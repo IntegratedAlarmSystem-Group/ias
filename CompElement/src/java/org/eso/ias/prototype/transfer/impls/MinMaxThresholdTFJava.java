@@ -204,6 +204,6 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 				
 				
 		AlarmSample newOutput = AlarmSample.fromBoolean(condition);
-		return ((IasAlarm) actualOutput).updateValue(newOutput);
+		return ((IasAlarm) actualOutput).updateValue(newOutput).updateMode(hio.mode);
 	}
 }

@@ -72,7 +72,7 @@ public abstract class PublisherBase implements MonitorPointSender {
 	/**
 	 * The default max size of the buffer
 	 */
-	public static final int defaultBufferSize = Integer.MAX_VALUE;
+	public static final int defaultBufferSize =131072;
 	
 	/**
 	 * The max number of monitor point values to keep in memory in the time interval.
