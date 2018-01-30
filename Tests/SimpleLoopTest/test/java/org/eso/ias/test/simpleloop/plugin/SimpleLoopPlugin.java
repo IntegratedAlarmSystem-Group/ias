@@ -17,6 +17,7 @@ import org.eso.ias.plugin.config.PluginConfigFileReader;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.KafkaPublisher;
+import org.eso.ias.prototype.input.java.OperationalMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -209,6 +210,8 @@ public class SimpleLoopPlugin extends Plugin implements Runnable {
 	@Override
 	public void start() throws PublisherException {
 		super.start();
+		
+		setPluginOperationalMode(OperationalMode.OPERATIONAL);
 		
 		// Start the thread to send values of the monitor point
 		future.set(Plugin.getScheduledExecutorService().scheduleAtFixedRate(this, stepTime, stepTime, TimeUnit.SECONDS));
