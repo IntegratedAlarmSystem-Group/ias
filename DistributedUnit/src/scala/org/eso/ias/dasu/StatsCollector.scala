@@ -29,8 +29,8 @@ class StatsCollector(
   logger.info("Building the statistics collector for DASU [{}]",dasuId)
   
   val margin = {
-    val prop = Option(System.getProperties.getProperty(TimeScheduler.MarginPropName))
-    prop.map(s => Try(s.toInt).getOrElse(TimeScheduler.DefaultMargin)).getOrElse(TimeScheduler.DefaultMargin).abs
+    val prop = Option(System.getProperties.getProperty(StatsCollector.MarginPropName))
+    prop.map(s => Try(s.toInt).getOrElse(StatsCollector.DefaultMargin)).getOrElse(StatsCollector.DefaultMargin).abs
   }
   
   /** The number of iterations executed so far */
@@ -43,9 +43,9 @@ class StatsCollector(
   val lastStatsPublicationTime = new AtomicLong(System.currentTimeMillis())
   
   /** The time interval to publish statistics in msecs */ 
-  val statsTimeInterval = TimeUnit.MILLISECONDS.convert(TimeScheduler.StatisticsTimeInterval,TimeUnit.MINUTES)
+  val statsTimeInterval = TimeUnit.MILLISECONDS.convert(StatsCollector.StatisticsTimeInterval,TimeUnit.MINUTES)
   if (statsTimeInterval>0) {
-    logger.info(f"DASU [$dasuId%s] will generate stats every ${TimeScheduler.StatisticsTimeInterval} minutes")
+    logger.info(f"DASU [$dasuId%s] will generate stats every ${StatsCollector.StatisticsTimeInterval} minutes")
   } else {
     logger.warn("Generation of stats for DASU [{}] disabled",dasuId)
   }
@@ -94,7 +94,7 @@ class StatsCollector(
 }
 
 /** Companion object with definitions of constants*/
-object TimeScheduler {
+object StatsCollector {
   
   /** The default margin to anticipate the generation of the output  */
   val DefaultMargin = 50
