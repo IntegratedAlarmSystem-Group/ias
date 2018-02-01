@@ -12,22 +12,19 @@ import org.eso.ias.prototype.input.Identifier
 import org.eso.ias.prototype.input.java.IdentifierType
 import org.eso.ias.prototype.input.InOut
 import org.eso.ias.prototype.input.java.IASTypes
+import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.prototype.input.JavaConverter
+import org.scalatest.BeforeAndAfterEach
 
 /**
  * Test the multiplicity transfer function
  */
-class TestMultiplicityTF extends FlatSpec {
+class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   
   val props = new Properties()
   props.put(MultiplicityTF.ThresholdPropName,"3")
   
   val threadFactory = new TestThreadFactory()
-    
-    // The TF executor to test
-    val scalaMultuiplicityTF = new TransferFunctionSetting(
-        "org.eso.ias.prototype.transfer.impls.MultiplicityTF",
-        TransferFunctionLanguage.scala,
-        threadFactory)
   
   /** The ID of the SUPERVISOR where the components runs */
   val supervId = new Identifier("SUPERV-ID",IdentifierType.SUPERVISOR,None)
@@ -58,25 +55,127 @@ class TestMultiplicityTF extends FlatSpec {
     v.toSet
   }
   
-  val scalaComp: ComputingElement[AlarmSample] = new ComputingElement[AlarmSample](
+  /** The ASCE running the multiplicity TF */
+  var scalaComp: Option[ComputingElement[AlarmSample]]= None
+  
+  override def beforeEach() {
+  val scalaMultuiplicityTF = new TransferFunctionSetting(
+      "org.eso.ias.prototype.transfer.impls.MultiplicityTF",
+        TransferFunctionLanguage.scala,
+        threadFactory)
+    
+    scalaComp = Some(new ComputingElement[AlarmSample](
        compID,
        output,
        inputsMPs,
        scalaMultuiplicityTF,
-       props) with ScalaTransfer[AlarmSample]
+       props) with ScalaTransfer[AlarmSample])
+    
+    scalaComp.get.initialize()
+    Thread.sleep(1000)
+  }
+  
+  override def afterEach() {
+    scalaComp.get.shutdown()
+  }
+  
+  /** 
+   *  Convert a InOut to a IASValue
+   *  
+   *  @param  iasio The InOut to convert
+   *  @return the IASValue
+   */
+  def convert(iasio: InOut[_]): IASValue[_] = {
+    JavaConverter.inOutToIASValue(iasio,iasio.getValidity(None))
+  }
+  
+  /**
+   * Check the state of the alarm of the passed IASIO
+   * 
+   * @param hio: the IASIO to check the alarm state
+   * @param alarmState: The expected alarm
+   */
+  def checkAlarmActivation(asce: ComputingElement[AlarmSample], alarmState: AlarmSample): Boolean = {
+    assert(asce.isOutputAnAlarm)
+    val hio = asce.getOutput()._1
+    assert(hio.iasType==IASTypes.ALARM)
+    
+    hio.value.forall(a => a==alarmState)
+  }
+  
+  /**
+   * Build and return a set of IASValue with a
+   * defined number of ativated alarms 
+   * 
+   * @param the desired number of activated alarms
+   * @param a set of alarms with n activaetd and the other cleared
+   */
+  def activate(n: Integer): Set[IASValue[_]] = {
+    require(n>0)
+    val inputsMPsList = inputsMPs.toList
+    val list = for (i <- 0 to inputsMPsList.size-1) yield {
+      if (i<=n-1) convert(inputsMPsList(i).updateValue(Some(AlarmSample.SET)))
+      else convert(inputsMPsList(i).updateValue(Some(AlarmSample.CLEARED)))
+    }
+    val ret = list.toSet
+    assert(ret.size==inputsMPs.size)
+    assert(ret.count(value => value.value==AlarmSample.SET)==n)
+    ret
+  }
   
   behavior of "The scala MultiplicityTF executor"
   
-  it must "Correctly load, init and shutdown the TF executor" in { 
-    assert(!scalaMultuiplicityTF.initialized)
-    assert(!scalaMultuiplicityTF.isShutDown)
-    scalaMultuiplicityTF.initialize("ASCE-MinMaxTF-ID", "ASCE-running-ID", new Properties())
+  it must "Correctly load, init and shutdown the multiplicity TF executor" in { 
+    val multuiplicityTF = new TransferFunctionSetting(
+      "org.eso.ias.prototype.transfer.impls.MultiplicityTF",
+        TransferFunctionLanguage.scala,
+        threadFactory)
+    
+    assert(!multuiplicityTF.initialized)
+    assert(!multuiplicityTF.isShutDown)
+    multuiplicityTF.initialize("ASCE-MinMaxTF-ID", "ASCE-running-ID", new Properties())
     Thread.sleep(500)
-    assert(scalaMultuiplicityTF.initialized)
-    assert(!scalaMultuiplicityTF.isShutDown)
-    scalaMultuiplicityTF.shutdown()
+    assert(multuiplicityTF.initialized)
+    assert(!multuiplicityTF.isShutDown)
+    multuiplicityTF.shutdown()
     Thread.sleep(500)
-    assert(scalaMultuiplicityTF.initialized)
-    assert(scalaMultuiplicityTF.isShutDown)
+    assert(multuiplicityTF.initialized)
+    assert(multuiplicityTF.isShutDown)
+  }
+  
+  it must "run the multiplicity TF" in {
+    // Change all inputs do  trigger the TF
+    val changedMPs = inputsMPs.map ( iasio => convert(iasio.updateValue(Some(AlarmSample.SET))))
+    scalaComp.get.update(changedMPs)
+    assert(checkAlarmActivation(scalaComp.get,AlarmSample.SET))
+    
+    // Clearing all must disable
+    val clearedMPs = inputsMPs.map ( iasio => convert(iasio.updateValue(Some(AlarmSample.CLEARED))))
+    scalaComp.get.update(clearedMPs)
+    assert(checkAlarmActivation(scalaComp.get,AlarmSample.CLEARED))
+    
+    val act1=activate(1)
+    scalaComp.get.update(act1)
+    assert(checkAlarmActivation(scalaComp.get,AlarmSample.CLEARED))
+    
+    val act2=activate(2)
+    scalaComp.get.update(act2)
+    assert(checkAlarmActivation(scalaComp.get,AlarmSample.CLEARED))
+    
+    val act3=activate(3)
+    scalaComp.get.update(act3)
+    assert(checkAlarmActivation(scalaComp.get,AlarmSample.SET))
+    
+    val act4=activate(4)
+    scalaComp.get.update(act4)
+    assert(checkAlarmActivation(scalaComp.get,AlarmSample.SET))
+
+    // Activate all again
+    scalaComp.get.update(changedMPs)
+    assert(checkAlarmActivation(scalaComp.get,AlarmSample.SET))
+    
+    // Clear all again
+    scalaComp.get.update(clearedMPs)
+    assert(checkAlarmActivation(scalaComp.get,AlarmSample.CLEARED))
   }
 }
