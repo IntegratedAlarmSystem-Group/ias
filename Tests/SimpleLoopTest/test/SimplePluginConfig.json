@@ -6,7 +6,7 @@
 	"properties": [],
 	"values":[
 		{"id":"MonitorPoint",
-		"refreshTime":"15000",
+		"refreshTime":"5000",
 		"filter":"",
 		"filterOptions":""}]
 }
