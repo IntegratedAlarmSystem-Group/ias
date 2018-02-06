@@ -26,6 +26,8 @@ import org.ias.prototype.logging.IASLogger
 import org.eso.ias.cdb.pojos.TFLanguageDao
 import org.eso.ias.prototype.transfer.ScalaTransfer
 import org.eso.ias.prototype.input.JavaConverter
+import org.eso.ias.prototype.input.java.OperationalMode
+import org.eso.ias.prototype.input.java.IasValidity
 
 /**
  * The Integrated Alarm System Computing Element (ASCE) 
@@ -403,9 +405,13 @@ object ComputingElement {
     
     // Builds the initial set of inputs: all the InOut at the beginning have a null value
     val initialIasios: Set[InOut[_]] = inputsIasioDaos.map(iDao => 
-      InOut(
+      new InOut(
+          None,
+          System.currentTimeMillis(),
           new Identifier(iDao.getId,IdentifierType.IASIO,None),
           iDao.getRefreshRate,
+          OperationalMode.UNKNOWN,
+          Some(Validity(IasValidity.UNRELIABLE)),
           IASTypes.fromIasioDaoType(iDao.getIasType())))
     
     if (tfLanguage==TransferFunctionLanguage.java) new ComputingElement[T](asceId,out, initialIasios, tfSettings, properties) with JavaTransfer[T]
