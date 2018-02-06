@@ -1,3 +1,4 @@
+
 package org.eso.ias.prototype.input
 
 import org.eso.ias.prototype.input.java.IASValue
@@ -189,7 +190,14 @@ object JavaConverter {
       throw new IllegalStateException("Running ID mismatch for HIO "+hio.id.fullRunningID+": "+hio.id.runningID+"!="+iasValue.fullRunningId)
     }
     // Finally, update the HIO
-    val inheritVal = Some(Validity(iasValue.iasValidity))
-    hio.updateMode(iasValue.mode).updateValue(Option[T](iasValue.value)).updatedInheritedValidity(inheritVal)
+    val ret = hio.updateMode(iasValue.mode).updateValue(Option[T](iasValue.value)) 
+    if (hio.isOutput()) {
+      // Does not updated the inherited validity 
+      ret
+    } else {
+      val inheritVal = Some(Validity(iasValue.iasValidity))
+      ret.updatedInheritedValidity(inheritVal)  
+    }
+    
   }
 }
