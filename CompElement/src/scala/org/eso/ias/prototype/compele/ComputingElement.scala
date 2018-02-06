@@ -105,7 +105,7 @@ abstract class ComputingElement[T](
   require(Option(props).isDefined,"Invalid null properties")
   require(Option(_output).isDefined,"Initial output cannot be null")
   
-  assert(initialInputs.forall(_.fromIasValueValidity.isEmpty))
+  assert(initialInputs.forall(_.fromIasValueValidity.isDefined))
   assert(_output.fromIasValueValidity.isEmpty)
   
   /** The logger */
@@ -348,7 +348,7 @@ abstract class ComputingElement[T](
   
   /**
    * Return the last computed output and its validity updated
-   * with the current value of the inputs.
+   * with the current validity of the inputs.
    * 
    * @return the output and its validity
    */

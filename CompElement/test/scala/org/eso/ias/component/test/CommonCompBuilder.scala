@@ -7,6 +7,8 @@ import org.eso.ias.prototype.input.Validity
 import org.eso.ias.prototype.input.java.IASTypes
 import org.eso.ias.prototype.input.java.IdentifierType
 import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.prototype.input.java.OperationalMode
+import org.eso.ias.prototype.input.java.IasValidity
 
 /**
  * A common helper class to build data structures for testing
@@ -54,9 +56,13 @@ class CommonCompBuilder(
 
   // The Map of IASValues for updating the inputs to the ASCE
   val inputsMPs: Set[InOut[_]]  = inputTypes.zip(1 to inputTypes.size).map( a => {
-     InOut(
-         new Identifier(("INPUT-HIO-ID#"+a._2), IdentifierType.IASIO,compID), 
-         mpRefreshRate, 
+     new InOut(
+         None,   
+         System.currentTimeMillis(),
+         new Identifier(("INPUT-HIO-ID#"+a._2), IdentifierType.IASIO,compID),
+         mpRefreshRate,
+         OperationalMode.UNKNOWN,
+         Some(Validity(IasValidity.RELIABLE)),
          a._1)
   })
      

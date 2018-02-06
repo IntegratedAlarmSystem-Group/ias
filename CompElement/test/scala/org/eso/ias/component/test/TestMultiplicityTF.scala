@@ -15,6 +15,9 @@ import org.eso.ias.prototype.input.java.IASTypes
 import org.eso.ias.prototype.input.java.IASValue
 import org.eso.ias.prototype.input.JavaConverter
 import org.scalatest.BeforeAndAfterEach
+import org.eso.ias.prototype.input.Validity
+import org.eso.ias.prototype.input.java.IasValidity
+import org.eso.ias.prototype.input.java.OperationalMode
 
 /**
  * Test the multiplicity transfer function
@@ -47,10 +50,14 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   /** The Map of IASValues for updating the inputs to the ASCE */
   val inputsMPs: Set[InOut[_]]  = {
     val v = for (i <- 1 to 5) yield {
-    InOut(
-         new Identifier(("INPUT-HIO-ID#"+i), IdentifierType.IASIO,compID), 
-         500, 
-         IASTypes.ALARM)
+    new InOut(
+         None,   
+         System.currentTimeMillis(),
+         new Identifier(("INPUT-HIO-ID#"+i), IdentifierType.IASIO,compID),
+         500,
+         OperationalMode.UNKNOWN,
+         Some(Validity(IasValidity.RELIABLE)),
+         IASTypes.ALARM)  
     }
     v.toSet
   }
