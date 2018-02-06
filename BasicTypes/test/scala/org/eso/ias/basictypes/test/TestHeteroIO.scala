@@ -82,8 +82,6 @@ class TestHeteroIO extends FlatSpec {
   it must "allow to update the dependant validity" in {
     val mp: InOut[Long] = InOut(id, refreshRate, IASTypes.LONG)
     assert(mp.fromIasValueValidity == None)
-    val mpUpdatedValidityRelaible = mp.updatedInheritedValidity(None)
-    assert(mpUpdatedValidityRelaible.fromIasValueValidity.isEmpty)
 
     val mp2= InOut[Long](
         None, 
