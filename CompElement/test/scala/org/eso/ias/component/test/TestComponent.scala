@@ -20,6 +20,7 @@ import org.eso.ias.prototype.input.java.AlarmSample
 import org.eso.ias.prototype.input.java.IASValue
 import org.eso.ias.prototype.compele.AsceStates
 import org.eso.ias.prototype.input.java.IasValidity._
+import org.eso.ias.prototype.input.java.IasValidity
 
 /**
  * Test the basic functionalities of the IAS Component,
@@ -54,7 +55,7 @@ class TestComponent extends FlatSpec {
       mpI1Identifier,
       mpRefreshRate,
       OperationalMode.UNKNOWN,
-      None,
+      Some(Validity(IasValidity.RELIABLE)),
       IASTypes.ALARM)
   
   // The ID of the second MP
@@ -65,7 +66,7 @@ class TestComponent extends FlatSpec {
       mpI2Identifier,
       mpRefreshRate,
       OperationalMode.UNKNOWN,
-      None,
+      Some(Validity(IasValidity.RELIABLE)),
       IASTypes.ALARM)
   val actualInputs: Set[InOut[_]] = Set(mp1,mp2)
   

@@ -82,8 +82,6 @@ class TestHeteroIO extends FlatSpec {
   it must "allow to update the dependant validity" in {
     val mp: InOut[Long] = InOut(id, refreshRate, IASTypes.LONG)
     assert(mp.fromIasValueValidity == None)
-    val mpUpdatedValidityRelaible = mp.updatedInheritedValidity(None)
-    assert(mpUpdatedValidityRelaible.fromIasValueValidity.isEmpty)
 
     val mp2= InOut[Long](
         None, 
@@ -246,10 +244,18 @@ class TestHeteroIO extends FlatSpec {
   }
 
   it must "correctly evaluate the validity with dependants IASIOs" in {
+    //
+    // NOTE: the validity calculated depends on the validity of the dependants
+    //       IASIOs that is assessed against the time when the validity is requested
+    //       i.e. if the inherited validity of a dependant is RELIABLE but
+    //       checked after its refresh rate expired, then its validity is UNRELIABLE
     val iasioId = new Identifier("IasioId", IdentifierType.IASIO, Option(asceId))
 
     val refreshRate = 500
 
+    // This is a IASIO produced by a ASCE:
+    // no fromIasValueValidity but depends on
+    // iasioReliable and iasioUnreliable
     val iasio = new InOut[AlarmSample](
       Some(AlarmSample.SET),
       System.currentTimeMillis(),
@@ -259,15 +265,23 @@ class TestHeteroIO extends FlatSpec {
       None,
       IASTypes.ALARM)
       
+    // An IASIO in input to a ASCE:
+    // it has the fromIasValueValidity but do not depend on
+    // other IASIOs
     val iasioReliable = new InOut[AlarmSample](
       Some(AlarmSample.SET),
       System.currentTimeMillis(),
       iasioId,
       refreshRate,
       OperationalMode.OPERATIONAL,
-      None,
+      Some(Validity(IasValidity.RELIABLE)),
       IASTypes.ALARM) 
       
+    val setReliable: Set[InOut[_]] = Set(iasioReliable)
+      
+    // An IASIO in input to a ASCE:
+    // it has the fromIasValueValidity but do not depend on
+    // other IASIOs
     val iasioUnreliable = new InOut[AlarmSample](
       Some(AlarmSample.SET),
       System.currentTimeMillis(),
@@ -276,13 +290,37 @@ class TestHeteroIO extends FlatSpec {
       OperationalMode.OPERATIONAL,
       Some(Validity(IasValidity.UNRELIABLE)),
       IASTypes.ALARM)
+      
+    val setUnreliable: Set[InOut[_]] = Set(iasioUnreliable)
 
     // Newly created, the update time is before the refresh rate
-    assert(iasio.getValidity(Option(Set(iasioReliable))) == Validity(IasValidity.RELIABLE))
+    assert(iasio.getValidity(Option(setReliable)) == Validity(IasValidity.RELIABLE))
     Thread.sleep(2 * refreshRate)
-    assert(iasio.getValidity(Option(Set(iasioReliable))) == Validity(IasValidity.UNRELIABLE))
+    assert(iasio.getValidity(Option(setUnreliable)) == Validity(IasValidity.UNRELIABLE))
 
-
+    // Update the value to reset the timestamp
+    val iasio2=iasio.updateValue(Some(AlarmSample.SET))
+    assert(iasio2.assessTimeValidity()==Validity(IasValidity.RELIABLE))
+    assert(iasio2.fromIasValueValidity.isEmpty)
+    // The validity of setReliable is now UNRELIABLE because 
+    // even if its inherited validity is RELIABALE, its update time
+    // is now greater then its refresh rate
+    assert(iasio2.getValidity(Option(setReliable)) == Validity(IasValidity.UNRELIABLE))
+    
+    // Update again the value to reset the timestamp
+    val iasio3=iasio2.updateValue(Some(AlarmSample.SET))
+    val iasioReliable2 = iasioReliable.updateValue(Some(AlarmSample.SET))
+    val setReliable2: Set[InOut[_]] = Set(iasioReliable2)
+    // The validity of setReliable2 is now RELIABLE because we renewed the refresh rate
+    assert(iasio3.getValidity(Option(setReliable2)) == Validity(IasValidity.RELIABLE))
+    Thread.sleep(2 * refreshRate)
+    assert(iasio3.getValidity(Option(setReliable2)) == Validity(IasValidity.UNRELIABLE))
+    
+    // Update again the value to reset the timestamp
+    val iasio4=iasio3.updateValue(Some(AlarmSample.SET))
+    val iasioUnreliable2 = iasioUnreliable.updateValue(Some(AlarmSample.SET))
+    val setUnReliable2: Set[InOut[_]] = Set(iasioUnreliable2)
+    assert(iasio2.getValidity(Option(setReliable2)) == Validity(IasValidity.UNRELIABLE))
   }
 
 }

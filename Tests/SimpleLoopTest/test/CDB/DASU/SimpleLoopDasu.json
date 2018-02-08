@@ -1,0 +1,8 @@
+{
+	"asceIDs":[
+		"SimpleLoopAsce"],
+	"outputId":"Alarm",
+	"logLevel":"FATAL",
+	"id":"SimpleLoopDasu",
+	"supervisorID":"SimpleLoopSuperv"
+}

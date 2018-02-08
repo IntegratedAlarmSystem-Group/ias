@@ -1,0 +1,12 @@
+{ 
+	"id":"SimpleLoopPlugin",
+	"monitoredSystemId":"SimulatedSystem",
+	"sinkServer":"localhost",
+	"sinkPort":"9092",
+	"properties": [],
+	"values":[
+		{"id":"MonitorPoint",
+		"refreshTime":"5000",
+		"filter":"",
+		"filterOptions":""}]
+}
