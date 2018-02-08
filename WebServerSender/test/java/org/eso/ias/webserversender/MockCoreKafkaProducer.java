@@ -2,6 +2,7 @@ package org.eso.ias.webserversender;
 
 import org.eso.ias.kafkautils.KafkaIasiosProducer;
 import org.eso.ias.kafkautils.KafkaUtilsException;
+import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.prototype.input.java.AlarmSample;
 import org.eso.ias.prototype.input.java.IASTypes;
 import org.eso.ias.prototype.input.java.IASValue;
@@ -17,21 +18,21 @@ public class MockCoreKafkaProducer {
 
 		IasValueStringSerializer serializer = new IasValueJsonSerializer();
 
-		KafkaIasiosProducer producer = new KafkaIasiosProducer("localhost:9092", "test", "PID1", serializer);
+		KafkaIasiosProducer producer = new KafkaIasiosProducer("localhost:9092", KafkaHelper.IASIOs_TOPIC_NAME, "PID1", serializer);
 		producer.setUp();
-		
+
 		IASValue<?> msg;
 		int counter = 0;
-		
+
 		AlarmSample value1 = AlarmSample.CLEARED;
 		AlarmSample value2 = AlarmSample.SET;
 		AlarmSample aux;
-		
+
 		while (true) {
 
 			try {
 				Thread.sleep(100);
-				
+
 				if (counter == 10) {
 					aux = value1;
 					value1 = value2;
@@ -52,6 +53,6 @@ public class MockCoreKafkaProducer {
 				e.printStackTrace();
 			}
 		}
-		
+
 	}
 }
