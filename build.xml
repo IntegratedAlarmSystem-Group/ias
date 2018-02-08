@@ -14,7 +14,7 @@
 
 	<taskdef resource="net/sf/antcontrib/antlib.xml"/>
 
-	<property name="iasModules" value="Tools,Logging,Cdb,BasicTypes,KafkaUtils,plugin,Converter,CompElement,DistributedUnit,Supervisor,WebServerSender" />
+	<property name="iasModules" value="Tools,Logging,Cdb,BasicTypes,KafkaUtils,plugin,Converter,CompElement,DistributedUnit,Supervisor,WebServerSender,Tests/SimpleLoopTest" />
 
 	<target name="SanityCheck">
 		<!--
