@@ -236,7 +236,15 @@ case class InOut[A](
     require(v.id==this.id.id,"Identifier mismatch: received "+v.id+", expected "+this.id.id)
     assert(v.valueType==this.iasType)
     
-    updateValue(Option(v.value)).updateMode(v.mode)
+    
+    val ret = updateValue(Option(v.value)).updateMode(v.mode)
+    
+    // If it is an input then we have to update also the inherited validity
+    if (fromIasValueValidity.isDefined) {
+      ret.updatedInheritedValidity(Option(Validity(v.iasValidity)))
+    } else {
+      ret
+    }
   }
 }
 
