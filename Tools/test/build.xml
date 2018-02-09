@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Tools" default="build" basedir=".">
+	<!-- Include IAS common definition -->
+	<include file="../config/CommonAnt.xml" as="ias" />
+	
+	<!-- ####################### PROPERTIES ####################### -->
+	
+	<!-- ####################### TARGETS ####################### -->
+	
+	<target name="build" depends="ias.build" />
+
+	<target name="clean" depends="ias.clean" />
+	
+	<target name="doc" depends="ias.doc" />
+	
+</project>
