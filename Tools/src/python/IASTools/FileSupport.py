@@ -59,7 +59,7 @@ class FileSupport(object):
         @param fileName: The name of the file to look for
         @param fileType: the type (iasFileType) of file to look for (example BINARY,LIB...)
         @return: if the file is found The full path name of the file
-                 otherwise throws a IOError exception
+                 otherwise throws a OSError exception
         """
         iasRoot=FileSupport.getIASRoot()
         if self.fileType:
@@ -101,7 +101,7 @@ class FileSupport(object):
                 if filePath is not None:
                     return filePath
         # Bad luck!
-        raise IOError(self.fileName+" not found")
+        raise OSError(self.fileName+" not found")
     
     @classmethod
     def getIASRoot(cls):
@@ -162,10 +162,10 @@ class FileSupport(object):
             makedirs(tmpFolder)
         else:
             if not path.isdir(tmpFolder):
-                raise IOError(tmpFolder+" is not a directory")
+                raise OSError(tmpFolder+" is not a directory")
             # Can write?
             if not access(tmpFolder, W_OK | X_OK):
-                raise IOError(tmpFolder+" is not writable")
+                raise OSError(tmpFolder+" is not writable")
         
     @classmethod
     def createLogsFolder(cls):
@@ -180,8 +180,8 @@ class FileSupport(object):
             makedirs(logsFolder)
         else:
             if not path.isdir(logsFolder):
-                raise IOError(logsFolder+" is not a directory")
+                raise OSError(logsFolder+" is not a directory")
             # Can write?
             if not access(logsFolder, W_OK | X_OK):
-                raise IOError(logsFolder+" is not writable")
+                raise OSError(logsFolder+" is not writable")
         

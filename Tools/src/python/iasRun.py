@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#! /usr/bin/env python
 '''
 Created on Sep 26, 2016
 
@@ -39,7 +39,7 @@ def setProps(propsDict,className):
         path = fs.findFile()
         propsDict["logback.configurationFile"]=path
     except:
-        print "No log4j config file ("+logbackConfigFileName+") found: using defaults"
+        print("No log4j config file ("+logbackConfigFileName+") found: using defaults")
     
     # Add environment variables
     
@@ -58,15 +58,15 @@ def addUserProps(propsDict,userProps):
         parts=prop[0].split('=')
         # Integrity check
         if len(parts)!=2:
-            print "Invalid property:",prop[0]
-            print "Expected format is name=value"
-            print
+            print("Invalid property:",prop[0])
+            print("Expected format is name=value")
+            print()
             sys.exit(-1)
         # Is th eprop. already defined?
         if parts[0] in propsDict:
-            print "\nWARNING: overriding ",parts[0],"java property"
-            print "\told value",propsDict[parts[0]],"new value",parts[1]
-            print
+            print("\nWARNING: overriding ",parts[0],"java property")
+            print("\told value",propsDict[parts[0]],"new value",parts[1])
+            print()
         propsDict[parts[0]]=parts[1]
     
 def formatProps(propsDict):
@@ -82,7 +82,7 @@ def formatProps(propsDict):
     
     ret = []
     
-    keys = propsDict.keys()
+    keys = list(propsDict.keys())
     for key in keys:
         propStr = "-D"+key+"="+propsDict[key]
         ret.append(propStr)
@@ -149,7 +149,7 @@ if __name__ == '__main__':
     
     verbose = args.verbose
     if verbose:
-        print "\nVerbose mode ON"
+        print("\nVerbose mode ON")
     
     # Get java options from JAVA_OPTS environment variable 
     javaOptions=javaOpts()
@@ -158,21 +158,21 @@ if __name__ == '__main__':
     if args.language=='s' or args.language=='scala':
         cmd=['scala']
         if verbose:
-            print "Running a SCALA program." 
+            print("Running a SCALA program.") 
     else:
         cmd=['java']
         if verbose:
-            print "Running a JAVA program."
+            print("Running a JAVA program.")
     
     # Assertions are enabled differently in java (command line) and scala ($JAVA_OPTS)
     enableAssertions = args.assertions
     if enableAssertions:
         javaOptions.append("-ea")
         if verbose:
-            print "Assertions are enabled."
+            print("Assertions are enabled.")
     else:
         if verbose:
-            print "Assertions disabled."
+            print("Assertions disabled.")
             
     
     # Actual environment to pass to the executable
@@ -185,20 +185,20 @@ if __name__ == '__main__':
     if args.language=='s' or args.language=='scala':
         s=" ".join(map(str, javaOptions))
         if verbose:
-            print "Options to pass to the java executable",s
+            print("Options to pass to the java executable",s)
             d['JAVA_OPTS']=s 
     else:
         for opt in javaOptions:
             if verbose:
-                print "Adding",opt,"java option"
+                print("Adding",opt,"java option")
             cmd.append(opt) 
         
     # Is the environment ok?
     # Fail fast!
     if not CommonDefs.checkEnvironment():
-        print "Some setting missing in IAS environment."
-        print "Set the environment with ias-bash_profile before running IAS applications"
-        print
+        print("Some setting missing in IAS environment.")
+        print("Set the environment with ias-bash_profile before running IAS applications")
+        print()
         sys.exit(-1)
     
     # Create tmp and logs folders if not exists already
@@ -219,12 +219,12 @@ if __name__ == '__main__':
         stingOfPros.sort()
         cmd.extend(formatProps(props))
         if verbose:
-            print "java properties:"
+            print("java properties:")
             for p in stingOfPros:
-                print "\t",p[2:]
+                print("\t",p[2:])
     else:
         if (verbose):
-            print "No java properties defined"
+            print("No java properties defined")
     
     
     #add the classpath
@@ -236,9 +236,9 @@ if __name__ == '__main__':
     if verbose:
         jars = theClasspath.split(":")
         jars.sort()
-        print "Classpath:"
+        print("Classpath:")
         for jar in jars:
-            print "\t",jar
+            print("\t",jar)
     
     # Add the class
     cmd.append(args.className)
@@ -248,30 +248,30 @@ if __name__ == '__main__':
         cmd.extend(args.params)
     
     if verbose:
-        print "Launching",args.className,
+        print("Launching",args.className, end=' ')
         if len(args.params)>0:
-            print "with params:"
+            print("with params:")
             for arg in args.params:
-                print "\t",arg
+                print("\t",arg)
         else:
-            print
+            print()
     
     if verbose:
-        arrowDown =  unichr(8595)
+        arrowDown =  chr(8595)
         delimiter = ""
         for t in range(16):
             delimiter = delimiter + arrowDown
             
-        print "\n",delimiter,args.className,"output",delimiter
+        print("\n",delimiter,args.className,"output",delimiter)
         
     call(cmd)
     
     if verbose:
-        arrowUp =  unichr(8593)
+        arrowUp =  chr(8593)
         delimiter = ""
         for t in range(17):
             delimiter = delimiter + arrowUp
-        print delimiter,args.className,"done",delimiter
-        print
+        print(delimiter,args.className,"done",delimiter)
+        print()
     
     

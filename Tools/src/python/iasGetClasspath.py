@@ -8,4 +8,4 @@ Writes the classpath in the stdout
 from IASTools.CommonDefs import CommonDefs
 
 if __name__ == '__main__':
-    print CommonDefs.buildClasspath()
+    print(CommonDefs.buildClasspath())

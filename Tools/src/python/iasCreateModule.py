@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#! /usr/bin/env python
 '''
 Created on Aug 18, 2016
 
@@ -24,12 +24,12 @@ if __name__ == '__main__':
     if args.erase:
         try:
             ModuleSupport.removeExistingModule(args.moduleName)
-        except Exception, e:
-            print "Error deleting the module: ",str(e)
+        except Exception as e:
+            print("Error deleting the module: ",str(e))
             exit(-1)
     try:
         ModuleSupport.createModule(args.moduleName)
-    except Exception, e:
-        print "Error creating the module: ",str(e)
+    except Exception as e:
+        print("Error creating the module: ",str(e))
         exit(-1)
     

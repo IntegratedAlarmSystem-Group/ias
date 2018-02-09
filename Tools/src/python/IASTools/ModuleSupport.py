@@ -6,14 +6,14 @@ Created on Sep 23, 2016
 from os.path import exists, join
 from os import makedirs
 from shutil import rmtree, copyfile
-import FileSupport
+from . import FileSupport
 
 class ModuleSupport(object):
     """
     A class providing useful method for dealing with IAS
     modules including IAS_ROOT)
     
-    @raise IOError: if the folder is not writable or the license file is not found
+    @raise OSError: if the folder is not writable or the license file is not found
     @raise ValueError: if the passed folder name is None or Empty
     """
     @staticmethod
@@ -50,7 +50,7 @@ class ModuleSupport(object):
             folders = f.readlines()
         # Check if the module 
         if not exists(name):
-            print "Creating module",name
+            print("Creating module",name)
             makedirs(name)
             ModuleSupport.writeLicenseFile(name)
             for folder in folders:
@@ -62,7 +62,7 @@ class ModuleSupport(object):
             
             return 0
         else:
-            raise IOError(name+"already exists!!!")
+            raise OSError(name+"already exists!!!")
 
     @staticmethod
     def removeExistingModule(name):
@@ -73,6 +73,6 @@ class ModuleSupport(object):
         '''
         if not name:
             raise ValueError("The name of the module can't be None nor empty")
-        print "Removing moldule",name
+        print("Removing moldule",name)
         if exists(name):
             rmtree(name) 
