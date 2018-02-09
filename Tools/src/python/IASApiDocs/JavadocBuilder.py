@@ -1,5 +1,4 @@
 from subprocess import call
-from exceptions import IOError
 import os
 import sys
 import datetime

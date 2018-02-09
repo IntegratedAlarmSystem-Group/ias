@@ -37,17 +37,17 @@ class DocGenerator(object):
         """
         # Check if src folder exists
         if not os.path.exists(src):
-            raise IOError("The source folder", src,"does not exist")
+            raise OSError("The source folder", src,"does not exist")
         elif not os.path.isdir(src):
-            raise IOError("The source folder", src,"is not a directory")
+            raise OSError("The source folder", src,"is not a directory")
             
         # Check if the destination folder exists
         if not os.path.exists(dst):
             os.mkdir(dst)
         if not os.path.exists(dst):
-            raise IOError("The destination folder", dst,"does not exist")
+            raise OSError("The destination folder", dst,"does not exist")
         elif not os.path.isdir(dst):
-            raise IOError("The destination folder", dst,"is not a directory")
+            raise OSError("The destination folder", dst,"is not a directory")
         
     def containsSources(self,folder,fileExtension):
         '''

@@ -5,7 +5,7 @@ Created on Sep 22, 2016
 '''
 
 from os import environ, getcwd, walk, path
-import FileSupport
+from . import FileSupport
 
 class CommonDefs(object):
     """

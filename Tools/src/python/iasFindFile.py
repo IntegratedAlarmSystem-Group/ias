@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#! /usr/bin/env python
 '''
 Created on Sep 21, 2016
 
@@ -28,6 +28,6 @@ if __name__ == '__main__':
         else:
             fileSupport = FileSupport(args.fileName)
             filePath=fileSupport.findFile()
-        print filePath
-    except IOError as e:
-        print "File not found"
+        print(filePath)
+    except OSError as e:
+        print("File not found")
