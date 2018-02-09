@@ -14,7 +14,7 @@ public enum OperationalMode {
 	/**
 	 * Initialization on going
 	 */
-	INTIALIZATION,
+	INITIALIZATION,
 	
 	/**
 	 * Shutting down

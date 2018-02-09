@@ -84,7 +84,7 @@ public class IasValueJsonSerializerTest {
 		IasShort shortIasType = new IasShort(
 			(short)120, 
 			1100, 
-			OperationalMode.INTIALIZATION, 
+			OperationalMode.INITIALIZATION, 
 			IasValidity.RELIABLE,
 			new Identifier(shortId, IdentifierType.IASIO, convIdentifier).fullRunningID());
 		jsonStr = jsonSerializer.iasValueToString(shortIasType);
@@ -97,7 +97,7 @@ public class IasValueJsonSerializerTest {
 		IasByte byteIasType = new IasByte(
 			(byte)90, 
 			1200, 
-			OperationalMode.INTIALIZATION, 
+			OperationalMode.INITIALIZATION, 
 			IasValidity.UNRELIABLE,
 			new Identifier(byteId, IdentifierType.IASIO, convIdentifier).fullRunningID());
 		jsonStr = jsonSerializer.iasValueToString(byteIasType);
@@ -110,7 +110,7 @@ public class IasValueJsonSerializerTest {
 		IasDouble doubleIasType = new IasDouble(
 			Double.valueOf(123456789.4321), 
 			1300, 
-			OperationalMode.INTIALIZATION, 
+			OperationalMode.INITIALIZATION, 
 			IasValidity.UNRELIABLE,
 			new Identifier(doubleId, IdentifierType.IASIO, convIdentifier).fullRunningID());
 		jsonStr = jsonSerializer.iasValueToString(doubleIasType);

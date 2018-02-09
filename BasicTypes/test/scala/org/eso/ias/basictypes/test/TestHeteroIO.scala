@@ -178,7 +178,7 @@ class TestHeteroIO extends FlatSpec {
     val iasioId = new Identifier("IasioId", IdentifierType.IASIO, Option(converterId))
 
     // Build the IASIO from the passed IASValue
-    val iasValue = new IasLong(821L, System.currentTimeMillis(), OperationalMode.INTIALIZATION, RELIABLE, iasioId.fullRunningID)
+    val iasValue = new IasLong(821L, System.currentTimeMillis(), OperationalMode.INITIALIZATION, RELIABLE, iasioId.fullRunningID)
     val inOut = InOut(iasValue, 3000)
 
     assert(inOut.iasType == iasValue.valueType)
