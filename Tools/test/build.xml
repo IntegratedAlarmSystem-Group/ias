@@ -10,6 +10,8 @@
 	<target name="build" depends="ias.build" />
 
 	<target name="clean" depends="ias.clean" />
+
+	<target name="test" depends="ias.test" />
 	
 	<target name="doc" depends="ias.doc" />
 	
