@@ -44,6 +44,7 @@
 		<available file="${src.java.dir}" type="dir" property="src.java.dir.exists"/>
 		<available file="${src.scala.dir}" type="dir" property="src.scala.dir.exists"/>
 		<available file="${src.python.dir}" type="dir" property="src.pyhton.dir.exists"/>
+		
 	</target>
 	
 	<!--
@@ -182,8 +183,8 @@
 		refined if we want the user to select specific scripts
 		by setting a property
 	-->
-	<target name="localinstallbinaries" depends="init-ias-environment" if="src.pyhton.dir.exists">
-		<!-- Binaries are initially copied in the bin folder of the module 
+	<target name="localinstallpyscripts" depends="init-ias-environment" if="src.pyhton.dir.exists">
+		<!-- Python scripts are initially copied in the bin folder of the module 
 		     then installed in the IAS_ROOT/bin folder -->
 		<echo>Locally installing python scripts in ${bin.dir}</echo>
 		<copy todir="${bin.dir}" verbose="true">
@@ -194,15 +195,40 @@
 			<fileset dir="${bin.dir}" includes="*.py" defaultexcludes="no"/>
 				<mapper type="glob" from="*.py" to="*"/>
 		</move>
-		<echo>Locally installing bash scripts in ${bin.dir}</echo>
-		<copy todir="${bin.dir}" verbose="true">
-			<fileset dir="${src.dir}" includes="*.sh" defaultexcludes="no"/>
-		</copy>
-		<!--  Removes the extension .sh of files in ../bin  -->
-		<move todir="${bin.dir}" verbose="true" includeEmptyDirs="false">
-			<fileset dir="${bin.dir}" includes="*.sh" defaultexcludes="no"/>
-				<mapper type="glob" from="*.sh" to="*"/>
-		</move>
+	</target>
+	
+	<target name="localinstallshscripts" depends="init-ias-environment" >
+		<condition property="src.shFilesExist">
+		     <resourcecount when="greater" count="0">
+		         <fileset dir="${src.dir}">
+		             <include name="*.sh"/>
+		         </fileset>
+		     </resourcecount>
+		</condition>
+				
+		<!-- Shell are initially copied in the bin folder of the module 
+			     then installed in the IAS_ROOT/bin folder -->
+			<echo>Locally installing bash scripts in ${bin.dir}</echo>
+			<copy todir="${bin.dir}" verbose="true">
+				<fileset dir="${src.dir}" includes="*.sh" defaultexcludes="no"/>
+			</copy>
+			<!--  Removes the extension .sh of files in ../bin  -->
+			<move todir="${bin.dir}" verbose="true" includeEmptyDirs="false">
+				<fileset dir="${bin.dir}" includes="*.sh" defaultexcludes="no"/>
+					<mapper type="glob" from="*.sh" to="*"/>
+			</move>
+	</target>
+	
+	<!--
+		Install the python scripts from src/python into bin
+		and set their executable attribute to true
+		
+		At the present it copies ALL the python scripts in src/python and must be
+		refined if we want the user to select specific scripts
+		by setting a property
+	-->
+	<target name="localinstallbinaries" depends="init-ias-environment,localinstallpyscripts,localinstallshscripts">
+		
 		<!-- Set permission of executables -->
 		<chmod dir="${bin.dir}" perm="ug+rx" includes="**/*" defaultexcludes="no" />
 	</target>
