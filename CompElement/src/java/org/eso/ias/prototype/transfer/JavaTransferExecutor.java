@@ -3,7 +3,7 @@ package org.eso.ias.prototype.transfer;
 import java.util.Map;
 import java.util.Properties;
 
-import org.eso.ias.prototype.input.java.IASValueBase;
+import org.eso.ias.types.IASValueBase;
 
 /**
  * The JavaTransferExecutor provides the interface

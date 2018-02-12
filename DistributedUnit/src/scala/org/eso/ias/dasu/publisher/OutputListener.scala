@@ -1,6 +1,6 @@
 package org.eso.ias.dasu.publisher
 
-import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.types.IASValue
 
 /**
  * The listener of events published by the output  publisher

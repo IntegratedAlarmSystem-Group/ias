@@ -1,10 +1,10 @@
 package org.eso.ias.dasu.publisher
 
-import org.eso.ias.prototype.input.InOut
+import org.eso.ias.types.InOut
 import scala.util.Try
-import org.eso.ias.prototype.input.java.IASValue
-import org.eso.ias.prototype.input.java.IasValueStringSerializer
-import org.eso.ias.prototype.input.JavaConverter
+import org.eso.ias.types.IASValue
+import org.eso.ias.types.IasValueStringSerializer
+import org.eso.ias.types.JavaConverter
 import scala.util.Success
 
 /**

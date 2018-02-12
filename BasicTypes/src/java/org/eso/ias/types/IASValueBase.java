@@ -1,8 +1,8 @@
-package org.eso.ias.prototype.input.java;
+package org.eso.ias.types;
 
 import java.util.Objects;
 
-import org.eso.ias.prototype.input.Identifier;
+import org.eso.ias.types.Identifier;
 /**
  * The view of the untyped heterogeneous inputs in the java code.
  * 

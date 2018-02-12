@@ -1,12 +1,12 @@
 package org.eso.ias.component.test
 
 import org.scalatest.FlatSpec
-import org.eso.ias.prototype.input.Identifier
-import org.eso.ias.prototype.input.java.OperationalMode
-import org.eso.ias.prototype.input.Validity
+import org.eso.ias.types.Identifier
+import org.eso.ias.types.OperationalMode
+import org.eso.ias.types.Validity
 import scala.collection.mutable.HashMap
-import org.eso.ias.prototype.input.java.IASTypes
-import org.eso.ias.prototype.input.InOut
+import org.eso.ias.types.IASTypes
+import org.eso.ias.types.InOut
 import scala.collection.mutable.{Map => MutableMap }
 import org.eso.ias.prototype.transfer.TransferFunctionSetting
 import org.eso.ias.prototype.transfer.TransferFunctionLanguage
@@ -15,12 +15,12 @@ import org.eso.ias.prototype.compele.CompEleThreadFactory
 import org.eso.ias.prototype.compele.ComputingElement
 import org.eso.ias.prototype.transfer.ScalaTransfer
 import org.eso.ias.prototype.transfer.JavaTransfer
-import org.eso.ias.prototype.input.java.IdentifierType
-import org.eso.ias.prototype.input.java.AlarmSample
-import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.types.IdentifierType
+import org.eso.ias.types.AlarmSample
+import org.eso.ias.types.IASValue
 import org.eso.ias.prototype.compele.AsceStates
-import org.eso.ias.prototype.input.java.IasValidity._
-import org.eso.ias.prototype.input.java.IasValidity
+import org.eso.ias.types.IasValidity._
+import org.eso.ias.types.IasValidity
 
 /**
  * Test the basic functionalities of the IAS Component,

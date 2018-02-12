@@ -1,4 +1,4 @@
-package org.eso.ias.prototype.input.java;
+package org.eso.ias.types;
 
 import java.util.Objects;
 

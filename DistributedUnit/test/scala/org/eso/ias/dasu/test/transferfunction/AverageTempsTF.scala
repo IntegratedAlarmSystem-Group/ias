@@ -2,8 +2,8 @@ package org.eso.ias.dasu.test.transferfunction
 
 import java.util.Properties
 import org.eso.ias.prototype.transfer.ScalaTransferExecutor
-import org.eso.ias.prototype.input.InOut
-import org.eso.ias.prototype.input.java.IASTypes._
+import org.eso.ias.types.InOut
+import org.eso.ias.types.IASTypes._
 import org.eso.ias.prototype.compele.exceptions.TypeMismatchException
 
 /**

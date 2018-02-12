@@ -1,7 +1,4 @@
-package org.eso.ias.prototype.input
-
-import org.eso.ias.prototype.input.java.IdentifierType
-import org.eso.ias.prototype.input.java.IASTypes
+package org.eso.ias.types
 
 /**
  * Companion object

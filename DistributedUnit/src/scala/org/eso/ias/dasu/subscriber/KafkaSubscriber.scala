@@ -1,7 +1,7 @@
 package org.eso.ias.dasu.subscriber
 
 import org.ias.prototype.logging.IASLogger
-import org.eso.ias.prototype.input.java.IasValueJsonSerializer
+import org.eso.ias.types.IasValueJsonSerializer
 import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener
 import java.util.Properties
 import org.eso.ias.kafkautils.KafkaHelper
@@ -10,7 +10,7 @@ import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition
 import scala.collection.mutable.{HashSet => MutableSet}
 import org.eso.ias.kafkautils.KafkaIasiosConsumer
 import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener
-import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.types.IASValue
 
 /** 
  *  Read IASValues from the kafka queue 

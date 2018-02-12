@@ -5,7 +5,7 @@ import scala.collection.mutable.{HashSet => MutableSet}
 import scala.util.Success
 import scala.util.Try
 import org.eso.ias.dasu.subscriber.InputsListener
-import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.types.IASValue
 import org.ias.prototype.logging.IASLogger
 
 /** 

@@ -1,7 +1,5 @@
-package org.eso.ias.prototype.input
+package org.eso.ias.types
 
-import org.eso.ias.prototype.input.java.IasValidity
-import org.eso.ias.prototype.input.java.IASValue
 import scala.language.implicitConversions
 
 /**

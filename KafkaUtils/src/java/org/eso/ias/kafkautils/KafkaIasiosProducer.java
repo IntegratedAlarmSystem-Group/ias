@@ -5,9 +5,9 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import org.eso.ias.prototype.input.java.IASValue;
-import org.eso.ias.prototype.input.java.IasValueSerializerException;
-import org.eso.ias.prototype.input.java.IasValueStringSerializer;
+import org.eso.ias.types.IASValue;
+import org.eso.ias.types.IasValueSerializerException;
+import org.eso.ias.types.IasValueStringSerializer;
 
 /**
  * KafkaIasioProducer writes {@link IASValue} in the kafka topic.

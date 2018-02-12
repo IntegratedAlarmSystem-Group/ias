@@ -5,14 +5,14 @@ import java.util.concurrent.ScheduledFuture
 import org.eso.ias.dasu.publisher.OutputPublisher
 import org.eso.ias.dasu.subscriber.InputSubscriber
 import org.eso.ias.cdb.CdbReader
-import org.eso.ias.prototype.input.Identifier
-import org.eso.ias.prototype.input.java.IdentifierType
+import org.eso.ias.types.Identifier
+import org.eso.ias.types.IdentifierType
 import scala.collection.mutable.{Map => MutableMap}
 import org.eso.ias.dasu.topology.Topology
 import org.eso.ias.prototype.compele.ComputingElement
 import scala.util.Properties
 import org.eso.ias.cdb.pojos.AsceDao
-import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.types.IASValue
 import org.ias.prototype.logging.IASLogger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicBoolean
@@ -21,14 +21,14 @@ import java.util.Properties
 import scala.util.Failure
 import scala.util.Success
 import scala.collection.JavaConverters
-import org.eso.ias.prototype.input.InOut
+import org.eso.ias.types.InOut
 import org.eso.ias.prototype.compele.AsceStates
 import org.eso.ias.dasu.executorthread.ScheduledExecutor
-import org.eso.ias.prototype.input.JavaConverter
+import org.eso.ias.types.JavaConverter
 import java.util.concurrent.TimeUnit
 import org.eso.ias.cdb.pojos.DasuDao
-import org.eso.ias.prototype.input.Validity
-import org.eso.ias.prototype.input.java.IasValidity
+import org.eso.ias.types.Validity
+import org.eso.ias.types.IasValidity
 
 /**
  * The implementation of the DASU.

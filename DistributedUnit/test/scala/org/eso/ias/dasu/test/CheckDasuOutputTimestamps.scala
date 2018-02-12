@@ -3,7 +3,7 @@ package org.eso.ias.dasu.test
 import org.scalatest.FlatSpec
 import org.scalatest.BeforeAndAfter
 import org.eso.ias.dasu.DasuImpl
-import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.types.IASValue
 import org.ias.prototype.logging.IASLogger
 
 /**

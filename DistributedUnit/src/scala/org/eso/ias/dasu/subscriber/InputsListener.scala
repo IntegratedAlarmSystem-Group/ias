@@ -1,6 +1,6 @@
 package org.eso.ias.dasu.subscriber
 
-import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.types.IASValue
 
 /** A listener of inputs like the DASU */
 trait InputsListener {

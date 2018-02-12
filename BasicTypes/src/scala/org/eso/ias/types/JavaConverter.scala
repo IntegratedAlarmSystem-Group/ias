@@ -1,21 +1,7 @@
 
-package org.eso.ias.prototype.input
+package org.eso.ias.types
 
-import org.eso.ias.prototype.input.java.IASValue
-import org.eso.ias.prototype.input.java.IASTypes._
-import org.eso.ias.prototype.input.java.IasAlarm
-import org.eso.ias.prototype.input.java.IasLong
-import org.eso.ias.prototype.input.java.IASValueBase
-import org.eso.ias.prototype.input.java.IasDouble
-import org.eso.ias.prototype.input.java.IasInt
-import org.eso.ias.prototype.input.java.IasShort
-import org.eso.ias.prototype.input.java.IasByte
-import org.eso.ias.prototype.input.java.IasFloat
-import org.eso.ias.prototype.input.java.IasChar
-import org.eso.ias.prototype.input.java.IasString
-import org.eso.ias.prototype.input.java.IasBool
-import org.eso.ias.prototype.input.java.AlarmSample
-
+import org.eso.ias.types.IASTypes._
 /**
  * Converter methods from java to scala and vice-versa.
  * 

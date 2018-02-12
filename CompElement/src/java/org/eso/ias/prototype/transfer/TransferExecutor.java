@@ -2,7 +2,7 @@ package org.eso.ias.prototype.transfer;
 
 import java.util.Properties;
 
-import org.eso.ias.prototype.input.Identifier;
+import org.eso.ias.types.Identifier;
 
 /**
  * 

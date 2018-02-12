@@ -1,6 +1,6 @@
-package org.eso.ias.prototype.input.java;
+package org.eso.ias.types;
 
-import org.eso.ias.prototype.input.Identifier;
+import org.eso.ias.types.Identifier;
 
 /**
  * The types of an identifier.

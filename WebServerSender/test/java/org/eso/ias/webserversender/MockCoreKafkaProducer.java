@@ -3,13 +3,13 @@ package org.eso.ias.webserversender;
 import org.eso.ias.kafkautils.KafkaIasiosProducer;
 import org.eso.ias.kafkautils.KafkaUtilsException;
 import org.eso.ias.kafkautils.KafkaHelper;
-import org.eso.ias.prototype.input.java.AlarmSample;
-import org.eso.ias.prototype.input.java.IASTypes;
-import org.eso.ias.prototype.input.java.IASValue;
-import org.eso.ias.prototype.input.java.IasValidity;
-import org.eso.ias.prototype.input.java.IasValueJsonSerializer;
-import org.eso.ias.prototype.input.java.IasValueStringSerializer;
-import org.eso.ias.prototype.input.java.OperationalMode;
+import org.eso.ias.types.AlarmSample;
+import org.eso.ias.types.IASTypes;
+import org.eso.ias.types.IASValue;
+import org.eso.ias.types.IasValidity;
+import org.eso.ias.types.IasValueJsonSerializer;
+import org.eso.ias.types.IasValueStringSerializer;
+import org.eso.ias.types.OperationalMode;
 
 public class MockCoreKafkaProducer {
 

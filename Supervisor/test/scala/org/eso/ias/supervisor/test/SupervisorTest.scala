@@ -1,23 +1,23 @@
 package org.eso.ias.supervisor.test
 
 import org.scalatest.FlatSpec
-import org.eso.ias.prototype.input.java.IasValueJsonSerializer
+import org.eso.ias.types.IasValueJsonSerializer
 import org.eso.ias.dasu.publisher.OutputPublisher
 import org.eso.ias.dasu.publisher.OutputListener
 import org.eso.ias.dasu.publisher.ListenerOutputPublisherImpl
 import org.ias.prototype.logging.IASLogger
 import org.eso.ias.dasu.publisher.DirectInputSubscriber
-import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.types.IASValue
 import org.eso.ias.supervisor.Supervisor
-import org.eso.ias.prototype.input.Identifier
-import org.eso.ias.prototype.input.java.IdentifierType
+import org.eso.ias.types.Identifier
+import org.eso.ias.types.IdentifierType
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.CdbJsonFiles
 import org.eso.ias.cdb.json.JsonReader
 import java.nio.file.FileSystems
-import org.eso.ias.prototype.input.java.OperationalMode
-import org.eso.ias.prototype.input.java.IasValidity
-import org.eso.ias.prototype.input.java.IASTypes
+import org.eso.ias.types.OperationalMode
+import org.eso.ias.types.IasValidity
+import org.eso.ias.types.IASTypes
 import scala.collection.mutable.ArrayBuffer
 
 // The following import is required by the usage of the fixture

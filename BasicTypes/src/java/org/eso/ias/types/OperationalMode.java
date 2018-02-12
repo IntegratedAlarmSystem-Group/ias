@@ -1,4 +1,4 @@
-package org.eso.ias.prototype.input.java;
+package org.eso.ias.types;
 
 /**
  * Th eoperational mode of a monitor point value

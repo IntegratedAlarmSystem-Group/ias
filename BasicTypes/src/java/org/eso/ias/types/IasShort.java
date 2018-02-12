@@ -1,4 +1,4 @@
-package org.eso.ias.prototype.input.java;
+package org.eso.ias.types;
 
 public class IasShort extends IASValue<Short> {
 	

@@ -1,13 +1,13 @@
 package org.eso.ias.prototype.compele
 
-import org.eso.ias.prototype.input.Identifier
-import org.eso.ias.prototype.input.InOut
-import org.eso.ias.prototype.input.Validity
+import org.eso.ias.types.Identifier
+import org.eso.ias.types.InOut
+import org.eso.ias.types.Validity
 import scala.util.control.NonFatal
 import scala.collection.mutable.HashMap
 import org.eso.ias.prototype.transfer.JavaTransfer
 import scala.collection.mutable.{Map => MutableMap}
-import org.eso.ias.prototype.input.java.IASTypes
+import org.eso.ias.types.IASTypes
 import java.util.Properties
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
@@ -17,17 +17,17 @@ import scala.util.Success
 import org.eso.ias.prototype.transfer.TransferFunctionSetting
 import org.eso.ias.utils.ISO8601Helper
 import org.eso.ias.prototype.transfer.TransferFunctionLanguage
-import org.eso.ias.prototype.input.java.IdentifierType
+import org.eso.ias.types.IdentifierType
 import org.eso.ias.cdb.pojos.AsceDao
 import scala.collection.JavaConverters
 import org.eso.ias.cdb.pojos.IasioDao
-import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.types.IASValue
 import org.ias.prototype.logging.IASLogger
 import org.eso.ias.cdb.pojos.TFLanguageDao
 import org.eso.ias.prototype.transfer.ScalaTransfer
-import org.eso.ias.prototype.input.JavaConverter
-import org.eso.ias.prototype.input.java.OperationalMode
-import org.eso.ias.prototype.input.java.IasValidity
+import org.eso.ias.types.JavaConverter
+import org.eso.ias.types.OperationalMode
+import org.eso.ias.types.IasValidity
 
 /**
  * The Integrated Alarm System Computing Element (ASCE) 

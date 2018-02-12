@@ -1,28 +1,28 @@
-package org.eso.ias.prototype.input.java;
+package org.eso.ias.types;
 
-public class IasChar extends IASValue<Character> {
+public class IasBool extends IASValue<Boolean> {
 	
-	public IasChar(Character value,
+	public IasBool(Boolean value,
 			long tStamp,
 			OperationalMode mode,
 			IasValidity iasValidity,
 			String fullRunningId) {
-		super(value,tStamp,mode,iasValidity,fullRunningId,IASTypes.CHAR);
+		super(value,tStamp,mode,iasValidity,fullRunningId,IASTypes.BOOLEAN);
 	}
 	
 	/**
-	 * Build a new IasChar with the passed value
+	 * Build a new IasAlarm with the passed value
 	 * 
 	 * @param newValue The value to set in the new IASValue
-	 * @return The new IasChar with the updated value
+	 * @return The new IASValue with the updated value
 	 * @see IASValue#updateValue(Object)
 	 */
 	@Override
-	public IasChar updateValue(Character newValue) {
+	public IasBool updateValue(Boolean newValue) {
 		if (newValue==null) {
 			throw new NullPointerException("The value can't be null");
 		}
-		return new IasChar(newValue,System.currentTimeMillis(),mode,iasValidity,fullRunningId);
+		return new IasBool(newValue,System.currentTimeMillis(),mode,iasValidity,fullRunningId);
 	}
 	
 	/**
@@ -31,11 +31,11 @@ public class IasChar extends IASValue<Character> {
 	 * @param newMode The mode to set in the new IASValue
 	 * @return The new IASValue with the updated mode
 	 */
-	public IasChar updateMode(OperationalMode newMode) {
+	public IasBool updateMode(OperationalMode newMode) {
 		if (newMode==null) {
 			throw new NullPointerException("The mode can't be null");
 		}
-		return new IasChar(value,System.currentTimeMillis(),newMode,iasValidity,fullRunningId);
+		return new IasBool(value,System.currentTimeMillis(),newMode,iasValidity,fullRunningId);
 	}
 
 }

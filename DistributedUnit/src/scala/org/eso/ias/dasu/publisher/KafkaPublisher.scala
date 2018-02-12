@@ -1,11 +1,11 @@
 package org.eso.ias.dasu.publisher
 
-import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.types.IASValue
 import scala.util.Try
 import org.eso.ias.kafkautils.KafkaIasiosProducer
 import java.util.Properties
 import org.ias.prototype.logging.IASLogger
-import org.eso.ias.prototype.input.java.IasValueJsonSerializer
+import org.eso.ias.types.IasValueJsonSerializer
 import org.eso.ias.kafkautils.KafkaHelper
 
 /** 

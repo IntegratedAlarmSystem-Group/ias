@@ -1,14 +1,14 @@
 package org.eso.ias.component.test
 
-import org.eso.ias.prototype.input.Identifier
-import org.eso.ias.prototype.input.InOut
+import org.eso.ias.types.Identifier
+import org.eso.ias.types.InOut
 import scala.collection.mutable.{Map => MutableMap }
-import org.eso.ias.prototype.input.Validity
-import org.eso.ias.prototype.input.java.IASTypes
-import org.eso.ias.prototype.input.java.IdentifierType
-import org.eso.ias.prototype.input.java.IASValue
-import org.eso.ias.prototype.input.java.OperationalMode
-import org.eso.ias.prototype.input.java.IasValidity
+import org.eso.ias.types.Validity
+import org.eso.ias.types.IASTypes
+import org.eso.ias.types.IdentifierType
+import org.eso.ias.types.IASValue
+import org.eso.ias.types.OperationalMode
+import org.eso.ias.types.IasValidity
 
 /**
  * A common helper class to build data structures for testing

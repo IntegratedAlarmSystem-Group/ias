@@ -1,10 +1,4 @@
-package org.eso.ias.prototype.input
-
-import org.eso.ias.prototype.input.java.AlarmSample
-import org.eso.ias.prototype.input.java.IASTypes
-import org.eso.ias.prototype.input.java.IASValue
-import org.eso.ias.prototype.input.java.IasValidity
-import org.eso.ias.prototype.input.java.OperationalMode
+package org.eso.ias.types
 
 /**
  * A  <code>InOut</code> holds the value of an input or output 

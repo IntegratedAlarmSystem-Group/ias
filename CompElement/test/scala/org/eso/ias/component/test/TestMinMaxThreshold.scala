@@ -3,11 +3,11 @@ package org.eso.ias.component.test
 import org.scalatest.FlatSpec
 import org.eso.ias.prototype.transfer.TransferFunctionSetting
 import org.eso.ias.prototype.transfer.TransferFunctionLanguage
-import org.eso.ias.prototype.input.Identifier
-import org.eso.ias.prototype.input.InOut
-import org.eso.ias.prototype.input.java.OperationalMode
-import org.eso.ias.prototype.input.Validity
-import org.eso.ias.prototype.input.java.IASTypes
+import org.eso.ias.types.Identifier
+import org.eso.ias.types.InOut
+import org.eso.ias.types.OperationalMode
+import org.eso.ias.types.Validity
+import org.eso.ias.types.IASTypes
 import org.eso.ias.prototype.compele.ComputingElement
 import scala.collection.mutable.{Map => MutableMap }
 import java.util.concurrent.ScheduledThreadPoolExecutor
@@ -16,9 +16,9 @@ import org.eso.ias.prototype.transfer.impls.MinMaxThresholdTF
 import org.eso.ias.prototype.transfer.impls.MinMaxThresholdTFJava
 import org.eso.ias.prototype.transfer.ScalaTransfer
 import org.eso.ias.prototype.transfer.JavaTransfer
-import org.eso.ias.prototype.input.java.AlarmSample
-import org.eso.ias.prototype.input.JavaConverter
-import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.types.AlarmSample
+import org.eso.ias.types.JavaConverter
+import org.eso.ias.types.IASValue
 
 class TestMinMaxThreshold extends FlatSpec {
   

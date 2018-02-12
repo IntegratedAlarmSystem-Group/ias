@@ -9,7 +9,7 @@ import java.util.Set;
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.IasCdbException;
 import org.eso.ias.cdb.pojos.IasioDao;
-import org.eso.ias.prototype.input.java.IASTypes;
+import org.eso.ias.types.IASTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

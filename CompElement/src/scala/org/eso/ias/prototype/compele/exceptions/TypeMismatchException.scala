@@ -1,6 +1,6 @@
 package org.eso.ias.prototype.compele.exceptions
 
-import org.eso.ias.prototype.input.java.IASTypes
+import org.eso.ias.types.IASTypes
 import java.util.Collection
 import scala.collection.JavaConverters
 

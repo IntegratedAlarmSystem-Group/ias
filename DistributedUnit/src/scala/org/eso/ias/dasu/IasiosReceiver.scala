@@ -1,10 +1,10 @@
 package org.eso.ias.dasu
 
 import org.ias.prototype.logging.IASLogger
-import org.eso.ias.prototype.input.Identifier
-import org.eso.ias.prototype.input.java.IasValueStringSerializer
-import org.eso.ias.prototype.input.java.IasValueJsonSerializer
-import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.types.Identifier
+import org.eso.ias.types.IasValueStringSerializer
+import org.eso.ias.types.IasValueJsonSerializer
+import org.eso.ias.types.IASValue
 import scala.collection.mutable.{Map=> MutableMap}
 import org.eso.ias.kafkautils.KafkaUtilsException
 import org.eso.ias.kafkautils.SimpleStringConsumer

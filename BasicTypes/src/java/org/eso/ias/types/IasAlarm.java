@@ -1,13 +1,22 @@
-package org.eso.ias.prototype.input.java;
+package org.eso.ias.types;
 
-public class IasBool extends IASValue<Boolean> {
+/**
+ * The IASVAlue encapsulating an alarm.
+ * <P>
+ * The type of the alarm at this stage is a {@link AlarmSample}
+ * as produced by a monitored system.
+ * 
+ * @author acaproni
+ *
+ */
+public class IasAlarm extends IASValue<AlarmSample> {
 	
-	public IasBool(Boolean value,
+	public IasAlarm(AlarmSample value,
 			long tStamp,
 			OperationalMode mode,
 			IasValidity iasValidity,
 			String fullRunningId) {
-		super(value,tStamp,mode,iasValidity,fullRunningId,IASTypes.BOOLEAN);
+		super(value,tStamp,mode,iasValidity,fullRunningId,IASTypes.ALARM);
 	}
 	
 	/**
@@ -18,11 +27,11 @@ public class IasBool extends IASValue<Boolean> {
 	 * @see IASValue#updateValue(Object)
 	 */
 	@Override
-	public IasBool updateValue(Boolean newValue) {
+	public IasAlarm updateValue(AlarmSample newValue) {
 		if (newValue==null) {
 			throw new NullPointerException("The value can't be null");
 		}
-		return new IasBool(newValue,System.currentTimeMillis(),mode,iasValidity,fullRunningId);
+		return new IasAlarm(newValue,System.currentTimeMillis(),mode,iasValidity,fullRunningId);
 	}
 	
 	/**
@@ -31,11 +40,12 @@ public class IasBool extends IASValue<Boolean> {
 	 * @param newMode The mode to set in the new IASValue
 	 * @return The new IASValue with the updated mode
 	 */
-	public IasBool updateMode(OperationalMode newMode) {
+	public IasAlarm updateMode(OperationalMode newMode) {
 		if (newMode==null) {
 			throw new NullPointerException("The mode can't be null");
 		}
-		return new IasBool(value,System.currentTimeMillis(),newMode,iasValidity,fullRunningId);
+		return new IasAlarm(value,System.currentTimeMillis(),newMode,iasValidity,fullRunningId);
 	}
 
 }
+

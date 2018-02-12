@@ -1,8 +1,8 @@
 package org.eso.ias.basictypes.test
 
 import org.scalatest.FlatSpec
-import org.eso.ias.prototype.input.Identifier
-import org.eso.ias.prototype.input.java.IdentifierType
+import org.eso.ias.types.Identifier
+import org.eso.ias.types.IdentifierType
 
 class TestIdentifier extends FlatSpec {
   behavior of "A Identifier"

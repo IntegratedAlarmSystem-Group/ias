@@ -10,16 +10,16 @@ import org.eso.ias.dasu.topology.Topology
 
 import scala.collection.JavaConverters
 import org.eso.ias.cdb.pojos.DasuDao
-import org.eso.ias.prototype.input.Identifier
-import org.eso.ias.prototype.input.java.IdentifierType
+import org.eso.ias.types.Identifier
+import org.eso.ias.types.IdentifierType
 import org.eso.ias.cdb.pojos.AsceDao
 import org.eso.ias.prototype.compele.ComputingElement
 import org.eso.ias.prototype.compele.ComputingElementState
 import org.eso.ias.prototype.compele.AsceStates
-import org.eso.ias.prototype.input.InOut
+import org.eso.ias.types.InOut
 import org.eso.ias.dasu.publisher.OutputPublisher
-import org.eso.ias.prototype.input.java.IASValue
-import org.eso.ias.prototype.input.JavaConverter
+import org.eso.ias.types.IASValue
+import org.eso.ias.types.JavaConverter
 import org.eso.ias.dasu.executorthread.ScheduledExecutor
 import scala.util.Try
 import java.util.concurrent.atomic.AtomicLong

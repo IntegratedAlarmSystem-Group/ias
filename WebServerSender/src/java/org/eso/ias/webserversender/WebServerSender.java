@@ -15,8 +15,8 @@ import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener;
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
-import org.eso.ias.prototype.input.java.IasValueJsonSerializer;
-import org.eso.ias.prototype.input.java.IASValue;
+import org.eso.ias.types.IasValueJsonSerializer;
+import org.eso.ias.types.IASValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

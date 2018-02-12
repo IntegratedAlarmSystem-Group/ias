@@ -1,22 +1,21 @@
 package org.eso.ias.prototype.transfer.impls;
 
-import java.util.Enumeration;
 import java.util.Map;
 import java.util.Properties;
 
 import org.eso.ias.prototype.compele.exceptions.PropsMisconfiguredException;
 import org.eso.ias.prototype.compele.exceptions.TypeMismatchException;
 import org.eso.ias.prototype.compele.exceptions.UnexpectedNumberOfInputsException;
-import org.eso.ias.prototype.input.java.AlarmSample;
-import org.eso.ias.prototype.input.java.IASTypes;
-import org.eso.ias.prototype.input.java.IASValueBase;
-import org.eso.ias.prototype.input.java.IasAlarm;
-import org.eso.ias.prototype.input.java.IasByte;
-import org.eso.ias.prototype.input.java.IasDouble;
-import org.eso.ias.prototype.input.java.IasFloat;
-import org.eso.ias.prototype.input.java.IasInt;
-import org.eso.ias.prototype.input.java.IasLong;
-import org.eso.ias.prototype.input.java.IasShort;
+import org.eso.ias.types.AlarmSample;
+import org.eso.ias.types.IASTypes;
+import org.eso.ias.types.IASValueBase;
+import org.eso.ias.types.IasAlarm;
+import org.eso.ias.types.IasByte;
+import org.eso.ias.types.IasDouble;
+import org.eso.ias.types.IasFloat;
+import org.eso.ias.types.IasInt;
+import org.eso.ias.types.IasLong;
+import org.eso.ias.types.IasShort;
 import org.eso.ias.prototype.transfer.JavaTransferExecutor;
 import org.eso.ias.prototype.transfer.TransferExecutor;
 

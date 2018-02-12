@@ -2,13 +2,13 @@ package org.eso.ias.prototype.transfer.impls
 
 import org.eso.ias.prototype.transfer.ScalaTransferExecutor
 import java.util.Properties
-import org.eso.ias.prototype.input.InOut
+import org.eso.ias.types.InOut
 import org.eso.ias.prototype.compele.exceptions.PropsMisconfiguredException
 import org.eso.ias.prototype.compele.exceptions.UnexpectedNumberOfInputsException
-import org.eso.ias.prototype.input.java.IASTypes._
+import org.eso.ias.types.IASTypes._
 import org.eso.ias.prototype.compele.exceptions.TypeMismatchException
 import MinMaxThresholdTF._
-import org.eso.ias.prototype.input.java.AlarmSample
+import org.eso.ias.types.AlarmSample
 
 /**
  * The TF implementing a Min/Max threshold TF  (there is also

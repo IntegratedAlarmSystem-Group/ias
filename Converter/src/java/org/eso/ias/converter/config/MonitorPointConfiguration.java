@@ -1,6 +1,6 @@
 package org.eso.ias.converter.config;
 
-import org.eso.ias.prototype.input.java.IASTypes;
+import org.eso.ias.types.IASTypes;
 
 /**
  * The configuration of the monitor point as read from the configuration database.

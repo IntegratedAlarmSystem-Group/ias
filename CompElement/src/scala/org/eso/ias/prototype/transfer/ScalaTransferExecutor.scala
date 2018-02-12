@@ -1,7 +1,7 @@
 package org.eso.ias.prototype.transfer
 
 import java.util.Properties
-import org.eso.ias.prototype.input.InOut
+import org.eso.ias.types.InOut
 
 /**
  * The <code>ScalaTransferExecutor<code> provides the interface

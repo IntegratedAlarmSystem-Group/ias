@@ -3,11 +3,11 @@ package org.eso.ias.component.test.transfer;
 import java.util.Map;
 import java.util.Properties;
 
-import org.eso.ias.prototype.input.java.IASValue;
-import org.eso.ias.prototype.input.java.IASValueBase;
-import org.eso.ias.prototype.input.java.IasAlarm;
-import org.eso.ias.prototype.input.java.AlarmSample;
-import org.eso.ias.prototype.input.java.OperationalMode;
+import org.eso.ias.types.IASValue;
+import org.eso.ias.types.IASValueBase;
+import org.eso.ias.types.IasAlarm;
+import org.eso.ias.types.AlarmSample;
+import org.eso.ias.types.OperationalMode;
 import org.eso.ias.prototype.transfer.JavaTransferExecutor;
 
 
