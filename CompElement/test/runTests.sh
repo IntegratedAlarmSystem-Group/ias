@@ -1,6 +1,6 @@
 #!/usr/bin/bash
-iasRun.py -l s org.scalatest.run org.eso.ias.component.test.TestTransferFunctionSetting
-iasRun.py -l s org.scalatest.run org.eso.ias.component.test.TestComponent
-iasRun.py -l s org.scalatest.run org.eso.ias.component.test.TestTransferFunction
-iasRun.py -l s org.scalatest.run org.eso.ias.component.test.TestMinMaxThreshold
-iasRun.py -l s org.scalatest.run org.eso.ias.component.test.TestMultiplicityTF
+iasRun -l s org.scalatest.run org.eso.ias.component.test.TestTransferFunctionSetting
+iasRun -l s org.scalatest.run org.eso.ias.component.test.TestComponent
+iasRun -l s org.scalatest.run org.eso.ias.component.test.TestTransferFunction
+iasRun -l s org.scalatest.run org.eso.ias.component.test.TestMinMaxThreshold
+iasRun -l s org.scalatest.run org.eso.ias.component.test.TestMultiplicityTF

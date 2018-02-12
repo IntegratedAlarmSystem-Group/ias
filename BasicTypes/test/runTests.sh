@@ -1,7 +1,7 @@
 #!/usr/bin/bash
-iasRun.py -l s org.scalatest.run org.eso.ias.basictypes.test.TestHeteroIO
-iasRun.py -l s org.scalatest.run org.eso.ias.basictypes.test.TestValidity
-iasRun.py -l s org.scalatest.run org.eso.ias.basictypes.test.TestIdentifier
-iasRun.py -l s org.scalatest.run org.eso.ias.basictypes.test.TestJavaConversion
-iasRun.py -l j org.junit.runner.JUnitCore org.eso.ias.basictypes.test.IasValueJsonSerializerTest
-iasRun.py -l j org.junit.runner.JUnitCore org.eso.ias.basictypes.test.IASValueTest
+iasRun -l s org.scalatest.run org.eso.ias.basictypes.test.TestHeteroIO
+iasRun -l s org.scalatest.run org.eso.ias.basictypes.test.TestValidity
+iasRun -l s org.scalatest.run org.eso.ias.basictypes.test.TestIdentifier
+iasRun -l s org.scalatest.run org.eso.ias.basictypes.test.TestJavaConversion
+iasRun -l j org.junit.runner.JUnitCore org.eso.ias.basictypes.test.IasValueJsonSerializerTest
+iasRun -l j org.junit.runner.JUnitCore org.eso.ias.basictypes.test.IASValueTest

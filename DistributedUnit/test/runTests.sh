@@ -1,7 +1,7 @@
 #!/usr/bin/bash
-iasRun.py -l s org.scalatest.run org.eso.ias.dasu.test.TopologyTest
-iasRun.py -l s org.scalatest.run org.eso.ias.dasu.test.DasuOneASCETest
-iasRun.py -l s org.scalatest.run org.eso.ias.dasu.test.CheckDasuOutputTimestamps
-iasRun.py -l s org.scalatest.run org.eso.ias.dasu.test.Dasu7ASCEsTest
-iasRun.py -l s org.scalatest.run org.eso.ias.dasu.test.JsonPublisherTest
-iasRun.py -l s org.scalatest.run org.eso.ias.dasu.test.DasuWithKafkaPubSubTest
+iasRun -l s org.scalatest.run org.eso.ias.dasu.test.TopologyTest
+iasRun -l s org.scalatest.run org.eso.ias.dasu.test.DasuOneASCETest
+iasRun -l s org.scalatest.run org.eso.ias.dasu.test.CheckDasuOutputTimestamps
+iasRun -l s org.scalatest.run org.eso.ias.dasu.test.Dasu7ASCEsTest
+iasRun -l s org.scalatest.run org.eso.ias.dasu.test.JsonPublisherTest
+iasRun -l s org.scalatest.run org.eso.ias.dasu.test.DasuWithKafkaPubSubTest
