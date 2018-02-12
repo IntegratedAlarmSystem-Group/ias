@@ -185,7 +185,7 @@
 	<target name="localinstallbinaries" depends="init-ias-environment" if="src.pyhton.dir.exists">
 		<!-- Binaries are initially copied in the bin folder of the module 
 		     then installed in the IAS_ROOT/bin folder -->
-		<echo>Locally installing python binaries in ${bin.dir}</echo>
+		<echo>Locally installing python scripts in ${bin.dir}</echo>
 		<copy todir="${bin.dir}" verbose="true">
 			<fileset dir="${src.python.dir}" includes="*.py" defaultexcludes="no"/>
 		</copy>
@@ -193,6 +193,15 @@
 		<move todir="${bin.dir}" verbose="true" includeEmptyDirs="false">
 			<fileset dir="${bin.dir}" includes="*.py" defaultexcludes="no"/>
 				<mapper type="glob" from="*.py" to="*"/>
+		</move>
+		<echo>Locally installing bash scripts in ${bin.dir}</echo>
+		<copy todir="${bin.dir}" verbose="true">
+			<fileset dir="${src.dir}" includes="*.sh" defaultexcludes="no"/>
+		</copy>
+		<!--  Removes the extension .sh of files in ../bin  -->
+		<move todir="${bin.dir}" verbose="true" includeEmptyDirs="false">
+			<fileset dir="${bin.dir}" includes="*.sh" defaultexcludes="no"/>
+				<mapper type="glob" from="*.sh" to="*"/>
 		</move>
 		<!-- Set permission of executables -->
 		<chmod dir="${bin.dir}" perm="ug+rx" includes="**/*" defaultexcludes="no" />
