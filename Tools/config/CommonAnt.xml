@@ -189,6 +189,11 @@
 		<copy todir="${bin.dir}" verbose="true">
 			<fileset dir="${src.python.dir}" includes="*.py" defaultexcludes="no"/>
 		</copy>
+		<!--  Removes the extension .py of files in ../bin  -->
+		<move todir="${bin.dir}" verbose="true" includeEmptyDirs="false">
+			<fileset dir="${bin.dir}" includes="*.py" defaultexcludes="no"/>
+				<mapper type="glob" from="*.py" to="*"/>
+		</move>
 		<!-- Set permission of executables -->
 		<chmod dir="${bin.dir}" perm="ug+rx" includes="**/*" defaultexcludes="no" />
 	</target>
@@ -244,7 +249,7 @@
 		<echo>Installing binaries in ${install.dir}/bin</echo>
 		<mkdir dir="${install.dir}/bin"/>
 		<copy todir="${install.dir}/bin" verbose="true">
-			<fileset dir="${bin.dir}" includes="*.py" defaultexcludes="no"/>
+			<fileset dir="${bin.dir}" includes="*" defaultexcludes="no"/>
 		</copy>
 		<copy todir="${install.dir}/bin" verbose="true">
 			<fileset dir="${bin.dir}" includes="*.sh" defaultexcludes="no"/>
