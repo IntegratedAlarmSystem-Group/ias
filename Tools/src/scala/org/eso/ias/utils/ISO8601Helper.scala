@@ -1,4 +1,4 @@
-package org.eso.ias.prototype.utils
+package org.eso.ias.utils
 
 import java.util.Date
 import java.text.DateFormat
