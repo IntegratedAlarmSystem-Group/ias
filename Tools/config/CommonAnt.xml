@@ -176,12 +176,8 @@
 	</target>
 	
 	<!--
-		Install the python scripts from src/python into bin
+		Install all the python scripts from src/python into bin
 		and set their executable attribute to true
-		
-		At the present it copies ALL the python scripts in src/python and must be
-		refined if we want the user to select specific scripts
-		by setting a property
 	-->
 	<target name="localinstallpyscripts" depends="init-ias-environment" if="src.pyhton.dir.exists">
 		<!-- Python scripts are initially copied in the bin folder of the module 
@@ -197,7 +193,11 @@
 		</move>
 	</target>
 	
-	<target name="localinstallshscripts" depends="init-ias-environment" >
+	<!--
+		Checks if there are *.sh in the source folder
+		to be installed
+	-->
+	<target name = "checkIfThereAreShFileinSrc">
 		<condition property="src.shFilesExist">
 		     <resourcecount when="greater" count="0">
 		         <fileset dir="${src.dir}">
@@ -205,7 +205,13 @@
 		         </fileset>
 		     </resourcecount>
 		</condition>
-				
+	</target>
+
+	<!--
+		Install all the shell scripts from src into bin
+		and set their executable attribute to true
+	-->
+	<target name="localinstallshscripts" depends="checkIfThereAreShFileinSrc, init-ias-environment" if="src.shFilesExist" >
 		<!-- Shell are initially copied in the bin folder of the module 
 			     then installed in the IAS_ROOT/bin folder -->
 			<echo>Locally installing bash scripts in ${bin.dir}</echo>
@@ -227,7 +233,7 @@
 		refined if we want the user to select specific scripts
 		by setting a property
 	-->
-	<target name="localinstallbinaries" depends="init-ias-environment,localinstallpyscripts,localinstallshscripts">
+	<target name="localinstallbinaries" depends="init-ias-folders,localinstallpyscripts,localinstallshscripts">
 		
 		<!-- Set permission of executables -->
 		<chmod dir="${bin.dir}" perm="ug+rx" includes="**/*" defaultexcludes="no" />
