@@ -1,7 +1,7 @@
 package org.eso.ias.dasu.test
 
 import org.scalatest.FlatSpec
-import org.ias.prototype.logging.IASLogger
+import org.ias.logging.IASLogger
 import java.nio.file.FileSystems
 import org.eso.ias.cdb.json.CdbJsonFiles
 import org.eso.ias.cdb.CdbReader

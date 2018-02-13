@@ -1,7 +1,7 @@
 package org.eso.ias.supervisor
 
 import org.eso.ias.cdb.CdbReader
-import org.ias.prototype.logging.IASLogger
+import org.ias.logging.IASLogger
 import org.eso.ias.cdb.json.JsonReader
 import org.eso.ias.cdb.json.CdbFiles
 import org.eso.ias.cdb.json.CdbJsonFiles

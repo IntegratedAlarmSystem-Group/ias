@@ -14,7 +14,7 @@ import org.eso.ias.types.IdentifierType
 import java.util.concurrent.atomic.AtomicInteger
 import scala.util.Success
 import scala.collection.mutable.ArrayBuffer
-import org.ias.prototype.logging.IASLogger
+import org.ias.logging.IASLogger
 import scala.collection.JavaConverters
 import org.eso.ias.types.AlarmSample
 import org.eso.ias.types.OperationalMode

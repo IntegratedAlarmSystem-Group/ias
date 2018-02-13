@@ -18,7 +18,7 @@ import org.eso.ias.prototype.transfer.JavaTransfer
 import org.eso.ias.prototype.transfer.ScalaTransfer
 import org.eso.ias.types.IdentifierType
 import org.eso.ias.types.AlarmSample
-import org.ias.prototype.logging.IASLogger
+import org.ias.logging.IASLogger
 import org.eso.ias.types.IasValidity._
 import org.eso.ias.types.IASValue
 import org.eso.ias.types.JavaConverter

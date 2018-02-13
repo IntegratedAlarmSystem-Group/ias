@@ -1,6 +1,6 @@
 package org.eso.ias.dasu.subscriber
 
-import org.ias.prototype.logging.IASLogger
+import org.ias.logging.IASLogger
 import org.eso.ias.types.IasValueJsonSerializer
 import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener
 import java.util.Properties

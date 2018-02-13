@@ -5,7 +5,7 @@ import org.eso.ias.types.IasValueJsonSerializer
 import org.eso.ias.dasu.publisher.OutputPublisher
 import org.eso.ias.dasu.publisher.OutputListener
 import org.eso.ias.dasu.publisher.ListenerOutputPublisherImpl
-import org.ias.prototype.logging.IASLogger
+import org.ias.logging.IASLogger
 import org.eso.ias.dasu.publisher.DirectInputSubscriber
 import org.eso.ias.types.IASValue
 import org.eso.ias.supervisor.Supervisor

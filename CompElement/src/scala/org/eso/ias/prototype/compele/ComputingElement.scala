@@ -22,7 +22,7 @@ import org.eso.ias.cdb.pojos.AsceDao
 import scala.collection.JavaConverters
 import org.eso.ias.cdb.pojos.IasioDao
 import org.eso.ias.types.IASValue
-import org.ias.prototype.logging.IASLogger
+import org.ias.logging.IASLogger
 import org.eso.ias.cdb.pojos.TFLanguageDao
 import org.eso.ias.prototype.transfer.ScalaTransfer
 import org.eso.ias.types.JavaConverter

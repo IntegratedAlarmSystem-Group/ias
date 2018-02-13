@@ -1,7 +1,7 @@
 package org.eso.ias.dasu.topology
 
 import org.eso.ias.cdb.pojos.AsceDao
-import org.ias.prototype.logging.IASLogger
+import org.ias.logging.IASLogger
 
 /** The topology to forward IASIOs to ASCEs.
  * 

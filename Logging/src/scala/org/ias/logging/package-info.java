@@ -5,4 +5,4 @@
  * @author acaproni
  *
  */
-package org.ias.prototype.logging;
+package org.ias.logging;

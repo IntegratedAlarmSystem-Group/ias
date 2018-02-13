@@ -1,4 +1,4 @@
-package org.ias.prototype.logging;
+package org.ias.logging;
 
 import com.typesafe.scalalogging.Logger
 

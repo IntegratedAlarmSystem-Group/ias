@@ -6,7 +6,7 @@ import org.eso.ias.prototype.transfer.ScalaTransferExecutor
 import org.eso.ias.types.InOut
 import org.eso.ias.types.OperationalMode
 import org.eso.ias.types.AlarmSample
-import org.ias.prototype.logging.IASLogger
+import org.ias.logging.IASLogger
 
 /**
  * A scala TransferExecutor for testing purposes.
