@@ -5,17 +5,17 @@ import org.eso.ias.types.InOut
 import org.eso.ias.types.Identifier
 import org.eso.ias.types.OperationalMode
 import org.eso.ias.types.Validity
-import org.eso.ias.prototype.compele.ComputingElement
+import org.eso.ias.asce.ComputingElement
 import org.eso.ias.types.IASTypes
 import scala.collection.mutable.{Map => MutableMap }
-import org.eso.ias.prototype.transfer.TransferFunctionSetting
+import org.eso.ias.asce.transfer.TransferFunctionSetting
 import java.util.Properties
-import org.eso.ias.prototype.transfer.TransferFunctionLanguage
+import org.eso.ias.asce.transfer.TransferFunctionLanguage
 import java.util.concurrent.ScheduledThreadPoolExecutor
-import org.eso.ias.prototype.compele.CompEleThreadFactory
-import org.eso.ias.prototype.compele.AsceStates
-import org.eso.ias.prototype.transfer.JavaTransfer
-import org.eso.ias.prototype.transfer.ScalaTransfer
+import org.eso.ias.asce.CompEleThreadFactory
+import org.eso.ias.asce.AsceStates
+import org.eso.ias.asce.transfer.JavaTransfer
+import org.eso.ias.asce.transfer.ScalaTransfer
 import org.eso.ias.types.IdentifierType
 import org.eso.ias.types.AlarmSample
 import org.ias.logging.IASLogger

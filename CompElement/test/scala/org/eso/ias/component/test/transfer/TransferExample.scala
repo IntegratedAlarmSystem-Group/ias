@@ -2,7 +2,7 @@ package org.eso.ias.component.test.transfer
 
 import java.util.Properties
 
-import org.eso.ias.prototype.transfer.ScalaTransferExecutor
+import org.eso.ias.asce.transfer.ScalaTransferExecutor
 import org.eso.ias.types.InOut
 import org.eso.ias.types.OperationalMode
 import org.eso.ias.types.AlarmSample

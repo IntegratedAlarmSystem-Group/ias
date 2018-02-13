@@ -1,4 +1,4 @@
-package org.eso.ias.prototype.transfer
+package org.eso.ias.asce.transfer
 
 import java.util.Properties
 import java.util.concurrent.ThreadFactory
@@ -24,7 +24,7 @@ object TransferFunctionLanguage extends Enumeration {
  * to run the transfer function independently from the 
  * supported programming language (@see TransferFunctionLanguage).
  * 
- * At the present in the prototype we foresee 2 possible implementations
+ * At the present there 2 possible implementations
  * of the transfer function in scala or java.
  * Other possibilities is to write the TF in python with jithon
  * that ultimately compiles the script into a java class, or use a DSL

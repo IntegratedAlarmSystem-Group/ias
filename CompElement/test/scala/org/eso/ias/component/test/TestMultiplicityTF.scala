@@ -1,13 +1,13 @@
 package org.eso.ias.component.test
 
 import org.scalatest.FlatSpec
-import org.eso.ias.prototype.transfer.impls.MultiplicityTF
+import org.eso.ias.asce.transfer.impls.MultiplicityTF
 import java.util.Properties
-import org.eso.ias.prototype.compele.ComputingElement
+import org.eso.ias.asce.ComputingElement
 import org.eso.ias.types.AlarmSample
-import org.eso.ias.prototype.transfer.ScalaTransfer
-import org.eso.ias.prototype.transfer.TransferFunctionLanguage
-import org.eso.ias.prototype.transfer.TransferFunctionSetting
+import org.eso.ias.asce.transfer.ScalaTransfer
+import org.eso.ias.asce.transfer.TransferFunctionLanguage
+import org.eso.ias.asce.transfer.TransferFunctionSetting
 import org.eso.ias.types.Identifier
 import org.eso.ias.types.IdentifierType
 import org.eso.ias.types.InOut
@@ -67,7 +67,7 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   
   override def beforeEach() {
   val scalaMultuiplicityTF = new TransferFunctionSetting(
-      "org.eso.ias.prototype.transfer.impls.MultiplicityTF",
+      "org.eso.ias.asce.transfer.impls.MultiplicityTF",
         TransferFunctionLanguage.scala,
         threadFactory)
     
@@ -134,7 +134,7 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   
   it must "Correctly load, init and shutdown the multiplicity TF executor" in { 
     val multuiplicityTF = new TransferFunctionSetting(
-      "org.eso.ias.prototype.transfer.impls.MultiplicityTF",
+      "org.eso.ias.asce.transfer.impls.MultiplicityTF",
         TransferFunctionLanguage.scala,
         threadFactory)
     

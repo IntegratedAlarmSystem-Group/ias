@@ -13,9 +13,9 @@ import org.eso.ias.cdb.pojos.DasuDao
 import org.eso.ias.types.Identifier
 import org.eso.ias.types.IdentifierType
 import org.eso.ias.cdb.pojos.AsceDao
-import org.eso.ias.prototype.compele.ComputingElement
-import org.eso.ias.prototype.compele.ComputingElementState
-import org.eso.ias.prototype.compele.AsceStates
+import org.eso.ias.asce.ComputingElement
+import org.eso.ias.asce.ComputingElementState
+import org.eso.ias.asce.AsceStates
 import org.eso.ias.types.InOut
 import org.eso.ias.dasu.publisher.OutputPublisher
 import org.eso.ias.types.IASValue

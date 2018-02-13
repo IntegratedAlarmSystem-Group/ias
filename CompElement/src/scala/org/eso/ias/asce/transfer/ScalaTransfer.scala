@@ -1,6 +1,6 @@
-package org.eso.ias.prototype.transfer
+package org.eso.ias.asce.transfer
 
-import org.eso.ias.prototype.compele.ComputingElement
+import org.eso.ias.asce.ComputingElement
 import org.eso.ias.types.InOut
 import org.eso.ias.types.Identifier
 import java.util.Properties

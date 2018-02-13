@@ -1,11 +1,11 @@
-package org.eso.ias.prototype.compele
+package org.eso.ias.asce
 
 import org.eso.ias.types.Identifier
 import org.eso.ias.types.InOut
 import org.eso.ias.types.Validity
 import scala.util.control.NonFatal
 import scala.collection.mutable.HashMap
-import org.eso.ias.prototype.transfer.JavaTransfer
+import org.eso.ias.asce.transfer.JavaTransfer
 import scala.collection.mutable.{Map => MutableMap}
 import org.eso.ias.types.IASTypes
 import java.util.Properties
@@ -14,9 +14,9 @@ import java.util.concurrent.TimeUnit
 import scala.util.Try
 import scala.util.Failure
 import scala.util.Success
-import org.eso.ias.prototype.transfer.TransferFunctionSetting
+import org.eso.ias.asce.transfer.TransferFunctionSetting
 import org.eso.ias.utils.ISO8601Helper
-import org.eso.ias.prototype.transfer.TransferFunctionLanguage
+import org.eso.ias.asce.transfer.TransferFunctionLanguage
 import org.eso.ias.types.IdentifierType
 import org.eso.ias.cdb.pojos.AsceDao
 import scala.collection.JavaConverters
@@ -24,7 +24,7 @@ import org.eso.ias.cdb.pojos.IasioDao
 import org.eso.ias.types.IASValue
 import org.ias.logging.IASLogger
 import org.eso.ias.cdb.pojos.TFLanguageDao
-import org.eso.ias.prototype.transfer.ScalaTransfer
+import org.eso.ias.asce.transfer.ScalaTransfer
 import org.eso.ias.types.JavaConverter
 import org.eso.ias.types.OperationalMode
 import org.eso.ias.types.IasValidity
@@ -128,18 +128,18 @@ abstract class ComputingElement[T](
   /**
    * The point in time when this object has been created.
    */
-  protected[compele] val creationTStamp = System.currentTimeMillis()
+  protected[asce] val creationTStamp = System.currentTimeMillis()
   
   /**
    * The point in time when the output of this computing element has been
    * updated for the last time.
    */
-  protected[compele] var lastOutputUpdateTStamp = creationTStamp
+  protected[asce] var lastOutputUpdateTStamp = creationTStamp
   
   /**
    * The state of the ASCE
    */
-  @volatile protected[compele] var state: ComputingElementState =  new ComputingElementState
+  @volatile protected[asce] var state: ComputingElementState =  new ComputingElementState
   
   /**
    * The inputs that produced the output.

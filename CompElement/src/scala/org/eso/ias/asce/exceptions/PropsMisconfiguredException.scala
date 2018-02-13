@@ -1,4 +1,4 @@
-package org.eso.ias.prototype.compele.exceptions
+package org.eso.ias.asce.exceptions
 
 import scala.collection.JavaConverters.mapAsScalaMapConverter
 import java.util.Properties

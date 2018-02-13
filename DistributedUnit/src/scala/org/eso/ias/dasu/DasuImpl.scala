@@ -9,7 +9,7 @@ import org.eso.ias.types.Identifier
 import org.eso.ias.types.IdentifierType
 import scala.collection.mutable.{Map => MutableMap}
 import org.eso.ias.dasu.topology.Topology
-import org.eso.ias.prototype.compele.ComputingElement
+import org.eso.ias.asce.ComputingElement
 import scala.util.Properties
 import org.eso.ias.cdb.pojos.AsceDao
 import org.eso.ias.types.IASValue
@@ -22,7 +22,7 @@ import scala.util.Failure
 import scala.util.Success
 import scala.collection.JavaConverters
 import org.eso.ias.types.InOut
-import org.eso.ias.prototype.compele.AsceStates
+import org.eso.ias.asce.AsceStates
 import org.eso.ias.dasu.executorthread.ScheduledExecutor
 import org.eso.ias.types.JavaConverter
 import java.util.concurrent.TimeUnit

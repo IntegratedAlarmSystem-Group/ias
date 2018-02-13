@@ -1,11 +1,8 @@
-package org.eso.ias.prototype.transfer.impls;
+package org.eso.ias.asce.transfer.impls;
 
 import java.util.Map;
 import java.util.Properties;
 
-import org.eso.ias.prototype.compele.exceptions.PropsMisconfiguredException;
-import org.eso.ias.prototype.compele.exceptions.TypeMismatchException;
-import org.eso.ias.prototype.compele.exceptions.UnexpectedNumberOfInputsException;
 import org.eso.ias.types.AlarmSample;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValueBase;
@@ -16,8 +13,11 @@ import org.eso.ias.types.IasFloat;
 import org.eso.ias.types.IasInt;
 import org.eso.ias.types.IasLong;
 import org.eso.ias.types.IasShort;
-import org.eso.ias.prototype.transfer.JavaTransferExecutor;
-import org.eso.ias.prototype.transfer.TransferExecutor;
+import org.eso.ias.asce.exceptions.PropsMisconfiguredException;
+import org.eso.ias.asce.exceptions.TypeMismatchException;
+import org.eso.ias.asce.exceptions.UnexpectedNumberOfInputsException;
+import org.eso.ias.asce.transfer.JavaTransferExecutor;
+import org.eso.ias.asce.transfer.TransferExecutor;
 
 /**
  * The TF implementing a Min/Max threshold TF  (there is also

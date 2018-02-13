@@ -1,5 +1,5 @@
 /**
- * <code>org.eso.ias.prototype.behavior</code> contains the 
+ * <code>org.eso.ias.asce.transfer</code> contains the 
  * classes to run (from scala) the java object provided by the user 
  * that elaborates the actual inputs to produce the output
  * of the component.
@@ -16,4 +16,4 @@
  * @author acaproni
  *
  */
-package org.eso.ias.prototype.transfer;
+package org.eso.ias.asce.transfer;

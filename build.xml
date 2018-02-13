@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-     Build the entire IAS prototype
+     Build the core of the IAS.
 
      PRE-Requisite: IAS_ROOT envirnment variable defined and pointing to
                              an existing folder

@@ -1,8 +1,8 @@
-package org.eso.ias.prototype.transfer
+package org.eso.ias.asce.transfer
 
 import org.eso.ias.types.Identifier
 import org.eso.ias.types.InOut
-import org.eso.ias.prototype.compele.ComputingElement
+import org.eso.ias.asce.ComputingElement
 import java.util.Properties
 import java.util.{Map => JavaMap, HashMap => JavaHashMap}
 import org.eso.ias.types.IASValue

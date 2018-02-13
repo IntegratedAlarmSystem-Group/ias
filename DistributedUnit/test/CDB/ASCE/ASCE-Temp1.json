@@ -7,6 +7,6 @@
 		{"name":"org.eso.ias.tf.minmaxthreshold.lowOn","value":"-20"},
 		{"name":"org.eso.ias.tf.minmaxthreshold.lowOff","value":"-10"}],
 	"id":"ASCE-Temp1",
-	"transferFunctionID":"org.eso.ias.prototype.transfer.impls.MinMaxThresholdTF",
+	"transferFunctionID":"org.eso.ias.asce.transfer.impls.MinMaxThresholdTF",
 	"inputIDs":["Temperature1"]
 }

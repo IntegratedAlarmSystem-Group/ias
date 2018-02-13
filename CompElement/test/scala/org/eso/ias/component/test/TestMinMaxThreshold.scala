@@ -1,21 +1,21 @@
 package org.eso.ias.component.test
 
 import org.scalatest.FlatSpec
-import org.eso.ias.prototype.transfer.TransferFunctionSetting
-import org.eso.ias.prototype.transfer.TransferFunctionLanguage
+import org.eso.ias.asce.transfer.TransferFunctionSetting
+import org.eso.ias.asce.transfer.TransferFunctionLanguage
 import org.eso.ias.types.Identifier
 import org.eso.ias.types.InOut
 import org.eso.ias.types.OperationalMode
 import org.eso.ias.types.Validity
 import org.eso.ias.types.IASTypes
-import org.eso.ias.prototype.compele.ComputingElement
+import org.eso.ias.asce.ComputingElement
 import scala.collection.mutable.{Map => MutableMap }
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.Properties
-import org.eso.ias.prototype.transfer.impls.MinMaxThresholdTF
-import org.eso.ias.prototype.transfer.impls.MinMaxThresholdTFJava
-import org.eso.ias.prototype.transfer.ScalaTransfer
-import org.eso.ias.prototype.transfer.JavaTransfer
+import org.eso.ias.asce.transfer.impls.MinMaxThresholdTF
+import org.eso.ias.asce.transfer.impls.MinMaxThresholdTFJava
+import org.eso.ias.asce.transfer.ScalaTransfer
+import org.eso.ias.asce.transfer.JavaTransfer
 import org.eso.ias.types.AlarmSample
 import org.eso.ias.types.JavaConverter
 import org.eso.ias.types.IASValue
@@ -31,7 +31,7 @@ class TestMinMaxThreshold extends FlatSpec {
     
     // The TF executor to test
     val scalaMinMaxTF = new TransferFunctionSetting(
-        "org.eso.ias.prototype.transfer.impls.MinMaxThresholdTF",
+        "org.eso.ias.asce.transfer.impls.MinMaxThresholdTF",
         TransferFunctionLanguage.scala,
         threadFactory)
     try {
@@ -47,7 +47,7 @@ class TestMinMaxThreshold extends FlatSpec {
     
     // The TF executor to test
     val javaMinMaxTF = new TransferFunctionSetting(
-        "org.eso.ias.prototype.transfer.impls.MinMaxThresholdTFJava",
+        "org.eso.ias.asce.transfer.impls.MinMaxThresholdTFJava",
         TransferFunctionLanguage.java,
         threadFactory)
     try {
@@ -69,7 +69,7 @@ class TestMinMaxThreshold extends FlatSpec {
     
     // Instantiate one ASCE with a scala TF implementation
     val scalaTFSetting =new TransferFunctionSetting(
-        "org.eso.ias.prototype.transfer.impls.MinMaxThresholdTF",
+        "org.eso.ias.asce.transfer.impls.MinMaxThresholdTF",
         TransferFunctionLanguage.scala,
         commons.threadFactory)
     
@@ -104,7 +104,7 @@ class TestMinMaxThreshold extends FlatSpec {
     
     // Instantiate one ASCE with a scala TF implementation
     val javaTFSetting =new TransferFunctionSetting(
-        "org.eso.ias.prototype.transfer.impls.MinMaxThresholdTFJava",
+        "org.eso.ias.asce.transfer.impls.MinMaxThresholdTFJava",
         TransferFunctionLanguage.java,
         commons.threadFactory)
     

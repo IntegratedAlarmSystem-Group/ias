@@ -1,4 +1,4 @@
-package org.eso.ias.prototype.transfer;
+package org.eso.ias.asce.transfer;
 
 import java.util.Map;
 import java.util.Properties;

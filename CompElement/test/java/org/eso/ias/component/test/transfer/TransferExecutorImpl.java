@@ -6,9 +6,9 @@ import java.util.Properties;
 import org.eso.ias.types.IASValue;
 import org.eso.ias.types.IASValueBase;
 import org.eso.ias.types.IasAlarm;
+import org.eso.ias.asce.transfer.JavaTransferExecutor;
 import org.eso.ias.types.AlarmSample;
 import org.eso.ias.types.OperationalMode;
-import org.eso.ias.prototype.transfer.JavaTransferExecutor;
 
 
 /**
