@@ -1,8 +1,8 @@
 package org.eso.ias.component.test.transfer
 
-import org.eso.ias.prototype.transfer.ScalaTransferExecutor
+import org.eso.ias.asce.transfer.ScalaTransferExecutor
 import java.util.Properties
-import org.eso.ias.prototype.input.InOut
+import org.eso.ias.types.InOut
 
 /**
  * A transfer function that throws an exception: it allows to test if the

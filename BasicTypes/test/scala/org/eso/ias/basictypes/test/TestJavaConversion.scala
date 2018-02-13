@@ -1,22 +1,22 @@
 package org.eso.ias.basictypes.test
 
 import org.scalatest.FlatSpec
-import org.eso.ias.prototype.input.Identifier
-import org.eso.ias.prototype.input.java.OperationalMode
-import org.eso.ias.prototype.input.Validity
-import org.eso.ias.prototype.input.InOut
-import org.eso.ias.prototype.input.java.IASTypes
-import org.eso.ias.prototype.input.JavaConverter
-import org.eso.ias.prototype.input.java.IASValue
-import org.eso.ias.prototype.input.java.IasDouble
-import org.eso.ias.prototype.input.java.IasAlarm
-import org.eso.ias.prototype.input.java.IdentifierType
-import org.eso.ias.prototype.input.java.AlarmSample
+import org.eso.ias.types.Identifier
+import org.eso.ias.types.OperationalMode
+import org.eso.ias.types.Validity
+import org.eso.ias.types.InOut
+import org.eso.ias.types.IASTypes
+import org.eso.ias.types.JavaConverter
+import org.eso.ias.types.IASValue
+import org.eso.ias.types.IasDouble
+import org.eso.ias.types.IasAlarm
+import org.eso.ias.types.IdentifierType
+import org.eso.ias.types.AlarmSample
+import org.eso.ias.types.IasValidity._
+import org.eso.ias.types.IasValidity
 
 // The following import is required by the usage of the fixture
 import language.reflectiveCalls
-import org.eso.ias.prototype.input.java.IasValidity._
-import org.eso.ias.prototype.input.java.IasValidity
 
 /**
  * Test the conversion between HIO to IASValue and vice-versa

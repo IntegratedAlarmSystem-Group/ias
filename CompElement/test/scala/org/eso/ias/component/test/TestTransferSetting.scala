@@ -2,8 +2,8 @@ package org.eso.ias.component.test
 
 import org.scalatest.FlatSpec
 import java.util.concurrent.ThreadFactory
-import org.eso.ias.prototype.transfer.TransferFunctionSetting
-import org.eso.ias.prototype.transfer.TransferFunctionLanguage
+import org.eso.ias.asce.transfer.TransferFunctionSetting
+import org.eso.ias.asce.transfer.TransferFunctionLanguage
 import java.util.Properties
 
 /**

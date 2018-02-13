@@ -21,7 +21,7 @@ import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.converter.config.IasioConfigurationDaoImpl;
 import org.eso.ias.converter.config.MonitorPointConfiguration;
-import org.eso.ias.prototype.input.java.IASTypes;
+import org.eso.ias.types.IASTypes;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

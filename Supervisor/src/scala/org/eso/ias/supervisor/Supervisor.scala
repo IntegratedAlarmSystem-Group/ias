@@ -1,7 +1,7 @@
 package org.eso.ias.supervisor
 
 import org.eso.ias.cdb.CdbReader
-import org.ias.prototype.logging.IASLogger
+import org.ias.logging.IASLogger
 import org.eso.ias.cdb.json.JsonReader
 import org.eso.ias.cdb.json.CdbFiles
 import org.eso.ias.cdb.json.CdbJsonFiles
@@ -11,18 +11,18 @@ import org.eso.ias.dasu.subscriber.InputSubscriber
 import org.eso.ias.dasu.publisher.OutputPublisher
 import scala.util.Success
 import scala.util.Try
-import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.types.IASValue
 import org.eso.ias.dasu.subscriber.InputsListener
 import org.eso.ias.dasu.Dasu
 import org.eso.ias.cdb.pojos.SupervisorDao
-import org.eso.ias.prototype.input.java.IasValueJsonSerializer
+import org.eso.ias.types.IasValueJsonSerializer
 import scala.util.Failure
 import java.util.concurrent.atomic.AtomicBoolean
-import org.eso.ias.prototype.input.Identifier
+import org.eso.ias.types.Identifier
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.dasu.publisher.KafkaPublisher
 import org.eso.ias.dasu.subscriber.KafkaSubscriber
-import org.eso.ias.prototype.input.java.IdentifierType
+import org.eso.ias.types.IdentifierType
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.eso.ias.cdb.rdb.RdbReader

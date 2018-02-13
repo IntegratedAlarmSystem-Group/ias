@@ -5,8 +5,8 @@ import scala.collection.mutable.{HashSet => MutableSet}
 import scala.util.Success
 import scala.util.Try
 import org.eso.ias.dasu.subscriber.InputsListener
-import org.eso.ias.prototype.input.java.IASValue
-import org.ias.prototype.logging.IASLogger
+import org.eso.ias.types.IASValue
+import org.ias.logging.IASLogger
 
 /** 
  *  The input subscriber to send event to the DASU

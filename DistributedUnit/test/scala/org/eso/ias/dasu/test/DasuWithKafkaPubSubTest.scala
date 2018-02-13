@@ -1,7 +1,7 @@
 package org.eso.ias.dasu.test
 
 import org.scalatest.FlatSpec
-import org.ias.prototype.logging.IASLogger
+import org.ias.logging.IASLogger
 import java.nio.file.FileSystems
 import org.eso.ias.cdb.json.CdbJsonFiles
 import org.eso.ias.cdb.CdbReader
@@ -10,20 +10,20 @@ import org.eso.ias.dasu.publisher.KafkaPublisher
 import java.util.Properties
 import org.eso.ias.dasu.subscriber.KafkaSubscriber
 import org.eso.ias.dasu.Dasu
-import org.eso.ias.prototype.input.Identifier
-import org.eso.ias.prototype.input.java.IASValue
-import org.eso.ias.prototype.input.java.IasDouble
-import org.eso.ias.prototype.input.java.IdentifierType
-import org.eso.ias.prototype.input.java.OperationalMode
+import org.eso.ias.types.Identifier
+import org.eso.ias.types.IASValue
+import org.eso.ias.types.IasDouble
+import org.eso.ias.types.IdentifierType
+import org.eso.ias.types.OperationalMode
 import org.eso.ias.kafkautils.SimpleStringConsumer
 import org.eso.ias.kafkautils.KafkaHelper
 import org.eso.ias.kafkautils.SimpleStringProducer
 import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener
-import org.eso.ias.prototype.input.java.IasValueJsonSerializer
+import org.eso.ias.types.IasValueJsonSerializer
 import scala.util.Try
 import scala.collection.mutable.ListBuffer
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition
-import org.eso.ias.prototype.input.java.IasValidity._
+import org.eso.ias.types.IasValidity._
 import org.eso.ias.dasu.DasuImpl
 
 /**

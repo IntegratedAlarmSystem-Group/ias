@@ -2,10 +2,10 @@ package org.eso.ias.component.test.transfer
 
 import java.util.Properties
 
-import org.eso.ias.prototype.transfer.ScalaTransferExecutor
-import org.eso.ias.prototype.input.InOut
-import org.eso.ias.prototype.input.java.OperationalMode
-import org.eso.ias.prototype.input.java.AlarmSample
+import org.eso.ias.asce.transfer.ScalaTransferExecutor
+import org.eso.ias.types.InOut
+import org.eso.ias.types.OperationalMode
+import org.eso.ias.types.AlarmSample
 
 /**
  * A scala TransferExecutor for testing purposes

@@ -1,9 +1,9 @@
 package org.eso.ias.basictypes.test
 
 import org.scalatest.FlatSpec
-import org.eso.ias.prototype.input.Validity
-import org.eso.ias.prototype.input.java.IasValidity
-import org.eso.ias.prototype.input.java.IasValidity._
+import org.eso.ias.types.Validity
+import org.eso.ias.types.IasValidity
+import org.eso.ias.types.IasValidity._
 
 
 /**

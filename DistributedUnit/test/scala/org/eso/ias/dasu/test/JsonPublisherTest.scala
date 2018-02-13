@@ -1,25 +1,25 @@
 package org.eso.ias.dasu.test
 
 import org.scalatest.FlatSpec
-import org.eso.ias.prototype.input.java.IasValueJsonSerializer
+import org.eso.ias.types.IasValueJsonSerializer
 import org.eso.ias.dasu.Dasu
-import org.eso.ias.prototype.input.Identifier
-import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.types.Identifier
+import org.eso.ias.types.IASValue
 import org.eso.ias.cdb.json.CdbJsonFiles
 import org.eso.ias.cdb.CdbReader
 import java.io.FileWriter
 import org.eso.ias.dasu.publisher.JsonWriterPublisher
 import org.eso.ias.cdb.json.JsonReader
-import org.ias.prototype.logging.IASLogger
+import org.ias.logging.IASLogger
 import java.nio.file.FileSystems
-import org.eso.ias.prototype.input.java.IasDouble
-import org.eso.ias.prototype.input.java.IdentifierType
+import org.eso.ias.types.IasDouble
+import org.eso.ias.types.IdentifierType
 import java.io.File
 import scala.io.Source
-import org.eso.ias.prototype.input.java.IASTypes
-import org.eso.ias.prototype.input.java.OperationalMode._
-import org.eso.ias.prototype.input.java.AlarmSample
-import org.eso.ias.prototype.input.java.IasValidity._
+import org.eso.ias.types.IASTypes
+import org.eso.ias.types.OperationalMode._
+import org.eso.ias.types.AlarmSample
+import org.eso.ias.types.IasValidity._
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.dasu.publisher.DirectInputSubscriber
 

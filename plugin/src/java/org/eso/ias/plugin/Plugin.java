@@ -22,7 +22,7 @@ import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.MonitorPointSender.SenderStats;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
-import org.eso.ias.prototype.input.java.OperationalMode;
+import org.eso.ias.types.OperationalMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -17,7 +17,7 @@ import org.eso.ias.plugin.config.PluginConfigFileReader;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.KafkaPublisher;
-import org.eso.ias.prototype.input.java.OperationalMode;
+import org.eso.ias.types.OperationalMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
