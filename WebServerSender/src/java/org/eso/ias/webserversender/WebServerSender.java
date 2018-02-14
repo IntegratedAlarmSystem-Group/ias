@@ -57,9 +57,9 @@ public class WebServerSender implements IasioListener, Runnable {
 	 * Same as the webserverUri but as a URI object
 	 */
 	URI uri;
-	
+
 	/**
-	 * Time in seconds to wait before attempt to reconnect 
+	 * Time in seconds to wait before attempt to reconnect
 	 */
 	int reconnectionInterval = 2;
 
@@ -107,7 +107,7 @@ public class WebServerSender implements IasioListener, Runnable {
     	this.kafkaTopic = kafkaTopic;
 		this.webserverUri = webserverUri;
 		this.listener = listener;
-		this.consumer = new KafkaIasiosConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, kafkaTopic, this.id);
+		this.consumer = new KafkaIasiosConsumer("kafka:9092", kafkaTopic, this.id);
 		this.consumer.setUp();
 	}
 
@@ -122,7 +122,7 @@ public class WebServerSender implements IasioListener, Runnable {
     	this.id = id;
 		this.webserverUri = webserverUri;
 		this.listener = listener;
-		this.consumer = new KafkaIasiosConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, KafkaHelper.IASIOs_TOPIC_NAME, this.id);
+		this.consumer = new KafkaIasiosConsumer("kafka:9092", KafkaHelper.IASIOs_TOPIC_NAME, this.id);
 		this.consumer.setUp();
 	}
 
@@ -249,10 +249,10 @@ public class WebServerSender implements IasioListener, Runnable {
 		}
 
 	}
-	
+
 	/**
 	 * Set the time to wait before attempt to reconnect
-	 * 
+	 *
 	 * @param interval time in seconds
 	 */
 	public void setReconnectionInverval(int interval) {
@@ -261,7 +261,7 @@ public class WebServerSender implements IasioListener, Runnable {
 
 	public static void main(String[] args) throws Exception {
 		WebServerSender ws = new WebServerSender("WebServerSender", "ws://localhost:8000/core/", null);
-		ws.run();	
+		ws.run();
 	}
 
 }
