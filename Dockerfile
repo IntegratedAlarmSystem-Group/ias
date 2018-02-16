@@ -26,4 +26,4 @@ RUN bash -c "source Tools/config/ias-bash-profile.sh && ant build"
 ENV PATH $PATH:/usr/src/ias/Tools/bin
 
 COPY entrypoint.sh /usr/src/ias
-CMD ["./entrypoint.sh"]
+ENTRYPOINT ["./entrypoint.sh"]
