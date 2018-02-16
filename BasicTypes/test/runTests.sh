@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-iasRun -l s org.scalatest.run org.eso.ias.basictypes.test.TestHeteroIO
+iasRun -l s org.scalatest.run org.eso.ias.basictypes.test.TestInOut
 iasRun -l s org.scalatest.run org.eso.ias.basictypes.test.TestValidity
 iasRun -l s org.scalatest.run org.eso.ias.basictypes.test.TestIdentifier
 iasRun -l s org.scalatest.run org.eso.ias.basictypes.test.TestJavaConversion

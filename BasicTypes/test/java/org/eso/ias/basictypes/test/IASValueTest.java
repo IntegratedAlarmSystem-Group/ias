@@ -31,10 +31,10 @@ public class IASValueTest {
 		Identifier asceId =  new Identifier("AsceId",IdentifierType.ASCE,new Some(dasuId));
 		Identifier id = new Identifier(valId, IdentifierType.IASIO,new Some(asceId));
 		
-		IASValue<?> val = IASValue.buildIasValue(
+		IASValue<?> val = IASValue.build(
 				10L, 
-				System.currentTimeMillis(),
-				OperationalMode.DEGRADED, IasValidity.RELIABLE, 
+				OperationalMode.DEGRADED, 
+				IasValidity.RELIABLE, 
 				id.fullRunningID(), 
 				IASTypes.LONG);
 		assertEquals(valId, val.id);

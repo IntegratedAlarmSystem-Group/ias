@@ -2,8 +2,10 @@
 package org.eso.ias.types
 
 import org.eso.ias.types.IASTypes._
+import java.util.Optional
+
 /**
- * Converter methods from java to scala and vice-versa.
+ * Helper methods to convert from java to scala and vice-versa.
  * 
  * @author acaproni
  */
@@ -23,24 +25,22 @@ object JavaConverter {
   def inOutToIASValue[T](io: InOut[_], validity: Validity): IASValue[_] = {
     require(Option(io).isDefined)
     require(Option(validity).isDefined)
+    require(io.value.isDefined,"Cannot build a IASValue from an IIASIO with no value")
     
-    val ret = if (io.value.isEmpty) {
-      IASValue.buildIasValue(
-          null, 
-          Long.MinValue,io.mode,
-          validity.iasValidity,
-          io.id.fullRunningID,
-          io.iasType)
-    } else {
-      IASValue.buildIasValue(
-          io.value.get, 
-          io.timestamp,
-          io.mode,
-          validity.iasValidity,
-          io.id.fullRunningID,
-          io.iasType)
-    }
-    ret
+    new IASValue(
+        io.value.get,
+			  io.mode,
+			  validity.iasValidity,
+			  io.id.fullRunningID,
+			  io.iasType,
+			  Optional.ofNullable(if (io.pluginProductionTStamp.isDefined) io.pluginProductionTStamp.get else null),
+  			Optional.ofNullable(if (io.sentToConverterTStamp.isDefined) io.pluginProductionTStamp.get else null),
+  			Optional.ofNullable(if (io.receivedFromPluginTStamp.isDefined) io.pluginProductionTStamp.get else null),
+  			Optional.ofNullable(if (io.convertedProductionTStamp.isDefined) io.pluginProductionTStamp.get else null),
+  			Optional.ofNullable(if (io.sentToBsdbTStamp.isDefined) io.pluginProductionTStamp.get else null),
+  			Optional.ofNullable(if (io.readFromBsdbTStamp.isDefined) io.pluginProductionTStamp.get else null),
+  			Optional.ofNullable(if (io.dasuProductionTStamp.isDefined) io.pluginProductionTStamp.get else null))
+
   }
   
   /**
@@ -164,7 +164,7 @@ object JavaConverter {
    */
   private def updateHIOWithIasValue[T](hio: InOut[T], iasValue: IASValue[T]): InOut[T] = {
     assert(Option[InOut[T]](hio).isDefined)
-    assert(Option[IASValueBase](iasValue).isDefined)
+    assert(Option[IASValue[_]](iasValue).isDefined)
     // Some consistency check
     if (hio.iasType!=iasValue.valueType) {
       throw new IllegalStateException("Type mismatch for HIO "+hio.id.runningID+": "+hio.iasType+"!="+iasValue.valueType)
@@ -186,4 +186,9 @@ object JavaConverter {
     }
     
   }
+  
+  /**
+   * Convert a java Optional to a scala Option
+   */
+  def toScalaOption[T](jOpt: Optional[T]): Option[T] = if (jOpt.isPresent) Some(jOpt.get()) else None
 }

@@ -33,8 +33,6 @@ class TestJavaConversion  extends FlatSpec {
       
       val doubleHioId = new Identifier("DoubleID",IdentifierType.IASIO,Option[Identifier](asceId))
       val alarmHioId = new Identifier("AlarmID",IdentifierType.IASIO,Option[Identifier](asceId))
-      // Refresh rate
-      val refRate = InOut.MinRefreshRate+10
       // Modes
       val doubleMode = OperationalMode.MAINTENANCE
       val alarmMode = OperationalMode.STARTUP
@@ -54,16 +52,76 @@ class TestJavaConversion  extends FlatSpec {
       // Validity
       val validity = Some(Validity(RELIABLE))
       // The HIOs
-      val longHIO = InOut[Long](longValue,System.currentTimeMillis(),doubleHioId,refRate,mode,validity,IASTypes.LONG)
-      val intHIO = InOut[Int](intValue,System.currentTimeMillis(),doubleHioId,refRate,mode,validity,IASTypes.INT)
-      val shortHIO = InOut[Short](shortValue,System.currentTimeMillis(),doubleHioId,refRate,mode,validity,IASTypes.SHORT)
-      val byteHIO = InOut[Byte](byteValue,System.currentTimeMillis(),doubleHioId,refRate,mode,validity,IASTypes.BYTE)
-      val charHIO = InOut[Char](charValue,System.currentTimeMillis(),doubleHioId,refRate,mode,validity,IASTypes.CHAR)
-      val stringHIO = InOut[String](stringValue,System.currentTimeMillis(),doubleHioId,refRate,mode,validity,IASTypes.STRING)
-      val boolHIO = InOut[Boolean](boolValue,System.currentTimeMillis(),doubleHioId,refRate,mode,validity,IASTypes.BOOLEAN)
-      val alarmHIO = InOut[AlarmSample](alarmValue,System.currentTimeMillis(),alarmHioId,refRate,alarmMode,validity,IASTypes.ALARM)
-      val doubleHIO = InOut[Double](doubleValue,System.currentTimeMillis(),doubleHioId,refRate,doubleMode,validity,IASTypes.DOUBLE)
-      val floatHIO = InOut[Float](floatValue,System.currentTimeMillis(),doubleHioId,refRate,mode,validity,IASTypes.FLOAT)
+      val longHIO = InOut[Long](
+        longValue, 
+        doubleHioId, 
+        mode,
+        validity,
+        IASTypes.LONG,
+        None,None,None,None,None,None,None) 
+      val intHIO = InOut[Int](
+        intValue, 
+        doubleHioId, 
+        mode,
+        validity,
+        IASTypes.INT,
+        None,None,None,None,None,None,None) 
+      val shortHIO =  InOut[Int](
+        shortValue, 
+        doubleHioId, 
+        mode,
+        validity,
+        IASTypes.SHORT,
+        None,None,None,None,None,None,None) 
+      val byteHIO = InOut[Byte](
+        byteValue, 
+        doubleHioId, 
+        mode,
+        validity,
+        IASTypes.BYTE,
+        None,None,None,None,None,None,None)
+      val charHIO = InOut[Char](
+        charValue, 
+        doubleHioId, 
+        mode,
+        validity,
+        IASTypes.CHAR,
+        None,None,None,None,None,None,None) 
+      val stringHIO = InOut[String](
+        stringValue, 
+        doubleHioId, 
+        mode,
+        validity,
+        IASTypes.STRING,
+        None,None,None,None,None,None,None)
+      val boolHIO = InOut[Boolean](
+        boolValue, 
+        doubleHioId, 
+        mode,
+        validity,
+        IASTypes.BOOLEAN,
+        None,None,None,None,None,None,None)
+      val alarmHIO = InOut[AlarmSample](
+        alarmValue, 
+        alarmHioId, 
+        mode,
+        validity,
+        IASTypes.ALARM,
+        None,None,None,None,None,None,None)
+      val doubleHIO = InOut[Double](
+        doubleValue, 
+        doubleHioId, 
+        doubleMode,
+        validity,
+        IASTypes.DOUBLE,
+        None,None,None,None,None,None,None)
+      val floatHIO = InOut[Float](
+        floatValue, 
+        doubleHioId, 
+        mode,
+        validity,
+        IASTypes.FLOAT,
+        Some(1L),Some(2L),Some(3L),Some(4L),Some(5L),Some(6L),Some(7L))
       
       // Ensure we are testing all possible types
       val hios = List (longHIO,intHIO,shortHIO,byteHIO,charHIO,stringHIO,boolHIO,alarmHIO,doubleHIO,floatHIO)
@@ -73,10 +131,18 @@ class TestJavaConversion  extends FlatSpec {
   
   it must "build the java value with the proper values" in {
     val f = fixture
-    val doubleVal = JavaConverter.inOutToIASValue[Double](f.doubleHIO,Validity(IasValidity.RELIABLE)).asInstanceOf[IasDouble]
+    val doubleVal = JavaConverter.inOutToIASValue[Double](f.doubleHIO,Validity(IasValidity.RELIABLE))
     assert(doubleVal.valueType==f.doubleHIO.iasType)
     assert(doubleVal.mode==f.doubleHIO.mode)
-    assert(doubleVal.timestamp==f.doubleHIO.timestamp)
+    
+    assert(doubleVal.pluginProductionTStamp.get == f.doubleHIO.pluginProductionTStamp.get)
+	  assert(doubleVal.sentToConverterTStamp.get == f.doubleHIO.sentToConverterTStamp.get)
+	  assert(doubleVal.receivedFromPluginTStamp.get == f.doubleHIO.receivedFromPluginTStamp.get)
+	  assert(doubleVal.convertedProductionTStamp.get == f.doubleHIO.convertedProductionTStamp.get)
+	  assert(doubleVal.sentToBsdbTStamp.get == f.doubleHIO.sentToBsdbTStamp.get)
+	  assert(doubleVal.readFromBsdbTStamp.get == f.doubleHIO.readFromBsdbTStamp.get)
+	  assert(doubleVal.dasuProductionTStamp.get == f.doubleHIO.dasuProductionTStamp.get)
+    
     assert(doubleVal.id==f.doubleHIO.id.id)
     assert(doubleVal.fullRunningId==f.doubleHIO.id.fullRunningID)
     assert(doubleVal.value==f.doubleHIO.value.get)

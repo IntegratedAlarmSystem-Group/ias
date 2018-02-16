@@ -61,7 +61,6 @@ public class IasValueJsonPojo {
 		Objects.requireNonNull(iasValue);
 		
 		value=iasValue.value.toString();
-		tStamp=iasValue.timestamp;
 		mode=iasValue.mode;
 		fullRunningId=iasValue.fullRunningId;
 		valueType=iasValue.valueType;
@@ -108,26 +107,26 @@ public class IasValueJsonPojo {
 		this.valueType = valueType;
 	}
 	
-	public IASValue<?> asIasValue() {
-
-		
-		// Convert the string to the proper type
-		Object theValue;
-		switch (valueType) {
-			case LONG: theValue=Long.valueOf(value); break;
-	 		case INT: theValue=Integer.valueOf(value); break;
-			case SHORT: theValue=Short.valueOf(value); break;
-			case BYTE: theValue=Byte.valueOf(value); break;
-			case DOUBLE: theValue=Double.valueOf(value); break;
-			case FLOAT: theValue=Float.valueOf(value); break;
-			case BOOLEAN: theValue=Boolean.valueOf(value); break;
-			case CHAR: theValue=Character.valueOf(value.charAt(0)); break;
-			case STRING: theValue=value; break;
-			case ALARM: theValue=AlarmSample.valueOf(value); break;
-			default: throw new UnsupportedOperationException("Unsupported type "+valueType);
-		}
-		return IASValue.buildIasValue(theValue, tStamp, mode, iasValidity, fullRunningId, valueType);
-	}
+//	public IASValue<?> asIasValue() {
+//
+//		
+//		// Convert the string to the proper type
+//		Object theValue;
+//		switch (valueType) {
+//			case LONG: theValue=Long.valueOf(value); break;
+//	 		case INT: theValue=Integer.valueOf(value); break;
+//			case SHORT: theValue=Short.valueOf(value); break;
+//			case BYTE: theValue=Byte.valueOf(value); break;
+//			case DOUBLE: theValue=Double.valueOf(value); break;
+//			case FLOAT: theValue=Float.valueOf(value); break;
+//			case BOOLEAN: theValue=Boolean.valueOf(value); break;
+//			case CHAR: theValue=Character.valueOf(value.charAt(0)); break;
+//			case STRING: theValue=value; break;
+//			case ALARM: theValue=AlarmSample.valueOf(value); break;
+//			default: throw new UnsupportedOperationException("Unsupported type "+valueType);
+//		}
+//		return IASValue.buildIasValue(theValue, tStamp, mode, iasValidity, fullRunningId, valueType);
+//	}
 
 	public IasValidity getIasValidity() {
 		return iasValidity;
