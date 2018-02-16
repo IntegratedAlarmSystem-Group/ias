@@ -283,7 +283,7 @@ public class IASValue<T> {
 	 * @param timestamp The value to set in the new IASValue
 	 * @return The new IASValue with the updated timestamp
 	 */
-	public IASValue<T> updateSentRecvFromPluginTime(Long timestamp) {
+	public IASValue<T> updateRecvFromPluginTime(Long timestamp) {
 		return new IASValue<T>(
 				this.value,
 				this.mode,

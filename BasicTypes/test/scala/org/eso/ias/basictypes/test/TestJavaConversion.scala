@@ -133,13 +133,13 @@ class TestJavaConversion  extends FlatSpec {
     assert(doubleVal.valueType==f.doubleHIO.iasType)
     assert(doubleVal.mode==f.doubleHIO.mode)
     
-    assert(doubleVal.pluginProductionTStamp.get == f.doubleHIO.pluginProductionTStamp.get)
-	  assert(doubleVal.sentToConverterTStamp.get == f.doubleHIO.sentToConverterTStamp.get)
-	  assert(doubleVal.receivedFromPluginTStamp.get == f.doubleHIO.receivedFromPluginTStamp.get)
-	  assert(doubleVal.convertedProductionTStamp.get == f.doubleHIO.convertedProductionTStamp.get)
-	  assert(doubleVal.sentToBsdbTStamp.get == f.doubleHIO.sentToBsdbTStamp.get)
-	  assert(doubleVal.readFromBsdbTStamp.get == f.doubleHIO.readFromBsdbTStamp.get)
-	  assert(doubleVal.dasuProductionTStamp.get == f.doubleHIO.dasuProductionTStamp.get)
+    assert(!doubleVal.pluginProductionTStamp.isPresent())
+	  assert(!doubleVal.sentToConverterTStamp.isPresent())
+	  assert(!doubleVal.receivedFromPluginTStamp.isPresent())
+	  assert(!doubleVal.convertedProductionTStamp.isPresent())
+	  assert(!doubleVal.sentToBsdbTStamp.isPresent())
+	  assert(!doubleVal.readFromBsdbTStamp.isPresent())
+	  assert(!doubleVal.dasuProductionTStamp.isPresent())
     
     assert(doubleVal.id==f.doubleHIO.id.id)
     assert(doubleVal.fullRunningId==f.doubleHIO.id.fullRunningID)
@@ -149,6 +149,39 @@ class TestJavaConversion  extends FlatSpec {
     val alarmVal = JavaConverter.inOutToIASValue[AlarmSample](f.alarmHIO,Validity(IasValidity.UNRELIABLE))
     assert(alarmVal.value==f.alarmHIO.value.get)
     assert(alarmVal.iasValidity==IasValidity.UNRELIABLE)
+  }
+  
+  it must "Update the times in the IASValue" in {
+    val f = fixture
+    val doubleVal = JavaConverter.inOutToIASValue[Double](f.doubleHIO,Validity(IasValidity.RELIABLE))
+    
+    val updatePluginTime = doubleVal.updatePluginProdTime(1L)
+    assert(updatePluginTime.pluginProductionTStamp.get == 1L)
+    
+    val sentToConvTime = updatePluginTime.updateSentToConverterTime(2L)
+    assert(sentToConvTime.sentToConverterTStamp.get == 2L)
+   
+    val updateCobverterTime = sentToConvTime.updateRecvFromPluginTime(3L)
+    assert(updateCobverterTime.receivedFromPluginTStamp.get == 3L)
+   
+   val convProTime = updateCobverterTime.updateConverterProdTime(4L)
+   assert(convProTime.convertedProductionTStamp.get == 4L)
+   
+   val sentBsdTime = convProTime.updateSentToBsdbTime(5L)
+   assert(sentBsdTime.sentToBsdbTStamp.get == 5L)
+   
+   val readBsdbTime = sentBsdTime.updateReadFromBsdbTime(6L)
+   assert(readBsdbTime.readFromBsdbTStamp.get == 6L)
+   
+   // This last IASValue must contain all the previously set timestamps
+   val dasuProdTime = readBsdbTime.updateDasuProdTime(7L)
+   assert(dasuProdTime.pluginProductionTStamp.get == 1L)
+   assert(dasuProdTime.sentToConverterTStamp.get == 2L)
+   assert(dasuProdTime.receivedFromPluginTStamp.get == 3L)
+   assert(dasuProdTime.convertedProductionTStamp.get == 4L)
+   assert(dasuProdTime.sentToBsdbTStamp.get == 5L)
+   assert(dasuProdTime.readFromBsdbTStamp.get == 6L)
+   assert(dasuProdTime.dasuProductionTStamp.get == 7L)
   }
   
   it must "Update a IASIO with the values from a IASValue" in {
