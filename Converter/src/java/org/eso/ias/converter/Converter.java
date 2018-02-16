@@ -221,7 +221,7 @@ public class Converter {
 			cdbReader = context.getBean("cdbReader",CdbReader.class);
 		}
 
-		ConverterStream converterStream = context.getBean(ConverterStream.class,id, new System.getProperties());
+		ConverterStream converterStream = context.getBean(ConverterStream.class,id, System.getProperties());
 
 		logger.info("Converter {} started",id);
 
