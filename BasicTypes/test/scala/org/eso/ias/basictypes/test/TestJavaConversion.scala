@@ -8,8 +8,6 @@ import org.eso.ias.types.InOut
 import org.eso.ias.types.IASTypes
 import org.eso.ias.types.JavaConverter
 import org.eso.ias.types.IASValue
-import org.eso.ias.types.IasDouble
-import org.eso.ias.types.IasAlarm
 import org.eso.ias.types.IdentifierType
 import org.eso.ias.types.AlarmSample
 import org.eso.ias.types.IasValidity._
@@ -129,7 +127,7 @@ class TestJavaConversion  extends FlatSpec {
     }
   }
   
-  it must "build the java value with the proper values" in {
+  it must "correctly build the IASValue" in {
     val f = fixture
     val doubleVal = JavaConverter.inOutToIASValue[Double](f.doubleHIO,Validity(IasValidity.RELIABLE))
     assert(doubleVal.valueType==f.doubleHIO.iasType)
@@ -148,28 +146,29 @@ class TestJavaConversion  extends FlatSpec {
     assert(doubleVal.value==f.doubleHIO.value.get)
     assert(doubleVal.iasValidity==IasValidity.RELIABLE)
     
-    val alarmVal = JavaConverter.inOutToIASValue[AlarmSample](f.alarmHIO,Validity(IasValidity.UNRELIABLE)).asInstanceOf[IasAlarm]
+    val alarmVal = JavaConverter.inOutToIASValue[AlarmSample](f.alarmHIO,Validity(IasValidity.UNRELIABLE))
     assert(alarmVal.value==f.alarmHIO.value.get)
     assert(alarmVal.iasValidity==IasValidity.UNRELIABLE)
   }
   
-  it must "Update a HIO with the values from a IASValue" in {
+  it must "Update a IASIO with the values from a IASValue" in {
     val f = fixture
     
-    val doubleVal = JavaConverter.inOutToIASValue[Double](f.doubleHIO,Validity(IasValidity.UNRELIABLE)).asInstanceOf[IasDouble]
-    val newdoubleVal = new IasDouble(doubleVal.value+8.5,System.currentTimeMillis(),OperationalMode.OPERATIONAL,UNRELIABLE,doubleVal.fullRunningId)
-    val hio = JavaConverter.updateHIOWithIasValue(f.doubleHIO,newdoubleVal)
+    val doubleVal = JavaConverter.inOutToIASValue[Double](f.doubleHIO,Validity(IasValidity.UNRELIABLE))
+    val newdoubleVal = IASValue.build(8.5d, OperationalMode.OPERATIONAL, UNRELIABLE, doubleVal.fullRunningId, IASTypes.DOUBLE)
+        
+    val iasio = JavaConverter.updateHIOWithIasValue(f.doubleHIO,newdoubleVal)
     
-    assert(newdoubleVal.valueType==hio.iasType)
-    assert(newdoubleVal.mode==hio.mode)
-    assert(newdoubleVal.id==hio.id.id)
-    assert(newdoubleVal.fullRunningId==hio.id.fullRunningID)
-    assert(newdoubleVal.value==hio.value.get)
+    assert(newdoubleVal.valueType==iasio.iasType)
+    assert(newdoubleVal.mode==iasio.mode)
+    assert(newdoubleVal.id==iasio.id.id)
+    assert(newdoubleVal.fullRunningId==iasio.id.fullRunningID)
+    assert(newdoubleVal.value==iasio.value.get)
     
-    val alarmVal = JavaConverter.inOutToIASValue[AlarmSample](f.alarmHIO,Validity(IasValidity.RELIABLE)).asInstanceOf[IasAlarm]
+    val alarmVal = JavaConverter.inOutToIASValue[AlarmSample](f.alarmHIO,Validity(IasValidity.RELIABLE))
     val alarm = alarmVal.value
     val newAlarm = AlarmSample.CLEARED
-    val newAlarmValue = alarmVal.updateValue(newAlarm).asInstanceOf[IasAlarm]
+    val newAlarmValue = alarmVal.updateValue(newAlarm)
     val alarmHio = JavaConverter.updateHIOWithIasValue(f.alarmHIO,newAlarmValue)
     
     assert(alarmHio.value.get.asInstanceOf[AlarmSample]==AlarmSample.CLEARED)
