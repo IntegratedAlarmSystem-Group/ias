@@ -23,66 +23,66 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
  * The tool to convert raw monitor point values and alarms
  * coming from plugins into IAS data type to be processed by the core.
  * <P>
- * The converter runs a never-ending loop 
+ * The converter runs a never-ending loop
  * that consists of:
  * <UL>
  * 	<LI>get one value produced by the remote system
  * 	<LI>convert the value in the corresponding IAS data type
  * 	<LI>send the value to the core for processing
  * </ul>
- * 
+ *
  * <P>
  * The conversion needs to access the configuration database.
  * <P>
  * Spring constructor-dependency injection is used mainly for testing purposes.
- * 
+ *
  * @author acaproni
  *
  */
 public class Converter {
-	
+
 	/**
 	 * The identifier of the converter
 	 */
 	public final String converterID;
-	
+
 	/**
 	 * The logger
 	 */
 	private static final Logger logger = LoggerFactory.getLogger(Converter.class);
-	
+
 	/**
 	 * Signal the thread to terminate
 	 */
 	private volatile boolean closed=false;
-	
+
 	/**
 	 * The DAO to get the configuration from the CDB
 	 */
 	private final CdbReader cdbDAO;
-	
+
 	/**
 	 * The DAO to get the configuration of monitor points
 	 */
 	private IasioConfigurationDAO configDao;
-	
+
 	/**
-	 * The serializer to transform IASValues into strings 
+	 * The serializer to transform IASValues into strings
 	 * to send to the core of the IAS
 	 */
 	private final IasValueStringSerializer iasValueStrSerializer;
-	
+
 	/**
 	 * The stream to get values from the plugins and
 	 * sends them to the core of the IAS in the proper format
 	 */
 	private final ConverterStream converterStream;
-	
+
 	/**
-	 * The function to map the json 
+	 * The function to map the json
 	 */
 	private final Function<String, String> mapper;
-	
+
 	/**
 	 * The shutdown thread for a clean exit
 	 */
@@ -92,12 +92,12 @@ public class Converter {
 			Converter.this.tearDown();
 		}
 	};
-	
+
 	/**
 	 * Constructor.
 	 * <P>
 	 * Dependency injection with spring take place here.
-	 * 
+	 *
 	 * @param id The not <code>null</code> nor empty ID of the converter
 	 * @param cdbReader The DAO of the configuration database
 	 * @param converterStream The stream to convert monitor point data into IAS values
@@ -114,18 +114,18 @@ public class Converter {
 		Objects.requireNonNull(cdbReader);
 		this.cdbDAO=cdbReader;
 		this.configDao= new IasioConfigurationDaoImpl(cdbReader);
-		
+
 		this.iasValueStrSerializer=	new IasValueJsonSerializer();
-		
+
 		mapper = new ValueMapper(this.configDao, this.iasValueStrSerializer,id);
-		
+
 		Objects.requireNonNull(converterStream);
 		this.converterStream=converterStream;
 	}
-	
+
 	/**
 	 * Initialize the converter and start the loop
-	 * 
+	 *
 	 * @throws ConfigurationException in case of error in the configuration
 	 */
 	public void setUp() throws ConfigurationException {
@@ -146,7 +146,7 @@ public class Converter {
 		}
 		logger.info("Converter {} initialized", converterID);
 	}
-	
+
 	/**
 	 * Shut down the loop and free the resources.
 	 */
@@ -166,7 +166,7 @@ public class Converter {
 		}
 		logger.info("Converter {} shutted down.", converterID);
 	}
-	
+
 	private static void printUsage() {
 		System.out.println("Usage: Converter Convert-ID [-jcdb JSON-CDB-PATH]");
 		System.out.println("-jcdb force the usage of the JSON CDB");
@@ -176,9 +176,9 @@ public class Converter {
 
 	/**
 	 * Application starting point.
-	 * 
+	 *
 	 * It builds a converter with the help of spring dependency injection
-	 * 
+	 *
 	 * @param args arguments
 	 */
 	public static void main(String[] args) {
@@ -187,14 +187,14 @@ public class Converter {
 			System.exit(-1);
 		}
 		String id=args[0];
-		
+
 		CdbReader cdbReader = null;
-		
+
 		/**
 		 * Spring stuff
 		 */
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ConverterConfig.class);
-		
+
 		if (args.length==3) {
 			String cmdLineSwitch = args[1];
 			if (cmdLineSwitch.compareTo("-jcdb")!=0) {
@@ -207,36 +207,36 @@ public class Converter {
 				System.err.println("Invalid file path "+cdbPath);
 				System.exit(-3);
 			}
-			
-			CdbFiles cdbFiles=null; 
-			try { 
+
+			CdbFiles cdbFiles=null;
+			try {
 				cdbFiles= new CdbJsonFiles(f);
 			} catch (Exception e) {
 				System.err.println("Error initializing JSON CDB "+e.getMessage());
 				System.exit(-4);
 			}
 			cdbReader = new JsonReader(cdbFiles);
-		} else {	
+		} else {
 			// Get from dependency injection
 			cdbReader = context.getBean("cdbReader",CdbReader.class);
 		}
-		
-		ConverterStream converterStream = context.getBean(ConverterStream.class,id, new Properties());
-		
+
+		ConverterStream converterStream = context.getBean(ConverterStream.class,id, System.getProperties());
+
 		logger.info("Converter {} started",id);
-		
+
 		Converter converter = new Converter(id,cdbReader,converterStream);
 		try {
 			converter.setUp();
 			logger.info("Converter {} initialized",id);
 		} catch (Exception e) {
 			logger.error("Error initializing the converter {}",id,e);
-			
+
 		}
 		context.close();
 		logger.info("Converter {} terminated",id);
 	}
 
-	
+
 
 }

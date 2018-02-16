@@ -62,7 +62,7 @@ public class ConverterKafkaStream extends ConverterStream {
 	/**
 	 * Default list of kafka servers to connect to
 	 */
-	private static final String DEFAULTKAFKASERVERS = "kafka:9092";
+	private static final String DEFAULTKAFKASERVERS = "localhost:9092";
 
 	/**
 	 * The list of kafka servers to connect to

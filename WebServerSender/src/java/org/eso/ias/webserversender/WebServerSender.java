@@ -107,7 +107,7 @@ public class WebServerSender implements IasioListener, Runnable {
     	this.kafkaTopic = kafkaTopic;
 		this.webserverUri = webserverUri;
 		this.listener = listener;
-		this.consumer = new KafkaIasiosConsumer("kafka:9092", kafkaTopic, this.id);
+		this.consumer = new KafkaIasiosConsumer("localhost:9092", kafkaTopic, this.id);
 		this.consumer.setUp();
 	}
 
@@ -119,10 +119,10 @@ public class WebServerSender implements IasioListener, Runnable {
 	 * @param listener The listener of the messages received by the server
 	 */
 	public WebServerSender(String id, String webserverUri, WebServerSenderListener listener) {
-    	this.id = id;
+		this.id = id;
 		this.webserverUri = webserverUri;
 		this.listener = listener;
-		this.consumer = new KafkaIasiosConsumer("kafka:9092", KafkaHelper.IASIOs_TOPIC_NAME, this.id);
+		this.consumer = new KafkaIasiosConsumer("localhost:9092", KafkaHelper.IASIOs_TOPIC_NAME, this.id);
 		this.consumer.setUp();
 	}
 
