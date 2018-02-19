@@ -122,6 +122,13 @@ public class ValueMapper implements Function<String, String> {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(remoteSystemData);
 		
+		/**
+		 * This method is invoked when the value is received by the plugin, 
+		 * i.e. this timestamp is the point in time when the value is received from
+		 * the plugin 
+		 */
+		long receivedFromPluginTStamp = System.currentTimeMillis();
+		
 		// Convert the received string in the proper object type
 		Object convertedValue=null;
 		switch (type) {
@@ -168,12 +175,20 @@ public class ValueMapper implements Function<String, String> {
 		default: throw new UnsupportedOperationException("Unsupported type "+type);
 		}
 		
-		long tStamp;
+		long pluginProductionTime;
 		try { 
-			tStamp=iso8601dateFormat.parse(remoteSystemData.getSampleTime()).getTime();
+			pluginProductionTime=iso8601dateFormat.parse(remoteSystemData.getSampleTime()).getTime();
 		} catch (ParseException pe) {
 			logger.error("Cannot parse the ISO 8601 timestamp {}: using actual time instead",remoteSystemData.getSampleTime());
-			tStamp=System.currentTimeMillis();
+			pluginProductionTime=System.currentTimeMillis();
+		}
+		
+		long pluginSentToConvertTime;
+		try { 
+			pluginSentToConvertTime=iso8601dateFormat.parse(remoteSystemData.getPublishTime()).getTime();
+		} catch (ParseException pe) {
+			logger.error("Cannot parse the ISO 8601 timestamp {}: using actual time instead",remoteSystemData.getPublishTime());
+			pluginSentToConvertTime=System.currentTimeMillis();
 		}
 		
 		String fullrunId = buildFullRunningId(
@@ -182,13 +197,24 @@ public class ValueMapper implements Function<String, String> {
 				remoteSystemData.getMonitoredSystemID(),
 				remoteSystemData.getId());
 		
-		return IASValue.buildIasValue(
+		// The value is converted to a IASValue and immeaitely sent to the BSDB
+		// by the streaming so the 2 timestamps (production and sent to BSDB)
+		// are the same point in time with thisimplementation
+		long producedAndSentTStamp = System.currentTimeMillis();
+		
+		return IASValue.build(
 				convertedValue, 
-				tStamp, 
 				OperationalMode.valueOf(remoteSystemData.getOperationalMode()),
 				IasValidity.valueOf(remoteSystemData.getValidity()),
 				fullrunId,
-				type);
+				type,
+				pluginProductionTime,
+				pluginSentToConvertTime,
+				receivedFromPluginTStamp,
+				producedAndSentTStamp, // Produced by converter
+				producedAndSentTStamp, // Sent to BSDB
+				null, // Read from BSDB
+				null); // DASU prod time
 	}
 
 	/**
