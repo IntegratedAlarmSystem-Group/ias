@@ -40,9 +40,9 @@
 	<resources id="jarsToKeep">
 		<string>ojdbc6.jar</string>
 		<string>hibernate-c3p0-5.2.6.Final.jar</string>
-		<string>jackson-core-2.8.7.jar</string>
-		<string>jackson-databind-2.8.7.jar</string>
-		<string>jackson-annotations-2.8.7.jar</string>
+		<string>jackson-core-2.9.4.jar</string>
+		<string>jackson-databind-2.9.4.jar</string>
+		<string>jackson-annotations-2.9.4.jar</string>
 		
 	</resources>
 	<pathconvert property="jarsToKeep"  refid="jarsToKeep" pathsep="," />
