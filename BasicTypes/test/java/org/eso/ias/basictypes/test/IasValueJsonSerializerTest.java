@@ -11,7 +11,9 @@ import org.eso.ias.types.OperationalMode;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Test the JSON serialization of {@link IASValue}
@@ -69,7 +71,7 @@ public class IasValueJsonSerializerTest {
 		String jsonStr = jsonSerializer.iasValueToString(intIasType);
 		
 		IASValue<?> intFromSerializer = jsonSerializer.valueOf(jsonStr);
-		assertNotNull(intFromSerializer);
+		assertNotNull("Got a null de-serializing ["+jsonStr+"]",intFromSerializer);
 		assertEquals(intIasType,intFromSerializer);
 		
 		String shortId = "ShortType-ID";
@@ -117,7 +119,7 @@ public class IasValueJsonSerializerTest {
 			OperationalMode.SHUTTEDDOWN, 
 			IasValidity.RELIABLE,
 			new Identifier(floatId, IdentifierType.IASIO, convIdentifier).fullRunningID(),
-			IASTypes.STRING);
+			IASTypes.FLOAT);
 		jsonStr = jsonSerializer.iasValueToString(floatIasType);
 		
 		IASValue<?> floatFromSerializer = jsonSerializer.valueOf(jsonStr);
@@ -194,8 +196,87 @@ public class IasValueJsonSerializerTest {
 		assertEquals(longIasType,longFromSerializer);
 	}
 	
+	/**
+	 * Ensure that timestamps are properly serialized/deserialized
+	 */
 	@Test
-	public void testConversionJStringToValue() {
+	public void testConversionWithTimestamps() throws Exception {
+		
+		// One test setting all the timestamps
+		String alarmId = "AlarmType-ID";
+		IASValue<?> alarm = IASValue.build(
+			AlarmSample.SET,
+			OperationalMode.DEGRADED,
+			IasValidity.RELIABLE,
+			new Identifier(alarmId, IdentifierType.IASIO, convIdentifier).fullRunningID(),
+			IASTypes.ALARM,
+			1L,
+			2L,
+			3L,
+			4L,
+			5L,
+			6L,
+			7L);
+		
+		String jsonStr = jsonSerializer.iasValueToString(alarm);
+		
+		IASValue<?> alarmFromSerializer = jsonSerializer.valueOf(jsonStr);
+		assertNotNull(alarmFromSerializer);
+		assertEquals(alarm,alarmFromSerializer);
+		
+		// Explicit check the values of the tstamps even if the assertEquals
+		// already ensure that
+		assertTrue(alarmFromSerializer.pluginProductionTStamp.isPresent());
+		assertTrue(alarmFromSerializer.pluginProductionTStamp.get()==1L);
+		assertTrue(alarmFromSerializer.sentToConverterTStamp.isPresent());
+		assertTrue(alarmFromSerializer.sentToConverterTStamp.get()==2L);
+		assertTrue(alarmFromSerializer.receivedFromPluginTStamp.isPresent());
+		assertTrue(alarmFromSerializer.receivedFromPluginTStamp.get()==3L);
+		assertTrue(alarmFromSerializer.convertedProductionTStamp.isPresent());
+		assertTrue(alarmFromSerializer.convertedProductionTStamp.get()==4L);
+		assertTrue(alarmFromSerializer.sentToBsdbTStamp.isPresent());
+		assertTrue(alarmFromSerializer.sentToBsdbTStamp.get()==5L);
+		assertTrue(alarmFromSerializer.readFromBsdbTStamp.isPresent());
+		assertTrue(alarmFromSerializer.readFromBsdbTStamp.get()==6L);
+		assertTrue(alarmFromSerializer.dasuProductionTStamp.isPresent());
+		assertTrue(alarmFromSerializer.dasuProductionTStamp.get()==7L);
+		
+		// Another test when some tstamps are unset to be
+		// sure the property is empty
+		String alarmId2 = "AlarmType-ID2";
+		IASValue<?> alarm2 = IASValue.build(
+			AlarmSample.SET,
+			OperationalMode.DEGRADED,
+			IasValidity.RELIABLE,
+			new Identifier(alarmId, IdentifierType.IASIO, convIdentifier).fullRunningID(),
+			IASTypes.ALARM,
+			1L,
+			null,
+			3L,
+			null,
+			5L,
+			null,
+			7L);
+		
+		jsonStr = jsonSerializer.iasValueToString(alarm2);
+		
+		alarmFromSerializer = jsonSerializer.valueOf(jsonStr);
+		assertNotNull(alarmFromSerializer);
+		assertEquals(alarm2,alarmFromSerializer);
+		
+		// Explicit check the values of the tstamps even if the assertEquals
+		// already ensure that
+		assertTrue(alarmFromSerializer.pluginProductionTStamp.isPresent());
+		assertTrue(alarmFromSerializer.pluginProductionTStamp.get()==1L);
+		assertFalse(alarmFromSerializer.sentToConverterTStamp.isPresent());
+		assertTrue(alarmFromSerializer.receivedFromPluginTStamp.isPresent());
+		assertTrue(alarmFromSerializer.receivedFromPluginTStamp.get()==3L);
+		assertFalse(alarmFromSerializer.convertedProductionTStamp.isPresent());
+		assertTrue(alarmFromSerializer.sentToBsdbTStamp.isPresent());
+		assertTrue(alarmFromSerializer.sentToBsdbTStamp.get()==5L);
+		assertFalse(alarmFromSerializer.readFromBsdbTStamp.isPresent());
+		assertTrue(alarmFromSerializer.dasuProductionTStamp.isPresent());
+		assertTrue(alarmFromSerializer.dasuProductionTStamp.get()==7L);
 		
 	}
 }

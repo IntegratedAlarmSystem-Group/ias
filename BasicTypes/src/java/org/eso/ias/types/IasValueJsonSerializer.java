@@ -44,10 +44,10 @@ public class IasValueJsonSerializer implements IasValueStringSerializer {
 	public IASValue<?> valueOf(String str)  throws IasValueSerializerException {
 		try {
 			
-			return jsonMapper.readValue(str, IASValue.class);
+			IasValueJsonPojo jsonPojo = jsonMapper.readValue(str, IasValueJsonPojo.class);
+			return jsonPojo.toIasValue();
 		} catch (Exception e) {
 			throw new IasValueSerializerException("Error converting the JSON string ["+str+"] to a IAS value",e);
 		}
 	}
-
 }
