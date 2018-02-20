@@ -126,10 +126,9 @@ public class WebServerSender implements IasioListener, Runnable {
 	/**
 	 * Constructor
 	 *
-   * @param id Identifier of the KafkaWebSocketConnector
-	 * @param kafkaTopic Topic defined to send messages to the IAS Core to the IAS Web Server
-	 * @param webserverUri
-	 * @param listener The listener of the messages received by the server
+   * @param senderID Identifier of the WebServerSender
+	 * @param props the properties to get kafka servers, topic names and webserver uri
+	 * @param listener The listener of the messages sent to the websocket server
 	 */
 	public WebServerSender(String senderID, Properties props, WebServerSenderListener listener) {
 		Objects.requireNonNull(senderID);
