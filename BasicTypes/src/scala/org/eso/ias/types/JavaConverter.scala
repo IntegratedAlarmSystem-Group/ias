@@ -25,7 +25,6 @@ object JavaConverter {
   def inOutToIASValue[T](io: InOut[_], validity: Validity): IASValue[_] = {
     require(Option(io).isDefined)
     require(Option(validity).isDefined)
-    require(io.value.isDefined,"Cannot build a IASValue from an IIASIO with no value")
     
     new IASValue(
         io.value.get,
