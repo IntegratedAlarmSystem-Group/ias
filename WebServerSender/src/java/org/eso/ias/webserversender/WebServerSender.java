@@ -1,6 +1,8 @@
 package org.eso.ias.webserversender;
 
 import java.net.URI;
+import java.util.Objects;
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -24,44 +26,51 @@ import org.slf4j.LoggerFactory;
 public class WebServerSender implements IasioListener, Runnable {
 
 	/**
-	 * Identifier
+	 * The identifier of the sender
 	 */
-	String id;
-
-	/**
-	 * WebSocket session required to send messages to the Web server
-	 */
-	public Session session;
+	public final String senderID;
 
 	/**
 	 * IAS Core Kafka Consumer to get messages from the Core
 	 */
-	KafkaIasiosConsumer consumer;
+	private final KafkaIasiosConsumer kafkaConsumer;
 
 	/**
-	 * Web socket client
+	 * The name of the topic where webserver senders get
+	 * monitor point values and alarms
 	 */
-	WebSocketClient client;
+	private final String sendersInputKTopicName;
 
 	/**
-	 * Topic defined to send messages to the IAS Core to the IAS Web Server
+	 * The name of the java property to get the name of the
+	 * topic where the ias core push values
 	 */
-	String kafkaTopic;
+	private static final String IASCORE_TOPIC_NAME_PROP_NAME = "org.eso.ias.senders.kafka.inputstream";
 
 	/**
-	 * Web Server URI as String
+	 * The list of kafka servers to connect to
 	 */
-	String webserverUri;
+	private final String kafkaServers;
 
 	/**
-	 * Same as the webserverUri but as a URI object
+	 * The name of the property to pass the kafka servers to connect to
 	 */
-	URI uri;
-	
+	private static final String KAFKA_SERVERS_PROP_NAME = "org.eso.ias.senders.kafka.servers";
+
 	/**
-	 * Time in seconds to wait before attempt to reconnect 
+	 * Web Server host as String
 	 */
-	int reconnectionInterval = 2;
+	private final String webserverUri;
+
+	/**
+	 * The name of the property to pass the webserver host to connect to
+	 */
+	private static final String WEBSERVER_URI_PROP_NAME = "org.eso.ias.senders.webserver.uri";
+
+	/**
+	 * Default webserver host to connect to
+	 */
+	private static final String DEFAULT_WEBSERVER_URI = "ws://localhost:8000/core/";
 
 	/**
 	 * The serializer/deserializer to convert the string
@@ -73,6 +82,26 @@ public class WebServerSender implements IasioListener, Runnable {
 	 * The logger
 	 */
 	private static final Logger logger = LoggerFactory.getLogger(WebServerSender.class);
+
+	/**
+	 * WebSocket session required to send messages to the Web server
+	 */
+	private static Session session;
+
+	/**
+	 * Same as the webserverUri but as a URI object
+	 */
+	private static URI uri;
+
+	/**
+	 * Web socket client
+	 */
+	private static WebSocketClient client;
+
+	/**
+	 * Time in seconds to wait before attempt to reconnect
+	 */
+	private static int reconnectionInterval = 2;
 
 	/**
 	 * The interface of the listener to be notified of Strings received
@@ -87,7 +116,7 @@ public class WebServerSender implements IasioListener, Runnable {
 	 * The listener to be notified of Strings received
 	 * by the WebServer sender.
 	 */
-	WebServerSenderListener listener;
+	private final WebServerSenderListener senderListener;
 
 	/**
 	 * Count down to wait until the connection is established
@@ -97,33 +126,26 @@ public class WebServerSender implements IasioListener, Runnable {
 	/**
 	 * Constructor
 	 *
-   	 * @param id Identifier of the KafkaWebSocketConnector
+   * @param id Identifier of the KafkaWebSocketConnector
 	 * @param kafkaTopic Topic defined to send messages to the IAS Core to the IAS Web Server
 	 * @param webserverUri
 	 * @param listener The listener of the messages received by the server
 	 */
-	public WebServerSender(String id, String kafkaTopic, String webserverUri, WebServerSenderListener listener) {
-    	this.id = id;
-    	this.kafkaTopic = kafkaTopic;
-		this.webserverUri = webserverUri;
-		this.listener = listener;
-		this.consumer = new KafkaIasiosConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, kafkaTopic, this.id);
-		this.consumer.setUp();
-	}
+	public WebServerSender(String senderID, Properties props, WebServerSenderListener listener) {
+		Objects.requireNonNull(senderID);
+		if (senderID.trim().isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty converter ID");
+		}
+		this.senderID=senderID.trim();
 
-	/**
-	 * Constructor
-	 *
-   	 * @param id Identifier of the KafkaWebSocketConnector
-	 * @param webserverUri
-	 * @param listener The listener of the messages received by the server
-	 */
-	public WebServerSender(String id, String webserverUri, WebServerSenderListener listener) {
-    	this.id = id;
-		this.webserverUri = webserverUri;
-		this.listener = listener;
-		this.consumer = new KafkaIasiosConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, KafkaHelper.IASIOs_TOPIC_NAME, this.id);
-		this.consumer.setUp();
+		Objects.requireNonNull(props);
+		kafkaServers = props.getProperty(KAFKA_SERVERS_PROP_NAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS);
+		sendersInputKTopicName = props.getProperty(IASCORE_TOPIC_NAME_PROP_NAME, KafkaHelper.IASIOs_TOPIC_NAME);
+		webserverUri = props.getProperty(WEBSERVER_URI_PROP_NAME, DEFAULT_WEBSERVER_URI);
+
+		senderListener = listener;
+		kafkaConsumer = new KafkaIasiosConsumer(kafkaServers, sendersInputKTopicName, this.senderID);
+		kafkaConsumer.setUp();
 	}
 
 	/**
@@ -156,7 +178,7 @@ public class WebServerSender implements IasioListener, Runnable {
 	   this.session = session;
 	   this.connectionReady.countDown();
 	   try {
-	       this.consumer.startGettingEvents(StartPosition.END, this);
+	       kafkaConsumer.startGettingEvents(StartPosition.END, this);
 	       logger.info("Starting to listen events");
 	   }
 	   catch (Throwable t) {
@@ -166,7 +188,7 @@ public class WebServerSender implements IasioListener, Runnable {
 
 	@OnWebSocketMessage
     public void onMessage(String message) {
-		notifyListener(message);
+			notifyListener(message);
     }
 
 	/**
@@ -197,13 +219,12 @@ public class WebServerSender implements IasioListener, Runnable {
 		}
 	}
 
-
 	/**
 	 * Initializes the WebSocket connection
 	 */
 	public void run() {
 		try {
-			this.uri = new URI(this.webserverUri);
+			this.uri = new URI(webserverUri);
 			this.session = null;
 			this.connectionReady = new CountDownLatch(1);
 			this.client = new WebSocketClient();
@@ -227,7 +248,7 @@ public class WebServerSender implements IasioListener, Runnable {
 	 */
 	public void stop() {
 		this.session = null;
-		this.consumer.tearDown();
+		kafkaConsumer.tearDown();
 		try {
 			this.client.stop();
 			logger.debug("Connection stopped!");
@@ -244,15 +265,15 @@ public class WebServerSender implements IasioListener, Runnable {
 	 * @param strToNotify The string to notify to the listener
 	 */
 	protected void notifyListener(String strToNotify) {
-		if(listener != null) {
-			listener.stringEventSent(strToNotify);
+		if(senderListener != null) {
+			senderListener.stringEventSent(strToNotify);
 		}
 
 	}
-	
+
 	/**
 	 * Set the time to wait before attempt to reconnect
-	 * 
+	 *
 	 * @param interval time in seconds
 	 */
 	public void setReconnectionInverval(int interval) {
@@ -260,8 +281,8 @@ public class WebServerSender implements IasioListener, Runnable {
 	}
 
 	public static void main(String[] args) throws Exception {
-		WebServerSender ws = new WebServerSender("WebServerSender", "ws://localhost:8000/core/", null);
-		ws.run();	
+		WebServerSender ws = new WebServerSender("WebServerSender", System.getProperties(), null);
+		ws.run();
 	}
 
 }
