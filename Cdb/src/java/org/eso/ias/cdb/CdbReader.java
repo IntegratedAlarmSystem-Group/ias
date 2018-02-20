@@ -108,5 +108,16 @@ public interface CdbReader {
 	 *                         ASCE with the give identifier does not exist
 	 */
 	public Collection<IasioDao> getIasiosForAsce(String id) throws IasCdbException;
+	
+	/**
+	 * Initialize the CDB
+	 */
+	public void init() throws IasCdbException;
+	
+	/**
+	 * Close the CDB and release the associated resources
+	 * @throws IasCdbException
+	 */
+	public void shutdown() throws IasCdbException;
 
 }
