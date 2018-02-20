@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -47,19 +48,29 @@ import org.eso.ias.webserversender.WebSocketServerHandler.WebSocketServerListene
 public class WebServerSenderTest {
 
 	/**
+	 * The logger
+	 */
+	private static final Logger logger = LoggerFactory.getLogger(WebServerSenderTest.class);
+
+	/**
 	 * Kafka Topic to used in the test
 	 */
-	private String kafkaTopic = "webserver-sender-test";
+	private final String kafkaTopic = "webserver-sender-test";
+
+	/**
+	 * Kafka Server to connect to
+	 */
+	private final String kafkaServer = "localhost:9092";
 
 	/**
 	 * Port to connect to the mock Websocket Server
 	 */
-	private int port = 8081;
+	private final int port = 8081;
 
 	/**
 	 * URI to connect to the mock Websocket Server
 	 */
-	private String webserverUri = "ws://localhost:" + this.port + "/";
+	private final String webserverUri = "ws://localhost:" + this.port + "/";
 
 	/**
 	 * Number of messages to be used in the test
@@ -85,11 +96,6 @@ public class WebServerSenderTest {
 	 * A mock producer to publish messages to the KafkaQueue
 	 */
 	private KafkaIasiosProducer producer;
-
-	/**
-	 * The logger
-	 */
-	private static final Logger logger = LoggerFactory.getLogger(WebServerSenderTest.class);
 
 	/**
 	 * Countdown of the messages sent by the WebServerSender
@@ -169,7 +175,11 @@ public class WebServerSenderTest {
 	        	}
         	};
         };
-		this.webServerSender = new WebServerSender("WebServerSender", this.kafkaTopic, this.webserverUri, listener);
+		Properties props = new Properties();
+		props.put("org.eso.ias.senders.kafka.inputstream", this.kafkaTopic);
+		props.put("org.eso.ias.senders.kafka.servers", this.kafkaServer);
+		props.put("org.eso.ias.senders.webserver.uri", this.webserverUri);
+		this.webServerSender = new WebServerSender("WebServerSender", props, listener);
 		this.webServerSender.run();
 		logger.info("WebServerSender initialized...");
 	}
