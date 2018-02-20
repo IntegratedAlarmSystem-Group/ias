@@ -33,12 +33,12 @@ object JavaConverter {
 			  io.id.fullRunningID,
 			  io.iasType,
 			  Optional.ofNullable(if (io.pluginProductionTStamp.isDefined) io.pluginProductionTStamp.get else null),
-  			Optional.ofNullable(if (io.sentToConverterTStamp.isDefined) io.pluginProductionTStamp.get else null),
-  			Optional.ofNullable(if (io.receivedFromPluginTStamp.isDefined) io.pluginProductionTStamp.get else null),
-  			Optional.ofNullable(if (io.convertedProductionTStamp.isDefined) io.pluginProductionTStamp.get else null),
-  			Optional.ofNullable(if (io.sentToBsdbTStamp.isDefined) io.pluginProductionTStamp.get else null),
-  			Optional.ofNullable(if (io.readFromBsdbTStamp.isDefined) io.pluginProductionTStamp.get else null),
-  			Optional.ofNullable(if (io.dasuProductionTStamp.isDefined) io.pluginProductionTStamp.get else null))
+  			Optional.ofNullable(if (io.sentToConverterTStamp.isDefined) io.sentToConverterTStamp.get else null),
+  			Optional.ofNullable(if (io.receivedFromPluginTStamp.isDefined) io.receivedFromPluginTStamp.get else null),
+  			Optional.ofNullable(if (io.convertedProductionTStamp.isDefined) io.convertedProductionTStamp.get else null),
+  			Optional.ofNullable(if (io.sentToBsdbTStamp.isDefined) io.sentToBsdbTStamp.get else null),
+  			Optional.ofNullable(if (io.readFromBsdbTStamp.isDefined) io.readFromBsdbTStamp.get else null),
+  			Optional.ofNullable(if (io.dasuProductionTStamp.isDefined) io.dasuProductionTStamp.get else null))
 
   }
   
