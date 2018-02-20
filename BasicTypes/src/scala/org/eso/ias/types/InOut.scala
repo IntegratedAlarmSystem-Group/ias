@@ -292,6 +292,20 @@ object InOut {
   }
   
   /**
+   * Build a InOut with no initial value neither a mode but with
+   * the val;idity inherited from the IASValue
+   * 
+   * This is an input to a ACSE.
+   * 
+   * @param id the identifier
+   * @param iasType the type of the value of the IASIO
+   * @return a InOut initially empty
+   */
+  def apply[T](id: Identifier, iasType: IASTypes, iasValidity: IasValidity): InOut[T] = {
+    InOut[T](None,id,OperationalMode.UNKNOWN,Some(Validity(iasValidity)),iasType,None,None,None,None,None,None,None)
+  }
+  
+  /**
    * Build a IASIO from a IASVAlue received from the BDSB.
    * 
    * @param iasValue the value received from the BSDB
