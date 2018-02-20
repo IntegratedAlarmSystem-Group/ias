@@ -54,7 +54,8 @@ class CommonCompBuilder(
   val inputsMPs: Set[InOut[_]]  = inputTypes.zip(1 to inputTypes.size).map( a => {
      InOut(
          new Identifier(("INPUT-HIO-ID#"+a._2), IdentifierType.IASIO,compID),
-         a._1)
+         a._1,
+         IasValidity.UNRELIABLE)
   })
      
   val requiredInputIDs: Set[String] = inputsMPs.map(_.id.id)

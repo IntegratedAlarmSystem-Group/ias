@@ -45,11 +45,11 @@ class TestComponent extends FlatSpec {
   
   // The ID of the first MP
   val mpI1Identifier = new Identifier(requiredInputIDs(0),IdentifierType.IASIO,Option(compId))
-  val mp1 = InOut[AlarmSample](mpI1Identifier,IASTypes.ALARM)
+  val mp1 = InOut[AlarmSample](mpI1Identifier,IASTypes.ALARM, IasValidity.RELIABLE)
   
   // The ID of the second MP
   val mpI2Identifier = new Identifier(requiredInputIDs(1),IdentifierType.IASIO,Option(compId))
-  val mp2 = InOut[AlarmSample](mpI2Identifier, IASTypes.ALARM)
+  val mp2 = InOut[AlarmSample](mpI2Identifier, IASTypes.ALARM, IasValidity.RELIABLE)
   val actualInputs: Set[InOut[_]] = Set(mp1,mp2)
   
   behavior of "A Component"

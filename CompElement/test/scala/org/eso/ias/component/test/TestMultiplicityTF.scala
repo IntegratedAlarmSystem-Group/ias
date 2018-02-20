@@ -49,7 +49,8 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
     val v = for (i <- 1 to 5) yield {
     InOut(
         new Identifier(("INPUT-HIO-ID#"+i), IdentifierType.IASIO,compID),
-        IASTypes.ALARM)  
+        IASTypes.ALARM,
+        IasValidity.UNRELIABLE)  
     }
     v.toSet
   }

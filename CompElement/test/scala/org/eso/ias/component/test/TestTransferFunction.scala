@@ -64,10 +64,10 @@ class TestTransferFunction extends FlatSpec {
       val mpId = new Identifier(id,IdentifierType.IASIO,Option(compID))
       i=i+1
       val mp = if ((i%2)==0) {
-        InOut[AlarmSample](mpId,IASTypes.ALARM)
+        InOut[AlarmSample](mpId,IASTypes.ALARM,IasValidity.RELIABLE)
       } else {
         val mpVal = 1L
-        InOut[Long](mpId,IASTypes.LONG)
+        InOut[Long](mpId,IASTypes.LONG,IasValidity.RELIABLE)
       }
       inputsMPs+=(mp.id.id -> mp)
     }
