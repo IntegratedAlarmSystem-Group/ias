@@ -132,7 +132,6 @@ public class IASValue<T> {
 			Optional<Long> sentToBsdbTStamp,
 			Optional<Long> readFromBsdbTStamp,
 			Optional<Long> dasuProductionTStamp) {
-		Objects.requireNonNull(value,"The value can't be null");
 		Objects.requireNonNull(mode,"The mode can't be null");
 		Objects.requireNonNull(iasValidity,"The validity can't be null");
 		Objects.requireNonNull(valueType,"The type can't be null");
