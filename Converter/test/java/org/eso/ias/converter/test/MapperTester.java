@@ -56,7 +56,12 @@ public class MapperTester extends ConverterTestBase {
 	@Test
 	public void testUnconfiguredMPD() throws Exception {
 		MonitorPointDataHolder unconfiguredMpdh = 
-				new MonitorPointDataHolder("Unrecognized", AlarmSample.CLEARED, System.currentTimeMillis(), IASTypes.ALARM);
+				new MonitorPointDataHolder(
+						"Unrecognized",
+						AlarmSample.CLEARED, 
+						System.currentTimeMillis()-100,
+						System.currentTimeMillis(),
+						IASTypes.ALARM);
 		
 		MonitorPointData mpd = buildMonitorPointData(unconfiguredMpdh);
 		
@@ -83,7 +88,15 @@ public class MapperTester extends ConverterTestBase {
 			IASValue<?> iasValue =  iasValueSerializer.valueOf(iasValueStr);
 			
 			assertEquals(mpdh.iasType, iasValue.valueType);
-			assertEquals(mpdh.timestamp, iasValue.timestamp);
+			assertTrue(iasValue.pluginProductionTStamp.isPresent());
+			assertEquals(Long.valueOf(mpdh.pluginProductionTSamp), iasValue.pluginProductionTStamp.get());
+			
+			// The timestamp when the value is sent to the converter is set by the mapper
+			// so we expect sentToConverterTStamp to represent a timestamp close to the actual date
+			assertTrue(iasValue.sentToConverterTStamp.isPresent());
+			long now = System.currentTimeMillis();
+			assertTrue(iasValue.sentToConverterTStamp.get()<=now && iasValue.sentToConverterTStamp.get()>now-1000);
+			
 			assertEquals(mpdh.id, iasValue.id);
 			assertEquals(mpdh.value,iasValue.value);
 		}

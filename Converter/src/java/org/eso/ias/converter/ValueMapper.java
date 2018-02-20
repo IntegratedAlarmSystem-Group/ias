@@ -116,18 +116,15 @@ public class ValueMapper implements Function<String, String> {
 	 * 
 	 * @param remoteSystemData the monitor point to translate
 	 * @param type the type of the monitor point
+	 * @param receptionTStamp the timestamp when the monitor point data has been received
 	 * @return the IASValue corresponding on the monitor point
 	 */
-	public IASValue<?> translate(MonitorPointData remoteSystemData, IASTypes type) {
+	public IASValue<?> translate(
+			MonitorPointData remoteSystemData, 
+			IASTypes type,
+			long receptionTStamp) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(remoteSystemData);
-		
-		/**
-		 * This method is invoked when the value is received by the plugin, 
-		 * i.e. this timestamp is the point in time when the value is received from
-		 * the plugin 
-		 */
-		long receivedFromPluginTStamp = System.currentTimeMillis();
 		
 		// Convert the received string in the proper object type
 		Object convertedValue=null;
@@ -208,9 +205,9 @@ public class ValueMapper implements Function<String, String> {
 				IasValidity.valueOf(remoteSystemData.getValidity()),
 				fullrunId,
 				type,
-				pluginProductionTime,
-				pluginSentToConvertTime,
-				receivedFromPluginTStamp,
+				pluginProductionTime, // PLUGIN production
+				pluginSentToConvertTime,  // Sent to converter
+				receptionTStamp, // received from plugin
 				producedAndSentTStamp, // Produced by converter
 				producedAndSentTStamp, // Sent to BSDB
 				null, // Read from BSDB
@@ -229,6 +226,9 @@ public class ValueMapper implements Function<String, String> {
 		if (mpString==null || mpString.isEmpty()) {
 			return null;
 		}
+		
+		long receptionTimestamp = System.currentTimeMillis();
+		
 		MonitorPointData mpd;
 		try {
 			mpd=MonitorPointData.fromJsonString(mpString);
@@ -248,7 +248,7 @@ public class ValueMapper implements Function<String, String> {
 		
 		IASValue<?> iasValue;
 		try { 
-			iasValue= translate(mpd,iasType);
+			iasValue= translate(mpd,iasType,receptionTimestamp);
 		} catch (Exception cfe) {
 			logger.error("Error converting {} to a core value type: value lost!",mpd.getId());
 			return null;
