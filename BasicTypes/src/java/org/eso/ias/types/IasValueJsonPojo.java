@@ -21,8 +21,9 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
  * separated by IASValue is to 
  * <UL>
  * 	<LI>avoid providing setters that would brake the immutability of the {@link IASValue}
- *  <LI>replace optiona.empty() with <code>null</code> so that a null value 
+ *  <LI>replace optional.empty() with <code>null</code> so that a null value 
  *      is not serialized in the JSON string (@see {@link Include})
+ *  <LI>replace Long timestamps with ISO-8601 strings
  * </UL>
  * 
  * Timestamps are represented as strings (ISO-8601)
