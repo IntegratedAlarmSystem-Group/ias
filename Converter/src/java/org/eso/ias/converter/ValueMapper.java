@@ -224,6 +224,7 @@ public class ValueMapper implements Function<String, String> {
 	@Override
 	public String apply(String mpString) {
 		if (mpString==null || mpString.isEmpty()) {
+			logger.warn("Received null or empty string from plugin: nothing to convert");
 			return null;
 		}
 		
