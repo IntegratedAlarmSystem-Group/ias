@@ -388,10 +388,7 @@ object ComputingElement {
     
     // Build the output
     val outputId = new Identifier(asceDao.getOutput.getId,IdentifierType.IASIO,Option(asceId))
-    val out = InOut[T](
-        outputId,
-        asceDao.getOutput.getRefreshRate,
-        IASTypes.fromIasioDaoType(asceDao.getOutput.getIasType))
+    val out = InOut[T](outputId, IASTypes.fromIasioDaoType(asceDao.getOutput.getIasType))
     logger.info("ComputingElement {} produces output {}",asceDao.getId,outputId.id)
         
     val inputsIasioDaos: Set[IasioDao] = JavaConverters.collectionAsScalaIterable(asceDao.getInputs).toSet
@@ -405,13 +402,8 @@ object ComputingElement {
     
     // Builds the initial set of inputs: all the InOut at the beginning have a null value
     val initialIasios: Set[InOut[_]] = inputsIasioDaos.map(iDao => 
-      new InOut(
-          None,
-          System.currentTimeMillis(),
+      InOut(
           new Identifier(iDao.getId,IdentifierType.IASIO,None),
-          iDao.getRefreshRate,
-          OperationalMode.UNKNOWN,
-          Some(Validity(IasValidity.UNRELIABLE)),
           IASTypes.fromIasioDaoType(iDao.getIasType())))
     
     if (tfLanguage==TransferFunctionLanguage.java) new ComputingElement[T](asceId,out, initialIasios, tfSettings, properties) with JavaTransfer[T]

@@ -5,14 +5,7 @@ import java.util.Properties;
 
 import org.eso.ias.types.AlarmSample;
 import org.eso.ias.types.IASTypes;
-import org.eso.ias.types.IASValueBase;
-import org.eso.ias.types.IasAlarm;
-import org.eso.ias.types.IasByte;
-import org.eso.ias.types.IasDouble;
-import org.eso.ias.types.IasFloat;
-import org.eso.ias.types.IasInt;
-import org.eso.ias.types.IasLong;
-import org.eso.ias.types.IasShort;
+import org.eso.ias.types.IASValue;
 import org.eso.ias.asce.exceptions.PropsMisconfiguredException;
 import org.eso.ias.asce.exceptions.TypeMismatchException;
 import org.eso.ias.asce.exceptions.UnexpectedNumberOfInputsException;
@@ -162,40 +155,32 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 	/**
 	 * @see JavaTransferExecutor#eval(Map, IASValueBase)
 	 */
-	public IASValueBase eval(Map<String, IASValueBase> compInputs, IASValueBase actualOutput) throws Exception {
+	public IASValue<?> eval(Map<String, IASValue<?>> compInputs, IASValue<?> actualOutput) throws Exception {
 		if (compInputs.size() != 1)
 			throw new UnexpectedNumberOfInputsException(compInputs.size(), 1);
 		if (actualOutput.valueType != IASTypes.ALARM)
 			throw new TypeMismatchException(actualOutput.fullRunningId);
 
 		// Get the input
-		IASValueBase hio = compInputs.values().iterator().next();
+		IASValue<?> iasio = compInputs.values().iterator().next();
 		
 		double hioValue;
-		switch (hio.valueType) {
+		
+		switch (iasio.valueType) {
 		case LONG:
-			hioValue = ((IasLong) hio).value;
-			break;
 		case INT:
-			hioValue = ((IasInt) hio).value;
-			break;
 		case SHORT:
-			hioValue = ((IasShort) hio).value;
-			break;
 		case BYTE:
-			hioValue = ((IasByte) hio).value;
-			break;
 		case DOUBLE:
-			hioValue = ((IasDouble) hio).value;
-			break;
 		case FLOAT:
-			hioValue = ((IasFloat) hio).value;
+			Number num = (Number)iasio.value;
+			hioValue = num.doubleValue();
 			break;
 		default:
-			throw new TypeMismatchException(hio.fullRunningId);
+			throw new TypeMismatchException(iasio.fullRunningId);
 		}
 		
-		boolean wasActivated = ((IasAlarm)actualOutput).value==AlarmSample.SET;
+		boolean wasActivated = (AlarmSample)actualOutput.value==AlarmSample.SET;
 		
 		boolean condition = 
 				hioValue >= highOn || hioValue <= lowOn ||
@@ -203,6 +188,6 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 				
 				
 		AlarmSample newOutput = AlarmSample.fromBoolean(condition);
-		return ((IasAlarm) actualOutput).updateValue(newOutput).updateMode(hio.mode);
+		return actualOutput.updateValue(newOutput).updateMode(iasio.mode);
 	}
 }

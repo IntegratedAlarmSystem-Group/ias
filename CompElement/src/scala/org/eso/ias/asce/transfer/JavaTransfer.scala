@@ -7,7 +7,7 @@ import java.util.Properties
 import java.util.{Map => JavaMap, HashMap => JavaHashMap}
 import org.eso.ias.types.IASValue
 import org.eso.ias.types.JavaConverter
-import org.eso.ias.types.IASValueBase
+import org.eso.ias.types.IASValue
 
 /**
  * <code>JavaTransfer</code> calls the java
@@ -27,8 +27,8 @@ trait JavaTransfer[T] extends ComputingElement[T] {
    * Flush the scala Map into a Java Map
    */
   private[this] def flushOnJavaMap(
-      inputs: Map[String, InOut[_]]): JavaMap[String, IASValueBase] = {
-    val map: JavaMap[String, IASValueBase] = new JavaHashMap[String, IASValueBase]()
+      inputs: Map[String, InOut[_]]): JavaMap[String, IASValue[_]] = {
+    val map: JavaMap[String, IASValue[_]] = new JavaHashMap[String, IASValue[_]]()
     
     inputs.values.foreach(iasio => {
       map.put(iasio.id.id,JavaConverter.inOutToIASValue(iasio,iasio.getValidity(None)))
@@ -48,7 +48,7 @@ trait JavaTransfer[T] extends ComputingElement[T] {
       actualOutput: InOut[T]): Either[Exception,InOut[T]] = {
     
     try { 
-      val map: JavaMap[String, IASValueBase] = flushOnJavaMap(inputs)
+      val map: JavaMap[String, IASValue[_]] = flushOnJavaMap(inputs)
       val newOutput=tfSetting.transferExecutor.get.asInstanceOf[JavaTransferExecutor].
       eval(
           map,
