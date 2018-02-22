@@ -57,14 +57,32 @@ import scala.util.Success
  * 
  * @constructor create a DASU with the given identifier
  * @param dasuIdentifier the identifier of the DASU
+ * @param autoSendTimeInterval the refresh rate (seconds) to automatically re-send the last calculated 
+ *                    output even if it did not change
+ * @param tolerance the max delay (secs) before declaring an input unreliable
  */
-abstract class Dasu(val dasuIdentifier: Identifier) extends InputsListener {
+abstract class Dasu(
+    val dasuIdentifier: Identifier, 
+    val autoSendTimeInterval: Integer,
+    val tolerance: Integer) extends InputsListener {
+  require(autoSendTimeInterval>0)
+  require(tolerance>=0)
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
   
   /** The ID of the DASU */
   val id = dasuIdentifier.id
+  
+  /** 
+   *  Auto send time interval in milliseconds
+   */
+  val autoSendTimeIntervalMillis = TimeUnit.SECONDS.convert(autoSendTimeInterval.toLong, TimeUnit.MILLISECONDS)
+  
+  /** 
+   *  The tolerance in milliseconds
+   */
+  val toleranceMillis = TimeUnit.SECONDS.convert(tolerance.toLong, TimeUnit.MILLISECONDS)
   
   /**
    * The minimum allowed refresh rate when a flow of inputs arrive (i.e. the throttiling) 
