@@ -43,19 +43,19 @@ class TestComponent extends FlatSpec {
   // to pass when building a Component
   val requiredInputIDs = List("ID1", "ID2")
   
-  // The ID of the first MP
+  // The ID of the first MP in input
   val mpI1Identifier = new Identifier(requiredInputIDs(0),IdentifierType.IASIO,Option(compId))
-  val mp1 = InOut[AlarmSample](mpI1Identifier,IASTypes.ALARM, IasValidity.RELIABLE)
+  val mp1 = InOut.asInput(mpI1Identifier,IASTypes.ALARM)
   
-  // The ID of the second MP
+  // The ID of the second MP in input
   val mpI2Identifier = new Identifier(requiredInputIDs(1),IdentifierType.IASIO,Option(compId))
-  val mp2 = InOut[AlarmSample](mpI2Identifier, IASTypes.ALARM, IasValidity.RELIABLE)
+  val mp2 = InOut.asInput(mpI2Identifier, IASTypes.ALARM)
   val actualInputs: Set[InOut[_]] = Set(mp1,mp2)
   
   behavior of "A Component"
   
   it must "catch an error instantiating a wrong TF class" in {
-    val output = InOut[AlarmSample](outId,IASTypes.ALARM)
+    val output: InOut[AlarmSample] = InOut.asOutput(outId,IASTypes.ALARM)
     
     val threadaFactory = new CompEleThreadFactory("Test-runninId")
     // A transfer function that does not exist
@@ -82,7 +82,7 @@ class TestComponent extends FlatSpec {
   }
   
   it must "correctly instantiate the TF" in {
-    val output = InOut[AlarmSample](outId,IASTypes.ALARM)
+    val output: InOut[AlarmSample] = InOut.asOutput(outId,IASTypes.ALARM)
     
     val threadaFactory = new CompEleThreadFactory("Test-runninId")
     // A transfer function that does not exist

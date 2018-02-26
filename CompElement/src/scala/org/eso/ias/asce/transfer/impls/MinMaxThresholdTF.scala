@@ -120,16 +120,16 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
     if (actualOutput.iasType!=ALARM) throw new TypeMismatchException(actualOutput.id.runningID,actualOutput.iasType,ALARM)
     
     // Get the input
-    val hio = compInputs.values.head
+    val iasio = compInputs.values.head
     
-    val hioValue: Double = hio.iasType match {
-      case LONG => hio.value.get.asInstanceOf[Long].toDouble
-      case INT => hio.value.get.asInstanceOf[Int].toDouble
-      case SHORT => hio.value.get.asInstanceOf[Short].toDouble
-      case BYTE => hio.value.get.asInstanceOf[Byte].toDouble
-      case DOUBLE => hio.value.get.asInstanceOf[Double]
-      case FLOAT => hio.value.get.asInstanceOf[Float].toDouble
-      case _ => throw new TypeMismatchException(hio.id.runningID,hio.iasType,List(LONG,INT,SHORT,BYTE,DOUBLE,FLOAT))
+    val doubleValue: Double = iasio.iasType match {
+      case LONG => iasio.value.get.asInstanceOf[Long].toDouble
+      case INT => iasio.value.get.asInstanceOf[Int].toDouble
+      case SHORT => iasio.value.get.asInstanceOf[Short].toDouble
+      case BYTE => iasio.value.get.asInstanceOf[Byte].toDouble
+      case DOUBLE => iasio.value.get.asInstanceOf[Double]
+      case FLOAT => iasio.value.get.asInstanceOf[Float].toDouble
+      case _ => throw new TypeMismatchException(iasio.id.runningID,iasio.iasType,List(LONG,INT,SHORT,BYTE,DOUBLE,FLOAT))
     }
     
     // It cope with the case that the value of the actual output is not 
@@ -141,10 +141,10 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
     // but remains set is the old values was set and the value is
     // between high on and hiogh off or between low on and low off
     val condition = 
-      (hioValue>=highOn || hioValue<=lowOn) ||
-      temp.get && (hioValue>=highOff || hioValue<=lowOff)
+      (doubleValue>=highOn || doubleValue<=lowOn) ||
+      temp.get && (doubleValue>=highOff || doubleValue<=lowOff)
     val newValue = AlarmSample.fromBoolean(condition)
-    actualOutput.updateValue(Option(newValue)).updateMode(hio.mode)
+    actualOutput.updateValue(Some(newValue)).updateMode(iasio.mode)
   }
   
 }

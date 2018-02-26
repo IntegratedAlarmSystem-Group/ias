@@ -101,9 +101,9 @@ abstract class ComputingElement[T](
     initialInputs: Set[InOut[_]],
     val tfSetting: TransferFunctionSetting,
     val props: Properties) {
-  require(Option(asceIdentifier)!=None,"Invalid identifier")
+  require(Option(asceIdentifier).isDefined,"Invalid identifier")
   require(asceIdentifier.idType==IdentifierType.ASCE)
-  require(Option(initialInputs)!=None && !initialInputs.isEmpty,"Invalid (empty or null) set of required inputs to the component")
+  require(Option(initialInputs).isDefined && !initialInputs.isEmpty,"Invalid (empty or null) set of required inputs to the component")
   require(Option(props).isDefined,"Invalid null properties")
   require(Option(_output).isDefined,"Initial output cannot be null")
   
@@ -313,7 +313,7 @@ abstract class ComputingElement[T](
    *         2) the actual validity
    *         3) the state of the ASCE
    */
-  def update(iasValues: Set[IASValue[_]]): Tuple3[InOut[T],Validity, AsceStates.State] = {
+  def update(iasValues: Set[IASValue[_]]): Tuple2[InOut[T], AsceStates.State] = {
     require(Option(iasValues).isDefined,"Set of inputs not defined")
     
     // Check if the passed set of IASIOs contains at least one IASIO that is 
@@ -341,22 +341,14 @@ abstract class ComputingElement[T](
       ( output,state)
     }
     state=newState
-    _output=newOut
     
-    val validity = _output.getValidity(Some(inputs.values.toSet))
+    // The validity of the output must be set to the min validity of its inputs 
+    val minValidityOfInputs = Validity.minValidity(iasValues.map (_.iasValidity))
+    _output=newOut.updateFromIinputsValidity(minValidityOfInputs)
     
-    (output, validity, state.actualState)
+    (output, state.actualState)
   }
-  
-  /**
-   * Return the last computed output and its validity updated
-   * with the current validity of the inputs.
-   * 
-   * @return the output and its validity
-   */
-  def getOutput(): Tuple2[InOut[_], Validity] = {
-    (output, output.getValidity(Some(inputs.values.toSet)))
-  }
+
 }
 /**
  * The ComputingElement object to build a ComputingElement from the AsceDao red from the CDB
@@ -388,7 +380,7 @@ object ComputingElement {
     
     // Build the output
     val outputId = new Identifier(asceDao.getOutput.getId,IdentifierType.IASIO,Option(asceId))
-    val out = InOut[T](outputId, IASTypes.fromIasioDaoType(asceDao.getOutput.getIasType))
+    val out: InOut[T] = InOut.asOutput(outputId, IASTypes.fromIasioDaoType(asceDao.getOutput.getIasType))
     logger.info("ComputingElement {} produces output {}",asceDao.getId,outputId.id)
         
     val inputsIasioDaos: Set[IasioDao] = JavaConverters.collectionAsScalaIterable(asceDao.getInputs).toSet
@@ -402,7 +394,7 @@ object ComputingElement {
     
     // Builds the initial set of inputs: all the InOut at the beginning have a null value
     val initialIasios: Set[InOut[_]] = inputsIasioDaos.map(iDao => 
-      InOut(
+      InOut.asInput(
           new Identifier(iDao.getId,IdentifierType.IASIO,None),
           IASTypes.fromIasioDaoType(iDao.getIasType())))
     

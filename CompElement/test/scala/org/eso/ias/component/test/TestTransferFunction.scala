@@ -27,8 +27,7 @@ import org.eso.ias.types.IasValidity
 class TestTransferFunction extends FlatSpec {
   
   def convert(iasios: Set[InOut[_]]): Set[IASValue[_]] = {
-    iasios.map( io => 
-      JavaConverter.inOutToIASValue(io: InOut[_],io.getValidity(None)))
+    iasios.map( io => io.toIASValue())
   }
   
   /**
@@ -50,7 +49,7 @@ class TestTransferFunction extends FlatSpec {
     
     // Build the MP in output
     // The inherited validity is undefined 
-    val output: InOut[AlarmSample] = InOut[AlarmSample](outId, IASTypes.ALARM)
+    val output: InOut[AlarmSample] = InOut.asOutput(outId, IASTypes.ALARM)
       
     // The IDs of the monitor points in input 
     // to pass when building a Component
@@ -64,10 +63,10 @@ class TestTransferFunction extends FlatSpec {
       val mpId = new Identifier(id,IdentifierType.IASIO,Option(compID))
       i=i+1
       val mp = if ((i%2)==0) {
-        InOut[AlarmSample](mpId,IASTypes.ALARM,IasValidity.RELIABLE)
+        InOut.asInput(mpId,IASTypes.ALARM).updateValue(Some(AlarmSample.CLEARED))
       } else {
         val mpVal = 1L
-        InOut[Long](mpId,IASTypes.LONG,IasValidity.RELIABLE)
+        InOut.asInput(mpId,IASTypes.LONG).updateValue(Some(1L))
       }
       inputsMPs+=(mp.id.id -> mp)
     }
@@ -118,25 +117,26 @@ class TestTransferFunction extends FlatSpec {
   
   /**
    * This test checks if the validity is set to Reliable if all the
-   * validities have this level.
+   * validity of the inputs have this level.
    */
-  it must "set the dependent validity to the lower validity of the inputs" in new CompBuilder {
-    logger.info("Dependent validity test started")
+  it must "set the validity of the output to the lower validity of the inputs" in new CompBuilder {
+    logger.info("Validity from inputs test started")
     val component: ComputingElement[AlarmSample] = javaComp
     javaComp.initialize()
     assert(component.output.fromIasValueValidity.isEmpty, "The output does not inherit the validity from a IASValue" )
     
     val keys=inputsMPs.keys.toList.sorted
-    val newChangedMp = inputsMPs.values.map(inout =>  inout.updatedInheritedValidity(Some(Validity(RELIABLE))))
+    val newChangedMp = inputsMPs.values.map(inout =>  inout.updateFromIasValueValidity(Validity(RELIABLE)))
+    assert(newChangedMp.forall(iasio => iasio.fromInputsValidity.isEmpty))
+    assert(newChangedMp.forall(iasio => iasio.fromIasValueValidity.isDefined))
+    newChangedMp.foreach(iasio => println(">"+iasio.id.id+iasio.fromIasValueValidity.get.iasValidity))
+    assert(newChangedMp.forall(iasio => iasio.fromIasValueValidity.get.iasValidity==RELIABLE))
     
     javaComp.update(convert(newChangedMp.toSet))
     assert(component.output.fromIasValueValidity.isEmpty)
+    assert(component.output.fromInputsValidity.isDefined)
+    assert(component.output.getValidity==Validity(IasValidity.RELIABLE))
     
-    // Wait so that the inputs are not valid an
-    Thread.sleep(2*1000)
-    javaComp.update(convert(newChangedMp.toSet))
-    assert(component.getOutput()._2==Validity(UNRELIABLE))
-    assert(component.output.fromIasValueValidity.isEmpty)
     javaComp.shutdown()
   }
   
@@ -145,18 +145,18 @@ class TestTransferFunction extends FlatSpec {
     // Send all the possible inputs to check if the state changes and the ASCE runs the TF
     inputsMPs.keys.foreach( k => {
       val inout = inputsMPs(k)
-      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.updateValue(Option(AlarmSample.SET))
-        else inout.updateValue(Option(-5L))
+      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.updateValue(Some(AlarmSample.SET))
+        else inout.updateValue(Some(-5L))
       inputsMPs(k)=newIasio
     })
     
     // Send all the inputs
     val result = javaComp.update(convert(inputsMPs.values.toSet))
-    assert(result._3==AsceStates.Healthy)
+    assert(result._2==AsceStates.Healthy)
     assert(result._1.value.isDefined)
     
     javaComp.shutdown()
-    val out = javaComp.getOutput()._1
+    val out = javaComp.output
     assert(out.value.isDefined)
     logger.info("Actual value = {}",out.value.toString())
     val alarm = out.value.get.asInstanceOf[AlarmSample]
@@ -169,20 +169,20 @@ class TestTransferFunction extends FlatSpec {
     // Send all the possible inputs to check if the state changes and the ASCE runs the TF
     inputsMPs.keys.foreach( k => {
       val inout = inputsMPs(k)
-      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.updateValue(Option(AlarmSample.SET))
-        else inout.updateValue(Option(-5L))
+      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.updateValue(Some(AlarmSample.SET))
+        else inout.updateValue(Some(-5L))
       inputsMPs(k)=newIasio
     })
     
     // Send the inputs
     val result = scalaComp.update(convert(inputsMPs.values.toSet))
     println("XXXX "+result._2.toString())
-    assert(result._3==AsceStates.Healthy)
+    assert(result._2==AsceStates.Healthy)
     
     scalaComp.shutdown()
     
     logger.info("Actual value = {}",scalaComp.output.value.toString())
-    val alarm = scalaComp.output.value.get.asInstanceOf[AlarmSample]
+    val alarm = scalaComp.output.value.get
     assert(alarm==AlarmSample.SET)
   }
   
@@ -192,14 +192,14 @@ class TestTransferFunction extends FlatSpec {
     // Send all the possible inputs to check if the state changes and the ASCE runs the TF
     inputsMPs.keys.foreach( k => {
       val inout = inputsMPs(k)
-      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.updateValue(Option(AlarmSample.SET))
-        else inout.updateValue(Option(-5L))
+      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.updateValue(Some(AlarmSample.SET))
+        else inout.updateValue(Some(-5L))
       inputsMPs(k)=newIasio
     })
     
     // Send the inputs and get the result
     val result = brokenTFScalaComp.update(convert(inputsMPs.values.toSet))
-    assert(result._3==AsceStates.TFBroken)
+    assert(result._2==AsceStates.TFBroken)
     assert(brokenTFScalaComp.getState()==AsceStates.TFBroken)
     
     brokenTFScalaComp.shutdown()
