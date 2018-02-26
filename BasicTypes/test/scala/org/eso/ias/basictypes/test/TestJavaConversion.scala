@@ -17,9 +17,10 @@ import org.eso.ias.types.IasValidity
 import language.reflectiveCalls
 
 /**
- * Test the conversion between HIO to IASValue and vice-versa
+ * Test the conversion between IASIO to IASValue and vice-versa
  */
 class TestJavaConversion  extends FlatSpec {
+  
   behavior of "The Scala<->Java converter"
   
   def fixture = {
@@ -49,75 +50,85 @@ class TestJavaConversion  extends FlatSpec {
       
       // Validity
       val validity = Some(Validity(RELIABLE))
-      // The HIOs
-      val longHIO = InOut[Long](
+      // The IASIOs
+      val longHIO = new InOut[Long]( // Input
         longValue, 
         doubleHioId, 
         mode,
         validity,
+        None,
         IASTypes.LONG,
         None,None,None,None,None,None,None) 
-      val intHIO = InOut[Int](
+      val intHIO = new InOut[Int]( // Input
         intValue, 
         doubleHioId, 
         mode,
         validity,
+        None,
         IASTypes.INT,
         None,None,None,None,None,None,None) 
-      val shortHIO =  InOut[Int](
+      val shortHIO =  new InOut[Int]( // Input
         shortValue, 
         doubleHioId, 
         mode,
         validity,
+        None,
         IASTypes.SHORT,
         None,None,None,None,None,None,None) 
-      val byteHIO = InOut[Byte](
+      val byteHIO = new InOut[Byte]( // Input
         byteValue, 
         doubleHioId, 
         mode,
         validity,
+        None,
         IASTypes.BYTE,
         None,None,None,None,None,None,None)
-      val charHIO = InOut[Char](
+      val charHIO = new InOut[Char]( // Input
         charValue, 
         doubleHioId, 
         mode,
         validity,
+        None,
         IASTypes.CHAR,
         None,None,None,None,None,None,None) 
-      val stringHIO = InOut[String](
+      val stringHIO = new InOut[String]( // Input
         stringValue, 
         doubleHioId, 
         mode,
         validity,
+        None,
         IASTypes.STRING,
         None,None,None,None,None,None,None)
-      val boolHIO = InOut[Boolean](
+      val boolHIO = new InOut[Boolean]( // Input
         boolValue, 
         doubleHioId, 
         mode,
         validity,
+        None,
         IASTypes.BOOLEAN,
         None,None,None,None,None,None,None)
-      val alarmHIO = InOut[AlarmSample](
+      val alarmHIO = new InOut[AlarmSample]( // Output
         alarmValue, 
         alarmHioId, 
         mode,
+        None,
         validity,
         IASTypes.ALARM,
         None,None,None,None,None,None,None)
-      val doubleHIO = InOut[Double](
+      val doubleHIO = new InOut[Double]( // Input
         doubleValue, 
         doubleHioId, 
         doubleMode,
         validity,
+        None,
         IASTypes.DOUBLE,
         None,None,None,None,None,None,None)
-      val floatHIO = InOut[Float](
+      val floatHIO = new InOut[Float]( // Input
         floatValue, 
         doubleHioId, 
         mode,
         validity,
+        None,
         IASTypes.FLOAT,
         Some(1L),Some(2L),Some(3L),Some(4L),Some(5L),Some(6L),Some(7L))
       
@@ -129,7 +140,7 @@ class TestJavaConversion  extends FlatSpec {
   
   it must "correctly build the IASValue" in {
     val f = fixture
-    val doubleVal = JavaConverter.inOutToIASValue[Double](f.doubleHIO,Validity(IasValidity.RELIABLE))
+    val doubleVal = JavaConverter.inOutToIASValue[Double](f.doubleHIO)
     assert(doubleVal.valueType==f.doubleHIO.iasType)
     assert(doubleVal.mode==f.doubleHIO.mode)
     
@@ -146,14 +157,14 @@ class TestJavaConversion  extends FlatSpec {
     assert(doubleVal.value==f.doubleHIO.value.get)
     assert(doubleVal.iasValidity==IasValidity.RELIABLE)
     
-    val alarmVal = JavaConverter.inOutToIASValue[AlarmSample](f.alarmHIO,Validity(IasValidity.UNRELIABLE))
+    val alarmVal = JavaConverter.inOutToIASValue[AlarmSample](f.alarmHIO)
     assert(alarmVal.value==f.alarmHIO.value.get)
-    assert(alarmVal.iasValidity==IasValidity.UNRELIABLE)
+    assert(alarmVal.iasValidity==IasValidity.RELIABLE)
   }
   
   it must "Update the times in the IASValue" in {
     val f = fixture
-    val doubleVal = JavaConverter.inOutToIASValue[Double](f.doubleHIO,Validity(IasValidity.RELIABLE))
+    val doubleVal = JavaConverter.inOutToIASValue[Double](f.doubleHIO)
     
     val updatePluginTime = doubleVal.updatePluginProdTime(1L)
     assert(updatePluginTime.pluginProductionTStamp.get == 1L)
@@ -187,10 +198,10 @@ class TestJavaConversion  extends FlatSpec {
   it must "Update a IASIO with the values from a IASValue" in {
     val f = fixture
     
-    val doubleVal = JavaConverter.inOutToIASValue[Double](f.doubleHIO,Validity(IasValidity.UNRELIABLE))
+    val doubleVal = JavaConverter.inOutToIASValue[Double](f.doubleHIO)
     val newdoubleVal = IASValue.build(8.5d, OperationalMode.OPERATIONAL, UNRELIABLE, doubleVal.fullRunningId, IASTypes.DOUBLE)
         
-    val iasio = JavaConverter.updateHIOWithIasValue(f.doubleHIO,newdoubleVal)
+    val iasio = JavaConverter.updateInOutWithIasValue(f.doubleHIO,newdoubleVal)
     
     assert(newdoubleVal.valueType==iasio.iasType)
     assert(newdoubleVal.mode==iasio.mode)
@@ -198,15 +209,16 @@ class TestJavaConversion  extends FlatSpec {
     assert(newdoubleVal.fullRunningId==iasio.id.fullRunningID)
     assert(newdoubleVal.value==iasio.value.get)
     
-    val alarmVal = JavaConverter.inOutToIASValue[AlarmSample](f.alarmHIO,Validity(IasValidity.RELIABLE))
+    val alarmVal = JavaConverter.inOutToIASValue[AlarmSample](f.alarmHIO)
     val alarm = alarmVal.value
     val newAlarm = AlarmSample.CLEARED
     val newAlarmValue = alarmVal.updateValue(newAlarm)
-    val alarmHio = JavaConverter.updateHIOWithIasValue(f.alarmHIO,newAlarmValue)
+    val alarmHio = JavaConverter.updateInOutWithIasValue(f.alarmHIO,newAlarmValue)
     
     assert(alarmHio.value.get.asInstanceOf[AlarmSample]==AlarmSample.CLEARED)
-    assert(alarmHio.fromIasValueValidity.isDefined)
-    assert(alarmHio.fromIasValueValidity.get.iasValidity==IasValidity.RELIABLE)
+    assert(alarmHio.fromIasValueValidity.isEmpty)
+    assert(alarmHio.fromInputsValidity.isDefined)
+    assert(alarmHio.fromInputsValidity.get.iasValidity==IasValidity.RELIABLE)
   }
   
 }

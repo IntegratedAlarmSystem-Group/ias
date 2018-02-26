@@ -30,12 +30,13 @@ class TestInOut extends FlatSpec {
   behavior of "A IASIO"
 
   it must "have an ID" in {
-    val mp: InOut[Long] = InOut(id, IASTypes.LONG)
+    val mp: InOut[Long] = InOut.asInput(id, IASTypes.LONG)
 
     assert(!mp.value.isDefined)
     assert(mp.mode == OperationalMode.UNKNOWN)
 
-    assert(mp.fromIasValueValidity == None)
+    assert(mp.fromIasValueValidity.isDefined)
+    assert(mp.fromInputsValidity.isEmpty)
   }
 
   it must "Have the same ID after changing other props" in {
@@ -43,7 +44,9 @@ class TestInOut extends FlatSpec {
         None,
         id, 
         OperationalMode.OPERATIONAL, 
-        Some(RELIABLE), IASTypes.LONG,
+        Some(RELIABLE),
+        None,
+        IASTypes.LONG,
         None,
         None,
         None,
@@ -64,7 +67,7 @@ class TestInOut extends FlatSpec {
     assert(mp2.fromIasValueValidity.get == Validity(RELIABLE))
 
     // Change validity of the previous MP
-    val mp3 = mp2.updatedInheritedValidity(Some(Validity(UNRELIABLE)))
+    val mp3 = mp2.updateFromIasValueValidity(Validity(UNRELIABLE))
     assert(mp3.id == mp.id)
     assert(mp3.value.isDefined)
     assert(mp3.value.get == mp2.value.get)
@@ -83,46 +86,46 @@ class TestInOut extends FlatSpec {
   }
 
   it must "allow to update the value" in {
-    val mp: InOut[Long] = InOut(id,  IASTypes.LONG)
+    val mp: InOut[Long] = InOut.asOutput(id,  IASTypes.LONG)
     val mpUpdatedValue = mp.updateValue(Some(5L))
     assert(mpUpdatedValue.value.get == 5L, "The values differ")
   }
 
-  it must "allow to update the dependant validity" in {
-    val mp: InOut[Long] = InOut(id, IASTypes.LONG)
-    assert(mp.fromIasValueValidity == None)
+  it must "allow to update the validity inherited from the IASValue" in {
+    val mpInput: InOut[Long] = InOut.asInput(id, IASTypes.LONG)
+    assert(mpInput.fromIasValueValidity.isDefined)
+    
+    val mp2= mpInput.updateFromIasValueValidity(Validity(RELIABLE))
+    assert(mp2.fromIasValueValidity.isDefined)
+    assert(mp2.fromIasValueValidity.get == Validity(RELIABLE), "The validities differ")
+  }
+  
+  it must "allow to update the validity inherited from the inputs" in {
+    val mpOutput: InOut[Long] = InOut.asOutput(id, IASTypes.LONG)
+    assert(mpOutput.fromInputsValidity.isDefined)
 
-    val mp2= InOut[Long](
-        None, 
-        id, 
-        OperationalMode.DEGRADED,
-        Option(Validity(RELIABLE)),
-        IASTypes.LONG,None,None,None,None,None,None,None)
-    val mpUpdatedValidityUnRelaible = mp2.updatedInheritedValidity(Some(Validity(UNRELIABLE)))
-    assert(mpUpdatedValidityUnRelaible.fromIasValueValidity.get == Validity(UNRELIABLE), "The validities differ")
+    val mp2 = mpOutput.updateFromIinputsValidity(Validity(RELIABLE))
+    assert(mp2.fromInputsValidity.isDefined)
+    assert(mp2.fromInputsValidity.get == Validity(RELIABLE), "The validities differ")
   }
 
   it must "allow to update the mode" in {
-    val mp: InOut[Long] = InOut(id, IASTypes.LONG)
+    val mp: InOut[Long] = InOut.asInput(id, IASTypes.LONG)
     val mpUpdatedMode = mp.updateMode(OperationalMode.OPERATIONAL)
     assert(mpUpdatedMode.mode == OperationalMode.OPERATIONAL, "The modes differ")
   }
 
   it must "allow to update the value and validity at once" in {
-    val mp: InOut[Long] = InOut(id, IASTypes.LONG)
-    val mpUpdated = mp.updateValue(Some(15L), Option(Validity(RELIABLE)))
+    val mp: InOut[Long] = InOut.asOutput(id, IASTypes.LONG)
+    val mpUpdated = mp.updateValueValidity(Some(15L), Some(Validity(RELIABLE)))
     assert(mpUpdated.value.get == 15L, "The values differ")
-    assert(mpUpdated.fromIasValueValidity.get == Validity(RELIABLE), "The validities differ")
+    assert(mpUpdated.fromIasValueValidity.isEmpty)
+    assert(mpUpdated.fromInputsValidity.isDefined)
+    assert(mpUpdated.fromInputsValidity.get == Validity(RELIABLE), "The validities differ")
   }
 
   it must "always update the timestamp when updating value or mode and inherited validity" in {
-    val mp = InOut[Long](
-        None, 
-        id, 
-        OperationalMode.DEGRADED,
-        Option(Validity(RELIABLE)),
-        IASTypes.LONG,
-        None,None,None,None,None,None,None)
+    val mp = InOut.asInput(id,IASTypes.LONG)
 
     val upVal = mp.updateValue(Some(10L))
     assert(upVal.value.get == 10L, "The values differ")
@@ -131,10 +134,10 @@ class TestInOut extends FlatSpec {
     assert(upValAgain.value.get == 10L, "The value differ")
     assert(upVal.dasuProductionTStamp.isDefined)
 
-    val upValidity = mp.updatedInheritedValidity(Some(Validity(RELIABLE)))
+    val upValidity = mp.updateFromIasValueValidity(Validity(RELIABLE))
     assert(upValidity.fromIasValueValidity.get == Validity(RELIABLE), "The validity differ")
     Thread.sleep(5) // be sure to update with another timestamp
-    val upValidityAgain = upValidity.updatedInheritedValidity(Some(Validity(UNRELIABLE)))
+    val upValidityAgain = upValidity.updateFromIasValueValidity(Validity(UNRELIABLE))
     assert(upValidityAgain.fromIasValueValidity.get == Validity(UNRELIABLE), "The validity differ")
     assert(upValidityAgain.dasuProductionTStamp.isDefined)
     assert(upValidityAgain.dasuProductionTStamp.get> upValidity.dasuProductionTStamp.get, "Timestamps must not be updated")
@@ -149,18 +152,18 @@ class TestInOut extends FlatSpec {
   }
 
   it must "support all types" in {
-    // Build a HIO of all supported types and update the value checking
+    // Build a IASIO of all supported types and update the value checking
     // for possible mismatch
-    val hioLong: InOut[Long] = InOut(id, IASTypes.LONG)
-    val hioShort: InOut[Short] = InOut(id, IASTypes.SHORT)
-    val hioInt: InOut[Int] = InOut(id, IASTypes.INT)
-    val hioByte: InOut[Byte] = InOut(id, IASTypes.BYTE)
-    val hioDouble: InOut[Double] = InOut(id, IASTypes.DOUBLE)
-    val hioFloat: InOut[Float] = InOut(id, IASTypes.FLOAT)
-    val hioBool: InOut[Boolean] = InOut(id, IASTypes.BOOLEAN)
-    val hioChar: InOut[Char] = InOut(id, IASTypes.CHAR)
-    val hioString: InOut[String] = InOut(id, IASTypes.STRING)
-    val hioAlarm: InOut[AlarmSample] = InOut(id, IASTypes.ALARM)
+    val hioLong: InOut[Long] = InOut.asInput(id, IASTypes.LONG)
+    val hioShort: InOut[Short] = InOut.asInput(id, IASTypes.SHORT)
+    val hioInt: InOut[Int] = InOut.asInput(id, IASTypes.INT)
+    val hioByte: InOut[Byte] = InOut.asInput(id, IASTypes.BYTE)
+    val hioDouble: InOut[Double] = InOut.asInput(id, IASTypes.DOUBLE)
+    val hioFloat: InOut[Float] = InOut.asInput(id, IASTypes.FLOAT)
+    val hioBool: InOut[Boolean] = InOut.asInput(id, IASTypes.BOOLEAN)
+    val hioChar: InOut[Char] = InOut.asInput(id, IASTypes.CHAR)
+    val hioString: InOut[String] = InOut.asInput(id, IASTypes.STRING)
+    val hioAlarm: InOut[AlarmSample] = InOut.asInput(id, IASTypes.ALARM)
 
     // Check if all the types has been instantiated
     val listOfHIOs = List(hioLong, hioShort, hioInt, hioByte, hioDouble, hioFloat, hioBool, hioChar, hioString, hioAlarm)
@@ -178,7 +181,7 @@ class TestInOut extends FlatSpec {
     hioAlarm.updateValue(Some(AlarmSample.SET))
   }
 
-  it must "build and update from a passed IASValues" in {
+  it must "build and update from a passed IASValue" in {
 
     val monitoredSysId = new Identifier("MonSysId", IdentifierType.MONITORED_SOFTWARE_SYSTEM, None)
     val puginId = new Identifier("PluginId", IdentifierType.PLUGIN, Option(monitoredSysId))
@@ -193,23 +196,25 @@ class TestInOut extends FlatSpec {
         iasioId.fullRunningID,
         IASTypes.LONG)
         
-    val inOut = InOut.fromIasValue(iasValue)
+    val inOut = InOut.asInput(iasioId,IASTypes.LONG).update(iasValue)
 
     assert(inOut.iasType == iasValue.valueType)
     assert(inOut.value.isDefined)
     assert(inOut.value.get.asInstanceOf[Long] == iasValue.value.asInstanceOf[Long])
     assert(inOut.mode == iasValue.mode)
+    
     assert(inOut.fromIasValueValidity.isDefined)
     assert(inOut.fromIasValueValidity.get.iasValidity==iasValue.iasValidity)
 
     // Update a IASIO with no value with a passed IASValue
-    val iasio: InOut[_] = InOut(iasioId, IASTypes.LONG)
+    val iasio: InOut[_] = InOut.asOutput(iasioId, IASTypes.LONG)
     val newiasIo = iasio.update(iasValue)
     assert(newiasIo.iasType == iasValue.valueType)
     assert(newiasIo.value.isDefined)
-    assert(newiasIo.value.get.asInstanceOf[Long] == iasValue.value.asInstanceOf[Long])
+    assert(newiasIo.value.get == iasValue.value)
     assert(newiasIo.mode == iasValue.mode)
     assert(newiasIo.fromIasValueValidity.isEmpty)
+    assert(newiasIo.fromInputsValidity.isDefined)
 
     // Update with another value
     val iasValue2 = IASValue.build(
