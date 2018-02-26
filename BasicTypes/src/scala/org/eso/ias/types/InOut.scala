@@ -78,7 +78,7 @@ case class InOut[A](
       fromIasValueValidity.isEmpty && fromInputsValidity.isDefined,
       "Inconsistent validity")
   
-  value.foreach(v => require(InOut.checkType(v,iasType),"Type mismatch: ["+v+"] is not "+iasType))
+  value.foreach(v => assert(InOut.checkType(v,iasType),"Type mismatch: ["+v+"] is not "+iasType))
   
   override def toString(): String = {
     val ret = new StringBuilder("Monitor point [")
@@ -120,6 +120,8 @@ case class InOut[A](
    * @return A new InOut with updated value
    */
   def updateValue[B >: A](newValue: Some[B]): InOut[A] = {
+    assert(InOut.checkType(newValue.get,iasType))
+    
     this.copy(value=newValue, dasuProductionTStamp=Some(System.currentTimeMillis()))
   }
   
@@ -134,6 +136,7 @@ case class InOut[A](
    * @return A new InOut with updated value and validity
    */
   def updateValueValidity[B >: A](newValue: Some[B], newValidity: Some[Validity]): InOut[A] = {
+    assert(InOut.checkType(newValue.get,iasType))
     if (isOutput()) {
       this.copy(value=newValue,fromInputsValidity=newValidity, dasuProductionTStamp=Some(System.currentTimeMillis()))
     } else {
@@ -190,15 +193,15 @@ case class InOut[A](
    * of a ASCE.
    */
   def update(iasValue: IASValue[_]): InOut[_] = {
-    val v = iasValue.asInstanceOf[IASValue[A]]
-    require(Option(iasValue).isDefined,"Cannot update from a undefined IASIO")
-    assert(v.id==this.id.id,"Identifier mismatch: received "+v.id+", expected "+this.id.id)
-    assert(v.valueType==this.iasType)
-    
+    require(Option(iasValue).isDefined,"Cannot update from a undefined IASValue")
+    require(Option(iasValue.value).isDefined,"Cannot update when the IASValue has no value")
+    assert(iasValue.id==this.id.id,"Identifier mismatch: received "+iasValue.id+", expected "+this.id.id)
+    assert(iasValue.valueType==this.iasType)
+    assert(InOut.checkType(iasValue.value,iasType))
     val validity = Some(Validity(iasValue.iasValidity))
     
     new InOut(
-        Option(iasValue.value),
+        Some(iasValue.value),
         Identifier(iasValue.fullRunningId),
         iasValue.mode,
         if (isOutput()) None else validity,
