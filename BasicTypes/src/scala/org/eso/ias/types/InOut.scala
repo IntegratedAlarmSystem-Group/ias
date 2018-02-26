@@ -221,7 +221,7 @@ case class InOut[A](
    * 
    * @return The IASValue representation of this IASIO
    */
-  def toIASValue[T](): IASValue[_] = {
+  def toIASValue(): IASValue[_] = {
     
     new IASValue(
         value.getOrElse(null),
