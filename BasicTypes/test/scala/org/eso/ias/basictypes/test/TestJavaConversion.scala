@@ -130,7 +130,7 @@ class TestJavaConversion  extends FlatSpec {
         validity,
         None,
         IASTypes.FLOAT,
-        Some(1L),Some(2L),Some(3L),Some(4L),Some(5L),Some(6L),Some(7L))
+        Some(1L),Some(2L),Some(3L),Some(4L),Some(5L),Some(6L),None)
       
       // Ensure we are testing all possible types
       val hios = List (longHIO,intHIO,shortHIO,byteHIO,charHIO,stringHIO,boolHIO,alarmHIO,doubleHIO,floatHIO)
