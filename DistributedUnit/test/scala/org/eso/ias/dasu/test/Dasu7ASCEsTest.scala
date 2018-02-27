@@ -12,7 +12,6 @@ import org.eso.ias.dasu.publisher.OutputPublisher
 import org.eso.ias.types.IasValueJsonSerializer
 import org.ias.logging.IASLogger
 import org.eso.ias.types.IASValue
-import org.eso.ias.types.IasDouble
 import org.eso.ias.types.Identifier
 import org.eso.ias.types.IdentifierType
 import org.eso.ias.types.OperationalMode
@@ -24,7 +23,6 @@ import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.TimeUnit
 import scala.collection.mutable.ListBuffer
 import org.eso.ias.types.IASTypes
-import org.eso.ias.types.IasAlarm
 import org.eso.ias.types.AlarmSample
 import org.eso.ias.types.IasValidity._
 import org.eso.ias.dasu.DasuImpl
@@ -101,7 +99,7 @@ class Dasu7ASCEsTest extends FlatSpec {
   val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervId)
   
   // The DASU to test
-  val dasu = new DasuImpl(dasuIdentifier,outputPublisher,inputsProvider,cdbReader,1)
+  val dasu = new DasuImpl(dasuIdentifier,outputPublisher,inputsProvider,cdbReader,3,1)
   
   // The identifier of the monitored system that produces the temperature in input to teh DASU
   val monSysId = new Identifier("MonitoredSystemID",IdentifierType.MONITORED_SOFTWARE_SYSTEM)
@@ -131,13 +129,23 @@ class Dasu7ASCEsTest extends FlatSpec {
   val iasValuesReceived = new ListBuffer[IASValue[_]]
   
   def buildValue(id: String, fullRunningID: String, d: Double): IASValue[_] = {
-    new IasDouble(
-        d,
-        System.currentTimeMillis(),
-        OperationalMode.OPERATIONAL,
-        UNRELIABLE,
-        fullRunningID)
-  }
+    
+    val t0 = System.currentTimeMillis()-100
+    
+    IASValue.build(
+      d,
+			OperationalMode.OPERATIONAL,
+			UNRELIABLE,
+			fullRunningID,
+			IASTypes.DOUBLE,
+			t0,
+			t0+5,
+			t0+10,
+			t0+15,
+			t0+20,
+			null,
+			null)
+    }
     
   }
   

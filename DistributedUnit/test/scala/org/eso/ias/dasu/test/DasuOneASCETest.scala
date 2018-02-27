@@ -12,7 +12,6 @@ import org.eso.ias.dasu.publisher.OutputPublisher
 import org.eso.ias.types.IasValueJsonSerializer
 import org.ias.logging.IASLogger
 import org.eso.ias.types.IASValue
-import org.eso.ias.types.IasDouble
 import org.eso.ias.types.Identifier
 import org.eso.ias.types.IdentifierType
 import org.eso.ias.types.OperationalMode
@@ -38,7 +37,7 @@ import org.scalatest.BeforeAndAfter
  */
 class DasuOneASCETest extends FlatSpec  with BeforeAndAfter {
   
-  val f = new DasuOneAsceCommon(1000)
+  val f = new DasuOneAsceCommon(3,1)
   
   before {
     f.outputValuesReceived.clear()

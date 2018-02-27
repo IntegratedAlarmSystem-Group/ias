@@ -12,7 +12,7 @@ import org.ias.logging.IASLogger
  * 
  * The test uses the DasuWithOneASCE DASU defined in the CDB
  * by submitting inputs and checking the fields of output
- * published (or not published by the DASU.
+ * published (or not published) by the DASU.
  * 
  * @see  [[https://github.com/IntegratedAlarmSystem-Group/ias/issues/52 Issue #52 on github]]
  */
@@ -21,9 +21,10 @@ class CheckDasuOutputTimestamps extends FlatSpec with BeforeAndAfter {
   /** The logger */
   val logger = IASLogger.getLogger(this.getClass);
   
-  val autoRefreshTime = 1000L
+  val autoRefreshTime = 3
+  val tolerance = 3
   
-  val f = new DasuOneAsceCommon(autoRefreshTime)
+  val f = new DasuOneAsceCommon(autoRefreshTime,tolerance)
   
   before {
     f.outputValuesReceived.clear()
@@ -117,7 +118,7 @@ class CheckDasuOutputTimestamps extends FlatSpec with BeforeAndAfter {
      
     val firstValue =  f.outputValuesReceived.head
     assert(f.outputValuesReceived.forall(iasVal => iasVal.value==firstValue.value))
-    assert(f.outputValuesReceived.forall(iasVal => iasVal.timestamp==firstValue.timestamp))
+    //assert(f.outputValuesReceived.forall(iasVal => iasVal.timestamp==firstValue.timestamp))
     assert(f.outputValuesReceived.forall(iasVal => iasVal.mode==firstValue.mode))
     assert(f.outputValuesReceived.forall(iasVal => iasVal.iasValidity==firstValue.iasValidity))
     assert(f.outputValuesReceived.forall(iasVal => iasVal.id==firstValue.id))
@@ -156,8 +157,8 @@ class CheckDasuOutputTimestamps extends FlatSpec with BeforeAndAfter {
     assert(out1.fullRunningId==out2.fullRunningId && out1.fullRunningId==out3.fullRunningId)
     assert(out1.value==out3.value)
     assert(out1.value!=out2.value)
-    assert(out1.timestamp<out2.timestamp)
-    assert(out2.timestamp<out3.timestamp)
+    assert(out1.sentToBsdbTStamp.get<out2.sentToBsdbTStamp.get)
+    assert(out2.sentToBsdbTStamp.get<out3.sentToBsdbTStamp.get)
   }
   
   it must "be updated when the value of the output does not change" in {
@@ -182,6 +183,6 @@ class CheckDasuOutputTimestamps extends FlatSpec with BeforeAndAfter {
     assert(out1.iasValidity==out2.iasValidity)
     assert(out1.fullRunningId==out2.fullRunningId)
     assert(out1.value==out2.value)
-    assert(out1.timestamp<out2.timestamp)
+    assert(out1.sentToBsdbTStamp.get<out2.sentToBsdbTStamp.get)
   }
 }
