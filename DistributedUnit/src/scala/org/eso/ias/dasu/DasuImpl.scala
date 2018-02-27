@@ -344,15 +344,10 @@ class DasuImpl (
   }
   
   /**
-   * Publish the last calculated output to the BSDB
-   * 
-   * The calculated output has the validity calculated when it has been produced;
-   * if the calculated output is empty, the validity must be updated as the
-   * validity of one of the inputs could have been changed in the mean time 
-   * 
-   * @param calculatedOutput the last calculated output (it has the last validity)
-   *                         it is empty if this method has been called
-   *                         without calculating an output (automatic sending for example)
+   * Publish the last calculated output to the BSDB after assessing its validity.
+   *
+   * This method can be called by the automatic sending and by a change in the output
+   * and blindly publish the last calculated output.
    */
   def publishOutput() {
     
@@ -360,6 +355,7 @@ class DasuImpl (
     val currentOutput = asceThatProducesTheOutput.output
     
     currentOutput.value.foreach({ v =>
+      
       val inputIds = getInputIds()
       val asceIds = getAsceIds()
       
@@ -395,14 +391,11 @@ class DasuImpl (
       val validity = calcOutputValidity(currentOutput, currentInputs)
       
       val lastSent = lastSentOutputAndValidity.get
-      val toSend = lastSent.isEmpty ||
-        mustSendOutput(lastSent.get._1, lastSent.get._2, currentOutput, validity)
+      
+      val valueToSend = currentOutput.toIASValue().updateValidity(validity)
+      lastSentOutputAndValidity.set(Some(currentOutput,validity))
+      outputPublisher.publish(valueToSend)
         
-      if (toSend) {
-        val valueToSend = currentOutput.toIASValue().updateValidity(validity)
-        lastSentOutputAndValidity.set(Some(currentOutput,validity))
-        outputPublisher.publish(valueToSend)
-      }  
     })
     
     
