@@ -24,11 +24,9 @@ import java.util.Optional
  * of the ACSE.
  * @see isOutput()
  * 
- * During is entire life, a IASIO is either one of the inputs or the output 
- * of the ACSE so the fromIasValueValidity is either defined or empty:
- * - If it is empty it remains empty forwver; 
- * - if it is defined it will remain defined forever
- * This invariant is checked is several parts of the code. 
+ * A IASIO can only be produced by a plugin or by a DASU i.e.
+ * only one between pluginProductionTStamp and dasuProductionTStamp
+ * can be defined (another invariant)
  * 
  * 
  * <code>InOut</code> is immutable.
@@ -73,10 +71,17 @@ case class InOut[A](
   require(Option[Identifier](id).isDefined,"The identifier must be defined")
   require(Option[IASTypes](iasType).isDefined,"The type must be defined")
   
+  // Check that one and only one validity (from inputs or from IASValue)
+  // is defined
   require(
-      fromIasValueValidity.isDefined && fromInputsValidity.isEmpty ||
-      fromIasValueValidity.isEmpty && fromInputsValidity.isDefined,
+      fromIasValueValidity.size+fromInputsValidity.size==1,
       "Inconsistent validity")
+      
+  // Check that no more then one between the pugin and the DASU production
+  // timestamps is defined
+  require(
+      pluginProductionTStamp.size+dasuProductionTStamp.size<=1,
+      "Inconsistent production timestamps")
   
   value.foreach(v => assert(InOut.checkType(v,iasType),"Type mismatch: ["+v+"] is not "+iasType))
   
@@ -171,8 +176,11 @@ case class InOut[A](
   def isOutput() = fromIasValueValidity.isEmpty
   
   /**
-   * The validity comes either from the IASValue (input of a ASCE)
+   * The validity that comes either from the IASValue (input of a ASCE)
    * or inherited from the inputs (output of the ASCE)
+   * 
+   * The validity returned by this method does not take into account 
+   * the actual time against the timestamps of the IASIO
    * 
    * @return the validity 
    */
