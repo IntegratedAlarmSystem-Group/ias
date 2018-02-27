@@ -307,13 +307,12 @@ abstract class ComputingElement[T](
    * value and the ASCE cannot run the TF neither produce the output.
    * 
    * @param iasValues the new inputs received from the DASU
-   * @return A tuple with 3 fields:
+   * @return A tuple with 2 fields:
    * 			   1) the new output generated applying the TF to the inputs and the new state of the ASCE
-   *            The output is None if at least one of the inputs has not yet been initialized
-   *         2) the actual validity
-   *         3) the state of the ASCE
+   *            It is None if at least one of the inputs has not yet been initialized
+   *         2) the state of the ASCE
    */
-  def update(iasValues: Set[IASValue[_]]): Tuple2[InOut[T], AsceStates.State] = {
+  def update(iasValues: Set[IASValue[_]]): Tuple2[Option[InOut[T]], AsceStates.State] = {
     require(Option(iasValues).isDefined,"Set of inputs not defined")
     
     // Check if the passed set of IASIOs contains at least one IASIO that is 
@@ -334,19 +333,21 @@ abstract class ComputingElement[T](
     }
     
     // Apply the transfer function to the inputs
-    val (newOut, newState) = if (state.canRunTF()) {
+    if (state.canRunTF()) {
       lastOutputUpdateTStamp=System.currentTimeMillis()
-      transfer(Map.empty++inputs,output,state)
+      val (newOut, newState) = transfer(Map.empty++inputs,output,state)
+      state=newState
+    
+      // The validity of the output must be set to the min validity of its inputs
+      //
+      // Note that this validity does not take into account the current
+      // timestamp against the timestamp of the IASValues in inputs
+      val minValidityOfInputs = Validity.minValidity(iasValues.map (_.iasValidity))
+      _output=newOut.updateFromIinputsValidity(minValidityOfInputs)
+      ( Some(output),state.actualState)
     } else {
-      ( output,state)
+      ( None,state.actualState)
     }
-    state=newState
-    
-    // The validity of the output must be set to the min validity of its inputs 
-    val minValidityOfInputs = Validity.minValidity(iasValues.map (_.iasValidity))
-    _output=newOut.updateFromIinputsValidity(minValidityOfInputs)
-    
-    (output, state.actualState)
   }
 
 }

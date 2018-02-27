@@ -153,7 +153,8 @@ class TestTransferFunction extends FlatSpec {
     // Send all the inputs
     val result = javaComp.update(convert(inputsMPs.values.toSet))
     assert(result._2==AsceStates.Healthy)
-    assert(result._1.value.isDefined)
+    assert(result._1.isDefined)
+    assert(result._1.get.value.isDefined)
     
     javaComp.shutdown()
     val out = javaComp.output
