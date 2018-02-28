@@ -42,6 +42,49 @@ class CheckDasuOutputTimestamps extends FlatSpec with BeforeAndAfter {
   
   behavior of "The auto-resend of the last output of the DASU"
   
+  it must "automatically re-send the same output" in {
+    
+    f.dasu.get.enableAutoRefreshOfOutput(false)
+    
+    val inputs: Set[IASValue[_]] = Set(f.buildValue(0))
+    f.inputsProvider.sendInputs(inputs)
+    Thread.sleep(1000)
+    f.outputValuesReceived.clear()
+    f.outputStringsReceived.clear()
+    f.dasu.get.enableAutoRefreshOfOutput(true)
+    
+    
+    // Leave the DASU time to send the last computed output
+    Thread.sleep(5000*autoRefreshTime+1000)
+    
+    assert(f.outputStringsReceived.size>=5)
+    assert(f.outputValuesReceived.size>=5)
+    
+    f.dasu.get.enableAutoRefreshOfOutput(false)
+    
+    f.outputStringsReceived.foreach( s =>
+      logger.info("String received [{}]",s))
+    
+    val strOutput = f.outputStringsReceived(0)
+    // The strings differ at least for the sentToBsdbTStamp 
+    for (t <- 1 until f.outputStringsReceived.size) {
+      assert(f.outputStringsReceived(t)!=strOutput)
+    }
+     
+    val firstValue =  f.outputValuesReceived(0)
+    for (t <- 1 until f.outputStringsReceived.size) {
+      assert(f.outputValuesReceived(t).value==firstValue.value)
+      assert(f.outputValuesReceived(t).sentToBsdbTStamp!=firstValue.sentToBsdbTStamp)
+      assert(f.outputValuesReceived(t).mode==firstValue.mode)
+      assert(f.outputValuesReceived(t).iasValidity==firstValue.iasValidity)
+      assert(f.outputValuesReceived(t).id==firstValue.id)
+      assert(f.outputValuesReceived(t).fullRunningId==firstValue.fullRunningId)
+      assert(f.outputValuesReceived(t).valueType==firstValue.valueType)
+    }
+    
+     
+  }
+  
   it must "not refresh the output before getting the input" in {
     f.dasu.get.enableAutoRefreshOfOutput(true)
     // Leave the DASU time to send the last computed output
@@ -50,25 +93,13 @@ class CheckDasuOutputTimestamps extends FlatSpec with BeforeAndAfter {
     assert(f.outputValuesReceived.isEmpty)
   }
   
-  it must "refresh the output once it has been generated" in {
-    f.dasu.get.enableAutoRefreshOfOutput(true)
-    val inputs: Set[IASValue[_]] = Set(f.buildValue(0))
-    f.inputsProvider.sendInputs(inputs)
-    
-    // Leave the DASU time to send the last computed output
-    Thread.sleep(5*autoRefreshTime)
-    
-    assert(f.outputStringsReceived.size>=5)
-    assert(f.outputValuesReceived.size>=5)
-  }
-  
   it must "enable/disable the auto-refresh" in {
     f.dasu.get.enableAutoRefreshOfOutput(true)
     val inputs: Set[IASValue[_]] = Set(f.buildValue(0))
     f.inputsProvider.sendInputs(inputs)
     
     // Leave the DASU time to send the last computed output
-    Thread.sleep(5*autoRefreshTime)
+    Thread.sleep(5000*autoRefreshTime+1000)
     
     assert(f.outputStringsReceived.size>=5)
     assert(f.outputValuesReceived.size>=5)
@@ -78,12 +109,12 @@ class CheckDasuOutputTimestamps extends FlatSpec with BeforeAndAfter {
     f.outputValuesReceived.clear()
     
     // Leave the DASU time to send the last computed output
-    Thread.sleep(3*autoRefreshTime)
+    Thread.sleep(3000*autoRefreshTime+1000)
     assert(f.outputStringsReceived.isEmpty)
     assert(f.outputValuesReceived.isEmpty)
     
     f.dasu.get.enableAutoRefreshOfOutput(true)
-    Thread.sleep(3*autoRefreshTime)
+    Thread.sleep(3000*autoRefreshTime+1000)
     assert(!f.outputStringsReceived.isEmpty)
     assert(!f.outputValuesReceived.isEmpty)
     
@@ -92,7 +123,7 @@ class CheckDasuOutputTimestamps extends FlatSpec with BeforeAndAfter {
     f.outputValuesReceived.clear()
     
     // Leave the DASU time to send the last computed output
-    Thread.sleep(3*autoRefreshTime)
+    Thread.sleep(3000*autoRefreshTime+1000)
     assert(f.outputStringsReceived.isEmpty)
     assert(f.outputValuesReceived.isEmpty)
   }
@@ -159,36 +190,6 @@ class CheckDasuOutputTimestamps extends FlatSpec with BeforeAndAfter {
     assert(out1.sentToBsdbTStamp.get<out2.sentToBsdbTStamp.get)
   }
   
-  it must "re-send the same output" in {
-    val inputs: Set[IASValue[_]] = Set(f.buildValue(0))
-    f.inputsProvider.sendInputs(inputs)
-    
-    f.dasu.get.enableAutoRefreshOfOutput(true)
-    
-    
-    // Leave the DASU time to send the last computed output
-    Thread.sleep(5000*autoRefreshTime+1000)
-    
-    assert(f.outputStringsReceived.size>=5)
-    assert(f.outputValuesReceived.size>=5)
-    
-    f.dasu.get.enableAutoRefreshOfOutput(false)
-    
-    f.outputStringsReceived.foreach( s =>
-      logger.info("String received [{}]",s))
-    
-    val strOutput = f.outputStringsReceived.head
-    assert(f.outputStringsReceived.forall(s => s==strOutput))
-     
-    val firstValue =  f.outputValuesReceived.head
-    assert(f.outputValuesReceived.forall(iasVal => iasVal.value==firstValue.value))
-    //assert(f.outputValuesReceived.forall(iasVal => iasVal.timestamp==firstValue.timestamp))
-    assert(f.outputValuesReceived.forall(iasVal => iasVal.mode==firstValue.mode))
-    assert(f.outputValuesReceived.forall(iasVal => iasVal.iasValidity==firstValue.iasValidity))
-    assert(f.outputValuesReceived.forall(iasVal => iasVal.id==firstValue.id))
-    assert(f.outputValuesReceived.forall(iasVal => iasVal.fullRunningId==firstValue.fullRunningId))
-    assert(f.outputValuesReceived.forall(iasVal => iasVal.valueType==firstValue.valueType))
-     
-  }
+  
   
 }

@@ -230,7 +230,7 @@ class DasuImpl (
       lastTimerScheduledFeature.foreach(_.cancel(false))
       val runnable = new Runnable {
             /** The task to refresh the output when no new inputs have been received */
-            override def run() = publishOutput()
+            override def run() = publishOutput(calcOutputValidity())
         }
         val newTask=scheduledExecutor.scheduleWithFixedDelay(
             runnable, 
@@ -258,20 +258,12 @@ class DasuImpl (
   private def propagateIasios(iasios: Set[IASValue[_]]): Option[IASValue[_]] = {
       
       // Updates one ASCE i.e. runs its TF passing the inputs
-      // Return the output of the ASCE
+      // and returns the output of the ASCE
       def updateOneAsce(asceId: String, asceInputs: Set[IASValue[_]]): Option[IASValue[_]] = {
         
         
-        println("*** Updating ASCE ["+asceId+"] with inputs "+asceInputs.mkString(" || "))
-        asces.keys.foreach(k => {
-          println("***** Inputs of ASCE ["+k+"] ="+getInputsOfAsce(k).mkString(", "))
-        })
-        
         val requiredInputs = dasuTopology.inputsOfAsce(asceId)
-        assert(requiredInputs.isDefined,"No inputs required by "+asceId)
-        val inputs: Set[IASValue[_]] = asceInputs.filter( p => requiredInputs.get.contains(p.id))
-        
-        println("******* Inputs for ACSE ["+asceId+"]"+inputs.mkString(", "))
+        val inputs: Set[IASValue[_]] = asceInputs.filter( p => requiredInputs.contains(p.id))
         
         if (!inputs.isEmpty) {
           // Get the ASCE with the given ID 
@@ -344,58 +336,24 @@ class DasuImpl (
   }
   
   /**
-   * Publish the last calculated output to the BSDB after assessing its validity.
+   * Publish the last calculated output to the BSDB with the given validity.
    *
    * This method can be called by the automatic sending and by a change in the output
    * and blindly publish the last calculated output.
+   * 
+   * @param actualValidity the validity
    */
-  def publishOutput() {
+  private def publishOutput(actualValidity: Validity) {
     
-    // Calculate the actual validity of the output
     val currentOutput = asceThatProducesTheOutput.output
     
     currentOutput.value.foreach({ v =>
+      lastSentTime.set(System.currentTimeMillis())
+      val iasioToSend = currentOutput.updateSentToBsdbTStamp(lastSentTime.get)
+      val iasValueToSend = iasioToSend.toIASValue().updateValidity(actualValidity)
       
-      val inputIds = getInputIds()
-      val asceIds = getAsceIds()
-      
-      // The map (asceID, Set[InputIds])
-      val inputsOfAsces = 
-        asceIds.foldLeft( Map.empty[String,Set[String]]) { (z, asceId) =>
-          if (getInputsOfAsce(asceId).isDefined) z+(asceId -> getInputsOfAsce(asceId).get)
-          else z
-        }
-      
-      // The map (inputId, asceId)
-      val inputToAsceId: Map[String,String] =
-        inputIds.foldLeft( Map.empty[String,String]) { (z, inputId) =>
-        // A map with all the ASCEs that contains the  inputId input
-        val ascesWithInputId =  inputsOfAsces.find(p => p._2.contains(inputId))
-        
-        if (ascesWithInputId.isDefined) z + (inputId -> ascesWithInputId.get._1)
-        else z
-      }
-    
-      // The Map (inputid, ComputingElement)
-      val inputToAsce = inputIds.foldLeft( Map.empty[String,ComputingElement[_]]) { (z,inId) =>
-        val asce = inputToAsceId(inId)
-        z + (inId -> asces(asce))
-      }
-      
-      val currentInputs = inputIds.map(id => {
-        val asce = inputToAsce(id)
-        asce.inputs(id)
-      })
-      assert(currentInputs.size == inputIds.size)
-      
-      val validity = calcOutputValidity(currentOutput, currentInputs)
-      
-      val lastSent = lastSentOutputAndValidity.get
-      
-      val valueToSend = currentOutput.toIASValue().updateValidity(validity)
-      lastSentOutputAndValidity.set(Some(currentOutput,validity))
-      outputPublisher.publish(valueToSend)
-        
+      lastSentOutputAndValidity.set(Some(iasioToSend,actualValidity))
+      outputPublisher.publish(iasValueToSend)
     })
     
     
@@ -408,17 +366,33 @@ class DasuImpl (
    * The method delegates the calculation to propapgateIasios
    */
   private def updateAndPublishOutput() = {
-        
+    // Let the ASCEs produce the new output
     val before = System.currentTimeMillis()
+    val oldCalculatedOutput = lastCalculatedOutput.get
     lastCalculatedOutput.set(propagateIasios(notYetProcessedInputs.values.toSet))
     val after = System.currentTimeMillis()
     lastUpdateTime.set(after)
     notYetProcessedInputs.clear()
     
-    publishOutput()
-    rescheduleAutoSendTimeInterval()
+    // Publish the value only if the output has been produced
+    lastCalculatedOutput.get.foreach( output => {
+      
+      // The validity of the output
+      val outputValidity = calcOutputValidity()
+      
+      // Do we really need to send the output imemdiately?
+      // If it did not change then it will be sent by the auto-send
+      val prevSentOutputAndValidity = lastSentOutputAndValidity.get()
+      if (prevSentOutputAndValidity.isEmpty || 
+          prevSentOutputAndValidity.get._2!=outputValidity ||
+          prevSentOutputAndValidity.get._1.value!= output.value ||
+          prevSentOutputAndValidity.get._1.mode!=output.mode) {
+        publishOutput(outputValidity)
+        rescheduleAutoSendTimeInterval()
+        statsCollector.updateStats(after-before)
+      }
+    })
     
-    statsCollector.updateStats(after-before)
   }
   
   /**
@@ -474,11 +448,22 @@ class DasuImpl (
       Validity.minValidity(fromIASValueValiditiesSet)
     }
     
-    // TODO: If some of the required inputs never arrived, then the validity must be set to unreliable
-    
     val validitybyTime = getInputsValidityByUpdateTime(inputs).iasValidity
     val validityByIasValue = getInputsValidityByIASValueValidity(inputs).iasValidity
     Validity.minValidity(Set(validitybyTime,validityByIasValue))
+  }
+  
+  private def calcOutputValidity(): Validity = {
+    val currentOutput = asceThatProducesTheOutput.output
+    val currentInputs = dasuTopology.dasuInputs.map(id => {
+        // Take the first ASCE that has this input
+        val asceId = dasuTopology.ascesOfInput(id).head
+        val asce= asces(asceId)
+        asce.inputs(id)
+      })
+      assert(currentInputs.size == dasuTopology.dasuInputs.size)
+      
+      calcOutputValidity(currentOutput, currentInputs)
   }
   
   /**
@@ -486,7 +471,7 @@ class DasuImpl (
    * 
    * The validity of the output depends
    * * on the time when the output has been generated
-   *   by the ASCEs
+   *   by the ASCEs of this DASU
    * * the time when the inputs have been refreshed
    * 
    * @param output the output of the DASU
