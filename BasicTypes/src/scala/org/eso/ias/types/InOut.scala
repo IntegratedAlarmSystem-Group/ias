@@ -224,6 +224,13 @@ case class InOut[A](
 	      if (iasValue.dasuProductionTStamp.isPresent()) Some(iasValue.dasuProductionTStamp.get()) else None)
   }
   
+  def updateSentToBsdbTStamp(timestamp: Long) = {
+    val newTimestamp = Option(timestamp)
+    require(newTimestamp.isDefined)
+    
+    this.copy(sentToBsdbTStamp=newTimestamp)
+  }
+  
   /**
    * Build and return the IASValue representation of this IASIO
    * 
