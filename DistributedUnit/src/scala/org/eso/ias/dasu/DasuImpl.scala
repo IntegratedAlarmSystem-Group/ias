@@ -380,12 +380,16 @@ class DasuImpl (
       // The validity of the output
       val outputValidity = calcOutputValidity()
       
-      // Do we really need to send the output imemdiately?
+      // Do we really need to send the output immediately?
       // If it did not change then it will be sent by the auto-send
       val prevSentOutputAndValidity = lastSentOutputAndValidity.get()
+      
+      prevSentOutputAndValidity.foreach(tuple => {
+        assert(tuple._1.value.isDefined)
+      })
       if (prevSentOutputAndValidity.isEmpty || 
-          prevSentOutputAndValidity.get._2!=outputValidity ||
-          prevSentOutputAndValidity.get._1.value!= output.value ||
+          prevSentOutputAndValidity.get._2!=outputValidity.iasValidity ||
+          prevSentOutputAndValidity.get._1.value.get!= output.value ||
           prevSentOutputAndValidity.get._1.mode!=output.mode) {
         publishOutput(outputValidity)
         rescheduleAutoSendTimeInterval()

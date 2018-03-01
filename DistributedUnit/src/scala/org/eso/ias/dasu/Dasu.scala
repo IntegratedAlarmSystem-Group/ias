@@ -77,12 +77,12 @@ abstract class Dasu(
   /** 
    *  Auto send time interval in milliseconds
    */
-  val autoSendTimeIntervalMillis = TimeUnit.SECONDS.convert(autoSendTimeInterval.toLong, TimeUnit.MILLISECONDS)
+  val autoSendTimeIntervalMillis = TimeUnit.MILLISECONDS.convert(autoSendTimeInterval.toLong, TimeUnit.SECONDS)
   
   /** 
    *  The tolerance in milliseconds
    */
-  val toleranceMillis = TimeUnit.SECONDS.convert(tolerance.toLong, TimeUnit.MILLISECONDS)
+  val toleranceMillis = TimeUnit.MILLISECONDS.convert(tolerance.toLong, TimeUnit.SECONDS)
   
   /**
    * The minimum allowed refresh rate when a flow of inputs arrive (i.e. the throttiling) 

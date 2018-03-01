@@ -31,6 +31,7 @@ import org.eso.ias.dasu.publisher.OutputListener
 
 // The following import is required by the usage of the fixture
 import language.reflectiveCalls
+import org.eso.ias.types.IasValidity
 
 /**
  * Test the DASU with 7 ASCEs (in 3 levels).
@@ -128,14 +129,23 @@ class Dasu7ASCEsTest extends FlatSpec {
   
   val iasValuesReceived = new ListBuffer[IASValue[_]]
   
-  def buildValue(id: String, fullRunningID: String, d: Double): IASValue[_] = {
+  def buildValue(
+      id: String, 
+      fullRunningID: String, 
+      d: Double): IASValue[_] = buildValue(id, fullRunningID, d, RELIABLE)
+  
+  def buildValue(
+      id: String, 
+      fullRunningID: String, 
+      d: Double,
+      validity: IasValidity): IASValue[_] = {
     
     val t0 = System.currentTimeMillis()-100
     
     IASValue.build(
       d,
 			OperationalMode.OPERATIONAL,
-			UNRELIABLE,
+			validity,
 			fullRunningID,
 			IASTypes.DOUBLE,
 			t0,
@@ -292,6 +302,91 @@ class Dasu7ASCEsTest extends FlatSpec {
     assert(outputProducedByDasu.get.valueType==IASTypes.ALARM)
     assert(outputProducedByDasu.get.value.asInstanceOf[AlarmSample]== AlarmSample.SET)
     f.dasu.cleanUp()
+  }
+  
+  behavior of "the output validity"
+  
+  it must "be UNRELIABLE when at least one input is UNRELIABLE" in {
+    val f = fixture
+    
+    // Start the getting of events in the DASU
+    assert(f.dasu.start().isSuccess)
+    f.iasValuesReceived.clear()
+    f.eventsReceived.set(0)
+    
+    // Avoid auto refresh to engage
+    f.dasu.enableAutoRefreshOfOutput(false)
+    
+    logger.info("Submits a set of RELIABLE inputs")
+    val inputs: Set[IASValue[_]] = Set(f.buildValue(f.inputTemperature1ID.id, f.inputTemperature1ID.fullRunningID,0))
+    val setOfInputs1: Set[IASValue[_]] = {
+      val v1=f.buildValue(f.inputTemperature1ID.id, f.inputTemperature1ID.fullRunningID,5)
+      val v2=f.buildValue(f.inputTemperature2ID.id, f.inputTemperature2ID.fullRunningID,6)
+      val v3=f.buildValue(f.inputTemperature3ID.id, f.inputTemperature3ID.fullRunningID,7)
+      val v4=f.buildValue(f.inputTemperature4ID.id, f.inputTemperature4ID.fullRunningID,8)
+      Set(v1,v2,v3,v4)
+    }
+    f.inputsProvider.sendInputs(setOfInputs1)
+     
+    // wait to avoid the throttling to engage
+    Thread.sleep(2*f.dasu.throttling)
+    assert(f.iasValuesReceived.size==1)
+    assert(f.iasValuesReceived.head.iasValidity == RELIABLE)
+    
+    f.iasValuesReceived.clear()
+    f.eventsReceived.set(0)
+    val setOfInputs2 = Set[IASValue[_]](f.buildValue(f.inputTemperature1ID.id, f.inputTemperature1ID.fullRunningID,5,UNRELIABLE))
+    
+     f.inputsProvider.sendInputs(setOfInputs2)
+    // wait to avoid the throttling to engage
+    Thread.sleep(2*f.dasu.throttling)
+    assert(f.iasValuesReceived.size==1)
+    assert(f.iasValuesReceived.head.iasValidity == UNRELIABLE)
+  }
+  
+  it must "be UNRELIABLE when some of the inputs is not refreshed in time" in {
+    val f = fixture
+    
+    // Start the getting of events in the DASU
+    assert(f.dasu.start().isSuccess)
+    f.iasValuesReceived.clear()
+    f.eventsReceived.set(0)
+    
+    // Avoid auto refresh to engage
+    f.dasu.enableAutoRefreshOfOutput(true)
+    
+    val setOfInputs1: Set[IASValue[_]] = {
+      val v1=f.buildValue(f.inputTemperature1ID.id, f.inputTemperature1ID.fullRunningID,5)
+      val v2=f.buildValue(f.inputTemperature2ID.id, f.inputTemperature2ID.fullRunningID,6)
+      val v3=f.buildValue(f.inputTemperature3ID.id, f.inputTemperature3ID.fullRunningID,7)
+      val v4=f.buildValue(f.inputTemperature4ID.id, f.inputTemperature4ID.fullRunningID,8)
+      Set(v1,v2,v3,v4)
+    }
+    f.inputsProvider.sendInputs(setOfInputs1)
+    
+    // wait to avoid the throttling to engage
+    Thread.sleep(2*f.dasu.throttling)
+    assert(f.iasValuesReceived.size==1)
+    assert(f.iasValuesReceived.head.iasValidity == RELIABLE)
+    
+    val setOfInputs2: Set[IASValue[_]] = {
+      val v1=f.buildValue(f.inputTemperature1ID.id, f.inputTemperature1ID.fullRunningID,8)
+      val v2=f.buildValue(f.inputTemperature2ID.id, f.inputTemperature2ID.fullRunningID,23)
+      val v3=f.buildValue(f.inputTemperature3ID.id, f.inputTemperature3ID.fullRunningID,11)
+      Set(v1,v2,v3)
+    }
+    
+    f.iasValuesReceived.clear()
+    f.eventsReceived.set(0)
+    
+    // Sent 3 inputs of 4 and wait until the DASU sends the new output by auto-sending
+    while (f.eventsReceived.get()!=2) {
+      logger.info("Sending some inputs")
+      f.inputsProvider.sendInputs(setOfInputs2)
+      Thread.sleep(1000)
+    }
+    assert(f.iasValuesReceived.last.iasValidity == UNRELIABLE)
+    
   }
   
 }
