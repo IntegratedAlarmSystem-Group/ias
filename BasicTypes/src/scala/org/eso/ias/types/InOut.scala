@@ -106,6 +106,15 @@ case class InOut[A](
     } else {
        ret.append("Value: "+value.get.toString())
     }
+    
+    pluginProductionTStamp.foreach(t => { ret.append(", pluginProductionTStamp="); ret.append(t); })
+	  sentToConverterTStamp.foreach(t => { ret.append(", sentToConverterTStamp="); ret.append(t); })
+	  receivedFromPluginTStamp.foreach(t => { ret.append(", receivedFromPluginTStamp="); ret.append(t); })
+	  convertedProductionTStamp.foreach(t => { ret.append(", convertedProductionTStamp="); ret.append(t); })
+	  sentToBsdbTStamp.foreach(t => { ret.append(", sentToBsdbTStamp="); ret.append(t); })
+	  readFromBsdbTStamp.foreach(t => { ret.append(", readFromBsdbTStamp="); ret.append(t); })
+	  dasuProductionTStamp.foreach(t => { ret.append(", dasuProductionTStamp="); ret.append(t); })
+	  
     ret.toString()
   }
   
