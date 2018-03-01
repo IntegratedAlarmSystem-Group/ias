@@ -76,7 +76,7 @@ class Dasu7ASCEsTest extends FlatSpec {
   /** Notifies about a new output produced by the DASU */
   class TestListener extends OutputListener { 
     override def outputEvent(output: IASValue[_]) {
-      logger.info("Event received from DASU: ",output.id)
+      logger.info("Event received from DASU: [{}]",output.id)
       eventsReceived.incrementAndGet();
       iasValuesReceived.append(output)
     }
@@ -195,15 +195,17 @@ class Dasu7ASCEsTest extends FlatSpec {
     // the DASU receives all the inputs
     f.inputsProvider.sendInputs(inputs)
     println("Set submitted")
+    // We expect no alarm because teh DASU has not yet received all the inputs
     assert(f.iasValuesReceived.size==0)
     
-    // wait to avoid the throttling
+    // wait to avoid the throttling to engage
     Thread.sleep(2*f.dasu.throttling)
     
     // Submit a set with Temperature 1 in a non nominal state
     logger.info("Submitting a set with only one temp {} in NON nominal state",f.inputTemperature1ID.id)
     f.inputsProvider.sendInputs(Set(f.buildValue(f.inputTemperature1ID.id, f.inputTemperature1ID.fullRunningID,100)))
     println("Another empty set submitted")
+    // Stil no alarm because teh DASU have not yet received all the inputs
     assert(f.iasValuesReceived.size==0)
     
     // wait to avoid the throttling
@@ -219,6 +221,7 @@ class Dasu7ASCEsTest extends FlatSpec {
       Set(v1,v2,v3,v4)
     }
     f.inputsProvider.sendInputs(setOfInputs)
+    // No the DASU has all the inputs and must produce the output
     assert(f.iasValuesReceived.size==1)
     val outputProducedByDasu = f.iasValuesReceived.last
     assert(outputProducedByDasu.valueType==IASTypes.ALARM)
@@ -266,8 +269,7 @@ class Dasu7ASCEsTest extends FlatSpec {
       val v4=f.buildValue(f.inputTemperature4ID.id, f.inputTemperature4ID.fullRunningID,8)
       Set(v1,v2,v3,v4)
     }
-    f.inputsProvider.sendInputs(inputs) // Calculate output immediately: now output with only temp 1
-    f.inputsProvider.sendInputs(setOfInputs1) // Delayed
+    f.inputsProvider.sendInputs(setOfInputs1) // // Calculate output immediately
     f.inputsProvider.sendInputs(Set(f.buildValue(f.inputTemperature1ID.id, f.inputTemperature1ID.fullRunningID,100))) // Delayed
     f.inputsProvider.sendInputs(setOfInputs2) // Delayed
     // And finally the throttling time expires and the output is generated again
@@ -277,13 +279,13 @@ class Dasu7ASCEsTest extends FlatSpec {
     Thread.sleep(2*f.dasu.throttling)
 
     // We sent 4 updates and expect that the DASU
-    // * updated immediately the ouptut when the first inputs have been subitted
+    // * updated immediately the output when the first inputs have been submitted
     // * with the second submit of inputs, the DASU activate the throttling and delayed the execution
     // * finally the throttling time expires and the output is calculated
     // 
     // In total the DASU is expected to run 2 (instead of 4) update cycles
     assert(f.dasu.statsCollector.iterationsRun.get.toInt==2)
-    assert(f.iasValuesReceived.size==1) // Only one output has been published
+    assert(f.iasValuesReceived.size==2) // Only one output has been published
     
     val outputProducedByDasu = f.dasu.lastCalculatedOutput.get
     assert(outputProducedByDasu.isDefined)
