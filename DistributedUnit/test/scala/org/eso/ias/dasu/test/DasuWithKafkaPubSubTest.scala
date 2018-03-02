@@ -27,7 +27,7 @@ import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.types.IASTypes
 
 /**
- * test if the DASU is capable to get events from
+ * Test if the DASU is capable to get events from
  * the IASIO kafka queue and publish the result 
  * in the same queue.
  * 
@@ -99,12 +99,20 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener {
   logger.info("Ready to start the test...")
   
   def buildValue(d: Double): IASValue[_] = {
+    val t0 = System.currentTimeMillis()-100
     IASValue.build(
         d,
-        OperationalMode.OPERATIONAL,
-        UNRELIABLE,
-        inputID.fullRunningID,
-        IASTypes.DOUBLE)
+			  OperationalMode.OPERATIONAL,
+			  UNRELIABLE,
+			  inputID.fullRunningID,
+			  IASTypes.DOUBLE,
+			  t0,
+			  t0+5,
+			  t0+10,
+			  t0+15,
+			  t0+20,
+			  t0+25,
+			  null)
   }
   
   def stringEventReceived(event: String) = {
