@@ -12,12 +12,12 @@ import org.eso.ias.types.Identifier
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.types.IdentifierType
 import org.eso.ias.types.IASValue
-import org.eso.ias.types.IasDouble
 import org.eso.ias.types.IasValidity._
 import org.eso.ias.types.OperationalMode
 import org.eso.ias.dasu.publisher.ListenerOutputPublisherImpl
 import org.eso.ias.dasu.publisher.OutputListener
 import scala.collection.mutable.ArrayBuffer
+import org.eso.ias.types.IASTypes
 
 /**
  * Setup the DASU with one ASCE as it is reused by more 
@@ -25,7 +25,7 @@ import scala.collection.mutable.ArrayBuffer
  * 
  * @param autoRefreshTimeInterval The auto-refresh time (msec) to pass to the DASU 
  */
-class DasuOneAsceCommon(autoRefreshTimeInterval: Long) extends OutputListener {
+class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, tolerance: Integer) extends OutputListener {
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass);
   
@@ -82,15 +82,26 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Long) extends OutputListener {
   }
   
   def buildDasu(): Option[DasuImpl] = {
-    Some(new DasuImpl(dasuIdentifier,outputPublisher,inputsProvider,cdbReader,autoRefreshTimeInterval))
+    Some(new DasuImpl(dasuIdentifier,outputPublisher,inputsProvider,cdbReader,autoRefreshTimeInterval,tolerance))
   }
   
+  
   def buildValue(d: Double): IASValue[_] = {
-    new IasDouble(
-        d,
-        System.currentTimeMillis(),
-        OperationalMode.OPERATIONAL,
-        UNRELIABLE,
-        inputID.fullRunningID)
+    val t0 = System.currentTimeMillis()-100
+    
+    IASValue.build(
+      d,
+			OperationalMode.OPERATIONAL,
+			UNRELIABLE,
+			inputID.fullRunningID,
+			IASTypes.DOUBLE,
+			t0,
+			t0+5,
+			t0+10,
+			t0+15,
+			t0+20,
+			null,
+			null)
   }
+    
 }

@@ -144,14 +144,24 @@ class SupervisorTest extends FlatSpec {
     val DasuId = new Identifier("DASU-Id", IdentifierType.DASU, Sup2Id)
     val AsceId = new Identifier("ASCE-Id", IdentifierType.ASCE, DasuId)
     val iasiosToSend = for (i <- 1 to 20) yield {
-      val iasValueId = new Identifier("IASIO-Id" + i, IdentifierType.IASIO, AsceId)
-      IASValue.buildIasValue(
-        10L, System.currentTimeMillis(),
-        OperationalMode.OPERATIONAL,
-        IasValidity.RELIABLE,
-        iasValueId.fullRunningID,
-        IASTypes.LONG)
+    val iasValueId = new Identifier("IASIO-Id" + i, IdentifierType.IASIO, AsceId)
+    
+    val t0 = System.currentTimeMillis()-100
+      IASValue.build(
+        10L,
+			  OperationalMode.OPERATIONAL,
+			  IasValidity.RELIABLE,
+			  iasValueId.fullRunningID,
+			  IASTypes.LONG,
+			  t0,
+			  t0+5,
+			  t0+10,
+			  t0+15,
+			  t0+20,
+			  t0+25,
+			null)
     }
+    
     assert(iasiosToSend.toSet.size == 20)
 
     logger.info(
@@ -172,12 +182,22 @@ class SupervisorTest extends FlatSpec {
       id = "ASCE" + i + "OnDasu2-ID" + x + "-In"
     } yield {
       val iasValueId = new Identifier(id, IdentifierType.IASIO, AsceId)
-      IASValue.buildIasValue(
-        10L, System.currentTimeMillis(),
-        OperationalMode.OPERATIONAL,
-        IasValidity.RELIABLE,
-        iasValueId.fullRunningID,
-        IASTypes.LONG)
+      val t0 = System.currentTimeMillis()-100
+      IASValue.build(
+        10L,
+			  OperationalMode.OPERATIONAL,
+			  IasValidity.RELIABLE,
+			  iasValueId.fullRunningID,
+			  IASTypes.LONG,
+			  t0,
+			  t0+5,
+			  t0+10,
+			  t0+15,
+			  t0+20,
+			  t0+25,
+			null)
+			
+      
     }
 
     val iasioForDasu2Set = iasioForDasu2.toSet
@@ -211,12 +231,20 @@ class SupervisorTest extends FlatSpec {
       id = "ASCE" + i + "OnDasu1-ID" + x + "-In"
     } yield {
       val iasValueId = new Identifier(id, IdentifierType.IASIO, AsceId)
-      IASValue.buildIasValue(
-        10L, System.currentTimeMillis(),
-        OperationalMode.OPERATIONAL,
-        IasValidity.RELIABLE,
-        iasValueId.fullRunningID,
-        IASTypes.LONG)
+      val t0 = System.currentTimeMillis()-100
+      IASValue.build(
+        10L,
+			  OperationalMode.OPERATIONAL,
+			  IasValidity.RELIABLE,
+			  iasValueId.fullRunningID,
+			  IASTypes.LONG,
+			  t0,
+			  t0+5,
+			  t0+10,
+			  t0+15,
+			  t0+20,
+			  t0+25,
+			null)
     }
     
     // And for DASU3
@@ -226,12 +254,21 @@ class SupervisorTest extends FlatSpec {
       id = "ASCE" + i + "OnDasu3-ID" + x + "-In"
     } yield {
       val iasValueId = new Identifier(id, IdentifierType.IASIO, AsceId)
-      IASValue.buildIasValue(
-        10L, System.currentTimeMillis(),
-        OperationalMode.OPERATIONAL,
-        IasValidity.RELIABLE,
-        iasValueId.fullRunningID,
-        IASTypes.LONG)
+      val t0 = System.currentTimeMillis()-100
+      IASValue.build(
+        10L,
+			  OperationalMode.OPERATIONAL,
+			  IasValidity.RELIABLE,
+			  iasValueId.fullRunningID,
+			  IASTypes.LONG,
+			  t0,
+			  t0+5,
+			  t0+10,
+			  t0+15,
+			  t0+20,
+			  t0+25,
+			null)
+      
     }
 
     val iasioForDasusSet = iasioForDasu1.toSet ++ iasioForDasu3.toSet

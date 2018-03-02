@@ -12,7 +12,6 @@ import org.eso.ias.dasu.publisher.JsonWriterPublisher
 import org.eso.ias.cdb.json.JsonReader
 import org.ias.logging.IASLogger
 import java.nio.file.FileSystems
-import org.eso.ias.types.IasDouble
 import org.eso.ias.types.IdentifierType
 import java.io.File
 import scala.io.Source
@@ -49,7 +48,7 @@ class JsonPublisherTest extends FlatSpec {
   val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervId)
   
   // The DASU
-  val dasu = new DasuImpl(dasuIdentifier,outputPublisher,inputsProvider,cdbReader,1)
+  val dasu = new DasuImpl(dasuIdentifier,outputPublisher,inputsProvider,cdbReader,3,1)
   
   // The identifer of the monitor system that produces the temperature in input to teh DASU
   val monSysId = new Identifier("MonitoredSystemID",IdentifierType.MONITORED_SOFTWARE_SYSTEM)
@@ -61,12 +60,22 @@ class JsonPublisherTest extends FlatSpec {
   val inputID = new Identifier("Temperature", IdentifierType.IASIO,converterId)
   
   def buildValue(d: Double): IASValue[_] = {
-    new IasDouble(
-        d,
-        System.currentTimeMillis(),
-        OPERATIONAL,
-        UNRELIABLE,
-        inputID.fullRunningID)
+    
+    val t0 = System.currentTimeMillis()-100
+    
+    IASValue.build(
+      d,
+			OPERATIONAL,
+			UNRELIABLE,
+			inputID.fullRunningID,
+			IASTypes.DOUBLE,
+			t0,
+			t0+5,
+			t0+10,
+			t0+15,
+			t0+20,
+			null,
+			null)
   }
   
   behavior of "The DASU"

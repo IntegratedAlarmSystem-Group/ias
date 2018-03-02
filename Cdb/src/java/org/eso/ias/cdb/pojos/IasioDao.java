@@ -32,12 +32,6 @@ public class IasioDao {
 	private IasTypeDao iasType;
 	
 	/**
-	 * Expected refresh rate
-	 */
-	@Basic(optional=false)
-	private int refreshRate;
-	
-	/**
 	 * Empty constructor
 	 */
 	public IasioDao() {}
@@ -47,15 +41,13 @@ public class IasioDao {
 	 * 
 	 * @param id The identifier
 	 * @param descr The description
-	 * @param rate The refresh rate
 	 * @param type The IAS type
 	 */
-	public IasioDao(String id, String descr, int rate, IasTypeDao type) {
+	public IasioDao(String id, String descr, IasTypeDao type) {
 		Objects.requireNonNull(id, "The identifier can't be null");
 		Objects.requireNonNull(type, "The IAS type can't be null");
 		this.id=id;
 		this.shortDesc=descr;
-		this.refreshRate=rate;
 		this.iasType=type;
 	}
 
@@ -88,14 +80,6 @@ public class IasioDao {
 		Objects.requireNonNull(iasType, "The IAS type can't be null");
 		this.iasType = iasType;
 	}
-
-	public int getRefreshRate() {
-		return refreshRate;
-	}
-
-	public void setRefreshRate(int refreshRate) {
-		this.refreshRate = refreshRate;
-	}
 	
 	@Override
 	public String toString() {
@@ -103,8 +87,6 @@ public class IasioDao {
 		ret.append(getId());
 		ret.append(", type=");
 		ret.append(getIasType().toString());
-		ret.append(", refreshRate=");
-		ret.append(getRefreshRate());
 		if (getShortDesc()!=null) { 
 			ret.append(", desc=\"");		
 			ret.append(getShortDesc());
@@ -126,14 +108,13 @@ public class IasioDao {
 
 		IasioDao other = (IasioDao) obj;
 
-		return this.getRefreshRate() == other.getRefreshRate() && 
-				this.getId().equals(other.getId()) &&
+		return 	this.getId().equals(other.getId()) &&
 				this.getIasType().equals(other.getIasType()) && 
 				Objects.equals(this.getShortDesc(),other.getShortDesc());
 	}
 	
 	@Override
 	public int hashCode() {
-		return Objects.hash(id,iasType,refreshRate,shortDesc);
+		return Objects.hash(id,iasType,shortDesc);
 	}
 }

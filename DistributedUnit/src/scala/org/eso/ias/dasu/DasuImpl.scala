@@ -34,27 +34,29 @@ import org.eso.ias.types.IasValidity
  * The implementation of the DASU.
  * 
  * A DASU normally has 2 threads running:
- * - the automatic resending of the output when no new input arrives
+ * - the automatic sending of the output when no new input arrives 
+ *   or the output did not change
  * - a thread for the throttling to avoid that processing too many 
  *   inputs takes 100% CPU
- *   
- * 
- * 
  * 
  * @param the identifier of the DASU
+ * @param refreshRate the refresh rate (seconds) to automatically resend the last calculated 
+ *                    output even if it did not change
  * @param outputPublisher the publisher to send the output
  * @param inputSubscriber the subscriber getting events to be processed 
  * @param cdbReader the CDB reader to get the configuration of the DASU from the CDB
- * @param autoSendTimeInterval refresh rate (msec) to automatically send the output  
- *                             when no new inputs have been received
+ * @param autoSendTimeInterval refresh rate (sec) to automatically send the output  
+ *                             even if it did not change
+ * @param tolerance the max delay (secs) before declaring an input unreliable
  */
 class DasuImpl (
     dasuIdentifier: Identifier,
     private val outputPublisher: OutputPublisher,
     private val inputSubscriber: InputSubscriber,
     cdbReader: CdbReader,
-    val autoSendTimeInterval: Long)
-    extends Dasu(dasuIdentifier) {
+    autoSendTimeInterval: Integer,
+    tolerance: Integer)
+    extends Dasu(dasuIdentifier,autoSendTimeInterval,tolerance) {
   require(Option(dasuIdentifier).isDefined,"Invalid Identifier")
   require(dasuIdentifier.idType==IdentifierType.DASU,"Invalid identifier type for DASU")
   require(Option(outputPublisher).isDefined,"Invalid output publisher")
@@ -74,7 +76,7 @@ class DasuImpl (
     dasuOptional.get
   }
   // TODO: release CDB resources
-  logger.debug("DASU [{}] configuration red from CDB",id)
+  logger.debug("DASU [{}] configuration read from CDB",id)
   
   /**
    * The configuration of the ASCEs that run in the DASU
@@ -123,21 +125,16 @@ class DasuImpl (
   /** The ASCE that produces the output */
   val asceThatProducesTheOutput = asces(idOfAsceThatProducesTheOutput)
   
-  // The refresh rate of the output
-  // (it is the refresh rate of the IASIO of the ASCE that produces the output of the DASU)
-  val outputRefreshRate = asceDaos.find(_.getOutput.getId==dasuOutputId).map(asce => asce.getOutput().getRefreshRate())
-  require(outputRefreshRate.isDefined,"Refresh rate of the output not found!")
-  
   /**
    * Values that have been received in input from plugins or other DASUs (BSDB)
-   * and not yet processed
+   * and not yet processed by the ASCEs
    * 
    * TODO: protect the map against access from multiple threads
    */
   val notYetProcessedInputs: MutableMap[String,IASValue[_]] = MutableMap()
   
   /** 
-   *  The last calculated output
+   *  The last calculated output by ASCEs
    */
   val lastCalculatedOutput = new AtomicReference[Option[IASValue[_]]](None)
   
@@ -146,7 +143,7 @@ class DasuImpl (
    *  this is sent again if no new inputs arrives and the autoSendTimerTask is running
    *  and the validity did not change since the last sending
    */
-  val lastSentOutputAndValidity = new AtomicReference[Option[Tuple2[IASValue[_], IasValidity]]](None)
+  val lastSentOutputAndValidity = new AtomicReference[Option[Tuple2[InOut[_], IasValidity]]](None)
   
   /** 
    *  The point in time when the output has been sent to the
@@ -233,9 +230,13 @@ class DasuImpl (
       lastTimerScheduledFeature.foreach(_.cancel(false))
       val runnable = new Runnable {
             /** The task to refresh the output when no new inputs have been received */
-            override def run() = publishOutput(None)
+            override def run() = publishOutput(calcOutputValidity())
         }
-        val newTask=scheduledExecutor.scheduleWithFixedDelay(runnable, autoSendTimeInterval, autoSendTimeInterval, TimeUnit.MILLISECONDS)
+        val newTask=scheduledExecutor.scheduleWithFixedDelay(
+            runnable, 
+            autoSendTimeInterval.toLong, 
+            autoSendTimeInterval.toLong, 
+            TimeUnit.SECONDS)
         autoSendTimerTask.set(newTask)
     }
   }
@@ -244,11 +245,11 @@ class DasuImpl (
    * Propagates the inputs received from the BSDB to each of the ASCEs
    * in the DASU generating the output of the entire DASU.
    * 
-   * This method runs after the refresh time interval elapses.
+   * This method runs after the throttling time interval elapses.
    * All the iasios collected in the time interval will be passed to the first level of the ASCEs
-   * and up till the last ASCE generates the output of the DASU itself.
+   * and up till the last ASCE that generates the output of the DASU itself.
    * Each ASCE runs the TF and produces another output to be propagated to the next level.
-   * The last level is the only one ASCE that produces the output of the DASU
+   * The last level is the one that produces the output of the DASU
    * to be sent to the BSDB.
    * 
    * @param iasios the IASIOs received from the BDSB in the last time interval
@@ -257,18 +258,24 @@ class DasuImpl (
   private def propagateIasios(iasios: Set[IASValue[_]]): Option[IASValue[_]] = {
       
       // Updates one ASCE i.e. runs its TF passing the inputs
-      // Return the output of the ASCE
-      def updateOneAsce(asceId: String, asceInputs: Set[IASValue[_]]): IASValue[_] = {
+      // and returns the output of the ASCE
+      def updateOneAsce(asceId: String, asceInputs: Set[IASValue[_]]): Option[IASValue[_]] = {
+        
         
         val requiredInputs = dasuTopology.inputsOfAsce(asceId)
-        assert(requiredInputs.isDefined,"No inputs required by "+asceId)
-        val inputs: Set[IASValue[_]] = asceInputs.filter( p => requiredInputs.get.contains(p.id))
-        // Get the ASCE with the given ID 
-        val asceOpt = asces.get(asceId)
-        assert(asceOpt.isDefined,"ASCE "+asceId+" NOT found!")
-        val asce: ComputingElement[_] = asceOpt.get
-        val updateRes: Tuple3[InOut[_],Validity, AsceStates.State] = asce.update(inputs)
-        JavaConverter.inOutToIASValue(updateRes._1,updateRes._2)
+        val inputs: Set[IASValue[_]] = asceInputs.filter( p => requiredInputs.contains(p.id))
+        
+        if (!inputs.isEmpty) {
+          // Get the ASCE with the given ID 
+          val asceOpt = asces.get(asceId)
+          assert(asceOpt.isDefined,"ASCE "+asceId+" NOT found!")
+          val asce: ComputingElement[_] = asceOpt.get
+          val asceResult: Option[InOut[_]] = asce.update(inputs)._1
+          asceResult.map( _.toIASValue() )
+        } else {
+          None
+        }
+        
       }
       
       // Run the TFs of all the ASCEs in one level
@@ -277,8 +284,12 @@ class DasuImpl (
         
         asces.foldLeft(levelInputs) ( 
           (s: Set[IASValue[_]], id: String ) => {
-            val output = updateOneAsce(id, levelInputs) 
-            s+output})
+            val output = updateOneAsce(id, levelInputs)
+            output match {
+              case Some(v) => s+v
+              case None => s
+            }
+            })
       }
       
       if (!closed.get) {
@@ -290,7 +301,7 @@ class DasuImpl (
   }
   
   /**
-   * Updates the output with new inputs have been received from the BSDB.
+   * New inputs have been received from the BSDB.
    * 
    * This method is not invoked while automatically re-sending the last computed value.
    * Such value is in fact stored into lastSentOutput and does not trigger
@@ -315,11 +326,9 @@ class DasuImpl (
     val throttlingIsScheduled = throttlingTask.get().isDefined && !throttlingTask.get().get.isDone()
     
     (throttlingIsScheduled, beforeEndOfThrottling) match {
-      case (true, true) =>  {}
-                          // delayed: do nothing
-      case (true, false) | (false, false) =>  
-        updateAndPublishOutput() // send immediately
-      case (false, true) => 
+      case (true, true)  => {} // delayed: do nothing
+      case (_ , false)   => updateAndPublishOutput() // send immediately
+      case (false, true) => // Activate throttling
         val delay =  throttling+now-lastSentTime.get
         val schedFeature = scheduledExecutor.schedule(delayedUpdateTask,delay,TimeUnit.MILLISECONDS)
         throttlingTask.set(Some(schedFeature))
@@ -327,56 +336,27 @@ class DasuImpl (
   }
   
   /**
-   * Publish the passed output to the BSDB.
+   * Publish the last calculated output to the BSDB with the given validity.
+   *
+   * This method can be called by the automatic sending and by a change in the output
+   * and blindly publish the last calculated output.
    * 
-   * The value effectively sent to the BSDB depends on the 
-   * passed parameter and the last sent value.
-   * 
-   * The calculated output has the validity calculated when it has been produced;
-   * if the calculatedoutput is empty, the validity must be updated as the
-   * validity of one of the inputs could have been changed in the mean time 
-   * 
-   * @param calculatedOutput the last calculated output (it has the last validity)
-   *                         it is empty if this method has been called
-   *                         without calculating an output (automatic sending for example)
+   * @param actualValidity the validity
    */
-  def publishOutput(calculatedOutput: Option[IASValue[_]]) {
+  private def publishOutput(actualValidity: Validity) {
     
-    val valueAndValidityToSend: Option[Tuple2[IASValue[_],IasValidity]] = 
-      ( calculatedOutput, lastSentOutputAndValidity.get) match {
-        case ( None, Some(sentVal)) =>
-          // Automatic sending of the last value
-          Option(sentVal._1,asceThatProducesTheOutput.getOutput()._2.iasValidity)
-        case ( Some(calc), _) =>
-          // Newly calculated value takes precedence
-          Option(calc, calc.iasValidity)
-        case ( None, None ) => None
-    }
+    val currentOutput = asceThatProducesTheOutput.output
     
-    
-    valueAndValidityToSend.foreach( valueAndValidity => {
-      // Shall we update the validity?
-      val valueToSendWithLastValidity= if (valueAndValidity._1.iasValidity==valueAndValidity._2) {
-        valueAndValidity._1  
-      } else {
-        IASValue.buildIasValue(
-            valueAndValidity._1.value, 
-            System.currentTimeMillis(), 
-            valueAndValidity._1.mode, 
-            valueAndValidity._2, // Set the actual validity 
-            valueAndValidity._1.fullRunningId, 
-            valueAndValidity._1.valueType)
-      }
+    currentOutput.value.foreach({ v =>
+      lastSentTime.set(System.currentTimeMillis())
+      val iasioToSend = currentOutput.updateSentToBsdbTStamp(lastSentTime.get)
+      val iasValueToSend = iasioToSend.toIASValue().updateValidity(actualValidity)
       
-      // Finally send the value but only if the value of the IASValue ios not null!
-      Option(valueToSendWithLastValidity.value).foreach( _ => {
-        outputPublisher.publish(valueToSendWithLastValidity)
-        lastSentTime.set(System.currentTimeMillis())
-        lastSentOutputAndValidity.set(Some((valueToSendWithLastValidity,valueAndValidity._2)))
-        logger.debug("DASU [{}]: output published",id)  
-      })
-         
+      lastSentOutputAndValidity.set(Some(iasioToSend,actualValidity))
+      outputPublisher.publish(iasValueToSend)
     })
+    
+    
   }
   
   /**
@@ -386,15 +366,165 @@ class DasuImpl (
    * The method delegates the calculation to propapgateIasios
    */
   private def updateAndPublishOutput() = {
-        
+    // Let the ASCEs produce the new output
     val before = System.currentTimeMillis()
+    val oldCalculatedOutput = lastCalculatedOutput.get
     lastCalculatedOutput.set(propagateIasios(notYetProcessedInputs.values.toSet))
     val after = System.currentTimeMillis()
     lastUpdateTime.set(after)
     notYetProcessedInputs.clear()
-    publishOutput(lastCalculatedOutput.get) 
-    rescheduleAutoSendTimeInterval()
-    statsCollector.updateStats(after-before)
+    
+    // Publish the value only if the output has been produced
+    lastCalculatedOutput.get.foreach( output => {
+      
+      // The validity of the output
+      val outputValidity = calcOutputValidity()
+      
+      // Do we really need to send the output immediately?
+      // If it did not change then it will be sent by the auto-send
+      val prevSentOutputAndValidity = lastSentOutputAndValidity.get()
+      
+      prevSentOutputAndValidity.foreach(tuple => {
+        assert(tuple._1.value.isDefined)
+      })
+      if (prevSentOutputAndValidity.isEmpty || 
+          prevSentOutputAndValidity.get._2!=outputValidity.iasValidity ||
+          prevSentOutputAndValidity.get._1.value.get!= output.value ||
+          prevSentOutputAndValidity.get._1.mode!=output.mode) {
+        publishOutput(outputValidity)
+        rescheduleAutoSendTimeInterval()
+        statsCollector.updateStats(after-before)
+      }
+    })
+    
+  }
+  
+  /**
+   * Calculate and return the validity of the inputs
+   * 
+   * The validity of the inputs depend on
+   * - the validity received from the BSDB
+   * - the update time of each input against the current timestamp
+   */
+  private def calcInputsValidity(inputs: Set[InOut[_]]): Validity = {
+    
+    // Get the validities of the inputs
+    // by comparing their timestamps against the threshold
+    //
+    // There are 2 possibilities: 
+    //   a) the input has been produced by a plugin
+    //   b) the input has been produced by another DASU
+    def getInputsValidityByUpdateTime(inputs: Set[InOut[_]]): Validity = {
+       
+      // All the inputs that have been refreshed before the following threshold 
+      // timestamp are UNRELIABLE 
+      val thresholdTStamp = System.currentTimeMillis() - autoSendTimeIntervalMillis - toleranceMillis
+      
+      val inputsValidityFromReceptionTimeSet = inputs.map( iasio => {
+        
+        // Case a) if the input has been produced by a plugin, then
+        //         its dasuProductionTStamp is empty and pluginProductionTStamp is defined
+        // Case b) if the input has been produced by a DASU, then
+        //         its dasuProductionTStamp is defined its pluginProductionTStamp is empty
+        assert(
+            iasio.dasuProductionTStamp.isDefined && iasio.pluginProductionTStamp.isEmpty ||
+            iasio.dasuProductionTStamp.isEmpty && iasio.pluginProductionTStamp.isDefined)
+          
+        val iasioTstamp = iasio.dasuProductionTStamp.getOrElse(iasio.pluginProductionTStamp.get)
+          
+        if (iasioTstamp<thresholdTStamp) {
+            IasValidity.UNRELIABLE
+        } else {
+            IasValidity.RELIABLE
+        }
+        
+      })
+      Validity.minValidity(inputsValidityFromReceptionTimeSet)
+    }
+    
+    def getInputsValidityByIASValueValidity(inputs: Set[InOut[_]]): Validity = {
+      
+      val fromIASValueValiditiesSet: Set[IasValidity] = 
+        inputs.foldLeft(Set.empty[IasValidity])((set,input) => 
+          if (input.fromIasValueValidity.isDefined) set+input.fromIasValueValidity.get.iasValidity
+          else set
+      )
+      Validity.minValidity(fromIASValueValiditiesSet)
+    }
+    
+    val validitybyTime = getInputsValidityByUpdateTime(inputs).iasValidity
+    val validityByIasValue = getInputsValidityByIASValueValidity(inputs).iasValidity
+    Validity.minValidity(Set(validitybyTime,validityByIasValue))
+  }
+  
+  private def calcOutputValidity(): Validity = {
+    val currentOutput = asceThatProducesTheOutput.output
+    val currentInputs = dasuTopology.dasuInputs.map(id => {
+        // Take the first ASCE that has this input
+        val asceId = dasuTopology.ascesOfInput(id).head
+        val asce= asces(asceId)
+        asce.inputs(id)
+      })
+      assert(currentInputs.size == dasuTopology.dasuInputs.size)
+      
+      calcOutputValidity(currentOutput, currentInputs)
+  }
+  
+  /**
+   * Calculate the validity of the output
+   * 
+   * The validity of the output depends
+   * * on the time when the output has been generated
+   *   by the ASCEs of this DASU
+   * * the time when the inputs have been refreshed
+   * 
+   * @param output the output of the DASU
+   * @param inputs the inputs
+   */
+  private def calcOutputValidity(output: InOut[_], inputs: Set[InOut[_]]): Validity = {
+    if (output.dasuProductionTStamp.isEmpty) {
+      Validity(IasValidity.UNRELIABLE)
+    } else {
+      val now = System.currentTimeMillis()
+      
+      // The threshold to check if the output or one of the inputs has not been
+      // refreshed in time and must be declared invalid
+      val thresholdTStamp = System.currentTimeMillis() - autoSendTimeIntervalMillis - toleranceMillis
+      
+      val outputIasValidity = if (output.dasuProductionTStamp.get<thresholdTStamp) {
+        IasValidity.UNRELIABLE
+      } else {
+        IasValidity.RELIABLE
+      }
+      
+      // The validity of the inputs
+      val inputsIasValidity=calcInputsValidity(inputs).iasValidity
+      
+      Validity.minValidity(Set(outputIasValidity,inputsIasValidity))
+    }
+    
+  }
+  
+  /**
+   * Check if the new output must be sent to the BSDB
+   * i.e if its mode or value or validity has changed
+   * 
+   * @param oldOutput the last output sent to the BSDB
+   * @param oldValidity the last validity sent to the BSDB
+   * @param newOutput the new output
+   * @param newValidity the new validity
+   * @return true if the new output changed from the last sent output 
+   *              and must be sent to the BSDB and false otherwise
+   * 
+   */
+  def mustSendOutput(
+      oldOutput: InOut[_], 
+      oldValidity: Validity,
+      newOutput: InOut[_],
+      newValidity: Validity): Boolean = {
+    oldValidity!=newValidity ||
+    oldOutput.value!=newOutput.value ||
+    oldOutput.mode!=newOutput.mode
   }
   
   /** 
@@ -425,12 +555,12 @@ class DasuImpl (
         logger.warn("DASU [{}]: automatic refresh of output already ative",id)
       case (true, false) => 
         rescheduleAutoSendTimeInterval()
-        logger.info("DASU [{}]: automatic refresh of output enabled at intervals of {} msecs (aprox)",id, autoSendTimeInterval.toString())
+        logger.info("DASU [{}]: automatic send of output enabled at intervals of {} secs (aprox)",id, autoSendTimeInterval.toString())
       case (false , _) => 
         val oldTask: Option[ScheduledFuture[_]] = Option(autoSendTimerTask.getAndSet(null))
         oldTask.foreach(task => {
           task.cancel(false)
-          logger.info("DASU [{}]: automatic refresh of output disaabled",id)  
+          logger.info("DASU [{}]: automatic send of output disabled",id)  
         })
     }
   }
@@ -454,11 +584,14 @@ class DasuImpl (
     }
   }
   
-  /** The inputs of the DASU */
+  /** @return the IDs of the inputs of the DASU */
   def getInputIds(): Set[String] = dasuTopology.dasuInputs
   
-  /** The IDs of the ASCEs running in the DASU  */
+  /** @return the IDs of the ASCEs running in the DASU  */
   def getAsceIds(): Set[String] = asces.keys.toSet
+  
+  /** @return the IDs of the of the inputs of the ASCE with the given ID */ 
+  def getInputsOfAsce(id: String) = dasuTopology.inputsOfAsce(id)
 }
 
 object DasuImpl {
@@ -473,14 +606,17 @@ object DasuImpl {
    * @param cdbReader: the CDB reader
    * @param autoSendTimeInterval refresh rate (msec) to automatically send the output  
    *                             when no new inputs have been received
+   * @param tolerance the max delay (secs) before declaring an input unreliable
    */
   def apply(
     dasuDao: DasuDao, 
-    supervidentifier: Identifier, 
+    supervidentifier: Identifier,
     outputPublisher: OutputPublisher,
     inputSubscriber: InputSubscriber,
     cdbReader: CdbReader,
-    autoSendTimeInterval: Long): DasuImpl = {
+    autoSendTimeInterval: Integer,
+    tolerance: Integer): DasuImpl = {
+    
     
     require(Option(dasuDao).isDefined)
     require(Option(supervidentifier).isDefined)
@@ -488,11 +624,18 @@ object DasuImpl {
     require(Option(inputSubscriber).isDefined)
     require(Option(cdbReader).isDefined)
     require(Option(autoSendTimeInterval).isDefined)
-   
+    require(Option(tolerance).isDefined)
+    
     val dasuId = dasuDao.getId
     
     val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervidentifier)
     
-    new DasuImpl(dasuIdentifier,outputPublisher,inputSubscriber,cdbReader,autoSendTimeInterval)
+    new DasuImpl(
+        dasuIdentifier,
+        outputPublisher,
+        inputSubscriber,
+        cdbReader,
+        autoSendTimeInterval,
+        tolerance)
   }
 }

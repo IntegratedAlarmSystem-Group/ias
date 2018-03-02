@@ -101,9 +101,9 @@ abstract class ComputingElement[T](
     initialInputs: Set[InOut[_]],
     val tfSetting: TransferFunctionSetting,
     val props: Properties) {
-  require(Option(asceIdentifier)!=None,"Invalid identifier")
+  require(Option(asceIdentifier).isDefined,"Invalid identifier")
   require(asceIdentifier.idType==IdentifierType.ASCE)
-  require(Option(initialInputs)!=None && !initialInputs.isEmpty,"Invalid (empty or null) set of required inputs to the component")
+  require(Option(initialInputs).isDefined && !initialInputs.isEmpty,"Invalid (empty or null) set of required inputs to the component")
   require(Option(props).isDefined,"Invalid null properties")
   require(Option(_output).isDefined,"Initial output cannot be null")
   
@@ -307,13 +307,12 @@ abstract class ComputingElement[T](
    * value and the ASCE cannot run the TF neither produce the output.
    * 
    * @param iasValues the new inputs received from the DASU
-   * @return A tuple with 3 fields:
+   * @return A tuple with 2 fields:
    * 			   1) the new output generated applying the TF to the inputs and the new state of the ASCE
-   *            The output is None if at least one of the inputs has not yet been initialized
-   *         2) the actual validity
-   *         3) the state of the ASCE
+   *            It is None if at least one of the inputs has not yet been initialized
+   *         2) the state of the ASCE
    */
-  def update(iasValues: Set[IASValue[_]]): Tuple3[InOut[T],Validity, AsceStates.State] = {
+  def update(iasValues: Set[IASValue[_]]): Tuple2[Option[InOut[T]], AsceStates.State] = {
     require(Option(iasValues).isDefined,"Set of inputs not defined")
     
     // Check if the passed set of IASIOs contains at least one IASIO that is 
@@ -334,29 +333,23 @@ abstract class ComputingElement[T](
     }
     
     // Apply the transfer function to the inputs
-    val (newOut, newState) = if (state.canRunTF()) {
+    if (state.canRunTF()) {
       lastOutputUpdateTStamp=System.currentTimeMillis()
-      transfer(Map.empty++inputs,output,state)
+      val (newOut, newState) = transfer(Map.empty++inputs,output,state)
+      state=newState
+    
+      // The validity of the output must be set to the min validity of its inputs
+      //
+      // Note that this validity does not take into account the current
+      // timestamp against the timestamp of the IASValues in inputs
+      val minValidityOfInputs = Validity.minValidity(iasValues.map (_.iasValidity))
+      _output=newOut.updateFromIinputsValidity(minValidityOfInputs)
+      ( Some(output),state.actualState)
     } else {
-      ( output,state)
+      ( None,state.actualState)
     }
-    state=newState
-    _output=newOut
-    
-    val validity = _output.getValidity(Some(inputs.values.toSet))
-    
-    (output, validity, state.actualState)
   }
-  
-  /**
-   * Return the last computed output and its validity updated
-   * with the current validity of the inputs.
-   * 
-   * @return the output and its validity
-   */
-  def getOutput(): Tuple2[InOut[_], Validity] = {
-    (output, output.getValidity(Some(inputs.values.toSet)))
-  }
+
 }
 /**
  * The ComputingElement object to build a ComputingElement from the AsceDao red from the CDB
@@ -388,10 +381,7 @@ object ComputingElement {
     
     // Build the output
     val outputId = new Identifier(asceDao.getOutput.getId,IdentifierType.IASIO,Option(asceId))
-    val out = InOut[T](
-        outputId,
-        asceDao.getOutput.getRefreshRate,
-        IASTypes.fromIasioDaoType(asceDao.getOutput.getIasType))
+    val out: InOut[T] = InOut.asOutput(outputId, IASTypes.fromIasioDaoType(asceDao.getOutput.getIasType))
     logger.info("ComputingElement {} produces output {}",asceDao.getId,outputId.id)
         
     val inputsIasioDaos: Set[IasioDao] = JavaConverters.collectionAsScalaIterable(asceDao.getInputs).toSet
@@ -405,13 +395,8 @@ object ComputingElement {
     
     // Builds the initial set of inputs: all the InOut at the beginning have a null value
     val initialIasios: Set[InOut[_]] = inputsIasioDaos.map(iDao => 
-      new InOut(
-          None,
-          System.currentTimeMillis(),
+      InOut.asInput(
           new Identifier(iDao.getId,IdentifierType.IASIO,None),
-          iDao.getRefreshRate,
-          OperationalMode.UNKNOWN,
-          Some(Validity(IasValidity.UNRELIABLE)),
           IASTypes.fromIasioDaoType(iDao.getIasType())))
     
     if (tfLanguage==TransferFunctionLanguage.java) new ComputingElement[T](asceId,out, initialIasios, tfSettings, properties) with JavaTransfer[T]

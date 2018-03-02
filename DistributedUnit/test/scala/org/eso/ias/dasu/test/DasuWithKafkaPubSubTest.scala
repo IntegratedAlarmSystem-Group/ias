@@ -12,7 +12,6 @@ import org.eso.ias.dasu.subscriber.KafkaSubscriber
 import org.eso.ias.dasu.Dasu
 import org.eso.ias.types.Identifier
 import org.eso.ias.types.IASValue
-import org.eso.ias.types.IasDouble
 import org.eso.ias.types.IdentifierType
 import org.eso.ias.types.OperationalMode
 import org.eso.ias.kafkautils.SimpleStringConsumer
@@ -25,6 +24,7 @@ import scala.collection.mutable.ListBuffer
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition
 import org.eso.ias.types.IasValidity._
 import org.eso.ias.dasu.DasuImpl
+import org.eso.ias.types.IASTypes
 
 /**
  * test if the DASU is capable to get events from
@@ -59,7 +59,7 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener {
   val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervId)
   
   // The DASU
-  val dasu = new DasuImpl(dasuIdentifier,outputPublisher,inputsProvider,cdbReader,1)
+  val dasu = new DasuImpl(dasuIdentifier,outputPublisher,inputsProvider,cdbReader,3,1)
   
   // The identifer of the monitor system that produces the temperature in input to teh DASU
   val monSysId = new Identifier("MonitoredSystemID",IdentifierType.MONITORED_SOFTWARE_SYSTEM)
@@ -99,12 +99,12 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener {
   logger.info("Ready to start the test...")
   
   def buildValue(d: Double): IASValue[_] = {
-    new IasDouble(
+    IASValue.build(
         d,
-        System.currentTimeMillis(),
         OperationalMode.OPERATIONAL,
         UNRELIABLE,
-        inputID.fullRunningID)
+        inputID.fullRunningID,
+        IASTypes.DOUBLE)
   }
   
   def stringEventReceived(event: String) = {

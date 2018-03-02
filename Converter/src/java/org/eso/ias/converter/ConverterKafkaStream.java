@@ -7,7 +7,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
-import org.apache.kafka.streams.kstream.KStreamBuilder;
+import org.apache.kafka.streams.StreamsBuilder;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,7 +72,7 @@ public class ConverterKafkaStream extends ConverterStream {
 	/**
 	 * Kafka stream builder
 	 */
-	private final KStreamBuilder builder = new KStreamBuilder();
+	private final StreamsBuilder builder = new StreamsBuilder();
 	
 	/**
 	 * The kafka streams
@@ -136,7 +136,7 @@ public class ConverterKafkaStream extends ConverterStream {
 		logger.debug("Initializing...");
 		KStream<String, String> source = builder.stream(pluginsInputKTopicName);
         source.mapValues(jString -> mapper.apply(jString)).filter((key,value) -> value!=null && !value.isEmpty()).to(iasCoreOutputKTopicName);
-        streams = new KafkaStreams(builder, setKafkaProps());
+        streams = new KafkaStreams(builder.build(), setKafkaProps());
         logger.debug("Initialized.");
 	}
 	

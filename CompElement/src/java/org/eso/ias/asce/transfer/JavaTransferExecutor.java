@@ -3,7 +3,7 @@ package org.eso.ias.asce.transfer;
 import java.util.Map;
 import java.util.Properties;
 
-import org.eso.ias.types.IASValueBase;
+import org.eso.ias.types.IASValue;
 
 /**
  * The JavaTransferExecutor provides the interface
@@ -37,6 +37,6 @@ public abstract class JavaTransferExecutor extends TransferExecutor {
 	 * @return the computed value to set as output of the ASCE
 	 * @throws Exception in case of error
 	 */
-	public abstract IASValueBase eval(Map<String, IASValueBase> compInputs, IASValueBase actualOutput) throws Exception;
+	public abstract IASValue<?> eval(Map<String, IASValue<?>> compInputs, IASValue<?> actualOutput) throws Exception;
 
 }

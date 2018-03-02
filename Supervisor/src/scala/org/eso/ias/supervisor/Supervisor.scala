@@ -334,12 +334,17 @@ object Supervisor {
     // The identifier of the supervisor
     val identifier = new Identifier(supervisorId, IdentifierType.SUPERVISOR, None)
     
-    val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber, cr: CdbReader) => DasuImpl(dd,i,op,id,cr,RefreshTimeIntervalMSecs)
+    val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber, cr: CdbReader) => 
+      DasuImpl(dd,i,op,id,cr,RefreshTimeIntervalSeconds,ToleranceSeconds)
     
     // Build the supervisor
     val supervisor = new Supervisor(identifier,outputPublisher,inputsProvider,reader,factory)
     
     val started = supervisor.start()
+    
+    // Release CDB resources
+    reader.shutdown()
+    
     started match {
       case Success(_) => val latch = new CountDownLatch(1); latch.await();
       case Failure(ex) => System.err.println("Error starting the supervisor: "+ex.getMessage)
@@ -353,7 +358,7 @@ object Supervisor {
   val AutoSendPropName = "ias.supervisor.autosend.time"
   
   /**
-   * The time interval to automatically send the last calculated output
+   * The default time interval to automatically send the last calculated output
    * in seconds
    */
   val AutoSendTimeIntervalDefault = 5
@@ -369,4 +374,28 @@ object Supervisor {
    * or, if the property is not set, the default value
    */
   lazy val RefreshTimeIntervalMSecs = TimeUnit.MILLISECONDS.convert(RefreshTimeIntervalSeconds.toLong, TimeUnit.SECONDS)
+  
+  /**
+   * The name of the property to override the tolerance
+   * read from the CDB
+   */
+  val TolerancePropName = "ias.supervisor.autosend.tolerance"
+  
+  /**
+   * The default tolarance in seconds: it is the time added to the auto-refresh before
+   * invalidate an input
+   */
+  val ToleranceDefault = 1
+  
+  /**
+   * The tolerance (seconds) read from the passed java property
+   * or, if the property is not set, the default value
+   */
+  lazy val ToleranceSeconds = Integer.getInteger(TolerancePropName,ToleranceDefault)
+  
+  /**
+   * The tolerance (msecs) read from the passed java property
+   * or, if the property is not set, the default value
+   */
+  lazy val ToleranceMSecs = TimeUnit.MILLISECONDS.convert(ToleranceSeconds.toLong, TimeUnit.SECONDS)
 }

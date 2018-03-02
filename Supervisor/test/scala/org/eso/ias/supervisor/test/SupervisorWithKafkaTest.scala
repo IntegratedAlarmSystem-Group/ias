@@ -132,7 +132,8 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
   val autorefreshTimeInterval = 1000L;
 
   /** The test uses real DASu i.e. the factory instantiates a DasuImpl */
-  val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber, cr: CdbReader) => DasuImpl(dd, i, op, id, cr,1000)
+  val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber, cr: CdbReader) => 
+    DasuImpl(dd, i, op, id, cr,1,1)
 
   // Build the supervisor
   val supervisor = new Supervisor(supervisorId, outputPublisher, inputConsumer, cdbReader, factory)
@@ -190,13 +191,21 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
    * Build a IASVlaue to submit to the BSDB
    */
   def buildIasioToSubmit(identifier: Identifier, value: Double) = {
-    IASValue.buildIasValue(
-      value,
-      System.currentTimeMillis(),
-      OperationalMode.OPERATIONAL,
-      IasValidity.RELIABLE,
-      identifier.fullRunningID,
-      IASTypes.DOUBLE)
+    val t0 = System.currentTimeMillis()-100
+      IASValue.build(
+        value,
+			  OperationalMode.OPERATIONAL,
+			  IasValidity.RELIABLE,
+			  identifier.fullRunningID,
+			  IASTypes.DOUBLE,
+			  t0,
+			  t0+5,
+			  t0+10,
+			  t0+15,
+			  t0+20,
+			  t0+25,
+			null)
+    
   }
 
   behavior of "The Supervisor with Kafka input/ouput"

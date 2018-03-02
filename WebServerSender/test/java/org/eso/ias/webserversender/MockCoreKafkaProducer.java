@@ -39,9 +39,8 @@ public class MockCoreKafkaProducer {
 					value2 = aux;
 					counter = 0;
 				}
-				msg = IASValue.buildIasValue(
+				msg = IASValue.build(
 						value1,
-						System.currentTimeMillis(),
 						OperationalMode.OPERATIONAL,
 						IasValidity.RELIABLE,
 						"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(AlarmType-ID:IASIO)",
