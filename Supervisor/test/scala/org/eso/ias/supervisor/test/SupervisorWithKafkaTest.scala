@@ -47,7 +47,7 @@ import java.util.concurrent.atomic.AtomicReference
  * The configuration of this Supervisor is in the JSON CDB.
  *
  * The supervisor runs 2 DASU with one ASCE each and
- * checks the generation of the output by its DASUs and their ASCEs
+ * checks the generation of the outputs by its DASUs and their ASCEs
  * when some input is read from the kafka topic.
  *
  * This test is meant to check the loop only so each DASU has only one ASCE
@@ -128,14 +128,11 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
   /** The kafka consumer gets AISValues from the BSDB */
   val inputConsumer: InputSubscriber = new KafkaSubscriber(supervisorId.id, new Properties())
   
-  /** The auto-refresh time interval (msecs) */
-  val autorefreshTimeInterval = 1000L;
-
   /** The test uses real DASu i.e. the factory instantiates a DasuImpl */
   val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber, cr: CdbReader) => 
     DasuImpl(dd, i, op, id, cr,1,1)
 
-  // Build the supervisor
+  /** The supervisor to test */
   val supervisor = new Supervisor(supervisorId, outputPublisher, inputConsumer, cdbReader, factory)
   
   val latchRef: AtomicReference[CountDownLatch] = new AtomicReference
@@ -147,7 +144,7 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
   after {}
 
   override def beforeAll() {
-    logger.info("Before...")
+    logger.info("BeforeAll...")
     /**
      * The listener of IASValues published in the BSDB
      * It receives the values sent by the test as well as the outputs
@@ -172,19 +169,19 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
     iasiosConsumer.startGettingEvents(StartPosition.END, iasioListener)
     
     // .get returns the value from this Success or throws the exception if this is a Failure.
-    supervisor.start().get
+    assert(supervisor.start().isSuccess)
     
     supervisor.enableAutoRefreshOfOutput(false)
     
-    logger.info("Before done.")
+    logger.info("BeforeAll done.")
   }
 
   override def afterAll() {
-    logger.info("After...")
+    logger.info("AfterAll...")
     iasiosProducer.tearDown()
     iasiosConsumer.tearDown()
     supervisor.cleanUp()
-    logger.info("Before done")
+    logger.info("AfterAll done")
   }
 
   /**
@@ -223,7 +220,7 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
     
     val iasio = buildIasioToSubmit(temperatureID, 5);
 
-    // Desable the autorefresh to avoid replication
+    // Disable the auto-refresh to avoid replication
     logger.info("Disabling auto-refresh of the output by the DASU")
     supervisor.enableAutoRefreshOfOutput(false)
 
@@ -247,7 +244,7 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
     val latch = new CountDownLatch(4)
     latchRef.set(latch)
     
-    val iasioTemp = buildIasioToSubmit(temperatureID, 5);
+    val iasioTemp = buildIasioToSubmit(temperatureID, 40);
     val iasioStrenght = buildIasioToSubmit(strenghtID, 10);
 
     // Desable the autorefresh to avoid replication
