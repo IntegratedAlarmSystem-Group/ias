@@ -328,6 +328,21 @@ object Supervisor {
       }
     }
     
+    val (refreshRate, tolerance) = {
+      val RefreshTimeIntervalSeconds = Integer.getInteger(AutoSendPropName,AutoSendTimeIntervalDefault)
+      val ToleranceSeconds = Integer.getInteger(TolerancePropName,ToleranceDefault)
+      
+      val iasDaoOpt = reader.getIas
+      val fromCdb = if (iasDaoOpt.isPresent()) {
+        (iasDaoOpt.get.getRefreshRate,iasDaoOpt.get.getTolerance)
+      } else {
+        (AutoSendTimeIntervalDefault,ToleranceDefault)
+      }
+      
+      (Integer.getInteger(AutoSendPropName,fromCdb._1),
+      Integer.getInteger(TolerancePropName,fromCdb._2))
+    }
+    
     val outputPublisher: OutputPublisher = KafkaPublisher(supervisorId,System.getProperties)
     val inputsProvider: InputSubscriber = new KafkaSubscriber(supervisorId,System.getProperties)
     
