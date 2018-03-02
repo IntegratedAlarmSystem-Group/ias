@@ -428,7 +428,8 @@ class DasuImpl (
         //         its dasuProductionTStamp is defined its pluginProductionTStamp is empty
         assert(
             iasio.dasuProductionTStamp.isDefined && iasio.pluginProductionTStamp.isEmpty ||
-            iasio.dasuProductionTStamp.isEmpty && iasio.pluginProductionTStamp.isDefined)
+            iasio.dasuProductionTStamp.isEmpty && iasio.pluginProductionTStamp.isDefined,
+            "Invariant violation for IASIO "+iasio.toString())
           
         val iasioTstamp = iasio.dasuProductionTStamp.getOrElse(iasio.pluginProductionTStamp.get)
           
