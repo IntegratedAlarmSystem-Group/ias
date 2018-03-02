@@ -328,6 +328,12 @@ object Supervisor {
       }
     }
     
+    /** 
+     *  Refresh rate and tolerance: it uses the first defined ones:
+     *  1 java properties,
+     *  2 CDB
+     *  3 default
+     */
     val (refreshRate, tolerance) = {
       val RefreshTimeIntervalSeconds = Integer.getInteger(AutoSendPropName,AutoSendTimeIntervalDefault)
       val ToleranceSeconds = Integer.getInteger(TolerancePropName,ToleranceDefault)
@@ -350,7 +356,7 @@ object Supervisor {
     val identifier = new Identifier(supervisorId, IdentifierType.SUPERVISOR, None)
     
     val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber, cr: CdbReader) => 
-      DasuImpl(dd,i,op,id,cr,RefreshTimeIntervalSeconds,ToleranceSeconds)
+      DasuImpl(dd,i,op,id,cr,refreshRate,tolerance)
     
     // Build the supervisor
     val supervisor = new Supervisor(identifier,outputPublisher,inputsProvider,reader,factory)
@@ -379,18 +385,6 @@ object Supervisor {
   val AutoSendTimeIntervalDefault = 5
   
   /**
-   * The auto-send time interval (seconds) read from the passed java property
-   * or, if the property is not set, the default value
-   */
-  lazy val RefreshTimeIntervalSeconds = Integer.getInteger(AutoSendPropName,AutoSendTimeIntervalDefault)
-  
-  /**
-   * The auto-send time interval (msecs) read from the passed java property
-   * or, if the property is not set, the default value
-   */
-  lazy val RefreshTimeIntervalMSecs = TimeUnit.MILLISECONDS.convert(RefreshTimeIntervalSeconds.toLong, TimeUnit.SECONDS)
-  
-  /**
    * The name of the property to override the tolerance
    * read from the CDB
    */
@@ -402,15 +396,5 @@ object Supervisor {
    */
   val ToleranceDefault = 1
   
-  /**
-   * The tolerance (seconds) read from the passed java property
-   * or, if the property is not set, the default value
-   */
-  lazy val ToleranceSeconds = Integer.getInteger(TolerancePropName,ToleranceDefault)
-  
-  /**
-   * The tolerance (msecs) read from the passed java property
-   * or, if the property is not set, the default value
-   */
-  lazy val ToleranceMSecs = TimeUnit.MILLISECONDS.convert(ToleranceSeconds.toLong, TimeUnit.SECONDS)
+
 }
