@@ -37,7 +37,7 @@ class DasuMock(
     private val inputSubscriber: InputSubscriber,
     cdbReader: CdbReader,
     outputIdentifier: Identifier)
-extends Dasu(dasuIdentifier) {
+extends Dasu(dasuIdentifier,5,1) {
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
@@ -86,13 +86,20 @@ extends Dasu(dasuIdentifier) {
   logger.info("{} inputs required by Mock_DASU [{}]: {}", inputsOfTheDasu.size.toString(), dasuIdentifier.id,inputsOfTheDasu.mkString(", "))
   
   /** The output published when inputs are received */
-  val output = IASValue.buildIasValue(
-      AlarmSample.SET, 
-      System.currentTimeMillis(), 
-      OperationalMode.OPERATIONAL, 
-      IasValidity.RELIABLE, 
-      outputIdentifier.fullRunningID, 
-      IASTypes.ALARM)
+  val output = IASValue.build(
+      AlarmSample.SET,
+			OperationalMode.OPERATIONAL,
+			IasValidity.RELIABLE,
+			outputIdentifier.fullRunningID,
+			IASTypes.ALARM,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			System.currentTimeMillis())
+  
   
   
   // TODO release cdb resources

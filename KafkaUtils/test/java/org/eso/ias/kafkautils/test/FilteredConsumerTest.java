@@ -150,9 +150,8 @@ public class FilteredConsumerTest implements IasioListener {
 	public Collection<IASValue<?>> buildValues(List<String> ids) {
 		Objects.requireNonNull(ids);
 		return ids.stream().map(id ->  
-			IASValue.buildIasValue(
+			IASValue.build(
 					10L, 
-					System.currentTimeMillis(), 
 					OperationalMode.OPERATIONAL, 
 					IasValidity.RELIABLE, 
 					buildFullRunningID(id),
@@ -171,9 +170,8 @@ public class FilteredConsumerTest implements IasioListener {
 	public Collection<IASValue<?>> buildValues(List<String> ids, Object value, IASTypes type) {
 		Objects.requireNonNull(ids);
 		return ids.stream().map(id ->  
-			IASValue.buildIasValue(
+			IASValue.build(
 					value, 
-					System.currentTimeMillis(), 
 					OperationalMode.OPERATIONAL, 
 					IasValidity.RELIABLE, 
 					buildFullRunningID(id),

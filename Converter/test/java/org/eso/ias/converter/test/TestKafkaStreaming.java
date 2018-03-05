@@ -150,10 +150,16 @@ public class TestKafkaStreaming extends ConverterTestBase {
 	public final String MP_ID_PREFIX ="MonitorPointData-ID";
 	
 	/**
-	 * The base time stamp: each mp has is created with this timestamp 
+	 * The base time stamp: each mp is created with this production timestamp 
 	 * plus a delta
 	 */
-	public final long MP_BASE_TIMESTAMP = 100000;
+	public final long MP_PROD_TIMESTAMP = 100000;
+	
+	/**
+	 * The base time stamp: each mp has is created with this sent to converter
+	 * timestamp plus a delta
+	 */
+	public final long MP_SENT_TIMESTAMP = 110000;
 	
 	/**
 	 * Default list of servers
@@ -221,12 +227,13 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		for (int t=0; t<n; t++) {
 			String id = MP_ID_PREFIX+t;
 			IASTypes iasType = IASTypes.values()[t%IASTypes.values().length];
-			long tStamp = MP_BASE_TIMESTAMP+t;
+			long prodTStamp = MP_PROD_TIMESTAMP+t;
+			long sentTStamp= MP_SENT_TIMESTAMP+t;
 			// The value to use is taken by mpHolders
 			// that associates the proper value to the given type
 			Object value = mapTypeToObjectValue.get(iasType);
 			
-			ret[t] = new MonitorPointDataHolder(id, value, tStamp, iasType);
+			ret[t] = new MonitorPointDataHolder(id, value, prodTStamp, sentTStamp,iasType);
 		}
 		return ret;
 	}
@@ -275,7 +282,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		for (MonitorPointDataHolder mpdh: mpdToSend) {
 			IasTypeDao iasTypeDao = IasTypeDao.valueOf(mpdh.iasType.toString());
 			String id = mpdh.id;
-			iasios.add(new IasioDao(id, "A mock description", 300, iasTypeDao));
+			iasios.add(new IasioDao(id, "A mock description", iasTypeDao));
 		}
 		cdbWriter.writeIasios(iasios, false);
 		
@@ -342,12 +349,22 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		CountDownLatch latch =eventsConsumer.reset(2);
 		
 		// Pushes 2 unknown monitor points
-		MonitorPointDataHolder unknown1 = new MonitorPointDataHolder("UNKNOWN-ID1", Long.MAX_VALUE, System.currentTimeMillis(), IASTypes.LONG);
+		MonitorPointDataHolder unknown1 = new MonitorPointDataHolder(
+				"UNKNOWN-ID1", 
+				Long.MAX_VALUE, 
+				System.currentTimeMillis(), 
+				System.currentTimeMillis(),
+				IASTypes.LONG);
 		MonitorPointData mpd = buildMonitorPointData(unknown1);
 		String mpdString = mpd.toJsonString();
 		mPointsProducer.push(mpdString, null, unknown1.id);
 		
-		MonitorPointDataHolder unknown2 = new MonitorPointDataHolder("UNKNOWN-ID2", AlarmSample.SET, System.currentTimeMillis(), IASTypes.ALARM);
+		MonitorPointDataHolder unknown2 = new MonitorPointDataHolder(
+				"UNKNOWN-ID2", 
+				AlarmSample.SET, 
+				System.currentTimeMillis(), 
+				System.currentTimeMillis(),
+				IASTypes.ALARM);
 		mpd = buildMonitorPointData(unknown2);
 		mpdString = mpd.toJsonString();
 		mPointsProducer.push(mpdString, null, unknown2.id);

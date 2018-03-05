@@ -4,8 +4,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.eso.ias.types.IASValue;
-import org.eso.ias.types.IASValueBase;
-import org.eso.ias.types.IasAlarm;
 import org.eso.ias.asce.transfer.JavaTransferExecutor;
 import org.eso.ias.types.AlarmSample;
 import org.eso.ias.types.OperationalMode;
@@ -35,14 +33,14 @@ public class TransferExecutorImpl  extends JavaTransferExecutor {
 		System.out.println("java TransferExecutorImpl: shutting down");
 	}
 	
-	public IASValueBase eval(Map<String, IASValueBase> compInputs, IASValueBase actualOutput) throws Exception{
+	public IASValue<?> eval(Map<String, IASValue<?>> compInputs, IASValue<?>actualOutput) throws Exception{
 		System.out.println("java TransferExecutorImpl: evaluating "+compInputs.size()+" inputs");
 		System.out.println("java TransferExecutorImpl for comp. with ID="+compElementId+" and output "+actualOutput.toString());
-		for (IASValueBase input: compInputs.values()) {
+		for (IASValue<?> input: compInputs.values()) {
 			System.out.println(input);
 		}
-		IASValueBase newValue = ((IASValue<?>)actualOutput).updateMode(OperationalMode.SHUTTEDDOWN);
-		newValue=((IasAlarm)newValue).updateValue(AlarmSample.SET); 
+		IASValue<?> newValue = ((IASValue<?>)actualOutput).updateMode(OperationalMode.SHUTTEDDOWN);
+		newValue=newValue.updateValue(AlarmSample.SET); 
 		System.out.println("Returning: "+newValue);
 		return newValue;
 	}

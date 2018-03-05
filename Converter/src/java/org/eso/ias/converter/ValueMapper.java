@@ -116,9 +116,13 @@ public class ValueMapper implements Function<String, String> {
 	 * 
 	 * @param remoteSystemData the monitor point to translate
 	 * @param type the type of the monitor point
+	 * @param receptionTStamp the timestamp when the monitor point data has been received
 	 * @return the IASValue corresponding on the monitor point
 	 */
-	public IASValue<?> translate(MonitorPointData remoteSystemData, IASTypes type) {
+	public IASValue<?> translate(
+			MonitorPointData remoteSystemData, 
+			IASTypes type,
+			long receptionTStamp) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(remoteSystemData);
 		
@@ -168,12 +172,20 @@ public class ValueMapper implements Function<String, String> {
 		default: throw new UnsupportedOperationException("Unsupported type "+type);
 		}
 		
-		long tStamp;
+		long pluginProductionTime;
 		try { 
-			tStamp=iso8601dateFormat.parse(remoteSystemData.getSampleTime()).getTime();
+			pluginProductionTime=iso8601dateFormat.parse(remoteSystemData.getSampleTime()).getTime();
 		} catch (ParseException pe) {
 			logger.error("Cannot parse the ISO 8601 timestamp {}: using actual time instead",remoteSystemData.getSampleTime());
-			tStamp=System.currentTimeMillis();
+			pluginProductionTime=System.currentTimeMillis();
+		}
+		
+		long pluginSentToConvertTime;
+		try { 
+			pluginSentToConvertTime=iso8601dateFormat.parse(remoteSystemData.getPublishTime()).getTime();
+		} catch (ParseException pe) {
+			logger.error("Cannot parse the ISO 8601 timestamp {}: using actual time instead",remoteSystemData.getPublishTime());
+			pluginSentToConvertTime=System.currentTimeMillis();
 		}
 		
 		String fullrunId = buildFullRunningId(
@@ -182,13 +194,24 @@ public class ValueMapper implements Function<String, String> {
 				remoteSystemData.getMonitoredSystemID(),
 				remoteSystemData.getId());
 		
-		return IASValue.buildIasValue(
+		// The value is converted to a IASValue and immeaitely sent to the BSDB
+		// by the streaming so the 2 timestamps (production and sent to BSDB)
+		// are the same point in time with thisimplementation
+		long producedAndSentTStamp = System.currentTimeMillis();
+		
+		return IASValue.build(
 				convertedValue, 
-				tStamp, 
 				OperationalMode.valueOf(remoteSystemData.getOperationalMode()),
 				IasValidity.valueOf(remoteSystemData.getValidity()),
 				fullrunId,
-				type);
+				type,
+				pluginProductionTime, // PLUGIN production
+				pluginSentToConvertTime,  // Sent to converter
+				receptionTStamp, // received from plugin
+				producedAndSentTStamp, // Produced by converter
+				producedAndSentTStamp, // Sent to BSDB
+				null, // Read from BSDB
+				null); // DASU prod time
 	}
 
 	/**
@@ -201,8 +224,12 @@ public class ValueMapper implements Function<String, String> {
 	@Override
 	public String apply(String mpString) {
 		if (mpString==null || mpString.isEmpty()) {
+			logger.warn("Received null or empty string from plugin: nothing to convert");
 			return null;
 		}
+		
+		long receptionTimestamp = System.currentTimeMillis();
+		
 		MonitorPointData mpd;
 		try {
 			mpd=MonitorPointData.fromJsonString(mpString);
@@ -222,7 +249,7 @@ public class ValueMapper implements Function<String, String> {
 		
 		IASValue<?> iasValue;
 		try { 
-			iasValue= translate(mpd,iasType);
+			iasValue= translate(mpd,iasType,receptionTimestamp);
 		} catch (Exception cfe) {
 			logger.error("Error converting {} to a core value type: value lost!",mpd.getId());
 			return null;

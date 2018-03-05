@@ -205,9 +205,8 @@ public class WebServerSenderTest {
 	public Collection<IASValue<?>> buildValues(List<String> ids, Object value, IASTypes type) {
 		Objects.requireNonNull(ids);
 		return ids.stream().map(id ->
-			IASValue.buildIasValue(
+			IASValue.build(
 					value,
-					System.currentTimeMillis(),
 					OperationalMode.OPERATIONAL,
 					IasValidity.RELIABLE,
 					buildFullRunningID(id),

@@ -18,7 +18,7 @@ public class IasValueJsonSerializer implements IasValueStringSerializer {
 	 * The jackson 2 mapper
 	 */
 	private final ObjectMapper jsonMapper = new ObjectMapper();
-
+	
 	/**
 	 * Convert the value in a JSON string
 	 * 
@@ -45,10 +45,9 @@ public class IasValueJsonSerializer implements IasValueStringSerializer {
 		try {
 			
 			IasValueJsonPojo jsonPojo = jsonMapper.readValue(str, IasValueJsonPojo.class);
-			return jsonPojo.asIasValue();
+			return jsonPojo.toIasValue();
 		} catch (Exception e) {
 			throw new IasValueSerializerException("Error converting the JSON string ["+str+"] to a IAS value",e);
 		}
 	}
-
 }

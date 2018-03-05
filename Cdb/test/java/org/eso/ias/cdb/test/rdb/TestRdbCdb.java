@@ -1,3 +1,4 @@
+
 package org.eso.ias.cdb.test.rdb;
 
 import static org.junit.Assert.assertEquals;
@@ -119,6 +120,9 @@ public class TestRdbCdb {
 
 		ias.getProps().add(p1);
 		ias.getProps().add(p2);
+		
+		ias.setRefreshRate(4);
+		ias.setTolerance(3);
 
 		// Write the IAS
 		cdbWriter.writeIas(ias);
@@ -132,6 +136,9 @@ public class TestRdbCdb {
 		IasDao ias2 = optIas.get();
 		ias2.setLogLevel(LogLevelDao.INFO);
 		assertTrue("Error removing a property from the IAS", ias2.getProps().remove(p1));
+		
+		ias2.setRefreshRate(5);
+		ias2.setTolerance(2);
 
 		cdbWriter.writeIas(ias2);
 
@@ -162,7 +169,7 @@ public class TestRdbCdb {
 		dasu1.setLogLevel(LogLevelDao.FATAL);
 		superv.addDasu(dasu1);
 
-		IasioDao dasuOut1 = new IasioDao("DASU-OUT-1", "descr", 831, IasTypeDao.ALARM);
+		IasioDao dasuOut1 = new IasioDao("DASU-OUT-1", "descr", IasTypeDao.ALARM);
 		cdbWriter.writeIasio(dasuOut1, true);
 		dasu1.setOutput(dasuOut1);
 
@@ -172,7 +179,7 @@ public class TestRdbCdb {
 		dasu2.setLogLevel(LogLevelDao.WARN);
 		superv.addDasu(dasu2);
 
-		IasioDao dasuOut2 = new IasioDao("DASU-OUT-2", "descr", 831, IasTypeDao.DOUBLE);
+		IasioDao dasuOut2 = new IasioDao("DASU-OUT-2", "descr", IasTypeDao.DOUBLE);
 		cdbWriter.writeIasio(dasuOut2, true);
 		dasu2.setOutput(dasuOut2);
 
@@ -202,7 +209,7 @@ public class TestRdbCdb {
 	@Test
 	public void testIasio() throws Exception {
 		logger.info("testIasio");
-		IasioDao io = new IasioDao("IO-ID", "IASIO description", 125, IasTypeDao.INT);
+		IasioDao io = new IasioDao("IO-ID", "IASIO description", IasTypeDao.INT);
 		cdbWriter.writeIasio(io, true);
 
 		Optional<IasioDao> iasioFromRdb = cdbReader.getIasio("IO-ID");
@@ -218,11 +225,11 @@ public class TestRdbCdb {
 	@Test
 	public void testIasios() throws Exception {
 		logger.info("testIasios");
-		IasioDao io1 = new IasioDao("IO-ID1", "IASIO descr1", 125, IasTypeDao.INT);
-		IasioDao io2 = new IasioDao("IO-ID2", "IASIO descr2", 150, IasTypeDao.ALARM);
-		IasioDao io3 = new IasioDao("IO-ID3", "IASIO descr3", 250, IasTypeDao.BOOLEAN);
-		IasioDao io4 = new IasioDao("IO-ID4", "IASIO descr4", 300, IasTypeDao.DOUBLE);
-		IasioDao io5 = new IasioDao("IO-ID5", "IASIO descr5", 500, IasTypeDao.STRING);
+		IasioDao io1 = new IasioDao("IO-ID1", "IASIO descr1", IasTypeDao.INT);
+		IasioDao io2 = new IasioDao("IO-ID2", "IASIO descr2", IasTypeDao.ALARM);
+		IasioDao io3 = new IasioDao("IO-ID3", "IASIO descr3", IasTypeDao.BOOLEAN);
+		IasioDao io4 = new IasioDao("IO-ID4", "IASIO descr4", IasTypeDao.DOUBLE);
+		IasioDao io5 = new IasioDao("IO-ID5", "IASIO descr5", IasTypeDao.STRING);
 		Set<IasioDao> iasios = new HashSet<>();
 		iasios.add(io1);
 		iasios.add(io2);
@@ -256,7 +263,7 @@ public class TestRdbCdb {
 		dasuNoASCEs.setLogLevel(LogLevelDao.DEBUG);
 		dasuNoASCEs.setSupervisor(superv);
 
-		IasioDao dasuNoASCEsOut = new IasioDao("DASU-OUT-1", "descr", 1500, IasTypeDao.ALARM);
+		IasioDao dasuNoASCEsOut = new IasioDao("DASU-OUT-1", "descr", IasTypeDao.ALARM);
 		cdbWriter.writeIasio(dasuNoASCEsOut, true);
 		dasuNoASCEs.setOutput(dasuNoASCEsOut);
 
@@ -275,12 +282,12 @@ public class TestRdbCdb {
 		dasuWithASCEs.setLogLevel(LogLevelDao.WARN);
 		dasuWithASCEs.setSupervisor(superv);
 
-		IasioDao dasuWithASCEsOut = new IasioDao("DASU-OUT-1", "descr", 1500, IasTypeDao.ALARM);
+		IasioDao dasuWithASCEsOut = new IasioDao("DASU-OUT-1", "descr", IasTypeDao.ALARM);
 		cdbWriter.writeIasio(dasuNoASCEsOut, true);
 		dasuWithASCEs.setOutput(dasuWithASCEsOut);
 
 		// Output of ASCE1
-		IasioDao ioAsce1Out = new IasioDao("IASIO-OUT-2", "descr", 1500, IasTypeDao.DOUBLE);
+		IasioDao ioAsce1Out = new IasioDao("IASIO-OUT-2", "descr", IasTypeDao.DOUBLE);
 		cdbWriter.writeIasio(ioAsce1Out, true);
 
 		TransferFunctionDao tfDao = new TransferFunctionDao();
@@ -297,7 +304,7 @@ public class TestRdbCdb {
 		dasuWithASCEs.addAsce(asce1);
 
 		// Output of ASCE2
-		IasioDao ioAsce2Out = new IasioDao("IASIO-OUT-2", "descr", 1050, IasTypeDao.BOOLEAN);
+		IasioDao ioAsce2Out = new IasioDao("IASIO-OUT-2", "descr", IasTypeDao.BOOLEAN);
 		cdbWriter.writeIasio(ioAsce2Out, true);
 
 		TransferFunctionDao tfDao2 = new TransferFunctionDao();
@@ -359,7 +366,7 @@ public class TestRdbCdb {
 		dasu.setLogLevel(LogLevelDao.DEBUG);
 		dasu.setSupervisor(superv);
 
-		IasioDao dasuOut = new IasioDao("DASU-OUT-1", "descr", 831, IasTypeDao.ALARM);
+		IasioDao dasuOut = new IasioDao("DASU-OUT-1", "descr", IasTypeDao.ALARM);
 		cdbWriter.writeIasio(dasuOut, true);
 		dasu.setOutput(dasuOut);
 
@@ -371,19 +378,19 @@ public class TestRdbCdb {
 
 		Set<IasioDao> iasios = new HashSet<>();
 		// The output of the ASCE
-		IasioDao ioOut = new IasioDao("IASIO-OUT", "description of output", 1234, IasTypeDao.ALARM);
+		IasioDao ioOut = new IasioDao("IASIO-OUT", "description of output", IasTypeDao.ALARM);
 		cdbWriter.writeIasio(ioOut, true);
 
 		// The 5 inputs of the ASCE
-		IasioDao ioIn1 = new IasioDao("IASIO-IN1", "input-1", 100, IasTypeDao.DOUBLE);
+		IasioDao ioIn1 = new IasioDao("IASIO-IN1", "input-1", IasTypeDao.DOUBLE);
 		iasios.add(ioIn1);
-		IasioDao ioIn2 = new IasioDao("IASIO-IN2", "input-2", 200, IasTypeDao.INT);
+		IasioDao ioIn2 = new IasioDao("IASIO-IN2", "input-2", IasTypeDao.INT);
 		iasios.add(ioIn2);
-		IasioDao ioIn3 = new IasioDao("IASIO-IN3", "input-3", 300, IasTypeDao.BOOLEAN);
+		IasioDao ioIn3 = new IasioDao("IASIO-IN3", "input-3", IasTypeDao.BOOLEAN);
 		iasios.add(ioIn3);
-		IasioDao ioIn4 = new IasioDao("IASIO-IN4", "input-4", 400, IasTypeDao.ALARM);
+		IasioDao ioIn4 = new IasioDao("IASIO-IN4", "input-4", IasTypeDao.ALARM);
 		iasios.add(ioIn4);
-		IasioDao ioIn5 = new IasioDao("IASIO-IN5", "input-5", 500, IasTypeDao.STRING);
+		IasioDao ioIn5 = new IasioDao("IASIO-IN5", "input-5", IasTypeDao.STRING);
 		iasios.add(ioIn5);
 
 		cdbWriter.writeIasios(iasios, true);
@@ -433,16 +440,16 @@ public class TestRdbCdb {
 
 		// First the IASIOs
 		Set<IasioDao> iasios = new HashSet<>();
-		IasioDao ioOut = new IasioDao("IASIO-OUT", "description of output", 1234, IasTypeDao.ALARM);
+		IasioDao ioOut = new IasioDao("IASIO-OUT", "description of output", IasTypeDao.ALARM);
 		iasios.add(ioOut);
 		// The 5 inputs of the ASCEs
-		IasioDao ioIn1 = new IasioDao("iasioID-1", "input-1", 100, IasTypeDao.DOUBLE);
+		IasioDao ioIn1 = new IasioDao("iasioID-1", "input-1", IasTypeDao.DOUBLE);
 		iasios.add(ioIn1);
-		IasioDao ioIn2 = new IasioDao("iasioID-2", "input-2", 200, IasTypeDao.INT);
+		IasioDao ioIn2 = new IasioDao("iasioID-2", "input-2", IasTypeDao.INT);
 		iasios.add(ioIn2);
-		IasioDao ioIn3 = new IasioDao("iasioID-3", "input-3", 300, IasTypeDao.BOOLEAN);
+		IasioDao ioIn3 = new IasioDao("iasioID-3", "input-3", IasTypeDao.BOOLEAN);
 		iasios.add(ioIn3);
-		IasioDao ioIn4 = new IasioDao("iasioID-4", "input-4", 400, IasTypeDao.ALARM);
+		IasioDao ioIn4 = new IasioDao("iasioID-4", "input-4", IasTypeDao.ALARM);
 		iasios.add(ioIn4);
 		cdbWriter.writeIasios(iasios, true);
 

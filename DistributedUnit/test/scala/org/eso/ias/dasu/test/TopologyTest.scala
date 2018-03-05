@@ -8,11 +8,11 @@ import org.eso.ias.dasu.topology.Topology
 class TopologyTest extends FlatSpec {
   
   // Builds the ASCEs for the topology to test
-  val asce1: AsceTopology = new AsceTopology("ASCE1-ID",Set("IN1","IN2","IN3"),"ASCE-OUT1")
-  val asce2: AsceTopology = new AsceTopology("ASCE2-ID",Set("IN3","IN4"),"ASCE-OUT2")
-  val asce3: AsceTopology = new AsceTopology("ASCE3-ID",Set("IN6"),"ASCE-OUT3")
-  val asce4: AsceTopology = new AsceTopology("ASCE4-ID",Set("ASCE-OUT1","IN3"),"ASCE-OUT4")
-  val asce5: AsceTopology = new AsceTopology("ASCE5-ID",Set("ASCE-OUT2","ASCE-OUT3","IN5"),"ASCE-OUT5")
+  val asce1: AsceTopology = new AsceTopology("ASCE1-ID",Set("IN1","IN2","IN3"),                        "ASCE-OUT1")
+  val asce2: AsceTopology = new AsceTopology("ASCE2-ID",Set("IN3","IN4"),                              "ASCE-OUT2")
+  val asce3: AsceTopology = new AsceTopology("ASCE3-ID",Set("IN6"),                                    "ASCE-OUT3")
+  val asce4: AsceTopology = new AsceTopology("ASCE4-ID",Set("ASCE-OUT1","IN3"),                        "ASCE-OUT4")
+  val asce5: AsceTopology = new AsceTopology("ASCE5-ID",Set("ASCE-OUT2","ASCE-OUT3","IN5"),            "ASCE-OUT5")
   val asce6: AsceTopology = new AsceTopology("ASCE6-ID",Set("ASCE-OUT4","ASCE-OUT2","ASCE-OUT5","IN3"),"ASCE-OUT6")
   
   // Most test uses the following topology
@@ -102,6 +102,28 @@ class TopologyTest extends FlatSpec {
     
     val asceId6 =topology.asceProducingOutput(asce6.output)
     assert(asceId6.isDefined && asceId6.get==asce6.identifier)
+  }
+  
+  it must "properly return the set of inputs of a given ASCEs" in {
+    val inputIds = topology.inputsOfAsce("ASCE2-ID")
+    assert(inputIds==Set("IN3","IN4"))
+    
+    val inputIds2 = topology.inputsOfAsce("ASCE6-ID")
+    assert(inputIds2==Set("ASCE-OUT4","ASCE-OUT2","ASCE-OUT5","IN3"))
+    
+    val inputIds3 = topology.inputsOfAsce("ASCE3-ID")
+    assert(inputIds3==Set("IN6"))
+  }
+  
+  it must "properly return the Ids of the ASCEs that require an input" in {
+    val asceIds = topology.ascesOfInput("ASCE-OUT2")
+    assert(asceIds==Set("ASCE5-ID","ASCE6-ID"))
+    
+    val asceIds2 = topology.ascesOfInput("IN1")
+    assert(asceIds2==Set("ASCE1-ID"))
+    
+    val asceIds3 = topology.ascesOfInput("IN3")
+    assert(asceIds3==Set("ASCE1-ID","ASCE2-ID","ASCE4-ID","ASCE6-ID"))
   }
   
 }

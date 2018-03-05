@@ -49,6 +49,6 @@ extends ScalaTransferExecutor[Double] (cEleId,cEleRunningId,props) {
     // Average
     val newValue = total/values.size
     
-    actualOutput.updateValue(Option(newValue))
+    actualOutput.updateValue(Some(newValue))
   }
 }

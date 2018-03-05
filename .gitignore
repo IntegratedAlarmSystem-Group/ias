@@ -6,6 +6,7 @@
 **/lib/
 **/classes/
 **/bin/
+.cache-*
 
 ## Project specific files:
 IntegratedAlarmSystemRoot

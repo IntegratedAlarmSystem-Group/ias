@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+import javax.persistence.Basic;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -47,6 +48,19 @@ public class IasDao {
 	private Set<PropertyDao> props = new HashSet<>();
 	
 	/**
+	 * Expected refresh rate
+	 */
+	@Basic(optional=false)
+	private int refreshRate;
+	
+	/**
+	 * The tolerance added by clients to the refresh rate
+	 * to invalidate a monitor point
+	 */
+	@Basic(optional=false)
+	private int tolerance;
+	
+	/**
 	 * Empty constructor
 	 */
 	public IasDao() {}
@@ -61,6 +75,22 @@ public class IasDao {
 	
 	public Set<PropertyDao> getProps() {
 		return props;
+	}
+	
+	public int getRefreshRate() {
+		return refreshRate;
+	}
+	
+	public void setRefreshRate(int refreshRate) {
+		this.refreshRate = refreshRate;
+	}
+	
+	public int getTolerance() {
+		return tolerance;
+	}
+	
+	public void setTolerance(int tolerance) {
+		this.tolerance = refreshRate;
 	}
 	
 	@Override
@@ -87,11 +117,16 @@ public class IasDao {
 		StringBuilder ret = new StringBuilder("IAS=[");
 		ret.append("logLevel=");
 		ret.append(getLogLevel().toString());
+		ret.append(", refreshRate=");
+		ret.append(refreshRate);
+		ret.append(", tolerance=");
+		ret.append(tolerance);
+		ret.append(", props={");
 		for (PropertyDao prop: getProps()) {
 			ret.append(' ');
 			ret.append(prop.toString());
 		}
-		ret.append(']');
+		ret.append("}]");
 		return ret.toString();
 	}
 }

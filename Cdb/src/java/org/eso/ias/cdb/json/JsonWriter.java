@@ -307,7 +307,6 @@ public class JsonWriter implements CdbWriter {
 			jg.writeStringField("shortDesc",iasio.getShortDesc());
 		}
 		jg.writeStringField("iasType",iasio.getIasType().toString());
-		jg.writeNumberField("refreshRate",Integer.valueOf(iasio.getRefreshRate()));
 		jg.writeEndObject();
 	}
 	
@@ -321,7 +320,6 @@ public class JsonWriter implements CdbWriter {
 	private IasioDao getNextIasio(JsonParser jp) throws IOException {
 		String iasioId=null;
 		String iasioDesc=null;
-		int iasioRate=-1;
 		String iasioType=null;
 		while(jp.nextToken() != JsonToken.END_OBJECT){
 			String name = jp.getCurrentName();
@@ -337,12 +335,8 @@ public class JsonWriter implements CdbWriter {
 				jp.nextToken();
 				iasioType=jp.getText();
 			}
-			if ("refreshRate".equals(name)) {
-				jp.nextToken();
-				iasioRate=jp.getIntValue();
-			}
 		}
-		IasioDao ret = new IasioDao(iasioId,iasioDesc,iasioRate,IasTypeDao.valueOf(iasioType));
+		IasioDao ret = new IasioDao(iasioId,iasioDesc,IasTypeDao.valueOf(iasioType));
 		return ret;
 	}
 
@@ -363,4 +357,17 @@ public class JsonWriter implements CdbWriter {
 			throw new IasCdbException("Error writing JSON TF",t);
 		}
 	}
+	
+	/**
+	 * Initialize the CDB
+	 */
+	@Override
+	public void init() throws IasCdbException {}
+	
+	/**
+	 * Close the CDB and release the associated resources
+	 * @throws IasCdbException
+	 */
+	@Override
+	public void shutdown() throws IasCdbException {	}
 }
