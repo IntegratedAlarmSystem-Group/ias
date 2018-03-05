@@ -167,7 +167,7 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 		if (compInputs.size() != 1)
 			throw new UnexpectedNumberOfInputsException(compInputs.size(), 1);
 		if (actualOutput.valueType != IASTypes.ALARM)
-			throw new TypeMismatchException(actualOutput.runningId);
+			throw new TypeMismatchException(actualOutput.fullRunningId);
 
 		// Get the input
 		IASValueBase hio = compInputs.values().iterator().next();
@@ -193,7 +193,7 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 			hioValue = ((IasFloat) hio).value;
 			break;
 		default:
-			throw new TypeMismatchException(hio.runningId);
+			throw new TypeMismatchException(hio.fullRunningId);
 		}
 		
 		boolean wasActivated = ((IasAlarm)actualOutput).value==AlarmSample.SET;
@@ -204,6 +204,6 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 				
 				
 		AlarmSample newOutput = AlarmSample.fromBoolean(condition);
-		return ((IasAlarm) actualOutput).updateValue(newOutput);
+		return ((IasAlarm) actualOutput).updateValue(newOutput).updateMode(hio.mode);
 	}
 }

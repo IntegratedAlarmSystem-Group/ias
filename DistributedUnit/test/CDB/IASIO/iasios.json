@@ -3,13 +3,13 @@
 		"id":"Temperature",
 		"shortDesc":"Simulated temperature",
 		"iasType":"DOUBLE",
-		"refreshRate":1000
+		"refreshRate":10000
 	},
 	{
 		"id":"ThresholdAlarm",
 		"shortDesc":"Temperature over the limit",
 		"iasType":"ALARM",
-		"refreshRate":1000
+		"refreshRate":15000
 	},
 	{
             "id":"Temperature1",

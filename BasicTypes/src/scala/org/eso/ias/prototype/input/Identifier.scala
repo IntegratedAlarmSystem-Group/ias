@@ -1,6 +1,7 @@
 package org.eso.ias.prototype.input
 
 import org.eso.ias.prototype.input.java.IdentifierType
+import org.eso.ias.prototype.input.java.IASTypes
 
 /**
  * Companion object
@@ -38,6 +39,25 @@ object Identifier {
   val coupleSeparator = ":"
   
   /**
+   * The regular expression of the fullRunning ID
+   */
+  val fullRunningIdRegExp = {
+    val idRegExp = """[^:^\(^\).]+"""
+    val coupleRegExp = """\("""+idRegExp+"+:"+idRegExp+"""\)"""
+    coupleRegExp + "(@"+coupleRegExp+")*"
+  }
+  
+  /**
+   * Check if the passed full running id string has the proper format
+   * 
+   * @param frid The full running id string to check
+   */
+  def checkFullRunningIdFormat(frid: String): Boolean = {
+    require(Option(frid).isDefined)
+    frid.matches(fullRunningIdRegExp)
+  }
+  
+  /**
    * Factory method to to build a identifier
    * from the passed fullRunningId string.
    * 
@@ -49,13 +69,10 @@ object Identifier {
    */
   def apply(fullRunningId: String): Identifier = {
     require(Option(fullRunningId).isDefined)
-    require(fullRunningId.size>0,"Invalid empty identifier")
-    
-    println("Building IDentifier from "+fullRunningId)
+    require(checkFullRunningIdFormat(fullRunningId),"Invalid fullRunningId format")
     
     // The id and type of each element passed in the parameter
     val identifiersDescr=fullRunningId.split(separator)
-    println("Splitted strings "+identifiersDescr.mkString(","))
     
     identifiersDescr.foldLeft(None: Option[Identifier])( (id, couple) => {
       val cleanedCouple=couple.substring(Identifier.coupleGroupPrefix.size, couple.size-Identifier.coupleGroupSuffix.size)
@@ -136,6 +153,9 @@ extends {
   require (Option(id).isDefined,"Invalid null Dasu ID")
   require(!id.isEmpty(),"Invalid empty identifier")
   require(id.indexOf(Identifier.separator) == -1,"Invalid character "+Identifier.separator+" in identifier "+id)
+  require(id.indexOf(Identifier.coupleSeparator) == -1,"Invalid character "+Identifier.coupleSeparator+" in identifier "+id)
+  require(id.indexOf(Identifier.coupleGroupSuffix) == -1,"Invalid character "+Identifier.coupleGroupSuffix+" in identifier "+id)
+  require(id.indexOf(Identifier.coupleGroupPrefix) == -1,"Invalid character "+Identifier.coupleGroupPrefix+" in identifier "+id)
   require(Option(idType).isDefined,"Invalid identifier type")
   require(isValidParentType(idType, parentID), "Invalid parent for "+idType)
    
@@ -245,4 +265,20 @@ extends {
   }
   
   override def toString = fullRunningID
+  
+  /**
+   * Search and return in this Identifier or in its parent
+   * the id of the given type,, if any.
+   * 
+   * @return the ID of the identifier of the given type 
+   */
+  def getIdOfType(idTypeToSearch: IdentifierType): Option[String] = {
+     require(Option(idTypeToSearch).isDefined,"Cannot search for an undefined identifier type")
+     
+     if (idTypeToSearch==idType) {
+       Some(id)
+     } else {
+       parentID.flatMap(p => p.getIdOfType(idTypeToSearch))
+     }
+  }
 }

@@ -38,11 +38,6 @@ public class IasValueJsonPojo {
 	private IasValidity iasValidity;
 	 
 	/**
-	 * The ID of this input
-	 */
-	private String id;
-	
-	/**
 	 * The full running id of this input and its parents
 	 */
 	private String fullRunningId;
@@ -68,8 +63,7 @@ public class IasValueJsonPojo {
 		value=iasValue.value.toString();
 		tStamp=iasValue.timestamp;
 		mode=iasValue.mode;
-		id=iasValue.id;
-		fullRunningId=iasValue.runningId;
+		fullRunningId=iasValue.fullRunningId;
 		valueType=iasValue.valueType;
 		iasValidity=iasValue.iasValidity;
 	}
@@ -96,14 +90,6 @@ public class IasValueJsonPojo {
 
 	public void setMode(OperationalMode mode) {
 		this.mode = mode;
-	}
-
-	public String getId() {
-		return id;
-	}
-
-	public void setId(String id) {
-		this.id = id;
 	}
 
 	public String getFullRunningId() {
@@ -140,7 +126,7 @@ public class IasValueJsonPojo {
 			case ALARM: theValue=AlarmSample.valueOf(value); break;
 			default: throw new UnsupportedOperationException("Unsupported type "+valueType);
 		}
-		return IASValue.buildIasValue(theValue, tStamp, mode, iasValidity,id, fullRunningId, valueType);
+		return IASValue.buildIasValue(theValue, tStamp, mode, iasValidity, fullRunningId, valueType);
 	}
 
 	public IasValidity getIasValidity() {

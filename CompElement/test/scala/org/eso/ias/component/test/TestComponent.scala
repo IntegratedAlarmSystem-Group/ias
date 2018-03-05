@@ -20,6 +20,7 @@ import org.eso.ias.prototype.input.java.AlarmSample
 import org.eso.ias.prototype.input.java.IASValue
 import org.eso.ias.prototype.compele.AsceStates
 import org.eso.ias.prototype.input.java.IasValidity._
+import org.eso.ias.prototype.input.java.IasValidity
 
 /**
  * Test the basic functionalities of the IAS Component,
@@ -29,7 +30,8 @@ import org.eso.ias.prototype.input.java.IasValidity._
 class TestComponent extends FlatSpec {
   
   // The ID of the DASU where the components runs
-  val dasId = new Identifier("DAS-ID",IdentifierType.DASU,None)
+  val supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR,None)
+  val dasId = new Identifier("DAS-ID",IdentifierType.DASU,supervId)
   
   // The ID of the component to test
   val compId = new Identifier("ComponentId",IdentifierType.ASCE,Option[Identifier](dasId))
@@ -47,34 +49,37 @@ class TestComponent extends FlatSpec {
   
   // The ID of the first MP
   val mpI1Identifier = new Identifier(requiredInputIDs(0),IdentifierType.IASIO,Option(compId))
-  val mp1 = InOut[AlarmSample](
+  val mp1 = new InOut[AlarmSample](
       None,
+      System.currentTimeMillis(),
       mpI1Identifier,
       mpRefreshRate,
       OperationalMode.UNKNOWN,
-      UNRELIABLE,
+      Some(Validity(IasValidity.RELIABLE)),
       IASTypes.ALARM)
   
   // The ID of the second MP
   val mpI2Identifier = new Identifier(requiredInputIDs(1),IdentifierType.IASIO,Option(compId))
-  val mp2 = InOut[AlarmSample](
+  val mp2 = new InOut[AlarmSample](
       None,
+      System.currentTimeMillis(),
       mpI2Identifier,
       mpRefreshRate,
       OperationalMode.UNKNOWN,
-      UNRELIABLE,
+      Some(Validity(IasValidity.RELIABLE)),
       IASTypes.ALARM)
   val actualInputs: Set[InOut[_]] = Set(mp1,mp2)
   
   behavior of "A Component"
   
   it must "catch an error instantiating a wrong TF class" in {
-    val output = InOut[AlarmSample](
+    val output = new InOut[AlarmSample](
       None,
+      System.currentTimeMillis(),
       outId,
       mpRefreshRate,
       OperationalMode.UNKNOWN,
-      UNRELIABLE,
+      None,
       IASTypes.ALARM)
     
     val threadaFactory = new CompEleThreadFactory("Test-runninId")
@@ -90,7 +95,7 @@ class TestComponent extends FlatSpec {
        tfSetting,
        new Properties()) with JavaTransfer[AlarmSample]
     
-    assert(comp.id==compId)
+    assert(comp.asceIdentifier==compId)
     assert(comp.output.id==outId)
     
     // A newly created ASCE haa a state equal to Initializing
@@ -102,12 +107,13 @@ class TestComponent extends FlatSpec {
   }
   
   it must "correctly instantiate the TF" in {
-    val output = InOut[AlarmSample](
+    val output = new InOut[AlarmSample](
       None,
+      System.currentTimeMillis(),
       outId,
       mpRefreshRate,
       OperationalMode.UNKNOWN,
-      UNRELIABLE,
+      None,
       IASTypes.ALARM)
     
     val threadaFactory = new CompEleThreadFactory("Test-runninId")
@@ -123,7 +129,7 @@ class TestComponent extends FlatSpec {
        tfSetting,
        new Properties()) with JavaTransfer[AlarmSample]
     
-    assert(comp.id==compId)
+    assert(comp.asceIdentifier==compId)
     assert(comp.output.id==outId)
     
     // A newly created ASCE haa a state equal to Initializing

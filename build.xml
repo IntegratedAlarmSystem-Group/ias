@@ -1,30 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<!-- 
-     Build the entire IAS prototype 
+<!--
+     Build the entire IAS prototype
 
-     PRE-Requisite: IAS_ROOT envirnment variable defined and pointing to 
+     PRE-Requisite: IAS_ROOT envirnment variable defined and pointing to
                              an existing folder
 -->
 <project name="BuildIAS" default="build" basedir=".">
-	
+
 	<property environment="env" />
 	<property name="iasRoot" value="${env.IAS_ROOT}" />
 	<available file="${iasRoot}" type="dir" property="iasRoot.exists"/>
 
 	<taskdef resource="net/sf/antcontrib/antlib.xml"/>
-	
-	<property name="iasModules" value="Tools,Logging,KafkaUtils,Cdb,BasicTypes,plugin,Converter,CompElement,DistributedUnit" />
-	
+
+	<property name="iasModules" value="Tools,Logging,Cdb,BasicTypes,KafkaUtils,plugin,Converter,CompElement,DistributedUnit,Supervisor,WebServerSender,Tests/SimpleLoopTest" />
+
 	<target name="SanityCheck">
 		<!--
 			Runs some check failing in case of error
 		-->
 		<fail unless="iasRoot.exists">
-			IAS_ROOT ${iasRoot} does not exist! 
+			IAS_ROOT ${iasRoot} does not exist!
 		</fail>
 	</target>
-	
+
 	<!--
 	     Sequentially runs ant in each of the the modules in ${iasModules}.
 	     The targets to ant are read from anttasks
@@ -62,7 +62,7 @@
 			<param name="anttasks" value="clean" />
 		</antcall>
     </target>
-	
+
 	<target name="build" depends="SanityCheck">
 		<echo>Building IAS modules: ${iasModules}</echo>
 		<antcall target="commontask">
@@ -70,7 +70,7 @@
 			<param name="anttasks" value="build,install" />
 		</antcall>
 	</target>
-	
+
 	<target name="install" depends="SanityCheck">
 		<echo>Installing IAS modules: ${iasModules}</echo>
 		<antcall target="commontask">
@@ -78,7 +78,7 @@
 			<param name="anttasks" value="install" />
 		</antcall>
 	</target>
-	
+
 	<target name="test" depends="SanityCheck">
 		<echo>Building IAS modules: ${iasModules}</echo>
 		<antcall target="commontask">
@@ -86,14 +86,14 @@
 			<param name="anttasks" value="build,test" />
 		</antcall>
 	</target>
-	
+
 	<target name="doc" depends="SanityCheck">
 		<delete dir="${iasRoot}/apidocs"/>
 		<mkdir dir="${iasRoot}/apidocs" />
 		<mkdir dir="${iasRoot}/apidocs/scala" />
 		<mkdir dir="${iasRoot}/apidocs/java" />
 		<mkdir dir="${iasRoot}/apidocs/python" />
-		
+
 		<echo>Generating API documentation</echo>
 		<exec executable="iasBuildApiDocs.py">
 		    <arg value="-d"/>
@@ -103,5 +103,5 @@
 		</exec>
 
 	</target>
-	
+
 </project>

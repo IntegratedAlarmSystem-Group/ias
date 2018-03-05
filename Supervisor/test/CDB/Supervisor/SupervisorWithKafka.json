@@ -1,0 +1,6 @@
+{
+	"logLevel":"INFO",
+	"id":"SupervisorWithKafka",
+	"hostName":"almaias.eso.org",
+	"dasusIDs":["DasuTemperature","DasuStrenght"]
+}

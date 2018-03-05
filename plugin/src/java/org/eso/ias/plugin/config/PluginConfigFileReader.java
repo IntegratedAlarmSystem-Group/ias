@@ -60,7 +60,7 @@ public class PluginConfigFileReader implements PluginConfigDao {
 			try {
 				ObjectMapper jackson2Mapper = new ObjectMapper();
 				PluginConfig config = jackson2Mapper.readValue(reader, PluginConfig.class);
-				logger.info("JSON Plugin configuration successfully red from {}",srcName);
+				logger.info("JSON Plugin configuration successfully read from {}",srcName);
 				return config;
 			} finally {
 				reader.close();

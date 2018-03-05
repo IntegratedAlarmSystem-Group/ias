@@ -6,9 +6,8 @@ public class IasShort extends IASValue<Short> {
 			long tStamp,
 			OperationalMode mode,
 			IasValidity iasValidity,
-			String id,
-			String runningId) {
-		super(value,tStamp,mode,iasValidity,id,runningId,IASTypes.SHORT);
+			String fullRunningId) {
+		super(value,tStamp,mode,iasValidity,fullRunningId,IASTypes.SHORT);
 	}
 	
 	/**
@@ -23,7 +22,7 @@ public class IasShort extends IASValue<Short> {
 		if (newValue==null) {
 			throw new NullPointerException("The value can't be null");
 		}
-		return new IasShort(newValue,System.currentTimeMillis(),mode,iasValidity,id,runningId);
+		return new IasShort(newValue,System.currentTimeMillis(),mode,iasValidity,fullRunningId);
 	}
 	
 	/**
@@ -36,7 +35,7 @@ public class IasShort extends IASValue<Short> {
 		if (newMode==null) {
 			throw new NullPointerException("The mode can't be null");
 		}
-		return new IasShort(value,System.currentTimeMillis(),newMode,iasValidity,id,runningId);
+		return new IasShort(value,System.currentTimeMillis(),newMode,iasValidity,fullRunningId);
 	}
 
 }

@@ -12,12 +12,12 @@ trait InputSubscriber {
    *  
    *  The get events, start() must be called 
    */
-  def initialize(): Try[Unit]
+  def initializeSubscriber(): Try[Unit]
   
   /** 
    *  CleanUp and release the resources 
    */
-  def cleanUp(): Try[Unit]
+  def cleanUpSubscriber(): Try[Unit]
   
   /**
    * Start to get events and forward them to the listener.
@@ -27,5 +27,5 @@ trait InputSubscriber {
    * @param listener the listener of events
    * @param acceptedInputs the IDs of the inputs accepted by the listener
    */
-  def start(listener: InputsListener, acceptedInputs: Set[String]): Try[Unit]
+  def startSubscriber(listener: InputsListener, acceptedInputs: Set[String]): Try[Unit]
 }

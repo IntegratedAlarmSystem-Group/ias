@@ -36,14 +36,14 @@ class ListenerOutputPublisherImpl (
    * 
    * @see OutputPublisher.initialize()
    */
-  override def initialize(): Try[Unit] = { new Success(()) }
+  override def initializePublisher(): Try[Unit] = { new Success(()) }
   
   /**
    * Release all the acquired resources.
    * 
    * @see OutputPublisher.cleanUp()
    */
-  override def cleanUp(): Try[Unit] = { new Success(()) }
+  override def cleanUpPublisher(): Try[Unit] = { new Success(()) }
   
   /**
    * Sends the output to the listener the output.

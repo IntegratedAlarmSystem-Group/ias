@@ -1,6 +1,5 @@
 package org.eso.ias.dasu.subscriber
 
-import org.eso.ias.kafkautils.SimpleStringConsumer
 import org.ias.prototype.logging.IASLogger
 import org.eso.ias.prototype.input.java.IasValueJsonSerializer
 import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener
@@ -9,12 +8,15 @@ import org.eso.ias.kafkautils.KafkaHelper
 import scala.util.Try
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition
 import scala.collection.mutable.{HashSet => MutableSet}
+import org.eso.ias.kafkautils.KafkaIasiosConsumer
+import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener
+import org.eso.ias.prototype.input.java.IASValue
 
 /** 
  *  Read IASValues from the kafka queue 
  *  and forward them to the DASU for processing.
  *  
- *  KafkaSubscriber delegates to SimpleStringConsumer.
+ *  KafkaSubscriber delegates to KafkaIasiosConsumer.
  *  
  *  @param dasuId the identifier of the DASU
  *  @param serversList the list of kafka brojkers to connect to
@@ -26,7 +28,7 @@ class KafkaSubscriber(
     serversList: String,
     topicName: String,
     val props: Properties) 
-extends KafkaConsumerListener with InputSubscriber {
+extends IasioListener with InputSubscriber {
   require(Option(dasuId).isDefined && !dasuId.isEmpty())
   require(Option(serversList).isDefined && !dasuId.isEmpty())
   require(Option(topicName).isDefined && !dasuId.isEmpty())
@@ -41,7 +43,7 @@ extends KafkaConsumerListener with InputSubscriber {
   private val jsonSerializer = new IasValueJsonSerializer()
   
   /** The Kafka consumer */
-  private val kafkaConsumer = new SimpleStringConsumer(serversList, topicName, dasuId, this)
+  private val kafkaConsumer = new KafkaIasiosConsumer(serversList, topicName, dasuId)
   
   /** The listener of events */
   private var listener: Option[InputsListener] = None
@@ -76,17 +78,16 @@ extends KafkaConsumerListener with InputSubscriber {
 	 * @param event The string received in the topic
 	 * @see KafkaConsumerListener
 	 */
-	override def stringEventReceived(event: String) = {
+	override def iasioReceived(iasValue: IASValue[_]) = {
 	  try {
-	    val iasValue = jsonSerializer.valueOf(event)
 	    if (acceptedInputs.contains(iasValue.id)) listener.foreach( l => l.inputsReceived(Set(iasValue)))
 	  } catch {
-	    case e: Exception => logger.error("Subscriber of DASU [{}] got an error processing this event [{}]", dasuId,event,e)
+	    case e: Exception => logger.error("Subscriber of DASU [{}] got an error processing event [{}]", dasuId,iasValue.toString(),e)
 	  }
 	}
   
   /** Initialize the subscriber */
-  def initialize(): Try[Unit] = {
+  def initializeSubscriber(): Try[Unit] = {
     logger.info("Initializing subscriber of DASU [{}]",dasuId)
     Try{ 
       kafkaConsumer.setUp(props)
@@ -95,7 +96,7 @@ extends KafkaConsumerListener with InputSubscriber {
   }
   
   /** CleanUp and release the resources */
-  def cleanUp(): Try[Unit] = {
+  def cleanUpSubscriber(): Try[Unit] = {
     logger.info("Cleaning up subscriber of DASU [{}]",dasuId)
     Try{
       kafkaConsumer.tearDown()
@@ -112,7 +113,7 @@ extends KafkaConsumerListener with InputSubscriber {
    * @param listener the listener of events
    * @param acceptedInputs the IDs of the inputs accepted by the listener
    */
-  def start(listener: InputsListener, acceptedInputs: Set[String]): Try[Unit] = {
+  def startSubscriber(listener: InputsListener, acceptedInputs: Set[String]): Try[Unit] = {
     require(Option(listener).isDefined)
     require(Option(acceptedInputs).isDefined)
     require(!acceptedInputs.isEmpty,"The list of IDs of accepted inputs can' be empty")
@@ -120,7 +121,7 @@ extends KafkaConsumerListener with InputSubscriber {
     this.listener = Option(listener)
     logger.info("The subscriber of DASU [{}] will start getting events",dasuId)
     Try {
-      kafkaConsumer.startGettingEvents(StartPosition.END)
+      kafkaConsumer.startGettingEvents(StartPosition.END,this)
       logger.info("The subscriber of DASU [{}] is polling events from kafka",dasuId)
     }
   }

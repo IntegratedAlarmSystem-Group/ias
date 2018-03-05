@@ -2,7 +2,7 @@ package org.eso.ias.dasu.publisher
 
 import org.eso.ias.prototype.input.java.IASValue
 import scala.util.Try
-import org.eso.ias.kafkautils.SimpleStringProducer
+import org.eso.ias.kafkautils.KafkaIasiosProducer
 import java.util.Properties
 import org.ias.prototype.logging.IASLogger
 import org.eso.ias.prototype.input.java.IasValueJsonSerializer
@@ -20,7 +20,7 @@ import org.eso.ias.kafkautils.KafkaHelper
  */ 
 class KafkaPublisher private (
     val dasuId: String, 
-    private val kafkaProducer: SimpleStringProducer,
+    private val kafkaProducer: KafkaIasiosProducer,
     props: Properties) 
 extends OutputPublisher {
   require(Option(dasuId).isDefined && !dasuId.isEmpty())
@@ -32,23 +32,20 @@ extends OutputPublisher {
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
   
-  /** To serialize IASValues to JSON strings */
-  private val jsonSerializer = new IasValueJsonSerializer()
-  
   /** 
    *  Initialize the Kafka subscriber.
    *  
    *  @return Success or Failure if the initialization went well 
    *          or encountered a problem  
    */
-  override def initialize(): Try[Unit] = {
+  override def initializePublisher(): Try[Unit] = {
     Try(kafkaProducer.setUp(props))
   }
   
   /**
    * Release all the acquired kafka resources.
    */
-  override def cleanUp(): Try[Unit] = {
+  override def cleanUpPublisher(): Try[Unit] = {
     Try(kafkaProducer.tearDown())
   }
   
@@ -60,8 +57,7 @@ extends OutputPublisher {
    */
   override def publish(iasio: IASValue[_]): Try[Unit]  = {
     Try {
-      val jsonStr = jsonSerializer.iasValueToString(iasio)
-      kafkaProducer.push(jsonStr,null,iasio.id)
+      kafkaProducer.push(iasio,null,iasio.id)
     }
   }
 }
@@ -76,7 +72,7 @@ object KafkaPublisher {
    * @param props additional set of properties
    */
   def apply(dasuId: String, kafkaTopic: String, kafkaServers: String, props: Properties): KafkaPublisher = {
-    val kafkaStringProducer = new SimpleStringProducer(kafkaServers,kafkaTopic,dasuId+"Producer")
+    val kafkaStringProducer = new KafkaIasiosProducer(kafkaServers,kafkaTopic,dasuId+"Producer",new IasValueJsonSerializer())
     new KafkaPublisher(dasuId,kafkaStringProducer,props)
   }
   

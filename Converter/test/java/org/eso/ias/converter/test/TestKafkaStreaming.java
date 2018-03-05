@@ -29,8 +29,8 @@ import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.converter.Converter;
 import org.eso.ias.converter.ConverterKafkaStream;
 import org.eso.ias.kafkautils.KafkaHelper;
-import org.eso.ias.kafkautils.SimpleStringConsumer;
-import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener;
+import org.eso.ias.kafkautils.KafkaIasiosConsumer;
+import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener;
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
 import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.eso.ias.prototype.input.java.AlarmSample;
@@ -82,7 +82,7 @@ import org.slf4j.LoggerFactory;
  */
 public class TestKafkaStreaming extends ConverterTestBase {
 	
-	public static class TestStringConsumer implements KafkaConsumerListener {
+	public static class TestStringConsumer implements IasioListener {
 		
 		/**
 		 * The values received i.e. those
@@ -115,24 +115,13 @@ public class TestKafkaStreaming extends ConverterTestBase {
 			return coundownLatch.get();
 		}
 		
-		/**
-		 * @see org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener#stringEventReceived(java.lang.String)
-		 */
-		@Override
-		public synchronized void stringEventReceived(String event) {
-			logger.info("Event received [{}]",event);
-			IASValue<?> iasValue;
-			try {
-				iasValue = iasSerializer.valueOf(event);
-				valuesReceived.add(iasValue);
-				CountDownLatch latch = coundownLatch.get();
-				if (latch!=null) {
-					latch.countDown();
-				}
-			} catch (IasValueSerializerException avse) {
-				logger.error("Exception pasing [{]] into a IASValue",event);
+		public synchronized void iasioReceived(IASValue<?> iasValue) {
+			logger.info("Event received [{}]",iasValue.toString());
+			valuesReceived.add(iasValue);
+			CountDownLatch latch = coundownLatch.get();
+			if (latch!=null) {
+				latch.countDown();
 			}
-			
 		}
 		
 		/**
@@ -209,7 +198,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
 	/**
 	 * The consumer to get IASValue published by the converter
 	 */
-	private static SimpleStringConsumer mPointsConsumer;
+	private static KafkaIasiosConsumer mPointsConsumer;
 	
 	
 	
@@ -246,17 +235,16 @@ public class TestKafkaStreaming extends ConverterTestBase {
 	public static void classInitializer() throws Exception {
 		// Build the consumer that takes out of the kafka topic
 		// the output of the converter
-		mPointsConsumer = new SimpleStringConsumer(
+		mPointsConsumer = new KafkaIasiosConsumer(
 				defaultKafkaBootstrapServers,
 				KafkaHelper.IASIOs_TOPIC_NAME,
-				"KafkaConverterTest",
-				eventsConsumer);
+				"KafkaConverterTest");
 		Properties props = new Properties();
 		props.put("auto.offset.reset", "latest");
 		mPointsConsumer.setUp(props);
 
 		// Start getting events
-		mPointsConsumer.startGettingEvents(StartPosition.END);
+		mPointsConsumer.startGettingEvents(StartPosition.END,eventsConsumer);
 		
 		// Build the producer that pushes monitor point
 		// in the kafka topic
