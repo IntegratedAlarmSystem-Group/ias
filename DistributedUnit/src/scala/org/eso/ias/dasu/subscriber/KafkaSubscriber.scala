@@ -58,7 +58,11 @@ extends IasioListener with InputSubscriber {
    * @param props additional properties
    */
   def this(dasuId: String, props: Properties) = {
-    this(dasuId,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,KafkaHelper.IASIOs_TOPIC_NAME,props)
+    this(
+        dasuId,
+        props.getProperty(KafkaHelper.BROKERS_PROPNAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS),
+        KafkaHelper.IASIOs_TOPIC_NAME,
+        props)
   }
   
   /**
@@ -69,7 +73,11 @@ extends IasioListener with InputSubscriber {
    * @param props additional properties
    */
   def this(dasuId: String, topicName: String,props: Properties) = {
-    this(dasuId,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,topicName,props)
+    this(
+        dasuId,
+        props.getProperty(KafkaHelper.BROKERS_PROPNAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS),
+        topicName,
+        props)
   }
   
   /**

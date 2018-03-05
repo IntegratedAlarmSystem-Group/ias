@@ -1,2 +1,28 @@
 #!/bin/bash
-iasRun -l s org.eso.ias.supervisor.Supervisor $@
+
+TEMP_PARMS_ARRAY=( "$@" )
+
+JAVA_PROPS=""
+OTHER_PARAMS=""
+
+for index in "${!TEMP_PARMS_ARRAY[@]}"
+do
+    if [[ ${TEMP_PARMS_ARRAY[index]} == -D* ]] ;
+    then
+    	JAVA_PROPS="$JAVA_PROPS ${TEMP_PARMS_ARRAY[index]}"
+	else
+		OTHER_PARAMS="$OTHER_PARAMS ${TEMP_PARMS_ARRAY[index]}"
+	fi
+done
+
+if [[ ! -z $JAVA_PROPS ]] ;
+then
+	echo "Found java properties: $JAVA_PROPS"
+fi
+
+CMD="iasRun -l s $JAVA_PROPS org.eso.ias.supervisor.Supervisor $OTHER_PARAMS"
+
+echo Will run
+echo $CMD
+
+$CMD
