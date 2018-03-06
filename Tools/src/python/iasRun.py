@@ -14,7 +14,7 @@ from subprocess import call
 from IASTools.FileSupport import FileSupport
 
 
-def setProps(propsDict,className):
+def setProps(propsDict,className,logFileNameId):
     """
     Adds to the passed dictionary, the properties to be passed to all java/scala
     executables.
@@ -24,6 +24,7 @@ def setProps(propsDict,className):
     
     @param propsDict: A dictionary of properties in the form name:value
     @param className The name of the class to run 
+    @param logFileNameId A string identifier to append to the name of the log file
     """
     # Environment variables
     propsDict["ias.root.folder"]=os.environ["IAS_ROOT"]
@@ -40,6 +41,10 @@ def setProps(propsDict,className):
     else:
         temp = className.rsplit(".",1)
         logFileName = temp[len(temp)-1]
+    
+    # Append the log identifier if it has been passed in the command line
+    if len(logFileNameId.strip())>0:
+        logFileName = logFileName+"-"+logFileNameId.strip()
     propsDict["ias.logs.filename"]= logFileName
     
     propsDict["ias.config.folder"]=os.environ["IAS_CONFIG_FOLDER"]
@@ -133,6 +138,13 @@ if __name__ == '__main__':
                         choices=['java', 'j', 'scala','s'],
                         required=True)
     parser.add_argument(
+                        '-i',
+                        '--logfileNameId',
+                        help='The identifier to be appended to the name of the log file',
+                        action='store',
+                        default="",
+                        required=False)
+    parser.add_argument(
                         '-D',
                         '--jProp',
                         help='Set a java property: -Dname=value',
@@ -222,7 +234,7 @@ if __name__ == '__main__':
     # Default and user defined properties are in a dictionary:
     # this way it is easy for the user to overrride default properties.
     props={}
-    setProps(props, args.className)
+    setProps(props, args.className,args.logfileNameId)
     if args.jProp is not None:
         addUserProps(props,args.jProp)
     if len(props)>0:
