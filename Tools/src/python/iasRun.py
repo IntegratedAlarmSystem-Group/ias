@@ -139,7 +139,7 @@ if __name__ == '__main__':
                         required=True)
     parser.add_argument(
                         '-i',
-                        '--logfileNameId',
+                        '--logfileId',
                         help='The identifier to be appended to the name of the log file',
                         action='store',
                         default="",
@@ -234,7 +234,7 @@ if __name__ == '__main__':
     # Default and user defined properties are in a dictionary:
     # this way it is easy for the user to overrride default properties.
     props={}
-    setProps(props, args.className,args.logfileNameId)
+    setProps(props, args.className,args.logfileId)
     if args.jProp is not None:
         addUserProps(props,args.jProp)
     if len(props)>0:
