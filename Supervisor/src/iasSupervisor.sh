@@ -20,7 +20,21 @@ then
 	echo "Found java properties: $JAVA_PROPS"
 fi
 
-CMD="iasRun -l s $JAVA_PROPS org.eso.ias.supervisor.Supervisor $OTHER_PARAMS"
+if [[ -z $OTHER_PARAMS ]];
+then
+	echo "Missing supervisor ID in command line"
+else
+	TEMP=( $OTHER_PARAMS )
+	ID=${TEMP_PARMS_ARRAY[0]}
+	echo "Supervisor ID=$ID"
+	LOGID_PARAM="-i $ID"
+fi
+
+TEMP=( $OTHER_PARAMS )
+ID=${TEMP_PARMS_ARRAY[0]}
+echo "Supervisor ID=$ID"
+
+CMD="iasRun -l s $JAVA_PROPS $LOGID_PARAM org.eso.ias.supervisor.Supervisor $OTHER_PARAMS"
 
 echo Will run
 echo $CMD
