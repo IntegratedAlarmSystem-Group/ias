@@ -2,7 +2,9 @@ package org.eso.ias.converter;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 
 import org.eso.ias.converter.config.IasioConfigurationDAO;
@@ -60,6 +62,11 @@ public class ValueMapper implements Function<String, String> {
 	 * ISO 8601 date formatter
 	 */
 	private final SimpleDateFormat iso8601dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
+	
+	/**
+	 * A monitor point ptoduced by a plugin has no dependents
+	 */
+	private final Set<String> emptySetDependents = new HashSet<>();
 
 	/**
 	 * Constructor
@@ -211,7 +218,8 @@ public class ValueMapper implements Function<String, String> {
 				producedAndSentTStamp, // Produced by converter
 				producedAndSentTStamp, // Sent to BSDB
 				null, // Read from BSDB
-				null); // DASU prod time
+				null,
+				emptySetDependents); // DASU prod time
 	}
 
 	/**

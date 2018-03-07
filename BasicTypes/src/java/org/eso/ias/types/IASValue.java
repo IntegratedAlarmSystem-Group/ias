@@ -1,12 +1,14 @@
 package org.eso.ias.types;
 
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import org.eso.ias.utils.ISO8601Helper;
 
 /**
- * The view of a heterogeneous inputs in the java code.
+ * The view of a heterogeneous inputs in the java code and in the BSDB.
  * 
  * Objects of this class are immutable i.e. updating returns
  * a new immutable object
@@ -42,9 +44,15 @@ public class IASValue<T> {
 	
 	/**
 	 * The point in time when the converter generated
-	 * the value from the data structure rceived by the plugin
+	 * the value from the data structure received by the plugin
 	 */
 	public final Optional<Long> convertedProductionTStamp;
+	
+	/**
+	 * The list of the full running identifiers of the dependent
+	 * monitor point 
+	 */
+	public final Set<String> dependentsFullRuningIds;
 	
 	/**
 	 * The point in time when the value has been sent to the BSDB
@@ -131,7 +139,8 @@ public class IASValue<T> {
 			Optional<Long> convertedProductionTStamp,
 			Optional<Long> sentToBsdbTStamp,
 			Optional<Long> readFromBsdbTStamp,
-			Optional<Long> dasuProductionTStamp) {
+			Optional<Long> dasuProductionTStamp,
+			Set<String> dependentsFullRuningIds) {
 		Objects.requireNonNull(mode,"The mode can't be null");
 		Objects.requireNonNull(iasValidity,"The validity can't be null");
 		Objects.requireNonNull(valueType,"The type can't be null");
@@ -142,6 +151,7 @@ public class IASValue<T> {
 		Objects.requireNonNull(sentToBsdbTStamp);
 		Objects.requireNonNull(readFromBsdbTStamp);
 		Objects.requireNonNull(dasuProductionTStamp);
+		Objects.requireNonNull(dependentsFullRuningIds);
 		this.value = value;
 		this.mode = mode;
 		this.iasValidity=iasValidity;
@@ -164,6 +174,7 @@ public class IASValue<T> {
 		this.sentToBsdbTStamp= sentToBsdbTStamp;
 		this.readFromBsdbTStamp= readFromBsdbTStamp;
 		this.dasuProductionTStamp= dasuProductionTStamp;
+		this.dependentsFullRuningIds=dependentsFullRuningIds;
 	}
 	
 	/**
@@ -185,7 +196,8 @@ public class IASValue<T> {
 				this.convertedProductionTStamp,
 				this.sentToBsdbTStamp,
 				this.readFromBsdbTStamp,
-				this.dasuProductionTStamp);
+				this.dasuProductionTStamp,
+				this.dependentsFullRuningIds);
 	}
 	
 	/**
@@ -207,7 +219,8 @@ public class IASValue<T> {
 				this.convertedProductionTStamp,
 				this.sentToBsdbTStamp,
 				this.readFromBsdbTStamp,
-				this.dasuProductionTStamp);
+				this.dasuProductionTStamp,
+				this.dependentsFullRuningIds);
 	}
 	
 	/**
@@ -229,7 +242,8 @@ public class IASValue<T> {
 				this.convertedProductionTStamp,
 				this.sentToBsdbTStamp,
 				this.readFromBsdbTStamp,
-				this.dasuProductionTStamp);
+				this.dasuProductionTStamp,
+				this.dependentsFullRuningIds);
 	}
 	
 	/**
@@ -251,7 +265,8 @@ public class IASValue<T> {
 				this.convertedProductionTStamp,
 				this.sentToBsdbTStamp,
 				this.readFromBsdbTStamp,
-				this.dasuProductionTStamp);
+				this.dasuProductionTStamp,
+				this.dependentsFullRuningIds);
 	}
 	
 	/**
@@ -273,7 +288,8 @@ public class IASValue<T> {
 				this.convertedProductionTStamp,
 				this.sentToBsdbTStamp,
 				this.readFromBsdbTStamp,
-				this.dasuProductionTStamp);
+				this.dasuProductionTStamp,
+				this.dependentsFullRuningIds);
 	}
 	
 	/**
@@ -295,7 +311,8 @@ public class IASValue<T> {
 				this.convertedProductionTStamp,
 				this.sentToBsdbTStamp,
 				this.readFromBsdbTStamp,
-				this.dasuProductionTStamp);
+				this.dasuProductionTStamp,
+				this.dependentsFullRuningIds);
 	}
 	
 	/**
@@ -317,7 +334,8 @@ public class IASValue<T> {
 				Optional.ofNullable(timestamp),
 				this.sentToBsdbTStamp,
 				this.readFromBsdbTStamp,
-				this.dasuProductionTStamp);
+				this.dasuProductionTStamp,
+				this.dependentsFullRuningIds);
 	}
 	
 	/**
@@ -339,7 +357,8 @@ public class IASValue<T> {
 				this.convertedProductionTStamp,
 				Optional.ofNullable(timestamp),
 				this.readFromBsdbTStamp,
-				this.dasuProductionTStamp);
+				this.dasuProductionTStamp,
+				this.dependentsFullRuningIds);
 	}
 	
 	/**
@@ -361,7 +380,8 @@ public class IASValue<T> {
 				this.convertedProductionTStamp,
 				this.sentToBsdbTStamp,
 				Optional.ofNullable(timestamp),
-				this.dasuProductionTStamp);
+				this.dasuProductionTStamp,
+				this.dependentsFullRuningIds);
 	}
 	
 	/**
@@ -383,7 +403,8 @@ public class IASValue<T> {
 				this.convertedProductionTStamp,
 				this.sentToBsdbTStamp,
 				this.readFromBsdbTStamp,
-				Optional.ofNullable(timestamp));
+				Optional.ofNullable(timestamp),
+				this.dependentsFullRuningIds);
 	}
 	
 	@Override
@@ -429,6 +450,13 @@ public class IASValue<T> {
 		ret.append(", value=");
 		ret.append(value);
 		
+		ret.append(", fullRunningIds of dependents=[");
+		for (String s: dependentsFullRuningIds) {
+			ret.append(' ');
+			ret.append(s);
+		}
+		ret.append(" ]");
+		
 		return ret.toString();
 	}
 	
@@ -448,7 +476,7 @@ public class IASValue<T> {
 			IasValidity iasValidity,
 			String fullRunningId,
 			IASTypes valueType) {
-		return build(value,mode,iasValidity,fullRunningId,valueType,null,null,null,null,null,null,null);
+		return build(value,mode,iasValidity,fullRunningId,valueType,null,null,null,null,null,null,null,new HashSet<String>());
 	}
 	
 	/**
@@ -482,8 +510,10 @@ public class IASValue<T> {
 			Long convertedProductionTStamp,
 			Long sentToBsdbTStamp,
 			Long readFromBsdbTStamp,
-			Long dasuProductionTStamp) {
+			Long dasuProductionTStamp,
+			Set<String> dependentsFullrunningIds) {
 		Objects.requireNonNull(valueType);
+		Objects.requireNonNull(dependentsFullrunningIds);
 		switch (valueType) {
 			case LONG: return new IASValue<Long>(
 					(Long)value, 
@@ -497,7 +527,8 @@ public class IASValue<T> {
 					Optional.ofNullable(convertedProductionTStamp),
 					Optional.ofNullable(sentToBsdbTStamp),
 					Optional.ofNullable(readFromBsdbTStamp),
-					Optional.ofNullable(dasuProductionTStamp));
+					Optional.ofNullable(dasuProductionTStamp),
+					dependentsFullrunningIds);
 	 		case INT: return new IASValue<Integer>(
 					(Integer)value, 
 					mode,
@@ -510,7 +541,8 @@ public class IASValue<T> {
 					Optional.ofNullable(convertedProductionTStamp),
 					Optional.ofNullable(sentToBsdbTStamp),
 					Optional.ofNullable(readFromBsdbTStamp),
-					Optional.ofNullable(dasuProductionTStamp));
+					Optional.ofNullable(dasuProductionTStamp),
+					dependentsFullrunningIds);
 			case SHORT: return new IASValue<Short>(
 					(Short)value, 
 					mode,
@@ -523,7 +555,8 @@ public class IASValue<T> {
 					Optional.ofNullable(convertedProductionTStamp),
 					Optional.ofNullable(sentToBsdbTStamp),
 					Optional.ofNullable(readFromBsdbTStamp),
-					Optional.ofNullable(dasuProductionTStamp));
+					Optional.ofNullable(dasuProductionTStamp),
+					dependentsFullrunningIds);
 			case BYTE: return new IASValue<Byte>(
 					(Byte)value, 
 					mode,
@@ -536,7 +569,8 @@ public class IASValue<T> {
 					Optional.ofNullable(convertedProductionTStamp),
 					Optional.ofNullable(sentToBsdbTStamp),
 					Optional.ofNullable(readFromBsdbTStamp),
-					Optional.ofNullable(dasuProductionTStamp));
+					Optional.ofNullable(dasuProductionTStamp),
+					dependentsFullrunningIds);
 			case DOUBLE: return new IASValue<Double>(
 					(Double)value, 
 					mode,
@@ -549,7 +583,8 @@ public class IASValue<T> {
 					Optional.ofNullable(convertedProductionTStamp),
 					Optional.ofNullable(sentToBsdbTStamp),
 					Optional.ofNullable(readFromBsdbTStamp),
-					Optional.ofNullable(dasuProductionTStamp));
+					Optional.ofNullable(dasuProductionTStamp),
+					dependentsFullrunningIds);
 			case FLOAT: return new IASValue<Float>(
 					(Float)value, 
 					mode,
@@ -562,7 +597,8 @@ public class IASValue<T> {
 					Optional.ofNullable(convertedProductionTStamp),
 					Optional.ofNullable(sentToBsdbTStamp),
 					Optional.ofNullable(readFromBsdbTStamp),
-					Optional.ofNullable(dasuProductionTStamp));
+					Optional.ofNullable(dasuProductionTStamp),
+					dependentsFullrunningIds);
 			case BOOLEAN: return new IASValue<Boolean>(
 					(Boolean)value, 
 					mode,
@@ -575,7 +611,8 @@ public class IASValue<T> {
 					Optional.ofNullable(convertedProductionTStamp),
 					Optional.ofNullable(sentToBsdbTStamp),
 					Optional.ofNullable(readFromBsdbTStamp),
-					Optional.ofNullable(dasuProductionTStamp));
+					Optional.ofNullable(dasuProductionTStamp),
+					dependentsFullrunningIds);
 			case CHAR: return new IASValue<Character>(
 					(Character)value, 
 					mode,
@@ -588,7 +625,8 @@ public class IASValue<T> {
 					Optional.ofNullable(convertedProductionTStamp),
 					Optional.ofNullable(sentToBsdbTStamp),
 					Optional.ofNullable(readFromBsdbTStamp),
-					Optional.ofNullable(dasuProductionTStamp));
+					Optional.ofNullable(dasuProductionTStamp),
+					dependentsFullrunningIds);
 			
 			case STRING: return new IASValue<String>(
 					(String)value, 
@@ -602,7 +640,8 @@ public class IASValue<T> {
 					Optional.ofNullable(convertedProductionTStamp),
 					Optional.ofNullable(sentToBsdbTStamp),
 					Optional.ofNullable(readFromBsdbTStamp),
-					Optional.ofNullable(dasuProductionTStamp));
+					Optional.ofNullable(dasuProductionTStamp),
+					dependentsFullrunningIds);
 			case ALARM: return new IASValue<AlarmSample>(
 					(AlarmSample)value, 
 					mode,
@@ -615,7 +654,8 @@ public class IASValue<T> {
 					Optional.ofNullable(convertedProductionTStamp),
 					Optional.ofNullable(sentToBsdbTStamp),
 					Optional.ofNullable(readFromBsdbTStamp),
-					Optional.ofNullable(dasuProductionTStamp));
+					Optional.ofNullable(dasuProductionTStamp),
+					dependentsFullrunningIds);
 			default: throw new UnsupportedOperationException("Unsupported type "+valueType);
 		}
 	}
@@ -626,6 +666,7 @@ public class IASValue<T> {
 		int result = 1;
 		result = prime * result + ((convertedProductionTStamp == null) ? 0 : convertedProductionTStamp.hashCode());
 		result = prime * result + ((dasuProductionTStamp == null) ? 0 : dasuProductionTStamp.hashCode());
+		result = prime * result + ((dependentsFullRuningIds == null) ? 0 : dependentsFullRuningIds.hashCode());
 		result = prime * result + ((fullRunningId == null) ? 0 : fullRunningId.hashCode());
 		result = prime * result + ((iasValidity == null) ? 0 : iasValidity.hashCode());
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
@@ -658,6 +699,11 @@ public class IASValue<T> {
 			if (other.dasuProductionTStamp != null)
 				return false;
 		} else if (!dasuProductionTStamp.equals(other.dasuProductionTStamp))
+			return false;
+		if (dependentsFullRuningIds == null) {
+			if (other.dependentsFullRuningIds != null)
+				return false;
+		} else if (!dependentsFullRuningIds.equals(other.dependentsFullRuningIds))
 			return false;
 		if (fullRunningId == null) {
 			if (other.fullRunningId != null)
@@ -707,7 +753,5 @@ public class IASValue<T> {
 			return false;
 		return true;
 	}
-
-	
 
 }

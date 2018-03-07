@@ -15,6 +15,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.HashSet;
+
 /**
  * Test the JSON serialization of {@link IASValue}
  * 
@@ -216,7 +218,8 @@ public class IasValueJsonSerializerTest {
 			4L,
 			5L,
 			6L,
-			7L);
+			7L,
+			new HashSet<String>());
 		
 		String jsonStr = jsonSerializer.iasValueToString(alarm);
 		
@@ -256,7 +259,8 @@ public class IasValueJsonSerializerTest {
 			null,
 			5L,
 			null,
-			7L);
+			7L,
+			new HashSet<String>());
 		
 		jsonStr = jsonSerializer.iasValueToString(alarm2);
 		
