@@ -238,6 +238,7 @@ class Dasu7ASCEsTest extends FlatSpec {
     val outputProducedByDasu = f.iasValuesReceived.last
     assert(outputProducedByDasu.valueType==IASTypes.ALARM)
     assert(outputProducedByDasu.value.asInstanceOf[AlarmSample]== AlarmSample.CLEARED)
+    assert(outputProducedByDasu.dasuProductionTStamp.isPresent())
     
     // wait to avoid the throttling
     Thread.sleep(2*f.dasu.throttling)
@@ -255,6 +256,9 @@ class Dasu7ASCEsTest extends FlatSpec {
     val outputProducedByDasu2 = f.iasValuesReceived.last
     assert(outputProducedByDasu2.valueType==IASTypes.ALARM)
     assert(outputProducedByDasu2.value.asInstanceOf[AlarmSample]== AlarmSample.SET)
+    assert(outputProducedByDasu2.dasuProductionTStamp.isPresent())
+    
+    assert(outputProducedByDasu2.dependentsFullRuningIds.size()==f.dasu.getInputIds().size)
     f.dasu.cleanUp()
   }
   
@@ -390,5 +394,7 @@ class Dasu7ASCEsTest extends FlatSpec {
     assert(f.iasValuesReceived.last.iasValidity == UNRELIABLE)
     
   }
+  
+  
   
 }

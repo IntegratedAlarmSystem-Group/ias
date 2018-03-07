@@ -29,6 +29,8 @@ import java.util.concurrent.TimeUnit
 import org.eso.ias.cdb.pojos.DasuDao
 import org.eso.ias.types.Validity
 import org.eso.ias.types.IasValidity
+import java.util.HashMap
+import java.util.Collections
 
 /**
  * The implementation of the DASU.
@@ -132,6 +134,11 @@ class DasuImpl (
    * TODO: protect the map against access from multiple threads
    */
   val notYetProcessedInputs: MutableMap[String,IASValue[_]] = MutableMap()
+  
+  /**
+   * The fullRuning Ids of the received inputs
+   */
+  val fullRunningIdsOfInputs: java.util.Map[String,String] = Collections.synchronizedMap(new HashMap[String,String]());
   
   /** 
    *  The last calculated output by ASCEs
@@ -314,7 +321,10 @@ class DasuImpl (
     assert(iasios.size>0)
         
     // Merge the inputs with the buffered ones to keep only the last updated values
-    iasios.foreach(iasio => notYetProcessedInputs.put(iasio.id,iasio))
+    iasios.filter( p => getInputIds().contains(p.id)).foreach(iasio => {
+      fullRunningIdsOfInputs.put(iasio.id, iasio.fullRunningId)
+      notYetProcessedInputs.put(iasio.id,iasio)
+    })
     
     // The new output must be immediately recalculated and sent unless 
     // * the throttling is already in place (i.e. calculation already delayed)
@@ -350,7 +360,7 @@ class DasuImpl (
     currentOutput.value.foreach({ v =>
       lastSentTime.set(System.currentTimeMillis())
       val iasioToSend = currentOutput.updateSentToBsdbTStamp(lastSentTime.get)
-      val iasValueToSend = iasioToSend.toIASValue().updateValidity(actualValidity)
+      val iasValueToSend = iasioToSend.toIASValue().updateFullIdsOfDependents(fullRunningIdsOfInputs.values).updateValidity(actualValidity)
       
       lastSentOutputAndValidity.set(Some(iasioToSend,actualValidity))
       outputPublisher.publish(iasValueToSend)
