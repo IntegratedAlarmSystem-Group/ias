@@ -62,7 +62,7 @@ class TestInOut extends FlatSpec {
     assert(mp2.value.isDefined)
     assert(mp2.value.get == 3L)
     // Trivial check of the update of the timestamp 
-    assert(mp2.dasuProductionTStamp.isDefined)
+    assert(mp2.dasuProductionTStamp.isEmpty)
     assert(mp2.mode == OperationalMode.OPERATIONAL)
     assert(mp2.fromIasValueValidity.isDefined)
     assert(mp2.fromIasValueValidity.get == Validity(RELIABLE))
@@ -125,31 +125,11 @@ class TestInOut extends FlatSpec {
     assert(mpUpdated.fromInputsValidity.get == Validity(RELIABLE), "The validities differ")
   }
 
-  it must "always update the timestamp when updating value or mode and inherited validity" in {
+  it must "update the DASU production timestamp" in {
     val mp = InOut.asInput(id,IASTypes.LONG)
-
-    val upVal = mp.updateValue(Some(10L))
-    assert(upVal.value.get == 10L, "The values differ")
-    Thread.sleep(5) // be sure to update with another timestamp
-    val upValAgain = upVal.updateValue(Some(10L))
-    assert(upValAgain.value.get == 10L, "The value differ")
-    assert(upVal.dasuProductionTStamp.isDefined)
-
-    val upValidity = mp.updateFromIasValueValidity(Validity(RELIABLE))
-    assert(upValidity.fromIasValueValidity.get == Validity(RELIABLE), "The validity differ")
-    Thread.sleep(5) // be sure to update with another timestamp
-    val upValidityAgain = upValidity.updateFromIasValueValidity(Validity(UNRELIABLE))
-    assert(upValidityAgain.fromIasValueValidity.get == Validity(UNRELIABLE), "The validity differ")
-    assert(upValidityAgain.dasuProductionTStamp.isDefined)
-    assert(upValidityAgain.dasuProductionTStamp.get> upValidity.dasuProductionTStamp.get, "Timestamps must not be updated")
-
-    val upMode = mp.updateMode(OperationalMode.STARTUP)
-    assert(upMode.mode == OperationalMode.STARTUP, "The mode differ")
-    Thread.sleep(5) // be sure to update with another timestamp
-    val upModeAgain = upMode.updateMode(OperationalMode.STARTUP)
-    assert(upModeAgain.mode == OperationalMode.STARTUP, "The mode differ")
-    assert(upModeAgain.dasuProductionTStamp.isDefined)
-    assert(upMode.dasuProductionTStamp.get< upModeAgain.dasuProductionTStamp.get, "Timestamp not updated")
+    assert(mp.dasuProductionTStamp.isEmpty)
+    val mp2=mp.updateDasuProdTStamp(System.currentTimeMillis());
+    assert(mp2.dasuProductionTStamp.isDefined)
   }
 
   it must "support all types" in {
@@ -232,117 +212,5 @@ class TestInOut extends FlatSpec {
     assert(newiasIo2.mode == iasValue2.mode)
     assert(newiasIo2.fromIasValueValidity.isEmpty)
   }
-
-//  it must "correctly evaluate the validity without dependants IASIOs" in {
-//    val iasioId = new Identifier("IasioId", IdentifierType.IASIO, Option(asceId))
-//
-//    val iasio = new InOut[AlarmSample](
-//      Some(AlarmSample.SET),
-//      iasioId,
-//      OperationalMode.OPERATIONAL,
-//      Some(Validity(RELIABLE)),
-//      IASTypes.ALARM,None,None,None,None,None,None,None)
-//
-//    // Newly created, the update time is before the refresh rate
-//    assert(iasio.getValidity(None) == Validity(IasValidity.RELIABLE))
-//
-//    // After refreshRate msec without update the IASIO
-//    // becomes invalid
-//    Thread.sleep(2 * refreshRate)
-//    assert(iasio.getValidity(None) == Validity(IasValidity.UNRELIABLE))
-//
-//    // After updating the value, the monitor point is valid again
-//    val updatedValue = iasio.updateValue(Option(AlarmSample.SET))
-//    assert(updatedValue.getValidity(None) == Validity(IasValidity.RELIABLE))
-//    Thread.sleep(2 * refreshRate)
-//    assert(updatedValue.getValidity(None) == Validity(IasValidity.UNRELIABLE))
-//
-//    // After updating the mode, the monitor point is valid again
-//    val updatedMode = updatedValue.updateMode(OperationalMode.OPERATIONAL)
-//    assert(updatedMode.getValidity(None) == Validity(IasValidity.RELIABLE))
-//    Thread.sleep(2 * refreshRate)
-//    assert(updatedMode.getValidity(None) == Validity(IasValidity.UNRELIABLE))
-//
-//  }
-//
-//  it must "correctly evaluate the validity with dependants IASIOs" in {
-//    //
-//    // NOTE: the validity calculated depends on the validity of the dependants
-//    //       IASIOs that is assessed against the time when the validity is requested
-//    //       i.e. if the inherited validity of a dependant is RELIABLE but
-//    //       checked after its refresh rate expired, then its validity is UNRELIABLE
-//    val iasioId = new Identifier("IasioId", IdentifierType.IASIO, Option(asceId))
-//
-//    val refreshRate = 500
-//
-//    // This is a IASIO produced by a ASCE:
-//    // no fromIasValueValidity but depends on
-//    // iasioReliable and iasioUnreliable
-//    val iasio = new InOut[AlarmSample](
-//      Some(AlarmSample.SET),
-//      System.currentTimeMillis(),
-//      iasioId,
-//      refreshRate,
-//      OperationalMode.OPERATIONAL,
-//      None,
-//      IASTypes.ALARM)
-//      
-//    // An IASIO in input to a ASCE:
-//    // it has the fromIasValueValidity but do not depend on
-//    // other IASIOs
-//    val iasioReliable = new InOut[AlarmSample](
-//      Some(AlarmSample.SET),
-//      System.currentTimeMillis(),
-//      iasioId,
-//      refreshRate,
-//      OperationalMode.OPERATIONAL,
-//      Some(Validity(IasValidity.RELIABLE)),
-//      IASTypes.ALARM) 
-//      
-//    val setReliable: Set[InOut[_]] = Set(iasioReliable)
-//      
-//    // An IASIO in input to a ASCE:
-//    // it has the fromIasValueValidity but do not depend on
-//    // other IASIOs
-//    val iasioUnreliable = new InOut[AlarmSample](
-//      Some(AlarmSample.SET),
-//      System.currentTimeMillis(),
-//      iasioId,
-//      refreshRate,
-//      OperationalMode.OPERATIONAL,
-//      Some(Validity(IasValidity.UNRELIABLE)),
-//      IASTypes.ALARM)
-//      
-//    val setUnreliable: Set[InOut[_]] = Set(iasioUnreliable)
-//
-//    // Newly created, the update time is before the refresh rate
-//    assert(iasio.getValidity(Option(setReliable)) == Validity(IasValidity.RELIABLE))
-//    Thread.sleep(2 * refreshRate)
-//    assert(iasio.getValidity(Option(setUnreliable)) == Validity(IasValidity.UNRELIABLE))
-//
-//    // Update the value to reset the timestamp
-//    val iasio2=iasio.updateValue(Some(AlarmSample.SET))
-//    assert(iasio2.assessTimeValidity()==Validity(IasValidity.RELIABLE))
-//    assert(iasio2.fromIasValueValidity.isEmpty)
-//    // The validity of setReliable is now UNRELIABLE because 
-//    // even if its inherited validity is RELIABALE, its update time
-//    // is now greater then its refresh rate
-//    assert(iasio2.getValidity(Option(setReliable)) == Validity(IasValidity.UNRELIABLE))
-//    
-//    // Update again the value to reset the timestamp
-//    val iasio3=iasio2.updateValue(Some(AlarmSample.SET))
-//    val iasioReliable2 = iasioReliable.updateValue(Some(AlarmSample.SET))
-//    val setReliable2: Set[InOut[_]] = Set(iasioReliable2)
-//    // The validity of setReliable2 is now RELIABLE because we renewed the refresh rate
-//    assert(iasio3.getValidity(Option(setReliable2)) == Validity(IasValidity.RELIABLE))
-//    Thread.sleep(2 * refreshRate)
-//    assert(iasio3.getValidity(Option(setReliable2)) == Validity(IasValidity.UNRELIABLE))
-//    
-//    // Update again the value to reset the timestamp
-//    val iasio4=iasio3.updateValue(Some(AlarmSample.SET))
-//    val iasioUnreliable2 = iasioUnreliable.updateValue(Some(AlarmSample.SET))
-//    val setUnReliable2: Set[InOut[_]] = Set(iasioUnreliable2)
-//    assert(iasio2.getValidity(Option(setReliable2)) == Validity(IasValidity.UNRELIABLE))
-//  }
 
 }

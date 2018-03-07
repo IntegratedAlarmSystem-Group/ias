@@ -138,7 +138,7 @@ case class InOut[A](
    * @param newMode: The new mode of the monitor point
    */
   def updateMode(newMode: OperationalMode): InOut[A] = {
-    this.copy(mode=newMode, dasuProductionTStamp=Some(System.currentTimeMillis()))
+    this.copy(mode=newMode)
   }
   
   /**
@@ -150,7 +150,7 @@ case class InOut[A](
   def updateValue[B >: A](newValue: Some[B]): InOut[A] = {
     assert(InOut.checkType(newValue.get,iasType))
     
-    this.copy(value=newValue, dasuProductionTStamp=Some(System.currentTimeMillis()))
+    this.copy(value=newValue)
   }
   
   /**
@@ -166,9 +166,9 @@ case class InOut[A](
   def updateValueValidity[B >: A](newValue: Some[B], newValidity: Some[Validity]): InOut[A] = {
     assert(InOut.checkType(newValue.get,iasType))
     if (isOutput()) {
-      this.copy(value=newValue,fromInputsValidity=newValidity, dasuProductionTStamp=Some(System.currentTimeMillis()))
+      this.copy(value=newValue,fromInputsValidity=newValidity)
     } else {
-      this.copy(value=newValue,fromIasValueValidity=newValidity, dasuProductionTStamp=Some(System.currentTimeMillis()))
+      this.copy(value=newValue,fromIasValueValidity=newValidity)
     }
   }
   
@@ -179,7 +179,7 @@ case class InOut[A](
     val validityOpt = Option(validity)
     require(validityOpt.isDefined)
     assert(!isOutput() && fromIasValueValidity.isDefined, "Cannot update the IASValue validity of an output")
-    this.copy(fromIasValueValidity=validityOpt, dasuProductionTStamp=Some(System.currentTimeMillis()))
+    this.copy(fromIasValueValidity=validityOpt)
   }
   
   /**
@@ -189,7 +189,7 @@ case class InOut[A](
     val validityOpt = Option(validity)
     require(validityOpt.isDefined)
     assert(isOutput() && fromInputsValidity.isDefined, "Cannot update the validities of inputs of an input")
-    this.copy(fromInputsValidity=validityOpt, dasuProductionTStamp=Some(System.currentTimeMillis()))
+    this.copy(fromInputsValidity=validityOpt)
   }
   
   /**
@@ -223,7 +223,7 @@ case class InOut[A](
    */
   def updateDependentsIds(idsOfDeps: Set[Identifier]): InOut[_] = {
     require(Option(idsOfDeps).isDefined,"Cannot update the list of dependents with an empty set of identifiers")
-    this.copy(idsOfDependants=idsOfDeps, dasuProductionTStamp=Some(System.currentTimeMillis()))
+    this.copy(idsOfDependants=idsOfDeps)
   }
   
   /**
@@ -269,6 +269,12 @@ case class InOut[A](
     this.copy(sentToBsdbTStamp=newTimestamp)
   }
   
+  def updateDasuProdTStamp(timestamp: Long) = {
+    val newTimestamp = Option(timestamp)
+    require(newTimestamp.isDefined)
+    
+    this.copy(dasuProductionTStamp=newTimestamp)
+  }
   /**
    * Build and return the IASValue representation of this IASIO
    * 
