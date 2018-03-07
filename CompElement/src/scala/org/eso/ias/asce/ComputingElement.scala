@@ -343,7 +343,7 @@ abstract class ComputingElement[T](
       // Note that this validity does not take into account the current
       // timestamp against the timestamp of the IASValues in inputs
       val minValidityOfInputs = Validity.minValidity(iasValues.map (_.iasValidity))
-      _output=newOut.updateFromIinputsValidity(minValidityOfInputs)
+      _output=newOut.updateFromIinputsValidity(minValidityOfInputs).updateDasuProdTStamp(System.currentTimeMillis())
       ( Some(output),state.actualState)
     } else {
       ( None,state.actualState)
