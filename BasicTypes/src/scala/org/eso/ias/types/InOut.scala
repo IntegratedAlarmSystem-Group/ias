@@ -221,7 +221,7 @@ case class InOut[A](
    * 
    * @param idsOfDeps the identifiers of the dependent monitor points
    */
-  def updateDependentsIds(idsOfDeps: Set[Identifier]): InOut[_] = {
+  def updateDependentsIds(idsOfDeps: Set[Identifier]): InOut[A] = {
     require(Option(idsOfDeps).isDefined,"Cannot update the list of dependents with an empty set of identifiers")
     this.copy(idsOfDependants=idsOfDeps)
   }
@@ -233,7 +233,7 @@ case class InOut[A](
    * if this INOut is an input of a ASCE or in fromInputsValidity if it the the output 
    * of a ASCE.
    */
-  def update(iasValue: IASValue[_]): InOut[_] = {
+  def update(iasValue: IASValue[_]): InOut[A] = {
     require(Option(iasValue).isDefined,"Cannot update from a undefined IASValue")
     require(Option(iasValue.value).isDefined,"Cannot update when the IASValue has no value")
     require(Option(iasValue.dependentsFullRuningIds).isDefined,"Cannot update when the IASValue has no dependent ids")
@@ -262,14 +262,14 @@ case class InOut[A](
 	      depIds.map(Identifier(_)))
   }
   
-  def updateSentToBsdbTStamp(timestamp: Long) = {
+  def updateSentToBsdbTStamp(timestamp: Long): InOut[A] = {
     val newTimestamp = Option(timestamp)
     require(newTimestamp.isDefined)
     
     this.copy(sentToBsdbTStamp=newTimestamp)
   }
   
-  def updateDasuProdTStamp(timestamp: Long) = {
+  def updateDasuProdTStamp(timestamp: Long): InOut[A] = {
     val newTimestamp = Option(timestamp)
     require(newTimestamp.isDefined)
     
