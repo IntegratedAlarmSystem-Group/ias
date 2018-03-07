@@ -133,12 +133,12 @@ class DasuImpl (
    * 
    * TODO: protect the map against access from multiple threads
    */
-  val notYetProcessedInputs: MutableMap[String,IASValue[_]] = MutableMap()
+  val notYetProcessedInputs: java.util.Map[String,IASValue[_]] = Collections.synchronizedMap(new HashMap[String,IASValue[_]]())
   
   /**
    * The fullRuning Ids of the received inputs
    */
-  val fullRunningIdsOfInputs: java.util.Map[String,String] = Collections.synchronizedMap(new HashMap[String,String]());
+  val fullRunningIdsOfInputs: java.util.Map[String,String] = Collections.synchronizedMap(new HashMap[String,String]())
   
   /** 
    *  The last calculated output by ASCEs
@@ -379,7 +379,11 @@ class DasuImpl (
     // Let the ASCEs produce the new output
     val before = System.currentTimeMillis()
     val oldCalculatedOutput = lastCalculatedOutput.get
-    lastCalculatedOutput.set(propagateIasios(notYetProcessedInputs.values.toSet))
+    
+    // Gets the input from the synchronized java map into a scala Set
+    val inputsFromMap = JavaConverters.collectionAsScalaIterable(notYetProcessedInputs.values).toSet
+    
+    lastCalculatedOutput.set(propagateIasios(inputsFromMap))
     val after = System.currentTimeMillis()
     lastUpdateTime.set(after)
     notYetProcessedInputs.clear()
