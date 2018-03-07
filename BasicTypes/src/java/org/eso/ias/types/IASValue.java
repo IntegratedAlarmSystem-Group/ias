@@ -1,5 +1,7 @@
 package org.eso.ias.types;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
@@ -174,7 +176,7 @@ public class IASValue<T> {
 		this.sentToBsdbTStamp= sentToBsdbTStamp;
 		this.readFromBsdbTStamp= readFromBsdbTStamp;
 		this.dasuProductionTStamp= dasuProductionTStamp;
-		this.dependentsFullRuningIds=dependentsFullRuningIds;
+		this.dependentsFullRuningIds=Collections.unmodifiableSet(dependentsFullRuningIds);
 	}
 	
 	/**
@@ -221,6 +223,34 @@ public class IASValue<T> {
 				this.readFromBsdbTStamp,
 				this.dasuProductionTStamp,
 				this.dependentsFullRuningIds);
+	}
+	
+	/**
+	 * Build a new IASValue with the passed list of 
+	 * fullRunningIds of the dependent monitor point
+	 * 
+	 * @param depfFullIDs The mode to set in the new IASValue
+	 * @return The new IASValue with the updated mode
+	 */
+	public IASValue<T> updateFullIdsOfDependents(Collection<String> depfFullIDs) {
+		Objects.requireNonNull(depfFullIDs);
+		
+		Set<String> newDeps = new HashSet<>(depfFullIDs);
+		
+		return new IASValue<T>(
+				this.value,
+				this.mode,
+				this.iasValidity,
+				this.fullRunningId,
+				this.valueType,
+				this.pluginProductionTStamp,
+				this.sentToConverterTStamp,
+				this.receivedFromPluginTStamp,
+				this.convertedProductionTStamp,
+				this.sentToBsdbTStamp,
+				this.readFromBsdbTStamp,
+				this.dasuProductionTStamp,
+				Collections.unmodifiableSet(newDeps));
 	}
 	
 	/**
