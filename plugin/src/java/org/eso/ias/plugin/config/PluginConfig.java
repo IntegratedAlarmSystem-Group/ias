@@ -16,52 +16,61 @@ import org.slf4j.LoggerFactory;
  * The java pojo with the plugin configuration.
  * <P>
  * This object is used by jakson2 parser to read the JSON file.
- * 
+ *
  * @author acaproni
  *
  */
 public class PluginConfig {
-	
+
 	/**
 	 * The logger
 	 */
 	private final Logger logger = LoggerFactory.getLogger(PluginConfig.class);
-	
+
 	/**
 	 * The ID of the plugin
 	 */
 	private String id;
-	
+
 	/**
 	 * The ID of the system monitored by the plugin
 	 */
 	private String monitoredSystemId;
-	
+
 	/**
 	 * The name of the server to send monitor point values
 	 * and alarms to
 	 */
 	private String sinkServer;
-	
+
 	/**
 	 * The port of the server to send monitor point values
 	 * and alarms to
 	 */
 	private int sinkPort;
-	
+
 	/**
 	 * Additional user defined properties
-	 * 
+	 *
 	 * @see Property
 	 */
 	private Property[] properties;
-	
+
 	/**
 	 * The values red from the monitored system
-	 * 
+	 *
 	 * @see Value
 	 */
 	private Value[] values;
+
+	/**
+	 *	The global filter and filterOptions
+	 *	@see defaultFilter and defaultFilterOptions
+	 */
+	public static String defaultFilter;
+
+	public static String defaultFilterOptions;
+
 
 	/**
 	 * @return the id
@@ -72,7 +81,7 @@ public class PluginConfig {
 
 	/**
 	 * Setter
-	 * 
+	 *
 	 * @param id the id of the plugin
 	 */
 	public void setId(String id) {
@@ -111,6 +120,7 @@ public class PluginConfig {
 	 * @return the values
 	 */
 	public Value[] getValues() {
+
 		return values;
 	}
 
@@ -120,7 +130,8 @@ public class PluginConfig {
 	public void setValues(Value[] values) {
 		this.values = values;
 	}
-	
+
+
 	/**
 	 * @return The values as a {@link Collection}
 	 */
@@ -131,7 +142,7 @@ public class PluginConfig {
 		}
 		return ret;
 	}
-	
+
 	/**
 	 * @return A map of values whose key is
 	 *         the ID of the value
@@ -143,9 +154,10 @@ public class PluginConfig {
 		}
 		return ret;
 	}
-	
+
+
 	/**
-	 * 
+	 *
 	 * @param id The non empty identifier of the value to get
 	 * @return The value with a give id that is
 	 *         empty if the array does not contain
@@ -157,7 +169,7 @@ public class PluginConfig {
 		}
 		return Optional.ofNullable(getMapOfValues().get(id));
 	}
-	
+
 	/**
 	 * Check the correctness of the values contained in this objects:
 	 * <UL>
@@ -168,8 +180,8 @@ public class PluginConfig {
 	 *  <LI>No duplicated ID between the values
 	 *  <LI>Each value is valid
 	 * </ul>
-	 * 
-	 * @return <code>true</code> if the data contained in this object 
+	 *
+	 * @return <code>true</code> if the data contained in this object
 	 * 			are correct
 	 */
 	public boolean isValid() {
@@ -227,11 +239,12 @@ public class PluginConfig {
 		// Everything ok
 		logger.debug("Plugin {} configuration is valid",id);
 		return true;
-		
+
 	}
-	
+
+
 	/**
-	 * 
+	 *
 	 * @param key The non empty key of the property to get
 	 * @return The value of the property with the given key
 	 *         or empty if a property with the given key does not exist
@@ -253,13 +266,13 @@ public class PluginConfig {
 	public Property[] getProperties() {
 		return properties;
 	}
-	
+
 	/**
 	 * Flushes and return the array of {@link Property} in a {@link Properties} object.
 	 * <P>
 	 * If the a property with the same key appears more the once, it is discarded
-	 * and a message logged. 
-	 * 
+	 * and a message logged.
+	 *
 	 * @return The properties as {@link Properties}
 	 */
 	public Properties getProps() {
@@ -272,6 +285,8 @@ public class PluginConfig {
 		return props;
 	}
 
+
+
 	/**
 	 * @param properties the properties to set
 	 */
@@ -279,9 +294,12 @@ public class PluginConfig {
 		this.properties = properties;
 	}
 
+
 	/**
-	 * Getter
-	 * 
+	 * Getteris
+
+
+	 *
 	 * @return The ID of the system monitored by the plugin
 	 */
 	public String getMonitoredSystemId() {
@@ -290,10 +308,46 @@ public class PluginConfig {
 
 	/**
 	 * Setter
-	 * 
+	 *
 	 * @param monitoredSystemId: The ID of the system monitored by the plugin
 	 */
 	public void setMonitoredSystemId(String monitoredSystemId) {
 		this.monitoredSystemId = monitoredSystemId;
 	}
+	/*is
+
+
+	 *	Add getter and setter for DefaultFilter and defaultFilterOptions
+	 */
+	/**
+	 * @return the DefaultFilter
+	 */
+	public String getDefaultFilter() {
+		return defaultFilter;
+	}
+
+	/**
+	 * @param DefaultFilter the DefaultFilter to set
+	 */
+	public void setDefaultFilter(String defaultFilter) {
+		this.defaultFilter = defaultFilter;
+	}
+
+	/**
+	 * @return the getDefaultFilterOption
+	 */
+	public String getDefaultFilterOptions() {
+		return defaultFilterOptions;
+	}
+
+	/**
+	 * @param getDefaultFilterOption the getDefaultFilterOption to set
+	 */
+	public void setDefaultFilterOptions(String defaultFilterOptions) {
+		this.defaultFilterOptions = defaultFilterOptions;
+	}
+
+
+
 }
+

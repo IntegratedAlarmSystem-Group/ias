@@ -13,7 +13,7 @@ import org.eso.ias.plugin.filter.Filter.ValidatedSample;
 import org.eso.ias.plugin.filter.FilterBase;
 import org.eso.ias.plugin.filter.FilterException;
 import org.eso.ias.plugin.filter.FilteredValue;
-import org.eso.ias.types.IasValidity;
+import org.eso.ias.prototype.input.java.IasValidity;
 import org.junit.Before;
 import org.junit.Test;
 

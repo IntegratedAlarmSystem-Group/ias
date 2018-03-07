@@ -3,13 +3,16 @@ package org.eso.ias.plugin.test.config;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertNotEquals;
 
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.Objects;
 
 import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.config.PluginConfigException;
@@ -40,7 +43,7 @@ public class JsonConfigReaderTest {
 	@Test
 	public void testReadConfiguration() throws PluginConfigException, TimeoutException, ExecutionException, InterruptedException {
 		
-		PluginConfigFileReader jsonFileReader = new PluginConfigFileReader(resourcePath+"configOk.json");
+		PluginConfigFileReader jsonFileReader = new PluginConfigFileReader(resourcePath+"configOkGlobalFilter.json");
 		assertNotNull(jsonFileReader);
 		Future<PluginConfig> futurePluginConfig = jsonFileReader.getPluginConfig();
 		assertNotNull(futurePluginConfig);
@@ -71,17 +74,30 @@ public class JsonConfigReaderTest {
 		Optional<Property> p3 = config.getProperty("MissingKey");
 		assertFalse(p3.isPresent());
 		
+		// Check the value with: filter, filterOptions, refreshTime.
+		// Add the GlobalFilter called defaultFilter and GlobalFilterOptions called defaultFilterOptions.
 		Optional<Value> v1Opt = config.getValue("AlarmID");
 		assertTrue(v1Opt.isPresent());
 		assertEquals(500, v1Opt.get().getRefreshTime());
-		assertEquals("",v1Opt.get().getFilter());
-		assertEquals("",v1Opt.get().getFilterOptions());
+		assertEquals("Average",v1Opt.get().getFilter());
+		assertEquals("10, 5, 4",v1Opt.get().getFilterOptions());
+
+		// Check if the filterOptions taked is not the global, it take the local filterOption.
+		assertNotEquals("5,10,15",v1Opt.get().getFilterOptions());
+		
+		/** 
+		* Used for check if assertnotEquals work
+		* It's work well, this row raise an erro because filter is Average
+		*/
+		//assertNotEquals("Average",v1Opt.get().getFilter());
+
 		
 		Optional<Value> v2Opt = config.getValue("TempID");
 		assertTrue(v2Opt.isPresent());
 		assertEquals(1500, v2Opt.get().getRefreshTime());
+
 		assertEquals("Average",v2Opt.get().getFilter());
-		assertEquals("1, 150, 5",v2Opt.get().getFilterOptions());
+		assertEquals("5,10,15",v2Opt.get().getFilterOptions());
 	}
 	
 	/**
@@ -125,6 +141,25 @@ public class JsonConfigReaderTest {
 		PluginConfig config8 = jsonFileReader8.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config8.isValid());
 		
+		
+		
 	}
+	/**
+	 * Read a non-valid configuration and check the non-correctness of the
+	 * values of the java pojo.
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testValidConf() throws PluginConfigException, InterruptedException, ExecutionException, TimeoutException {
+	PluginConfigFileReader jsonFileReader9 = new PluginConfigFileReader(resourcePath+"configOk.json");
+		PluginConfig config9 = jsonFileReader9.getPluginConfig().get(1,TimeUnit.MINUTES);
+		assertTrue(config9.isValid());
+
+		PluginConfigFileReader jsonFileReader10 = new PluginConfigFileReader(resourcePath+"configOkGlobalFilter.json");
+		PluginConfig config10 = jsonFileReader10.getPluginConfig().get(1,TimeUnit.MINUTES);
+		assertTrue(config10.isValid());
+}
+
 
 }

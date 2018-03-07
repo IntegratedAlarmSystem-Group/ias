@@ -3,9 +3,9 @@ package org.eso.ias.plugin.test;
 import java.util.List;
 import java.util.Vector;
 
-import org.eso.ias.types.AlarmSample;
-import org.eso.ias.types.IasValidity;
-import org.eso.ias.types.OperationalMode;
+import org.eso.ias.prototype.input.java.AlarmSample;
+import org.eso.ias.prototype.input.java.IasValidity;
+import org.eso.ias.prototype.input.java.OperationalMode;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.Filter.ValidatedSample;

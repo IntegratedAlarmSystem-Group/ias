@@ -12,8 +12,8 @@ import org.eso.ias.plugin.filter.Filter.ValidatedSample;
 import org.eso.ias.plugin.filter.FilterException;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.filter.NoneFilter;
-import org.eso.ias.types.IasValidity;
-import org.eso.ias.types.OperationalMode;
+import org.eso.ias.prototype.input.java.IasValidity;
+import org.eso.ias.prototype.input.java.OperationalMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

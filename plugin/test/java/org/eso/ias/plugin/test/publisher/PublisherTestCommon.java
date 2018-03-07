@@ -32,7 +32,7 @@ import org.eso.ias.plugin.publisher.impl.BufferedListenerPublisher;
 import org.eso.ias.plugin.publisher.impl.BufferedListenerPublisher.PublisherEventsListener;
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
-import org.eso.ias.types.IasValidity;
+import org.eso.ias.prototype.input.java.IasValidity;
 import org.junit.After;
 import org.junit.Before;
 import org.slf4j.Logger;

@@ -22,7 +22,7 @@ import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.plugin.publisher.PublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
-import org.eso.ias.types.IasValidity;
+import org.eso.ias.prototype.input.java.IasValidity;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

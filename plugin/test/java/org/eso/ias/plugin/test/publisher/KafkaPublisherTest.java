@@ -22,7 +22,7 @@ import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.KafkaPublisher;
 import org.eso.ias.plugin.test.publisher.SimpleKafkaConsumer.KafkaConsumerListener;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
-import org.eso.ias.types.IasValidity;
+import org.eso.ias.prototype.input.java.IasValidity;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

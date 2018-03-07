@@ -15,7 +15,7 @@ import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.Filter.ValidatedSample;
 import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
-import org.eso.ias.types.IasValidity;
+import org.eso.ias.prototype.input.java.IasValidity;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.junit.Test;
 import org.slf4j.Logger;

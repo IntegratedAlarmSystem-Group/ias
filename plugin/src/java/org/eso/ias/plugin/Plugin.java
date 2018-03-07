@@ -22,7 +22,7 @@ import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.MonitorPointSender.SenderStats;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
-import org.eso.ias.types.OperationalMode;
+import org.eso.ias.prototype.input.java.OperationalMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -171,6 +171,14 @@ public class Plugin implements ChangeValueListener {
 	 * The object that sends monitor points to the core of the IAS.
 	 */
 	private final MonitorPointSender mpPublisher;
+
+	/**
+	 * String filter and filterOptions
+	 * 
+	 */
+	public String filter;
+	public String filterOptions;
+	
 	
 	/**
 	 * The operational mode of the plugin.
@@ -188,6 +196,10 @@ public class Plugin implements ChangeValueListener {
 	 * @param monitoredSystemId: the identifier of the monitored system
 	 * @param values the monitor point values
 	 * @param props The user defined properties 
+ * @param string2 
+ * @param string 
+	 * @param collection 
+	 * @param collection 
 	 * @param sender The publisher of monitor point values to the IAS core
 	 */
 	public Plugin(
@@ -196,6 +208,7 @@ public class Plugin implements ChangeValueListener {
 			Collection<Value> values,
 			Properties props,
 			MonitorPointSender sender) {
+		
 		if (id==null || id.trim().isEmpty()) {
 			throw new IllegalArgumentException("The ID can't be null nor empty");
 		}
@@ -210,15 +223,20 @@ public class Plugin implements ChangeValueListener {
 		if (sender==null) {
 			throw new IllegalArgumentException("No monitor point sender");
 		}
+		
 		flushProperties(props);
 		this.mpPublisher=sender;
 		logger.info("Plugin (ID=%s) started",pluginId);
+		
+		/** check if the monitor point has the filter or if take global*/ 
 		values.forEach(v -> { 
 			try {
+				logger.info("ID: {}, filter: {}, filterOptions: {}",v.getId(),v.getFilter(),v.getFilterOptions());
 			putMonitoredPoint(new MonitoredValue(v.getId(), v.getRefreshTime(), schedExecutorSvc, this));
 		}catch (Exception e){
 			logger.error("Error adding monitor point "+v.getId(),e);
 		} });
+		
 	}
 	
 	/**
@@ -260,6 +278,8 @@ public class Plugin implements ChangeValueListener {
 				config.getMonitoredSystemId(),
 				config.getValuesAsCollection(),
 				config.getProps(),
+/*				config.getDefaultFilter(),
+				config.getDefaultFilterOptions(),*/
 				sender);
 	}
 	

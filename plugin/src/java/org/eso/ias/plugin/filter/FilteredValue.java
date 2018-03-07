@@ -7,8 +7,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
+import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.filter.Filter.ValidatedSample;
-import org.eso.ias.types.IasValidity;
+import org.eso.ias.prototype.input.java.IasValidity;
 
 /**
  * The value returned after applying the filter.
