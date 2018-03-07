@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,6 +86,11 @@ public class IasValueJsonPojo {
 	 */
 	@JsonInclude(Include.NON_NULL)
 	private String dasuProductionTStamp;
+	
+	/**
+	 * @see IASValue#dependentsFullRuningIds
+	 */
+	private Set<String> depsFullRunningIds;
 	 
 	/**
 	 * The operational mode
@@ -129,6 +135,7 @@ public class IasValueJsonPojo {
 		fullRunningId=iasValue.fullRunningId;
 		valueType=iasValue.valueType;
 		iasValidity=iasValue.iasValidity;
+		this.depsFullRunningIds=iasValue.dependentsFullRuningIds;
 		
 		synchronized(iso8601Formatter) {
 			this.pluginProductionTStamp=convertTStampToIso8601(iasValue.pluginProductionTStamp);
@@ -277,8 +284,17 @@ public class IasValueJsonPojo {
 					convertIso8601ToTStamp(convertedProductionTStamp), 
 					convertIso8601ToTStamp(sentToBsdbTStamp), 
 					convertIso8601ToTStamp(readFromBsdbTStamp), 
-					convertIso8601ToTStamp(dasuProductionTStamp));
+					convertIso8601ToTStamp(dasuProductionTStamp),
+					depsFullRunningIds);
 		}
+	}
+
+	public Set<String> getDepsFullRunningIds() {
+		return depsFullRunningIds;
+	}
+
+	public void setDepsFullRunningIds(Set<String> dependentsFullRuningIds) {
+		this.depsFullRunningIds = dependentsFullRuningIds;
 	}
 
 }

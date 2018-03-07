@@ -68,6 +68,43 @@ class DasuOneASCETest extends FlatSpec  with BeforeAndAfter {
     val inputs: Set[IASValue[_]] = Set(f.buildValue(0))
     // Sumbit the inputs
     f.inputsProvider.sendInputs(inputs)
+    // Give time to produce the output
+    Thread.sleep(1000)
+    assert(f.outputValuesReceived.size==1)
+  }
+  
+  it must "set the dasu production timestamp of the output" in {
+    f.dasu.get.enableAutoRefreshOfOutput(false)
+    val before = System.currentTimeMillis()
+    // Start the getting of events in the DASU
+    val inputs: Set[IASValue[_]] = Set(f.buildValue(0))
+    // Sumbit the inputs
+    f.inputsProvider.sendInputs(inputs)
+    
+    // Give time to produce the output
+    Thread.sleep(1000)
+    
+    assert(f.outputValuesReceived.size==1)
+    val output = f.outputValuesReceived(0)
+    assert(output.dasuProductionTStamp.isPresent())
+    val prodTStamp = output.dasuProductionTStamp.get()
+    assert( prodTStamp>=before && prodTStamp<=System.currentTimeMillis())
+  }
+  
+  it must "set the list of fullRuningIds of dependent inputs" in {
+    f.dasu.get.enableAutoRefreshOfOutput(false)
+    val before = System.currentTimeMillis()
+    // Start the getting of events in the DASU
+    val inputs: Set[IASValue[_]] = Set(f.buildValue(0))
+    // Sumbit the inputs
+    f.inputsProvider.sendInputs(inputs)
+    
+    // Give time to produce the output
+    Thread.sleep(1000)
+    
+    assert(f.outputValuesReceived.size==1)
+    val output = f.outputValuesReceived(0)
+    assert(!output.dependentsFullRuningIds.isEmpty())
   }
   
 }

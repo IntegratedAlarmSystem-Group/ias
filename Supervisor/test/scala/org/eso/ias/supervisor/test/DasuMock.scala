@@ -20,6 +20,7 @@ import org.eso.ias.types.AlarmSample
 import org.eso.ias.types.OperationalMode
 import org.eso.ias.types.IasValidity
 import org.eso.ias.types.IASTypes
+import java.util.HashSet
 
 
 /** 
@@ -98,12 +99,11 @@ extends Dasu(dasuIdentifier,5,1) {
 			null,
 			null,
 			null,
-			System.currentTimeMillis())
+			System.currentTimeMillis(),
+			new HashSet[String]())
   
   
   
-  // TODO release cdb resources
-      
   logger.info("Mock-DASU [{}] built", dasuIdentifier.id)
   
   /**
@@ -120,8 +120,10 @@ extends Dasu(dasuIdentifier,5,1) {
       if (!getInputIds().contains(id)) unexpectedInputsReceived.append(id)
       })
       
+      val depIds = iasios.filter(value => getInputIds().contains(value.id)).map(_.fullRunningId)
+      
       // Publish the simulated output
-      outputPublisher.publish(output)
+      outputPublisher.publish(output.updateFullIdsOfDependents(JavaConverters.setAsJavaSet(depIds)))
   }
 
   /**

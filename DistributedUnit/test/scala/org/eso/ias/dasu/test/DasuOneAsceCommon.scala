@@ -18,6 +18,7 @@ import org.eso.ias.dasu.publisher.ListenerOutputPublisherImpl
 import org.eso.ias.dasu.publisher.OutputListener
 import scala.collection.mutable.ArrayBuffer
 import org.eso.ias.types.IASTypes
+import java.util.HashSet
 
 /**
  * Setup the DASU with one ASCE as it is reused by more 
@@ -87,7 +88,9 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, tolerance: Integer) ex
   
   
   def buildValue(d: Double): IASValue[_] = {
+    
     val t0 = System.currentTimeMillis()-100
+    val deps = new HashSet[String]()
     
     IASValue.build(
       d,
@@ -101,7 +104,8 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, tolerance: Integer) ex
 			t0+15,
 			t0+20,
 			null,
-			null)
+			null,
+			deps)
   }
     
 }
