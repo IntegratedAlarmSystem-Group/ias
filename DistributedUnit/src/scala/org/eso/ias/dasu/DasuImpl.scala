@@ -294,7 +294,7 @@ class DasuImpl (
       
       if (!closed.get) {
         val outputs = dasuTopology.levels.foldLeft(iasios){ (s: Set[IASValue[_]], ids: Set[String]) => s ++ updateOneLevel(ids, s) }
-        outputs.find(_.id==dasuOutputId)
+        outputs.find(_.id==dasuOutputId).map(_.updateDasuProdTime(System.currentTimeMillis()))
       } else {
         None
       }
