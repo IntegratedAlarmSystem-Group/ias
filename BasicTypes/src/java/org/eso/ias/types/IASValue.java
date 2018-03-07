@@ -252,7 +252,7 @@ public class IASValue<T> {
 	 * @param timestamp The value to set in the new IASValue
 	 * @return The new IASValue with the updated timestamp
 	 */
-	public IASValue<T> updatePluginProdTime(Long timestamp) {
+	public IASValue<T> updatePluginProdTime(long timestamp) {
 		return new IASValue<T>(
 				this.value,
 				this.mode,
@@ -275,7 +275,7 @@ public class IASValue<T> {
 	 * @param timestamp The value to set in the new IASValue
 	 * @return The new IASValue with the updated timestamp
 	 */
-	public IASValue<T> updateSentToConverterTime(Long timestamp) {
+	public IASValue<T> updateSentToConverterTime(long timestamp) {
 		return new IASValue<T>(
 				this.value,
 				this.mode,
@@ -298,7 +298,7 @@ public class IASValue<T> {
 	 * @param timestamp The value to set in the new IASValue
 	 * @return The new IASValue with the updated timestamp
 	 */
-	public IASValue<T> updateRecvFromPluginTime(Long timestamp) {
+	public IASValue<T> updateRecvFromPluginTime(long timestamp) {
 		return new IASValue<T>(
 				this.value,
 				this.mode,
@@ -321,7 +321,7 @@ public class IASValue<T> {
 	 * @param validity the validity
 	 * @return The new IASValue with the updated timestamp
 	 */
-	public IASValue<T> updateConverterProdTime(Long timestamp) {
+	public IASValue<T> updateConverterProdTime(long timestamp) {
 		return new IASValue<T>(
 				this.value,
 				this.mode,
@@ -344,7 +344,7 @@ public class IASValue<T> {
 	 * @param validity the validity
 	 * @return The new IASValue with the updated timestamp
 	 */
-	public IASValue<T> updateSentToBsdbTime(Long timestamp) {
+	public IASValue<T> updateSentToBsdbTime(long timestamp) {
 		return new IASValue<T>(
 				this.value,
 				this.mode,
@@ -367,7 +367,7 @@ public class IASValue<T> {
 	 * @param validity the validity
 	 * @return The new IASValue with the updated timestamp
 	 */
-	public IASValue<T> updateReadFromBsdbTime(Long timestamp) {
+	public IASValue<T> updateReadFromBsdbTime(long timestamp) {
 		return new IASValue<T>(
 				this.value,
 				this.mode,
@@ -390,7 +390,7 @@ public class IASValue<T> {
 	 * @param validity the validity
 	 * @return The new IASValue with the updated timestamp
 	 */
-	public IASValue<T> updateDasuProdTime(Long timestamp) {
+	public IASValue<T> updateDasuProdTime(long timestamp) {
 		return new IASValue<T>(
 				this.value,
 				this.mode,
