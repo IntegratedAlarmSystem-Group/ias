@@ -15,7 +15,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Test the JSON serialization of {@link IASValue}
@@ -281,6 +283,45 @@ public class IasValueJsonSerializerTest {
 		assertFalse(alarmFromSerializer.readFromBsdbTStamp.isPresent());
 		assertTrue(alarmFromSerializer.dasuProductionTStamp.isPresent());
 		assertTrue(alarmFromSerializer.dasuProductionTStamp.get()==7L);
+		assertEquals(0,alarmFromSerializer.dependentsFullRuningIds.size());
+	}
+	
+	/**
+	 * Ensure that the Ids of the dependents monitor points
+	 * are properly serialized/deserialized
+	 */
+	@Test
+	public void testIdsOfDeps() throws Exception {
+		
+		String fullruningId1="(SupervId1:SUPERVISOR)@(dasuVID1:DASU)@(asceVID1:ASCE)@(AlarmID1:IASIO)";
+		String fullruningId2="(SupervId2:SUPERVISOR)@(dasuVID2:DASU)@(asceVID2:ASCE)@(AlarmID2:IASIO)";
+		
+		Set<String> deps = new HashSet<>(Arrays.asList(fullruningId1,fullruningId2));
+		
+		// One test setting all the timestamps
+		String alarmId = "AlarmType-ID";
+		IASValue<?> alarm = IASValue.build(
+			AlarmSample.SET,
+			OperationalMode.DEGRADED,
+			IasValidity.RELIABLE,
+			new Identifier(alarmId, IdentifierType.IASIO, convIdentifier).fullRunningID(),
+			IASTypes.ALARM,
+			1L,
+			2L,
+			3L,
+			4L,
+			5L,
+			6L,
+			7L,
+			deps);
+		String jsonStr = jsonSerializer.iasValueToString(alarm);
+		System.out.println("jsonStr ="+jsonStr);
+		
+		IASValue<?> fromJson = jsonSerializer.valueOf(jsonStr);
+		assertEquals(alarm.dependentsFullRuningIds.size(),fromJson.dependentsFullRuningIds.size());
+		for (String frId: alarm.dependentsFullRuningIds) {
+			assertTrue(fromJson.dependentsFullRuningIds.contains(frId));
+		}
 		
 	}
 }
