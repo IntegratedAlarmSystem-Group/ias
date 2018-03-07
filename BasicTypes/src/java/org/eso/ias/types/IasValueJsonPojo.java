@@ -90,7 +90,7 @@ public class IasValueJsonPojo {
 	/**
 	 * @see IASValue#dependentsFullRuningIds
 	 */
-	private Set<String> dependentsFullRuningIds;
+	private Set<String> depsFullRunningIds;
 	 
 	/**
 	 * The operational mode
@@ -135,7 +135,7 @@ public class IasValueJsonPojo {
 		fullRunningId=iasValue.fullRunningId;
 		valueType=iasValue.valueType;
 		iasValidity=iasValue.iasValidity;
-		this.dependentsFullRuningIds=iasValue.dependentsFullRuningIds;
+		this.depsFullRunningIds=iasValue.dependentsFullRuningIds;
 		
 		synchronized(iso8601Formatter) {
 			this.pluginProductionTStamp=convertTStampToIso8601(iasValue.pluginProductionTStamp);
@@ -285,16 +285,16 @@ public class IasValueJsonPojo {
 					convertIso8601ToTStamp(sentToBsdbTStamp), 
 					convertIso8601ToTStamp(readFromBsdbTStamp), 
 					convertIso8601ToTStamp(dasuProductionTStamp),
-					dependentsFullRuningIds);
+					depsFullRunningIds);
 		}
 	}
 
-	public Set<String> getDependentsFullRuningIds() {
-		return dependentsFullRuningIds;
+	public Set<String> getDepsFullRunningIds() {
+		return depsFullRunningIds;
 	}
 
-	public void setDependentsFullRuningIds(Set<String> dependentsFullRuningIds) {
-		this.dependentsFullRuningIds = dependentsFullRuningIds;
+	public void setDepsFullRunningIds(Set<String> dependentsFullRuningIds) {
+		this.depsFullRunningIds = dependentsFullRuningIds;
 	}
 
 }
