@@ -2,6 +2,7 @@ package org.eso.ias.plugin.publisher;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 
 import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.NoneFilter;
@@ -66,12 +67,15 @@ public class MonitorPointDataToBuffer {
 	/**
 	 * ISO 8601 date formatter
 	 */
-	protected final SimpleDateFormat iso8601dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
+	protected final SimpleDateFormat iso8601dateFormat;
 
 	/**
 	 * Empty constructor
 	 */
-	public MonitorPointDataToBuffer() {}
+	public MonitorPointDataToBuffer() {
+		iso8601dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
+		iso8601dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+	}
 	
 	/**
 	 * Constructor
@@ -79,6 +83,8 @@ public class MonitorPointDataToBuffer {
 	 * @param value The filtered value produced by the monitored system
 	 */
 	public MonitorPointDataToBuffer(ValueToSend value) {
+		iso8601dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
+		iso8601dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 		setId(value.id);
 		setValue(value.value.toString());
 		synchronized (iso8601dateFormat) {

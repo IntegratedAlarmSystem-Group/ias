@@ -1,12 +1,12 @@
 package org.eso.ias.types;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import org.eso.ias.utils.ISO8601Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -118,11 +118,6 @@ public class IasValueJsonPojo {
 	public IasValueJsonPojo() {}
 	
 	/**
-	 * Formatter to convert time-stamps to from ISO 8601
-	 */
-	private static final SimpleDateFormat iso8601Formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
-
-	/**
 	 * Constructor
 	 * 
 	 * @param iasValue The {@link IASValue}
@@ -137,15 +132,13 @@ public class IasValueJsonPojo {
 		iasValidity=iasValue.iasValidity;
 		this.depsFullRunningIds=iasValue.dependentsFullRuningIds;
 		
-		synchronized(iso8601Formatter) {
-			this.pluginProductionTStamp=convertTStampToIso8601(iasValue.pluginProductionTStamp);
-			this.sentToConverterTStamp=convertTStampToIso8601(iasValue.sentToConverterTStamp);
-			this.receivedFromPluginTStamp=convertTStampToIso8601(iasValue.receivedFromPluginTStamp);
-			this.convertedProductionTStamp=convertTStampToIso8601(iasValue.convertedProductionTStamp);
-			this.sentToBsdbTStamp=convertTStampToIso8601(iasValue.sentToBsdbTStamp);
-			this.readFromBsdbTStamp=convertTStampToIso8601(iasValue.readFromBsdbTStamp);
-			this.dasuProductionTStamp=convertTStampToIso8601(iasValue.dasuProductionTStamp);
-		}
+		this.pluginProductionTStamp=convertTStampToIso8601(iasValue.pluginProductionTStamp);
+		this.sentToConverterTStamp=convertTStampToIso8601(iasValue.sentToConverterTStamp);
+		this.receivedFromPluginTStamp=convertTStampToIso8601(iasValue.receivedFromPluginTStamp);
+		this.convertedProductionTStamp=convertTStampToIso8601(iasValue.convertedProductionTStamp);
+		this.sentToBsdbTStamp=convertTStampToIso8601(iasValue.sentToBsdbTStamp);
+		this.readFromBsdbTStamp=convertTStampToIso8601(iasValue.readFromBsdbTStamp);
+		this.dasuProductionTStamp=convertTStampToIso8601(iasValue.dasuProductionTStamp);
 		
 	}
 	
@@ -159,7 +152,7 @@ public class IasValueJsonPojo {
 	 */
 	private String convertTStampToIso8601(Optional<Long> tStamp) {
 		assert(tStamp!=null);
-		Optional<String> isoTStamp = tStamp.map( stamp -> iso8601Formatter.format(new Date(stamp)));
+		Optional<String> isoTStamp = tStamp.map( stamp -> ISO8601Helper.getTimestamp(stamp));
 		return isoTStamp.orElse(null);
 	}
 	
@@ -177,11 +170,7 @@ public class IasValueJsonPojo {
 		}
 		
 		Long tstamp = null;
-		try {
-			tstamp = iso8601Formatter.parse(iso8601Str).getTime();
-		} catch (ParseException pe) {
-			logger.error("Error parsing ISO-8601 string {} to a date",iso8601Str);
-		}
+		tstamp = ISO8601Helper.timestampToMillis(iso8601Str);
 		return Optional.ofNullable(tstamp);
 		
 	}
@@ -271,22 +260,20 @@ public class IasValueJsonPojo {
 			default: throw new UnsupportedOperationException("Unsupported type "+valueType);
 		}
 		
-		synchronized(iso8601Formatter) {
-			return new IASValue(
-					theValue, 
-					mode, 
-					iasValidity, 
-					fullRunningId, 
-					valueType, 
-					convertIso8601ToTStamp(pluginProductionTStamp), 
-					convertIso8601ToTStamp(sentToConverterTStamp), 
-					convertIso8601ToTStamp(receivedFromPluginTStamp), 
-					convertIso8601ToTStamp(convertedProductionTStamp), 
-					convertIso8601ToTStamp(sentToBsdbTStamp), 
-					convertIso8601ToTStamp(readFromBsdbTStamp), 
-					convertIso8601ToTStamp(dasuProductionTStamp),
+		return new IASValue(
+				theValue, 
+				mode, 
+				iasValidity, 
+				fullRunningId, 
+				valueType, 
+				convertIso8601ToTStamp(pluginProductionTStamp), 
+				convertIso8601ToTStamp(sentToConverterTStamp), 
+				convertIso8601ToTStamp(receivedFromPluginTStamp), 
+				convertIso8601ToTStamp(convertedProductionTStamp), 
+				convertIso8601ToTStamp(sentToBsdbTStamp), 
+				convertIso8601ToTStamp(readFromBsdbTStamp), 
+				convertIso8601ToTStamp(dasuProductionTStamp),
 					depsFullRunningIds);
-		}
 	}
 
 	public Set<String> getDepsFullRunningIds() {

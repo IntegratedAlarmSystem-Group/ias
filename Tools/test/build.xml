@@ -5,6 +5,8 @@
 	
 	<!-- ####################### PROPERTIES ####################### -->
 	
+	<property name="jarName" value="ias-tools-test.jar" />
+	
 	<!-- ####################### TARGETS ####################### -->
 	
 	<target name="build" depends="ias.build" />

@@ -57,6 +57,9 @@ def setProps(propsDict,className,logFileNameId):
         propsDict["logback.configurationFile"]=path
     except:
         print("No log4j config file ("+logbackConfigFileName+") found: using defaults")
+        
+    # JVM always uses UTC
+    propsDict["-Duser.timezone"]="UTC"
     
     # Add environment variables
     

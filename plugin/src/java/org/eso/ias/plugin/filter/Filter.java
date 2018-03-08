@@ -4,7 +4,7 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.eso.ias.plugin.Sample;
-import org.eso.ias.prototype.input.java.IasValidity;
+import org.eso.ias.types.IasValidity;
 
 /**
  * The interface defining filter to apply to a monitored value 
