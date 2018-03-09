@@ -9,6 +9,9 @@ import argparse
 import cmd
 import os
 import sys
+# Add import for default log with python
+import logging
+
 from IASTools.CommonDefs import CommonDefs
 from subprocess import call
 from IASTools.FileSupport import FileSupport
