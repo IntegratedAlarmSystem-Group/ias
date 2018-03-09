@@ -22,6 +22,7 @@ import scala.collection.mutable.ArrayBuffer
 
 // The following import is required by the usage of the fixture
 import language.reflectiveCalls
+import java.util.HashSet
 
 class SupervisorTest extends FlatSpec {
 
@@ -159,7 +160,8 @@ class SupervisorTest extends FlatSpec {
 			  t0+15,
 			  t0+20,
 			  t0+25,
-			null)
+			  null,
+			new HashSet[String]())
     }
     
     assert(iasiosToSend.toSet.size == 20)
@@ -195,7 +197,8 @@ class SupervisorTest extends FlatSpec {
 			  t0+15,
 			  t0+20,
 			  t0+25,
-			null)
+			null,
+			new HashSet[String]())
 			
       
     }
@@ -244,7 +247,8 @@ class SupervisorTest extends FlatSpec {
 			  t0+15,
 			  t0+20,
 			  t0+25,
-			null)
+			  null,
+			  new HashSet[String]())
     }
     
     // And for DASU3
@@ -267,7 +271,8 @@ class SupervisorTest extends FlatSpec {
 			  t0+15,
 			  t0+20,
 			  t0+25,
-			null)
+			  null,
+			  new HashSet[String]())
       
     }
 

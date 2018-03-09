@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -129,7 +130,7 @@ public abstract class PublisherBase implements MonitorPointSender {
 	/**
 	 * ISO 8601 date formatter
 	 */
-	protected final SimpleDateFormat iso8601dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
+	protected final SimpleDateFormat iso8601dateFormat;
 	
 	/**
 	 * Signal the thread that it has been closed and should reject 
@@ -216,6 +217,8 @@ public abstract class PublisherBase implements MonitorPointSender {
 			throw new IllegalArgumentException("The executor service can't be null");
 		}
 		this.executorService=executorSvc;
+		iso8601dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
+		iso8601dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 		logger.info("Plugin {} sends monitor points to {}:{} at a rate of {} msec",pluginId,serverName,serverPort,throttlingTime);
 	}
 	

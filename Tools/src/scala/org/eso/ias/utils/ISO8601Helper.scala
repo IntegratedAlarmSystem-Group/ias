@@ -1,6 +1,7 @@
 package org.eso.ias.utils
 
 import java.util.Date
+import java.util.TimeZone
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 
@@ -11,7 +12,16 @@ import java.text.SimpleDateFormat
  * @author acaproni
  */
 object ISO8601Helper {
-  private val df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S")
+  
+  /** Pattern for ISO 8601 */
+  val iso8601StringPattern =  "yyyy-MM-dd'T'HH:mm:ss.S"
+  
+  
+  private val df = {
+    val sdf = new SimpleDateFormat(iso8601StringPattern)
+    sdf.setTimeZone(TimeZone.getTimeZone("UTC"))
+    sdf
+  }
   
   def now(): String = {
     ISO8601Helper.getTimestamp(System.currentTimeMillis())
@@ -33,5 +43,21 @@ object ISO8601Helper {
      ISO8601Helper.df.synchronized {
        df.format(date)
      }
+  }
+  
+  /**
+   * Parse the passed string into a Date
+   */
+  def timestampToDate(timestamp: String): Date = {
+    ISO8601Helper.df.synchronized { 
+      df.parse(timestamp)
+    }
+  }
+  
+  /**
+   * Parse the passed string into a Date
+   */
+  def timestampToMillis(timestamp: String): Long = {
+    timestampToDate(timestamp).getTime()
   }
 }

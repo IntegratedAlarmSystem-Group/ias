@@ -86,9 +86,20 @@ class TestIdentifier extends FlatSpec {
     
   }
   
+  it must "implement equals" in {
+    // The IDs of dependents
+    val supervId1 = new Identifier("SupervId1",IdentifierType.SUPERVISOR,None)
+    val dasuId1 = new Identifier("dasuVID1",IdentifierType.DASU,supervId1)
+    val asceId1 = new Identifier("asceVID1",IdentifierType.ASCE,Option(dasuId1))      
+    val depId1 = new Identifier("AlarmID1",IdentifierType.IASIO,Option[Identifier](asceId1))
+    
+    val tempId = Identifier(depId1.fullRunningID)
+    assert(tempId==depId1)
+  }
+  
+  
   /**
-   * Check the getIdOfType that return id id of the identifier or
-   * one of its parent of the given, if any
+   * Check the getIdOfType
    */
   it must "Return the id by the passed type" in {
     val monSysId: Identifier = new Identifier("monSysyId",IdentifierType.MONITORED_SOFTWARE_SYSTEM,None)

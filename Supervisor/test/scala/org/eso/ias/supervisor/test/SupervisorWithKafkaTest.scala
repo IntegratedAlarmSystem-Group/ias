@@ -37,6 +37,7 @@ import org.scalatest.BeforeAndAfter
 import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener
 import org.scalatest.BeforeAndAfterAll
 import java.util.concurrent.atomic.AtomicReference
+import java.util.HashSet
 
 /**
  * Test the Supervisor connected to the kafka BSDB.
@@ -201,7 +202,8 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
 			  t0+15,
 			  t0+20,
 			  t0+25,
-			null)
+			null,
+			new HashSet[String]())
     
   }
 

@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.TimeZone;
 
 import org.eso.ias.plugin.filter.Filter.ValidatedSample;
 import org.eso.ias.plugin.filter.FilteredValue;
@@ -147,6 +148,7 @@ public class ValueToSend extends FilteredValue {
 		ret.append(id);
 		ret.append(", generated at ");
 		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
+		df.setTimeZone(TimeZone.getTimeZone("UTC"));
 		Date date = new Date(filteredTimestamp);
 		ret.append(df.format(date));
 		ret.append(", value=");

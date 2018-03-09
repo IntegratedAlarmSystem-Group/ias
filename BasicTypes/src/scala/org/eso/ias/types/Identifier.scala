@@ -278,4 +278,28 @@ extends {
        parentID.flatMap(p => p.getIdOfType(idTypeToSearch))
      }
   }
+  
+  /** 
+   *  canEqual method checks the class of the passed
+   *  @param other the object to compare
+   */
+  def canEqual(other: Any): Boolean = other.isInstanceOf[Identifier]
+  
+  /**
+   * Override equals
+   * 
+   * For equality it is enough to check the fullRuningId
+   */
+  override def equals(other: Any): Boolean = {
+    other match {
+      case that: Identifier =>
+        (that canEqual this) && fullRunningID==that.fullRunningID
+      case _ => false
+    }
+  }
+  
+  /**
+   * Override hashCode
+   */
+  override def hashCode: Int =  fullRunningID.##
 }

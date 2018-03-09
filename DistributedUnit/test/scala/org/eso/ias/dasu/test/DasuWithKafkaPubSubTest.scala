@@ -25,6 +25,7 @@ import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition
 import org.eso.ias.types.IasValidity._
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.types.IASTypes
+import java.util.HashSet
 
 /**
  * Test if the DASU is capable to get events from
@@ -112,7 +113,8 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener {
 			  t0+15,
 			  t0+20,
 			  t0+25,
-			  null)
+			  null,
+			  new HashSet[String]())
   }
   
   def stringEventReceived(event: String) = {

@@ -21,6 +21,7 @@ import org.eso.ias.types.AlarmSample
 import org.eso.ias.types.IasValidity._
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.dasu.publisher.DirectInputSubscriber
+import java.util.HashSet
 
 /** 
  *  Test the writing of the output of the DASU
@@ -75,7 +76,8 @@ class JsonPublisherTest extends FlatSpec {
 			t0+15,
 			t0+20,
 			null,
-			null)
+			null,
+			new HashSet[String]())
   }
   
   behavior of "The DASU"

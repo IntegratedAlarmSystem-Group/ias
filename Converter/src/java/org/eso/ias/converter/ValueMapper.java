@@ -1,8 +1,9 @@
 package org.eso.ias.converter;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 
 import org.eso.ias.converter.config.IasioConfigurationDAO;
@@ -18,6 +19,7 @@ import org.eso.ias.types.IasValueSerializerException;
 import org.eso.ias.types.IasValueStringSerializer;
 import org.eso.ias.types.IdentifierType;
 import org.eso.ias.types.OperationalMode;
+import org.eso.ias.utils.ISO8601Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,9 +59,9 @@ public class ValueMapper implements Function<String, String> {
 	private final String converterID;
 	
 	/**
-	 * ISO 8601 date formatter
+	 * A monitor point ptoduced by a plugin has no dependents
 	 */
-	private final SimpleDateFormat iso8601dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
+	private final Set<String> emptySetDependents = new HashSet<>();
 
 	/**
 	 * Constructor
@@ -173,20 +175,10 @@ public class ValueMapper implements Function<String, String> {
 		}
 		
 		long pluginProductionTime;
-		try { 
-			pluginProductionTime=iso8601dateFormat.parse(remoteSystemData.getSampleTime()).getTime();
-		} catch (ParseException pe) {
-			logger.error("Cannot parse the ISO 8601 timestamp {}: using actual time instead",remoteSystemData.getSampleTime());
-			pluginProductionTime=System.currentTimeMillis();
-		}
+		pluginProductionTime=ISO8601Helper.timestampToMillis(remoteSystemData.getSampleTime());
 		
 		long pluginSentToConvertTime;
-		try { 
-			pluginSentToConvertTime=iso8601dateFormat.parse(remoteSystemData.getPublishTime()).getTime();
-		} catch (ParseException pe) {
-			logger.error("Cannot parse the ISO 8601 timestamp {}: using actual time instead",remoteSystemData.getPublishTime());
-			pluginSentToConvertTime=System.currentTimeMillis();
-		}
+		pluginSentToConvertTime=ISO8601Helper.timestampToMillis(remoteSystemData.getPublishTime());
 		
 		String fullrunId = buildFullRunningId(
 				converterID,
@@ -211,7 +203,8 @@ public class ValueMapper implements Function<String, String> {
 				producedAndSentTStamp, // Produced by converter
 				producedAndSentTStamp, // Sent to BSDB
 				null, // Read from BSDB
-				null); // DASU prod time
+				null,
+				emptySetDependents); // DASU prod time
 	}
 
 	/**

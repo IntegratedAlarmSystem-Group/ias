@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -248,7 +249,7 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 		 * ISO 8601 date formatter
 		 */
 		SimpleDateFormat iso8601dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
-		
+		iso8601dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 		boolean ret = v.id.equals(d.getId());
 		ret = ret && v.value.toString().equals(d.getValue());
 		ret = ret && iso8601dateFormat.format(new Date(v.filteredTimestamp)).equals(d.getFilteredTime());

@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.TimeZone;
 import java.util.stream.Stream;
 
 import org.eso.ias.plugin.filter.Filter.ValidatedSample;
@@ -85,6 +86,7 @@ public class FilteredValue {
 	public String toString() {
 		StringBuilder ret = new StringBuilder("FilteredValue(generated at ");
 		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
+		df.setTimeZone(TimeZone.getTimeZone("UTC"));
 		Date date = new Date(filteredTimestamp);
 		ret.append(df.format(date));
 		ret.append(", value=");

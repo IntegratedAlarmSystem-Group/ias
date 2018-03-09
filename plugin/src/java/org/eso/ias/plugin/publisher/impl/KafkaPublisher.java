@@ -106,6 +106,7 @@ public class KafkaPublisher extends PublisherBase {
 	@Override
 	protected long publish(MonitorPointData mpData) throws PublisherException {
 		String jsonStrToSend = mpData.toJsonString();
+		System.out.println("jsonStrToSend "+jsonStrToSend);
 		// The partition is explicitly set: the passed key will not used
 		// for partitioning in the topic
 		ProducerRecord<String, String> record = new ProducerRecord<String, String>(topicName, partition,pluginId,jsonStrToSend);
