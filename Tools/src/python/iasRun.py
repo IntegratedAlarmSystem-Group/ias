@@ -175,7 +175,7 @@ if __name__ == '__main__':
                         help='Disable assertions',
                         action='store_false',
                         default=True,
-                        required=False7
+                        required=False
                         )
 
     parser.add_argument('className', help='The name of the class to run the program')
