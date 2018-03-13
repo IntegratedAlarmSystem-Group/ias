@@ -8,10 +8,7 @@ import argparse
 import cmd
 import os
 import sys
-# Add import for default log with python
-import logging
-import sys
-import os, errno
+
 
 from IASTools.CommonDefs import CommonDefs
 from subprocess import call
@@ -190,42 +187,7 @@ if __name__ == '__main__':
         print("\nVerbose mode ON")
         logger.info("\nVerbose mode ON")
 
-    """
-    Insert the configuration for the logger
-    """
-    #Set all level of the logger
-    LEVELS = {'debug': logging.DEBUG,'info': logging.INFO,'warning': logging.WARNING,'error': logging.ERROR,'critical': logging.CRITICAL}
-
-    if len(sys.argv) > 1:
-        level_name = sys.argv[1]
-        level = LEVELS.get(level_name, logging.NOTSET)
-        logging.basicConfig(level=level)
-
-    #Define logger with logging import
-    logger = logging.getLogger()
-    #Set the level of the message visualize
-    logger.setLevel(logging.DEBUG)
-
-    #Set the format of the log
-    logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
-    #Set path where save the file and the name of the file.
-    #if the folder exist continue to write there ekse create it.
-    logPath="../IAS_LOGS_FOLDER"
-    #Name of the log file
-    fileName="iasRun"
-    try:
-        os.makedirs(logPath)
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
-
-    fileHandler = logging.FileHandler("{0}/{1}.log".format(logPath, fileName))
-    fileHandler.setFormatter(logFormatter)
-    logger.addHandler(fileHandler)
-    #Start stream for write into file, from here when it's insert the logger. Write all into file.
-    consoleHandler = logging.StreamHandler()
-    consoleHandler.setFormatter(logFormatter)
-    logger.addHandler(consoleHandler)
+    
     # Get java options from JAVA_OPTS environment variable
     javaOptions=javaOpts()
     # Build the command line
