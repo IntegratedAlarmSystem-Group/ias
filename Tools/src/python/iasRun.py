@@ -9,7 +9,7 @@ import cmd
 import os
 import sys
 
-
+from logConf import Log
 from IASTools.CommonDefs import CommonDefs
 from subprocess import call
 from IASTools.FileSupport import FileSupport
@@ -188,7 +188,7 @@ if __name__ == '__main__':
         logger.info("\nVerbose mode ON")
 
     #Get the logger
-    logger=log.GetLogger(os.path.basename(__file__).split(".")[0])
+    logger=Log.GetLogger(os.path.basename(__file__).split(".")[0])
 
     # Get java options from JAVA_OPTS environment variable
     javaOptions=javaOpts()
