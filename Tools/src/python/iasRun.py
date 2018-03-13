@@ -189,6 +189,8 @@ if __name__ == '__main__':
     if verbose:
         print("\nVerbose mode ON")
         logger.info("\nVerbose mode ON")
+		
+    """
     Insert the configuration for the logger
     """
     LEVELS = {'debug': logging.DEBUG,'info': logging.INFO,'warning': logging.WARNING,'error': logging.ERROR,'critical': logging.CRITICAL}
