@@ -5,7 +5,7 @@ import os, errno
 
 class log():
 
-    def GetLogger():
+    def GetLogger(fileName):
         LEVELS = {'debug': logging.DEBUG,'info': logging.INFO,'warning': logging.WARNING,'error': logging.ERROR,'critical': logging.CRITICAL}
 
         if len(sys.argv) > 1:
@@ -22,7 +22,6 @@ class log():
         logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
         #Set path where save the file and the name of the file.
         logPath="../IAS_LOGS_FOLDER"
-        fileName=""
         try:
             os.makedirs(logPath)
         except OSError as e:

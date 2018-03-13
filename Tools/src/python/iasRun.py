@@ -187,7 +187,9 @@ if __name__ == '__main__':
         print("\nVerbose mode ON")
         logger.info("\nVerbose mode ON")
 
-    
+    #Get the logger
+    logger=log.GetLogger(os.path.basename(__file__).split(".")[0])
+
     # Get java options from JAVA_OPTS environment variable
     javaOptions=javaOpts()
     # Build the command line
