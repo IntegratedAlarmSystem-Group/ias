@@ -129,10 +129,23 @@ case class InOut[A](
 	  
 	  idsOfDependants.foreach( ids => {
 	    ret.append(", Ids of dependants=[")
-	    ret.append(ids.map(_.id).mkString(", "))
+	    val listOfIds = ids.map(_.id).toList.sorted
+	    ret.append(listOfIds.mkString(", "))
 	    ret.append(']')  
 	  })
 	  
+	  props.foreach( pMap => {
+	     ret.append(", properties=[")
+	     val keys = pMap.keys.toList.sorted
+	     keys.foreach(key => {
+	       ret.append('(')
+	       ret.append(key)
+	       ret.append(',')
+	       ret.append(pMap(key))
+	       ret.append(')')
+	     })
+	     ret.append(']') 
+	  })
 	  
     ret.toString()
   }
