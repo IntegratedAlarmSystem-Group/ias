@@ -1,7 +1,6 @@
 package org.eso.ias.types;
 
-import java.text.ParseException;
-import java.util.Date;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -91,6 +90,11 @@ public class IasValueJsonPojo {
 	 * @see IASValue#dependentsFullRuningIds
 	 */
 	private Set<String> depsFullRunningIds;
+	
+	/**
+	 * Additional properties
+	 */
+	private Map<String, String> props;
 	 
 	/**
 	 * The operational mode
@@ -139,6 +143,8 @@ public class IasValueJsonPojo {
 		this.sentToBsdbTStamp=convertTStampToIso8601(iasValue.sentToBsdbTStamp);
 		this.readFromBsdbTStamp=convertTStampToIso8601(iasValue.readFromBsdbTStamp);
 		this.dasuProductionTStamp=convertTStampToIso8601(iasValue.dasuProductionTStamp);
+		
+		this.props = iasValue.props.orElse(null);
 		
 	}
 	
@@ -273,7 +279,8 @@ public class IasValueJsonPojo {
 				convertIso8601ToTStamp(sentToBsdbTStamp), 
 				convertIso8601ToTStamp(readFromBsdbTStamp), 
 				convertIso8601ToTStamp(dasuProductionTStamp),
-					depsFullRunningIds);
+				depsFullRunningIds,
+				Optional.ofNullable(props));
 	}
 
 	public Set<String> getDepsFullRunningIds() {
@@ -282,6 +289,14 @@ public class IasValueJsonPojo {
 
 	public void setDepsFullRunningIds(Set<String> dependentsFullRuningIds) {
 		this.depsFullRunningIds = dependentsFullRuningIds;
+	}
+
+	public Map<String, String> getProps() {
+		return props;
+	}
+
+	public void setProps(Map<String, String> props) {
+		this.props = props;
 	}
 
 }
