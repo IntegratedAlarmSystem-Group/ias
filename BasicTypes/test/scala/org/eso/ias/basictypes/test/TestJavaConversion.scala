@@ -269,4 +269,60 @@ class TestJavaConversion  extends FlatSpec {
     assert(alarmHIO2.idsOfDependants.get.contains(depId2))
   }
   
+  it must "Update a IASIO with the properties of a IASValue" in { 
+    val f = fixture
+    
+    // The IDs of dependents
+    val supervId1 = new Identifier("SupervId1",IdentifierType.SUPERVISOR,None)
+    val dasuId1 = new Identifier("dasuVID1",IdentifierType.DASU,supervId1)
+    val asceId1 = new Identifier("asceVID1",IdentifierType.ASCE,Option(dasuId1))      
+    val depId1 = new Identifier("AlarmID1",IdentifierType.IASIO,Option[Identifier](asceId1))
+    
+    val supervId2 = new Identifier("SupervId2",IdentifierType.SUPERVISOR,None)
+    val dasuId2 = new Identifier("dasuVID2",IdentifierType.DASU,supervId2)
+    val asceId2 = new Identifier("asceVID2",IdentifierType.ASCE,Option(dasuId2))      
+    val depId2 = new Identifier("AlarmID2",IdentifierType.IASIO,Option[Identifier](asceId2))
+    
+    val properties = Map("key1"->"Value1", "key2"->"Value2")
+    
+    val alarmHIO = new InOut[AlarmSample]( // Output
+        f.alarmValue, 
+        f.alarmHioId, 
+        f.mode,
+        None,
+        f.validity,
+        IASTypes.ALARM,
+        None,None,None,None,None,None,None,None,Some(properties))
+    
+    val alarmVal = JavaConverter.inOutToIASValue(alarmHIO)
+    
+    val valueProps = alarmVal.props
+    assert(valueProps.isPresent())
+    assert(valueProps.get.size()==properties.size)
+    properties.keys.foreach(key => { 
+        assert(valueProps.get.keySet().contains(key))
+        assert(properties(key)==valueProps.get.get(key))
+    })
+    
+    // Now check if updating a InOut takes the properties from the IASValue
+    val alarmHIO2 = new InOut[AlarmSample]( // Output
+        f.alarmValue, 
+        f.alarmHioId, 
+        f.mode,
+        None,
+        f.validity,
+        IASTypes.ALARM,
+        None,None,None,None,None,None,None,None,None).update(alarmVal)
+    
+    val valuePropsOpt = alarmHIO2.props
+    assert(valuePropsOpt.isDefined)
+    assert(valuePropsOpt.get.size==properties.size)
+    properties.keys.foreach(key => { 
+        assert(valuePropsOpt.get.keys.toList.contains(key))
+        assert(properties(key)==valueProps.get.get(key))
+    })    
+    
+    
+  }
+  
 }

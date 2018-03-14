@@ -225,10 +225,31 @@ case class InOut[A](
    * Updates the IDs of the dependents
    * 
    * @param idsOfDeps the identifiers of the dependent monitor points
+   * @return a new InOut with the passed IDs of the dependents
    */
   def updateDependentsIds(idsOfDeps: Set[Identifier]): InOut[A] = {
-    require(Option(idsOfDeps).isDefined,"Cannot update the list of dependents with an empty set of identifiers")
-    this.copy(idsOfDependants=Some(idsOfDeps))
+    val idsOfDepsOpt = Option(idsOfDeps)
+    require(idsOfDepsOpt.isDefined,"Cannot update the list of dependents with an empty set of identifiers")
+    if (idsOfDepsOpt.get.isEmpty) {
+      this.copy(idsOfDependants=None)
+    } else {
+      this.copy(idsOfDependants=idsOfDepsOpt)
+    }
+  }
+  
+  /**
+   * Return a new inOut with the passed additional properties
+   * 
+   * @param The additional properties
+   * @return a new inOut with the passed additional properties
+   */
+  def updateProps(additionalProps: Map[String,String]): InOut[A] = {
+    val propsOpt = Option(additionalProps)
+    if (propsOpt.get.isEmpty) {
+      this.copy(props = None)
+    } else {
+      this.copy(props = propsOpt)
+    }
   }
   
   /**
