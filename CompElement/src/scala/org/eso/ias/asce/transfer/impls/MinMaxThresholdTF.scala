@@ -144,7 +144,7 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
       (doubleValue>=highOn || doubleValue<=lowOn) ||
       temp.get && (doubleValue>=highOff || doubleValue<=lowOff)
     val newValue = AlarmSample.fromBoolean(condition)
-    actualOutput.updateValue(Some(newValue)).updateMode(iasio.mode)
+    actualOutput.updateValue(Some(newValue)).updateMode(iasio.mode).updateProps(Map("actualValue"->doubleValue.toString()))
   }
   
 }
