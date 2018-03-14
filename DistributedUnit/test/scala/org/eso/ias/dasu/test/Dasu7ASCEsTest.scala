@@ -156,7 +156,8 @@ class Dasu7ASCEsTest extends FlatSpec {
 			t0+20,
 			null,
 			null,
-			new HashSet[String]())
+			null,
+			null)
     }
     
   }
@@ -258,7 +259,8 @@ class Dasu7ASCEsTest extends FlatSpec {
     assert(outputProducedByDasu2.value.asInstanceOf[AlarmSample]== AlarmSample.SET)
     assert(outputProducedByDasu2.dasuProductionTStamp.isPresent())
     
-    assert(outputProducedByDasu2.dependentsFullRuningIds.size()==f.dasu.getInputIds().size)
+    assert(outputProducedByDasu2.dependentsFullRuningIds.isPresent())
+    assert(outputProducedByDasu2.dependentsFullRuningIds.get.size()==f.dasu.getInputIds().size)
     f.dasu.cleanUp()
   }
   
