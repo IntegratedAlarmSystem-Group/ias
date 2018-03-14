@@ -54,7 +54,8 @@ class TestInOut extends FlatSpec {
         None,
         None,
         None,
-        Set.empty)
+        None,
+        None)
     
     // Change the value of the previous MP
     val mp2 = mp.updateValue(Some(3L))

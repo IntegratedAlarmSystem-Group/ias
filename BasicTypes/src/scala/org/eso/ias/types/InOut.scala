@@ -57,7 +57,8 @@ import scala.collection.JavaConverters
  * @param idsOfDependants the identifiers of the dependent monitor points i.e.
  *                        the identifier of the inputs if this InOut represents a output
  *                        empty otherwise
- * 
+ * @param props additional properties if any, otherwise empty
+ *  
  * @see IASType
  * 
  * @author acaproni
@@ -76,7 +77,8 @@ case class InOut[A](
 	  sentToBsdbTStamp: Option[Long],
 	  readFromBsdbTStamp: Option[Long],
 	  dasuProductionTStamp: Option[Long],
-	  idsOfDependants: Set[Identifier]) {
+	  idsOfDependants: Option[Set[Identifier]],
+	  props: Option[Map[String,String]]) {
   require(Option[Identifier](id).isDefined,"The identifier must be defined")
   require(Option[IASTypes](iasType).isDefined,"The type must be defined")
   require(Option(idsOfDependants).isDefined,"Invalid list of dep. identifiers")
@@ -125,9 +127,12 @@ case class InOut[A](
 	  readFromBsdbTStamp.foreach(t => { ret.append(", readFromBsdbTStamp="); ret.append(t); })
 	  dasuProductionTStamp.foreach(t => { ret.append(", dasuProductionTStamp="); ret.append(t); })
 	  
-	  ret.append(", Ids of dependants=[")
-	  ret.append(idsOfDependants.map(_.id).mkString(", "))
-	  ret.append(']')
+	  idsOfDependants.foreach( ids => {
+	    ret.append(", Ids of dependants=[")
+	    ret.append(ids.map(_.id).mkString(", "))
+	    ret.append(']')  
+	  })
+	  
 	  
     ret.toString()
   }
@@ -223,7 +228,7 @@ case class InOut[A](
    */
   def updateDependentsIds(idsOfDeps: Set[Identifier]): InOut[A] = {
     require(Option(idsOfDeps).isDefined,"Cannot update the list of dependents with an empty set of identifiers")
-    this.copy(idsOfDependants=idsOfDeps)
+    this.copy(idsOfDependants=Some(idsOfDeps))
   }
   
   /**
@@ -242,8 +247,17 @@ case class InOut[A](
     assert(InOut.checkType(iasValue.value,iasType))
     val validity = Some(Validity(iasValue.iasValidity))
     
-    val depIds: Set[String] = Set.empty++JavaConverters.asScalaSet(iasValue.dependentsFullRuningIds)
+    val depIds = if (iasValue.dependentsFullRuningIds.isPresent() && !iasValue.dependentsFullRuningIds.get.isEmpty()) {
+      Some(Set.empty++JavaConverters.asScalaSet(iasValue.dependentsFullRuningIds.get).map(Identifier(_)))
+    } else {
+      None
+    }
     
+    val addProps = if (iasValue.props.isPresent() && !iasValue.props.get.isEmpty()) {
+      Some(Map.empty++JavaConverters.mapAsScalaMap(iasValue.props.get))
+    } else {
+      None
+    }
     
     new InOut(
         Some(iasValue.value),
@@ -259,7 +273,8 @@ case class InOut[A](
 	      if (iasValue.sentToBsdbTStamp.isPresent()) Some(iasValue.sentToBsdbTStamp.get()) else None,
 	      if (iasValue.readFromBsdbTStamp.isPresent()) Some(iasValue.readFromBsdbTStamp.get()) else None,
 	      if (iasValue.dasuProductionTStamp.isPresent()) Some(iasValue.dasuProductionTStamp.get()) else None,
-	      depIds.map(Identifier(_)))
+	      depIds,
+	      addProps)
   }
   
   def updateSentToBsdbTStamp(timestamp: Long): InOut[A] = {
@@ -282,7 +297,9 @@ case class InOut[A](
    */
   def toIASValue(): IASValue[_] = {
     
-    val ids = JavaConverters.setAsJavaSet(idsOfDependants.map(_.fullRunningID))
+    val ids = idsOfDependants.map( i => JavaConverters.setAsJavaSet(i.map(_.fullRunningID)))
+    
+    val p = props.map( p => JavaConverters.mapAsJavaMap(p))
     
     new IASValue(
         value.getOrElse(null),
@@ -297,7 +314,8 @@ case class InOut[A](
   			Optional.ofNullable(if (sentToBsdbTStamp.isDefined) sentToBsdbTStamp.get else null),
   			Optional.ofNullable(if (readFromBsdbTStamp.isDefined) readFromBsdbTStamp.get else null),
   			Optional.ofNullable(if (dasuProductionTStamp.isDefined) dasuProductionTStamp.get else null),
-  			ids)
+  			Optional.ofNullable(if (idsOfDependants.isDefined) ids.get else null),
+  			Optional.ofNullable(if (p.isDefined) p.get else null))
 
   }
   
@@ -359,7 +377,8 @@ object InOut {
         None,
         None,
         None,
-        Set.empty)
+        None,
+        None)
   }
   
   /**
@@ -390,6 +409,7 @@ object InOut {
         None,
         None,
         None,
-        Set.empty)
+        None,
+        None)
   }
 }

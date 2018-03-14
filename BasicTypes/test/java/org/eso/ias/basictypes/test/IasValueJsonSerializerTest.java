@@ -287,7 +287,9 @@ public class IasValueJsonSerializerTest {
 		assertFalse(alarmFromSerializer.readFromBsdbTStamp.isPresent());
 		assertTrue(alarmFromSerializer.dasuProductionTStamp.isPresent());
 		assertTrue(alarmFromSerializer.dasuProductionTStamp.get()==7L);
-		assertEquals(0,alarmFromSerializer.dependentsFullRuningIds.size());
+		
+		assertTrue(alarmFromSerializer.dependentsFullRuningIds.isPresent());
+		assertEquals(0,alarmFromSerializer.dependentsFullRuningIds.get().size());
 	}
 	
 	/**
@@ -323,9 +325,10 @@ public class IasValueJsonSerializerTest {
 		System.out.println("jsonStr ="+jsonStr);
 		
 		IASValue<?> fromJson = jsonSerializer.valueOf(jsonStr);
-		assertEquals(alarm.dependentsFullRuningIds.size(),fromJson.dependentsFullRuningIds.size());
-		for (String frId: alarm.dependentsFullRuningIds) {
-			assertTrue(fromJson.dependentsFullRuningIds.contains(frId));
+		assertTrue(alarm.dependentsFullRuningIds.isPresent());
+		assertEquals(alarm.dependentsFullRuningIds.get().size(),fromJson.dependentsFullRuningIds.get().size());
+		for (String frId: alarm.dependentsFullRuningIds.get()) {
+			assertTrue(fromJson.dependentsFullRuningIds.get().contains(frId));
 		}
 	}
 	
