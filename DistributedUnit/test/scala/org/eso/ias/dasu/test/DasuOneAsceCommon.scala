@@ -90,7 +90,6 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, tolerance: Integer) ex
   def buildValue(d: Double): IASValue[_] = {
     
     val t0 = System.currentTimeMillis()-100
-    val deps = new HashSet[String]()
     
     IASValue.build(
       d,
@@ -105,7 +104,8 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, tolerance: Integer) ex
 			t0+20,
 			null,
 			null,
-			deps)
+			null,
+			null)
   }
     
 }

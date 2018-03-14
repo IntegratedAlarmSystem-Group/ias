@@ -16,7 +16,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -221,7 +223,8 @@ public class IasValueJsonSerializerTest {
 			5L,
 			6L,
 			7L,
-			new HashSet<String>());
+			new HashSet<String>(),
+			null);
 		
 		String jsonStr = jsonSerializer.iasValueToString(alarm);
 		
@@ -262,7 +265,8 @@ public class IasValueJsonSerializerTest {
 			5L,
 			null,
 			7L,
-			new HashSet<String>());
+			new HashSet<String>(),
+			null);
 		
 		jsonStr = jsonSerializer.iasValueToString(alarm2);
 		
@@ -283,7 +287,8 @@ public class IasValueJsonSerializerTest {
 		assertFalse(alarmFromSerializer.readFromBsdbTStamp.isPresent());
 		assertTrue(alarmFromSerializer.dasuProductionTStamp.isPresent());
 		assertTrue(alarmFromSerializer.dasuProductionTStamp.get()==7L);
-		assertEquals(0,alarmFromSerializer.dependentsFullRuningIds.size());
+		
+		assertTrue(!alarmFromSerializer.dependentsFullRuningIds.isPresent());
 	}
 	
 	/**
@@ -313,15 +318,61 @@ public class IasValueJsonSerializerTest {
 			5L,
 			6L,
 			7L,
-			deps);
+			deps,
+			null);
 		String jsonStr = jsonSerializer.iasValueToString(alarm);
 		System.out.println("jsonStr ="+jsonStr);
 		
 		IASValue<?> fromJson = jsonSerializer.valueOf(jsonStr);
-		assertEquals(alarm.dependentsFullRuningIds.size(),fromJson.dependentsFullRuningIds.size());
-		for (String frId: alarm.dependentsFullRuningIds) {
-			assertTrue(fromJson.dependentsFullRuningIds.contains(frId));
+		assertTrue(alarm.dependentsFullRuningIds.isPresent());
+		assertEquals(alarm.dependentsFullRuningIds.get().size(),fromJson.dependentsFullRuningIds.get().size());
+		for (String frId: alarm.dependentsFullRuningIds.get()) {
+			assertTrue(fromJson.dependentsFullRuningIds.get().contains(frId));
+		}
+	}
+	
+	/**
+	 * test the serialization/desetrialization of user properties
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testAdditionalProperties() throws Exception {
+		
+		Map<String,String> props = new HashMap<>();
+		props.put("key1", "value1");
+		props.put("key2", "value2");
+		
+		// One test setting additional properties
+		String alarmId = "AlarmType-ID";
+		IASValue<?> alarm = IASValue.build(
+			AlarmSample.SET,
+			OperationalMode.DEGRADED,
+			IasValidity.RELIABLE,
+			new Identifier(alarmId, IdentifierType.IASIO, convIdentifier).fullRunningID(),
+			IASTypes.ALARM,
+			1L,
+			2L,
+			3L,
+			4L,
+			5L,
+			6L,
+			7L,
+			new HashSet<String>(),
+			props);
+		String jsonStr = jsonSerializer.iasValueToString(alarm);
+		System.out.println("jsonStr ="+jsonStr);
+		for (String key: props.keySet()) {
+			assertTrue(jsonStr.contains(key));
+			assertTrue(jsonStr.contains(props.get(key)));
 		}
 		
+		// Now generate the IASValue from the string
+		IASValue<?> fromJson = jsonSerializer.valueOf(jsonStr);
+		assertTrue(fromJson.props.isPresent());
+		for (String key: props.keySet()) {
+			assertTrue(fromJson.props.get().keySet().contains(key));
+			assertEquals(props.get(key),fromJson.props.get().get(key));
+		}
 	}
 }

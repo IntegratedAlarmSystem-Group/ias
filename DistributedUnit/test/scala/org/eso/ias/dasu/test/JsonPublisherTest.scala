@@ -77,7 +77,8 @@ class JsonPublisherTest extends FlatSpec {
 			t0+20,
 			null,
 			null,
-			new HashSet[String]())
+			null,
+			null)
   }
   
   behavior of "The DASU"

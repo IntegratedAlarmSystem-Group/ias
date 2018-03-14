@@ -1,7 +1,6 @@
 package org.eso.ias.types;
 
-import java.text.ParseException;
-import java.util.Date;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -90,7 +89,14 @@ public class IasValueJsonPojo {
 	/**
 	 * @see IASValue#dependentsFullRuningIds
 	 */
+	@JsonInclude(Include.NON_NULL)
 	private Set<String> depsFullRunningIds;
+	
+	/**
+	 * Additional properties
+	 */
+	@JsonInclude(Include.NON_NULL)
+	private Map<String, String> props;
 	 
 	/**
 	 * The operational mode
@@ -130,7 +136,6 @@ public class IasValueJsonPojo {
 		fullRunningId=iasValue.fullRunningId;
 		valueType=iasValue.valueType;
 		iasValidity=iasValue.iasValidity;
-		this.depsFullRunningIds=iasValue.dependentsFullRuningIds;
 		
 		this.pluginProductionTStamp=convertTStampToIso8601(iasValue.pluginProductionTStamp);
 		this.sentToConverterTStamp=convertTStampToIso8601(iasValue.sentToConverterTStamp);
@@ -139,6 +144,9 @@ public class IasValueJsonPojo {
 		this.sentToBsdbTStamp=convertTStampToIso8601(iasValue.sentToBsdbTStamp);
 		this.readFromBsdbTStamp=convertTStampToIso8601(iasValue.readFromBsdbTStamp);
 		this.dasuProductionTStamp=convertTStampToIso8601(iasValue.dasuProductionTStamp);
+
+		this.depsFullRunningIds=iasValue.dependentsFullRuningIds.orElse(null);
+		this.props = iasValue.props.orElse(null);
 		
 	}
 	
@@ -273,7 +281,8 @@ public class IasValueJsonPojo {
 				convertIso8601ToTStamp(sentToBsdbTStamp), 
 				convertIso8601ToTStamp(readFromBsdbTStamp), 
 				convertIso8601ToTStamp(dasuProductionTStamp),
-					depsFullRunningIds);
+				Optional.ofNullable(depsFullRunningIds),
+				Optional.ofNullable(props));
 	}
 
 	public Set<String> getDepsFullRunningIds() {
@@ -282,6 +291,14 @@ public class IasValueJsonPojo {
 
 	public void setDepsFullRunningIds(Set<String> dependentsFullRuningIds) {
 		this.depsFullRunningIds = dependentsFullRuningIds;
+	}
+
+	public Map<String, String> getProps() {
+		return props;
+	}
+
+	public void setProps(Map<String, String> props) {
+		this.props = props;
 	}
 
 }

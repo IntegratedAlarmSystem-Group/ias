@@ -114,7 +114,8 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener {
 			  t0+20,
 			  t0+25,
 			  null,
-			  new HashSet[String]())
+			  null,
+			  null)
   }
   
   def stringEventReceived(event: String) = {

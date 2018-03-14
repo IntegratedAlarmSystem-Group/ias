@@ -154,6 +154,8 @@ class TestMinMaxThreshold extends FlatSpec {
     iasio.value.forall(a => a==alarmState)
   }
   
+  
+  
   it must "run the scala Min/Max TF executor" in withScalaComp { (scalaComp, inputsMPs) =>
     scalaComp.initialize()
     Thread.sleep(1000)
@@ -167,10 +169,20 @@ class TestMinMaxThreshold extends FlatSpec {
     scalaComp.update(Set(highMp.toIASValue()))
     assert(checkAlarmActivation(scalaComp,AlarmSample.SET))
     
+    // Is the property set with the value that triggered the alarm?
+    assert(scalaComp.output.props.isDefined)
+    assert(scalaComp.output.props.get.keys.toList.contains("actualValue"))
+    val propValueMap=scalaComp.output.props.get
+    assert(propValueMap("actualValue")==100L.toDouble.toString())
+    
+    
     // Increase does not deactivate the alarm
     val moreHigh=highMp.updateValue(Some(150L))
     scalaComp.update(Set(moreHigh.toIASValue()))
     assert(checkAlarmActivation(scalaComp,AlarmSample.SET))
+    
+    val propValueMap2=scalaComp.output.props.get
+    assert(propValueMap2("actualValue")==150L.toDouble.toString())
     
     // Decreasing without passing HighOn does not deactivate
     val noDeact = moreHigh.updateValue(Some(40L))
@@ -181,6 +193,9 @@ class TestMinMaxThreshold extends FlatSpec {
     val deact = noDeact.updateValue(Some(10L))
     scalaComp.update(Set(deact.toIASValue()))
     assert(checkAlarmActivation(scalaComp,AlarmSample.CLEARED))
+    
+    val propValueMap3=scalaComp.output.props.get
+    assert(propValueMap3("actualValue")==10L.toDouble.toString())
     
     // Below LowOff but not passing LowOn does not activate
     val aBitLower = deact.updateValue(Some(-15L))
@@ -237,10 +252,19 @@ class TestMinMaxThreshold extends FlatSpec {
     javaComp.update(Set(highMp.toIASValue()))
     assert(checkAlarmActivation(javaComp,AlarmSample.SET))
     
+    // Is the property set with the value that triggered the alarm?
+    assert(javaComp.output.props.isDefined)
+    assert(javaComp.output.props.get.keys.toList.contains("actualValue"))
+    val propValueMap=javaComp.output.props.get
+    assert(propValueMap("actualValue")==100L.toDouble.toString())
+    
     // Increase does not deactivate the alarm
     val moreHigh=highMp.updateValue(Some(150L))
     javaComp.update(Set(moreHigh.toIASValue()))
     assert(checkAlarmActivation(javaComp,AlarmSample.SET))
+    
+    val propValueMap2=javaComp.output.props.get
+    assert(propValueMap2("actualValue")==150L.toDouble.toString())
     
     // Decreasing without passing HighOn does not deactivate
     val noDeact = moreHigh.updateValue(Some(40L))
@@ -251,6 +275,9 @@ class TestMinMaxThreshold extends FlatSpec {
     val deact = noDeact.updateValue(Some(10L))
     javaComp.update(Set(deact.toIASValue()))
     assert(checkAlarmActivation(javaComp,AlarmSample.CLEARED))
+    
+    val propValueMap3=javaComp.output.props.get
+    assert(propValueMap3("actualValue")==10L.toDouble.toString())
     
     // Below LowOff but not passing LowOn does not activate
     val aBitLower = deact.updateValue(Some(-15L))

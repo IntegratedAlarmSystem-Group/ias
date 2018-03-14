@@ -203,8 +203,9 @@ public class ValueMapper implements Function<String, String> {
 				producedAndSentTStamp, // Produced by converter
 				producedAndSentTStamp, // Sent to BSDB
 				null, // Read from BSDB
-				null,
-				emptySetDependents); // DASU prod time
+				null, // DASU prod time
+				null, // dependents
+				null); // additional properties
 	}
 
 	/**

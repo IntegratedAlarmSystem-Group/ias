@@ -104,7 +104,8 @@ class DasuOneASCETest extends FlatSpec  with BeforeAndAfter {
     
     assert(f.outputValuesReceived.size==1)
     val output = f.outputValuesReceived(0)
-    assert(!output.dependentsFullRuningIds.isEmpty())
+    assert(output.dependentsFullRuningIds.isPresent())
+    assert(!output.dependentsFullRuningIds.get().isEmpty())
   }
   
 }

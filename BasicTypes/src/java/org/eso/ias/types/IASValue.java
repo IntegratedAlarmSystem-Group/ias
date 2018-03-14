@@ -2,7 +2,9 @@ package org.eso.ias.types;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -51,10 +53,15 @@ public class IASValue<T> {
 	public final Optional<Long> convertedProductionTStamp;
 	
 	/**
-	 * The list of the full running identifiers of the dependent
-	 * monitor point 
+	 * The unmodifiable set of the full running identifiers of the dependent
+	 * monitor point, if any 
 	 */
-	public final Set<String> dependentsFullRuningIds;
+	public final Optional<Set<String>> dependentsFullRuningIds;
+	
+	/**
+	 * Unmodifiable map of additional properties, if any
+	 */
+	public final Optional<Map<String, String>> props;
 	
 	/**
 	 * The point in time when the value has been sent to the BSDB
@@ -142,7 +149,8 @@ public class IASValue<T> {
 			Optional<Long> sentToBsdbTStamp,
 			Optional<Long> readFromBsdbTStamp,
 			Optional<Long> dasuProductionTStamp,
-			Set<String> dependentsFullRuningIds) {
+			Optional<Set<String>> dependentsFullRuningIds,
+			Optional<Map<String, String>> properties) {
 		Objects.requireNonNull(mode,"The mode can't be null");
 		Objects.requireNonNull(iasValidity,"The validity can't be null");
 		Objects.requireNonNull(valueType,"The type can't be null");
@@ -154,6 +162,7 @@ public class IASValue<T> {
 		Objects.requireNonNull(readFromBsdbTStamp);
 		Objects.requireNonNull(dasuProductionTStamp);
 		Objects.requireNonNull(dependentsFullRuningIds);
+		Objects.requireNonNull(properties);
 		this.value = value;
 		this.mode = mode;
 		this.iasValidity=iasValidity;
@@ -176,7 +185,18 @@ public class IASValue<T> {
 		this.sentToBsdbTStamp= sentToBsdbTStamp;
 		this.readFromBsdbTStamp= readFromBsdbTStamp;
 		this.dasuProductionTStamp= dasuProductionTStamp;
-		this.dependentsFullRuningIds=Collections.unmodifiableSet(dependentsFullRuningIds);
+		
+		Optional<Set<String>> tempDeps = dependentsFullRuningIds.map( ids -> Collections.unmodifiableSet(ids));
+		if (tempDeps.isPresent() && tempDeps.get().isEmpty()) {
+			tempDeps=Optional.empty();
+		}
+		this.dependentsFullRuningIds=tempDeps;
+		
+		Optional<Map<String, String>> tempProps = properties.map( m -> Collections.unmodifiableMap(m));
+		if (tempProps.isPresent() && tempProps.get().isEmpty()) {
+			tempProps=Optional.empty();
+		}
+		this.props=tempProps;
 	}
 	
 	/**
@@ -199,7 +219,8 @@ public class IASValue<T> {
 				this.sentToBsdbTStamp,
 				this.readFromBsdbTStamp,
 				this.dasuProductionTStamp,
-				this.dependentsFullRuningIds);
+				this.dependentsFullRuningIds,
+				this.props);
 	}
 	
 	/**
@@ -222,7 +243,8 @@ public class IASValue<T> {
 				this.sentToBsdbTStamp,
 				this.readFromBsdbTStamp,
 				this.dasuProductionTStamp,
-				this.dependentsFullRuningIds);
+				this.dependentsFullRuningIds,
+				this.props);
 	}
 	
 	/**
@@ -250,7 +272,36 @@ public class IASValue<T> {
 				this.sentToBsdbTStamp,
 				this.readFromBsdbTStamp,
 				this.dasuProductionTStamp,
-				Collections.unmodifiableSet(newDeps));
+				Optional.of(Collections.unmodifiableSet(newDeps)),
+				this.props);
+	}
+	
+	/**
+	 * Update the additional properties
+	 * 
+	 * @param properties The new additional properties (can be null)
+	 * @return A new IASValue with updated properties
+	 */
+	public IASValue<T> updateProperties(Map<String,String> properties) {
+		
+		Optional<Map<String,String>> propsOpt = Optional.ofNullable(properties);
+		Optional<Map<String,String>> newProperties = propsOpt.map( m -> Collections.unmodifiableMap(m));
+		
+		return new IASValue<T>(
+				this.value,
+				this.mode,
+				this.iasValidity,
+				this.fullRunningId,
+				this.valueType,
+				this.pluginProductionTStamp,
+				this.sentToConverterTStamp,
+				this.receivedFromPluginTStamp,
+				this.convertedProductionTStamp,
+				this.sentToBsdbTStamp,
+				this.readFromBsdbTStamp,
+				this.dasuProductionTStamp,
+				this.dependentsFullRuningIds,
+				newProperties);
 	}
 	
 	/**
@@ -273,7 +324,8 @@ public class IASValue<T> {
 				this.sentToBsdbTStamp,
 				this.readFromBsdbTStamp,
 				this.dasuProductionTStamp,
-				this.dependentsFullRuningIds);
+				this.dependentsFullRuningIds,
+				this.props);
 	}
 	
 	/**
@@ -296,7 +348,8 @@ public class IASValue<T> {
 				this.sentToBsdbTStamp,
 				this.readFromBsdbTStamp,
 				this.dasuProductionTStamp,
-				this.dependentsFullRuningIds);
+				this.dependentsFullRuningIds,
+				this.props);
 	}
 	
 	/**
@@ -319,7 +372,8 @@ public class IASValue<T> {
 				this.sentToBsdbTStamp,
 				this.readFromBsdbTStamp,
 				this.dasuProductionTStamp,
-				this.dependentsFullRuningIds);
+				this.dependentsFullRuningIds,
+				this.props);
 	}
 	
 	/**
@@ -342,7 +396,8 @@ public class IASValue<T> {
 				this.sentToBsdbTStamp,
 				this.readFromBsdbTStamp,
 				this.dasuProductionTStamp,
-				this.dependentsFullRuningIds);
+				this.dependentsFullRuningIds,
+				this.props);
 	}
 	
 	/**
@@ -365,7 +420,8 @@ public class IASValue<T> {
 				this.sentToBsdbTStamp,
 				this.readFromBsdbTStamp,
 				this.dasuProductionTStamp,
-				this.dependentsFullRuningIds);
+				this.dependentsFullRuningIds,
+				this.props);
 	}
 	
 	/**
@@ -388,7 +444,8 @@ public class IASValue<T> {
 				Optional.ofNullable(timestamp),
 				this.readFromBsdbTStamp,
 				this.dasuProductionTStamp,
-				this.dependentsFullRuningIds);
+				this.dependentsFullRuningIds,
+				this.props);
 	}
 	
 	/**
@@ -411,7 +468,8 @@ public class IASValue<T> {
 				this.sentToBsdbTStamp,
 				Optional.ofNullable(timestamp),
 				this.dasuProductionTStamp,
-				this.dependentsFullRuningIds);
+				this.dependentsFullRuningIds,
+				this.props);
 	}
 	
 	/**
@@ -434,7 +492,8 @@ public class IASValue<T> {
 				this.sentToBsdbTStamp,
 				this.readFromBsdbTStamp,
 				Optional.ofNullable(timestamp),
-				this.dependentsFullRuningIds);
+				this.dependentsFullRuningIds,
+				this.props);
 	}
 	
 	@Override
@@ -480,12 +539,27 @@ public class IASValue<T> {
 		ret.append(", value=");
 		ret.append(value);
 		
-		ret.append(", fullRunningIds of dependents=[");
-		for (String s: dependentsFullRuningIds) {
-			ret.append(' ');
-			ret.append(s);
-		}
-		ret.append(" ]");
+		dependentsFullRuningIds.ifPresent( ids -> {
+			ret.append(", fullRunningIds of dependents=[");
+			for (String s: ids) {
+				ret.append(' ');
+				ret.append(s);
+			}
+			ret.append(" ]");
+		});
+		
+		
+		props.ifPresent( properties -> {
+			ret.append(", props=[");
+			for (String key: properties.keySet()) {
+				ret.append('(');
+				ret.append(key);
+				ret.append(',');
+				ret.append(properties.get(key));
+				ret.append(')');
+			}
+			ret.append(']');
+		});
 		
 		return ret.toString();
 	}
@@ -506,7 +580,14 @@ public class IASValue<T> {
 			IasValidity iasValidity,
 			String fullRunningId,
 			IASTypes valueType) {
-		return build(value,mode,iasValidity,fullRunningId,valueType,null,null,null,null,null,null,null,new HashSet<String>());
+		return build(
+				value,
+				mode,
+				iasValidity,
+				fullRunningId,
+				valueType,
+				null,null,null,null,null,null,null,
+				null,null);
 	}
 	
 	/**
@@ -526,6 +607,8 @@ public class IASValue<T> {
 	 * @param sentToBsdbTStamp The point in time when the value has been sent to the BSDB
 	 * @param readFromBsdbTStamp The point in time when the value has been read from the BSDB
 	 * @param dasuProductionTStamp The point in time when the value has been generated by the DASU
+	 * @param dependentsFullrunningIds The full running IDs of the dependent monitor points; can be <code>null</code>
+	 * @param properties Additional properties (can be <code>null</code>)
 	 * @return A IasValue initialized with the passed parameters
 	 */
 	public static <X> IASValue<?> build(
@@ -541,9 +624,17 @@ public class IASValue<T> {
 			Long sentToBsdbTStamp,
 			Long readFromBsdbTStamp,
 			Long dasuProductionTStamp,
-			Set<String> dependentsFullrunningIds) {
+			Set<String> dependentsFullrunningIds,
+			Map<String,String> properties) {
 		Objects.requireNonNull(valueType);
-		Objects.requireNonNull(dependentsFullrunningIds);
+		
+		Optional<Set<String>> idsOpt = Optional.ofNullable(dependentsFullrunningIds);
+		Optional<Set<String>> depIds = idsOpt.map(s -> Collections.unmodifiableSet(s));
+		
+		Optional<Map<String,String>> propsOpt = Optional.ofNullable(properties);
+		Optional<Map<String,String>> theProps = propsOpt.map(p -> Collections.unmodifiableMap(p));
+		
+		
 		switch (valueType) {
 			case LONG: return new IASValue<Long>(
 					(Long)value, 
@@ -558,7 +649,8 @@ public class IASValue<T> {
 					Optional.ofNullable(sentToBsdbTStamp),
 					Optional.ofNullable(readFromBsdbTStamp),
 					Optional.ofNullable(dasuProductionTStamp),
-					dependentsFullrunningIds);
+					depIds,
+					theProps);
 	 		case INT: return new IASValue<Integer>(
 					(Integer)value, 
 					mode,
@@ -572,7 +664,8 @@ public class IASValue<T> {
 					Optional.ofNullable(sentToBsdbTStamp),
 					Optional.ofNullable(readFromBsdbTStamp),
 					Optional.ofNullable(dasuProductionTStamp),
-					dependentsFullrunningIds);
+					depIds,
+					theProps);
 			case SHORT: return new IASValue<Short>(
 					(Short)value, 
 					mode,
@@ -586,7 +679,8 @@ public class IASValue<T> {
 					Optional.ofNullable(sentToBsdbTStamp),
 					Optional.ofNullable(readFromBsdbTStamp),
 					Optional.ofNullable(dasuProductionTStamp),
-					dependentsFullrunningIds);
+					depIds,
+					theProps);
 			case BYTE: return new IASValue<Byte>(
 					(Byte)value, 
 					mode,
@@ -600,7 +694,8 @@ public class IASValue<T> {
 					Optional.ofNullable(sentToBsdbTStamp),
 					Optional.ofNullable(readFromBsdbTStamp),
 					Optional.ofNullable(dasuProductionTStamp),
-					dependentsFullrunningIds);
+					depIds,
+					theProps);
 			case DOUBLE: return new IASValue<Double>(
 					(Double)value, 
 					mode,
@@ -614,7 +709,8 @@ public class IASValue<T> {
 					Optional.ofNullable(sentToBsdbTStamp),
 					Optional.ofNullable(readFromBsdbTStamp),
 					Optional.ofNullable(dasuProductionTStamp),
-					dependentsFullrunningIds);
+					depIds,
+					theProps);
 			case FLOAT: return new IASValue<Float>(
 					(Float)value, 
 					mode,
@@ -628,7 +724,8 @@ public class IASValue<T> {
 					Optional.ofNullable(sentToBsdbTStamp),
 					Optional.ofNullable(readFromBsdbTStamp),
 					Optional.ofNullable(dasuProductionTStamp),
-					dependentsFullrunningIds);
+					depIds,
+					theProps);
 			case BOOLEAN: return new IASValue<Boolean>(
 					(Boolean)value, 
 					mode,
@@ -642,7 +739,8 @@ public class IASValue<T> {
 					Optional.ofNullable(sentToBsdbTStamp),
 					Optional.ofNullable(readFromBsdbTStamp),
 					Optional.ofNullable(dasuProductionTStamp),
-					dependentsFullrunningIds);
+					depIds,
+					theProps);
 			case CHAR: return new IASValue<Character>(
 					(Character)value, 
 					mode,
@@ -656,7 +754,8 @@ public class IASValue<T> {
 					Optional.ofNullable(sentToBsdbTStamp),
 					Optional.ofNullable(readFromBsdbTStamp),
 					Optional.ofNullable(dasuProductionTStamp),
-					dependentsFullrunningIds);
+					depIds,
+					theProps);
 			
 			case STRING: return new IASValue<String>(
 					(String)value, 
@@ -671,7 +770,8 @@ public class IASValue<T> {
 					Optional.ofNullable(sentToBsdbTStamp),
 					Optional.ofNullable(readFromBsdbTStamp),
 					Optional.ofNullable(dasuProductionTStamp),
-					dependentsFullrunningIds);
+					depIds,
+					theProps);
 			case ALARM: return new IASValue<AlarmSample>(
 					(AlarmSample)value, 
 					mode,
@@ -685,7 +785,8 @@ public class IASValue<T> {
 					Optional.ofNullable(sentToBsdbTStamp),
 					Optional.ofNullable(readFromBsdbTStamp),
 					Optional.ofNullable(dasuProductionTStamp),
-					dependentsFullrunningIds);
+					depIds,
+					theProps);
 			default: throw new UnsupportedOperationException("Unsupported type "+valueType);
 		}
 	}
@@ -702,6 +803,7 @@ public class IASValue<T> {
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		result = prime * result + ((mode == null) ? 0 : mode.hashCode());
 		result = prime * result + ((pluginProductionTStamp == null) ? 0 : pluginProductionTStamp.hashCode());
+		result = prime * result + ((props == null) ? 0 : props.hashCode());
 		result = prime * result + ((readFromBsdbTStamp == null) ? 0 : readFromBsdbTStamp.hashCode());
 		result = prime * result + ((receivedFromPluginTStamp == null) ? 0 : receivedFromPluginTStamp.hashCode());
 		result = prime * result + ((sentToBsdbTStamp == null) ? 0 : sentToBsdbTStamp.hashCode());
@@ -709,6 +811,54 @@ public class IASValue<T> {
 		result = prime * result + ((value == null) ? 0 : value.hashCode());
 		result = prime * result + ((valueType == null) ? 0 : valueType.hashCode());
 		return result;
+	}
+	
+	/**
+	 * Get the value of the property with the passed key,
+	 * if it exists.
+	 * 
+	 * @param key the key
+	 * @return the value of the property or empty if a property with
+	 *         the given key does not exist
+	 */
+	public Optional<String> getProperty(String key) {
+		Objects.requireNonNull(key);
+		return props.map( ps -> ps.get(key));
+	}
+	
+	/**
+	 * Build a new IASValue with a new key,value couple 
+	 * in the map of properties
+	 * 
+	 * @param key The key
+	 * @param value The value of the property
+	 * @return 
+	 */
+	public IASValue<T> putProp(String key, String value) {
+		Objects.requireNonNull(key);
+		Objects.requireNonNull(value);
+		if (key.isEmpty() || value.isEmpty()) {
+			throw new IllegalArgumentException("Invalid key/value");
+		}
+		// If the key/value pair already exists return
+		// this same object
+		if (
+				props.isPresent() && 
+				props.get().containsKey(key) && 
+				props.get().get(key).equals(value)) {
+			return this;
+		}
+		// If the par key/value is not already in the map
+		// we need to create a new map because the one in the
+		// object is unmodifiable
+		Map<String,String> properties = new HashMap<>();
+		props.ifPresent( mProps -> {
+			for (String k: mProps.keySet()) {
+				properties.put(k, mProps.get(k));
+			}
+		});
+		properties.put(key, value);
+		return updateProperties(properties);
 	}
 
 	@Override
@@ -753,6 +903,11 @@ public class IASValue<T> {
 			if (other.pluginProductionTStamp != null)
 				return false;
 		} else if (!pluginProductionTStamp.equals(other.pluginProductionTStamp))
+			return false;
+		if (props == null) {
+			if (other.props != null)
+				return false;
+		} else if (!props.equals(other.props))
 			return false;
 		if (readFromBsdbTStamp == null) {
 			if (other.readFromBsdbTStamp != null)

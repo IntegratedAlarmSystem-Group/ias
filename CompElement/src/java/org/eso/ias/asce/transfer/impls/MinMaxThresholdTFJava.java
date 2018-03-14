@@ -1,5 +1,6 @@
 package org.eso.ias.asce.transfer.impls;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
@@ -89,6 +90,11 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 	 * then LowOFF, then the alarm is deactivated
 	 */
 	public final double lowOff = getValue(props, MinMaxThresholdTFJava.lowOffPropName, Double.MIN_VALUE);
+	
+	/** 
+	 * Additional properties
+	 */
+	public final Map<String , String> additionalProperties = new HashMap<>();
 
 	/**
 	 * Get the value of a property from the passed properties.
@@ -188,6 +194,7 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 				
 				
 		AlarmSample newOutput = AlarmSample.fromBoolean(condition);
-		return actualOutput.updateValue(newOutput).updateMode(iasio.mode);
+		additionalProperties.put("actualValue", Double.valueOf(hioValue).toString());
+		return actualOutput.updateValue(newOutput).updateMode(iasio.mode).updateProperties(additionalProperties);
 	}
 }
