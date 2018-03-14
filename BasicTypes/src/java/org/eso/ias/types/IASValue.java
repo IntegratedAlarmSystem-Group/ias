@@ -186,8 +186,17 @@ public class IASValue<T> {
 		this.readFromBsdbTStamp= readFromBsdbTStamp;
 		this.dasuProductionTStamp= dasuProductionTStamp;
 		
-		this.dependentsFullRuningIds=dependentsFullRuningIds.map( ids -> Collections.unmodifiableSet(ids));
-		this.props=properties.map( m -> Collections.unmodifiableMap(m));
+		Optional<Set<String>> tempDeps = dependentsFullRuningIds.map( ids -> Collections.unmodifiableSet(ids));
+		if (tempDeps.isPresent() && tempDeps.get().isEmpty()) {
+			tempDeps=Optional.empty();
+		}
+		this.dependentsFullRuningIds=tempDeps;
+		
+		Optional<Map<String, String>> tempProps = properties.map( m -> Collections.unmodifiableMap(m));
+		if (tempProps.isPresent() && tempProps.get().isEmpty()) {
+			tempProps=Optional.empty();
+		}
+		this.props=tempProps;
 	}
 	
 	/**
@@ -578,8 +587,7 @@ public class IASValue<T> {
 				fullRunningId,
 				valueType,
 				null,null,null,null,null,null,null,
-				new HashSet<String>(),
-				null);
+				null,null);
 	}
 	
 	/**

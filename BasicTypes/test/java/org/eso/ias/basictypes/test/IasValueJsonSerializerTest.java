@@ -288,8 +288,7 @@ public class IasValueJsonSerializerTest {
 		assertTrue(alarmFromSerializer.dasuProductionTStamp.isPresent());
 		assertTrue(alarmFromSerializer.dasuProductionTStamp.get()==7L);
 		
-		assertTrue(alarmFromSerializer.dependentsFullRuningIds.isPresent());
-		assertEquals(0,alarmFromSerializer.dependentsFullRuningIds.get().size());
+		assertTrue(!alarmFromSerializer.dependentsFullRuningIds.isPresent());
 	}
 	
 	/**
