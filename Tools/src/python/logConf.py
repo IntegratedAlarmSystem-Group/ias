@@ -19,8 +19,7 @@ class Log():
         logger.setLevel(logging.DEBUG)
 
         #Set the format of the log
-        logFormatter = logging.Formatter("%(asctime)s | %(pathname)s | %(name)s | [%(threadName)-12.12s] | %(module)s.%(lineno)d | [%(levelname)-5.5s] | %(message)s")
-
+        logFormatter = logging.Formatter("%(asctime)s | %(pathname)s | %(name)s | [%(threadName)-12.12s] | %(module)s.%(lineno)d | [%(levelname)-5.5s] | %(message)s", "%Y-%m-%dT%H:%M:%S")
         #Set path where save the file and the name of the file.
         logPath=os.environ["IAS_ROOT"]
         try:
@@ -29,7 +28,7 @@ class Log():
             if e.errno != errno.EEXIST:
                 raise
         now = datetime.datetime.now()
-        fileName=fileName+now.isoformat()1
+        fileName=fileName+now.isoformat()
         fileHandler = logging.FileHandler("{0}/logs/{1}.log".format(logPath, fileName))
         fileHandler.setFormatter(logFormatter)
         logger.addHandler(fileHandler)
