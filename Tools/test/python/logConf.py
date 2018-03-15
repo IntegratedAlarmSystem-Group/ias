@@ -1,7 +1,7 @@
 import logging
 import sys
 import os, errno
-
+import datetime
 
 class Log():
 
@@ -21,13 +21,15 @@ class Log():
         #Set the format of the log
         logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
         #Set path where save the file and the name of the file.
-        logPath="../IAS_LOGS_FOLDER"
+        logPath=os.environ["IAS_ROOT"]
         try:
             os.makedirs(logPath)
         except OSError as e:
             if e.errno != errno.EEXIST:
                 raise
-        fileHandler = logging.FileHandler("{0}/{1}.log".format(logPath, fileName))
+        now = datetime.datetime.now()
+        fileName=fileName+now.isoformat()
+        fileHandler = logging.FileHandler("{0}/logs/{1}.log".format(logPath, fileName))
         fileHandler.setFormatter(logFormatter)
         logger.addHandler(fileHandler)
         #Start stream for write into file, from here when it's insert the logger. write all into file.
