@@ -141,7 +141,8 @@ public class WebServerSender implements IasioListener, Runnable {
 		kafkaServers = props.getProperty(KAFKA_SERVERS_PROP_NAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS);
 		sendersInputKTopicName = props.getProperty(IASCORE_TOPIC_NAME_PROP_NAME, KafkaHelper.IASIOs_TOPIC_NAME);
 		webserverUri = props.getProperty(WEBSERVER_URI_PROP_NAME, DEFAULT_WEBSERVER_URI);
-
+		logger.info("Websocket connection URI: "+ webserverUri);
+		logger.info("Kafka server: "+ kafkaServers);
 		senderListener = listener;
 		kafkaConsumer = new KafkaIasiosConsumer(kafkaServers, sendersInputKTopicName, this.senderID);
 		kafkaConsumer.setUp();

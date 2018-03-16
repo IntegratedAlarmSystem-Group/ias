@@ -1,0 +1,15 @@
+.metadata
+
+**/.settings
+**/.gitignore
+**/*.RELEASE
+**/lib/
+**/classes/
+
+## Project specific files:
+IntegratedAlarmSystemRoot
+
+#### For exceptions stop ignoring using '!<file_to_stop_ignoring>'. E.g:
+#### !Cdb/extTools/antlr-2.7.7.jar
+
+Dockerfile
