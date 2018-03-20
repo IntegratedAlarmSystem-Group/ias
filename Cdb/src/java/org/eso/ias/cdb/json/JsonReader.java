@@ -100,7 +100,7 @@ public class JsonReader implements CdbReader {
 	}
 	
 	/**
-	 * Get the IASIOs from the passed file.
+	 * Get the IASIOs from the file.
 	 * 
 	 * @return The IASIOs read from the configuration file
 	 * @see CdbReader#getIasios()
@@ -110,9 +110,10 @@ public class JsonReader implements CdbReader {
 	public Optional<Set<IasioDao>> getIasios() throws IasCdbException {
 		File f;
 		try {
+			// The ID is not used for JSON: we pass a whatever sting
 			f = cdbFileNames.getIasioFilePath("UnusedID").toFile();
 		} catch (IOException ioe) {
-			throw new IasCdbException("Error getting file",ioe);
+			throw new IasCdbException("Error getting IASIOs file",ioe);
 		}
 		if (!canReadFromFile(f)) {
 			return Optional.empty();
@@ -124,6 +125,36 @@ public class JsonReader implements CdbReader {
 				return Optional.of(iasios);
 			} catch (Throwable t) {
 				System.err.println("Error reading IAS from "+f.getAbsolutePath()+ ": "+t.getMessage());
+				t.printStackTrace();
+				return Optional.empty();
+			}
+		}
+	}
+	
+	/**
+	 * Get all the TFs.
+	 * 
+	 * @return The TFs read from the configuration file
+	 * @throws IasCdbException In case of error getting the IASIOs
+	 */
+	private Optional<Set<TransferFunctionDao>> getTransferFunctions() throws IasCdbException {
+		File f;
+		try {
+			// The ID is not used for JSON: we pass a whatever sting
+			f = cdbFileNames.getTFFilePath("UnusedID").toFile();
+		} catch (IOException ioe) {
+			throw new IasCdbException("Error getting TFs file",ioe);
+		}
+		if (!canReadFromFile(f)) {
+			return Optional.empty();
+		} else {
+			// Parse the file in a JSON pojo
+			ObjectMapper mapper = new ObjectMapper();
+			try {
+				Set<TransferFunctionDao> tfs = mapper.readValue(f, new TypeReference<Set<TransferFunctionDao>>(){});
+				return Optional.of(tfs);
+			} catch (Throwable t) {
+				System.err.println("Error reading TFs from "+f.getAbsolutePath()+ ": "+t.getMessage());
 				t.printStackTrace();
 				return Optional.empty();
 			}
@@ -520,27 +551,19 @@ public class JsonReader implements CdbReader {
 	@Override
 	public Optional<TransferFunctionDao> getTransferFunction(String tf_id) throws IasCdbException {
 		Objects.requireNonNull(tf_id);
-		if (tf_id.isEmpty()) {
+		String cleanedID = tf_id.trim();
+		if (cleanedID.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty TF ID");
 		}
-		File f;
-		try {
-			f= cdbFileNames.getTFFilePath(tf_id).toFile();
-		} catch (IOException ioe) {
-			throw new IasCdbException("Error getting file",ioe);
-		}
-		if (!canReadFromFile(f)) {
-			return Optional.empty();
-		} else {
-			// Parse the file in a JSON pojo
-			ObjectMapper mapper = new ObjectMapper();
-			try {
-				TransferFunctionDao tfDao = mapper.readValue(f, TransferFunctionDao.class);
-				return Optional.of(tfDao);
-			} catch (Exception e) {
-				throw new IasCdbException("Error reading TF from "+f.getAbsolutePath(),e);
+		Optional<Set<TransferFunctionDao>> tfs = getTransferFunctions();
+		if (tfs.isPresent()) {
+			for (TransferFunctionDao tf : tfs.get()) {
+				if (tf.getClassName().equals(cleanedID)) {
+					return Optional.of(tf);
+				}
 			}
 		}
+		return Optional.empty();
 	}
 	
 	/**

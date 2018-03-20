@@ -132,12 +132,12 @@ public class CdbJsonFiles implements CdbFiles {
 		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.IASIO, true).resolve("iasios.json");
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.eso.ias.cdb.json.CdbFiles#getTFFilePath(java.lang.String)
+	 */
 	@Override
 	public Path getTFFilePath(String tfID) throws IOException {
-		Objects.requireNonNull(tfID, "Invalid null TF ID");
-		if (tfID.isEmpty()) {
-			throw new IllegalArgumentException("Invalid empty TF ID");
-		}
-		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.TF, true).resolve(tfID+".json");
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.TF, true).resolve("tfs.json");
 	}
 }

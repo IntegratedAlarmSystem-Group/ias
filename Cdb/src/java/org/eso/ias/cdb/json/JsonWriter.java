@@ -25,6 +25,7 @@ import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
+import org.eso.ias.cdb.pojos.TFLanguageDao;
 import org.eso.ias.cdb.pojos.TransferFunctionDao;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -293,6 +294,123 @@ public class JsonWriter implements CdbWriter {
 	}
 	
 	/**
+	 * Serialize the TFs in the JSON file.
+	 * 
+	 * <P>If <code>append</code> is <code>false</code> then a new file is created otherwise
+	 * the TFs in the passed files are written at the end of the file.
+	 * <BR>If a TF in <code>iasios</code> already exists in the file, the latter
+	 * is replaced by that in the set.
+	 * 
+	 * @param tfs The TFs to write in the file
+	 * @param append: if <code>true</code> the passed TFs are appended to the file
+	 *                otherwise a new file is created
+	 */
+	private void writeTransferFunctions(Set<TransferFunctionDao> tfs, boolean append) throws IasCdbException {
+		File f;
+		try { 
+			// The ID is unused in getTFFilePath
+			f = cdbFileNames.getTFFilePath("UnusedID").toFile();
+		}catch (IOException ioe) {
+			throw new IasCdbException("Error getting TFs file",ioe);
+		}
+		
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
+		if (!f.exists() || !append) {
+			try {
+				mapper.writeValue(f, tfs);
+			}catch (Throwable t) {
+				throw new IasCdbException("Error writing JSON TFss",t);
+			}
+		} else {
+			Path path = FileSystems.getDefault().getPath(f.getAbsolutePath());
+			Path parent  = path.getParent();
+			File tempF;
+			BufferedOutputStream outS;
+			try {
+				tempF = File.createTempFile("tfs", "tmp", parent.toFile());
+				outS = new BufferedOutputStream(new FileOutputStream(tempF));
+			} catch (IOException ioe) {
+				throw new IasCdbException("Error creating temporary file",ioe);
+			}
+			
+			JsonFactory jsonFactory = new JsonFactory(); 
+			JsonParser jp;
+			try {
+				jp = jsonFactory.createParser(f);
+			} catch (Throwable t) {
+				try {
+					outS.close();
+				} catch (IOException ioe) {}
+				throw new IasCdbException("Error creating the JSON parser", t);
+			} 
+			JsonGenerator jg;
+			try { 
+				jg = jsonFactory.createGenerator(outS);
+			} catch (IOException ioe) {
+				try {
+					outS.close();
+				} catch (IOException nestedIOE) {}
+				throw new IasCdbException("Error creating the JSON generator", ioe);
+			} 
+			
+			jg.setPrettyPrinter(new DefaultPrettyPrinter());
+
+			// Builds a map of IASIOs to replace existing TFs 
+			Map<String,TransferFunctionDao> tfsMap = tfs.stream().collect(Collectors.toMap(
+					new Function<TransferFunctionDao,String>() {
+						public String apply(TransferFunctionDao i) { return i.getClassName(); }
+					},
+					Function.<TransferFunctionDao>identity()));
+			try {
+				
+				while(jp.nextToken() != JsonToken.END_ARRAY){
+					JsonToken curToken = jp.getCurrentToken();
+					if (curToken==JsonToken.START_ARRAY) {
+						jg.writeStartArray();
+					}
+					if (curToken==JsonToken.START_OBJECT) {
+						TransferFunctionDao tfInFile = getNextTF(jp);
+						if (tfsMap.containsKey(tfInFile.getClassName())) {
+							// The IASIO in the set replaces the one in the file
+							putNextTF(tfsMap.get(tfInFile.getClassName()),jg);
+							tfsMap.remove(tfInFile.getClassName());
+						} else {
+							putNextTF(tfInFile,jg);
+						}
+					}
+				}
+				// Flushes the remaining TFs from the set into the file
+				for (String key: tfsMap.keySet()) {
+					putNextTF(tfsMap.get(key),jg);
+				}
+				
+			} catch (IOException ioe) {
+				throw new IasCdbException("I/O Error processing JSON files",ioe);
+			} finally {
+				// Done... close everything
+				try {
+					jp.close();
+					jg.writeEndArray();
+					jg.flush();
+					jg.close();
+				} catch (IOException ioe) {
+					throw new IasCdbException("I/O Error closing JSON parser and generator",ioe);
+				}
+			}
+			
+			
+			// Remove the original file and rename the temporary file
+			try {
+				Files.delete(path);
+			} catch (IOException ioe) {
+				throw new IasCdbException("Error deleting temporary file "+path,ioe);
+			}
+			tempF.renameTo(f);
+		}
+	}
+	
+	/**
 	 * Write a IasioDao in the JSON file.
 	 * 
 	 * @param iasio The IASIO to write in the file
@@ -310,6 +428,21 @@ public class JsonWriter implements CdbWriter {
 		if (iasio.getDocUrl()!=null && !iasio.getDocUrl().isEmpty()) {
 			jg.writeStringField("docUrl",iasio.getDocUrl());
 		}
+		jg.writeEndObject();
+	}
+	
+	/**
+	 * Write a TransferFunctionDao in the JSON file.
+	 * 
+	 * @param tf The transfer function to write in the file
+	 * @param jg The Jakson2 generator
+	 * @throws IOException In case of error writing the TF
+	 */
+	private void putNextTF(TransferFunctionDao tf, JsonGenerator jg) throws IOException {
+		Objects.requireNonNull(tf);
+		jg.writeStartObject();
+		jg.writeStringField("className",tf.getClassName());
+		jg.writeStringField("implLang",tf.getImplLang().toString());
 		jg.writeEndObject();
 	}
 	
@@ -347,23 +480,38 @@ public class JsonWriter implements CdbWriter {
 		IasioDao ret = new IasioDao(iasioId,iasioDesc,IasTypeDao.valueOf(iasioType),iasioUrl);
 		return ret;
 	}
+	
+	/**
+	 * Get the next TransferFunctionDao from the passed parser, if it exists
+	 * 
+	 * @param jp The jason parser
+	 * @return The TransferFunctionDao read from the parser if found
+	 * @throws IOException In case of error getting the next TF
+	 */
+	private TransferFunctionDao getNextTF(JsonParser jp) throws IOException {
+		String tfClassName=null;
+		String tfImplLang=null;
+		while(jp.nextToken() != JsonToken.END_OBJECT){
+			String name = jp.getCurrentName();
+			if ("className".equals(name)) {
+				jp.nextToken();
+				tfClassName=jp.getText();
+			}
+			if ("implLang".equals(name)) {
+				jp.nextToken();
+				tfImplLang=jp.getText();
+			}
+		}
+		TransferFunctionDao ret = new TransferFunctionDao(tfClassName,TFLanguageDao.valueOf(tfImplLang));
+		return ret;
+	}
 
 	@Override
 	public void writeTransferFunction(TransferFunctionDao transferFunction) throws IasCdbException {
 		Objects.requireNonNull(transferFunction);
-		File f;
-		try {
-			f = cdbFileNames.getTFFilePath(transferFunction.getClassName()).toFile();
-		}catch (IOException ioe) {
-			throw new IasCdbException("Error getting TF file",ioe);
-		}
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
-		try {
-			mapper.writeValue(f, transferFunction);
-		}catch (Throwable t) {
-			throw new IasCdbException("Error writing JSON TF",t);
-		}
+		Set<TransferFunctionDao> tfs = new HashSet<>();
+		tfs.add(transferFunction);
+		writeTransferFunctions(tfs, true);
 	}
 	
 	/**
