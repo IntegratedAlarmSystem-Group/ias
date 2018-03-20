@@ -23,13 +23,24 @@ public class IasioDao {
 	@Column(name = "io_id")
 	private String id;
 	
-	// Human readable description of the IASIO
+	/**
+	 *  Human readable description of the IASIO
+	 */
 	@Basic(optional=true)
 	private String shortDesc;
 	
+	/**
+	 * The type of the IASIO
+	 */
 	@Enumerated(EnumType.STRING)
 	@Basic(optional=false)
 	private IasTypeDao iasType;
+	
+	/**
+	 * The URL with the documentation
+	 */
+	@Basic(optional=true)
+	private String docUrl;
 	
 	/**
 	 * Empty constructor
@@ -43,12 +54,13 @@ public class IasioDao {
 	 * @param descr The description
 	 * @param type The IAS type
 	 */
-	public IasioDao(String id, String descr, IasTypeDao type) {
+	public IasioDao(String id, String descr, IasTypeDao type, String docUrl) {
 		Objects.requireNonNull(id, "The identifier can't be null");
 		Objects.requireNonNull(type, "The IAS type can't be null");
 		this.id=id;
 		this.shortDesc=descr;
 		this.iasType=type;
+		this.docUrl=docUrl;
 	}
 
 	public String getId() {
@@ -87,11 +99,13 @@ public class IasioDao {
 		ret.append(getId());
 		ret.append(", type=");
 		ret.append(getIasType().toString());
+		ret.append(", desc=\"");
 		if (getShortDesc()!=null) { 
-			ret.append(", desc=\"");		
 			ret.append(getShortDesc());
-		} else {
-			ret.append(", NO description given");
+		}
+		ret.append("\", URL=\"");
+		if (getDocUrl()!=null) {
+			ret.append(getDocUrl());
 		}
 		ret.append("\"]");
 		return ret.toString();
@@ -110,11 +124,20 @@ public class IasioDao {
 
 		return 	this.getId().equals(other.getId()) &&
 				this.getIasType().equals(other.getIasType()) && 
-				Objects.equals(this.getShortDesc(),other.getShortDesc());
+				Objects.equals(this.getShortDesc(),other.getShortDesc()) &&
+				Objects.equals(this.getDocUrl(),other.getDocUrl()) ;
 	}
 	
 	@Override
 	public int hashCode() {
-		return Objects.hash(id,iasType,shortDesc);
+		return Objects.hash(id,iasType,shortDesc,docUrl);
+	}
+
+	public String getDocUrl() {
+		return docUrl;
+	}
+
+	public void setDocUrl(String docUrl) {
+		this.docUrl = docUrl;
 	}
 }

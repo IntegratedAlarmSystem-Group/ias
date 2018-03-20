@@ -12,6 +12,21 @@ CREATE TABLE PROPERTY ( --Prop table
   CONSTRAINT Property_PK PRIMARY KEY ( id ));
   
 /*
+  The template for replication of identical equipments
+  
+  The repllicated  eequipments will have indexes between the min and max,
+  inclusive [min, max]
+*/
+CREATE TABLE TEMPLATE (
+  template_id VARCHAR2(64) NOT NULL,
+  min Numeric(8) NOT NULL,
+  max Numeric(8) NOT NULL,
+  CONSTRAINT TEMPLATE_PK PRIMARY KEY(template_id),
+  CONSTRAINT minGreaterEqualThenZero CHECK (min>=0),
+  CONSTRAINT maxGreaterThenMin CHECK (max>min));
+  
+  
+/*
   The SEQUENCE to generate PROPERTY IDs
 */
 CREATE SEQUENCE PROP_SEQ_GENERATOR
@@ -59,6 +74,7 @@ CREATE TABLE IASIO (
   io_id varchar2(64) NOT NULL,
   shortDesc VARCHAR2(256),
   iasType VARCHAR2(16) NOT NULL,
+  docUrl VARCHAR2(256),
   CONSTRAINT IASIO_PK PRIMARY KEY(io_id));
   
 

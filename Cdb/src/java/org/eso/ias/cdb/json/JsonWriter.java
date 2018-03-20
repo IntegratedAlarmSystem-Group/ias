@@ -307,6 +307,9 @@ public class JsonWriter implements CdbWriter {
 			jg.writeStringField("shortDesc",iasio.getShortDesc());
 		}
 		jg.writeStringField("iasType",iasio.getIasType().toString());
+		if (iasio.getDocUrl()!=null && !iasio.getDocUrl().isEmpty()) {
+			jg.writeStringField("docUrl",iasio.getDocUrl());
+		}
 		jg.writeEndObject();
 	}
 	
@@ -321,6 +324,7 @@ public class JsonWriter implements CdbWriter {
 		String iasioId=null;
 		String iasioDesc=null;
 		String iasioType=null;
+		String iasioUrl=null;
 		while(jp.nextToken() != JsonToken.END_OBJECT){
 			String name = jp.getCurrentName();
 			if ("id".equals(name)) {
@@ -335,8 +339,12 @@ public class JsonWriter implements CdbWriter {
 				jp.nextToken();
 				iasioType=jp.getText();
 			}
+			if ("docUrl".equals(name)) {
+				jp.nextToken();
+				iasioUrl=jp.getText();
+			}
 		}
-		IasioDao ret = new IasioDao(iasioId,iasioDesc,IasTypeDao.valueOf(iasioType));
+		IasioDao ret = new IasioDao(iasioId,iasioDesc,IasTypeDao.valueOf(iasioType),iasioUrl);
 		return ret;
 	}
 

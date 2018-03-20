@@ -138,7 +138,7 @@ public class TestJsonCdb {
 		dasu1.setId("DasuID1");
 		dasu1.setSupervisor(superv);
 		dasu1.setLogLevel(LogLevelDao.FATAL);
-		IasioDao dasuOutIasio1 = new IasioDao("DASU_OUTPUT1", "desc-dasu-out", IasTypeDao.ALARM);
+		IasioDao dasuOutIasio1 = new IasioDao("DASU_OUTPUT1", "desc-dasu-out", IasTypeDao.ALARM,"http://www.eso.org");
 		dasu1.setOutput(dasuOutIasio1);
 		superv.addDasu(dasu1);
 		
@@ -146,7 +146,7 @@ public class TestJsonCdb {
 		dasu2.setId("DasuID2");
 		dasu2.setSupervisor(superv);
 		dasu1.setLogLevel(LogLevelDao.WARN);
-		IasioDao dasuOutIasio2 = new IasioDao("DASU_OUTPUT2", "desc-dasu-out", IasTypeDao.LONG);
+		IasioDao dasuOutIasio2 = new IasioDao("DASU_OUTPUT2", "desc-dasu-out", IasTypeDao.LONG,"http://www.eso.org");
 		dasu2.setOutput(dasuOutIasio2);
 		superv.addDasu(dasu2);
 		
@@ -189,7 +189,7 @@ public class TestJsonCdb {
 		asce1.setId("ASCE1");
 		asce1.setDasu(dasu);
 		asce1.setTransferFunction(tfDao);
-		IasioDao output1 = new IasioDao("OUT-ID1", "description", IasTypeDao.CHAR);
+		IasioDao output1 = new IasioDao("OUT-ID1", "description", IasTypeDao.CHAR,"http://www.eso.org");
 		asce1.setOutput(output1);
 		
 		TransferFunctionDao tfDao2 = new TransferFunctionDao();
@@ -199,7 +199,7 @@ public class TestJsonCdb {
 		AsceDao asce2= new AsceDao();
 		asce2.setId("ASCE-2");
 		asce2.setDasu(dasu);
-		IasioDao output2 = new IasioDao("ID2", "description", IasTypeDao.DOUBLE);
+		IasioDao output2 = new IasioDao("ID2", "description", IasTypeDao.DOUBLE,"http://www.eso.org");
 		asce2.setOutput(output2);
 		asce2.setTransferFunction(tfDao2);
 		
@@ -210,11 +210,11 @@ public class TestJsonCdb {
 		AsceDao asce3= new AsceDao();
 		asce3.setId("ASCE-ID-3");
 		asce3.setDasu(dasu);
-		IasioDao output3 = new IasioDao("OUT-ID3", "desc3", IasTypeDao.SHORT);
+		IasioDao output3 = new IasioDao("OUT-ID3", "desc3", IasTypeDao.SHORT,"http://www.eso.org");
 		asce3.setOutput(output2);
 		asce3.setTransferFunction(tfDao3);
 		
-		IasioDao dasuOutIasio = new IasioDao("DASU_OUTPUT", "desc-dasu-out", IasTypeDao.ALARM);
+		IasioDao dasuOutIasio = new IasioDao("DASU_OUTPUT", "desc-dasu-out", IasTypeDao.ALARM,"http://www.eso.org");
 		dasu.setOutput(dasuOutIasio);
 		
 		// Supervisor must be in the CDB as well otherwise
@@ -265,7 +265,7 @@ public class TestJsonCdb {
 		dasu.setLogLevel(LogLevelDao.FATAL);
 		dasu.setSupervisor(superv);
 
-		IasioDao dasuOutIasio = new IasioDao("DASU_OUTPUT", "desc-dasu-out", IasTypeDao.ALARM);
+		IasioDao dasuOutIasio = new IasioDao("DASU_OUTPUT", "desc-dasu-out", IasTypeDao.ALARM,"http://www.eso.org");
 		dasu.setOutput(dasuOutIasio);
 		
 		TransferFunctionDao tfDao1 = new TransferFunctionDao();
@@ -278,12 +278,12 @@ public class TestJsonCdb {
 		asce.setDasu(dasu);
 		asce.setTransferFunction(tfDao1);
 		
-		IasioDao output = new IasioDao("OUTPUT-ID", "One IASIO in output", IasTypeDao.BYTE);
+		IasioDao output = new IasioDao("OUTPUT-ID", "One IASIO in output", IasTypeDao.BYTE,"http://www.eso.org");
 		asce.setOutput(output);
 		
 		// A set of inputs (one for each possible type
 		for (int t=0; t<IasTypeDao.values().length; t++) {
-			IasioDao input = new IasioDao("INPUT-ID"+t, "IASIO "+t+" in input", IasTypeDao.values()[t]);
+			IasioDao input = new IasioDao("INPUT-ID"+t, "IASIO "+t+" in input", IasTypeDao.values()[t],"http://www.eso.org");
 			asce.addInput(input, true);
 			cdbWriter.writeIasio(input, true);
 		}
@@ -328,7 +328,7 @@ public class TestJsonCdb {
 	 */
 	@Test
 	public void testWriteIasio() throws Exception {
-		IasioDao iasio = new IasioDao("ioID", "IASIO description", IasTypeDao.ALARM);
+		IasioDao iasio = new IasioDao("ioID", "IASIO description", IasTypeDao.ALARM,"http://wiki.alma.cl/ioID");
 		cdbWriter.writeIasio(iasio, false);
 		
 		assertTrue(cdbFiles.getIasioFilePath(iasio.getId()).toFile().exists());
@@ -343,7 +343,7 @@ public class TestJsonCdb {
 		assertEquals("Size of set mismatch",1,optSet.get().size());
 
 		// Append another IASIO
-		IasioDao iasio2 = new IasioDao("ioID2", "Another IASIO", IasTypeDao.BOOLEAN);
+		IasioDao iasio2 = new IasioDao("ioID2", "Another IASIO", IasTypeDao.BOOLEAN,null);
 		cdbWriter.writeIasio(iasio2, true);
 		Optional<Set<IasioDao>> optSet2 = cdbReader.getIasios();
 		assertTrue("Got an empty set of IASIOs!", optSet2.isPresent());
@@ -355,7 +355,7 @@ public class TestJsonCdb {
 		assertEquals("The IASIOs differ!", iasio2, optIasio2.get());
 		
 		// Check if updating a IASIO replaces the old one
-		iasio.setShortDesc("A new Desccripton");
+		iasio.setShortDesc("A new Descripton");
 		cdbWriter.writeIasio(iasio, true);
 		// There must be still 2 IASIOs in the CDB
 		optSet = cdbReader.getIasios();
@@ -376,7 +376,7 @@ public class TestJsonCdb {
 	public void testWriteIasios() throws Exception {
 		Set<IasioDao> set = new HashSet<>();
 		for (int t=0; t<5; t++) {
-			IasioDao iasio = new IasioDao("iasioID-"+t, "IASIO description "+t, IasTypeDao.values()[t]);
+			IasioDao iasio = new IasioDao("iasioID-"+t, "IASIO description "+t, IasTypeDao.values()[t],"http://www.eso.org");
 			set.add(iasio);
 		}
 		cdbWriter.writeIasios(set, false);
@@ -389,7 +389,7 @@ public class TestJsonCdb {
 		// Check if appending works
 		Set<IasioDao> set2 = new HashSet<>();
 		for (int t=0; t<6; t++) {
-			IasioDao iasio = new IasioDao("2ndset-iasioID-"+t, "IASIO descr "+t*2, IasTypeDao.values()[t]);
+			IasioDao iasio = new IasioDao("2ndset-iasioID-"+t, "IASIO descr "+t*2, IasTypeDao.values()[t],"http://www.eso.org");
 			set2.add(iasio);
 		}
 		cdbWriter.writeIasios(set2, true);
@@ -400,7 +400,7 @@ public class TestJsonCdb {
 		// Update the first iasios
 		set.clear();
 		for (int t=0; t<5; t++) {
-			IasioDao iasio = new IasioDao("iasioID-"+t, "IASIO "+t, IasTypeDao.values()[t]);
+			IasioDao iasio = new IasioDao("iasioID-"+t, "IASIO "+t, IasTypeDao.values()[t],"http://www.eso.org");
 			set.add(iasio);
 		}
 		cdbWriter.writeIasios(set, true);
