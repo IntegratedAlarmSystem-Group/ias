@@ -43,12 +43,25 @@ public class IasioDao {
 	private String docUrl;
 	
 	/**
+	 * The default value for canShelve: by default all
+	 * alarms can be shelved
+	 */
+	public static final boolean canSheveDefault = true;
+	
+	/**
+	 * The attribute saying if a IASIO can be shelved,
+	 * initialized with the default value {@link #canSheveDefault}
+	 */
+	@Basic(optional=true)
+	private boolean canShelve=canSheveDefault;
+	
+	/**
 	 * Empty constructor
 	 */
 	public IasioDao() {}
 	
 	/**
-	 * Constructor
+	 * Constructor with default canShelve 
 	 * 
 	 * @param id The identifier
 	 * @param descr The description
@@ -61,6 +74,20 @@ public class IasioDao {
 		this.shortDesc=descr;
 		this.iasType=type;
 		this.docUrl=docUrl;
+	}
+	
+	/**
+	 * Constructor
+	 * 
+	 * @param id The identifier
+	 * @param descr The description
+	 * @param type The IAS type
+	 * @param canShelve <code>true</code> if this IASIO can be shelved, 
+	 *                  <code>false</code> otherwise
+	 */
+	public IasioDao(String id, String descr, IasTypeDao type, String docUrl, boolean canShelve) {
+		this(id,descr,type,docUrl);
+		this.canShelve=canShelve;
 	}
 
 	public String getId() {
@@ -107,6 +134,11 @@ public class IasioDao {
 		if (getDocUrl()!=null) {
 			ret.append(getDocUrl());
 		}
+		if (canShelve) {
+			ret.append(", can be shelved");
+		} else {
+			ret.append(", cannot be shelved");
+		}
 		ret.append("\"]");
 		return ret.toString();
 	}
@@ -125,12 +157,13 @@ public class IasioDao {
 		return 	this.getId().equals(other.getId()) &&
 				this.getIasType().equals(other.getIasType()) && 
 				Objects.equals(this.getShortDesc(),other.getShortDesc()) &&
-				Objects.equals(this.getDocUrl(),other.getDocUrl()) ;
+				Objects.equals(this.getDocUrl(),other.getDocUrl()) &&
+				this.isCanShelve()==other.isCanShelve();
 	}
 	
 	@Override
 	public int hashCode() {
-		return Objects.hash(id,iasType,shortDesc,docUrl);
+		return Objects.hash(id,iasType,shortDesc,docUrl,canShelve);
 	}
 
 	public String getDocUrl() {
@@ -139,5 +172,13 @@ public class IasioDao {
 
 	public void setDocUrl(String docUrl) {
 		this.docUrl = docUrl;
+	}
+
+	public boolean isCanShelve() {
+		return canShelve;
+	}
+
+	public void setCanShelve(boolean canShelve) {
+		this.canShelve = canShelve;
 	}
 }

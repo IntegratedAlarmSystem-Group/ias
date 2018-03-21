@@ -328,7 +328,15 @@ public class TestJsonCdb {
 	 */
 	@Test
 	public void testWriteIasio() throws Exception {
-		IasioDao iasio = new IasioDao("ioID", "IASIO description", IasTypeDao.ALARM,"http://wiki.alma.cl/ioID");
+		// Is the default value saved for IasioDao#canShelve?
+		IasioDao iasioDefaultShelve = new IasioDao("ioID2", "IASIO description", IasTypeDao.ALARM,"http://www.eso.org");
+		cdbWriter.writeIasio(iasioDefaultShelve, false);
+		Optional<IasioDao> optIasioDefShelve = cdbReader.getIasio(iasioDefaultShelve.getId());
+		assertTrue("Got an empty IASIO!", optIasioDefShelve.isPresent());
+		assertEquals("The IASIOs differ!", iasioDefaultShelve, optIasioDefShelve.get());
+		assertEquals(IasioDao.canSheveDefault,optIasioDefShelve.get().isCanShelve());
+		
+		IasioDao iasio = new IasioDao("ioID", "IASIO description", IasTypeDao.ALARM,"http://wiki.alma.cl/ioID",true);
 		cdbWriter.writeIasio(iasio, false);
 		
 		assertTrue(cdbFiles.getIasioFilePath(iasio.getId()).toFile().exists());

@@ -209,12 +209,20 @@ public class TestRdbCdb {
 	@Test
 	public void testIasio() throws Exception {
 		logger.info("testIasio");
-		IasioDao io = new IasioDao("IO-ID", "IASIO description", IasTypeDao.INT,"http://www.eso.org");
+		IasioDao io = new IasioDao("IO-ID", "IASIO description", IasTypeDao.INT,"http://www.eso.org",false);
 		cdbWriter.writeIasio(io, true);
 
 		Optional<IasioDao> iasioFromRdb = cdbReader.getIasio("IO-ID");
 		assertTrue("Got an empty IASIO!", iasioFromRdb.isPresent());
 		assertEquals("The IASIOs differ!", io, iasioFromRdb.get());
+		
+		// Is the default value saved for IasioDao#canShelve?
+		IasioDao iasioDefaultShelve = new IasioDao("ioID2", "IASIO description", IasTypeDao.ALARM,"http://www.eso.org");
+		cdbWriter.writeIasio(iasioDefaultShelve, false);
+		Optional<IasioDao> optIasioDefShelve = cdbReader.getIasio(iasioDefaultShelve.getId());
+		assertTrue("Got an empty IASIO!", optIasioDefShelve.isPresent());
+		assertEquals("The IASIOs differ!", iasioDefaultShelve, optIasioDefShelve.get());
+		assertEquals(IasioDao.canSheveDefault,optIasioDefShelve.get().isCanShelve());
 	}
 
 	/**
