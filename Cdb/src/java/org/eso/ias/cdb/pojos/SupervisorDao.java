@@ -5,6 +5,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.persistence.Basic;
 import javax.persistence.CascadeType;
@@ -105,7 +106,7 @@ public class SupervisorDao {
 	
 	public void removeDasu(DasuDao dasu) {
 		Objects.requireNonNull(dasu,"Cannot remove a null DASU");
-		dasus.remove(dasu.getId());
+		dasus.remove(dasu);
 		dasu.setSupervisor(null); // This won't work
 	}
 	
@@ -114,7 +115,10 @@ public class SupervisorDao {
 		if (dasuId.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty DASU identifier");
 		}
-		dasus.remove(dasuId);
+		Stream<DasuDao> stream = dasus.stream().filter(d -> d.getId().equals(dasuId));
+		// There can be at most one DASU with the given dasuId
+		assert(stream.count()<=1);
+		stream.findFirst().ifPresent(d -> removeDasu(d));
 	}
 	
 	/**
