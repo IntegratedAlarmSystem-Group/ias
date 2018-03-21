@@ -1,6 +1,7 @@
 package org.eso.ias.cdb.json.pojos;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -56,8 +57,24 @@ public class JsonSupervisorDao {
 	 * @return <code>true</code> if this object is equal to the passed object
 	 * @see java.lang.Object#equals(Object)
 	 */
+	@Override
 	public boolean equals(Object obj) {
-		return supervisorDao.equals(obj);
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		JsonSupervisorDao other =(JsonSupervisorDao)obj;
+		return this.getId().equals(other.getId()) && 
+				this.getHostName().equals(other.getHostName()) &&
+				this.getLogLevel().equals(other.getLogLevel()) &&
+				this.getDasusIDs().equals(other.getDasusIDs());
+	}
+	
+	@Override
+	public int hashCode() {
+		return Objects.hash(getId(),getHostName(),getLogLevel(),getDasusIDs());
 	}
 
 	/**
