@@ -23,16 +23,16 @@ import java.util.Objects;
  *     | ...
  *     | <DasuID-m>.json
  *  |+ TF
- *     | <TFID-1>.json
- *     | ...
- *     | <TFID-x>.json
+ *     | tfs.json
  *  |+ ASCE
  *     | <AsceID-1>.json
  *     | ...
  *     | <AsceID-t>.json
  *  |+ IASIO
  *     | IASIO.json
- *     }
+ *  |+ TEMPLATE
+ *     | templates.json
+ * }
  * </pre>
  * 
  * Note that <code>CdbFolders</code> only deals with the folders of the CDB 
@@ -49,7 +49,8 @@ public enum CdbFolders {
 	DASU("DASU"),
 	ASCE("ASCE"),
 	IASIO("IASIO"),
-	TF("TF");
+	TF("TF"),
+	TEMPLATE("TEMPLATE");
 	
 	/**
 	 *  The name of the folder

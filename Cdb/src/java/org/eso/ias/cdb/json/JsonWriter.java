@@ -26,6 +26,7 @@ import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
 import org.eso.ias.cdb.pojos.TFLanguageDao;
+import org.eso.ias.cdb.pojos.TemplateDao;
 import org.eso.ias.cdb.pojos.TransferFunctionDao;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -297,7 +298,7 @@ public class JsonWriter implements CdbWriter {
 	 * 
 	 * <P>If <code>append</code> is <code>false</code> then a new file is created otherwise
 	 * the TFs in the passed files are written at the end of the file.
-	 * <BR>If a TF in <code>iasios</code> already exists in the file, the latter
+	 * <BR>If a TF in <code>tfs</code> already exists in the file, the latter
 	 * is replaced by that in the set.
 	 * 
 	 * @param tfs The TFs to write in the file
@@ -355,7 +356,7 @@ public class JsonWriter implements CdbWriter {
 			
 			jg.setPrettyPrinter(new DefaultPrettyPrinter());
 
-			// Builds a map of IASIOs to replace existing TFs 
+			// Builds a map of TFs to replace existing TFs 
 			Map<String,TransferFunctionDao> tfsMap = tfs.stream().collect(Collectors.toMap(
 					new Function<TransferFunctionDao,String>() {
 						public String apply(TransferFunctionDao i) { return i.getClassName(); }
@@ -371,7 +372,7 @@ public class JsonWriter implements CdbWriter {
 					if (curToken==JsonToken.START_OBJECT) {
 						TransferFunctionDao tfInFile = getNextTF(jp);
 						if (tfsMap.containsKey(tfInFile.getClassName())) {
-							// The IASIO in the set replaces the one in the file
+							// The TF in the set replaces the one in the file
 							putNextTF(tfsMap.get(tfInFile.getClassName()),jg);
 							tfsMap.remove(tfInFile.getClassName());
 						} else {
@@ -382,6 +383,123 @@ public class JsonWriter implements CdbWriter {
 				// Flushes the remaining TFs from the set into the file
 				for (String key: tfsMap.keySet()) {
 					putNextTF(tfsMap.get(key),jg);
+				}
+				
+			} catch (IOException ioe) {
+				throw new IasCdbException("I/O Error processing JSON files",ioe);
+			} finally {
+				// Done... close everything
+				try {
+					jp.close();
+					jg.writeEndArray();
+					jg.flush();
+					jg.close();
+				} catch (IOException ioe) {
+					throw new IasCdbException("I/O Error closing JSON parser and generator",ioe);
+				}
+			}
+			
+			
+			// Remove the original file and rename the temporary file
+			try {
+				Files.delete(path);
+			} catch (IOException ioe) {
+				throw new IasCdbException("Error deleting temporary file "+path,ioe);
+			}
+			tempF.renameTo(f);
+		}
+	}
+	
+	/**
+	 * Serialize the templates in the JSON file.
+	 * 
+	 * <P>If <code>append</code> is <code>false</code> then a new file is created otherwise
+	 * the templates in the passed files are appended at the end of the file.
+	 * <BR>If a emplate in <code>templates</code> already exists in the file, the latter
+	 * is replaced by that in the set.
+	 * 
+	 * @param tfs The TFs to write in the file
+	 * @param append: if <code>true</code> the passed TFs are appended to the file
+	 *                otherwise a new file is created
+	 */
+	private void writeTemplates(Set<TemplateDao> templates, boolean append) throws IasCdbException {
+		File f;
+		try { 
+			// The ID is unused in getTFFilePath
+			f = cdbFileNames.getTemplateFilePath("UnusedID").toFile();
+		}catch (IOException ioe) {
+			throw new IasCdbException("Error getting TFs file",ioe);
+		}
+		
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
+		if (!f.exists() || !append) {
+			try {
+				mapper.writeValue(f, templates);
+			}catch (Throwable t) {
+				throw new IasCdbException("Error writing JSON TFss",t);
+			}
+		} else {
+			Path path = FileSystems.getDefault().getPath(f.getAbsolutePath());
+			Path parent  = path.getParent();
+			File tempF;
+			BufferedOutputStream outS;
+			try {
+				tempF = File.createTempFile("templates", "tmp", parent.toFile());
+				outS = new BufferedOutputStream(new FileOutputStream(tempF));
+			} catch (IOException ioe) {
+				throw new IasCdbException("Error creating temporary file",ioe);
+			}
+			
+			JsonFactory jsonFactory = new JsonFactory(); 
+			JsonParser jp;
+			try {
+				jp = jsonFactory.createParser(f);
+			} catch (Throwable t) {
+				try {
+					outS.close();
+				} catch (IOException ioe) {}
+				throw new IasCdbException("Error creating the JSON parser", t);
+			} 
+			JsonGenerator jg;
+			try { 
+				jg = jsonFactory.createGenerator(outS);
+			} catch (IOException ioe) {
+				try {
+					outS.close();
+				} catch (IOException nestedIOE) {}
+				throw new IasCdbException("Error creating the JSON generator", ioe);
+			} 
+			
+			jg.setPrettyPrinter(new DefaultPrettyPrinter());
+
+			// Builds a map of templates to replace existing Templates 
+			Map<String,TemplateDao> templatesMap = templates.stream().collect(Collectors.toMap(
+					new Function<TemplateDao,String>() {
+						public String apply(TemplateDao i) { return i.getId(); }
+					},
+					Function.<TemplateDao>identity()));
+			try {
+				
+				while(jp.nextToken() != JsonToken.END_ARRAY){
+					JsonToken curToken = jp.getCurrentToken();
+					if (curToken==JsonToken.START_ARRAY) {
+						jg.writeStartArray();
+					}
+					if (curToken==JsonToken.START_OBJECT) {
+						TemplateDao templateInFile = getNextTemplate(jp);
+						if (templatesMap.containsKey(templateInFile.getId())) {
+							// The template in the set replaces the one in the file
+							putNextTemplate(templatesMap.get(templateInFile.getId()),jg);
+							templatesMap.remove(templateInFile.getId());
+						} else {
+							putNextTemplate(templateInFile,jg);
+						}
+					}
+				}
+				// Flushes the remaining TFs from the set into the file
+				for (String key: templatesMap.keySet()) {
+					putNextTemplate(templatesMap.get(key),jg);
 				}
 				
 			} catch (IOException ioe) {
@@ -446,6 +564,22 @@ public class JsonWriter implements CdbWriter {
 	}
 	
 	/**
+	 * Write a template in the JSON file.
+	 * 
+	 * @param tDao The template to write in the file
+	 * @param jg The Jakson2 generator
+	 * @throws IOException In case of error writing the TF
+	 */
+	private void putNextTemplate(TemplateDao tDao, JsonGenerator jg) throws IOException {
+		Objects.requireNonNull(tDao);
+		jg.writeStartObject();
+		jg.writeStringField("id",tDao.getId());
+		jg.writeStringField("min",Integer.valueOf(tDao.getMin()).toString());
+		jg.writeStringField("max",Integer.valueOf(tDao.getMax()).toString());
+		jg.writeEndObject();
+	}
+	
+	/**
 	 * Get the next IasioDao from the passed parser, if it exists
 	 * 
 	 * @param jp The jason parser
@@ -504,13 +638,63 @@ public class JsonWriter implements CdbWriter {
 		TransferFunctionDao ret = new TransferFunctionDao(tfClassName,TFLanguageDao.valueOf(tfImplLang));
 		return ret;
 	}
+	
+	/**
+	 * Get the next Template from the passed parser, if it exists
+	 * 
+	 * @param jp The jason parser
+	 * @return The TemplateDao read from the parser if found
+	 * @throws IOException In case of error getting the next TF
+	 */
+	private TemplateDao getNextTemplate(JsonParser jp) throws IOException {
+		String id=null;
+		String min=null;
+		String max=null;
+		while(jp.nextToken() != JsonToken.END_OBJECT){
+			String name = jp.getCurrentName();
+			if ("id".equals(name)) {
+				jp.nextToken();
+				id=jp.getText();
+			}
+			if ("min".equals(name)) {
+				jp.nextToken();
+				min=jp.getText();
+			}
+			if ("max".equals(name)) {
+				jp.nextToken();
+				max=jp.getText();
+			}
+		}
+		TemplateDao ret = new TemplateDao(id,Integer.parseInt(min),Integer.parseInt(max));
+		return ret;
+	}
 
+	/**
+	 *  Write the transfer function to the CDB
+	 *  
+	 *  @param transferFunction The TF configuration to write in the file
+	 *  @throws IasCdbException In case of error writing the TF
+	 */
 	@Override
 	public void writeTransferFunction(TransferFunctionDao transferFunction) throws IasCdbException {
 		Objects.requireNonNull(transferFunction);
 		Set<TransferFunctionDao> tfs = new HashSet<>();
 		tfs.add(transferFunction);
 		writeTransferFunctions(tfs, true);
+	}
+	
+	/**
+	 *  Write the passed template to the CDB
+	 *  
+	 *  @param templateDao The template DAO to write in the file
+	 *  @throws IasCdbException In case of error writing the TF
+	 */
+	@Override
+	public void writeTemplate(TemplateDao templateDao) throws IasCdbException {
+		Objects.requireNonNull(templateDao);
+		Set<TemplateDao> templates = new HashSet<>();
+		templates.add(templateDao);
+		writeTemplates(templates, true);
 	}
 	
 	/**

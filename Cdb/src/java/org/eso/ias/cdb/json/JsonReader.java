@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.IasCdbException;
@@ -21,6 +22,7 @@ import org.eso.ias.cdb.pojos.DasuDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
+import org.eso.ias.cdb.pojos.TemplateDao;
 import org.eso.ias.cdb.pojos.TransferFunctionDao;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -124,7 +126,7 @@ public class JsonReader implements CdbReader {
 				Set<IasioDao> iasios = mapper.readValue(f, new TypeReference<Set<IasioDao>>(){});
 				return Optional.of(iasios);
 			} catch (Throwable t) {
-				System.err.println("Error reading IAS from "+f.getAbsolutePath()+ ": "+t.getMessage());
+				System.err.println("Error reading IASIOs from "+f.getAbsolutePath()+ ": "+t.getMessage());
 				t.printStackTrace();
 				return Optional.empty();
 			}
@@ -162,6 +164,36 @@ public class JsonReader implements CdbReader {
 	}
 	
 	/**
+	 * Get the all the templates from the file.
+	 * 
+	 * @return The templates read from the configuration file
+	 * @throws IasCdbException In case of error getting the IASIOs
+	 */
+	private Optional<Set<TemplateDao>> getTemplates() throws IasCdbException {
+		File f;
+		try {
+			// The ID is not used for JSON: we pass a whatever sting
+			f = cdbFileNames.getTemplateFilePath("UnusedID").toFile();
+		} catch (IOException ioe) {
+			throw new IasCdbException("Error getting the template file",ioe);
+		}
+		if (!canReadFromFile(f)) {
+			return Optional.empty();
+		} else {
+			// Parse the file in a JSON pojo
+			ObjectMapper mapper = new ObjectMapper();
+			try {
+				Set<TemplateDao> templates = mapper.readValue(f, new TypeReference<Set<TemplateDao>>(){});
+				return Optional.of(templates);
+			} catch (Throwable t) {
+				System.err.println("Error reading templates from "+f.getAbsolutePath()+ ": "+t.getMessage());
+				t.printStackTrace();
+				return Optional.empty();
+			}
+		}
+	}
+	
+	/**
 	 * Get the IASIO with the given ID
 	 * 
 	 * The implementation is not optimized for performances and memory usage because 
@@ -175,6 +207,7 @@ public class JsonReader implements CdbReader {
 	 * @return The IASIO red from the file
 	 * @throws IasCdbException In case of error getting the IASIO
 	 */
+	@Override
 	public Optional<IasioDao> getIasio(String id) throws IasCdbException {
 		Objects.requireNonNull(id, "The IASIO identifier cannot be null");
 		String cleanedID = id.trim();
@@ -191,6 +224,26 @@ public class JsonReader implements CdbReader {
 
 		}
 		return Optional.empty();
+	}
+	
+	/**
+	 * Read the template configuration from the CDB. 
+	 * 
+	 * @param template_id The not <code>null</code> nor empty identifier of the template
+	 * @return The template read from the CDB
+	 * @throws IasCdbException in case of error reading from the CDB
+	 */
+	@Override
+	public Optional<TemplateDao> getTemplate(String template_id) throws IasCdbException {
+		if (template_id==null || template_id.isEmpty()) {
+			throw new IllegalArgumentException("The ID of the template cannot be null nor empty");
+		}
+		Optional<Set<TemplateDao>> templates = getTemplates();
+		if (!templates.isPresent()) {
+			return Optional.empty();
+		}
+		Stream<TemplateDao> temp = templates.get().stream().filter(template -> template.getId().equals(template_id));
+		return temp.findFirst();
 	}
 	
 	/**

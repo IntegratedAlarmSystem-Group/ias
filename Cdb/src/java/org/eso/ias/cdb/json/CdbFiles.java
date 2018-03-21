@@ -50,6 +50,16 @@ public interface CdbFiles {
 	
 	/**
 	 * 
+	 * @param templateID The ID of the template
+	 * 
+	 * @return The path for the configuration of the template
+	 * 		with the passed ID 
+	 * @throws IOException In case of IO error getting the path 
+	 */
+	public Path getTemplateFilePath(String templateID) throws IOException;
+	
+	/**
+	 * 
 	 * @param asceID The ID of the ASCE
 	 * 
 	 * @return The path for the configuration of the ASCE

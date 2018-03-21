@@ -9,6 +9,7 @@ import org.eso.ias.cdb.pojos.DasuDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
+import org.eso.ias.cdb.pojos.TemplateDao;
 import org.eso.ias.cdb.pojos.TransferFunctionDao;
 
 /**
@@ -60,6 +61,15 @@ public interface CdbReader {
 	 * @throws IasCdbException in case of error reading from the CDB
 	 */
 	public Optional<TransferFunctionDao> getTransferFunction(String tf_id) throws IasCdbException;
+	
+	/**
+	 * Read the ttemplate configuration from the CDB. 
+	 * 
+	 * @param template_id The not <code>null</code> nor empty identifier of the template
+	 * @return The template read from the CDB
+	 * @throws IasCdbException in case of error reading from the CDB
+	 */
+	public Optional<TemplateDao> getTemplate(String template_id) throws IasCdbException;
 	
 	/**
 	 * Read the ASCE configuration from the CDB. 

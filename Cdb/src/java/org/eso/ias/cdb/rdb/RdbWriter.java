@@ -15,6 +15,7 @@ import org.eso.ias.cdb.pojos.DasuDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
+import org.eso.ias.cdb.pojos.TemplateDao;
 import org.eso.ias.cdb.pojos.TransferFunctionDao;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -148,6 +149,17 @@ public class RdbWriter implements CdbWriter {
 		s.merge(tf);
 		t.commit();
 		s.flush();
+	}
+	
+	/**
+	 *  Write the transfer function to the CDB
+	 *  
+	 *  @param transferFunction The TF configuration to write in the file
+	 *  @throws IasCdbException In case of error writing the TF
+	 */
+	@Override
+	public void writeTemplate(TemplateDao transferFunction) throws IasCdbException {
+		throw new UnsupportedOperationException();
 	}
 	
 	/**

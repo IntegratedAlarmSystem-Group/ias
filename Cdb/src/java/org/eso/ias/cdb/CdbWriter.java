@@ -8,6 +8,7 @@ import org.eso.ias.cdb.pojos.DasuDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
+import org.eso.ias.cdb.pojos.TemplateDao;
 import org.eso.ias.cdb.pojos.TransferFunctionDao;
 
 /**
@@ -48,6 +49,14 @@ public interface CdbWriter {
 	 *  @throws IasCdbException In case of error writing the TF
 	 */
 	public void writeTransferFunction(TransferFunctionDao transferFunction) throws IasCdbException;
+	
+	/**
+	 *  Write the passed template to the CDB
+	 *  
+	 *  @param templateDao The template DAO to write in the file
+	 *  @throws IasCdbException In case of error writing the TF
+	 */
+	public void writeTemplate(TemplateDao templateDao) throws IasCdbException;
 	
 	/**
 	 * Write the ASCE in the passed file.

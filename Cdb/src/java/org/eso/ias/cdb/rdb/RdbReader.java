@@ -19,6 +19,7 @@ import org.eso.ias.cdb.pojos.DasuDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
+import org.eso.ias.cdb.pojos.TemplateDao;
 import org.eso.ias.cdb.pojos.TransferFunctionDao;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -165,6 +166,18 @@ public class RdbReader implements CdbReader {
 		TransferFunctionDao tf = s.get(TransferFunctionDao.class,tf_id);
 		t.commit();
 		return Optional.ofNullable(tf);
+	}
+	
+	/**
+	 * Read the template configuration from the CDB. 
+	 * 
+	 * @param template_id The not <code>null</code> nor empty identifier of the template
+	 * @return The template read from the CDB
+	 * @throws IasCdbException in case of error reading from the CDB
+	 */
+	@Override
+	public Optional<TemplateDao> getTemplate(String template_id) throws IasCdbException {
+		return Optional.empty();
 	}
 
 	/**
