@@ -152,14 +152,19 @@ public class RdbWriter implements CdbWriter {
 	}
 	
 	/**
-	 *  Write the transfer function to the CDB
+	 *  Persist the passed template to the CDB
 	 *  
-	 *  @param transferFunction The TF configuration to write in the file
-	 *  @throws IasCdbException In case of error writing the TF
+	 *  @param template The template Dao to write in the CDB
+	 *  @throws IasCdbException In case of error writing the template
 	 */
 	@Override
-	public void writeTemplate(TemplateDao transferFunction) throws IasCdbException {
-		throw new UnsupportedOperationException();
+	public void writeTemplate(TemplateDao template) throws IasCdbException {
+		Objects.requireNonNull(template, "The template object to persist can't be null");
+		Session s=rdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		s.merge(template);
+		t.commit();
+		s.flush();
 	}
 	
 	/**

@@ -545,6 +545,7 @@ public class JsonWriter implements CdbWriter {
 		if (iasio.getDocUrl()!=null && !iasio.getDocUrl().isEmpty()) {
 			jg.writeStringField("docUrl",iasio.getDocUrl());
 		}
+		jg.writeStringField("templateId",iasio.getTemplateId());
 		jg.writeEndObject();
 	}
 	

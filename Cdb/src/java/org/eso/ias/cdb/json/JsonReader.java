@@ -242,8 +242,7 @@ public class JsonReader implements CdbReader {
 		if (!templates.isPresent()) {
 			return Optional.empty();
 		}
-		Stream<TemplateDao> temp = templates.get().stream().filter(template -> template.getId().equals(template_id));
-		return temp.findFirst();
+		return templates.get().stream().filter(template -> template.getId().equals(template_id)).findFirst();
 	}
 	
 	/**

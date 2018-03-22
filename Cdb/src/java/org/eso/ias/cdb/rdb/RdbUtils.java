@@ -16,6 +16,7 @@ import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.PropertyDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
+import org.eso.ias.cdb.pojos.TemplateDao;
 import org.eso.ias.cdb.pojos.TransferFunctionDao;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -164,6 +165,7 @@ public class RdbUtils {
 			sources.addAnnotatedClass(AsceDao.class);
 			sources.addAnnotatedClass(DasuDao.class);
 			sources.addAnnotatedClass(SupervisorDao.class);
+			sources.addAnnotatedClass(TemplateDao.class);
 			Metadata data = sources.buildMetadata();
 			logger.debug("Building the SessionFactory");
 			sessionFactory = data.buildSessionFactory();

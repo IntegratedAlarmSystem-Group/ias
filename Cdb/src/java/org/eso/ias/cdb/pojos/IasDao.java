@@ -1,6 +1,7 @@
 package org.eso.ias.cdb.pojos;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.Basic;
@@ -112,14 +113,7 @@ public class IasDao {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + ((id == null) ? 0 : id.hashCode());
-		result = prime * result + ((logLevel == null) ? 0 : logLevel.hashCode());
-		result = prime * result + ((props == null) ? 0 : props.hashCode());
-		result = prime * result + refreshRate;
-		result = prime * result + tolerance;
-		return result;
+		return Objects.hash(logLevel,refreshRate,tolerance,props);
 	}
 
 	@Override
@@ -131,22 +125,10 @@ public class IasDao {
 		if (getClass() != obj.getClass())
 			return false;
 		IasDao other = (IasDao) obj;
-		if (id == null) {
-			if (other.id != null)
-				return false;
-		} else if (!id.equals(other.id))
-			return false;
-		if (logLevel != other.logLevel)
-			return false;
-		if (props == null) {
-			if (other.props != null)
-				return false;
-		} else if (!props.equals(other.props))
-			return false;
-		if (refreshRate != other.refreshRate)
-			return false;
-		if (tolerance != other.tolerance)
-			return false;
-		return true;
+		
+		return 	Objects.equals(logLevel, other.logLevel) &&
+				Objects.equals(refreshRate, other.refreshRate) &&
+				Objects.equals(tolerance, other.tolerance) &&
+				Objects.equals(props, other.props);
 	}
 }

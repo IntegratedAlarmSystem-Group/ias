@@ -28,6 +28,7 @@
 		<property name="hibernate.c3p0.debugUnreturnedConnectionStackTraces">true</property>
         
         <!-- mapping -->
+        <mapping class="org.eso.ias.cdb.pojos.TemplateDao"></mapping>
 	    <mapping class="org.eso.ias.cdb.pojos.IasDao"></mapping>
 	    <mapping class="org.eso.ias.cdb.pojos.PropertyDao"></mapping>
 	    <mapping class="org.eso.ias.cdb.pojos.IasioDao"></mapping>

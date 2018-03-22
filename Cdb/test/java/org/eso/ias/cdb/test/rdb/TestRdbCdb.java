@@ -20,6 +20,7 @@ import org.eso.ias.cdb.pojos.LogLevelDao;
 import org.eso.ias.cdb.pojos.PropertyDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
 import org.eso.ias.cdb.pojos.TFLanguageDao;
+import org.eso.ias.cdb.pojos.TemplateDao;
 import org.eso.ias.cdb.pojos.TransferFunctionDao;
 import org.eso.ias.cdb.rdb.RdbReader;
 import org.eso.ias.cdb.rdb.RdbUtils;
@@ -209,7 +210,12 @@ public class TestRdbCdb {
 	@Test
 	public void testIasio() throws Exception {
 		logger.info("testIasio");
-		IasioDao io = new IasioDao("IO-ID", "IASIO description", IasTypeDao.INT,"http://www.eso.org",false);
+		IasioDao io = new IasioDao(
+				"IO-ID", 
+				"IASIO description", 
+				IasTypeDao.INT,
+				"http://www.eso.org",false,
+				null);
 		cdbWriter.writeIasio(io, true);
 
 		Optional<IasioDao> iasioFromRdb = cdbReader.getIasio("IO-ID");
@@ -224,7 +230,32 @@ public class TestRdbCdb {
 		assertEquals("The IASIOs differ!", iasioDefaultShelve, optIasioDefShelve.get());
 		assertEquals(IasioDao.canSheveDefault,optIasioDefShelve.get().isCanShelve());
 	}
+	
+	/**
+	 * Test reading and writing of IASIO
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testTemplatedIasio() throws Exception {
+		logger.info("testTemplatedIasio");
+		
+		TemplateDao template = new TemplateDao("TemplateForTest", 5, 37);
+		cdbWriter.writeTemplate(template);
+		
+		IasioDao io = new IasioDao(
+				"T-IO-ID", 
+				"IASIO template description", 
+				IasTypeDao.ALARM,
+				"http://www.eso.org",false,
+				template.getId());
+		cdbWriter.writeIasio(io, true);
 
+		Optional<IasioDao> iasioFromRdb = cdbReader.getIasio("T-IO-ID");
+		assertTrue("Got an empty templated IASIO!", iasioFromRdb.isPresent());
+		assertEquals("The IASIOs differ!", io, iasioFromRdb.get());
+	}
+	
 	/**
 	 * Test reading and writing of a set of IASIOs
 	 * 
@@ -659,5 +690,26 @@ public class TestRdbCdb {
 			assertTrue(iasio.getId().equals("iasioID-2") || iasio.getId().equals("iasioID-3")
 					|| iasio.getId().equals("iasioID-4"));
 		}
+	}
+	
+	/**
+	 * Test the writing and reading of the template
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testWriteTemplate() throws Exception {
+		TemplateDao tDao1 = new TemplateDao("tID1",3,9);
+		TemplateDao tDao2 = new TemplateDao("tID2",1,25);
+		
+		cdbWriter.writeTemplate(tDao1);
+		cdbWriter.writeTemplate(tDao2);
+		
+		Optional<TemplateDao> optT1 = cdbReader.getTemplate(tDao1.getId());
+		assertTrue(optT1.isPresent());
+		assertEquals(tDao1, optT1.get());
+		Optional<TemplateDao> optT2 = cdbReader.getTemplate(tDao2.getId());
+		assertTrue(optT2.isPresent());
+		assertEquals(tDao2, optT2.get());
 	}
 }

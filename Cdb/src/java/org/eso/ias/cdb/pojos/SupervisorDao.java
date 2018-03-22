@@ -50,6 +50,13 @@ public class SupervisorDao {
 	private LogLevelDao logLevel;
 	
 	/**
+	 * The ID of the template for implementing replication
+	 */
+	@Basic(optional=true)
+	@Column(name = "template_id")
+	private String templateId;
+	
+	/**
 	 * This one-to-many annotation matches with the many-to-one
 	 * annotation in the {@link DasuDao} 
 	 */
@@ -115,10 +122,7 @@ public class SupervisorDao {
 		if (dasuId.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty DASU identifier");
 		}
-		Stream<DasuDao> stream = dasus.stream().filter(d -> d.getId().equals(dasuId));
-		// There can be at most one DASU with the given dasuId
-		assert(stream.count()<=1);
-		stream.findFirst().ifPresent(d -> removeDasu(d));
+		dasus.stream().filter(d -> d.getId().equals(dasuId)).findFirst().ifPresent(d -> removeDasu(d));
 	}
 	
 	/**
@@ -168,7 +172,13 @@ public class SupervisorDao {
 		ret.append(getHostName());
 		ret.append(", DASUs={");
 		dasus.forEach(x -> { ret.append(' '); ret.append(x.getId()); });
-		ret.append("}]");
+		ret.append("}");
+		if (templateId!=null) {
+			ret.append(", template id=\"");
+			ret.append(templateId);
+			ret.append('"');
+		}
+		ret.append("]");
 		return ret.toString();
 	}
 	
@@ -191,7 +201,8 @@ public class SupervisorDao {
 				this.id.equals(superv.getId()) &&
 				Objects.equals(this.hostName, superv.getHostName()) &&
 				Objects.equals(this.logLevel, superv.getLogLevel()) &&
-				Objects.equals(this.getDasusIDs(),superv.getDasusIDs());
+				Objects.equals(this.getDasusIDs(),superv.getDasusIDs()) &&
+				Objects.equals(this.getTemplateId(),superv.getTemplateId());
 	}
 
 	/**
@@ -202,6 +213,14 @@ public class SupervisorDao {
 	@Override
 	public int hashCode() {
 		return Objects.hash(id);
+	}
+	
+	public String getTemplateId() {
+		return templateId;
+	}
+
+	public void setTemplateId(String templateId) {
+		this.templateId = templateId;
 	}
 
 

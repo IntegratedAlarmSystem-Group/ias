@@ -177,7 +177,14 @@ public class RdbReader implements CdbReader {
 	 */
 	@Override
 	public Optional<TemplateDao> getTemplate(String template_id) throws IasCdbException {
-		return Optional.empty();
+		if (template_id==null || template_id.isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty or null template ID");
+		}
+		Session s=rdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		TemplateDao template = s.get(TemplateDao.class,template_id);
+		t.commit();
+		return Optional.ofNullable(template);
 	}
 
 	/**

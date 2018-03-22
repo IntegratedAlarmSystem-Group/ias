@@ -19,11 +19,10 @@ CREATE TABLE PROPERTY ( --Prop table
 */
 CREATE TABLE TEMPLATE (
   template_id VARCHAR2(64) NOT NULL,
-  min NUMBER(8) NOT NULL,
-  max NUMBER(8) NOT NULL,
-  CONSTRAINT TEMPLATE_PK PRIMARY KEY(template_id),
-  CONSTRAINT minGreaterEqualThenZero CHECK (min>=0),
-  CONSTRAINT maxGreaterThenMin CHECK (max>min));
+  min NUMBER(8) NOT NULL CHECK (min>=0),
+  max NUMBER(8) NOT NULL CHECK (max>0),
+  CONSTRAINT maxGreaterThenMin CHECK (max>min),
+  CONSTRAINT TEMPLATE_PK PRIMARY KEY(template_id));
   
   
 /*
@@ -76,6 +75,8 @@ CREATE TABLE IASIO (
   iasType VARCHAR2(16) NOT NULL,
   docUrl VARCHAR2(256),
   canShelve NUMBER(1), -- boolean 0/1
+  template_id VARCHAR2(64) NULL,
+  FOREIGN KEY(template_id) REFERENCES TEMPLATE(template_id),
   CONSTRAINT IASIO_PK PRIMARY KEY(io_id));
   
 
@@ -86,6 +87,8 @@ CREATE TABLE SUPERVISOR (
   supervisor_id VARCHAR2(64) NOT NULL,
   hostName VARCHAR2(64) NOT NULL,
   logLevel VARCHAR2(10),
+  template_id VARCHAR2(64) NULL,
+  FOREIGN KEY(template_id) REFERENCES TEMPLATE(template_id),
   CONSTRAINT SUPERVISOR_PK PRIMARY KEY(supervisor_id));
 
 /*

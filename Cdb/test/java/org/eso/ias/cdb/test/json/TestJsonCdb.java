@@ -337,7 +337,12 @@ public class TestJsonCdb {
 		assertEquals("The IASIOs differ!", iasioDefaultShelve, optIasioDefShelve.get());
 		assertEquals(IasioDao.canSheveDefault,optIasioDefShelve.get().isCanShelve());
 		
-		IasioDao iasio = new IasioDao("ioID", "IASIO description", IasTypeDao.ALARM,"http://wiki.alma.cl/ioID",true);
+		IasioDao iasio = new IasioDao(
+				"ioID", 
+				"IASIO description", 
+				IasTypeDao.ALARM,"http://wiki.alma.cl/ioID",
+				true,
+				"templateID");
 		cdbWriter.writeIasio(iasio, false);
 		
 		assertTrue(cdbFiles.getIasioFilePath(iasio.getId()).toFile().exists());

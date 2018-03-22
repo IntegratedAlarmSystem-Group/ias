@@ -40,7 +40,14 @@ public class IasioDao {
 	 * The URL with the documentation
 	 */
 	@Basic(optional=true)
-	private String docUrl;
+	private String docUrl=null;
+	
+	/**
+	 * The ID of the template for implementing replication
+	 */
+	@Basic(optional=true)
+	@Column(name = "template_id")
+	private String templateId=null;
 	
 	/**
 	 * The default value for canShelve: by default all
@@ -66,6 +73,7 @@ public class IasioDao {
 	 * @param id The identifier
 	 * @param descr The description
 	 * @param type The IAS type
+	 * @param docUrl the URL of the documentation
 	 */
 	public IasioDao(String id, String descr, IasTypeDao type, String docUrl) {
 		Objects.requireNonNull(id, "The identifier can't be null");
@@ -82,12 +90,21 @@ public class IasioDao {
 	 * @param id The identifier
 	 * @param descr The description
 	 * @param type The IAS type
+	 * @param docUrl the URL of the documentation
 	 * @param canShelve <code>true</code> if this IASIO can be shelved, 
 	 *                  <code>false</code> otherwise
+	 * @param templateId the Id of the template for replication
 	 */
-	public IasioDao(String id, String descr, IasTypeDao type, String docUrl, boolean canShelve) {
+	public IasioDao(
+			String id, 
+			String descr, 
+			IasTypeDao type, 
+			String docUrl, 
+			boolean canShelve, 
+			String templateId) {
 		this(id,descr,type,docUrl);
 		this.canShelve=canShelve;
+		this.templateId=templateId;
 	}
 
 	public String getId() {
@@ -133,13 +150,19 @@ public class IasioDao {
 		ret.append("\", URL=\"");
 		if (getDocUrl()!=null) {
 			ret.append(getDocUrl());
+			ret.append('"');
 		}
 		if (canShelve) {
 			ret.append(", can be shelved");
 		} else {
 			ret.append(", cannot be shelved");
 		}
-		ret.append("\"]");
+		if (templateId!=null) {
+			ret.append(", template id=\"");
+			ret.append(templateId);
+			ret.append('"');
+		}
+		ret.append("]");
 		return ret.toString();
 	}
 	
@@ -158,12 +181,13 @@ public class IasioDao {
 				this.getIasType().equals(other.getIasType()) && 
 				Objects.equals(this.getShortDesc(),other.getShortDesc()) &&
 				Objects.equals(this.getDocUrl(),other.getDocUrl()) &&
-				this.isCanShelve()==other.isCanShelve();
+				this.isCanShelve()==other.isCanShelve() &&
+				Objects.equals(this.getTemplateId(),other.getTemplateId());
 	}
 	
 	@Override
 	public int hashCode() {
-		return Objects.hash(id,iasType,shortDesc,docUrl,canShelve);
+		return Objects.hash(id,iasType,shortDesc,docUrl,canShelve,templateId);
 	}
 
 	public String getDocUrl() {
@@ -180,5 +204,13 @@ public class IasioDao {
 
 	public void setCanShelve(boolean canShelve) {
 		this.canShelve = canShelve;
+	}
+
+	public String getTemplateId() {
+		return templateId;
+	}
+
+	public void setTemplateId(String templateId) {
+		this.templateId = templateId;
 	}
 }
