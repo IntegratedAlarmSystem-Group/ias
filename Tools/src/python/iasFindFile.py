@@ -10,7 +10,7 @@ from logConf import Log
 
 if __name__ == '__main__':
     #import Logger from logConf
-    logger = Log.GetLogger(os.path.basename(__file__).split(".")[0])
+    logger = Log.GetLogger(__name__)
 
     parser = argparse.ArgumentParser(description='Search for a file in the hierarchy of IAS folders.')
     parser.add_argument(

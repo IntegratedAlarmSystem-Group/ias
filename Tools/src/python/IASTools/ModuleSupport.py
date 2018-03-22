@@ -10,7 +10,7 @@ from . import FileSupport
 from .logConf import GetLogger
 
 class ModuleSupport(object):
-    logger=log.GetLogger(os.path.basename(__file__).split(".")[0])
+    logger=log.GetLogger(__name__)
     """
     A class providing useful method for dealing with IAS
     modules including IAS_ROOT)
@@ -80,6 +80,6 @@ class ModuleSupport(object):
             logger.error("The name of the module can't be None nor empty")
             raise ValueError("The name of the module can't be None nor empty")
         logger.warning("Removing module",name)
-        
+
         if exists(name):
             rmtree(name)

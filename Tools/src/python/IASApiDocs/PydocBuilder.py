@@ -20,7 +20,7 @@ class PydocBuilder(DocGenerator):
     '''
     Builds python API documentation, delegating to pydoc
     '''
-    logger=log.GetLogger(os.path.basename(__file__).split(".")[0])
+    logger=log.GetLogger(__name__)
 
     def __init__(self,srcFolder,dstFolder,includeTestFolder=False,outFile=sys.stdout):
         """
@@ -142,7 +142,7 @@ class PydocBuilder(DocGenerator):
                 if (f.endswith(".html")):
                     shutil.move(f, self.dstFolder)
             logger.info("Changing folder back to %s",oldWD)
-            
+
             os.chdir(oldWD)
 
         self.buildIndex(self.dstFolder)

@@ -15,7 +15,7 @@ class DocGenerator(object):
     '''
     The base class for API docs generators
     '''
-    logger=log.GetLogger(os.path.basename(__file__).split(".")[0])
+    logger=log.GetLogger(__name__)
 
     def __init__(self,srcFolder,dstFolder,outFile=sys.stdout):
         """

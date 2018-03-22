@@ -11,7 +11,7 @@ from IASTools.ModuleSupport import ModuleSupport
 from logConf import Log
 
 if __name__ == '__main__':
-    logger=Log.GetLogger(os.path.basename(__file__).split(".")[0])
+    logger=Log.GetLogger(__name__)
 
     parser = argparse.ArgumentParser(description='Creates a module for the Integrated Alarm System.')
     parser.add_argument(
