@@ -28,13 +28,11 @@ if __name__ == '__main__':
             ModuleSupport.removeExistingModule(args.moduleName)
             logger.info("Module erased")
         except Exception as e:
-            print("Error deleting the module: ",str(e))
             logger.warning("Error deleting the module: %s",str(e))
             exit(-1)
     try:
         ModuleSupport.createModule(args.moduleName)
         logger.info("Module created")
     except Exception as e:
-        print("Error creating the module: ",str(e))
         logger.warning("Error creating the module: %s",str(e))
         exit(-1)

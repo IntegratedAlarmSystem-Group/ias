@@ -58,7 +58,7 @@ def setProps(propsDict,className,logFileNameId):
                 path = fs.findFile()
                 propsDict["logback.configurationFile"]=path
             except:
-                print("No log4j config file ("+logbackConfigFileName+") found: using defaults")
+                logger.warning("No log4j config file (%s) found: using defaults")
                 # JVM always uses UTC
                 propsDict["-Duser.timezone"]="UTC"
                 logger.info("Properties Set")
@@ -79,15 +79,13 @@ def addUserProps(propsDict,userProps):
         parts=prop[0].split('=')
         # Integrity check
         if len(parts)!=2:
-            print("Invalid property:",prop[0])
-            print("Expected format is name=value")
-            print()
+            logger.info("Invalid property %s", prop[0])
+            logger.info("Expected format is name=value \n")
             sys.exit(-1)
             # Is th eprop. already defined?
         if parts[0] in propsDict:
-            print("\nWARNING: overriding ",parts[0],"java property")
-            print("\told value",propsDict[parts[0]],"new value",parts[1])
-            print()
+            logger.warning("\nWARNING: overriding %s java property", parts[0])
+            logger.warning("\told value %s new value %s \n",propsDict[parts[0]],parts[1])
         propsDict[parts[0]]=parts[1]
     logger.info("User properties set")
 
@@ -184,7 +182,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
     verbose = args.verbose
     if verbose:
-        print("\nVerbose mode ON")
         logger.info("\nVerbose mode ON")
 
     #Get the logger
@@ -196,23 +193,19 @@ if __name__ == '__main__':
     if args.language=='s' or args.language=='scala':
         cmd=['scala']
         if verbose:
-            print("Running a SCALA program.")
             logger.info("Running a SCALA program")
         else:
             cmd=['java']
             if verbose:
-                print("Running a JAVA program.")
                 logger.info("Running a JAVA program")
     # Assertions are enabled differently in java (command line) and scala ($JAVA_OPTS)
     enableAssertions = args.assertions
     if enableAssertions:
         javaOptions.append("-ea")
         if verbose:
-            print("Assertions are enabled.")
             logger.info("Assertions are enabled")
         else:
             if verbose:
-                print("Assertions disabled.")
                 logger.info("Assertions disabled")
 
     # Actual environment to pass to the executable
@@ -225,13 +218,11 @@ if __name__ == '__main__':
     if args.language=='s' or args.language=='scala':
         s=" ".join(map(str, javaOptions))
         if verbose:
-            print("Options to pass to the java executable",s)
             logger.info("Options to pass to the java executable %s",s)
             d['JAVA_OPTS']=s
     else:
         for opt in javaOptions:
             if verbose:
-                print("Adding",opt,"java option")
                 logger.info("Adding %s java option",opt)
             cmd.append(opt)
 
@@ -264,14 +255,11 @@ if __name__ == '__main__':
         stingOfPros.sort()
         cmd.extend(formatProps(props))
         if verbose:
-            print("java properties:")
             logger.info("java properties:")
             for p in stingOfPros:
-                print("\t",p[2:])
                 logger.info("\t%s",p[2:])
     else:
         if (verbose):
-            print("No java properties defined")
             logger.info("No java properties defined")
 
     #add the classpath
@@ -283,10 +271,9 @@ if __name__ == '__main__':
     if verbose:
         jars = theClasspath.split(":")
         jars.sort()
-        print("Classpath:")
+        logger.info("Classpath:")
         for jar in jars:
-            print("\t",jar)
-            logger.info("Classpath set")
+            logger.info("\t %s",jar)
 
     # Add the class
     cmd.append(args.className)
@@ -296,11 +283,13 @@ if __name__ == '__main__':
         cmd.extend(args.params)
 
     if verbose:
-        print("Launching",args.className, end='')
+        logger.info("Launching %s", args.className)
+        #print("Launching",args.className, end='')
         if len(args.params)>0:
+            logger.info("with params:")
             print("with params:")
             for arg in args.params:
-                print("\t",arg)
+                logger.info("\t %s",arg)
         else:
             print()
     logger.info("Launch element")
@@ -310,7 +299,6 @@ if __name__ == '__main__':
         delimiter = ""
         for t in range(16):
             delimiter = delimiter + arrowDown
-
         print("\n",delimiter,args.className,"output",delimiter)
     call(cmd)
 

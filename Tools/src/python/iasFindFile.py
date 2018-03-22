@@ -33,7 +33,5 @@ if __name__ == '__main__':
             fileSupport = FileSupport(args.fileName)
             filePath=fileSupport.findFile()
         logger.warning("File found in the path %s",filePath)
-        print(filePath)
     except OSError as e:
-        print("File not found")
         logger.warning("File not found")
