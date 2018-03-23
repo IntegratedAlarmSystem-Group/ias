@@ -159,7 +159,7 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 	public void shutdown() {}
 
 	/**
-	 * @see JavaTransferExecutor#eval(Map, IASValueBase)
+	 * @see JavaTransferExecutor#eval(Map, IASValue)
 	 */
 	public IASValue<?> eval(Map<String, IASValue<?>> compInputs, IASValue<?> actualOutput) throws Exception {
 		if (compInputs.size() != 1)

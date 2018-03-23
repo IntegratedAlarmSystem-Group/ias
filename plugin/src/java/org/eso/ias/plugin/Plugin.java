@@ -196,10 +196,6 @@ public class Plugin implements ChangeValueListener {
 	 * @param monitoredSystemId: the identifier of the monitored system
 	 * @param values the monitor point values
 	 * @param props The user defined properties 
- * @param string2 
- * @param string 
-	 * @param collection 
-	 * @param collection 
 	 * @param sender The publisher of monitor point values to the IAS core
 	 */
 	public Plugin(

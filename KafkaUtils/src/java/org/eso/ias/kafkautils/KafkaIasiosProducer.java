@@ -201,7 +201,7 @@ public class KafkaIasiosProducer {
 	 * This method pushes all the values with the same partition/key so it is not very
 	 * convenient. You should probably prefer {@link #push(Collection,int,TimeUnit)}.
 	 * 
-	 * @param @param values The not <code>null</code> nor empty collection of values to publish in the topic
+	 * @param values The not <code>null</code> nor empty collection of values to publish in the topic
 	 * @param partition The partition
 	 * @param key The key
 	 * @param timeout the time to wait if sync is set

@@ -142,7 +142,7 @@ public class Value {
 	}
 
 	/**
-	 * @param filter the filter to set
+	 * @param defaultFilter the default filter to set
 	 */
 	public void setDefaultFilter(String defaultFilter) {
 		PluginConfig.defaultFilter = defaultFilter;
@@ -156,7 +156,7 @@ public class Value {
 	}
 
 	/**
-	 * @param filterOptions the filterOptions to set
+	 * @param defaultFilterOptions the filter options to set
 	 */
 	public void setDefaultFilterOptions(String defaultFilterOptions) {
 		PluginConfig.defaultFilterOptions = defaultFilterOptions;
