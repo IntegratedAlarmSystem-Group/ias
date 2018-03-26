@@ -10,7 +10,9 @@ from logConf import Log
 
 if __name__ == '__main__':
     #import Logger from logConf
-    logger = Log.GetLogger(__name__)
+    log=Log()
+    fileName=os.path.basename(__file__).split(".")[0]
+    logger=log.GetLoggerFile(fileName)
 
     parser = argparse.ArgumentParser(description='Search for a file in the hierarchy of IAS folders.')
     parser.add_argument(
@@ -35,3 +37,4 @@ if __name__ == '__main__':
         logger.warning("File found in the path %s",filePath)
     except OSError as e:
         logger.warning("File not found")
+

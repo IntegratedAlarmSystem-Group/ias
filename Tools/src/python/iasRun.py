@@ -131,6 +131,9 @@ if __name__ == '__main__':
     """
     Run a java or scala tool.
     """
+    log=Log()
+    fileName=os.path.basename(__file__).split(".")[0]
+    logger=log.GetLoggerFile(fileName)
     parser = argparse.ArgumentParser(description='Run a java or scala program.')
     parser.add_argument(
                         '-l',
@@ -185,7 +188,7 @@ if __name__ == '__main__':
         logger.info("\nVerbose mode ON")
 
     #Get the logger
-    logger=Log.GetLogger(os.path.basename(__file__).split(".")[0])
+
 
     # Get java options from JAVA_OPTS environment variable
     javaOptions=javaOpts()
@@ -229,10 +232,7 @@ if __name__ == '__main__':
     # Is the environment ok?
     # Fail fast!
     if not CommonDefs.checkEnvironment():
-        print("Some setting missing in IAS environment.")
-        print("Set the environment with ias-bash_profile before running IAS applications")
         logger.warning("Some setting missing in IAS environment\nSet the environment with ias-bash_profile before running IAS applications")
-        print()
         sys.exit(-1)
 
     # Create tmp and logs folders if not exists already
@@ -287,11 +287,11 @@ if __name__ == '__main__':
         #print("Launching",args.className, end='')
         if len(args.params)>0:
             logger.info("with params:")
-            print("with params:")
+            
             for arg in args.params:
                 logger.info("\t %s",arg)
         else:
-            print()
+         logger.info("")
     logger.info("Launch element")
 
     if verbose:
@@ -299,7 +299,8 @@ if __name__ == '__main__':
         delimiter = ""
         for t in range(16):
             delimiter = delimiter + arrowDown
-        print("\n",delimiter,args.className,"output",delimiter)
+        logger.info("\n %s %s output %s",delimiter,args.className,delimiter)
+
     call(cmd)
 
     if verbose:
@@ -307,5 +308,6 @@ if __name__ == '__main__':
         delimiter = ""
         for t in range(17):
             delimiter = delimiter + arrowUp
-    print(delimiter,args.className,"done",delimiter)
-    print()
+    logger.info("\n %s %s done %s",delimiter,args.className,delimiter)
+    
+

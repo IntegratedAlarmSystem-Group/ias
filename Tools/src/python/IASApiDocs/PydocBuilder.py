@@ -12,7 +12,8 @@ import shutil
 from subprocess import call
 from glob import glob
 from IASApiDocs.DocGenerator import DocGenerator
-from .logConf import GetLogger
+from logConf import Log
+
 
 
 
@@ -20,7 +21,9 @@ class PydocBuilder(DocGenerator):
     '''
     Builds python API documentation, delegating to pydoc
     '''
-    logger=log.GetLogger(__name__)
+    log=Log()
+
+    logger=log.GetLoggerFile(__name__)
 
     def __init__(self,srcFolder,dstFolder,includeTestFolder=False,outFile=sys.stdout):
         """
@@ -147,3 +150,4 @@ class PydocBuilder(DocGenerator):
 
         self.buildIndex(self.dstFolder)
         return ret
+

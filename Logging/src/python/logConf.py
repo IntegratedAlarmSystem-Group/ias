@@ -1,35 +1,20 @@
 import logging
-
 import sys
-
 import os, errno
-
 import datetime
-
-
-
 
 
 class Log():
 
-
-
   def GetLoggerFile(fileName):
     #take the path for logs folder inside $IAS_ROOT
-
     logPath=os.environ["IAS_ROOT"]
     #If the file doesn't exist it's created
-
     try:
-
         os.makedirs(logPath)
-
     except OSError as e:
-
         if e.errno != errno.EEXIST:
-
          raise
-
     #Format of the data for filename
     now = datetime.datetime.utcnow().strftime('%Y-%m-%d_%H:%M:%S.%f')[:-3]
     fileName=fileName+now
@@ -56,5 +41,5 @@ class Log():
 
     logger1 = logging.getLogger()
 
-
     return logger1
+

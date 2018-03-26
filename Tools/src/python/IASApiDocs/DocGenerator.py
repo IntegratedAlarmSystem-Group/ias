@@ -1,3 +1,4 @@
+
 '''
 
 Base class for java, scala and python API docs generators
@@ -8,14 +9,16 @@ Created on Jul 7, 2017
 
 import sys
 import os
-from .logConf import GetLogger
+from logConf import Log
 
 
 class DocGenerator(object):
     '''
     The base class for API docs generators
     '''
-    logger=log.GetLogger(__name__)
+    log=Log()
+
+    logger=log.GetLoggerFile(__name__)
 
     def __init__(self,srcFolder,dstFolder,outFile=sys.stdout):
         """
@@ -86,3 +89,4 @@ class DocGenerator(object):
                 if self.containsSources(root,fileExtension):
                     ret.append(root)
         return ret
+

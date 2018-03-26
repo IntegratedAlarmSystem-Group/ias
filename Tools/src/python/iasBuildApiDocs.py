@@ -16,7 +16,9 @@ from logConf import Log
 
 if __name__ == '__main__':
     # Parse the command line
-    logger = Log.GetLogger(__name__)
+    log=Log()
+    fileName=os.path.basename(__file__).split(".")[0]
+    logger=log.GetLoggerFile(fileName)
     parser = OptionParser()
     parser.add_option("-d", "--destFolder", help="HTML destination folder", action="store", type="string", dest="destFolder")
     parser.add_option("-s", "--sourceFolder", help="IAS source folder", action="store", type="string", dest="srcFolder")
@@ -46,3 +48,4 @@ if __name__ == '__main__':
     logger.info("Building pydoc")
     pythonBuilder = PydocBuilder(options.srcFolder,join(options.destFolder,"python"))
     pythonBuilder.buildPydocs()
+
