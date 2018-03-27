@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Tools" default="build" basedir=".">
+	<!-- Include IAS common definition -->
+	<include file="../config/CommonAnt.xml" as="ias" />
+	
+	<!-- ####################### PROPERTIES ####################### -->
+	
+	<!-- Initially sets the properties that affect the build so that they are available
+	     to the common tasks
+	-->
+	
+	<!-- Spring stuff including its deps commons-logging-1.2.jar -->
+	<property name="spring-release" value="4.3.9" />
+	<property name="spring" value="spring-framework-${spring-release}.RELEASE" />
+	<property name="spring-core.jar" value ="spring-core-${spring-release}.RELEASE.jar" /> 
+	<property name="spring-context.jar" value="spring-context-${spring-release}.RELEASE.jar" />
+	<property name="spring-beans.jar" value="spring-beans-${spring-release}.RELEASE.jar" />
+	<property name="spring-aop.jar" value="spring-aop-${spring-release}.RELEASE.jar" />
+	<property name="spring-expression.jar" value="spring-expression-${spring-release}.RELEASE.jar" />
+	<target name="prepareExtTools" depends="ias.init-ias-environment">
+		<echo>Unpacking ${spring} in ${exttools.dir}</echo>
+		<unzip src="${exttools.dir}/${spring}-dist.zip" dest="${exttools.dir}" />
+		<copy todir="${exttools.dir}" file="${exttools.dir}/${spring}/libs/${spring-core.jar}"/>
+		<copy todir="${exttools.dir}" file="${exttools.dir}/${spring}/libs/${spring-context.jar}"/>
+		<copy todir="${exttools.dir}" file="${exttools.dir}/${spring}/libs/${spring-beans.jar}"/>
+		<copy todir="${exttools.dir}" file="${exttools.dir}/${spring}/libs/${spring-aop.jar}"/>
+		<copy todir="${exttools.dir}" file="${exttools.dir}/${spring}/libs/${spring-expression.jar}"/>
+	</target>
+	
+	<!--
+		exttools: a comma separated list of third-party jars to install
+		
+		Third party jars must be put in the <module>/extTools folder
+		and are installed in <module>lib/ExtTools during the build
+	-->
+	<property name="exttools" value="${spring-core.jar},${spring-context.jar},${spring-beans.jar},${spring-aop.jar},${spring-expression.jar},commons-logging-1.2.jar,scalactic_2.12-3.0.4.jar,scalatest_2.12-3.0.4.jar,junit-4.12.jar,hamcrest-core-1.3.jar,kafka-clients-1.0.0.jar" />
+	
+	<!--
+		jarName: the name of the jar to build from scala and java sources; 
+		              if not set the build is skipped
+	     
+	-->
+	<property name="jarName" value="ias-tools.jar" />
+	
+	<!-- ####################### TARGETS ####################### -->
+	
+	<target name="clean" depends="ias.clean">
+		<delete dir="${exttools.dir}/${spring}" />
+		<delete file="${exttools.dir}/${spring-core.jar}"/>
+		<delete file="${exttools.dir}/${spring-context.jar}" />
+		<delete file="${exttools.dir}/${spring-beans.jar}" />
+		<delete file="${exttools.dir}/${spring-aop.jar}" />
+	<delete file="${exttools.dir}/${spring-expression.jar}" />
+	</target>
+	
+	<target name="install" depends="ias.install" />
+	
+	<target name="build" depends="prepareExtTools,ias.build" />
+	
+	<target name="doc" depends="ias.doc" />
+	
+</project>
