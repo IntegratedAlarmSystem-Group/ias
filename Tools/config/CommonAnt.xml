@@ -2,9 +2,9 @@
 <!-- Ant common definitions for the IAS build system -->
 
 <project name="CommonAnt" default="build" basedir=".">
-	
+
 	<taskdef resource="net/sf/antcontrib/antlib.xml"/>
-		
+
 	<!-- Global props definition -->
 	<target name="init-ias-environment">
 		<echo>Initing IAS build...</echo>
@@ -26,27 +26,27 @@
 		<property name="docs.java.dir" value="../apidocs/java" />
 		<property name="docs.scala.dir" value="../apidocs/scala" />
 		<property name="docs.python.dir" value="../apidocs/python" />
-		
+
 		<property name="ias.dir" value="${env.IAS_ROOT}" />
-		
+
 		<!-- Files are installed in the AIS_ROOT folder
 		     Could change in future if we want to introduce INTROOTs
 		-->
 		<property name="install.dir" value="${env.IAS_ROOT}" />
-		
+
 		<!-- ias.lib are needed to build classpath for compiling java/scala sources -->
 		<property name="ias.lib.dir" value="${ias.dir}/lib" />
 		<property name="ias.lib.ExtTools.dir" value="${ias.dir}/lib/ExtTools" />
-		
+
 		<property name="scala.home" value="${env.SCALA_HOME}" />
-		
+
 		<!-- Props set depending on the existence of folders/files -->
 		<available file="${src.java.dir}" type="dir" property="src.java.dir.exists"/>
 		<available file="${src.scala.dir}" type="dir" property="src.scala.dir.exists"/>
-		<available file="${src.python.dir}" type="dir" property="src.pyhton.dir.exists"/>
-		
+		<available file="${src.python.dir}" type="dir" property="src.python.dir.exists"/>
+
 	</target>
-	
+
 	<!--
 		Check if the source folder for java exists
 	-->
@@ -55,7 +55,7 @@
 	      <available file="${src.java.dir}" type="dir"/>
 	    </condition>
 	</target>
-	
+
 	<!--
 		Check if the source folder for scala exists
 	-->
@@ -64,7 +64,7 @@
 	      <available file="${src.scala.dir}" type="dir"/>
 	    </condition>
 	</target>
-	
+
 	<!--
 		Check if the source folder for python exists
 	-->
@@ -73,18 +73,18 @@
 	      <available file="${src.python.dir}" type="dir"/>
 	    </condition>
 	</target>
-	
-	<target 
+
+	<target
 		name="buildClasspath"
 		description="Build the classpath including all the jars from the current module and IAS_ROOT">
 		<property name="scala-library.jar" value="${env.SCALA_HOME}/lib/scala-library.jar" />
 		<path id="build.classpath">
-			
+
 			<pathelement location="${scala-library.jar}"   />
 			<pathelement location="${build.dir}"   />
 			<pathelement location="${build.scala.dir}" />
 			<pathelement location="${build.java.dir}" />
-			
+
 			<fileset dir="${lib.dir}">
 		        <include name="**/*.jar" />
 		    </fileset>
@@ -97,11 +97,11 @@
 			<fileset dir="${ias.lib.ExtTools.dir}">
 				<include name="**/*.jar" />
 		    </fileset>
-			
+
 	    </path>
 	</target>
-		
-	
+
+
 	<!-- Build the folders required by compilation -->
 	<target name="init-ias-folders" depends="init-ias-environment">
 		<echo>Initing IAS build...</echo>
@@ -115,14 +115,14 @@
 		<mkdir dir="${docs.java.dir}" />
 		<mkdir dir="${docs.scala.dir}" />
 		<mkdir dir="${docs.python.dir}" />
-		
+
 	</target>
-	
+
 	<!-- Initialization of scala build -->
-	<target 
+	<target
 		description="Initialization of scala build"
-		name="init-scala-build" 
-		depends="init-ias-folders,buildClasspath" 
+		name="init-scala-build"
+		depends="init-ias-folders,buildClasspath"
 		if="jarName">
 		<echo>Initing scala build...</echo>
 	    <taskdef resource="scala/tools/ant/antlib.xml">
@@ -136,8 +136,8 @@
   		</taskdef>
   		<echo>Scala environment ready</echo>
 	</target>
-	
-	<!-- Clean up the module --> 
+
+	<!-- Clean up the module -->
 	<target name="clean" depends="init-ias-environment">
 		<echo>Cleaning... ${build.dir}</echo>
 		<delete includeEmptyDirs="true" quiet="true">
@@ -153,15 +153,15 @@
 			<fileset dir="${bin.dir}" includes="**/*" defaultexcludes="no"/>
 		</delete>
 	</target>
-	
+
 	<!--
 		Copy a python module from src/python/<moduleName> into lib/python/ModuleName
 	-->
-	<target 
-		name="localInstallPyModules" 
+	<target
+		name="localInstallPyModules"
 		depends="init-ias-environment"
 		description="Install python modules from src to lib"
-		if="src.pyhton.dir.exists">
+		if="src.python.dir.exists">
 
 		<echo>Locally installing python modules in ${mods.python.dir}</echo>
 		<mkdir dir="${mods.python.dir}"/>
@@ -174,13 +174,13 @@
 			</fileset>
 		</copy>
 	</target>
-	
+
 	<!--
 		Install all the python scripts from src/python into bin
 		and set their executable attribute to true
 	-->
-	<target name="localinstallpyscripts" depends="init-ias-environment" if="src.pyhton.dir.exists">
-		<!-- Python scripts are initially copied in the bin folder of the module 
+	<target name="localinstallpyscripts" depends="init-ias-environment" if="src.python.dir.exists">
+		<!-- Python scripts are initially copied in the bin folder of the module
 		     then installed in the IAS_ROOT/bin folder -->
 		<echo>Locally installing python scripts in ${bin.dir}</echo>
 		<copy todir="${bin.dir}" verbose="true">
@@ -192,7 +192,7 @@
 				<mapper type="glob" from="*.py" to="*"/>
 		</move>
 	</target>
-	
+
 	<!--
 		Checks if there are *.sh in the source folder
 		to be installed
@@ -212,7 +212,7 @@
 		and set their executable attribute to true
 	-->
 	<target name="localinstallshscripts" depends="checkIfThereAreShFileinSrc, init-ias-environment" if="src.shFilesExist" >
-		<!-- Shell are initially copied in the bin folder of the module 
+		<!-- Shell are initially copied in the bin folder of the module
 			     then installed in the IAS_ROOT/bin folder -->
 			<echo>Locally installing bash scripts in ${bin.dir}</echo>
 			<copy todir="${bin.dir}" verbose="true">
@@ -224,24 +224,24 @@
 					<mapper type="glob" from="*.sh" to="*"/>
 			</move>
 	</target>
-	
+
 	<!--
 		Install the python scripts from src/python into bin
 		and set their executable attribute to true
-		
+
 		At the present it copies ALL the python scripts in src/python and must be
 		refined if we want the user to select specific scripts
 		by setting a property
 	-->
 	<target name="localinstallbinaries" depends="init-ias-folders,localinstallpyscripts,localinstallshscripts">
-		
+
 		<!-- Set permission of executables -->
 		<chmod dir="${bin.dir}" perm="ug+rx" includes="**/*" defaultexcludes="no" />
 	</target>
-	
+
 	<!--
 	  Installs (copies) third party jars from extTools folder into lib/ExtProd.
-	
+
 	  ${exttools}: The comma separated list of jars to install
 	-->
 	<target name="localInstallThirdPartyJars" depends= "init-ias-environment" if="exttools">
@@ -253,18 +253,18 @@
                 </sequential>
         </for>
 	</target>
-	
+
 	<!--
 		Install jars and binaries into $IAS_ROOT lib and bin folders.
-		
-		
+
+
 	-->
-	<target 
-		name="install" 
+	<target
+		name="install"
 		depends="init-ias-environment,localinstallbinaries,localInstallThirdPartyJars">
-		
+
 		<echo>Installing in ${install.dir}</echo>
-		
+
 		<!-- Copy third party jars -->
 		<echo>Installing third-party jars in ${install.dir}/lib/ExtTools</echo>
 		<mkdir dir="${install.dir}/lib/ExtTools"/>
@@ -302,7 +302,7 @@
 			<fileset dir="${config.dir}" includes="**/*" defaultexcludes="no"/>
 		</copy>
 	</target>
-	
+
 	<!--
 		Compile scala sources (*.scala) into ../classes
 	-->
@@ -320,15 +320,15 @@
   			<include name="${src.java.dir}/**/*.java"/>
   		</scalac>
 	</target>
-	
+
 	<target name="buildJavaScala" depends="scalacompile,javacompile" if="jarName">
 		<property name="jarFileName" value="${lib.dir}/${jarName}"/>
 		<echo>Building ${jarFileName}</echo>
-		
+
 		<mkdir dir="${build.scala.dir}"/>
 		<mkdir dir="${build.java.dir}"/>
 		<mkdir dir="${src.resources.dir}"/>
-		
+
 		<jar destfile="${jarFileName}" >
 		 	<fileset dir="${build.scala.dir}" />
 		 	<fileset dir="${build.java.dir}" />
@@ -340,7 +340,7 @@
 			<fileset file="../LGPLv3.txt" />
 	 	</jar>
 	</target>
-	
+
 	<!--
 		Compile java sources (*.java) into ../classes
 	-->
@@ -351,9 +351,9 @@
 			<fileset dir="${build.java.dir}"  includes="**/*"/>
 	  	</delete>
 
-  		<javac 
-  			srcdir="${src.java.dir}" 
-  			destdir="${build.java.dir}" 
+  		<javac
+  			srcdir="${src.java.dir}"
+  			destdir="${build.java.dir}"
   			classpathref="build.classpath"
   			includeantruntime="false"
   			debug="true"
@@ -362,7 +362,7 @@
   			<include name="**/*.java"/>
   		</javac>
 	</target>
-	
+
 	<!--
 		Generate API documentation for java delegating to
 		javadoc ant task.
@@ -373,7 +373,7 @@
 		<mkdir dir="${docs.java.dir}"/>
 		<javadoc sourcepath="${src.java.dir}" destdir="${docs.java.dir}" classpathref="build.classpath"/>
 	</target>
-	
+
 	<!--
 		Generate API documentation for scala delegating to
 		scaldoc ant task.
@@ -383,7 +383,7 @@
 		<delete dir="${docs.scala.dir}"/>
 		<mkdir dir="${docs.scala.dir}"/>
 
-		<scaladoc 
+		<scaladoc
 			classpathref="build.classpath"
 			srcdir="${src.scala.dir}"
 			destdir="${docs.scala.dir}"
@@ -392,7 +392,7 @@
 			unchecked="yes">
 	 	</scaladoc>
 	</target>
-	
+
 	<!--
 		Generate API documentation for python delegating to pydoc.
 	-->
@@ -409,25 +409,25 @@
 			</fileset>
 		</move>
 	</target>
-	
+
 	<!--
 		Generate API documentation for the module
 		in the apidocs folder
 	-->
 	<target name="doc" depends="java-doc,scala-doc,python-doc" />
-	
-	<target 
-		name="build" 
+
+	<target
+		name="build"
 		depends="localinstallbinaries,localInstallThirdPartyJars,buildJavaScala,localInstallPyModules" />
-	
+
 	<target name="check-test-runner">
 	    <available file="runTests.sh" property="testRunnerShFile.exists"/>
 	</target>
-	
+
 	<target name = "test" depends="check-test-runner, build" if="testRunnerShFile.exists">
-		<exec executable="bash"> 
+		<exec executable="bash">
 			<arg value="runTests.sh"/>
 		</exec>
 	</target>
-	
+
 </project>
