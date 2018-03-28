@@ -26,7 +26,11 @@ CREATE SEQUENCE PROP_SEQ_GENERATOR
 CREATE TABLE IAS (
   id NUMERIC(15) NOT NULL,
   logLevel VARCHAR2(10) NOT NULL,
-  CONSTRAINT IAS_PK PRIMARY KEY ( id ));
+  refreshRate INTEGER NOT NULL,
+  tolerance INTEGER NOT NULL,
+  CONSTRAINT IAS_PK PRIMARY KEY ( id ),
+  CONSTRAINT refreshGreaterThenZero CHECK (refreshRate>0),
+  CONSTRAINT toleranceGreaterThenZero CHECK (tolerance>0));
 
 /*
   The SEQUENCE to generate IAS IDs
@@ -54,10 +58,9 @@ CREATE TABLE IAS_PROPERTY (
 CREATE TABLE IASIO (
   io_id varchar2(64) NOT NULL,
   shortDesc VARCHAR2(256),
-  refreshRate INTEGER NOT NULL,
   iasType VARCHAR2(16) NOT NULL,
-  CONSTRAINT IASIO_PK PRIMARY KEY(io_id),
-  CONSTRAINT refreshGreaterThenZero CHECK (refreshRate>0));
+  CONSTRAINT IASIO_PK PRIMARY KEY(io_id));
+  
 
   /*
     The Supervisor 

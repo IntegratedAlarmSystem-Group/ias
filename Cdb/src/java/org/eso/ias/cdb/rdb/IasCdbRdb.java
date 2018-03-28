@@ -116,19 +116,16 @@ public class IasCdbRdb {
 		logger.info("Persisting IASIOs");
 		IasioDao i1 = new IasioDao();
 		i1.setId("CONTROL/DA01/WVR/AMB_TEMP");
-		i1.setRefreshRate(1000);
 		i1.setShortDesc("The short description of this MP");
 		i1.setIasType(IasTypeDao.ALARM);
 		
 		IasioDao i2 = new IasioDao();
 		i2.setId("WTANK3/LEVEL");
-		i2.setRefreshRate(1500);
 		i2.setShortDesc("Remaining liters in water tank 3");
 		i2.setIasType(IasTypeDao.INT);
 		
 		IasioDao i3 = new IasioDao();
 		i3.setId("WTANK2/LEVEL");
-		i3.setRefreshRate(1500);
 		i3.setIasType(IasTypeDao.INT);
 		
 		logger.info("Beginning transaction for IASIOs");

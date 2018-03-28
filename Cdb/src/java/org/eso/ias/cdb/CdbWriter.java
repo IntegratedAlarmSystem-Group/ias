@@ -76,4 +76,15 @@ public interface CdbWriter {
 	 * @throws IasCdbException In case of error writing the IASIOs
 	 */
 	public void writeIasios(Set<IasioDao> iasios, boolean append) throws IasCdbException;
+	
+	/**
+	 * Initialize the CDB
+	 */
+	public void init() throws IasCdbException;
+	
+	/**
+	 * Close the CDB and release the associated resources
+	 * @throws IasCdbException
+	 */
+	public void shutdown() throws IasCdbException;
 }

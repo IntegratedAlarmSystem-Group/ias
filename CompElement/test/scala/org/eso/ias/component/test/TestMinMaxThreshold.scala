@@ -1,37 +1,33 @@
 package org.eso.ias.component.test
 
 import org.scalatest.FlatSpec
-import org.eso.ias.prototype.transfer.TransferFunctionSetting
-import org.eso.ias.prototype.transfer.TransferFunctionLanguage
-import org.eso.ias.prototype.input.Identifier
-import org.eso.ias.prototype.input.InOut
-import org.eso.ias.prototype.input.java.OperationalMode
-import org.eso.ias.prototype.input.Validity
-import org.eso.ias.prototype.input.java.IASTypes
-import org.eso.ias.prototype.compele.ComputingElement
+import org.eso.ias.asce.transfer.TransferFunctionSetting
+import org.eso.ias.asce.transfer.TransferFunctionLanguage
+import org.eso.ias.types.Identifier
+import org.eso.ias.types.InOut
+import org.eso.ias.types.OperationalMode
+import org.eso.ias.types.Validity
+import org.eso.ias.types.IASTypes
+import org.eso.ias.asce.ComputingElement
 import scala.collection.mutable.{Map => MutableMap }
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.Properties
-import org.eso.ias.prototype.transfer.impls.MinMaxThresholdTF
-import org.eso.ias.prototype.transfer.impls.MinMaxThresholdTFJava
-import org.eso.ias.prototype.transfer.ScalaTransfer
-import org.eso.ias.prototype.transfer.JavaTransfer
-import org.eso.ias.prototype.input.java.AlarmSample
-import org.eso.ias.prototype.input.JavaConverter
-import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.asce.transfer.impls.MinMaxThresholdTF
+import org.eso.ias.asce.transfer.impls.MinMaxThresholdTFJava
+import org.eso.ias.asce.transfer.ScalaTransfer
+import org.eso.ias.asce.transfer.JavaTransfer
+import org.eso.ias.types.AlarmSample
+import org.eso.ias.types.JavaConverter
+import org.eso.ias.types.IASValue
 
 class TestMinMaxThreshold extends FlatSpec {
-  
-  def convert(iasio: InOut[_]): IASValue[_] = {
-    JavaConverter.inOutToIASValue(iasio,iasio.getValidity(None))
-  }
   
   def withScalaTransferSetting(testCode: TransferFunctionSetting => Any) {
     val threadFactory = new TestThreadFactory()
     
     // The TF executor to test
     val scalaMinMaxTF = new TransferFunctionSetting(
-        "org.eso.ias.prototype.transfer.impls.MinMaxThresholdTF",
+        "org.eso.ias.asce.transfer.impls.MinMaxThresholdTF",
         TransferFunctionLanguage.scala,
         threadFactory)
     try {
@@ -47,7 +43,7 @@ class TestMinMaxThreshold extends FlatSpec {
     
     // The TF executor to test
     val javaMinMaxTF = new TransferFunctionSetting(
-        "org.eso.ias.prototype.transfer.impls.MinMaxThresholdTFJava",
+        "org.eso.ias.asce.transfer.impls.MinMaxThresholdTFJava",
         TransferFunctionLanguage.java,
         threadFactory)
     try {
@@ -69,7 +65,7 @@ class TestMinMaxThreshold extends FlatSpec {
     
     // Instantiate one ASCE with a scala TF implementation
     val scalaTFSetting =new TransferFunctionSetting(
-        "org.eso.ias.prototype.transfer.impls.MinMaxThresholdTF",
+        "org.eso.ias.asce.transfer.impls.MinMaxThresholdTF",
         TransferFunctionLanguage.scala,
         commons.threadFactory)
     
@@ -104,7 +100,7 @@ class TestMinMaxThreshold extends FlatSpec {
     
     // Instantiate one ASCE with a scala TF implementation
     val javaTFSetting =new TransferFunctionSetting(
-        "org.eso.ias.prototype.transfer.impls.MinMaxThresholdTFJava",
+        "org.eso.ias.asce.transfer.impls.MinMaxThresholdTFJava",
         TransferFunctionLanguage.java,
         commons.threadFactory)
     
@@ -152,63 +148,78 @@ class TestMinMaxThreshold extends FlatSpec {
    */
   def checkAlarmActivation(asce: ComputingElement[AlarmSample], alarmState: AlarmSample): Boolean = {
     assert(asce.isOutputAnAlarm)
-    val hio = asce.getOutput()._1
-    assert(hio.iasType==IASTypes.ALARM)
+    val iasio = asce.output
+    assert(iasio.iasType==IASTypes.ALARM)
     
-    hio.value.forall(a => a==alarmState)
+    iasio.value.forall(a => a==alarmState)
   }
+  
+  
   
   it must "run the scala Min/Max TF executor" in withScalaComp { (scalaComp, inputsMPs) =>
     scalaComp.initialize()
     Thread.sleep(1000)
     // Change the input to trigger the TF
     val changedMP = inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(5L))
-    scalaComp.update(Set(convert(changedMP)))
+    scalaComp.update(Set(changedMP.toIASValue()))
     assert(checkAlarmActivation(scalaComp,AlarmSample.CLEARED))
     
     // Activate high
     val highMp = changedMP.updateValue(Some(100L))
-    scalaComp.update(Set(convert(highMp)))
+    scalaComp.update(Set(highMp.toIASValue()))
     assert(checkAlarmActivation(scalaComp,AlarmSample.SET))
+    
+    // Is the property set with the value that triggered the alarm?
+    assert(scalaComp.output.props.isDefined)
+    assert(scalaComp.output.props.get.keys.toList.contains("actualValue"))
+    val propValueMap=scalaComp.output.props.get
+    assert(propValueMap("actualValue")==100L.toDouble.toString())
+    
     
     // Increase does not deactivate the alarm
     val moreHigh=highMp.updateValue(Some(150L))
-    scalaComp.update(Set(convert(moreHigh)))
+    scalaComp.update(Set(moreHigh.toIASValue()))
     assert(checkAlarmActivation(scalaComp,AlarmSample.SET))
+    
+    val propValueMap2=scalaComp.output.props.get
+    assert(propValueMap2("actualValue")==150L.toDouble.toString())
     
     // Decreasing without passing HighOn does not deactivate
     val noDeact = moreHigh.updateValue(Some(40L))
-    scalaComp.update(Set(convert(noDeact)))
+    scalaComp.update(Set(noDeact.toIASValue()))
     assert(checkAlarmActivation(scalaComp,AlarmSample.SET))
     
     // Below HighOff deactivate the alarm
     val deact = noDeact.updateValue(Some(10L))
-    scalaComp.update(Set(convert(deact)))
+    scalaComp.update(Set(deact.toIASValue()))
     assert(checkAlarmActivation(scalaComp,AlarmSample.CLEARED))
+    
+    val propValueMap3=scalaComp.output.props.get
+    assert(propValueMap3("actualValue")==10L.toDouble.toString())
     
     // Below LowOff but not passing LowOn does not activate
     val aBitLower = deact.updateValue(Some(-15L))
-    scalaComp.update(Set(convert(aBitLower)))
+    scalaComp.update(Set(aBitLower.toIASValue()))
     assert(checkAlarmActivation(scalaComp,AlarmSample.CLEARED))
     
     // Passing LowOn activate
     val actLow = aBitLower.updateValue(Some(-30L))
-    scalaComp.update(Set(convert(actLow)))
+    scalaComp.update(Set(actLow.toIASValue()))
     assert(checkAlarmActivation(scalaComp,AlarmSample.SET))
     
     // Decreasing more remain activate
     val evenLower = actLow.updateValue(Some(-40L))
-    scalaComp.update(Set(convert(evenLower)))
+    scalaComp.update(Set(evenLower.toIASValue()))
     assert(checkAlarmActivation(scalaComp,AlarmSample.SET))
     
     // Increasing but not passing LowOff remains active
     val aBitHigher = evenLower.updateValue(Some(-15L))
-    scalaComp.update(Set(convert(aBitHigher)))
+    scalaComp.update(Set(aBitHigher.toIASValue()))
     assert(checkAlarmActivation(scalaComp,AlarmSample.SET))
     
     // Passing LowOff deactivate
     val deactFromLow = aBitHigher.updateValue(Some(0L))
-    scalaComp.update(Set(convert(deactFromLow)))
+    scalaComp.update(Set(deactFromLow.toIASValue()))
     assert(checkAlarmActivation(scalaComp,AlarmSample.CLEARED))
   }
   
@@ -232,54 +243,65 @@ class TestMinMaxThreshold extends FlatSpec {
     Thread.sleep(1000)
     // Change the input to trigger the TF
     val changedMP = inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(5L))
-    javaComp.update(Set(
-        JavaConverter.inOutToIASValue(changedMP,changedMP.getValidity(None))))
+    javaComp.update(Set(changedMP.toIASValue()))
 
     assert(checkAlarmActivation(javaComp,AlarmSample.CLEARED))
     
     // Activate high
     val highMp = changedMP.updateValue(Some(100L))
-    javaComp.update(Set(convert(highMp)))
+    javaComp.update(Set(highMp.toIASValue()))
     assert(checkAlarmActivation(javaComp,AlarmSample.SET))
+    
+    // Is the property set with the value that triggered the alarm?
+    assert(javaComp.output.props.isDefined)
+    assert(javaComp.output.props.get.keys.toList.contains("actualValue"))
+    val propValueMap=javaComp.output.props.get
+    assert(propValueMap("actualValue")==100L.toDouble.toString())
     
     // Increase does not deactivate the alarm
     val moreHigh=highMp.updateValue(Some(150L))
-    javaComp.update(Set(convert(moreHigh)))
+    javaComp.update(Set(moreHigh.toIASValue()))
     assert(checkAlarmActivation(javaComp,AlarmSample.SET))
+    
+    val propValueMap2=javaComp.output.props.get
+    assert(propValueMap2("actualValue")==150L.toDouble.toString())
     
     // Decreasing without passing HighOn does not deactivate
     val noDeact = moreHigh.updateValue(Some(40L))
-    javaComp.update(Set(convert(noDeact)))
+    javaComp.update(Set(noDeact.toIASValue()))
     assert(checkAlarmActivation(javaComp,AlarmSample.SET))
     
     // Below HighOff deactivate the alarm
     val deact = noDeact.updateValue(Some(10L))
-    javaComp.update(Set(convert(deact)))
+    javaComp.update(Set(deact.toIASValue()))
     assert(checkAlarmActivation(javaComp,AlarmSample.CLEARED))
+    
+    val propValueMap3=javaComp.output.props.get
+    assert(propValueMap3("actualValue")==10L.toDouble.toString())
     
     // Below LowOff but not passing LowOn does not activate
     val aBitLower = deact.updateValue(Some(-15L))
-    javaComp.update(Set(convert(aBitLower)))
+    javaComp.update(Set(aBitLower.toIASValue()))
     assert(checkAlarmActivation(javaComp,AlarmSample.CLEARED))
     
     // Passing LowOn activate
     val actLow = aBitLower.updateValue(Some(-30L))
-    javaComp.update(Set(convert(actLow)))
+    javaComp.update(Set(actLow.toIASValue()))
     assert(checkAlarmActivation(javaComp,AlarmSample.SET))
     
     // Decreasing more remain activate
     val evenLower = actLow.updateValue(Some(-40L))
-    javaComp.update(Set(convert(evenLower)))
+    javaComp.update(Set(evenLower.toIASValue()))
     assert(checkAlarmActivation(javaComp,AlarmSample.SET))
     
     // Increasing but not passing LowOff remains active
     val aBitHigher = evenLower.updateValue(Some(-15L))
-    javaComp.update(Set(convert(aBitHigher)))
+    javaComp.update(Set(aBitHigher.toIASValue()))
     assert(checkAlarmActivation(javaComp,AlarmSample.SET))
     
     // Passing LowOff deactivate
     val deactFromLow = aBitHigher.updateValue(Some(0L))
-    javaComp.update(Set(convert(deactFromLow)))
+    javaComp.update(Set(deactFromLow.toIASValue()))
     assert(checkAlarmActivation(javaComp,AlarmSample.CLEARED))
   }
   

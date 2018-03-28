@@ -28,13 +28,13 @@ import org.slf4j.LoggerFactory;
  * <P>
  * Kafka properties are fully customizable by calling {@link #setUp(Properties)}:
  * defaults values are used for the missing properties.
- * <P><EM>Life cycle</em>: after {@link #setUp()} oe {@link #setUp(Properties)}
+ * <P><EM>Life cycle</em>: {@link #setUp()} or {@link #setUp(Properties)}
  *                         must be called to initialize the object;
  *                         {@link #tearDown()} must be called when finished using the object;
- *                         {@link #startGettingEvents(StartPosition)} must be called to start
+ *                         {@link #startGettingEvents(StartPosition, KafkaConsumerListener)} must be called to start
  *                         polling events from the kafka topic
  *
- * {@link #startGettingEvents(StartPosition)} returns when the consumer has been assigned to
+ * {@link #startGettingEvents(StartPosition, KafkaConsumerListener)} returns when the consumer has been assigned to
  * at least one partition. There are situations when the partitions assigned to the consumer
  * can be revoked and reassigned like for example when another consumer subscribe or disconnect
  * as the assignment of consumers to partitions is left to kafka in this version.

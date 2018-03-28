@@ -6,10 +6,10 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 
-import org.eso.ias.prototype.input.java.IASTypes;
-import org.eso.ias.prototype.input.java.IASValue;
-import org.eso.ias.prototype.input.java.IasValueJsonSerializer;
-import org.eso.ias.prototype.input.java.IasValueStringSerializer;
+import org.eso.ias.types.IASTypes;
+import org.eso.ias.types.IASValue;
+import org.eso.ias.types.IasValueJsonSerializer;
+import org.eso.ias.types.IasValueStringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +22,7 @@ import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
  * Filtering is based on the ID of the IASIOs _and_ IASValue type: 
  * - if the ID of the received String is contained in {@link #acceptedIds}
  *   then the IASIO is forwarded to the listener otherwise is rejected.
- * - if the type of the {@link IASValue} is contained in {@link #acceptedtypes}
+ * - if the type of the {@link IASValue} is contained in {@link #acceptedTypes}
  *   then the IASIO is forwarded to the listener otherwise is rejected.
  * 
  * <BR>If the caller does not set any filter, then all the received IASIOs 
@@ -101,7 +101,6 @@ implements KafkaConsumerListener {
 	 * @param servers The kafka servers to connect to
 	 * @param topicName The name of the topic to get events from
 	 * @param consumerID the ID of the consumer
-	 * @param listener The listener of events published in the topic
 	 * @param idsOfIDsToAccept   The IDs of the IASIOs to forward to the listener
 	 * @param idsOfTypesToAccept The types of the IASIOs to forward to the listener
 	 */

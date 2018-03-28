@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-     Build the entire IAS prototype
+     Build the core of the IAS.
 
      PRE-Requisite: IAS_ROOT envirnment variable defined and pointing to
                              an existing folder
@@ -14,7 +14,7 @@
 
 	<taskdef resource="net/sf/antcontrib/antlib.xml"/>
 
-	<property name="iasModules" value="Tools,Logging,Cdb,BasicTypes,KafkaUtils,plugin,Converter,CompElement,DistributedUnit,Supervisor,WebServerSender,Tests/SimpleLoopTest" />
+	<property name="iasModules" value="Tools,Logging,Cdb,BasicTypes,KafkaUtils,plugin,Converter,CompElement,DistributedUnit,Supervisor,WebServerSender,TransferFunctions,Tests/SimpleLoopTest" />
 
 	<target name="SanityCheck">
 		<!--

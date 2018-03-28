@@ -1,7 +1,5 @@
 # ias
-The production version of the Integrated Alarm System.
-
-Some of the code in this reposotory could come from the [prototype](https://github.com/IntegratedAlarmSystem-Group/alarmsystem-prototype).
+The production version of the core of Integrated Alarm System.
 
 Website: [Integrated Alarm System](https://integratedalarmsystem-group.github.io)
 

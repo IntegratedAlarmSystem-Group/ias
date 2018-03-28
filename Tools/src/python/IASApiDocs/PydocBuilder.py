@@ -54,7 +54,7 @@ class PydocBuilder(DocGenerator):
         
         @param folder: the folder containing html files to index
         """
-        print "Generating index in",folder
+        print("Generating index in",folder)
         
         htmlFilePaths = glob(folder+"/*.html")
         htmlFiles = []
@@ -73,7 +73,7 @@ class PydocBuilder(DocGenerator):
                 if (parts[0] not in pyModules):
                     pyModules.append(parts[0])
         pyModules.sort()
-        print "Python modules",pyModules
+        print("Python modules",pyModules)
         
         msg = "<!DOCTYPE html><html>\n<body>\n"
         msg += "\t<h1>IAS python API</h1>\n"
@@ -105,7 +105,7 @@ class PydocBuilder(DocGenerator):
         text_file.write(msg)
         text_file.close()
         
-        print folder+"/index.html written"
+        print(folder+"/index.html written")
     
     def buildPydocs(self):
         """
@@ -118,26 +118,26 @@ class PydocBuilder(DocGenerator):
         
         folders = self.getSrcPaths(self.srcFolder, False,"python",".py")
         
-        print "Folders",folders
-        print "SourceFolder",self.srcFolder
+        print("Folders",folders)
+        print("SourceFolder",self.srcFolder)
                    
         for folder in folders:
-            print "Generating pydoc in",folder
+            print("Generating pydoc in",folder)
             
             oldWD = os.getcwd()
-            print "Changing folder to",folder
+            print("Changing folder to",folder)
             os.chdir(folder)
             cmd =["pydoc"]
             cmd.append("-w")
             cmd.append("./")
             ret = call(cmd,stdout=self.outFile,stderr=self.outFile)
             
-            print "Moving htmls to",self.dstFolder
+            print("Moving htmls to",self.dstFolder)
             files = os.listdir(".")
             for f in files:
                 if (f.endswith(".html")):
                     shutil.move(f, self.dstFolder)
-            print "Changing folder back to",oldWD
+            print("Changing folder back to",oldWD)
             os.chdir(oldWD)
         
         self.buildIndex(self.dstFolder)

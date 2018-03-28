@@ -1,7 +1,7 @@
 package org.eso.ias.dasu.executorthread
 
 import java.util.concurrent.ThreadFactory
-import org.eso.ias.prototype.utils.ISO8601Helper
+import org.eso.ias.utils.ISO8601Helper
 
 /** The thread factory for the DASU */
 class DasuThreadFactory(private val dasuId: String) extends ThreadFactory {

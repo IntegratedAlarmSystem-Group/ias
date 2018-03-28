@@ -5,9 +5,9 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import org.eso.ias.prototype.input.java.IASValue;
-import org.eso.ias.prototype.input.java.IasValueSerializerException;
-import org.eso.ias.prototype.input.java.IasValueStringSerializer;
+import org.eso.ias.types.IASValue;
+import org.eso.ias.types.IasValueSerializerException;
+import org.eso.ias.types.IasValueStringSerializer;
 
 /**
  * KafkaIasioProducer writes {@link IASValue} in the kafka topic.
@@ -201,7 +201,7 @@ public class KafkaIasiosProducer {
 	 * This method pushes all the values with the same partition/key so it is not very
 	 * convenient. You should probably prefer {@link #push(Collection,int,TimeUnit)}.
 	 * 
-	 * @param @param values The not <code>null</code> nor empty collection of values to publish in the topic
+	 * @param values The not <code>null</code> nor empty collection of values to publish in the topic
 	 * @param partition The partition
 	 * @param key The key
 	 * @param timeout the time to wait if sync is set

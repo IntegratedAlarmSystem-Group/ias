@@ -1,11 +1,11 @@
 package org.eso.ias.dasu.publisher
 
-import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.types.IASValue
 import scala.util.Try
 import org.eso.ias.kafkautils.KafkaIasiosProducer
 import java.util.Properties
-import org.ias.prototype.logging.IASLogger
-import org.eso.ias.prototype.input.java.IasValueJsonSerializer
+import org.ias.logging.IASLogger
+import org.eso.ias.types.IasValueJsonSerializer
 import org.eso.ias.kafkautils.KafkaHelper
 
 /** 
@@ -71,7 +71,11 @@ object KafkaPublisher {
    * @param kafkaServers kafka servers
    * @param props additional set of properties
    */
-  def apply(dasuId: String, kafkaTopic: String, kafkaServers: String, props: Properties): KafkaPublisher = {
+  def apply(
+      dasuId: String, 
+      kafkaTopic: String, 
+      kafkaServers: String, 
+      props: Properties): KafkaPublisher = {
     val kafkaStringProducer = new KafkaIasiosProducer(kafkaServers,kafkaTopic,dasuId+"Producer",new IasValueJsonSerializer())
     new KafkaPublisher(dasuId,kafkaStringProducer,props)
   }
@@ -83,6 +87,10 @@ object KafkaPublisher {
    * @param props additional set of properties
    */
   def apply(dasuId: String, props: Properties): KafkaPublisher = {
-    apply(dasuId,KafkaHelper.IASIOs_TOPIC_NAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,props)
+    apply(
+        dasuId,
+        KafkaHelper.IASIOs_TOPIC_NAME,
+        props.getProperty(KafkaHelper.BROKERS_PROPNAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS),
+        props)
   }
 }

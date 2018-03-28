@@ -1,0 +1,21 @@
+{ 
+	"id":"Plugin-ID",
+	"monitoredSystemId":"ACS",
+	"sinkServer":"iasdevel.hq.eso.org",
+	"sinkPort":"8192",
+	"properties": [
+		{"key":"a-key",
+		"value":"itsValue"},
+		{"key":"Anotherkey",
+		"value":"AnotherValue"}],
+	"defaultFilter":"",
+	"defaultFilterOptions":"",
+	"values":[
+		{"id":"AlarmID",
+		"refreshTime":"500"},
+		{"id":"TempID",
+		"refreshTime":"1500",
+		"filter":"Average",
+		"filterOptions":"1, 150, 5"}]
+}
+

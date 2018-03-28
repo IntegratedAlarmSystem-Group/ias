@@ -9,27 +9,27 @@ import java.util.Properties
 import org.eso.ias.dasu.publisher.OutputPublisher
 import org.eso.ias.dasu.subscriber.InputSubscriber
 import org.eso.ias.dasu.subscriber.KafkaSubscriber
-import org.eso.ias.prototype.input.java.IdentifierType
-import org.eso.ias.prototype.input.Identifier
+import org.eso.ias.types.IdentifierType
+import org.eso.ias.types.Identifier
 import org.eso.ias.cdb.pojos.DasuDao
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.supervisor.Supervisor
 import scala.util.Success
 import scala.util.Failure
 import java.util.concurrent.CountDownLatch
-import org.ias.prototype.logging.IASLogger
+import org.ias.logging.IASLogger
 import org.scalatest.FlatSpec
 import org.eso.ias.kafkautils.KafkaIasiosProducer
 import org.eso.ias.kafkautils.KafkaHelper
-import org.eso.ias.prototype.input.java.IasValueStringSerializer
-import org.eso.ias.prototype.input.java.IasValueJsonSerializer
+import org.eso.ias.types.IasValueStringSerializer
+import org.eso.ias.types.IasValueJsonSerializer
 import org.eso.ias.kafkautils.KafkaIasiosConsumer
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition
 import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener
-import org.eso.ias.prototype.input.java.IASValue
-import org.eso.ias.prototype.input.java.OperationalMode
-import org.eso.ias.prototype.input.java.IasValidity
-import org.eso.ias.prototype.input.java.IASTypes
+import org.eso.ias.types.IASValue
+import org.eso.ias.types.OperationalMode
+import org.eso.ias.types.IasValidity
+import org.eso.ias.types.IASTypes
 import scala.collection.mutable.ListBuffer
 
 import java.util.concurrent.TimeUnit
@@ -37,6 +37,7 @@ import org.scalatest.BeforeAndAfter
 import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener
 import org.scalatest.BeforeAndAfterAll
 import java.util.concurrent.atomic.AtomicReference
+import java.util.HashSet
 
 /**
  * Test the Supervisor connected to the kafka BSDB.
@@ -47,7 +48,7 @@ import java.util.concurrent.atomic.AtomicReference
  * The configuration of this Supervisor is in the JSON CDB.
  *
  * The supervisor runs 2 DASU with one ASCE each and
- * checks the generation of the output by its DASUs and their ASCEs
+ * checks the generation of the outputs by its DASUs and their ASCEs
  * when some input is read from the kafka topic.
  *
  * This test is meant to check the loop only so each DASU has only one ASCE
@@ -128,13 +129,11 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
   /** The kafka consumer gets AISValues from the BSDB */
   val inputConsumer: InputSubscriber = new KafkaSubscriber(supervisorId.id, new Properties())
   
-  /** The auto-refresh time interval (msecs) */
-  val autorefreshTimeInterval = 1000L;
-
   /** The test uses real DASu i.e. the factory instantiates a DasuImpl */
-  val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber, cr: CdbReader) => DasuImpl(dd, i, op, id, cr,1000)
+  val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber, cr: CdbReader) => 
+    DasuImpl(dd, i, op, id, cr,1,1)
 
-  // Build the supervisor
+  /** The supervisor to test */
   val supervisor = new Supervisor(supervisorId, outputPublisher, inputConsumer, cdbReader, factory)
   
   val latchRef: AtomicReference[CountDownLatch] = new AtomicReference
@@ -146,7 +145,7 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
   after {}
 
   override def beforeAll() {
-    logger.info("Before...")
+    logger.info("BeforeAll...")
     /**
      * The listener of IASValues published in the BSDB
      * It receives the values sent by the test as well as the outputs
@@ -171,32 +170,41 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
     iasiosConsumer.startGettingEvents(StartPosition.END, iasioListener)
     
     // .get returns the value from this Success or throws the exception if this is a Failure.
-    supervisor.start().get
+    assert(supervisor.start().isSuccess)
     
     supervisor.enableAutoRefreshOfOutput(false)
     
-    logger.info("Before done.")
+    logger.info("BeforeAll done.")
   }
 
   override def afterAll() {
-    logger.info("After...")
+    logger.info("AfterAll...")
     iasiosProducer.tearDown()
     iasiosConsumer.tearDown()
     supervisor.cleanUp()
-    logger.info("Before done")
+    logger.info("AfterAll done")
   }
 
   /**
    * Build a IASVlaue to submit to the BSDB
    */
   def buildIasioToSubmit(identifier: Identifier, value: Double) = {
-    IASValue.buildIasValue(
-      value,
-      System.currentTimeMillis(),
-      OperationalMode.OPERATIONAL,
-      IasValidity.RELIABLE,
-      identifier.fullRunningID,
-      IASTypes.DOUBLE)
+    val t0 = System.currentTimeMillis()-100
+      IASValue.build(
+        value,
+			  OperationalMode.OPERATIONAL,
+			  IasValidity.RELIABLE,
+			  identifier.fullRunningID,
+			  IASTypes.DOUBLE,
+			  t0,
+			  t0+5,
+			  t0+10,
+			  t0+15,
+			  t0+20,
+			  t0+25,
+			null,
+			null,null)
+    
   }
 
   behavior of "The Supervisor with Kafka input/ouput"
@@ -214,7 +222,7 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
     
     val iasio = buildIasioToSubmit(temperatureID, 5);
 
-    // Desable the autorefresh to avoid replication
+    // Disable the auto-refresh to avoid replication
     logger.info("Disabling auto-refresh of the output by the DASU")
     supervisor.enableAutoRefreshOfOutput(false)
 
@@ -238,7 +246,7 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
     val latch = new CountDownLatch(4)
     latchRef.set(latch)
     
-    val iasioTemp = buildIasioToSubmit(temperatureID, 5);
+    val iasioTemp = buildIasioToSubmit(temperatureID, 40);
     val iasioStrenght = buildIasioToSubmit(strenghtID, 10);
 
     // Desable the autorefresh to avoid replication

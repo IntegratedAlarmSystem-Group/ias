@@ -1,23 +1,25 @@
 package org.eso.ias.converter;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 
 import org.eso.ias.converter.config.IasioConfigurationDAO;
 import org.eso.ias.converter.config.MonitorPointConfiguration;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.plugin.publisher.PublisherException;
-import org.eso.ias.prototype.input.Identifier;
-import org.eso.ias.prototype.input.java.AlarmSample;
-import org.eso.ias.prototype.input.java.IASTypes;
-import org.eso.ias.prototype.input.java.IASValue;
-import org.eso.ias.prototype.input.java.IasValidity;
-import org.eso.ias.prototype.input.java.IasValueSerializerException;
-import org.eso.ias.prototype.input.java.IasValueStringSerializer;
-import org.eso.ias.prototype.input.java.IdentifierType;
-import org.eso.ias.prototype.input.java.OperationalMode;
+import org.eso.ias.types.Identifier;
+import org.eso.ias.types.AlarmSample;
+import org.eso.ias.types.IASTypes;
+import org.eso.ias.types.IASValue;
+import org.eso.ias.types.IasValidity;
+import org.eso.ias.types.IasValueSerializerException;
+import org.eso.ias.types.IasValueStringSerializer;
+import org.eso.ias.types.IdentifierType;
+import org.eso.ias.types.OperationalMode;
+import org.eso.ias.utils.ISO8601Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,9 +59,9 @@ public class ValueMapper implements Function<String, String> {
 	private final String converterID;
 	
 	/**
-	 * ISO 8601 date formatter
+	 * A monitor point ptoduced by a plugin has no dependents
 	 */
-	private final SimpleDateFormat iso8601dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
+	private final Set<String> emptySetDependents = new HashSet<>();
 
 	/**
 	 * Constructor
@@ -116,9 +118,13 @@ public class ValueMapper implements Function<String, String> {
 	 * 
 	 * @param remoteSystemData the monitor point to translate
 	 * @param type the type of the monitor point
+	 * @param receptionTStamp the timestamp when the monitor point data has been received
 	 * @return the IASValue corresponding on the monitor point
 	 */
-	public IASValue<?> translate(MonitorPointData remoteSystemData, IASTypes type) {
+	public IASValue<?> translate(
+			MonitorPointData remoteSystemData, 
+			IASTypes type,
+			long receptionTStamp) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(remoteSystemData);
 		
@@ -168,13 +174,11 @@ public class ValueMapper implements Function<String, String> {
 		default: throw new UnsupportedOperationException("Unsupported type "+type);
 		}
 		
-		long tStamp;
-		try { 
-			tStamp=iso8601dateFormat.parse(remoteSystemData.getSampleTime()).getTime();
-		} catch (ParseException pe) {
-			logger.error("Cannot parse the ISO 8601 timestamp {}: using actual time instead",remoteSystemData.getSampleTime());
-			tStamp=System.currentTimeMillis();
-		}
+		long pluginProductionTime;
+		pluginProductionTime=ISO8601Helper.timestampToMillis(remoteSystemData.getSampleTime());
+		
+		long pluginSentToConvertTime;
+		pluginSentToConvertTime=ISO8601Helper.timestampToMillis(remoteSystemData.getPublishTime());
 		
 		String fullrunId = buildFullRunningId(
 				converterID,
@@ -182,13 +186,26 @@ public class ValueMapper implements Function<String, String> {
 				remoteSystemData.getMonitoredSystemID(),
 				remoteSystemData.getId());
 		
-		return IASValue.buildIasValue(
+		// The value is converted to a IASValue and immeaitely sent to the BSDB
+		// by the streaming so the 2 timestamps (production and sent to BSDB)
+		// are the same point in time with thisimplementation
+		long producedAndSentTStamp = System.currentTimeMillis();
+		
+		return IASValue.build(
 				convertedValue, 
-				tStamp, 
 				OperationalMode.valueOf(remoteSystemData.getOperationalMode()),
 				IasValidity.valueOf(remoteSystemData.getValidity()),
 				fullrunId,
-				type);
+				type,
+				pluginProductionTime, // PLUGIN production
+				pluginSentToConvertTime,  // Sent to converter
+				receptionTStamp, // received from plugin
+				producedAndSentTStamp, // Produced by converter
+				producedAndSentTStamp, // Sent to BSDB
+				null, // Read from BSDB
+				null, // DASU prod time
+				null, // dependents
+				null); // additional properties
 	}
 
 	/**
@@ -201,8 +218,12 @@ public class ValueMapper implements Function<String, String> {
 	@Override
 	public String apply(String mpString) {
 		if (mpString==null || mpString.isEmpty()) {
+			logger.warn("Received null or empty string from plugin: nothing to convert");
 			return null;
 		}
+		
+		long receptionTimestamp = System.currentTimeMillis();
+		
 		MonitorPointData mpd;
 		try {
 			mpd=MonitorPointData.fromJsonString(mpString);
@@ -222,7 +243,7 @@ public class ValueMapper implements Function<String, String> {
 		
 		IASValue<?> iasValue;
 		try { 
-			iasValue= translate(mpd,iasType);
+			iasValue= translate(mpd,iasType,receptionTimestamp);
 		} catch (Exception cfe) {
 			logger.error("Error converting {} to a core value type: value lost!",mpd.getId());
 			return null;

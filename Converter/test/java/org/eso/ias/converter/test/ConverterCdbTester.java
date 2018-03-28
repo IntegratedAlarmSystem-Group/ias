@@ -21,7 +21,7 @@ import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.converter.config.IasioConfigurationDaoImpl;
 import org.eso.ias.converter.config.MonitorPointConfiguration;
-import org.eso.ias.prototype.input.java.IASTypes;
+import org.eso.ias.types.IASTypes;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -127,7 +127,7 @@ public class ConverterCdbTester {
 		Set<IasioDao> iasios = new HashSet<>(numOfIasios);
 		for (int t=0; t<numOfIasios; t++) {
 			IasTypeDao iasType = buildIasType(t);
-			IasioDao iasio = new IasioDao(buildIasId(t), "IASIO description", 1500, iasType);
+			IasioDao iasio = new IasioDao(buildIasId(t), "IASIO description", iasType);
 			iasios.add(iasio);
 		}
 		return iasios;

@@ -7,9 +7,9 @@ import scala.collection.JavaConverters.collectionAsScalaIterable
  *  and the generated output.
  * 
  * @constructor build the ACSE view for topology
- * @param id the identifier of the ASCE
- * @param ins the identifier of the IASIOs in input
- * @param out the identifier of the IASIO produced by the ASCE
+ * @param identifier the identifier of the ASCE
+ * @param inputs the identifier of the IASIOs in input
+ * @param output the identifier of the IASIO produced by the ASCE
  * @author acaproni
  */
 class AsceTopology(

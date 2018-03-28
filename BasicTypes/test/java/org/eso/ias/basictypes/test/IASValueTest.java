@@ -4,13 +4,13 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-import org.eso.ias.prototype.input.Identifier;
-import org.eso.ias.prototype.input.Validity;
-import org.eso.ias.prototype.input.java.IASTypes;
-import org.eso.ias.prototype.input.java.IASValue;
-import org.eso.ias.prototype.input.java.IasValidity;
-import org.eso.ias.prototype.input.java.IdentifierType;
-import org.eso.ias.prototype.input.java.OperationalMode;
+import org.eso.ias.types.IASTypes;
+import org.eso.ias.types.IASValue;
+import org.eso.ias.types.IasValidity;
+import org.eso.ias.types.Identifier;
+import org.eso.ias.types.IdentifierType;
+import org.eso.ias.types.OperationalMode;
+import org.eso.ias.types.Validity;
 
 import scala.Some;
 import scala.Option;
@@ -31,10 +31,10 @@ public class IASValueTest {
 		Identifier asceId =  new Identifier("AsceId",IdentifierType.ASCE,new Some(dasuId));
 		Identifier id = new Identifier(valId, IdentifierType.IASIO,new Some(asceId));
 		
-		IASValue<?> val = IASValue.buildIasValue(
+		IASValue<?> val = IASValue.build(
 				10L, 
-				System.currentTimeMillis(),
-				OperationalMode.DEGRADED, IasValidity.RELIABLE, 
+				OperationalMode.DEGRADED, 
+				IasValidity.RELIABLE, 
 				id.fullRunningID(), 
 				IASTypes.LONG);
 		assertEquals(valId, val.id);

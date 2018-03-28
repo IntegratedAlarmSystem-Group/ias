@@ -1,23 +1,23 @@
 package org.eso.ias.component.test
 
 import org.scalatest.FlatSpec
-import org.eso.ias.prototype.transfer.impls.MultiplicityTF
+import org.eso.ias.asce.transfer.impls.MultiplicityTF
 import java.util.Properties
-import org.eso.ias.prototype.compele.ComputingElement
-import org.eso.ias.prototype.input.java.AlarmSample
-import org.eso.ias.prototype.transfer.ScalaTransfer
-import org.eso.ias.prototype.transfer.TransferFunctionLanguage
-import org.eso.ias.prototype.transfer.TransferFunctionSetting
-import org.eso.ias.prototype.input.Identifier
-import org.eso.ias.prototype.input.java.IdentifierType
-import org.eso.ias.prototype.input.InOut
-import org.eso.ias.prototype.input.java.IASTypes
-import org.eso.ias.prototype.input.java.IASValue
-import org.eso.ias.prototype.input.JavaConverter
+import org.eso.ias.asce.ComputingElement
+import org.eso.ias.types.AlarmSample
+import org.eso.ias.asce.transfer.ScalaTransfer
+import org.eso.ias.asce.transfer.TransferFunctionLanguage
+import org.eso.ias.asce.transfer.TransferFunctionSetting
+import org.eso.ias.types.Identifier
+import org.eso.ias.types.IdentifierType
+import org.eso.ias.types.InOut
+import org.eso.ias.types.IASTypes
+import org.eso.ias.types.IASValue
+import org.eso.ias.types.JavaConverter
 import org.scalatest.BeforeAndAfterEach
-import org.eso.ias.prototype.input.Validity
-import org.eso.ias.prototype.input.java.IasValidity
-import org.eso.ias.prototype.input.java.OperationalMode
+import org.eso.ias.types.Validity
+import org.eso.ias.types.IasValidity
+import org.eso.ias.types.OperationalMode
 
 /**
  * Test the multiplicity transfer function
@@ -42,22 +42,14 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   val outId = new Identifier("MultiAlarm-ID",IdentifierType.IASIO, Some(compID))
   
   /** The output of the ASCE */
-  val output: InOut[AlarmSample] = InOut(
-    outId,
-    1000,
-    IASTypes.ALARM)
+  val output: InOut[AlarmSample] = InOut.asOutput(outId,IASTypes.ALARM)
     
   /** The Map of IASValues for updating the inputs to the ASCE */
   val inputsMPs: Set[InOut[_]]  = {
     val v = for (i <- 1 to 5) yield {
-    new InOut(
-         None,   
-         System.currentTimeMillis(),
-         new Identifier(("INPUT-HIO-ID#"+i), IdentifierType.IASIO,compID),
-         500,
-         OperationalMode.UNKNOWN,
-         Some(Validity(IasValidity.RELIABLE)),
-         IASTypes.ALARM)  
+    InOut.asInput(
+        new Identifier(("INPUT-HIO-ID#"+i), IdentifierType.IASIO,compID),
+        IASTypes.ALARM)  
     }
     v.toSet
   }
@@ -67,7 +59,7 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   
   override def beforeEach() {
   val scalaMultuiplicityTF = new TransferFunctionSetting(
-      "org.eso.ias.prototype.transfer.impls.MultiplicityTF",
+      "org.eso.ias.asce.transfer.impls.MultiplicityTF",
         TransferFunctionLanguage.scala,
         threadFactory)
     
@@ -86,16 +78,6 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
     scalaComp.get.shutdown()
   }
   
-  /** 
-   *  Convert a InOut to a IASValue
-   *  
-   *  @param  iasio The InOut to convert
-   *  @return the IASValue
-   */
-  def convert(iasio: InOut[_]): IASValue[_] = {
-    JavaConverter.inOutToIASValue(iasio,iasio.getValidity(None))
-  }
-  
   /**
    * Check the state of the alarm of the passed IASIO
    * 
@@ -104,10 +86,10 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
    */
   def checkAlarmActivation(asce: ComputingElement[AlarmSample], alarmState: AlarmSample): Boolean = {
     assert(asce.isOutputAnAlarm)
-    val hio = asce.getOutput()._1
-    assert(hio.iasType==IASTypes.ALARM)
+    val iasio = asce.output
+    assert(iasio.iasType==IASTypes.ALARM)
     
-    hio.value.forall(a => a==alarmState)
+    iasio.value.forall(a => a==alarmState)
   }
   
   /**
@@ -121,8 +103,8 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
     require(n>0)
     val inputsMPsList = inputsMPs.toList
     val list = for (i <- 0 to inputsMPsList.size-1) yield {
-      if (i<=n-1) convert(inputsMPsList(i).updateValue(Some(AlarmSample.SET)))
-      else convert(inputsMPsList(i).updateValue(Some(AlarmSample.CLEARED)))
+      if (i<=n-1) inputsMPsList(i).updateValue(Some(AlarmSample.SET)).toIASValue()
+      else inputsMPsList(i).updateValue(Some(AlarmSample.CLEARED)).toIASValue()
     }
     val ret = list.toSet
     assert(ret.size==inputsMPs.size)
@@ -134,7 +116,7 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   
   it must "Correctly load, init and shutdown the multiplicity TF executor" in { 
     val multuiplicityTF = new TransferFunctionSetting(
-      "org.eso.ias.prototype.transfer.impls.MultiplicityTF",
+      "org.eso.ias.asce.transfer.impls.MultiplicityTF",
         TransferFunctionLanguage.scala,
         threadFactory)
     
@@ -152,12 +134,12 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   
   it must "run the multiplicity TF" in {
     // Change all inputs do  trigger the TF
-    val changedMPs = inputsMPs.map ( iasio => convert(iasio.updateValue(Some(AlarmSample.SET))))
+    val changedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(AlarmSample.SET)).toIASValue())
     scalaComp.get.update(changedMPs)
     assert(checkAlarmActivation(scalaComp.get,AlarmSample.SET))
     
     // Clearing all must disable
-    val clearedMPs = inputsMPs.map ( iasio => convert(iasio.updateValue(Some(AlarmSample.CLEARED))))
+    val clearedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(AlarmSample.CLEARED)).toIASValue())
     scalaComp.get.update(clearedMPs)
     assert(checkAlarmActivation(scalaComp.get,AlarmSample.CLEARED))
     

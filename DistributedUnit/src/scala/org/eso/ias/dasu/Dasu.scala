@@ -1,6 +1,6 @@
 package org.eso.ias.dasu
 
-import org.ias.prototype.logging.IASLogger
+import org.ias.logging.IASLogger
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.JsonReader
 import org.eso.ias.cdb.json.CdbFiles
@@ -10,16 +10,16 @@ import org.eso.ias.dasu.topology.Topology
 
 import scala.collection.JavaConverters
 import org.eso.ias.cdb.pojos.DasuDao
-import org.eso.ias.prototype.input.Identifier
-import org.eso.ias.prototype.input.java.IdentifierType
+import org.eso.ias.types.Identifier
+import org.eso.ias.types.IdentifierType
 import org.eso.ias.cdb.pojos.AsceDao
-import org.eso.ias.prototype.compele.ComputingElement
-import org.eso.ias.prototype.compele.ComputingElementState
-import org.eso.ias.prototype.compele.AsceStates
-import org.eso.ias.prototype.input.InOut
+import org.eso.ias.asce.ComputingElement
+import org.eso.ias.asce.ComputingElementState
+import org.eso.ias.asce.AsceStates
+import org.eso.ias.types.InOut
 import org.eso.ias.dasu.publisher.OutputPublisher
-import org.eso.ias.prototype.input.java.IASValue
-import org.eso.ias.prototype.input.JavaConverter
+import org.eso.ias.types.IASValue
+import org.eso.ias.types.JavaConverter
 import org.eso.ias.dasu.executorthread.ScheduledExecutor
 import scala.util.Try
 import java.util.concurrent.atomic.AtomicLong
@@ -57,14 +57,32 @@ import scala.util.Success
  * 
  * @constructor create a DASU with the given identifier
  * @param dasuIdentifier the identifier of the DASU
+ * @param autoSendTimeInterval the refresh rate (seconds) to automatically re-send the last calculated 
+ *                    output even if it did not change
+ * @param tolerance the max delay (secs) before declaring an input unreliable
  */
-abstract class Dasu(val dasuIdentifier: Identifier) extends InputsListener {
+abstract class Dasu(
+    val dasuIdentifier: Identifier, 
+    val autoSendTimeInterval: Integer,
+    val tolerance: Integer) extends InputsListener {
+  require(autoSendTimeInterval>0)
+  require(tolerance>=0)
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
   
   /** The ID of the DASU */
   val id = dasuIdentifier.id
+  
+  /** 
+   *  Auto send time interval in milliseconds
+   */
+  val autoSendTimeIntervalMillis = TimeUnit.MILLISECONDS.convert(autoSendTimeInterval.toLong, TimeUnit.SECONDS)
+  
+  /** 
+   *  The tolerance in milliseconds
+   */
+  val toleranceMillis = TimeUnit.MILLISECONDS.convert(tolerance.toLong, TimeUnit.SECONDS)
   
   /**
    * The minimum allowed refresh rate when a flow of inputs arrive (i.e. the throttiling) 

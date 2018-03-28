@@ -21,26 +21,26 @@ if __name__ == '__main__':
     (options, args) = parser.parse_args()
     
     if not options.destFolder:
-        print "No destination folder given"
+        print("No destination folder given")
         sys.exit(-1)
     else:
-        print "API documentation will be generated in",options.destFolder
+        print("API documentation will be generated in",options.destFolder)
     
     if not options.srcFolder:
-        print "No source folder given"
+        print("No source folder given")
         sys.exit(-1)
     else:
-        print "Reading sources from",options.srcFolder
+        print("Reading sources from",options.srcFolder)
         
     # Build scala documentation
-    print "Building scaladoc"
+    print("Building scaladoc")
     scalaBuilder = ScaladocBuilder(options.srcFolder,join(options.destFolder,"scala"))
     scalaBuilder.buildScaladocs()
     
-    print "Building javadoc"
+    print("Building javadoc")
     javaBuilder = JavadocBuilder(options.srcFolder,join(options.destFolder,"java"))
     javaBuilder.buildJavadocs()
     
-    print "Building pydoc"
+    print("Building pydoc")
     pythonBuilder = PydocBuilder(options.srcFolder,join(options.destFolder,"python"))
     pythonBuilder.buildPydocs()

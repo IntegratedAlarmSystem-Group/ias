@@ -43,7 +43,8 @@
 		<!-- Props set depending on the existence of folders/files -->
 		<available file="${src.java.dir}" type="dir" property="src.java.dir.exists"/>
 		<available file="${src.scala.dir}" type="dir" property="src.scala.dir.exists"/>
-		<available file="${src.python.dir}" type="dir" property="src.pyhton.dir.exists"/>
+		<available file="${src.python.dir}" type="dir" property="src.python.dir.exists"/>
+		
 	</target>
 	
 	<!--
@@ -160,7 +161,7 @@
 		name="localInstallPyModules" 
 		depends="init-ias-environment"
 		description="Install python modules from src to lib"
-		if="src.pyhton.dir.exists">
+		if="src.python.dir.exists">
 
 		<echo>Locally installing python modules in ${mods.python.dir}</echo>
 		<mkdir dir="${mods.python.dir}"/>
@@ -175,6 +176,56 @@
 	</target>
 	
 	<!--
+		Install all the python scripts from src/python into bin
+		and set their executable attribute to true
+	-->
+	<target name="localinstallpyscripts" depends="init-ias-environment" if="src.python.dir.exists">
+		<!-- Python scripts are initially copied in the bin folder of the module 
+		     then installed in the IAS_ROOT/bin folder -->
+		<echo>Locally installing python scripts in ${bin.dir}</echo>
+		<copy todir="${bin.dir}" verbose="true">
+			<fileset dir="${src.python.dir}" includes="*.py" defaultexcludes="no"/>
+		</copy>
+		<!--  Removes the extension .py of files in ../bin  -->
+		<move todir="${bin.dir}" verbose="true" includeEmptyDirs="false">
+			<fileset dir="${bin.dir}" includes="*.py" defaultexcludes="no"/>
+				<mapper type="glob" from="*.py" to="*"/>
+		</move>
+	</target>
+	
+	<!--
+		Checks if there are *.sh in the source folder
+		to be installed
+	-->
+	<target name = "checkIfThereAreShFileinSrc">
+		<condition property="src.shFilesExist">
+		     <resourcecount when="greater" count="0">
+		         <fileset dir="${src.dir}">
+		             <include name="*.sh"/>
+		         </fileset>
+		     </resourcecount>
+		</condition>
+	</target>
+
+	<!--
+		Install all the shell scripts from src into bin
+		and set their executable attribute to true
+	-->
+	<target name="localinstallshscripts" depends="checkIfThereAreShFileinSrc, init-ias-environment" if="src.shFilesExist" >
+		<!-- Shell are initially copied in the bin folder of the module 
+			     then installed in the IAS_ROOT/bin folder -->
+			<echo>Locally installing bash scripts in ${bin.dir}</echo>
+			<copy todir="${bin.dir}" verbose="true">
+				<fileset dir="${src.dir}" includes="*.sh" defaultexcludes="no"/>
+			</copy>
+			<!--  Removes the extension .sh of files in ../bin  -->
+			<move todir="${bin.dir}" verbose="true" includeEmptyDirs="false">
+				<fileset dir="${bin.dir}" includes="*.sh" defaultexcludes="no"/>
+					<mapper type="glob" from="*.sh" to="*"/>
+			</move>
+	</target>
+	
+	<!--
 		Install the python scripts from src/python into bin
 		and set their executable attribute to true
 		
@@ -182,13 +233,8 @@
 		refined if we want the user to select specific scripts
 		by setting a property
 	-->
-	<target name="localinstallbinaries" depends="init-ias-environment" if="src.pyhton.dir.exists">
-		<!-- Binaries are initially copied in the bin folder of the module 
-		     then installed in the IAS_ROOT/bin folder -->
-		<echo>Locally installing python binaries in ${bin.dir}</echo>
-		<copy todir="${bin.dir}" verbose="true">
-			<fileset dir="${src.python.dir}" includes="*.py" defaultexcludes="no"/>
-		</copy>
+	<target name="localinstallbinaries" depends="init-ias-folders,localinstallpyscripts,localinstallshscripts">
+		
 		<!-- Set permission of executables -->
 		<chmod dir="${bin.dir}" perm="ug+rx" includes="**/*" defaultexcludes="no" />
 	</target>
@@ -244,7 +290,7 @@
 		<echo>Installing binaries in ${install.dir}/bin</echo>
 		<mkdir dir="${install.dir}/bin"/>
 		<copy todir="${install.dir}/bin" verbose="true">
-			<fileset dir="${bin.dir}" includes="*.py" defaultexcludes="no"/>
+			<fileset dir="${bin.dir}" includes="*" defaultexcludes="no"/>
 		</copy>
 		<copy todir="${install.dir}/bin" verbose="true">
 			<fileset dir="${bin.dir}" includes="*.sh" defaultexcludes="no"/>

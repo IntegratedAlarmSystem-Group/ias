@@ -6,7 +6,7 @@
   	packagingData: nicely print stack traces (expansive)  
    -->
    
-  <timestamp key="tStamp" datePattern="yyyy-MM-dd'T'HH-mm-ss"/>
+  <timestamp key="tStamp" datePattern="yyyy-MM-dd'T'HH:mm:ss.SSS" timeReference="-3"/>
 
   <shutdownHook/>
   
@@ -14,9 +14,11 @@
     <!-- encoders are assigned the type
          ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
     <encoder>
-      <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} [%file:%line] - %msg%n</pattern>
+      <pattern>%d{HH-mm-ss.SSS, UTC} |%-5level| [%file:%line] [%thread] %msg%n</pattern>
     </encoder>
   </appender>
+
+  <logger name="org.apache.kafka" level="INFO" />
   
    <appender 
    	name="FILE" 
@@ -24,20 +26,14 @@
    	<append>true</append>
    	<prudent>true</prudent> <!--  Can slow down the logging -->
     <file>${IAS_LOGS_FOLDER}/${ias.logs.filename}-${tStamp}.log</file>
-    <!--  
-    	In future we might want to implement the rolling policy
-    	based on time and size
-    	(#see http://logback.qos.ch/manual/appenders.html#SizeAndTimeBasedRollingPolicy)
-    	
-    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-      <fileNamePattern>mylog-%d{yyyy-MM-dd}.%i.txt</fileNamePattern>
+    <rollingPolicy lass="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+      <fileNamePattern>${IAS_LOGS_FOLDER}/${ias.logs.filename}.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
       <maxFileSize>100MB</maxFileSize>    
       <maxHistory>60</maxHistory>
-      <totalSizeCap>20GB</totalSizeCap>
+      <totalSizeCap>5GB</totalSizeCap>
     </rollingPolicy>
-    -->
     <encoder>
-      <pattern>%d{yyyy-MM-dd'T'HH:mm:ss} %-5level [%file:%line] [%thread] %msg%n</pattern>
+      <pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSS, UTC} | %-5level [%file:%line] [%thread] %msg%n</pattern>
       <outputPatternAsHeader>true</outputPatternAsHeader>
     </encoder>
   </appender>

@@ -9,18 +9,18 @@ import java.util.Objects;
 import org.eso.ias.converter.config.ConfigurationException;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
 import org.eso.ias.converter.config.MonitorPointConfiguration;
-import org.eso.ias.prototype.input.java.AlarmSample;
+import org.eso.ias.types.AlarmSample;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.Filter.ValidatedSample;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.MonitorPointData;
-import org.eso.ias.prototype.input.java.IASTypes;
-import org.eso.ias.prototype.input.java.IASValue;
-import org.eso.ias.prototype.input.java.IasValidity;
-import org.eso.ias.prototype.input.java.IasValueJsonSerializer;
-import org.eso.ias.prototype.input.java.IasValueStringSerializer;
-import org.eso.ias.prototype.input.java.OperationalMode;
+import org.eso.ias.types.IASTypes;
+import org.eso.ias.types.IASValue;
+import org.eso.ias.types.IasValidity;
+import org.eso.ias.types.IasValueJsonSerializer;
+import org.eso.ias.types.IasValueStringSerializer;
+import org.eso.ias.types.OperationalMode;
 
 /**
  * A base class providing common utlity methods used
@@ -43,14 +43,21 @@ public class ConverterTestBase {
 		 * 
 		 * @param id The identifier of the monitor point
 		 * @param value The value of the monitor point
-		 * @param timestamp The timestamp
+		 * @param pluginProductionTSamp The timestamp when the plugin produced the value
+		 * @param pluginSentTSamp The timestamp when the plugin sent the value to the converter
 		 * @param iasType The type of the monitor point
 		 */
-		public MonitorPointDataHolder(String id, Object value, long timestamp, IASTypes iasType) {
+		public MonitorPointDataHolder(
+				String id, 
+				Object value, 
+				long pluginProductionTSamp,
+				long pluginSentTSamp,
+				IASTypes iasType) {
 			super();
 			this.id=id;
 			this.value = value;
-			this.timestamp = timestamp;
+			this.pluginProductionTSamp = pluginProductionTSamp;
+			this.pluginSentTSamp=pluginSentTSamp;
 			this.iasType = iasType;
 		}
 		
@@ -65,9 +72,15 @@ public class ConverterTestBase {
 		public final Object value;
 		
 		/**
-		 * The timestamp
+		 * The time-stamp when the plugin produced the value
 		 */
-		public final long timestamp;
+		public final long pluginProductionTSamp;
+		
+		/**
+		 * The time-stamp when the plugin sent the value
+		 * to the converter
+		 */
+		public final long pluginSentTSamp;
 		
 		/**
 		 * The type of the monitor point
@@ -180,52 +193,101 @@ public class ConverterTestBase {
 	/**
 	 * A holder for type Long
 	 */
-	private final MonitorPointDataHolder mpLong = new MonitorPointDataHolder("LongId",Long.valueOf(1234455667),1000, IASTypes.LONG);
+	private final MonitorPointDataHolder mpLong = new MonitorPointDataHolder(
+			"LongId",
+			Long.valueOf(1234455667),
+			1000L, 
+			1050L,
+			IASTypes.LONG);
 	
 	/**
 	 * A holder for type Integer
 	 */
-	private final MonitorPointDataHolder mpInt= new MonitorPointDataHolder("IntId",Integer.valueOf(321456),1100, IASTypes.INT);
+	private final MonitorPointDataHolder mpInt= new MonitorPointDataHolder(
+			"IntId",
+			Integer.valueOf(321456),
+			1100L,
+			1150L,
+			IASTypes.INT);
 	
 	/**
 	 * A holder for type Short
 	 */
-	private final MonitorPointDataHolder mpShort = new MonitorPointDataHolder("ShortId",Short.valueOf("121"),1200,IASTypes.SHORT);
+	private final MonitorPointDataHolder mpShort = new MonitorPointDataHolder(
+			"ShortId",
+			Short.valueOf("121"),
+			1200L,
+			1250L,
+			IASTypes.SHORT);
 	
 	/**
 	 * A holder for type Byte
 	 */
-	private final MonitorPointDataHolder mpByte = new MonitorPointDataHolder("ByteId",Byte.valueOf("10"), 1300,IASTypes.BYTE);
+	private final MonitorPointDataHolder mpByte = new MonitorPointDataHolder(
+			"ByteId",
+			Byte.valueOf("10"), 
+			1300L,
+			1350L,
+			IASTypes.BYTE);
 	
 	/**
 	 * A holder for type Double
 	 */
-	private final MonitorPointDataHolder mpDouble = new MonitorPointDataHolder("DoubleId",Double.valueOf(2234.6589), 1400, IASTypes.DOUBLE);
+	private final MonitorPointDataHolder mpDouble = new MonitorPointDataHolder(
+			"DoubleId",
+			Double.valueOf(2234.6589), 
+			1400L,
+			1450L,
+			IASTypes.DOUBLE);
 	
 	/**
 	 * A holder for type Float
 	 */
-	private final MonitorPointDataHolder mpFloat = new MonitorPointDataHolder("FloatId",Float.valueOf(554466.8702f), 1500,IASTypes.FLOAT);
+	private final MonitorPointDataHolder mpFloat = new MonitorPointDataHolder(
+			"FloatId",
+			Float.valueOf(554466.8702f), 
+			1500L,
+			1550L,
+			IASTypes.FLOAT);
 	
 	/**
 	 * A holder for type Boolean
 	 */
-	private final MonitorPointDataHolder mpBool = new MonitorPointDataHolder("BoolId",Boolean.FALSE, 1600, IASTypes.BOOLEAN);
+	private final MonitorPointDataHolder mpBool = new MonitorPointDataHolder(
+			"BoolId",
+			Boolean.FALSE, 
+			1600L,
+			1650L,
+			IASTypes.BOOLEAN);
 	
 	/**
 	 * A holder for type Character
 	 */
-	private final MonitorPointDataHolder mpChar = new MonitorPointDataHolder("CharId",Character.valueOf('X'), 1700, IASTypes.CHAR);
+	private final MonitorPointDataHolder mpChar = new MonitorPointDataHolder(
+			"CharId",Character.valueOf('X'), 
+			1700L,
+			1750L,
+			IASTypes.CHAR);
 	
 	/**
 	 * A holder for type String
 	 */
-	private final MonitorPointDataHolder mpString = new MonitorPointDataHolder("StrId","The string", 1800, IASTypes.STRING);
+	private final MonitorPointDataHolder mpString = new MonitorPointDataHolder(
+			"StrId",
+			"The string", 
+			1800L,
+			1850L,
+			IASTypes.STRING);
 	
 	/**
 	 * A holder for type Alarm
 	 */
-	private final MonitorPointDataHolder mpAlarm = new MonitorPointDataHolder("AlarmId",AlarmSample.SET, 1900, IASTypes.ALARM);
+	private final MonitorPointDataHolder mpAlarm = new MonitorPointDataHolder(
+			"AlarmId",
+			AlarmSample.SET, 
+			1900L,
+			1950L,
+			IASTypes.ALARM);
 	
 	/**
 	 * The holders: one for each type
@@ -245,7 +307,7 @@ public class ConverterTestBase {
 		Objects.requireNonNull(mpHolder);
 		List<ValidatedSample> samples = new ArrayList<>();
 		samples.add(new ValidatedSample(new Sample(mpHolder.value),IasValidity.RELIABLE));
-		FilteredValue fv = new FilteredValue(mpHolder.value, samples, mpHolder.timestamp);
+		FilteredValue fv = new FilteredValue(mpHolder.value, samples, mpHolder.pluginProductionTSamp);
 		ValueToSend vts = new ValueToSend(mpHolder.id, fv,OperationalMode.DEGRADED);
 		return new MonitorPointData(pluginID, monitoredSystemID, vts);
 	}

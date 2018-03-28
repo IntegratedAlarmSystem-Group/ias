@@ -2,24 +2,25 @@ package org.eso.ias.supervisor.test
 
 import org.eso.ias.dasu.Dasu
 import org.eso.ias.dasu.topology.Topology
-import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.types.IASValue
 import scala.util.Try
-import org.eso.ias.prototype.input.Identifier
+import org.eso.ias.types.Identifier
 import org.eso.ias.dasu.publisher.OutputPublisher
 import org.eso.ias.dasu.subscriber.InputSubscriber
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.pojos.DasuDao
 import org.eso.ias.cdb.pojos.AsceDao
-import org.eso.ias.prototype.input.java.IdentifierType
+import org.eso.ias.types.IdentifierType
 import java.util.concurrent.atomic.AtomicInteger
 import scala.util.Success
 import scala.collection.mutable.ArrayBuffer
-import org.ias.prototype.logging.IASLogger
+import org.ias.logging.IASLogger
 import scala.collection.JavaConverters
-import org.eso.ias.prototype.input.java.AlarmSample
-import org.eso.ias.prototype.input.java.OperationalMode
-import org.eso.ias.prototype.input.java.IasValidity
-import org.eso.ias.prototype.input.java.IASTypes
+import org.eso.ias.types.AlarmSample
+import org.eso.ias.types.OperationalMode
+import org.eso.ias.types.IasValidity
+import org.eso.ias.types.IASTypes
+import java.util.HashSet
 
 
 /** 
@@ -37,7 +38,7 @@ class DasuMock(
     private val inputSubscriber: InputSubscriber,
     cdbReader: CdbReader,
     outputIdentifier: Identifier)
-extends Dasu(dasuIdentifier) {
+extends Dasu(dasuIdentifier,5,1) {
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
@@ -86,17 +87,24 @@ extends Dasu(dasuIdentifier) {
   logger.info("{} inputs required by Mock_DASU [{}]: {}", inputsOfTheDasu.size.toString(), dasuIdentifier.id,inputsOfTheDasu.mkString(", "))
   
   /** The output published when inputs are received */
-  val output = IASValue.buildIasValue(
-      AlarmSample.SET, 
-      System.currentTimeMillis(), 
-      OperationalMode.OPERATIONAL, 
-      IasValidity.RELIABLE, 
-      outputIdentifier.fullRunningID, 
-      IASTypes.ALARM)
+  val output = IASValue.build(
+      AlarmSample.SET,
+			OperationalMode.OPERATIONAL,
+			IasValidity.RELIABLE,
+			outputIdentifier.fullRunningID,
+			IASTypes.ALARM,
+			null,
+			null,
+			null,
+			null,
+			null,
+			null,
+			System.currentTimeMillis(),
+			null,
+			null)
   
   
-  // TODO release cdb resources
-      
+  
   logger.info("Mock-DASU [{}] built", dasuIdentifier.id)
   
   /**
@@ -113,8 +121,10 @@ extends Dasu(dasuIdentifier) {
       if (!getInputIds().contains(id)) unexpectedInputsReceived.append(id)
       })
       
+      val depIds = iasios.filter(value => getInputIds().contains(value.id)).map(_.fullRunningId)
+      
       // Publish the simulated output
-      outputPublisher.publish(output)
+      outputPublisher.publish(output.updateFullIdsOfDependents(JavaConverters.setAsJavaSet(depIds)))
   }
 
   /**

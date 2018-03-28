@@ -4,11 +4,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.TimeZone;
 
 import org.eso.ias.plugin.filter.Filter.ValidatedSample;
 import org.eso.ias.plugin.filter.FilteredValue;
-import org.eso.ias.prototype.input.java.IasValidity;
-import org.eso.ias.prototype.input.java.OperationalMode;
+import org.eso.ias.types.IasValidity;
+import org.eso.ias.types.OperationalMode;
 
 /**
  * The value to send to the core of the IAS.
@@ -89,7 +90,6 @@ public class ValueToSend extends FilteredValue {
 	 * @param id The ID of the value 
 	 * @param filteredValue The value produced applying the filter
 	 * @param opMode The operational mode
-	 * @param iasValidity The validity
 	 */
 	public ValueToSend(
 			String id, 
@@ -147,6 +147,7 @@ public class ValueToSend extends FilteredValue {
 		ret.append(id);
 		ret.append(", generated at ");
 		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
+		df.setTimeZone(TimeZone.getTimeZone("UTC"));
 		Date date = new Date(filteredTimestamp);
 		ret.append(df.format(date));
 		ret.append(", value=");

@@ -9,21 +9,20 @@ import org.eso.ias.dasu.Dasu
 import org.eso.ias.dasu.publisher.OutputListener
 import org.eso.ias.dasu.publisher.ListenerOutputPublisherImpl
 import org.eso.ias.dasu.publisher.OutputPublisher
-import org.eso.ias.prototype.input.java.IasValueJsonSerializer
-import org.ias.prototype.logging.IASLogger
-import org.eso.ias.prototype.input.java.IASValue
-import org.eso.ias.prototype.input.java.IasDouble
-import org.eso.ias.prototype.input.Identifier
-import org.eso.ias.prototype.input.java.IdentifierType
-import org.eso.ias.prototype.input.java.OperationalMode
-import org.eso.ias.prototype.input.InOut
-import org.eso.ias.prototype.input.JavaConverter
+import org.eso.ias.types.IasValueJsonSerializer
+import org.ias.logging.IASLogger
+import org.eso.ias.types.IASValue
+import org.eso.ias.types.Identifier
+import org.eso.ias.types.IdentifierType
+import org.eso.ias.types.OperationalMode
+import org.eso.ias.types.InOut
+import org.eso.ias.types.JavaConverter
 import org.eso.ias.dasu.subscriber.InputsListener
 import org.eso.ias.dasu.subscriber.InputSubscriber
 import scala.util.Success
 import scala.util.Try
 import scala.collection.mutable.{HashSet => MutableSet}
-import org.eso.ias.prototype.input.java.IasValidity._
+import org.eso.ias.types.IasValidity._
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.dasu.publisher.DirectInputSubscriber
 import org.scalatest.BeforeAndAfter
@@ -38,7 +37,7 @@ import org.scalatest.BeforeAndAfter
  */
 class DasuOneASCETest extends FlatSpec  with BeforeAndAfter {
   
-  val f = new DasuOneAsceCommon(1000)
+  val f = new DasuOneAsceCommon(3,1)
   
   before {
     f.outputValuesReceived.clear()
@@ -69,6 +68,44 @@ class DasuOneASCETest extends FlatSpec  with BeforeAndAfter {
     val inputs: Set[IASValue[_]] = Set(f.buildValue(0))
     // Sumbit the inputs
     f.inputsProvider.sendInputs(inputs)
+    // Give time to produce the output
+    Thread.sleep(1000)
+    assert(f.outputValuesReceived.size==1)
+  }
+  
+  it must "set the dasu production timestamp of the output" in {
+    f.dasu.get.enableAutoRefreshOfOutput(false)
+    val before = System.currentTimeMillis()
+    // Start the getting of events in the DASU
+    val inputs: Set[IASValue[_]] = Set(f.buildValue(0))
+    // Sumbit the inputs
+    f.inputsProvider.sendInputs(inputs)
+    
+    // Give time to produce the output
+    Thread.sleep(1000)
+    
+    assert(f.outputValuesReceived.size==1)
+    val output = f.outputValuesReceived(0)
+    assert(output.dasuProductionTStamp.isPresent())
+    val prodTStamp = output.dasuProductionTStamp.get()
+    assert( prodTStamp>=before && prodTStamp<=System.currentTimeMillis())
+  }
+  
+  it must "set the list of fullRuningIds of dependent inputs" in {
+    f.dasu.get.enableAutoRefreshOfOutput(false)
+    val before = System.currentTimeMillis()
+    // Start the getting of events in the DASU
+    val inputs: Set[IASValue[_]] = Set(f.buildValue(0))
+    // Sumbit the inputs
+    f.inputsProvider.sendInputs(inputs)
+    
+    // Give time to produce the output
+    Thread.sleep(1000)
+    
+    assert(f.outputValuesReceived.size==1)
+    val output = f.outputValuesReceived(0)
+    assert(output.dependentsFullRuningIds.isPresent())
+    assert(!output.dependentsFullRuningIds.get().isEmpty())
   }
   
 }

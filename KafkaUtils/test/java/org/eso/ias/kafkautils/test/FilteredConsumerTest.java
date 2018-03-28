@@ -24,14 +24,14 @@ import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener;
 import org.eso.ias.kafkautils.KafkaIasiosProducer;
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
-import org.eso.ias.prototype.input.Identifier;
-import org.eso.ias.prototype.input.java.AlarmSample;
-import org.eso.ias.prototype.input.java.IASTypes;
-import org.eso.ias.prototype.input.java.IASValue;
-import org.eso.ias.prototype.input.java.IasValidity;
-import org.eso.ias.prototype.input.java.IasValueJsonSerializer;
-import org.eso.ias.prototype.input.java.IasValueStringSerializer;
-import org.eso.ias.prototype.input.java.OperationalMode;
+import org.eso.ias.types.Identifier;
+import org.eso.ias.types.AlarmSample;
+import org.eso.ias.types.IASTypes;
+import org.eso.ias.types.IASValue;
+import org.eso.ias.types.IasValidity;
+import org.eso.ias.types.IasValueJsonSerializer;
+import org.eso.ias.types.IasValueStringSerializer;
+import org.eso.ias.types.OperationalMode;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -150,9 +150,8 @@ public class FilteredConsumerTest implements IasioListener {
 	public Collection<IASValue<?>> buildValues(List<String> ids) {
 		Objects.requireNonNull(ids);
 		return ids.stream().map(id ->  
-			IASValue.buildIasValue(
+			IASValue.build(
 					10L, 
-					System.currentTimeMillis(), 
 					OperationalMode.OPERATIONAL, 
 					IasValidity.RELIABLE, 
 					buildFullRunningID(id),
@@ -171,9 +170,8 @@ public class FilteredConsumerTest implements IasioListener {
 	public Collection<IASValue<?>> buildValues(List<String> ids, Object value, IASTypes type) {
 		Objects.requireNonNull(ids);
 		return ids.stream().map(id ->  
-			IASValue.buildIasValue(
+			IASValue.build(
 					value, 
-					System.currentTimeMillis(), 
 					OperationalMode.OPERATIONAL, 
 					IasValidity.RELIABLE, 
 					buildFullRunningID(id),

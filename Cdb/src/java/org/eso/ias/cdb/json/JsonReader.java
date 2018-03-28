@@ -542,4 +542,17 @@ public class JsonReader implements CdbReader {
 			}
 		}
 	}
+	
+	/**
+	 * Initialize the CDB
+	 */
+	@Override
+	public void init() throws IasCdbException {}
+	
+	/**
+	 * Close the CDB and release the associated resources
+	 * @throws IasCdbException
+	 */
+	@Override
+	public void shutdown() throws IasCdbException {}
 }

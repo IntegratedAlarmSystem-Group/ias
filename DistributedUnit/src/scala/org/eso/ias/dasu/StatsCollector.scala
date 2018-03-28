@@ -1,6 +1,6 @@
 package org.eso.ias.dasu
 
-import org.ias.prototype.logging.IASLogger
+import org.ias.logging.IASLogger
 import org.eso.ias.cdb.pojos.DasuDao
 import scala.collection.JavaConverters
 import org.eso.ias.cdb.pojos.IasioDao
@@ -27,11 +27,6 @@ class StatsCollector(
   private val logger = IASLogger.getLogger(this.getClass)
   
   logger.info("Building the statistics collector for DASU [{}]",dasuId)
-  
-  val margin = {
-    val prop = Option(System.getProperties.getProperty(StatsCollector.MarginPropName))
-    prop.map(s => Try(s.toInt).getOrElse(StatsCollector.DefaultMargin)).getOrElse(StatsCollector.DefaultMargin).abs
-  }
   
   /** The number of iterations executed so far */
   val iterationsRun = new AtomicLong(0L)
@@ -95,12 +90,6 @@ class StatsCollector(
 
 /** Companion object with definitions of constants*/
 object StatsCollector {
-  
-  /** The default margin to anticipate the generation of the output  */
-  val DefaultMargin = 50
-  
-  /** The name of the java property to set the margin */
-  val MarginPropName = "ias.dasu.min.output.generation.margin"
   
   /** The time interval to log statistics (minutes) */
   val DeafaultStatisticsTimeInterval = 10

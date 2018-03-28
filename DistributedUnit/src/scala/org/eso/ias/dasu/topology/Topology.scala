@@ -1,7 +1,7 @@
 package org.eso.ias.dasu.topology
 
 import org.eso.ias.cdb.pojos.AsceDao
-import org.ias.prototype.logging.IASLogger
+import org.ias.logging.IASLogger
 
 /** The topology to forward IASIOs to ASCEs.
  * 
@@ -35,7 +35,7 @@ class Topology(
     asces: List[AsceTopology],
     val dasuId: String,
     val dasuOutputId: String) {
-  require(Option(asces).isDefined)
+  require(Option(asces).isDefined && !asces.isEmpty)
   require(Option(dasuId).isDefined)
   require(Option(dasuOutputId).isDefined)
   
@@ -65,7 +65,60 @@ class Topology(
    * by ASCEs running in the DASU).
    */
   val dasuInputs: Set[String] = asces.flatMap(asce => asce.inputs).filterNot(asceOutputs.contains).toSet
-
+  
+  /** The Ids of the ASCEs running in the DASU */
+  val asceIds = asces.map(_.identifier).toSet
+  require(asces.size==asceIds.size,"The list of topologies contains duplicate")
+  
+  /**
+   * The map associating each ASCE ID to its topology
+   */
+  val asceTopology: Map[String,AsceTopology] = asces.foldLeft(Map.empty[String,AsceTopology]) { (z, asceTopology) =>
+    z+(asceTopology.identifier -> asceTopology)
+  }
+  
+  /**
+   * The IDs of the inputs of each ASCE
+   * 
+   * The key is the ID of the ASCE;
+   * the value is the set of the IDs of the inputs of the ASCE
+   */
+  val inputsOfAsce: Map[String, Set[String]] = {
+    asceIds.foldLeft(Map.empty[String, Set[String]]) { (z, asceId) =>
+      z+(asceId -> asceTopology(asceId).inputs)
+    }
+  }
+  
+  /**
+   * The IDs of the ASCEs that require an input.
+   * 
+   * Note the this map also includes the IDs of the IASIOs
+   * produced by ASCEs in the topology that are in input to other
+   * ASCEs running in this DASU 
+   * 
+   * The key is the ID of the input;
+   * the value is the list of the ACSE that require that input 
+   */
+  val ascesOfInput: Map[String, Set[String]] = {
+    val allInputs: Set[String] = asces.flatMap(asce => asce.inputs).toSet
+    
+    def ascesWithInput(x: String) = {
+      asces.foldLeft(Set.empty[String]) { (z, asce) =>
+        if (asce.inputs.contains(x)) z+asce.identifier
+        else z
+      }
+    }
+    
+    allInputs.foldLeft(Map.empty[String, Set[String]]) { (z,inputId) =>
+      z+(inputId -> ascesWithInput(inputId))
+    }
+    
+  }
+  assert(
+      ascesOfInput.keys.forall( id => !ascesOfInput(id).isEmpty),
+      "Some of the inputs is not required by any ASCE")
+  assert(ascesOfInput.keys.size>=dasuInputs.size)
+    
   /** The trees of nodes from the inputs to the output of the DASU
    *   
    * There is one tree for each input of the DASU: each tree terminates
@@ -441,18 +494,5 @@ class Topology(
     require(Option(outputId).isDefined && !outputId.isEmpty(),"Invalid output identifier")
     
     asces.find(_.output==outputId).map(_.identifier)
-  }
-  
-  /**
-   * Return the inputs requested by the ASCE with the passed ID
-   * 
-   * @param the ID of the ASCE
-   * @return the input accepted by the ASCE with the passed ID
-   */
-   def inputsOfAsce(asceId: String): Option[Set[String]] = {
-    require(Option(asceId).isDefined && !asceId.isEmpty(),"Invalid ASCE ID")
-    require(asces.exists(_.identifier==asceId),"The ASCE "+asceId+" does not run in the DASU "+dasuId)
-    
-     asces.find(_.identifier==asceId).map(_.inputs)
   }
 }

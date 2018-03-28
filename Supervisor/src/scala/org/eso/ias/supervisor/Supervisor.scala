@@ -1,7 +1,7 @@
 package org.eso.ias.supervisor
 
 import org.eso.ias.cdb.CdbReader
-import org.ias.prototype.logging.IASLogger
+import org.ias.logging.IASLogger
 import org.eso.ias.cdb.json.JsonReader
 import org.eso.ias.cdb.json.CdbFiles
 import org.eso.ias.cdb.json.CdbJsonFiles
@@ -11,18 +11,18 @@ import org.eso.ias.dasu.subscriber.InputSubscriber
 import org.eso.ias.dasu.publisher.OutputPublisher
 import scala.util.Success
 import scala.util.Try
-import org.eso.ias.prototype.input.java.IASValue
+import org.eso.ias.types.IASValue
 import org.eso.ias.dasu.subscriber.InputsListener
 import org.eso.ias.dasu.Dasu
 import org.eso.ias.cdb.pojos.SupervisorDao
-import org.eso.ias.prototype.input.java.IasValueJsonSerializer
+import org.eso.ias.types.IasValueJsonSerializer
 import scala.util.Failure
 import java.util.concurrent.atomic.AtomicBoolean
-import org.eso.ias.prototype.input.Identifier
+import org.eso.ias.types.Identifier
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.dasu.publisher.KafkaPublisher
 import org.eso.ias.dasu.subscriber.KafkaSubscriber
-import org.eso.ias.prototype.input.java.IdentifierType
+import org.eso.ias.types.IdentifierType
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.eso.ias.cdb.rdb.RdbReader
@@ -328,18 +328,44 @@ object Supervisor {
       }
     }
     
+    /** 
+     *  Refresh rate and tolerance: it uses the first defined ones:
+     *  1 java properties,
+     *  2 CDB
+     *  3 default
+     */
+    val (refreshRate, tolerance) = {
+      val RefreshTimeIntervalSeconds = Integer.getInteger(AutoSendPropName,AutoSendTimeIntervalDefault)
+      val ToleranceSeconds = Integer.getInteger(TolerancePropName,ToleranceDefault)
+      
+      val iasDaoOpt = reader.getIas
+      val fromCdb = if (iasDaoOpt.isPresent()) {
+        (iasDaoOpt.get.getRefreshRate,iasDaoOpt.get.getTolerance)
+      } else {
+        (AutoSendTimeIntervalDefault,ToleranceDefault)
+      }
+      
+      (Integer.getInteger(AutoSendPropName,fromCdb._1),
+      Integer.getInteger(TolerancePropName,fromCdb._2))
+    }
+    
     val outputPublisher: OutputPublisher = KafkaPublisher(supervisorId,System.getProperties)
     val inputsProvider: InputSubscriber = new KafkaSubscriber(supervisorId,System.getProperties)
     
     // The identifier of the supervisor
     val identifier = new Identifier(supervisorId, IdentifierType.SUPERVISOR, None)
     
-    val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber, cr: CdbReader) => DasuImpl(dd,i,op,id,cr,RefreshTimeIntervalMSecs)
+    val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber, cr: CdbReader) => 
+      DasuImpl(dd,i,op,id,cr,refreshRate,tolerance)
     
     // Build the supervisor
     val supervisor = new Supervisor(identifier,outputPublisher,inputsProvider,reader,factory)
     
     val started = supervisor.start()
+    
+    // Release CDB resources
+    reader.shutdown()
+    
     started match {
       case Success(_) => val latch = new CountDownLatch(1); latch.await();
       case Failure(ex) => System.err.println("Error starting the supervisor: "+ex.getMessage)
@@ -353,20 +379,22 @@ object Supervisor {
   val AutoSendPropName = "ias.supervisor.autosend.time"
   
   /**
-   * The time interval to automatically send the last calculated output
+   * The default time interval to automatically send the last calculated output
    * in seconds
    */
   val AutoSendTimeIntervalDefault = 5
   
   /**
-   * The auto-send time interval (seconds) read from the passed java property
-   * or, if the property is not set, the default value
+   * The name of the property to override the tolerance
+   * read from the CDB
    */
-  lazy val RefreshTimeIntervalSeconds = Integer.getInteger(AutoSendPropName,AutoSendTimeIntervalDefault)
+  val TolerancePropName = "ias.supervisor.autosend.tolerance"
   
   /**
-   * The auto-send time interval (msecs) read from the passed java property
-   * or, if the property is not set, the default value
+   * The default tolarance in seconds: it is the time added to the auto-refresh before
+   * invalidate an input
    */
-  lazy val RefreshTimeIntervalMSecs = TimeUnit.MILLISECONDS.convert(RefreshTimeIntervalSeconds.toLong, TimeUnit.SECONDS)
+  val ToleranceDefault = 1
+  
+
 }
