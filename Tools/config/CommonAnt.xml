@@ -43,7 +43,7 @@
 		<!-- Props set depending on the existence of folders/files -->
 		<available file="${src.java.dir}" type="dir" property="src.java.dir.exists"/>
 		<available file="${src.scala.dir}" type="dir" property="src.scala.dir.exists"/>
-		<available file="${src.python.dir}" type="dir" property="src.pyhton.dir.exists"/>
+		<available file="${src.python.dir}" type="dir" property="src.python.dir.exists"/>
 		
 	</target>
 	
@@ -161,7 +161,7 @@
 		name="localInstallPyModules" 
 		depends="init-ias-environment"
 		description="Install python modules from src to lib"
-		if="src.pyhton.dir.exists">
+		if="src.python.dir.exists">
 
 		<echo>Locally installing python modules in ${mods.python.dir}</echo>
 		<mkdir dir="${mods.python.dir}"/>
@@ -179,7 +179,7 @@
 		Install all the python scripts from src/python into bin
 		and set their executable attribute to true
 	-->
-	<target name="localinstallpyscripts" depends="init-ias-environment" if="src.pyhton.dir.exists">
+	<target name="localinstallpyscripts" depends="init-ias-environment" if="src.python.dir.exists">
 		<!-- Python scripts are initially copied in the bin folder of the module 
 		     then installed in the IAS_ROOT/bin folder -->
 		<echo>Locally installing python scripts in ${bin.dir}</echo>
