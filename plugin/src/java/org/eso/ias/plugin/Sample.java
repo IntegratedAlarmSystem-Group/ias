@@ -1,5 +1,7 @@
 package org.eso.ias.plugin;
 
+import org.eso.ias.types.AlarmSample;
+
 /**
  * A sample of the value read from the remote system.
  * <P>

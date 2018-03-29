@@ -123,8 +123,8 @@ public class IASValue<T> {
 	 * Constructor
 	 * 
 	 * @param value The value of the output
-	 * @param tStamp The timestamp
 	 * @param mode The new mode of the output
+	 * @param iasValidity The validity
 	 * @param fullRunningId: The full running id of this input and its parents
 	 * @param valueType: the IAS type of this input
 	 * @param pluginProductionTStamp The point in time when the plugin produced this value
@@ -403,7 +403,7 @@ public class IASValue<T> {
 	/**
 	 * Build a new IASValue with the passed time when produced by Converter
 	 * 
-	 * @param validity the validity
+	 * @param timestamp the timestamp
 	 * @return The new IASValue with the updated timestamp
 	 */
 	public IASValue<T> updateConverterProdTime(long timestamp) {
@@ -427,7 +427,7 @@ public class IASValue<T> {
 	/**
 	 * Build a new IASValue with the passed time when sent to BSDB
 	 * 
-	 * @param validity the validity
+	 * @param timestamp the timestamp
 	 * @return The new IASValue with the updated timestamp
 	 */
 	public IASValue<T> updateSentToBsdbTime(long timestamp) {
@@ -451,7 +451,7 @@ public class IASValue<T> {
 	/**
 	 * Build a new IASValue with the passed time when received from BSDB
 	 * 
-	 * @param validity the validity
+	 * @param timestamp the timestamp
 	 * @return The new IASValue with the updated timestamp
 	 */
 	public IASValue<T> updateReadFromBsdbTime(long timestamp) {
@@ -475,7 +475,7 @@ public class IASValue<T> {
 	/**
 	 * Build a new IASValue with the passed time when produced by DASU
 	 * 
-	 * @param validity the validity
+	 * @param timestamp the timestamp
 	 * @return The new IASValue with the updated timestamp
 	 */
 	public IASValue<T> updateDasuProdTime(long timestamp) {

@@ -31,7 +31,7 @@ public class NoneFilter extends FilterBase {
 
 	/**
 	 * 
-	 * @see org.eso.ias.plugin.filter.FilterBase#sampleAdded(org.eso.ias.plugin.Sample)
+	 * @see org.eso.ias.plugin.filter.FilterBase#sampleAdded(org.eso.ias.plugin.filter.Filter.ValidatedSample)
 	 */
 	@Override
 	protected void sampleAdded(ValidatedSample newSample) {

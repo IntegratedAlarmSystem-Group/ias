@@ -28,7 +28,7 @@ public abstract class JavaTransferExecutor extends TransferExecutor {
 	 * Produces the output of the component by evaluating the inputs.
 	 * 
 	 * <EM>IMPLEMENTATION NOTE</EM>
-	 * The {@link IASValueBase} is immutable. The easiest way to produce
+	 * The {@link IASValue} is immutable. The easiest way to produce
 	 * the output to return is to execute the methods of the actualOutput
 	 * that return a new IASValue.
 	 * 

@@ -327,7 +327,7 @@ public class PluginConfig {
 	}
 
 	/**
-	 * @param DefaultFilter the DefaultFilter to set
+	 * @param defaultFilter the default filter to set
 	 */
 	public void setDefaultFilter(String defaultFilter) {
 		this.defaultFilter = defaultFilter;
@@ -341,7 +341,7 @@ public class PluginConfig {
 	}
 
 	/**
-	 * @param getDefaultFilterOption the getDefaultFilterOption to set
+	 * @param defaultFilterOptions the default filter options to set
 	 */
 	public void setDefaultFilterOptions(String defaultFilterOptions) {
 		this.defaultFilterOptions = defaultFilterOptions;

@@ -6,6 +6,8 @@ import java.util.TimeZone;
 
 import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.NoneFilter;
+import org.eso.ias.types.IasValidity;
+import org.eso.ias.types.OperationalMode;
 
 /**
  * A java POJO representing a monitor point or alarm
