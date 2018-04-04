@@ -6,7 +6,7 @@ Created on Sep 21, 2016
 '''
 import argparse
 from IASTools.FileSupport import FileSupport
-from logConf import Log
+from IASTools.logConf import Log
 if __name__ == '__main__':
     log=Log()
     logger=log.GetLoggerFile(os.path.basename(__file__).split(".")[0])

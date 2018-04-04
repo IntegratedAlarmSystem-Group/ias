@@ -12,7 +12,7 @@ import sys
 from IASTools.CommonDefs import CommonDefs
 from subprocess import call
 from IASTools.FileSupport import FileSupport
-from logConf import Log
+from IASTools.logConf import Log
 
 def setProps(propsDict,className,logFileNameId):
     """

@@ -6,7 +6,7 @@ Writes the classpath in the stdout
 '''
 
 from IASTools.CommonDefs import CommonDefs
-from logConf import Log
+from IASTools.logConf import Log
 if __name__ == '__main__':
     log=Log()
     logger=log.GetLoggerFile(os.path.basename(__file__).split(".")[0])

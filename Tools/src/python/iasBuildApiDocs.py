@@ -12,7 +12,7 @@ from IASApiDocs.ScaladocBuilder import ScaladocBuilder
 from IASApiDocs.JavadocBuilder import JavadocBuilder
 from IASApiDocs.PydocBuilder import PydocBuilder
 from os.path import join
-from logConf import Log
+from IASTools.logConf import Log
 if __name__ == '__main__':
     log=Log()
     logger=log.GetLoggerFile(os.path.basename(__file__).split(".")[0])
