@@ -14,10 +14,10 @@ CREATE TABLE PROPERTY ( --Prop table
 /*
   The template for replication of identical equipments
   
-  The repllicated  eequipments will have indexes between the min and max,
+  The replicated  eequipments will have indexes between the min and max,
   inclusive [min, max]
 */
-CREATE TABLE TEMPLATE (
+CREATE TABLE TEMPLATE_DEF (
   template_id VARCHAR2(64) NOT NULL,
   min NUMBER(8) NOT NULL CHECK (min>=0),
   max NUMBER(8) NOT NULL CHECK (max>0),
@@ -76,20 +76,10 @@ CREATE TABLE IASIO (
   docUrl VARCHAR2(256),
   canShelve NUMBER(1), -- boolean 0/1
   template_id VARCHAR2(64) NULL,
-  FOREIGN KEY(template_id) REFERENCES TEMPLATE(template_id),
+  FOREIGN KEY(template_id) REFERENCES TEMPLATE_DEF(template_id),
   CONSTRAINT IASIO_PK PRIMARY KEY(io_id));
-  
 
-  /*
-    The Supervisor 
-   */
-CREATE TABLE SUPERVISOR (
-  supervisor_id VARCHAR2(64) NOT NULL,
-  hostName VARCHAR2(64) NOT NULL,
-  logLevel VARCHAR2(10),
-  template_id VARCHAR2(64) NULL,
-  FOREIGN KEY(template_id) REFERENCES TEMPLATE(template_id),
-  CONSTRAINT SUPERVISOR_PK PRIMARY KEY(supervisor_id));
+
 
 /*
 The table describing a DASU
@@ -97,15 +87,19 @@ The table describing a DASU
 CREATE TABLE DASU (
   dasu_id  VARCHAR2(64) NOT NULL,
   logLevel VARCHAR2(16),
-  supervisor_id VARCHAR2(64) NOT NULL,
   output_id VARCHAR2(64) NOT NULL,
+  template_id VARCHAR2(64) NULL,
+  FOREIGN KEY(template_id) REFERENCES TEMPLATE_DEF(template_id),
   CONSTRAINT DASU_PK PRIMARY KEY(dasu_id),
-  CONSTRAINT DASU_SUPERVISOR_FK FOREIGN KEY (supervisor_id) REFERENCES SUPERVISOR(supervisor_id),
   CONSTRAINT DASU_OUTPUT_FK FOREIGN KEY(output_id) REFERENCES IASIO(io_id));
-  
+
+ /*
+  * Transfer functions  with the class to run
+  * and its implementation language
+  */
 CREATE TABLE TRANSFER_FUNC (
 	className_id VARCHAR2(64) NOT NULL,
-	implLang VARCHAR2(16),
+	implLang VARCHAR2(16) NOT NULL,
 	CONSTRAINT TFUNC_PK PRIMARY KEY(className_id));
 
 /*
@@ -116,6 +110,8 @@ CREATE TABLE ASCE (
   transf_fun_id VARCHAR2(96) NOT NULL,
   output_id VARCHAR2(64) NOT NULL,
   dasu_id VARCHAR2(64) NOT NULL,
+  template_id VARCHAR2(64) NULL,
+  FOREIGN KEY(template_id) REFERENCES TEMPLATE_DEF(template_id),
   CONSTRAINT ASCE_PK PRIMARY KEY(asce_id),
   CONSTRAINT ASCE_output_FK FOREIGN KEY (output_id) REFERENCES IASIO(io_id),
   CONSTRAINT ASCE_DASU_FK FOREIGN KEY (dasu_id) REFERENCES DASU(dasu_id),
@@ -123,7 +119,7 @@ CREATE TABLE ASCE (
   
   /*
   One ASCE can have zero to many properties.
-  This is the link table betwee ASCE and properties
+  This is the link table between ASCE and properties
   (veery similar to the IAS_PROPERTY table)
 */
 CREATE TABLE ASCE_PROPERTY (
@@ -143,3 +139,38 @@ CREATE TABLE ASCE_IASIO (
   CONSTRAINT ASCE_IASIO_ASCE_FK FOREIGN KEY(asce_id) REFERENCES ASCE(asce_id),
   CONSTRAINT ASCE_IASIO_IASIO_FK FOREIGN KEY(io_id) REFERENCES IASIO(io_id));
   
+  /*
+    The Supervisor 
+   */
+CREATE TABLE SUPERVISOR (
+  supervisor_id VARCHAR2(64) NOT NULL,
+  hostName VARCHAR2(64) NOT NULL,
+  logLevel VARCHAR2(10),
+  CONSTRAINT SUPERVISOR_PK PRIMARY KEY(supervisor_id));
+ 
+  /*
+   * The DASUs that the supervisor runs
+   */
+ CREATE TABLE DASUS_DEPLOYMENT (
+	dasu_deploy_id NUMBER(15) NOT NULL,
+	dasu_id  VARCHAR2(64) NOT NULL,
+	template_id VARCHAR2(64) NULL,
+	instance NUMBER(8) NULL CHECK (instance>=0),
+	CONSTRAINT DASUDEP_FK_DASUS FOREIGN KEY (dasu_id) REFERENCES DASU(dasu_id),
+	CONSTRAINT DASUDEP_FK_TEMP FOREIGN KEY(template_id) REFERENCES TEMPLATE_DEF(template_id),
+	CONSTRAINT DASUDEP_PK PRIMARY KEY ( dasu_deploy_id ));
+  
+/**
+ * Associate a SUPERV to its DASUs
+ * 
+ * This table implements the one-to-many relation
+ * between SUPERVISOR and DASUS_DEPLOYMENT
+ */
+CREATE TABLE SUPERV_DASUDEPLOY (
+  dasu_deploy_id NUMBER(15) NOT NULL,
+  supervisor_id VARCHAR2(64) NOT NULL,
+  CONSTRAINT SUPERV_DASUDEPLOY_UQ UNIQUE(supervisor_id,dasu_deploy_id),
+  CONSTRAINT SUPERV_DASUDEPLOY_ID_FK FOREIGN KEY(dasu_deploy_id) REFERENCES DASUS_DEPLOYMENT(dasu_deploy_id),
+  CONSTRAINT SUPERV_DASUDEPLOY_SUPID_FK FOREIGN KEY(supervisor_id) REFERENCES SUPERVISOR(supervisor_id),
+  CONSTRAINT SUPERV_DASUDEPLOY_PK PRIMARY KEY (dasu_deploy_id, supervisor_id));
+	
