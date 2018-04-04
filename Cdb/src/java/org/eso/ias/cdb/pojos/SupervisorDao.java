@@ -49,12 +49,7 @@ public class SupervisorDao {
 	@Basic(optional=true)
 	private LogLevelDao logLevel;
 	
-	/**
-	 * The ID of the template for implementing replication
-	 */
-	@Basic(optional=true)
-	@Column(name = "template_id")
-	private String templateId;
+	
 	
 	/**
 	 * This one-to-many annotation matches with the many-to-one
@@ -172,13 +167,7 @@ public class SupervisorDao {
 		ret.append(getHostName());
 		ret.append(", DASUs={");
 		dasus.forEach(x -> { ret.append(' '); ret.append(x.getId()); });
-		ret.append("}");
-		if (templateId!=null) {
-			ret.append(", template id=\"");
-			ret.append(templateId);
-			ret.append('"');
-		}
-		ret.append("]");
+		ret.append("}]");
 		return ret.toString();
 	}
 	
@@ -201,8 +190,7 @@ public class SupervisorDao {
 				this.id.equals(superv.getId()) &&
 				Objects.equals(this.hostName, superv.getHostName()) &&
 				Objects.equals(this.logLevel, superv.getLogLevel()) &&
-				Objects.equals(this.getDasusIDs(),superv.getDasusIDs()) &&
-				Objects.equals(this.getTemplateId(),superv.getTemplateId());
+				Objects.equals(this.getDasusIDs(),superv.getDasusIDs());
 	}
 
 	/**
@@ -215,13 +203,7 @@ public class SupervisorDao {
 		return Objects.hash(id);
 	}
 	
-	public String getTemplateId() {
-		return templateId;
-	}
-
-	public void setTemplateId(String templateId) {
-		this.templateId = templateId;
-	}
+	
 
 
 }

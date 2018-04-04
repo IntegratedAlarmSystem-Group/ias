@@ -65,6 +65,13 @@ public class DasuDao {
 	@OneToMany(mappedBy = "dasu", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<AsceDao> asces = new HashSet<>();
 	
+	/**
+	 * The ID of the template for implementing replication
+	 */
+	@Basic(optional=true)
+	@Column(name = "template_id")
+	private String templateId;
+	
 	public DasuDao() {}
 	
 	public LogLevelDao getLogLevel() {
@@ -132,7 +139,13 @@ public class DasuDao {
 			ret.append(" ");
 			ret.append(asce.getId());
 		}
-		ret.append("}]");
+		ret.append("}");
+		if (templateId!=null) {
+			ret.append(", template id=\"");
+			ret.append(templateId);
+			ret.append('"');
+		}
+		ret.append("]");
 		return ret.toString();
 	}
 	
@@ -148,6 +161,14 @@ public class DasuDao {
 		Objects.requireNonNull(output,"The output of DASU can't be null");
 		this.output = output;
 	}
+	
+	public String getTemplateId() {
+		return templateId;
+	}
+
+	public void setTemplateId(String templateId) {
+		this.templateId = templateId;
+	}
 
 	/**
 	 * <code>hashCode</code> is based on unique the ID only.
@@ -156,7 +177,7 @@ public class DasuDao {
 	 */
 	@Override
 	public int hashCode() {
-		return Objects.hash(id);
+		return Objects.hash(id,templateId);
 	}
 
 	/**
@@ -198,6 +219,11 @@ public class DasuDao {
 			if (other.output != null)
 				return false;
 		} else if (!getOutput().equals(other.getOutput()))
+			return false;
+		if (templateId == null) {
+			if (other.templateId != null)
+				return false;
+		} else if (!getTemplateId().equals(other.getTemplateId()))
 			return false;
 		return true;
 	}

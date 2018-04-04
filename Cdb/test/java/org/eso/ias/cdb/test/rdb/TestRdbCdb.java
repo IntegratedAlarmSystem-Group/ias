@@ -207,43 +207,43 @@ public class TestRdbCdb {
 	 * 
 	 * @throws Exception
 	 */
-	@Test
-	public void testTemplatedSupervisor() throws Exception {
-		logger.info("testTemplatedSupervisor");
-		
-		TemplateDao template = new TemplateDao("TemplateForTest", 5, 37);
-		cdbWriter.writeTemplate(template);
-		
-		SupervisorDao superv = new SupervisorDao();
-		superv.setId("Supervisor-ID");
-		superv.setHostName("almadev2.alma.cl");
-		superv.setLogLevel(LogLevelDao.INFO);
-		superv.setTemplateId(template.getId());
-
-		// Adds the DASUs
-		DasuDao dasu1 = new DasuDao();
-		dasu1.setId("DasuID1");
-		dasu1.setSupervisor(superv);
-		dasu1.setLogLevel(LogLevelDao.FATAL);
-		superv.addDasu(dasu1);
-
-		IasioDao dasuOut1 = new IasioDao(
-				"DASU-OUT-1", 
-				"descr", 
-				IasTypeDao.ALARM,"http://www.eso.org",
-				true,
-				template.getId());
-		cdbWriter.writeIasio(dasuOut1, true);
-		dasu1.setOutput(dasuOut1);
-
-		cdbWriter.writeSupervisor(superv);
-
-		Optional<SupervisorDao> optSuperv = cdbReader.getSupervisor(superv.getId());
-		assertTrue("Got an empty Supervisor!", optSuperv.isPresent());
-		assertEquals("The Supervisors differ!", superv, optSuperv.get());
-		assertEquals(superv.getTemplateId(), optSuperv.get().getTemplateId());
-
-	}
+//	@Test
+//	public void testTemplatedSupervisor() throws Exception {
+//		logger.info("testTemplatedSupervisor");
+//		
+//		TemplateDao template = new TemplateDao("TemplateForTest", 5, 37);
+//		cdbWriter.writeTemplate(template);
+//		
+//		SupervisorDao superv = new SupervisorDao();
+//		superv.setId("Supervisor-ID");
+//		superv.setHostName("almadev2.alma.cl");
+//		superv.setLogLevel(LogLevelDao.INFO);
+//		superv.setTemplateId(template.getId());
+//
+//		// Adds the DASUs
+//		DasuDao dasu1 = new DasuDao();
+//		dasu1.setId("DasuID1");
+//		dasu1.setSupervisor(superv);
+//		dasu1.setLogLevel(LogLevelDao.FATAL);
+//		superv.addDasu(dasu1);
+//
+//		IasioDao dasuOut1 = new IasioDao(
+//				"DASU-OUT-1", 
+//				"descr", 
+//				IasTypeDao.ALARM,"http://www.eso.org",
+//				true,
+//				template.getId());
+//		cdbWriter.writeIasio(dasuOut1, true);
+//		dasu1.setOutput(dasuOut1);
+//
+//		cdbWriter.writeSupervisor(superv);
+//
+//		Optional<SupervisorDao> optSuperv = cdbReader.getSupervisor(superv.getId());
+//		assertTrue("Got an empty Supervisor!", optSuperv.isPresent());
+//		assertEquals("The Supervisors differ!", superv, optSuperv.get());
+//		assertEquals(superv.getTemplateId(), optSuperv.get().getTemplateId());
+//
+//	}
 
 	/**
 	 * Test reading and writing of IASIO
