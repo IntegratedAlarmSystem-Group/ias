@@ -6,7 +6,7 @@ import datetime
 
 class Log():
   @staticmethod
-  def GetLoggerFile():
+  def GetLoggerFile(fileName):
     #take the path for logs folder inside $IAS_ROOT
     logPath=os.environ["IAS_ROOT"]
     #If the file doesn't exist it's created
@@ -14,10 +14,10 @@ class Log():
         os.makedirs(logPath)
     except OSError as e:
         if e.errno != errno.EEXIST:
-         raise 
+         raise
     #Format of the data for filename
     now = datetime.datetime.utcnow().strftime('%Y-%m-%d_%H:%M:%S.%f')[:-3]
-    fileNameN='IasRoot'+now
+    fileNameN=fileName+now
     #path of the file
     file=("{0}/logs/{1}.log".format(logPath, fileNameN))
 
@@ -39,10 +39,6 @@ class Log():
     # Now, define a couple of other loggers which might represent areas in your
     # application:
 
-    logger1 = logging.getLogger()
+    logger1 = logging.getLogger(__name__)
 
     return logger1
-
-   
-
-   
