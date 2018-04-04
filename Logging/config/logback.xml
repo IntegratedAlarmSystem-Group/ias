@@ -22,11 +22,11 @@
   
    <appender 
    	name="FILE" 
-   	class="ch.qos.logback.core.FileAppender">
+   	class="ch.qos.logback.core.rolling.RollingFileAppender">
    	<append>true</append>
    	<prudent>true</prudent> <!--  Can slow down the logging -->
     <file>${IAS_LOGS_FOLDER}/${ias.logs.filename}-${tStamp}.log</file>
-    <rollingPolicy lass="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+    <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
       <fileNamePattern>${IAS_LOGS_FOLDER}/${ias.logs.filename}.%d{yyyy-MM-dd}.%i.log</fileNamePattern>
       <maxFileSize>100MB</maxFileSize>    
       <maxHistory>60</maxHistory>
