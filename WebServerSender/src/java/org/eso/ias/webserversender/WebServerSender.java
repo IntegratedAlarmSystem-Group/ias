@@ -141,8 +141,8 @@ public class WebServerSender implements IasioListener, Runnable {
 		kafkaServers = props.getProperty(KAFKA_SERVERS_PROP_NAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS);
 		sendersInputKTopicName = props.getProperty(IASCORE_TOPIC_NAME_PROP_NAME, KafkaHelper.IASIOs_TOPIC_NAME);
 		webserverUri = props.getProperty(WEBSERVER_URI_PROP_NAME, DEFAULT_WEBSERVER_URI);
-		logger.info("Websocket connection URI: "+ webserverUri);
-		logger.info("Kafka server: "+ kafkaServers);
+		logger.debug("Websocket connection URI: "+ webserverUri);
+		logger.debug("Kafka server: "+ kafkaServers);
 		senderListener = listener;
 		kafkaConsumer = new KafkaIasiosConsumer(kafkaServers, sendersInputKTopicName, this.senderID);
 		kafkaConsumer.setUp();
@@ -204,10 +204,9 @@ public class WebServerSender implements IasioListener, Runnable {
 	public synchronized void iasioReceived(IASValue<?> event) {
 		try {
 			String value = serializer.iasValueToString(event);
-			logger.info("Attempting to send value: "+ value);
 			if (this.session != null) {
 				this.session.getRemote().sendStringByFuture(value);
-				logger.info("Value sent");
+				logger.debug("Value sent: " + value);
 				this.notifyListener(value);
 			}
 			else {
