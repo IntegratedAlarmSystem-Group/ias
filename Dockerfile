@@ -4,8 +4,8 @@ FROM openjdk:8
 RUN apt-get update && apt-get -y install ant ant-contrib
 
 # Install Scala
-RUN wget http://scala-lang.org/files/archive/scala-2.12.1.deb && \
-    dpkg -i scala-2.12.1.deb && \
+RUN wget http://scala-lang.org/files/archive/scala-2.12.4.deb && \
+    dpkg -i scala-2.12.4.deb && \
     apt-get update && \
     apt-get -y install scala
 
