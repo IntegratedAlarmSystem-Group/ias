@@ -12,10 +12,8 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.ForeignKey;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
@@ -31,14 +29,6 @@ public class DasuDao {
 	@Id
 	@Column(name = "dasu_id")
 	private String id;
-	
-	/**
-	 * The supervisor that runs this DASU 
-	 */
-	@ManyToOne
-    @JoinColumn(name = "supervisor_id", foreignKey = @ForeignKey(name = "supervisor_id")
-    )
-    private SupervisorDao supervisor;
 	
 	/**
 	 * The log level
@@ -98,14 +88,6 @@ public class DasuDao {
 		return id;
 	}
 
-	public SupervisorDao getSupervisor() {
-		return supervisor;
-	}
-
-	public void setSupervisor(SupervisorDao supervisor) {
-		this.supervisor = supervisor;
-	}
-
 	public void setId(String id) {
 		Objects.requireNonNull(id,"The DASU ID can't be null");
 		String iden = id.trim();
@@ -132,8 +114,6 @@ public class DasuDao {
 		Optional.ofNullable(output).ifPresent(io -> ret.append(io.getId()));
 		ret.append("], logLevel=");
 		Optional.ofNullable(logLevel).ifPresent(x -> ret.append(x.toString()));
-		ret.append(", Supervisor=[");
-		Optional.ofNullable(supervisor).ifPresent(x -> ret.append(x.getId()));
 		ret.append("], ASCEs={");
 		for (AsceDao asce: getAsces()) {
 			ret.append(" ");
@@ -209,11 +189,6 @@ public class DasuDao {
 		} else if (!id.equals(other.id))
 			return false;
 		if (logLevel != other.logLevel)
-			return false;
-		if (supervisor == null) {
-			if (other.supervisor != null)
-				return false;
-		} else if (!supervisor.getId().equals(other.supervisor.getId()))
 			return false;
 		if (output == null) {
 			if (other.output != null)

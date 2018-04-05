@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.eso.ias.cdb.pojos.AsceDao;
 import org.eso.ias.cdb.pojos.DasuDao;
+import org.eso.ias.cdb.pojos.DasuToDeployDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
@@ -25,6 +26,14 @@ public interface CdbWriter {
 	 * @throws IasCdbException In case of error writing the IAS
 	 */
 	public void writeIas(IasDao ias) throws IasCdbException;
+	
+	/**
+	 * Write the DASU to deploy in the passed file.
+	 * 
+	 * @param dtd The DASU to deploy in the supervisor
+	 * @throws IasCdbException In case of error writing the DASU
+	 */
+	public void writeDasuToDeploy(DasuToDeployDao dtd) throws IasCdbException;
 	
 	/**
 	 * Write the Supervisor in the passed file.

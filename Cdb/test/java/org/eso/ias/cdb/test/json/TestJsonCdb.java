@@ -20,6 +20,7 @@ import org.eso.ias.cdb.json.JsonReader;
 import org.eso.ias.cdb.json.JsonWriter;
 import org.eso.ias.cdb.pojos.AsceDao;
 import org.eso.ias.cdb.pojos.DasuDao;
+import org.eso.ias.cdb.pojos.DasuToDeployDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
@@ -137,19 +138,15 @@ public class TestJsonCdb {
 		// Adds the DASUs
 		DasuDao dasu1 = new DasuDao();
 		dasu1.setId("DasuID1");
-		dasu1.setSupervisor(superv);
 		dasu1.setLogLevel(LogLevelDao.FATAL);
 		IasioDao dasuOutIasio1 = new IasioDao("DASU_OUTPUT1", "desc-dasu-out", IasTypeDao.ALARM,"http://www.eso.org");
 		dasu1.setOutput(dasuOutIasio1);
-		superv.addDasu(dasu1);
 		
 		DasuDao dasu2 = new DasuDao();
 		dasu2.setId("DasuID2");
-		dasu2.setSupervisor(superv);
 		dasu1.setLogLevel(LogLevelDao.WARN);
 		IasioDao dasuOutIasio2 = new IasioDao("DASU_OUTPUT2", "desc-dasu-out", IasTypeDao.LONG,"http://www.eso.org");
 		dasu2.setOutput(dasuOutIasio2);
-		superv.addDasu(dasu2);
 		
 		cdbWriter.writeIasio(dasuOutIasio1, false);
 		cdbWriter.writeIasio(dasuOutIasio2, true);
@@ -178,9 +175,7 @@ public class TestJsonCdb {
 		// The DASU to test
 		DasuDao dasu = new DasuDao();
 		dasu.setId("DasuID1");
-		dasu.setSupervisor(superv);
 		dasu.setLogLevel(LogLevelDao.FATAL);
-		superv.addDasu(dasu);
 		
 		TransferFunctionDao tfDao = new TransferFunctionDao();
 		tfDao.setClassName("org.eso.ias.tf.Threshold");
@@ -264,7 +259,6 @@ public class TestJsonCdb {
 		DasuDao dasu = new DasuDao();
 		dasu.setId("DasuID1");
 		dasu.setLogLevel(LogLevelDao.FATAL);
-		dasu.setSupervisor(superv);
 
 		IasioDao dasuOutIasio = new IasioDao("DASU_OUTPUT", "desc-dasu-out", IasTypeDao.ALARM,"http://www.eso.org");
 		dasu.setOutput(dasuOutIasio);
@@ -453,20 +447,20 @@ public class TestJsonCdb {
 		cdbFiles = new CdbJsonFiles(path);
 		cdbReader = new JsonReader(cdbFiles);
 		// Get the DASUs of a Supervisor that has none
-		Set<DasuDao> dasus = cdbReader.getDasusForSupervisor("Supervisor-ID2");
+		Set<DasuToDeployDao> dasus = cdbReader.getDasusForSupervisor("Supervisor-ID2");
 		assertTrue(dasus.isEmpty());
 		// Get the DASUs of a Supervisor that has one
 		dasus = cdbReader.getDasusForSupervisor("Supervisor-ID1");
 		assertEquals(1,dasus.size());
-		Iterator<DasuDao> iter = dasus.iterator();
-		DasuDao dasu = iter.next();
-		assertEquals("DasuID1",dasu.getId());
+		Iterator<DasuToDeployDao> iter = dasus.iterator();
+		DasuToDeployDao dtd = iter.next();
+		assertEquals("DasuID1",dtd.getDasu().getId());
 		// Get the DASUs of a Supervisor that has three
 		dasus = cdbReader.getDasusForSupervisor("Supervisor-ID3");
 		assertEquals(3,dasus.size());
-		Set<String> dasuIds = dasus.stream().map(d -> d.getId()).collect(Collectors.toSet());
+		Set<String> dasuIds = dasus.stream().map(d -> d.getDasu().getId()).collect(Collectors.toSet());
 		assertEquals(3,dasuIds.size());
-		dasus.forEach( d -> assertTrue(d.getId().equals("DasuID2") || d.getId().equals("DasuID3")||d.getId().equals("DasuID4")));
+		dasus.forEach( d -> assertTrue(d.getDasu().getId().equals("DasuID2") || d.getDasu().getId().equals("DasuID3")||d.getDasu().getId().equals("DasuID4")));
 	}
 	
 	/**

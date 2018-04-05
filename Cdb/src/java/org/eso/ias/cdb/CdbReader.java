@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.eso.ias.cdb.pojos.AsceDao;
 import org.eso.ias.cdb.pojos.DasuDao;
+import org.eso.ias.cdb.pojos.DasuToDeployDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
@@ -97,7 +98,7 @@ public interface CdbReader {
 	 * @throws IasCdbException in case of error reading CDB or if the 
 	 *                         supervisor with the give identifier does not exist
 	 */
-	public Set<DasuDao> getDasusForSupervisor(String id) throws IasCdbException;
+	public Set<DasuToDeployDao> getDasusForSupervisor(String id) throws IasCdbException;
 	
 	/**
 	 * Return the ASCEs belonging to the given DASU.

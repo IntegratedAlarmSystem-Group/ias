@@ -16,7 +16,7 @@ import javax.persistence.Table;
  *
  */
 @Entity
-@Table(name = "TEMPLATE")
+@Table(name = "TEMPLATE_DEF")
 public class TemplateDao {
 
 	/**
@@ -107,5 +107,10 @@ public class TemplateDao {
 		if (min != other.min)
 			return false;
 		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "TemplateDao [id=" + id + ", min=" + min + ", max=" + max + "]";
 	}
 }

@@ -21,6 +21,7 @@ import org.eso.ias.cdb.json.pojos.JsonDasuDao;
 import org.eso.ias.cdb.json.pojos.JsonSupervisorDao;
 import org.eso.ias.cdb.pojos.AsceDao;
 import org.eso.ias.cdb.pojos.DasuDao;
+import org.eso.ias.cdb.pojos.DasuToDeployDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
@@ -111,6 +112,17 @@ public class JsonWriter implements CdbWriter {
 		}catch (Throwable t) {
 			throw new IasCdbException("Error writing JSON Supervisor",t);
 		}
+	}
+	
+	/**
+	 * Write the DASU to deploy in the passed file.
+	 * 
+	 * @param dtd The DASU to deploy in the supervisor
+	 * @throws IasCdbException In case of error writing the DASU
+	 */
+	@Override
+	public void writeDasuToDeploy(DasuToDeployDao dtd) throws IasCdbException {
+		throw new IasCdbException("Operation not implemented");
 	}
 	
 	/**

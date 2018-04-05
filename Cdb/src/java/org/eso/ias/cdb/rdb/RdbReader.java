@@ -16,6 +16,7 @@ import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.IasCdbException;
 import org.eso.ias.cdb.pojos.AsceDao;
 import org.eso.ias.cdb.pojos.DasuDao;
+import org.eso.ias.cdb.pojos.DasuToDeployDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
@@ -58,7 +59,7 @@ public class RdbReader implements CdbReader {
 		List<IasDao> iasdaos = (List<IasDao>)s.createQuery("FROM IasDao").list();
 		Set<IasDao> ret = new HashSet<>();
 		for (Iterator<IasDao> iterator = iasdaos.iterator(); iterator.hasNext();){
-			ret.add((IasDao)iterator.next());
+			ret.add(iterator.next());
 		}
 		t.commit();
 		// Check if the query returned too many IAS
@@ -215,13 +216,13 @@ public class RdbReader implements CdbReader {
 	 *                         supervisor with the give identifier does not exist
 	 */
 	@Override
-	public Set<DasuDao> getDasusForSupervisor(String id) throws IasCdbException {
+	public Set<DasuToDeployDao> getDasusForSupervisor(String id) throws IasCdbException {
 		Objects.requireNonNull(id, "The ID cant't be null");
 		if (id.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty ID");
 		}
 		Optional<SupervisorDao> superv = getSupervisor(id);
-		Set<DasuDao> ret = superv.orElseThrow(() -> new IasCdbException("Supervisor ["+id+"] not dound")).getDasus();
+		Set<DasuToDeployDao> ret = superv.orElseThrow(() -> new IasCdbException("Supervisor ["+id+"] not dound")).getDasusToDeploy();
 		return (ret==null)? new HashSet<>() : ret;
 	}
 	

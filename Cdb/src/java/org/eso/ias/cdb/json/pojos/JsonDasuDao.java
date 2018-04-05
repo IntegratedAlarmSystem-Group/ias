@@ -22,11 +22,6 @@ public class JsonDasuDao {
 	private final DasuDao dasu;
 	
 	/**
-	 * The ID of the supervisor where this DASU run
-	 */
-	private String supervisorId;
-	
-	/**
 	 * The IDs of the ASCEs that run into this DASU
 	 */
 	private final Set<String> asceIDs;
@@ -47,7 +42,6 @@ public class JsonDasuDao {
 		}
 		this.dasu=dasu;
 		this.asceIDs=dasu.getAsces().stream().map(i -> i.getId()).collect(Collectors.toSet());
-		this.supervisorId=dasu.getSupervisor().getId();
 		this.outputId=dasu.getOutput().getId();
 	}
 	
@@ -87,24 +81,6 @@ public class JsonDasuDao {
 	 */
 	public String getId() {
 		return dasu.getId();
-	}
-
-	/**
-	 * Get the Id of the supervisor where this DASU is deployed
-	 * 
-	 * @return the Id of the supervisor
-	 * @see DasuDao#getSupervisor()
-	 */
-	public String getSupervisorID() {
-		return supervisorId;
-	}
-	
-	/**
-	 * Set the ID of the Supervisor
-	 * @param supervID the ID of the Supervisor
-	 */
-	public void setSupervisorID(String supervID) {
-		supervisorId=supervID;
 	}
 
 	/**
@@ -148,8 +124,6 @@ public class JsonDasuDao {
 		ret.append(getOutputId());
 		ret.append("], logLevel=");
 		ret.append(getLogLevel());
-		ret.append(", Supervisor=[");
-		ret.append(getSupervisorID());
 		ret.append("], ASCEs={");
 		for (String asce: getAsceIDs()) {
 			ret.append(" ");

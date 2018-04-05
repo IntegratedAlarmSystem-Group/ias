@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.eso.ias.cdb.IasCdbException;
 import org.eso.ias.cdb.pojos.AsceDao;
 import org.eso.ias.cdb.pojos.DasuDao;
+import org.eso.ias.cdb.pojos.DasuToDeployDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.PropertyDao;
@@ -166,6 +167,7 @@ public class RdbUtils {
 			sources.addAnnotatedClass(DasuDao.class);
 			sources.addAnnotatedClass(SupervisorDao.class);
 			sources.addAnnotatedClass(TemplateDao.class);
+			sources.addAnnotatedClass(DasuToDeployDao.class);
 			Metadata data = sources.buildMetadata();
 			logger.debug("Building the SessionFactory");
 			sessionFactory = data.buildSessionFactory();

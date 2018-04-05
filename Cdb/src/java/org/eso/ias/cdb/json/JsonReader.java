@@ -19,6 +19,7 @@ import org.eso.ias.cdb.json.pojos.JsonDasuDao;
 import org.eso.ias.cdb.json.pojos.JsonSupervisorDao;
 import org.eso.ias.cdb.pojos.AsceDao;
 import org.eso.ias.cdb.pojos.DasuDao;
+import org.eso.ias.cdb.pojos.DasuToDeployDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
@@ -413,22 +414,22 @@ public class JsonReader implements CdbReader {
 		if (!holder.supervisors.containsKey(superv.getId())) {
 			holder.supervisors.put(superv.getId(), superv);
 		}
-		for (String dasuId : jSupDao.getDasusIDs()) {
-			if (!superv.containsDasu(dasuId)) {
-				Optional<DasuDao> optDasu = Optional.ofNullable(holder.dasus.get(dasuId));
-				if (!optDasu.isPresent()) {
-					Optional<JsonDasuDao> jDasu = getJsonDasu(dasuId);
-					if (jDasu.isPresent()) {
-						updateDasuObjects(jDasu.get(), holder);
-					} else {
-						throw new IasCdbException("Inconsistent Supervisor record: DASU ["+dasuId+"] not found in CDB");
-					}
-					optDasu = jDasu.map(d -> d.toDasuDao());
-				}
-				optDasu.filter(n -> holder.dasus.containsKey(n.getId())).ifPresent(x -> holder.dasus.put(dasuId, x));
-				optDasu.ifPresent(x -> superv.addDasu(x));
-			}
-		}
+//		for (String dasuId : jSupDao.getDasusIDs()) {
+//			if (!superv.containsDasu(dasuId)) {
+//				Optional<DasuDao> optDasu = Optional.ofNullable(holder.dasus.get(dasuId));
+//				if (!optDasu.isPresent()) {
+//					Optional<JsonDasuDao> jDasu = getJsonDasu(dasuId);
+//					if (jDasu.isPresent()) {
+//						updateDasuObjects(jDasu.get(), holder);
+//					} else {
+//						throw new IasCdbException("Inconsistent Supervisor record: DASU ["+dasuId+"] not found in CDB");
+//					}
+//					optDasu = jDasu.map(d -> d.toDasuDao());
+//				}
+//				optDasu.filter(n -> holder.dasus.containsKey(n.getId())).ifPresent(x -> holder.dasus.put(dasuId, x));
+//				optDasu.ifPresent(x -> superv.addDasu(x));
+//			}
+//		}
 	}
 	
 	/**
@@ -448,22 +449,22 @@ public class JsonReader implements CdbReader {
 		}
 		
 		// Fix the supervisor 
-		if (dasu.getSupervisor()==null) {
-			Optional<SupervisorDao> sup;
-			if (holder.supervisors.containsKey(jDasuDao.getSupervisorID())) {
-				sup = Optional.of(holder.supervisors.get(jDasuDao.getSupervisorID()));
-			} else {
-				Optional<JsonSupervisorDao> jSup = getJsonSupervisor(jDasuDao.getSupervisorID());
-				if (jSup.isPresent()) {
-					updateSupervisorObjects(jSup.get(), holder);
-				} else {
-					throw new IasCdbException("Inconsistent DASU record: Supervisor ["+jDasuDao.getSupervisorID()+"] not found in CDB");
-				}
-				sup = jSup.map(x -> x.toSupervisorDao());
-				sup.ifPresent( s -> holder.supervisors.put(jDasuDao.getSupervisorID(), s));
-			}
-			sup.ifPresent(s -> dasu.setSupervisor(s));
-		}
+//		if (dasu.getSupervisor()==null) {
+//			Optional<SupervisorDao> sup;
+//			if (holder.supervisors.containsKey(jDasuDao.getSupervisorID())) {
+//				sup = Optional.of(holder.supervisors.get(jDasuDao.getSupervisorID()));
+//			} else {
+//				Optional<JsonSupervisorDao> jSup = getJsonSupervisor(jDasuDao.getSupervisorID());
+//				if (jSup.isPresent()) {
+//					updateSupervisorObjects(jSup.get(), holder);
+//				} else {
+//					throw new IasCdbException("Inconsistent DASU record: Supervisor ["+jDasuDao.getSupervisorID()+"] not found in CDB");
+//				}
+//				sup = jSup.map(x -> x.toSupervisorDao());
+//				sup.ifPresent( s -> holder.supervisors.put(jDasuDao.getSupervisorID(), s));
+//			}
+//			sup.ifPresent(s -> dasu.setSupervisor(s));
+//		}
 		
 		// Fix included ASCEs
 		for (String asceID: jDasuDao.getAsceIDs()) {
@@ -554,13 +555,13 @@ public class JsonReader implements CdbReader {
 	 * @throws IasCdbException in case of error reading CDB or if the 
 	 *                         supervisor with the give identifier does not exist
 	 */
-	public Set<DasuDao> getDasusForSupervisor(String id) throws IasCdbException {
+	public Set<DasuToDeployDao> getDasusForSupervisor(String id) throws IasCdbException {
 		Objects.requireNonNull(id, "The ID cant't be null");
 		if (id.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty ID");
 		}
 		Optional<SupervisorDao> superv = getSupervisor(id);
-		Set<DasuDao> ret = superv.orElseThrow(() -> new IasCdbException("Supervisor ["+id+"] not dound")).getDasus();
+		Set<DasuToDeployDao> ret = superv.orElseThrow(() -> new IasCdbException("Supervisor ["+id+"] not dound")).getDasusToDeploy();
 		return (ret==null)? new HashSet<>() : ret;
 	}
 	

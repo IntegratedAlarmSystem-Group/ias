@@ -26,7 +26,7 @@ public class JsonSupervisorDao {
 	/**
 	 * The DASUs are replaced by their IDs
 	 */
-	private final Set<String>dasuIDs;
+	private final Set<JsonDasuToDeployDao>dasusToDeploy;
 	
 	/**
 	 * Empty constructor.
@@ -36,7 +36,7 @@ public class JsonSupervisorDao {
 	 */
 	public JsonSupervisorDao() {
 		supervisorDao = new SupervisorDao();
-		this.dasuIDs = new HashSet<>();
+		this.dasusToDeploy = new HashSet<>();
 	}
 	
 	/**
@@ -49,7 +49,7 @@ public class JsonSupervisorDao {
 			throw new NullPointerException("The SupervisorDao can't be null");
 		}
 		this.supervisorDao=supervisorDao;
-		this.dasuIDs=supervisorDao.getDasus().stream().map(i -> i.getId()).collect(Collectors.toSet());
+		this.dasusToDeploy=supervisorDao.getDasusToDeploy().stream().map(i -> new JsonDasuToDeployDao(i)).collect(Collectors.toSet());
 	}
 	
 	/**
@@ -69,12 +69,12 @@ public class JsonSupervisorDao {
 		return this.getId().equals(other.getId()) && 
 				this.getHostName().equals(other.getHostName()) &&
 				this.getLogLevel().equals(other.getLogLevel()) &&
-				this.getDasusIDs().equals(other.getDasusIDs());
+				this.getDasusToDeployIDs().equals(other.getDasusToDeployIDs());
 	}
 	
 	@Override
 	public int hashCode() {
-		return Objects.hash(getId(),getHostName(),getLogLevel(),getDasusIDs());
+		return Objects.hash(getId(),getHostName(),getLogLevel(),getDasusToDeployIDs());
 	}
 
 	/**
@@ -141,17 +141,8 @@ public class JsonSupervisorDao {
 	 * 
 	 * @return The IDs of the DASUs of this supervisor
 	 */
-	public Set<String> getDasusIDs() {
-		return dasuIDs;
-	}
-	
-	/**
-	 * Replaces DASUs in {@link #supervisorDao} with their IDs
-	 * 
-	 * @param ids the IDs of the DASUs
-	 */
-	public void setDasusIDs(Set<String> ids) {
-		this.dasuIDs.addAll(ids);
+	public Set<String> getDasusToDeployIDs() {
+		return dasusToDeploy.stream().map(dtd -> dtd.getDasuId()).collect(Collectors.toSet());
 	}
 	
 	public String toString() {
@@ -162,9 +153,9 @@ public class JsonSupervisorDao {
 		ret.append(", hostName=");
 		ret.append(getHostName());
 		ret.append(", DASUs={");
-		for (String dasuId : getDasusIDs()) {
+		for (String dtdId : getDasusToDeployIDs()) {
 			ret.append(" ");
-			ret.append(dasuId);
+			ret.append(dtdId);
 		}
 		ret.append("}]");
 		return ret.toString();
