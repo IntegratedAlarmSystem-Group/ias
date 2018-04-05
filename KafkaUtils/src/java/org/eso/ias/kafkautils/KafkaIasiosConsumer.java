@@ -158,7 +158,6 @@ implements KafkaConsumerListener {
 	
 	private boolean accept(IASValue<?> iasio) {
 		assert(iasio!=null);
-		logger.info("*** Checking [{}] of type [{}]",iasio.id,iasio.valueType);
 		boolean acceptedById;
 		synchronized(acceptedIds) {
 			acceptedById = acceptedIds.contains(iasio.id) || acceptedIds.isEmpty();
@@ -169,7 +168,6 @@ implements KafkaConsumerListener {
 				acceptedByType = acceptedTypes.contains(iasio.valueType) || acceptedTypes.isEmpty();
 			}
 		}
-		logger.info("\t*** Check of [{}] will return {} AND {}={}",iasio.id,acceptedById,acceptedByType,(acceptedById && acceptedByType));
 		return acceptedById && acceptedByType;
 	}
 
