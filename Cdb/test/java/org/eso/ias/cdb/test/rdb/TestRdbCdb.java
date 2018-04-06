@@ -109,7 +109,6 @@ public class TestRdbCdb {
 	 * Test reading and writing the IAS
 	 */
 	@Test
-	@Ignore("Test is ignored for debugging")
 	public void testIas() throws Exception {
 		logger.info("testIas");
 		IasDao ias = new IasDao();
@@ -225,49 +224,6 @@ public class TestRdbCdb {
 		assertTrue("Got an empty Supervisor!", optSuperv2.isPresent());
 		assertEquals("The Supervisors differ!", superv, optSuperv2.get());
 	}
-	
-	/**
-	 * Test reading and writing of Supervisor
-	 * 
-	 * @throws Exception
-	 */
-//	@Test
-//	public void testTemplatedSupervisor() throws Exception {
-//		logger.info("testTemplatedSupervisor");
-//		
-//		TemplateDao template = new TemplateDao("TemplateForTest", 5, 37);
-//		cdbWriter.writeTemplate(template);
-//		
-//		SupervisorDao superv = new SupervisorDao();
-//		superv.setId("Supervisor-ID");
-//		superv.setHostName("almadev2.alma.cl");
-//		superv.setLogLevel(LogLevelDao.INFO);
-//		superv.setTemplateId(template.getId());
-//
-//		// Adds the DASUs
-//		DasuDao dasu1 = new DasuDao();
-//		dasu1.setId("DasuID1");
-//		dasu1.setSupervisor(superv);
-//		dasu1.setLogLevel(LogLevelDao.FATAL);
-//		superv.addDasu(dasu1);
-//
-//		IasioDao dasuOut1 = new IasioDao(
-//				"DASU-OUT-1", 
-//				"descr", 
-//				IasTypeDao.ALARM,"http://www.eso.org",
-//				true,
-//				template.getId());
-//		cdbWriter.writeIasio(dasuOut1, true);
-//		dasu1.setOutput(dasuOut1);
-//
-//		cdbWriter.writeSupervisor(superv);
-//
-//		Optional<SupervisorDao> optSuperv = cdbReader.getSupervisor(superv.getId());
-//		assertTrue("Got an empty Supervisor!", optSuperv.isPresent());
-//		assertEquals("The Supervisors differ!", superv, optSuperv.get());
-//		assertEquals(superv.getTemplateId(), optSuperv.get().getTemplateId());
-//
-//	}
 
 	/**
 	 * Test reading and writing of IASIO
@@ -275,7 +231,6 @@ public class TestRdbCdb {
 	 * @throws Exception
 	 */
 	@Test
-	@Ignore("Test is ignored for debugging")
 	public void testIasio() throws Exception {
 		logger.info("testIasio");
 		IasioDao io = new IasioDao(
@@ -305,7 +260,6 @@ public class TestRdbCdb {
 	 * @throws Exception
 	 */
 	@Test
-	@Ignore("Test is ignored for debugging")
 	public void testTemplatedIasio() throws Exception {
 		logger.info("testTemplatedIasio");
 		
@@ -332,7 +286,6 @@ public class TestRdbCdb {
 	 * @throws Exception
 	 */
 	@Test
-	@Ignore("Test is ignored for debugging")
 	public void testIasios() throws Exception {
 		logger.info("testIasios");
 		IasioDao io1 = new IasioDao("IO-ID1", "IASIO descr1", IasTypeDao.INT,"http://www.eso.org");
@@ -360,7 +313,6 @@ public class TestRdbCdb {
 	 * @throws Exception
 	 */
 	@Test
-	@Ignore("Test is ignored for debugging")
 	public void testDasu() throws Exception {
 		logger.info("testDasu");
 		// Test the reading/writing od a DASU with no ASCEs
@@ -433,7 +385,6 @@ public class TestRdbCdb {
 	 * Test the transfer function
 	 */
 	@Test
-	@Ignore("Test is ignored for debugging")
 	public void testTransferFunction() throws Exception {
 		logger.info("testTransferFunction");
 		
@@ -454,7 +405,6 @@ public class TestRdbCdb {
 	 * @throws Exception
 	 */
 	@Test
-	@Ignore("Test is ignored for debugging")
 	public void testAsce() throws Exception {
 		logger.info("testAsce");
 		// The supervisor where the DASU containing the ASCE runs
@@ -548,29 +498,31 @@ public class TestRdbCdb {
 		iasios.add(ioIn4);
 		cdbWriter.writeIasios(iasios, true);
 
-		// The supervisor with one DASU
-
 		// A DASU
 		DasuDao dasu = new DasuDao();
 		dasu.setId("DasuID1");
 		dasu.setLogLevel(LogLevelDao.DEBUG);
 		dasu.setOutput(ioOut);
-
 		cdbWriter.writeDasu(dasu);
+		
+		DasuToDeployDao dtd = new DasuToDeployDao(dasu, null, null);
+		
+		// The supervisor with one DASU
+		SupervisorDao superv1 = new SupervisorDao();
+		superv1.setId("Supervisor-ID1");
+		superv1.setHostName("almaias.hq.eso.org");
+		superv1.setLogLevel(LogLevelDao.DEBUG);
+		superv1.addDasuToDeploy(dtd);
+		cdbWriter.writeSupervisor(superv1);
 
+		
+		
 		// Another supervisor without DASU
 		SupervisorDao superv2 = new SupervisorDao();
 		superv2.setId("Supervisor-ID2");
 		superv2.setHostName("almaias.hq.eso.org");
 		superv2.setLogLevel(LogLevelDao.DEBUG);
 		cdbWriter.writeSupervisor(superv2);
-
-		// Another supervisor without 3 DASUs
-		SupervisorDao superv3 = new SupervisorDao();
-		superv3.setId("Supervisor-ID3");
-		superv3.setHostName("almaias.hq.eso.org");
-		superv3.setLogLevel(LogLevelDao.DEBUG);
-		cdbWriter.writeSupervisor(superv3);
 
 		// A DASU
 		DasuDao dasu2 = new DasuDao();
@@ -652,12 +604,27 @@ public class TestRdbCdb {
 		dasu4.setLogLevel(LogLevelDao.DEBUG);
 		dasu4.setOutput(ioIn4);
 		cdbWriter.writeDasu(dasu4);
+		
+		DasuToDeployDao dtd2 = new DasuToDeployDao(dasu2, null, null);
+		DasuToDeployDao dtd3 = new DasuToDeployDao(dasu3, null, null);
+		DasuToDeployDao dtd4 = new DasuToDeployDao(dasu4, null, null);
+		
+		// Another supervisor without 3 DASUs
+		SupervisorDao superv3 = new SupervisorDao();
+		superv3.setId("Supervisor-ID3");
+		superv3.setHostName("almaias.hq.eso.org");
+		superv3.setLogLevel(LogLevelDao.DEBUG);
+		superv3.addDasuToDeploy(dtd2);
+		superv3.addDasuToDeploy(dtd3);
+		superv3.addDasuToDeploy(dtd4);
+		cdbWriter.writeSupervisor(superv3);
+		
 
 		logger.info("CDB built");
 	}
 
 	/**
-	 * Test the getting of the DAUS of a supervisor
+	 * Test the getting of the DASU of a supervisor
 	 */
 	@Test
 	public void testGetDasusOfSupervisor() throws Exception {
@@ -686,7 +653,6 @@ public class TestRdbCdb {
 	 * Test the getting of the DAUS of a supervisor
 	 */
 	@Test
-	@Ignore("Test is ignored for debugging")
 	public void testGetAscesOfDasu() throws Exception {
 		logger.info("testGetAscesOfDasu");
 		buildCDB();
@@ -713,7 +679,6 @@ public class TestRdbCdb {
 	 * Test the getting of the DAUS of a supervisor
 	 */
 	@Test
-	@Ignore("Test is ignored for debugging")
 	public void testGetInputsOfAsce() throws Exception {
 		logger.info("testGetInputsOfAsce");
 		buildCDB();
@@ -745,7 +710,6 @@ public class TestRdbCdb {
 	 * @throws Exception
 	 */
 	@Test
-	@Ignore("Test is ignored for debugging")
 	public void testWriteTemplate() throws Exception {
 		TemplateDao tDao1 = new TemplateDao("tID1",3,9);
 		TemplateDao tDao2 = new TemplateDao("tID2",1,25);
