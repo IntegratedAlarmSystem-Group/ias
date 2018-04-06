@@ -16,6 +16,7 @@ import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.IasCdbException;
 import org.eso.ias.cdb.json.pojos.JsonAcseDao;
 import org.eso.ias.cdb.json.pojos.JsonDasuDao;
+import org.eso.ias.cdb.json.pojos.JsonDasuToDeployDao;
 import org.eso.ias.cdb.json.pojos.JsonSupervisorDao;
 import org.eso.ias.cdb.pojos.AsceDao;
 import org.eso.ias.cdb.pojos.DasuDao;
@@ -54,8 +55,8 @@ public class JsonReader implements CdbReader {
 	private class ObjectsHolder {
 		public final Map<String,AsceDao> asces = new HashMap<>();
 		public final Map<String,DasuDao> dasus = new HashMap<>();
-		public final Map<String,SupervisorDao> supervisors = new HashMap<>();
 		public final Map<String, TransferFunctionDao> transferFunctions = new HashMap<>();
+		public final Map<String, DasuToDeployDao> dasusToDeploy= new HashMap<>();
 	}
 	
 	/**
@@ -320,6 +321,13 @@ public class JsonReader implements CdbReader {
 	/**
 	 * Read the supervisor configuration from the JSON file. 
 	 * 
+	 * This methods reads the JsonSupervisorDao and convert it to SupervisorDao.
+	 * The tricky part is the conversion of the JsonDasuToDeployDao of the JsonSupervisorDao
+	 * to a DasuToDeployDao that needs to replace the ID of the DASU to deploy with a DasuDao.
+	 * The DasuDao can be easily retrieved by calling {@link #getDasu(String)}.
+	 * In the same way, the instance of TemplateDao can be easily retrieved
+	 * by calling {@link #getTemplate(String)}
+	 * 
 	 * @param id The not <code>null</code> nor empty supervisor identifier
 	 * @throws IasCdbException if the supervisor file does not exist or is unreadable
 	 */
@@ -331,21 +339,56 @@ public class JsonReader implements CdbReader {
 			throw new IllegalArgumentException("The identifier can't be an empty string");
 		}
 		
+		// Read the JsonSupervisorDao of the given id
 		Optional<JsonSupervisorDao> jSupervOpt;
 		try {
 			jSupervOpt = getJsonSupervisor(cleanedID);
 		} catch (IOException ioe) {
 			throw new IasCdbException("Error getting JSON SUpervisor",ioe);
 		}
-		ObjectsHolder holder = new ObjectsHolder();
-		if (jSupervOpt.isPresent()) {
-			try {
-				updateSupervisorObjects(jSupervOpt.get(), holder);
-			} catch (IOException|IasCdbException ioe) {
-				throw new IasCdbException("Error updating Supervisor objects",ioe);
+		
+		if (jSupervOpt.isPresent()) { 
+			
+			JsonSupervisorDao jSuperv = jSupervOpt.get();
+			
+			// Build the SupervisorDao
+			SupervisorDao ret = new SupervisorDao();
+			ret.setId(jSuperv.getId());
+			ret.setHostName(jSuperv.getHostName());
+			ret.setLogLevel(jSuperv.getLogLevel());
+			
+			// Convert each JsonDasuToDeployDao in a DasuToDeployDao
+			for (JsonDasuToDeployDao jdtd: jSupervOpt.get().getDasusToDeploy()) {
+				// get the dasuDao with the ID in the JsonDasuToDeployDao
+				Optional<DasuDao> optDasu = getDasu(jdtd.getDasuId());
+				if (!optDasu.isPresent()) {
+					throw new IasCdbException("DASU ["+jdtd.getDasuId()+"] not found for supevisor ["+id+"]");
+				}
+				
+				TemplateDao template = null;
+				Integer instance = jdtd.getInstance();
+				
+				// If the JsonDasuToDeployDao is templated, then
+				// read the template from the id in the JsonDasuToDeployDao
+				if (jdtd.getTemplateId()!=null) {
+					Optional<TemplateDao> optTemplate = getTemplate(jdtd.getTemplateId());
+					if (!optTemplate.isPresent()) {
+						throw new IasCdbException("Template ["+jdtd.getTemplateId()+"] not found for supevisor ["+id+"]");
+					}
+					template = optTemplate.get();
+					if (instance==null) {
+						throw new IasCdbException("Instance nr. not found for DTD ["+jdtd.getDasuId()+"] of supevisor ["+id+"]");
+					}
+				} 
+				
+				// Add the DasuToDeployDao to the SupervisorDao
+				ret.addDasuToDeploy(new DasuToDeployDao(optDasu.get(), template, instance));
+				
 			}
+			return Optional.of(ret);
+		} else {
+			return Optional.empty();
 		}
-		return jSupervOpt.map(x -> x.toSupervisorDao());
 	}
 	
 	/**
@@ -398,38 +441,6 @@ public class JsonReader implements CdbReader {
 			ObjectMapper mapper = new ObjectMapper();
 			return Optional.of(mapper.readValue(supervFile, JsonSupervisorDao.class));
 		}
-	}
-	/**
-	 * Update the the objects included in the JSON Supervisor
-	 * 
-	 * @param jSupDao The JSON Supervisor pojo
-	 * @param holder The holder to rebuild objects just once
-	 * @throws IOException
-	 * @throws IasCdbException
-	 */
-	private void updateSupervisorObjects(JsonSupervisorDao jSupDao, ObjectsHolder holder) throws IOException, IasCdbException {
-		Objects.requireNonNull(jSupDao, "The jSupervisor cannot be null");
-		Objects.requireNonNull(holder, "The holder cannot be null");
-		SupervisorDao superv = jSupDao.toSupervisorDao();
-		if (!holder.supervisors.containsKey(superv.getId())) {
-			holder.supervisors.put(superv.getId(), superv);
-		}
-//		for (String dasuId : jSupDao.getDasusIDs()) {
-//			if (!superv.containsDasu(dasuId)) {
-//				Optional<DasuDao> optDasu = Optional.ofNullable(holder.dasus.get(dasuId));
-//				if (!optDasu.isPresent()) {
-//					Optional<JsonDasuDao> jDasu = getJsonDasu(dasuId);
-//					if (jDasu.isPresent()) {
-//						updateDasuObjects(jDasu.get(), holder);
-//					} else {
-//						throw new IasCdbException("Inconsistent Supervisor record: DASU ["+dasuId+"] not found in CDB");
-//					}
-//					optDasu = jDasu.map(d -> d.toDasuDao());
-//				}
-//				optDasu.filter(n -> holder.dasus.containsKey(n.getId())).ifPresent(x -> holder.dasus.put(dasuId, x));
-//				optDasu.ifPresent(x -> superv.addDasu(x));
-//			}
-//		}
 	}
 	
 	/**

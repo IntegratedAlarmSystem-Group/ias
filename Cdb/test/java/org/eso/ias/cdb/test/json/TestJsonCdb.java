@@ -156,6 +156,11 @@ public class TestJsonCdb {
 		cdbWriter.writeDasu(dasu1);
 		cdbWriter.writeDasu(dasu2);
 		
+		DasuToDeployDao dtd1 = new DasuToDeployDao(dasu1, null, null);
+		DasuToDeployDao dtd2 = new DasuToDeployDao(dasu2, null, null);
+		superv.addDasuToDeploy(dtd1);
+		superv.addDasuToDeploy(dtd2);
+		
 		cdbWriter.writeSupervisor(superv);
 		assertTrue(cdbFiles.getSuperivisorFilePath(superv.getId()).toFile().exists());
 		

@@ -2,6 +2,8 @@ package org.eso.ias.cdb.json.pojos;
 
 import java.util.Objects;
 
+import javax.persistence.Basic;
+
 import org.eso.ias.cdb.pojos.DasuToDeployDao;
 import org.eso.ias.cdb.pojos.DasuDao;
 /**
@@ -16,18 +18,21 @@ public class JsonDasuToDeployDao {
 	/**
 	 * The ID of the DASU
 	 */
+	@Basic(optional=false)
 	private String dasuId;
 	
 	/**
 	 * The ID of the template
 	 */
-	private String templateId;
+	@Basic(optional=true)
+	private String templateId=null;
 	
 	/**
 	 * The instance of the templated DASU
 	 * to deploy
 	 */
-	private Integer instance;
+	@Basic(optional=true)
+	private Integer instance=null;
 	
 	/**
 	 * Empty constructor
@@ -47,7 +52,7 @@ public class JsonDasuToDeployDao {
 			throw new IllegalArgumentException("Invalid null or empty invalid DASU ID");
 		}
 		
-		// If the DASU is templted then both the template and the instance number
+		// If the DASU is templated then both the template and the instance number
 		// must be defined
 		//
 		// If it is not templated then both template and number must be null
@@ -96,6 +101,56 @@ public class JsonDasuToDeployDao {
 
 	public void setTemplateId(String templateId) {
 		this.templateId = templateId;
+	}
+
+	public Integer getInstance() {
+		return instance;
+	}
+
+	public void setInstance(Integer instance) {
+		this.instance = instance;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((dasuId == null) ? 0 : dasuId.hashCode());
+		result = prime * result + ((instance == null) ? 0 : instance.hashCode());
+		result = prime * result + ((templateId == null) ? 0 : templateId.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		JsonDasuToDeployDao other = (JsonDasuToDeployDao) obj;
+		if (dasuId == null) {
+			if (other.dasuId != null)
+				return false;
+		} else if (!dasuId.equals(other.dasuId))
+			return false;
+		if (instance == null) {
+			if (other.instance != null)
+				return false;
+		} else if (!instance.equals(other.instance))
+			return false;
+		if (templateId == null) {
+			if (other.templateId != null)
+				return false;
+		} else if (!templateId.equals(other.templateId))
+			return false;
+		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "JsonDasuToDeployDao [dasuId=" + dasuId + ", templateId=" + templateId + ", instance=" + instance + "]";
 	}
 
 	

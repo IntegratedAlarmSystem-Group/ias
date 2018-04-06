@@ -5,6 +5,10 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.persistence.Basic;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+
 import org.eso.ias.cdb.pojos.DasuDao;
 import org.eso.ias.cdb.pojos.LogLevelDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
@@ -19,14 +23,30 @@ import org.eso.ias.cdb.pojos.SupervisorDao;
 public class JsonSupervisorDao {
 	
 	/**
-	 * The SupervisorDao to make its DASUs
+	 * Supervisor ID
 	 */
-	private final SupervisorDao supervisorDao;
+	@Basic(optional=false)
+	private String id;
+	
+	/**
+	 * The host where the Supervisor runs
+	 */
+	@Basic(optional=false)
+	private String hostName;
+	
+	/**
+	 * The log level
+	 * 
+	 * A Supervisor inherits the IAS log level if undefined in the CDB.
+	 */
+	@Enumerated(EnumType.STRING)
+	@Basic(optional=true)
+	private LogLevelDao logLevel;
 	
 	/**
 	 * The DASUs are replaced by their IDs
 	 */
-	private final Set<JsonDasuToDeployDao>dasusToDeploy;
+	private Set<JsonDasuToDeployDao>dasusToDeploy = new HashSet<>();
 	
 	/**
 	 * Empty constructor.
@@ -35,7 +55,6 @@ public class JsonSupervisorDao {
 	 * 
 	 */
 	public JsonSupervisorDao() {
-		supervisorDao = new SupervisorDao();
 		this.dasusToDeploy = new HashSet<>();
 	}
 	
@@ -48,103 +67,12 @@ public class JsonSupervisorDao {
 		if (supervisorDao==null) {
 			throw new NullPointerException("The SupervisorDao can't be null");
 		}
-		this.supervisorDao=supervisorDao;
+		id = supervisorDao.getId();
+		hostName = supervisorDao.getHostName();
+		logLevel = supervisorDao.getLogLevel();
 		this.dasusToDeploy=supervisorDao.getDasusToDeploy().stream().map(i -> new JsonDasuToDeployDao(i)).collect(Collectors.toSet());
 	}
-	
-	/**
-	 * @param obj The object to check
-	 * @return <code>true</code> if this object is equal to the passed object
-	 * @see java.lang.Object#equals(Object)
-	 */
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		JsonSupervisorDao other =(JsonSupervisorDao)obj;
-		return this.getId().equals(other.getId()) && 
-				this.getHostName().equals(other.getHostName()) &&
-				this.getLogLevel().equals(other.getLogLevel()) &&
-				this.getDasusToDeployIDs().equals(other.getDasusToDeployIDs());
-	}
-	
-	@Override
-	public int hashCode() {
-		return Objects.hash(getId(),getHostName(),getLogLevel(),getDasusToDeployIDs());
-	}
 
-	/**
-	 * Get the ID of the Supervisor
-	 * 
-	 * @return the ID of the Supervisor
-	 * @see SupervisorDao#getId()
-	 */
-	public String getId() {
-		return supervisorDao.getId();
-	}
-
-	/**
-	 * Set the ID of the Supervisor
-	 * 
-	 * @param id the ID of the Supervisor
-	 * @see SupervisorDao#setId(java.lang.String)
-	 */
-	public void setId(String id) {
-		supervisorDao.setId(id);
-	}
-
-	/**
-	 * Get the name of the host
-	 * 
-	 * @return the name of the host
-	 * @see SupervisorDao#getHostName()
-	 */
-	public String getHostName() {
-		return supervisorDao.getHostName();
-	}
-
-	/**
-	 * Set the name of the host
-	 * 
-	 * @param host the name of the host
-	 * @see SupervisorDao#setHostName(java.lang.String)
-	 */
-	public void setHostName(String host) {
-		supervisorDao.setHostName(host);
-	}
-
-	/**
-	 * Get the log level
-	 * 
-	 * @return the log level
-	 * @see SupervisorDao#getLogLevel()
-	 */
-	public LogLevelDao getLogLevel() {
-		return supervisorDao.getLogLevel();
-	}
-
-	/**
-	 * Set the log level
-	 * @param logLevel the log level
-	 * @see SupervisorDao#setLogLevel(LogLevelDao)
-	 */
-	public void setLogLevel(LogLevelDao logLevel) {
-		supervisorDao.setLogLevel(logLevel);
-	}
-	
-	/**
-	 * Get the IDs of the DASUs
-	 * 
-	 * @return The IDs of the DASUs of this supervisor
-	 */
-	public Set<String> getDasusToDeployIDs() {
-		return dasusToDeploy.stream().map(dtd -> dtd.getDasuId()).collect(Collectors.toSet());
-	}
-	
 	public String toString() {
 		StringBuilder ret = new StringBuilder("JsonSupervisorDAO=[ID=");
 		ret.append(getId());
@@ -153,35 +81,100 @@ public class JsonSupervisorDao {
 		ret.append(", hostName=");
 		ret.append(getHostName());
 		ret.append(", DASUs={");
-		for (String dtdId : getDasusToDeployIDs()) {
+		for (JsonDasuToDeployDao jdtd : getDasusToDeploy()) {
 			ret.append(" ");
-			ret.append(dtdId);
+			ret.append(jdtd);
 		}
 		ret.append("}]");
 		return ret.toString();
 	}
+
+	public Set<JsonDasuToDeployDao> getDasusToDeploy() {
+		return dasusToDeploy;
+	}
 	
-	/**
-	 * Return the {@link DasuDao} encapsulated in this object.
-	 * 
-	 * @return The DasuDao
-	 */
-	public SupervisorDao toSupervisorDao() {
-		return this.supervisorDao;
-//		for (String dasuId: dasuIDs) {
-//			if (!supervisorDao.containsDasu(dasuId)) {
-//				try {
-//					Optional<DasuDao> optDasu = reader.getDasu(dasuId);
-//					if (!optDasu.isPresent()) {
-//						return Optional.empty();
-//					}
-//				} catch (Throwable t) {
-//					System.err.println("Error getting DASU "+dasuId);
-//					t.printStackTrace();
-//					return Optional.empty();
-//				}
-//			}
-//		}
-//		return Optional.of(supervisorDao);
+	
+	public void addDasusToDeploy(JsonDasuToDeployDao jdtd) {
+		Objects.requireNonNull(jdtd);
+		if (dasusToDeploy==null) {
+			dasusToDeploy = new HashSet<>();
+		}
+		// The DTD valid?
+		if (jdtd.getDasuId()==null || jdtd.getDasuId().isEmpty()) {
+			throw new IllegalArgumentException("Invalid jDTD ID");
+		}
+		if ((jdtd.getInstance()==null && jdtd.getTemplateId()!=null) ||
+		(jdtd.getInstance()!=null && jdtd.getTemplateId()==null)) {
+			throw new IllegalArgumentException("Inconsistent template defitinion: "+jdtd.toString());
+		}
+		dasusToDeploy.add(jdtd);
+	}
+
+	public void setDasusToDeploy(Set<JsonDasuToDeployDao> dasusToDeploy) {
+		this.dasusToDeploy = dasusToDeploy;
+	}
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getHostName() {
+		return hostName;
+	}
+
+	public void setHostName(String hostName) {
+		this.hostName = hostName;
+	}
+
+	public LogLevelDao getLogLevel() {
+		return logLevel;
+	}
+
+	public void setLogLevel(LogLevelDao logLevel) {
+		this.logLevel = logLevel;
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((dasusToDeploy == null) ? 0 : dasusToDeploy.hashCode());
+		result = prime * result + ((hostName == null) ? 0 : hostName.hashCode());
+		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		result = prime * result + ((logLevel == null) ? 0 : logLevel.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		JsonSupervisorDao other = (JsonSupervisorDao) obj;
+		if (dasusToDeploy == null) {
+			if (other.dasusToDeploy != null)
+				return false;
+		} else if (!dasusToDeploy.equals(other.dasusToDeploy))
+			return false;
+		if (hostName == null) {
+			if (other.hostName != null)
+				return false;
+		} else if (!hostName.equals(other.hostName))
+			return false;
+		if (id == null) {
+			if (other.id != null)
+				return false;
+		} else if (!id.equals(other.id))
+			return false;
+		if (logLevel != other.logLevel)
+			return false;
+		return true;
 	}
 }

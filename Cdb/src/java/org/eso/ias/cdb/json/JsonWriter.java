@@ -1,15 +1,19 @@
 package org.eso.ias.cdb.json;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -112,17 +116,6 @@ public class JsonWriter implements CdbWriter {
 		}catch (Throwable t) {
 			throw new IasCdbException("Error writing JSON Supervisor",t);
 		}
-	}
-	
-	/**
-	 * Write the DASU to deploy in the passed file.
-	 * 
-	 * @param dtd The DASU to deploy in the supervisor
-	 * @throws IasCdbException In case of error writing the DASU
-	 */
-	@Override
-	public void writeDasuToDeploy(DasuToDeployDao dtd) throws IasCdbException {
-		throw new IasCdbException("Operation not implemented");
 	}
 	
 	/**
