@@ -76,7 +76,7 @@ CREATE TABLE IASIO (
   docUrl VARCHAR2(256),
   canShelve NUMBER(1), -- boolean 0/1
   template_id VARCHAR2(64) NULL,
-  FOREIGN KEY(template_id) REFERENCES TEMPLATE_DEF(template_id),
+  CONSTRAINT IASIO_TEMPFK FOREIGN KEY(template_id) REFERENCES TEMPLATE_DEF(template_id),
   CONSTRAINT IASIO_PK PRIMARY KEY(io_id));
 
 
