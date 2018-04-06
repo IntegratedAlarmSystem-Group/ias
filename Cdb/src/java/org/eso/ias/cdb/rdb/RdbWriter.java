@@ -53,24 +53,6 @@ public class RdbWriter implements CdbWriter {
 	}
 	
 	/**
-	 * Write the DASU to deploy in the passed file.
-	 * 
-	 * @param dtd The DASU to deploy in the supervisor
-	 * @throws IasCdbException In case of error writing the DASU
-	 * @see org.eso.ias.cdb.CdbWrite#writeDasuToDeploy(DasuToDeployDao)
-	 */
-	@Override
-	public void writeDasuToDeploy(DasuToDeployDao dtd) throws IasCdbException {
-		Objects.requireNonNull(dtd, "The DASU to deploy object to persist can't be null");
-		Session s=rdbUtils.getSession();
-		Transaction t =s.beginTransaction();
-		s.merge(dtd);
-		t.commit();
-		s.flush();
-		s.close();
-	}
-
-	/**
 	 * Write the Supervisor in the CDB.
 	 * 
 	 * @param superv The Supervisor configuration to write in the file

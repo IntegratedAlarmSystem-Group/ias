@@ -28,14 +28,6 @@ public interface CdbWriter {
 	public void writeIas(IasDao ias) throws IasCdbException;
 	
 	/**
-	 * Write the DASU to deploy in the passed file.
-	 * 
-	 * @param dtd The DASU to deploy in the supervisor
-	 * @throws IasCdbException In case of error writing the DASU
-	 */
-	public void writeDasuToDeploy(DasuToDeployDao dtd) throws IasCdbException;
-	
-	/**
 	 * Write the Supervisor in the passed file.
 	 * 
 	 * @param superv The Supervisor configuration to write in the file
