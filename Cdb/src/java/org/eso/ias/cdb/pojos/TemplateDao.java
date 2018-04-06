@@ -54,6 +54,9 @@ public class TemplateDao {
 		if (id==null || id.isEmpty()) {
 			throw new IllegalArgumentException("Invalid null or empty template ID");
 		}
+		if (min>=max) {
+			throw new IllegalArgumentException("MIN>=MAX is not allowed");
+		}
 		this.id=id;
 		this.min=min;
 		this.max=max;
