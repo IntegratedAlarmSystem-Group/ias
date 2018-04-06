@@ -43,7 +43,6 @@ public class DasuToDeployDao {
 	 * The template if it is a templated DASU
 	 */
 	@OneToOne
-//	@ManyToOne
 	@JoinColumn(name = "template_id", foreignKey = @ForeignKey(name = "template_id"))
 	private TemplateDao template;
 	
