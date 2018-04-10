@@ -5,6 +5,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.persistence.Basic;
+
 import org.eso.ias.cdb.pojos.AsceDao;
 import org.eso.ias.cdb.pojos.PropertyDao;
 
@@ -41,6 +43,12 @@ public class JsonAcseDao {
 	 * The ID of the transfer function
 	 */
 	private String transferFunctionID;
+	
+	/**
+	 * The ID of the template for implementing replication
+	 */
+	@Basic(optional=true)
+	private String templateId;
 	
 	/**
 	 * Empty constructor 
@@ -174,7 +182,12 @@ public class JsonAcseDao {
 			ret.append(' ');
 			ret.append(prop.toString());
 		}
-		ret.append("}]");
+		ret.append("}");
+		if (templateId!=null) {
+			ret.append(", template=");
+			ret.append(templateId);
+		}
+		ret.append("]");
 		return ret.toString();
 	}
 	
@@ -193,5 +206,13 @@ public class JsonAcseDao {
 
 	public void setTransferFunctionID(String transferFunctionID) {
 		this.transferFunctionID = transferFunctionID;
+	}
+
+	public String getTemplateId() {
+		return templateId;
+	}
+
+	public void setTemplateId(String templateId) {
+		this.templateId = templateId;
 	}
 }
