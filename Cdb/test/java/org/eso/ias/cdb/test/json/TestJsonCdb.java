@@ -5,8 +5,10 @@ import static org.junit.Assert.*;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -538,6 +540,38 @@ public class TestJsonCdb {
 		// Get the IASIOs of ASCE-ID3 that has 2 inputs
 		iasios = cdbReader.getIasiosForAsce("ASCE-ID3");
 		assertEquals(2,iasios.size());
+	}
+	
+	/**
+	 * Test the getting of Supervisor that deploys templated DASUs
+	 * <P>
+	 * This test runs against the JSON CDB contained in testCdb and
+	 * gets Supervisor-ID4.
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetSupervWithTemplatedDASUs() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./testCdb");
+		cdbFiles = new CdbJsonFiles(path);
+		cdbReader = new JsonReader(cdbFiles);
+		
+		Optional<SupervisorDao> superv4 = cdbReader.getSupervisor("Supervisor-ID4");
+		assert(superv4.isPresent());
+		SupervisorDao superv = superv4.get();
+		assertEquals(2,superv.getDasusToDeploy().size());
+		Map<String , DasuToDeployDao> dasusToDeploy= new HashMap<>();
+		for (DasuToDeployDao dtd: superv.getDasusToDeploy()) {
+			dasusToDeploy.put(dtd.getDasu().getId(), dtd);
+		}
+		DasuToDeployDao dtd5 = dasusToDeploy.get("DasuID5");
+		assertNotNull(dtd5);
+		assertEquals("template1-ID",dtd5.getTemplate().getId());
+		assertEquals(3, dtd5.getInstance().intValue());
+		DasuToDeployDao dtd6 = dasusToDeploy.get("DasuID6");
+		assertNotNull(dtd6);
+		assertEquals("template3-ID",dtd6.getTemplate().getId());
+		assertEquals(5, dtd6.getInstance().intValue());
 	}
 	
 	/**
