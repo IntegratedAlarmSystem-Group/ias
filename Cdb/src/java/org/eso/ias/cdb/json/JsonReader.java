@@ -315,7 +315,27 @@ public class JsonReader implements CdbReader {
 				throw new IasCdbException("Error updating DASU objects",ioe);
 			}
 		}
-		return jDasuOpt.map(x -> x.toDasuDao());
+		Optional<DasuDao> ret = jDasuOpt.map(x -> x.toDasuDao());
+		
+		// If the DASU is templated then the ID of the templates of ASCEs
+		// must be equal to that of the DASU
+		if (ret.isPresent()) {
+			Set<AsceDao> asces = ret.get().getAsces();
+			String templateOfDasu = ret.get().getTemplateId(); 
+			if (templateOfDasu==null) {
+				// No template in the DASU: ASCEs must have no template
+				if (!asces.stream().allMatch(asce -> asce.getTemplateId()==null)) {
+					throw new IasCdbException("Template mismatch between DASU ["+cleanedID+"] and its ASCEs");
+				}
+			} else {
+				if (!asces.stream().allMatch(asce -> asce.getTemplateId().equals(templateOfDasu))) {
+					throw new IasCdbException("Template mismatch between DASU ["+cleanedID+"] and its ASCEs");
+				}
+			}
+		}
+		
+		
+		return ret;
 	}
 	
 	/**

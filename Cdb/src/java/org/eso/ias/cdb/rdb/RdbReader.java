@@ -204,7 +204,27 @@ public class RdbReader implements CdbReader {
 		Transaction t =s.beginTransaction();
 		DasuDao dasu = s.get(DasuDao.class,id);
 		t.commit();
-		return Optional.ofNullable(dasu);
+		
+		Optional<DasuDao> ret = Optional.ofNullable(dasu);
+		
+		// If the DASU is templated then the ID of the templates of ASCEs
+		// must be equal to that of the DASU
+		if (ret.isPresent()) {
+			Set<AsceDao> asces = ret.get().getAsces();
+			String templateOfDasu = ret.get().getTemplateId(); 
+			if (templateOfDasu==null) {
+				// No template in the DASU: ASCEs must have no template
+				if (!asces.stream().allMatch(asce -> asce.getTemplateId()==null)) {
+					throw new IasCdbException("Template mismatch between DASU ["+id+"] and its ASCEs");
+				}
+			} else {
+				if (!asces.stream().allMatch(asce -> asce.getTemplateId().equals(templateOfDasu))) {
+					throw new IasCdbException("Template mismatch between DASU ["+id+"] and its ASCEs");
+				}
+			}
+		}
+		
+		return ret;
 	}
 	
 	/**
