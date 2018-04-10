@@ -236,7 +236,7 @@ public class RdbReader implements CdbReader {
 	 *                         supervisor with the give identifier does not exist
 	 */
 	@Override
-	public Set<DasuToDeployDao> getDasusForSupervisor(String id) throws IasCdbException {
+	public Set<DasuToDeployDao> getDasusToDeployInSupervisor(String id) throws IasCdbException {
 		Objects.requireNonNull(id, "The ID cant't be null");
 		if (id.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty ID");

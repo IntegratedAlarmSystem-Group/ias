@@ -631,16 +631,16 @@ public class TestRdbCdb {
 		buildCDB();
 
 		// The test starts below
-		Set<DasuToDeployDao> dtds = cdbReader.getDasusForSupervisor("Supervisor-ID1");
+		Set<DasuToDeployDao> dtds = cdbReader.getDasusToDeployInSupervisor("Supervisor-ID1");
 		assertEquals(1, dtds.size());
 		for (DasuToDeployDao dtd : dtds) {
 			assertEquals("DasuID1", dtd.getDasu().getId());
 		}
 
-		dtds = cdbReader.getDasusForSupervisor("Supervisor-ID2");
+		dtds = cdbReader.getDasusToDeployInSupervisor("Supervisor-ID2");
 		assertEquals(0, dtds.size());
 
-		dtds = cdbReader.getDasusForSupervisor("Supervisor-ID3");
+		dtds = cdbReader.getDasusToDeployInSupervisor("Supervisor-ID3");
 		assertEquals(3, dtds.size());
 		for (DasuToDeployDao dtd : dtds) {
 			assertTrue(

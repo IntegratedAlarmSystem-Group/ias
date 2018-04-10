@@ -454,16 +454,16 @@ public class TestJsonCdb {
 		cdbFiles = new CdbJsonFiles(path);
 		cdbReader = new JsonReader(cdbFiles);
 		// Get the DASUs of a Supervisor that has none
-		Set<DasuToDeployDao> dasus = cdbReader.getDasusForSupervisor("Supervisor-ID2");
+		Set<DasuToDeployDao> dasus = cdbReader.getDasusToDeployInSupervisor("Supervisor-ID2");
 		assertTrue(dasus.isEmpty());
 		// Get the DASUs of a Supervisor that has one
-		dasus = cdbReader.getDasusForSupervisor("Supervisor-ID1");
+		dasus = cdbReader.getDasusToDeployInSupervisor("Supervisor-ID1");
 		assertEquals(1,dasus.size());
 		Iterator<DasuToDeployDao> iter = dasus.iterator();
 		DasuToDeployDao dtd = iter.next();
 		assertEquals("DasuID1",dtd.getDasu().getId());
 		// Get the DASUs of a Supervisor that has three
-		dasus = cdbReader.getDasusForSupervisor("Supervisor-ID3");
+		dasus = cdbReader.getDasusToDeployInSupervisor("Supervisor-ID3");
 		assertEquals(3,dasus.size());
 		Set<String> dasuIds = dasus.stream().map(d -> d.getDasu().getId()).collect(Collectors.toSet());
 		assertEquals(3,dasuIds.size());
