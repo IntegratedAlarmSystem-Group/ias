@@ -216,7 +216,11 @@ public class JsonWriter implements CdbWriter {
 			File tempF;
 			BufferedOutputStream outS;
 			try {
-				tempF = File.createTempFile("iasio", "tmp", parent.toFile());
+				if (parent==null) {
+					tempF = File.createTempFile("iasio", "tmp", null);
+				} else {
+					tempF = File.createTempFile("iasio", "tmp", parent.toFile());
+				}
 				outS = new BufferedOutputStream(new FileOutputStream(tempF));
 			} catch (IOException ioe) {
 				throw new IasCdbException("Error creating temporary file",ioe);
@@ -333,7 +337,11 @@ public class JsonWriter implements CdbWriter {
 			File tempF;
 			BufferedOutputStream outS;
 			try {
-				tempF = File.createTempFile("tfs", "tmp", parent.toFile());
+				if (parent==null) {
+					tempF = File.createTempFile("tfs", "tmp", null);
+				} else {
+					tempF = File.createTempFile("tfs", "tmp", parent.toFile());
+				}
 				outS = new BufferedOutputStream(new FileOutputStream(tempF));
 			} catch (IOException ioe) {
 				throw new IasCdbException("Error creating temporary file",ioe);
@@ -450,7 +458,11 @@ public class JsonWriter implements CdbWriter {
 			File tempF;
 			BufferedOutputStream outS;
 			try {
-				tempF = File.createTempFile("templates", "tmp", parent.toFile());
+				if (parent==null) {
+					tempF = File.createTempFile("templates", "tmp", null);
+				} else {
+					tempF = File.createTempFile("templates", "tmp", parent.toFile());
+				}
 				outS = new BufferedOutputStream(new FileOutputStream(tempF));
 			} catch (IOException ioe) {
 				throw new IasCdbException("Error creating temporary file",ioe);
