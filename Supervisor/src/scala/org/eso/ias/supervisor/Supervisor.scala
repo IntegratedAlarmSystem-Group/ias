@@ -131,8 +131,6 @@ class Supervisor(
   val dasuIds = dasuDaos.map(_.getId)
   logger.info("Supervisor [{}] built {} DASUs: {}",id, dasus.size.toString(),dasuIds.mkString(", "))
   
-  // TODO: close the cdbReader and free the resources (@see Issue #25)
-  
   /**
    * Associate each DASU with the Set of inputs it needs.
    * 
