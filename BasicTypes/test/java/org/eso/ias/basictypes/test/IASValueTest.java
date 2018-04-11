@@ -27,9 +27,9 @@ public class IASValueTest {
 		String valId="testIdentifier";
 		Option<Identifier> none = Option.apply(null);
 		Identifier supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR,none);
-		Identifier dasuId =  new Identifier("DasuId",IdentifierType.DASU,new Some(supervId));
-		Identifier asceId =  new Identifier("AsceId",IdentifierType.ASCE,new Some(dasuId));
-		Identifier id = new Identifier(valId, IdentifierType.IASIO,new Some(asceId));
+		Identifier dasuId =  new Identifier("DasuId",IdentifierType.DASU, supervId);
+		Identifier asceId =  new Identifier("AsceId",IdentifierType.ASCE,dasuId);
+		Identifier id = new Identifier(valId, IdentifierType.IASIO,asceId);
 		
 		IASValue<?> val = IASValue.build(
 				10L, 
