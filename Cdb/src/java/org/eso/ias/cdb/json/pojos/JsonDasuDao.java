@@ -52,6 +52,7 @@ public class JsonDasuDao {
 		this.dasu=dasu;
 		this.asceIDs=dasu.getAsces().stream().map(i -> i.getId()).collect(Collectors.toSet());
 		this.outputId=dasu.getOutput().getId();
+		this.templateId=dasu.getTemplateId();
 	}
 	
 	/**
@@ -151,6 +152,7 @@ public class JsonDasuDao {
 	 * @return the {@link DasuDao} encapsulated in this object.
 	 */
 	public DasuDao toDasuDao() {
+		dasu.setTemplateId(templateId);
 		return this.dasu;
 	
 	}

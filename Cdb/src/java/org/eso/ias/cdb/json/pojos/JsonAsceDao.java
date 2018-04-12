@@ -75,6 +75,7 @@ public class JsonAsceDao {
 		Objects.requireNonNull(this.asce.getOutput(), "Inavlid null output IASIO");
 		this.outputID=this.asce.getOutput().getId();
 		this.transferFunctionID=this.asce.getTransferFunction().getClassName();
+		this.templateId=this.asce.getTemplateId();
 		
 		asce.getInputs().stream().forEach(iasio -> inputIds.add(iasio.getId()));
 	}
@@ -197,6 +198,7 @@ public class JsonAsceDao {
 	 * @return The AsceDao
 	 */
 	public AsceDao toAsceDao() {
+		asce.setTemplateId(templateId);
 		return this.asce;
 	}
 
