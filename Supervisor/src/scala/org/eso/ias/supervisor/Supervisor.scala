@@ -65,7 +65,7 @@ class Supervisor(
     private val outputPublisher: OutputPublisher,
     private val inputSubscriber: InputSubscriber,
     cdbReader: CdbReader,
-    dasuFactory: (DasuDao, Identifier, OutputPublisher, InputSubscriber, CdbReader) => Dasu) 
+    dasuFactory: (DasuDao, Identifier, OutputPublisher, InputSubscriber) => Dasu) 
     extends InputsListener with InputSubscriber with  OutputPublisher {
   require(Option(supervisorIdentifier).isDefined,"Invalid Supervisor identifier")
   require(Option(outputPublisher).isDefined,"Invalid output publisher")
@@ -123,7 +123,8 @@ class Supervisor(
   assert(dasuDaos.size==dasusToDelpoy.size)
   
   // Build all the DASUs
-  val dasus: Map[String, Dasu] = dasuDaos.foldLeft(Map.empty[String,Dasu])((m, dasuDao) => m + (dasuDao.getId -> dasuFactory(dasuDao,supervisorIdentifier,this,this,cdbReader)))
+  val dasus: Map[String, Dasu] = dasuDaos.foldLeft(Map.empty[String,Dasu])((m, dasuDao) => 
+    m + (dasuDao.getId -> dasuFactory(dasuDao,supervisorIdentifier,this,this)))
   
   /**
    * The IDs of the DASUs instantiated in the Supervisor
@@ -365,8 +366,8 @@ object Supervisor {
     // The identifier of the supervisor
     val identifier = new Identifier(supervisorId, IdentifierType.SUPERVISOR, None)
     
-    val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber, cr: CdbReader) => 
-      DasuImpl(dd,i,op,id,cr,refreshRate,tolerance)
+    val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) => 
+      DasuImpl(dd,i,op,id,refreshRate,tolerance)
     
     // Build the supervisor
     val supervisor = new Supervisor(identifier,outputPublisher,inputsProvider,reader,factory)
