@@ -9,6 +9,5 @@
 		"ASCE-AlarmsThreshold"],
 	"outputId":"TooManyHighTempAlarm",
 	"logLevel":"FATAL",
-	"id":"DasuWith7ASCEs",
-	"supervisorID":"SupervisorID"
+	"id":"DasuWith7ASCEs"
 }
