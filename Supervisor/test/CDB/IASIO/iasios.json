@@ -240,5 +240,8 @@
 	{ "id":"TemperatureAlarm", "shortDesc":"Temperature too high", "iasType":"ALARM" },
 	{ "id":"StrenghtAlarm", "shortDesc":"Too strong", "iasType":"ALARM" },
 	{ "id":"Strenght", "shortDesc":"Strenght", "iasType":"DOUBLE" },
-	{ "id":"Temperature", "shortDesc":"Temperature", "iasType":"DOUBLE" }
+	{ "id":"Temperature", "shortDesc":"Temperature", "iasType":"DOUBLE" },
+	
+	{ "id":"DasuTemp1-OutID", "shortDesc":"Templated output 1", "iasType":"ALARM", "templateId":"temp-ID1" },
+	{ "id":"DasuTemp2-OutID", "shortDesc":"Templated output 2", "iasType":"ALARM", "templateId":"temp-ID2" }
 ]

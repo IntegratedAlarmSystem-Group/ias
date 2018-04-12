@@ -12,6 +12,5 @@
 		"ASCEOnDasu1-ID10"],
 	"outputId":"Dasu1-OutID",
 	"logLevel":"FATAL",
-	"id":"Dasu1",
-	"supervisorID":"SupervisorID"
+	"id":"Dasu1"
 }
