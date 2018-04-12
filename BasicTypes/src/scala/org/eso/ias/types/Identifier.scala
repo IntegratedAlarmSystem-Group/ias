@@ -115,10 +115,11 @@ object Identifier {
    * 
    * @param id: the identifier
    * @param instance: the number of the templated instance, if defined
+   * @return the id for the instance instance of a template
    */
   def buildIdFromTemplate(
       id: String, 
-      instance: Option[Int]) = {
+      instance: Option[Int]): String = {
     require(Option(id).isDefined && !id.trim().isEmpty(),"Invalid identifier")
     require(Option(instance).isDefined)
     if (instance.isDefined) {
