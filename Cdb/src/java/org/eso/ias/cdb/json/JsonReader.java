@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.IasCdbException;
-import org.eso.ias.cdb.json.pojos.JsonAcseDao;
+import org.eso.ias.cdb.json.pojos.JsonAsceDao;
 import org.eso.ias.cdb.json.pojos.JsonDasuDao;
 import org.eso.ias.cdb.json.pojos.JsonDasuToDeployDao;
 import org.eso.ias.cdb.json.pojos.JsonSupervisorDao;
@@ -271,7 +271,7 @@ public class JsonReader implements CdbReader {
 			throw new IllegalArgumentException("The identifier can't be an empty string");
 		}
 		
-		Optional<JsonAcseDao> jAsceOpt;
+		Optional<JsonAsceDao> jAsceOpt;
 		try {
 			jAsceOpt = getJsonAsce(cleanedID);
 		} catch (IOException ioe) {
@@ -436,13 +436,13 @@ public class JsonReader implements CdbReader {
 	 * @return The JSON configuration of the ASCE if found; 
 	 *         empty otherwise
 	 */
-	private Optional<JsonAcseDao>getJsonAsce(String id) throws IOException {
+	private Optional<JsonAsceDao>getJsonAsce(String id) throws IOException {
 		File asceFile =  cdbFileNames.getAsceFilePath(id).toFile();
 		if (!canReadFromFile(asceFile)) {
 			return Optional.empty();
 		} else {
 			ObjectMapper mapper = new ObjectMapper();
-			return Optional.of(mapper.readValue(asceFile, JsonAcseDao.class));
+			return Optional.of(mapper.readValue(asceFile, JsonAsceDao.class));
 		}
 	}
 	
@@ -503,7 +503,7 @@ public class JsonReader implements CdbReader {
 			if (holder.asces.containsKey(asceID)) {
 				asce=Optional.of(holder.asces.get(asceID));
 			} else {
-				Optional<JsonAcseDao> jAsce = getJsonAsce(asceID);
+				Optional<JsonAsceDao> jAsce = getJsonAsce(asceID);
 				if (jAsce.isPresent()) {
 					updateAsceObjects(jAsce.get(), holder);
 				} else {
@@ -527,7 +527,7 @@ public class JsonReader implements CdbReader {
 	 * @throws IOException
 	 * @throws IasCdbException
 	 */
-	private void updateAsceObjects(JsonAcseDao jAsceDao, ObjectsHolder holder) throws IOException, IasCdbException {
+	private void updateAsceObjects(JsonAsceDao jAsceDao, ObjectsHolder holder) throws IOException, IasCdbException {
 		Objects.requireNonNull(jAsceDao, "The jASCE cannot be null");
 		Objects.requireNonNull(holder, "The holder cannot be null");
 		AsceDao asce = jAsceDao.toAsceDao();

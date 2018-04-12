@@ -17,7 +17,7 @@ import org.eso.ias.cdb.pojos.PropertyDao;
  * @author acaproni
  *
  */
-public class JsonAcseDao {
+public class JsonAsceDao {
 	
 	/**
 	 * The rdb pojo
@@ -53,7 +53,7 @@ public class JsonAcseDao {
 	/**
 	 * Empty constructor 
 	 */
-	public JsonAcseDao() {
+	public JsonAsceDao() {
 		this.asce=new AsceDao();
 		this.inputIds= new HashSet<>();
 	}
@@ -63,7 +63,7 @@ public class JsonAcseDao {
 	 * 
 	 * @param asce The rdb pojo to mask
 	 */
-	public JsonAcseDao(AsceDao asce) {
+	public JsonAsceDao(AsceDao asce) {
 		if (asce==null) {
 			throw new NullPointerException("The ASCE pojo can't be null");
 		}

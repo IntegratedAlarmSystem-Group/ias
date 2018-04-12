@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 import org.eso.ias.cdb.CdbWriter;
 import org.eso.ias.cdb.IasCdbException;
-import org.eso.ias.cdb.json.pojos.JsonAcseDao;
+import org.eso.ias.cdb.json.pojos.JsonAsceDao;
 import org.eso.ias.cdb.json.pojos.JsonDasuDao;
 import org.eso.ias.cdb.json.pojos.JsonSupervisorDao;
 import org.eso.ias.cdb.pojos.AsceDao;
@@ -154,7 +154,7 @@ public class JsonWriter implements CdbWriter {
 		}catch (IOException ioe) {
 			throw new IasCdbException("Error getting ASCE file",ioe);
 		}
-		JsonAcseDao jsonAsce = new JsonAcseDao(asce);
+		JsonAsceDao jsonAsce = new JsonAsceDao(asce);
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
 		try {
