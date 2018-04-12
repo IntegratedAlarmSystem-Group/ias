@@ -88,7 +88,8 @@ class SupervisorWithTemplatesTest extends FlatSpec {
     val f = fixture
     // There are 2 DASUs
     assert(f.supervisor.dasuIds.size == 2)
-    assert(f.supervisor.dasuIds.forall(id => id == "DasuTemp1-OutID" || id == "DasuTemp2-OutID"))
+    println (f.supervisor.dasuIds.mkString(", "))
+    assert(f.supervisor.dasuIds.forall(id => id.startsWith("DasuTemplateID1") || id.startsWith("DasuTemplateID2")))
   }
 
 //  it must "properly associate inputs to DASUs" in {
