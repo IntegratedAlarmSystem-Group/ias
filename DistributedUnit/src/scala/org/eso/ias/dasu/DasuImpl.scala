@@ -619,7 +619,6 @@ object DasuImpl {
     supervidentifier: Identifier,
     outputPublisher: OutputPublisher,
     inputSubscriber: InputSubscriber,
-    cdbReader: CdbReader,
     autoSendTimeInterval: Integer,
     tolerance: Integer): DasuImpl = {
     
@@ -628,7 +627,6 @@ object DasuImpl {
     require(Option(supervidentifier).isDefined)
     require(Option(outputPublisher).isDefined)
     require(Option(inputSubscriber).isDefined)
-    require(Option(cdbReader).isDefined)
     require(Option(autoSendTimeInterval).isDefined)
     require(Option(tolerance).isDefined)
     
