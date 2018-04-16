@@ -1,9 +1,11 @@
 package org.eso.ias.asce.transfer;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 
 import org.eso.ias.types.IASValue;
+import org.eso.ias.types.Identifier;
 
 /**
  * The JavaTransferExecutor provides the interface
@@ -22,6 +24,46 @@ public abstract class JavaTransferExecutor extends TransferExecutor {
 			Properties props
 			) {
 		super(cEleId,cEleRunningId,props);
+	}
+	
+	/**
+	 * This method transparently return a value from the passed ID,
+	 * being the ASCE templated or not.
+	 * 
+	 * If the ASCE is not templated, this method delegates to 
+	 * {@link Map#get(Object)}.
+	 * 
+	 * If the ASCE is generated out of a template,
+	 * its inputs can or cannot be generated out of the same template. In the latter, 
+	 * their identifiers must be enriched with the number of the instance.
+	 * 
+	 * @param inputs the map of the inputs
+	 * @param id The (non templated) identifier of the value
+	 * @return the IASValue of the given ID or <code>null</code>
+	 *         if a IASValue with the passed id is not in the map
+	 */
+	protected IASValue<?> getValue(Map<String, IASValue<?>> inputs, String id) {
+		Objects.requireNonNull(inputs,"Invalid map of inputs");
+		Objects.requireNonNull(id,"Invalid IASIO ID");
+		if (Identifier.isTemplatedIdentifier(id)) {
+			throw new IllegalArgumentException("Templated IDs are forbidden here");
+		}
+		if (!isTemplated()) {
+			return inputs.get(id);
+		}
+		
+		// If the ASCE is templated, it can have non-templated or
+		// template inputs.
+		//
+		// Let's try first with a non template
+		IASValue<?> ret = inputs.get(id);
+		if (ret==null) {
+			// Bad luck: try with templated ID
+			Integer instance = getTemplateInstance().get();
+			String templatedID = Identifier.buildIdFromTemplate(id,instance);
+			ret = inputs.get(templatedID);
+		}
+		return ret;
 	}
 
 	/**

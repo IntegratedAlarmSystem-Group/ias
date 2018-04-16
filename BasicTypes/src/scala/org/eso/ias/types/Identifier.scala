@@ -129,6 +129,19 @@ object Identifier {
   }
   
   /**
+   * Build the identifier from a string and a instance number.
+   * 
+   * @param id: the identifier
+   * @param instance: the number of the templated instance
+   * @return the id for the instance instance of a template
+   */
+  def buildIdFromTemplate(
+      id: String, 
+      instance: Int): String = {
+    buildIdFromTemplate(id,Option(instance))
+  }
+  
+  /**
    * Factory method to to build a identifier
    * from the passed fullRunningId string.
    * 
