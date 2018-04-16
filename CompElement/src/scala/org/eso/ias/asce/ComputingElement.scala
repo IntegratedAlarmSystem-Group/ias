@@ -116,6 +116,18 @@ abstract class ComputingElement[T](
   /** The ID of the ASCE */
   val id = asceIdentifier.id
   
+  /** 
+   *  True if the DASU has been generated from a template,
+   *  False otherwise 
+   */
+  val fromTemplate: Boolean = asceIdentifier.fromTemplate
+  
+  /**
+   * The number of the instance if the DASU has been generated
+   * from a template; empty otherwise
+   */
+  lazy val templateInstance: Option[Int] = asceIdentifier.templateInstance
+  
   logger.info("Building ASCE [{}] with running id {}",id,asceIdentifier.fullRunningID)
   
   /**
