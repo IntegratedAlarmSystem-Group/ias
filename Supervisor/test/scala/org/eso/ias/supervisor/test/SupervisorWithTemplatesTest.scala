@@ -286,105 +286,71 @@ class SupervisorWithTemplatesTest extends FlatSpec {
     assert(f.supervisor.dasus("Dasu1").asInstanceOf[DasuMock].inputsReceivedFromSuperv.isEmpty)
     assert(f.supervisor.dasus("DasuTemplateID1[!#3!]").asInstanceOf[DasuMock].inputsReceivedFromSuperv.size==3)
     assert(f.supervisor.dasus("DasuTemplateID2[!#5!]").asInstanceOf[DasuMock].inputsReceivedFromSuperv.isEmpty)    
-    
-//    val iasioForDasu1 = for {
-//      i <- 1 to 10
-//      x <- 1 to 5
-//      id = "ASCE" + i + "OnDasu1-ID" + x + "-In"
-//    } yield {
-//      val iasValueId = new Identifier(id, IdentifierType.IASIO, AsceId)
-//      val t0 = System.currentTimeMillis()-100
-//      IASValue.build(
-//        10L,
-//			  OperationalMode.OPERATIONAL,
-//			  IasValidity.RELIABLE,
-//			  iasValueId.fullRunningID,
-//			  IASTypes.LONG,
-//			  t0,
-//			  t0+5,
-//			  t0+10,
-//			  t0+15,
-//			  t0+20,
-//			  t0+25,
-//			null,
-//			null,null)
-//    }
-    
-    
   }
   
-//  
-//  // Sends some input to DASU1 and DASU3 and check if the
-//  // supervisor published their output (bit no output must be
-//  // produced by DASU2)
-//  it must "publish the output" in {
-//    
-//    val f = fixture
-//    assert(f.supervisor.start().isSuccess)
-//    
-//    val Sup2Id = new Identifier("AnotherSupervID", IdentifierType.SUPERVISOR, None)
-//    val DasuId = new Identifier("DASU-Id", IdentifierType.DASU, Sup2Id)
-//    val AsceId = new Identifier("ASCE-Id", IdentifierType.ASCE, DasuId)
-//    
-//    // Few IASIOs for DASU1
-//    //
-//    // The format of the input of this DASU is ASCEXOnDasu1-IDY-In
-//    val iasioForDasu1 = for {
-//      i <- 1 to 8 // ASCEs
-//      x <- 1 to 3
-//      id = "ASCE" + i + "OnDasu1-ID" + x + "-In"
-//    } yield {
-//      val iasValueId = new Identifier(id, IdentifierType.IASIO, AsceId)
-//      val t0 = System.currentTimeMillis()-100
-//      IASValue.build(
-//        10L,
-//			  OperationalMode.OPERATIONAL,
-//			  IasValidity.RELIABLE,
-//			  iasValueId.fullRunningID,
-//			  IASTypes.LONG,
-//			  t0,
-//			  t0+5,
-//			  t0+10,
-//			  t0+15,
-//			  t0+20,
-//			  t0+25,
-//			  null,
-//			  null,null)
-//    }
-//    
-//    // And for DASU3
-//    val iasioForDasu3 = for {
-//      i <- 1 to 5 // ASCEs
-//      x <- 1 to 4
-//      id = "ASCE" + i + "OnDasu3-ID" + x + "-In"
-//    } yield {
-//      val iasValueId = new Identifier(id, IdentifierType.IASIO, AsceId)
-//      val t0 = System.currentTimeMillis()-100
-//      IASValue.build(
-//        10L,
-//			  OperationalMode.OPERATIONAL,
-//			  IasValidity.RELIABLE,
-//			  iasValueId.fullRunningID,
-//			  IASTypes.LONG,
-//			  t0,
-//			  t0+5,
-//			  t0+10,
-//			  t0+15,
-//			  t0+20,
-//			  t0+25,
-//			  null,
-//			  null,null)
-//      
-//    }
-//
-//    val iasioForDasusSet = iasioForDasu1.toSet ++ iasioForDasu3.toSet
-//    val ids = iasioForDasusSet.map(i => i.id)
-//
-//    logger.info("Sending {} iasios {}", ids.size.toString, ids.mkString(", "))
-//    f.inputsProvider.sendInputs(iasioForDasusSet)
-//    
-//    assert(f.outputEventsreceived.size==2)
-//    assert(f.stringEventsreceived.size==2)
-//    assert(f.stringEventsreceived.forall(s => s.contains("Dasu1")||s.contains("Dasu3")))
-//  }
+  // Sends some input to Dasu1 and DasuTemplateID2 and check if the
+  // supervisor published their outputs (but no output must be
+  // produced by DasuTemplateID1)
+  it must "publish the output" in {
+    
+    val f = fixture
+    assert(f.supervisor.start().isSuccess)
+    
+    val Sup2Id = new Identifier("AnotherSupervID", IdentifierType.SUPERVISOR, None)
+    val DasuId = new Identifier("DASU-Id", IdentifierType.DASU, Sup2Id)
+    val AsceId = new Identifier("ASCE-Id", IdentifierType.ASCE, DasuId)
+    
+    // Few IASIOs for Dasu1
+    //
+    // The format of the input of this DASU is ASCEXOnDasu1-IDY-In
+    val iasioForDasu1 = for {
+      i <- 1 to 8 // ASCEs
+      x <- 1 to 3
+      id = "ASCE" + i + "OnDasu1-ID" + x + "-In"
+    } yield {
+      val iasValueId = new Identifier(id, IdentifierType.IASIO, AsceId)
+      val t0 = System.currentTimeMillis()-100
+      IASValue.build(
+        10L,
+			  OperationalMode.OPERATIONAL,
+			  IasValidity.RELIABLE,
+			  iasValueId.fullRunningID,
+			  IASTypes.LONG,
+			  t0,
+			  t0+5,
+			  t0+10,
+			  t0+15,
+			  t0+20,
+			  t0+25,
+			  null,
+			  null,null)
+    }
+    
+    // And for DasuTemplateID2
+    val t1 = System.currentTimeMillis()-100
+    val templ1: IASValue[_] = IASValue.build(
+        7.5,
+			  OperationalMode.OPERATIONAL,
+			  IasValidity.RELIABLE,
+			  (new Identifier("AsceTemp2-ID1-In[!#5!]", IdentifierType.IASIO, AsceId)).fullRunningID,
+			  IASTypes.DOUBLE,
+			  t1,
+			  t1+5,
+			  t1+10,
+			  t1+15,
+			  t1+20,
+			  t1+25,
+			null,
+			null,null)
+
+    val iasioForDasusSet: Set[IASValue[_]] = iasioForDasu1.toSet + templ1
+    val ids = iasioForDasusSet.map(i => i.id)
+
+    logger.info("Sending {} iasios {}", ids.size.toString, ids.mkString(", "))
+    f.inputsProvider.sendInputs(iasioForDasusSet)
+    
+    assert(f.outputEventsreceived.size==2)
+    assert(f.stringEventsreceived.size==2)
+    assert(f.stringEventsreceived.forall(s => s.contains("Dasu1")||s.contains("DasuTemplateID2[!#5!]")))
+  }
 }
