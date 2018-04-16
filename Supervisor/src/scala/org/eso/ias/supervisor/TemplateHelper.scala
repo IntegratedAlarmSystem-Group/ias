@@ -150,7 +150,7 @@ class TemplateHelper(
     require(Option(asce).isDefined)
     require(Option(asce.getTemplateId).isDefined,"Template ASCE required")
     
-    logger.debug("Normalizing templated ASCE [{}] with instance []", asce.getId, instance.toString())
+    logger.debug("Normalizing templated ASCE [{}] with instance {}", asce.getId, instance.toString())
     
     // Set the identifier
     asce.setId(Identifier.buildIdFromTemplate(asce.getId, Some(instance)))
@@ -160,7 +160,7 @@ class TemplateHelper(
     asce.setOutput(newOutput)
     
     // Only templated input must be normalized
-    val inputs = JavaConverters.collectionAsScalaIterable(asce.getInputs)
+    val inputs = JavaConverters.collectionAsScalaIterable(asce.getInputs).toList
     asce.getInputs.clear()
     inputs.foreach( input => {
       if (Option(input.getTemplateId).isDefined) {
@@ -170,7 +170,9 @@ class TemplateHelper(
       }
     })
     
-    logger.debug("ASCE normalized with new ID [{}] ", asce.getId)
+    logger.debug("ASCE normalized with new ID [{}], inputs=[{}]", 
+        asce.getId,
+        JavaConverters.collectionAsScalaIterable(asce.getInputs).map(_.getId).mkString(","))
     asce
   }
   
@@ -193,11 +195,18 @@ class TemplateHelper(
     val newOutput = normalizeIasio(dasu.getOutput,instance)
     dasu.setOutput(newOutput)
     
-    val asces = JavaConverters.collectionAsScalaIterable(dasu.getAsces)
+    val asces = JavaConverters.collectionAsScalaIterable(dasu.getAsces).toList
+   
+    asces.foreach(a => logger.debug("DASU [{}] will convert ASCE [{}]",
+        dasu.getId,
+        a.getId))
     dasu.getAsces.clear()
     asces.foreach(asce => dasu.addAsce(normalizeAsce(asce,instance)))
     
-    logger.debug("DASU normalized with new ID [{}] ", dasu.getId)
+    
+    logger.debug("DASU normalized with new ID [{}], ASCES =[{}]", 
+        dasu.getId,
+        JavaConverters.collectionAsScalaIterable(dasu.getAsces).map(_.getId).mkString(", "))
     
     dasu
   }

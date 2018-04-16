@@ -86,26 +86,39 @@ class SupervisorWithTemplatesTest extends FlatSpec {
 
   it must "instantiate the templated DASUs defined in the CDB" in {
     val f = fixture
-    // There are 2 DASUs
-    assert(f.supervisor.dasuIds.size == 2)
-    println (f.supervisor.dasuIds.mkString(", "))
-    assert(f.supervisor.dasuIds.forall(id => id.startsWith("DasuTemplateID1") || id.startsWith("DasuTemplateID2")))
+    // There are 2 templated DASUs and one non templated DASU
+    assert(f.supervisor.dasuIds.size == 3)
+    logger.info("DASUs of Supervisor {}: {}",f.supervIdentifier.fullRunningID,f.supervisor.dasuIds.mkString(", "))
+    
+    assert(f.supervisor.dasus.values.size==3)
+    logger.info("===> {}",f.supervisor.dasus.values.map(d => d.id).mkString(", "))
+    
+    val templatedDasus=f.supervisor.dasus.values.filter(d => d.id.startsWith("DasuTemplateID"))
+    assert(templatedDasus.size==2)
+    assert(templatedDasus.forall(_.dasuIdentifier.fromTemplate))
+    
+    val nonTempdasu = f.supervisor.dasus.get("Dasu1")
+    assert(nonTempdasu.isDefined)
+    assert(!nonTempdasu.get.dasuIdentifier.fromTemplate)
+    
   }
 
-//  it must "properly associate inputs to DASUs" in {
-//    val f = fixture
-//    val inputsToDasu1 = f.supervisor.iasiosToDasusMap("Dasu1")
-//    assert(inputsToDasu1.size == 5 * 10) // 5 inputs for each ASCE running in the DASU
-//    assert(inputsToDasu1.forall(id => id.contains("Dasu1")))
-//
-//    val inputsToDasu2 = f.supervisor.iasiosToDasusMap("Dasu2")
-//    assert(inputsToDasu2.size == 5 * 15) // 5 inputs for each ASCE running in the DASU
-//    assert(inputsToDasu2.forall(id => id.contains("Dasu2")))
-//
-//    val inputsToDasu3 = f.supervisor.iasiosToDasusMap("Dasu3")
-//    assert(inputsToDasu3.size == 5 * 8) // 5 inputs for each ASCE running in the DASU
-//    assert(inputsToDasu3.forall(id => id.contains("Dasu3")))
-//  }
+  it must "properly associate inputs to DASUs" in {
+    val f = fixture
+    
+    // Check the number of inputs of the non templated DASU, Dasu1
+    val inputsToNonTempDasu = f.supervisor.iasiosToDasusMap(Identifier.buildIdFromTemplate("Dasu1", None))
+    assert(inputsToNonTempDasu.size == 50)
+    
+    val inputsToDasu1 = f.supervisor.iasiosToDasusMap(Identifier.buildIdFromTemplate("DasuTemplateID1", Some(3)))
+    assert(inputsToDasu1.size == 3)
+    assert(inputsToDasu1.forall(id => 
+      id.startsWith("AsceTemp1-ID1-In") || id.startsWith("AsceTemp1-ID2-In") || id=="Temperature"))
+
+    val inputsToDasu2 = f.supervisor.iasiosToDasusMap(Identifier.buildIdFromTemplate("DasuTemplateID2", Some(5)))
+    assert(inputsToDasu2.size == 1)
+    assert(inputsToDasu2.forall(id => id.startsWith("AsceTemp2-ID1-In")))
+  }
 //
 //  it must "start each DASU" in {
 //    val f = fixture

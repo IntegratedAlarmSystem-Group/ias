@@ -122,6 +122,8 @@ class Supervisor(
   }
   assert(dasuDaos.size==dasusToDelpoy.size)
   
+  dasuDaos.foreach(d => logger.info("Supervisor [{}]: building DASU from DasuDao {}",id,d.toString()))
+  
   // Build all the DASUs
   val dasus: Map[String, Dasu] = dasuDaos.foldLeft(Map.empty[String,Dasu])((m, dasuDao) => 
     m + (dasuDao.getId -> dasuFactory(dasuDao,supervisorIdentifier,this,this)))
