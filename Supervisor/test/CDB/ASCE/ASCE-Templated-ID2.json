@@ -8,6 +8,6 @@
 		{"name":"org.eso.ias.tf.minmaxthreshold.lowOff","value":"-25"}],
 	"id":"ASCE-Templated-ID2",
 	"transferFunctionID":"org.eso.ias.asce.transfer.impls.MinMaxThresholdTF",
-	"inputIDs":["Strenght"],
+	"inputIDs":["AsceTemp2-ID1-In"],
 	"templateId":"temp-ID2"
 }
