@@ -91,7 +91,6 @@ class SupervisorWithTemplatesTest extends FlatSpec {
     logger.info("DASUs of Supervisor {}: {}",f.supervIdentifier.fullRunningID,f.supervisor.dasuIds.mkString(", "))
     
     assert(f.supervisor.dasus.values.size==3)
-    logger.info("===> {}",f.supervisor.dasus.values.map(d => d.id).mkString(", "))
     
     val templatedDasus=f.supervisor.dasus.values.filter(d => d.id.startsWith("DasuTemplateID"))
     assert(templatedDasus.size==2)
@@ -119,83 +118,179 @@ class SupervisorWithTemplatesTest extends FlatSpec {
     assert(inputsToDasu2.size == 1)
     assert(inputsToDasu2.forall(id => id.startsWith("AsceTemp2-ID1-In")))
   }
-//
-//  it must "start each DASU" in {
-//    val f = fixture
-//    assert(f.supervisor.start().isSuccess)
-//
-//    val dasus = f.supervisor.dasus.values
-//    dasus.foreach(d => assert(d.asInstanceOf[DasuMock].numOfStarts.get() == 1))
-//
-//    f.supervisor.cleanUp()
-//  }
-//
-//  it must "clean up each DASU" in {
-//    val f = fixture
-//    assert(f.supervisor.start().isSuccess)
-//
-//    f.supervisor.cleanUp()
-//
-//    val dasus = f.supervisor.dasus.values
-//    dasus.foreach(d => assert(d.asInstanceOf[DasuMock].numOfCleanUps.get() == 1))
-//  }
-//
-//  it must "activate the auto refresh of the output of each DASU" in {
-//    val f = fixture
-//    assert(f.supervisor.start().isSuccess)
-//
-//    val dasus = f.supervisor.dasus.values
-//    dasus.foreach(d => assert(d.asInstanceOf[DasuMock].numOfEnableAutorefresh.get() == 1))
-//
-//    f.supervisor.cleanUp()
-//  }
-//
-//  it must "properly forward IASIOs do DASUs" in {
-//    val f = fixture
-//    assert(f.supervisor.start().isSuccess)
-//
-//    // NO DASU should receive the following IASIOs
-//    val Sup2Id = new Identifier("AnotherSupervID", IdentifierType.SUPERVISOR, None)
-//    val DasuId = new Identifier("DASU-Id", IdentifierType.DASU, Sup2Id)
-//    val AsceId = new Identifier("ASCE-Id", IdentifierType.ASCE, DasuId)
-//    val iasiosToSend = for (i <- 1 to 20) yield {
-//    val iasValueId = new Identifier("IASIO-Id" + i, IdentifierType.IASIO, AsceId)
-//    
-//    val t0 = System.currentTimeMillis()-100
-//      IASValue.build(
-//        10L,
-//			  OperationalMode.OPERATIONAL,
-//			  IasValidity.RELIABLE,
-//			  iasValueId.fullRunningID,
-//			  IASTypes.LONG,
-//			  t0,
-//			  t0+5,
-//			  t0+10,
-//			  t0+15,
-//			  t0+20,
-//			  t0+25,
-//			  null,
-//			null,null)
-//    }
-//    
-//    assert(iasiosToSend.toSet.size == 20)
-//
-//    logger.info(
-//      "Sending {} inputs to the supervisor: {}",
-//      iasiosToSend.size.toString(),
-//      iasiosToSend.map(i => i.id).mkString(", "))
-//
-//    f.inputsProvider.sendInputs(iasiosToSend.toSet)
-//    val dasus = f.supervisor.dasus.values
-//    dasus.foreach(d => assert(d.asInstanceOf[DasuMock].inputsReceivedFromSuperv.isEmpty))
-//
-//    // Only DASU2 should receive the followings
-//    //
-//    // The format of the input of this DASU is ASCEXOnDasu2-IDY-In
-//    val iasioForDasu2 = for {
-//      i <- 1 to 15
+
+  it must "start each DASU" in {
+    val f = fixture
+    assert(f.supervisor.start().isSuccess)
+
+    val dasus = f.supervisor.dasus.values
+    dasus.foreach(d => assert(d.asInstanceOf[DasuMock].numOfStarts.get() == 1))
+
+    f.supervisor.cleanUp()
+  }
+
+  it must "clean up each DASU" in {
+    val f = fixture
+    assert(f.supervisor.start().isSuccess)
+
+    f.supervisor.cleanUp()
+
+    val dasus = f.supervisor.dasus.values
+    dasus.foreach(d => assert(d.asInstanceOf[DasuMock].numOfCleanUps.get() == 1))
+  }
+
+  it must "properly forward IASIOs to the non-templated DASU" in {
+    val f = fixture
+    assert(f.supervisor.start().isSuccess)
+
+    // NO DASU should receive the following IASIOs
+    val Sup2Id = new Identifier("AnotherSupervID", IdentifierType.SUPERVISOR, None)
+    val DasuId = new Identifier("DASU-Id", IdentifierType.DASU, Sup2Id)
+    val AsceId = new Identifier("ASCE-Id", IdentifierType.ASCE, DasuId)
+    val iasiosToSend = for (i <- 1 to 20) yield {
+    val iasValueId = new Identifier("IASIO-Id" + i, IdentifierType.IASIO, AsceId)
+    
+    val t0 = System.currentTimeMillis()-100
+      IASValue.build(
+        10L,
+			  OperationalMode.OPERATIONAL,
+			  IasValidity.RELIABLE,
+			  iasValueId.fullRunningID,
+			  IASTypes.LONG,
+			  t0,
+			  t0+5,
+			  t0+10,
+			  t0+15,
+			  t0+20,
+			  t0+25,
+			  null,
+			null,null)
+    }
+    
+    assert(iasiosToSend.toSet.size == 20)
+
+    logger.info(
+      "Sending {} inputs to the supervisor: {}",
+      iasiosToSend.size.toString(),
+      iasiosToSend.map(i => i.id).mkString(", "))
+
+    f.inputsProvider.sendInputs(iasiosToSend.toSet)
+    val dasus = f.supervisor.dasus.values
+    dasus.foreach(d => assert(d.asInstanceOf[DasuMock].inputsReceivedFromSuperv.isEmpty))
+
+    // Only Dasu1 should receive the followings
+    //
+    // The format of the input of this DASU is ASCEXOnDasu2-IDY-In
+    val iasioForDasu1 = for {
+      i <- 1 to 10
+      x <- 1 to 5
+      id = "ASCE" + i + "OnDasu1-ID" + x + "-In"
+    } yield {
+      val iasValueId = new Identifier(id, IdentifierType.IASIO, AsceId)
+      val t0 = System.currentTimeMillis()-100
+      IASValue.build(
+        10L,
+			  OperationalMode.OPERATIONAL,
+			  IasValidity.RELIABLE,
+			  iasValueId.fullRunningID,
+			  IASTypes.LONG,
+			  t0,
+			  t0+5,
+			  t0+10,
+			  t0+15,
+			  t0+20,
+			  t0+25,
+			null,
+			null,null)
+    }
+
+    val iasioForDasu1Set = iasioForDasu1.toSet
+    val ids = iasioForDasu1Set.map(i => i.id)
+
+    logger.info("Sending {} iasios {}", ids.size.toString, ids.mkString(","))
+    f.inputsProvider.sendInputs(iasioForDasu1Set)
+    assert(f.supervisor.dasus("Dasu1").asInstanceOf[DasuMock].inputsReceivedFromSuperv.size==50)
+    
+    val templatedDasus = f.supervisor.dasus.values.filter(_.id!="Dasu1")
+    assert(templatedDasus.forall(d => d.asInstanceOf[DasuMock].inputsReceivedFromSuperv.isEmpty))
+  }
+  
+  it must "properly forward IASIOs to the templated DASU" in {
+    // It sends inputs to DasuTemplateID1 because its ASCE, ASCE-Templated-ID1,
+    // accepts a mix of templated (AsceTemp1-ID1-In, AsceTemp1-ID2-In)
+    // and non-templated (Temperature) inputs.
+    
+    val f = fixture
+    assert(f.supervisor.start().isSuccess)
+    
+    val Sup2Id = new Identifier("AnotherSupervID", IdentifierType.SUPERVISOR, None)
+    val DasuId = new Identifier("DASU-Id", IdentifierType.DASU, Sup2Id)
+    val AsceId = new Identifier("ASCE-Id", IdentifierType.ASCE, DasuId)
+    
+    // Build the inputs for DasuTemplateID1:
+    // the other DASUS shall not receive IASValues
+    val t0 = System.currentTimeMillis()-100
+    val tempIasio: IASValue[_] = IASValue.build(
+        5.5,
+			  OperationalMode.OPERATIONAL,
+			  IasValidity.RELIABLE,
+			  (new Identifier("Temperature", IdentifierType.IASIO, AsceId)).fullRunningID,
+			  IASTypes.DOUBLE,
+			  t0,
+			  t0+5,
+			  t0+10,
+			  t0+15,
+			  t0+20,
+			  t0+25,
+			null,
+			null,null)
+		val t1 = System.currentTimeMillis()-100
+    val templ1: IASValue[_] = IASValue.build(
+        5.5,
+			  OperationalMode.OPERATIONAL,
+			  IasValidity.RELIABLE,
+			  (new Identifier("AsceTemp1-ID1-In[!#3!]", IdentifierType.IASIO, AsceId)).fullRunningID,
+			  IASTypes.DOUBLE,
+			  t1,
+			  t1+5,
+			  t1+10,
+			  t1+15,
+			  t1+20,
+			  t1+25,
+			null,
+			null,null)
+		val t2 = System.currentTimeMillis()-100
+    val templ2: IASValue[_] = IASValue.build(
+        5.5,
+			  OperationalMode.OPERATIONAL,
+			  IasValidity.RELIABLE,
+			  (new Identifier("AsceTemp1-ID2-In[!#3!]", IdentifierType.IASIO, AsceId)).fullRunningID,
+			  IASTypes.DOUBLE,
+			  t2,
+			  t2+5,
+			  t2+10,
+			  t2+15,
+			  t2+20,
+			  t2+25,
+			null,
+			null,null)
+			
+		// Sends the IASValues to the DASUs
+		val iasiosToSend: Set[IASValue[_]] = Set(templ1,tempIasio,templ2)
+		logger.info("Sending inputs: {}",iasiosToSend.map(_.id).mkString)
+    f.inputsProvider.sendInputs(iasiosToSend)
+    
+    logger.info("Instantiated DASUs= {}",f.supervisor.dasus.values.map(_.id).mkString,(", "))
+    
+    // Check which DASU got the inputs
+    assert(f.supervisor.dasus("Dasu1").asInstanceOf[DasuMock].inputsReceivedFromSuperv.isEmpty)
+    assert(f.supervisor.dasus("DasuTemplateID1[!#3!]").asInstanceOf[DasuMock].inputsReceivedFromSuperv.size==3)
+    assert(f.supervisor.dasus("DasuTemplateID2[!#5!]").asInstanceOf[DasuMock].inputsReceivedFromSuperv.isEmpty)    
+    
+//    val iasioForDasu1 = for {
+//      i <- 1 to 10
 //      x <- 1 to 5
-//      id = "ASCE" + i + "OnDasu2-ID" + x + "-In"
+//      id = "ASCE" + i + "OnDasu1-ID" + x + "-In"
 //    } yield {
 //      val iasValueId = new Identifier(id, IdentifierType.IASIO, AsceId)
 //      val t0 = System.currentTimeMillis()-100
@@ -213,19 +308,11 @@ class SupervisorWithTemplatesTest extends FlatSpec {
 //			  t0+25,
 //			null,
 //			null,null)
-//			
-//      
 //    }
-//
-//    val iasioForDasu2Set = iasioForDasu2.toSet
-//    val ids = iasioForDasu2Set.map(i => i.id)
-//
-//    logger.info("Sending {} iasios {}", ids.size.toString, ids.mkString(", "))
-//    f.inputsProvider.sendInputs(iasioForDasu2Set)
-//    assert(f.supervisor.dasus("Dasu1").asInstanceOf[DasuMock].inputsReceivedFromSuperv.isEmpty)
-//    assert(f.supervisor.dasus("Dasu2").asInstanceOf[DasuMock].inputsReceivedFromSuperv.size == 15 * 5)
-//    assert(f.supervisor.dasus("Dasu3").asInstanceOf[DasuMock].inputsReceivedFromSuperv.isEmpty)
-//  }
+    
+    
+  }
+  
 //  
 //  // Sends some input to DASU1 and DASU3 and check if the
 //  // supervisor published their output (bit no output must be
