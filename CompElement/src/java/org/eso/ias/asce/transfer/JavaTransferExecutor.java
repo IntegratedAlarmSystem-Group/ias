@@ -42,7 +42,7 @@ public abstract class JavaTransferExecutor extends TransferExecutor {
 	 * @return the IASValue of the given ID or <code>null</code>
 	 *         if a IASValue with the passed id is not in the map
 	 */
-	protected IASValue<?> getValue(Map<String, IASValue<?>> inputs, String id) {
+	protected final IASValue<?> getValue(Map<String, IASValue<?>> inputs, String id) {
 		Objects.requireNonNull(inputs,"Invalid map of inputs");
 		Objects.requireNonNull(id,"Invalid IASIO ID");
 		if (Identifier.isTemplatedIdentifier(id)) {

@@ -27,7 +27,7 @@ extends TransferExecutor(cEleId,cEleRunningId,props) {
 	 * @param id The (non templated) identifier of the value
 	 * @return the IASValue of the given ID, or None if not found in the Map
 	 */
-  def getValue(inputs: Map[String, InOut[_]], id: String): Option[InOut[_]] = {
+  protected final def getValue(inputs: Map[String, InOut[_]], id: String): Option[InOut[_]] = {
     if (Identifier.isTemplatedIdentifier(id)) {
 			throw new IllegalArgumentException("Templated IDs are forbidden here");
 		}
