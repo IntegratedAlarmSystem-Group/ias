@@ -7,6 +7,7 @@ import org.ias.logging.IASLogger
 import scala.sys.SystemProperties
 import scala.util.Success
 import scala.util.Failure
+import java.util.Optional
 
 /**
  * Implemented types of transfer functions
@@ -36,6 +37,8 @@ object TransferFunctionLanguage extends Enumeration {
  * 
  * @param className: The name of the java/scala class to run
  * @param language: the programming language used to implement the TF
+ * @param templateInstance: the instance of the template if defined;
+ *                          if empty the ASCE is not generated out of a template
  * @param threadFactory: The thread factory to async. run init and
  *                       shutdown on the user provided TF object
  * @see {@link ComputingElement}
@@ -43,6 +46,7 @@ object TransferFunctionLanguage extends Enumeration {
 class TransferFunctionSetting(
     val className: String, 
     val language: TransferFunctionLanguage.Value,
+    templateInstance: Option[Int],
     private[this] val threadFactory: ThreadFactory) {
   require(Option[String](className).isDefined && !className.isEmpty())
   require(Option[TransferFunctionLanguage.Value](language).isDefined)
@@ -155,7 +159,11 @@ class TransferFunctionSetting(
   private[this] def initExecutor(executor: TransferExecutor): Boolean = {
     require(Option(executor).isDefined)
     try {
-      executor.initialize()
+      val instance: Optional[Integer] = templateInstance match {
+        case None => Optional.empty()
+        case Some(v) => Optional.of(v)
+      }
+      executor.internalInitialize(instance)
       true
     } catch {
         case e: Exception => 

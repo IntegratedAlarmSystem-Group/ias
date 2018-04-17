@@ -5,6 +5,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.persistence.Basic;
+
 import org.eso.ias.cdb.pojos.AsceDao;
 import org.eso.ias.cdb.pojos.PropertyDao;
 
@@ -15,7 +17,7 @@ import org.eso.ias.cdb.pojos.PropertyDao;
  * @author acaproni
  *
  */
-public class JsonAcseDao {
+public class JsonAsceDao {
 	
 	/**
 	 * The rdb pojo
@@ -43,9 +45,15 @@ public class JsonAcseDao {
 	private String transferFunctionID;
 	
 	/**
+	 * The ID of the template for implementing replication
+	 */
+	@Basic(optional=true)
+	private String templateId;
+	
+	/**
 	 * Empty constructor 
 	 */
-	public JsonAcseDao() {
+	public JsonAsceDao() {
 		this.asce=new AsceDao();
 		this.inputIds= new HashSet<>();
 	}
@@ -55,7 +63,7 @@ public class JsonAcseDao {
 	 * 
 	 * @param asce The rdb pojo to mask
 	 */
-	public JsonAcseDao(AsceDao asce) {
+	public JsonAsceDao(AsceDao asce) {
 		if (asce==null) {
 			throw new NullPointerException("The ASCE pojo can't be null");
 		}
@@ -67,6 +75,7 @@ public class JsonAcseDao {
 		Objects.requireNonNull(this.asce.getOutput(), "Inavlid null output IASIO");
 		this.outputID=this.asce.getOutput().getId();
 		this.transferFunctionID=this.asce.getTransferFunction().getClassName();
+		this.templateId=this.asce.getTemplateId();
 		
 		asce.getInputs().stream().forEach(iasio -> inputIds.add(iasio.getId()));
 	}
@@ -174,7 +183,12 @@ public class JsonAcseDao {
 			ret.append(' ');
 			ret.append(prop.toString());
 		}
-		ret.append("}]");
+		ret.append("}");
+		if (templateId!=null) {
+			ret.append(", template=");
+			ret.append(templateId);
+		}
+		ret.append("]");
 		return ret.toString();
 	}
 	
@@ -184,6 +198,7 @@ public class JsonAcseDao {
 	 * @return The AsceDao
 	 */
 	public AsceDao toAsceDao() {
+		asce.setTemplateId(templateId);
 		return this.asce;
 	}
 
@@ -193,5 +208,13 @@ public class JsonAcseDao {
 
 	public void setTransferFunctionID(String transferFunctionID) {
 		this.transferFunctionID = transferFunctionID;
+	}
+
+	public String getTemplateId() {
+		return templateId;
+	}
+
+	public void setTemplateId(String templateId) {
+		this.templateId = templateId;
 	}
 }

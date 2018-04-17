@@ -360,6 +360,7 @@
   			source="1.8">
           	<!-- addparams="-Yclosure-elim -optimise" -->
   			<include name="**/*.java"/>
+  			<compilerarg value="-Xlint"/>
   		</javac>
 	</target>
 	

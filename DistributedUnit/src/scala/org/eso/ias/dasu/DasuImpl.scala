@@ -53,32 +53,23 @@ import java.util.Collections
  */
 class DasuImpl (
     dasuIdentifier: Identifier,
+    dasuDao: DasuDao,
     private val outputPublisher: OutputPublisher,
     private val inputSubscriber: InputSubscriber,
-    cdbReader: CdbReader,
     autoSendTimeInterval: Integer,
     tolerance: Integer)
     extends Dasu(dasuIdentifier,autoSendTimeInterval,tolerance) {
   require(Option(dasuIdentifier).isDefined,"Invalid Identifier")
+  require(Option(dasuDao).isDefined,"Invalid DASU CDB configuration")
   require(dasuIdentifier.idType==IdentifierType.DASU,"Invalid identifier type for DASU")
   require(Option(outputPublisher).isDefined,"Invalid output publisher")
   require(Option(inputSubscriber).isDefined,"Invalid input subscriber")
-  require(Option(cdbReader).isDefined,"Invalid CDB reader")
   require(Option(autoSendTimeInterval).isDefined && autoSendTimeInterval>0,"Invalid auto-send time interval")
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
   
   logger.info("Building DASU [{}] with running id {}",id,dasuIdentifier.fullRunningID)
-  
-  // Read configuration from CDB
-  val dasuDao = {
-    val dasuOptional = cdbReader.getDasu(id)
-    require(dasuOptional.isPresent(),"DASU ["+id+"] configuration not found on cdb")
-    dasuOptional.get
-  }
-  // TODO: release CDB resources
-  logger.debug("DASU [{}] configuration read from CDB",id)
   
   /**
    * The configuration of the ASCEs that run in the DASU
@@ -628,7 +619,6 @@ object DasuImpl {
     supervidentifier: Identifier,
     outputPublisher: OutputPublisher,
     inputSubscriber: InputSubscriber,
-    cdbReader: CdbReader,
     autoSendTimeInterval: Integer,
     tolerance: Integer): DasuImpl = {
     
@@ -637,7 +627,6 @@ object DasuImpl {
     require(Option(supervidentifier).isDefined)
     require(Option(outputPublisher).isDefined)
     require(Option(inputSubscriber).isDefined)
-    require(Option(cdbReader).isDefined)
     require(Option(autoSendTimeInterval).isDefined)
     require(Option(tolerance).isDefined)
     
@@ -647,9 +636,9 @@ object DasuImpl {
     
     new DasuImpl(
         dasuIdentifier,
+        dasuDao,
         outputPublisher,
         inputSubscriber,
-        cdbReader,
         autoSendTimeInterval,
         tolerance)
   }

@@ -61,6 +61,7 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   val scalaMultuiplicityTF = new TransferFunctionSetting(
       "org.eso.ias.asce.transfer.impls.MultiplicityTF",
         TransferFunctionLanguage.scala,
+        None,
         threadFactory)
     
     scalaComp = Some(new ComputingElement[AlarmSample](
@@ -118,6 +119,7 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
     val multuiplicityTF = new TransferFunctionSetting(
       "org.eso.ias.asce.transfer.impls.MultiplicityTF",
         TransferFunctionLanguage.scala,
+        None,
         threadFactory)
     
     assert(!multuiplicityTF.initialized)

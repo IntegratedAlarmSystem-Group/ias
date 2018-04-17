@@ -62,6 +62,7 @@ class TestComponent extends FlatSpec {
     val tfSetting =new TransferFunctionSetting(
         "org.eso.ias.asce.transfer.TransferExecutorImpl",
         TransferFunctionLanguage.java,
+        None,
         threadaFactory)
     val comp: ComputingElement[AlarmSample] = new ComputingElement[AlarmSample](
        compId,
@@ -89,6 +90,7 @@ class TestComponent extends FlatSpec {
     val tfSetting =new TransferFunctionSetting(
         "org.eso.ias.asce.transfer.impls.MultiplicityTF",
         TransferFunctionLanguage.java,
+        None,
         threadaFactory)
     val comp: ComputingElement[AlarmSample] = new ComputingElement[AlarmSample](
        compId,

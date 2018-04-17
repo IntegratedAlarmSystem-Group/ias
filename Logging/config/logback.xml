@@ -19,6 +19,8 @@
   </appender>
 
   <logger name="org.apache.kafka" level="INFO" />
+  <logger name="org.hibernate" level="INFO" />
+  <logger name="com.mchange" level="INFO" />
   
    <appender 
    	name="FILE" 

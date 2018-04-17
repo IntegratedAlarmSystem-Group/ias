@@ -127,7 +127,7 @@ public class ConverterCdbTester {
 		Set<IasioDao> iasios = new HashSet<>(numOfIasios);
 		for (int t=0; t<numOfIasios; t++) {
 			IasTypeDao iasType = buildIasType(t);
-			IasioDao iasio = new IasioDao(buildIasId(t), "IASIO description", iasType);
+			IasioDao iasio = new IasioDao(buildIasId(t), "IASIO description", iasType,"http://www.eso.org/almm/alarms");
 			iasios.add(iasio);
 		}
 		return iasios;

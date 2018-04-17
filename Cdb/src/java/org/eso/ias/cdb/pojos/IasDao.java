@@ -94,25 +94,6 @@ public class IasDao {
 	}
 	
 	@Override
-	public boolean equals(Object object) {
-		if (this == object) {
-			return true;
-		}
-		if (object==null || !(object instanceof IasDao)) {
-			return false;
-		}
-		IasDao other = (IasDao)object;
-		if (!this.logLevel.equals(other.getLogLevel())) {
-			return false;
-		}
-		if (props.size()!=other.getProps().size()) {
-			return false;
-		}
-		return Objects.equals(this.logLevel, other.getLogLevel()) &&
-				Objects.equals(props,other.getProps());
-	}
-	
-	@Override
 	public String toString() {
 		StringBuilder ret = new StringBuilder("IAS=[");
 		ret.append("logLevel=");
@@ -128,5 +109,26 @@ public class IasDao {
 		}
 		ret.append("}]");
 		return ret.toString();
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(logLevel,refreshRate,tolerance,props);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		IasDao other = (IasDao) obj;
+		
+		return 	Objects.equals(logLevel, other.logLevel) &&
+				Objects.equals(refreshRate, other.refreshRate) &&
+				Objects.equals(tolerance, other.tolerance) &&
+				Objects.equals(props, other.props);
 	}
 }

@@ -26,6 +26,7 @@ import org.eso.ias.types.IasValidity._
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.types.IASTypes
 import java.util.HashSet
+import org.eso.ias.cdb.pojos.DasuDao
 
 /**
  * Test if the DASU is capable to get events from
@@ -59,8 +60,14 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener {
   val supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR,None)
   val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervId)
   
+  val dasuDao: DasuDao = {
+    val dasuDaoOpt = cdbReader.getDasu(dasuId)
+    assert(dasuDaoOpt.isPresent())
+    dasuDaoOpt.get()
+  }
+  
   // The DASU
-  val dasu = new DasuImpl(dasuIdentifier,outputPublisher,inputsProvider,cdbReader,3,1)
+  val dasu = new DasuImpl(dasuIdentifier,dasuDao,outputPublisher,inputsProvider,3,1)
   
   // The identifer of the monitor system that produces the temperature in input to teh DASU
   val monSysId = new Identifier("MonitoredSystemID",IdentifierType.MONITORED_SOFTWARE_SYSTEM)

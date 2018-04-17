@@ -21,23 +21,22 @@ import org.eso.ias.types.OperationalMode
 import org.eso.ias.types.IasValidity
 import org.eso.ias.types.IASTypes
 import java.util.HashSet
+import org.eso.ias.cdb.pojos.IasioDao
 
 
 /** 
  *  A mockup of the DASUs to run in the Supervisor without the 
  *  complexity of DASUs and ASCEs
  *  
- * @param the identifier of the DASU
+ * @param dasuDao the DASU configuration
  * @param outputPublisher the publisher to send the output
  * @param inputSubscriber the subscriber getting events to be processed 
- * @param cdbReader the CDB reader to get the configuration of the DASU from the CDB
  */
 class DasuMock(
-    dasuIdentifier: Identifier,
+	dasuIdentifier: Identifier,
+    dasuDao: DasuDao,
     private val outputPublisher: OutputPublisher,
-    private val inputSubscriber: InputSubscriber,
-    cdbReader: CdbReader,
-    outputIdentifier: Identifier)
+    private val inputSubscriber: InputSubscriber)
 extends Dasu(dasuIdentifier,5,1) {
   
   /** The logger */
@@ -69,29 +68,27 @@ extends Dasu(dasuIdentifier,5,1) {
    */
   val unexpectedInputsReceived: ArrayBuffer[String] = ArrayBuffer.empty[String]
   
-  /** DASU configuration from CDB */
-  lazy val dasuDao = {
-    val dasuOptional = cdbReader.getDasu(dasuIdentifier.id)
-    require(dasuOptional.isPresent(), "DASU [" + dasuIdentifier.id+ "] configuration not found on cdb")
-    logger.debug("DASU [{}] configuration read from CDB", dasuIdentifier.id)
-    dasuOptional.get
-  }
-  
   /**
    * The configuration of the ASCEs that run in the DASU
    */
-  lazy val asceDaos = JavaConverters.asScalaSet(dasuDao.getAsces).toList
+  val asceDaos = JavaConverters.asScalaSet(dasuDao.getAsces).toList
   
   /** The inputs of the DASU */
-  val inputsOfTheDasu: Set[String] = getInputsFromCDB(cdbReader)
+  val inputsOfTheDasu: Set[String] = {
+    val inputs = asceDaos.foldLeft(Set.empty[IasioDao])( (set, asce) => set++JavaConverters.collectionAsScalaIterable(asce.getInputs))
+    inputs.map(_.getId)
+  }
   logger.info("{} inputs required by Mock_DASU [{}]: {}", inputsOfTheDasu.size.toString(), dasuIdentifier.id,inputsOfTheDasu.mkString(", "))
   
   /** The output published when inputs are received */
-  val output = IASValue.build(
+  val output = {
+    val asceId = new Identifier("ASCE_ID_RUNTIME_GENERATED",IdentifierType.ASCE,dasuIdentifier)
+    val outputId = new Identifier(dasuDao.getOutput.getId,IdentifierType.IASIO,asceId)
+    IASValue.build(
       AlarmSample.SET,
 			OperationalMode.OPERATIONAL,
 			IasValidity.RELIABLE,
-			outputIdentifier.fullRunningID,
+			outputId.fullRunningID,
 			IASTypes.ALARM,
 			null,
 			null,
@@ -102,6 +99,7 @@ extends Dasu(dasuIdentifier,5,1) {
 			System.currentTimeMillis(),
 			null,
 			null)
+  }
   
   
   
@@ -125,22 +123,6 @@ extends Dasu(dasuIdentifier,5,1) {
       
       // Publish the simulated output
       outputPublisher.publish(output.updateFullIdsOfDependents(JavaConverters.setAsJavaSet(depIds)))
-  }
-
-  /**
-   * Get the inputs of the DASU from the CDB
-   * 
-   * It reads the inputs from the ASCEs running in the DASU
-   * 
-   * @param reader The CDB reader
-   * @return the inputs of the DASU
-   */
-  private def getInputsFromCDB(reader: CdbReader): Set[String] = {
-    asceDaos.foldLeft(Set.empty[String])( (s, aDao) => {
-      val asceInputs = JavaConverters.collectionAsScalaIterable(aDao.getInputs).map(i => i.getId).toSet
-      logger.info("Inputs of ASCE [{}] running in Mock_DASU [{}]: {}", aDao.getId, dasuIdentifier.id,asceInputs.mkString(", "))
-      s ++ asceInputs
-      })
   }
   
   /** The inputs of the DASU */
@@ -195,23 +177,17 @@ object DasuMock {
       dasuDao: DasuDao, 
       supervidentifier: Identifier, 
       outputPublisher: OutputPublisher,
-      inputSubscriber: InputSubscriber,
-      cdbReader: CdbReader): DasuMock = {
+      inputSubscriber: InputSubscriber): DasuMock = {
     
     require(Option(dasuDao).isDefined)
     require(Option(supervidentifier).isDefined)
     require(Option(outputPublisher).isDefined)
     require(Option(inputSubscriber).isDefined)
-    require(Option(cdbReader).isDefined)
    
     val dasuId = dasuDao.getId
     
     val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervidentifier)
     
-    val asceId = new Identifier("ASCE_ID_RUNTIME_GENERATED",IdentifierType.ASCE,dasuIdentifier)
-    
-    val outputId = new Identifier(dasuDao.getOutput.getId,IdentifierType.IASIO,asceId)
-    
-    new DasuMock(dasuIdentifier,outputPublisher,inputSubscriber,cdbReader,outputId)
+    new DasuMock(dasuIdentifier,dasuDao,outputPublisher,inputSubscriber)
   }  
 }

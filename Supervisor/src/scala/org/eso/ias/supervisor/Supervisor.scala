@@ -26,6 +26,7 @@ import org.eso.ias.types.IdentifierType
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.eso.ias.cdb.rdb.RdbReader
+import org.eso.ias.cdb.pojos.DasuToDeployDao
 
 /**
  * A Supervisor is the container to run several DASUs into the same JVM.
@@ -64,7 +65,7 @@ class Supervisor(
     private val outputPublisher: OutputPublisher,
     private val inputSubscriber: InputSubscriber,
     cdbReader: CdbReader,
-    dasuFactory: (DasuDao, Identifier, OutputPublisher, InputSubscriber, CdbReader) => Dasu) 
+    dasuFactory: (DasuDao, Identifier, OutputPublisher, InputSubscriber) => Dasu) 
     extends InputsListener with InputSubscriber with  OutputPublisher {
   require(Option(supervisorIdentifier).isDefined,"Invalid Supervisor identifier")
   require(Option(outputPublisher).isDefined,"Invalid output publisher")
@@ -90,9 +91,12 @@ class Supervisor(
   /**
    * Gets the definitions of the DASUs to run in the Supervisor from the CDB
    */
-  val dasuDaos: Set[DasuDao] = JavaConverters.asScalaSet(cdbReader.getDasusForSupervisor(id)).toSet
-  require(dasuDaos.size>0,"No DASUs to run in Supervisor "+id)
-  logger.info("Supervisor [{}], {} DASUs to run: {}",id,dasuDaos.size.toString(),dasuDaos.map(d => d.getId()).mkString(", "))
+  val dasusToDelpoy: Set[DasuToDeployDao] = JavaConverters.asScalaSet(cdbReader.getDasusToDeployInSupervisor((id))).toSet
+  require(dasusToDelpoy.size>0,"No DASUs to run in Supervisor "+id)
+  logger.info("Supervisor [{}], {} DASUs to run: {}",
+      id,
+      dasusToDelpoy.size.toString(),
+      dasusToDelpoy.map(d => d.getDasu().getId()).mkString(", "))
   
   // Initialize the consumer and exit in case of error 
   val inputSubscriberInitialized = inputSubscriber.initializeSubscriber()
@@ -110,16 +114,25 @@ class Supervisor(
     case Success(s) => logger.info("Supervisor [{}] producer successfully initialized",id)
   }
   
+  // Get the DasuDaos from the set of DASUs to deploy:
+  // the helper transform the templated DASUS into normal ones
+  val dasuDaos = {
+    val helper = new TemplateHelper(dasusToDelpoy)
+    helper.normalize()
+  }
+  assert(dasuDaos.size==dasusToDelpoy.size)
+  
+  dasuDaos.foreach(d => logger.info("Supervisor [{}]: building DASU from DasuDao {}",id,d.toString()))
+  
   // Build all the DASUs
-  val dasus: Map[String, Dasu] = dasuDaos.foldLeft(Map.empty[String,Dasu])((m, dasuDao) => m + (dasuDao.getId -> dasuFactory(dasuDao,supervisorIdentifier,this,this,cdbReader)))
+  val dasus: Map[String, Dasu] = dasuDaos.foldLeft(Map.empty[String,Dasu])((m, dasuDao) => 
+    m + (dasuDao.getId -> dasuFactory(dasuDao,supervisorIdentifier,this,this)))
   
   /**
    * The IDs of the DASUs instantiated in the Supervisor
    */
   val dasuIds = dasuDaos.map(_.getId)
   logger.info("Supervisor [{}] built {} DASUs: {}",id, dasus.size.toString(),dasuIds.mkString(", "))
-  
-  // TODO: close the cdbReader and free the resources (@see Issue #25)
   
   /**
    * Associate each DASU with the Set of inputs it needs.
@@ -355,8 +368,8 @@ object Supervisor {
     // The identifier of the supervisor
     val identifier = new Identifier(supervisorId, IdentifierType.SUPERVISOR, None)
     
-    val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber, cr: CdbReader) => 
-      DasuImpl(dd,i,op,id,cr,refreshRate,tolerance)
+    val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) => 
+      DasuImpl(dd,i,op,id,refreshRate,tolerance)
     
     // Build the supervisor
     val supervisor = new Supervisor(identifier,outputPublisher,inputsProvider,reader,factory)

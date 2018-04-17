@@ -76,6 +76,7 @@ class TestTransferFunction extends FlatSpec {
     val javaTFSetting =new TransferFunctionSetting(
         "org.eso.ias.component.test.transfer.TransferExecutorImpl",
         TransferFunctionLanguage.java,
+        None,
         threadFactory)
     val javaComp: ComputingElement[AlarmSample] = new ComputingElement[AlarmSample](
        compID,
@@ -89,6 +90,7 @@ class TestTransferFunction extends FlatSpec {
     val scalaTFSetting =new TransferFunctionSetting(
         "org.eso.ias.component.test.transfer.TransferExample",
         TransferFunctionLanguage.scala,
+        None,
         threadFactory)
     val scalaComp: ComputingElement[AlarmSample] = new ComputingElement[AlarmSample](
        compID,
@@ -101,6 +103,7 @@ class TestTransferFunction extends FlatSpec {
     val brokenScalaTFSetting =new TransferFunctionSetting(
         "org.eso.ias.component.test.transfer.ThrowExceptionTF",
         TransferFunctionLanguage.scala,
+        None,
         threadFactory)
     val brokenTFScalaComp: ComputingElement[AlarmSample] = new ComputingElement[AlarmSample](
        compID,
