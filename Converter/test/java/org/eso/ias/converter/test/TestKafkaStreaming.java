@@ -282,7 +282,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		for (MonitorPointDataHolder mpdh: mpdToSend) {
 			IasTypeDao iasTypeDao = IasTypeDao.valueOf(mpdh.iasType.toString());
 			String id = mpdh.id;
-			iasios.add(new IasioDao(id, "A mock description", iasTypeDao));
+			iasios.add(new IasioDao(id, "A mock description", iasTypeDao,"http://www.eso.org/almm/alarms"));
 		}
 		cdbWriter.writeIasios(iasios, false);
 		
