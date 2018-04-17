@@ -156,7 +156,7 @@ class TemplatedInputTest extends FlatSpec {
       3L,
 		  OperationalMode.OPERATIONAL,
 		  IasValidity.RELIABLE,
-		  f.idTemplated.fullRunningID,
+		  f.idNonTemplated.fullRunningID,
 		  IASTypes.LONG,
 		  t1,
 		  t1+5,
@@ -175,6 +175,9 @@ class TemplatedInputTest extends FlatSpec {
     // Did the DASU produce the output?
     assert(f.stringEventsreceived.size==1)
     assert(f.outputEventsreceived.size==1)
+    
+    val valueOfOutput = f.outputEventsreceived.head.value.asInstanceOf[Long]
+    assert(valueOfOutput==11L)
     
     f.supervisor.cleanUp()
   }
