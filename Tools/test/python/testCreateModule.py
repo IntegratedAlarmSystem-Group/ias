@@ -16,7 +16,7 @@ from IASTools.FileSupport import FileSupport
 from IASTools.ModuleSupport import ModuleSupport
 from shutil import rmtree
 
-from IASTools.logConf import Log
+from IASLogging.logConf import Log
 
 class TestCreateModule(unittest.TestCase):
 
