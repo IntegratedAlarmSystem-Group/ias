@@ -14,10 +14,11 @@
 
 	<taskdef resource="net/sf/antcontrib/antlib.xml"/>
 
-	<property name="iasModules" value="Logging,Tools,Cdb,BasicTypes,KafkaUtils,plugin,Converter,CompElement,DistributedUnit,Supervisor,WebServerSender,Tests/SimpleLoopTest" />
+	<property name="iasModules" value="Tools,Utils,Cdb,BasicTypes,KafkaUtils,plugin,Converter,CompElement,DistributedUnit,Supervisor,WebServerSender,Tests/SimpleLoopTest" />
 
 	<target name="SanityCheck">
 		<!--
+
 			Runs some check failing in case of error
 		-->
 		<fail unless="iasRoot.exists">
