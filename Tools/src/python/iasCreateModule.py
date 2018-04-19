@@ -8,7 +8,7 @@ Created on Aug 18, 2016
 import argparse
 
 from IASTools.ModuleSupport import ModuleSupport
-from IASTools.logConf import Log
+from IASLogging.logConf import Log
 
 if __name__ == '__main__':
     log=Log()
