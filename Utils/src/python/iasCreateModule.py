@@ -12,7 +12,7 @@ from IASLogging.logConf import Log
 
 if __name__ == '__main__':
     log=Log()
-    logger=log.GetLoggerFile()
+    logger=log.GetLoggerFile(os.path.basename(__file__).split(".")[0])
     parser = argparse.ArgumentParser(description='Creates a module for the Integrated Alarm System.')
     parser.add_argument(
                         '-e',
@@ -22,7 +22,7 @@ if __name__ == '__main__':
                         default=False)
     parser.add_argument('moduleName', help='The name of the IAS module to create')
     args = parser.parse_args()
-    
+
     if args.erase:
         try:
             ModuleSupport.removeExistingModule(args.moduleName)
@@ -34,4 +34,3 @@ if __name__ == '__main__':
     except Exception as e:
         logger.error("Error creating the module: %s",str(e))
         exit(-1)
-    

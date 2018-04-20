@@ -10,5 +10,5 @@ from IASLogging.logConf import Log
 
 if __name__ == '__main__':
     log=Log()
-    logger=log.GetLoggerFile()
+    logger=log.GetLoggerFile(os.path.basename(__file__).split(".")[0])
     logger.info(CommonDefs.buildClasspath())
