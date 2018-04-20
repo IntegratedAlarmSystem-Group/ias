@@ -11,10 +11,10 @@ class Log():
     logPath=os.environ["IAS_ROOT"]
     #If the file doesn't exist it's created
     try:
-        os.makedirs(logPath)
+        os.makedirs(logPath+"/logs")
     except OSError as e:
         if e.errno != errno.EEXIST:
-         raise 
+         raise
     #Format of the data for filename
     now = datetime.datetime.utcnow().strftime('%Y-%m-%d_%H:%M:%S.%f')[:-3]
 #    fileNameN='IasRoot'+now
@@ -43,7 +43,3 @@ class Log():
     logger1 = logging.getLogger(__name__)
 
     return logger1
-
-   
-
-   
