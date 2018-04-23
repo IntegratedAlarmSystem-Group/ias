@@ -24,17 +24,17 @@ public class NoneFilter extends FilterBase {
 	 */
 	@Override
 	public Optional<FilteredValue> applyFilter() {
-		Optional<ValidatedSample> sample=peekNewest();
+		Optional<EnrichedSample> sample=peekNewest();
 		return sample.map(s -> new FilteredValue(s.value, historySnapshot(),s.timestamp));
 	}
 	
 
 	/**
 	 * 
-	 * @see org.eso.ias.plugin.filter.FilterBase#sampleAdded(org.eso.ias.plugin.filter.Filter.ValidatedSample)
+	 * @see org.eso.ias.plugin.filter.FilterBase#sampleAdded(org.eso.ias.plugin.filter.Filter.EnrichedSample)
 	 */
 	@Override
-	protected void sampleAdded(ValidatedSample newSample) {
+	protected void sampleAdded(EnrichedSample newSample) {
 		keepNewest(1);
 	}
 }

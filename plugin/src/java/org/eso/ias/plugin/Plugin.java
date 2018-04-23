@@ -57,7 +57,11 @@ import org.slf4j.LoggerFactory;
  * If the operational mode for the plugin is set, it takes priority over the operational mode 
  * of the monitor point value (i.e. if a operational mode is set at plugin level,
  * it will be sent as the operational mode of each monitored value independently of their settings).
- * 
+ * <P>
+ * The collected monitor points and alarms pass through the filtering and are finally sent to the 
+ * BSDB where they will be processed by the DASUs.
+ * Monitor points and alarms are sent on change and periodically 
+ * if their values did not change (@see #autoSendRefreshRate).
  *  
  * @author acaproni
  */
@@ -149,6 +153,22 @@ public class Plugin implements ChangeValueListener {
 	public final String pluginId;
 	
 	/**
+	 * The property to set the auto-send time interval (in seconds)
+	 */
+	public static final String AUTO_SEND_TI_PROPNAME = "org.eso.ias.plugin.timeinterval";
+	
+	/**
+	 * The default value of the auto-send refresh rate
+	 */
+	public static final int defaultAutoSendRefreshRate = 5;
+	
+	/**
+	 * The refresh rate to automatically send the last 
+	 * values of the monitor points even if did not change
+	 */
+	public final int autoSendRefreshRate; 
+	
+	/**
 	 * The identifier of the system monitored by this plugin
 	 */
 	public final String monitoredSystemId;
@@ -197,13 +217,15 @@ public class Plugin implements ChangeValueListener {
 	 * @param values the monitor point values
 	 * @param props The user defined properties 
 	 * @param sender The publisher of monitor point values to the IAS core
+	 * @param refreshRate The auto-send time interval in seconds
 	 */
 	public Plugin(
 			String id, 
 			String monitoredSystemId,
 			Collection<Value> values,
 			Properties props,
-			MonitorPointSender sender) {
+			MonitorPointSender sender,
+			int refreshRate) {
 		
 		if (id==null || id.trim().isEmpty()) {
 			throw new IllegalArgumentException("The ID can't be null nor empty");
@@ -220,6 +242,16 @@ public class Plugin implements ChangeValueListener {
 			throw new IllegalArgumentException("No monitor point sender");
 		}
 		
+		Integer refreshRateFromProp = Integer.getInteger(AUTO_SEND_TI_PROPNAME);
+		if (refreshRateFromProp!=null) {
+			this.autoSendRefreshRate = refreshRateFromProp;
+		} else {
+			this.autoSendRefreshRate = refreshRate;
+		}
+		if (this.autoSendRefreshRate<=0) {
+			throw new IllegalArgumentException("The auto-send time interval must be greater then 0 instead of "+refreshRate);
+}
+		
 		flushProperties(props);
 		this.mpPublisher=sender;
 		logger.info("Plugin (ID=%s) started",pluginId);
@@ -228,7 +260,7 @@ public class Plugin implements ChangeValueListener {
 		values.forEach(v -> { 
 			try {
 				logger.info("ID: {}, filter: {}, filterOptions: {}",v.getId(),v.getFilter(),v.getFilterOptions());
-			putMonitoredPoint(new MonitoredValue(v.getId(), v.getRefreshTime(), schedExecutorSvc, this));
+			putMonitoredPoint(new MonitoredValue(v.getId(), v.getRefreshTime(), schedExecutorSvc, this,autoSendRefreshRate));
 		}catch (Exception e){
 			logger.error("Error adding monitor point "+v.getId(),e);
 		} });
@@ -274,9 +306,8 @@ public class Plugin implements ChangeValueListener {
 				config.getMonitoredSystemId(),
 				config.getValuesAsCollection(),
 				config.getProps(),
-/*				config.getDefaultFilter(),
-				config.getDefaultFilterOptions(),*/
-				sender);
+				sender,
+				config.getAutoSendTimeInterval());
 	}
 	
 	/**
@@ -316,6 +347,10 @@ public class Plugin implements ChangeValueListener {
 				shutdown();
 			}
 		}, "Plugin shutdown hook"));
+		
+		logger.debug("Initiailizing {} monitor points", monitorPoints.values().size());
+		monitorPoints.values().forEach(mp -> mp.start());
+		
 		logger.info("Plugin {} initialized",pluginId);
 	}
 	
@@ -337,6 +372,10 @@ public class Plugin implements ChangeValueListener {
 				logger.error("Error clearing the publisher: {}",pe.getMessage());
 				pe.printStackTrace(System.err);
 			}
+			
+			logger.debug("Shutting down the monitor points");
+			monitorPoints.values().forEach(mp -> mp.shutdown());
+			
 			logger.info("Plugin {} is shut down",pluginId);
 		}
 	}
@@ -436,7 +475,7 @@ public class Plugin implements ChangeValueListener {
 			monitorPoints.put(mPoint.id, mPoint);
 			sz=monitorPoints.size();
 		}
-		logger.info("IAS plugin %s now manages %d monitor points",pluginId,sz);
+		logger.info("IAS plugin {} will manage {} monitor points",pluginId,sz);
 		return sz;
 	}
 
@@ -449,15 +488,17 @@ public class Plugin implements ChangeValueListener {
 	@Override
 	public void monitoredValueUpdated(ValueToSend value) {
 		Objects.requireNonNull(value, "Cannot update a null monitored value");
-		ValueToSend fv = pluginOperationalMode.map(mode -> value.withMode(mode)).orElse(value);
-		mpPublisher.offer(fv);
-		logger.info("Filtered value {} with value {} and mode {} has been forwarded for sending to the IAS",fv.id,fv.value.toString(),fv.operationalMode.toString());
+		if (!closed.get()) {
+			ValueToSend fv = pluginOperationalMode.map(mode -> value.withMode(mode)).orElse(value);
+			mpPublisher.offer(fv);
+			logger.debug("Filtered value {} with value {} and mode {} has been forwarded for sending to the IAS",fv.id,fv.value.toString(),fv.operationalMode.toString());
+		}
 	}
 	
 	/**
 	 * Change the refresh rate of the monitor point with the passed ID.
 	 * <P>
-	 * The new refresh rate is bounded by a minimum ({@link MonitoredValue#minAllowedRefreshRate})
+	 * The new refresh rate is bounded by a minimum ({@link MonitoredValue#minAllowedSendRate})
 	 * and a maximum ({@link MonitoredValue#maxAllowedRefreshRate}) values.
 	 * 
 	 * @param mPointId The not <code>null</code> nor empty ID of a monitored point

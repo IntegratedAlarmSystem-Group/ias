@@ -42,6 +42,18 @@ public class PluginConfig {
 	 * and alarms to
 	 */
 	private String sinkServer;
+	
+	/**
+	 * The default time interval to automatically resend monitor point 
+	 * if their values did not change
+	 */
+	public static final int autoSendTimeIntervalDefault = 5;
+	
+	/**
+	 * The time interval (seconds) to automatically resend the monitor
+	 * points even if their values did not change.
+	 */
+	private int autoSendTimeInterval = autoSendTimeIntervalDefault;
 
 	/**
 	 * The port of the server to send monitor point values
@@ -206,6 +218,12 @@ public class PluginConfig {
 			logger.error("No values found");
 			return false;
 		}
+		
+		if (autoSendTimeInterval<=0) {
+			logger.error("Auto send time interval must be greater then 0");
+			return false;
+		}
+		
 		// Ensure that all the IDs of the values differ
 		if (getMapOfValues().keySet().size()!=values.length) {
 			logger.error("Some values share the same ID");
@@ -347,7 +365,13 @@ public class PluginConfig {
 		this.defaultFilterOptions = defaultFilterOptions;
 	}
 
+	public int getAutoSendTimeInterval() {
+		return autoSendTimeInterval;
+	}
 
+	public void setAutoSendTimeInterval(int autoSendTimeINterval) {
+		this.autoSendTimeInterval = autoSendTimeINterval;
+}
 
 }
 

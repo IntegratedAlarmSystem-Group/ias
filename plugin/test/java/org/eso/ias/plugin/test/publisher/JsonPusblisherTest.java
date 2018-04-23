@@ -18,7 +18,7 @@ import org.eso.ias.types.IasValidity;
 import org.eso.ias.types.OperationalMode;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
-import org.eso.ias.plugin.filter.Filter.ValidatedSample;
+import org.eso.ias.plugin.filter.Filter.EnrichedSample;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
@@ -97,14 +97,14 @@ public class JsonPusblisherTest {
 
 	@Test
 	public void testPublishing() throws Exception {
-		List<ValidatedSample> samples = Arrays.asList(new ValidatedSample(new Sample(Integer.valueOf(67)),IasValidity.RELIABLE));
+		List<EnrichedSample> samples = Arrays.asList(new EnrichedSample(new Sample(Integer.valueOf(67)),true));
 		
 		List<ValueToSend> values = Arrays.asList(
-				new ValueToSend("FV-ID1", Double.valueOf(6.7), samples, System.currentTimeMillis()),
+				new ValueToSend("FV-ID1", Double.valueOf(6.7), samples, System.currentTimeMillis(),OperationalMode.UNKNOWN,IasValidity.UNRELIABLE),
 				new ValueToSend("FV-ID2", Long.valueOf(1123), samples, System.currentTimeMillis(),OperationalMode.OPERATIONAL,IasValidity.RELIABLE),
 				new ValueToSend("FV-ID3", "Another string", samples, System.currentTimeMillis(),OperationalMode.MAINTENANCE,IasValidity.UNRELIABLE),
 				new ValueToSend("FV-ID4", Boolean.valueOf(false), samples, System.currentTimeMillis(),OperationalMode.STARTUP,IasValidity.RELIABLE),
-				new ValueToSend("FV-ID5", Integer.valueOf(-98), samples, System.currentTimeMillis()));
+				new ValueToSend("FV-ID5", Integer.valueOf(-98), samples, System.currentTimeMillis(),OperationalMode.UNKNOWN,IasValidity.UNRELIABLE));
 		
 		Map<String, ValueToSend> mapOfValues = new HashMap<>();
 

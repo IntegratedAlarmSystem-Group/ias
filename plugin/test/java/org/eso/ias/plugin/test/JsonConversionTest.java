@@ -8,7 +8,7 @@ import org.eso.ias.types.IasValidity;
 import org.eso.ias.types.OperationalMode;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
-import org.eso.ias.plugin.filter.Filter.ValidatedSample;
+import org.eso.ias.plugin.filter.Filter.EnrichedSample;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 
@@ -38,15 +38,15 @@ public class JsonConversionTest {
 	@Test
 	public void testAlarmTypeConversion() throws Exception {
 		
-		List<ValidatedSample> samples = new Vector<>();
+		List<EnrichedSample> samples = new Vector<>();
 		Sample s = new Sample(AlarmSample.SET);
-		ValidatedSample vs = new ValidatedSample(s, IasValidity.RELIABLE);
+		EnrichedSample vs = new EnrichedSample(s, true);
 		samples.add(vs);
 		
 		// Check the conversion to/from AlarmSample
 		AlarmSample alarmSample = AlarmSample.SET;
 		FilteredValue fv = new FilteredValue(alarmSample, samples, System.currentTimeMillis());
-		ValueToSend vts = new ValueToSend("IASIO-ALARM-ID", fv,OperationalMode.UNKNOWN);
+		ValueToSend vts = new ValueToSend("IASIO-ALARM-ID", fv,OperationalMode.UNKNOWN, IasValidity.RELIABLE);
 		
 		MonitorPointData mpd = new MonitorPointData(pluginID, monSysID, vts);
 		String jsonRepresentation=mpd.toJsonString();
@@ -57,7 +57,7 @@ public class JsonConversionTest {
 		// Even if not implemented yet... Check an array of integers
 		int[] array = new int[] { 0,1,2,3,4};
 		fv = new FilteredValue(array, samples, System.currentTimeMillis());
-		vts = new ValueToSend("IASIO-INT_ARRAY-ID", fv,OperationalMode.UNKNOWN);
+		vts = new ValueToSend("IASIO-INT_ARRAY-ID", fv,OperationalMode.UNKNOWN, IasValidity.RELIABLE);
 		mpd = new MonitorPointData(pluginID, monSysID, vts);
 		jsonRepresentation=mpd.toJsonString();
 		mpdFromJsonStr = MonitorPointData.fromJsonString(jsonRepresentation);

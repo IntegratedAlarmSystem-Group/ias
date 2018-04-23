@@ -2,17 +2,15 @@ package org.eso.ias.plugin.test.config;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.Objects;
 
 import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.config.PluginConfigException;
@@ -56,6 +54,7 @@ public class JsonConfigReaderTest {
 		assertEquals("iasdevel.hq.eso.org",config.getSinkServer());
 		assertEquals(8192,config.getSinkPort());
 		assertEquals(2, config.getValues().length);
+		assertEquals(3, config.getAutoSendTimeInterval());
 		
 		// Check the properties
 		assertEquals(2, config.getProperties().length);
@@ -141,7 +140,9 @@ public class JsonConfigReaderTest {
 		PluginConfig config8 = jsonFileReader8.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config8.isValid());
 		
-		
+		PluginConfigFileReader jsonFileReader9 = new PluginConfigFileReader(resourcePath+"configInvalidValues9.json");
+		PluginConfig config9 = jsonFileReader9.getPluginConfig().get(1,TimeUnit.MINUTES);
+		assertFalse(config9.isValid());
 		
 	}
 	/**
