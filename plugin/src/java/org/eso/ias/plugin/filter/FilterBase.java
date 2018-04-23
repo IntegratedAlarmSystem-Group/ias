@@ -106,7 +106,7 @@ public abstract class FilterBase implements Filter {
 			// in the history
 			if (!history.isEmpty()) {
 				EnrichedSample s = history.peekFirst();
-				if (s.timestamp>=newSample.timestamp) {
+				if (s.timestamp>newSample.timestamp) {
 					throw new FilterException("The new sample is older then the last submitted sample!");
 				}
 			}

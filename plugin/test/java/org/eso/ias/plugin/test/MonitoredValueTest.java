@@ -214,5 +214,29 @@ public class MonitoredValueTest implements ChangeValueListener {
 		}
 		receivedValue = receivedValues.get(1);
 		assertEquals(IasValidity.UNRELIABLE, receivedValue.iasValidity);
+		
+		logger.info("testSettingOfValidity test done");
 	}
+	
+	/**
+	 * Checks that a value is not sent if its
+	 * value did not change
+	 */
+	@Test
+	public void testSendOnlyDifferentValues() throws Exception {
+		logger.info("testSendOnlyDifferentValues test started");
+		
+		mVal.enablePeriodicNotification(false);
+		
+		// Sends many time the same value
+		for (int t=0; t<=11; t++) {
+			Sample s = new Sample(Integer.valueOf(13));
+			mVal.submitSample(s);
+		}
+		Thread.sleep(1000);
+		assertEquals(1, receivedValues.size());
+		
+		logger.info("testSendOnlyDifferentValues done");
+	}
+	
 }
