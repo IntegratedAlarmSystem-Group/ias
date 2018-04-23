@@ -49,7 +49,7 @@ import org.slf4j.LoggerFactory;
  * {@link #refreshRate} of the monitor point that is the time interval 
  * that the monitor point is refreshed by the device.
  * The validity depends on the time when the value has been produced by the remote
- * system against the refresh rate and the actual: the IAS periodic sending
+ * system against the refresh rate and the actual time: the IAS periodic sending
  * of the value does not play a role in the assessment of the validity. 
  * 
  * @author acaproni
