@@ -36,13 +36,20 @@ import org.slf4j.LoggerFactory;
  * 	<LI>if the value has not been sent to the IAS when the refresh time interval elapses,
  *      send the value again to the core
  * </UL>
- * <P>The <code>MonitoredValue</code> sends the value the {@link #listener}, that 
+ * <P>The <code>MonitoredValue</code> sends the value to the {@link #listener}, that 
  * will send it to the core of the IAS:
  * <UL>
  * 	<LI>immediately if the generated value changed
- * 	<LI>after the time interval elapses by a timer task.
+ * 	<LI>periodically by a timer task.
  * </UL>
  * A timer task implemented by the {@link #run()} resend to the core the last value sent. 
+ * <BR>Note that he periodic sending time interval is a global parameter
+ * of the plugin (of the IAS, actually) and must not be confused with the
+ * {@link #refreshRate} of the monitor point that is the time interval 
+ * that the monitor point is refreshed by the device.
+ * The validity depends on the time when the value has been produced by the remote
+ * system against the refresh rate and the actual: the IAS periodic sending
+ * of the value does not play a role in the assessment of the validity. 
  * 
  * @author acaproni
  *
@@ -135,6 +142,12 @@ public class MonitoredValue implements Runnable {
 	private ScheduledFuture<?> future=null;
 	
 	/**
+	 * The periodic time interval to automatically send the
+	 * last computed value to the BSDB
+	 */
+	public final int iasPeriodicSendingTime;
+	
+	/**
 	 * If <code>true</code> the <code>MonitoredValue</code> autonomously resends
 	 * the last value to the core of the IAS when the refresh rate elapses.
 	 * <P>
@@ -143,6 +156,16 @@ public class MonitoredValue implements Runnable {
 	 * new sample (or the same semple).
 	 */
 	private final AtomicBoolean isPeriodicNotificationEnabled = new AtomicBoolean(true);
+	
+	/**
+	 * Signal the the value has been started
+	 */
+	private final AtomicBoolean isStarted= new AtomicBoolean(false);
+	
+	/**
+	 * Signal the the value has been closed
+	 */
+	private final AtomicBoolean isClosed = new AtomicBoolean(false);
 	
 	/**
 	 * The operational mode of this monitored value.
@@ -167,13 +190,16 @@ public class MonitoredValue implements Runnable {
 	 * @param filter The filter to apply to the samples
 	 * @param executorSvc The executor to schedule the thread
 	 * @param listener The listener of updates
+	 * @param iasPeriodicSendingTime The time interval (secs) 
+	 *           to periodically send the last computed value to the BSDB
 	 */
 	public MonitoredValue(
 			String id, 
 			long refreshRate, 
 			Filter filter, 
 			ScheduledExecutorService executorSvc,
-			ChangeValueListener listener) {
+			ChangeValueListener listener,
+			int iasPeriodicSendingTime) {
 		Objects.requireNonNull(id,"The ID can't be null");
 		if (id.trim().isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty monitored value ID string");
@@ -181,13 +207,15 @@ public class MonitoredValue implements Runnable {
 		Objects.requireNonNull(filter,"The filter can't be null");
 		Objects.requireNonNull(executorSvc,"The executor service can't be null");
 		Objects.requireNonNull(listener,"The listener can't be null");
+		if (iasPeriodicSendingTime<=0) {
+			throw new IllegalArgumentException("Invalid periodic time interval "+iasPeriodicSendingTime);
+		}
 		this.id=id.trim();
 		this.refreshRate=refreshRate;
 		this.filter = filter;
 		this.schedExecutorSvc=executorSvc;
 		this.listener=listener;
-		future = schedExecutorSvc.scheduleAtFixedRate(this, refreshRate, refreshRate, TimeUnit.MILLISECONDS);
-		logger.debug("Monitor point {} created with a refresh rate of {}ms",this.id,this.refreshRate);
+		this.iasPeriodicSendingTime=iasPeriodicSendingTime;
 	}
 
 	/**
@@ -197,13 +225,16 @@ public class MonitoredValue implements Runnable {
 	 * @param refreshRate The refresh time interval
 	 * @param executorSvc The executor to schedule the thread
 	 * @param listener The listener
+	 * @param iasPeriodicSendingTime The time interval (secs) 
+	 *           to periodically send the last computed value to the BSDB
 	 */
 	public MonitoredValue(
 			String id, 
 			long refreshRate, 
 			ScheduledExecutorService executorSvc,
-			ChangeValueListener listener) {
-		this(id,refreshRate, new NoneFilter(),executorSvc,listener);
+			ChangeValueListener listener,
+			int iasPeriodicSendingTime) {
+		this(id,refreshRate, new NoneFilter(),executorSvc,listener,iasPeriodicSendingTime);
 	}
 	
 	/**
@@ -241,9 +272,11 @@ public class MonitoredValue implements Runnable {
 		if(future.getDelay(TimeUnit.MILLISECONDS)<=minAllowedRefreshRate) {
 			rescheduleTimer();
 		}
-		ValidatedSample validatedSample = new ValidatedSample(s, calcValidity());
-		filter.newSample(validatedSample).ifPresent(filteredValue -> notifyListener(new ValueToSend(id,filteredValue,operationalMode)));
-		lastSubmittedTimestamp=System.currentTimeMillis();
+		if (isStarted.get() && !isClosed.get()) {
+			ValidatedSample validatedSample = new ValidatedSample(s, calcValidity());
+			filter.newSample(validatedSample).ifPresent(filteredValue -> notifyListener(new ValueToSend(id,filteredValue,operationalMode)));
+			lastSubmittedTimestamp=System.currentTimeMillis();
+		}
 	}
 	
 	/**
@@ -285,7 +318,9 @@ public class MonitoredValue implements Runnable {
 	 */
 	@Override
 	public void run() {
-		notifyListener(lastSentValue);
+		if (!isClosed.get()) {
+			notifyListener(lastSentValue);
+		}
 	}
 	
 	/**
@@ -340,5 +375,34 @@ public class MonitoredValue implements Runnable {
 		OperationalMode ret = operationalMode;
 		operationalMode= opMode;
 		return ret;
+	}
+	
+	/**
+	 * Start the MonitorValue basically activating
+	 * the timer thread 
+	 */
+	public synchronized void start() {
+		boolean alreadyStarted = isStarted.getAndSet(true);
+		assert(!alreadyStarted);
+		future = schedExecutorSvc.scheduleAtFixedRate(
+				this, 
+				iasPeriodicSendingTime, 
+				iasPeriodicSendingTime, 
+				TimeUnit.SECONDS);
+		logger.debug("Monitor point {} created with a refresh rate of {} secs",this.id,this.refreshRate);
+	}
+	
+	/**
+	 * Stops the periodic thread and release all the resources
+	 */
+	public synchronized void shutdown() {
+		boolean alreadyClosed = isClosed.getAndSet(true);
+		if (alreadyClosed) {
+			logger.warn("Monitor point {} already closed",id);
+		} else {
+			if (isStarted.get()) {
+				future.cancel(false);
+			}
+		}
 	}
 }

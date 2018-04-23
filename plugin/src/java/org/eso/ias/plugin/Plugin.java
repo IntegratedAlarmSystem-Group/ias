@@ -260,7 +260,7 @@ public class Plugin implements ChangeValueListener {
 		values.forEach(v -> { 
 			try {
 				logger.info("ID: {}, filter: {}, filterOptions: {}",v.getId(),v.getFilter(),v.getFilterOptions());
-			putMonitoredPoint(new MonitoredValue(v.getId(), v.getRefreshTime(), schedExecutorSvc, this));
+			putMonitoredPoint(new MonitoredValue(v.getId(), v.getRefreshTime(), schedExecutorSvc, this,autoSendRefreshRate));
 		}catch (Exception e){
 			logger.error("Error adding monitor point "+v.getId(),e);
 		} });
@@ -347,6 +347,10 @@ public class Plugin implements ChangeValueListener {
 				shutdown();
 			}
 		}, "Plugin shutdown hook"));
+		
+		logger.debug("Initiailizing {} monitor points", monitorPoints.values().size());
+		monitorPoints.values().forEach(mp -> mp.start());
+		
 		logger.info("Plugin {} initialized",pluginId);
 	}
 	
@@ -368,6 +372,10 @@ public class Plugin implements ChangeValueListener {
 				logger.error("Error clearing the publisher: {}",pe.getMessage());
 				pe.printStackTrace(System.err);
 			}
+			
+			logger.debug("Shutting down the monitor points");
+			monitorPoints.values().forEach(mp -> mp.shutdown());
+			
 			logger.info("Plugin {} is shut down",pluginId);
 		}
 	}
@@ -467,7 +475,7 @@ public class Plugin implements ChangeValueListener {
 			monitorPoints.put(mPoint.id, mPoint);
 			sz=monitorPoints.size();
 		}
-		logger.info("IAS plugin %s now manages %d monitor points",pluginId,sz);
+		logger.info("IAS plugin {} will manage {} monitor points",pluginId,sz);
 		return sz;
 	}
 
@@ -480,9 +488,11 @@ public class Plugin implements ChangeValueListener {
 	@Override
 	public void monitoredValueUpdated(ValueToSend value) {
 		Objects.requireNonNull(value, "Cannot update a null monitored value");
-		ValueToSend fv = pluginOperationalMode.map(mode -> value.withMode(mode)).orElse(value);
-		mpPublisher.offer(fv);
-		logger.info("Filtered value {} with value {} and mode {} has been forwarded for sending to the IAS",fv.id,fv.value.toString(),fv.operationalMode.toString());
+		if (!closed.get()) {
+			ValueToSend fv = pluginOperationalMode.map(mode -> value.withMode(mode)).orElse(value);
+			mpPublisher.offer(fv);
+			logger.debug("Filtered value {} with value {} and mode {} has been forwarded for sending to the IAS",fv.id,fv.value.toString(),fv.operationalMode.toString());
+		}
 	}
 	
 	/**
