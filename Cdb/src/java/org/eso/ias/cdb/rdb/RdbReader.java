@@ -16,9 +16,11 @@ import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.IasCdbException;
 import org.eso.ias.cdb.pojos.AsceDao;
 import org.eso.ias.cdb.pojos.DasuDao;
+import org.eso.ias.cdb.pojos.DasuToDeployDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
+import org.eso.ias.cdb.pojos.TemplateDao;
 import org.eso.ias.cdb.pojos.TransferFunctionDao;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -57,7 +59,7 @@ public class RdbReader implements CdbReader {
 		List<IasDao> iasdaos = (List<IasDao>)s.createQuery("FROM IasDao").list();
 		Set<IasDao> ret = new HashSet<>();
 		for (Iterator<IasDao> iterator = iasdaos.iterator(); iterator.hasNext();){
-			ret.add((IasDao)iterator.next());
+			ret.add(iterator.next());
 		}
 		t.commit();
 		// Check if the query returned too many IAS
@@ -166,6 +168,25 @@ public class RdbReader implements CdbReader {
 		t.commit();
 		return Optional.ofNullable(tf);
 	}
+	
+	/**
+	 * Read the template configuration from the CDB. 
+	 * 
+	 * @param template_id The not <code>null</code> nor empty identifier of the template
+	 * @return The template read from the CDB
+	 * @throws IasCdbException in case of error reading from the CDB
+	 */
+	@Override
+	public Optional<TemplateDao> getTemplate(String template_id) throws IasCdbException {
+		if (template_id==null || template_id.isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty or null template ID");
+		}
+		Session s=rdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		TemplateDao template = s.get(TemplateDao.class,template_id);
+		t.commit();
+		return Optional.ofNullable(template);
+	}
 
 	/**
 	 * Read the DASU configuration from the CDB. 
@@ -183,7 +204,27 @@ public class RdbReader implements CdbReader {
 		Transaction t =s.beginTransaction();
 		DasuDao dasu = s.get(DasuDao.class,id);
 		t.commit();
-		return Optional.ofNullable(dasu);
+		
+		Optional<DasuDao> ret = Optional.ofNullable(dasu);
+		
+		// If the DASU is templated then the ID of the templates of ASCEs
+		// must be equal to that of the DASU
+		if (ret.isPresent()) {
+			Set<AsceDao> asces = ret.get().getAsces();
+			String templateOfDasu = ret.get().getTemplateId(); 
+			if (templateOfDasu==null) {
+				// No template in the DASU: ASCEs must have no template
+				if (!asces.stream().allMatch(asce -> asce.getTemplateId()==null)) {
+					throw new IasCdbException("Template mismatch between DASU ["+id+"] and its ASCEs");
+				}
+			} else {
+				if (!asces.stream().allMatch(asce -> asce.getTemplateId().equals(templateOfDasu))) {
+					throw new IasCdbException("Template mismatch between DASU ["+id+"] and its ASCEs");
+				}
+			}
+		}
+		
+		return ret;
 	}
 	
 	/**
@@ -195,13 +236,13 @@ public class RdbReader implements CdbReader {
 	 *                         supervisor with the give identifier does not exist
 	 */
 	@Override
-	public Set<DasuDao> getDasusForSupervisor(String id) throws IasCdbException {
+	public Set<DasuToDeployDao> getDasusToDeployInSupervisor(String id) throws IasCdbException {
 		Objects.requireNonNull(id, "The ID cant't be null");
 		if (id.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty ID");
 		}
 		Optional<SupervisorDao> superv = getSupervisor(id);
-		Set<DasuDao> ret = superv.orElseThrow(() -> new IasCdbException("Supervisor ["+id+"] not dound")).getDasus();
+		Set<DasuToDeployDao> ret = superv.orElseThrow(() -> new IasCdbException("Supervisor ["+id+"] not dound")).getDasusToDeploy();
 		return (ret==null)? new HashSet<>() : ret;
 	}
 	

@@ -22,7 +22,7 @@ import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
  * Filtering is based on the ID of the IASIOs _and_ IASValue type: 
  * - if the ID of the received String is contained in {@link #acceptedIds}
  *   then the IASIO is forwarded to the listener otherwise is rejected.
- * - if the type of the {@link IASValue} is contained in {@link #acceptedtypes}
+ * - if the type of the {@link IASValue} is contained in {@link #acceptedTypes}
  *   then the IASIO is forwarded to the listener otherwise is rejected.
  * 
  * <BR>If the caller does not set any filter, then all the received IASIOs 
@@ -101,7 +101,6 @@ implements KafkaConsumerListener {
 	 * @param servers The kafka servers to connect to
 	 * @param topicName The name of the topic to get events from
 	 * @param consumerID the ID of the consumer
-	 * @param listener The listener of events published in the topic
 	 * @param idsOfIDsToAccept   The IDs of the IASIOs to forward to the listener
 	 * @param idsOfTypesToAccept The types of the IASIOs to forward to the listener
 	 */
@@ -159,7 +158,6 @@ implements KafkaConsumerListener {
 	
 	private boolean accept(IASValue<?> iasio) {
 		assert(iasio!=null);
-		logger.info("*** Checking [{}] of type [{}]",iasio.id,iasio.valueType);
 		boolean acceptedById;
 		synchronized(acceptedIds) {
 			acceptedById = acceptedIds.contains(iasio.id) || acceptedIds.isEmpty();
@@ -170,7 +168,6 @@ implements KafkaConsumerListener {
 				acceptedByType = acceptedTypes.contains(iasio.valueType) || acceptedTypes.isEmpty();
 			}
 		}
-		logger.info("\t*** Check of [{}] will return {} AND {}={}",iasio.id,acceptedById,acceptedByType,(acceptedById && acceptedByType));
 		return acceptedById && acceptedByType;
 	}
 

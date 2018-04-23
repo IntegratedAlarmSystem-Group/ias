@@ -1,0 +1,13 @@
+{
+	"dasuID":"DasuTemplateID1",
+	"outputID":"DasuTemp1-OutID",
+	"props":[
+		{"name":"org.eso.ias.tf.minmaxthreshold.highOn","value":"50"},
+		{"name":"org.eso.ias.tf.minmaxthreshold.highOff","value":"40"},
+		{"name":"org.eso.ias.tf.minmaxthreshold.lowOn","value":"-30"},
+		{"name":"org.eso.ias.tf.minmaxthreshold.lowOff","value":"-25"}],
+	"id":"ASCE-Templated-ID1",
+	"transferFunctionID":"org.eso.ias.asce.transfer.impls.MinMaxThresholdTF",
+	"inputIDs":["Temperature", "AsceTemp1-ID1-In", "AsceTemp1-ID2-In"],
+	"templateId":"temp-ID1"
+}

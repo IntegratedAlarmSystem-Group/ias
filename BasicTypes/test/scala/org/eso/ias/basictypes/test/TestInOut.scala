@@ -54,7 +54,8 @@ class TestInOut extends FlatSpec {
         None,
         None,
         None,
-        Set.empty)
+        None,
+        None)
     
     // Change the value of the previous MP
     val mp2 = mp.updateValue(Some(3L))
@@ -211,6 +212,27 @@ class TestInOut extends FlatSpec {
     assert(newiasIo2.value.get == iasValue2.value)
     assert(newiasIo2.mode == iasValue2.mode)
     assert(newiasIo2.fromIasValueValidity.isEmpty)
+  }
+  
+  it must "Update the properties" in {
+    val monitoredSysId = new Identifier("MonSysId", IdentifierType.MONITORED_SOFTWARE_SYSTEM, None)
+    val puginId = new Identifier("PluginId", IdentifierType.PLUGIN, Option(monitoredSysId))
+    val converterId = new Identifier("ConverterId", IdentifierType.CONVERTER, Option(puginId))
+    val iasioId = new Identifier("IasioId", IdentifierType.IASIO, Option(converterId))
+    
+    val properties = Map("key1"->"Value1", "key2"->"Value2")
+    
+    val inOut = InOut.asInput(iasioId,IASTypes.LONG).updateProps(properties)
+    val valuePropsOpt = inOut.props
+    assert(valuePropsOpt.isDefined)
+    assert(valuePropsOpt.get.size==properties.size)
+    properties.keys.foreach(key => { 
+        assert(valuePropsOpt.get.keys.toList.contains(key))
+        val map = inOut.props.get
+        val value = map(key)
+        assert(properties(key)==value)
+    })
+    
   }
 
 }

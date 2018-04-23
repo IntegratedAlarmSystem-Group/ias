@@ -1,0 +1,5 @@
+[
+	{"id":"temp-ID1", "min":"1", "max":"5"},
+	{"id":"temp-ID2", "min":"0", "max":"10"},
+	{"id":"TemplToTestInputs", "min":"1", "max":"25"}
+]

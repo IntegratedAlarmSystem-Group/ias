@@ -10,6 +10,31 @@ import java.util.Objects;
 public class CdbJsonFiles implements CdbFiles {
 	
 	/**
+	 * The extension of json file names
+	 */
+	public static final String jsonFileExtension=".json";
+	
+	/**
+	 * The name of the file containing all the templates
+	 */
+	public static final String iasFileName="ias"+jsonFileExtension;
+	
+	/**
+	 * The name of the file containing all the templates
+	 */
+	public static final String templatesFileName="templates"+jsonFileExtension;
+	
+	/**
+	 * The name of the file containing all the IASIOs
+	 */
+	public static final String iasiosFileName="iasios"+jsonFileExtension;
+	
+	/**
+	 * The name of the file containing all the transfer functions
+	 */
+	public static final String transferFunsFileName="tfs"+jsonFileExtension;
+	
+	/**
 	 * The parent folder of the CDB 
 	 * i.e. the folder where we expect to find CDB, CDB/DASU etc.
 	 * 
@@ -85,7 +110,7 @@ public class CdbJsonFiles implements CdbFiles {
 	 */
 	@Override
 	public Path getIasFilePath()  throws IOException {
-		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.ROOT, true).resolve("ias.json");
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.ROOT, true).resolve(iasFileName);
 	}
 
 	/* (non-Javadoc)
@@ -97,7 +122,7 @@ public class CdbJsonFiles implements CdbFiles {
 		if (supervisorID.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty supervisor ID");
 		}
-		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.SUPERVISOR, true).resolve(supervisorID+".json");
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.SUPERVISOR, true).resolve(supervisorID+jsonFileExtension);
 	}
 
 	/* (non-Javadoc)
@@ -109,7 +134,7 @@ public class CdbJsonFiles implements CdbFiles {
 		if (dasuID.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty DASU ID");
 		}
-		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.DASU, true).resolve(dasuID+".json");
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.DASU, true).resolve(dasuID+jsonFileExtension);
 	}
 
 	/* (non-Javadoc)
@@ -121,7 +146,7 @@ public class CdbJsonFiles implements CdbFiles {
 		if (asceID.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty ASCE ID");
 		}
-		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.ASCE, true).resolve(asceID+".json");
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.ASCE, true).resolve(asceID+jsonFileExtension);
 	}
 
 	/* (non-Javadoc)
@@ -129,15 +154,24 @@ public class CdbJsonFiles implements CdbFiles {
 	 */
 	@Override
 	public Path getIasioFilePath(String iasioID)  throws IOException{
-		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.IASIO, true).resolve("iasios.json");
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.IASIO, true).resolve(iasiosFileName);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see org.eso.ias.cdb.json.CdbFiles#getTFFilePath(java.lang.String)
+	 */
 	@Override
 	public Path getTFFilePath(String tfID) throws IOException {
-		Objects.requireNonNull(tfID, "Invalid null TF ID");
-		if (tfID.isEmpty()) {
-			throw new IllegalArgumentException("Invalid empty TF ID");
-		}
-		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.TF, true).resolve(tfID+".json");
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.TF, true).resolve(transferFunsFileName);
+	}
+	
+	/*
+	 * (non-Javadoc)
+	 * @see org.eso.ias.cdb.json.CdbFiles#getTemplateFilePath(java.lang.String)
+	 */
+	@Override
+	public Path getTemplateFilePath(String templateID) throws IOException {
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.TEMPLATE, true).resolve(templatesFileName);
 	}
 }

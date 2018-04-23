@@ -130,8 +130,8 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
   val inputConsumer: InputSubscriber = new KafkaSubscriber(supervisorId.id, new Properties())
   
   /** The test uses real DASu i.e. the factory instantiates a DasuImpl */
-  val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber, cr: CdbReader) => 
-    DasuImpl(dd, i, op, id, cr,1,1)
+  val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) => 
+    DasuImpl(dd, i, op, id, 1,1)
 
   /** The supervisor to test */
   val supervisor = new Supervisor(supervisorId, outputPublisher, inputConsumer, cdbReader, factory)
@@ -203,7 +203,7 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
 			  t0+20,
 			  t0+25,
 			null,
-			new HashSet[String]())
+			null,null)
     
   }
 

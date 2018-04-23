@@ -33,6 +33,7 @@ import org.eso.ias.dasu.publisher.OutputListener
 import language.reflectiveCalls
 import org.eso.ias.types.IasValidity
 import java.util.HashSet
+import org.eso.ias.cdb.pojos.DasuDao
 
 /**
  * Test the DASU with 7 ASCEs (in 3 levels).
@@ -100,8 +101,14 @@ class Dasu7ASCEsTest extends FlatSpec {
   val supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR,None)
   val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervId)
   
+  val dasuDao: DasuDao = {
+    val dasuDaoOpt = cdbReader.getDasu(dasuId)
+    assert(dasuDaoOpt.isPresent())
+    dasuDaoOpt.get()
+  }
+  
   // The DASU to test
-  val dasu = new DasuImpl(dasuIdentifier,outputPublisher,inputsProvider,cdbReader,3,1)
+  val dasu = new DasuImpl(dasuIdentifier,dasuDao,outputPublisher,inputsProvider,3,1)
   
   // The identifier of the monitored system that produces the temperature in input to the DASU
   val monSysId = new Identifier("MonitoredSystemID",IdentifierType.MONITORED_SOFTWARE_SYSTEM)
@@ -156,7 +163,8 @@ class Dasu7ASCEsTest extends FlatSpec {
 			t0+20,
 			null,
 			null,
-			new HashSet[String]())
+			null,
+			null)
     }
     
   }
@@ -258,7 +266,8 @@ class Dasu7ASCEsTest extends FlatSpec {
     assert(outputProducedByDasu2.value.asInstanceOf[AlarmSample]== AlarmSample.SET)
     assert(outputProducedByDasu2.dasuProductionTStamp.isPresent())
     
-    assert(outputProducedByDasu2.dependentsFullRuningIds.size()==f.dasu.getInputIds().size)
+    assert(outputProducedByDasu2.dependentsFullRuningIds.isPresent())
+    assert(outputProducedByDasu2.dependentsFullRuningIds.get.size()==f.dasu.getInputIds().size)
     f.dasu.cleanUp()
   }
   

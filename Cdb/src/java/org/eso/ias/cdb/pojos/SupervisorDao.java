@@ -5,6 +5,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.persistence.Basic;
 import javax.persistence.CascadeType;
@@ -48,12 +49,14 @@ public class SupervisorDao {
 	@Basic(optional=true)
 	private LogLevelDao logLevel;
 	
+	
+	
 	/**
 	 * This one-to-many annotation matches with the many-to-one
-	 * annotation in the {@link DasuDao} 
+	 * annotation in the {@link DasuToDeployDao} 
 	 */
 	@OneToMany(mappedBy = "supervisor", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<DasuDao> dasus = new HashSet<>();
+    private Set<DasuToDeployDao> dasusToDeploy = new HashSet<>();
 	
 	public SupervisorDao() {}
 	
@@ -95,26 +98,36 @@ public class SupervisorDao {
 	 * Puts the passed DASU in the list of tDASUs that
 	 * run in this supervisor
 	 * 
-	 * @param dasu The DASU to add
+	 * @param dtd The DASU to deploy to add
 	 */
-	public void addDasu(DasuDao dasu) {
-		Objects.requireNonNull(dasu,"The DASU can't be null");
-		dasus.add(dasu);
-		dasu.setSupervisor(this);
+	public void addDasuToDeploy(DasuToDeployDao dtd) {
+		Objects.requireNonNull(dtd,"The DASU can't be null");
+		dasusToDeploy.add(dtd);
+		dtd.setSupervisor(this);
 	}
 	
-	public void removeDasu(DasuDao dasu) {
-		Objects.requireNonNull(dasu,"Cannot remove a null DASU");
-		dasus.remove(dasu.getId());
-		dasu.setSupervisor(null); // This won't work
+	/**
+	 * Remove the passed DASU from the set of DASUs to deploy
+	 * 
+	 * @param dtd The DASU to deploy to remove
+	 */
+	public void removeDasu(DasuToDeployDao dtd) {
+		Objects.requireNonNull(dtd,"Cannot remove a null DASU");
+		dasusToDeploy.remove(dtd);
+		dtd.setSupervisor(null); // This won't work
 	}
 	
+	/**
+	 * Remove the passed DASU with the given ID
+	 * from the set of DASUs to deploy
+	 * 
+	 * @param dasuId The ID of the DASU to deploy to remove
+	 */
 	public void removeDasu(String dasuId) {
-		Objects.requireNonNull(dasuId,"Invalid null DASU identifier");
-		if (dasuId.isEmpty()) {
-			throw new IllegalArgumentException("Invalid empty DASU identifier");
+		if (dasuId==null || dasuId.isEmpty()) {
+			throw new IllegalArgumentException("Invalid null or empty DASU identifier");
 		}
-		dasus.remove(dasuId);
+		dasusToDeploy.stream().filter(d -> d.getDasu().getId().equals(dasuId)).findFirst().ifPresent(d -> removeDasu(d));
 	}
 	
 	/**
@@ -129,26 +142,16 @@ public class SupervisorDao {
 		if (id.isEmpty()) {
 			throw new IllegalArgumentException("The ID of DASU can't be an empty string");
 		}
-		return dasus.stream().filter(x -> x.getId().equals(id)).count()>0;
-	}
-
-	public Set<DasuDao> getDasus() {
-		return dasus;
+		return dasusToDeploy.stream().filter(x -> x.getDasu().getId().equals(id)).count()>0;
 	}
 	
-	
+	/**
+	 * 
+	 * @return The IDs of all the DASUSs of this supervisor
+	 */
 	public Set<String> getDasusIDs() {
-		return dasus.stream().map(x -> x.getId()).collect(Collectors.toSet());
+		return dasusToDeploy.stream().map(x -> x.getDasu().getId()).collect(Collectors.toSet());
 	}
-	
-//	private Set<String> getDasusIDs(
-//			Map<String, SupervisorDao> supervisors,
-//			Map<String, DasuDao> dasus,
-//			Map<String,AsceDao> asces) {
-//		Objects.requireNonNull(supervisors,"Map of supervisors can't be null");
-//		Objects.requireNonNull(dasus,"Map of supervisors can't be null");
-//		Objects.requireNonNull(asces,"Map of supervisors can't be null");
-//	}
 	 
 	/**
 	 * toString() prints a human readable version of the DASU
@@ -162,8 +165,8 @@ public class SupervisorDao {
 		Optional.ofNullable(logLevel).ifPresent(x -> ret.append(x.toString()));
 		ret.append(", hostName=");
 		ret.append(getHostName());
-		ret.append(", DASUs={");
-		dasus.forEach(x -> { ret.append(' '); ret.append(x.getId()); });
+		ret.append(", DASUs to deploy={");
+		dasusToDeploy.forEach(x -> { ret.append(' '); ret.append(x.getDasu().getId()); });
 		ret.append("}]");
 		return ret.toString();
 	}
@@ -183,7 +186,7 @@ public class SupervisorDao {
 		}
 		SupervisorDao superv =(SupervisorDao)obj;
 		
-		return  this.dasus.size()==superv.dasus.size() &&
+		return  this.dasusToDeploy.size()==superv.dasusToDeploy.size() &&
 				this.id.equals(superv.getId()) &&
 				Objects.equals(this.hostName, superv.getHostName()) &&
 				Objects.equals(this.logLevel, superv.getLogLevel()) &&
@@ -199,6 +202,16 @@ public class SupervisorDao {
 	public int hashCode() {
 		return Objects.hash(id);
 	}
+
+	public Set<DasuToDeployDao> getDasusToDeploy() {
+		return dasusToDeploy;
+	}
+
+	public void setDasusToDeploy(Set<DasuToDeployDao> dasusToDeploy) {
+		this.dasusToDeploy = dasusToDeploy;
+	}
+	
+	
 
 
 }

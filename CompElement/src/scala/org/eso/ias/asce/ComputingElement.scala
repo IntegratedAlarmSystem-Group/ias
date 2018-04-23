@@ -116,6 +116,18 @@ abstract class ComputingElement[T](
   /** The ID of the ASCE */
   val id = asceIdentifier.id
   
+  /** 
+   *  True if the DASU has been generated from a template,
+   *  False otherwise 
+   */
+  lazy val fromTemplate: Boolean = asceIdentifier.fromTemplate
+  
+  /**
+   * The number of the instance if the DASU has been generated
+   * from a template; empty otherwise
+   */
+  lazy val templateInstance: Option[Int] = asceIdentifier.templateInstance
+  
   logger.info("Building ASCE [{}] with running id {}",id,asceIdentifier.fullRunningID)
   
   /**
@@ -391,7 +403,9 @@ object ComputingElement {
     val tfLanguage = if (asceDao.getTransferFunction.getImplLang==TFLanguageDao.JAVA) TransferFunctionLanguage.java else TransferFunctionLanguage.scala
     val tfSettings = new TransferFunctionSetting(
         asceDao.getTransferFunction.getClassName,
-        tfLanguage, new CompEleThreadFactory(asceId.fullRunningID))
+        tfLanguage, 
+        dasuId.templateInstance,
+        new CompEleThreadFactory(asceId.fullRunningID))
     
     // Builds the initial set of inputs: all the InOut at the beginning have a null value
     val initialIasios: Set[InOut[_]] = inputsIasioDaos.map(iDao => 

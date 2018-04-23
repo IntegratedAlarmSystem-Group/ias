@@ -13,6 +13,7 @@ import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
 import org.eso.ias.cdb.pojos.AsceDao;
 import org.eso.ias.cdb.pojos.DasuDao;
+import org.eso.ias.cdb.pojos.DasuToDeployDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
@@ -20,6 +21,7 @@ import org.eso.ias.cdb.pojos.LogLevelDao;
 import org.eso.ias.cdb.pojos.PropertyDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
 import org.eso.ias.cdb.pojos.TFLanguageDao;
+import org.eso.ias.cdb.pojos.TemplateDao;
 import org.eso.ias.cdb.pojos.TransferFunctionDao;
 import org.eso.ias.cdb.rdb.RdbReader;
 import org.eso.ias.cdb.rdb.RdbUtils;
@@ -157,34 +159,42 @@ public class TestRdbCdb {
 	@Test
 	public void testSupervisor() throws Exception {
 		logger.info("testSupervisor");
+		
+		TemplateDao tDao1 = new TemplateDao("tID1",3,9);
+		TemplateDao tDao2 = new TemplateDao("tID2",1,25);
+		cdbWriter.writeTemplate(tDao1);
+		cdbWriter.writeTemplate(tDao2);
+		
 		SupervisorDao superv = new SupervisorDao();
 		superv.setId("Supervisor-ID");
 		superv.setHostName("almadev2.alma.cl");
 		superv.setLogLevel(LogLevelDao.INFO);
 
-		// Adds the DASUs
+		// Adds the DASU to deploy
 		DasuDao dasu1 = new DasuDao();
 		dasu1.setId("DasuID1");
-		dasu1.setSupervisor(superv);
 		dasu1.setLogLevel(LogLevelDao.FATAL);
-		superv.addDasu(dasu1);
+		DasuToDeployDao dtd1 = new DasuToDeployDao(dasu1, tDao1, 5);
+		superv.addDasuToDeploy(dtd1);
 
-		IasioDao dasuOut1 = new IasioDao("DASU-OUT-1", "descr", IasTypeDao.ALARM);
+		IasioDao dasuOut1 = new IasioDao("DASU-OUT-1", "descr", IasTypeDao.ALARM,"http://www.eso.org/1");
 		cdbWriter.writeIasio(dasuOut1, true);
 		dasu1.setOutput(dasuOut1);
 
 		DasuDao dasu2 = new DasuDao();
 		dasu2.setId("DasuID2");
-		dasu2.setSupervisor(superv);
 		dasu2.setLogLevel(LogLevelDao.WARN);
-		superv.addDasu(dasu2);
+		DasuToDeployDao dtd2 = new DasuToDeployDao(dasu2, tDao2, 1);
+		superv.addDasuToDeploy(dtd2);
 
-		IasioDao dasuOut2 = new IasioDao("DASU-OUT-2", "descr", IasTypeDao.DOUBLE);
+		IasioDao dasuOut2 = new IasioDao("DASU-OUT-2", "descr", IasTypeDao.DOUBLE,"http://www.eso.org/2");
 		cdbWriter.writeIasio(dasuOut2, true);
 		dasu2.setOutput(dasuOut2);
 
+		cdbWriter.writeDasu(dasu1);
+		cdbWriter.writeDasu(dasu2);
 		cdbWriter.writeSupervisor(superv);
-
+		
 		Optional<SupervisorDao> optSuperv = cdbReader.getSupervisor(superv.getId());
 		assertTrue("Got an empty Supervisor!", optSuperv.isPresent());
 		assertEquals("The Supervisors differ!", superv, optSuperv.get());
@@ -192,7 +202,20 @@ public class TestRdbCdb {
 		// Modify the supervisor then save it again
 		superv.setHostName("almadev.hq.eso.org");
 		superv.removeDasu(dasu2.getId());
+		
+		DasuDao dasu3 = new DasuDao();
+		dasu3.setId("DasuID3");
+		dasu3.setLogLevel(LogLevelDao.FATAL);
+		DasuToDeployDao dtd3 = new DasuToDeployDao(dasu3, null, null);
+		superv.addDasuToDeploy(dtd3);
+		
+		IasioDao dasuOut3 = new IasioDao("DASU-OUT-3", "descr", IasTypeDao.DOUBLE,"http://www.eso.org/3");
+		cdbWriter.writeIasio(dasuOut3, true);
+		dasu3.setOutput(dasuOut3);
+		
+		cdbWriter.writeDasu(dasu3);
 
+		logger.info("Writing the modified supervisor {}",superv);
 		cdbWriter.writeSupervisor(superv);
 
 		// Check if it has been updated
@@ -209,14 +232,53 @@ public class TestRdbCdb {
 	@Test
 	public void testIasio() throws Exception {
 		logger.info("testIasio");
-		IasioDao io = new IasioDao("IO-ID", "IASIO description", IasTypeDao.INT);
+		IasioDao io = new IasioDao(
+				"IO-ID", 
+				"IASIO description", 
+				IasTypeDao.INT,
+				"http://www.eso.org",false,
+				null);
 		cdbWriter.writeIasio(io, true);
 
 		Optional<IasioDao> iasioFromRdb = cdbReader.getIasio("IO-ID");
 		assertTrue("Got an empty IASIO!", iasioFromRdb.isPresent());
 		assertEquals("The IASIOs differ!", io, iasioFromRdb.get());
+		
+		// Is the default value saved for IasioDao#canShelve?
+		IasioDao iasioDefaultShelve = new IasioDao("ioID2", "IASIO description", IasTypeDao.ALARM,"http://www.eso.org");
+		cdbWriter.writeIasio(iasioDefaultShelve, false);
+		Optional<IasioDao> optIasioDefShelve = cdbReader.getIasio(iasioDefaultShelve.getId());
+		assertTrue("Got an empty IASIO!", optIasioDefShelve.isPresent());
+		assertEquals("The IASIOs differ!", iasioDefaultShelve, optIasioDefShelve.get());
+		assertEquals(IasioDao.canSheveDefault,optIasioDefShelve.get().isCanShelve());
 	}
+	
+	/**
+	 * Test reading and writing of IASIO
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testTemplatedIasio() throws Exception {
+		logger.info("testTemplatedIasio");
+		
+		TemplateDao template = new TemplateDao("TemplateForTest", 5, 37);
+		cdbWriter.writeTemplate(template);
+		
+		IasioDao io = new IasioDao(
+				"T-IO-ID", 
+				"IASIO template description", 
+				IasTypeDao.ALARM,
+				"http://www.eso.org",false,
+				template.getId());
+		cdbWriter.writeIasio(io, true);
 
+		Optional<IasioDao> iasioFromRdb = cdbReader.getIasio("T-IO-ID");
+		assertTrue("Got an empty templated IASIO!", iasioFromRdb.isPresent());
+		assertEquals("The IASIOs differ!", io, iasioFromRdb.get());
+		assertEquals(io.getTemplateId(),iasioFromRdb.get().getTemplateId());
+	}
+	
 	/**
 	 * Test reading and writing of a set of IASIOs
 	 * 
@@ -225,11 +287,11 @@ public class TestRdbCdb {
 	@Test
 	public void testIasios() throws Exception {
 		logger.info("testIasios");
-		IasioDao io1 = new IasioDao("IO-ID1", "IASIO descr1", IasTypeDao.INT);
-		IasioDao io2 = new IasioDao("IO-ID2", "IASIO descr2", IasTypeDao.ALARM);
-		IasioDao io3 = new IasioDao("IO-ID3", "IASIO descr3", IasTypeDao.BOOLEAN);
-		IasioDao io4 = new IasioDao("IO-ID4", "IASIO descr4", IasTypeDao.DOUBLE);
-		IasioDao io5 = new IasioDao("IO-ID5", "IASIO descr5", IasTypeDao.STRING);
+		IasioDao io1 = new IasioDao("IO-ID1", "IASIO descr1", IasTypeDao.INT,"http://www.eso.org");
+		IasioDao io2 = new IasioDao("IO-ID2", "IASIO descr2", IasTypeDao.ALARM,"http://www.eso.org");
+		IasioDao io3 = new IasioDao("IO-ID3", "IASIO descr3", IasTypeDao.BOOLEAN,"http://www.eso.org");
+		IasioDao io4 = new IasioDao("IO-ID4", "IASIO descr4", IasTypeDao.DOUBLE,"http://www.eso.org");
+		IasioDao io5 = new IasioDao("IO-ID5", "IASIO descr5", IasTypeDao.STRING,"http://www.eso.org");
 		Set<IasioDao> iasios = new HashSet<>();
 		iasios.add(io1);
 		iasios.add(io2);
@@ -253,23 +315,14 @@ public class TestRdbCdb {
 	public void testDasu() throws Exception {
 		logger.info("testDasu");
 		// Test the reading/writing od a DASU with no ASCEs
-		SupervisorDao superv = new SupervisorDao();
-		superv.setId("SupervID");
-		superv.setHostName("almadev.hq.eso.org");
-		superv.setLogLevel(LogLevelDao.INFO);
-
 		DasuDao dasuNoASCEs = new DasuDao();
 		dasuNoASCEs.setId("A-DASU-For-Testing");
 		dasuNoASCEs.setLogLevel(LogLevelDao.DEBUG);
-		dasuNoASCEs.setSupervisor(superv);
 
-		IasioDao dasuNoASCEsOut = new IasioDao("DASU-OUT-1", "descr", IasTypeDao.ALARM);
+		IasioDao dasuNoASCEsOut = new IasioDao("DASU-OUT-1", "descr", IasTypeDao.ALARM,"http://www.eso.org");
 		cdbWriter.writeIasio(dasuNoASCEsOut, true);
 		dasuNoASCEs.setOutput(dasuNoASCEsOut);
 
-		superv.addDasu(dasuNoASCEs);
-
-		cdbWriter.writeSupervisor(superv);
 		cdbWriter.writeDasu(dasuNoASCEs);
 
 		Optional<DasuDao> dasuFromRdb = cdbReader.getDasu("A-DASU-For-Testing");
@@ -280,14 +333,13 @@ public class TestRdbCdb {
 		DasuDao dasuWithASCEs = new DasuDao();
 		dasuWithASCEs.setId("A-DASU-With-ASCEs");
 		dasuWithASCEs.setLogLevel(LogLevelDao.WARN);
-		dasuWithASCEs.setSupervisor(superv);
 
-		IasioDao dasuWithASCEsOut = new IasioDao("DASU-OUT-1", "descr", IasTypeDao.ALARM);
+		IasioDao dasuWithASCEsOut = new IasioDao("DASU-OUT-1", "descr", IasTypeDao.ALARM,"http://www.eso.org");
 		cdbWriter.writeIasio(dasuNoASCEsOut, true);
 		dasuWithASCEs.setOutput(dasuWithASCEsOut);
 
 		// Output of ASCE1
-		IasioDao ioAsce1Out = new IasioDao("IASIO-OUT-2", "descr", IasTypeDao.DOUBLE);
+		IasioDao ioAsce1Out = new IasioDao("IASIO-OUT-2", "descr", IasTypeDao.DOUBLE,"http://www.eso.org");
 		cdbWriter.writeIasio(ioAsce1Out, true);
 
 		TransferFunctionDao tfDao = new TransferFunctionDao();
@@ -304,7 +356,7 @@ public class TestRdbCdb {
 		dasuWithASCEs.addAsce(asce1);
 
 		// Output of ASCE2
-		IasioDao ioAsce2Out = new IasioDao("IASIO-OUT-2", "descr", IasTypeDao.BOOLEAN);
+		IasioDao ioAsce2Out = new IasioDao("IASIO-OUT-2", "descr", IasTypeDao.BOOLEAN,"http://www.eso.org");
 		cdbWriter.writeIasio(ioAsce2Out, true);
 
 		TransferFunctionDao tfDao2 = new TransferFunctionDao();
@@ -355,42 +407,34 @@ public class TestRdbCdb {
 	public void testAsce() throws Exception {
 		logger.info("testAsce");
 		// The supervisor where the DASU containing the ASCE runs
-		SupervisorDao superv = new SupervisorDao();
-		superv.setId("SuperID");
-		superv.setHostName("almaias.hq.eso.org");
-		superv.setLogLevel(LogLevelDao.DEBUG);
 
 		// The DAUS where the ASCE runs
 		DasuDao dasu = new DasuDao();
 		dasu.setId("A-DASU-For-Testing");
 		dasu.setLogLevel(LogLevelDao.DEBUG);
-		dasu.setSupervisor(superv);
 
-		IasioDao dasuOut = new IasioDao("DASU-OUT-1", "descr", IasTypeDao.ALARM);
+		IasioDao dasuOut = new IasioDao("DASU-OUT-1", "descr", IasTypeDao.ALARM,"http://www.eso.org");
 		cdbWriter.writeIasio(dasuOut, true);
 		dasu.setOutput(dasuOut);
 
-		superv.addDasu(dasu);
-
-		cdbWriter.writeSupervisor(superv);
 		cdbWriter.writeDasu(dasu);
 		
 
 		Set<IasioDao> iasios = new HashSet<>();
 		// The output of the ASCE
-		IasioDao ioOut = new IasioDao("IASIO-OUT", "description of output", IasTypeDao.ALARM);
+		IasioDao ioOut = new IasioDao("IASIO-OUT", "description of output", IasTypeDao.ALARM,"http://www.eso.org");
 		cdbWriter.writeIasio(ioOut, true);
 
 		// The 5 inputs of the ASCE
-		IasioDao ioIn1 = new IasioDao("IASIO-IN1", "input-1", IasTypeDao.DOUBLE);
+		IasioDao ioIn1 = new IasioDao("IASIO-IN1", "input-1", IasTypeDao.DOUBLE,"http://www.eso.org");
 		iasios.add(ioIn1);
-		IasioDao ioIn2 = new IasioDao("IASIO-IN2", "input-2", IasTypeDao.INT);
+		IasioDao ioIn2 = new IasioDao("IASIO-IN2", "input-2", IasTypeDao.INT,"http://www.eso.org");
 		iasios.add(ioIn2);
-		IasioDao ioIn3 = new IasioDao("IASIO-IN3", "input-3", IasTypeDao.BOOLEAN);
+		IasioDao ioIn3 = new IasioDao("IASIO-IN3", "input-3", IasTypeDao.BOOLEAN,"http://www.eso.org");
 		iasios.add(ioIn3);
-		IasioDao ioIn4 = new IasioDao("IASIO-IN4", "input-4", IasTypeDao.ALARM);
+		IasioDao ioIn4 = new IasioDao("IASIO-IN4", "input-4", IasTypeDao.ALARM,"http://www.eso.org");
 		iasios.add(ioIn4);
-		IasioDao ioIn5 = new IasioDao("IASIO-IN5", "input-5", IasTypeDao.STRING);
+		IasioDao ioIn5 = new IasioDao("IASIO-IN5", "input-5", IasTypeDao.STRING,"http://www.eso.org");
 		iasios.add(ioIn5);
 
 		cdbWriter.writeIasios(iasios, true);
@@ -440,37 +484,38 @@ public class TestRdbCdb {
 
 		// First the IASIOs
 		Set<IasioDao> iasios = new HashSet<>();
-		IasioDao ioOut = new IasioDao("IASIO-OUT", "description of output", IasTypeDao.ALARM);
+		IasioDao ioOut = new IasioDao("IASIO-OUT", "description of output", IasTypeDao.ALARM,"http://www.eso.org");
 		iasios.add(ioOut);
 		// The 5 inputs of the ASCEs
-		IasioDao ioIn1 = new IasioDao("iasioID-1", "input-1", IasTypeDao.DOUBLE);
+		IasioDao ioIn1 = new IasioDao("iasioID-1", "input-1", IasTypeDao.DOUBLE,"http://www.eso.org");
 		iasios.add(ioIn1);
-		IasioDao ioIn2 = new IasioDao("iasioID-2", "input-2", IasTypeDao.INT);
+		IasioDao ioIn2 = new IasioDao("iasioID-2", "input-2", IasTypeDao.INT,"http://www.eso.org");
 		iasios.add(ioIn2);
-		IasioDao ioIn3 = new IasioDao("iasioID-3", "input-3", IasTypeDao.BOOLEAN);
+		IasioDao ioIn3 = new IasioDao("iasioID-3", "input-3", IasTypeDao.BOOLEAN,"http://www.eso.org");
 		iasios.add(ioIn3);
-		IasioDao ioIn4 = new IasioDao("iasioID-4", "input-4", IasTypeDao.ALARM);
+		IasioDao ioIn4 = new IasioDao("iasioID-4", "input-4", IasTypeDao.ALARM,"http://www.eso.org");
 		iasios.add(ioIn4);
 		cdbWriter.writeIasios(iasios, true);
-
-		// The supervisor with one DASU
-		SupervisorDao superv = new SupervisorDao();
-		superv.setId("Supervisor-ID1");
-		superv.setHostName("almaias.hq.eso.org");
-		superv.setLogLevel(LogLevelDao.DEBUG);
 
 		// A DASU
 		DasuDao dasu = new DasuDao();
 		dasu.setId("DasuID1");
 		dasu.setLogLevel(LogLevelDao.DEBUG);
-		dasu.setSupervisor(superv);
 		dasu.setOutput(ioOut);
-
-		superv.addDasu(dasu);
-
-		cdbWriter.writeSupervisor(superv);
 		cdbWriter.writeDasu(dasu);
+		
+		DasuToDeployDao dtd = new DasuToDeployDao(dasu, null, null);
+		
+		// The supervisor with one DASU
+		SupervisorDao superv1 = new SupervisorDao();
+		superv1.setId("Supervisor-ID1");
+		superv1.setHostName("almaias.hq.eso.org");
+		superv1.setLogLevel(LogLevelDao.DEBUG);
+		superv1.addDasuToDeploy(dtd);
+		cdbWriter.writeSupervisor(superv1);
 
+		
+		
 		// Another supervisor without DASU
 		SupervisorDao superv2 = new SupervisorDao();
 		superv2.setId("Supervisor-ID2");
@@ -478,18 +523,10 @@ public class TestRdbCdb {
 		superv2.setLogLevel(LogLevelDao.DEBUG);
 		cdbWriter.writeSupervisor(superv2);
 
-		// Another supervisor without 3 DASUs
-		SupervisorDao superv3 = new SupervisorDao();
-		superv3.setId("Supervisor-ID3");
-		superv3.setHostName("almaias.hq.eso.org");
-		superv3.setLogLevel(LogLevelDao.DEBUG);
-		cdbWriter.writeSupervisor(superv3);
-
 		// A DASU
 		DasuDao dasu2 = new DasuDao();
 		dasu2.setId("DasuID2");
 		dasu2.setLogLevel(LogLevelDao.DEBUG);
-		dasu2.setSupervisor(superv3);
 		dasu2.setOutput(ioIn3);
 
 		TransferFunctionDao tfDao1 = new TransferFunctionDao();
@@ -512,7 +549,6 @@ public class TestRdbCdb {
 		DasuDao dasu3 = new DasuDao();
 		dasu3.setId("DasuID3");
 		dasu3.setLogLevel(LogLevelDao.DEBUG);
-		dasu3.setSupervisor(superv3);
 		dasu3.setOutput(ioIn3);
 
 		TransferFunctionDao tfDao2 = new TransferFunctionDao();
@@ -565,15 +601,29 @@ public class TestRdbCdb {
 		DasuDao dasu4 = new DasuDao();
 		dasu4.setId("DasuID4");
 		dasu4.setLogLevel(LogLevelDao.DEBUG);
-		dasu4.setSupervisor(superv3);
 		dasu4.setOutput(ioIn4);
 		cdbWriter.writeDasu(dasu4);
+		
+		DasuToDeployDao dtd2 = new DasuToDeployDao(dasu2, null, null);
+		DasuToDeployDao dtd3 = new DasuToDeployDao(dasu3, null, null);
+		DasuToDeployDao dtd4 = new DasuToDeployDao(dasu4, null, null);
+		
+		// Another supervisor without 3 DASUs
+		SupervisorDao superv3 = new SupervisorDao();
+		superv3.setId("Supervisor-ID3");
+		superv3.setHostName("almaias.hq.eso.org");
+		superv3.setLogLevel(LogLevelDao.DEBUG);
+		superv3.addDasuToDeploy(dtd2);
+		superv3.addDasuToDeploy(dtd3);
+		superv3.addDasuToDeploy(dtd4);
+		cdbWriter.writeSupervisor(superv3);
+		
 
 		logger.info("CDB built");
 	}
 
 	/**
-	 * Test the getting of the DAUS of a supervisor
+	 * Test the getting of the DASU of a supervisor
 	 */
 	@Test
 	public void testGetDasusOfSupervisor() throws Exception {
@@ -581,20 +631,20 @@ public class TestRdbCdb {
 		buildCDB();
 
 		// The test starts below
-		Set<DasuDao> dasus = cdbReader.getDasusForSupervisor("Supervisor-ID1");
-		assertEquals(1, dasus.size());
-		for (DasuDao dasu : dasus) {
-			assertEquals("DasuID1", dasu.getId());
+		Set<DasuToDeployDao> dtds = cdbReader.getDasusToDeployInSupervisor("Supervisor-ID1");
+		assertEquals(1, dtds.size());
+		for (DasuToDeployDao dtd : dtds) {
+			assertEquals("DasuID1", dtd.getDasu().getId());
 		}
 
-		dasus = cdbReader.getDasusForSupervisor("Supervisor-ID2");
-		assertEquals(0, dasus.size());
+		dtds = cdbReader.getDasusToDeployInSupervisor("Supervisor-ID2");
+		assertEquals(0, dtds.size());
 
-		dasus = cdbReader.getDasusForSupervisor("Supervisor-ID3");
-		assertEquals(3, dasus.size());
-		for (DasuDao dasu : dasus) {
+		dtds = cdbReader.getDasusToDeployInSupervisor("Supervisor-ID3");
+		assertEquals(3, dtds.size());
+		for (DasuToDeployDao dtd : dtds) {
 			assertTrue(
-					dasu.getId().equals("DasuID2") || dasu.getId().equals("DasuID3") || dasu.getId().equals("DasuID4"));
+					dtd.getDasu().getId().equals("DasuID2") || dtd.getDasu().getId().equals("DasuID3") || dtd.getDasu().getId().equals("DasuID4"));
 		}
 	}
 
@@ -651,5 +701,26 @@ public class TestRdbCdb {
 			assertTrue(iasio.getId().equals("iasioID-2") || iasio.getId().equals("iasioID-3")
 					|| iasio.getId().equals("iasioID-4"));
 		}
+	}
+	
+	/**
+	 * Test the writing and reading of the template
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testWriteTemplate() throws Exception {
+		TemplateDao tDao1 = new TemplateDao("tID1",3,9);
+		TemplateDao tDao2 = new TemplateDao("tID2",1,25);
+		
+		cdbWriter.writeTemplate(tDao1);
+		cdbWriter.writeTemplate(tDao2);
+		
+		Optional<TemplateDao> optT1 = cdbReader.getTemplate(tDao1.getId());
+		assertTrue(optT1.isPresent());
+		assertEquals(tDao1, optT1.get());
+		Optional<TemplateDao> optT2 = cdbReader.getTemplate(tDao2.getId());
+		assertTrue(optT2.isPresent());
+		assertEquals(tDao2, optT2.get());
 	}
 }

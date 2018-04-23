@@ -54,7 +54,7 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
    * if the (high) alarm is active and the value of the IASIO
    * goes below HighOFF, then the alarm is deactivated
    */
-  lazy val highOff: Double = getValue(props, highOffPropName, Double.MaxValue)
+  lazy val highOff: Double = getValue(props, highOffPropName, highOn)
   
   /**
    * the (low) alarm is activated when the value of the IASIO is
@@ -66,7 +66,7 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
    * if the (low) alarm is active and the value of the IASIO
    * becomes greater then LowOFF, then the alarm is deactivated
    */
-  lazy val lowOff: Double = getValue(props, lowOffPropName, Double.MinValue)
+  lazy val lowOff: Double = getValue(props, lowOffPropName, lowOn)
   
   /**
    * Get the value of a property from the passed properties.
@@ -144,7 +144,7 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
       (doubleValue>=highOn || doubleValue<=lowOn) ||
       temp.get && (doubleValue>=highOff || doubleValue<=lowOff)
     val newValue = AlarmSample.fromBoolean(condition)
-    actualOutput.updateValue(Some(newValue)).updateMode(iasio.mode)
+    actualOutput.updateValue(Some(newValue)).updateMode(iasio.mode).updateProps(Map("actualValue"->doubleValue.toString()))
   }
   
 }

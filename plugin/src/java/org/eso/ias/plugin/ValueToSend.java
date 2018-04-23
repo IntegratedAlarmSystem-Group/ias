@@ -90,7 +90,6 @@ public class ValueToSend extends FilteredValue {
 	 * @param id The ID of the value 
 	 * @param filteredValue The value produced applying the filter
 	 * @param opMode The operational mode
-	 * @param iasValidity The validity
 	 */
 	public ValueToSend(
 			String id, 

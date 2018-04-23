@@ -75,6 +75,18 @@ abstract class Dasu(
   val id = dasuIdentifier.id
   
   /** 
+   *  True if the DASU has been generated from a template,
+   *  False otherwise 
+   */
+  val fromTemplate: Boolean = dasuIdentifier.fromTemplate
+  
+  /**
+   * The number of the instance if the DASU has been generated
+   * from a template; empty otherwise
+   */
+  lazy val templateInstance: Option[Int] = dasuIdentifier.templateInstance
+  
+  /** 
    *  Auto send time interval in milliseconds
    */
   val autoSendTimeIntervalMillis = TimeUnit.MILLISECONDS.convert(autoSendTimeInterval.toLong, TimeUnit.SECONDS)

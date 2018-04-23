@@ -3,6 +3,5 @@
 		"AsceTemperature"],
 	"outputId":"TemperatureAlarm",
 	"logLevel":"FATAL",
-	"id":"DasuTemperature",
-	"supervisorID":"SupervisorWithKafka"
+	"id":"DasuTemperature"
 }

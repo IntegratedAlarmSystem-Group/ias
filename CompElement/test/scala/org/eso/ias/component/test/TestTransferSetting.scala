@@ -23,11 +23,13 @@ class TestTransferFunctionSetting extends FlatSpec {
     val javaTF = new TransferFunctionSetting(
         "org.eso.ias.component.test.transfer.TransferExecutorImpl",
         TransferFunctionLanguage.java,
+        None,
         threadFactory)
     
     val scalaTF = new TransferFunctionSetting(
         "org.eso.ias.component.test.transfer.TransferExample",
         TransferFunctionLanguage.scala,
+        None,
         threadFactory)
   }
   

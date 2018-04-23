@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
  * newest items are in the head of the list.
  * <P>
  * Implementation of filters must take care of removing elements from the history when 
- * a new element is added ({@link #sampleAdded(Sample)}) and/or when the filtered value
+ * a new element is added ({@link #sampleAdded(org.eso.ias.plugin.filter.Filter.ValidatedSample)}) and/or when the filtered value
  * is retrieved {@link Filter#apply()}.
  * <P>
  * Objects of this class stores also:

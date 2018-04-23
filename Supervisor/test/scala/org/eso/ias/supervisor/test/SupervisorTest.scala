@@ -161,7 +161,7 @@ class SupervisorTest extends FlatSpec {
 			  t0+20,
 			  t0+25,
 			  null,
-			new HashSet[String]())
+			null,null)
     }
     
     assert(iasiosToSend.toSet.size == 20)
@@ -198,7 +198,7 @@ class SupervisorTest extends FlatSpec {
 			  t0+20,
 			  t0+25,
 			null,
-			new HashSet[String]())
+			null,null)
 			
       
     }
@@ -248,7 +248,7 @@ class SupervisorTest extends FlatSpec {
 			  t0+20,
 			  t0+25,
 			  null,
-			  new HashSet[String]())
+			  null,null)
     }
     
     // And for DASU3
@@ -272,7 +272,7 @@ class SupervisorTest extends FlatSpec {
 			  t0+20,
 			  t0+25,
 			  null,
-			  new HashSet[String]())
+			  null,null)
       
     }
 

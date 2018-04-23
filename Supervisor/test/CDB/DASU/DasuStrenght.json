@@ -3,6 +3,5 @@
 		"AsceStrenght"],
 	"outputId":"StrenghtAlarm",
 	"logLevel":"INFO",
-	"id":"DasuStrenght",
-	"supervisorID":"SupervisorWithKafka"
+	"id":"DasuStrenght"
 }

@@ -19,71 +19,71 @@ import org.slf4j.LoggerFactory;
  * The list of kafka servers to connect to and the names of
  * the input and output topics can be passed by means of
  * java properties ({@link #ConverterKafkaStream(String, Properties)})
- * or programmatically. 
- * 
- * 
+ * or programmatically.
+ *
+ *
  * @author acaproni
  */
 public class ConverterKafkaStream extends ConverterStream {
-	
+
 	/**
 	 * The logger
 	 */
 	private static final Logger logger = LoggerFactory.getLogger(ConverterKafkaStream.class);
-	
+
 	/**
 	 * The name of the topic where plugins pushes
 	 * monitor point values and alarms
 	 */
 	private final String pluginsInputKTopicName;
-	
+
 	/**
-	 * The name of the java property to get the name of the 
+	 * The name of the java property to get the name of the
 	 * topic where plugins push values
 	 */
 	private static final String PLUGIN_TOPIC_NAME_PROP_NAME = "org.eso.ias.converter.kafka.inputstream";
-	
+
 	/**
 	 * The name of the topic to send values to the core of the IAS
 	 */
 	private final String iasCoreOutputKTopicName;
-	
+
 	/**
-	 * The name of the java property to get thename of the 
+	 * The name of the java property to get thename of the
 	 * topic where plugins push values
 	 */
 	private static final String IASCORE_TOPIC_NAME_PROP_NAME = "org.eso.ias.converter.kafka.outputstream";
-	
+
 	/**
 	 * The name of the property to pass the kafka servers to connect to
 	 */
 	private static final String KAFKA_SERVERS_PROP_NAME = "org.eso.ias.converter.kafka.servers";
-	
+
 	/**
 	 * Default list of kafka servers to connect to
 	 */
 	private static final String DEFAULTKAFKASERVERS = "localhost:9092";
-	
+
 	/**
 	 * The list of kafka servers to connect to
 	 */
 	private final String kafkaServers;
-	
+
 	/**
 	 * Kafka stream builder
 	 */
 	private final StreamsBuilder builder = new StreamsBuilder();
-	
+
 	/**
 	 * The kafka streams
 	 */
 	private KafkaStreams streams;
-	
+
 	/**
 	 * The empty constructor gets the kafka servers, and the topics
 	 * for the streaming from the passed properties or falls
 	 * back to the defaults.
-	 * 
+	 *
 	 * @param converterID The ID of the converter.
 	 * @param props the properties to get kafka serves and topic anmes
 	 */
@@ -92,19 +92,19 @@ public class ConverterKafkaStream extends ConverterStream {
 			Properties props) {
 		super(converterID);
 		Objects.requireNonNull(props);
-		kafkaServers = props.getProperty(KAFKA_SERVERS_PROP_NAME,DEFAULTKAFKASERVERS);
+		kafkaServers = props.getProperty(KAFKA_SERVERS_PROP_NAME, DEFAULTKAFKASERVERS);
 		pluginsInputKTopicName=props.getProperty(PLUGIN_TOPIC_NAME_PROP_NAME, KafkaHelper.PLUGINS_TOPIC_NAME);
 		iasCoreOutputKTopicName=props.getProperty(IASCORE_TOPIC_NAME_PROP_NAME, KafkaHelper.IASIOs_TOPIC_NAME);
-		
+
 		logger.debug("Will connect to {} to send data from {} to {}",
 				kafkaServers,
 				pluginsInputKTopicName,
 				iasCoreOutputKTopicName);
 	}
-	
+
 	/**
 	 * Constructor
-	 * 
+	 *
 	 * @param converterID The ID of the converter
 	 * @param servers The kafka servers to conncet to
 	 * @param pluginTopicName The name of the topic to get monitor points from plugins
@@ -113,7 +113,7 @@ public class ConverterKafkaStream extends ConverterStream {
 	public ConverterKafkaStream(
 			String converterID,
 			String servers,
-			String pluginTopicName, 
+			String pluginTopicName,
 			String iasCoreTopicName) {
 		super(converterID);
 		Objects.requireNonNull(servers);
@@ -127,10 +127,10 @@ public class ConverterKafkaStream extends ConverterStream {
 				pluginsInputKTopicName,
 				iasCoreOutputKTopicName);
 	}
-	
+
 	/**
 	 * Initialize the stream
-	 * 
+	 *
 	 */
 	public void init() {
 		logger.debug("Initializing...");
@@ -139,12 +139,12 @@ public class ConverterKafkaStream extends ConverterStream {
         streams = new KafkaStreams(builder.build(), setKafkaProps());
         logger.debug("Initialized.");
 	}
-	
-	
-	
+
+
+
 	/**
 	 * Set and return the properties for the kafka stream
-	 * 
+	 *
 	 * @return the properties for the kafka stream
 	 */
 	private Properties setKafkaProps() {
@@ -160,7 +160,7 @@ public class ConverterKafkaStream extends ConverterStream {
 	/**
 	 * Start streaming data from the kafka input topic
 	 * to the kafka output topic
-	 * 
+	 *
 	 * @see org.eso.ias.converter.ConverterStream#start()
 	 */
 	@Override
@@ -172,7 +172,7 @@ public class ConverterKafkaStream extends ConverterStream {
 
 	/**
 	 * Stop streaming data
-	 * 
+	 *
 	 * @see org.eso.ias.converter.ConverterStream#stop()
 	 */
 	@Override

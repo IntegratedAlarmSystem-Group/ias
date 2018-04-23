@@ -2,5 +2,9 @@
 	"logLevel":"INFO",
 	"id":"SupervisorID",
 	"hostName":"almaias.eso.org",
-	"dasusIDs":["Dasu1","Dasu2","Dasu3"]
+	"dasusToDeploy":[
+		{"dasuId":"Dasu1","templateId":null,"instance":null},
+		{"dasuId":"Dasu2","templateId":null,"instance":null},
+		{"dasuId":"Dasu3","templateId":null,"instance":null}
+	]
 }

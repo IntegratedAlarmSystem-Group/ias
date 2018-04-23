@@ -19,6 +19,7 @@ import org.eso.ias.dasu.publisher.OutputListener
 import scala.collection.mutable.ArrayBuffer
 import org.eso.ias.types.IASTypes
 import java.util.HashSet
+import org.eso.ias.cdb.pojos.DasuDao
 
 /**
  * Setup the DASU with one ASCE as it is reused by more 
@@ -82,15 +83,20 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, tolerance: Integer) ex
     outputStringsReceived.append(outputStr)
   }
   
+  val dasuDao: DasuDao = {
+    val dasuDaoOpt = cdbReader.getDasu(dasuId)
+    assert(dasuDaoOpt.isPresent())
+    dasuDaoOpt.get()
+  }
+  
   def buildDasu(): Option[DasuImpl] = {
-    Some(new DasuImpl(dasuIdentifier,outputPublisher,inputsProvider,cdbReader,autoRefreshTimeInterval,tolerance))
+    Some(new DasuImpl(dasuIdentifier,dasuDao,outputPublisher,inputsProvider,autoRefreshTimeInterval,tolerance))
   }
   
   
   def buildValue(d: Double): IASValue[_] = {
     
     val t0 = System.currentTimeMillis()-100
-    val deps = new HashSet[String]()
     
     IASValue.build(
       d,
@@ -105,7 +111,8 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, tolerance: Integer) ex
 			t0+20,
 			null,
 			null,
-			deps)
+			null,
+			null)
   }
     
 }

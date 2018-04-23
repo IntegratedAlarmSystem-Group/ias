@@ -1,0 +1,9 @@
+{
+	"dasuID":"DasuToTestInputs",
+	"outputID":"TemplatedOutId",
+	"props":[],
+	"id":"AsceToTestInputs",
+	"transferFunctionID":"org.eso.ias.supervisor.test.tf.TemplatedTF",
+	"inputIDs":["TemplatedId", "NonTemplatedId"],
+	"templateId":"TemplToTestInputs"
+}
