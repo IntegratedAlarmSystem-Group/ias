@@ -57,7 +57,11 @@ import org.slf4j.LoggerFactory;
  * If the operational mode for the plugin is set, it takes priority over the operational mode 
  * of the monitor point value (i.e. if a operational mode is set at plugin level,
  * it will be sent as the operational mode of each monitored value independently of their settings).
- * 
+ * <P>
+ * The collected monitor points and alarms pass through the filtering and are finally sent to the 
+ * BSDB where they will be processed by the DASUs.
+ * Monitor points and alarms are sent on change and periodically 
+ * if their values did not change (@see #autoSendRefreshRate).
  *  
  * @author acaproni
  */
@@ -149,6 +153,22 @@ public class Plugin implements ChangeValueListener {
 	public final String pluginId;
 	
 	/**
+	 * The property to set the auto-send time interval (in seconds)
+	 */
+	public static final String AUTO_SEND_TI_PROPNAME = "org.eso.ias.plugin.timeinterval";
+	
+	/**
+	 * The default value of the auto-send refresh rate
+	 */
+	public static final int defaultAutoSendRefreshRate = 5;
+	
+	/**
+	 * The refresh rate to automatically send the last 
+	 * values of the monitor points even if did not change
+	 */
+	public final int autoSendRefreshRate; 
+	
+	/**
 	 * The identifier of the system monitored by this plugin
 	 */
 	public final String monitoredSystemId;
@@ -197,13 +217,15 @@ public class Plugin implements ChangeValueListener {
 	 * @param values the monitor point values
 	 * @param props The user defined properties 
 	 * @param sender The publisher of monitor point values to the IAS core
+	 * @param refreshRate The auto-send time interval in seconds
 	 */
 	public Plugin(
 			String id, 
 			String monitoredSystemId,
 			Collection<Value> values,
 			Properties props,
-			MonitorPointSender sender) {
+			MonitorPointSender sender,
+			int refreshRate) {
 		
 		if (id==null || id.trim().isEmpty()) {
 			throw new IllegalArgumentException("The ID can't be null nor empty");
@@ -219,6 +241,16 @@ public class Plugin implements ChangeValueListener {
 		if (sender==null) {
 			throw new IllegalArgumentException("No monitor point sender");
 		}
+		
+		Integer refreshRateFromProp = Integer.getInteger(AUTO_SEND_TI_PROPNAME);
+		if (refreshRateFromProp!=null) {
+			this.autoSendRefreshRate = refreshRateFromProp;
+		} else {
+			this.autoSendRefreshRate = refreshRate;
+		}
+		if (this.autoSendRefreshRate<=0) {
+			throw new IllegalArgumentException("The auto-send time interval must be greater then 0 instead of "+refreshRate);
+}
 		
 		flushProperties(props);
 		this.mpPublisher=sender;
@@ -274,9 +306,8 @@ public class Plugin implements ChangeValueListener {
 				config.getMonitoredSystemId(),
 				config.getValuesAsCollection(),
 				config.getProps(),
-/*				config.getDefaultFilter(),
-				config.getDefaultFilterOptions(),*/
-				sender);
+				sender,
+				config.getAutoSendTimeInterval());
 	}
 	
 	/**
