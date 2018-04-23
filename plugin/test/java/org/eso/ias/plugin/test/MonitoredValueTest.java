@@ -59,12 +59,15 @@ public class MonitoredValueTest implements ChangeValueListener {
 	private MonitoredValue mVal;
 	
 	/**
-	 * The refresh rate of the monitor point in msec
-	 * <P>
-	 * This value must be chosen big enough to let the value
-	 * submit a values before the timer takes control
+	 * The refresh rate of the monitor point in msec as it is defined in the
+	 * monitored system
 	 */
 	private final long refreshRate = 1000;
+	
+	/**
+	 * The time to send the value to the BSDB if it did not change
+	 */
+	private final int iasPeriodicSendTI = 4;
 	
 	/**
 	 * The samaphore to wait for the sending of events
@@ -83,13 +86,13 @@ public class MonitoredValueTest implements ChangeValueListener {
 	
 	@Before
 	public void setUp() {
-		mVal = new MonitoredValue(mValueId, refreshRate, schedExecutorSvc, this);
+		mVal = new MonitoredValue(mValueId, refreshRate, schedExecutorSvc, this,iasPeriodicSendTI);
+		mVal.start();
 	}
 	
 	@After
 	public void tearDown() {
-		mVal.enablePeriodicNotification(false);
-
+		mVal.shutdown();
 	}
 	
 	@AfterClass
@@ -108,7 +111,7 @@ public class MonitoredValueTest implements ChangeValueListener {
 		Sample s = new Sample(Integer.valueOf(127));
 		mVal.submitSample(s);
 		// Wait but not enough to let the timer shot
-		assertTrue(countDownLatch.await(refreshRate/2, TimeUnit.MILLISECONDS));
+		assertTrue(countDownLatch.await(iasPeriodicSendTI/2, TimeUnit.SECONDS));
 		assertEquals(1L, receivedValues.size());
 		assertEquals(s.value, receivedValues.get(0).value);
 		assertEquals(mValueId,receivedValues.get(0).id);
@@ -150,7 +153,7 @@ public class MonitoredValueTest implements ChangeValueListener {
 		Sample s = new Sample(Integer.valueOf(135));
 		mVal.submitSample(s);
 		// Wait but not enough to let the timer shot
-		assertTrue(countDownLatch.await((1+expectedNotifications)*refreshRate, TimeUnit.MILLISECONDS));
+		assertTrue(countDownLatch.await((1+expectedNotifications)*iasPeriodicSendTI, TimeUnit.SECONDS));
 		assertEquals(expectedNotifications, receivedValues.size());
 	}
 	
@@ -160,15 +163,19 @@ public class MonitoredValueTest implements ChangeValueListener {
 	@Test
 	public void testPeriodicNotification() throws Exception {
 		Sample s = new Sample(Integer.valueOf(17751));
+		logger.info("testPeriodicNotification sumbitted a sample with value {}",s.value.toString());
 		mVal.submitSample(s);
 		mVal.enablePeriodicNotification(false);
 		// Give time to send the value as effect of the submit
 		Thread.sleep(1000);
 		countDownLatch = new CountDownLatch(1);
 		// Check that notifications are disabled 
-		assertFalse(countDownLatch.await(2000, TimeUnit.MILLISECONDS));
+		logger.info("Is the periodic send disabled?");
+		assertFalse(countDownLatch.await(2*iasPeriodicSendTI, TimeUnit.SECONDS));
 		mVal.enablePeriodicNotification(true);
-		assertTrue(countDownLatch.await(2000, TimeUnit.MILLISECONDS));
+		logger.info("Is the periodic send enabled?");
+		assertTrue(countDownLatch.await(2*iasPeriodicSendTI, TimeUnit.SECONDS));
+		logger.info("testPeriodicNotification done");
 	}
 	
 

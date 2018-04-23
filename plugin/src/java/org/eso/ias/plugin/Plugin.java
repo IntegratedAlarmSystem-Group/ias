@@ -498,7 +498,7 @@ public class Plugin implements ChangeValueListener {
 	/**
 	 * Change the refresh rate of the monitor point with the passed ID.
 	 * <P>
-	 * The new refresh rate is bounded by a minimum ({@link MonitoredValue#minAllowedRefreshRate})
+	 * The new refresh rate is bounded by a minimum ({@link MonitoredValue#minAllowedSendRate})
 	 * and a maximum ({@link MonitoredValue#maxAllowedRefreshRate}) values.
 	 * 
 	 * @param mPointId The not <code>null</code> nor empty ID of a monitored point

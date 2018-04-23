@@ -70,14 +70,7 @@ public class MonitoredValue implements Runnable {
 	 * The {@link #refreshRate} of the monitored can be dynamically changed
 	 * but can never be less then the allowed minimum. 
 	 */
-	public final static long minAllowedRefreshRate=50;
-	
-	/**
-	 * The {@link #refreshRate} of the monitored can be dynamically changed
-	 * but can never be greater then the allowed maximum 
-	 * to avoid the risk that the value is never sent to the core 
-	 */
-	public final static long maxAllowedRefreshRate=60000;
+	public final static long minAllowedSendRate=50;
 	
 	/**
 	 * The name of the property to set the delta time error
@@ -94,8 +87,8 @@ public class MonitoredValue implements Runnable {
 	
 	/**
 	 * The actual refresh rate (msec) of this monitored value:
-	 * the value must be sent to the IAS core on change or before the
-	 * refresh rate expires
+	 * the value depends on the time when the device provides a new value
+	 * ansd is used to evaluate the validity
 	 */
 	public long refreshRate;
 	
@@ -186,7 +179,7 @@ public class MonitoredValue implements Runnable {
 	/**
 	 * Build a {@link MonitoredValue} with the passed filter
 	 * @param id The identifier of the value
-	 * @param refreshRate The refresh time interval in msec
+	 * @param refreshRate The refresh time interval  of the device (in msec)
 	 * @param filter The filter to apply to the samples
 	 * @param executorSvc The executor to schedule the thread
 	 * @param listener The listener of updates
@@ -269,10 +262,10 @@ public class MonitoredValue implements Runnable {
 	 */
 	public void submitSample(Sample s) throws FilterException {
 		Objects.requireNonNull(s);
-		if(future.getDelay(TimeUnit.MILLISECONDS)<=minAllowedRefreshRate) {
-			rescheduleTimer();
-		}
 		if (isStarted.get() && !isClosed.get()) {
+			if(future.getDelay(TimeUnit.MILLISECONDS)<=minAllowedSendRate) {
+				rescheduleTimer();
+			}
 			ValidatedSample validatedSample = new ValidatedSample(s, calcValidity());
 			filter.newSample(validatedSample).ifPresent(filteredValue -> notifyListener(new ValueToSend(id,filteredValue,operationalMode)));
 			lastSubmittedTimestamp=System.currentTimeMillis();
@@ -305,9 +298,17 @@ public class MonitoredValue implements Runnable {
 	 * at the latest when the refresh rate elapse. 
 	 */
 	private synchronized void rescheduleTimer() {
+		if (isClosed.get()) {
+			return;
+		}
+		assert(isStarted.get());
 		future.cancel(false);
 		if (isPeriodicNotificationEnabled.get()) {
-			future = schedExecutorSvc.scheduleAtFixedRate(this, refreshRate, refreshRate, TimeUnit.MILLISECONDS);
+			future = schedExecutorSvc.scheduleAtFixedRate(
+					this, 
+					iasPeriodicSendingTime, 
+					iasPeriodicSendingTime, 
+					TimeUnit.SECONDS);
 		}
 	}
 
@@ -326,27 +327,24 @@ public class MonitoredValue implements Runnable {
 	/**
 	 * Set the new refresh rate for the monitored value with the given identifier.
 	 * <P>
-	 * If the periodic send is disabled, this method sets the new time interval 
-	 * but does not reactivate the periodic send that must be done by 
-	 * {@link #enablePeriodicNotification(boolean)}.
+	 * This method sets the refresh rate at which the monitored value is retrieved from
+	 * the remote monitored system and not the time the value is periodically
+	 * sent to the BSDB if its value did not change.
+	 * <P>
+	 * Setting this value affects the evaluation of the validity.
 	 * 
-	 * @param newRefreshRate The new refresh rate (msecs), must be greater then {@link #minAllowedRefreshRate}
-	 *                       and less then {@link #maxAllowedRefreshRate}
+	 * @param newRefreshRate The new refresh rate (msecs), must be greater 
+	 *                       then {@link #minAllowedSendRate}
 	 * @return The new refresh rate (msec)
 	 * 
 	 */
 	public synchronized long setRefreshRate(long newRefreshRate) {
-		if (newRefreshRate<minAllowedRefreshRate) {
-			logger.warn("The requested refresh rate {} for {} was too low: {} will be set instead",newRefreshRate,id,minAllowedRefreshRate);
-			newRefreshRate=minAllowedRefreshRate;
+		if (newRefreshRate<minAllowedSendRate) {
+			logger.warn("The requested refresh rate {} for {} was too low: {} will be set instead",newRefreshRate,id,minAllowedSendRate);
+			newRefreshRate=minAllowedSendRate;
 			
 		}
-		if (newRefreshRate>maxAllowedRefreshRate) {
-			logger.warn("The requested refresh rate {} for {} was too high: {} will be set instead",newRefreshRate,id,maxAllowedRefreshRate);
-			newRefreshRate=maxAllowedRefreshRate;
-		}
 		refreshRate=newRefreshRate;
-		rescheduleTimer();
 		return newRefreshRate;
 	}
 	
@@ -389,7 +387,7 @@ public class MonitoredValue implements Runnable {
 				iasPeriodicSendingTime, 
 				iasPeriodicSendingTime, 
 				TimeUnit.SECONDS);
-		logger.debug("Monitor point {} created with a refresh rate of {} secs",this.id,this.refreshRate);
+		logger.debug("Monitor point {} initialized with a refresh rate of {} secs",id,iasPeriodicSendingTime);
 	}
 	
 	/**
