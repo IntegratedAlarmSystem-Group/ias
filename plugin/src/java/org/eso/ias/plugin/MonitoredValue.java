@@ -290,7 +290,7 @@ public class MonitoredValue implements Runnable {
 			
 			filter.newSample(validatedSample).ifPresent(filteredValue -> {
 				FilteredValue oldfilteredValue = lastProducedValue.getAndSet(filteredValue);
-				if (!filteredValue.value.equals(oldfilteredValue.value)) {
+				if (oldfilteredValue==null || !filteredValue.value.equals(oldfilteredValue.value)) {
 					// The value changed so a immediate sending is triggered
 					if(future.getDelay(TimeUnit.MILLISECONDS)<=minAllowedSendRate) {
 						rescheduleTimer();
