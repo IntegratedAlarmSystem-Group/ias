@@ -42,20 +42,6 @@ public class Value {
 	private String filterOptions;
 
 	/**
-	 * Add global filter e filterOptions
-	 */
-	/**
-	 * The optional filter to apply to the value
-	 */
-	private String defaultFilter;
-
-	/**
-	 * A optional comma separated list of options to pass
-	 * to the filter
-	 */
-	private String defaultFilterOptions;
-
-	/**
 	 * @return the id
 	 */
 	public String getId() {
@@ -122,7 +108,7 @@ public class Value {
 	 */
 	public void setFilterOptions(String filterOptions) {
 		if(Objects.isNull(filterOptions)){
-			this.filter = getDefaultFilterOptions();
+			this.filterOptions = getDefaultFilterOptions();
 		}else{
 			this.filterOptions=filterOptions;		
 		}
