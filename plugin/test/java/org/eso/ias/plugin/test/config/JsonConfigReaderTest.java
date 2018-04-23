@@ -140,7 +140,9 @@ public class JsonConfigReaderTest {
 		PluginConfig config8 = jsonFileReader8.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config8.isValid());
 		
-		
+		PluginConfigFileReader jsonFileReader9 = new PluginConfigFileReader(resourcePath+"configInvalidValues9.json");
+		PluginConfig config9 = jsonFileReader9.getPluginConfig().get(1,TimeUnit.MINUTES);
+		assertFalse(config9.isValid());
 		
 	}
 	/**
