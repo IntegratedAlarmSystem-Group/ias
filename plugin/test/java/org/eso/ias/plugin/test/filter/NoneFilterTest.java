@@ -10,7 +10,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.eso.ias.plugin.Sample;
-import org.eso.ias.plugin.filter.Filter.ValidatedSample;
+import org.eso.ias.plugin.filter.Filter.EnrichedSample;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.filter.NoneFilter;
 import org.eso.ias.types.IasValidity;
@@ -72,7 +72,7 @@ public class NoneFilterTest {
 		 * @see org.eso.ias.plugin.filter.FilterBase#historySnapshot()
 		 */
 		@Override
-		public List<ValidatedSample> historySnapshot() {
+		public List<EnrichedSample> historySnapshot() {
 			return super.historySnapshot();
 		}
 
@@ -80,7 +80,7 @@ public class NoneFilterTest {
 		 * @see org.eso.ias.plugin.filter.FilterBase#peekNewest()
 		 */
 		@Override
-		public Optional<ValidatedSample> peekNewest() {
+		public Optional<EnrichedSample> peekNewest() {
 			return super.peekNewest();
 		}
 
@@ -96,7 +96,7 @@ public class NoneFilterTest {
 		 * @see org.eso.ias.plugin.filter.FilterBase#peekOldest()
 		 */
 		@Override
-		public Optional<ValidatedSample> peekOldest() {
+		public Optional<EnrichedSample> peekOldest() {
 			return super.peekOldest();
 		}
 		
@@ -140,7 +140,7 @@ public class NoneFilterTest {
 	@Test
 	public void testApply() throws Exception {
 		Sample s = new Sample(Integer.valueOf(12));
-		ValidatedSample vs = new ValidatedSample(s,IasValidity.RELIABLE);
+		EnrichedSample vs = new EnrichedSample(s,true);
 		defaultFilter.newSample(vs);
 		
 		Optional<FilteredValue> value = defaultFilter.apply();
@@ -150,7 +150,7 @@ public class NoneFilterTest {
 		assertEquals("Unexpected size of history",1,fValue.samples.size());
 		
 		// Submit more samples the check again
-		List<ValidatedSample> samples=TestFilterBase.submitSamples(43,defaultFilter);
+		List<EnrichedSample> samples=TestFilterBase.submitSamples(43,defaultFilter);
 		value = defaultFilter.apply();
 		fValue = value.orElseThrow(() -> new Exception("Value not assigned to the submitted sample"));
 		assertEquals("Unexpected assignement of the value",samples.get(0).value,fValue.value);
@@ -167,7 +167,7 @@ public class NoneFilterTest {
 		assertFalse(defaultFilter.getLastReturnedFilteredValue().isPresent());
 		
 		Sample s = new Sample(Long.valueOf(3));
-		ValidatedSample vs = new ValidatedSample(s,IasValidity.RELIABLE);
+		EnrichedSample vs = new EnrichedSample(s,true);
 		defaultFilter.newSample(vs);
 		Optional<FilteredValue> filteredValue = defaultFilter.apply();
 		Optional<FilteredValue> lastReturnedilteredValue = defaultFilter.getLastReturnedFilteredValue();
@@ -179,7 +179,7 @@ public class NoneFilterTest {
 		
 		Thread.sleep(25);
 		Sample s2 = new Sample(Long.valueOf(9));
-		vs = new ValidatedSample(s2,IasValidity.RELIABLE);
+		vs = new EnrichedSample(s2,true);
 		defaultFilter.newSample(vs);
 		
 		Optional<FilteredValue> anotherFilteredValue = defaultFilter.apply();

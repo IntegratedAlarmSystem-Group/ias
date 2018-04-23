@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
-import org.eso.ias.plugin.filter.Filter.ValidatedSample;
+import org.eso.ias.plugin.filter.Filter.EnrichedSample;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.MonitorPointData;
@@ -34,6 +34,7 @@ import org.eso.ias.plugin.publisher.impl.BufferedListenerPublisher.PublisherEven
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.eso.ias.types.IasValidity;
+import org.eso.ias.types.OperationalMode;
 import org.junit.After;
 import org.junit.Before;
 import org.slf4j.Logger;
@@ -218,7 +219,7 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 			long baseValue,
 			long valueInc) {
 		List<ValueToSend> ret = new LinkedList<>();
-		List<ValidatedSample> samples = new LinkedList<>();
+		List<EnrichedSample> samples = new LinkedList<>();
 		int idCounter=0;
 		long valueCounter=baseValue;
 		for (int t=0; t<numOfValues; t++) {
@@ -226,8 +227,14 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 			long value=valueCounter;
 			valueCounter+=valueInc;
 			samples.clear();
-			samples.add(new ValidatedSample(new Sample(Long.valueOf(value)),IasValidity.RELIABLE));
-			ValueToSend fv = new ValueToSend(id, Long.valueOf(value), samples, System.currentTimeMillis());
+			samples.add(new EnrichedSample(new Sample(Long.valueOf(value)),true));
+			ValueToSend fv = new ValueToSend(
+					id, 
+					Long.valueOf(value), 
+					samples, 
+					System.currentTimeMillis(),
+					OperationalMode.UNKNOWN,
+					IasValidity.RELIABLE);
 			ret.add(fv);
 		}
 		return ret;
@@ -325,7 +332,6 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 	@Before
 	public void setUp() {
 		// Build the publisher
-		int poolSize = Runtime.getRuntime().availableProcessors()/2;
 		bufferedPublisher = new BufferedListenerPublisher(pluginId, monitoredSystemId, pluginServerName, pluginServerPort, schedExecutorSvc,this);
 		unbufferedPublisher = new ListenerPublisher(pluginId, monitoredSystemId,pluginServerName, pluginServerPort, schedExecutorSvc,this);
 		logger.debug("Set up");

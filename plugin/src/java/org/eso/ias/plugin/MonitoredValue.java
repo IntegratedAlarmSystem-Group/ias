@@ -6,9 +6,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.eso.ias.plugin.filter.Filter;
-import org.eso.ias.plugin.filter.Filter.ValidatedSample;
+import org.eso.ias.plugin.filter.Filter.EnrichedSample;
 import org.eso.ias.plugin.filter.FilterException;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.filter.NoneFilter;
@@ -110,12 +111,16 @@ public class MonitoredValue implements Runnable {
 	private final ChangeValueListener listener;
 	
 	/**
-	 * The last value sent to the IAS core 
-	 * (i.e. to the {@link #listener}).
+	 * The last value produced by applying the filters
+	 * to the samples.
 	 * <P>
-	 * It is <code>null</code> when no value has been set.
+	 * The FilteredValue will be converted in a ValueToSend before being
+	 * sent to the BSDB to add, as a minimum, the validity
+	 * at the time of sending.
+	 * <P>
+	 * Can be <code>null</code> when no value has been set yet.
 	 */
-	private ValueToSend lastSentValue = null;
+	private AtomicReference<FilteredValue> lastProducedValue = new AtomicReference<>(null);
 	
 	/**
 	 * The point in time when the last value has been
@@ -232,7 +237,7 @@ public class MonitoredValue implements Runnable {
 	
 	/**
 	 * Get and return the value to send i.e. the value
-	 * returned applying the {@link #filter} to the #history of samples.
+	 * generated applying the {@link #filter} to the #history of samples.
 	 * 
 	 * @return The value to send
 	 */
@@ -241,16 +246,21 @@ public class MonitoredValue implements Runnable {
 	}
 	
 	/**
-	 * Calculate the validity of the newly submitted sample.
+	 * Calculate the validity of the value to send to the BSDB.
 	 * <P>
 	 * The heuristic is very simple as the validity at this stage 
 	 * is only based on timing.
+	 * A newly produced value is always valid but a value that is sent
+	 * after being produced can be valid or invalid depending on how
+	 * long after production it is efefctively sent.
 	 *  
 	 * @return the validity
 	 */
-	private IasValidity calcValidity() {
+	private IasValidity calcValidity(FilteredValue fValue) {
+		Objects.requireNonNull(fValue,"Cannot evaluate the validity of a null value");
 		long now = System.currentTimeMillis();
-		if (now-lastSubmittedTimestamp<=refreshRate+validityDelta) return IasValidity.RELIABLE;
+		long productionTime = fValue.producedTimestamp;
+		if (now-productionTime<=refreshRate+validityDelta) return IasValidity.RELIABLE;
 		else return IasValidity.UNRELIABLE;
 	}
 	
@@ -263,30 +273,52 @@ public class MonitoredValue implements Runnable {
 	public void submitSample(Sample s) throws FilterException {
 		Objects.requireNonNull(s);
 		if (isStarted.get() && !isClosed.get()) {
-			if(future.getDelay(TimeUnit.MILLISECONDS)<=minAllowedSendRate) {
-				rescheduleTimer();
-			}
-			ValidatedSample validatedSample = new ValidatedSample(s, calcValidity());
-			filter.newSample(validatedSample).ifPresent(filteredValue -> notifyListener(new ValueToSend(id,filteredValue,operationalMode)));
 			lastSubmittedTimestamp=System.currentTimeMillis();
+			
+			// Check if the new sample arrived before the refreshRate elapsed.
+			//
+			// The refresh rate depends on the rate at which the monitored software system
+			// or a device produces a new value.
+			//
+			// A newly received sample is by definition always valid but it can be
+			// useful to record if it arrived too late because there can be a problem 
+			// in the device that is too slow responding or in the algorithm 
+			// that read the value from the monitored system/device and notify the plugin
+			boolean generatedInTime = System.currentTimeMillis()-lastSubmittedTimestamp<=refreshRate+validityDelta;
+			
+			EnrichedSample validatedSample = new EnrichedSample(s, generatedInTime);
+			
+			filter.newSample(validatedSample).ifPresent(filteredValue -> {
+				FilteredValue oldfilteredValue = lastProducedValue.getAndSet(filteredValue);
+				if (!filteredValue.value.equals(oldfilteredValue.value)) {
+					// The value changed so a immediate sending is triggered
+					if(future.getDelay(TimeUnit.MILLISECONDS)<=minAllowedSendRate) {
+						rescheduleTimer();
+					}
+					notifyListener();
+				}
+			});
 		}
 	}
 	
 	/**
-	 * Send the value to the listener that in turn will forward it to the IAS core.
-	 * 
-	 * @param value The not <code>null</code> value to send to the IAS
+	 * Send the last produced value to the listener
+	 * that in turn will forward it to the BSDB.
 	 */
-	private void notifyListener(ValueToSend value) {
-		Objects.requireNonNull(value, "Cannot notify a null value");
+	private void notifyListener() {
+		FilteredValue filteredValueToSend = lastProducedValue.get();
+		IasValidity actualValidity = calcValidity(filteredValueToSend);
+		ValueToSend valueToSend = new ValueToSend(
+				id, 
+				filteredValueToSend, 
+				operationalMode,
+				actualValidity);
 		try {
-			listener.monitoredValueUpdated(value);
+			listener.monitoredValueUpdated(valueToSend);
 			lastSentTimestamp=System.currentTimeMillis();
-			lastSentValue=value;
 		} catch (Exception e) {
 			// In case of error sending the value, we log the exception
-			// but do nothing else as we want to be ready to try to send it again
-			// later
+			// but do nothing else because we want to be ready to send it again later
 			logger.error("Error notifying the listener of the {} monitor point change", id, e);
 		}
 	}
@@ -320,7 +352,7 @@ public class MonitoredValue implements Runnable {
 	@Override
 	public void run() {
 		if (!isClosed.get()) {
-			notifyListener(lastSentValue);
+			notifyListener();
 		}
 	}
 	

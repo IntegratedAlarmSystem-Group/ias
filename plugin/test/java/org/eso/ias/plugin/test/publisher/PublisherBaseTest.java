@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
-import org.eso.ias.plugin.filter.Filter.ValidatedSample;
+import org.eso.ias.plugin.filter.Filter.EnrichedSample;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
@@ -23,6 +23,7 @@ import org.eso.ias.plugin.publisher.PublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
 import org.eso.ias.types.IasValidity;
+import org.eso.ias.types.OperationalMode;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,8 +125,8 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		unbufferedPublisher.startSending();
 		expectedValues = new CountDownLatch(1);
 		
-		List<ValidatedSample> samples = Arrays.asList(new ValidatedSample(new Sample(Integer.valueOf(67)),IasValidity.RELIABLE));
-		ValueToSend v = new ValueToSend("OneID", Integer.valueOf(67), samples, System.currentTimeMillis());
+		List<EnrichedSample> samples = Arrays.asList(new EnrichedSample(new Sample(Integer.valueOf(67)),true));
+		ValueToSend v = new ValueToSend("OneID", Integer.valueOf(67), samples, System.currentTimeMillis(),OperationalMode.OPERATIONAL,IasValidity.RELIABLE);
 		publishedValues.put(v.id,v);
 		unbufferedPublisher.offer(v);
 		try {
@@ -155,8 +156,8 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		assertEquals(0L,unbufferedPublisher.getPublishedMessages());
 		
 		Integer val = Integer.valueOf(67);
-		List<ValidatedSample> samples = Arrays.asList(new ValidatedSample(new Sample(val),IasValidity.RELIABLE));
-		ValueToSend v = new ValueToSend("OneID", val, samples, System.currentTimeMillis());
+		List<EnrichedSample> samples = Arrays.asList(new EnrichedSample(new Sample(val),true));
+		ValueToSend v = new ValueToSend("OneID", val, samples, System.currentTimeMillis(),OperationalMode.UNKNOWN,IasValidity.RELIABLE);
 		publishedValues.put(v.id,v);
 		unbufferedPublisher.offer(v);
 		
@@ -182,14 +183,14 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		unbufferedPublisher.startSending();
 		expectedValues = new CountDownLatch(5);
 		
-		List<ValidatedSample> samples = Arrays.asList(new ValidatedSample(new Sample(Integer.valueOf(67)),IasValidity.RELIABLE));
+		List<EnrichedSample> samples = Arrays.asList(new EnrichedSample(new Sample(Integer.valueOf(67)),true));
 		
 		List<ValueToSend> values = Arrays.asList(
-				new ValueToSend("FV-ID1", Integer.valueOf(67), samples, System.currentTimeMillis()),
-				new ValueToSend("FV-ID2", Long.valueOf(123), samples, System.currentTimeMillis()),
-				new ValueToSend("FV-ID3", "A string", samples, System.currentTimeMillis()),
-				new ValueToSend("FV-ID4", Boolean.valueOf(true), samples, System.currentTimeMillis()),
-				new ValueToSend("FV-ID5", Integer.valueOf(11), samples, System.currentTimeMillis()));
+				new ValueToSend("FV-ID1", Integer.valueOf(67), samples, System.currentTimeMillis(),OperationalMode.UNKNOWN,IasValidity.RELIABLE),
+				new ValueToSend("FV-ID2", Long.valueOf(123), samples, System.currentTimeMillis(),OperationalMode.OPERATIONAL,IasValidity.RELIABLE),
+				new ValueToSend("FV-ID3", "A string", samples, System.currentTimeMillis(),OperationalMode.DEGRADED,IasValidity.RELIABLE),
+				new ValueToSend("FV-ID4", Boolean.valueOf(true), samples, System.currentTimeMillis(),OperationalMode.UNKNOWN,IasValidity.RELIABLE),
+				new ValueToSend("FV-ID5", Integer.valueOf(11), samples, System.currentTimeMillis(),OperationalMode.CLOSING,IasValidity.RELIABLE));
 
 		for (ValueToSend v: values) {
 			publishedValues.put(v.id, v);
@@ -290,8 +291,8 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		unbufferedPublisher.startSending();
 		expectedValues = new CountDownLatch(1);
 		
-		List<ValidatedSample> samples = Arrays.asList(new ValidatedSample(new Sample(Integer.valueOf(67)),IasValidity.UNRELIABLE));
-		ValueToSend v = new ValueToSend("OneID", Integer.valueOf(67), samples, System.currentTimeMillis());
+		List<EnrichedSample> samples = Arrays.asList(new EnrichedSample(new Sample(Integer.valueOf(67)),true));
+		ValueToSend v = new ValueToSend("OneID", Integer.valueOf(67), samples, System.currentTimeMillis(),OperationalMode.UNKNOWN,IasValidity.RELIABLE);
 		publishedValues.put(v.id,v);
 		unbufferedPublisher.offer(v);
 		try {
