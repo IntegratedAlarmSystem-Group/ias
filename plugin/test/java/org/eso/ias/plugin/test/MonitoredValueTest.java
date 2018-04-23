@@ -19,6 +19,7 @@ import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.NoneFilter;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
+import org.eso.ias.types.IasValidity;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -190,5 +191,28 @@ public class MonitoredValueTest implements ChangeValueListener {
 		if (countDownLatch!=null) {
 			countDownLatch.countDown();
 		}
+	}
+	
+	/**
+	 * Tests if the validity is properly set before sending a Value to the BSDB
+	 */
+	@Test
+	public void testSettingOfValidity() throws Exception {
+		logger.info("testSettingOfValidity test started");
+		Sample s = new Sample(Integer.valueOf(3));
+		
+		mVal.submitSample(s);
+		while (receivedValues.size()<1) {
+			Thread.sleep(50);
+		}
+		ValueToSend receivedValue = receivedValues.get(0);
+		assertEquals(IasValidity.RELIABLE, receivedValue.iasValidity);
+		
+		Thread.sleep(2*refreshRate);
+		while (receivedValues.size()<2) {
+			Thread.sleep(50);
+		}
+		receivedValue = receivedValues.get(1);
+		assertEquals(IasValidity.UNRELIABLE, receivedValue.iasValidity);
 	}
 }
