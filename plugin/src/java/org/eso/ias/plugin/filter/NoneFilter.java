@@ -13,10 +13,14 @@ public class NoneFilter extends FilterBase {
 	
 	/**
 	 * Constructor
+	 * 
+	 * @param pros The properties of this filter (ignored)
 	 */
-	public NoneFilter() {
+	public NoneFilter(String props) {
 		super();
 	}
+	
+	
 
 
 	/**
