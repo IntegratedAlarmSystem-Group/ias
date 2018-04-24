@@ -12,6 +12,7 @@ import shutil
 from subprocess import call
 from glob import glob
 from IASApiDocs.DocGenerator import DocGenerator
+import logging 
 
 class PydocBuilder(DocGenerator):
     '''
@@ -54,7 +55,7 @@ class PydocBuilder(DocGenerator):
         
         @param folder: the folder containing html files to index
         """
-        print("Generating index in",folder)
+        logging.info("Generating index in %s",folder)
         
         htmlFilePaths = glob(folder+"/*.html")
         htmlFiles = []
@@ -73,7 +74,7 @@ class PydocBuilder(DocGenerator):
                 if (parts[0] not in pyModules):
                     pyModules.append(parts[0])
         pyModules.sort()
-        print("Python modules",pyModules)
+        logging.info("Python modules %s",pyModules)
         
         msg = "<!DOCTYPE html><html>\n<body>\n"
         msg += "\t<h1>IAS python API</h1>\n"
@@ -105,7 +106,7 @@ class PydocBuilder(DocGenerator):
         text_file.write(msg)
         text_file.close()
         
-        print(folder+"/index.html written")
+        logging.info("%s/index.html written",folder)
     
     def buildPydocs(self):
         """
@@ -118,26 +119,26 @@ class PydocBuilder(DocGenerator):
         
         folders = self.getSrcPaths(self.srcFolder, False,"python",".py")
         
-        print("Folders",folders)
-        print("SourceFolder",self.srcFolder)
+        logging.info("Folders %s",folders)
+        logging.info("SourceFolder %s",self.srcFolder)
                    
         for folder in folders:
-            print("Generating pydoc in",folder)
+            logging.info("Generating pydoc in %s",folder)
             
             oldWD = os.getcwd()
-            print("Changing folder to",folder)
+            logging.info("Changing folder to %s",folder)
             os.chdir(folder)
             cmd =["pydoc"]
             cmd.append("-w")
             cmd.append("./")
             ret = call(cmd,stdout=self.outFile,stderr=self.outFile)
             
-            print("Moving htmls to",self.dstFolder)
+            logging.info("Moving htmls to %s",self.dstFolder)
             files = os.listdir(".")
             for f in files:
                 if (f.endswith(".html")):
                     shutil.move(f, self.dstFolder)
-            print("Changing folder back to",oldWD)
+            logging.info("Changing folder back to %s",oldWD)
             os.chdir(oldWD)
         
         self.buildIndex(self.dstFolder)

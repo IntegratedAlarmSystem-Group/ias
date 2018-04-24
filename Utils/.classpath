@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src/scala"/>
+	<classpathentry kind="src" path="test/scala"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="extTools/logback-core-1.1.7.jar"/>
+	<classpathentry kind="output" path="lib"/>
+</classpath>
