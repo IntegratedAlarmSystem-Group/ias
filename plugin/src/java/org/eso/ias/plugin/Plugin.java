@@ -217,6 +217,10 @@ public class Plugin implements ChangeValueListener {
 	 * @param values the monitor point values
 	 * @param props The user defined properties 
 	 * @param sender The publisher of monitor point values to the IAS core
+	 * @param defaultFilter the default filter (can be <code>null</code>) to aplly
+	 *                      if there is not filter set in the value
+	 * @param defaultFilterOptions the options for the default filter
+	 *                             (can be <code>null</code>)                      
 	 * @param refreshRate The auto-send time interval in seconds
 	 */
 	public Plugin(
@@ -225,6 +229,8 @@ public class Plugin implements ChangeValueListener {
 			Collection<Value> values,
 			Properties props,
 			MonitorPointSender sender,
+			String defaultFilter,
+			String defaultFilterOptions,
 			int refreshRate) {
 		
 		if (id==null || id.trim().isEmpty()) {
@@ -260,7 +266,30 @@ public class Plugin implements ChangeValueListener {
 		values.forEach(v -> { 
 			try {
 				logger.info("ID: {}, filter: {}, filterOptions: {}",v.getId(),v.getFilter(),v.getFilterOptions());
-			putMonitoredPoint(new MonitoredValue(v.getId(), v.getRefreshTime(), schedExecutorSvc, this,autoSendRefreshRate));
+				
+				MonitoredValue mv = null;
+				
+				if (v.getFilter()==null && defaultFilter==null) {
+					logger.info("No filter, neither defaiult filter, for {}",v.getId());
+					mv = new MonitoredValue(
+							v.getId(), 
+							v.getRefreshTime(), 
+							schedExecutorSvc, 
+							this,autoSendRefreshRate); 
+				} else {
+					
+					String filterName = (v.getFilter()!=null)?v.getFilter():defaultFilter;
+					String filterOptions = (v.getFilterOptions()!=null)?v.getFilterOptions():defaultFilterOptions;
+					
+					logger.debug("Loading filter {} for monitor point {}",filterName,v.getId());
+					mv = new MonitoredValue(
+							v.getId(), 
+							v.getRefreshTime(), 
+							schedExecutorSvc, 
+							this,autoSendRefreshRate); 
+				}
+				
+				putMonitoredPoint(mv);
 		}catch (Exception e){
 			logger.error("Error adding monitor point "+v.getId(),e);
 		} });
@@ -307,6 +336,8 @@ public class Plugin implements ChangeValueListener {
 				config.getValuesAsCollection(),
 				config.getProps(),
 				sender,
+				config.getDefaultFilter(),
+				config.getDefaultFilterOptions(),
 				config.getAutoSendTimeInterval());
 	}
 	
