@@ -40,11 +40,10 @@ public class NoneFilterTest {
 	public class TestFilter extends NoneFilter {
 
 		public TestFilter() {
-			super();
-			// TODO Auto-generated constructor stub
+			super("");
 		}
 
-		/* (non-Javadoc)
+		/**
 		 * @see org.eso.ias.plugin.filter.FilterBase#removeOldSamples(long)
 		 */
 		@Override
@@ -52,7 +51,7 @@ public class NoneFilterTest {
 			return super.removeOldSamples(time,unit);
 		}
 
-		/* (non-Javadoc)
+		/**
 		 * @see org.eso.ias.plugin.filter.FilterBase#removeLastSamples(int)
 		 */
 		@Override
@@ -60,7 +59,7 @@ public class NoneFilterTest {
 			return super.removeLastSamples(nSamples);
 		}
 
-		/* (non-Javadoc)
+		/**
 		 * @see org.eso.ias.plugin.filter.FilterBase#keepNewest(int)
 		 */
 		@Override
@@ -68,7 +67,7 @@ public class NoneFilterTest {
 			return super.keepNewest(nSamples);
 		}
 
-		/* (non-Javadoc)
+		/**
 		 * @see org.eso.ias.plugin.filter.FilterBase#historySnapshot()
 		 */
 		@Override
@@ -76,7 +75,7 @@ public class NoneFilterTest {
 			return super.historySnapshot();
 		}
 
-		/* (non-Javadoc)
+		/**
 		 * @see org.eso.ias.plugin.filter.FilterBase#peekNewest()
 		 */
 		@Override
@@ -84,7 +83,7 @@ public class NoneFilterTest {
 			return super.peekNewest();
 		}
 
-		/* (non-Javadoc)
+		/**
 		 * @see org.eso.ias.plugin.filter.FilterBase#clearHistory()
 		 */
 		@Override
