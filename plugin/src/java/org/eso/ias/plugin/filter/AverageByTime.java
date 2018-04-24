@@ -19,7 +19,7 @@ public class AverageByTime extends FilterBase {
 	/**
 	 * The time frame (msecs) of samples to average
 	 */
-	private final long timeFrame;
+	public final long timeFrame;
 	
 	/**
 	 * Constructor
@@ -58,6 +58,7 @@ public class AverageByTime extends FilterBase {
 	 */
 	@Override
 	protected Optional<FilteredValue> applyFilter() {
+		removeOldSamples(timeFrame,TimeUnit.MILLISECONDS);
 		if (getHistorySize()==0) {
 			return Optional.empty();
 		}
