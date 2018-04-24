@@ -17,7 +17,7 @@ import org.eso.ias.supervisor.Supervisor
 import scala.util.Success
 import scala.util.Failure
 import java.util.concurrent.CountDownLatch
-import org.ias.logging.IASLogger
+import org.eso.ias.logging.IASLogger
 import org.scalatest.FlatSpec
 import org.eso.ias.kafkautils.KafkaIasiosProducer
 import org.eso.ias.kafkautils.KafkaHelper

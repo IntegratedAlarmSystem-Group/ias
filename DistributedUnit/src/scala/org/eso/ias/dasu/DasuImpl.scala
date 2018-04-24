@@ -13,7 +13,7 @@ import org.eso.ias.asce.ComputingElement
 import scala.util.Properties
 import org.eso.ias.cdb.pojos.AsceDao
 import org.eso.ias.types.IASValue
-import org.ias.logging.IASLogger
+import org.eso.ias.logging.IASLogger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference

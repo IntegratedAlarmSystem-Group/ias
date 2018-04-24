@@ -10,7 +10,7 @@ import org.eso.ias.dasu.publisher.OutputListener
 import org.eso.ias.dasu.publisher.ListenerOutputPublisherImpl
 import org.eso.ias.dasu.publisher.OutputPublisher
 import org.eso.ias.types.IasValueJsonSerializer
-import org.ias.logging.IASLogger
+import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IASValue
 import org.eso.ias.types.Identifier
 import org.eso.ias.types.IdentifierType

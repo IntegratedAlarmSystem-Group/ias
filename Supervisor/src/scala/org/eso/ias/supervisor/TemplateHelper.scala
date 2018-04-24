@@ -2,7 +2,7 @@ package org.eso.ias.supervisor
 
 import org.eso.ias.cdb.pojos.DasuToDeployDao
 import org.eso.ias.cdb.pojos.DasuDao
-import org.ias.logging.IASLogger
+import org.eso.ias.logging.IASLogger
 import scala.collection.JavaConverters
 import org.eso.ias.cdb.pojos.IasioDao
 import org.eso.ias.types.Identifier

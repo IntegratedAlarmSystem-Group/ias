@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit
 
 import org.eso.ias.types.AlarmSample
 import org.eso.ias.types.InOut
-import org.ias.logging.IASLogger
+import org.eso.ias.logging.IASLogger
 import scala.util.Try
 import org.eso.ias.types.IASTypes
 

@@ -1,6 +1,6 @@
 package org.eso.ias.dasu
 
-import org.ias.logging.IASLogger
+import org.eso.ias.logging.IASLogger
 import org.eso.ias.cdb.pojos.DasuDao
 import scala.collection.JavaConverters
 import org.eso.ias.cdb.pojos.IasioDao

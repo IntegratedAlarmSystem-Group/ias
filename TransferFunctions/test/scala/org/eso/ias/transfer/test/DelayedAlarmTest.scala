@@ -10,7 +10,7 @@ import org.eso.ias.types.IASTypes
 import org.eso.ias.tranfer.DelayedAlarmException
 import org.eso.ias.types.AlarmSample
 import java.util.concurrent.TimeUnit
-import org.ias.logging.IASLogger
+import org.eso.ias.logging.IASLogger
 
 /**
  * test the DelayedAlarm TF

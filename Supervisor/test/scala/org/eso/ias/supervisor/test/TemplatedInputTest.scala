@@ -1,7 +1,7 @@
 package org.eso.ias.supervisor.test
 
 import org.scalatest.FlatSpec
-import org.ias.logging.IASLogger
+import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IasValueJsonSerializer
 import scala.collection.mutable.ArrayBuffer
 import org.eso.ias.dasu.publisher.OutputListener

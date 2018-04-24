@@ -1,6 +1,6 @@
 package org.eso.ias.dasu.test
 
-import org.ias.logging.IASLogger
+import org.eso.ias.logging.IASLogger
 import java.nio.file.FileSystems
 import org.eso.ias.cdb.json.CdbJsonFiles
 import org.eso.ias.cdb.json.JsonReader

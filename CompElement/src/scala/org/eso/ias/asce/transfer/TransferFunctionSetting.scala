@@ -3,7 +3,7 @@ package org.eso.ias.asce.transfer
 import java.util.Properties
 import java.util.concurrent.ThreadFactory
 import scala.util.Try
-import org.ias.logging.IASLogger
+import org.eso.ias.logging.IASLogger
 import scala.sys.SystemProperties
 import scala.util.Success
 import scala.util.Failure

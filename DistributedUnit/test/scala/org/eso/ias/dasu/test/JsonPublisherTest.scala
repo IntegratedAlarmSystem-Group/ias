@@ -10,7 +10,7 @@ import org.eso.ias.cdb.CdbReader
 import java.io.FileWriter
 import org.eso.ias.dasu.publisher.JsonWriterPublisher
 import org.eso.ias.cdb.json.JsonReader
-import org.ias.logging.IASLogger
+import org.eso.ias.logging.IASLogger
 import java.nio.file.FileSystems
 import org.eso.ias.types.IdentifierType
 import java.io.File
