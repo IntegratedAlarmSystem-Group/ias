@@ -219,6 +219,13 @@ public abstract class FilterBase implements Filter {
 	}
 	
 	/**
+	 * @return the size of the history
+	 */
+	protected int getHistorySize() {
+		return history.size();
+	}
+	
+	/**
 	 * Clear the history.
 	 * 
 	 * @return The number of samples removed from the history
