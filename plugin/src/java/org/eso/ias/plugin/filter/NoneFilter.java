@@ -31,11 +31,7 @@ public class NoneFilter extends FilterBase {
 
 	/**
 	 * 
-<<<<<<< HEAD
 	 * @see org.eso.ias.plugin.filter.FilterBase#sampleAdded(org.eso.ias.plugin.filter.Filter.EnrichedSample)
-=======
-	 * @see org.eso.ias.plugin.filter.FilterBase#sampleAdded(org.eso.ias.plugin.filter.Filter.ValidatedSample)
->>>>>>> feature/addLoggingPython-issue#64
 	 */
 	@Override
 	protected void sampleAdded(EnrichedSample newSample) {

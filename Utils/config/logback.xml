@@ -19,11 +19,8 @@
   </appender>
 
   <logger name="org.apache.kafka" level="INFO" />
-<<<<<<< HEAD:Logging/config/logback.xml
   <logger name="org.hibernate" level="INFO" />
   <logger name="com.mchange" level="INFO" />
-=======
->>>>>>> feature/addLoggingPython-issue#64:Utils/config/logback.xml
   
    <appender 
    	name="FILE" 

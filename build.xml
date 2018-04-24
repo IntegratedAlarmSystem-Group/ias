@@ -14,11 +14,7 @@
 
 	<taskdef resource="net/sf/antcontrib/antlib.xml"/>
 
-<<<<<<< HEAD
-	<property name="iasModules" value="Tools,Logging,Cdb,BasicTypes,KafkaUtils,plugin,Converter,CompElement,DistributedUnit,Supervisor,WebServerSender,TransferFunctions,Tests/SimpleLoopTest" />
-=======
-	<property name="iasModules" value="Tools,Utils,Cdb,BasicTypes,KafkaUtils,plugin,Converter,CompElement,DistributedUnit,Supervisor,WebServerSender,Tests/SimpleLoopTest" />
->>>>>>> feature/addLoggingPython-issue#64
+	<property name="iasModules" value="Tools,Utils,Cdb,BasicTypes,KafkaUtils,plugin,Converter,CompElement,DistributedUnit,Supervisor,WebServerSender,TransferFunctions,Tests/SimpleLoopTest" />
 
 	<target name="SanityCheck">
 		<!--
