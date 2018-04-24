@@ -76,12 +76,14 @@ public class PluginConfig {
 	private Value[] values;
 
 	/**
-	 *	The global filter and filterOptions
-	 *	@see defaultFilter and defaultFilterOptions
+	 *	The global default filter and filterOptions
 	 */
-	public static String defaultFilter;
+	private String defaultFilter;
 
-	public static String defaultFilterOptions;
+	/**
+	 *	The global default filterOptions
+	 */
+	private String defaultFilterOptions;
 
 
 	/**
