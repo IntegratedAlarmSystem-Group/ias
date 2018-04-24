@@ -18,6 +18,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.config.Value;
+import org.eso.ias.plugin.filter.Filter;
+import org.eso.ias.plugin.filter.FilterFactory;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.MonitorPointSender.SenderStats;
 import org.eso.ias.plugin.publisher.PublisherException;
@@ -260,7 +262,7 @@ public class Plugin implements ChangeValueListener {
 		
 		flushProperties(props);
 		this.mpPublisher=sender;
-		logger.info("Plugin (ID=%s) started",pluginId);
+		logger.info("Plugin with ID=[{}] started",pluginId);
 		
 		/** check if the monitor point has the filter or if take global*/ 
 		values.forEach(v -> { 
@@ -270,7 +272,7 @@ public class Plugin implements ChangeValueListener {
 				MonitoredValue mv = null;
 				
 				if (v.getFilter()==null && defaultFilter==null) {
-					logger.info("No filter, neither defaiult filter, for {}",v.getId());
+					logger.info("No filter, neither default filter set for {}",v.getId());
 					mv = new MonitoredValue(
 							v.getId(), 
 							v.getRefreshTime(), 
@@ -281,10 +283,13 @@ public class Plugin implements ChangeValueListener {
 					String filterName = (v.getFilter()!=null)?v.getFilter():defaultFilter;
 					String filterOptions = (v.getFilterOptions()!=null)?v.getFilterOptions():defaultFilterOptions;
 					
-					logger.debug("Loading filter {} for monitor point {}",filterName,v.getId());
+					logger.debug("Instantiating filter {} for monitor point {}",filterName,v.getId());
+					Filter filter = FilterFactory.getFilter(filterName, filterOptions);
+					
 					mv = new MonitoredValue(
 							v.getId(), 
-							v.getRefreshTime(), 
+							v.getRefreshTime(),
+							filter,
 							schedExecutorSvc, 
 							this,autoSendRefreshRate); 
 				}
