@@ -22,7 +22,7 @@ public class AverageBySamples extends FilterBase {
 	/**
 	 * The number of samples to average
 	 */
-	private final int numberOfSamplesToAverage;
+	public final int numberOfSamplesToAverage;
 	
 	/**
 	 * Constructor
@@ -67,7 +67,7 @@ public class AverageBySamples extends FilterBase {
 		List<EnrichedSample> samples = historySnapshot();
 		double value=0.0;
 		for (EnrichedSample sample: samples) {
-			value+= (Double)sample.value;
+			value+= ((Number)sample.value).doubleValue();
 		}
 		double valueToreturn = value/samples.size();
 		Optional<EnrichedSample> newestSample = peekNewest();
