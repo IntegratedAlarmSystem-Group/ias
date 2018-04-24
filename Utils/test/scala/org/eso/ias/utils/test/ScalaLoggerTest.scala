@@ -1,6 +1,6 @@
 package org.ias.logging.test
 
-import org.ias.logging.IASLogger
+import org.eso.ias.logging.IASLogger
 
 class ScalaLoggerTest {
   

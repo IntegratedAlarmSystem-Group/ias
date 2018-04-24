@@ -1,4 +1,4 @@
-package org.ias.logging;
+package org.eso.ias.logging;
 
 import com.typesafe.scalalogging.Logger
 
