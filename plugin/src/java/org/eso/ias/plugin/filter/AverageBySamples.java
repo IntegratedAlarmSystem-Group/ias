@@ -39,7 +39,7 @@ public class AverageBySamples extends FilterBase {
 		} catch (NumberFormatException nfe) {
 			throw new IllegalArgumentException("Error parsing the number of samples to average: "+props);
 		}
-		if (numberOfSamplesToAverage<=0) {
+		if (numberOfSamplesToAverage<=1) {
 			throw new IllegalArgumentException("Invalid number of samples to average "+numberOfSamplesToAverage);
 		}
 	}
