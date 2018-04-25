@@ -114,7 +114,28 @@ public class ValueToSend extends FilteredValue {
 	 * @return The new value with the passed operational mode
 	 */
 	public ValueToSend withMode(OperationalMode opMode) {
-		return new ValueToSend(id, value, samples, producedTimestamp,opMode,iasValidity);
+		if (opMode==operationalMode) {
+			return this;
+		} else {
+			return new ValueToSend(id, value, samples, producedTimestamp,opMode,iasValidity);
+		}
+	}
+	
+	/**
+	 * Builds and return a new <code>ValueToSend</code> with the assigned 
+	 * ID. 
+	 * This method supports replication that changes the ID before sending 
+	 * the value to the BSDB
+	 * 
+	 * @param newId  The new ID of the value to send to the BSDB
+	 * @return A new value with the passed ID
+	 */
+	public ValueToSend withId(String newId) {
+		if (newId.equals(id)) {
+			return this;
+		} else {
+			return new ValueToSend(newId, value, samples, producedTimestamp,operationalMode,iasValidity);
+		}
 	}
 	
 	/**
