@@ -43,7 +43,7 @@ public class ReplicatedIdsMapper {
 	 *                       empty if the plugin is not replicated.
 	 */
 	public ReplicatedIdsMapper(int instanceNumber) {
-		if (instanceNumber>=0) {
+		if (instanceNumber<0) {
 			throw new IllegalArgumentException("Invalid negative instance");
 		}
 		this.instance = instanceNumber;
