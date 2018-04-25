@@ -2,6 +2,7 @@ package org.eso.ias.plugin;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -232,7 +233,7 @@ public class MonitoredValue implements Runnable {
 			ScheduledExecutorService executorSvc,
 			ChangeValueListener listener,
 			int iasPeriodicSendingTime) {
-		this(id,refreshRate, new NoneFilter(),executorSvc,listener,iasPeriodicSendingTime);
+		this(id,refreshRate, new NoneFilter(null),executorSvc,listener,iasPeriodicSendingTime);
 	}
 	
 	/**
