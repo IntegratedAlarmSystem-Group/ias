@@ -16,3 +16,4 @@ iasRun -l j org.junit.runner.JUnitCore org.eso.ias.plugin.test.publisher.JsonPus
 iasRun -l j -Dorg.eso.ias.plugin.kafka.partition=0 org.junit.runner.JUnitCore org.eso.ias.plugin.test.publisher.KafkaPublisherTest
 iasRun -l j org.junit.runner.JUnitCore org.eso.ias.plugin.test.MonitoredValueTest
 iasRun -l j org.junit.runner.JUnitCore org.eso.ias.plugin.test.JsonConversionTest
+iasRun -l j org.junit.runner.JUnitCore org.eso.ias.plugin.test.ReplicatedPluginTest
