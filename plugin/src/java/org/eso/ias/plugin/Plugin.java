@@ -193,14 +193,6 @@ public class Plugin implements ChangeValueListener {
 	 * The object that sends monitor points to the core of the IAS.
 	 */
 	private final MonitorPointSender mpPublisher;
-
-	/**
-	 * String filter and filterOptions
-	 * 
-	 */
-	public String filter;
-	public String filterOptions;
-	
 	
 	/**
 	 * The operational mode of the plugin.
