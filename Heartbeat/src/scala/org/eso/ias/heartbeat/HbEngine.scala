@@ -55,10 +55,26 @@ class HbEngine(
   
   /**
    * Update the Hb status message
+   * 
+   * @param newStateMsg The new state message
    */
-  def updateHbState(initialMsg: HbMessage) {
-    require(Option(initialMsg).isDefined,"Cannot send an empty HB")
-    hbStatusMessage.set(initialMsg)
+  def updateHbState(newStateMsg: HbMessage) {
+    require(Option(newStateMsg).isDefined,"Cannot update with an empty HB message")
+    hbStatusMessage.set(newStateMsg)
+  }
+  
+  /**
+   * Update the state message with the passed state
+   * 
+   * This method does not allow to update the addiotional properties.
+   * 
+   * @param hbState The new state message
+   */
+  def updateHbState(hbState: HeartbeatStatus) {
+    require(Option(hbState).isDefined,"Cannot update with an empty HB state")
+    val actualMessage = getActualHbStatusMessage
+    assert(actualMessage.isDefined,"Not initialized?")
+    actualMessage.foreach( msg => updateHbState(msg.setHbState(hbState)))
   }
   
   /** 
