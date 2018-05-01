@@ -36,7 +36,7 @@ class HbEngine(
   val hbStatusMessage = new AtomicReference[HbMessage]()
   
   /** The periodic feature that push the heartbeat */
-  val feature = new AtomicReference[ScheduledFuture[_]]()
+  private val feature = new AtomicReference[ScheduledFuture[_]]()
   
   /**
    * Start periodic sending of the heartbeat with the given

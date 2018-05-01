@@ -4,6 +4,7 @@ import org.eso.ias.heartbeat.HbProducer
 import org.eso.ias.heartbeat.HbMsgSerializer
 import org.eso.ias.kafkautils.SimpleStringProducer
 import org.eso.ias.kafkautils.KafkaHelper
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Publish the HB in a kafka topic with a kafka 
@@ -22,17 +23,31 @@ class HbKafkaProducer(
   /** The kafka producer */
   val kafkaProducer = new SimpleStringProducer(kafkaServers,KafkaHelper.HEARTBEAT_TOPIC_NAME,id)
   
+  val initialized = new AtomicBoolean(false)
+  
+  val closed = new AtomicBoolean(false)
+  
   /** Initialize the producer */
-  def init() = kafkaProducer.setUp()
+  def init() = {
+    if (!initialized.getAndSet(true)) {
+      kafkaProducer.setUp()
+    }
+  }
   
   /** Shutdown the producer */
-  def shutdown() = kafkaProducer.tearDown()
+  def shutdown() = {
+    if (!closed.getAndSet(true)) {
+      kafkaProducer.tearDown()
+    }
+  }
   
   /**
    * Push the string
    */
   def push(hbAsString: String) {
-    kafkaProducer.push(hbAsString,null,id)
+    if (!closed.get) {
+      kafkaProducer.push(hbAsString,null,id)
+    }
   }
   
 }
