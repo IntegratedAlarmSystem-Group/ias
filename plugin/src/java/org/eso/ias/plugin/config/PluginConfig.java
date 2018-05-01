@@ -54,6 +54,16 @@ public class PluginConfig {
 	 * points even if their values did not change.
 	 */
 	private int autoSendTimeInterval = autoSendTimeIntervalDefault;
+	
+	/**
+	 * The default value of the frequency of the heartbeat
+	 */
+	public static final int hbFrequencyDefault = 5;
+	
+	/**
+	 * The frequency of the heartbeat in seconds
+	 */
+	private int hbFrequency = hbFrequencyDefault;
 
 	/**
 	 * The port of the server to send monitor point values
@@ -226,6 +236,11 @@ public class PluginConfig {
 			return false;
 		}
 		
+		if (hbFrequency<=0) {
+			logger.error("The frequency must be greater then 0");
+			return false;
+		}
+		
 		// Ensure that all the IDs of the values differ
 		if (getMapOfValues().keySet().size()!=values.length) {
 			logger.error("Some values share the same ID");
@@ -374,6 +389,14 @@ public class PluginConfig {
 	public void setAutoSendTimeInterval(int autoSendTimeINterval) {
 		this.autoSendTimeInterval = autoSendTimeINterval;
 }
+
+	public int getHbFrequency() {
+		return hbFrequency;
+	}
+
+	public void setHbFrequency(int hbFrequency) {
+		this.hbFrequency = hbFrequency;
+	}
 
 }
 

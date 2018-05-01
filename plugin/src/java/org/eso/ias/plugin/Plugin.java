@@ -16,6 +16,9 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.eso.ias.heartbeat.HbEngine;
+import org.eso.ias.heartbeat.HbMessage;
+import org.eso.ias.heartbeat.HeartbeatStatus;
 import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.config.Value;
 import org.eso.ias.plugin.filter.Filter;
@@ -24,6 +27,8 @@ import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.MonitorPointSender.SenderStats;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
+import org.eso.ias.types.Identifier;
+import org.eso.ias.types.IdentifierType;
 import org.eso.ias.types.OperationalMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -168,9 +173,14 @@ public class Plugin implements ChangeValueListener {
 	private static final Logger logger = LoggerFactory.getLogger(Plugin.class);
 	
 	/**
-	 * The identifier of the plugin
+	 * The ID of the plugin
 	 */
 	public final String pluginId;
+	
+	/**
+	 * The identifier of the plugin
+	 */
+	public final Identifier pluginIdentifier;
 	
 	/**
 	 * The property to set the auto-send time interval (in seconds)
@@ -235,6 +245,11 @@ public class Plugin implements ChangeValueListener {
 	private final Optional<ReplicatedIdsMapper> idsMapper;
 	
 	/**
+	 * ThE engine to send heartbeats
+	 */
+	private final HbEngine hbEngine;
+	
+	/**
 	 * Build a non templated plugin with the passed parameters.
 	 * 
 	 * @param id The Identifier of the plugin
@@ -247,6 +262,7 @@ public class Plugin implements ChangeValueListener {
 	 * @param defaultFilterOptions the options for the default filter
 	 *                             (can be <code>null</code>)                      
 	 * @param refreshRate The auto-send time interval in seconds
+	 * @param hbEngine the engine to send heartbeats
 	 */
 	public Plugin(
 			String id, 
@@ -256,7 +272,8 @@ public class Plugin implements ChangeValueListener {
 			MonitorPointSender sender,
 			String defaultFilter,
 			String defaultFilterOptions,
-			int refreshRate) {
+			int refreshRate,
+			HbEngine hbEngine) {
 		this(
 				id,
 				monitoredSystemId,
@@ -265,7 +282,8 @@ public class Plugin implements ChangeValueListener {
 				defaultFilter,
 				defaultFilterOptions,
 				refreshRate,
-				null);
+				null,
+				hbEngine);
 	}
 
 	/**
@@ -281,8 +299,10 @@ public class Plugin implements ChangeValueListener {
 	 * @param defaultFilterOptions the options for the default filter
 	 *                             (can be <code>null</code>)                      
 	 * @param refreshRate The auto-send time interval in seconds
+	 * @param hbFrequency the frequency of the heartbeat in seconds
 	 * @param instanceNumber the number of the instance if the plugin is replicated,
 	 *                       <code>null</code> if not replicated
+	 * @param hbEngine the engine to send heartbeats
 	 */
 	public Plugin(
 			String id, 
@@ -293,7 +313,8 @@ public class Plugin implements ChangeValueListener {
 			String defaultFilter,
 			String defaultFilterOptions,
 			int refreshRate,
-			Integer instanceNumber) {
+			Integer instanceNumber,
+			HbEngine hbEngine) {
 		
 		// Immediately checks if the plugin is replicated
 		Optional<Integer> instanceNumberOpt = Optional.ofNullable(instanceNumber);
@@ -309,12 +330,17 @@ public class Plugin implements ChangeValueListener {
 			throw new IllegalArgumentException("The ID can't be null nor empty");
 		}
 		
+		Identifier monSystemIdentifier = new Identifier(monitoredSystemId, IdentifierType.MONITORED_SOFTWARE_SYSTEM);
+		pluginIdentifier = new Identifier(id, IdentifierType.PLUGIN,monSystemIdentifier);
+		
 		this.pluginId=idsMapper.map( mapper -> mapper.toRealId(id.trim()))
 				.orElse(id.trim());
 		
 		if (idsMapper.isPresent()) {
 			logger.info("New iID of the replicated plugin is [{}]",this.pluginId);
-		} 
+		}
+		
+		
 		
 		if (monitoredSystemId==null || monitoredSystemId.trim().isEmpty()) {
 			throw new IllegalArgumentException("The ID of th emonitored system can't be null nor empty");
@@ -338,6 +364,11 @@ public class Plugin implements ChangeValueListener {
 		if (this.autoSendRefreshRate<=0) {
 			throw new IllegalArgumentException("The auto-send time interval must be greater then 0 instead of "+refreshRate);
 		}
+		
+		if (Objects.isNull(hbEngine)) {
+			throw new IllegalArgumentException("The heartebeat engine can't be null");
+		}
+		this.hbEngine=hbEngine;
 		
 		flushProperties(props);
 		this.mpPublisher=sender;
@@ -408,11 +439,13 @@ public class Plugin implements ChangeValueListener {
 	 * 
 	 * @param config The plugin coinfiguration
 	 * @param sender The publisher of monitor point values to the IAS core
+	 * @param hbEngine the engine to send heartbeats
 	 */
 	public Plugin(
 			PluginConfig config,
-			MonitorPointSender sender) {
-		this(config,sender,null);
+			MonitorPointSender sender,
+			HbEngine hbEngine) {
+		this(config,sender,null,hbEngine);
 		
 	}
 	
@@ -423,11 +456,13 @@ public class Plugin implements ChangeValueListener {
 	 * @param sender The publisher of monitor point values to the IAS core
 	 * @param instanceNumber the number of the instance if the plugin is replicated,
 	 *                       <code>null</code> if not replicated
+	 * @param hbEngine the engine to send heartbeats
 	 */
 	public Plugin(
 			PluginConfig config,
 			MonitorPointSender sender,
-			Integer instanceNumber) {
+			Integer instanceNumber,
+			HbEngine hbEngine) {
 		this(
 				config.getId(),
 				config.getMonitoredSystemId(),
@@ -437,7 +472,8 @@ public class Plugin implements ChangeValueListener {
 				config.getDefaultFilter(),
 				config.getDefaultFilterOptions(),
 				config.getAutoSendTimeInterval(),
-				instanceNumber);
+				instanceNumber,
+				hbEngine);
 	}
 	
 	/**
@@ -448,6 +484,9 @@ public class Plugin implements ChangeValueListener {
 	 */
 	public void start() throws PublisherException {
 		logger.debug("Initializing");
+		
+		// Start sending the HB
+		hbEngine.start(new HbMessage(pluginIdentifier.fullRunningID(), HeartbeatStatus.STARTING_UP));
 		
 		mpPublisher.setUp();
 		logger.info("Publisher initialized.");
@@ -481,6 +520,8 @@ public class Plugin implements ChangeValueListener {
 		logger.debug("Initiailizing {} monitor points", monitorPoints.values().size());
 		monitorPoints.values().forEach(mp -> mp.start());
 		
+		hbEngine.updateHbState(hbEngine.getActualHbStatusMessage().get().setHbState(HeartbeatStatus.RUNNING));
+		
 		logger.info("Plugin {} initialized",pluginId);
 	}
 	
@@ -490,6 +531,7 @@ public class Plugin implements ChangeValueListener {
 	 */
 	public void shutdown() {
 		boolean alreadyClosed=closed.getAndSet(true);
+		hbEngine.updateHbState(hbEngine.getActualHbStatusMessage().get().setHbState(HeartbeatStatus.EXITING));
 		if (!alreadyClosed) {
 			shutdownExecutorSvc();
 			logger.info("Stopping the sending of monitor point values to the core of the IAS");
@@ -505,6 +547,8 @@ public class Plugin implements ChangeValueListener {
 			
 			logger.debug("Shutting down the monitor points");
 			monitorPoints.values().forEach(mp -> mp.shutdown());
+			
+			hbEngine.closed();
 			
 			logger.info("Plugin {} is shut down",pluginId);
 		}

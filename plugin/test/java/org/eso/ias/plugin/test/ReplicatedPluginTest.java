@@ -7,7 +7,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
+import java.util.Vector;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.eso.ias.heartbeat.HbEngine;
+import org.eso.ias.heartbeat.HbMsgSerializer;
+import org.eso.ias.heartbeat.HbProducer;
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.plugin.Plugin;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
@@ -88,6 +95,8 @@ public class ReplicatedPluginTest {
 		
 	}
 	
+	
+	
 	/**
 	 * The plugin to test
 	 */
@@ -138,6 +147,9 @@ public class ReplicatedPluginTest {
 		values.add(v2);
 		values.add(v3);
 		
+		HbMsgSerializer hbSerializer = new HbJsonSerializer();
+		HbProducer hbProd = new MockHeartBeatProd(hbSerializer);
+		HbEngine hbEngine = new HbEngine(1, TimeUnit.SECONDS, hbProd);
 		
 		replicatedPlugin = new Plugin(
 				pluginId, 
@@ -148,7 +160,8 @@ public class ReplicatedPluginTest {
 				null, //defaultFilter
 				null, //defaultFilterOptions
 				2,
-				instance);
+				instance,
+				hbEngine);
 	}
 	
 	/**
