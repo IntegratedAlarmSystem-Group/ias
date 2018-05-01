@@ -7,5 +7,7 @@
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-kafka-tools.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-basic-types.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-utils.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/jackson-annotations-2.9.4.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/jackson-databind-2.9.4.jar"/>
 	<classpathentry kind="output" path="lib"/>
 </classpath>
