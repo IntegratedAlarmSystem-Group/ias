@@ -42,6 +42,11 @@ public class HeartbeatMessagePojo {
 	private Map< String, String> props;
 	
 	/**
+	 * Empty constructor
+	 */
+	public HeartbeatMessagePojo() {}
+	
+	/**
 	 * Constructor
 	 * 
 	 * @param msg the HB message
@@ -54,7 +59,7 @@ public class HeartbeatMessagePojo {
 		this.state=msg.hbState().toString();
 		
 		Map<String,String> addProps = msg.getPropsAsJavaMap(); 
-		if (addProps.isEmpty()) {
+		if (!addProps.isEmpty()) {
 			this.props = addProps;
 		}
 	}

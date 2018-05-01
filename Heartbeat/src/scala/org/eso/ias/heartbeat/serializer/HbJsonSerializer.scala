@@ -1,9 +1,8 @@
-package org.eso.ias.heartbeat.publisher
+package org.eso.ias.heartbeat.serializer
 
 import org.eso.ias.heartbeat.HbMsgSerializer
 import org.eso.ias.heartbeat.HbMessage
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.eso.ias.heartbeat.serializer.HeartbeatMessagePojo
 import org.eso.ias.heartbeat.HeartbeatStatus
 import org.eso.ias.utils.ISO8601Helper
 
@@ -13,7 +12,7 @@ import org.eso.ias.utils.ISO8601Helper
 class HbJsonSerializer extends HbMsgSerializer {
   
   /** Jackson mapper */
-  val mapper: ObjectMapper = new ObjectMapper()
+  private val mapper: ObjectMapper = new ObjectMapper()
   
   /**
    * Sends the heartbeat with the passed timestamp
@@ -36,7 +35,7 @@ class HbJsonSerializer extends HbMsgSerializer {
   def deserializeFromString(hbStrMessage: String): Tuple2[HbMessage, Long] = {
     val pojo: HeartbeatMessagePojo = mapper.readValue(hbStrMessage, classOf[HeartbeatMessagePojo])
     val hbMessage = new HbMessage(pojo.getFullRunningId,HeartbeatStatus.valueOf(pojo.getState))
-    (hbMessage,ISO8601Helper.timestampToMillis(pojo.getTimestamp))
+    (hbMessage.setHbProps(pojo.getProps),ISO8601Helper.timestampToMillis(pojo.getTimestamp))
   }
   
   
