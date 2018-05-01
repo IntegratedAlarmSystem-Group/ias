@@ -11,7 +11,10 @@ import org.eso.ias.types.Identifier
  * computational phase and optionally some properties.
  * The message effectively published contains also the timestamp.
  * 
- * The HeartbeatMessage is immutable.
+ * The message sent to the publisher subscriber framework includes a time stamp
+ * added at the time of sending.
+ * 
+ * The HbMessage is immutable.
  * 
  * @param fullRunningId The full running ID of the tool publishing the heartbeat
  * @param hbState the state
@@ -89,5 +92,9 @@ case class HbMessage(
     val temp = Option(newProps).map(map => JavaConverters.mapAsScalaMap(newProps).toMap).getOrElse(Map.empty)
     this.copy(additionalProps=temp)
   }
+
+  /** Return the propertise as a java map */
+  def getPropsAsJavaMap(): java.util.Map[String,String] = JavaConverters.mapAsJavaMap(additionalProps)
+
   
 }
