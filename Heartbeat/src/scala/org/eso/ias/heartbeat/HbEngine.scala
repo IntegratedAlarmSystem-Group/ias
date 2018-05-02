@@ -32,6 +32,9 @@ class HbEngine(
   /** Signal if the object has been closed */
   val closed = new AtomicBoolean(false)
   
+  /** Shutdown hook */
+  val shutDownThread=addsShutDownHook()
+  
   /** The message to send */
   val hbStatusMessage = new AtomicReference[HbMessage]()
   
@@ -51,6 +54,17 @@ class HbEngine(
     val executorService = Executors.newSingleThreadScheduledExecutor();
     feature.set(executorService.scheduleWithFixedDelay(this, frequency, frequency, timeUnit))
     logger.info("Heartbeat engine started with a frequency of {} {}",frequency.toString(),timeUnit.toString())
+  }
+  
+  /** Adds a shutdown hook to cleanup resources before exiting */
+  private def addsShutDownHook(): Thread = {
+    val t = new Thread("Shutdown hook for HB engine") {
+        override def run() = {
+          shutdown()
+        }
+    }
+    Runtime.getRuntime().addShutdownHook(t)
+    t
   }
   
   /**
