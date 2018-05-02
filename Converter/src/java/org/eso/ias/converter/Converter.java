@@ -4,9 +4,11 @@ import java.io.File;
 import java.security.InvalidParameterException;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import org.eso.ias.cdb.CdbReader;
+import org.eso.ias.cdb.IasCdbException;
 import org.eso.ias.cdb.json.CdbFiles;
 import org.eso.ias.cdb.json.CdbJsonFiles;
 import org.eso.ias.cdb.json.JsonReader;
@@ -54,12 +56,7 @@ public class Converter {
 	/**
 	 * Signal the thread to terminate
 	 */
-	private volatile boolean closed=false;
-
-	/**
-	 * The DAO to get the configuration from the CDB
-	 */
-	private final CdbReader cdbDAO;
+	private AtomicBoolean closed=new AtomicBoolean(false);
 
 	/**
 	 * The DAO to get the configuration of monitor points
@@ -112,8 +109,12 @@ public class Converter {
 		}
 		converterID=id.trim();
 		Objects.requireNonNull(cdbReader);
-		this.cdbDAO=cdbReader;
 		this.configDao= new IasioConfigurationDaoImpl(cdbReader);
+		try {
+			cdbReader.shutdown();
+		} catch (IasCdbException e) {
+			logger.warn("Exception got closing the CDB",e);
+		}
 
 		this.iasValueStrSerializer=	new IasValueJsonSerializer();
 
@@ -151,14 +152,13 @@ public class Converter {
 	 * Shut down the loop and free the resources.
 	 */
 	public void tearDown() {
-		if (closed) {
+		if (closed.getAndSet(true)) {
 			logger.info("Converter {} already closed", converterID);
 			return;
 		}
 		logger.info("Converter {} shutting down...", converterID);
 		Runtime.getRuntime().removeShutdownHook(shutDownThread);
 
-		closed=true;
 		try {
 			converterStream.stop();
 		}  catch (Exception e) {
