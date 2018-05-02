@@ -25,6 +25,8 @@ import org.eso.ias.types.IasValidity
 // The following import is required by the usage of the fixture
 import language.reflectiveCalls
 import org.eso.ias.types.IASTypes
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer
+import org.eso.ias.heartbeat.publisher.HbLogProducer
 
 /**
  * This test checks if the the TF running in a templated ASCE
@@ -112,6 +114,7 @@ class TemplatedInputTest extends FlatSpec {
         supervIdentifier,
         outputPublisher,
         inputsProvider,
+        new HbLogProducer(new HbJsonSerializer),
         cdbReader,
         factory)
       

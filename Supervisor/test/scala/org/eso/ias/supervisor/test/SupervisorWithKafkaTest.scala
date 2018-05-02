@@ -38,6 +38,8 @@ import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener
 import org.scalatest.BeforeAndAfterAll
 import java.util.concurrent.atomic.AtomicReference
 import java.util.HashSet
+import org.eso.ias.heartbeat.publisher.HbLogProducer
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer
 
 /**
  * Test the Supervisor connected to the kafka BSDB.
@@ -134,7 +136,13 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
     DasuImpl(dd, i, op, id, 1,1)
 
   /** The supervisor to test */
-  val supervisor = new Supervisor(supervisorId, outputPublisher, inputConsumer, cdbReader, factory)
+  val supervisor = new Supervisor(
+      supervisorId, 
+      outputPublisher, 
+      inputConsumer, 
+      new HbLogProducer(new HbJsonSerializer),
+      cdbReader,
+      factory)
   
   val latchRef: AtomicReference[CountDownLatch] = new AtomicReference
   

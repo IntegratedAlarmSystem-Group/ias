@@ -27,6 +27,13 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.eso.ias.cdb.rdb.RdbReader
 import org.eso.ias.cdb.pojos.DasuToDeployDao
+import org.eso.ias.heartbeat.HbProducer
+import org.eso.ias.kafkautils.KafkaHelper
+import org.eso.ias.heartbeat.publisher.HbKafkaProducer
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer
+import org.eso.ias.heartbeat.HbEngine
+import org.eso.ias.cdb.pojos.IasDao
+import org.eso.ias.heartbeat.HeartbeatStatus
 
 /**
  * A Supervisor is the container to run several DASUs into the same JVM.
@@ -55,7 +62,8 @@ import org.eso.ias.cdb.pojos.DasuToDeployDao
  * 
  * @param supervisorIdentifier the identifier of the Supervisor
  * @param outputPublisher the publisher to send the output
- * @param inputSubscriber the subscriber getting events to be processed 
+ * @param inputSubscriber the subscriber getting events to be processed
+ * @param hbProducer the subscriber to send heartbeats 
  * @param cdbReader the CDB reader to get the configuration of the DASU from the CDB
  * @param dasuFactory: factory to build DASU 
  */
@@ -64,6 +72,7 @@ class Supervisor(
     val supervisorIdentifier: Identifier,
     private val outputPublisher: OutputPublisher,
     private val inputSubscriber: InputSubscriber,
+    private val hbProducer: HbProducer,
     cdbReader: CdbReader,
     dasuFactory: (DasuDao, Identifier, OutputPublisher, InputSubscriber) => Dasu) 
     extends InputsListener with InputSubscriber with  OutputPublisher {
@@ -79,6 +88,12 @@ class Supervisor(
   val logger = IASLogger.getLogger(Supervisor.getClass)
   
   logger.info("Building Supervisor [{}] with fullRunningId [{}]",id,supervisorIdentifier.fullRunningID)
+  
+  /** The heartbeat Engine */
+  val hbEngine: HbEngine = {
+    val iasDao: IasDao = cdbReader.getIas.orElseThrow(() => new IllegalArgumentException("IasDao not found"))
+    HbEngine(supervisorIdentifier.fullRunningID,iasDao.getHbFrequency,TimeUnit.SECONDS,hbProducer)
+  }
   
   // Get the configuration of the supervisor from the CDB
   val supervDao : SupervisorDao = {
@@ -188,9 +203,13 @@ class Supervisor(
     val alreadyStarted = started.getAndSet(true) 
     if (!alreadyStarted) {
       logger.debug("Starting Supervisor [{}]",id)
+      hbEngine.start()
       dasus.values.foreach(dasu => dasu.enableAutoRefreshOfOutput(true))
       val inputsOfSupervisor = dasus.values.foldLeft(Set.empty[String])( (s, dasu) => s ++ dasu.getInputIds())
-      inputSubscriber.startSubscriber(this, inputsOfSupervisor).flatMap(s => Try(logger.debug("Supervisor [{}] started",id)))
+      inputSubscriber.startSubscriber(this, inputsOfSupervisor).flatMap(s => {
+        Try{
+          logger.debug("Supervisor [{}] started",id)
+          hbEngine.updateHbState(HeartbeatStatus.RUNNING)}})
     } else {
       logger.warn("Supervisor [{}] already started",id)
       new Failure(new Exception("Supervisor already started"))
@@ -205,7 +224,7 @@ class Supervisor(
     val alreadyCleaned = cleanedUp.getAndSet(true)
     if (!alreadyCleaned) {
       logger.debug("Cleaning up supervisor [{}]", id)
-
+hbEngine.updateHbState(HeartbeatStatus.EXITING)
       logger.debug("Releasing DASUs running in the supervisor [{}]", id)
       dasus.values.foreach(_.cleanUp)
 
@@ -213,6 +232,7 @@ class Supervisor(
       Try(inputSubscriber.cleanUpSubscriber())
       logger.debug("Supervisor [{}]: releasing the publisher", id)
       Try(outputPublisher.cleanUpPublisher())
+      hbEngine.shutdown()
       logger.info("Supervisor [{}]: cleaned up", id)
     }
   }
@@ -370,9 +390,15 @@ object Supervisor {
     
     val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) => 
       DasuImpl(dd,i,op,id,refreshRate,tolerance)
-    
+      
+    val hbProducer: HbProducer = {
+      val kafkaServers = System.getProperties.getProperty(KafkaHelper.BROKERS_PROPNAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
+      
+      new HbKafkaProducer(supervisorId,kafkaServers,new HbJsonSerializer())
+    }
+      
     // Build the supervisor
-    val supervisor = new Supervisor(identifier,outputPublisher,inputsProvider,reader,factory)
+    val supervisor = new Supervisor(identifier,outputPublisher,inputsProvider,hbProducer,reader,factory)
     
     val started = supervisor.start()
     

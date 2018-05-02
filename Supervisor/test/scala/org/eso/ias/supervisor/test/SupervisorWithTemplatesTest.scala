@@ -23,6 +23,8 @@ import scala.collection.mutable.ArrayBuffer
 // The following import is required by the usage of the fixture
 import language.reflectiveCalls
 import java.util.HashSet
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer
+import org.eso.ias.heartbeat.publisher.HbLogProducer
 
 class SupervisorWithTemplatesTest extends FlatSpec {
 
@@ -77,6 +79,7 @@ class SupervisorWithTemplatesTest extends FlatSpec {
         supervIdentifier,
         outputPublisher,
         inputsProvider,
+        new HbLogProducer(new HbJsonSerializer),
         cdbReader,
         DasuMock.apply)
 
