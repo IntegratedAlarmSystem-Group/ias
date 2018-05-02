@@ -150,9 +150,11 @@ public class ReplicatedPluginTest {
 		values.add(v2);
 		values.add(v3);
 		
+		// Format of the string with the HBs
 		HbMsgSerializer hbSerializer = new HbJsonSerializer();
+		
+		// Build the producer for sending HBs
 		HbProducer hbProd = new MockHeartBeatProd(hbSerializer);
-		HbEngine hbEngine = HbEngine.apply(pluginIdentifier.fullRunningID(), 1, TimeUnit.SECONDS, hbProd);
 		
 		replicatedPlugin = new Plugin(
 				pluginId, 
@@ -164,7 +166,8 @@ public class ReplicatedPluginTest {
 				null, //defaultFilterOptions
 				2,
 				instance,
-				hbEngine);
+				1,
+				hbProd);
 	}
 	
 	/**

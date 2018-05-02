@@ -52,10 +52,10 @@ public class DumbWeatherStationPlugin extends Plugin {
 	 * Constructor
 	 * @param config The configuration of the plugin
 	 * @param sender The sender
-	 * @param hbEngine the engine to send HBs
+	 * @param hbProucer the publisher of HBs
 	 */
-	public DumbWeatherStationPlugin(PluginConfig config, MonitorPointSender sender,HbEngine hbEngine) {
-		super(config, sender,hbEngine);
+	public DumbWeatherStationPlugin(PluginConfig config, MonitorPointSender sender, HbProducer hbProd) {
+		super(config, sender,hbProd);
 	}
 	
 	/**
@@ -232,9 +232,8 @@ public class DumbWeatherStationPlugin extends Plugin {
 		
 		HbMsgSerializer hbSerializer = new HbJsonSerializer();
 		HbProducer hbProd = new MockHeartBeatProd(hbSerializer);
-		HbEngine hbEngine = HbEngine.apply(pluginIdentifier.fullRunningID(), config.getHbFrequency(), TimeUnit.SECONDS, hbProd);
 		
-		DumbWeatherStationPlugin plugin = new DumbWeatherStationPlugin(config,jsonPublisher,hbEngine);
+		DumbWeatherStationPlugin plugin = new DumbWeatherStationPlugin(config,jsonPublisher,hbProd);
 		try {
 			plugin.start();
 		} catch (PublisherException pe) {

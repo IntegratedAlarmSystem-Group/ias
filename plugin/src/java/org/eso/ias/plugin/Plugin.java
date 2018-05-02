@@ -17,7 +17,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eso.ias.heartbeat.HbEngine;
+import org.eso.ias.heartbeat.HbMsgSerializer;
+import org.eso.ias.heartbeat.HbProducer;
 import org.eso.ias.heartbeat.HeartbeatStatus;
+import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
 import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.config.Value;
 import org.eso.ias.plugin.filter.Filter;
@@ -261,7 +264,8 @@ public class Plugin implements ChangeValueListener {
 	 * @param defaultFilterOptions the options for the default filter
 	 *                             (can be <code>null</code>)                      
 	 * @param refreshRate The auto-send time interval in seconds
-	 * @param hbEngine the engine to send heartbeats
+	 * @param hbFrequency the frequency (seconds) to periodically publish HBs
+	 * @param hbProducer the publisher of HBs
 	 */
 	public Plugin(
 			String id, 
@@ -272,7 +276,8 @@ public class Plugin implements ChangeValueListener {
 			String defaultFilter,
 			String defaultFilterOptions,
 			int refreshRate,
-			HbEngine hbEngine) {
+			int hbFrequency,
+			HbProducer hbProducer) {
 		this(
 				id,
 				monitoredSystemId,
@@ -282,7 +287,8 @@ public class Plugin implements ChangeValueListener {
 				defaultFilterOptions,
 				refreshRate,
 				null,
-				hbEngine);
+				hbFrequency,
+				hbProducer);
 	}
 
 	/**
@@ -301,7 +307,8 @@ public class Plugin implements ChangeValueListener {
 	 * @param hbFrequency the frequency of the heartbeat in seconds
 	 * @param instanceNumber the number of the instance if the plugin is replicated,
 	 *                       <code>null</code> if not replicated
-	 * @param hbEngine the engine to send heartbeats
+	 * @param hbFrequency the frequency (seconds) to periodically publish HBs
+	 * @param hbProducer the publisher of HBs
 	 */
 	public Plugin(
 			String id, 
@@ -313,7 +320,8 @@ public class Plugin implements ChangeValueListener {
 			String defaultFilterOptions,
 			int refreshRate,
 			Integer instanceNumber,
-			HbEngine hbEngine) {
+			int hbFrequency,
+			HbProducer hbProducer) {
 		
 		// Immediately checks if the plugin is replicated
 		Optional<Integer> instanceNumberOpt = Optional.ofNullable(instanceNumber);
@@ -339,8 +347,6 @@ public class Plugin implements ChangeValueListener {
 			logger.info("New iID of the replicated plugin is [{}]",this.pluginId);
 		}
 		
-		
-		
 		if (monitoredSystemId==null || monitoredSystemId.trim().isEmpty()) {
 			throw new IllegalArgumentException("The ID of th emonitored system can't be null nor empty");
 		}
@@ -363,11 +369,12 @@ public class Plugin implements ChangeValueListener {
 		if (this.autoSendRefreshRate<=0) {
 			throw new IllegalArgumentException("The auto-send time interval must be greater then 0 instead of "+refreshRate);
 		}
-		
-		if (Objects.isNull(hbEngine)) {
-			throw new IllegalArgumentException("The heartebeat engine can't be null");
+
+		if (hbFrequency<=0) {
+			throw new IllegalArgumentException("The HB frequency must be >0");
 		}
-		this.hbEngine=hbEngine;
+		Objects.requireNonNull(hbProducer);
+		this.hbEngine=HbEngine.apply(pluginIdentifier.fullRunningID(), hbFrequency, TimeUnit.SECONDS, hbProducer);		
 		
 		flushProperties(props);
 		this.mpPublisher=sender;
@@ -438,13 +445,13 @@ public class Plugin implements ChangeValueListener {
 	 * 
 	 * @param config The plugin coinfiguration
 	 * @param sender The publisher of monitor point values to the IAS core
-	 * @param hbEngine the engine to send heartbeats
+	 * @param hbProducer the publisher of HBs
 	 */
 	public Plugin(
 			PluginConfig config,
 			MonitorPointSender sender,
-			HbEngine hbEngine) {
-		this(config,sender,null,hbEngine);
+			HbProducer hbProducer) {
+		this(config,sender,null,hbProducer);
 		
 	}
 	
@@ -455,13 +462,13 @@ public class Plugin implements ChangeValueListener {
 	 * @param sender The publisher of monitor point values to the IAS core
 	 * @param instanceNumber the number of the instance if the plugin is replicated,
 	 *                       <code>null</code> if not replicated
-	 * @param hbEngine the engine to send heartbeats
+	 * @param hbProducer the publisher of HBs
 	 */
 	public Plugin(
 			PluginConfig config,
 			MonitorPointSender sender,
 			Integer instanceNumber,
-			HbEngine hbEngine) {
+			HbProducer hbProducer) {
 		this(
 				config.getId(),
 				config.getMonitoredSystemId(),
@@ -472,7 +479,8 @@ public class Plugin implements ChangeValueListener {
 				config.getDefaultFilterOptions(),
 				config.getAutoSendTimeInterval(),
 				instanceNumber,
-				hbEngine);
+				config.getHbFrequency(),
+				hbProducer);
 	}
 	
 	/**
