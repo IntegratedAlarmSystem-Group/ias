@@ -52,17 +52,17 @@ public class ConverterKafkaStream extends ConverterStream {
 	 * The name of the java property to get thename of the
 	 * topic where plugins push values
 	 */
-	private static final String IASCORE_TOPIC_NAME_PROP_NAME = "org.eso.ias.converter.kafka.outputstream";
+	public static final String IASCORE_TOPIC_NAME_PROP_NAME = "org.eso.ias.converter.kafka.outputstream";
 
 	/**
 	 * The name of the property to pass the kafka servers to connect to
 	 */
-	private static final String KAFKA_SERVERS_PROP_NAME = "org.eso.ias.converter.kafka.servers";
+	public static final String KAFKA_SERVERS_PROP_NAME = "org.eso.ias.converter.kafka.servers";
 
 	/**
 	 * Default list of kafka servers to connect to
 	 */
-	private static final String DEFAULTKAFKASERVERS = "localhost:9092";
+	public static final String DEFAULTKAFKASERVERS = "localhost:9092";
 
 	/**
 	 * The list of kafka servers to connect to

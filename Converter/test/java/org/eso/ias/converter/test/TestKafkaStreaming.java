@@ -24,10 +24,15 @@ import org.eso.ias.cdb.CdbWriter;
 import org.eso.ias.cdb.json.CdbJsonFiles;
 import org.eso.ias.cdb.json.JsonReader;
 import org.eso.ias.cdb.json.JsonWriter;
+import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
+import org.eso.ias.cdb.pojos.LogLevelDao;
 import org.eso.ias.converter.Converter;
 import org.eso.ias.converter.ConverterKafkaStream;
+import org.eso.ias.heartbeat.HbMsgSerializer;
+import org.eso.ias.heartbeat.publisher.HbLogProducer;
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener;
@@ -286,11 +291,22 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		}
 		cdbWriter.writeIasios(iasios, false);
 		
+		IasDao iasDao = new IasDao();
+		iasDao.setHbFrequency(1);
+		iasDao.setLogLevel(LogLevelDao.DEBUG);
+		iasDao.setRefreshRate(5);
+		iasDao.setTolerance(1);
+		cdbWriter.writeIas(iasDao);
+		
 		// The reader to pass to the converter
 		CdbReader cdbReader = new JsonReader(cdbFiles);
 		
 		// Finally builds the converter
-		converter = new Converter(converterID, cdbReader, new ConverterKafkaStream(converterID, new Properties()));
+		converter = new Converter(
+				converterID, 
+				cdbReader, 
+				new ConverterKafkaStream(converterID, new Properties()),
+				new HbLogProducer(new HbJsonSerializer()));
 		
 		converter.setUp();
 		
