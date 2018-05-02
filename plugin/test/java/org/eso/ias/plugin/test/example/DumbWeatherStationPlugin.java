@@ -25,6 +25,8 @@ import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.JsonFilePublisher;
 import org.eso.ias.plugin.test.MockHeartBeatProd;
 import org.eso.ias.plugin.test.example.SimulatedWeatherStation.SimulatedMonitorPoint;
+import org.eso.ias.types.Identifier;
+import org.eso.ias.types.IdentifierType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -224,9 +226,13 @@ public class DumbWeatherStationPlugin extends Plugin {
 				jsonWriter);
 		
 		
+		Identifier monSysIdentifier = new Identifier(config.getMonitoredSystemId(), IdentifierType.MONITORED_SOFTWARE_SYSTEM);
+		Identifier pluginIdentifier = new Identifier(config.getId(), IdentifierType.PLUGIN,monSysIdentifier);
+		
+		
 		HbMsgSerializer hbSerializer = new HbJsonSerializer();
 		HbProducer hbProd = new MockHeartBeatProd(hbSerializer);
-		HbEngine hbEngine = new HbEngine(1, TimeUnit.SECONDS, hbProd);
+		HbEngine hbEngine = HbEngine.apply(pluginIdentifier.fullRunningID(), config.getHbFrequency(), TimeUnit.SECONDS, hbProd);
 		
 		DumbWeatherStationPlugin plugin = new DumbWeatherStationPlugin(config,jsonPublisher,hbEngine);
 		try {

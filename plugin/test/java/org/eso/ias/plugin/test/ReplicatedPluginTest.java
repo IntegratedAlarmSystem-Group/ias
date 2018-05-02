@@ -25,6 +25,7 @@ import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.types.IasValidity;
 import org.eso.ias.types.Identifier;
+import org.eso.ias.types.IdentifierType;
 import org.eso.ias.types.OperationalMode;
 import org.junit.Before;
 import org.junit.Test;
@@ -112,12 +113,14 @@ public class ReplicatedPluginTest {
 	 */
 	private Sender monitorPointSender;
 	
+	private final String monitoredSystemId = "MonSysId";
+	private Identifier monSysIdentifier = new Identifier(monitoredSystemId, IdentifierType.MONITORED_SOFTWARE_SYSTEM);
+	
 	/**
 	 * The identifier of the plugin 
 	 */
-	private final String pluginId = "ReplicatedPluginId"; 
-	
-	private final String monitoredSystemId = "MonSysId";
+	private final String pluginId = "ReplicatedPluginId";
+	private Identifier pluginIdentifier = new Identifier(pluginId, IdentifierType.PLUGIN,monSysIdentifier);
 	
 	private final Value v1 = new Value();
 	
@@ -149,7 +152,7 @@ public class ReplicatedPluginTest {
 		
 		HbMsgSerializer hbSerializer = new HbJsonSerializer();
 		HbProducer hbProd = new MockHeartBeatProd(hbSerializer);
-		HbEngine hbEngine = new HbEngine(1, TimeUnit.SECONDS, hbProd);
+		HbEngine hbEngine = HbEngine.apply(pluginIdentifier.fullRunningID(), 1, TimeUnit.SECONDS, hbProd);
 		
 		replicatedPlugin = new Plugin(
 				pluginId, 

@@ -17,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eso.ias.heartbeat.HbEngine;
-import org.eso.ias.heartbeat.HbMessage;
 import org.eso.ias.heartbeat.HeartbeatStatus;
 import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.config.Value;
@@ -486,7 +485,7 @@ public class Plugin implements ChangeValueListener {
 		logger.debug("Initializing");
 		
 		// Start sending the HB
-		hbEngine.start(new HbMessage(pluginIdentifier.fullRunningID(), HeartbeatStatus.STARTING_UP));
+		hbEngine.start();
 		
 		mpPublisher.setUp();
 		logger.info("Publisher initialized.");
@@ -520,7 +519,7 @@ public class Plugin implements ChangeValueListener {
 		logger.debug("Initiailizing {} monitor points", monitorPoints.values().size());
 		monitorPoints.values().forEach(mp -> mp.start());
 		
-		hbEngine.updateHbState(hbEngine.getActualHbStatusMessage().get().setHbState(HeartbeatStatus.RUNNING));
+		hbEngine.updateHbState(HeartbeatStatus.RUNNING);
 		
 		logger.info("Plugin {} initialized",pluginId);
 	}
@@ -531,7 +530,7 @@ public class Plugin implements ChangeValueListener {
 	 */
 	public void shutdown() {
 		boolean alreadyClosed=closed.getAndSet(true);
-		hbEngine.updateHbState(hbEngine.getActualHbStatusMessage().get().setHbState(HeartbeatStatus.EXITING));
+		hbEngine.updateHbState(HeartbeatStatus.EXITING);
 		if (!alreadyClosed) {
 			shutdownExecutorSvc();
 			logger.info("Stopping the sending of monitor point values to the core of the IAS");
@@ -548,7 +547,7 @@ public class Plugin implements ChangeValueListener {
 			logger.debug("Shutting down the monitor points");
 			monitorPoints.values().forEach(mp -> mp.shutdown());
 			
-			hbEngine.closed();
+			hbEngine.shutdown();
 			
 			logger.info("Plugin {} is shut down",pluginId);
 		}
