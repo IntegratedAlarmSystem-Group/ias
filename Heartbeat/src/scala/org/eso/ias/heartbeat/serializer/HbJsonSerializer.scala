@@ -1,7 +1,6 @@
 package org.eso.ias.heartbeat.serializer
 
 import org.eso.ias.heartbeat.HbMsgSerializer
-import org.eso.ias.heartbeat.HbMessage
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.eso.ias.heartbeat.HeartbeatStatus
 import org.eso.ias.utils.ISO8601Helper
