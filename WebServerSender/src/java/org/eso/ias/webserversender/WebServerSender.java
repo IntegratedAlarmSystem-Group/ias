@@ -2,6 +2,7 @@ package org.eso.ias.webserversender;
 
 import java.net.URI;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -116,7 +117,7 @@ public class WebServerSender implements IasioListener, Runnable {
 	 * The listener to be notified of Strings received
 	 * by the WebServer sender.
 	 */
-	private final WebServerSenderListener senderListener;
+	private final Optional<WebServerSenderListener> senderListener;
 
 	/**
 	 * Count down to wait until the connection is established
@@ -143,7 +144,7 @@ public class WebServerSender implements IasioListener, Runnable {
 		webserverUri = props.getProperty(WEBSERVER_URI_PROP_NAME, DEFAULT_WEBSERVER_URI);
 		logger.debug("Websocket connection URI: "+ webserverUri);
 		logger.debug("Kafka server: "+ kafkaServers);
-		senderListener = listener;
+		senderListener = Optional.ofNullable(listener);
 		kafkaConsumer = new KafkaIasiosConsumer(kafkaServers, sendersInputKTopicName, this.senderID);
 		kafkaConsumer.setUp();
 	}
@@ -264,10 +265,7 @@ public class WebServerSender implements IasioListener, Runnable {
 	 * @param strToNotify The string to notify to the listener
 	 */
 	protected void notifyListener(String strToNotify) {
-		if(senderListener != null) {
-			senderListener.stringEventSent(strToNotify);
-		}
-
+		senderListener.ifPresent(listener -> listener.stringEventSent(strToNotify));
 	}
 
 	/**
