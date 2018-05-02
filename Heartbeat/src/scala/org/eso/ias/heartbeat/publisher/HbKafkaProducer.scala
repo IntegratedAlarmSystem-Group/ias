@@ -28,14 +28,14 @@ class HbKafkaProducer(
   val closed = new AtomicBoolean(false)
   
   /** Initialize the producer */
-  def init() = {
+  override def init() = {
     if (!initialized.getAndSet(true)) {
       kafkaProducer.setUp()
     }
   }
   
   /** Shutdown the producer */
-  def shutdown() = {
+  override def shutdown() = {
     if (!closed.getAndSet(true)) {
       kafkaProducer.tearDown()
     }
@@ -44,7 +44,7 @@ class HbKafkaProducer(
   /**
    * Push the string
    */
-  def push(hbAsString: String) {
+  override def push(hbAsString: String) {
     if (!closed.get) {
       kafkaProducer.push(hbAsString,null,id)
     }
