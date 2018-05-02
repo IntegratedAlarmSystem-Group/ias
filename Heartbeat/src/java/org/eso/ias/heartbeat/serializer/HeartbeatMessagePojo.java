@@ -1,10 +1,9 @@
 package org.eso.ias.heartbeat.serializer;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import org.eso.ias.heartbeat.HbMessage;
+import org.eso.ias.heartbeat.HeartbeatStatus;
 import org.eso.ias.utils.ISO8601Helper;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -33,7 +32,7 @@ public class HeartbeatMessagePojo {
 	/**
 	 * The state of the tool
 	 */
-	private String state;
+	private HeartbeatStatus state;
 	
 	/**
 	 * additional properties
@@ -49,18 +48,27 @@ public class HeartbeatMessagePojo {
 	/**
 	 * Constructor
 	 * 
-	 * @param msg the HB message
+	 * @param id the full running id
+	 * @param hbStatus the status
+	 * @param props additional properties
 	 * @param tStamp the timestamp
 	 */
-	public HeartbeatMessagePojo(HbMessage msg, long tStamp) {
-		Objects.requireNonNull(msg);
-		this.timestamp=ISO8601Helper.getTimestamp(tStamp);
-		this.fullRunningId=msg.fullRunningId();
-		this.state=msg.hbState().toString();
+	public HeartbeatMessagePojo(
+			String fullRunningId,
+			HeartbeatStatus hbStatus,
+			Map<String, String> props,
+			long tStamp) {
+		if (Objects.isNull(fullRunningId) || fullRunningId.isEmpty()) {
+			throw new IllegalArgumentException("Invalid null/empty full running id");
+		}
+		Objects.requireNonNull(hbStatus);
 		
-		Map<String,String> addProps = msg.getPropsAsJavaMap(); 
-		if (!addProps.isEmpty()) {
-			this.props = addProps;
+		this.timestamp=ISO8601Helper.getTimestamp(tStamp);
+		this.fullRunningId=fullRunningId;
+		this.state=hbStatus;
+		
+		if (props!=null && !props.isEmpty()) {
+			this.props = props;
 		}
 	}
 
@@ -80,11 +88,11 @@ public class HeartbeatMessagePojo {
 		this.fullRunningId = fullRunningId;
 	}
 
-	public String getState() {
+	public HeartbeatStatus getState() {
 		return state;
 	}
 
-	public void setState(String state) {
+	public void setState(HeartbeatStatus state) {
 		this.state = state;
 	}
 

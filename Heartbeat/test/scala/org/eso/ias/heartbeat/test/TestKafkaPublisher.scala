@@ -91,10 +91,9 @@ class TestKafkaPublisher extends FlatSpec with KafkaConsumerListener with Before
       // One property just to have it
       val aProp = Map("PropK" -> state.toString())
       // Build the message
-      val msg = new HbMessage(supervIdentifier,state,aProp)
       val now = System.currentTimeMillis()
       
-      kProd.send(msg, now)
+      kProd.send(supervIdentifier.fullRunningID,state,aProp)
       val op = Try(Thread.sleep(50))
       
     })
@@ -104,12 +103,12 @@ class TestKafkaPublisher extends FlatSpec with KafkaConsumerListener with Before
     
     assert(receivedStrings.size==HeartbeatStatus.values().length)
     
-    val hbMessages = receivedStrings.map(str => serializer.deserializeFromString(str)._1)
+    val hbMessages = receivedStrings.map(str => serializer.deserializeFromString(str))
     
-    assert(hbMessages.forall( msg => msg.fullRunningId==supervIdentifier.fullRunningID))
+    assert(hbMessages.forall( msg => msg._1==supervIdentifier.fullRunningID))
     
     assert(HeartbeatStatus.values().forall( state => {
-      hbMessages.filter(msg => msg.hbState==state).size==1
+      hbMessages.filter(msg => msg._2==state).size==1
     }))
   }
   

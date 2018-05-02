@@ -7,7 +7,6 @@ import scala.collection.mutable.ArrayBuffer
 import language.reflectiveCalls
 import java.util.concurrent.TimeUnit
 import org.eso.ias.heartbeat.HbEngine
-import org.eso.ias.heartbeat.HbMessage
 import org.eso.ias.heartbeat.HeartbeatStatus
 import scala.util.Try
 import org.eso.ias.logging.IASLogger
@@ -80,7 +79,7 @@ class TestEngine extends FlatSpec {
     /**
      * The engine to test
      */
-    val engine = new HbEngine(frequency,tUnit,producer)
+    val engine = new HbEngine(supervIdentifier.fullRunningID,frequency,tUnit,producer)
     
   }
   
@@ -91,9 +90,8 @@ class TestEngine extends FlatSpec {
   
   it must "init and shutdown the producer" in {
     val f = fixture
-    val  initialMessage = new HbMessage(f.supervIdentifier,HeartbeatStatus.STARTING_UP)
     
-    f.engine.start(initialMessage)
+    f.engine.start()
     f.engine.shutdown()
     
     assert(f.producer.initialzed)
@@ -110,11 +108,29 @@ class TestEngine extends FlatSpec {
     assert(f.producer.pushedStrings.isEmpty)
   }
   
+  it must "send the default intial message" in {
+    val f = fixture
+    
+    logger.info("Starting engine")
+    f.engine.start()
+    
+    // Give time to send one and only one message
+    logger.info("Waiting...")
+    val op = Try(Thread.sleep(3000))
+    assert(op.isSuccess)
+    
+    logger.info("shutting down")
+    f.engine.shutdown()
+    
+    assert(f.producer.pushedStrings.size==1)
+    val status=f.serializer.deserializeFromString(f.producer.pushedStrings(0))._2
+    assert(status==f.engine.initialStatusDefault)
+  }
+  
   it must "send the intial message" in {
     val f = fixture
-    val  initialMessage = new HbMessage(f.supervIdentifier,HeartbeatStatus.STARTING_UP)
     
-    f.engine.start(initialMessage)
+    f.engine.start(HeartbeatStatus.RUNNING)
     
     // Give time to send one and only one message
     val op = Try(Thread.sleep(3000))
@@ -123,24 +139,23 @@ class TestEngine extends FlatSpec {
     f.engine.shutdown()
     
     assert(f.producer.pushedStrings.size==1)
-    val msg1=f.serializer.deserializeFromString(f.producer.pushedStrings(0))._1
-    assert(msg1==initialMessage)
+    val status=f.serializer.deserializeFromString(f.producer.pushedStrings(0))._2
+    assert(status==HeartbeatStatus.RUNNING)
   }
   
   it must "update the state" in {
     
     val f = fixture
-    val  initialMessage = new HbMessage(f.supervIdentifier,HeartbeatStatus.STARTING_UP)
     
-    f.engine.start(initialMessage)
+    f.engine.start(HeartbeatStatus.STARTING_UP)
     
     // Give time to send one and only one message
     val op = Try(Thread.sleep(3000))
     assert(op.isSuccess)
     
-    val addProps = Map("key1" -> "prop1", "key2" -> "prop2","key3" -> "prop3")
-    val newMessage = initialMessage.setHbState(HeartbeatStatus.RUNNING).setHbProps(addProps)
-    f.engine.updateHbState(newMessage)
+    f.engine.addProperty("key1", "prop1");
+    f.engine.addProperty("key2", "prop2");
+    f.engine.updateHbState(HeartbeatStatus.RUNNING)
     
     val op2 = Try(Thread.sleep(2000))
     assert(op2.isSuccess)
@@ -149,25 +164,26 @@ class TestEngine extends FlatSpec {
     
     assert(f.producer.pushedStrings.size==2)
     
-    val msg1=f.serializer.deserializeFromString(f.producer.pushedStrings(0))._1
-    assert(msg1==initialMessage)
-    val msg2=f.serializer.deserializeFromString(f.producer.pushedStrings(1))._1
-    assert(msg2==newMessage)
+    val deserialized1 = f.serializer.deserializeFromString(f.producer.pushedStrings(0))  
+    assert(deserialized1._2==HeartbeatStatus.STARTING_UP)
+    assert(deserialized1._3.isEmpty)
+    
+    val deserialized2 = f.serializer.deserializeFromString(f.producer.pushedStrings(1))
+    assert(deserialized2._2==HeartbeatStatus.RUNNING)
+    assert(deserialized2._3.size==2)
   }
   
   it must "not send HBs after shutdown" in {
     val f = fixture
-    val  initialMessage = new HbMessage(f.supervIdentifier,HeartbeatStatus.STARTING_UP)
     
-    f.engine.start(initialMessage)
+    f.engine.start()
     
     // Give time to send one and only one message
     val op = Try(Thread.sleep(3000))
     assert(op.isSuccess)
     
-    val addProps = Map("key1-t2" -> "prop1-t2")
-    val newMessage = initialMessage.setHbState(HeartbeatStatus.RUNNING).setHbProps(addProps)
-    f.engine.updateHbState(newMessage)
+    f.engine.updateHbState(HeartbeatStatus.RUNNING)
+    f.engine.addProperty("key1-t2", "prop1-t2")
     
     val op2 = Try(Thread.sleep(2000))
     assert(op2.isSuccess)
@@ -184,9 +200,8 @@ class TestEngine extends FlatSpec {
   
   it must "send periodically send the same msg if not changed" in {
     val f = fixture
-    val  initialMessage = new HbMessage(f.supervIdentifier,HeartbeatStatus.STARTING_UP)
     
-    f.engine.start(initialMessage)
+    f.engine.start(HeartbeatStatus.PARTIALLY_RUNNING)
     
     // Give time to send 5 messages
     val op = Try(Thread.sleep(f.frequency*5000+1000))
@@ -197,8 +212,8 @@ class TestEngine extends FlatSpec {
     assert(f.producer.pushedStrings.size==5)
     
     f.producer.pushedStrings.foreach( str => {
-      val msg=f.serializer.deserializeFromString(str)._1
-      assert(msg==initialMessage)
+      val msg=f.serializer.deserializeFromString(str)._2
+      assert(msg==HeartbeatStatus.PARTIALLY_RUNNING)
     })
   }
   

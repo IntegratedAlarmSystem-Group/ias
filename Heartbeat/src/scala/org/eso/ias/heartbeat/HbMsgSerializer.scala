@@ -9,20 +9,27 @@ package org.eso.ias.heartbeat
 trait HbMsgSerializer {
   
   /**
-   * Sends the heartbeat with the passed timestamp
+   * Serialize the HB message to publish in a string 
    * 
-   * @param hbMessage theheartbeat to send
+   * @param fullRunningId full running id
+   * @param status the status of the tool
+   * @paran additionalProeprties a map of additional properties
    * @param timestamp the timestamp to associate to the message
    * @return A string representation of the message and the timestamp
    */
-  def serializeToString(hbMessage: HbMessage, timestamp: Long): String
+  def serializeToString(
+      fullRunningId: String,
+      status: HeartbeatStatus, 
+      additionalProeprties: Map[String,String],
+      timestamp: Long): String
   
   /** 
    *  Parse the passed string to return a tuple with the
-   *  HB mesage and the timestamp
+   *  field of the HB mesage
    *  
    *  @param A string representation of the message with the timestamp
-   *  @return a tuple with the message and the timestamp
+   *  @return a tuple with the full running id, the status, properties and the timestamp
    */
-  def deserializeFromString(hbMessage: String): Tuple2[HbMessage, Long]
+  def deserializeFromString(hbMessage: String): 
+    Tuple4[String,HeartbeatStatus, Map[String,String], Long]
 }
