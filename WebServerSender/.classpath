@@ -14,10 +14,7 @@
 	<classpathentry exported="true" kind="var" path="IAS_ROOT/lib/ExtTools/websocket-client-9.4.7.v20170914.jar"/>
 	<classpathentry exported="true" kind="var" path="IAS_ROOT/lib/ExtTools/websocket-common-9.4.7.v20170914.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/websocket-api-9.4.7.v20170914.jar"/>
-	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/jetty-server-9.4.7.v20170914.jar"/>
-	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/websocket-server-9.4.7.v20170914.jar"/>
-	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/websocket-servlet-9.4.7.v20170914.jar"/>
-	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/jetty-servlet-9.4.7.v20170914.jar"/>
-	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/javax.servlet-api-4.0.0.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ias-heartbeat.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ias-cdb.jar"/>
 	<classpathentry kind="output" path="lib"/>
 </classpath>

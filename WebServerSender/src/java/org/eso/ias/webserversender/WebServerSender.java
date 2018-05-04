@@ -14,6 +14,18 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
+import org.eso.ias.cdb.CdbReader;
+import org.eso.ias.cdb.json.CdbFiles;
+import org.eso.ias.cdb.json.CdbJsonFiles;
+import org.eso.ias.cdb.json.JsonReader;
+import org.eso.ias.cdb.pojos.IasDao;
+import org.eso.ias.cdb.rdb.RdbReader;
+import org.eso.ias.heartbeat.HbEngine;
+import org.eso.ias.heartbeat.HbMsgSerializer;
+import org.eso.ias.heartbeat.HbProducer;
+import org.eso.ias.heartbeat.HeartbeatStatus;
+import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener;
@@ -103,6 +115,11 @@ public class WebServerSender implements IasioListener, Runnable {
 	 * Time in seconds to wait before attempt to reconnect
 	 */
 	private static int reconnectionInterval = 2;
+	
+	/**
+	 * Th esender of heartbeats
+	 */
+	private final HbEngine hbEngine;
 
 	/**
 	 * The interface of the listener to be notified of Strings received
@@ -129,9 +146,16 @@ public class WebServerSender implements IasioListener, Runnable {
 	 *
    * @param senderID Identifier of the WebServerSender
 	 * @param props the properties to get kafka servers, topic names and webserver uri
-	 * @param listener The listener of the messages sent to the websocket server
+	 * @param listener The listenr of the messages sent to the websocket server
+	 * @param hbFrequency the frequency of the heartbeat (seconds)
+	 * @param hbProducer the sender of HBs
 	 */
-	public WebServerSender(String senderID, Properties props, WebServerSenderListener listener) {
+	public WebServerSender(
+			String senderID, 
+			Properties props, 
+			WebServerSenderListener listener,
+			int hbFrequency,
+			HbProducer hbProducer) {
 		Objects.requireNonNull(senderID);
 		if (senderID.trim().isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty converter ID");
@@ -146,6 +170,13 @@ public class WebServerSender implements IasioListener, Runnable {
 		logger.debug("Kafka server: "+ kafkaServers);
 		senderListener = Optional.ofNullable(listener);
 		kafkaConsumer = new KafkaIasiosConsumer(kafkaServers, sendersInputKTopicName, this.senderID);
+		
+		if (hbFrequency<=0) {
+			throw new IllegalArgumentException("Invalid frequency "+hbFrequency);
+		}
+		
+		Objects.requireNonNull(hbProducer);
+		hbEngine = HbEngine.apply(senderID, hbFrequency, TimeUnit.SECONDS, hbProducer);
 		kafkaConsumer.setUp();
 	}
 
@@ -223,6 +254,7 @@ public class WebServerSender implements IasioListener, Runnable {
 	 * Initializes the WebSocket connection
 	 */
 	public void run() {
+		hbEngine.start();
 		try {
 			this.uri = new URI(webserverUri);
 			this.session = null;
@@ -248,6 +280,7 @@ public class WebServerSender implements IasioListener, Runnable {
 	 */
 	public void stop() {
 		this.session = null;
+		hbEngine.updateHbState(HeartbeatStatus.EXITING);
 		kafkaConsumer.tearDown();
 		try {
 			this.client.stop();
@@ -256,7 +289,7 @@ public class WebServerSender implements IasioListener, Runnable {
 		catch( Exception e) {
 			logger.error("Error on Websocket stop");
 		}
-
+		hbEngine.shutdown();
 	}
 
 	/**
@@ -276,9 +309,64 @@ public class WebServerSender implements IasioListener, Runnable {
 	public void setReconnectionInverval(int interval) {
 		this.reconnectionInterval = interval;
 	}
+	
+	/** 
+	 * Build the usage message 
+	 */
+	public static void printUsage() {
+		System.out.println("Usage: WebServerSender Sender-ID [-jcdb JSON-CDB-PATH]");
+		System.out.println("  -jcdb force the usage of the JSON CDB");
+		System.out.println("  Sender-ID: the identifier of the web server sender");
+		System.out.println("  JSON-CDB-PATH: the path of the JSON CDB");
+	}
 
 	public static void main(String[] args) throws Exception {
-		WebServerSender ws = new WebServerSender("WebServerSender", System.getProperties(), null);
+		if (args.length!=1 && args.length!=3) {
+			printUsage();
+			throw new IllegalArgumentException();
+		}
+		
+		String id = args[0].trim();
+		if (id.isEmpty()) {
+			printUsage();
+			throw new IllegalArgumentException("Invalid identifier");
+		}
+		
+		if (args.length==3 && !args[1].equals("-jcdb")) {
+			printUsage();
+			throw new IllegalArgumentException();
+		}
+		
+		CdbReader reader;
+		if (args.length == 3) {
+			CdbFiles cdbFiles = new CdbJsonFiles(args[2]);
+			reader= new JsonReader(cdbFiles);
+		} else {
+			reader= new RdbReader();
+		}
+		
+		Optional<IasDao> optIasdao = reader.getIas();
+		reader.shutdown();
+		
+		if (!optIasdao.isPresent()) {
+			throw new IllegalArgumentException("IAS DAO not fund");
+		}
+		int frequency = optIasdao.get().getHbFrequency();
+		
+		
+		// Serializer of HB messages
+		HbMsgSerializer hbSerializer = new HbJsonSerializer();
+		
+		String kServers = System.getProperty(KAFKA_SERVERS_PROP_NAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS);
+		Objects.requireNonNull(kServers);
+		HbProducer hbProd = new HbKafkaProducer(id, kServers, hbSerializer);
+		
+		WebServerSender ws = new WebServerSender(
+				id, 
+				System.getProperties(), 
+				null,
+				frequency,
+				hbProd);
 		ws.run();
 	}
 

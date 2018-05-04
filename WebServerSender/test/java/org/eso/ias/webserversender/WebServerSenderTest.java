@@ -23,6 +23,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import org.eso.ias.heartbeat.HbMsgSerializer;
+import org.eso.ias.heartbeat.HbProducer;
+import org.eso.ias.heartbeat.publisher.HbLogProducer;
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaIasiosProducer;
 import org.eso.ias.kafkautils.SimpleStringProducer;
@@ -179,7 +183,18 @@ public class WebServerSenderTest {
 		props.put("org.eso.ias.senders.kafka.inputstream", this.kafkaTopic);
 		props.put("org.eso.ias.senders.kafka.servers", this.kafkaServer);
 		props.put("org.eso.ias.senders.webserver.uri", this.webserverUri);
-		this.webServerSender = new WebServerSender("WebServerSender", props, listener);
+		
+		
+		HbMsgSerializer hbSer = new HbJsonSerializer();
+		HbProducer hProd = new HbLogProducer(hbSer);
+		
+		
+		this.webServerSender = new WebServerSender(
+				"WebServerSender", 
+				props, 
+				listener,
+				1,
+				hProd);
 		this.webServerSender.run();
 		logger.info("WebServerSender initialized...");
 	}
