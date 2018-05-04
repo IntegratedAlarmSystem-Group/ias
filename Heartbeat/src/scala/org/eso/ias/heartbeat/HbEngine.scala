@@ -24,17 +24,14 @@ import scala.collection.mutable.{Map => MutableMap}
  * computational phases of the tool that sends the HB.
  * 
  * @param fullRunningId the full running ID of the tool
- * @param frequency the frequency to send the heartbeat
- * @param timeUnit the time unit of the frequency
+ * @param frequency the frequency to send the heartbeat (seconds)
  * @param publisher publish HB messages
  */
 class HbEngine private[heartbeat] (
     fullRunningId: String,
-    frequency: Long, 
-    timeUnit: TimeUnit,
+    frequency: Long,
     publisher: HbProducer) extends Runnable {
   
-  require(Option(timeUnit).isDefined)
   require(Option(publisher).isDefined)
   
   /** The logger */
@@ -75,8 +72,8 @@ class HbEngine private[heartbeat] (
       publisher.init()
       logger.debug("HB publisher initialized")
       val executorService = Executors.newSingleThreadScheduledExecutor();
-      feature.set(executorService.scheduleWithFixedDelay(this, frequency, frequency, timeUnit))
-      logger.info("Heartbeat engine started with a frequency of {} {}",frequency.toString(),timeUnit.toString())  
+      feature.set(executorService.scheduleWithFixedDelay(this, frequency, frequency, TimeUnit.SECONDS))
+      logger.info("Heartbeat engine started with a frequency of {} seconds",frequency.toString())  
     } else {
       logger.warn("HB engine Already started")
     }
@@ -193,14 +190,20 @@ object HbEngine {
    */
   def apply(
     fullRunningId: String,
-    frequency: Long, 
-    timeUnit: TimeUnit,
+    frequency: Long,
     publisher: HbProducer) = {
        engine match {
          case None =>
-         engine = Some(new HbEngine(fullRunningId,frequency,timeUnit,publisher))
+         engine = Some(new HbEngine(fullRunningId,frequency,publisher))
          engine.get
          case Some(hbEng) => hbEng
        }
   }
+  
+  /** Alias more familiar fto java developers */
+  def getInstance(
+      fullRunningId: String,
+      frequency: Long,
+      publisher: HbProducer)() = apply(fullRunningId,frequency,publisher)
+  
 }

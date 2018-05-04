@@ -9,7 +9,6 @@ import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition
 import scala.collection.mutable.ArrayBuffer
 import org.scalatest.BeforeAndAfter
-import org.eso.ias.heartbeat.HbMessage
 import org.eso.ias.heartbeat.HeartbeatStatus
 import java.util.EnumSet
 import scala.util.Try

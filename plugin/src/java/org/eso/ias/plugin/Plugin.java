@@ -374,7 +374,7 @@ public class Plugin implements ChangeValueListener {
 			throw new IllegalArgumentException("The HB frequency must be >0");
 		}
 		Objects.requireNonNull(hbProducer);
-		this.hbEngine=HbEngine.apply(pluginIdentifier.fullRunningID(), hbFrequency, TimeUnit.SECONDS, hbProducer);		
+		this.hbEngine=HbEngine.apply(pluginIdentifier.fullRunningID(), hbFrequency, hbProducer);		
 		
 		flushProperties(props);
 		this.mpPublisher=sender;

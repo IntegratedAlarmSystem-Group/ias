@@ -148,7 +148,6 @@ public class Converter {
 		hbEngine = new HbEngine(
 				converterId, 
 				hbFrequency, 
-				TimeUnit.SECONDS, 
 				hbProducer);
 		
 		this.configDao= new IasioConfigurationDaoImpl(cdbReader);

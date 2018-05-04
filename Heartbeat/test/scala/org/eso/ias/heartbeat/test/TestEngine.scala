@@ -70,7 +70,6 @@ class TestEngine extends FlatSpec {
     val supervIdentifier = new Identifier("SupervisorID", IdentifierType.SUPERVISOR, None)
     
     val frequency = 2
-    val tUnit = TimeUnit.SECONDS
     
     val serializer = new HbJsonSerializer
     
@@ -79,7 +78,7 @@ class TestEngine extends FlatSpec {
     /**
      * The engine to test
      */
-    val engine = new HbEngine(supervIdentifier.fullRunningID,frequency,tUnit,producer)
+    val engine = new HbEngine(supervIdentifier.fullRunningID,frequency,producer)
     
   }
   

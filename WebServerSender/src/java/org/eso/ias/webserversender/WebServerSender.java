@@ -176,7 +176,7 @@ public class WebServerSender implements IasioListener, Runnable {
 		}
 		
 		Objects.requireNonNull(hbProducer);
-		hbEngine = HbEngine.apply(senderID, hbFrequency, TimeUnit.SECONDS, hbProducer);
+		hbEngine = HbEngine.apply(senderID, hbFrequency, hbProducer);
 		kafkaConsumer.setUp();
 	}
 

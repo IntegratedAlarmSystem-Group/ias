@@ -92,7 +92,7 @@ class Supervisor(
   /** The heartbeat Engine */
   val hbEngine: HbEngine = {
     val iasDao: IasDao = cdbReader.getIas.orElseThrow(() => new IllegalArgumentException("IasDao not found"))
-    HbEngine(supervisorIdentifier.fullRunningID,iasDao.getHbFrequency,TimeUnit.SECONDS,hbProducer)
+    HbEngine(supervisorIdentifier.fullRunningID,iasDao.getHbFrequency,hbProducer)
   }
   
   // Get the configuration of the supervisor from the CDB
