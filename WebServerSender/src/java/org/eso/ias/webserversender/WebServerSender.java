@@ -111,12 +111,12 @@ public class WebServerSender implements IasioListener {
 	/**
 	 * Web socket client
 	 */
-	private static WebSocketClient client;
+	private WebSocketClient client;
 
 	/**
 	 * Time in seconds to wait before attempt to reconnect
 	 */
-	private static int reconnectionInterval = 2;
+	private int reconnectionInterval = 2;
 	
 	/**
 	 * The sender of heartbeats
@@ -271,10 +271,10 @@ public class WebServerSender implements IasioListener {
 			this.uri = new URI(webserverUri);
 			sessionOpt = Optional.empty();
 			this.connectionReady = new CountDownLatch(1);
-			this.client = new WebSocketClient();
-			this.client.start();
-			this.client.connect(this, this.uri, new ClientUpgradeRequest());
-			if(!this.connectionReady.await(this.reconnectionInterval, TimeUnit.SECONDS)) {
+			client = new WebSocketClient();
+			client.start();
+			client.connect(this, this.uri, new ClientUpgradeRequest());
+			if(!this.connectionReady.await(reconnectionInterval, TimeUnit.SECONDS)) {
 				logger.info("WebSocketSender could not establish the connection with the server.");
 				logger.info("Trying to reconnect");
 				connect();
@@ -295,7 +295,7 @@ public class WebServerSender implements IasioListener {
 		kafkaConsumer.tearDown();
 		sessionOpt = Optional.empty();
 		try {
-			this.client.stop();
+			client.stop();
 			logger.debug("Connection stopped!");
 		}
 		catch( Exception e) {
@@ -319,7 +319,7 @@ public class WebServerSender implements IasioListener {
 	 * @param interval time in seconds
 	 */
 	public void setReconnectionInverval(int interval) {
-		this.reconnectionInterval = interval;
+		reconnectionInterval = interval;
 	}
 	
 	/** 
