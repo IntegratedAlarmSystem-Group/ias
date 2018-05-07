@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
@@ -118,9 +119,14 @@ public class WebServerSender implements IasioListener {
 	private static int reconnectionInterval = 2;
 	
 	/**
-	 * Th esender of heartbeats
+	 * The sender of heartbeats
 	 */
 	private final HbEngine hbEngine;
+	
+	/**
+	 * A flag set to <code>true</code> if the socket is connected
+	 */
+	public final AtomicBoolean socketConnected = new AtomicBoolean(false);
 
 	/**
 	 * The interface of the listener to be notified of Strings received
@@ -189,6 +195,7 @@ public class WebServerSender implements IasioListener {
 	@OnWebSocketClose
 	public void onClose(int statusCode, String reason) {
 	   logger.info("WebSocket connection closed. status: " + statusCode + ", reason: " + reason);
+	   socketConnected.set(false);
 	   sessionOpt = Optional.empty();
 	   if (statusCode != 1001) {
 		   logger.info("Trying to reconnect");
@@ -216,11 +223,12 @@ public class WebServerSender implements IasioListener {
 	   catch (Throwable t) {
 	       logger.error("WebSocket couldn't send the message",t);
 	   }
+	   socketConnected.set(true);
 	}
 
 	@OnWebSocketMessage
     public void onMessage(String message) {
-			notifyListener(message);
+		notifyListener(message);
     }
 
 	/**
@@ -230,6 +238,10 @@ public class WebServerSender implements IasioListener {
 	 */
 	@Override
 	public synchronized void iasioReceived(IASValue<?> event) {
+		if (!socketConnected.get()) {
+			// The socket is not connected: discard the event
+			return;
+		}
 		final String value;
 		try {
 			value = serializer.iasValueToString(event);
@@ -278,7 +290,7 @@ public class WebServerSender implements IasioListener {
 	/**
 	 * Shutdown the WebSocket client and Kafka consumer
 	 */
-	public void shutdown() {
+	public  void shutdown() {
 		hbEngine.updateHbState(HeartbeatStatus.EXITING);
 		kafkaConsumer.tearDown();
 		sessionOpt = Optional.empty();
