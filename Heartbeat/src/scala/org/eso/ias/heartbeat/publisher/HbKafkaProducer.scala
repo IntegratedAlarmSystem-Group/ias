@@ -27,6 +27,21 @@ class HbKafkaProducer(
   
   val closed = new AtomicBoolean(false)
   
+  /** 
+   *  Auxiliary constructor that takes the list of kafka brokers 
+   *  from java properties.
+   *  
+   *  If the proeprties does not contain a list of kafkla brokers then the default is used
+   *  
+   * @parm id the identifier will be used as client ID for kafka producer
+   * @param serializer the serializer to transform HBs into strings 
+   */
+  def this(id: String, serializer: HbMsgSerializer) {
+    this(id,
+        System.getProperties().getProperty(KafkaHelper.BROKERS_PROPNAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS),
+        serializer)
+  }
+  
   /** Initialize the producer */
   override def init() = {
     if (!initialized.getAndSet(true)) {
