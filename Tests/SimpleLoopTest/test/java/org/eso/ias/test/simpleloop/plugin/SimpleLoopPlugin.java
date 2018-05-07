@@ -9,6 +9,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.eso.ias.heartbeat.HbMsgSerializer;
+import org.eso.ias.heartbeat.HbProducer;
+import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.plugin.Plugin;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.config.PluginConfig;
@@ -109,8 +113,18 @@ public class SimpleLoopPlugin extends Plugin implements Runnable {
 	 */
 	private static final Logger logger = LoggerFactory.getLogger(SimpleLoopPlugin.class);
 
-	public SimpleLoopPlugin(PluginConfig config, MonitorPointSender sender) {
-		super(config,sender);
+	/**
+	 * Constructor
+	 * 
+	 * @param config The plugin coinfiguration
+	 * @param sender The publisher of monitor point values to the IAS core
+	 * @param hbProducer the publisher of HBs
+	 */
+	public SimpleLoopPlugin(
+			PluginConfig config, 
+			MonitorPointSender sender,
+			HbProducer hbProducer) {
+		super(config,sender,hbProducer);
 	}
 	
 	/**
@@ -173,7 +187,7 @@ public class SimpleLoopPlugin extends Plugin implements Runnable {
 				pluginId, 
 				monSysId, 
 				serverName, 
-				port, 
+				port,
 				Plugin.getScheduledExecutorService());
 		
 		logger.info("kafka publisher created");
@@ -181,7 +195,10 @@ public class SimpleLoopPlugin extends Plugin implements Runnable {
 		/**
 		 * Instantiate the plugin
 		 */
-		SimpleLoopPlugin plugin = new SimpleLoopPlugin(config, publisher);
+		SimpleLoopPlugin plugin = new SimpleLoopPlugin(
+				config, 
+				publisher,
+				new HbKafkaProducer(pluginId, new HbJsonSerializer()));
 		logger.info("Plugin built");
 		
 		try {
