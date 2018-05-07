@@ -13,8 +13,45 @@
 	<available file="${iasRoot}" type="dir" property="iasRoot.exists"/>
 
 	<taskdef resource="net/sf/antcontrib/antlib.xml"/>
+	
+	<!-- IAS Modules -->
+	 <resources id="iasModsResources">
+        <string>Tools</string>
+	 	<string>Utils</string>
+        <string>Cdb</string>
+        <string>BasicTypes</string>
+        <string>KafkaUtils</string>
+	 	<string>Heartbeat</string>
+        <string>plugin</string>
+        <string>Converter</string>
+        <string>CompElement</string>
+        <string>DistributedUnit</string>
+	 	<string>Supervisor</string>
+        <string>WebServerSender</string>
+	 	<string>TransferFunctions</string>
+ 		<string>Tests/SimpleLoopTest</string>
+    </resources>
+    <pathconvert property="iasModules" refid="iasModsResources" pathsep="," />
 
-	<property name="iasModules" value="Tools,Utils,Cdb,BasicTypes,KafkaUtils,Heartbeat,plugin,Converter,CompElement,DistributedUnit,Supervisor,WebServerSender,TransferFunctions,Tests/SimpleLoopTest" />
+    <!-- Extract git version into properties -->
+    <target name="git-version">
+	    <exec executable="git" outputproperty="git.branch"
+	     failifexecutionfails="false">
+	     <arg line="rev-parse --abbrev-ref HEAD"/>
+	    </exec>
+	
+	    <exec executable="git" outputproperty="git.hash.long"
+	     failifexecutionfails="false">
+	     <arg line="rev-parse --verify HEAD"/>
+	    </exec>
+	
+	    <exec executable="git" outputproperty="git.hash.short"
+	     failifexecutionfails="false">
+	     <arg line="rev-parse --short HEAD"/>
+	    </exec>
+	
+	    <echo>Git: ${git.branch} ${git.hash.short} ${git.hash.long}</echo>
+    </target>
 
 	<target name="SanityCheck">
 		<!--
@@ -64,12 +101,17 @@
 		</antcall>
     </target>
 
-	<target name="build" depends="SanityCheck">
+	<target name="build" depends="git-version, SanityCheck">
 		<echo>Building IAS modules: ${iasModules}</echo>
 		<antcall target="commontask">
 			<param name="ant-folder" value="src" />
 			<param name="anttasks" value="build,install" />
 		</antcall>
+		<echo>Generating IAS_VERSION</echo>
+        <exec executable="echo" failifexecutionfails="false">
+	        <arg line="${git.branch} ${git.hash.short} ${git.hash.long}"/>
+	        <redirector output="${iasRoot}/IAS_GIT_VERSION"/>
+        </exec>
 	</target>
 
 	<target name="install" depends="SanityCheck">
