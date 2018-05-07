@@ -375,12 +375,18 @@ public class WebServerSender implements IasioListener {
 		Objects.requireNonNull(kServers);
 		HbProducer hbProd = new HbKafkaProducer(id, kServers, hbSerializer);
 		
-		WebServerSender ws = new WebServerSender(
+		WebServerSender ws=null;
+		try { 
+			ws = new WebServerSender(
 				id, 
 				System.getProperties(), 
 				null,
 				frequency,
 				hbProd);
+		} catch (URISyntaxException e) {
+			logger.error("Could not instantiate the WebServerSender",e);
+			System.exit(-1);
+		}
 		ws.setUp();
 	}
 
