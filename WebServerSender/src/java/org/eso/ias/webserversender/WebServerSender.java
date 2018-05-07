@@ -1,6 +1,7 @@
 package org.eso.ias.webserversender;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
@@ -101,12 +102,12 @@ public class WebServerSender implements IasioListener {
 	/**
 	 * WebSocket session required to send messages to the Web server
 	 */
-	private static Optional<Session> sessionOpt;
+	private Optional<Session> sessionOpt;
 
 	/**
 	 * Same as the webserverUri but as a URI object
 	 */
-	private static URI uri;
+	private final URI uri;
 
 	/**
 	 * Web socket client
@@ -156,13 +157,14 @@ public class WebServerSender implements IasioListener {
 	 * @param listener The listenr of the messages sent to the websocket server
 	 * @param hbFrequency the frequency of the heartbeat (seconds)
 	 * @param hbProducer the sender of HBs
+	 * @throws URISyntaxException 
 	 */
 	public WebServerSender(
 			String senderID, 
 			Properties props, 
 			WebServerSenderListener listener,
 			int hbFrequency,
-			HbProducer hbProducer) {
+			HbProducer hbProducer) throws URISyntaxException {
 		Objects.requireNonNull(senderID);
 		if (senderID.trim().isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty converter ID");
@@ -173,6 +175,7 @@ public class WebServerSender implements IasioListener {
 		kafkaServers = props.getProperty(KAFKA_SERVERS_PROP_NAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS);
 		sendersInputKTopicName = props.getProperty(IASCORE_TOPIC_NAME_PROP_NAME, KafkaHelper.IASIOs_TOPIC_NAME);
 		webserverUri = props.getProperty(WEBSERVER_URI_PROP_NAME, DEFAULT_WEBSERVER_URI);
+		uri = new URI(webserverUri);
 		logger.debug("Websocket connection URI: "+ webserverUri);
 		logger.debug("Kafka server: "+ kafkaServers);
 		senderListener = Optional.ofNullable(listener);
@@ -268,7 +271,6 @@ public class WebServerSender implements IasioListener {
 	 */
 	public void connect() {
 		try {
-			this.uri = new URI(webserverUri);
 			sessionOpt = Optional.empty();
 			this.connectionReady = new CountDownLatch(1);
 			client = new WebSocketClient();
