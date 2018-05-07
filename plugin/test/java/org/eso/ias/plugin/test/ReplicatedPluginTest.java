@@ -7,7 +7,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
+import java.util.Vector;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.eso.ias.heartbeat.HbEngine;
+import org.eso.ias.heartbeat.HbMsgSerializer;
+import org.eso.ias.heartbeat.HbProducer;
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.plugin.Plugin;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
@@ -18,6 +25,7 @@ import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.types.IasValidity;
 import org.eso.ias.types.Identifier;
+import org.eso.ias.types.IdentifierType;
 import org.eso.ias.types.OperationalMode;
 import org.junit.Before;
 import org.junit.Test;
@@ -88,6 +96,8 @@ public class ReplicatedPluginTest {
 		
 	}
 	
+	
+	
 	/**
 	 * The plugin to test
 	 */
@@ -103,12 +113,14 @@ public class ReplicatedPluginTest {
 	 */
 	private Sender monitorPointSender;
 	
+	private final String monitoredSystemId = "MonSysId";
+	private Identifier monSysIdentifier = new Identifier(monitoredSystemId, IdentifierType.MONITORED_SOFTWARE_SYSTEM);
+	
 	/**
 	 * The identifier of the plugin 
 	 */
-	private final String pluginId = "ReplicatedPluginId"; 
-	
-	private final String monitoredSystemId = "MonSysId";
+	private final String pluginId = "ReplicatedPluginId";
+	private Identifier pluginIdentifier = new Identifier(pluginId, IdentifierType.PLUGIN,monSysIdentifier);
 	
 	private final Value v1 = new Value();
 	
@@ -138,6 +150,11 @@ public class ReplicatedPluginTest {
 		values.add(v2);
 		values.add(v3);
 		
+		// Format of the string with the HBs
+		HbMsgSerializer hbSerializer = new HbJsonSerializer();
+		
+		// Build the producer for sending HBs
+		HbProducer hbProd = new MockHeartBeatProd(hbSerializer);
 		
 		replicatedPlugin = new Plugin(
 				pluginId, 
@@ -148,7 +165,9 @@ public class ReplicatedPluginTest {
 				null, //defaultFilter
 				null, //defaultFilterOptions
 				2,
-				instance);
+				instance,
+				1,
+				hbProd);
 	}
 	
 	/**

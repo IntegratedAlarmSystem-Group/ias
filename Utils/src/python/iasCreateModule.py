@@ -6,6 +6,7 @@ Created on Aug 18, 2016
 '''
 
 import argparse
+import os
 
 from IASTools.ModuleSupport import ModuleSupport
 from IASLogging.logConf import Log

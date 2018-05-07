@@ -125,6 +125,8 @@ public class TestRdbCdb {
 		
 		ias.setRefreshRate(4);
 		ias.setTolerance(3);
+		
+		ias.setHbFrequency(5);
 
 		// Write the IAS
 		cdbWriter.writeIas(ias);
@@ -141,6 +143,7 @@ public class TestRdbCdb {
 		
 		ias2.setRefreshRate(5);
 		ias2.setTolerance(2);
+		ias2.setHbFrequency(10);
 
 		cdbWriter.writeIas(ias2);
 

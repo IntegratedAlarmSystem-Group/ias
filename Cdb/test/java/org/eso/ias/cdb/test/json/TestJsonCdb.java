@@ -112,6 +112,8 @@ public class TestJsonCdb {
 		ias.setRefreshRate(4);
 		ias.setTolerance(3);
 		
+		ias.setHbFrequency(5);
+		
 		// Write the IAS
 		cdbWriter.writeIas(ias);
 		
@@ -123,6 +125,41 @@ public class TestJsonCdb {
 		Optional<IasDao> optIas = cdbReader.getIas();
 		assertTrue("Got an empty IAS!", optIas.isPresent());
 		assertEquals("The IASs differ!", ias, optIas.get());
+	}
+	
+
+	
+	/**
+	 * Test the reading of ias.json
+	 * <P>
+	 * This test runs against the JSON CDB contained in testCdb
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetIasFromFile() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./testCdb");
+		cdbFiles = new CdbJsonFiles(path);
+		cdbReader = new JsonReader(cdbFiles);
+		
+		Optional<IasDao> iasOpt = cdbReader.getIas();
+		assertTrue(iasOpt.isPresent());
+		IasDao ias = iasOpt.get();
+		
+		assertEquals(LogLevelDao.INFO,ias.getLogLevel());
+		assertEquals(5,ias.getRefreshRate());
+		assertEquals(1,ias.getTolerance());
+		assertEquals(10,ias.getHbFrequency());
+		
+		Set<PropertyDao> props = ias.getProps();
+		assertEquals(2,props.size());
+		props.forEach( p -> {
+			if (p.getName().equals("PropName1")) {
+				assertEquals("PropValue1",p.getValue());
+			} else if (p.getName().equals("PropName2")) {
+				assertEquals("PropValue2",p.getValue());
+			} 
+		});
 	}
 
 	/**
@@ -440,6 +477,8 @@ public class TestJsonCdb {
 		set.stream().forEach(x -> assertTrue(optSet4.get().contains(x)));
 		set2.stream().forEach(x -> assertFalse(optSet4.get().contains(x)));
 	}
+	
+	
 	
 	/**
 	 * Test the getting of DASUs belonging to a given supervisor

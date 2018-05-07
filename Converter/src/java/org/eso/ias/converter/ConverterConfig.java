@@ -4,6 +4,10 @@ import java.util.Properties;
 
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.rdb.RdbReader;
+import org.eso.ias.heartbeat.HbMsgSerializer;
+import org.eso.ias.heartbeat.HbProducer;
+import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -27,4 +31,15 @@ public class ConverterConfig {
 		return new ConverterKafkaStream(cID, props);
 	}
 	
+	@Bean
+	@Lazy(value = true)
+	public HbProducer hbProducer(String cID, Properties props) { 
+		HbMsgSerializer hbSerializer = new HbJsonSerializer();
+		
+		String kafkaServers = props.getProperty(
+				ConverterKafkaStream.KAFKA_SERVERS_PROP_NAME, 
+				ConverterKafkaStream.DEFAULTKAFKASERVERS);
+		
+		return new HbKafkaProducer(cID, kafkaServers, hbSerializer); 
+	}
 }

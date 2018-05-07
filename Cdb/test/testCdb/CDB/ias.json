@@ -1,0 +1,10 @@
+{
+	"logLevel":"INFO",
+	"refreshRate":"5",
+	"tolerance":"1",
+	"hbFrequency":"10",
+	"props": [
+		{ "name":"PropName1", "value":"PropValue1"},
+		{ "name":"PropName2", "value":"PropValue2"}
+	]
+}

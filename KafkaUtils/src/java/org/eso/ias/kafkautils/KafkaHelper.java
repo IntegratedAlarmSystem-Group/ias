@@ -42,6 +42,11 @@ public class KafkaHelper {
 	 * push the IASIOs
 	 */
 	public static final String IASIOs_TOPIC_NAME = "BsdbCoreKTopic";
+	
+	/**
+	 * The name of the kafka topic where tools publish the heartbeat
+	 */
+	public static final String HEARTBEAT_TOPIC_NAME = "HeartbeatTopic";
 
 	/**
 	 * Get the value of a property from the system properties

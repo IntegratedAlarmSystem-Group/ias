@@ -56,6 +56,7 @@ public class JsonConfigReaderTest {
 		assertEquals(8192,config.getSinkPort());
 		assertEquals(2, config.getValues().length);
 		assertEquals(3, config.getAutoSendTimeInterval());
+		assertEquals(9, config.getHbFrequency());
 		assertEquals("Average",config.getDefaultFilter());
 		assertEquals("5,10,15",config.getDefaultFilterOptions());
 		

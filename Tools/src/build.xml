@@ -40,7 +40,6 @@
 		              if not set the build is skipped
 	     
 	-->
-	<property name="jarName" value="ias-tools.jar" />
 	
 	<!-- ####################### TARGETS ####################### -->
 	

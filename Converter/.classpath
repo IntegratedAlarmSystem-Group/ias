@@ -15,5 +15,6 @@
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-kafka-tools.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT"/>
 	<classpathentry kind="lib" path="extTools/kafka-streams-1.0.0.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ias-heartbeat.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

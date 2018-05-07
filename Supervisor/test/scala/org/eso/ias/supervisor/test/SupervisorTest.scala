@@ -23,6 +23,9 @@ import scala.collection.mutable.ArrayBuffer
 // The following import is required by the usage of the fixture
 import language.reflectiveCalls
 import java.util.HashSet
+import org.eso.ias.heartbeat.HbProducer
+import org.eso.ias.heartbeat.publisher.HbLogProducer
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer
 
 class SupervisorTest extends FlatSpec {
 
@@ -71,12 +74,13 @@ class SupervisorTest extends FlatSpec {
       val cdbReader: CdbReader = new JsonReader(cdbFiles)
 
       val supervIdentifier = new Identifier("SupervisorID", IdentifierType.SUPERVISOR, None)
-
+      
       /** The supervisor to test */
       val supervisor = new Supervisor(
         supervIdentifier,
         outputPublisher,
         inputsProvider,
+        new HbLogProducer(new HbJsonSerializer),
         cdbReader,
         DasuMock.apply)
 
