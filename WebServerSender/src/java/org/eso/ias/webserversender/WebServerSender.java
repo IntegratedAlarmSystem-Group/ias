@@ -31,12 +31,13 @@ import org.eso.ias.kafkautils.KafkaIasiosConsumer;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener;
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
 import org.eso.ias.types.IasValueJsonSerializer;
+import org.eso.ias.types.IasValueSerializerException;
 import org.eso.ias.types.IASValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @WebSocket(maxTextMessageSize = 64 * 1024)
-public class WebServerSender implements IasioListener, Runnable {
+public class WebServerSender implements IasioListener {
 
 	/**
 	 * The identifier of the sender
@@ -99,7 +100,7 @@ public class WebServerSender implements IasioListener, Runnable {
 	/**
 	 * WebSocket session required to send messages to the Web server
 	 */
-	private static Session session;
+	private static Optional<Session> sessionOpt;
 
 	/**
 	 * Same as the webserverUri but as a URI object
@@ -177,7 +178,6 @@ public class WebServerSender implements IasioListener, Runnable {
 		
 		Objects.requireNonNull(hbProducer);
 		hbEngine = HbEngine.apply(senderID, hbFrequency, hbProducer);
-		kafkaConsumer.setUp();
 	}
 
 	/**
@@ -189,10 +189,10 @@ public class WebServerSender implements IasioListener, Runnable {
 	@OnWebSocketClose
 	public void onClose(int statusCode, String reason) {
 	   logger.info("WebSocket connection closed. status: " + statusCode + ", reason: " + reason);
-	   this.session = null;
+	   sessionOpt = Optional.empty();
 	   if (statusCode != 1001) {
 		   logger.info("Trying to reconnect");
-		   this.run();
+		   this.connect();
 	   }
 	   else {
 		   logger.info("WebServerSender was stopped");
@@ -207,7 +207,7 @@ public class WebServerSender implements IasioListener, Runnable {
 	@OnWebSocketConnect
 	public void onConnect(Session session) {
 	   logger.info("WebSocket got connect. remoteAdress: " + session.getRemoteAddress());
-	   this.session = session;
+	   sessionOpt = Optional.ofNullable(session);
 	   this.connectionReady.countDown();
 	   try {
 	       kafkaConsumer.startGettingEvents(StartPosition.END, this);
@@ -224,40 +224,40 @@ public class WebServerSender implements IasioListener, Runnable {
     }
 
 	/**
-	 * This method could get notifications for messages
-	 * published before depending on the log and offset
-	 * retention times. Therefore it discards the strings
-	 * not published by this test
-	 * @throws Exception
+	 * This method receives IASValues published in the BSDB.
 	 *
-	 * @see org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener#stringEventReceived(java.lang.String)
+	 * @see {@link IasioListener#iasioReceived(IASValue)}
 	 */
 	@Override
 	public synchronized void iasioReceived(IASValue<?> event) {
+		final String value;
 		try {
-			String value = serializer.iasValueToString(event);
-			if (this.session != null) {
-				this.session.getRemote().sendStringByFuture(value);
-				logger.debug("Value sent: " + value);
-				this.notifyListener(value);
-			}
-			else {
-				logger.debug("No server available to send message: " + value);
-			}
+			value = serializer.iasValueToString(event);
+		} catch (IasValueSerializerException avse){
+			logger.error("Error converting the event into a string", avse);
+			return;
 		}
-		catch (Exception e){
-			logger.error("Error sending message to the Web Server", e);
-		}
+		
+		sessionOpt.ifPresent( session -> {
+			session.getRemote().sendStringByFuture(value);
+			logger.debug("Value sent: " + value);
+			this.notifyListener(value);
+		});
+	}
+	
+	public void setUp() {
+		hbEngine.start();
+		kafkaConsumer.setUp();
+		connect();
 	}
 
 	/**
 	 * Initializes the WebSocket connection
 	 */
-	public void run() {
-		hbEngine.start();
+	public void connect() {
 		try {
 			this.uri = new URI(webserverUri);
-			this.session = null;
+			sessionOpt = Optional.empty();
 			this.connectionReady = new CountDownLatch(1);
 			this.client = new WebSocketClient();
 			this.client.start();
@@ -265,23 +265,23 @@ public class WebServerSender implements IasioListener, Runnable {
 			if(!this.connectionReady.await(this.reconnectionInterval, TimeUnit.SECONDS)) {
 				logger.info("WebSocketSender could not establish the connection with the server.");
 				logger.info("Trying to reconnect");
-				this.run();
+				connect();
 			}
 			logger.debug("Connection started!");
 		}
 		catch( Exception e) {
 			logger.error("Error on WebSocket connection", e);
-			this.stop();
+			this.shutdown();
 		}
 	}
 
 	/**
 	 * Shutdown the WebSocket client and Kafka consumer
 	 */
-	public void stop() {
-		this.session = null;
+	public void shutdown() {
 		hbEngine.updateHbState(HeartbeatStatus.EXITING);
 		kafkaConsumer.tearDown();
+		sessionOpt = Optional.empty();
 		try {
 			this.client.stop();
 			logger.debug("Connection stopped!");
@@ -367,7 +367,7 @@ public class WebServerSender implements IasioListener, Runnable {
 				null,
 				frequency,
 				hbProd);
-		ws.run();
+		ws.setUp();
 	}
 
 }

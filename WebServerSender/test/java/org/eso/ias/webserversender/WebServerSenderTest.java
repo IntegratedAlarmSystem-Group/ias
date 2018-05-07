@@ -1,5 +1,8 @@
 package org.eso.ias.webserversender;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -14,32 +17,26 @@ import java.util.stream.Collectors;
 
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.websocket.server.WebSocketHandler;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import org.eso.ias.heartbeat.HbMsgSerializer;
 import org.eso.ias.heartbeat.HbProducer;
 import org.eso.ias.heartbeat.publisher.HbLogProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaIasiosProducer;
-import org.eso.ias.kafkautils.SimpleStringProducer;
-import org.eso.ias.types.Identifier;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
 import org.eso.ias.types.IasValidity;
 import org.eso.ias.types.IasValueJsonSerializer;
 import org.eso.ias.types.IasValueStringSerializer;
+import org.eso.ias.types.Identifier;
 import org.eso.ias.types.OperationalMode;
-import org.eso.ias.webserversender.WebServerSender;
 import org.eso.ias.webserversender.WebServerSender.WebServerSenderListener;
 import org.eso.ias.webserversender.WebSocketServerHandler.WebSocketServerListener;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Test that, when messages are published to the Kafka queue,
@@ -195,7 +192,7 @@ public class WebServerSenderTest {
 				listener,
 				1,
 				hProd);
-		this.webServerSender.run();
+		this.webServerSender.setUp();
 		logger.info("WebServerSender initialized...");
 	}
 
@@ -397,7 +394,7 @@ public class WebServerSenderTest {
 	public void tearDown() throws Exception {
 		logger.info("Starting Test Finalization");
 		this.producer.tearDown();
-		this.webServerSender.stop();
+		this.webServerSender.shutdown();
 		this.server.stop();
 		logger.info("Test Finalization Completed");
 	}
