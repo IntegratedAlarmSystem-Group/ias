@@ -8,5 +8,8 @@
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-plugin.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-heartbeat.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/slf4j-api-1.7.25.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ias-utils.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/jackson-core-2.9.4.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/jackson-databind-2.9.4.jar"/>
 	<classpathentry kind="output" path="lib"/>
 </classpath>

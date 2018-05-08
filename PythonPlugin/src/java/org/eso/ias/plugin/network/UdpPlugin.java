@@ -12,11 +12,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.eso.ias.heartbeat.HbProducer;
 import org.eso.ias.plugin.Plugin;
 import org.eso.ias.plugin.PluginException;
+import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.PublisherException;
+import org.eso.ias.types.AlarmSample;
+import org.eso.ias.types.IASTypes;
+import org.eso.ias.utils.ISO8601Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * A plugin that gets monitor points and alarms 
@@ -73,6 +80,11 @@ public class UdpPlugin implements Runnable {
 	 * The max size of the buffer
 	 */
 	public static final int receivedStringBufferSize = 2048;
+	
+	/**
+	 * The mapper to convert received strings into {@link MessageDao}
+	 */
+	private static final ObjectMapper MAPPER = new ObjectMapper();
 	
 	/**
 	 * The buffer of strings received from the socket
@@ -157,11 +169,75 @@ public class UdpPlugin implements Runnable {
 	 * 
 	 * @param str
 	 */
-	public void submitValue(String str) {
+	private void submitValue(String str) {
 		if (str==null || str.isEmpty()) {
 			throw new IllegalArgumentException("Invalid value from socket");
 		}
 		logger.debug("Submitting [{}] to the plugin library",str);
+		
+		MessageDao message;
+		try { 
+			message = MAPPER.readValue(str, MessageDao.class);
+		} catch (Exception e) {
+			logger.error("Exception parsing JSON string [{}]: value lost",str,e);
+			return;
+		}
+		Object value;
+		try { 
+			value = convertStringToObject(message.getValue(),message.getValueType());
+		} catch (PluginException pe) {
+			logger.error("Exception building the object of type [{}] and value[{}]: value lost",
+					message.getValue(),
+					message.getValueType(),
+					pe);
+			return;
+		}
+		
+		
+		long timestamp;
+		try { 
+			timestamp = ISO8601Helper.timestampToMillis(message.getTimestamp());
+		} catch (Exception e) {
+			logger.error("Exception parsing te timestamp [{}]: using actual time",message.getTimestamp(),e);
+			timestamp=System.currentTimeMillis();
+		}
+		
+		Sample sample = new Sample(value,timestamp);
+		try {
+			plugin.updateMonitorPointValue(message.getId(), sample);
+		} catch (Exception e) {
+			logger.error("Exception adding the sample [{}] to the plugin: value lost",message.getId(),e);
+		}
+	}
+	
+	/**
+	 * Parse the passed string of the give type into a java object
+	 * 
+	 * @param value the string representation of the value
+	 * @param valueType the type of the value
+	 * @return the java object for the give value and type
+	 * @throws PluginException in case of error building the object
+	 */
+	private Object convertStringToObject(String value, String valueType) throws PluginException {
+		if (value==null || value.isEmpty()) {
+			throw new PluginException("Invalid value string to parse");
+		}
+		if (valueType==null || valueType.isEmpty()) {
+			throw new PluginException("Invalid value type");
+		}
+		
+		IASTypes iasType;
+		try { 
+			iasType = IASTypes.valueOf(valueType);
+		} catch (Exception e) {
+			throw new PluginException("Unrecognized/Unsupported value type "+valueType);
+		}
+		try {
+			return IASTypes.convertStringToObject(value, iasType);
+		} catch (Exception e) {
+			throw new PluginException("Exception converting "+value+" to an object of type "+iasType,e);
+		}
+		
 	}
 	
 	/**
