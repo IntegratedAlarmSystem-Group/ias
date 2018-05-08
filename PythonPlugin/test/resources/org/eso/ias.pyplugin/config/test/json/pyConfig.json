@@ -1,0 +1,19 @@
+{ 
+	"id":"Plugin-ID",
+	"monitoredSystemId":"ACS",
+	"sinkServer":"iasdevel.hq.eso.org",
+	"sinkPort":"8192",
+	"autoSendTimeInterval":"3",
+	"hbFrequency":"5",
+	"properties": [],
+	"values":[
+		{"id":"AlarmID",
+		"refreshTime":"3000",
+		"filter":"org.eso.ias.plugin.filter.NoneFilter",
+		"filterOptions":""},
+		{"id":"TempID",
+		"refreshTime":"5000",
+		"filter":"org.eso.ias.plugin.filter.NoneFilter",
+		"filterOptions":""}]
+}
+
