@@ -5,6 +5,7 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -21,6 +22,9 @@ import org.slf4j.LoggerFactory;
  * A plugin that gets monitor points and alarms 
  * from a UDP socket.
  * 
+ * Strings received from the socket are pushed in the {@link #receivedStringQueue}
+ * queue and processed by a dedicated thread to decouple reading 
+ * from processing and better cope with spikes.
  * 
  * @author acaproni
  *
@@ -34,20 +38,21 @@ public class UdpPlugin implements Runnable {
 	private final Plugin plugin; 
 	
 	/**
-	 * The number of the UDP port
-	 */
-	private final int udpPort;
-	
-	/**
 	 * The UDP socket
 	 */
 	private final DatagramSocket udpSocket;
 	
 	/**
-	 * The thread processing events received from the UDP socket
+	 * The thread getting strings from the UDP socket
+	 * and pushing them in the buffer
 	 */
-	private volatile Thread thread;
+	private volatile Thread udpRecvThread;
 	
+	/**
+	 * The thread getting strings from the buffer and 
+	 * sending them to the plugin
+	 */
+	private volatile Thread stringProcessrThread;
 	
 	/**
 	 * Signal the thread to terminate
@@ -63,6 +68,16 @@ public class UdpPlugin implements Runnable {
 	 * The latch to be notified about termination
 	 */
 	private final CountDownLatch done = new CountDownLatch(1);
+	
+	/**
+	 * The max size of the buffer
+	 */
+	public static final int receivedStringBufferSize = 2048;
+	
+	/**
+	 * The buffer of strings received from the socket
+	 */
+	private final LinkedBlockingDeque<String> receivedStringQueue = new LinkedBlockingDeque<>(receivedStringBufferSize);
 	
 	/**
 	 * Constructor
@@ -86,9 +101,7 @@ public class UdpPlugin implements Runnable {
 		if (udpPort<1024) {
 			throw new IllegalArgumentException("Invalid UDP port: "+udpPort);
 		}
-		this.udpPort=udpPort;
-		
-		this.udpSocket = new DatagramSocket(udpPort);
+		udpSocket = new DatagramSocket(udpPort);
 	}
 
 	/**
@@ -104,7 +117,6 @@ public class UdpPlugin implements Runnable {
 		// The buffer
 		byte[] buffer = new byte[2048];
 		logger.debug("UDP loop thread started");
-		System.out.println("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX");
 		// The loop to get monitor from the socket 
 		while (!terminateThread.get()) {
 			DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
@@ -117,13 +129,39 @@ public class UdpPlugin implements Runnable {
 			}
 			String receivedString = new String(packet.getData());
 			logger.debug("Packet of size {} received from {}:{}: [{}]",
-					packet.getData().length,
+					receivedString.length(),
 					packet.getAddress(),
 					packet.getPort(),
 					receivedString);
+			// Put the string in the buffer
+			if (receivedString.isEmpty()) {
+				logger.warn("Got an empty string from the socket?!?");
+				continue;
+			}
+			boolean addedToQueue = receivedStringQueue.offer(receivedString);
+			if (!addedToQueue) {
+				logger.warn("Queue full: string rejected: [{}]",receivedString);
+			} else {
+				logger.debug("String [{}] pushed in buffer (size of buffer ={})",
+						receivedString,
+						receivedStringQueue.size());
+			}
 		}
 		done.countDown();
 		logger.debug("UDP loop thread terminated");
+	}
+	
+	/**
+	 * Submit a value received from the socket to the
+	 * plugin
+	 * 
+	 * @param str
+	 */
+	public void submitValue(String str) {
+		if (str==null || str.isEmpty()) {
+			throw new IllegalArgumentException("Invalid value from socket");
+		}
+		logger.debug("Submitting [{}] to the plugin library",str);
 	}
 	
 	/**
@@ -139,9 +177,33 @@ public class UdpPlugin implements Runnable {
 		} catch (PublisherException pe) {
 			throw new PluginException("Error starting the plugin",pe);
 		}
+		logger.debug("Starting the string processor loop");
+		stringProcessrThread = Plugin.getThreadFactory().newThread(new Runnable() {
+			public void run() {
+				logger.debug("String processor thread started");
+				while (!terminateThread.get()) {
+					String strToInject=null;
+					try {
+						strToInject= receivedStringQueue.take();
+					} catch (InterruptedException ie) {
+						logger.warn("Interrupted",ie);
+						continue;
+					}
+					try {
+						if (strToInject!=null && !strToInject.isEmpty()) {
+							submitValue(strToInject);
+						}
+					} catch (Exception e) {
+						logger.warn("Error processing [{}]: ignored",strToInject,e);
+					}
+				}
+			}
+		});
+		stringProcessrThread.start();
+		
 		logger.debug("Starting the UDP loop");
-		thread = Plugin.getThreadFactory().newThread(this);
-		thread.start();
+		udpRecvThread = Plugin.getThreadFactory().newThread(this);
+		udpRecvThread.start();
 		// Adds the shutdown hook
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 			@Override
@@ -159,8 +221,11 @@ public class UdpPlugin implements Runnable {
 	public void shutdown() {
 		logger.debug("Shutting down the UDP loop");
 		terminateThread.set(true);
-		if (thread!=null) {
-			thread.interrupt();
+		if (udpRecvThread!=null) {
+			udpRecvThread.interrupt();
+		}
+		if (stringProcessrThread!=null) {
+			stringProcessrThread.interrupt();
 		}
 		boolean terminatedInTime;
 		try {
