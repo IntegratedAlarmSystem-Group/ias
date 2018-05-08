@@ -3,6 +3,7 @@ package org.eso.ias.types;
 import java.util.Objects;
 
 import org.eso.ias.cdb.pojos.IasTypeDao;
+import org.eso.ias.plugin.PluginException;
 
 /**
  * Java representation of the IAS types.
@@ -73,4 +74,33 @@ public enum IASTypes {
     	default: throw new UnsupportedOperationException("Unsupported DAO type "+typeDao);
     	}
     }
+    
+    /**
+	 * Parse the passed string of the given type into a java object
+	 * 
+	 * @param value the string representation of the value
+	 * @param valueType the type of the value
+	 * @return the java object for the give value and type
+	 * @throws PluginException in case of error building the object
+	 */
+	public static Object convertStringToObject(String value, IASTypes valueType) throws PluginException {
+		if (value==null || value.isEmpty()) {
+			throw new PluginException("Invalid value string to parse");
+		}
+		Objects.requireNonNull(valueType);
+		
+		switch (valueType) {
+	    	case LONG: return Long.parseLong(value);
+	    	case INT: return Integer.parseInt(value);
+	    	case SHORT: return Short.parseShort(value);
+	    	case BYTE: return Byte.parseByte(value);
+	    	case DOUBLE: return Double.parseDouble(value);
+	    	case FLOAT: return Float.parseFloat(value);
+	    	case BOOLEAN: return Boolean.parseBoolean(value);
+	    	case CHAR: return value.charAt(0);
+	    	case STRING: return value;
+	    	case ALARM: return AlarmSample.valueOf(value);
+	    	default: throw new UnsupportedOperationException("Unsupported type "+valueType);
+    	}
+	}
 };
