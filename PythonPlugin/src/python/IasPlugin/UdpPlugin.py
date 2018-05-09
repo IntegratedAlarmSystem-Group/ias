@@ -59,6 +59,8 @@ class UdpPlugin(Thread):
         log=Log()
         self.logger=log.GetLoggerFile(os.path.basename(__file__).split(".")[0])
         
+        self.logger.info('UdpPlugin will send UDP messages to %s(%s):%d',self._hostname,self._ip,self._port )
+        
         # Monitor points to send are initially stored in the dictionary
         # (key=MPoint ID, value = JSonMsg)
         self._MPointsToSend = {}
@@ -90,6 +92,7 @@ class UdpPlugin(Thread):
         self.logger.info('Starting up')
         self._started = True
         self._timer = Timer(UdpPlugin.SENDING_TIME_INTERVAL, self._sendMonitorPoints)
+        self._timer.start()
         self.logger.info('Started.')
     
     def shutdown(self):
@@ -102,21 +105,20 @@ class UdpPlugin(Thread):
         self._lock.release()
         if self._started:
             self._timer.cancel()
-            self.join(1)
-            self._sock.close()
+        self._sock.close()
         self.logger.info('Closed.')
         
-    def submit(self, id,timestamp=datetime.utcnow(), value, valueType):
+    def submit(self, id, value, valueType, timestamp=datetime.utcnow()):
         '''
         Submit a monitor point or alarm with the give ID to the java plugin.
         
         The monitor point is added to the dictionary and will be sent later
         
         @param the not None nor empty ID of the monitor point
-        @param timestamp: (datetime) the timestamp when the value has been
-                          red from the monitored system
         @param value: the value of the monitor point
         @param valueType: the type of the monitor point
+        @param timestamp: (datetime) the timestamp when the value has been
+                          red from the monitored system
         @see: JsonMsg.IAS_SUPPORTED_TYPES
         '''
         if id is None:
@@ -130,7 +132,7 @@ class UdpPlugin(Thread):
         
         if self._shuttedDown:
             return
-        msg = JsonMsg(id,timestamp,value, valueType)
+        msg = JsonMsg(id,value, valueType,timestamp)
         self._lock.acquire()
         self._MPointsToSend[msg.id]=msg
         self._lock.release()
@@ -163,6 +165,7 @@ class UdpPlugin(Thread):
             if not self._shuttedDown:
                 self._lock.acquire()
                 self._timer = Timer(UdpPlugin.SENDING_TIME_INTERVAL, self._sendMonitorPoints)
+                self._timer.start()
                 self._lock.release()
     
     def _send(self, mPoint):
@@ -175,5 +178,5 @@ class UdpPlugin(Thread):
         jsonStr = mPoint.dumps()
         
         # send the string to the UDP socket
-        self.sock.sendto(bytes(jsonStr, "utf-8"),(self._ip, self._port))
+        self._sock.sendto(bytes(jsonStr, "utf-8"),(self._ip, self._port))
         
