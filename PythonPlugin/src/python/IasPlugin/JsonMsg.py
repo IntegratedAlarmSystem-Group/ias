@@ -8,14 +8,29 @@ import json
 from datetime import datetime
 
 class JsonMsg(object):
-    
     '''
     This class encapsulate the field of the message to send
     to the java plugin as JSON string
     
     It is the  counter part of the java org.eso.ias.plugin.network.MessageDao
+    
+    The type must be one of types supported by the IAS as defined in
+    org.eso.ias.types.IASTypes
     '''
 
+    # types supported by the IAS
+    IAS_SUPPORTED_TYPES = (
+        'LONG', 
+        'INT', 
+        'SHORT', 
+        'BYTE', 
+        'DOUBLE', 
+        'FLOAT', 
+        'BOOLEAN', 
+        'CHAR', 
+        'STRING', 
+        'ALARM')
+        
     def __init__(self, id, timestamp=datetime.utcnow(), value, valueType):
         '''
         Constructor
@@ -24,9 +39,10 @@ class JsonMsg(object):
         @param timestamp: (datetime) the point in time when the value 
                           has been read from the monitored system; 
                           if not provided, it is set to the actual time
-        @param value: (string)  the value to send to the BSDB
+        @param value: the value to send to the BSDB
         @param valueType: the type of the value
         '''
+        
         self.id=str(id)
         if not self.id:
             raise ValueError("Invalid empty ID") 
@@ -39,10 +55,12 @@ class JsonMsg(object):
         if not self.value:
             raise ValueError("Invalid empty value")
        
-        self.valueType=str(valueType)
+        self.valueType=str(valueType).upper()
         if not self.valueType:
             raise ValueError("Invalid empty type")
         
+        if not self.valueType in JsonMsg.IAS_SUPPORTED_TYPES:
+            raise ValueError("Unknown type: "+self.valueType+ "not in "+JsonMsg.IAS_SUPPORTED_TYPES)
         # define the names of the json fields
         self.idJsonParamName = "id"
         self.tStampJsonParamName = "timestamp"
