@@ -4,7 +4,7 @@ import os, errno
 import datetime
 
 
-class Log():
+class Log(object):
   @staticmethod
   def GetLoggerFile(fileName):
     #take the path for logs folder inside $IAS_ROOT
