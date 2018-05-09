@@ -31,16 +31,16 @@ class JsonMsg(object):
         'STRING', 
         'ALARM')
         
-    def __init__(self, id, timestamp=datetime.utcnow(), value, valueType):
+    def __init__(self, id, value, valueType, timestamp=datetime.utcnow()):
         '''
         Constructor
         
         @param id: the identifier of the monitor point
+        @param value: the value to send to the BSDB
+        @param valueType: the type of the value
         @param timestamp: (datetime) the point in time when the value 
                           has been read from the monitored system; 
                           if not provided, it is set to the actual time
-        @param value: the value to send to the BSDB
-        @param valueType: the type of the value
         '''
         
         self.id=str(id)
@@ -60,7 +60,8 @@ class JsonMsg(object):
             raise ValueError("Invalid empty type")
         
         if not self.valueType in JsonMsg.IAS_SUPPORTED_TYPES:
-            raise ValueError("Unknown type: "+self.valueType+ "not in "+JsonMsg.IAS_SUPPORTED_TYPES)
+            
+            raise ValueError("Unknown type: "+self.valueType)
         # define the names of the json fields
         self.idJsonParamName = "id"
         self.tStampJsonParamName = "timestamp"
@@ -78,7 +79,7 @@ class JsonMsg(object):
         '''
         
         # isoTStamp in microseconds like 2018-05-09T16:15:05.775444
-        isoTStamp=self.timestamp.isoformat() 
+        isoTStamp=tStamp.isoformat() 
         
         # split the timestamop in 2 parts like
         # ['2018-05-09T16:15:05', '775444']
@@ -91,7 +92,7 @@ class JsonMsg(object):
         Return the JSON string to send to the java plugin 
         '''
         return json.dumps({
-            self.idJsonParamNam:self.id, 
+            self.idJsonParamName:self.id, 
             self.tStampJsonParamName:self.timestamp, 
             self.valueJsonParamName: self.value, 
             self.valueTypeJsonParamName:self.valueType})
