@@ -12,6 +12,8 @@ class JsonMsg(object):
     '''
     This class encapsulate the field of the message to send
     to the java plugin as JSON string
+    
+    It is the  counter part of the java org.eso.ias.plugin.network.MessageDao
     '''
 
     def __init__(self, id, timestamp=datetime.utcnow(), value, valueType):
