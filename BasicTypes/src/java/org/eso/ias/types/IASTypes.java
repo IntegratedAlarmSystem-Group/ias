@@ -76,6 +76,32 @@ public enum IASTypes {
     }
     
     /**
+	 * Parse the passed string java object
+	 * 
+	 * @param value the string representation of the value
+	 * @return the java object for the give value and type
+	 * @throws PluginException in case of error building the object
+	 */
+    public Object convertStringToObject(String value) throws PluginException {
+    	if (value==null || value.isEmpty()) {
+			throw new PluginException("Invalid value string to parse");
+		}
+    	switch (this) {
+    	case LONG: return Long.parseLong(value);
+    	case INT: return Integer.parseInt(value);
+    	case SHORT: return Short.parseShort(value);
+    	case BYTE: return Byte.parseByte(value);
+    	case DOUBLE: return Double.parseDouble(value);
+    	case FLOAT: return Float.parseFloat(value);
+    	case BOOLEAN: return Boolean.parseBoolean(value);
+    	case CHAR: return value.charAt(0);
+    	case STRING: return value;
+    	case ALARM: return AlarmSample.valueOf(value);
+    	default: throw new UnsupportedOperationException("Unsupported type "+this);
+	}
+    }
+    
+    /**
 	 * Parse the passed string of the given type into a java object
 	 * 
 	 * @param value the string representation of the value
@@ -88,19 +114,6 @@ public enum IASTypes {
 			throw new PluginException("Invalid value string to parse");
 		}
 		Objects.requireNonNull(valueType);
-		
-		switch (valueType) {
-	    	case LONG: return Long.parseLong(value);
-	    	case INT: return Integer.parseInt(value);
-	    	case SHORT: return Short.parseShort(value);
-	    	case BYTE: return Byte.parseByte(value);
-	    	case DOUBLE: return Double.parseDouble(value);
-	    	case FLOAT: return Float.parseFloat(value);
-	    	case BOOLEAN: return Boolean.parseBoolean(value);
-	    	case CHAR: return value.charAt(0);
-	    	case STRING: return value;
-	    	case ALARM: return AlarmSample.valueOf(value);
-	    	default: throw new UnsupportedOperationException("Unsupported type "+valueType);
-    	}
+		return valueType.convertStringToObject(value);
 	}
 };
