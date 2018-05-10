@@ -11,6 +11,9 @@ import socket
 import time
 from threading import Thread
 from IasPlugin.UdpPlugin import UdpPlugin
+from IasPlugin.JsonMsg import JsonMsg
+from IasPlugin.OperationalMode import OperationalMode
+from IasPlugin.IasType import IASType
 
 class MessageReceiver(Thread):
     
@@ -58,18 +61,40 @@ class TestUdpPlugin(unittest.TestCase):
         self.plugin.shutdown()
         self.receiver.tearDown()
         ## Give time to close the UDP socket before next iteration
-        time.sleep(1) 
+        time.sleep(2*UdpPlugin.SENDING_TIME_INTERVAL) 
     
     def testDoesNotSendIfNotStarted(self):
-        self.plugin.submit("MPoint-ID", 123, "INT")
-        time.sleep(1)
+        '''
+        Test if the plugin send nothing before being started
+        '''
+        self.plugin.submit("MPoint-ID", 123, IASType.INT)
+        time.sleep(2*UdpPlugin.SENDING_TIME_INTERVAL)
         self.assertEqual(len(self.receiver.msgReceived),0)
         
     def testSendIfStarted(self):
+        '''
+        Test that the plugin send a monitor point to the UDP after 
+        being started
+        '''
         self.plugin.start()
-        self.plugin.submit("MPoint-ID", 123, "INT")
-        time.sleep(1)
+        self.plugin.submit("MPoint-ID", 123, IASType.INT)
+        time.sleep(2*UdpPlugin.SENDING_TIME_INTERVAL)
         self.assertEqual(len(self.receiver.msgReceived),1)
+        
+    def testSentValue(self):
+        '''
+        Test that the plugin effectively sent what has been submitted
+        '''
+        self.plugin.start()
+        self.plugin.submit("MPoint-ID", 2.3, IASType.DOUBLE)
+        time.sleep(2*UdpPlugin.SENDING_TIME_INTERVAL)
+        self.assertEqual(len(self.receiver.msgReceived),1)
+        msg = JsonMsg.parse(self.receiver.msgReceived[0])
+        self.assertEqual(msg.identifier,"MPoint-ID")
+        self.assertEqual(msg.value,str(2.3))
+        self.assertEqual(msg.valueType,IASType.DOUBLE)
+        
 
 if __name__ == '__main__':
     unittest.main()
+

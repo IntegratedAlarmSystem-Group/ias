@@ -6,6 +6,10 @@ Created on May 9, 2018
 
 import json
 from datetime import datetime
+import dateutil.parser
+from asn1crypto.core import InstanceOf
+from IasPlugin.OperationalMode import OperationalMode
+from IasPlugin.IasType import IASType
 
 class JsonMsg(object):
     '''
@@ -17,56 +21,67 @@ class JsonMsg(object):
     The type must be one of types supported by the IAS as defined in
     org.eso.ias.types.IASTypes
     '''
-
-    # types supported by the IAS
-    IAS_SUPPORTED_TYPES = (
-        'LONG', 
-        'INT', 
-        'SHORT', 
-        'BYTE', 
-        'DOUBLE', 
-        'FLOAT', 
-        'BOOLEAN', 
-        'CHAR', 
-        'STRING', 
-        'ALARM')
+    
+    # define the names of the json fields
+    idJsonParamName = "identifier"
+    tStampJsonParamName = "timestamp"
+    valueJsonParamName = "value"
+    valueTypeJsonParamName = "valueType"
         
-    def __init__(self, id, value, valueType, timestamp=datetime.utcnow()):
+    def __init__(self, identifier, value, valueType, timestamp=datetime.utcnow()):
         '''
         Constructor
         
-        @param id: the identifier of the monitor point
+        @param identifier: the identifier of the monitor point
         @param value: the value to send to the BSDB
         @param valueType: the type of the value
         @param timestamp: (datetime) the point in time when the value 
                           has been read from the monitored system; 
                           if not provided, it is set to the actual time
+                          It can be either datetime or a ISO-8601 string
         '''
         
-        self.id=str(id)
-        if not self.id:
-            raise ValueError("Invalid empty ID") 
+        
+        if not identifier:
+            raise ValueError("Invalid empty ID")
+        self.identifier=str(identifier) 
+        
+        if timestamp is None:
+            raise ValueError("The timestamp can't be None")
         
         if not isinstance(timestamp, datetime):
-            raise ValueError("The timestamp should be of type datetime (UCT)") 
-        self.timestamp=self.isoTimestamp(timestamp)
+            # Is it a ISO 8601 string?
+            temp = str(timestamp)
+            if (self.checkStringIsoTimestamp(temp)):
+                self.timestamp=temp
+            else:
+                raise ValueError("The timestamp must be of type datetime (UCT) or an ISO 8601 string")
+        else: 
+            self.timestamp=self.isoTimestamp(timestamp)
         
-        self.value=str(value)
-        if not self.value:
+        if not value:
             raise ValueError("Invalid empty value")
+        self.value=str(value)
        
-        self.valueType=str(valueType).upper()
-        if not self.valueType:
-            raise ValueError("Invalid empty type")
+        if not isinstance(valueType, IASType):
+            raise ValueError("Invalid type")
+        self.valueType=valueType
+    
+    
+    def checkStringIsoTimestamp(self,tStamp):
+        '''
+        Check if the passed string represent a ISO timestamp
         
-        if not self.valueType in JsonMsg.IAS_SUPPORTED_TYPES:
+        @param tStamp the string representing a ISO timestamp
+        @return True if tStamp is a ISO 8601 timestamp,
+                False otherwise
+        '''
+        try:
+            dateutil.parser.parse(tStamp)
+            return True
+        except:
+            return False
             
-            raise ValueError("Unknown type: "+self.valueType)
-        # define the names of the json fields
-        self.idJsonParamName = "id"
-        self.tStampJsonParamName = "timestamp"
-        self.valueJsonParamName = "value"
-        self.valueTypeJsonParamName = "valueType"
         
     def isoTimestamp(self, tStamp):
         '''
@@ -92,12 +107,13 @@ class JsonMsg(object):
         Return the JSON string to send to the java plugin 
         '''
         return json.dumps({
-            self.idJsonParamName:self.id, 
-            self.tStampJsonParamName:self.timestamp, 
-            self.valueJsonParamName: self.value, 
-            self.valueTypeJsonParamName:self.valueType})
+            JsonMsg.idJsonParamName:self.identifier, 
+            JsonMsg.tStampJsonParamName:self.timestamp, 
+            JsonMsg.valueJsonParamName: self.value, 
+            JsonMsg.valueTypeJsonParamName: str(self.valueType).split('.')[1]})
     
-    def parse(self,jsonStr):
+    @staticmethod
+    def parse(jsonStr):
         '''
         Parse the passed string and return a JsonMsg
         
@@ -105,8 +121,8 @@ class JsonMsg(object):
         '''
         obj = json.loads(jsonStr)
         return JsonMsg(
-            obj[self.idJsonParamNam],
-            obj[self.tStampJsonParamName],
-            obj[self.valueJsonParamName],
-            obj[self.valueTypeJsonParamName])
+            obj[JsonMsg.idJsonParamName],
+            obj[JsonMsg.valueJsonParamName],
+            IASType.fromString(obj[JsonMsg.valueTypeJsonParamName]),
+            obj[JsonMsg.tStampJsonParamName])
         

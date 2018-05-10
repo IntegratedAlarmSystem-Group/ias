@@ -116,13 +116,13 @@ class UdpPlugin(Thread):
         
         @param the not None nor empty ID of the monitor point
         @param value: the value of the monitor point
-        @param valueType: the type of the monitor point
+        @param valueType: the IasType of the monitor point
         @param timestamp: (datetime) the timestamp when the value has been
                           red from the monitored system
         @see: JsonMsg.IAS_SUPPORTED_TYPES
         '''
-        if id is None:
-            raise ValueError("The ID can't be None")
+        if not id:
+            raise ValueError("The ID can't be None neither empty")
         if timestamp is None:
             raise ValueError("The timestamp can't be None")
         if value is None:
@@ -134,10 +134,10 @@ class UdpPlugin(Thread):
             return
         msg = JsonMsg(id,value, valueType,timestamp)
         self._lock.acquire()
-        self._MPointsToSend[msg.id]=msg
+        self._MPointsToSend[msg.identifier]=msg
         self._lock.release()
         self.logger.debug("Monitor point %s of type %s submitted with value %s (%d values in queue)",
-                          msg.id,
+                          msg.identifier,
                           msg.valueType,
                           msg.value,
                           len(self._MPointsToSend))
