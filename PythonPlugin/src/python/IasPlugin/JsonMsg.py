@@ -7,7 +7,6 @@ Created on May 9, 2018
 import json
 from datetime import datetime
 import dateutil.parser
-from asn1crypto.core import InstanceOf
 from IasPlugin.OperationalMode import OperationalMode
 from IasPlugin.IasType import IASType
 
@@ -27,24 +26,27 @@ class JsonMsg(object):
     tStampJsonParamName = "timestamp"
     valueJsonParamName = "value"
     valueTypeJsonParamName = "valueType"
+    operationaModeParamName = "operMode"
         
-    def __init__(self, identifier, value, valueType, timestamp=datetime.utcnow()):
+    def __init__(self, mpointId, value, valueType, timestamp=datetime.utcnow(), operationalMode=None):
         '''
         Constructor
         
-        @param identifier: the identifier of the monitor point
+        @param mpointId: the mpointId of the monitor point
         @param value: the value to send to the BSDB
-        @param valueType: the type of the value
+        @param valueType: (IASType) the type of the value
         @param timestamp: (datetime) the point in time when the value 
                           has been read from the monitored system; 
                           if not provided, it is set to the actual time
                           It can be either datetime or a ISO-8601 string
+        @param operationalMode: (OperationalMode) optionally sets a operational mode 
+                                for the passed monitor point
         '''
         
         
-        if not identifier:
+        if not mpointId:
             raise ValueError("Invalid empty ID")
-        self.identifier=str(identifier) 
+        self.mPointID=str(mpointId) 
         
         if timestamp is None:
             raise ValueError("The timestamp can't be None")
@@ -64,8 +66,12 @@ class JsonMsg(object):
         self.value=str(value)
        
         if not isinstance(valueType, IASType):
-            raise ValueError("Invalid type")
+            raise ValueError("Invalid type: "+valueType)
         self.valueType=valueType
+        
+        if not operationalMode is None and not isinstance(operationalMode,OperationalMode):
+            raise ValueError("Invalid operational mode "+operationalMode)
+        self.operationalMode = operationalMode
     
     
     def checkStringIsoTimestamp(self,tStamp):
@@ -106,11 +112,21 @@ class JsonMsg(object):
         '''
         Return the JSON string to send to the java plugin 
         '''
+        
+        vType = str(self.valueType).split('.')[1]
+        
+        if self.operationalMode is None:
+            mode = ""
+        else:
+            mode = str(self.operationalMode).split('.')[1]
+        
+        
         return json.dumps({
-            JsonMsg.idJsonParamName:self.identifier, 
+            JsonMsg.idJsonParamName:self.mPointID, 
             JsonMsg.tStampJsonParamName:self.timestamp, 
             JsonMsg.valueJsonParamName: self.value, 
-            JsonMsg.valueTypeJsonParamName: str(self.valueType).split('.')[1]})
+            JsonMsg.valueTypeJsonParamName: vType,
+            JsonMsg.operationaModeParamName: mode})
     
     @staticmethod
     def parse(jsonStr):
@@ -120,9 +136,18 @@ class JsonMsg(object):
         @param jsonStr the json string representing a message to send to the java plugin
         '''
         obj = json.loads(jsonStr)
+        
+        mPointType = IASType.fromString(obj[JsonMsg.valueTypeJsonParamName])
+        
+        if JsonMsg.operationaModeParamName in obj and not obj[JsonMsg.operationaModeParamName]=="":
+            mode = OperationalMode.fromString(obj[JsonMsg.operationaModeParamName])
+        else:
+            mode = None
+        
         return JsonMsg(
             obj[JsonMsg.idJsonParamName],
             obj[JsonMsg.valueJsonParamName],
-            IASType.fromString(obj[JsonMsg.valueTypeJsonParamName]),
-            obj[JsonMsg.tStampJsonParamName])
+            mPointType,
+            obj[JsonMsg.tStampJsonParamName],
+            mode)
         

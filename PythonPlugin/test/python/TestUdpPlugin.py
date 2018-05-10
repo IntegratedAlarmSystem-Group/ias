@@ -87,12 +87,26 @@ class TestUdpPlugin(unittest.TestCase):
         '''
         self.plugin.start()
         self.plugin.submit("MPoint-ID", 2.3, IASType.DOUBLE)
+        self.plugin.submit("MPoint-IDOpMode", 5, IASType.INT,operationalMode=OperationalMode.MAINTENANCE)
         time.sleep(2*UdpPlugin.SENDING_TIME_INTERVAL)
-        self.assertEqual(len(self.receiver.msgReceived),1)
-        msg = JsonMsg.parse(self.receiver.msgReceived[0])
-        self.assertEqual(msg.identifier,"MPoint-ID")
-        self.assertEqual(msg.value,str(2.3))
-        self.assertEqual(msg.valueType,IASType.DOUBLE)
+        self.assertEqual(len(self.receiver.msgReceived),2)
+        dict = {}
+        msg1 = JsonMsg.parse(self.receiver.msgReceived[0])
+        dict[msg1.mPointID]=msg1
+        msg2 = JsonMsg.parse(self.receiver.msgReceived[1])
+        dict[msg2.mPointID]=msg2
+        
+        m = dict["MPoint-ID"]
+        self.assertEqual(m.mPointID,"MPoint-ID")
+        self.assertEqual(m.value,str(2.3))
+        self.assertEqual(m.valueType,IASType.DOUBLE)
+        self.assertIsNone(m.operationalMode)
+        
+        m = dict["MPoint-IDOpMode"]
+        self.assertEqual(m.mPointID,"MPoint-IDOpMode")
+        self.assertEqual(m.value,str(5))
+        self.assertEqual(m.valueType,IASType.INT)
+        self.assertEqual(m.operationalMode,OperationalMode.MAINTENANCE)
         
 
 if __name__ == '__main__':

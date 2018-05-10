@@ -108,7 +108,7 @@ class UdpPlugin(Thread):
         self._sock.close()
         self.logger.info('Closed.')
         
-    def submit(self, id, value, valueType, timestamp=datetime.utcnow()):
+    def submit(self, id, value, valueType, timestamp=datetime.utcnow(), operationalMode=None):
         '''
         Submit a monitor point or alarm with the give ID to the java plugin.
         
@@ -116,9 +116,10 @@ class UdpPlugin(Thread):
         
         @param the not None nor empty ID of the monitor point
         @param value: the value of the monitor point
-        @param valueType: the IasType of the monitor point
+        @param valueType: (IasTye)the IasType of the monitor point
         @param timestamp: (datetime) the timestamp when the value has been
                           red from the monitored system
+        @param operationalMode (OperationalMode) the optional operational mode
         @see: JsonMsg.IAS_SUPPORTED_TYPES
         '''
         if not id:
@@ -132,14 +133,15 @@ class UdpPlugin(Thread):
         
         if self._shuttedDown:
             return
-        msg = JsonMsg(id,value, valueType,timestamp)
+        msg = JsonMsg(id,value, valueType,timestamp,operationalMode)
         self._lock.acquire()
-        self._MPointsToSend[msg.identifier]=msg
+        self._MPointsToSend[msg.mPointID]=msg
         self._lock.release()
-        self.logger.debug("Monitor point %s of type %s submitted with value %s (%d values in queue)",
-                          msg.identifier,
+        self.logger.debug("Monitor point %s of type %s submitted with value %s and mode %s (%d values in queue)",
+                          msg.mPointID,
                           msg.valueType,
                           msg.value,
+                          msg.operationalMode,
                           len(self._MPointsToSend))
         
     def _sendMonitorPoints(self):
