@@ -35,21 +35,21 @@ class OperationalMode(Enum):
     UNKNOWN = 8
     
     @staticmethod
-    def fromString(opMode):
+    def fromString(alarmString):
         '''
-        @param opMode: the string representation of OperationalMode like
+        @param alarmString: the string representation of OperationalMode like
                       OperationalMode.DEGRADED or DEGRADED
         @return the mode represented by the passed a string
         '''
         if not str:
             raise ValueError("Invalid string representation of a operational mode")
         
-        temp = str(opMode)
+        temp = str(alarmString)
         if "." not in temp:
             temp="OperationalMode."+temp
         for mode in OperationalMode:
             if str(mode)==temp:
                 return mode
-        # No enumerated matches with opMode
-        raise NotImplementedError("Not supported/find operational mode: "+opMode)
+        # No enumerated matches with alarmString
+        raise NotImplementedError("Not supported/find operational mode: "+alarmString)
         

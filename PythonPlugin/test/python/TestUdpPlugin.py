@@ -14,6 +14,7 @@ from IasPlugin.UdpPlugin import UdpPlugin
 from IasPlugin.JsonMsg import JsonMsg
 from IasPlugin.OperationalMode import OperationalMode
 from IasPlugin.IasType import IASType
+from IasPlugin.Alarm import Alarm
 
 class MessageReceiver(Thread):
     
@@ -88,25 +89,32 @@ class TestUdpPlugin(unittest.TestCase):
         self.plugin.start()
         self.plugin.submit("MPoint-ID", 2.3, IASType.DOUBLE)
         self.plugin.submit("MPoint-IDOpMode", 5, IASType.INT,operationalMode=OperationalMode.MAINTENANCE)
+        self.plugin.submit("MPoint-Alarm", Alarm.SET, IASType.ALARM,operationalMode=OperationalMode.DEGRADED)
         time.sleep(2*UdpPlugin.SENDING_TIME_INTERVAL)
-        self.assertEqual(len(self.receiver.msgReceived),2)
+        self.assertEqual(len(self.receiver.msgReceived),3)
         dict = {}
-        msg1 = JsonMsg.parse(self.receiver.msgReceived[0])
-        dict[msg1.mPointID]=msg1
-        msg2 = JsonMsg.parse(self.receiver.msgReceived[1])
-        dict[msg2.mPointID]=msg2
+        for jmsg in self.receiver.msgReceived:
+            msg = JsonMsg.parse(jmsg)
+            dict[msg.mPointID]=msg
+            
         
         m = dict["MPoint-ID"]
         self.assertEqual(m.mPointID,"MPoint-ID")
-        self.assertEqual(m.value,str(2.3))
+        self.assertEqual(m.value,2.3)
         self.assertEqual(m.valueType,IASType.DOUBLE)
         self.assertIsNone(m.operationalMode)
         
         m = dict["MPoint-IDOpMode"]
         self.assertEqual(m.mPointID,"MPoint-IDOpMode")
-        self.assertEqual(m.value,str(5))
+        self.assertEqual(m.value,5)
         self.assertEqual(m.valueType,IASType.INT)
         self.assertEqual(m.operationalMode,OperationalMode.MAINTENANCE)
+        
+        m = dict["MPoint-Alarm"]
+        self.assertEqual(m.mPointID,"MPoint-Alarm")
+        self.assertEqual(m.value,Alarm.SET)
+        self.assertEqual(m.valueType,IASType.ALARM)
+        self.assertEqual(m.operationalMode,OperationalMode.DEGRADED)
         
 
 if __name__ == '__main__':

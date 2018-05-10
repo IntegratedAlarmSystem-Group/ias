@@ -15,20 +15,20 @@ class Alarm(Enum):
     CLEARED = 2
 
     @staticmethod
-    def fromString(opMode):
+    def fromString(alarmString):
         '''
-        @param opMode: the string representation of an Alarm like
+        @param alarmString: the string representation of an Alarm like
                       Alarm.SET or SET
-        @return the opMode represented by the passed a string
+        @return the alarmString represented by the passed a string
         '''
-        if not str:
-            raise ValueError("Invalid string representation of an opMode")
+        if alarmString is None or alarmString=="":
+            raise ValueError("Invalid string representation of an alarmString")
         
-        temp = str(opMode)
+        temp = str(alarmString)
         if "." not in temp:
             temp="Alarm."+temp
         for alarmState in Alarm:
             if str(alarmState)==temp:
                 return alarmState
-        # No enumerated matches with opMode
-        raise NotImplementedError("Not supported/find opMode")
+        # No enumerated matches with alarmString
+        raise NotImplementedError("Not supported/find alarmString: "+alarmString)

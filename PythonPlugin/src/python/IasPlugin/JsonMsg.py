@@ -61,9 +61,9 @@ class JsonMsg(object):
         else: 
             self.timestamp=self.isoTimestamp(timestamp)
         
-        if not value:
+        if value is None or value=="":
             raise ValueError("Invalid empty value")
-        self.value=str(value)
+        self.value=value
        
         if not isinstance(valueType, IASType):
             raise ValueError("Invalid type: "+valueType)
@@ -120,13 +120,18 @@ class JsonMsg(object):
         else:
             mode = str(self.operationalMode).split('.')[1]
         
+        if self.valueType==IASType.ALARM:
+            value = str(self.value).split(".")[1]
+        else:
+            value = str(self.value)
         
         return json.dumps({
             JsonMsg.idJsonParamName:self.mPointID, 
             JsonMsg.tStampJsonParamName:self.timestamp, 
-            JsonMsg.valueJsonParamName: self.value, 
+            JsonMsg.valueJsonParamName: value, 
             JsonMsg.valueTypeJsonParamName: vType,
             JsonMsg.operationaModeParamName: mode})
+    
     
     @staticmethod
     def parse(jsonStr):
@@ -139,6 +144,8 @@ class JsonMsg(object):
         
         mPointType = IASType.fromString(obj[JsonMsg.valueTypeJsonParamName])
         
+        value = mPointType.convertStrToValue(obj[JsonMsg.valueJsonParamName])
+        
         if JsonMsg.operationaModeParamName in obj and not obj[JsonMsg.operationaModeParamName]=="":
             mode = OperationalMode.fromString(obj[JsonMsg.operationaModeParamName])
         else:
@@ -146,7 +153,7 @@ class JsonMsg(object):
         
         return JsonMsg(
             obj[JsonMsg.idJsonParamName],
-            obj[JsonMsg.valueJsonParamName],
+            value,
             mPointType,
             obj[JsonMsg.tStampJsonParamName],
             mode)
