@@ -108,13 +108,13 @@ class UdpPlugin(Thread):
         self._sock.close()
         self.logger.info('Closed.')
         
-    def submit(self, id, value, valueType, timestamp=datetime.utcnow(), operationalMode=None):
+    def submit(self, mPointID, value, valueType, timestamp=datetime.utcnow(), operationalMode=None):
         '''
         Submit a monitor point or alarm with the give ID to the java plugin.
         
         The monitor point is added to the dictionary and will be sent later
         
-        @param the not None nor empty ID of the monitor point
+        @param mPointID: the not None nor empty ID of the monitor point
         @param value: the value of the monitor point
         @param valueType: (IasTye)the IasType of the monitor point
         @param timestamp: (datetime) the timestamp when the value has been
@@ -122,7 +122,7 @@ class UdpPlugin(Thread):
         @param operationalMode (OperationalMode) the optional operational mode
         @see: JsonMsg.IAS_SUPPORTED_TYPES
         '''
-        if not id:
+        if not mPointID:
             raise ValueError("The ID can't be None neither empty")
         if timestamp is None:
             raise ValueError("The timestamp can't be None")
@@ -133,7 +133,7 @@ class UdpPlugin(Thread):
         
         if self._shuttedDown:
             return
-        msg = JsonMsg(id,value, valueType,timestamp,operationalMode)
+        msg = JsonMsg(mPointID,value, valueType,timestamp,operationalMode)
         self._lock.acquire()
         self._MPointsToSend[msg.mPointID]=msg
         self._lock.release()
