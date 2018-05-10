@@ -133,8 +133,9 @@ public class UdpPlugin implements Runnable {
 			try {
 				udpSocket.receive(packet);
 			} catch (Exception e) {
-				logger.error("Error receiving data from UDP socket",e);
-				terminateThread.set(true);
+				if (!terminateThread.get()) {
+					logger.error("Error receiving data from UDP socket.",e);
+				}
 				continue;
 			}
 			String receivedString = new String(packet.getData());
@@ -260,7 +261,9 @@ public class UdpPlugin implements Runnable {
 					try {
 						strToInject= receivedStringQueue.take();
 					} catch (InterruptedException ie) {
-						logger.warn("Interrupted",ie);
+						if (!terminateThread.get()) {
+							logger.warn("Interrupted",ie);
+						}
 						continue;
 					}
 					try {
