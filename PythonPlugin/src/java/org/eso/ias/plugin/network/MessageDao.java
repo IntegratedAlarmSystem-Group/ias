@@ -27,7 +27,7 @@ public class MessageDao {
 	/**
 	 * The ID of the monitor point
 	 */
-	private String id;
+	private String mPointId;
 	
 	/**
 	 * Empty constructor
@@ -47,7 +47,7 @@ public class MessageDao {
 		if (mPointId==null || mPointId.isEmpty()) {
 			throw new IllegalArgumentException("Invalid null or empty ID");
 		}
-		this.id = mPointId;
+		this.mPointId = mPointId;
 		if (timestamp==null || timestamp.isEmpty()) {
 			throw new IllegalArgumentException("Invalid null or empty timestamp");
 		}
@@ -118,12 +118,12 @@ public class MessageDao {
 		this.value = value;
 	}
 
-	public String getId() {
-		return id;
+	public String getMPointId() {
+		return mPointId;
 	}
 
-	public void setId(String id) {
-		this.id = id;
+	public void setMPointId(String id) {
+		this.mPointId = id;
 	}
 	
 	

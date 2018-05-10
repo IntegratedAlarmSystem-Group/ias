@@ -16,13 +16,11 @@ import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.PublisherException;
-import org.eso.ias.types.AlarmSample;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.utils.ISO8601Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -204,9 +202,9 @@ public class UdpPlugin implements Runnable {
 		
 		Sample sample = new Sample(value,timestamp);
 		try {
-			plugin.updateMonitorPointValue(message.getId(), sample);
+			plugin.updateMonitorPointValue(message.getMPointId(), sample);
 		} catch (Exception e) {
-			logger.error("Exception adding the sample [{}] to the plugin: value lost",message.getId(),e);
+			logger.error("Exception adding the sample [{}] to the plugin: value lost",message.getMPointId(),e);
 		}
 	}
 	

@@ -23,7 +23,7 @@ class JsonMsg(object):
     '''
     
     # define the names of the json fields
-    idJsonParamName = "identifier"
+    idJsonParamName = "mPointId"
     tStampJsonParamName = "timestamp"
     valueJsonParamName = "value"
     valueTypeJsonParamName = "valueType"
