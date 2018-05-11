@@ -17,6 +17,7 @@ import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.types.IASTypes;
+import org.eso.ias.types.OperationalMode;
 import org.eso.ias.utils.ISO8601Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -203,9 +204,26 @@ public class UdpPlugin implements Runnable {
 		
 		Sample sample = new Sample(value,timestamp);
 		try {
-			plugin.updateMonitorPointValue(message.getMPointId(), sample);
+			plugin.updateMonitorPointValue(message.getMonitorPointId(), sample);
 		} catch (Exception e) {
-			logger.error("Exception adding the sample [{}] to the plugin: value lost",message.getMPointId(),e);
+			logger.error("Exception adding the sample [{}] to the plugin: value lost",message.getMonitorPointId(),e);
+		}
+		
+		if (!Objects.isNull(message.getOperMode()) && !message.getOperMode().isEmpty()) {
+			try {
+				OperationalMode mode = OperationalMode.valueOf(message.getOperMode());
+				plugin.setOperationalMode(message.getMonitorPointId(), mode);
+			} catch (PluginException e) {  
+				// This exception is thrown by plugin.setOperationalMode
+				logger.error("Error setting the operational mode {} for  monitor point {}",
+						message.getOperMode(),
+						message.getMonitorPointId());
+			}catch (Exception e) {
+				logger.error("Error decoding operational mode {} for  monitor point {}",
+						message.getOperMode(),
+						message.getMonitorPointId());
+			}
+			
 		}
 	}
 	
@@ -232,7 +250,7 @@ public class UdpPlugin implements Runnable {
 			throw new PluginException("Unrecognized/Unsupported value type "+valueType);
 		}
 		try {
-			return IASTypes.convertStringToObject(value, iasType);
+			return iasType.convertStringToObject(value);
 		} catch (Exception e) {
 			throw new PluginException("Exception converting "+value+" to an object of type "+iasType,e);
 		}
