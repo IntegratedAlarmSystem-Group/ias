@@ -5,17 +5,29 @@ import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.eso.ias.heartbeat.HbProducer;
+import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.plugin.Plugin;
 import org.eso.ias.plugin.PluginException;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.config.PluginConfig;
+import org.eso.ias.plugin.config.PluginConfigException;
+import org.eso.ias.plugin.config.PluginConfigFileReader;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.PublisherException;
+import org.eso.ias.plugin.publisher.impl.KafkaPublisher;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.OperationalMode;
 import org.eso.ias.utils.ISO8601Helper;
@@ -114,13 +126,101 @@ public class UdpPlugin implements Runnable {
 		}
 		udpSocket = new DatagramSocket(udpPort);
 	}
+	
+	/**
+	 * Print th eusage string
+	 * 
+	 * @param options The options expected in the command line
+	 */
+	private static void printUsage(Options options) {
+		HelpFormatter formatter = new HelpFormatter();
+		formatter.printHelp( "UdpPlugin", options );
+	}
 
 	/**
 	 * The main to start the plugin
 	 */
 	public static void main(String[] args) {
+		// Use apache CLI for command line parsing
+		Options options = new Options();
+		options.addOption("u","uport",true,"UDP port");
+		options.addOption("c","config-file", true,"Plugin configuration file");
 		
-
+		CommandLineParser parser = new DefaultParser();
+		CommandLine cmd=null;
+		try { 
+			cmd = parser.parse(options, args);
+		} catch (ParseException pe) {
+			System.err.println("Error parsing the comamnd line: "+pe.getMessage());
+			printUsage(options);
+			System.exit(-1);
+		}
+		
+		if (!cmd.hasOption("u")) {
+			System.err.println("UDP port missing");
+			printUsage(options);
+			System.exit(-1);
+		}
+		int udpPort=0;
+		try {
+			udpPort = Integer.parseInt(cmd.getOptionValue("u"));
+			UdpPlugin.logger.info("UDP port {}",udpPort);
+		} catch (Exception e) {
+			System.err.println("Invalid UDP port "+cmd.getOptionValue("u"));
+			printUsage(options);
+			System.exit(-1);
+		}
+		
+		if (!cmd.hasOption("c")) {
+			System.err.println("Configuration file missing");
+			printUsage(options);
+			System.exit(-1);
+		}
+		String fileName = cmd.getOptionValue("c");
+		logger.info("Configuration file name {}",fileName);
+		
+		PluginConfig pluginConfig = null;
+		try  { 
+			PluginConfigFileReader configFileReader= new PluginConfigFileReader(fileName);
+			Future<PluginConfig> pluginConfigFuture = configFileReader.getPluginConfig();
+			pluginConfig = pluginConfigFuture.get(1, TimeUnit.MINUTES);
+		} catch (Exception e) {
+			System.err.println("Reading configuration file "+fileName+": "+e.getMessage());
+			printUsage(options);
+			System.exit(-1);
+		}
+		
+		logger.info("Kafka server {}:{}", pluginConfig.getSinkServer(),pluginConfig.getSinkPort());
+		MonitorPointSender mpSender = new KafkaPublisher(
+				pluginConfig.getId(), 
+				pluginConfig.getMonitoredSystemId(), 
+				pluginConfig.getSinkServer(), 
+				pluginConfig.getSinkPort(), 
+				Plugin.getScheduledExecutorService());
+		
+		HbProducer hbProducer = new HbKafkaProducer(pluginConfig.getId(), new HbJsonSerializer());
+		
+		UdpPlugin udpPlugin = null; 
+		try {
+			udpPlugin = new UdpPlugin(pluginConfig, mpSender, hbProducer, udpPort);
+		} catch (Exception e) {
+			UdpPlugin.logger.error("The UdpPlugin failed to build",e);
+			System.exit(-2);
+		}
+		
+		CountDownLatch latch = null;
+		try {
+			latch = udpPlugin.setUp();
+		} catch(PluginException pe) {
+			UdpPlugin.logger.error("The UdpPlugin failed to start",pe);
+			System.exit(-3);
+		}
+		try {
+			latch.await();
+		} catch (InterruptedException ie) {
+			UdpPlugin.logger.error("UdpPlugin interrupted",ie);
+		}
+		
 	}
 
 	@Override
