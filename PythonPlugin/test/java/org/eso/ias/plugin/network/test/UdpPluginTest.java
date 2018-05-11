@@ -1,7 +1,13 @@
 package org.eso.ias.plugin.network.test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -18,6 +24,8 @@ import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher.PublisherEventsListener;
+import org.eso.ias.types.AlarmSample;
+import org.eso.ias.types.OperationalMode;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,8 +41,13 @@ import org.slf4j.LoggerFactory;
  * The test setup up the java plugin {@link #udpPlugin},
  * the run the python plugin (MockUdpPlugin.py) that sends some monitor points and alarms.
  *  
- *  The test check if the monitor points sent byockUdpPlugin.py
- *  are finally published by Plugin.java
+ *  The test check if the monitor points sent by MockUdpPlugin.py
+ *  are finally published by Plugin.java 
+ *  (i.e. received in {@link #dataReceived(MonitorPointData)}).
+ *  
+ *  To avoid the java plugin to continuosly send the same monitor points (auto-send), 
+ *  the  autoSendTimeInterval in pyConfig.json is set to 120 seconds
+ *  while this test lasts much less
  * 
  * @author acaproni
  *
@@ -68,9 +81,19 @@ public class UdpPluginTest implements PublisherEventsListener {
 	private UdpPlugin udpPlugin;
 	
 	/**
+	 * The monitor point published by the java plugin
+	 */
+	private final Map<String, MonitorPointData> publishedMPoints = new HashMap<>();
+	
+	/**
 	 * The latch used by the UdpPlugin to signal termination
 	 */
 	private CountDownLatch udpPluginLatch;
+	
+	/**
+	 * The python plugin
+	 */
+	private Process proc;
 	
 	@Before
 	public void setUp() throws Exception {
@@ -113,8 +136,39 @@ public class UdpPluginTest implements PublisherEventsListener {
 	@Test
 	public void test() throws Exception {
 		logger.debug("Leaving the plugin time to run");
-		udpPluginLatch.await(1, TimeUnit.MINUTES);
+		udpPluginLatch.await(30, TimeUnit.SECONDS);
 		logger.debug("test terminated");
+		
+		// CHeck if the python process terminated without errors
+		assertFalse("Python plugin still running",proc.isAlive());
+		assertTrue("Python plugin terminated with error "+proc.exitValue(),proc.exitValue()==0);
+		
+		assertEquals(6, publishedMPoints.size());
+		
+		MonitorPointData mpdDouble = publishedMPoints.get("ID-Double");
+		assertEquals(OperationalMode.INITIALIZATION.toString(),mpdDouble.getOperationalMode());
+		assertEquals(Double.valueOf(122.54), Double.valueOf(Double.parseDouble(mpdDouble.getValue())));
+		
+		MonitorPointData mpdLong = publishedMPoints.get("ID-Long");
+		assertEquals(OperationalMode.STARTUP.toString(),mpdLong.getOperationalMode());
+		assertEquals(Integer.valueOf(1234567), Integer.valueOf(Integer.parseInt(mpdLong.getValue())));
+		
+		MonitorPointData mpdBool = publishedMPoints.get("ID-Bool");
+		assertEquals(OperationalMode.OPERATIONAL.toString(),mpdBool.getOperationalMode());
+		assertEquals(Boolean.FALSE, Boolean.valueOf(Boolean.parseBoolean(mpdBool.getValue())));
+		
+		MonitorPointData mpdChar = publishedMPoints.get("ID-Char");
+		assertEquals(OperationalMode.DEGRADED.toString(),mpdChar.getOperationalMode());
+		assertTrue(mpdChar.getValue().length()==1);
+		assertEquals('X', mpdChar.getValue().charAt(0));
+		
+		MonitorPointData mpdString = publishedMPoints.get("ID-String");
+		assertEquals(OperationalMode.CLOSING.toString(),mpdString.getOperationalMode());
+		assertEquals("Testing for test", mpdString.getValue());
+		
+		MonitorPointData mpdAlarm = publishedMPoints.get("ID-Alarm");
+		assertEquals(OperationalMode.UNKNOWN.toString(),mpdAlarm.getOperationalMode());
+		assertEquals(AlarmSample.SET.toString(), mpdAlarm.getValue());
 	}
 
 	@Override
@@ -129,6 +183,7 @@ public class UdpPluginTest implements PublisherEventsListener {
 
 	@Override
 	public void dataReceived(MonitorPointData mpData) {
+		publishedMPoints.put(mpData.getId(), mpData);
 		try {
 			logger.info("Data published {}",mpData.toJsonString());
 		} catch (PublisherException pe) {
@@ -139,7 +194,7 @@ public class UdpPluginTest implements PublisherEventsListener {
 	private void launchPythonPlugin() throws Exception {
 		logger.debug("Starting the python plugin");
 		ProcessBuilder builder = new ProcessBuilder("MockUdpPlugin");
-		Process proc = builder.start();
+		proc = builder.start();
 		logger.debug("Python plugin running");
 	}
 }
