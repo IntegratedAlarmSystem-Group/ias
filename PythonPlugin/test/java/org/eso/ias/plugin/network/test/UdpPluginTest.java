@@ -25,7 +25,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * test the {@link UdpPlugin}
+ * test the {@link UdpPlugin} closing the loop from
+ * python to the monitor point published
+ * by the java plugin:
+ * UdpPlugin.py -> UdpPlugin.java -> Plugin.java -> BSDB
+ * 
+ * The test setup up the java plugin {@link #udpPlugin},
+ * the run the python plugin (MockUdpPlugin.py) that sends some monitor points and alarms.
+ *  
+ *  The test check if the monitor points sent byockUdpPlugin.py
+ *  are finally published by Plugin.java
  * 
  * @author acaproni
  *
@@ -46,7 +55,7 @@ public class UdpPluginTest implements PublisherEventsListener {
 	/**
 	 * The port of the UDP socket
 	 */
-	private static final int udpPort = 5000;
+	private static final int udpPort = 10101;
 	
 	/**
 	 * The publisher of monitor points
@@ -75,18 +84,25 @@ public class UdpPluginTest implements PublisherEventsListener {
 		mpSender = new ListenerPublisher(
 				config.getId(), 
 				config.getMonitoredSystemId(), 
-				"localhost", 
-				10000, 
+				"localhost",  // Unused
+				10000, // Unused 
 				Plugin.getScheduledExecutorService(), 
 				this);
 		
+		// Not interested in HBs here so loggin is enough
 		HbProducer hbProd = new HbLogProducer(new HbJsonSerializer());
 		
+		// The plugin will send data to this process instead of the BSDB
 		udpPlugin = new UdpPlugin(config, mpSender, hbProd, udpPort);
 		
 		udpPluginLatch = udpPlugin.setUp();
 		assertNotNull(udpPluginLatch);
+		
+		Thread.sleep(1000);
+		launchPythonPlugin();
+		
 	}
+	
 	
 	@After
 	public void tearDown() throws Exception {
@@ -118,5 +134,12 @@ public class UdpPluginTest implements PublisherEventsListener {
 		} catch (PublisherException pe) {
 			logger.error("Error translating the MonitorPointData into a JSON string",pe);
 		}
+	}
+	
+	private void launchPythonPlugin() throws Exception {
+		logger.debug("Starting the python plugin");
+		ProcessBuilder builder = new ProcessBuilder("MockUdpPlugin");
+		Process proc = builder.start();
+		logger.debug("Python plugin running");
 	}
 }
