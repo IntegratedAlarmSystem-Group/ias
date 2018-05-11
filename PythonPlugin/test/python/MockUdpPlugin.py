@@ -21,11 +21,11 @@ if __name__ == '__main__':
     udpPlugin.start()
     time.sleep(1)
     udpPlugin.submit("ID-Double", 122.54, IASType.DOUBLE, operationalMode=OperationalMode.INITIALIZATION)
-    udpPlugin.submit("ID-Long", 1234567, IASType.DOUBLE, operationalMode=OperationalMode.STARTUP)
+    udpPlugin.submit("ID-Long", 1234567, IASType.INT, operationalMode=OperationalMode.STARTUP)
     udpPlugin.submit("ID-Bool", False, IASType.BOOLEAN, operationalMode=OperationalMode.OPERATIONAL)
     udpPlugin.submit("ID-Char", 'X', IASType.CHAR, operationalMode=OperationalMode.DEGRADED)
     udpPlugin.submit("ID-String", 'Testing for test', IASType.STRING, operationalMode=OperationalMode.CLOSING)
-    udpPlugin.submit("ID-Alarm", Alarm.SET, IASType.ALARM, operationalMode=OperationalMode.SHUTTEDDOWN)
+    udpPlugin.submit("ID-Alarm", Alarm.SET, IASType.ALARM)
     
     time.sleep(.5)
     udpPlugin.shutdown()
