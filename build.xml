@@ -21,8 +21,9 @@
         <string>Cdb</string>
         <string>BasicTypes</string>
         <string>KafkaUtils</string>
-	 	<string>Heartbeat</string>
+	<string>Heartbeat</string>
         <string>plugin</string>
+        <string>PythonPluginFeeder</string>
         <string>Converter</string>
         <string>CompElement</string>
         <string>DistributedUnit</string>
