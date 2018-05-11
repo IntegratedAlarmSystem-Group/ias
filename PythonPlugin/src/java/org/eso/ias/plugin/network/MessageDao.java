@@ -27,7 +27,12 @@ public class MessageDao {
 	/**
 	 * The ID of the monitor point
 	 */
-	private String mPointId;
+	private String monitorPointId;
+	
+	/**
+	 * The operational mode (can be null)
+	 */
+	private String operMode=null;
 	
 	/**
 	 * Empty constructor
@@ -42,12 +47,18 @@ public class MessageDao {
 	 * @param timestamp ISO 8601 time stamp
 	 * @param value The value (sample) to be sent to the BSDB
 	 * @param valueType The type of the value
+	 * @param operMode The operational mode (can be <code>null</code>)
 	 */
-	public MessageDao(String mPointId,String timestamp, String value, String valueType) {
+	public MessageDao(
+			String mPointId,
+			String timestamp, 
+			String value, 
+			String valueType,
+			String operMode) {
 		if (mPointId==null || mPointId.isEmpty()) {
 			throw new IllegalArgumentException("Invalid null or empty ID");
 		}
-		this.mPointId = mPointId;
+		this.monitorPointId = mPointId;
 		if (timestamp==null || timestamp.isEmpty()) {
 			throw new IllegalArgumentException("Invalid null or empty timestamp");
 		}
@@ -62,6 +73,8 @@ public class MessageDao {
 			throw new IllegalArgumentException("Invalid null or empty type");
 		}
 		this.valueType = valueType;
+		
+		this.operMode=operMode;
 	}
 
 	/**
@@ -118,12 +131,20 @@ public class MessageDao {
 		this.value = value;
 	}
 
-	public String getMPointId() {
-		return mPointId;
+	public String getMonitorPointId() {
+		return monitorPointId;
 	}
 
-	public void setMPointId(String id) {
-		this.mPointId = id;
+	public void setMonitorPointId(String id) {
+		this.monitorPointId = id;
+	}
+
+	public String getOperMode() {
+		return operMode;
+	}
+
+	public void setOperMode(String operMode) {
+		this.operMode = operMode;
 	}
 	
 	
