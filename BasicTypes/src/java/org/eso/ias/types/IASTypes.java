@@ -3,7 +3,6 @@ package org.eso.ias.types;
 import java.util.Objects;
 
 import org.eso.ias.cdb.pojos.IasTypeDao;
-import org.eso.ias.plugin.PluginException;
 
 /**
  * Java representation of the IAS types.
@@ -80,11 +79,10 @@ public enum IASTypes {
 	 * 
 	 * @param value the string representation of the value
 	 * @return the java object for the give value and type
-	 * @throws PluginException in case of error building the object
 	 */
-    public Object convertStringToObject(String value) throws PluginException {
+    public Object convertStringToObject(String value) {
     	if (value==null || value.isEmpty()) {
-			throw new PluginException("Invalid value string to parse");
+			throw new IllegalArgumentException("Invalid null or empty value string to parse");
 		}
     	switch (this) {
     	case LONG: return Long.parseLong(value);
@@ -107,12 +105,8 @@ public enum IASTypes {
 	 * @param value the string representation of the value
 	 * @param valueType the type of the value
 	 * @return the java object for the give value and type
-	 * @throws PluginException in case of error building the object
 	 */
-	public static Object convertStringToObject(String value, IASTypes valueType) throws PluginException {
-		if (value==null || value.isEmpty()) {
-			throw new PluginException("Invalid value string to parse");
-		}
+	public static Object convertStringToObject(String value, IASTypes valueType) {
 		Objects.requireNonNull(valueType);
 		return valueType.convertStringToObject(value);
 	}
