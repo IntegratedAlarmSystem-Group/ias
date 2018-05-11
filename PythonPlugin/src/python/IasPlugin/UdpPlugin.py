@@ -8,9 +8,9 @@ import socket, os
 from datetime import datetime
 from IasPlugin.JsonMsg import JsonMsg
 from IASLogging.logConf import Log
-from threading import Thread, Timer, RLock
+from threading import Timer, RLock
 
-class UdpPlugin(Thread):
+class UdpPlugin(object):
     '''
     UpdPlugin sends monitor points to the java plugin by means 
     of UDP sockets.
@@ -50,7 +50,6 @@ class UdpPlugin(Thread):
         @param port the port to send UDP packets to
         @raise exception: if the hostname is not resolved
         '''
-        Thread.__init__(self,name='Udp sender thread',daemon=True)
         
         self._hostname = hostname
         self._port=port
@@ -75,7 +74,7 @@ class UdpPlugin(Thread):
         # A flag reporting if the object has been initialized
         self._started = False
         
-        # The time r to send moitor points to the 
+        # The time r to send monitor points to the 
         # java plugin
         self._timer = None
         
@@ -89,24 +88,40 @@ class UdpPlugin(Thread):
         '''
         Start the UdpPlugin
         '''
+        assert  not self._started
         self.logger.info('Starting up')
         self._started = True
-        self._timer = Timer(UdpPlugin.SENDING_TIME_INTERVAL, self._sendMonitorPoints)
-        self._timer.start()
+        self._timer = self._schedule()
         self.logger.info('Started.')
     
     def shutdown(self):
         '''
         Shutdown the plugin
         '''
+        assert  not self._shuttedDown
         self.logger.info('Shutting down')
         self._lock.acquire(blocking=True)
         self._shuttedDown = True
         self._lock.release()
-        if self._started:
+        if self._started and self._timer is not None:
             self._timer.cancel()
         self._sock.close()
         self.logger.info('Closed.')
+        
+    def _schedule(self):
+        '''
+        Schedule the timer for the next sending
+        
+        @return: the scheduled timer or None if shut down
+        '''
+        if not self._shuttedDown:
+                self._lock.acquire()
+                timer = Timer(UdpPlugin.SENDING_TIME_INTERVAL, self._sendMonitorPoints)
+                timer.start()
+                self._lock.release()
+                return timer
+        else:
+            return None
         
     def submit(self, mPointID, value, valueType, timestamp=datetime.utcnow(), operationalMode=None):
         '''
@@ -149,7 +164,7 @@ class UdpPlugin(Thread):
         The periodic task that send monitor points to the java plugin
         through the UDP socket
         '''
-        while not self._shuttedDown:
+        if not self._shuttedDown:
             self.logger.debug("Sending %d monitor points",len(self._MPointsToSend))
             self._lock.acquire()
             valuesToSend = list(self._MPointsToSend.values())
@@ -164,11 +179,8 @@ class UdpPlugin(Thread):
             valuesToSend.clear()
             
             ## reschedule the time if not closed
-            if not self._shuttedDown:
-                self._lock.acquire()
-                self._timer = Timer(UdpPlugin.SENDING_TIME_INTERVAL, self._sendMonitorPoints)
-                self._timer.start()
-                self._lock.release()
+            self._timer = self._schedule()
+            
     
     def _send(self, mPoint):
         ''' 
