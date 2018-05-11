@@ -193,22 +193,6 @@ public class UdpPlugin implements Runnable {
 			return;
 		}
 		
-		
-		long timestamp;
-		try { 
-			timestamp = ISO8601Helper.timestampToMillis(message.getTimestamp());
-		} catch (Exception e) {
-			logger.error("Exception parsing te timestamp [{}]: using actual time",message.getTimestamp(),e);
-			timestamp=System.currentTimeMillis();
-		}
-		
-		Sample sample = new Sample(value,timestamp);
-		try {
-			plugin.updateMonitorPointValue(message.getMonitorPointId(), sample);
-		} catch (Exception e) {
-			logger.error("Exception adding the sample [{}] to the plugin: value lost",message.getMonitorPointId(),e);
-		}
-		
 		if (!Objects.isNull(message.getOperMode()) && !message.getOperMode().isEmpty()) {
 			try {
 				OperationalMode mode = OperationalMode.valueOf(message.getOperMode());
@@ -224,6 +208,21 @@ public class UdpPlugin implements Runnable {
 						message.getMonitorPointId());
 			}
 			
+		}
+		
+		long timestamp;
+		try { 
+			timestamp = ISO8601Helper.timestampToMillis(message.getTimestamp());
+		} catch (Exception e) {
+			logger.error("Exception parsing te timestamp [{}]: using actual time",message.getTimestamp(),e);
+			timestamp=System.currentTimeMillis();
+		}
+		
+		Sample sample = new Sample(value,timestamp);
+		try {
+			plugin.updateMonitorPointValue(message.getMonitorPointId(), sample);
+		} catch (Exception e) {
+			logger.error("Exception adding the sample [{}] to the plugin: value lost",message.getMonitorPointId(),e);
 		}
 	}
 	
