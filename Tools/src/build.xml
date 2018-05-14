@@ -29,7 +29,7 @@
 		<copy todir="${exttools.dir}" file="${exttools.dir}/${spring}/libs/${spring-beans.jar}"/>
 		<copy todir="${exttools.dir}" file="${exttools.dir}/${spring}/libs/${spring-aop.jar}"/>
 		<copy todir="${exttools.dir}" file="${exttools.dir}/${spring}/libs/${spring-expression.jar}"/>
-		<echo>Unpacking ${spring} in ${exttools.dir}</echo>
+		<echo>Unpacking ${apache-commons-cli} in ${exttools.dir}</echo>
 		<untar src="${exttools.dir}/${apache-commons-cli}-bin.tar.gz" dest="${exttools.dir}" compression="gzip"/>
 		<copy todir="${exttools.dir}" file="${exttools.dir}/${apache-commons-cli}/${apache-commons-cli}.jar" />
 		<delete dir="${exttools.dir}/${apache-commons-cli}"/>
