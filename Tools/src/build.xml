@@ -48,8 +48,8 @@
 		<string>${spring-aop.jar}</string>
 		<string>${spring-expression.jar}</string>
 		<string>commons-logging-1.2.jar</string>
-		<string>scalactic_2.12-3.0.4.jar</string>
-		<string>scalatest_2.12-3.0.4.jar</string>
+		<string>scalactic_2.12-3.0.5.jar</string>
+		<string>scalatest_2.12-3.0.5.jar</string>
 		<string>junit-4.12.jar</string>
 		<string>hamcrest-core-1.3.jar</string>
 		<string>kafka-clients-1.0.0.jar</string>
