@@ -1,6 +1,9 @@
 package org.eso.ias.cdb.test.json;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -32,9 +35,9 @@ import org.eso.ias.cdb.pojos.SupervisorDao;
 import org.eso.ias.cdb.pojos.TFLanguageDao;
 import org.eso.ias.cdb.pojos.TemplateDao;
 import org.eso.ias.cdb.pojos.TransferFunctionDao;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test reading and writing of JSON CDB.
@@ -68,7 +71,7 @@ public class TestJsonCdb {
 	 */
 	public static final Path cdbParentPath =  FileSystems.getDefault().getPath(".");
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		// Remove any CDB folder if present
 		CdbFolders.ROOT.delete(cdbParentPath);
@@ -84,7 +87,7 @@ public class TestJsonCdb {
 		cdbReader.init();
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		CdbFolders.ROOT.delete(cdbParentPath);
 		assertFalse(CdbFolders.ROOT.exists(cdbParentPath));
@@ -123,8 +126,8 @@ public class TestJsonCdb {
 		// Read the IAS from the CDB and check if it is
 		// what we just wrote
 		Optional<IasDao> optIas = cdbReader.getIas();
-		assertTrue("Got an empty IAS!", optIas.isPresent());
-		assertEquals("The IASs differ!", ias, optIas.get());
+		assertTrue( optIas.isPresent(),"Got an empty IAS!");
+		assertEquals(ias, optIas.get(),"The IASs differ!");
 	}
 	
 
@@ -204,8 +207,8 @@ public class TestJsonCdb {
 		assertTrue(cdbFiles.getSuperivisorFilePath(superv.getId()).toFile().exists());
 		
 		Optional<SupervisorDao> optSuperv = cdbReader.getSupervisor(superv.getId());
-		assertTrue("Got an empty Supervisor!", optSuperv.isPresent());
-		assertEquals("The Supervisors differ!", superv, optSuperv.get());
+		assertTrue( optSuperv.isPresent(),"Got an empty Supervisor!");
+		assertEquals(superv, optSuperv.get(),"The Supervisors differ!");
 		
 	}
 
@@ -286,8 +289,8 @@ public class TestJsonCdb {
 		
 		// Read the DASU from CDB and compare with what we just wrote
 		Optional<DasuDao> theDasuFromCdb = cdbReader.getDasu(dasu.getId());
-		assertTrue("Got a null DASU with ID "+dasu.getId()+" from CDB",theDasuFromCdb.isPresent());
-		assertEquals("The DASUs differ!", dasu,theDasuFromCdb.get());
+		assertTrue(theDasuFromCdb.isPresent(),"Got a null DASU with ID "+dasu.getId()+" from CDB");
+		assertEquals(dasu,theDasuFromCdb.get(),"The DASUs differ!");
 		assertEquals(theDasuFromCdb.get().getOutput().getId(), dasuOutIasio.getId());
 	}
 
@@ -326,7 +329,7 @@ public class TestJsonCdb {
 			asce.addInput(input, true);
 			cdbWriter.writeIasio(input, true);
 		}
-		assertEquals("Not all the inputs have bene added to the ASCE",IasTypeDao.values().length,asce.getInputs().size());
+		assertEquals(IasTypeDao.values().length,asce.getInputs().size(),"Not all the inputs have bene added to the ASCE");
 		
 		// Adds few properties
 		PropertyDao p1 = new PropertyDao();
@@ -355,9 +358,9 @@ public class TestJsonCdb {
 		assertTrue(cdbFiles.getAsceFilePath(asce.getId()).toFile().exists());
 		
 		Optional<AsceDao> optAsce = cdbReader.getAsce(asce.getId());
-		assertTrue("Got a null ASCE with ID "+asce.getId()+" from CDB",optAsce.isPresent());
+		assertTrue(optAsce.isPresent(),"Got a null ASCE with ID "+asce.getId()+" from CDB");
 		assertEquals(asce.getOutput(),optAsce.get().getOutput());
-		assertEquals("The ASCEs differ!", asce,optAsce.get());
+		assertEquals(asce,optAsce.get(),"The ASCEs differ!");
 	}
 
 	/**
@@ -371,8 +374,8 @@ public class TestJsonCdb {
 		IasioDao iasioDefaultShelve = new IasioDao("ioID2", "IASIO description", IasTypeDao.ALARM,"http://www.eso.org");
 		cdbWriter.writeIasio(iasioDefaultShelve, false);
 		Optional<IasioDao> optIasioDefShelve = cdbReader.getIasio(iasioDefaultShelve.getId());
-		assertTrue("Got an empty IASIO!", optIasioDefShelve.isPresent());
-		assertEquals("The IASIOs differ!", iasioDefaultShelve, optIasioDefShelve.get());
+		assertTrue(optIasioDefShelve.isPresent(),"Got an empty IASIO!");
+		assertEquals(iasioDefaultShelve, optIasioDefShelve.get(),"The IASIOs differ!");
 		assertEquals(IasioDao.canSheveDefault,optIasioDefShelve.get().isCanShelve());
 		
 		IasioDao iasio = new IasioDao(
@@ -386,37 +389,37 @@ public class TestJsonCdb {
 		assertTrue(cdbFiles.getIasioFilePath(iasio.getId()).toFile().exists());
 		
 		Optional<IasioDao> optIasio = cdbReader.getIasio(iasio.getId());
-		assertTrue("Got an empty IASIO!", optIasio.isPresent());
-		assertEquals("The IASIOs differ!", iasio, optIasio.get());
+		assertTrue( optIasio.isPresent(),"Got an empty IASIO!");
+		assertEquals(iasio, optIasio.get(),"The IASIOs differ!");
 		
 		// Check if there is one and only one IASIO in the CDB
 		Optional<Set<IasioDao>> optSet = cdbReader.getIasios();
-		assertTrue("Got an empty set of IASIOs!", optSet.isPresent());
-		assertEquals("Size of set mismatch",1,optSet.get().size());
+		assertTrue( optSet.isPresent(),"Got an empty set of IASIOs!");
+		assertEquals(1,optSet.get().size(),"Size of set mismatch");
 
 		// Append another IASIO
 		IasioDao iasio2 = new IasioDao("ioID2", "Another IASIO", IasTypeDao.BOOLEAN,null);
 		cdbWriter.writeIasio(iasio2, true);
 		Optional<Set<IasioDao>> optSet2 = cdbReader.getIasios();
-		assertTrue("Got an empty set of IASIOs!", optSet2.isPresent());
-		assertEquals("Size of set mismatch",2,optSet2.get().size());
+		assertTrue(optSet2.isPresent(),"Got an empty set of IASIOs!");
+		assertEquals(2,optSet2.get().size(),"Size of set mismatch");
 		
 		// Is the second IASIO ok?
 		Optional<IasioDao> optIasio2 = cdbReader.getIasio(iasio2.getId());
-		assertTrue("Got an empty IASIO!", optIasio2.isPresent());
-		assertEquals("The IASIOs differ!", iasio2, optIasio2.get());
+		assertTrue(optIasio2.isPresent(),"Got an empty IASIO!");
+		assertEquals(iasio2, optIasio2.get(),"The IASIOs differ!");
 		
 		// Check if updating a IASIO replaces the old one
 		iasio.setShortDesc("A new Descripton");
 		cdbWriter.writeIasio(iasio, true);
 		// There must be still 2 IASIOs in the CDB
 		optSet = cdbReader.getIasios();
-		assertTrue("Got an empty set of IASIOs!", optSet.isPresent());
-		assertEquals("Size of set mismatch",2,optSet.get().size());
+		assertTrue( optSet.isPresent(),"Got an empty set of IASIOs!");
+		assertEquals(2,optSet.get().size(),"Size of set mismatch");
 		// Check if the IASIO in the CDB has been updated
 		optIasio = cdbReader.getIasio(iasio.getId());
-		assertTrue("Got an empty IASIO!", optIasio.isPresent());
-		assertEquals("The IASIOs differ!", iasio, optIasio.get());
+		assertTrue( optIasio.isPresent(),"Got an empty IASIO!");
+		assertEquals(iasio, optIasio.get(),"The IASIOs differ!");
 	}
 
 	/**
@@ -435,8 +438,8 @@ public class TestJsonCdb {
 		assertTrue(cdbFiles.getIasioFilePath("PlaceHolderID").toFile().exists());
 		
 		Optional<Set<IasioDao>> optSet = cdbReader.getIasios();
-		assertTrue("Got an empty set of IASIOs!", optSet.isPresent());
-		assertEquals("Size of set mismatch",set.size(),optSet.get().size());
+		assertTrue( optSet.isPresent(),"Got an empty set of IASIOs!");
+		assertEquals(set.size(),optSet.get().size(),"Size of set mismatch");
 		
 		// Check if appending works
 		Set<IasioDao> set2 = new HashSet<>();
@@ -446,8 +449,8 @@ public class TestJsonCdb {
 		}
 		cdbWriter.writeIasios(set2, true);
 		Optional<Set<IasioDao>> optSet2 = cdbReader.getIasios();
-		assertTrue("Got an empty set of IASIOs!", optSet2.isPresent());
-		assertEquals("Size of set mismatch",set.size()+set2.size(),optSet2.get().size());
+		assertTrue(optSet2.isPresent(),"Got an empty set of IASIOs!");
+		assertEquals(set.size()+set2.size(),optSet2.get().size(),"Size of set mismatch");
 		
 		// Update the first iasios
 		set.clear();
@@ -458,8 +461,8 @@ public class TestJsonCdb {
 		cdbWriter.writeIasios(set, true);
 		// Size must be the same
 		Optional<Set<IasioDao>> optSet3 = cdbReader.getIasios();
-		assertTrue("Got an empty set of IASIOs!", optSet3.isPresent());
-		assertEquals("Size of set mismatch",set.size()+set2.size(),optSet3.get().size());
+		assertTrue(optSet3.isPresent(),"Got an empty set of IASIOs!");
+		assertEquals(set.size()+set2.size(),optSet3.get().size(),"Size of set mismatch");
 		
 		// Check if all IASIOs match with the ones in the sets
 		set.stream().forEach(x -> assertTrue(optSet3.get().contains(x)));
@@ -470,8 +473,8 @@ public class TestJsonCdb {
 		cdbWriter.writeIasios(set, false);
 		// Size must be the same
 		Optional<Set<IasioDao>> optSet4 = cdbReader.getIasios();
-		assertTrue("Got an empty set of IASIOs!", optSet4.isPresent());
-		assertEquals("Size of set mismatch",set.size(),optSet4.get().size());
+		assertTrue(optSet4.isPresent(),"Got an empty set of IASIOs!");
+		assertEquals(set.size(),optSet4.get().size(),"Size of set mismatch");
 		
 		// Check if all IASIOs match with the ones in the sets
 		set.stream().forEach(x -> assertTrue(optSet4.get().contains(x)));

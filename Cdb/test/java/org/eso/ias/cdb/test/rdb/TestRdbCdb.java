@@ -1,8 +1,8 @@
 
 package org.eso.ias.cdb.test.rdb;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -27,10 +27,10 @@ import org.eso.ias.cdb.rdb.RdbReader;
 import org.eso.ias.cdb.rdb.RdbUtils;
 import org.eso.ias.cdb.rdb.RdbWriter;
 import org.eso.ias.cdb.test.json.TestJsonCdb;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,7 +76,7 @@ public class TestRdbCdb {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		// Clear the content of the DB
 
@@ -95,11 +95,11 @@ public class TestRdbCdb {
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void logout() {
 		rdbUtils.close();
 	}
@@ -133,13 +133,13 @@ public class TestRdbCdb {
 
 		// Get the IAS from the reader
 		Optional<IasDao> optIas = cdbReader.getIas();
-		assertTrue("Got an empty IAS!", optIas.isPresent());
-		assertEquals("The IASs differ!", ias, optIas.get());
+		assertTrue( optIas.isPresent(),"Got an empty IAS!");
+		assertEquals(ias, optIas.get(),"The IASs differ!");
 
 		// Modify the IAS and save it again
 		IasDao ias2 = optIas.get();
 		ias2.setLogLevel(LogLevelDao.INFO);
-		assertTrue("Error removing a property from the IAS", ias2.getProps().remove(p1));
+		assertTrue(ias2.getProps().remove(p1),"Error removing a property from the IAS");
 		
 		ias2.setRefreshRate(5);
 		ias2.setTolerance(2);
@@ -149,9 +149,9 @@ public class TestRdbCdb {
 
 		// Get the IAS from the reader
 		Optional<IasDao> optIas2 = cdbReader.getIas();
-		assertTrue("Got an empty IAS!", optIas2.isPresent());
-		assertEquals("The IASs differ!", ias2, optIas2.get());
-		assertEquals("Wrong number of properties", 1, optIas2.get().getProps().size());
+		assertTrue(optIas2.isPresent(),"Got an empty IAS!");
+		assertEquals(ias2, optIas2.get(),"The IASs differ!");
+		assertEquals(1, optIas2.get().getProps().size(),"Wrong number of properties");
 	}
 
 	/**
@@ -199,8 +199,8 @@ public class TestRdbCdb {
 		cdbWriter.writeSupervisor(superv);
 		
 		Optional<SupervisorDao> optSuperv = cdbReader.getSupervisor(superv.getId());
-		assertTrue("Got an empty Supervisor!", optSuperv.isPresent());
-		assertEquals("The Supervisors differ!", superv, optSuperv.get());
+		assertTrue(optSuperv.isPresent(),"Got an empty Supervisor!");
+		assertEquals(superv, optSuperv.get(),"The Supervisors differ!");
 
 		// Modify the supervisor then save it again
 		superv.setHostName("almadev.hq.eso.org");
@@ -223,8 +223,8 @@ public class TestRdbCdb {
 
 		// Check if it has been updated
 		Optional<SupervisorDao> optSuperv2 = cdbReader.getSupervisor(superv.getId());
-		assertTrue("Got an empty Supervisor!", optSuperv2.isPresent());
-		assertEquals("The Supervisors differ!", superv, optSuperv2.get());
+		assertTrue(optSuperv2.isPresent(),"Got an empty Supervisor!");
+		assertEquals(superv, optSuperv2.get(),"The Supervisors differ!");
 	}
 
 	/**
@@ -244,15 +244,15 @@ public class TestRdbCdb {
 		cdbWriter.writeIasio(io, true);
 
 		Optional<IasioDao> iasioFromRdb = cdbReader.getIasio("IO-ID");
-		assertTrue("Got an empty IASIO!", iasioFromRdb.isPresent());
-		assertEquals("The IASIOs differ!", io, iasioFromRdb.get());
+		assertTrue(iasioFromRdb.isPresent(),"Got an empty IASIO!");
+		assertEquals(io, iasioFromRdb.get(),"The IASIOs differ!");
 		
 		// Is the default value saved for IasioDao#canShelve?
 		IasioDao iasioDefaultShelve = new IasioDao("ioID2", "IASIO description", IasTypeDao.ALARM,"http://www.eso.org");
 		cdbWriter.writeIasio(iasioDefaultShelve, false);
 		Optional<IasioDao> optIasioDefShelve = cdbReader.getIasio(iasioDefaultShelve.getId());
-		assertTrue("Got an empty IASIO!", optIasioDefShelve.isPresent());
-		assertEquals("The IASIOs differ!", iasioDefaultShelve, optIasioDefShelve.get());
+		assertTrue(optIasioDefShelve.isPresent(),"Got an empty IASIO!");
+		assertEquals(iasioDefaultShelve, optIasioDefShelve.get(),"The IASIOs differ!");
 		assertEquals(IasioDao.canSheveDefault,optIasioDefShelve.get().isCanShelve());
 	}
 	
@@ -277,8 +277,8 @@ public class TestRdbCdb {
 		cdbWriter.writeIasio(io, true);
 
 		Optional<IasioDao> iasioFromRdb = cdbReader.getIasio("T-IO-ID");
-		assertTrue("Got an empty templated IASIO!", iasioFromRdb.isPresent());
-		assertEquals("The IASIOs differ!", io, iasioFromRdb.get());
+		assertTrue(iasioFromRdb.isPresent(),"Got an empty templated IASIO!");
+		assertEquals(io, iasioFromRdb.get(),"The IASIOs differ!");
 		assertEquals(io.getTemplateId(),iasioFromRdb.get().getTemplateId());
 	}
 	
@@ -305,8 +305,9 @@ public class TestRdbCdb {
 		cdbWriter.writeIasios(iasios, true);
 
 		Optional<Set<IasioDao>> iasiosFromRdb = cdbReader.getIasios();
-		assertTrue("Got an empty set of IASIOs!", iasiosFromRdb.isPresent());
-		assertEquals("The sets of IASIOs differ!", iasios, iasiosFromRdb.get());
+		assertTrue(iasiosFromRdb.isPresent(),"Got an empty set of IASIOs!");
+		assertEquals(iasios.size(), iasiosFromRdb.get().size());
+		assertEquals(iasios, iasiosFromRdb.get(),"The sets of IASIOs differ!");
 	}
 
 	/**
@@ -329,8 +330,8 @@ public class TestRdbCdb {
 		cdbWriter.writeDasu(dasuNoASCEs);
 
 		Optional<DasuDao> dasuFromRdb = cdbReader.getDasu("A-DASU-For-Testing");
-		assertTrue("Got an empty DASU!", dasuFromRdb.isPresent());
-		assertEquals("The DASUs differ!", dasuNoASCEs, dasuFromRdb.get());
+		assertTrue(dasuFromRdb.isPresent(),"Got an empty DASU!");
+		assertEquals(dasuNoASCEs, dasuFromRdb.get(),"The DASUs differ!");
 
 		// Test the reading/writing of a DASU with some ASCEs
 		DasuDao dasuWithASCEs = new DasuDao();
@@ -377,10 +378,10 @@ public class TestRdbCdb {
 
 		cdbWriter.writeDasu(dasuWithASCEs);
 		Optional<DasuDao> dasuWithAscesFromRdb = cdbReader.getDasu("A-DASU-With-ASCEs");
-		assertTrue("Got an empty DASU!", dasuWithAscesFromRdb.isPresent());
+		assertTrue(dasuWithAscesFromRdb.isPresent(),"Got an empty DASU!");
 		assertEquals(dasuWithASCEs.getOutput().getId(), dasuWithAscesFromRdb.get().getOutput().getId());
-		assertEquals("The DASUs differ!", dasuWithASCEs, dasuWithAscesFromRdb.get());
-		assertEquals("The number of ASCEs in the DASU is wrong", 2, dasuWithAscesFromRdb.get().getAsces().size());
+		assertEquals(dasuWithASCEs, dasuWithAscesFromRdb.get(),"The DASUs differ!");
+		assertEquals(2, dasuWithAscesFromRdb.get().getAsces().size(),"The number of ASCEs in the DASU is wrong");
 	}
 	
 	/**
@@ -397,8 +398,8 @@ public class TestRdbCdb {
 		cdbWriter.writeTransferFunction(tfDao);
 
 		Optional<TransferFunctionDao> tfFromRdb = cdbReader.getTransferFunction(tfDao.getClassName());
-		assertTrue("Got an empty TF!", tfFromRdb.isPresent());
-		assertEquals("The TFs differ!", tfDao, tfFromRdb.get());
+		assertTrue(tfFromRdb.isPresent(),"Got an empty TF!");
+		assertEquals(tfDao, tfFromRdb.get(),"The TFs differ!");
 	}
 
 	/**
@@ -469,10 +470,10 @@ public class TestRdbCdb {
 		cdbWriter.writeAsce(asce);
 
 		Optional<AsceDao> asceFromRdb = cdbReader.getAsce("ASCE-ID");
-		assertTrue("Got an empty ASCE!", asceFromRdb.isPresent());
-		assertEquals("The ASCEs differ!", asce, asceFromRdb.get());
-		assertEquals("The number of inputs of the ASCE differ!", iasios.size(), asceFromRdb.get().getInputs().size());
-		assertEquals("The number of properties of the ASCE differ!", 2, asceFromRdb.get().getProps().size());
+		assertTrue( asceFromRdb.isPresent(),"Got an empty ASCE!");
+		assertEquals(asce, asceFromRdb.get(),"The ASCEs differ!");
+		assertEquals(iasios.size(), asceFromRdb.get().getInputs().size(),"The number of inputs of the ASCE differ!");
+		assertEquals(2, asceFromRdb.get().getProps().size(),"The number of properties of the ASCE differ!");
 	}
 
 	/**
