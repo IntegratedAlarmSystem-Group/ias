@@ -1,9 +1,9 @@
 package org.eso.ias.plugin.network.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,9 +26,9 @@ import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher.PublisherEventsListener;
 import org.eso.ias.types.AlarmSample;
 import org.eso.ias.types.OperationalMode;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,7 +95,7 @@ public class UdpPluginTest implements PublisherEventsListener {
 	 */
 	private Process proc;
 	
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		PluginConfigFileReader jsonFileReader = new PluginConfigFileReader(resourcePath+"pyConfig.json");
 		assertNotNull(jsonFileReader);
@@ -127,7 +127,7 @@ public class UdpPluginTest implements PublisherEventsListener {
 	}
 	
 	
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		logger.debug("Shutting down");
 		udpPlugin.shutdown();
@@ -140,8 +140,8 @@ public class UdpPluginTest implements PublisherEventsListener {
 		logger.debug("test terminated");
 		
 		// CHeck if the python process terminated without errors
-		assertFalse("Python plugin still running",proc.isAlive());
-		assertTrue("Python plugin terminated with error "+proc.exitValue(),proc.exitValue()==0);
+		assertFalse(proc.isAlive(),"Python plugin still running");
+		assertEquals(0,proc.exitValue(),"Python plugin terminated with error "+proc.exitValue());
 		
 		assertEquals(6, publishedMPoints.size());
 		
