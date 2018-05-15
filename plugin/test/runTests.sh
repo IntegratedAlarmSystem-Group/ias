@@ -13,7 +13,7 @@ iasRun -l j org.junit.platform.console.ConsoleLauncher -c org.eso.ias.plugin.tes
 iasRun -l j org.junit.platform.console.ConsoleLauncher -c org.eso.ias.plugin.test.stats.DetailedStatsTest
 iasRun -l j org.junit.platform.console.ConsoleLauncher -c org.eso.ias.plugin.test.publisher.BufferedMonitoredSystemDataTest
 iasRun -l j org.junit.platform.console.ConsoleLauncher -c org.eso.ias.plugin.test.publisher.JsonPusblisherTest
-iasRun -l j -Dorg.eso.ias.plugin.kafka.partition=0 org.junit.platform.console.ConsoleLauncher -c org.eso.ias.plugin.test.publisher.KafkaPublisherTest
+iasRun -l j org.junit.platform.console.ConsoleLauncher -c org.eso.ias.plugin.test.publisher.KafkaPublisherTest
 iasRun -l j org.junit.platform.console.ConsoleLauncher -c org.eso.ias.plugin.test.MonitoredValueTest
 iasRun -l j org.junit.platform.console.ConsoleLauncher -c org.eso.ias.plugin.test.JsonConversionTest
 iasRun -l j org.junit.platform.console.ConsoleLauncher -c org.eso.ias.plugin.test.ReplicatedPluginTest
