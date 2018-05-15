@@ -1,2 +1,2 @@
 #!/usr/bin/bash
-iasRun -l j org.junit.runner.JUnitCore org.eso.ias.webserversender.WebServerSenderTest
+iasRun -l j org.junit.platform.console.ConsoleLauncher -c org.eso.ias.webserversender.WebServerSenderTest
