@@ -1,8 +1,8 @@
 package org.eso.ias.plugin.test.publisher;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -24,9 +24,9 @@ import org.eso.ias.plugin.test.publisher.SimpleKafkaConsumer.KafkaConsumerListen
 import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.eso.ias.types.IasValidity;
 import org.eso.ias.types.OperationalMode;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,7 +96,7 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 	/**
 	 * Initialization
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() {
 		// Build the publisher
 		logger.info("Initializing...");
@@ -115,7 +115,7 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 	/**
 	 * Clean up
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws PublisherException {
 		kPub.tearDown();
 		consumer.tearDown();
@@ -144,7 +144,7 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 		kPub.offer(fv);
 		
 		try {
-			assertTrue("Timeout, event not received",eventsToReceive.await(2, TimeUnit.MINUTES));
+			assertTrue(eventsToReceive.await(2, TimeUnit.MINUTES),"Timeout, event not received");
 		} catch (InterruptedException ie) {
 			ie.printStackTrace();
 		}
@@ -185,7 +185,7 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 		}
 		
 		try {
-			assertTrue("Timeout, events not received",eventsToReceive.await(2, TimeUnit.MINUTES));
+			assertTrue(eventsToReceive.await(2, TimeUnit.MINUTES),"Timeout, events not received");
 		} catch (InterruptedException ie) {
 			ie.printStackTrace();
 		}

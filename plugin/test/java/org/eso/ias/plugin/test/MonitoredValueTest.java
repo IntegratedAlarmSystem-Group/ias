@@ -1,9 +1,9 @@
 package org.eso.ias.plugin.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -20,10 +20,10 @@ import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.NoneFilter;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.eso.ias.types.IasValidity;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,18 +85,18 @@ public class MonitoredValueTest implements ChangeValueListener {
 	 */
 	private static final String mValueId= "A-Valid-ID";
 	
-	@Before
+	@BeforeEach
 	public void setUp() {
 		mVal = new MonitoredValue(mValueId, refreshRate, schedExecutorSvc, this,iasPeriodicSendTI);
 		mVal.start();
 	}
 	
-	@After
+	@AfterEach
 	public void tearDown() {
 		mVal.shutdown();
 	}
 	
-	@AfterClass
+	@AfterAll
 	public static void shutdownAll() {
 		schedExecutorSvc.shutdown();
 	}

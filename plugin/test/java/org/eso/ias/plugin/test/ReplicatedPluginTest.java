@@ -1,7 +1,7 @@
 package org.eso.ias.plugin.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,8 +27,8 @@ import org.eso.ias.types.IasValidity;
 import org.eso.ias.types.Identifier;
 import org.eso.ias.types.IdentifierType;
 import org.eso.ias.types.OperationalMode;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -135,7 +135,7 @@ public class ReplicatedPluginTest {
 	 */
 	private static final Logger logger = LoggerFactory.getLogger(ReplicatedPluginTest.class);
 	
-	@Before
+	@BeforeEach
 	public void setUp() {
 		monitorPointSender = new Sender();
 		
