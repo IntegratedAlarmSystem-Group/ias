@@ -26,7 +26,7 @@ public enum IASTypes {
     BOOLEAN(java.lang.Boolean.class,"BooleanType"), 
     CHAR(java.lang.Character.class,"CharType"), 
     STRING(java.lang.String.class,"StringType"), 
-    ALARM(AlarmSample.class,"AlarmType");
+    ALARM(Alarm.class,"AlarmType");
 	
 	public final Class typeClass; 
 	
@@ -94,7 +94,7 @@ public enum IASTypes {
     	case BOOLEAN: return Boolean.parseBoolean(value);
     	case CHAR: return value.charAt(0);
     	case STRING: return value;
-    	case ALARM: return AlarmSample.valueOf(value);
+    	case ALARM: return Alarm.valueOf(value);
     	default: throw new UnsupportedOperationException("Unsupported type "+this);
 	}
     }

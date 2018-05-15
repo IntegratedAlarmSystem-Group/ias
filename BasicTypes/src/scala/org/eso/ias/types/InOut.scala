@@ -379,7 +379,7 @@ object InOut {
       case IASTypes.BOOLEAN =>value.isInstanceOf[Boolean]
       case IASTypes.CHAR => value.isInstanceOf[Char]
       case IASTypes.STRING => value.isInstanceOf[String]
-      case IASTypes.ALARM =>value.isInstanceOf[AlarmSample]
+      case IASTypes.ALARM =>value.isInstanceOf[Alarm]
       case _ => false
     }
   }

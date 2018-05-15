@@ -772,8 +772,8 @@ public class IASValue<T> {
 					Optional.ofNullable(dasuProductionTStamp),
 					depIds,
 					theProps);
-			case ALARM: return new IASValue<AlarmSample>(
-					(AlarmSample)value, 
+			case ALARM: return new IASValue<Alarm>(
+					(Alarm)value, 
 					mode,
 					iasValidity,
 					fullRunningId,

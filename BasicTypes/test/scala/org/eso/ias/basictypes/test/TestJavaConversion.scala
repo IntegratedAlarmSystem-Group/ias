@@ -211,11 +211,11 @@ class TestJavaConversion  extends FlatSpec {
     
     val alarmVal = JavaConverter.inOutToIASValue[AlarmSample](f.alarmHIO)
     val alarm = alarmVal.value
-    val newAlarm = AlarmSample.CLEARED
+    val Alarm = Alarm.CLEARED
     val newAlarmValue = alarmVal.updateValue(newAlarm)
     val alarmHio = JavaConverter.updateInOutWithIasValue(f.alarmHIO,newAlarmValue)
     
-    assert(alarmHio.value.get.asInstanceOf[AlarmSample]==AlarmSample.CLEARED)
+    assert(alarmHio.value.get.asInstanceOf[Alarm]==Alarm.CLEARED)
     assert(alarmHio.fromIasValueValidity.isEmpty)
     assert(alarmHio.fromInputsValidity.isDefined)
     assert(alarmHio.fromInputsValidity.get.iasValidity==IasValidity.RELIABLE)
