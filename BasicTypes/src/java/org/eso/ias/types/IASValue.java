@@ -869,7 +869,7 @@ public class IASValue<T> {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		IASValue other = (IASValue) obj;
+		IASValue<?> other = (IASValue<?>) obj;
 		if (convertedProductionTStamp == null) {
 			if (other.convertedProductionTStamp != null)
 				return false;

@@ -28,11 +28,11 @@ public enum IASTypes {
     STRING(java.lang.String.class,"StringType"), 
     ALARM(Alarm.class,"AlarmType");
 	
-	public final Class typeClass; 
+	public final Class<?> typeClass; 
 	
 	public final String typeName;
     
-    private IASTypes(Class c, String typeName) {
+    private IASTypes(Class<?> c, String typeName) {
     	this.typeClass=c;
     	this.typeName=typeName;
 	}
