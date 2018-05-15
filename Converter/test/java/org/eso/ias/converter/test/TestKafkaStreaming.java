@@ -1,8 +1,8 @@
 package org.eso.ias.converter.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -45,11 +45,11 @@ import org.eso.ias.types.IASValue;
 import org.eso.ias.types.IasValueJsonSerializer;
 import org.eso.ias.types.IasValueSerializerException;
 import org.eso.ias.types.IasValueStringSerializer;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -243,7 +243,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		return ret;
 	}
 	
-	@BeforeClass
+	@BeforeAll
 	public static void classInitializer() throws Exception {
 		// Build the consumer that takes out of the kafka topic
 		// the output of the converter
@@ -267,7 +267,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		mPointsProducer.setUp();
 	}
 	
-	@AfterClass
+	@AfterAll
 	public static void classCleanup() throws Exception {
 		mPointsConsumer.tearDown();
 		mPointsProducer.tearDown();
@@ -278,7 +278,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
 	 * 
 	 * @throws Exception
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		// Builds the JSON CDB
 		cdbFiles = new CdbJsonFiles(cdbParentPath);
@@ -315,7 +315,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
 	/**
 	 * Cleanup
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		logger.info("Shutting down the converter");
 		converter.tearDown();
@@ -344,7 +344,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		mPointsProducer.flush();
 		logger.info("{} strings sent",numOfMPointsToSend);
 		logger.info("Waiting for the events from the converter...");
-		assertTrue("Not all events received!",latch.await(1, TimeUnit.MINUTES));
+		assertTrue(latch.await(1, TimeUnit.MINUTES),"Not all events received!");
 		assertEquals(numOfMPointsToSend,eventsConsumer.numOfEventsReceived());
 		logger.info("Test done");
 		
@@ -386,7 +386,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		mPointsProducer.push(mpdString, null, unknown2.id);
 		
 		logger.info("Waiting for unkonwn monitor point that should never arrived");
-		assertFalse("Should not have received any value!",latch.await(1, TimeUnit.MINUTES));
+		assertFalse(latch.await(1, TimeUnit.MINUTES),"Should not have received any value!");
 		assertEquals(0,eventsConsumer.numOfEventsReceived());
 		
 		// After the error.. Does the translation still work?
@@ -402,7 +402,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		mPointsProducer.flush();
 		logger.info("{} strings sent",numOfMPointsToSend);
 		logger.info("Waiting for the events from the converter...");
-		assertTrue("Not all events received!",latch.await(1, TimeUnit.MINUTES));
+		assertTrue(latch.await(1, TimeUnit.MINUTES),"Not all events received!");
 		assertEquals(numOfMPointsToSend,eventsConsumer.numOfEventsReceived());
 		logger.info("Test done");
 		

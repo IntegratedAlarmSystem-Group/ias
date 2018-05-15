@@ -1,8 +1,8 @@
 package org.eso.ias.converter.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
@@ -22,9 +22,9 @@ import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.converter.config.IasioConfigurationDaoImpl;
 import org.eso.ias.converter.config.MonitorPointConfiguration;
 import org.eso.ias.types.IASTypes;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test the CDB DAO of the converter,
@@ -52,7 +52,7 @@ public class ConverterCdbTester {
 	
 	private IasioConfigurationDaoImpl configDao;
 	
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		// Remove any CDB folder if present
 		CdbFolders.ROOT.delete(cdbParentPath);
@@ -133,7 +133,7 @@ public class ConverterCdbTester {
 		return iasios;
 	}
 	
-	@After
+	@AfterEach
 	public void tearDown() throws Exception{
 		configDao.close();
 		CdbFolders.ROOT.delete(cdbParentPath);
