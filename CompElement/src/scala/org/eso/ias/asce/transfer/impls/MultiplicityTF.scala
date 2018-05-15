@@ -10,7 +10,7 @@ import scala.util.control.NonFatal
 import org.eso.ias.asce.exceptions.UnexpectedNumberOfInputsException
 import org.eso.ias.asce.exceptions.TypeMismatchException
 import org.eso.ias.asce.exceptions.TypeMismatchException
-import org.eso.ias.types.AlarmSample
+import org.eso.ias.types.Alarm
 
 /**
  * Implements the Multiplicity transfer function.
@@ -23,7 +23,7 @@ import org.eso.ias.types.AlarmSample
  * @author acaproni
  */
 class MultiplicityTF (cEleId: String, cEleRunningId: String, props: Properties) 
-extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
+extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,props) {
   
   /**
    * A little bit too verbose but wanted to catch all the 
@@ -65,7 +65,7 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
   /**
    * @see ScalaTransferExecutor#eval
    */
-  def eval(compInputs: Map[String, InOut[_]], actualOutput: InOut[AlarmSample]): InOut[AlarmSample] = {
+  def eval(compInputs: Map[String, InOut[_]], actualOutput: InOut[Alarm]): InOut[Alarm] = {
     if (compInputs.size<threshold) throw new UnexpectedNumberOfInputsException(compInputs.size,threshold)
     if (actualOutput.iasType!=ALARM) throw new TypeMismatchException(actualOutput.id.runningID,actualOutput.iasType,ALARM)
     for (hio <- compInputs.values
@@ -77,10 +77,11 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
       hio <- compInputs.values
       if (hio.iasType==ALARM)
       if (hio.value.isDefined)
-      alarmValue = hio.value.get.asInstanceOf[AlarmSample]
-      if (alarmValue==AlarmSample.SET)} activeAlarms=activeAlarms+1
+      alarmValue = hio.value.get.asInstanceOf[Alarm]
+      if (alarmValue.isSet())} activeAlarms=activeAlarms+1
     
-    actualOutput.updateValue(Some(AlarmSample.fromBoolean(activeAlarms>=threshold)))
+      val newAlarm = if (activeAlarms>=threshold) Alarm.getSetDefault else Alarm.cleared()
+    actualOutput.updateValue(Some(newAlarm))
   }
 }
 

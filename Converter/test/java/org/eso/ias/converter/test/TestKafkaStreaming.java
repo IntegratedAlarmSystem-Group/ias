@@ -38,7 +38,7 @@ import org.eso.ias.kafkautils.KafkaIasiosConsumer;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener;
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
 import org.eso.ias.kafkautils.SimpleStringProducer;
-import org.eso.ias.types.AlarmSample;
+import org.eso.ias.types.Alarm;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
@@ -377,7 +377,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		
 		MonitorPointDataHolder unknown2 = new MonitorPointDataHolder(
 				"UNKNOWN-ID2", 
-				AlarmSample.SET, 
+				Alarm.SET_CRITICAL, 
 				System.currentTimeMillis(), 
 				System.currentTimeMillis(),
 				IASTypes.ALARM);

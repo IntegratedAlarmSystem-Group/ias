@@ -16,7 +16,7 @@ import org.eso.ias.asce.ComputingElement
 import org.eso.ias.asce.transfer.ScalaTransfer
 import org.eso.ias.asce.transfer.JavaTransfer
 import org.eso.ias.types.IdentifierType
-import org.eso.ias.types.AlarmSample
+import org.eso.ias.types.Alarm
 import org.eso.ias.types.IASValue
 import org.eso.ias.asce.AsceStates
 import org.eso.ias.types.IasValidity._
@@ -55,7 +55,7 @@ class TestComponent extends FlatSpec {
   behavior of "A Component"
   
   it must "catch an error instantiating a wrong TF class" in {
-    val output: InOut[AlarmSample] = InOut.asOutput(outId,IASTypes.ALARM)
+    val output: InOut[Alarm] = InOut.asOutput(outId,IASTypes.ALARM)
     
     val threadaFactory = new CompEleThreadFactory("Test-runninId")
     // A transfer function that does not exist
@@ -64,12 +64,12 @@ class TestComponent extends FlatSpec {
         TransferFunctionLanguage.java,
         None,
         threadaFactory)
-    val comp: ComputingElement[AlarmSample] = new ComputingElement[AlarmSample](
+    val comp: ComputingElement[Alarm] = new ComputingElement[Alarm](
        compId,
        output,
        actualInputs,
        tfSetting,
-       new Properties()) with JavaTransfer[AlarmSample]
+       new Properties()) with JavaTransfer[Alarm]
     
     assert(comp.asceIdentifier==compId)
     assert(comp.output.id==outId)
@@ -83,7 +83,7 @@ class TestComponent extends FlatSpec {
   }
   
   it must "correctly instantiate the TF" in {
-    val output: InOut[AlarmSample] = InOut.asOutput(outId,IASTypes.ALARM)
+    val output: InOut[Alarm] = InOut.asOutput(outId,IASTypes.ALARM)
     
     val threadaFactory = new CompEleThreadFactory("Test-runninId")
     // A transfer function that does not exist
@@ -92,12 +92,12 @@ class TestComponent extends FlatSpec {
         TransferFunctionLanguage.java,
         None,
         threadaFactory)
-    val comp: ComputingElement[AlarmSample] = new ComputingElement[AlarmSample](
+    val comp: ComputingElement[Alarm] = new ComputingElement[Alarm](
        compId,
        output,
        actualInputs,
        tfSetting,
-       new Properties()) with JavaTransfer[AlarmSample]
+       new Properties()) with JavaTransfer[Alarm]
     
     assert(comp.asceIdentifier==compId)
     assert(comp.output.id==outId)

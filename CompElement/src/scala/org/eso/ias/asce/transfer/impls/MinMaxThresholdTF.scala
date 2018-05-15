@@ -8,7 +8,7 @@ import org.eso.ias.asce.exceptions.UnexpectedNumberOfInputsException
 import org.eso.ias.types.IASTypes._
 import org.eso.ias.asce.exceptions.TypeMismatchException
 import MinMaxThresholdTF._
-import org.eso.ias.types.AlarmSample
+import org.eso.ias.types.Alarm
 
 /**
  * The TF implementing a Min/Max threshold TF  (there is also
@@ -42,7 +42,7 @@ import org.eso.ias.types.AlarmSample
  * @author acaproni
  */
 class MinMaxThresholdTF(cEleId: String, cEleRunningId: String, props: Properties) 
-extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
+extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,props) {
   
   /**
    * The (high) alarm is activated when the value of the IASIO 
@@ -115,7 +115,7 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
   /**
    * @see ScalaTransferExecutor#eval
    */
-  def eval(compInputs: Map[String, InOut[_]], actualOutput: InOut[AlarmSample]): InOut[AlarmSample] = {
+  def eval(compInputs: Map[String, InOut[_]], actualOutput: InOut[Alarm]): InOut[Alarm] = {
     if (compInputs.size!=1) throw new UnexpectedNumberOfInputsException(compInputs.size,1)
     if (actualOutput.iasType!=ALARM) throw new TypeMismatchException(actualOutput.id.runningID,actualOutput.iasType,ALARM)
     
@@ -135,7 +135,7 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
     // It cope with the case that the value of the actual output is not 
     // defined (i.e. it is Optional.empty. In that case the variable
     // is initialized to false 
-    val temp = actualOutput.value.map { x => x==AlarmSample.SET }.orElse(Some(false))
+    val temp = actualOutput.value.map { x => x==Alarm.getSetDefault }.orElse(Some(false))
  
     // The condition is true if the value is over the limits (high on and low on)
     // but remains set is the old values was set and the value is
@@ -143,7 +143,7 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
     val condition = 
       (doubleValue>=highOn || doubleValue<=lowOn) ||
       temp.get && (doubleValue>=highOff || doubleValue<=lowOff)
-    val newValue = AlarmSample.fromBoolean(condition)
+    val newValue = if (condition) Alarm.getSetDefault else Alarm.cleared()
     actualOutput.updateValue(Some(newValue)).updateMode(iasio.mode).updateProps(Map("actualValue"->doubleValue.toString()))
   }
   

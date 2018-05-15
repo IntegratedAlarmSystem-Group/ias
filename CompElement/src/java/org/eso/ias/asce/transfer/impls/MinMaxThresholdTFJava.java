@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.eso.ias.types.AlarmSample;
+import org.eso.ias.types.Alarm;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
 import org.eso.ias.asce.exceptions.PropsMisconfiguredException;
@@ -186,14 +186,19 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 			throw new TypeMismatchException(iasio.fullRunningId);
 		}
 		
-		boolean wasActivated = (AlarmSample)actualOutput.value==AlarmSample.SET;
+		boolean wasActivated = actualOutput.value!=null && ((Alarm)actualOutput.value).isSet();
 		
 		boolean condition = 
 				hioValue >= highOn || hioValue <= lowOn ||
 				wasActivated && (hioValue>=highOff || hioValue<=lowOff);
 				
 				
-		AlarmSample newOutput = AlarmSample.fromBoolean(condition);
+		Alarm newOutput;
+		if (condition) {
+			newOutput=Alarm.getSetDefault();
+		} else {
+			newOutput=Alarm.cleared();
+		}
 		additionalProperties.put("actualValue", Double.valueOf(hioValue).toString());
 		return actualOutput.updateValue(newOutput).updateMode(iasio.mode).updateProperties(additionalProperties);
 	}
