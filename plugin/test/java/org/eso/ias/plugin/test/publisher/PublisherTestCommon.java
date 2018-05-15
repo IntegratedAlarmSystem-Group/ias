@@ -296,7 +296,7 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 	@Override
 	public void dataReceived(BufferedMonitoredSystemData data) {
 		assertNotNull(data);
-		assertEquals("ID differs",data.getSystemID(), pluginId);
+		assertEquals(data.getSystemID(), pluginId,"ID differs");
 		assertNotNull(data.getPublishTime());
 		assertFalse(data.getPublishTime().isEmpty());
 		assertTrue(data.getMonitorPoints().size()>0,"There must be at least one monitor point value in a message");
@@ -319,7 +319,7 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 	@Override
 	public void dataReceived(MonitorPointData mpData) {
 		assertNotNull(mpData);
-		assertEquals("ID differs",mpData.getPluginID(), pluginId);
+		assertEquals(mpData.getPluginID(), pluginId,"ID differs");
 		assertNotNull(mpData.getPublishTime());
 		assertFalse(mpData.getPublishTime().isEmpty());
 		numOfPublishInvocationInUnbufferedPub.incrementAndGet();
