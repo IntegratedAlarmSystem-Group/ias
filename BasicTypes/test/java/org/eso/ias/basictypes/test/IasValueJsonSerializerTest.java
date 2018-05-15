@@ -8,12 +8,12 @@ import org.eso.ias.types.IasValueJsonSerializer;
 import org.eso.ias.types.Identifier;
 import org.eso.ias.types.IdentifierType;
 import org.eso.ias.types.OperationalMode;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -77,7 +77,7 @@ public class IasValueJsonSerializerTest {
 		String jsonStr = jsonSerializer.iasValueToString(intIasType);
 		
 		IASValue<?> intFromSerializer = jsonSerializer.valueOf(jsonStr);
-		assertNotNull("Got a null de-serializing ["+jsonStr+"]",intFromSerializer);
+		assertNotNull(intFromSerializer,"Got a null de-serializing ["+jsonStr+"]");
 		assertEquals(intIasType,intFromSerializer);
 		
 		String shortId = "ShortType-ID";
