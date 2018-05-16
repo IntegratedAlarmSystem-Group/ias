@@ -25,7 +25,7 @@ if __name__ == '__main__':
     udpPlugin.submit("ID-Bool", False, IASType.BOOLEAN, operationalMode=OperationalMode.OPERATIONAL)
     udpPlugin.submit("ID-Char", 'X', IASType.CHAR, operationalMode=OperationalMode.DEGRADED)
     udpPlugin.submit("ID-String", 'Testing for test', IASType.STRING, operationalMode=OperationalMode.CLOSING)
-    udpPlugin.submit("ID-Alarm", Alarm.SET, IASType.ALARM)
+    udpPlugin.submit("ID-Alarm", Alarm.SET_HIGH, IASType.ALARM)
     
     time.sleep(.5)
     udpPlugin.shutdown()

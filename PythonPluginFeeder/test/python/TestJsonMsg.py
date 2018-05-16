@@ -93,12 +93,12 @@ class TestJsonMessage(unittest.TestCase):
         '''
         Test the conversion of all possible IAS data types
         '''
-        msg = JsonMsg("MPoint-IDC", Alarm.SET, IASType.ALARM,operationalMode=OperationalMode.SHUTTEDDOWN)
+        msg = JsonMsg("MPoint-IDC", Alarm.SET_MEDIUM, IASType.ALARM,operationalMode=OperationalMode.SHUTTEDDOWN)
         jStr = msg.dumps()
         print(jStr)
         fromJString = JsonMsg.parse(jStr)
         self.assertEqual(fromJString.mPointID, "MPoint-IDC")
-        self.assertEqual(fromJString.value, Alarm.SET)
+        self.assertEqual(fromJString.value, Alarm.SET_MEDIUM)
         self.assertEqual(fromJString.valueType,IASType.ALARM)
         self.assertEqual(fromJString.operationalMode, OperationalMode.SHUTTEDDOWN)
 

@@ -7,13 +7,23 @@ from enum import Enum
 
 class Alarm(Enum):
     '''
-    The alarm as defined in org.eso.ias.types.AlarmSample
+    The alarm as defined in org.eso.ias.types.Alarm
     '''
-    # Alarm raised
-    SET = 1
-    # Alarm cleared or unset
-    CLEARED = 2
-
+    # Critical alarm set
+    SET_CRITICAL = 4
+    
+    #  HIGH alarm set
+    SET_HIGH = 3
+    
+    # Medium alarm set
+    SET_MEDIUM = 2
+    
+    #  Low priority alarm set
+    SET_LOW = 1
+    
+    #  Alarm clear or unset
+    CLEARED = 0
+    
     @staticmethod
     def fromString(alarmString):
         '''
@@ -32,3 +42,64 @@ class Alarm(Enum):
                 return alarmState
         # No enumerated matches with alarmString
         raise NotImplementedError("Not supported/find alarmString: "+alarmString)
+    
+    @staticmethod
+    def getSetDefault():
+        '''
+        @return the default priority for an alarm set
+        '''
+        return Alarm.SET_MEDIUM
+    
+    @staticmethod
+    def cleared(self):
+        '''
+        A method returning the cleared alarm
+        
+        @return the cleared alarm
+        '''
+        return Alarm.CLEARED
+    
+    def increasePriority(self):
+        '''
+        Return an alarm of a lowered priority if it exists,
+        otherwise return the same alarm.
+      
+        Lowering the priority of a {@link #CLEARED} 
+        alarm is not allowed and the method throws an exception
+      
+        @return the alarm with increased priority
+        '''
+        if (self.value==0):
+            raise ValueError("Cannot increase the priority of an alarm that is not set")
+        elif self.value==1:
+            return Alarm.SET_MEDIUM
+        if (self.value==2):
+            return Alarm.SET_HIGH
+        if (self.value==3 or self.value==4):
+            Alarm.SET_CRITICAL
+    
+    def lowerPriority(self):
+        '''
+        Return an alarm of a lowered priority if it exists,
+        otherwise return the same alarm.
+         
+        Lowering the priority of a CLEARED 
+        alarm is not allowed and the method throws an exception
+         
+        @return the alarm with increased priority
+        '''
+        if (self.value==0):
+            raise ValueError("Cannot lower the priority of an alarm that is not set")
+        elif self.value==1 or self.value==2:
+            return Alarm.SET_LOW
+        if (self.value==3):
+            return Alarm.SET_MEDIUM
+        if (self.value==4):
+            Alarm.SET_HIGH
+    
+    def isSet(self):
+        '''
+        @return True if the alarm is set and False otherwise
+        '''
+        return self.value>0       
+    
