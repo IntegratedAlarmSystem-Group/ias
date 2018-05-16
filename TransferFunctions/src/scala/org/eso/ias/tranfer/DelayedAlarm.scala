@@ -4,7 +4,7 @@ import org.eso.ias.asce.transfer.ScalaTransferExecutor
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 
-import org.eso.ias.types.AlarmSample
+import org.eso.ias.types.Alarm
 import org.eso.ias.types.InOut
 import org.eso.ias.logging.IASLogger
 import scala.util.Try
@@ -36,7 +36,7 @@ class DelayedAlarmException(msg: String) extends Exception(msg)
  * @author acaproni
  */
 class DelayedAlarm(cEleId: String, cEleRunningId: String, props: Properties) 
-extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
+extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,props) {
   
   /**
    * Get the value of the passed property, if defined
@@ -66,7 +66,7 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
   /**
    * The previously received alarm
    */
-  private var lastInputValue: Option[AlarmSample]=None
+  private var lastInputValue: Option[Alarm]=None
   
   /**
    * Initialization: it basically checks if the 
@@ -102,7 +102,7 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
 	 * 
 	 * @return the computed output of the ASCE
 	 */
-	override def eval(compInputs: Map[String, InOut[_]], actualOutput: InOut[AlarmSample]): InOut[AlarmSample] = {
+	override def eval(compInputs: Map[String, InOut[_]], actualOutput: InOut[Alarm]): InOut[Alarm] = {
 	  // Here waitTimeToClear and waitTimeToSet must be defined because if they are not
 	  // an exception in thrown by initialize() and the execution of the TF never enabled
 	  assert(waitTimeToClear.isDefined && waitTimeToSet.isDefined)
@@ -131,21 +131,21 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
 	    // Initialization: ff the output was never activated then 
 	    // return a CLEARED alarm because the delay did not elapsed
 	    lastStateChangeTime=System.currentTimeMillis()
-	    lastInputValue=Some(iasio.value.get.asInstanceOf[AlarmSample])
-	    actualOutput.updateValue(Some(AlarmSample.CLEARED))
+	    lastInputValue=Some(iasio.value.get.asInstanceOf[Alarm])
+	    actualOutput.updateValue(Some(Alarm.cleared))
 	  } else {
       
       // Did the input change?
       if (iasio.value.get!=lastInputValue.get) {
-        lastInputValue=Some(iasio.value.get.asInstanceOf[AlarmSample])
+        lastInputValue=Some(iasio.value.get.asInstanceOf[Alarm])
         lastStateChangeTime = System.currentTimeMillis()
       } 
       
       val delayFromLastChange = System.currentTimeMillis()-lastStateChangeTime
       
       if (
-          (actualOutput.value.get==AlarmSample.SET && delayFromLastChange<waitTimeToClear.get) ||
-          (actualOutput.value.get==AlarmSample.CLEARED && delayFromLastChange<waitTimeToSet.get)) {
+          (actualOutput.value.get==Alarm.getSetDefault && delayFromLastChange<waitTimeToClear.get) ||
+          (actualOutput.value.get==Alarm.cleared && delayFromLastChange<waitTimeToSet.get)) {
         // Not enough time elapsed from the last time the input changed: 
         // the output remains the same
         actualOutput
