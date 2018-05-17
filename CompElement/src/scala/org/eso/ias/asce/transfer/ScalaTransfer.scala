@@ -4,6 +4,7 @@ import org.eso.ias.asce.ComputingElement
 import org.eso.ias.types.InOut
 import org.eso.ias.types.Identifier
 import java.util.Properties
+import scala.util.Try
 
 /**
  * <code>ScalaTransfer</code> calls the scala
@@ -23,10 +24,9 @@ trait ScalaTransfer[T] extends ComputingElement[T] {
   def transfer(
       inputs: Map[String, InOut[_]], 
       id: Identifier,
-      actualOutput: InOut[T]): Either[Exception,InOut[T]] = {
+      actualOutput: InOut[T]): Try[InOut[T]] = {
     
-    try Right(tfSetting.transferExecutor.get.asInstanceOf[ScalaTransferExecutor[T]].eval(inputs,actualOutput))
-    catch { case e:Exception => Left(e) } 
+    Try(tfSetting.transferExecutor.get.asInstanceOf[ScalaTransferExecutor[T]].eval(inputs,actualOutput))
   }
   
 }

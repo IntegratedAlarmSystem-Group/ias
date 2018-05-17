@@ -8,6 +8,7 @@ import java.util.{Map => JavaMap, HashMap => JavaHashMap}
 import org.eso.ias.types.IASValue
 import org.eso.ias.types.JavaConverter
 import org.eso.ias.types.IASValue
+import scala.util.Try
 
 /**
  * <code>JavaTransfer</code> calls the java
@@ -45,15 +46,13 @@ trait JavaTransfer[T] extends ComputingElement[T] {
   def transfer(
       inputs: Map[String, InOut[_]], 
       id: Identifier,
-      actualOutput: InOut[T]): Either[Exception,InOut[T]] = {
-    
-    try { 
+      actualOutput: InOut[T]): Try[InOut[T]] = {
+    Try[InOut[T]]{
       val map: JavaMap[String, IASValue[_]] = flushInputsOnJavaMap(inputs)
       val newOutput=tfSetting.transferExecutor.get.asInstanceOf[JavaTransferExecutor].
       eval( map, actualOutput.toIASValue)
-      Right(actualOutput.update(newOutput).asInstanceOf[InOut[T]])
-    
-    } catch { case e:Exception => Left(e) }
+      actualOutput.update(newOutput).asInstanceOf[InOut[T]]
+    }
   }
   
 }
