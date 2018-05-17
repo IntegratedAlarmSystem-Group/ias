@@ -66,6 +66,11 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 	 * The name of the lowOff property
 	 */
 	public static final String lowOffPropName = "org.eso.ias.tf.minmaxthreshold.java.lowOff";
+	
+	/** 
+	 * The name of the property to set the priority of the alarm 
+	 */
+	public static final String alarmPriorityPropName = "org.eso.ias.tf.alarm.priority";
 
 	/**
 	 * The (high) alarm is activated when the value of the HIO is greater then
@@ -90,6 +95,9 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 	 * then LowOFF, then the alarm is deactivated
 	 */
 	public final double lowOff = getValue(props, MinMaxThresholdTFJava.lowOffPropName, Double.MIN_VALUE);
+	
+	public final Alarm alarmSet = Alarm.valueOf(
+			props.getProperty(MinMaxThresholdTFJava.alarmPriorityPropName, Alarm.getSetDefault().toString()));
 	
 	/** 
 	 * Additional properties
@@ -195,7 +203,7 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 				
 		Alarm newOutput;
 		if (condition) {
-			newOutput=Alarm.getSetDefault();
+			newOutput=alarmSet;
 		} else {
 			newOutput=Alarm.cleared();
 		}

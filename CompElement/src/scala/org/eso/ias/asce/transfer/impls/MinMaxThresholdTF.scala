@@ -69,6 +69,14 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,props) {
   lazy val lowOff: Double = getValue(props, lowOffPropName, lowOn)
   
   /**
+   * The priority of the alarm can be set defining a property; 
+   * otherwise use the default
+   */
+  val alarmSet: Alarm = 
+    Option(props.getProperty(alarmPriorityPropName)).map(Alarm.valueOf(_)).getOrElse(Alarm.getSetDefault) 
+  
+  
+  /**
    * Get the value of a property from the passed properties.
    * 
    * @param props: The properties to look for the property with 
@@ -85,6 +93,8 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,props) {
       default
     }
   }
+  
+  
   
   /**
    * Initialize the TF by getting the four properties
@@ -135,38 +145,34 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,props) {
     // It cope with the case that the value of the actual output is not 
     // defined (i.e. it is Optional.empty. In that case the variable
     // is initialized to false 
-    val temp = actualOutput.value.map { x => x==Alarm.getSetDefault }.orElse(Some(false))
+    val wasSet = actualOutput.value.map(_!=Alarm.cleared()).getOrElse(false)
  
     // The condition is true if the value is over the limits (high on and low on)
     // but remains set is the old values was set and the value is
     // between high on and hiogh off or between low on and low off
     val condition = 
       (doubleValue>=highOn || doubleValue<=lowOn) ||
-      temp.get && (doubleValue>=highOff || doubleValue<=lowOff)
-    val newValue = if (condition) Alarm.getSetDefault else Alarm.cleared()
+      wasSet && (doubleValue>=highOff || doubleValue<=lowOff)
+    val newValue = if (condition) alarmSet else Alarm.cleared()
     actualOutput.updateValue(Some(newValue)).updateMode(iasio.mode).updateProps(Map("actualValue"->doubleValue.toString()))
   }
   
 }
 
 object MinMaxThresholdTF {
- /**
-   * The name of the HighOn property
-   */
+  
+ /** The name of the HighOn property */
   val highOnPropName = "org.eso.ias.tf.minmaxthreshold.highOn"
   
-  /**
-   * The name of the HighOff property
-   */
+  /** The name of the HighOff property  */
   val highOffPropName = "org.eso.ias.tf.minmaxthreshold.highOff"
   
-  /**
-   * The name of the lowOn property
-   */
+  /** The name of the lowOn property */
   val lowOnPropName = "org.eso.ias.tf.minmaxthreshold.lowOn"
   
-  /**
-   * The name of the lowOff property
-   */
+  /** The name of the lowOff property  */
   val lowOffPropName = "org.eso.ias.tf.minmaxthreshold.lowOff" 
+  
+  /** The name of the property to set the priority of the alarm */
+  val alarmPriorityPropName = "org.eso.ias.tf.alarm.priority"
 }

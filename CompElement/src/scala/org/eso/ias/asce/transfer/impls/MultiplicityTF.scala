@@ -52,6 +52,13 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,props) {
   }
   
   /**
+   * The priority of the alarm can be set defining a property; 
+   * otherwise use the default
+   */
+  val alarmSet: Alarm = 
+    Option(props.getProperty(MultiplicityTF.alarmPriorityPropName)).map(Alarm.valueOf(_)).getOrElse(Alarm.getSetDefault)
+  
+  /**
    * @see TransferExecutor#shutdown()
    */
   def initialize() {
@@ -80,15 +87,16 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,props) {
       alarmValue = hio.value.get.asInstanceOf[Alarm]
       if (alarmValue.isSet())} activeAlarms=activeAlarms+1
     
-      val newAlarm = if (activeAlarms>=threshold) Alarm.getSetDefault else Alarm.cleared()
+      val newAlarm = if (activeAlarms>=threshold) alarmSet else Alarm.cleared()
     actualOutput.updateValue(Some(newAlarm))
   }
 }
 
 object MultiplicityTF {
   
-  /**
-   * The name of the property with the integer value of the threshold 
-   */
+  /** The name of the property with the integer value of the threshold */
   val ThresholdPropName="org.eso.ias.tf.mutliplicity.threshold"
+  
+  /** The name of the property to set the priority of the alarm */
+  val alarmPriorityPropName = "org.eso.ias.tf.alarm.priority"
 }

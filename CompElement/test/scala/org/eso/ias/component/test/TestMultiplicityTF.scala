@@ -26,6 +26,7 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   
   val props = new Properties()
   props.put(MultiplicityTF.ThresholdPropName,"3")
+  props.put(MultiplicityTF.alarmPriorityPropName,Alarm.SET_LOW.toString())
   
   val threadFactory = new TestThreadFactory()
   
@@ -138,7 +139,7 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
     // Change all inputs do  trigger the TF
     val changedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getSetDefault)).toIASValue())
     scalaComp.get.update(changedMPs)
-    assert(checkAlarmActivation(scalaComp.get,Alarm.getSetDefault))
+    assert(checkAlarmActivation(scalaComp.get,Alarm.SET_LOW))
     
     // Clearing all must disable
     val clearedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.CLEARED)).toIASValue())
@@ -155,15 +156,15 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
     
     val act3=activate(3)
     scalaComp.get.update(act3)
-    assert(checkAlarmActivation(scalaComp.get,Alarm.getSetDefault))
+    assert(checkAlarmActivation(scalaComp.get,Alarm.SET_LOW))
     
     val act4=activate(4)
     scalaComp.get.update(act4)
-    assert(checkAlarmActivation(scalaComp.get,Alarm.getSetDefault))
+    assert(checkAlarmActivation(scalaComp.get,Alarm.SET_LOW))
 
     // Activate all again
     scalaComp.get.update(changedMPs)
-    assert(checkAlarmActivation(scalaComp.get,Alarm.getSetDefault))
+    assert(checkAlarmActivation(scalaComp.get,Alarm.SET_LOW))
     
     // Clear all again
     scalaComp.get.update(clearedMPs)
