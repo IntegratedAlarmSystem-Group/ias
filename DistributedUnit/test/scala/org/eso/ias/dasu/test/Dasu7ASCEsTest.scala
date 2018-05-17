@@ -23,7 +23,7 @@ import java.util.concurrent.locks.ReentrantLock
 import java.util.concurrent.TimeUnit
 import scala.collection.mutable.ListBuffer
 import org.eso.ias.types.IASTypes
-import org.eso.ias.types.AlarmSample
+import org.eso.ias.types.Alarm
 import org.eso.ias.types.IasValidity._
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.dasu.publisher.DirectInputSubscriber
@@ -245,7 +245,7 @@ class Dasu7ASCEsTest extends FlatSpec {
     assert(f.iasValuesReceived.size==1)
     val outputProducedByDasu = f.iasValuesReceived.last
     assert(outputProducedByDasu.valueType==IASTypes.ALARM)
-    assert(outputProducedByDasu.value.asInstanceOf[AlarmSample]== AlarmSample.CLEARED)
+    assert(outputProducedByDasu.value.asInstanceOf[Alarm]== Alarm.CLEARED)
     assert(outputProducedByDasu.dasuProductionTStamp.isPresent())
     
     // wait to avoid the throttling
@@ -263,7 +263,7 @@ class Dasu7ASCEsTest extends FlatSpec {
     assert(f.iasValuesReceived.size==2)
     val outputProducedByDasu2 = f.iasValuesReceived.last
     assert(outputProducedByDasu2.valueType==IASTypes.ALARM)
-    assert(outputProducedByDasu2.value.asInstanceOf[AlarmSample]== AlarmSample.SET)
+    assert(outputProducedByDasu2.value.asInstanceOf[Alarm]== Alarm.getSetDefault)
     assert(outputProducedByDasu2.dasuProductionTStamp.isPresent())
     
     assert(outputProducedByDasu2.dependentsFullRuningIds.isPresent())
@@ -315,7 +315,7 @@ class Dasu7ASCEsTest extends FlatSpec {
     val outputProducedByDasu = f.dasu.lastCalculatedOutput.get
     assert(outputProducedByDasu.isDefined)
     assert(outputProducedByDasu.get.valueType==IASTypes.ALARM)
-    assert(outputProducedByDasu.get.value.asInstanceOf[AlarmSample]== AlarmSample.SET)
+    assert(outputProducedByDasu.get.value.asInstanceOf[Alarm]== Alarm.getSetDefault)
     f.dasu.cleanUp()
   }
   

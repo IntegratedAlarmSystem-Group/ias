@@ -3,7 +3,7 @@ package org.eso.ias.webserversender;
 import org.eso.ias.kafkautils.KafkaIasiosProducer;
 import org.eso.ias.kafkautils.KafkaUtilsException;
 import org.eso.ias.kafkautils.KafkaHelper;
-import org.eso.ias.types.AlarmSample;
+import org.eso.ias.types.Alarm;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
 import org.eso.ias.types.IasValidity;
@@ -24,9 +24,9 @@ public class MockCoreKafkaProducer {
 		IASValue<?> msg;
 		int counter = 0;
 
-		AlarmSample value1 = AlarmSample.CLEARED;
-		AlarmSample value2 = AlarmSample.SET;
-		AlarmSample aux;
+		Alarm value1 = Alarm.CLEARED;
+		Alarm value2 = Alarm.SET_MEDIUM;
+		Alarm aux;
 
 		while (true) {
 

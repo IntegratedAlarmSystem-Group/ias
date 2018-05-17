@@ -2,7 +2,7 @@ package org.eso.ias.supervisor.test.tf
 
 import java.util.Properties
 import org.eso.ias.asce.transfer.ScalaTransferExecutor
-import org.eso.ias.types.AlarmSample
+import org.eso.ias.types.Alarm
 import org.eso.ias.types.InOut
 
 /**
