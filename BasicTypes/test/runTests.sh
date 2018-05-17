@@ -6,3 +6,4 @@ iasRun -l s org.scalatest.run org.eso.ias.basictypes.test.TestTemplatedIdentifie
 iasRun -l s org.scalatest.run org.eso.ias.basictypes.test.TestJavaConversion
 iasRun -l j org.junit.platform.console.ConsoleLauncher -c org.eso.ias.basictypes.test.IasValueJsonSerializerTest
 iasRun -l j org.junit.platform.console.ConsoleLauncher -c org.eso.ias.basictypes.test.IASValueTest
+iasRun -l s org.scalatest.run org.eso.ias.basictypes.test.TestAlarm
