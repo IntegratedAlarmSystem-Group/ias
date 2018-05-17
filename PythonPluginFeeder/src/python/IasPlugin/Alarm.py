@@ -59,6 +59,20 @@ class Alarm(Enum):
         '''
         return Alarm.CLEARED
     
+    @staticmethod
+    def getMaxPriorityAlarm():
+        '''
+        @return the alarm with the highest priority
+        '''
+        return Alarm.SET_CRITICAL
+    
+    @staticmethod
+    def getMinPriorityAlarm():
+        '''
+        @return the alarm with the lowest priority
+        '''
+        return Alarm.SET_LOW
+    
     def increasePriority(self):
         '''
         Return an alarm of a lowered priority if it exists,
