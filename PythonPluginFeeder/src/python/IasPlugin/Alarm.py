@@ -28,7 +28,7 @@ class Alarm(Enum):
     def fromString(alarmString):
         '''
         @param alarmString: the string representation of an Alarm like
-                      Alarm.SET or SET
+                      Alarm.SET_CRITICAL or SET_MEDIUM
         @return the alarmString represented by the passed a string
         '''
         if alarmString is None or alarmString=="":
