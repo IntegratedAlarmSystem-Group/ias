@@ -85,7 +85,7 @@ public enum Alarm {
 	 * @param n the integer representation of an alarm
 	 * @return the alarm of the given integer representation
 	 */
-	public Alarm fromPriority(int n) {
+	public static Alarm fromPriority(int n) {
 		for (Alarm al: Alarm.values()) {
 			if (!al.priorityLevel.isPresent()) {
 				continue;
