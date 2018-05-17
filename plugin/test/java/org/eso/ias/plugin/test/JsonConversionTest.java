@@ -3,7 +3,7 @@ package org.eso.ias.plugin.test;
 import java.util.List;
 import java.util.Vector;
 
-import org.eso.ias.types.AlarmSample;
+import org.eso.ias.types.Alarm;
 import org.eso.ias.types.IasValidity;
 import org.eso.ias.types.OperationalMode;
 import org.eso.ias.plugin.Sample;
@@ -39,12 +39,12 @@ public class JsonConversionTest {
 	public void testAlarmTypeConversion() throws Exception {
 		
 		List<EnrichedSample> samples = new Vector<>();
-		Sample s = new Sample(AlarmSample.SET);
+		Sample s = new Sample(Alarm.SET_MEDIUM);
 		EnrichedSample vs = new EnrichedSample(s, true);
 		samples.add(vs);
 		
-		// Check the conversion to/from AlarmSample
-		AlarmSample alarmSample = AlarmSample.SET;
+		// Check the conversion to/from Alarm
+		Alarm alarmSample = Alarm.SET_MEDIUM;
 		FilteredValue fv = new FilteredValue(alarmSample, samples, System.currentTimeMillis());
 		ValueToSend vts = new ValueToSend("IASIO-ALARM-ID", fv,OperationalMode.UNKNOWN, IasValidity.RELIABLE);
 		

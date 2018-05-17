@@ -5,7 +5,7 @@ import java.util.Properties;
 
 import org.eso.ias.types.IASValue;
 import org.eso.ias.asce.transfer.JavaTransferExecutor;
-import org.eso.ias.types.AlarmSample;
+import org.eso.ias.types.Alarm;
 import org.eso.ias.types.OperationalMode;
 
 
@@ -40,7 +40,7 @@ public class TransferExecutorImpl  extends JavaTransferExecutor {
 			System.out.println(input);
 		}
 		IASValue<?> newValue = ((IASValue<?>)actualOutput).updateMode(OperationalMode.SHUTTEDDOWN);
-		newValue=newValue.updateValue(AlarmSample.SET); 
+		newValue=newValue.updateValue(Alarm.getSetDefault()); 
 		System.out.println("Returning: "+newValue);
 		return newValue;
 	}

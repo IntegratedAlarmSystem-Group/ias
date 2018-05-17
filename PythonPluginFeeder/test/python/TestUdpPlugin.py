@@ -89,7 +89,7 @@ class TestUdpPlugin(unittest.TestCase):
         self.plugin.start()
         self.plugin.submit("MPoint-ID", 2.3, IASType.DOUBLE)
         self.plugin.submit("MPoint-IDOpMode", 5, IASType.INT,operationalMode=OperationalMode.MAINTENANCE)
-        self.plugin.submit("MPoint-Alarm", Alarm.SET, IASType.ALARM,operationalMode=OperationalMode.DEGRADED)
+        self.plugin.submit("MPoint-Alarm", Alarm.SET_CRITICAL, IASType.ALARM,operationalMode=OperationalMode.DEGRADED)
         time.sleep(2*UdpPlugin.SENDING_TIME_INTERVAL)
         self.assertEqual(len(self.receiver.msgReceived),3)
         dict = {}
@@ -112,7 +112,7 @@ class TestUdpPlugin(unittest.TestCase):
         
         m = dict["MPoint-Alarm"]
         self.assertEqual(m.mPointID,"MPoint-Alarm")
-        self.assertEqual(m.value,Alarm.SET)
+        self.assertEqual(m.value,Alarm.SET_CRITICAL)
         self.assertEqual(m.valueType,IASType.ALARM)
         self.assertEqual(m.operationalMode,OperationalMode.DEGRADED)
         

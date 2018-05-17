@@ -17,7 +17,7 @@ import org.eso.ias.asce.AsceStates
 import org.eso.ias.asce.transfer.JavaTransfer
 import org.eso.ias.asce.transfer.ScalaTransfer
 import org.eso.ias.types.IdentifierType
-import org.eso.ias.types.AlarmSample
+import org.eso.ias.types.Alarm
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IasValidity._
 import org.eso.ias.types.IASValue
@@ -49,7 +49,7 @@ class TestTransferFunction extends FlatSpec {
     
     // Build the MP in output
     // The inherited validity is undefined 
-    val output: InOut[AlarmSample] = InOut.asOutput(outId, IASTypes.ALARM)
+    val output: InOut[Alarm] = InOut.asOutput(outId, IASTypes.ALARM)
       
     // The IDs of the monitor points in input 
     // to pass when building a Component
@@ -63,7 +63,7 @@ class TestTransferFunction extends FlatSpec {
       val mpId = new Identifier(id,IdentifierType.IASIO,Option(compID))
       i=i+1
       val mp = if ((i%2)==0) {
-        InOut.asInput(mpId,IASTypes.ALARM).updateValue(Some(AlarmSample.CLEARED))
+        InOut.asInput(mpId,IASTypes.ALARM).updateValue(Some(Alarm.CLEARED))
       } else {
         val mpVal = 1L
         InOut.asInput(mpId,IASTypes.LONG).updateValue(Some(1L))
@@ -78,12 +78,12 @@ class TestTransferFunction extends FlatSpec {
         TransferFunctionLanguage.java,
         None,
         threadFactory)
-    val javaComp: ComputingElement[AlarmSample] = new ComputingElement[AlarmSample](
+    val javaComp: ComputingElement[Alarm] = new ComputingElement[Alarm](
        compID,
        output,
        inputsMPs.values.toSet,
        javaTFSetting,
-       new Properties()) with JavaTransfer[AlarmSample]
+       new Properties()) with JavaTransfer[Alarm]
     
     
     // Instantiate one ASCE with a scala TF implementation
@@ -92,12 +92,12 @@ class TestTransferFunction extends FlatSpec {
         TransferFunctionLanguage.scala,
         None,
         threadFactory)
-    val scalaComp: ComputingElement[AlarmSample] = new ComputingElement[AlarmSample](
+    val scalaComp: ComputingElement[Alarm] = new ComputingElement[Alarm](
        compID,
        output,
        inputsMPs.values.toSet,
        scalaTFSetting,
-       new Properties()) with ScalaTransfer[AlarmSample]
+       new Properties()) with ScalaTransfer[Alarm]
     
      // Instantiate one ASCE with a scala TF implementation
     val brokenScalaTFSetting =new TransferFunctionSetting(
@@ -105,12 +105,12 @@ class TestTransferFunction extends FlatSpec {
         TransferFunctionLanguage.scala,
         None,
         threadFactory)
-    val brokenTFScalaComp: ComputingElement[AlarmSample] = new ComputingElement[AlarmSample](
+    val brokenTFScalaComp: ComputingElement[Alarm] = new ComputingElement[Alarm](
        compID,
        output,
        inputsMPs.values.toSet,
        brokenScalaTFSetting,
-       new Properties()) with ScalaTransfer[AlarmSample]
+       new Properties()) with ScalaTransfer[Alarm]
   }
   
   /** The logger */
@@ -124,7 +124,7 @@ class TestTransferFunction extends FlatSpec {
    */
   it must "set the validity of the output to the lower validity of the inputs" in new CompBuilder {
     logger.info("Validity from inputs test started")
-    val component: ComputingElement[AlarmSample] = javaComp
+    val component: ComputingElement[Alarm] = javaComp
     javaComp.initialize()
     assert(component.output.fromIasValueValidity.isEmpty, "The output does not inherit the validity from a IASValue" )
     
@@ -148,7 +148,7 @@ class TestTransferFunction extends FlatSpec {
     // Send all the possible inputs to check if the state changes and the ASCE runs the TF
     inputsMPs.keys.foreach( k => {
       val inout = inputsMPs(k)
-      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.updateValue(Some(AlarmSample.SET))
+      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.updateValue(Some(Alarm.getSetDefault))
         else inout.updateValue(Some(-5L))
       inputsMPs(k)=newIasio
     })
@@ -163,8 +163,8 @@ class TestTransferFunction extends FlatSpec {
     val out = javaComp.output
     assert(out.value.isDefined)
     logger.info("Actual value = {}",out.value.toString())
-    val alarm = out.value.get.asInstanceOf[AlarmSample]
-    assert(alarm==AlarmSample.SET)
+    val alarm = out.value.get.asInstanceOf[Alarm]
+    assert(alarm==Alarm.getSetDefault)
   }
   
   it must "run the scala TF executor" in new CompBuilder {
@@ -173,7 +173,7 @@ class TestTransferFunction extends FlatSpec {
     // Send all the possible inputs to check if the state changes and the ASCE runs the TF
     inputsMPs.keys.foreach( k => {
       val inout = inputsMPs(k)
-      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.updateValue(Some(AlarmSample.SET))
+      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.updateValue(Some(Alarm.getSetDefault))
         else inout.updateValue(Some(-5L))
       inputsMPs(k)=newIasio
     })
@@ -187,7 +187,7 @@ class TestTransferFunction extends FlatSpec {
     
     logger.info("Actual value = {}",scalaComp.output.value.toString())
     val alarm = scalaComp.output.value.get
-    assert(alarm==AlarmSample.SET)
+    assert(alarm==Alarm.getSetDefault)
   }
   
   it must "detect a broken scala TF executor" in new CompBuilder {
@@ -196,7 +196,7 @@ class TestTransferFunction extends FlatSpec {
     // Send all the possible inputs to check if the state changes and the ASCE runs the TF
     inputsMPs.keys.foreach( k => {
       val inout = inputsMPs(k)
-      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.updateValue(Some(AlarmSample.SET))
+      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.updateValue(Some(Alarm.getSetDefault))
         else inout.updateValue(Some(-5L))
       inputsMPs(k)=newIasio
     })

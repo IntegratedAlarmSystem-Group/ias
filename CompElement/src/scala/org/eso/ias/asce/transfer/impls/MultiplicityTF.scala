@@ -10,7 +10,7 @@ import scala.util.control.NonFatal
 import org.eso.ias.asce.exceptions.UnexpectedNumberOfInputsException
 import org.eso.ias.asce.exceptions.TypeMismatchException
 import org.eso.ias.asce.exceptions.TypeMismatchException
-import org.eso.ias.types.AlarmSample
+import org.eso.ias.types.Alarm
 
 /**
  * Implements the Multiplicity transfer function.
@@ -23,7 +23,7 @@ import org.eso.ias.types.AlarmSample
  * @author acaproni
  */
 class MultiplicityTF (cEleId: String, cEleRunningId: String, props: Properties) 
-extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
+extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,props) {
   
   /**
    * A little bit too verbose but wanted to catch all the 
@@ -52,6 +52,13 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
   }
   
   /**
+   * The priority of the alarm can be set defining a property; 
+   * otherwise use the default
+   */
+  val alarmSet: Alarm = 
+    Option(props.getProperty(MultiplicityTF.alarmPriorityPropName)).map(Alarm.valueOf(_)).getOrElse(Alarm.getSetDefault)
+  
+  /**
    * @see TransferExecutor#shutdown()
    */
   def initialize() {
@@ -65,7 +72,7 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
   /**
    * @see ScalaTransferExecutor#eval
    */
-  def eval(compInputs: Map[String, InOut[_]], actualOutput: InOut[AlarmSample]): InOut[AlarmSample] = {
+  def eval(compInputs: Map[String, InOut[_]], actualOutput: InOut[Alarm]): InOut[Alarm] = {
     if (compInputs.size<threshold) throw new UnexpectedNumberOfInputsException(compInputs.size,threshold)
     if (actualOutput.iasType!=ALARM) throw new TypeMismatchException(actualOutput.id.runningID,actualOutput.iasType,ALARM)
     for (hio <- compInputs.values
@@ -77,17 +84,19 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
       hio <- compInputs.values
       if (hio.iasType==ALARM)
       if (hio.value.isDefined)
-      alarmValue = hio.value.get.asInstanceOf[AlarmSample]
-      if (alarmValue==AlarmSample.SET)} activeAlarms=activeAlarms+1
+      alarmValue = hio.value.get.asInstanceOf[Alarm]
+      if (alarmValue.isSet())} activeAlarms=activeAlarms+1
     
-    actualOutput.updateValue(Some(AlarmSample.fromBoolean(activeAlarms>=threshold)))
+      val newAlarm = if (activeAlarms>=threshold) alarmSet else Alarm.cleared()
+    actualOutput.updateValue(Some(newAlarm))
   }
 }
 
 object MultiplicityTF {
   
-  /**
-   * The name of the property with the integer value of the threshold 
-   */
+  /** The name of the property with the integer value of the threshold */
   val ThresholdPropName="org.eso.ias.tf.mutliplicity.threshold"
+  
+  /** The name of the property to set the priority of the alarm */
+  val alarmPriorityPropName = "org.eso.ias.tf.alarm.priority"
 }

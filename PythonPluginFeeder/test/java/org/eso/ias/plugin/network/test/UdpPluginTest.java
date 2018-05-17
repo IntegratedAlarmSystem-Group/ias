@@ -24,7 +24,7 @@ import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher.PublisherEventsListener;
-import org.eso.ias.types.AlarmSample;
+import org.eso.ias.types.Alarm;
 import org.eso.ias.types.OperationalMode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -168,7 +168,7 @@ public class UdpPluginTest implements PublisherEventsListener {
 		
 		MonitorPointData mpdAlarm = publishedMPoints.get("ID-Alarm");
 		assertEquals(OperationalMode.UNKNOWN.toString(),mpdAlarm.getOperationalMode());
-		assertEquals(AlarmSample.SET.toString(), mpdAlarm.getValue());
+		assertEquals(Alarm.SET_HIGH.toString(), mpdAlarm.getValue());
 	}
 
 	@Override

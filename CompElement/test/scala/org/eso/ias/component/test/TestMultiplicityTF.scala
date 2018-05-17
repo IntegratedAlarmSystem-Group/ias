@@ -4,7 +4,7 @@ import org.scalatest.FlatSpec
 import org.eso.ias.asce.transfer.impls.MultiplicityTF
 import java.util.Properties
 import org.eso.ias.asce.ComputingElement
-import org.eso.ias.types.AlarmSample
+import org.eso.ias.types.Alarm
 import org.eso.ias.asce.transfer.ScalaTransfer
 import org.eso.ias.asce.transfer.TransferFunctionLanguage
 import org.eso.ias.asce.transfer.TransferFunctionSetting
@@ -26,6 +26,7 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   
   val props = new Properties()
   props.put(MultiplicityTF.ThresholdPropName,"3")
+  props.put(MultiplicityTF.alarmPriorityPropName,Alarm.SET_LOW.toString())
   
   val threadFactory = new TestThreadFactory()
   
@@ -42,7 +43,7 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   val outId = new Identifier("MultiAlarm-ID",IdentifierType.IASIO, Some(compID))
   
   /** The output of the ASCE */
-  val output: InOut[AlarmSample] = InOut.asOutput(outId,IASTypes.ALARM)
+  val output: InOut[Alarm] = InOut.asOutput(outId,IASTypes.ALARM)
     
   /** The Map of IASValues for updating the inputs to the ASCE */
   val inputsMPs: Set[InOut[_]]  = {
@@ -55,7 +56,7 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   }
   
   /** The ASCE running the multiplicity TF */
-  var scalaComp: Option[ComputingElement[AlarmSample]]= None
+  var scalaComp: Option[ComputingElement[Alarm]]= None
   
   override def beforeEach() {
   val scalaMultuiplicityTF = new TransferFunctionSetting(
@@ -64,12 +65,12 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
         None,
         threadFactory)
     
-    scalaComp = Some(new ComputingElement[AlarmSample](
+    scalaComp = Some(new ComputingElement[Alarm](
        compID,
        output,
        inputsMPs,
        scalaMultuiplicityTF,
-       props) with ScalaTransfer[AlarmSample])
+       props) with ScalaTransfer[Alarm])
     
     scalaComp.get.initialize()
     Thread.sleep(1000)
@@ -85,7 +86,7 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
    * @param hio: the IASIO to check the alarm state
    * @param alarmState: The expected alarm
    */
-  def checkAlarmActivation(asce: ComputingElement[AlarmSample], alarmState: AlarmSample): Boolean = {
+  def checkAlarmActivation(asce: ComputingElement[Alarm], alarmState: Alarm): Boolean = {
     assert(asce.isOutputAnAlarm)
     val iasio = asce.output
     assert(iasio.iasType==IASTypes.ALARM)
@@ -104,12 +105,12 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
     require(n>0)
     val inputsMPsList = inputsMPs.toList
     val list = for (i <- 0 to inputsMPsList.size-1) yield {
-      if (i<=n-1) inputsMPsList(i).updateValue(Some(AlarmSample.SET)).toIASValue()
-      else inputsMPsList(i).updateValue(Some(AlarmSample.CLEARED)).toIASValue()
+      if (i<=n-1) inputsMPsList(i).updateValue(Some(Alarm.getSetDefault)).toIASValue()
+      else inputsMPsList(i).updateValue(Some(Alarm.CLEARED)).toIASValue()
     }
     val ret = list.toSet
     assert(ret.size==inputsMPs.size)
-    assert(ret.count(value => value.value==AlarmSample.SET)==n)
+    assert(ret.count(value => value.value==Alarm.getSetDefault)==n)
     ret
   }
   
@@ -136,37 +137,37 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   
   it must "run the multiplicity TF" in {
     // Change all inputs do  trigger the TF
-    val changedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(AlarmSample.SET)).toIASValue())
+    val changedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getSetDefault)).toIASValue())
     scalaComp.get.update(changedMPs)
-    assert(checkAlarmActivation(scalaComp.get,AlarmSample.SET))
+    assert(checkAlarmActivation(scalaComp.get,Alarm.SET_LOW))
     
     // Clearing all must disable
-    val clearedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(AlarmSample.CLEARED)).toIASValue())
+    val clearedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.CLEARED)).toIASValue())
     scalaComp.get.update(clearedMPs)
-    assert(checkAlarmActivation(scalaComp.get,AlarmSample.CLEARED))
+    assert(checkAlarmActivation(scalaComp.get,Alarm.CLEARED))
     
     val act1=activate(1)
     scalaComp.get.update(act1)
-    assert(checkAlarmActivation(scalaComp.get,AlarmSample.CLEARED))
+    assert(checkAlarmActivation(scalaComp.get,Alarm.CLEARED))
     
     val act2=activate(2)
     scalaComp.get.update(act2)
-    assert(checkAlarmActivation(scalaComp.get,AlarmSample.CLEARED))
+    assert(checkAlarmActivation(scalaComp.get,Alarm.CLEARED))
     
     val act3=activate(3)
     scalaComp.get.update(act3)
-    assert(checkAlarmActivation(scalaComp.get,AlarmSample.SET))
+    assert(checkAlarmActivation(scalaComp.get,Alarm.SET_LOW))
     
     val act4=activate(4)
     scalaComp.get.update(act4)
-    assert(checkAlarmActivation(scalaComp.get,AlarmSample.SET))
+    assert(checkAlarmActivation(scalaComp.get,Alarm.SET_LOW))
 
     // Activate all again
     scalaComp.get.update(changedMPs)
-    assert(checkAlarmActivation(scalaComp.get,AlarmSample.SET))
+    assert(checkAlarmActivation(scalaComp.get,Alarm.SET_LOW))
     
     // Clear all again
     scalaComp.get.update(clearedMPs)
-    assert(checkAlarmActivation(scalaComp.get,AlarmSample.CLEARED))
+    assert(checkAlarmActivation(scalaComp.get,Alarm.CLEARED))
   }
 }

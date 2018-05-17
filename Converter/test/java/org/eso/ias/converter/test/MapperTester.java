@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.eso.ias.converter.ValueMapper;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
-import org.eso.ias.types.AlarmSample;
+import org.eso.ias.types.Alarm;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
@@ -58,7 +58,7 @@ public class MapperTester extends ConverterTestBase {
 		MonitorPointDataHolder unconfiguredMpdh = 
 				new MonitorPointDataHolder(
 						"Unrecognized",
-						AlarmSample.CLEARED, 
+						Alarm.CLEARED, 
 						System.currentTimeMillis()-100,
 						System.currentTimeMillis(),
 						IASTypes.ALARM);

@@ -9,7 +9,7 @@ import java.util.Objects;
 import org.eso.ias.converter.config.ConfigurationException;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
 import org.eso.ias.converter.config.MonitorPointConfiguration;
-import org.eso.ias.types.AlarmSample;
+import org.eso.ias.types.Alarm;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.Filter.EnrichedSample;
@@ -284,7 +284,7 @@ public class ConverterTestBase {
 	 */
 	private final MonitorPointDataHolder mpAlarm = new MonitorPointDataHolder(
 			"AlarmId",
-			AlarmSample.SET, 
+			Alarm.SET_MEDIUM, 
 			1900L,
 			1950L,
 			IASTypes.ALARM);

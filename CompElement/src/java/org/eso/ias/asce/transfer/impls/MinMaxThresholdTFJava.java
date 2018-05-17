@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.eso.ias.types.AlarmSample;
+import org.eso.ias.types.Alarm;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
 import org.eso.ias.asce.exceptions.PropsMisconfiguredException;
@@ -66,6 +66,11 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 	 * The name of the lowOff property
 	 */
 	public static final String lowOffPropName = "org.eso.ias.tf.minmaxthreshold.java.lowOff";
+	
+	/** 
+	 * The name of the property to set the priority of the alarm 
+	 */
+	public static final String alarmPriorityPropName = "org.eso.ias.tf.alarm.priority";
 
 	/**
 	 * The (high) alarm is activated when the value of the HIO is greater then
@@ -90,6 +95,9 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 	 * then LowOFF, then the alarm is deactivated
 	 */
 	public final double lowOff = getValue(props, MinMaxThresholdTFJava.lowOffPropName, Double.MIN_VALUE);
+	
+	public final Alarm alarmSet = Alarm.valueOf(
+			props.getProperty(MinMaxThresholdTFJava.alarmPriorityPropName, Alarm.getSetDefault().toString()));
 	
 	/** 
 	 * Additional properties
@@ -186,14 +194,19 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 			throw new TypeMismatchException(iasio.fullRunningId);
 		}
 		
-		boolean wasActivated = (AlarmSample)actualOutput.value==AlarmSample.SET;
+		boolean wasActivated = actualOutput.value!=null && ((Alarm)actualOutput.value).isSet();
 		
 		boolean condition = 
 				hioValue >= highOn || hioValue <= lowOn ||
 				wasActivated && (hioValue>=highOff || hioValue<=lowOff);
 				
 				
-		AlarmSample newOutput = AlarmSample.fromBoolean(condition);
+		Alarm newOutput;
+		if (condition) {
+			newOutput=alarmSet;
+		} else {
+			newOutput=Alarm.cleared();
+		}
 		additionalProperties.put("actualValue", Double.valueOf(hioValue).toString());
 		return actualOutput.updateValue(newOutput).updateMode(iasio.mode).updateProperties(additionalProperties);
 	}
