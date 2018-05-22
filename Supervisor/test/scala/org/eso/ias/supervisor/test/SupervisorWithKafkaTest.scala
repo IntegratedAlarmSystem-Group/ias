@@ -126,10 +126,10 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
   logger.info("Testing consumer started")
 
   /** The kafka publisher used by the supervisor to send the output of the DASUs to the BSDB*/
-  val outputPublisher: OutputPublisher = KafkaPublisher(supervisorId.id, new Properties())
+  val outputPublisher: OutputPublisher = KafkaPublisher(supervisorId.id, None, None, new Properties())
 
   /** The kafka consumer gets AISValues from the BSDB */
-  val inputConsumer: InputSubscriber = new KafkaSubscriber(supervisorId.id, new Properties())
+  val inputConsumer: InputSubscriber = KafkaSubscriber(supervisorId.id, None, None, new Properties())
   
   /** The test uses real DASu i.e. the factory instantiates a DasuImpl */
   val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) => 
