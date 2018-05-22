@@ -117,6 +117,8 @@ public class TestJsonCdb {
 		
 		ias.setHbFrequency(5);
 		
+		ias.setBsdbUrl("bsdb-server:9092");
+		
 		// Write the IAS
 		cdbWriter.writeIas(ias);
 		
@@ -153,6 +155,7 @@ public class TestJsonCdb {
 		assertEquals(5,ias.getRefreshRate());
 		assertEquals(1,ias.getTolerance());
 		assertEquals(10,ias.getHbFrequency());
+		assertEquals("127.0.0.1:9092",ias.getBsdbUrl());
 		
 		Set<PropertyDao> props = ias.getProps();
 		assertEquals(2,props.size());

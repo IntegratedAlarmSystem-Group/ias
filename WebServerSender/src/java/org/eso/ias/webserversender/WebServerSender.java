@@ -152,7 +152,8 @@ public class WebServerSender implements IasioListener {
 	/**
 	 * Constructor
 	 *
-   * @param senderID Identifier of the WebServerSender
+	 * @param senderID Identifier of the WebServerSender
+	 * @param kafkaServers Kafka servers URL 
 	 * @param props the properties to get kafka servers, topic names and webserver uri
 	 * @param listener The listenr of the messages sent to the websocket server
 	 * @param hbFrequency the frequency of the heartbeat (seconds)
@@ -161,6 +162,7 @@ public class WebServerSender implements IasioListener {
 	 */
 	public WebServerSender(
 			String senderID, 
+			String kafkaServers,
 			Properties props, 
 			WebServerSenderListener listener,
 			int hbFrequency,
@@ -170,9 +172,15 @@ public class WebServerSender implements IasioListener {
 			throw new IllegalArgumentException("Invalid empty converter ID");
 		}
 		this.senderID=senderID.trim();
+		
+		
+		Objects.requireNonNull(kafkaServers);
+		if (kafkaServers.trim().isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty kafka servers list");
+		}
+		this.kafkaServers=kafkaServers.trim();
 
 		Objects.requireNonNull(props);
-		kafkaServers = props.getProperty(KAFKA_SERVERS_PROP_NAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS);
 		sendersInputKTopicName = props.getProperty(IASCORE_TOPIC_NAME_PROP_NAME, KafkaHelper.IASIOs_TOPIC_NAME);
 		webserverUri = props.getProperty(WEBSERVER_URI_PROP_NAME, DEFAULT_WEBSERVER_URI);
 		uri = new URI(webserverUri);
@@ -371,14 +379,21 @@ public class WebServerSender implements IasioListener {
 		// Serializer of HB messages
 		HbMsgSerializer hbSerializer = new HbJsonSerializer();
 		
-		String kServers = System.getProperty(KAFKA_SERVERS_PROP_NAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS);
-		Objects.requireNonNull(kServers);
+		String kServers=System.getProperty(KAFKA_SERVERS_PROP_NAME);
+		if (kServers==null || kServers.isEmpty()) {
+			kServers=optIasdao.get().getBsdbUrl();
+		}
+		if (kServers==null || kServers.isEmpty()) {
+			kServers=KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS;
+		}
+
 		HbProducer hbProd = new HbKafkaProducer(id, kServers, hbSerializer);
 		
 		WebServerSender ws=null;
 		try { 
 			ws = new WebServerSender(
 				id, 
+				kServers,
 				System.getProperties(), 
 				null,
 				frequency,

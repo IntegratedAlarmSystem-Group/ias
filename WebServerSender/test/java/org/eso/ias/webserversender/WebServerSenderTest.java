@@ -187,7 +187,8 @@ public class WebServerSenderTest {
 		
 		
 		this.webServerSender = new WebServerSender(
-				"WebServerSender", 
+				"WebServerSender",
+				KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
 				props, 
 				listener,
 				1,

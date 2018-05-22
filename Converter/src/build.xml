@@ -7,7 +7,7 @@
 	
 	<!-- ####################### PROPERTIES ####################### -->
 	
-	<property name="exttools" value="kafka-streams-1.0.0.jar" />
+	<property name="exttools" value="kafka-streams-1.1.0.jar" />
 	
 	<!--
 		jarName: the name of the jar to build from java sources; 

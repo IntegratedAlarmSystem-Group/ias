@@ -367,23 +367,25 @@ object Supervisor {
      *  2 CDB
      *  3 default
      */
-    val (refreshRate, tolerance) = {
+    val (refreshRate, tolerance,kafkaBrokers) = {
       val RefreshTimeIntervalSeconds = Integer.getInteger(AutoSendPropName,AutoSendTimeIntervalDefault)
       val ToleranceSeconds = Integer.getInteger(TolerancePropName,ToleranceDefault)
       
       val iasDaoOpt = reader.getIas
+      
       val fromCdb = if (iasDaoOpt.isPresent()) {
-        (iasDaoOpt.get.getRefreshRate,iasDaoOpt.get.getTolerance)
+        (iasDaoOpt.get.getRefreshRate,iasDaoOpt.get.getTolerance,Some(iasDaoOpt.get.getBsdbUrl))
       } else {
-        (AutoSendTimeIntervalDefault,ToleranceDefault)
+        (AutoSendTimeIntervalDefault,ToleranceDefault,None)
       }
       
       (Integer.getInteger(AutoSendPropName,fromCdb._1),
-      Integer.getInteger(TolerancePropName,fromCdb._2))
+      Integer.getInteger(TolerancePropName,fromCdb._2),
+      fromCdb._3)
     }
     
-    val outputPublisher: OutputPublisher = KafkaPublisher(supervisorId,System.getProperties)
-    val inputsProvider: InputSubscriber = new KafkaSubscriber(supervisorId,System.getProperties)
+    val outputPublisher: OutputPublisher = KafkaPublisher(supervisorId,None,kafkaBrokers,System.getProperties)
+    val inputsProvider: InputSubscriber = KafkaSubscriber(supervisorId,None,kafkaBrokers,System.getProperties)
     
     // The identifier of the supervisor
     val identifier = new Identifier(supervisorId, IdentifierType.SUPERVISOR, None)

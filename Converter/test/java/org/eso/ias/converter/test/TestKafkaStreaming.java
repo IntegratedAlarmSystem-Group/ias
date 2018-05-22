@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -305,7 +306,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		converter = new Converter(
 				converterID, 
 				cdbReader, 
-				new ConverterKafkaStream(converterID, new Properties()),
+				new ConverterKafkaStream(converterID, Optional.empty(),new Properties()),
 				new HbLogProducer(new HbJsonSerializer()));
 		
 		converter.setUp();

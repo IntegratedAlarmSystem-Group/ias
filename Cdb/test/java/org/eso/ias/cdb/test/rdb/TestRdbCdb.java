@@ -127,6 +127,8 @@ public class TestRdbCdb {
 		ias.setTolerance(3);
 		
 		ias.setHbFrequency(5);
+		
+		ias.setBsdbUrl("localhost:9092");
 
 		// Write the IAS
 		cdbWriter.writeIas(ias);
@@ -144,7 +146,7 @@ public class TestRdbCdb {
 		ias2.setRefreshRate(5);
 		ias2.setTolerance(2);
 		ias2.setHbFrequency(10);
-
+		ias.setBsdbUrl("bsdb-server:9092");
 		cdbWriter.writeIas(ias2);
 
 		// Get the IAS from the reader
