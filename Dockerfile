@@ -22,6 +22,7 @@ RUN mkdir -p /usr/src/IntegratedAlarmSystemRoot
 WORKDIR /usr/src/ias
 COPY . /usr/src/ias
 
+ENV JAVA_HOME /usr/lib/jvm/java-1.8.0-openjdk
 ENV JRE_HOME $JAVA_HOME/jre
 ENV SCALA_HOME /usr/share/scala
 ENV IAS_ROOT /usr/src/IntegratedAlarmSystemRoot
