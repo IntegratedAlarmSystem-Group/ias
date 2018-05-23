@@ -25,9 +25,6 @@
 	<property name="junit-engine-release" value="1.2.0"/>
 	<property name="junit-jupiter-release" value="5.2.0"/>
 
-	<!-- Plugin to upload JARs to a Maven Repository -->
-	<property name="exttools" value="maven-ant-tasks-2.1.3.jar" />
-
 	<target name="prepareExtTools" depends="ias.init-ias-environment">
 		<echo>Unpacking ${spring} in ${exttools.dir}</echo>
 		<unzip src="${exttools.dir}/${spring}-dist.zip" dest="${exttools.dir}" />
@@ -65,6 +62,7 @@
 		<string>junit-platform-engine-${junit-engine-release}.jar</string>
 		<string>junit-jupiter-api-${junit-jupiter-release}.jar</string>
 		<string>junit-jupiter-engine-${junit-jupiter-release}.jar</string>
+		<string>maven-ant-tasks-2.1.3.jar</string>
 	</resources>
 	<pathconvert property="exttools" refid="iasModsResources" pathsep="," />
 
