@@ -1,7 +1,7 @@
 package org.eso.ias.webserversender;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,9 +32,9 @@ import org.eso.ias.types.Identifier;
 import org.eso.ias.types.OperationalMode;
 import org.eso.ias.webserversender.WebServerSender.WebServerSenderListener;
 import org.eso.ias.webserversender.WebSocketServerHandler.WebSocketServerListener;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -187,7 +187,8 @@ public class WebServerSenderTest {
 		
 		
 		this.webServerSender = new WebServerSender(
-				"WebServerSender", 
+				"WebServerSender",
+				KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
 				props, 
 				listener,
 				1,
@@ -229,7 +230,7 @@ public class WebServerSenderTest {
 	/**
 	 * Test set up
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		logger.info("Starting Test Initialization");
 
@@ -249,7 +250,7 @@ public class WebServerSenderTest {
 		this.runSender();
 
 		Boolean status = this.serverReady.await(10, TimeUnit.SECONDS);
-		assertTrue("Server and sender never connected", status);
+		assertTrue(status,"Server and sender never connected");
 
 		logger.info("Test Initialization Completed.");
 	}
@@ -301,9 +302,9 @@ public class WebServerSenderTest {
 		logger.info("- [{}] messages were published in the Kafka queue",messagesDelivered);
 		logger.info("- [{}] messages were sent by the WebServerSender",this.sentMessages.size());
 		logger.info("- [{}] messages were received by the Mock Server",this.receivedMessages.size());
-		assertEquals("Some messages were not published in the Kafka Queue by Mock Producer", messagesNumber, messagesDelivered);
-		assertEquals("Some messages were not sent by the WebServerSender", messagesNumber, this.sentMessages.size());
-		assertEquals("Some messages were not received by the Mock Server", messagesNumber, this.receivedMessages.size());
+		assertEquals(messagesNumber, messagesDelivered,"Some messages were not published in the Kafka Queue by Mock Producer");
+		assertEquals(messagesNumber, this.sentMessages.size(),"Some messages were not sent by the WebServerSender");
+		assertEquals(messagesNumber, this.receivedMessages.size(),"Some messages were not received by the Mock Server");
 	}
 
 	/**
@@ -343,7 +344,7 @@ public class WebServerSenderTest {
 		this.numOfMessagesToSend = new CountDownLatch(messagesNumber/2);
 
 		Boolean status = this.serverReady.await(10, TimeUnit.SECONDS);
-		assertTrue("Sender did not reconnect to Server", status);
+		assertTrue(status,"Sender did not reconnect to Server");
 
 		// Send the other half of the messages:
 		while(iterator.hasNext()) {
@@ -382,15 +383,15 @@ public class WebServerSenderTest {
 		logger.info("- [{}] messages were published in the Kafka queue",messagesDelivered);
 		logger.info("- [{}] messages were sent by the WebServerSender",this.sentMessages.size());
 		logger.info("- [{}] messages were received by the Mock Server",this.receivedMessages.size());
-		assertEquals("Some messages were not published in the Kafka Queue by Mock Producer", messagesNumber, messagesDelivered);
-		assertEquals("Some messages were not sent by the WebServerSender", messagesNumber, this.sentMessages.size());
-		assertEquals("Some messages were not received by the Mock Server", messagesNumber, this.receivedMessages.size());
+		assertEquals(messagesNumber, messagesDelivered,"Some messages were not published in the Kafka Queue by Mock Producer");
+		assertEquals(messagesNumber, this.sentMessages.size(),"Some messages were not sent by the WebServerSender");
+		assertEquals(messagesNumber, this.receivedMessages.size(),"Some messages were not received by the Mock Server");
 	}
 
 	/**
 	 * Stop the WebserverSender, Server and Producer after the test is finished
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		logger.info("Starting Test Finalization");
 		this.producer.tearDown();

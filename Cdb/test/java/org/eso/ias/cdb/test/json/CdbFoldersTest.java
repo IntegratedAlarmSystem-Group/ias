@@ -1,6 +1,7 @@
 package org.eso.ias.cdb.test.json;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -9,9 +10,9 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 
 import org.eso.ias.cdb.json.CdbFolders;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test creation and deletion of CDB folders
@@ -27,14 +28,14 @@ public class CdbFoldersTest {
 	 */
 	public static final Path cdbParentPath =  FileSystems.getDefault().getPath(".");
 
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		// Remove any CDB folder if present
 		CdbFolders.ROOT.delete(cdbParentPath);
 		assertFalse(CdbFolders.ROOT.exists(cdbParentPath));
 	}
 
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		CdbFolders.ROOT.delete(cdbParentPath);
 		assertFalse(CdbFolders.ROOT.exists(cdbParentPath));
@@ -50,7 +51,7 @@ public class CdbFoldersTest {
 	public void testFoldersCreation() throws Exception {
 		for (CdbFolders folder: CdbFolders.values()) {
 			folder.getFolder(cdbParentPath, true);
-			assertTrue(folder.toString()+"Creation of folder failed!", folder.exists(cdbParentPath));
+			assertTrue( folder.exists(cdbParentPath),folder.toString()+"Creation of folder failed!");
 		}
 	}
 	
@@ -84,7 +85,7 @@ public class CdbFoldersTest {
 		CdbFolders.createFolders(cdbParentPath);
 		for (CdbFolders folder: CdbFolders.values()) {
 			File f = folder.getFolder(cdbParentPath, false).toFile();
-			assertTrue(folder.toString()+"Creation of folder failed!", f.exists());
+			assertTrue(f.exists(),folder.toString()+"Creation of folder failed!");
 		}
 	}
 	
@@ -122,7 +123,7 @@ public class CdbFoldersTest {
                 writer.close();
             } catch (Exception e) { }
         }
-		assertTrue("The file does not exists!", txtFile.exists());
+		assertTrue(txtFile.exists(),"The file does not exists!");
 		// Delete the folder
 		CdbFolders.SUPERVISOR.delete(cdbParentPath);
 		assertFalse(CdbFolders.SUPERVISOR.exists(cdbParentPath));

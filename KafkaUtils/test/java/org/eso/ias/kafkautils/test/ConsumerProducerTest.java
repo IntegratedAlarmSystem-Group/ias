@@ -1,8 +1,8 @@
 package org.eso.ias.kafkautils.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,9 +17,9 @@ import org.eso.ias.kafkautils.SimpleStringConsumer;
 import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener;
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
 import org.eso.ias.kafkautils.SimpleStringProducer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -124,7 +124,7 @@ public class ConsumerProducerTest implements KafkaConsumerListener {
 	/**
 	 * Initialize
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		logger.info("Initializing...");
 		consumer = new SimpleStringConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, topicName, "PubSub-Test");
@@ -139,7 +139,7 @@ public class ConsumerProducerTest implements KafkaConsumerListener {
 	/**
 	 * Clean up
 	 */
-	@After
+	@AfterEach
 	public void tearDown() {
 		logger.info("Closing...");
 		receivedStrings.clear();
@@ -178,7 +178,7 @@ public class ConsumerProducerTest implements KafkaConsumerListener {
 			}
 			for (String str: discardedStrings) {
 				logger.error("[{}] discarded",str);
-				assertFalse("This string should not have been discarded!",sentStrings.contains(str));
+				assertFalse(sentStrings.contains(str),"This string should not have been discarded!");
 			}
 		}
 		assertEquals(nrOfStrings, receivedStrings.size());
@@ -186,7 +186,7 @@ public class ConsumerProducerTest implements KafkaConsumerListener {
 		logger.info("{} strings discarded",discardedStrings.size());
 		
 		// Check if the receives strings match with the strings sent
-		receivedStrings.forEach(str -> assertTrue("Got a string not produced by this test: ["+str+"]",strsToSend.contains(str)));
+		receivedStrings.forEach(str -> assertTrue(strsToSend.contains(str),"Got a string not produced by this test: ["+str+"]"));
 	}
 
 	/**

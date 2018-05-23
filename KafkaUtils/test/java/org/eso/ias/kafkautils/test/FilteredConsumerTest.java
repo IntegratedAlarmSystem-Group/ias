@@ -1,9 +1,9 @@
 package org.eso.ias.kafkautils.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,21 +20,20 @@ import java.util.stream.Collectors;
 
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer;
-import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener;
 import org.eso.ias.kafkautils.KafkaIasiosProducer;
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
-import org.eso.ias.types.Identifier;
-import org.eso.ias.types.AlarmSample;
+import org.eso.ias.types.Alarm;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
 import org.eso.ias.types.IasValidity;
 import org.eso.ias.types.IasValueJsonSerializer;
 import org.eso.ias.types.IasValueStringSerializer;
+import org.eso.ias.types.Identifier;
 import org.eso.ias.types.OperationalMode;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,7 +96,7 @@ public class FilteredConsumerTest implements IasioListener {
 	/**
 	 * Initialize
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		logger.info("Initializing...");
 		consumer = new KafkaIasiosConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, topicName, "FilteredConsumser-Test");
@@ -112,7 +111,7 @@ public class FilteredConsumerTest implements IasioListener {
 	/**
 	 * Clean up
 	 */
-	@After
+	@AfterEach
 	public void tearDown() {
 		logger.info("Closing...");
 		receivedIasios.clear();
@@ -366,7 +365,7 @@ public class FilteredConsumerTest implements IasioListener {
 		// Accepted alarms
 		List<String> idsOfAlarms = new LinkedList<>();
 		for (int i=1; i<75; i++) idsOfAlarms.add("ID-TypeAlarm-"+i);
-		Collection<IASValue<?>> alarmIasios = buildValues(idsOfAlarms, AlarmSample.SET, IASTypes.ALARM);
+		Collection<IASValue<?>> alarmIasios = buildValues(idsOfAlarms, Alarm.SET_HIGH, IASTypes.ALARM);
 		
 		// Rejected boolean
 		List<String> idsOfbooleans = new LinkedList<>();

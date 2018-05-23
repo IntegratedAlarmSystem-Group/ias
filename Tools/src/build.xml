@@ -17,6 +17,14 @@
 	<property name="spring-beans.jar" value="spring-beans-${spring-release}.RELEASE.jar" />
 	<property name="spring-aop.jar" value="spring-aop-${spring-release}.RELEASE.jar" />
 	<property name="spring-expression.jar" value="spring-expression-${spring-release}.RELEASE.jar" />
+	
+	<!-- Apache Command Line Interfce -->
+	<property name="apache-commons-cli" value="commons-cli-1.4" />
+	
+	<!-- Junit 5 stuff -->
+	<property name="junit-engine-release" value="1.2.0"/>
+	<property name="junit-jupiter-release" value="5.2.0"/>
+	
 	<target name="prepareExtTools" depends="ias.init-ias-environment">
 		<echo>Unpacking ${spring} in ${exttools.dir}</echo>
 		<unzip src="${exttools.dir}/${spring}-dist.zip" dest="${exttools.dir}" />
@@ -25,6 +33,10 @@
 		<copy todir="${exttools.dir}" file="${exttools.dir}/${spring}/libs/${spring-beans.jar}"/>
 		<copy todir="${exttools.dir}" file="${exttools.dir}/${spring}/libs/${spring-aop.jar}"/>
 		<copy todir="${exttools.dir}" file="${exttools.dir}/${spring}/libs/${spring-expression.jar}"/>
+		<echo>Unpacking ${apache-commons-cli} in ${exttools.dir}</echo>
+		<untar src="${exttools.dir}/${apache-commons-cli}-bin.tar.gz" dest="${exttools.dir}" compression="gzip"/>
+		<copy todir="${exttools.dir}" file="${exttools.dir}/${apache-commons-cli}/${apache-commons-cli}.jar" />
+		<delete dir="${exttools.dir}/${apache-commons-cli}"/>
 	</target>
 	
 	<!--
@@ -33,7 +45,25 @@
 		Third party jars must be put in the <module>/extTools folder
 		and are installed in <module>lib/ExtTools during the build
 	-->
-	<property name="exttools" value="${spring-core.jar},${spring-context.jar},${spring-beans.jar},${spring-aop.jar},${spring-expression.jar},commons-logging-1.2.jar,scalactic_2.12-3.0.4.jar,scalatest_2.12-3.0.4.jar,junit-4.12.jar,hamcrest-core-1.3.jar,kafka-clients-1.0.0.jar" />
+	<resources id="iasModsResources">
+		<string>${spring-core.jar}</string>
+		<string>${spring-context.jar}</string>
+		<string>${spring-beans.jar}</string>
+		<string>${spring-aop.jar}</string>
+		<string>${spring-expression.jar}</string>
+		<string>commons-logging-1.2.jar</string>
+		<string>scalactic_2.12-3.0.5.jar</string>
+		<string>scalatest_2.12-3.0.5.jar</string>
+		<string>hamcrest-core-1.3.jar</string>
+		<string>kafka-clients-1.1.0.jar</string>
+		<string>${apache-commons-cli}.jar</string>
+		<string>junit-platform-commons-${junit-engine-release}.jar</string>
+		<string>junit-platform-console-standalone-${junit-engine-release}.jar</string>
+		<string>junit-platform-engine-${junit-engine-release}.jar</string>
+		<string>junit-jupiter-api-${junit-jupiter-release}.jar</string>
+		<string>junit-jupiter-engine-${junit-jupiter-release}.jar</string>
+	</resources>
+	<pathconvert property="exttools" refid="iasModsResources" pathsep="," />
 	
 	<!--
 		jarName: the name of the jar to build from scala and java sources; 
@@ -49,7 +79,8 @@
 		<delete file="${exttools.dir}/${spring-context.jar}" />
 		<delete file="${exttools.dir}/${spring-beans.jar}" />
 		<delete file="${exttools.dir}/${spring-aop.jar}" />
-	<delete file="${exttools.dir}/${spring-expression.jar}" />
+		<delete file="${exttools.dir}/${spring-expression.jar}" />
+		<delete file="${exttools.dir}/${apache-commons-cli}.jar" />
 	</target>
 	
 	<target name="install" depends="ias.install" />

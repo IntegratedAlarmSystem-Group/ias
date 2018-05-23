@@ -1,6 +1,12 @@
 package org.eso.ias.plugin.test.filter;
 
-import static org.junit.Assert.*;
+
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -14,8 +20,8 @@ import org.eso.ias.plugin.filter.FilterBase;
 import org.eso.ias.plugin.filter.FilterException;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.types.IasValidity;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test the {@link FilterBase}
@@ -121,7 +127,7 @@ public class TestFilterBase {
 		 */
 		private TestFilter defaultFilter;
 
-		@Before
+		@BeforeEach
 		public void setUp() {
 			defaultFilter = new TestFilter();
 			assertNotNull(defaultFilter);
@@ -190,7 +196,7 @@ public class TestFilterBase {
 		 * Check that adding a sample older then the newer sample
 		 * in the history throws an exception
 		 */
-		@Test(expected=FilterException.class)
+		@Test
 		public void testAddingOldSample() throws Exception {
 			EnrichedSample oldest = new EnrichedSample(new Sample("OLD"),true);
 			Thread.sleep(125);
@@ -198,7 +204,7 @@ public class TestFilterBase {
 			
 			// Add in the wrong order
 			defaultFilter.newSample(newest);
-			defaultFilter.newSample(oldest);
+			assertThrows(FilterException.class, () -> defaultFilter.newSample(oldest));
 		}
 		
 		/**
@@ -226,7 +232,7 @@ public class TestFilterBase {
 			List<EnrichedSample> samples = submitSamples(nSamples, defaultFilter);
 			
 			int removed = defaultFilter.removeLastSamples(toRemove);
-			assertEquals("Wrong number of removed samples",toRemove,removed);
+			assertEquals(toRemove,removed,"Wrong number of removed samples");
 			
 			List<EnrichedSample> samplesFromFilter = defaultFilter.historySnapshot(); 
 			assertTrue(checkOrder(defaultFilter.historySnapshot()));
@@ -260,8 +266,8 @@ public class TestFilterBase {
 			List<EnrichedSample> samples = submitSamples(nSamples, defaultFilter);
 			int removed = defaultFilter.keepNewest(toKeep);
 			List<EnrichedSample> samplesFromFilter = defaultFilter.historySnapshot();
-			assertEquals("Wrong number of deleted samples returned",(long)nSamples-toKeep, removed);
-			assertEquals("Wrong number of samples in history",toKeep, samplesFromFilter.size());
+			assertEquals((long)nSamples-toKeep, removed,"Wrong number of deleted samples returned");
+			assertEquals(toKeep, samplesFromFilter.size(),"Wrong number of samples in history");
 			
 			// Check that the newer samples have been kept
 			for (int t=0; t<toKeep; t++) {
@@ -341,7 +347,7 @@ public class TestFilterBase {
 			submitSamples(nSamples, defaultFilter);
 			
 			int removed = defaultFilter.removeOldSamples(now);
-			assertEquals("Wrong number of removed samples",0,removed);
+			assertEquals(0,removed,"Wrong number of removed samples");
 			
 			List<EnrichedSample> samplesFromFilter = defaultFilter.historySnapshot(); 
 			assertEquals(nSamples,samplesFromFilter.size());
@@ -383,7 +389,7 @@ public class TestFilterBase {
 			List<EnrichedSample> samples = submitSamples(nSamples, defaultFilter);
 			
 			int removed = defaultFilter.removeOldSamples(System.currentTimeMillis()-now, TimeUnit.MILLISECONDS);
-			assertEquals("Wrong number of removed samples",0,removed);
+			assertEquals(0,removed,"Wrong number of removed samples");
 			
 			List<EnrichedSample> samplesFromFilter = defaultFilter.historySnapshot(); 
 			assertEquals(nSamples,samplesFromFilter.size());
@@ -427,11 +433,11 @@ public class TestFilterBase {
 			assertTrue(defaultFilter.getLastSampleTimeStamp().isPresent());
 			Optional<Long> submissionTime = defaultFilter.getLastSampleTimeStamp();
 			Long time = submissionTime.orElseThrow(() -> new Exception("Time not present"));
-			assertTrue("Invalid submission time",time>=before && time<=after);
+			assertTrue(time>=before && time<=after,"Invalid submission time");
 			
 			// Get it again, did it change?
 			Thread.sleep(50);
-			assertEquals("The submissson timestamp should not have changed",defaultFilter.getLastSampleTimeStamp(), submissionTime);
+			assertEquals(defaultFilter.getLastSampleTimeStamp(), submissionTime,"The submissson timestamp should not have changed");
 		}
 	}
 

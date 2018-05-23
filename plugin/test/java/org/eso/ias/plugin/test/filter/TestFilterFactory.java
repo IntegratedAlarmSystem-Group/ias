@@ -1,12 +1,13 @@
 package org.eso.ias.plugin.test.filter;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.eso.ias.plugin.PluginException;
 import org.eso.ias.plugin.filter.AverageBySamples;
 import org.eso.ias.plugin.filter.Filter;
 import org.eso.ias.plugin.filter.FilterFactory;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test the instantiation of filters by {@link FilterFactory}
@@ -25,7 +26,7 @@ public class TestFilterFactory {
 		String className = "org.eso.ias.plugin.filter.AverageBySamples";
 		String filterOpt = "50";
 		
-		Filter avgFilter = FilterFactory.getFilter(className, filterOpt); 
+		FilterFactory.getFilter(className, filterOpt); 
 		
 	}
 	
@@ -48,12 +49,12 @@ public class TestFilterFactory {
 	 * Check if an exception is thrwon when the class does not exist
 	 * @throws Exception
 	 */
-	@Test(expected = PluginException.class)
+	@Test
 	public void testThrowsExceptionFilterNotFound() throws Exception {
 		String className = "org.eso.ias.plugin.filter.DoesNotExistFilter";
 		String filterOpt = "50";
 		
-		Filter avgFileter = FilterFactory.getFilter(className, filterOpt);
+		assertThrows(PluginException.class, () -> FilterFactory.getFilter(className, filterOpt));
 	}
 
 }

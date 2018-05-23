@@ -216,25 +216,24 @@ abstract class ComputingElement[T](
     
     val startedAt=System.currentTimeMillis()
     
-    val ret = try {
-      transfer(immutableMapOfInputs,asceIdentifier,actualOutput)
-    } catch { case e: Exception => Left(e) }
+    val ret = transfer(immutableMapOfInputs,asceIdentifier,actualOutput)
     
     val endedAt=System.currentTimeMillis()
     
     ret match {
-      case Left(ex) =>
-        logger.error("TF of [{}] inhibited for the time being",asceIdentifier,ex)
-        // Change the state so that the TF is never executed again
-        (actualOutput,ComputingElementState.transition(actualState, new Broken()))
-      case Right(v) => 
-          val newState = if (endedAt-startedAt>TransferFunctionSetting.MaxTolerableTFTime) {
+      case Success(v) => 
+        val newState = if (endedAt-startedAt>TransferFunctionSetting.MaxTolerableTFTime) {
             ComputingElementState.transition(actualState, new Slow())
           } else {
             ComputingElementState.transition(actualState, new Normal())
           }
           (v,newState)
+      case Failure(ex) => 
+        logger.error("TF of [{}] inhibited for the time being",asceIdentifier,ex)
+        // Change the state so that the TF is never executed again
+        (actualOutput,ComputingElementState.transition(actualState, new Broken()))
     }
+
   }
   
   /**
@@ -252,7 +251,7 @@ abstract class ComputingElement[T](
   def transfer(
       inputs: Map[String, InOut[_]], 
       id: Identifier,
-      actualOutput: InOut[T]) : Either[Exception,InOut[T]]
+      actualOutput: InOut[T]) : Try[InOut[T]]
   
   override def toString() = {
     val outStr: StringBuilder = new StringBuilder("State of ASCE [")

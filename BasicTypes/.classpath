@@ -12,10 +12,10 @@
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/jackson-annotations-2.9.4.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/jackson-core-2.9.4.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/jackson-databind-2.9.4.jar"/>
-	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/junit-4.12.jar"/>
-	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/scalactic_2.12-3.0.4.jar"/>
-	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/scalatest_2.12-3.0.4.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-logging.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/slf4j-api-1.7.25.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/junit-jupiter-api-5.2.0.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/scalactic_2.12-3.0.5.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/scalatest_2.12-3.0.5.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

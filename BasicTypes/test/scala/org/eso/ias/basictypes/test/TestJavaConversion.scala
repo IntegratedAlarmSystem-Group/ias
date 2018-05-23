@@ -9,7 +9,7 @@ import org.eso.ias.types.IASTypes
 import org.eso.ias.types.JavaConverter
 import org.eso.ias.types.IASValue
 import org.eso.ias.types.IdentifierType
-import org.eso.ias.types.AlarmSample
+import org.eso.ias.types.Alarm
 import org.eso.ias.types.IasValidity._
 import org.eso.ias.types.IasValidity
 
@@ -37,7 +37,7 @@ class TestJavaConversion  extends FlatSpec {
       val alarmMode = OperationalMode.STARTUP
       val mode = OperationalMode.OPERATIONAL
       // The values
-      val alarmValue = Some(AlarmSample.SET)
+      val alarmValue = Some(Alarm.SET_MEDIUM)
       val doubleValue = Some(48.6D)
       val floatValue = Some(-11.5F)
       val longValue = Some(11L)
@@ -107,7 +107,7 @@ class TestJavaConversion  extends FlatSpec {
         None,
         IASTypes.BOOLEAN,
         None,None,None,None,None,None,None,None,None)
-      val alarmHIO = new InOut[AlarmSample]( // Output
+      val alarmHIO = new InOut[Alarm]( // Output
         alarmValue, 
         alarmHioId, 
         mode,
@@ -157,7 +157,7 @@ class TestJavaConversion  extends FlatSpec {
     assert(doubleVal.value==f.doubleHIO.value.get)
     assert(doubleVal.iasValidity==IasValidity.RELIABLE)
     
-    val alarmVal = JavaConverter.inOutToIASValue[AlarmSample](f.alarmHIO)
+    val alarmVal = JavaConverter.inOutToIASValue[Alarm](f.alarmHIO)
     assert(alarmVal.value==f.alarmHIO.value.get)
     assert(alarmVal.iasValidity==IasValidity.RELIABLE)
   }
@@ -209,13 +209,13 @@ class TestJavaConversion  extends FlatSpec {
     assert(newdoubleVal.fullRunningId==iasio.id.fullRunningID)
     assert(newdoubleVal.value==iasio.value.get)
     
-    val alarmVal = JavaConverter.inOutToIASValue[AlarmSample](f.alarmHIO)
+    val alarmVal = JavaConverter.inOutToIASValue[Alarm](f.alarmHIO)
     val alarm = alarmVal.value
-    val newAlarm = AlarmSample.CLEARED
-    val newAlarmValue = alarmVal.updateValue(newAlarm)
+    val alarmCleared = Alarm.CLEARED
+    val newAlarmValue = alarmVal.updateValue(alarmCleared)
     val alarmHio = JavaConverter.updateInOutWithIasValue(f.alarmHIO,newAlarmValue)
     
-    assert(alarmHio.value.get.asInstanceOf[AlarmSample]==AlarmSample.CLEARED)
+    assert(alarmHio.value.get.asInstanceOf[Alarm]==Alarm.CLEARED)
     assert(alarmHio.fromIasValueValidity.isEmpty)
     assert(alarmHio.fromInputsValidity.isDefined)
     assert(alarmHio.fromInputsValidity.get.iasValidity==IasValidity.RELIABLE)
@@ -235,7 +235,7 @@ class TestJavaConversion  extends FlatSpec {
     val asceId2 = new Identifier("asceVID2",IdentifierType.ASCE,Option(dasuId2))      
     val depId2 = new Identifier("AlarmID2",IdentifierType.IASIO,Option[Identifier](asceId2))
     
-    val alarmHIO = new InOut[AlarmSample]( // Output
+    val alarmHIO = new InOut[Alarm]( // Output
         f.alarmValue, 
         f.alarmHioId, 
         f.mode,
@@ -253,7 +253,7 @@ class TestJavaConversion  extends FlatSpec {
     assert(valueDepIds.get().size==2)
     
     // Now check if updating a InOut takes the dependents from the IASValue
-    val alarmHIO2 = new InOut[AlarmSample]( // Output
+    val alarmHIO2 = new InOut[Alarm]( // Output
         f.alarmValue, 
         f.alarmHioId, 
         f.mode,
@@ -285,7 +285,7 @@ class TestJavaConversion  extends FlatSpec {
     
     val properties = Map("key1"->"Value1", "key2"->"Value2")
     
-    val alarmHIO = new InOut[AlarmSample]( // Output
+    val alarmHIO = new InOut[Alarm]( // Output
         f.alarmValue, 
         f.alarmHioId, 
         f.mode,
@@ -305,7 +305,7 @@ class TestJavaConversion  extends FlatSpec {
     })
     
     // Now check if updating a InOut takes the properties from the IASValue
-    val alarmHIO2 = new InOut[AlarmSample]( // Output
+    val alarmHIO2 = new InOut[Alarm]( // Output
         f.alarmValue, 
         f.alarmHioId, 
         f.mode,

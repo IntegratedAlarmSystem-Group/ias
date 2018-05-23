@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="test/java"/>
+	<classpathentry kind="src" path="src/java"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ias-basic-types.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ias-plugin.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ias-heartbeat.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/slf4j-api-1.7.25.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ias-utils.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/jackson-core-2.9.4.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/jackson-databind-2.9.4.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/commons-cli-1.4.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/junit-jupiter-api-5.2.0.jar"/>
+	<classpathentry kind="output" path="lib"/>
+</classpath>

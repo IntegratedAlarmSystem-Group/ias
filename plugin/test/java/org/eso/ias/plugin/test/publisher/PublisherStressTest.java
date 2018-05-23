@@ -1,9 +1,9 @@
 package org.eso.ias.plugin.test.publisher;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -23,7 +23,7 @@ import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
 import org.eso.ias.plugin.publisher.PublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -92,7 +92,7 @@ public class PublisherStressTest extends PublisherTestCommon {
 	    // but could not yet been published
 	    boolean isNotTimeout=expectedValues.await(1,TimeUnit.MINUTES);
 		logger.info("Published messages={}, num of publish={}",unbufferedPublisher.getPublishedMessages(),numOfPublishInvocationInUnbufferedPub.get());
-	    assertTrue("Too slow processing events",isNotTimeout);
+	    assertTrue(isNotTimeout,"Too slow processing events");
 	    
 	    
 	    // Check if all values have been pushed

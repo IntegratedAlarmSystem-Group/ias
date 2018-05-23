@@ -9,7 +9,7 @@ import org.eso.ias.types.IdentifierType
 import org.eso.ias.types.IASValue
 import org.eso.ias.types.IasValidity._
 import org.eso.ias.types.OperationalMode
-import org.eso.ias.types.AlarmSample
+import org.eso.ias.types.Alarm
 import org.eso.ias.types.IasValidity
 
 /**
@@ -145,7 +145,7 @@ class TestInOut extends FlatSpec {
     val hioBool: InOut[Boolean] = InOut.asInput(id, IASTypes.BOOLEAN)
     val hioChar: InOut[Char] = InOut.asInput(id, IASTypes.CHAR)
     val hioString: InOut[String] = InOut.asInput(id, IASTypes.STRING)
-    val hioAlarm: InOut[AlarmSample] = InOut.asInput(id, IASTypes.ALARM)
+    val hioAlarm: InOut[Alarm] = InOut.asInput(id, IASTypes.ALARM)
 
     // Check if all the types has been instantiated
     val listOfHIOs = List(hioLong, hioShort, hioInt, hioByte, hioDouble, hioFloat, hioBool, hioChar, hioString, hioAlarm)
@@ -160,7 +160,7 @@ class TestInOut extends FlatSpec {
     hioBool.updateValue(Some(false))
     hioChar.updateValue(Some('C'))
     hioString.updateValue(Some("Test"))
-    hioAlarm.updateValue(Some(AlarmSample.SET))
+    hioAlarm.updateValue(Some(Alarm.SET_MEDIUM))
   }
 
   it must "build and update from a passed IASValue" in {

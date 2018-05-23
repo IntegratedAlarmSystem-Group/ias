@@ -1,9 +1,9 @@
 package org.eso.ias.plugin.test.filter;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,8 +16,8 @@ import org.eso.ias.plugin.filter.FilterBase;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.filter.NoneFilter;
 import org.eso.ias.types.IasValidity;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test the {@link NoneFilter}.
@@ -129,7 +129,7 @@ public class AvgBySamplesFilterTest {
 	 */
 	private TestFilter avgFilter;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		avgFilter = new TestFilter();
 		assertNotNull(avgFilter);

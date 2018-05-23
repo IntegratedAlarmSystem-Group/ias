@@ -1,8 +1,8 @@
 package org.eso.ias.plugin.test.publisher;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
@@ -20,7 +20,7 @@ import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.BufferedListenerPublisher;
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,8 +80,8 @@ public class BufferedPublisherBaseTest extends PublisherTestCommon {
 		assertEquals(1L,bufferedPublisher.getPublishedMonitorPoints());
 		assertEquals(bufferedPublisher.getPublishedMessages(),numOfPublishInvocationInBufferedPub.get());
 		MonitorPointDataToBuffer d = receivedValuesFromBufferedPub.get(v.id);
-		assertNotNull("Expected value not published",d);
-		assertTrue("Offered and published values do not match "+v.toString()+"<->"+d.toString(), match(v,d));
+		assertNotNull(d,"Expected value not published");
+		assertTrue( match(v,d),"Offered and published values do not match "+v.toString()+"<->"+d.toString());
 		
 	}
 	
@@ -149,8 +149,8 @@ public class BufferedPublisherBaseTest extends PublisherTestCommon {
 		
 		for (ValueToSend v: values) {
 			MonitorPointDataToBuffer d = receivedValuesFromBufferedPub.get(v.id);
-			assertNotNull("Expected value not published",d);
-			assertTrue("Offered and published values do not match", match(v,d));
+			assertNotNull(d,"Expected value not published");
+			assertTrue( match(v,d),"Offered and published values do not match");
 		}
 	}
 	
@@ -194,7 +194,7 @@ public class BufferedPublisherBaseTest extends PublisherTestCommon {
 		assertEquals(publishedValues.size(), receivedValuesFromBufferedPub.size());
 		
 		MonitorPointDataToBuffer d = receivedValuesFromBufferedPub.get(lastOffered.id);
-		assertNotNull("Expected value not published",d);
-		assertTrue("Offered and published values do not match", match(lastOffered,d));
+		assertNotNull(d,"Expected value not published");
+		assertTrue( match(lastOffered,d),"Offered and published values do not match");
 	}
 }

@@ -16,7 +16,7 @@ import scala.util.Success
 import scala.collection.mutable.ArrayBuffer
 import org.eso.ias.logging.IASLogger
 import scala.collection.JavaConverters
-import org.eso.ias.types.AlarmSample
+import org.eso.ias.types.Alarm
 import org.eso.ias.types.OperationalMode
 import org.eso.ias.types.IasValidity
 import org.eso.ias.types.IASTypes
@@ -85,7 +85,7 @@ extends Dasu(dasuIdentifier,5,1) {
     val asceId = new Identifier("ASCE_ID_RUNTIME_GENERATED",IdentifierType.ASCE,dasuIdentifier)
     val outputId = new Identifier(dasuDao.getOutput.getId,IdentifierType.IASIO,asceId)
     IASValue.build(
-      AlarmSample.SET,
+      Alarm.SET_MEDIUM,
 			OperationalMode.OPERATIONAL,
 			IasValidity.RELIABLE,
 			outputId.fullRunningID,
