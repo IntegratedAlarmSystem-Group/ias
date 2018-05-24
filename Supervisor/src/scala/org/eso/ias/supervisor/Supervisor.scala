@@ -84,10 +84,7 @@ class Supervisor(
   /** The ID of the Supervisor */
   val id = supervisorIdentifier.id
   
-  /** The logger */
-  val logger = IASLogger.getLogger(Supervisor.getClass)
-  
-  logger.info("Building Supervisor [{}] with fullRunningId [{}]",id,supervisorIdentifier.fullRunningID)
+  Supervisor.logger.info("Building Supervisor [{}] with fullRunningId [{}]",id,supervisorIdentifier.fullRunningID)
   
   /** The heartbeat Engine */
   val hbEngine: HbEngine = {
@@ -101,14 +98,14 @@ class Supervisor(
     require(supervDaoOpt.isPresent(),"Supervisor ["+id+"] configuration not found on cdb")
     supervDaoOpt.get
   }
-  logger.info("Supervisor [{}] configuration retrived from CDB",id)
+  Supervisor.logger.info("Supervisor [{}] configuration retrived from CDB",id)
   
   /**
    * Gets the definitions of the DASUs to run in the Supervisor from the CDB
    */
   val dasusToDelpoy: Set[DasuToDeployDao] = JavaConverters.asScalaSet(cdbReader.getDasusToDeployInSupervisor((id))).toSet
   require(dasusToDelpoy.size>0,"No DASUs to run in Supervisor "+id)
-  logger.info("Supervisor [{}], {} DASUs to run: {}",
+  Supervisor.logger.info("Supervisor [{}], {} DASUs to run: {}",
       id,
       dasusToDelpoy.size.toString(),
       dasusToDelpoy.map(d => d.getDasu().getId()).mkString(", "))
@@ -116,17 +113,17 @@ class Supervisor(
   // Initialize the consumer and exit in case of error 
   val inputSubscriberInitialized = inputSubscriber.initializeSubscriber()
   inputSubscriberInitialized match {
-    case Failure(f) => logger.error("Supervisor [{}] failed to initialize the consumer", id,f);
+    case Failure(f) => Supervisor.logger.error("Supervisor [{}] failed to initialize the consumer", id,f);
                        System.exit(-1)
-    case Success(s) => logger.info("Supervisor [{}] subscriber successfully initialized",id)
+    case Success(s) => Supervisor.logger.info("Supervisor [{}] subscriber successfully initialized",id)
   }
   
   // Initialize the producer and exit in case of error 
   val outputProducerInitialized = outputPublisher.initializePublisher()
   outputProducerInitialized match {
-    case Failure(f) => logger.error("Supervisor [{}] failed to initialize the producer", id,f);
+    case Failure(f) => Supervisor.logger.error("Supervisor [{}] failed to initialize the producer", id,f);
                        System.exit(-2)
-    case Success(s) => logger.info("Supervisor [{}] producer successfully initialized",id)
+    case Success(s) => Supervisor.logger.info("Supervisor [{}] producer successfully initialized",id)
   }
   
   // Get the DasuDaos from the set of DASUs to deploy:
@@ -137,7 +134,7 @@ class Supervisor(
   }
   assert(dasuDaos.size==dasusToDelpoy.size)
   
-  dasuDaos.foreach(d => logger.info("Supervisor [{}]: building DASU from DasuDao {}",id,d.toString()))
+  dasuDaos.foreach(d => Supervisor.logger.info("Supervisor [{}]: building DASU from DasuDao {}",id,d.toString()))
   
   // Build all the DASUs
   val dasus: Map[String, Dasu] = dasuDaos.foldLeft(Map.empty[String,Dasu])((m, dasuDao) => 
@@ -147,7 +144,7 @@ class Supervisor(
    * The IDs of the DASUs instantiated in the Supervisor
    */
   val dasuIds = dasuDaos.map(_.getId)
-  logger.info("Supervisor [{}] built {} DASUs: {}",id, dasus.size.toString(),dasuIds.mkString(", "))
+  Supervisor.logger.info("Supervisor [{}] built {} DASUs: {}",id, dasus.size.toString(),dasuIds.mkString(", "))
   
   /**
    * Associate each DASU with the Set of inputs it needs.
@@ -156,7 +153,7 @@ class Supervisor(
    * the set of inputs to send to the DASU
    */
   val iasiosToDasusMap: Map[String, Set[String]] = startDasus()
-  logger.info("Supervisor [{}] associated IASIOs IDs to DASUs", id)
+  Supervisor.logger.info("Supervisor [{}] associated IASIOs IDs to DASUs", id)
   
   val cleanedUp = new AtomicBoolean(false) // Avoid cleaning up twice
   val shutDownThread=addsShutDownHook()
@@ -164,7 +161,7 @@ class Supervisor(
   /** Flag to know if the Supervisor has been started */
   val started = new AtomicBoolean(false)
   
-  logger.info("Supervisor [{}] built",id)
+  Supervisor.logger.info("Supervisor [{}] built",id)
   
   /**
    * Start each DASU and gets the list of inputs it needs to forward to the ASCEs
@@ -202,16 +199,16 @@ class Supervisor(
   def start(): Try[Unit] = {
     val alreadyStarted = started.getAndSet(true) 
     if (!alreadyStarted) {
-      logger.debug("Starting Supervisor [{}]",id)
+      Supervisor.logger.debug("Starting Supervisor [{}]",id)
       hbEngine.start()
       dasus.values.foreach(dasu => dasu.enableAutoRefreshOfOutput(true))
       val inputsOfSupervisor = dasus.values.foldLeft(Set.empty[String])( (s, dasu) => s ++ dasu.getInputIds())
       inputSubscriber.startSubscriber(this, inputsOfSupervisor).flatMap(s => {
         Try{
-          logger.debug("Supervisor [{}] started",id)
+          Supervisor.logger.debug("Supervisor [{}] started",id)
           hbEngine.updateHbState(HeartbeatStatus.RUNNING)}})
     } else {
-      logger.warn("Supervisor [{}] already started",id)
+      Supervisor.logger.warn("Supervisor [{}] already started",id)
       new Failure(new Exception("Supervisor already started"))
     }
   }
@@ -223,17 +220,17 @@ class Supervisor(
 
     val alreadyCleaned = cleanedUp.getAndSet(true)
     if (!alreadyCleaned) {
-      logger.debug("Cleaning up supervisor [{}]", id)
-hbEngine.updateHbState(HeartbeatStatus.EXITING)
-      logger.debug("Releasing DASUs running in the supervisor [{}]", id)
+      Supervisor.logger.debug("Cleaning up supervisor [{}]", id)
+      hbEngine.updateHbState(HeartbeatStatus.EXITING)
+      Supervisor.logger.debug("Releasing DASUs running in the supervisor [{}]", id)
       dasus.values.foreach(_.cleanUp)
 
-      logger.debug("Supervisor [{}]: releasing the subscriber", id)
+      Supervisor.logger.debug("Supervisor [{}]: releasing the subscriber", id)
       Try(inputSubscriber.cleanUpSubscriber())
-      logger.debug("Supervisor [{}]: releasing the publisher", id)
+      Supervisor.logger.debug("Supervisor [{}]: releasing the publisher", id)
       Try(outputPublisher.cleanUpPublisher())
       hbEngine.shutdown()
-      logger.info("Supervisor [{}]: cleaned up", id)
+      Supervisor.logger.info("Supervisor [{}]: cleaned up", id)
     }
   }
   
@@ -330,6 +327,8 @@ hbEngine.updateHbState(HeartbeatStatus.EXITING)
 
 object Supervisor {
   
+  /** The logger */
+  val logger = IASLogger.getLogger(Supervisor.getClass)
 
   /** Build the usage message */
   def printUsage() = {
@@ -372,12 +371,14 @@ object Supervisor {
       val ToleranceSeconds = Integer.getInteger(TolerancePropName,ToleranceDefault)
       
       val iasDaoOpt = reader.getIas
+      logger.debug("IAS configuration read from CDB")
       
       val fromCdb = if (iasDaoOpt.isPresent()) {
-        (iasDaoOpt.get.getRefreshRate,iasDaoOpt.get.getTolerance,Some(iasDaoOpt.get.getBsdbUrl))
+        (iasDaoOpt.get.getRefreshRate,iasDaoOpt.get.getTolerance,Option(iasDaoOpt.get.getBsdbUrl))
       } else {
         (AutoSendTimeIntervalDefault,ToleranceDefault,None)
       }
+      logger.debug("Values from CDB autosend time={}, HB frequency={}, Kafka brokers={}",fromCdb._1,fromCdb._2,fromCdb._3)
       
       (Integer.getInteger(AutoSendPropName,fromCdb._1),
       Integer.getInteger(TolerancePropName,fromCdb._2),
