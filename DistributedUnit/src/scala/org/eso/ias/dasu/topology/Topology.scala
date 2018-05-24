@@ -47,7 +47,8 @@ class Topology(
    *  One of The ASCE must produce the output of the DASU
    */
   val asceOutputs: Set[String] = asces.map(asce => asce.output).toSet
-  require(asceOutputs.contains(dasuOutputId),"The output of the DASU is not produced by any of its ASCEs")
+  require(asceOutputs.contains(dasuOutputId),
+      "The output ["+dasuOutputId+"] of the DASU ["+dasuId+"] is not produced by any of its ASCEs"+asceOutputs.mkString(","))
   
   // Ensure that the output produced by one ASCE is not produced by any other ASCE
   require(asces.size==asceOutputs.size,"Number of outputs of ASCEs and number of ASCEs mismatch")
