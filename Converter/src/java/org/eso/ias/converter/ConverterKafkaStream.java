@@ -87,7 +87,7 @@ public class ConverterKafkaStream extends ConverterStream {
 	 * kafka broker URL defined in {@link KafkaHelper#DEFAULT_BOOTSTRAP_BROKERS}. 
 	 *
 	 * @param converterID The ID of the converter
-	 * @param kafkaBrokers The URL to connect to kafka broker(s)
+	 * @param kafkaBrokers The URL to connect to kafka broker(s) read from the CDB
 	 * @param props the properties to get kafka serves and topic anmes
 	 */
 	public ConverterKafkaStream(

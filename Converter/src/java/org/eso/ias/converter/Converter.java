@@ -271,10 +271,21 @@ public class Converter {
 			// Get from dependency injection
 			cdbReader = context.getBean("cdbReader",CdbReader.class);
 		}
-
-		ConverterStream converterStream = context.getBean(ConverterStream.class,id, System.getProperties());
 		
-		HbProducer hbProducer = context.getBean(HbProducer.class,id,System.getProperties());
+		IasDao iasDao = null;
+		try { 
+			Optional<IasDao> iasDaoOpt = cdbReader.getIas();
+			iasDao=iasDaoOpt.get();
+		} catch (IasCdbException cdbEx) {
+			logger.error("Error getting IAS configuration from CDB",cdbEx);
+			System.exit(-1);
+		}
+		
+		Optional<String> kafkaBrokersFromCdb = Optional.ofNullable(iasDao.getBsdbUrl());
+
+		ConverterStream converterStream = context.getBean(ConverterStream.class,id, kafkaBrokersFromCdb, System.getProperties());
+		
+		HbProducer hbProducer = context.getBean(HbProducer.class,id,kafkaBrokersFromCdb,System.getProperties());
 
 		logger.info("Building the {} Converter",id);
 

@@ -23,8 +23,8 @@ import org.eso.ias.types.IasValueStringSerializer;
 import org.eso.ias.types.OperationalMode;
 
 /**
- * A base class providing common utlity methods used
- * y several test in Convereter.
+ * A base class providing common utility methods used
+ * by several test in Converter.
  * 
  * @author acaproni
  *
