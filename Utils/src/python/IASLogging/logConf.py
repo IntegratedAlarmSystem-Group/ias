@@ -4,9 +4,9 @@ import os, errno
 import datetime
 
 
-class Log(object):
+class Log():
   @staticmethod
-  def GetLoggerFile(fileName):
+  def initLogging (nameFile,stdoutLevel,consoleLevel):
     #take the path for logs folder inside $IAS_ROOT
     logPath=os.environ["IAS_ROOT"]
     #If the file doesn't exist it's created
@@ -15,21 +15,32 @@ class Log(object):
     except OSError as e:
         if e.errno != errno.EEXIST:
          raise
+
     #Format of the data for filename
     now = datetime.datetime.utcnow().strftime('%Y-%m-%d_%H:%M:%S.%f')[:-3]
-#    fileNameN='IasRoot'+now
-    fileNameN=fileName+now
+    LEVELS = { 'debug':logging.DEBUG,
+            'info':logging.INFO,
+            'warning':logging.WARNING,
+            'error':logging.ERROR,
+            'critical':logging.CRITICAL,
+            }
+    stdLevel_name = stdoutLevel
+    consoleLevel= consoleLevel
+    stdLevel = LEVELS.get(stdLevel_name, logging.NOTSET)
+    consoleLevel = LEVELS.get(consoleLevel, logging.NOTSET)
+    file=("{0}/logs/{1}.log".format(logPath, str(nameFile)+str(now)))
+
+
+    logging.basicConfig(level=stdLevel,format='%(asctime)s%(msecs)d  | %(levelname)s | [%(filename)s %(lineno)d] [%(threadName)s] | %(message)s',
+                        datefmt='%Y-%m-%d %H:%M:%S.', filename=file)
     #path of the file
-    file=("{0}/logs/{1}.log".format(logPath, fileNameN))
+
 
     # set up logging to file - see previous section for more details
-    logging.basicConfig(level=logging.DEBUG,
-                        format='%(asctime)s%(msecs)d  | %(levelname)s | [%(filename)s %(lineno)d] [%(threadName)s] | %(message)s',
-                        datefmt='%Y-%m-%d %H:%M:%S.',
-                        filename=file)
+
     # define a Handler which writes INFO messages or higher to the sys.stderr
     console = logging.StreamHandler()
-    console.setLevel(logging.INFO)
+    console.setLevel(consoleLevel)
     # set a format which is simpler for console use
     formatter = logging.Formatter('%(asctime)s%(msecs)d %(levelname)-8s [%(filename)s %(lineno)d] %(message)s' , '%H:%M:%S.')
     # tell the handler to use this format
@@ -43,3 +54,4 @@ class Log(object):
     logger1 = logging.getLogger(__name__)
 
     return logger1
+

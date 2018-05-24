@@ -7,10 +7,9 @@ Created on Sep 21, 2016
 import argparse
 from IASTools.FileSupport import FileSupport
 from IASLogging.logConf import Log
-
+import os
 if __name__ == '__main__':
-    log=Log()
-    logger=log.GetLoggerFile(os.path.basename(__file__).split(".")[0])
+
     parser = argparse.ArgumentParser(description='Search for a file in the hierarchy of IAS folders.')
     parser.add_argument(
         '-t',
@@ -20,10 +19,29 @@ if __name__ == '__main__':
         action='store',
         default=None)
     parser.add_argument(
+                        '-lso',
+                        '--levelStdOut',
+                        help='Logging level: Set the level of the message for the file logger, default: Debug level',
+                        action='store',
+                        choices=['info', 'debug', 'warning', 'error', 'critical'],
+                        default='info',
+                        required=False)
+    parser.add_argument(
+                        '-lcon',
+                        '--levelConsole',
+                        help='Logging level: Set the level of the message for the console logger, default: Debug level',
+                        action='store',
+                        choices=['info', 'debug', 'warning', 'error', 'critical'],
+                        default='info',
+                        required=False)
+    parser.add_argument(
         dest='fileName',
         help='The name of the file to search for')
     args = parser.parse_args()
-
+    stdoutLevel=args.levelStdOut
+    consoleLevel=args.levelConsole
+    log = Log()
+    fileName=(os.path.basename(__file__),stdoutLevel,consoleLevel)
     try:
         if not args.fileType is None:
             fileSupport = FileSupport(args.fileName, args.fileType)
