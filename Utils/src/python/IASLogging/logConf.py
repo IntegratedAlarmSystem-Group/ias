@@ -6,7 +6,7 @@ import datetime
 
 class Log():
   @staticmethod
-  def initLogging (nameFile,stdoutLevel,consoleLevel):
+  def initLogging (nameFile,stdoutLevel='info',consoleLevel='info'):
     #take the path for logs folder inside $IAS_ROOT
     logPath=os.environ["IAS_ROOT"]
     #If the file doesn't exist it's created
