@@ -56,9 +56,14 @@ public class UdpPlugin implements Runnable {
 	private final Plugin plugin; 
 	
 	/**
+	 * The UDP port to receive messages
+	 */
+	public final int udpPort;
+	
+	/**
 	 * The UDP socket
 	 */
-	private final DatagramSocket udpSocket;
+	private DatagramSocket udpSocket;
 	
 	/**
 	 * The thread getting strings from the UDP socket
@@ -70,7 +75,7 @@ public class UdpPlugin implements Runnable {
 	 * The thread getting strings from the buffer and 
 	 * sending them to the plugin
 	 */
-	private volatile Thread stringProcessrThread;
+	private volatile Thread stringProcessorThread;
 	
 	/**
 	 * Signal the thread to terminate
@@ -124,11 +129,11 @@ public class UdpPlugin implements Runnable {
 		if (udpPort<1024) {
 			throw new IllegalArgumentException("Invalid UDP port: "+udpPort);
 		}
-		udpSocket = new DatagramSocket(udpPort);
+		this.udpPort = udpPort;
 	}
 	
 	/**
-	 * Print th eusage string
+	 * Print the usage string
 	 * 
 	 * @param options The options expected in the command line
 	 */
@@ -159,7 +164,7 @@ public class UdpPlugin implements Runnable {
 		if (!cmd.hasOption("u")) {
 			System.err.println("UDP port missing");
 			printUsage(options);
-			System.exit(-1);
+			System.exit(-2);
 		}
 		int udpPort=0;
 		try {
@@ -168,13 +173,13 @@ public class UdpPlugin implements Runnable {
 		} catch (Exception e) {
 			System.err.println("Invalid UDP port "+cmd.getOptionValue("u"));
 			printUsage(options);
-			System.exit(-1);
+			System.exit(-3);
 		}
 		
 		if (!cmd.hasOption("c")) {
 			System.err.println("Configuration file missing");
 			printUsage(options);
-			System.exit(-1);
+			System.exit(-4);
 		}
 		String fileName = cmd.getOptionValue("c");
 		logger.info("Configuration file name {}",fileName);
@@ -187,7 +192,7 @@ public class UdpPlugin implements Runnable {
 		} catch (Exception e) {
 			System.err.println("Reading configuration file "+fileName+": "+e.getMessage());
 			printUsage(options);
-			System.exit(-1);
+			System.exit(-5);
 		}
 		
 		logger.info("Kafka server {}:{}", pluginConfig.getSinkServer(),pluginConfig.getSinkPort());
@@ -205,7 +210,7 @@ public class UdpPlugin implements Runnable {
 			udpPlugin = new UdpPlugin(pluginConfig, mpSender, hbProducer, udpPort);
 		} catch (Exception e) {
 			UdpPlugin.logger.error("The UdpPlugin failed to build",e);
-			System.exit(-2);
+			System.exit(-6);
 		}
 		
 		CountDownLatch latch = null;
@@ -213,13 +218,14 @@ public class UdpPlugin implements Runnable {
 			latch = udpPlugin.setUp();
 		} catch(PluginException pe) {
 			UdpPlugin.logger.error("The UdpPlugin failed to start",pe);
-			System.exit(-3);
+			System.exit(-7);
 		}
 		try {
 			latch.await();
 		} catch (InterruptedException ie) {
 			UdpPlugin.logger.error("UdpPlugin interrupted",ie);
 		}
+		UdpPlugin.logger.info("Done.");
 		
 	}
 
@@ -237,6 +243,7 @@ public class UdpPlugin implements Runnable {
 				if (!terminateThread.get()) {
 					logger.error("Error receiving data from UDP socket.",e);
 				}
+				logger.debug("Interrupted");
 				continue;
 			}
 			String receivedString = new String(packet.getData());
@@ -363,6 +370,12 @@ public class UdpPlugin implements Runnable {
 	 * @throws PluginException in case of error running the plugin  
 	 */
 	public CountDownLatch setUp() throws PluginException {
+		logger.debug("Instantiating the UDP socket with port {}",udpPort);
+		try {
+			udpSocket = new DatagramSocket(udpPort);
+		} catch (SocketException se) {
+			throw new PluginException("Error building the UDP socket",se);
+		}
 		logger.debug("Starting the plugin");
 		try {
 			plugin.start();
@@ -370,7 +383,7 @@ public class UdpPlugin implements Runnable {
 			throw new PluginException("Error starting the plugin",pe);
 		}
 		logger.debug("Starting the string processor loop");
-		stringProcessrThread = Plugin.getThreadFactory().newThread(new Runnable() {
+		stringProcessorThread = Plugin.getThreadFactory().newThread(new Runnable() {
 			public void run() {
 				logger.debug("String processor thread started");
 				while (!terminateThread.get()) {
@@ -391,9 +404,10 @@ public class UdpPlugin implements Runnable {
 						logger.warn("Error processing [{}]: ignored",strToInject,e);
 					}
 				}
+				logger.debug("String processor thread exited");
 			}
 		});
-		stringProcessrThread.start();
+		stringProcessorThread.start();
 		
 		logger.debug("Starting the UDP loop");
 		udpRecvThread = Plugin.getThreadFactory().newThread(this);
@@ -413,25 +427,32 @@ public class UdpPlugin implements Runnable {
 	 * Shuts down the the thread and closes the plugin
 	 */
 	public void shutdown() {
+		boolean alreadyShutDown=terminateThread.getAndSet(true);
+		if (alreadyShutDown) {
+			logger.warn("Already shut down!");
+			return;
+		}
+		logger.debug("Closing the UDP socket");
+		udpSocket.close();
 		logger.debug("Shutting down the UDP loop");
-		terminateThread.set(true);
 		if (udpRecvThread!=null) {
 			udpRecvThread.interrupt();
+			logger.debug("UDP loop interrupted");
 		}
-		if (stringProcessrThread!=null) {
-			stringProcessrThread.interrupt();
+		if (stringProcessorThread!=null) {
+			stringProcessorThread.interrupt();
+			logger.debug("String processor thread interrupted");
 		}
 		boolean terminatedInTime;
 		try {
+			logger.debug("Waiting for the UDP loop thread to terminate");
 			terminatedInTime = done.await(2, TimeUnit.SECONDS);
 			if (!terminatedInTime) {
-				logger.warn("The UDP loop did not temrinate in time");
+				logger.warn("The UDP loop did not terminate in time");
 			}
 		} catch (InterruptedException e) {
 			logger.warn("Interrupetd while waiting for thread termination",e);
 		}
-		logger.debug("Closing the UDP socket");
-		udpSocket.close();
 		logger.debug("Shutting down the plugin");
 		plugin.shutdown();
 		logger.info("Cleaned up.");
