@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -139,7 +138,7 @@ public class UdpPluginTest implements PublisherEventsListener {
 		udpPluginLatch.await(30, TimeUnit.SECONDS);
 		logger.debug("test terminated");
 		
-		// CHeck if the python process terminated without errors
+		// Check if the python process terminated without errors
 		assertFalse(proc.isAlive(),"Python plugin still running");
 		assertEquals(0,proc.exitValue(),"Python plugin terminated with error "+proc.exitValue());
 		
