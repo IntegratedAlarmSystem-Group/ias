@@ -155,7 +155,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,props) {
         if (iasio.value.get==actualOutput.value.get) {
           actualOutput
         } else {
-          actualOutput.updateValue(Some(iasio.value.get))
+          actualOutput.updateValue(Some(iasio.value.get)).updateProps(iasio.props.get)
         }
       }
 	  }
