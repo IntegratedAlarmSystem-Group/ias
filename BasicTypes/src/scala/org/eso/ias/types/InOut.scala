@@ -230,8 +230,11 @@ case class InOut[A](
   def setValidityConstraint(constraint: Option[Set[String]]):InOut[A] = {
     require(Option(constraint).isDefined,"Invalid validity constraint")
     require(isOutput(),"Validity constraint can be set only for output IASIO")
-    require(constraint.forall(!_.isEmpty),"Invalid empty set of validity constraint")
-    this.copy(validityConstraint=constraint)
+    
+    // Replaces an empty Set with none
+    val reviewedConstraints = constraint.flatMap( c => if (c.isEmpty) None else Some(c))
+    
+    this.copy(validityConstraint=reviewedConstraints)
   }
   
   /**
