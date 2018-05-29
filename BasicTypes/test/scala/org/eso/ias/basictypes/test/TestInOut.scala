@@ -46,6 +46,7 @@ class TestInOut extends FlatSpec {
         OperationalMode.OPERATIONAL, 
         Some(RELIABLE),
         None,
+        None,
         IASTypes.LONG,
         None,
         None,
