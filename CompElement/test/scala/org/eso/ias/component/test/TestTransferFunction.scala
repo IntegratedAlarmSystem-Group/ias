@@ -23,8 +23,12 @@ import org.eso.ias.types.IasValidity._
 import org.eso.ias.types.IASValue
 import org.eso.ias.types.JavaConverter
 import org.eso.ias.types.IasValidity
+import org.eso.ias.component.test.transfer.ConstraintValidityTF
 
 class TestTransferFunction extends FlatSpec {
+  
+  /** The logger */
+  private val logger = IASLogger.getLogger(this.getClass)
   
   def convert(iasios: Set[InOut[_]]): Set[IASValue[_]] = {
     iasios.map( io => io.toIASValue())
@@ -99,7 +103,7 @@ class TestTransferFunction extends FlatSpec {
        scalaTFSetting,
        new Properties()) with ScalaTransfer[Alarm]
     
-     // Instantiate one ASCE with a scala TF implementation
+     // Instantiate an ASCE with a scala TF implementation
     val brokenScalaTFSetting =new TransferFunctionSetting(
         "org.eso.ias.component.test.transfer.ThrowExceptionTF",
         TransferFunctionLanguage.scala,
@@ -111,10 +115,21 @@ class TestTransferFunction extends FlatSpec {
        inputsMPs.values.toSet,
        brokenScalaTFSetting,
        new Properties()) with ScalaTransfer[Alarm]
+    
+    // Instantiate an ASCE to test the setting of thevalidity with constraints
+    val validityConstraintTFSetting = new TransferFunctionSetting(
+        "org.eso.ias.component.test.transfer.ConstraintValidityTF",
+        TransferFunctionLanguage.scala,
+        None,
+        threadFactory)
+    val constraintValidityId = new Identifier(ConstraintValidityTF.constraintSetterID,IdentifierType.IASIO,Option(compID))
+    val constraintValidityScalaComponent: ComputingElement[Alarm] = new ComputingElement[Alarm](
+       compID,
+       output,
+       inputsMPs.values.toSet+InOut.asInput(constraintValidityId,IASTypes.STRING),
+       validityConstraintTFSetting,
+       new Properties()) with ScalaTransfer[Alarm]
   }
-  
-  /** The logger */
-  private val logger = IASLogger.getLogger(this.getClass)
   
   behavior of "The Component transfer function"
   
@@ -207,6 +222,92 @@ class TestTransferFunction extends FlatSpec {
     assert(brokenTFScalaComp.getState()==AsceStates.TFBroken)
     
     brokenTFScalaComp.shutdown()
+  }
+  
+  it must "set the validity constraints" in new CompBuilder {
+    constraintValidityScalaComponent.initialize()
+    
+    logger.info("Inputs of ASCE {}",constraintValidityScalaComponent.inputs.values.map(_.id.id).mkString(","))
+
+    val selectorInput = constraintValidityScalaComponent.inputs(ConstraintValidityTF.constraintSetterID)
+    assert(selectorInput.id.id==ConstraintValidityTF.constraintSetterID)
+    
+    // Empty String
+    val empty=selectorInput.updateValue(Some(""))
+    // Send the inputs and get the result
+    val result = constraintValidityScalaComponent.update(convert(inputsMPs.values.toSet+empty))
+    assert(result._1.isDefined)
+    assert(!result._1.get.validityConstraint.isDefined)
+    assert(result._2==AsceStates.Healthy)
+    
+    // Valid constraint with one ID
+    val oneId = selectorInput.updateValue(Some("ID2"))
+    // Send the inputs and get the result
+    val resultOneId = constraintValidityScalaComponent.update(convert(inputsMPs.values.toSet+oneId))
+    assert(resultOneId._1.isDefined)
+    assert(resultOneId._1.get.validityConstraint.isDefined)
+    assert(resultOneId._1.get.validityConstraint.get.size==1)
+    assert(resultOneId._2==AsceStates.Healthy)
+    
+    // Valid constraint with more IDs
+    val moreIds = selectorInput.updateValue(Some("ID1,ID3,ID4"))
+    // Send the inputs and get the result
+    val resultMoreIds = constraintValidityScalaComponent.update(convert(inputsMPs.values.toSet+moreIds))
+    assert(resultMoreIds._1.isDefined)
+    assert(resultMoreIds._1.get.validityConstraint.isDefined)
+    assert(resultMoreIds._1.get.validityConstraint.get.size==3)
+    assert(resultMoreIds._2==AsceStates.Healthy)
+    
+    constraintValidityScalaComponent.shutdown()
+  }
+  
+  it must "set stop running the TF with invalid constraints" in new CompBuilder {
+    constraintValidityScalaComponent.initialize()
+    
+    // Empty String
+    val invalid= constraintValidityScalaComponent.inputs(ConstraintValidityTF.constraintSetterID).updateValue(Some("NotDefinedID"))
+    // Send the inputs and get the result
+    val result = constraintValidityScalaComponent.update(convert(inputsMPs.values.toSet+invalid))
+    assert(result._2==AsceStates.TFBroken)
+    
+    constraintValidityScalaComponent.shutdown()
+    
+  }
+  
+  it must "set the validity according to the constraints" in new CompBuilder {
+    constraintValidityScalaComponent.initialize()
+    
+    val selectorInput = constraintValidityScalaComponent.inputs(ConstraintValidityTF.constraintSetterID)
+    assert(selectorInput.id.id==ConstraintValidityTF.constraintSetterID)
+    
+    // Consider only the validity of the LONG (odd ID)
+    val moreIds = selectorInput.updateValue(Some("ID1,ID3,ID5"))
+    // Send the inputs and get the result
+    val resultMoreIds = constraintValidityScalaComponent.update(convert(inputsMPs.values.toSet+moreIds))
+    logger.info("The TF returned with {} validity from inputs",resultMoreIds._1.get.fromInputsValidity)
+    assert(resultMoreIds._1.isDefined)
+    assert(resultMoreIds._1.get.validityConstraint.isDefined)
+    assert(resultMoreIds._1.get.validityConstraint.get.size==3)
+    assert(resultMoreIds._2==AsceStates.Healthy)
+    assert(resultMoreIds._1.get.fromInputsValidity.isDefined)
+    assert(resultMoreIds._1.get.fromInputsValidity.get.iasValidity==UNRELIABLE)
+    
+    // Change the validity of the three inputs of the constraints
+    // that must change the validity of the output
+    val id1 = constraintValidityScalaComponent.inputs("ID1").updateValueValidity(Some(1L), Some(Validity(IasValidity.RELIABLE)))
+    val id3 = constraintValidityScalaComponent.inputs("ID3").updateValueValidity(Some(3L), Some(Validity(IasValidity.RELIABLE)))
+    val id5 = constraintValidityScalaComponent.inputs("ID5").updateValueValidity(Some(5L), Some(Validity(IasValidity.RELIABLE)))
+    
+    val resultWintConstraints = constraintValidityScalaComponent.update(convert(Set(id1,id3,id5,moreIds)))
+    logger.info("The TF returned with {} validity from inputs",resultWintConstraints._1.get.fromInputsValidity)
+    assert(resultWintConstraints._1.isDefined)
+    assert(resultWintConstraints._1.get.validityConstraint.isDefined)
+    assert(resultWintConstraints._1.get.validityConstraint.get.size==3)
+    assert(resultWintConstraints._2==AsceStates.Healthy)
+    assert(resultWintConstraints._1.get.fromInputsValidity.isDefined)
+    assert(resultWintConstraints._1.get.fromInputsValidity.get.iasValidity==RELIABLE)
+    
+    constraintValidityScalaComponent.shutdown()
   }
   
 }

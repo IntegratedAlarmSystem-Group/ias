@@ -28,6 +28,7 @@ import org.eso.ias.asce.transfer.ScalaTransfer
 import org.eso.ias.types.JavaConverter
 import org.eso.ias.types.OperationalMode
 import org.eso.ias.types.IasValidity
+import org.eso.ias.asce.exceptions.ValidityConstraintsMismatchException
 
 /**
  * The Integrated Alarm System Computing Element (ASCE) 
@@ -312,6 +313,42 @@ abstract class ComputingElement[T](
   def getState(): AsceStates.State = state.actualState
   
   /**
+   * Get the min validity of the passed InOut,
+   * taking into account the constraints that it can have in
+   * InOut.validityConstraint.
+   * 
+   * The method fails if at least on ID of the constraints does not
+   * match with any of the inputs.
+   * The constraints are set by the TF provided by the user and whose implementation 
+   * is not known so it can potentially contain errors like a typo in one of the IDs
+   * of constraints.
+   * 
+   * @param iasio the IASIO to calculate the validity of the input
+   * @param inputs the inputs of the ASCE 
+   * @return the validity from the inputs of the IASIO  
+   */
+  def getMinValidityOfInputs(iasio: InOut[T], inputs: Set[IASValue[_]]): Try[Validity] = {
+    require(Option(iasio).isDefined)
+    require(Option(inputs).isDefined)
+    
+    // If there are constraints, discard the inputs whose ID 
+    // is not contained in the constraints
+    val selectedInputsByConstraint = 
+      iasio.validityConstraint.map( set => inputs.filter(input => set.contains(input.id)))
+      .getOrElse(inputs)
+      
+    if (iasio.validityConstraint.isDefined && selectedInputsByConstraint.size!=iasio.validityConstraint.get.size) {
+      // There are constraints but the at least one ID of the contraints does not belong 
+      // to any of the IDs of the IASVAlue in input
+      Failure(new ValidityConstraintsMismatchException(
+          iasio.validityConstraint.get,
+          inputs.map(input => input.id)))
+    } else {   
+      Success(Validity.minValidity(selectedInputsByConstraint.map (_.iasValidity)))
+    }
+  }
+  
+  /**
    * The DASU sent a new set of inputs: they replace the old inputs and
    * trigger the execution of the TF to create a new output.
    * If some of the inputs of the ASCE is not yet initialized, it has a null/empty
@@ -353,8 +390,14 @@ abstract class ComputingElement[T](
       //
       // Note that this validity does not take into account the current
       // timestamp against the timestamp of the IASValues in inputs
-      val minValidityOfInputs = Validity.minValidity(iasValues.map (_.iasValidity))
-      _output=newOut.updateFromIinputsValidity(minValidityOfInputs).updateDasuProdTStamp(System.currentTimeMillis())
+      val minValidityOfInputs = getMinValidityOfInputs(newOut, iasValues)
+      minValidityOfInputs match {
+        case Failure(cause) =>
+          logger.error("TF of [{}] inhibited for the time being",asceIdentifier,cause)
+          state=ComputingElementState.transition(state, new Broken())
+        case Success(validitity) => 
+          _output=newOut.updateFromIinputsValidity(validitity).updateDasuProdTStamp(System.currentTimeMillis())    
+      }
       ( Some(output),state.actualState)
     } else {
       ( None,state.actualState)
