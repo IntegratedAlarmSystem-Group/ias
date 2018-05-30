@@ -267,9 +267,11 @@ class DasuImpl (
           // Get the ASCE with the given ID 
           val asceOpt = asces.get(asceId)
           assert(asceOpt.isDefined,"ASCE "+asceId+" NOT found!")
-          val asce: ComputingElement[_] = asceOpt.get
-          val asceResult: Option[InOut[_]] = asce.update(inputs)._1
-          asceResult.map( _.toIASValue() )
+          
+          asceOpt.flatMap(asce => {
+            asce.update(inputs)._1.map(_.toIASValue())
+          })
+          
         } else {
           None
         }
@@ -282,11 +284,7 @@ class DasuImpl (
         
         asces.foldLeft(levelInputs) ( 
           (s: Set[IASValue[_]], id: String ) => {
-            val output = updateOneAsce(id, levelInputs)
-            output match {
-              case Some(v) => s+v
-              case None => s
-            }
+            updateOneAsce(id, levelInputs).map( v => s+v).getOrElse(s)
             })
       }
       
@@ -375,12 +373,18 @@ class DasuImpl (
     val inputsFromMap = JavaConverters.collectionAsScalaIterable(notYetProcessedInputs.values).toSet
     
     lastCalculatedOutput.set(propagateIasios(inputsFromMap))
+    
     val after = System.currentTimeMillis()
     lastUpdateTime.set(after)
     notYetProcessedInputs.clear()
     
     // Publish the value only if the output has been produced
     lastCalculatedOutput.get.foreach( output => {
+      
+      logger.debug("DASU [{}] calculated output [{}] with validity {}",
+        id,
+        output.id,
+        output.iasValidity)
       
       // The validity of the output
       val outputValidity = calcOutputValidity()
@@ -439,9 +443,9 @@ class DasuImpl (
         val iasioTstamp = iasio.dasuProductionTStamp.getOrElse(iasio.pluginProductionTStamp.get)
           
         if (iasioTstamp<thresholdTStamp) {
-            IasValidity.UNRELIABLE
+            Validity(IasValidity.UNRELIABLE)
         } else {
-            IasValidity.RELIABLE
+            Validity(IasValidity.RELIABLE)
         }
         
       })
@@ -450,9 +454,9 @@ class DasuImpl (
     
     def getInputsValidityByIASValueValidity(inputs: Set[InOut[_]]): Validity = {
       
-      val fromIASValueValiditiesSet: Set[IasValidity] = 
-        inputs.foldLeft(Set.empty[IasValidity])((set,input) => 
-          if (input.fromIasValueValidity.isDefined) set+input.fromIasValueValidity.get.iasValidity
+      val fromIASValueValiditiesSet: Set[Validity] = 
+        inputs.foldLeft(Set.empty[Validity])((set,input) => 
+          if (input.fromIasValueValidity.isDefined) set+input.fromIasValueValidity.get
           else set
       )
       Validity.minValidity(fromIASValueValiditiesSet)
