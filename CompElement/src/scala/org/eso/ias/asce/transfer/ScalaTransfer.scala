@@ -19,7 +19,7 @@ trait ScalaTransfer[T] extends ComputingElement[T] {
   /**
    * The programming language of this TF 
    */
-  val tfLanguage = TransferFunctionLanguage.java
+  val tfLanguage = TransferFunctionLanguage.scala
   
   def transfer(
       inputs: Map[String, InOut[_]], 
