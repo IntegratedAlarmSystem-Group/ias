@@ -52,6 +52,9 @@ class TestComponent extends FlatSpec {
   val mp2 = InOut.asInput(mpI2Identifier, IASTypes.ALARM)
   val actualInputs: Set[InOut[_]] = Set(mp1,mp2)
   
+  // The threshold to assess the validity from the arrival time of the input
+  val validityThresholdInSecs = 2
+  
   behavior of "A Component"
   
   it must "catch an error instantiating a wrong TF class" in {
@@ -69,6 +72,7 @@ class TestComponent extends FlatSpec {
        output,
        actualInputs,
        tfSetting,
+       validityThresholdInSecs,
        new Properties()) with JavaTransfer[Alarm]
     
     assert(comp.asceIdentifier==compId)
@@ -97,6 +101,7 @@ class TestComponent extends FlatSpec {
        output,
        actualInputs,
        tfSetting,
+       validityThresholdInSecs,
        new Properties()) with JavaTransfer[Alarm]
     
     assert(comp.asceIdentifier==compId)
