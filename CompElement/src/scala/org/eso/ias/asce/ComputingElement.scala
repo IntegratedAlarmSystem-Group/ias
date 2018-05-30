@@ -180,10 +180,19 @@ abstract class ComputingElement[T](
    */
   lazy val isOutputAnAlarm = !isOutputASyntheticParam
   
-  /** Getter for the private _output */
-  def output: InOut[T] = _output
-  
   logger.info("ASCE [{}] built",id)
+  
+  /** 
+   * Getter for the private _output
+   * 
+   * This method return the last calculated output.
+   * 
+   * Use getOutputWithUpdatedValidity() if you want the updated with an
+   * updated validity.
+   * 
+   * @return the last calculated output  
+   */
+  def output: InOut[T] = synchronized { _output }
   
   /**
    * Update the output by running the user provided script/class against the inputs.
@@ -299,7 +308,7 @@ abstract class ComputingElement[T](
    * One of the tasks of this method is to stop the timer thread
    * to update the output i.e. to execute the transfer function.
    */
-  def shutdown(): Unit = {
+  def shutdown(): Unit = synchronized {
     state = ComputingElementState.transition(state, new Shutdown())
     tfSetting.shutdown()
     state = ComputingElementState.transition(state, new Close())
@@ -310,7 +319,7 @@ abstract class ComputingElement[T](
    * 
    * @return The state of the ASCE
    */
-  def getState(): AsceStates.State = state.actualState
+  def getState(): AsceStates.State = synchronized {state.actualState }
   
   /**
    * Get the min validity of the passed InOut,
@@ -327,25 +336,49 @@ abstract class ComputingElement[T](
    * @param inputs the inputs of the ASCE 
    * @return the validity from the inputs of the IASIO  
    */
-  def getMinValidityOfInputs(iasio: InOut[T], inputs: Set[IASValue[_]]): Try[Validity] = {
+  private def getMinValidityOfInputs(iasio: InOut[T], inputs: Iterable[InOut[_]]): Try[Validity] = {
     require(Option(iasio).isDefined)
     require(Option(inputs).isDefined)
+    
+    // Inputs must all have fromIasValueValidity defined
+    assert(inputs.filter(inout => !inout.fromIasValueValidity.isDefined).isEmpty)
     
     // If there are constraints, discard the inputs whose ID 
     // is not contained in the constraints
     val selectedInputsByConstraint = 
-      iasio.validityConstraint.map( set => inputs.filter(input => set.contains(input.id)))
+      iasio.validityConstraint.map( set => inputs.filter(input => set.contains(input.id.id)))
       .getOrElse(inputs)
       
     if (iasio.validityConstraint.isDefined && selectedInputsByConstraint.size!=iasio.validityConstraint.get.size) {
-      // There are constraints but the at least one ID of the contraints does not belong 
-      // to any of the IDs of the IASVAlue in input
+      // There are constraints but the at least one ID of the constraints does not belong 
+      // to any of the IDs of the IASIO in input
       Failure(new ValidityConstraintsMismatchException(
+          id,
           iasio.validityConstraint.get,
-          inputs.map(input => input.id)))
+          inputs.map(input => input.id.id)))
     } else {   
-      Success(Validity.minValidity(selectedInputsByConstraint.map (_.iasValidity)))
+      Success(Validity.minValidity(selectedInputsByConstraint.map (_.fromIasValueValidity.get).toSet))
     }
+  }
+  
+  /**
+   * Return the last calculated output after updating its validity.
+   * 
+   * The method returns a Try because the evaluation of the validity involves 
+   * parameters set in the TF that can potentially introduce errors.
+   * 
+   * Note that this validity does not take into account the current
+   * timestamp against the timestamp of the IASValues of the inputs 
+   *
+   * @return the last calculated output with updated validity 
+   */
+  def getOutputWithUpdatedValidity(): Try[InOut[T]] = synchronized {
+    // The assert ensures that all the inputs are effectively inputs
+    // The validity of the inputs is, in fact in the InOut.fromIasValueValidity
+    assert(inputs.values.filter(inout => inout.isOutput()).isEmpty)
+    
+    val minValidityOfInputs = getMinValidityOfInputs(_output, inputs.values.toSet)
+    minValidityOfInputs.map(validity => _output.updateFromIinputsValidity(validity))
   }
   
   /**
@@ -360,7 +393,7 @@ abstract class ComputingElement[T](
    *            It is None if at least one of the inputs has not yet been initialized
    *         2) the state of the ASCE
    */
-  def update(iasValues: Set[IASValue[_]]): Tuple2[Option[InOut[T]], AsceStates.State] = {
+  def update(iasValues: Set[IASValue[_]]): Tuple2[Option[InOut[T]], AsceStates.State] = synchronized {
     require(Option(iasValues).isDefined,"Set of inputs not defined")
     
     // Check if the passed set of IASIOs contains at least one IASIO that is 
@@ -390,7 +423,7 @@ abstract class ComputingElement[T](
       //
       // Note that this validity does not take into account the current
       // timestamp against the timestamp of the IASValues in inputs
-      val minValidityOfInputs = getMinValidityOfInputs(newOut, iasValues)
+      val minValidityOfInputs = getMinValidityOfInputs(newOut, inputs.values)
       minValidityOfInputs match {
         case Failure(cause) =>
           logger.error("TF of [{}] inhibited for the time being",asceIdentifier,cause)
