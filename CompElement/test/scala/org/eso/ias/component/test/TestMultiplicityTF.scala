@@ -55,6 +55,9 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
     v.toSet
   }
   
+  // The threshold to assess the validity from the arrival time of the input
+  val validityThresholdInSecs = 2
+  
   /** The ASCE running the multiplicity TF */
   var scalaComp: Option[ComputingElement[Alarm]]= None
   
@@ -70,6 +73,7 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
        output,
        inputsMPs,
        scalaMultuiplicityTF,
+       validityThresholdInSecs,
        props) with ScalaTransfer[Alarm])
     
     scalaComp.get.initialize()
@@ -105,8 +109,8 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
     require(n>0)
     val inputsMPsList = inputsMPs.toList
     val list = for (i <- 0 to inputsMPsList.size-1) yield {
-      if (i<=n-1) inputsMPsList(i).updateValue(Some(Alarm.getSetDefault)).toIASValue()
-      else inputsMPsList(i).updateValue(Some(Alarm.CLEARED)).toIASValue()
+      if (i<=n-1) inputsMPsList(i).updateValue(Some(Alarm.getSetDefault)).updateDasuProdTStamp(System.currentTimeMillis()).toIASValue()
+      else inputsMPsList(i).updateValue(Some(Alarm.CLEARED)).updateDasuProdTStamp(System.currentTimeMillis()).toIASValue()
     }
     val ret = list.toSet
     assert(ret.size==inputsMPs.size)
@@ -137,12 +141,12 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   
   it must "run the multiplicity TF" in {
     // Change all inputs do  trigger the TF
-    val changedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getSetDefault)).toIASValue())
+    val changedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getSetDefault)).updateDasuProdTStamp(System.currentTimeMillis()).toIASValue())
     scalaComp.get.update(changedMPs)
     assert(checkAlarmActivation(scalaComp.get,Alarm.SET_LOW))
     
     // Clearing all must disable
-    val clearedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.CLEARED)).toIASValue())
+    val clearedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.CLEARED)).updateDasuProdTStamp(System.currentTimeMillis()).toIASValue())
     scalaComp.get.update(clearedMPs)
     assert(checkAlarmActivation(scalaComp.get,Alarm.CLEARED))
     

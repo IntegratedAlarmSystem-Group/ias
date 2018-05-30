@@ -46,6 +46,7 @@ class TestInOut extends FlatSpec {
         OperationalMode.OPERATIONAL, 
         Some(RELIABLE),
         None,
+        None,
         IASTypes.LONG,
         None,
         None,
@@ -233,6 +234,26 @@ class TestInOut extends FlatSpec {
         assert(properties(key)==value)
     })
     
+  }
+  
+  it must "not update the validity constraint for inputs" in {
+    val iasio = InOut.asInput(id, IASTypes.ALARM)
+    assertThrows[IllegalArgumentException] {
+      iasio.setValidityConstraint(Some(Set("ID")))
+    }
+  }
+  
+  it must "update the validity constraint for outputs" in {
+    val iasio = InOut.asOutput(id, IASTypes.ALARM)
+    val constraints = Some(Set("ID", "ID2"))
+    val i2=iasio.setValidityConstraint(constraints)
+    assert(i2.validityConstraint.isDefined)
+    assert(i2.validityConstraint==constraints)
+    
+    val i3 = i2.setValidityConstraint(None)
+    assert(!i3.validityConstraint.isDefined)
+    val i4 = i3.setValidityConstraint(Option(Set.empty))
+    assert(!i4.validityConstraint.isDefined)
   }
 
 }

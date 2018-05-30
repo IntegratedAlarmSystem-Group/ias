@@ -57,6 +57,7 @@ class TestJavaConversion  extends FlatSpec {
         mode,
         validity,
         None,
+        None,
         IASTypes.LONG,
         None,None,None,None,None,None,None,None,None) 
       val intHIO = new InOut[Int]( // Input
@@ -64,6 +65,7 @@ class TestJavaConversion  extends FlatSpec {
         doubleHioId, 
         mode,
         validity,
+        None,
         None,
         IASTypes.INT,
         None,None,None,None,None,None,None,None,None) 
@@ -73,6 +75,7 @@ class TestJavaConversion  extends FlatSpec {
         mode,
         validity,
         None,
+        None,
         IASTypes.SHORT,
         None,None,None,None,None,None,None,None,None) 
       val byteHIO = new InOut[Byte]( // Input
@@ -80,6 +83,7 @@ class TestJavaConversion  extends FlatSpec {
         doubleHioId, 
         mode,
         validity,
+        None,
         None,
         IASTypes.BYTE,
         None,None,None,None,None,None,None,None,None)
@@ -89,6 +93,7 @@ class TestJavaConversion  extends FlatSpec {
         mode,
         validity,
         None,
+        None,
         IASTypes.CHAR,
         None,None,None,None,None,None,None,None,None) 
       val stringHIO = new InOut[String]( // Input
@@ -96,6 +101,7 @@ class TestJavaConversion  extends FlatSpec {
         doubleHioId, 
         mode,
         validity,
+        None,
         None,
         IASTypes.STRING,
         None,None,None,None,None,None,None,None,None)
@@ -105,6 +111,7 @@ class TestJavaConversion  extends FlatSpec {
         mode,
         validity,
         None,
+        None,
         IASTypes.BOOLEAN,
         None,None,None,None,None,None,None,None,None)
       val alarmHIO = new InOut[Alarm]( // Output
@@ -113,6 +120,7 @@ class TestJavaConversion  extends FlatSpec {
         mode,
         None,
         validity,
+        None,
         IASTypes.ALARM,
         None,None,None,None,None,None,None,None,None)
       val doubleHIO = new InOut[Double]( // Input
@@ -121,6 +129,7 @@ class TestJavaConversion  extends FlatSpec {
         doubleMode,
         validity,
         None,
+        None,
         IASTypes.DOUBLE,
         None,None,None,None,None,None,None,None,None)
       val floatHIO = new InOut[Float]( // Input
@@ -128,6 +137,7 @@ class TestJavaConversion  extends FlatSpec {
         doubleHioId, 
         mode,
         validity,
+        None,
         None,
         IASTypes.FLOAT,
         Some(1L),Some(2L),Some(3L),Some(4L),Some(5L),Some(6L),None,None,None)
@@ -241,6 +251,7 @@ class TestJavaConversion  extends FlatSpec {
         f.mode,
         None,
         f.validity,
+        None,
         IASTypes.ALARM,
         None,None,None,None,None,None,None,Some(Set(depId1,depId2)),None)
     
@@ -259,6 +270,7 @@ class TestJavaConversion  extends FlatSpec {
         f.mode,
         None,
         f.validity,
+        None,
         IASTypes.ALARM,
         None,None,None,None,None,None,None,None,None).update(alarmVal)
         
@@ -291,6 +303,7 @@ class TestJavaConversion  extends FlatSpec {
         f.mode,
         None,
         f.validity,
+        None,
         IASTypes.ALARM,
         None,None,None,None,None,None,None,None,Some(properties))
     
@@ -311,6 +324,7 @@ class TestJavaConversion  extends FlatSpec {
         f.mode,
         None,
         f.validity,
+        None,
         IASTypes.ALARM,
         None,None,None,None,None,None,None,None,None).update(alarmVal)
     

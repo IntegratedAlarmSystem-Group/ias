@@ -23,16 +23,30 @@ class TestValidity extends FlatSpec {
     }
   }
   
-  "Validity.minValidity(Set)" must "always return the min validity" in {
+  "Validity.minIasValidity(Set)" must "always return the min validity" in {
     // Build few "interesting" lists to submit to Validity.min
     val l1= Set(RELIABLE)
-    assert(Validity.minValidity(l1)==Validity(RELIABLE))
+    assert(Validity.minIasValidity(l1)==RELIABLE)
     
     val l2= Set(UNRELIABLE)
-    assert(Validity.minValidity(l2)==Validity(UNRELIABLE))
+    assert(Validity.minIasValidity(l2)==UNRELIABLE)
     
     val l3= Set(RELIABLE,UNRELIABLE)
-    assert(Validity.minValidity(l3)==Validity(UNRELIABLE))
+    assert(Validity.minIasValidity(l3)==UNRELIABLE)
+  }
+  
+  "Validity.minIasValidity(Set)" must "match with Validity.minValidity(Set)" in {
+    val iasV1= Set(RELIABLE)
+    val v1 = Set(Validity(RELIABLE))
+    assert(Validity.minIasValidity(iasV1)==Validity.minValidity(v1).iasValidity)
+    
+    val iasV2 = Set(UNRELIABLE)
+    val v2 = Set(Validity(UNRELIABLE))
+    assert(Validity.minIasValidity(iasV2)==Validity.minValidity(v2).iasValidity)
+    
+    val iasV3 = Set(RELIABLE,UNRELIABLE)
+    val v3 = Set(Validity(RELIABLE),Validity(UNRELIABLE))
+    assert(Validity.minIasValidity(iasV3)==Validity.minValidity(v3).iasValidity) 
   }
   
 }
