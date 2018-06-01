@@ -178,7 +178,7 @@ case class InOut[A](
    * @param newValue: The new value of the IASIO
    * @return A new InOut with updated value
    */
-  def updateValue[B >: A](newValue: Some[B]): InOut[A] = {
+  def updateValue(newValue: Some[_ >: A]): InOut[A] = {
     assert(InOut.checkType(newValue.get,iasType))
     
     this.copy(value=newValue)
@@ -194,7 +194,7 @@ case class InOut[A](
    * @param newValidity the new validity (either fromIasValueValidity or fromInputsValidity)
    * @return A new InOut with updated value and validity
    */
-  def updateValueValidity[B >: A](newValue: Some[B], newValidity: Some[Validity]): InOut[A] = {
+  def updateValueValidity(newValue: Some[_ >: A], newValidity: Some[Validity]): InOut[A] = {
     assert(InOut.checkType(newValue.get,iasType))
     if (isOutput()) {
       this.copy(value=newValue,fromInputsValidity=newValidity)
