@@ -168,6 +168,7 @@ case class InOut[A](
    * @param newMode: The new mode of the monitor point
    */
   def updateMode(newMode: OperationalMode): InOut[A] = {
+    require(Option(newMode).isDefined)
     this.copy(mode=newMode)
   }
   
