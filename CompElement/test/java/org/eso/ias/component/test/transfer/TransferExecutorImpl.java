@@ -39,7 +39,7 @@ public class TransferExecutorImpl  extends JavaTransferExecutor {
 		for (IASValue<?> input: compInputs.values()) {
 			System.out.println(input);
 		}
-		IASValue<?> newValue = ((IASValue<?>)actualOutput).updateMode(OperationalMode.SHUTTEDDOWN);
+		IASValue<Alarm> newValue = ((IASValue<Alarm>)actualOutput).updateMode(OperationalMode.SHUTTEDDOWN);
 		newValue=newValue.updateValue(Alarm.getSetDefault()); 
 		System.out.println("Returning: "+newValue);
 		return newValue;

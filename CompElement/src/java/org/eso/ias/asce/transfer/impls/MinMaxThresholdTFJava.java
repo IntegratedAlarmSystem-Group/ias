@@ -208,6 +208,6 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 			newOutput=Alarm.cleared();
 		}
 		additionalProperties.put("actualValue", Double.valueOf(hioValue).toString());
-		return actualOutput.updateValue(newOutput).updateMode(iasio.mode).updateProperties(additionalProperties);
+		return ((IASValue<Alarm>)actualOutput).updateValue(newOutput).updateMode(iasio.mode).updateProperties(additionalProperties);
 	}
 }
