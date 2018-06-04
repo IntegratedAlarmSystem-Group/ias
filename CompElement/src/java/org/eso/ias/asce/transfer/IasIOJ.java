@@ -37,8 +37,11 @@ public class IasIOJ<T> {
 	
 	/**
 	 * The InOut to delegate
+	 * 
+	 * The visibility is limited to the package to avoi user implementation of the TF
+	 * access internals of the IAS
 	 */
-	private final InOut<T> inOut;
+	final InOut<T> inOut;
 
 	/**
 	 * Constructor
@@ -82,7 +85,7 @@ public class IasIOJ<T> {
 	   * 
 	   * To remove the constraints, the passed set must be empty
 	   * 
-	   * @param constraint the constraints
+	   * @param the constraint the constraints (can be null)
 	   */
 	  public IasIOJ<T> setValidityConstraint(Set<String> constraint) {
 		  Option<scala.collection.immutable.Set<String>> scalaSet = Option.apply(null); // None
@@ -129,6 +132,14 @@ public class IasIOJ<T> {
     }
     
     /**
+     * 
+     * @return the full running identifier of the monitor point
+     */
+    public String getFullrunningId() {
+    	return inOut.id().fullRunningID();
+    }
+    
+    /**
      * Note that a monitor point can be produced by a DASU or by a plugin
      * so only one between the plugin production timestamp and the
      * DASU production timestamp is defined.
@@ -151,7 +162,7 @@ public class IasIOJ<T> {
     }
     
     /**
-     * The proeprties of the monitor point 
+     * The properties of the monitor point 
      * 
      * @return the (unmodifiable) properties 
      */
@@ -164,6 +175,27 @@ public class IasIOJ<T> {
     		javaProps =  JavaConverters.mapAsJavaMap(inOut.props().get());
     	}
     	return Collections.unmodifiableMap(javaProps);
+    }
+    
+    /**
+     * 
+     * @return the actual value of the monitor point (can be <code>null</code>)
+     */
+    public Optional<T> getValue() {
+    	if (inOut.value().isDefined()) {
+    		T obj = (T)inOut.value().get();
+    		return Optional.of(obj);
+    	} else {
+    		return Optional.empty();
+    	}
+    }
+    
+    /**
+     * 
+     * @return the operational mode
+     */
+    public OperationalMode getMode() {
+    	return inOut.mode();
     }
 
 }

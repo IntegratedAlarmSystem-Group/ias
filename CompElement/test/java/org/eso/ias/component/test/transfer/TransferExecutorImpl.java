@@ -3,7 +3,7 @@ package org.eso.ias.component.test.transfer;
 import java.util.Map;
 import java.util.Properties;
 
-import org.eso.ias.types.IASValue;
+import org.eso.ias.asce.transfer.IasIOJ;
 import org.eso.ias.asce.transfer.JavaTransferExecutor;
 import org.eso.ias.types.Alarm;
 import org.eso.ias.types.OperationalMode;
@@ -15,7 +15,7 @@ import org.eso.ias.types.OperationalMode;
  * @author acaproni
  *
  */
-public class TransferExecutorImpl  extends JavaTransferExecutor {
+public class TransferExecutorImpl  extends JavaTransferExecutor<Alarm> {
 	
 	public TransferExecutorImpl(String cEleId, 
 			String cEleRunningId,
@@ -33,13 +33,14 @@ public class TransferExecutorImpl  extends JavaTransferExecutor {
 		System.out.println("java TransferExecutorImpl: shutting down");
 	}
 	
-	public IASValue<?> eval(Map<String, IASValue<?>> compInputs, IASValue<?>actualOutput) throws Exception{
+	@Override
+	public IasIOJ<Alarm> eval(Map<String, IasIOJ<?>> compInputs, IasIOJ<Alarm>actualOutput) throws Exception{
 		System.out.println("java TransferExecutorImpl: evaluating "+compInputs.size()+" inputs");
 		System.out.println("java TransferExecutorImpl for comp. with ID="+compElementId+" and output "+actualOutput.toString());
-		for (IASValue<?> input: compInputs.values()) {
+		for (IasIOJ<?> input: compInputs.values()) {
 			System.out.println(input);
 		}
-		IASValue<Alarm> newValue = ((IASValue<Alarm>)actualOutput).updateMode(OperationalMode.SHUTTEDDOWN);
+		IasIOJ<Alarm> newValue = actualOutput.updateMode(OperationalMode.SHUTTEDDOWN);
 		newValue=newValue.updateValue(Alarm.getSetDefault()); 
 		System.out.println("Returning: "+newValue);
 		return newValue;
