@@ -54,6 +54,6 @@ extends TransferExecutor(cEleId,cEleRunningId,props) {
 	 * @param actualOutput: the actual output of the ASCE
 	 * @return the computed value to set as output of the ASCE
 	 */
-	def eval(compInputs: Map[String, InOut[_]], actualOutput: InOut[T]): InOut[T]
+	def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[T]): IasIO[T]
   
 }

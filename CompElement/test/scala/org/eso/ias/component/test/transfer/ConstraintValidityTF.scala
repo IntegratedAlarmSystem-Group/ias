@@ -7,6 +7,7 @@ import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.InOut
 import org.eso.ias.types.OperationalMode
 import org.eso.ias.types.IASTypes
+import org.eso.ias.asce.transfer.IasIO
 
 /**
  * The TF to check the functioning of the setting of the validity
@@ -42,14 +43,13 @@ class ConstraintValidityTF (
     logger.info("Shutting down")
   }
   
-  override def eval(compInputs: Map[String, InOut[_]], actualOutput: InOut[Alarm]): InOut[Alarm] = {
+  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
     logger.info("Evaluating {} inputs for comp. with ID [] and output []",
         compInputs.size.toString(),
         compElementId,
-        actualOutput.id.id)
-    for (hio <- compInputs.values) logger.info("Input {} with ias validity {} and value {}",
-        hio.id.id,
-        hio.fromIasValueValidity.toString,
+        actualOutput.id)
+    for (hio <- compInputs.values) logger.info("Input {} with value {}",
+        hio.id,
         hio.value.toString)
     
     require(compInputs.keySet.contains(ConstraintValidityTF.constraintSetterID))
@@ -67,7 +67,7 @@ class ConstraintValidityTF (
     
     
     val newAlarm = Alarm.getSetDefault
-    actualOutput.updateMode(OperationalMode.DEGRADED).updateValue(Some(newAlarm)).setValidityConstraint(validityConstraints)
+    actualOutput.updateMode(OperationalMode.DEGRADED).updateValue(newAlarm).setValidityConstraint(validityConstraints)
   }
   
 }

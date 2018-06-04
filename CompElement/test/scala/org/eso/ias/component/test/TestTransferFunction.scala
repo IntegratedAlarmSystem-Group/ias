@@ -231,6 +231,7 @@ class TestTransferFunction extends FlatSpec {
   }
   
   it must "set the validity constraints" in new CompBuilder {
+    logger.info("Checking the validity constraints")
     constraintValidityScalaComponent.initialize()
     
     logger.info("Inputs of ASCE {}",constraintValidityScalaComponent.inputs.values.map(_.id.id).mkString(","))

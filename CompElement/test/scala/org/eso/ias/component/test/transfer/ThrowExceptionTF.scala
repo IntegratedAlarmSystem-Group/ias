@@ -2,7 +2,7 @@ package org.eso.ias.component.test.transfer
 
 import org.eso.ias.asce.transfer.ScalaTransferExecutor
 import java.util.Properties
-import org.eso.ias.types.InOut
+import org.eso.ias.asce.transfer.IasIO
 
 /**
  * A transfer function that throws an exception: it allows to test if the
@@ -21,19 +21,19 @@ class ThrowExceptionTF(
    * 
    * @see TransferExecutor
    */
-  def initialize() { }
+  override def initialize() { }
   
   /**
    * Shut dwon
    * 
    * @see TransferExecutor
    */
-  def shutdown() {}
+  override def shutdown() {}
   
   /**
    * This method does nothing but throwing an exception
    */
-  def eval(compInputs: Map[String, InOut[_]], actualOutput: InOut[Nothing]): InOut[Nothing] = {
+  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Nothing]): IasIO[Nothing] = {
     println("ThrowExceptionTF: Throwing exception!")
     throw new Exception("Exception from a broken TF");
   }

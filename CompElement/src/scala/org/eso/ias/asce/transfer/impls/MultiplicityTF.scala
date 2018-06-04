@@ -3,7 +3,6 @@ package org.eso.ias.asce.transfer.impls
 import org.eso.ias.asce.transfer.ScalaTransferExecutor
 import org.eso.ias.types.IASTypes._
 import java.util.Properties
-import org.eso.ias.types.InOut
 import org.eso.ias.asce.exceptions.PropNotFoundException
 import org.eso.ias.asce.exceptions.WrongPropValue
 import scala.util.control.NonFatal
@@ -11,6 +10,7 @@ import org.eso.ias.asce.exceptions.UnexpectedNumberOfInputsException
 import org.eso.ias.asce.exceptions.TypeMismatchException
 import org.eso.ias.asce.exceptions.TypeMismatchException
 import org.eso.ias.types.Alarm
+import org.eso.ias.asce.transfer.IasIO
 
 /**
  * Implements the Multiplicity transfer function.
@@ -72,11 +72,17 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,props) {
   /**
    * @see ScalaTransferExecutor#eval
    */
-  def eval(compInputs: Map[String, InOut[_]], actualOutput: InOut[Alarm]): InOut[Alarm] = {
-    if (compInputs.size<threshold) throw new UnexpectedNumberOfInputsException(compInputs.size,threshold)
-    if (actualOutput.iasType!=ALARM) throw new TypeMismatchException(actualOutput.id.runningID,actualOutput.iasType,ALARM)
-    for (hio <- compInputs.values
-        if hio.iasType!=ALARM) throw new TypeMismatchException(actualOutput.id.runningID,hio.iasType,ALARM)
+  def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
+    if (compInputs.size<threshold) {
+      throw new UnexpectedNumberOfInputsException(compInputs.size,threshold)
+    }
+    if (actualOutput.iasType!=ALARM) {
+      throw new TypeMismatchException(actualOutput.fullRunningId,actualOutput.iasType,ALARM)
+    }
+    
+    for (hio <- compInputs.values if hio.iasType!=ALARM) {
+      throw new TypeMismatchException(actualOutput.fullRunningId,hio.iasType,ALARM)
+    }
     
     // Get the number of active alarms in input
     var activeAlarms=0
@@ -88,7 +94,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,props) {
       if (alarmValue.isSet())} activeAlarms=activeAlarms+1
     
       val newAlarm = if (activeAlarms>=threshold) alarmSet else Alarm.cleared()
-    actualOutput.updateValue(Some(newAlarm))
+    actualOutput.updateValue(newAlarm)
   }
 }
 

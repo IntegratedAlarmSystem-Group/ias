@@ -2,13 +2,13 @@ package org.eso.ias.asce.transfer.impls
 
 import org.eso.ias.asce.transfer.ScalaTransferExecutor
 import java.util.Properties
-import org.eso.ias.types.InOut
 import org.eso.ias.asce.exceptions.PropsMisconfiguredException
 import org.eso.ias.asce.exceptions.UnexpectedNumberOfInputsException
 import org.eso.ias.types.IASTypes._
 import org.eso.ias.asce.exceptions.TypeMismatchException
 import MinMaxThresholdTF._
 import org.eso.ias.types.Alarm
+import org.eso.ias.asce.transfer.IasIO
 
 /**
  * The TF implementing a Min/Max threshold TF  (there is also
@@ -125,9 +125,13 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,props) {
   /**
    * @see ScalaTransferExecutor#eval
    */
-  def eval(compInputs: Map[String, InOut[_]], actualOutput: InOut[Alarm]): InOut[Alarm] = {
-    if (compInputs.size!=1) throw new UnexpectedNumberOfInputsException(compInputs.size,1)
-    if (actualOutput.iasType!=ALARM) throw new TypeMismatchException(actualOutput.id.runningID,actualOutput.iasType,ALARM)
+  def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
+    if (compInputs.size!=1) {
+      throw new UnexpectedNumberOfInputsException(compInputs.size,1)
+    }
+    if (actualOutput.iasType!=ALARM) {
+      throw new TypeMismatchException(actualOutput.fullRunningId,actualOutput.iasType,ALARM)
+    }
     
     // Get the input
     val iasio = compInputs.values.head
@@ -139,7 +143,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,props) {
       case BYTE => iasio.value.get.asInstanceOf[Byte].toDouble
       case DOUBLE => iasio.value.get.asInstanceOf[Double]
       case FLOAT => iasio.value.get.asInstanceOf[Float].toDouble
-      case _ => throw new TypeMismatchException(iasio.id.runningID,iasio.iasType,List(LONG,INT,SHORT,BYTE,DOUBLE,FLOAT))
+      case _ => throw new TypeMismatchException(iasio.fullRunningId,iasio.iasType,List(LONG,INT,SHORT,BYTE,DOUBLE,FLOAT))
     }
     
     // It cope with the case that the value of the actual output is not 
@@ -154,7 +158,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,props) {
       (doubleValue>=highOn || doubleValue<=lowOn) ||
       wasSet && (doubleValue>=highOff || doubleValue<=lowOff)
     val newValue = if (condition) alarmSet else Alarm.cleared()
-    actualOutput.updateValue(Some(newValue)).updateMode(iasio.mode).updateProps(Map("actualValue"->doubleValue.toString()))
+    actualOutput.updateValue(newValue).updateMode(iasio.mode).updateProps(Map("actualValue"->doubleValue.toString()))
   }
   
 }

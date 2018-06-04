@@ -21,7 +21,7 @@ import scala.Option;
  * 
  * @param inOut The InOut to delegate
  */
-class IasIO[T](private val inOut: InOut[T]) {
+class IasIO[T](private[transfer] val inOut: InOut[T]) {
   require(Option(inOut).isDefined)
   
   /** The IAS type of the monitor point */
@@ -29,6 +29,9 @@ class IasIO[T](private val inOut: InOut[T]) {
   
   /** The identifier of the monitor point */
   lazy val id: String = inOut.id.id
+  
+  /** The full running identifier of the monitor point */
+  lazy val fullRunningId = inOut.id.fullRunningID
   
   /**
    * The point in time when this monitor point has been produced by the DASU
@@ -53,6 +56,12 @@ class IasIO[T](private val inOut: InOut[T]) {
    */
   lazy val props: Map[String, String] = inOut.props.getOrElse(Map.empty)
   
+  /** The actual value */
+  val value: Option[T] = inOut.value.asInstanceOf[Option[T]]
+  
+  /** The operational mode */
+  val mode: OperationalMode = inOut.mode
+  
   /**
    * Update the mode of the monitor point
    * 
@@ -63,7 +72,7 @@ class IasIO[T](private val inOut: InOut[T]) {
   /**
    * Update the value of a IASIO
    * 
-   * @param newValue: The new value of the IASIO
+   * @param newValue: The not null new value of the IASIO
    * @return A new InOut with updated value
    */
   def updateValue[B >: T](newValue: B): IasIO[T] = {
@@ -78,15 +87,17 @@ class IasIO[T](private val inOut: InOut[T]) {
    * The passed set contains the IDs of the inputs that the core must be consider
    * when evaluating the validity of the output.
    * The core returns an error if at least one of the ID is not 
-   * an input to the ASCE where the TF runs: in this case a message 
+   * an input to the ASCE when the TF runs: in this case a message 
    * is logged and the TF will not be run again.
    * 
    * To remove the constrans, the passed set must be empty
    * 
    * @param constraint the constraints
    */
-  def setValidityConstraint(constraint: Set[String]):IasIO[T] = 
-    new IasIO[T](inOut.setValidityConstraint(Option(constraint)))
+  def setValidityConstraint(constraint: Option[Set[String]]):IasIO[T] = 
+    
+    
+    new IasIO[T](inOut.setValidityConstraint(constraint))
   
   /**
    * Return a new IasIO with the passed additional properties.

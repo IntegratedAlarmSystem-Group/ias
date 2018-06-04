@@ -26,7 +26,11 @@ trait ScalaTransfer[T] extends ComputingElement[T] {
       id: Identifier,
       actualOutput: InOut[T]): Try[InOut[T]] = {
     
-    Try(tfSetting.transferExecutor.get.asInstanceOf[ScalaTransferExecutor[T]].eval(inputs,actualOutput))
+    val ins: Map[String, IasIO[_]] = inputs.mapValues( inout => new IasIO(inout)) 
+    
+    val out: IasIO[T] = new IasIO(actualOutput)
+    
+    Try(tfSetting.transferExecutor.get.asInstanceOf[ScalaTransferExecutor[T]].eval(ins,out).inOut)
   }
   
 }
