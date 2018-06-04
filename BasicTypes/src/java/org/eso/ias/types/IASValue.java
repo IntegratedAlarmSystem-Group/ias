@@ -205,8 +205,8 @@ public class IASValue<T> {
 	 * @param newValue The value to set in the new IASValue
 	 * @return The new IASValue with the updated value
 	 */
-	public <X> IASValue<?> updateValue(X newValue) {
-		return new IASValue<X>(
+	public <X extends T> IASValue<T> updateValue(X newValue) {
+		return new IASValue<T>(
 				newValue,
 				this.mode,
 				this.iasValidity,
