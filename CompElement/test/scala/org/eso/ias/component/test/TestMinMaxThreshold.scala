@@ -17,7 +17,6 @@ import org.eso.ias.asce.transfer.impls.MinMaxThresholdTFJava
 import org.eso.ias.asce.transfer.ScalaTransfer
 import org.eso.ias.asce.transfer.JavaTransfer
 import org.eso.ias.types.Alarm
-import org.eso.ias.types.JavaConverter
 import org.eso.ias.types.IASValue
 
 class TestMinMaxThreshold extends FlatSpec {

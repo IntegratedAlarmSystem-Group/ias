@@ -13,7 +13,6 @@ import org.eso.ias.types.IdentifierType
 import org.eso.ias.types.InOut
 import org.eso.ias.types.IASTypes
 import org.eso.ias.types.IASValue
-import org.eso.ias.types.JavaConverter
 import org.scalatest.BeforeAndAfterEach
 import org.eso.ias.types.Validity
 import org.eso.ias.types.IasValidity

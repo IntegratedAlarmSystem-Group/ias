@@ -21,7 +21,6 @@ import org.eso.ias.types.Alarm
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IasValidity._
 import org.eso.ias.types.IASValue
-import org.eso.ias.types.JavaConverter
 import org.eso.ias.types.IasValidity
 import org.eso.ias.component.test.transfer.ConstraintValidityTF
 
