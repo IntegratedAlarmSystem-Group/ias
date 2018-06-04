@@ -358,14 +358,20 @@ case class InOut[A](
    * 
    * @return The IASValue representation of this IASIO
    */
-  def toIASValue(): IASValue[_] = {
+  def toIASValue(): IASValue[A] = {
     
     val ids = idsOfDependants.map( i => JavaConverters.setAsJavaSet(i.map(_.fullRunningID)))
     
     val p = props.map( p => JavaConverters.mapAsJavaMap(p))
     
-    new IASValue(
-        value.getOrElse(null),
+    val theValue = if (value.isDefined) {
+      value.get.asInstanceOf[A]
+    } else {
+      null
+    }
+    
+    new IASValue[A](
+        theValue.asInstanceOf[A],
 			  mode,
 			  getValidity.iasValidity,
 			  id.fullRunningID,
