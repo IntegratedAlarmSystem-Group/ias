@@ -25,7 +25,6 @@ import org.eso.ias.types.IASValue
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.cdb.pojos.TFLanguageDao
 import org.eso.ias.asce.transfer.ScalaTransfer
-import org.eso.ias.types.JavaConverter
 import org.eso.ias.types.OperationalMode
 import org.eso.ias.types.IasValidity
 import org.eso.ias.asce.exceptions.ValidityConstraintsMismatchException

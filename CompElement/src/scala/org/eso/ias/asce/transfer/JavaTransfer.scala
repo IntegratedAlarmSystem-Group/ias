@@ -6,7 +6,6 @@ import org.eso.ias.asce.ComputingElement
 import java.util.Properties
 import java.util.{Map => JavaMap, HashMap => JavaHashMap}
 import org.eso.ias.types.IASValue
-import org.eso.ias.types.JavaConverter
 import org.eso.ias.types.IASValue
 import scala.util.Try
 
