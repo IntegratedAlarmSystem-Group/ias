@@ -50,7 +50,7 @@ trait JavaTransfer[T] extends ComputingElement[T] {
     Try[InOut[T]]{
       val map: JavaMap[String, IASValue[_]] = flushInputsOnJavaMap(inputs)
       val newOutput=tfSetting.transferExecutor.get.asInstanceOf[JavaTransferExecutor].
-      eval( map, actualOutput.toIASValue)
+        eval( map, actualOutput.toIASValue)
       actualOutput.update(newOutput).asInstanceOf[InOut[T]]
     }
   }
