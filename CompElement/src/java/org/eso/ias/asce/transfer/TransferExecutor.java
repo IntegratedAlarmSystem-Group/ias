@@ -31,6 +31,14 @@ public abstract class TransferExecutor {
 	protected final String compElementRunningId;
 	
 	/**
+	 * The time frame (msec) to invalidate monitor points that have been refreshed
+	 * after the time frame.
+	 * 
+	 * The validityTimeFrame is given by autoRefreshRate+tolerance 
+	 */
+	protected final long validityTimeFrame;
+	
+	/**
 	 * Properties for this executor.
 	 */
 	protected final Properties props;
@@ -46,16 +54,24 @@ public abstract class TransferExecutor {
 	 * 
 	 * @param cEleId: The id of the ASCE
 	 * @param cEleRunningId: the running ID of the ASCE
-	 * @param props The properties fro the executor
+	 * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
+	 * @param props: The properties fro the executor
 	 */
 	public TransferExecutor(
 			String cEleId, 
 			String cEleRunningId,
+			long validityTimeFrame,
 			Properties props) {
 		Objects.requireNonNull(cEleId,"The ID of the ASCE can't be null!");
 		this.compElementId=cEleId;
 		Objects.requireNonNull(cEleRunningId,"The running ID can't be null!");
 		this.compElementRunningId=cEleRunningId;
+		
+		if (validityTimeFrame<0) {
+			throw new IllegalArgumentException("Time frame must be greater then 0");
+		}
+		this.validityTimeFrame=validityTimeFrame;
+		
 		Objects.requireNonNull(props,"The properties can't be null!");
 		this.props=props;
 		

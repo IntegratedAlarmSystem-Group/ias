@@ -38,11 +38,15 @@ import org.eso.ias.asce.transfer.IasIO
  *               becomes greater then LowOFF, then the alarm is deactivated
  *  <LI>LowON: the (low) alarm is activated when the value of the IASIO is
  *             lower then LowON
- *             
+ *         
+ * @param asceId: the ID of the ASCE
+ * @param asceRunningId: the runningID of the ASCE
+ * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
+ * @param props: the user defined properties    
  * @author acaproni
  */
-class MinMaxThresholdTF(cEleId: String, cEleRunningId: String, props: Properties) 
-extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,props) {
+class MinMaxThresholdTF(cEleId: String, cEleRunningId: String, validityTimeFrame:Long, props: Properties) 
+extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame, props) {
   
   /**
    * The (high) alarm is activated when the value of the IASIO 

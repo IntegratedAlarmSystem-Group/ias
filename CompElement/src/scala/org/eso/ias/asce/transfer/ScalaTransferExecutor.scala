@@ -6,10 +6,15 @@ import org.eso.ias.types.Identifier
 
 /**
  * The <code>ScalaTransferExecutor<code> provides the interface
- * for scala implementators of the transfer function.
+ * for scala implementations of the transfer function.
+ * 
+ * @param cEleId: The id of the ASCE
+ * @param cEleRunningId: the running ID of the ASCE
+ * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
+ * @param props: The properties for the executor
  */
-abstract class ScalaTransferExecutor[T](cEleId: String, cEleRunningId: String, props: Properties) 
-extends TransferExecutor(cEleId,cEleRunningId,props) {
+abstract class ScalaTransferExecutor[T](cEleId: String, cEleRunningId: String, validityTimeFrame: Long, props: Properties) 
+extends TransferExecutor(cEleId,cEleRunningId,validityTimeFrame,props) {
   
   /**
 	 * This method transparently return a value from the passed ID,

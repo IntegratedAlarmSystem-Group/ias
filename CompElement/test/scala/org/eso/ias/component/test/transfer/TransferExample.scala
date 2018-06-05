@@ -10,12 +10,17 @@ import org.eso.ias.asce.transfer.IasIO
 /**
  * A scala TransferExecutor for testing purposes
  * 
+ * @param asceId: the ID of the ASCE
+ * @param asceRunningId: the runningID of the ASCE
+ * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
+ * @param props: the user defined properties
  * @see TransferExecutor
  */
 class TransferExample(
     cEleId: String, 
 		cEleRunningId: String,
-		props: Properties) extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,props) {
+		validityTimeFrame: Long,
+		props: Properties) extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,props) {
   
   /**
    * Intialization

@@ -17,12 +17,21 @@ import org.eso.ias.types.Identifier;
  */
 public abstract class JavaTransferExecutor<T> extends TransferExecutor {
 	
+	/**
+	 * Constructor
+	 * 
+	 * @param cEleId: The id of the ASCE
+	 * @param cEleRunningId: the running ID of the ASCE
+	 * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
+	 * @param props: The properties for the executor
+	 */
 	public JavaTransferExecutor(
 			String cEleId, 
 			String cEleRunningId,
+			long validityTimeFrame,
 			Properties props
 			) {
-		super(cEleId,cEleRunningId,props);
+		super(cEleId,cEleRunningId,validityTimeFrame,props);
 	}
 	
 	/**

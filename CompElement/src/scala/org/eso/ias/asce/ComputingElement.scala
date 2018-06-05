@@ -300,7 +300,7 @@ abstract class ComputingElement[T](
    */
   def initialize(): AsceStates.State = {
     assert(state.actualState==AsceStates.Initializing)
-    state = if (tfSetting.initialize(id, asceIdentifier.runningID, props)) {
+    state = if (tfSetting.initialize(id, asceIdentifier.runningID, validityThreshold, props)) {
       ComputingElementState.transition(state, new Initialized())
     } else { 
       ComputingElementState.transition(state, new Broken())

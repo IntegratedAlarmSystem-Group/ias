@@ -16,11 +16,17 @@ import org.eso.ias.asce.transfer.IasIO
  * The TF ignores the values of the inputs (it is not the purpose of this TF)
  * and set the validity constraints according to the string contained in the
  * input with ID constraintSetterID
+ * 
+ * @param asceId: the ID of the ASCE
+ * @param asceRunningId: the runningID of the ASCE
+ * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
+ * @param props: the user defined properties
  */
 class ConstraintValidityTF (
     cEleId: String, 
 		cEleRunningId: String,
-		props: Properties) extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,props) {
+		validityTimeFrame: Long,
+		props: Properties) extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,props) {
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)

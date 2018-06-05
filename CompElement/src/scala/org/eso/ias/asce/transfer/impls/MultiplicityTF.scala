@@ -20,10 +20,14 @@ import org.eso.ias.asce.transfer.IasIO
  * of alarms in input is equal or greater then the threshold retrieved
  * from the properties. 
  * 
+ * @param asceId: the ID of the ASCE
+ * @param asceRunningId: the runningID of the ASCE
+ * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
+ * @param props: the user defined properties
  * @author acaproni
  */
-class MultiplicityTF (cEleId: String, cEleRunningId: String, props: Properties) 
-extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,props) {
+class MultiplicityTF (cEleId: String, cEleRunningId: String, validityTimeFrame: Long, props: Properties) 
+extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,props) {
   
   /**
    * A little bit too verbose but wanted to catch all the 

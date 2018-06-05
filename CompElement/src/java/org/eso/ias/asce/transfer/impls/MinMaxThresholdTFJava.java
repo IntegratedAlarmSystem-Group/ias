@@ -124,8 +124,16 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor<Alarm> {
 		}
 	}
 
-	public MinMaxThresholdTFJava(String cEleId, String cEleRunningId, Properties props) {
-		super(cEleId, cEleRunningId, props);
+	/**
+	 * Constructor 
+	 * 
+	 * @param asceId: the ID of the ASCE
+	 * @param asceRunningId: the runningID of the ASCE
+	 * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
+	 * @param props: the user defined properties
+	 */
+	public MinMaxThresholdTFJava(String cEleId, String cEleRunningId, long validityTimeFrame, Properties props) {
+		super(cEleId, cEleRunningId, validityTimeFrame, props);
 	}
 
 	/**

@@ -17,10 +17,19 @@ import org.eso.ias.types.OperationalMode;
  */
 public class TransferExecutorImpl  extends JavaTransferExecutor<Alarm> {
 	
+	/**
+	 * Constructor 
+	 * 
+	 * @param asceId: the ID of the ASCE
+	 * @param asceRunningId: the runningID of the ASCE
+	 * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
+	 * @param props: the user defined properties
+	 */
 	public TransferExecutorImpl(String cEleId, 
 			String cEleRunningId,
+			long validityTimeFrame,
 			Properties props) {
-		super(cEleId,cEleRunningId,props);
+		super(cEleId,cEleRunningId,validityTimeFrame,props);
 	}
 
 	@Override

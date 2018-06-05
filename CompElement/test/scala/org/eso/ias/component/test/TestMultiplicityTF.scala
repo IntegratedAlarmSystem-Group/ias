@@ -128,7 +128,7 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
     
     assert(!multuiplicityTF.initialized)
     assert(!multuiplicityTF.isShutDown)
-    multuiplicityTF.initialize("ASCE-MinMaxTF-ID", "ASCE-running-ID", new Properties())
+    multuiplicityTF.initialize("ASCE-MinMaxTF-ID", "ASCE-running-ID", 1000, new Properties())
     Thread.sleep(500)
     assert(multuiplicityTF.initialized)
     assert(!multuiplicityTF.isShutDown)

@@ -9,12 +9,17 @@ import org.eso.ias.asce.transfer.IasIO
  * exception is properly caught and the TF not executed any longer.
  * In this case the state of the ASCE must change to TFBroken.
  * 
+ * @param asceId: the ID of the ASCE
+ * @param asceRunningId: the runningID of the ASCE
+ * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
+ * @param props: the user defined properties
  * @author acaproni
  */
 class ThrowExceptionTF(
     cEleId: String, 
 		cEleRunningId: String,
-		props: Properties) extends ScalaTransferExecutor(cEleId,cEleRunningId,props) {
+		validityTimeFrame: Long,
+		props: Properties) extends ScalaTransferExecutor(cEleId,cEleRunningId,validityTimeFrame,props) {
   
   /**
    * Intialization

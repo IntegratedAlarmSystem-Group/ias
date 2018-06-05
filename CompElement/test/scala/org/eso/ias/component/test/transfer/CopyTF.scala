@@ -14,12 +14,17 @@ import org.eso.ias.asce.transfer.IasIO
  * The purpose of this class is to check the updating of the
  * timestamp when the output is generated 
  * 
+ * @param asceId: the ID of the ASCE
+ * @param asceRunningId: the runningID of the ASCE
+ * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
+ * @param props: the user defined properties
  * @see TransferExecutor
  */
 class CopyTF(
     cEleId: String, 
 		cEleRunningId: String,
-		props: Properties) extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,props) {
+		validityTimeFrame: Long,
+		props: Properties) extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,props) {
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
