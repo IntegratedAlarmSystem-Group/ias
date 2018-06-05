@@ -255,5 +255,22 @@ class TestInOut extends FlatSpec {
     val i4 = i3.setValidityConstraint(Option(Set.empty))
     assert(!i4.validityConstraint.isDefined)
   }
+  
+  it must "calculate the validity by time of inputs" in {
+    val timeFrame = 3000;
+    val inOut = InOut.asInput(id,IASTypes.LONG).updateValueValidity(Some(5L), Some(RELIABLE)).updateDasuProdTStamp(System.currentTimeMillis())
+    assert(inOut.getValidityOfInputByTime(timeFrame).iasValidity==RELIABLE,"Shall not be RELIABLE")
+    // Give time to invalidate
+    Thread.sleep(timeFrame+1000)
+    assert(inOut.getValidityOfInputByTime(timeFrame).iasValidity==UNRELIABLE,"Invalid reliablity")
+  }
+  
+  it must "NOT calculate the validity by time of outputs" in {
+    val inOut = InOut.asOutput(id,IASTypes.LONG).updateValueValidity(Some(125L), Some(RELIABLE)).updateDasuProdTStamp(System.currentTimeMillis())
+    // Calculating the validity by time thoros an exception
+    assertThrows[IllegalArgumentException] {
+      inOut.getValidityOfInputByTime(1000)
+    }
+  }
 
 }
