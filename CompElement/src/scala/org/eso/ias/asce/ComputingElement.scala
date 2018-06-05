@@ -340,15 +340,7 @@ abstract class ComputingElement[T](
     require(Option(inputs).isDefined)
     require(!inputs.isEmpty,"No validity without inputs")
     
-    val now = System.currentTimeMillis()
-    val allInputsInTime = inputs.forall(iasio => {
-      val tStamp = iasio.dasuProductionTStamp.orElse(iasio.pluginProductionTStamp)
-      assert(tStamp.isDefined,"At least one between dasuProductionTStamp and pluginProductionTStamp must be defined")
-      
-      tStamp.get >= now - threshold
-    })
-    if (allInputsInTime) Validity(IasValidity.RELIABLE)
-    else Validity(IasValidity.UNRELIABLE)
+    Validity.minValidity(inputs.map(i => i.getValidityOfInputByTime(threshold)).toSet)
   }
   
   /**
@@ -391,7 +383,7 @@ abstract class ComputingElement[T](
           inputs.map(input => input.id.id)))
     } else {
       
-      val timeValidityOfInputs = validityOfInputsByTime(selectedInputsByConstraint,validityThreshold)
+      val timeValidityOfInputs = Validity.minValidity(selectedInputsByConstraint.map(_.getValidityOfInputByTime(validityThreshold)).toSet)
       
       Success(Validity.minValidity(selectedInputsByConstraint.map (_.fromIasValueValidity.get).toSet+timeValidityOfInputs))
     }
