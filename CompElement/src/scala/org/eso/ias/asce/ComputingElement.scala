@@ -419,7 +419,7 @@ abstract class ComputingElement[T](
         "Received at least one IASIO that does not belong to this ASCE: "+iasValues.map(_.id).mkString(","))
         
     // Does the passed set contains 2 IASIOs with the same ID?
-    assert(!iasValues.exists(i => iasValues.count(_.id==i.id)>1),"There cant 2 IASIOs with the same ID in the passed set of inputs!")
+    assert(!iasValues.exists(i => iasValues.count(_.id==i.id)>1),"There can't be 2 IASIOs with the same ID in the passed set of inputs!")
     
     // Updates the map with the passed IASIOs
     iasValues.foreach(iasVal => inputs.get(iasVal.id).map( _.update(iasVal)).foreach(i => inputs.put(i.id.id,i)))
@@ -437,7 +437,7 @@ abstract class ComputingElement[T](
     
       // The validity of the output must be set to the min validity of its inputs
       //
-      // Note that this validity does not take into account the current
+      // Note that this validity *does* take into account the current
       // timestamp against the timestamp of the IASValues in inputs
       val minValidityOfInputs = getMinValidityOfInputs(newOut, inputs.values)
       minValidityOfInputs match {
