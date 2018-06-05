@@ -11,9 +11,15 @@ import org.eso.ias.asce.transfer.IasIO
  * A transfer function that calculate th e average of its inputs.
  * 
  * This is to test and show the case of a synthetic parameter
+ * 
+ * @param asceId: the ID of the ASCE
+ * @param asceRunningId: the runningID of the ASCE
+ * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
+ * @param props: the user defined properties    
+ * @author acaproni
  */
-class AverageTempsTF (cEleId: String, cEleRunningId: String, props: Properties) 
-extends ScalaTransferExecutor[Double] (cEleId,cEleRunningId,props) {
+class AverageTempsTF (cEleId: String, cEleRunningId: String, validityTimeFrame: Long,props: Properties) 
+extends ScalaTransferExecutor[Double] (cEleId,cEleRunningId,validityTimeFrame,props) {
   /**
    * @see TransferExecutor#shutdown()
    */

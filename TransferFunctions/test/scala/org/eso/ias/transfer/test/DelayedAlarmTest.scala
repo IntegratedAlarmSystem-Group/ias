@@ -48,7 +48,7 @@ class DelayedAlarmTest extends FlatSpec {
     val props = new Properties
     props.put(DelayedAlarm.delayToClearTimePropName, timeToClear.toString())
     props.put(DelayedAlarm.delayToSetTimePropName, timeToSet.toString())
-    val tf = new DelayedAlarm(compID.id,compID.fullRunningID,props)
+    val tf = new DelayedAlarm(compID.id,compID.fullRunningID,1000,props)
     assert(tf.waitTimeToClear.get==TimeUnit.MILLISECONDS.convert(timeToClear,TimeUnit.SECONDS))
     assert(tf.waitTimeToSet.get==TimeUnit.MILLISECONDS.convert(timeToSet,TimeUnit.SECONDS))
   }
@@ -56,7 +56,7 @@ class DelayedAlarmTest extends FlatSpec {
   it must "throw an exception when inited with missing or wrong times" in {
     
     // No times
-    val tf = new DelayedAlarm(compID.id,compID.fullRunningID,new Properties())
+    val tf = new DelayedAlarm(compID.id,compID.fullRunningID,1000,new Properties())
     
     assertThrows[DelayedAlarmException] {
       tf.initialize()
@@ -67,7 +67,7 @@ class DelayedAlarmTest extends FlatSpec {
     props.put(DelayedAlarm.delayToClearTimePropName, "wrong!")
     props.put(DelayedAlarm.delayToSetTimePropName, "1")
     
-    val tf2 = new DelayedAlarm(compID.id,compID.fullRunningID,props)
+    val tf2 = new DelayedAlarm(compID.id,compID.fullRunningID,1000,props)
     assertThrows[DelayedAlarmException] {
       tf2.initialize()
     }
@@ -77,7 +77,7 @@ class DelayedAlarmTest extends FlatSpec {
     props2.put(DelayedAlarm.delayToClearTimePropName, "15")
     props2.put(DelayedAlarm.delayToSetTimePropName, "-5")
     
-    val tf3 = new DelayedAlarm(compID.id,compID.fullRunningID,props2)
+    val tf3 = new DelayedAlarm(compID.id,compID.fullRunningID,1000,props2)
     assertThrows[DelayedAlarmException] {
       tf3.initialize()
     }
@@ -87,7 +87,7 @@ class DelayedAlarmTest extends FlatSpec {
     props3.put(DelayedAlarm.delayToClearTimePropName, "5")
     props3.put(DelayedAlarm.delayToSetTimePropName, "10")
     
-    val tf4 = new DelayedAlarm(compID.id,compID.fullRunningID,props3)
+    val tf4 = new DelayedAlarm(compID.id,compID.fullRunningID,1000,props3)
     tf4.initialize()
   }
   
@@ -95,7 +95,7 @@ class DelayedAlarmTest extends FlatSpec {
     val props = new Properties
     props.put(DelayedAlarm.delayToClearTimePropName, "5")
     props.put(DelayedAlarm.delayToSetTimePropName, "10")
-    val tf = new DelayedAlarm(compID.id,compID.fullRunningID,props)
+    val tf = new DelayedAlarm(compID.id,compID.fullRunningID,1000,props)
     tf.initialize()
     val map = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.getSetDefault))
     
@@ -110,7 +110,7 @@ class DelayedAlarmTest extends FlatSpec {
     val props = new Properties
     props.put(DelayedAlarm.delayToClearTimePropName, "15")
     props.put(DelayedAlarm.delayToSetTimePropName, timeToSet.toString())
-    val tf = new DelayedAlarm(compID.id,compID.fullRunningID,props)
+    val tf = new DelayedAlarm(compID.id,compID.fullRunningID,1000,props)
     tf.initialize()
     
     // Send the initial value
@@ -144,7 +144,7 @@ class DelayedAlarmTest extends FlatSpec {
     val props = new Properties
     props.put(DelayedAlarm.delayToClearTimePropName, timeToClear.toString())
     props.put(DelayedAlarm.delayToSetTimePropName, timeToSet.toString())
-    val tf = new DelayedAlarm(compID.id,compID.fullRunningID,props)
+    val tf = new DelayedAlarm(compID.id,compID.fullRunningID,1000,props)
     tf.initialize()
     
     // Send the initial value
@@ -185,7 +185,7 @@ class DelayedAlarmTest extends FlatSpec {
     val props = new Properties
     props.put(DelayedAlarm.delayToClearTimePropName, timeToClear.toString())
     props.put(DelayedAlarm.delayToSetTimePropName, timeToSet.toString())
-    val tf = new DelayedAlarm(compID.id,compID.fullRunningID,props)
+    val tf = new DelayedAlarm(compID.id,compID.fullRunningID,1000,props)
     tf.initialize()
     
     val mapSet = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.getSetDefault))

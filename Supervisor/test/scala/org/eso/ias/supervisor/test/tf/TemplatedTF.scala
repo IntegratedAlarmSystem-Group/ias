@@ -12,9 +12,15 @@ import org.eso.ias.asce.transfer.IasIO
  * The test aims to check if getValue works as expected when dealing
  * with templated and non templated TF i.e. when getting a 
  * templated value passing its ID only.
+ * 
+ * @param asceId: the ID of the ASCE
+ * @param asceRunningId: the runningID of the ASCE
+ * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
+ * @param props: the user defined properties    
+ * @author acaproni
  */
-class TemplatedTF(cEleId: String, cEleRunningId: String, props: Properties) 
-extends ScalaTransferExecutor[Long](cEleId,cEleRunningId,props) {
+class TemplatedTF(cEleId: String, cEleRunningId: String, validityTimeFrame: Long,props: Properties) 
+extends ScalaTransferExecutor[Long](cEleId,cEleRunningId,validityTimeFrame,props) {
   
   /**
    * The ID of a non templated param

@@ -32,11 +32,14 @@ class DelayedAlarmException(msg: String) extends Exception(msg)
  * The best way to get the alarm close to the required time frame
  * is to tune the refresh rate of the Supervisor where this TF is executed.
  * 
- * 
+ * @param asceId: the ID of the ASCE
+ * @param asceRunningId: the runningID of the ASCE
+ * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
+ * @param props: the user defined properties    
  * @author acaproni
  */
-class DelayedAlarm(cEleId: String, cEleRunningId: String, props: Properties) 
-extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,props) {
+class DelayedAlarm(cEleId: String, cEleRunningId: String, validityTimeFrame: Long, props: Properties) 
+extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,props) {
   
   /**
    * Get the value of the passed property, if defined
