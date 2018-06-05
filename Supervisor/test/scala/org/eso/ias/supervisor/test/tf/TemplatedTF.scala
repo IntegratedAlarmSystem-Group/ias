@@ -3,7 +3,7 @@ package org.eso.ias.supervisor.test.tf
 import java.util.Properties
 import org.eso.ias.asce.transfer.ScalaTransferExecutor
 import org.eso.ias.types.Alarm
-import org.eso.ias.types.InOut
+import org.eso.ias.asce.transfer.IasIO
 
 /**
  * A TF to test the getting of values with getValue
@@ -35,10 +35,10 @@ extends ScalaTransferExecutor[Long](cEleId,cEleRunningId,props) {
   }
   
   /**
-   * eval sums the values of all the InOut in the map, getting them 
+   * eval sums the values of all the IasIO in the map, getting them 
    * with their IDs
    */
-  override def eval(compInputs: Map[String, InOut[_]], actualOutput: InOut[Long]): InOut[Long] = {
+  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Long]): IasIO[Long] = {
     
     val nonTempInOut = getValue(compInputs, nontTemplatedId)
     assert(nonTempInOut.isDefined)
@@ -50,7 +50,7 @@ extends ScalaTransferExecutor[Long](cEleId,cEleRunningId,props) {
     val tempVal = tempInOut.get.value.get.asInstanceOf[Long]
     print("Templated value ="+tempVal)
     
-    actualOutput.updateValue(Some(nonTempVal+tempVal))
+    actualOutput.updateValue(nonTempVal+tempVal)
   }
   
 }
