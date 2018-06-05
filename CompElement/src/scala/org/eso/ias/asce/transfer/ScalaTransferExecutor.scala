@@ -2,7 +2,6 @@ package org.eso.ias.asce.transfer
 
 import java.util.Properties
 
-import org.eso.ias.types.InOut
 import org.eso.ias.types.Identifier
 
 /**
@@ -27,7 +26,7 @@ extends TransferExecutor(cEleId,cEleRunningId,props) {
 	 * @param id The (non templated) identifier of the value
 	 * @return the IASValue of the given ID, or None if not found in the Map
 	 */
-  protected final def getValue(inputs: Map[String, InOut[_]], id: String): Option[InOut[_]] = {
+  protected final def getValue(inputs: Map[String, IasIO[_]], id: String): Option[IasIO[_]] = {
     if (Identifier.isTemplatedIdentifier(id)) {
 			throw new IllegalArgumentException("Templated IDs are forbidden here");
 		}
