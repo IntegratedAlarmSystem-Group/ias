@@ -6,6 +6,8 @@ import org.eso.ias.types.InOut
 import org.eso.ias.types.OperationalMode;
 
 import scala.Option;
+import org.eso.ias.types.Validity
+import org.eso.ias.types.IasValidity
 
 /**
  * The view of an InOut for the TF
@@ -31,7 +33,14 @@ class IasIO[T](private[transfer] val inOut: InOut[T]) {
   lazy val id: String = inOut.id.id
   
   /** The full running identifier of the monitor point */
-  lazy val fullRunningId = inOut.id.fullRunningID
+  lazy val fullRunningId: String = inOut.id.fullRunningID
+  
+  /** 
+   *  The validity
+   *  
+   *  This is the validity without taking times into account.
+   */
+  lazy val validity: IasValidity = inOut.getValidity.iasValidity
   
   /**
    * The point in time when this monitor point has been produced by the DASU
@@ -61,6 +70,9 @@ class IasIO[T](private[transfer] val inOut: InOut[T]) {
   
   /** The operational mode */
   val mode: OperationalMode = inOut.mode
+  
+  /** The validity of an input taking times into account */
+  def validityOfInputByTime(threshold: Long): IasValidity = inOut.getValidityOfInputByTime(threshold).iasValidity
   
   /**
    * Update the mode of the monitor point

@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.eso.ias.types.IASTypes;
+import org.eso.ias.types.IasValidity;
 import org.eso.ias.types.InOut;
 import org.eso.ias.types.OperationalMode;
 
@@ -196,6 +197,20 @@ public class IasIOJ<T> {
      */
     public OperationalMode getMode() {
     	return inOut.mode();
+    }
+    
+    /**
+     * The validity without taking times into account.
+     * 
+     * @return the validity
+     */
+    public IasValidity getValidity() {
+    	return inOut.getValidity().iasValidity();
+    }
+    
+    /** The validity of an input taking times into account */
+    public IasValidity validityOfInputByTime(long threshold) {
+    	return inOut.getValidityOfInputByTime(threshold).iasValidity();
     }
 
 }
