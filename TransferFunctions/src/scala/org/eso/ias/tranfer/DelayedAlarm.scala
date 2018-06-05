@@ -5,10 +5,10 @@ import java.util.Properties
 import java.util.concurrent.TimeUnit
 
 import org.eso.ias.types.Alarm
-import org.eso.ias.types.InOut
 import org.eso.ias.logging.IASLogger
 import scala.util.Try
 import org.eso.ias.types.IASTypes
+import org.eso.ias.asce.transfer.IasIO
 
 /**
  * The exception thrown by this TF in case of 
@@ -102,7 +102,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,props) {
 	 * 
 	 * @return the computed output of the ASCE
 	 */
-	override def eval(compInputs: Map[String, InOut[_]], actualOutput: InOut[Alarm]): InOut[Alarm] = {
+	override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
 	  // Here waitTimeToClear and waitTimeToSet must be defined because if they are not
 	  // an exception in thrown by initialize() and the execution of the TF never enabled
 	  assert(waitTimeToClear.isDefined && waitTimeToSet.isDefined)
@@ -132,7 +132,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,props) {
 	    // return a CLEARED alarm because the delay did not elapsed
 	    lastStateChangeTime=System.currentTimeMillis()
 	    lastInputValue=Some(iasio.value.get.asInstanceOf[Alarm])
-	    actualOutput.updateValue(Some(Alarm.cleared))
+	    actualOutput.updateValue(Alarm.cleared)
 	  } else {
       
       // Did the input change?
@@ -155,7 +155,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,props) {
         if (iasio.value.get==actualOutput.value.get) {
           actualOutput
         } else {
-          actualOutput.updateValue(Some(iasio.value.get)).updateProps(iasio.props.get)
+          actualOutput.updateValue(iasio.value.get).updateProps(iasio.props)
         }
       }
 	  }
