@@ -329,21 +329,6 @@ abstract class ComputingElement[T](
   def getState(): AsceStates.State = synchronized {state.actualState }
   
   /**
-   * Calulate and return the validity of the inputs taking into account
-   * the last time they have been updated and the validity threshold
-   * 
-   * @param inputs the inputs to calculate the validity by time
-   * @param threshold the validity threshold (msecs)
-   * @return the validity of the inputs taking into account their timestamps
-   */
-  def validityOfInputsByTime(inputs: Iterable[InOut[_]], threshold: Long): Validity = {
-    require(Option(inputs).isDefined)
-    require(!inputs.isEmpty,"No validity without inputs")
-    
-    Validity.minValidity(inputs.map(i => i.getValidityOfInputByTime(threshold)).toSet)
-  }
-  
-  /**
    * Get the min validity of the passed InOut,
    * taking into account the constraints that it can have in
    * InOut.validityConstraint.
@@ -383,9 +368,7 @@ abstract class ComputingElement[T](
           inputs.map(input => input.id.id)))
     } else {
       
-      val timeValidityOfInputs = Validity.minValidity(selectedInputsByConstraint.map(_.getValidityOfInputByTime(validityThreshold)).toSet)
-      
-      Success(Validity.minValidity(selectedInputsByConstraint.map (_.fromIasValueValidity.get).toSet+timeValidityOfInputs))
+      Success(Validity.minValidity(selectedInputsByConstraint.map(_.getValidityOfInputByTime(validityThreshold)).toSet))
     }
   }
   
