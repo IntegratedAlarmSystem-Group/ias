@@ -24,7 +24,6 @@ import scala.collection.JavaConverters
 import org.eso.ias.types.InOut
 import org.eso.ias.asce.AsceStates
 import org.eso.ias.dasu.executorthread.ScheduledExecutor
-import org.eso.ias.types.JavaConverter
 import java.util.concurrent.TimeUnit
 import org.eso.ias.cdb.pojos.DasuDao
 import org.eso.ias.types.Validity
@@ -265,11 +264,12 @@ class DasuImpl (
         
         if (!inputs.isEmpty) {
           // Get the ASCE with the given ID 
-          val asceOpt = asces.get(asceId)
+          val asceOpt: Option[ComputingElement[_]] = asces.get(asceId)
           assert(asceOpt.isDefined,"ASCE "+asceId+" NOT found!")
           
-          asceOpt.flatMap(asce => {
-            asce.update(inputs)._1.map(_.toIASValue())
+          asceOpt.flatMap( aaaa => {
+            aaaa.update(inputs).asInstanceOf[(Option[InOut[_]], AsceStates.State)]
+              ._1.map(inOut => inOut.toIASValue())
           })
           
         } else {

@@ -4,7 +4,6 @@ import org.eso.ias.types.InOut
 import scala.util.Try
 import org.eso.ias.types.IASValue
 import org.eso.ias.types.IasValueStringSerializer
-import org.eso.ias.types.JavaConverter
 import scala.util.Success
 
 /**

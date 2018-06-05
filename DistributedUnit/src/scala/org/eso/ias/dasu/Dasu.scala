@@ -19,7 +19,6 @@ import org.eso.ias.asce.AsceStates
 import org.eso.ias.types.InOut
 import org.eso.ias.dasu.publisher.OutputPublisher
 import org.eso.ias.types.IASValue
-import org.eso.ias.types.JavaConverter
 import org.eso.ias.dasu.executorthread.ScheduledExecutor
 import scala.util.Try
 import java.util.concurrent.atomic.AtomicLong

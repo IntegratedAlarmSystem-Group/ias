@@ -5,6 +5,7 @@ import org.eso.ias.asce.transfer.ScalaTransferExecutor
 import org.eso.ias.types.InOut
 import org.eso.ias.types.IASTypes._
 import org.eso.ias.asce.exceptions.TypeMismatchException
+import org.eso.ias.asce.transfer.IasIO
 
 /**
  * A transfer function that calculate th e average of its inputs.
@@ -16,13 +17,13 @@ extends ScalaTransferExecutor[Double] (cEleId,cEleRunningId,props) {
   /**
    * @see TransferExecutor#shutdown()
    */
-  def initialize() {
+  override def initialize() {
   }
   
   /**
    * @see TransferExecutor#shutdown()
    */
-  def shutdown() {}
+  override def shutdown() {}
   
   /**
    * eval returns the average of the values of the inputs
@@ -30,7 +31,7 @@ extends ScalaTransferExecutor[Double] (cEleId,cEleRunningId,props) {
    * @return the average of the values of the inputs
    * @see ScalaTransferExecutor#eval
    */
-  def eval(compInputs: Map[String, InOut[_]], actualOutput: InOut[Double]): InOut[Double] = {
+  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Double]): IasIO[Double] = {
     val inputs = compInputs.values
     val values = inputs.map( input => {
       input.iasType match {
@@ -40,7 +41,7 @@ extends ScalaTransferExecutor[Double] (cEleId,cEleRunningId,props) {
         case BYTE => input.value.get.asInstanceOf[Byte].toDouble
         case DOUBLE => input.value.get.asInstanceOf[Double]
         case FLOAT => input.value.get.asInstanceOf[Float].toDouble
-        case _ => throw new TypeMismatchException(input.id.runningID,input.iasType,List(LONG,INT,SHORT,BYTE,DOUBLE,FLOAT))
+        case _ => throw new TypeMismatchException(input.fullRunningId,input.iasType,List(LONG,INT,SHORT,BYTE,DOUBLE,FLOAT))
       }
     })
     
@@ -49,6 +50,6 @@ extends ScalaTransferExecutor[Double] (cEleId,cEleRunningId,props) {
     // Average
     val newValue = total/values.size
     
-    actualOutput.updateValue(Some(newValue))
+    actualOutput.updateValue(newValue)
   }
 }

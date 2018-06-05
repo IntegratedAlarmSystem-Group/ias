@@ -16,7 +16,6 @@ import org.eso.ias.types.Identifier
 import org.eso.ias.types.IdentifierType
 import org.eso.ias.types.OperationalMode
 import org.eso.ias.types.InOut
-import org.eso.ias.types.JavaConverter
 import org.eso.ias.dasu.subscriber.InputsListener
 import org.eso.ias.dasu.subscriber.InputSubscriber
 import scala.util.Success
