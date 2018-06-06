@@ -1,7 +1,7 @@
 package org.eso.ias.plugin.test.publisher;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -17,9 +17,9 @@ import org.eso.ias.plugin.publisher.impl.BufferedListenerPublisher;
 import org.eso.ias.plugin.publisher.impl.BufferedListenerPublisher.PublisherEventsListener;
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,7 +94,7 @@ public class PublisherMaxBufferSizeTest implements PublisherEventsListener {
 		}
 	}
 	
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		// Build the publisher
 		int poolSize = Runtime.getRuntime().availableProcessors()/2;
@@ -106,7 +106,7 @@ public class PublisherMaxBufferSizeTest implements PublisherEventsListener {
 		publisher.startSending();
 	}
 	
-	@After
+	@AfterEach
 	public void tearDown() throws PublisherException {
 		logger.debug("Releasing resource");
 		publisher.tearDown();

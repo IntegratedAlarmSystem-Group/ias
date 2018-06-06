@@ -1,10 +1,13 @@
 package org.eso.ias.webserversender;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
@@ -13,17 +16,30 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
+import org.eso.ias.cdb.CdbReader;
+import org.eso.ias.cdb.json.CdbFiles;
+import org.eso.ias.cdb.json.CdbJsonFiles;
+import org.eso.ias.cdb.json.JsonReader;
+import org.eso.ias.cdb.pojos.IasDao;
+import org.eso.ias.cdb.rdb.RdbReader;
+import org.eso.ias.heartbeat.HbEngine;
+import org.eso.ias.heartbeat.HbMsgSerializer;
+import org.eso.ias.heartbeat.HbProducer;
+import org.eso.ias.heartbeat.HeartbeatStatus;
+import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener;
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
 import org.eso.ias.types.IasValueJsonSerializer;
+import org.eso.ias.types.IasValueSerializerException;
 import org.eso.ias.types.IASValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @WebSocket(maxTextMessageSize = 64 * 1024)
-public class WebServerSender implements IasioListener, Runnable {
+public class WebServerSender implements IasioListener {
 
 	/**
 	 * The identifier of the sender
@@ -86,22 +102,32 @@ public class WebServerSender implements IasioListener, Runnable {
 	/**
 	 * WebSocket session required to send messages to the Web server
 	 */
-	private static Session session;
+	private Optional<Session> sessionOpt;
 
 	/**
 	 * Same as the webserverUri but as a URI object
 	 */
-	private static URI uri;
+	private final URI uri;
 
 	/**
 	 * Web socket client
 	 */
-	private static WebSocketClient client;
+	private WebSocketClient client;
 
 	/**
 	 * Time in seconds to wait before attempt to reconnect
 	 */
-	private static int reconnectionInterval = 2;
+	private int reconnectionInterval = 2;
+	
+	/**
+	 * The sender of heartbeats
+	 */
+	private final HbEngine hbEngine;
+	
+	/**
+	 * A flag set to <code>true</code> if the socket is connected
+	 */
+	public final AtomicBoolean socketConnected = new AtomicBoolean(false);
 
 	/**
 	 * The interface of the listener to be notified of Strings received
@@ -116,7 +142,7 @@ public class WebServerSender implements IasioListener, Runnable {
 	 * The listener to be notified of Strings received
 	 * by the WebServer sender.
 	 */
-	private final WebServerSenderListener senderListener;
+	private final Optional<WebServerSenderListener> senderListener;
 
 	/**
 	 * Count down to wait until the connection is established
@@ -126,26 +152,49 @@ public class WebServerSender implements IasioListener, Runnable {
 	/**
 	 * Constructor
 	 *
-   * @param senderID Identifier of the WebServerSender
+	 * @param senderID Identifier of the WebServerSender
+	 * @param kafkaServers Kafka servers URL 
 	 * @param props the properties to get kafka servers, topic names and webserver uri
-	 * @param listener The listener of the messages sent to the websocket server
+	 * @param listener The listenr of the messages sent to the websocket server
+	 * @param hbFrequency the frequency of the heartbeat (seconds)
+	 * @param hbProducer the sender of HBs
+	 * @throws URISyntaxException 
 	 */
-	public WebServerSender(String senderID, Properties props, WebServerSenderListener listener) {
+	public WebServerSender(
+			String senderID, 
+			String kafkaServers,
+			Properties props, 
+			WebServerSenderListener listener,
+			int hbFrequency,
+			HbProducer hbProducer) throws URISyntaxException {
 		Objects.requireNonNull(senderID);
 		if (senderID.trim().isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty converter ID");
 		}
 		this.senderID=senderID.trim();
+		
+		
+		Objects.requireNonNull(kafkaServers);
+		if (kafkaServers.trim().isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty kafka servers list");
+		}
+		this.kafkaServers=kafkaServers.trim();
 
 		Objects.requireNonNull(props);
-		kafkaServers = props.getProperty(KAFKA_SERVERS_PROP_NAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS);
 		sendersInputKTopicName = props.getProperty(IASCORE_TOPIC_NAME_PROP_NAME, KafkaHelper.IASIOs_TOPIC_NAME);
 		webserverUri = props.getProperty(WEBSERVER_URI_PROP_NAME, DEFAULT_WEBSERVER_URI);
+		uri = new URI(webserverUri);
 		logger.debug("Websocket connection URI: "+ webserverUri);
 		logger.debug("Kafka server: "+ kafkaServers);
-		senderListener = listener;
+		senderListener = Optional.ofNullable(listener);
 		kafkaConsumer = new KafkaIasiosConsumer(kafkaServers, sendersInputKTopicName, this.senderID);
-		kafkaConsumer.setUp();
+		
+		if (hbFrequency<=0) {
+			throw new IllegalArgumentException("Invalid frequency "+hbFrequency);
+		}
+		
+		Objects.requireNonNull(hbProducer);
+		hbEngine = HbEngine.apply(senderID, hbFrequency, hbProducer);
 	}
 
 	/**
@@ -157,10 +206,11 @@ public class WebServerSender implements IasioListener, Runnable {
 	@OnWebSocketClose
 	public void onClose(int statusCode, String reason) {
 	   logger.info("WebSocket connection closed. status: " + statusCode + ", reason: " + reason);
-	   this.session = null;
+	   socketConnected.set(false);
+	   sessionOpt = Optional.empty();
 	   if (statusCode != 1001) {
 		   logger.info("Trying to reconnect");
-		   this.run();
+		   this.connect();
 	   }
 	   else {
 		   logger.info("WebServerSender was stopped");
@@ -175,7 +225,7 @@ public class WebServerSender implements IasioListener, Runnable {
 	@OnWebSocketConnect
 	public void onConnect(Session session) {
 	   logger.info("WebSocket got connect. remoteAdress: " + session.getRemoteAddress());
-	   this.session = session;
+	   sessionOpt = Optional.ofNullable(session);
 	   this.connectionReady.countDown();
 	   try {
 	       kafkaConsumer.startGettingEvents(StartPosition.END, this);
@@ -184,78 +234,84 @@ public class WebServerSender implements IasioListener, Runnable {
 	   catch (Throwable t) {
 	       logger.error("WebSocket couldn't send the message",t);
 	   }
+	   socketConnected.set(true);
 	}
 
 	@OnWebSocketMessage
     public void onMessage(String message) {
-			notifyListener(message);
+		notifyListener(message);
     }
 
 	/**
-	 * This method could get notifications for messages
-	 * published before depending on the log and offset
-	 * retention times. Therefore it discards the strings
-	 * not published by this test
-	 * @throws Exception
+	 * This method receives IASValues published in the BSDB.
 	 *
-	 * @see org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener#stringEventReceived(java.lang.String)
+	 * @see {@link IasioListener#iasioReceived(IASValue)}
 	 */
 	@Override
 	public synchronized void iasioReceived(IASValue<?> event) {
+		if (!socketConnected.get()) {
+			// The socket is not connected: discard the event
+			return;
+		}
+		final String value;
 		try {
-			String value = serializer.iasValueToString(event);
-			if (this.session != null) {
-				this.session.getRemote().sendStringByFuture(value);
-				logger.debug("Value sent: " + value);
-				this.notifyListener(value);
-			}
-			else {
-				logger.debug("No server available to send message: " + value);
-			}
+			value = serializer.iasValueToString(event);
+		} catch (IasValueSerializerException avse){
+			logger.error("Error converting the event into a string", avse);
+			return;
 		}
-		catch (Exception e){
-			logger.error("Error sending message to the Web Server", e);
-		}
+		
+		sessionOpt.ifPresent( session -> {
+			session.getRemote().sendStringByFuture(value);
+			logger.debug("Value sent: " + value);
+			this.notifyListener(value);
+		});
+	}
+	
+	public void setUp() {
+		hbEngine.start();
+		kafkaConsumer.setUp();
+		connect();
 	}
 
 	/**
 	 * Initializes the WebSocket connection
 	 */
-	public void run() {
+	public void connect() {
 		try {
-			this.uri = new URI(webserverUri);
-			this.session = null;
+			sessionOpt = Optional.empty();
 			this.connectionReady = new CountDownLatch(1);
-			this.client = new WebSocketClient();
-			this.client.start();
-			this.client.connect(this, this.uri, new ClientUpgradeRequest());
-			if(!this.connectionReady.await(this.reconnectionInterval, TimeUnit.SECONDS)) {
+			client = new WebSocketClient();
+			client.start();
+			client.connect(this, this.uri, new ClientUpgradeRequest());
+			if(!this.connectionReady.await(reconnectionInterval, TimeUnit.SECONDS)) {
 				logger.info("WebSocketSender could not establish the connection with the server.");
 				logger.info("Trying to reconnect");
-				this.run();
+				connect();
 			}
 			logger.debug("Connection started!");
 		}
 		catch( Exception e) {
 			logger.error("Error on WebSocket connection", e);
-			this.stop();
+			this.shutdown();
 		}
 	}
 
 	/**
 	 * Shutdown the WebSocket client and Kafka consumer
 	 */
-	public void stop() {
-		this.session = null;
+	public  void shutdown() {
+		hbEngine.updateHbState(HeartbeatStatus.EXITING);
 		kafkaConsumer.tearDown();
+		sessionOpt = Optional.empty();
 		try {
-			this.client.stop();
+			client.stop();
 			logger.debug("Connection stopped!");
 		}
 		catch( Exception e) {
 			logger.error("Error on Websocket stop");
 		}
-
+		hbEngine.shutdown();
 	}
 
 	/**
@@ -264,10 +320,7 @@ public class WebServerSender implements IasioListener, Runnable {
 	 * @param strToNotify The string to notify to the listener
 	 */
 	protected void notifyListener(String strToNotify) {
-		if(senderListener != null) {
-			senderListener.stringEventSent(strToNotify);
-		}
-
+		senderListener.ifPresent(listener -> listener.stringEventSent(strToNotify));
 	}
 
 	/**
@@ -276,12 +329,80 @@ public class WebServerSender implements IasioListener, Runnable {
 	 * @param interval time in seconds
 	 */
 	public void setReconnectionInverval(int interval) {
-		this.reconnectionInterval = interval;
+		reconnectionInterval = interval;
+	}
+	
+	/** 
+	 * Build the usage message 
+	 */
+	public static void printUsage() {
+		System.out.println("Usage: WebServerSender Sender-ID [-jcdb JSON-CDB-PATH]");
+		System.out.println("  -jcdb force the usage of the JSON CDB");
+		System.out.println("  Sender-ID: the identifier of the web server sender");
+		System.out.println("  JSON-CDB-PATH: the path of the JSON CDB");
 	}
 
 	public static void main(String[] args) throws Exception {
-		WebServerSender ws = new WebServerSender("WebServerSender", System.getProperties(), null);
-		ws.run();
+		if (args.length!=1 && args.length!=3) {
+			printUsage();
+			throw new IllegalArgumentException();
+		}
+		
+		String id = args[0].trim();
+		if (id.isEmpty()) {
+			printUsage();
+			throw new IllegalArgumentException("Invalid identifier");
+		}
+		
+		if (args.length==3 && !args[1].equals("-jcdb")) {
+			printUsage();
+			throw new IllegalArgumentException();
+		}
+		
+		CdbReader reader;
+		if (args.length == 3) {
+			CdbFiles cdbFiles = new CdbJsonFiles(args[2]);
+			reader= new JsonReader(cdbFiles);
+		} else {
+			reader= new RdbReader();
+		}
+		
+		Optional<IasDao> optIasdao = reader.getIas();
+		reader.shutdown();
+		
+		if (!optIasdao.isPresent()) {
+			throw new IllegalArgumentException("IAS DAO not fund");
+		}
+		int frequency = optIasdao.get().getHbFrequency();
+		
+		
+		// Serializer of HB messages
+		HbMsgSerializer hbSerializer = new HbJsonSerializer();
+		
+		String kServers=System.getProperty(KAFKA_SERVERS_PROP_NAME);
+		if (kServers==null || kServers.isEmpty()) {
+			kServers=optIasdao.get().getBsdbUrl();
+		}
+		if (kServers==null || kServers.isEmpty()) {
+			kServers=KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS;
+		}
+
+		HbProducer hbProd = new HbKafkaProducer(id, kServers, hbSerializer);
+		
+		WebServerSender ws=null;
+		try { 
+			ws = new WebServerSender(
+				id, 
+				kServers,
+				System.getProperties(), 
+				null,
+				frequency,
+				hbProd);
+		} catch (URISyntaxException e) {
+			logger.error("Could not instantiate the WebServerSender",e);
+			System.exit(-1);
+		}
+		ws.setUp();
 	}
 
 }

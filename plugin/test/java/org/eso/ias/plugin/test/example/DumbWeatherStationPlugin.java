@@ -10,6 +10,10 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.eso.ias.heartbeat.HbEngine;
+import org.eso.ias.heartbeat.HbMsgSerializer;
+import org.eso.ias.heartbeat.HbProducer;
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.plugin.Plugin;
 import org.eso.ias.plugin.PluginException;
 import org.eso.ias.plugin.Sample;
@@ -19,7 +23,10 @@ import org.eso.ias.plugin.config.PluginConfigFileReader;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.JsonFilePublisher;
+import org.eso.ias.plugin.test.MockHeartBeatProd;
 import org.eso.ias.plugin.test.example.SimulatedWeatherStation.SimulatedMonitorPoint;
+import org.eso.ias.types.Identifier;
+import org.eso.ias.types.IdentifierType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,9 +52,10 @@ public class DumbWeatherStationPlugin extends Plugin {
 	 * Constructor
 	 * @param config The configuration of the plugin
 	 * @param sender The sender
+	 * @param hbProucer the publisher of HBs
 	 */
-	public DumbWeatherStationPlugin(PluginConfig config, MonitorPointSender sender) {
-		super(config, sender);
+	public DumbWeatherStationPlugin(PluginConfig config, MonitorPointSender sender, HbProducer hbProd) {
+		super(config, sender,hbProd);
 	}
 	
 	/**
@@ -217,7 +225,15 @@ public class DumbWeatherStationPlugin extends Plugin {
 				Plugin.getScheduledExecutorService(), 
 				jsonWriter);
 		
-		DumbWeatherStationPlugin plugin = new DumbWeatherStationPlugin(config,jsonPublisher);
+		
+		Identifier monSysIdentifier = new Identifier(config.getMonitoredSystemId(), IdentifierType.MONITORED_SOFTWARE_SYSTEM);
+		Identifier pluginIdentifier = new Identifier(config.getId(), IdentifierType.PLUGIN,monSysIdentifier);
+		
+		
+		HbMsgSerializer hbSerializer = new HbJsonSerializer();
+		HbProducer hbProd = new MockHeartBeatProd(hbSerializer);
+		
+		DumbWeatherStationPlugin plugin = new DumbWeatherStationPlugin(config,jsonPublisher,hbProd);
 		try {
 			plugin.start();
 		} catch (PublisherException pe) {

@@ -1,0 +1,6 @@
+[
+	{
+	"className" : "org.eso.ias.asce.transfer.impls.MinMaxThresholdTF",
+	"implLang" : "SCALA"
+	}
+]

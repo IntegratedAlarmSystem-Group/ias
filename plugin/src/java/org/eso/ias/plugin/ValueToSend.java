@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.TimeZone;
 
-import org.eso.ias.plugin.filter.Filter.ValidatedSample;
+import org.eso.ias.plugin.filter.Filter.EnrichedSample;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.types.IasValidity;
 import org.eso.ias.types.OperationalMode;
@@ -39,6 +39,16 @@ public class ValueToSend extends FilteredValue {
 	public final OperationalMode operationalMode;
 	
 	/**
+	 * The value to send can be generated out of many samples
+	 * that are all supposed to arrive before the refresh time elapses,
+	 * where the refresh rate is the time the monitored system 
+	 * or the device produces a new value. If it is not the case
+	 * the something went wrong because same sampling has been 
+	 * lost.
+	 */
+	public final boolean degraded;
+	
+	/**
 	 * The validity
 	 */
 	public final IasValidity iasValidity;
@@ -56,7 +66,7 @@ public class ValueToSend extends FilteredValue {
 	public ValueToSend(
 			String id, 
 			Object value, 
-			List<ValidatedSample> samples, 
+			List<EnrichedSample> samples, 
 			long monitoredSystemTimestamp, 
 			OperationalMode opMode,
 			IasValidity iasValidity) {
@@ -66,22 +76,13 @@ public class ValueToSend extends FilteredValue {
 		if (id.isEmpty()){ 
 			throw new IllegalArgumentException("Invalid empty ID");
 		}
+		Objects.requireNonNull(iasValidity, "Undefined validity");
 		this.id=id;
 		this.operationalMode=opMode;
 		this.iasValidity=iasValidity;
-	}
-	
-	/**
-	 * Builds a ValueToSend with a unknown operational mode
-	 * and unreliable.
-	 *  
-	 * @param id The ID of the value
-	 * @param value The value to send to the IAS core
-	 * @param samples The history of samples used by the filter to produce the value
-	 * @param monitoredSystemTimestamp The timestamp when the value has been provided by the monitored system
-	 */
-	public ValueToSend(String id, Object value, List<ValidatedSample> samples, long monitoredSystemTimestamp) {
-		this(id,value, samples, monitoredSystemTimestamp,OperationalMode.UNKNOWN,IasValidity.UNRELIABLE);
+		// The value is degraded if at least one sample
+		// was not produced in time (i.e. before the refresh rate elapsed)
+		this.degraded = samples.stream().anyMatch( es -> !es.generatedInTime);
 	}
 	
 	/**
@@ -94,27 +95,17 @@ public class ValueToSend extends FilteredValue {
 	public ValueToSend(
 			String id, 
 			FilteredValue filteredValue, 
-			OperationalMode opMode) {
-		this(id,filteredValue.value,filteredValue.samples, filteredValue.producedTimestamp,opMode,filteredValue.validity);
+			OperationalMode opMode,
+			IasValidity actualValidity) {
+		this(
+				id,
+				filteredValue.value,
+				filteredValue.samples, 
+				filteredValue.producedTimestamp,
+				opMode,
+				actualValidity);
 	}
-//	
-//	/**
-//	 * Builds a <code>ValueToSend</code> from the passed <code>FilteredValue</code>
-//	 * with a unknown operational mode and unreliable.
-//	 * 
-//	 * @param id The ID of the value 
-//	 * @param filteredValue The value produced applying the filter
-//	 */
-//	public ValueToSend(String id, FilteredValue filteredValue) {
-//		this(
-//				id,
-//				filteredValue.value,
-//				filteredValue.samples, 
-//				filteredValue.producedTimestamp,
-//				OperationalMode.UNKNOWN,
-//				IasValidity.UNRELIABLE);
-//	}
-//
+
 	/**
 	 * Builds and return a new <code>ValueToSend</code> with the assigned 
 	 * operational mode.
@@ -123,19 +114,29 @@ public class ValueToSend extends FilteredValue {
 	 * @return The new value with the passed operational mode
 	 */
 	public ValueToSend withMode(OperationalMode opMode) {
-		return new ValueToSend(id, value, samples, producedTimestamp,opMode,iasValidity);
+		if (opMode==operationalMode) {
+			return this;
+		} else {
+			return new ValueToSend(id, value, samples, producedTimestamp,opMode,iasValidity);
+		}
 	}
-//	
-//	/**
-//	 * Builds and return a new <code>ValueToSend</code> with the assigned 
-//	 * validity.
-//	 * 
-//	 * @param iasValidity  The validity
-//	 * @return The new value with the passed validity
-//	 */
-//	public ValueToSend withValidity(IasValidity iasValidity) {
-//		return new ValueToSend(id, value, samples, producedTimestamp,operationalMode,iasValidity);
-//	}
+	
+	/**
+	 * Builds and return a new <code>ValueToSend</code> with the assigned 
+	 * ID. 
+	 * This method supports replication that changes the ID before sending 
+	 * the value to the BSDB
+	 * 
+	 * @param newId  The new ID of the value to send to the BSDB
+	 * @return A new value with the passed ID
+	 */
+	public ValueToSend withId(String newId) {
+		if (newId.equals(id)) {
+			return this;
+		} else {
+			return new ValueToSend(newId, value, samples, producedTimestamp,operationalMode,iasValidity);
+		}
+	}
 	
 	/**
 	 * 

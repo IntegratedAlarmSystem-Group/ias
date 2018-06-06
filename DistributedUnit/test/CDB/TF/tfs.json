@@ -1,0 +1,5 @@
+[
+	{"className" : "org.eso.ias.asce.transfer.impls.MinMaxThresholdTF","implLang" : "SCALA"},
+	{"className" : "org.eso.ias.asce.transfer.impls.MultiplicityTF","implLang" : "SCALA"},
+	{"className" : "org.eso.ias.dasu.test.transferfunction.AverageTempsTF",	"implLang" : "SCALA"}
+]

@@ -1,8 +1,8 @@
 package org.eso.ias.plugin.test.publisher;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -13,11 +13,12 @@ import java.util.List;
 
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
-import org.eso.ias.plugin.filter.Filter.ValidatedSample;
+import org.eso.ias.plugin.filter.Filter.EnrichedSample;
 import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
 import org.eso.ias.types.IasValidity;
+import org.eso.ias.types.OperationalMode;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -130,13 +131,13 @@ public class BufferedMonitoredSystemDataTest extends PublisherTestCommon {
 		String isoDate = iso8601dateFormat.format(new Date(now));
 		msData.setPublishTime(isoDate);
 		
-		List<ValidatedSample> samples = Arrays.asList(new ValidatedSample(new Sample(Integer.valueOf(67)),IasValidity.RELIABLE));
+		List<EnrichedSample> samples = Arrays.asList(new EnrichedSample(new Sample(Integer.valueOf(67)),true));
 		List<MonitorPointDataToBuffer> values = Arrays.asList(
-				new MonitorPointDataToBuffer(new ValueToSend("FV-ID1", Integer.valueOf(67), samples, System.currentTimeMillis()+10)),
-				new MonitorPointDataToBuffer(new ValueToSend("FV-ID2", Long.valueOf(123), samples, System.currentTimeMillis()+20)),
-				new MonitorPointDataToBuffer(new ValueToSend("FV-ID3", "A string", samples, System.currentTimeMillis()+30)),
-				new MonitorPointDataToBuffer(new ValueToSend("FV-ID4", Boolean.valueOf(true), samples, System.currentTimeMillis()+40)),
-				new MonitorPointDataToBuffer(new ValueToSend("FV-ID5", Integer.valueOf(11), samples, System.currentTimeMillis()+50)));
+				new MonitorPointDataToBuffer(new ValueToSend("FV-ID1", Integer.valueOf(67), samples, System.currentTimeMillis()+10,OperationalMode.OPERATIONAL,IasValidity.RELIABLE)),
+				new MonitorPointDataToBuffer(new ValueToSend("FV-ID2", Long.valueOf(123), samples, System.currentTimeMillis()+20,OperationalMode.OPERATIONAL,IasValidity.RELIABLE)),
+				new MonitorPointDataToBuffer(new ValueToSend("FV-ID3", "A string", samples, System.currentTimeMillis()+30,OperationalMode.OPERATIONAL,IasValidity.RELIABLE)),
+				new MonitorPointDataToBuffer(new ValueToSend("FV-ID4", Boolean.valueOf(true), samples, System.currentTimeMillis()+40,OperationalMode.OPERATIONAL,IasValidity.RELIABLE)),
+				new MonitorPointDataToBuffer(new ValueToSend("FV-ID5", Integer.valueOf(11), samples, System.currentTimeMillis()+50,OperationalMode.OPERATIONAL,IasValidity.RELIABLE)));
 		
 		msData.setMonitorPoints(values);
 		

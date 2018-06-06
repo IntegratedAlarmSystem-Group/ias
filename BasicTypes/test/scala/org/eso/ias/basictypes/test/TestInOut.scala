@@ -9,7 +9,7 @@ import org.eso.ias.types.IdentifierType
 import org.eso.ias.types.IASValue
 import org.eso.ias.types.IasValidity._
 import org.eso.ias.types.OperationalMode
-import org.eso.ias.types.AlarmSample
+import org.eso.ias.types.Alarm
 import org.eso.ias.types.IasValidity
 
 /**
@@ -45,6 +45,7 @@ class TestInOut extends FlatSpec {
         id, 
         OperationalMode.OPERATIONAL, 
         Some(RELIABLE),
+        None,
         None,
         IASTypes.LONG,
         None,
@@ -145,7 +146,7 @@ class TestInOut extends FlatSpec {
     val hioBool: InOut[Boolean] = InOut.asInput(id, IASTypes.BOOLEAN)
     val hioChar: InOut[Char] = InOut.asInput(id, IASTypes.CHAR)
     val hioString: InOut[String] = InOut.asInput(id, IASTypes.STRING)
-    val hioAlarm: InOut[AlarmSample] = InOut.asInput(id, IASTypes.ALARM)
+    val hioAlarm: InOut[Alarm] = InOut.asInput(id, IASTypes.ALARM)
 
     // Check if all the types has been instantiated
     val listOfHIOs = List(hioLong, hioShort, hioInt, hioByte, hioDouble, hioFloat, hioBool, hioChar, hioString, hioAlarm)
@@ -160,7 +161,7 @@ class TestInOut extends FlatSpec {
     hioBool.updateValue(Some(false))
     hioChar.updateValue(Some('C'))
     hioString.updateValue(Some("Test"))
-    hioAlarm.updateValue(Some(AlarmSample.SET))
+    hioAlarm.updateValue(Some(Alarm.SET_MEDIUM))
   }
 
   it must "build and update from a passed IASValue" in {
@@ -233,6 +234,43 @@ class TestInOut extends FlatSpec {
         assert(properties(key)==value)
     })
     
+  }
+  
+  it must "not update the validity constraint for inputs" in {
+    val iasio = InOut.asInput(id, IASTypes.ALARM)
+    assertThrows[IllegalArgumentException] {
+      iasio.setValidityConstraint(Some(Set("ID")))
+    }
+  }
+  
+  it must "update the validity constraint for outputs" in {
+    val iasio = InOut.asOutput(id, IASTypes.ALARM)
+    val constraints = Some(Set("ID", "ID2"))
+    val i2=iasio.setValidityConstraint(constraints)
+    assert(i2.validityConstraint.isDefined)
+    assert(i2.validityConstraint==constraints)
+    
+    val i3 = i2.setValidityConstraint(None)
+    assert(!i3.validityConstraint.isDefined)
+    val i4 = i3.setValidityConstraint(Option(Set.empty))
+    assert(!i4.validityConstraint.isDefined)
+  }
+  
+  it must "calculate the validity by time of inputs" in {
+    val timeFrame = 3000;
+    val inOut = InOut.asInput(id,IASTypes.LONG).updateValueValidity(Some(5L), Some(RELIABLE)).updateDasuProdTStamp(System.currentTimeMillis())
+    assert(inOut.getValidityOfInputByTime(timeFrame).iasValidity==RELIABLE,"Shall not be RELIABLE")
+    // Give time to invalidate
+    Thread.sleep(timeFrame+1000)
+    assert(inOut.getValidityOfInputByTime(timeFrame).iasValidity==UNRELIABLE,"Invalid reliablity")
+  }
+  
+  it must "NOT calculate the validity by time of outputs" in {
+    val inOut = InOut.asOutput(id,IASTypes.LONG).updateValueValidity(Some(125L), Some(RELIABLE)).updateDasuProdTStamp(System.currentTimeMillis())
+    // Calculating the validity by time thoros an exception
+    assertThrows[IllegalArgumentException] {
+      inOut.getValidityOfInputByTime(1000)
+    }
   }
 
 }

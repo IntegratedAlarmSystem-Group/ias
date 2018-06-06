@@ -1,0 +1,9 @@
+{
+	"logLevel":"INFO",
+	"id":"Supervisor-ID4",
+	"hostName":"ias.osf.alma.cl",
+	"dasusToDeploy":[
+		{"dasuId":"DasuID5","templateId":"template1-ID","instance":"3"},
+		{"dasuId":"DasuID6","templateId":"template3-ID","instance":"5"}
+	]
+}

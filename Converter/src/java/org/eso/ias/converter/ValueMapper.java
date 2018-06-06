@@ -11,7 +11,7 @@ import org.eso.ias.converter.config.MonitorPointConfiguration;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.types.Identifier;
-import org.eso.ias.types.AlarmSample;
+import org.eso.ias.types.Alarm;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
 import org.eso.ias.types.IasValidity;
@@ -168,7 +168,7 @@ public class ValueMapper implements Function<String, String> {
     		break;
     	}
     	case ALARM: {
-    		convertedValue=AlarmSample.valueOf(remoteSystemData.getValue());
+    		convertedValue=Alarm.valueOf(remoteSystemData.getValue());
     		break;
     	}
 		default: throw new UnsupportedOperationException("Unsupported type "+type);

@@ -4,7 +4,7 @@ import org.scalatest.FlatSpec
 import org.scalatest.BeforeAndAfter
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.types.IASValue
-import org.ias.logging.IASLogger
+import org.eso.ias.logging.IASLogger
 
 /**
  * Checks the timestamps of the output produced by a DASU

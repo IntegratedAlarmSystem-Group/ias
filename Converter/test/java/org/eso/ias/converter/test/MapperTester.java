@@ -1,19 +1,19 @@
 package org.eso.ias.converter.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.eso.ias.converter.ValueMapper;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
-import org.eso.ias.types.AlarmSample;
+import org.eso.ias.types.Alarm;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test the mapper function i.e. the function that gets
@@ -30,7 +30,7 @@ public class MapperTester extends ConverterTestBase {
 	 */
 	private ValueMapper mapper;
 	
-	@Before
+	@BeforeEach
 	public void setUp() {
 		// Ensures we are going to test all implemented types
 		assertTrue(IASTypes.values().length==mpdHolders.length);
@@ -40,7 +40,7 @@ public class MapperTester extends ConverterTestBase {
 		mapper = new ValueMapper(testerDao, iasValueSerializer, converterID);
 	}
 	
-	@After
+	@AfterEach
 	public void tearDown() {
 		
 	}
@@ -58,7 +58,7 @@ public class MapperTester extends ConverterTestBase {
 		MonitorPointDataHolder unconfiguredMpdh = 
 				new MonitorPointDataHolder(
 						"Unrecognized",
-						AlarmSample.CLEARED, 
+						Alarm.CLEARED, 
 						System.currentTimeMillis()-100,
 						System.currentTimeMillis(),
 						IASTypes.ALARM);

@@ -12,9 +12,11 @@ import org.eso.ias.cdb.CdbWriter;
 import org.eso.ias.cdb.IasCdbException;
 import org.eso.ias.cdb.pojos.AsceDao;
 import org.eso.ias.cdb.pojos.DasuDao;
+import org.eso.ias.cdb.pojos.DasuToDeployDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
+import org.eso.ias.cdb.pojos.TemplateDao;
 import org.eso.ias.cdb.pojos.TransferFunctionDao;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
@@ -49,7 +51,7 @@ public class RdbWriter implements CdbWriter {
 		s.flush();
 		s.close();
 	}
-
+	
 	/**
 	 * Write the Supervisor in the CDB.
 	 * 
@@ -146,6 +148,22 @@ public class RdbWriter implements CdbWriter {
 		Session s=rdbUtils.getSession();
 		Transaction t =s.beginTransaction();
 		s.merge(tf);
+		t.commit();
+		s.flush();
+	}
+	
+	/**
+	 *  Persist the passed template to the CDB
+	 *  
+	 *  @param template The template Dao to write in the CDB
+	 *  @throws IasCdbException In case of error writing the template
+	 */
+	@Override
+	public void writeTemplate(TemplateDao template) throws IasCdbException {
+		Objects.requireNonNull(template, "The template object to persist can't be null");
+		Session s=rdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		s.merge(template);
 		t.commit();
 		s.flush();
 	}

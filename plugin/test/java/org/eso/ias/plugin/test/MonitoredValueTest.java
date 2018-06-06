@@ -1,9 +1,9 @@
 package org.eso.ias.plugin.test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -19,10 +19,11 @@ import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.NoneFilter;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.Test;
+import org.eso.ias.types.IasValidity;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,12 +60,15 @@ public class MonitoredValueTest implements ChangeValueListener {
 	private MonitoredValue mVal;
 	
 	/**
-	 * The refresh rate of the monitor point in msec
-	 * <P>
-	 * This value must be chosen big enough to let the value
-	 * submit a values before the timer takes control
+	 * The refresh rate of the monitor point in msec as it is defined in the
+	 * monitored system
 	 */
 	private final long refreshRate = 1000;
+	
+	/**
+	 * The time to send the value to the BSDB if it did not change
+	 */
+	private final int iasPeriodicSendTI = 4;
 	
 	/**
 	 * The samaphore to wait for the sending of events
@@ -81,18 +85,18 @@ public class MonitoredValueTest implements ChangeValueListener {
 	 */
 	private static final String mValueId= "A-Valid-ID";
 	
-	@Before
+	@BeforeEach
 	public void setUp() {
-		mVal = new MonitoredValue(mValueId, refreshRate, schedExecutorSvc, this);
+		mVal = new MonitoredValue(mValueId, refreshRate, schedExecutorSvc, this,iasPeriodicSendTI);
+		mVal.start();
 	}
 	
-	@After
+	@AfterEach
 	public void tearDown() {
-		mVal.enablePeriodicNotification(false);
-
+		mVal.shutdown();
 	}
 	
-	@AfterClass
+	@AfterAll
 	public static void shutdownAll() {
 		schedExecutorSvc.shutdown();
 	}
@@ -108,7 +112,7 @@ public class MonitoredValueTest implements ChangeValueListener {
 		Sample s = new Sample(Integer.valueOf(127));
 		mVal.submitSample(s);
 		// Wait but not enough to let the timer shot
-		assertTrue(countDownLatch.await(refreshRate/2, TimeUnit.MILLISECONDS));
+		assertTrue(countDownLatch.await(iasPeriodicSendTI/2, TimeUnit.SECONDS));
 		assertEquals(1L, receivedValues.size());
 		assertEquals(s.value, receivedValues.get(0).value);
 		assertEquals(mValueId,receivedValues.get(0).id);
@@ -150,7 +154,7 @@ public class MonitoredValueTest implements ChangeValueListener {
 		Sample s = new Sample(Integer.valueOf(135));
 		mVal.submitSample(s);
 		// Wait but not enough to let the timer shot
-		assertTrue(countDownLatch.await((1+expectedNotifications)*refreshRate, TimeUnit.MILLISECONDS));
+		assertTrue(countDownLatch.await((1+expectedNotifications)*iasPeriodicSendTI, TimeUnit.SECONDS));
 		assertEquals(expectedNotifications, receivedValues.size());
 	}
 	
@@ -160,15 +164,19 @@ public class MonitoredValueTest implements ChangeValueListener {
 	@Test
 	public void testPeriodicNotification() throws Exception {
 		Sample s = new Sample(Integer.valueOf(17751));
+		logger.info("testPeriodicNotification sumbitted a sample with value {}",s.value.toString());
 		mVal.submitSample(s);
 		mVal.enablePeriodicNotification(false);
 		// Give time to send the value as effect of the submit
 		Thread.sleep(1000);
 		countDownLatch = new CountDownLatch(1);
 		// Check that notifications are disabled 
-		assertFalse(countDownLatch.await(2000, TimeUnit.MILLISECONDS));
+		logger.info("Is the periodic send disabled?");
+		assertFalse(countDownLatch.await(2*iasPeriodicSendTI, TimeUnit.SECONDS));
 		mVal.enablePeriodicNotification(true);
-		assertTrue(countDownLatch.await(2000, TimeUnit.MILLISECONDS));
+		logger.info("Is the periodic send enabled?");
+		assertTrue(countDownLatch.await(2*iasPeriodicSendTI, TimeUnit.SECONDS));
+		logger.info("testPeriodicNotification done");
 	}
 	
 
@@ -184,4 +192,51 @@ public class MonitoredValueTest implements ChangeValueListener {
 			countDownLatch.countDown();
 		}
 	}
+	
+	/**
+	 * Tests if the validity is properly set before sending a Value to the BSDB
+	 */
+	@Test
+	public void testSettingOfValidity() throws Exception {
+		logger.info("testSettingOfValidity test started");
+		Sample s = new Sample(Integer.valueOf(3));
+		
+		mVal.submitSample(s);
+		while (receivedValues.size()<1) {
+			Thread.sleep(50);
+		}
+		ValueToSend receivedValue = receivedValues.get(0);
+		assertEquals(IasValidity.RELIABLE, receivedValue.iasValidity);
+		
+		Thread.sleep(2*refreshRate);
+		while (receivedValues.size()<2) {
+			Thread.sleep(50);
+		}
+		receivedValue = receivedValues.get(1);
+		assertEquals(IasValidity.UNRELIABLE, receivedValue.iasValidity);
+		
+		logger.info("testSettingOfValidity test done");
+	}
+	
+	/**
+	 * Checks that a value is not sent if its
+	 * value did not change
+	 */
+	@Test
+	public void testSendOnlyDifferentValues() throws Exception {
+		logger.info("testSendOnlyDifferentValues test started");
+		
+		mVal.enablePeriodicNotification(false);
+		
+		// Sends many time the same value
+		for (int t=0; t<=11; t++) {
+			Sample s = new Sample(Integer.valueOf(13));
+			mVal.submitSample(s);
+		}
+		Thread.sleep(1000);
+		assertEquals(1, receivedValues.size());
+		
+		logger.info("testSendOnlyDifferentValues done");
+	}
+	
 }

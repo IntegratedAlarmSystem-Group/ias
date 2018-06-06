@@ -1,1 +1,6 @@
-{"logLevel":"INFO","id":"Supervisor-ID2","hostName":"almaias.eso.org","dasusIDs":[]}
+{
+	"logLevel":"INFO",
+	"id":"Supervisor-ID2",
+	"hostName":"almaias.eso.org",
+	"dasusToDeploy":[]
+}

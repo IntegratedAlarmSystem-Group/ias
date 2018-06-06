@@ -2,13 +2,13 @@ package org.eso.ias.asce.transfer.impls
 
 import org.eso.ias.asce.transfer.ScalaTransferExecutor
 import java.util.Properties
-import org.eso.ias.types.InOut
 import org.eso.ias.asce.exceptions.PropsMisconfiguredException
 import org.eso.ias.asce.exceptions.UnexpectedNumberOfInputsException
 import org.eso.ias.types.IASTypes._
 import org.eso.ias.asce.exceptions.TypeMismatchException
 import MinMaxThresholdTF._
-import org.eso.ias.types.AlarmSample
+import org.eso.ias.types.Alarm
+import org.eso.ias.asce.transfer.IasIO
 
 /**
  * The TF implementing a Min/Max threshold TF  (there is also
@@ -38,11 +38,15 @@ import org.eso.ias.types.AlarmSample
  *               becomes greater then LowOFF, then the alarm is deactivated
  *  <LI>LowON: the (low) alarm is activated when the value of the IASIO is
  *             lower then LowON
- *             
+ *         
+ * @param asceId: the ID of the ASCE
+ * @param asceRunningId: the runningID of the ASCE
+ * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
+ * @param props: the user defined properties    
  * @author acaproni
  */
-class MinMaxThresholdTF(cEleId: String, cEleRunningId: String, props: Properties) 
-extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
+class MinMaxThresholdTF(cEleId: String, cEleRunningId: String, validityTimeFrame:Long, props: Properties) 
+extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame, props) {
   
   /**
    * The (high) alarm is activated when the value of the IASIO 
@@ -69,6 +73,14 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
   lazy val lowOff: Double = getValue(props, lowOffPropName, lowOn)
   
   /**
+   * The priority of the alarm can be set defining a property; 
+   * otherwise use the default
+   */
+  val alarmSet: Alarm = 
+    Option(props.getProperty(alarmPriorityPropName)).map(Alarm.valueOf(_)).getOrElse(Alarm.getSetDefault) 
+  
+  
+  /**
    * Get the value of a property from the passed properties.
    * 
    * @param props: The properties to look for the property with 
@@ -85,6 +97,8 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
       default
     }
   }
+  
+  
   
   /**
    * Initialize the TF by getting the four properties
@@ -115,9 +129,13 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
   /**
    * @see ScalaTransferExecutor#eval
    */
-  def eval(compInputs: Map[String, InOut[_]], actualOutput: InOut[AlarmSample]): InOut[AlarmSample] = {
-    if (compInputs.size!=1) throw new UnexpectedNumberOfInputsException(compInputs.size,1)
-    if (actualOutput.iasType!=ALARM) throw new TypeMismatchException(actualOutput.id.runningID,actualOutput.iasType,ALARM)
+  def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
+    if (compInputs.size!=1) {
+      throw new UnexpectedNumberOfInputsException(compInputs.size,1)
+    }
+    if (actualOutput.iasType!=ALARM) {
+      throw new TypeMismatchException(actualOutput.fullRunningId,actualOutput.iasType,ALARM)
+    }
     
     // Get the input
     val iasio = compInputs.values.head
@@ -129,44 +147,40 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
       case BYTE => iasio.value.get.asInstanceOf[Byte].toDouble
       case DOUBLE => iasio.value.get.asInstanceOf[Double]
       case FLOAT => iasio.value.get.asInstanceOf[Float].toDouble
-      case _ => throw new TypeMismatchException(iasio.id.runningID,iasio.iasType,List(LONG,INT,SHORT,BYTE,DOUBLE,FLOAT))
+      case _ => throw new TypeMismatchException(iasio.fullRunningId,iasio.iasType,List(LONG,INT,SHORT,BYTE,DOUBLE,FLOAT))
     }
     
     // It cope with the case that the value of the actual output is not 
     // defined (i.e. it is Optional.empty. In that case the variable
     // is initialized to false 
-    val temp = actualOutput.value.map { x => x==AlarmSample.SET }.orElse(Some(false))
+    val wasSet = actualOutput.value.map(_!=Alarm.cleared()).getOrElse(false)
  
     // The condition is true if the value is over the limits (high on and low on)
     // but remains set is the old values was set and the value is
     // between high on and hiogh off or between low on and low off
     val condition = 
       (doubleValue>=highOn || doubleValue<=lowOn) ||
-      temp.get && (doubleValue>=highOff || doubleValue<=lowOff)
-    val newValue = AlarmSample.fromBoolean(condition)
-    actualOutput.updateValue(Some(newValue)).updateMode(iasio.mode).updateProps(Map("actualValue"->doubleValue.toString()))
+      wasSet && (doubleValue>=highOff || doubleValue<=lowOff)
+    val newValue = if (condition) alarmSet else Alarm.cleared()
+    actualOutput.updateValue(newValue).updateMode(iasio.mode).updateProps(Map("actualValue"->doubleValue.toString()))
   }
   
 }
 
 object MinMaxThresholdTF {
- /**
-   * The name of the HighOn property
-   */
+  
+ /** The name of the HighOn property */
   val highOnPropName = "org.eso.ias.tf.minmaxthreshold.highOn"
   
-  /**
-   * The name of the HighOff property
-   */
+  /** The name of the HighOff property  */
   val highOffPropName = "org.eso.ias.tf.minmaxthreshold.highOff"
   
-  /**
-   * The name of the lowOn property
-   */
+  /** The name of the lowOn property */
   val lowOnPropName = "org.eso.ias.tf.minmaxthreshold.lowOn"
   
-  /**
-   * The name of the lowOff property
-   */
+  /** The name of the lowOff property  */
   val lowOffPropName = "org.eso.ias.tf.minmaxthreshold.lowOff" 
+  
+  /** The name of the property to set the priority of the alarm */
+  val alarmPriorityPropName = "org.eso.ias.tf.alarm.priority"
 }

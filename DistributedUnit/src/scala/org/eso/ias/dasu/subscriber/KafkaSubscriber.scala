@@ -1,6 +1,6 @@
 package org.eso.ias.dasu.subscriber
 
-import org.ias.logging.IASLogger
+import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IasValueJsonSerializer
 import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener
 import java.util.Properties
@@ -11,6 +11,7 @@ import scala.collection.mutable.{HashSet => MutableSet}
 import org.eso.ias.kafkautils.KafkaIasiosConsumer
 import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener
 import org.eso.ias.types.IASValue
+import org.eso.ias.kafkautils.KafkaIasiosProducer
 
 /** 
  *  Read IASValues from the kafka queue 
@@ -25,13 +26,11 @@ import org.eso.ias.types.IASValue
  */
 class KafkaSubscriber(
     val dasuId: String, 
-    serversList: String,
-    topicName: String,
+    private val kafkaConsumer: KafkaIasiosConsumer,
     val props: Properties) 
 extends IasioListener with InputSubscriber {
   require(Option(dasuId).isDefined && !dasuId.isEmpty())
-  require(Option(serversList).isDefined && !dasuId.isEmpty())
-  require(Option(topicName).isDefined && !dasuId.isEmpty())
+  require(Option(kafkaConsumer).isDefined && !dasuId.isEmpty())
   require(Option(props).isDefined)
   
   props.setProperty("group.id", dasuId+"-GroupID")
@@ -42,43 +41,12 @@ extends IasioListener with InputSubscriber {
   /** To serialize IASValues to JSON strings */
   private val jsonSerializer = new IasValueJsonSerializer()
   
-  /** The Kafka consumer */
-  private val kafkaConsumer = new KafkaIasiosConsumer(serversList, topicName, dasuId)
-  
   /** The listener of events */
   private var listener: Option[InputsListener] = None
   
   /** The set of inputs accepted by the DASU */
   private val acceptedInputs = MutableSet[String]()
-  
-  /**
-   * Auxiliary constructor with default topic and servers list
-   * @param serversList the list of kafka brojkers to connect to
-   * @param dasuId the identifier of the DASU
-   * @param props additional properties
-   */
-  def this(dasuId: String, props: Properties) = {
-    this(
-        dasuId,
-        props.getProperty(KafkaHelper.BROKERS_PROPNAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS),
-        KafkaHelper.IASIOs_TOPIC_NAME,
-        props)
-  }
-  
-  /**
-   * Auxiliary constructor with default servers list
-   * 
-   * @param dasuId the identifier of the DASU
-   * @param topicName the name of the kafka topic to poll events from
-   * @param props additional properties
-   */
-  def this(dasuId: String, topicName: String,props: Properties) = {
-    this(
-        dasuId,
-        props.getProperty(KafkaHelper.BROKERS_PROPNAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS),
-        topicName,
-        props)
-  }
+
   
   /**
 	 * Process an event (a String) received from the kafka topic
@@ -133,4 +101,39 @@ extends IasioListener with InputSubscriber {
       logger.info("The subscriber of DASU [{}] is polling events from kafka",dasuId)
     }
   }
+}
+
+object KafkaSubscriber {
+  /** 
+   *  Factory method
+   *  
+   * @param dasuId the identifier of the DASU
+   * @param kafkaTopic the kafka topic to send the output to;
+   *                   if empty uses defaults from KafkaHelper
+   * @param kafkaServers kafka servers; 
+   *                     overridden by KafkaHelper.BROKERS_PROPNAME java property, if present
+   * @param props additional set of properties
+   */
+  def apply(
+      dasuId: String, 
+      kafkaTopic: Option[String], 
+      kafkaServers: Option[String], 
+      props: Properties): KafkaSubscriber = {
+    
+    // Get the topic from the parameter or from the default  
+    val topic = kafkaTopic.getOrElse(KafkaHelper.IASIOs_TOPIC_NAME);
+    
+    val serversFromProps = Option( props.getProperty(KafkaHelper.BROKERS_PROPNAME))
+    val kafkaBrokers = (serversFromProps, kafkaServers) match {
+      case (Some(servers), _) => servers
+      case ( None, Some(servers)) => servers
+      case (_, _) => KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS
+    }
+    
+    
+    val kafkaConsumer = new KafkaIasiosConsumer(kafkaBrokers,topic,dasuId+"Consumer")
+    new KafkaSubscriber(dasuId,kafkaConsumer,props)
+  }
+  
+  
 }

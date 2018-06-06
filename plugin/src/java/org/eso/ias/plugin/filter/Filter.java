@@ -1,10 +1,8 @@
 package org.eso.ias.plugin.filter;
 
-import java.util.Objects;
 import java.util.Optional;
 
 import org.eso.ias.plugin.Sample;
-import org.eso.ias.types.IasValidity;
 
 /**
  * The interface defining filter to apply to a monitored value 
@@ -16,17 +14,20 @@ import org.eso.ias.types.IasValidity;
 public interface Filter {
 	
 	/**
-	 * The sample enriched with its validity
+	 * The sample enriched with a flag to know if it has
+	 * been generate before the refreshRate elapsed.
 	 * 
 	 * @author acaproni
 	 *
 	 */
-	public class ValidatedSample extends Sample {
+	public class EnrichedSample extends Sample {
 		
 		/**
-		 * The validity of the sample
+		 * The generatedInTime flag records if the
+		 * sample has been provided before teh refreshRate 
+		 * elapsed.
 		 */
-		public final IasValidity  validity;
+		public final boolean  generatedInTime;
 
 		/**
 		 * Constructor
@@ -34,10 +35,9 @@ public interface Filter {
 		 * @param s The sample
 		 * @param validity The validity
 		 */
-		public ValidatedSample(Sample s, IasValidity  validity) {
+		public EnrichedSample(Sample s, boolean generatedInTime) {
 			super(s.value, s.timestamp);
-			Objects.requireNonNull(validity);
-			this.validity = validity;
+			this.generatedInTime= generatedInTime;
 		}
 
 	}
@@ -57,7 +57,7 @@ public interface Filter {
 	 * @return the value after applying the filter the newly received filter
 	 * @throws FilterException If the sample is not timely ordered
 	 */
-	public Optional<FilteredValue> newSample(ValidatedSample newSample) throws FilterException;
+	public Optional<FilteredValue> newSample(EnrichedSample newSample) throws FilterException;
 	
 	/**
 	 * Apply the filter to the samples already in the history 

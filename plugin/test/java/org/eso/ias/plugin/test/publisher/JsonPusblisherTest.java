@@ -1,8 +1,8 @@
 package org.eso.ias.plugin.test.publisher;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -18,15 +18,15 @@ import org.eso.ias.types.IasValidity;
 import org.eso.ias.types.OperationalMode;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
-import org.eso.ias.plugin.filter.Filter.ValidatedSample;
+import org.eso.ias.plugin.filter.Filter.EnrichedSample;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
 import org.eso.ias.plugin.publisher.impl.JsonFilePublisher;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,7 +75,7 @@ public class JsonPusblisherTest {
 	 */
 	private final static Logger logger = LoggerFactory.getLogger(JsonPusblisherTest.class);
 	
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		jsonFile = File.createTempFile("JsonPusblisherTest", ".json", new File(System.getProperty("ias.tmp.folder")));
 		logger.info("JSON data will be written in: {}",jsonFile.getAbsolutePath());
@@ -90,21 +90,21 @@ public class JsonPusblisherTest {
 		publisher.startSending();
 	}
 	
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		publisher.tearDown();
 	}
 
 	@Test
 	public void testPublishing() throws Exception {
-		List<ValidatedSample> samples = Arrays.asList(new ValidatedSample(new Sample(Integer.valueOf(67)),IasValidity.RELIABLE));
+		List<EnrichedSample> samples = Arrays.asList(new EnrichedSample(new Sample(Integer.valueOf(67)),true));
 		
 		List<ValueToSend> values = Arrays.asList(
-				new ValueToSend("FV-ID1", Double.valueOf(6.7), samples, System.currentTimeMillis()),
+				new ValueToSend("FV-ID1", Double.valueOf(6.7), samples, System.currentTimeMillis(),OperationalMode.UNKNOWN,IasValidity.UNRELIABLE),
 				new ValueToSend("FV-ID2", Long.valueOf(1123), samples, System.currentTimeMillis(),OperationalMode.OPERATIONAL,IasValidity.RELIABLE),
 				new ValueToSend("FV-ID3", "Another string", samples, System.currentTimeMillis(),OperationalMode.MAINTENANCE,IasValidity.UNRELIABLE),
 				new ValueToSend("FV-ID4", Boolean.valueOf(false), samples, System.currentTimeMillis(),OperationalMode.STARTUP,IasValidity.RELIABLE),
-				new ValueToSend("FV-ID5", Integer.valueOf(-98), samples, System.currentTimeMillis()));
+				new ValueToSend("FV-ID5", Integer.valueOf(-98), samples, System.currentTimeMillis(),OperationalMode.UNKNOWN,IasValidity.UNRELIABLE));
 		
 		Map<String, ValueToSend> mapOfValues = new HashMap<>();
 
@@ -130,7 +130,7 @@ public class JsonPusblisherTest {
 			assertNotNull(fv);
 			System.out.println("FV="+fv.toString());
 			System.out.println("MPD="+mpd.toString());
-			assertTrue("Filtered value and the published data mismatch",PublisherTestCommon.match(fv, mpd));
+			assertTrue(PublisherTestCommon.match(fv, mpd),"Filtered value and the published data mismatch");
 		}
 		// Ok, everything went fine: the JSON file can be removed
 		jsonFile.deleteOnExit();

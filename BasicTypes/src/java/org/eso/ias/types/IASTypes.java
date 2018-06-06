@@ -26,13 +26,13 @@ public enum IASTypes {
     BOOLEAN(java.lang.Boolean.class,"BooleanType"), 
     CHAR(java.lang.Character.class,"CharType"), 
     STRING(java.lang.String.class,"StringType"), 
-    ALARM(AlarmSample.class,"AlarmType");
+    ALARM(Alarm.class,"AlarmType");
 	
-	public final Class typeClass; 
+	public final Class<?> typeClass; 
 	
 	public final String typeName;
     
-    private IASTypes(Class c, String typeName) {
+    private IASTypes(Class<?> c, String typeName) {
     	this.typeClass=c;
     	this.typeName=typeName;
 	}
@@ -73,4 +73,41 @@ public enum IASTypes {
     	default: throw new UnsupportedOperationException("Unsupported DAO type "+typeDao);
     	}
     }
+    
+    /**
+	 * Parse the passed string java object
+	 * 
+	 * @param value the string representation of the value
+	 * @return the java object for the give value and type
+	 */
+    public Object convertStringToObject(String value) {
+    	if (value==null || value.isEmpty()) {
+			throw new IllegalArgumentException("Invalid null or empty value string to parse");
+		}
+    	switch (this) {
+    	case LONG: return Long.parseLong(value);
+    	case INT: return Integer.parseInt(value);
+    	case SHORT: return Short.parseShort(value);
+    	case BYTE: return Byte.parseByte(value);
+    	case DOUBLE: return Double.parseDouble(value);
+    	case FLOAT: return Float.parseFloat(value);
+    	case BOOLEAN: return Boolean.parseBoolean(value);
+    	case CHAR: return value.charAt(0);
+    	case STRING: return value;
+    	case ALARM: return Alarm.valueOf(value);
+    	default: throw new UnsupportedOperationException("Unsupported type "+this);
+	}
+    }
+    
+    /**
+	 * Parse the passed string of the given type into a java object
+	 * 
+	 * @param value the string representation of the value
+	 * @param valueType the type of the value
+	 * @return the java object for the give value and type
+	 */
+	public static Object convertStringToObject(String value, IASTypes valueType) {
+		Objects.requireNonNull(valueType);
+		return valueType.convertStringToObject(value);
+	}
 };

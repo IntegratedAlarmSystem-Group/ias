@@ -3,6 +3,8 @@
 	"monitoredSystemId":"ACS",
 	"sinkServer":"iasdevel.hq.eso.org",
 	"sinkPort":"8192",
+	"autoSendTimeInterval":"3",
+	"hbFrequency":"10",
 	"properties": [
 		{"key":"a-key",
 		"value":"itsValue"},

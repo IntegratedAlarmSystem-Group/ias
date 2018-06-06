@@ -1,6 +1,6 @@
 package org.eso.ias.dasu
 
-import org.ias.logging.IASLogger
+import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.Identifier
 import org.eso.ias.types.IasValueStringSerializer
 import org.eso.ias.types.IasValueJsonSerializer

@@ -9,10 +9,10 @@ import java.util.Objects;
 import org.eso.ias.converter.config.ConfigurationException;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
 import org.eso.ias.converter.config.MonitorPointConfiguration;
-import org.eso.ias.types.AlarmSample;
+import org.eso.ias.types.Alarm;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
-import org.eso.ias.plugin.filter.Filter.ValidatedSample;
+import org.eso.ias.plugin.filter.Filter.EnrichedSample;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.types.IASTypes;
@@ -23,8 +23,8 @@ import org.eso.ias.types.IasValueStringSerializer;
 import org.eso.ias.types.OperationalMode;
 
 /**
- * A base class providing common utlity methods used
- * y several test in Convereter.
+ * A base class providing common utility methods used
+ * by several test in Converter.
  * 
  * @author acaproni
  *
@@ -284,7 +284,7 @@ public class ConverterTestBase {
 	 */
 	private final MonitorPointDataHolder mpAlarm = new MonitorPointDataHolder(
 			"AlarmId",
-			AlarmSample.SET, 
+			Alarm.SET_MEDIUM, 
 			1900L,
 			1950L,
 			IASTypes.ALARM);
@@ -305,10 +305,14 @@ public class ConverterTestBase {
 	 */
 	protected MonitorPointData buildMonitorPointData(MonitorPointDataHolder mpHolder) {
 		Objects.requireNonNull(mpHolder);
-		List<ValidatedSample> samples = new ArrayList<>();
-		samples.add(new ValidatedSample(new Sample(mpHolder.value),IasValidity.RELIABLE));
+		List<EnrichedSample> samples = new ArrayList<>();
+		samples.add(new EnrichedSample(new Sample(mpHolder.value),true));
 		FilteredValue fv = new FilteredValue(mpHolder.value, samples, mpHolder.pluginProductionTSamp);
-		ValueToSend vts = new ValueToSend(mpHolder.id, fv,OperationalMode.DEGRADED);
+		ValueToSend vts = new ValueToSend(
+				mpHolder.id, 
+				fv,
+				OperationalMode.DEGRADED,
+				IasValidity.RELIABLE);
 		return new MonitorPointData(pluginID, monitoredSystemID, vts);
 	}
 

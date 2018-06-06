@@ -1,6 +1,7 @@
 package org.eso.ias.plugin.publisher.impl;
 
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
@@ -58,24 +59,24 @@ public class BufferedListenerPublisher extends BufferedPublisherBase {
 	/**
 	 * The number of messages 
 	 */
-	private volatile int publishedMessages=0;
+	private final AtomicInteger publishedMessages=new AtomicInteger(0);
 	
 	/**
 	 * The number of published monitor points can be greater then
 	 * the number of messages published ({@link #publishedMessages}) because
 	 * of the throttling.
 	 */
-	private volatile int publishedMonitorPoints=0;
+	private final AtomicInteger publishedMonitorPoints=new AtomicInteger(0);
 	
 	/**
 	 * Record the number of times {@link #setUp()} has been executed
 	 */
-	private volatile int numOfSetUpInvocations=0;
+	private final AtomicInteger numOfSetUpInvocations=new AtomicInteger(0);
 	
 	/**
 	 * Record the number of times {@link #tearDown()} has been executed
 	 */
-	private volatile int numOfTearDownInvocations=0;
+	private final AtomicInteger numOfTearDownInvocations=new AtomicInteger(0);
 
 	/**
 	 * Constructor 
@@ -109,8 +110,8 @@ public class BufferedListenerPublisher extends BufferedPublisherBase {
 	 */
 	@Override
 	protected long publish(BufferedMonitoredSystemData data) throws PublisherException {
-		publishedMessages++;
-		publishedMonitorPoints+=data.getMonitorPoints().size();
+		publishedMessages.incrementAndGet();
+		publishedMonitorPoints.getAndAdd(data.getMonitorPoints().size());
 		listener.dataReceived(data);
 		return data.toJsonString().length();
 	}
@@ -123,7 +124,7 @@ public class BufferedListenerPublisher extends BufferedPublisherBase {
 	@Override
 	protected void start() throws PublisherException {
 		listener.initialized();
-		numOfSetUpInvocations++;
+		numOfSetUpInvocations.incrementAndGet();
 	}
 
 	/**
@@ -134,35 +135,35 @@ public class BufferedListenerPublisher extends BufferedPublisherBase {
 	@Override
 	protected void shutdown() throws PublisherException {
 		listener.closed();
-		numOfTearDownInvocations++;
+		numOfTearDownInvocations.incrementAndGet();
 	}
 
 	/**
 	 * @return the publishedMessages
 	 */
 	public int getPublishedMessages() {
-		return publishedMessages;
+		return publishedMessages.get();
 	}
 
 	/**
 	 * @return the publishedMonitorPoints
 	 */
 	public int getPublishedMonitorPoints() {
-		return publishedMonitorPoints;
+		return publishedMonitorPoints.get();
 	}
 
 	/**
 	 * @return the numOfSetUpInvocations
 	 */
 	public int getNumOfSetUpInvocations() {
-		return numOfSetUpInvocations;
+		return numOfSetUpInvocations.get();
 	}
 
 	/**
 	 * @return the numOfTearDownInvocations
 	 */
 	public int getNumOfTearDownInvocations() {
-		return numOfTearDownInvocations;
+		return numOfTearDownInvocations.get();
 	}
 
 }

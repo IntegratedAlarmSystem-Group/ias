@@ -1,9 +1,9 @@
 package org.eso.ias.plugin.test.stats;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,8 +11,8 @@ import java.util.List;
 
 import org.eso.ias.plugin.DetailedStatsCollector;
 import org.eso.ias.plugin.DetailedStatsCollector.StatData;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test {@link DetailedStatsCollector}
@@ -40,7 +40,7 @@ public class DetailedStatsTest {
 	/**
 	 * Setup the test
 	 */
-	@Before
+	@BeforeEach
 	public void setup() {
 		statsCollector = new DetailedStatsCollector();
 		List<StatData> statData = statsCollector.getAndReset();

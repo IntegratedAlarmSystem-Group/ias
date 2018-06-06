@@ -1,7 +1,7 @@
 package org.eso.ias.dasu.test
 
 import org.scalatest.FlatSpec
-import org.ias.logging.IASLogger
+import org.eso.ias.logging.IASLogger
 import java.nio.file.FileSystems
 import org.eso.ias.cdb.json.CdbJsonFiles
 import org.eso.ias.cdb.CdbReader
@@ -26,6 +26,7 @@ import org.eso.ias.types.IasValidity._
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.types.IASTypes
 import java.util.HashSet
+import org.eso.ias.cdb.pojos.DasuDao
 
 /**
  * Test if the DASU is capable to get events from
@@ -51,16 +52,22 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener {
   val dasuId = "DasuWithOneASCE"
   
   /** The kafka publisher used by the DASU to send the output */
-  val outputPublisher = KafkaPublisher(dasuId, new Properties())
+  val outputPublisher = KafkaPublisher(dasuId, None, None, new Properties())
   
-  val inputsProvider = new KafkaSubscriber(dasuId, new Properties())
+  val inputsProvider = KafkaSubscriber(dasuId, None, None, new Properties())
   
   // Build the Identifier
   val supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR,None)
   val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervId)
   
+  val dasuDao: DasuDao = {
+    val dasuDaoOpt = cdbReader.getDasu(dasuId)
+    assert(dasuDaoOpt.isPresent())
+    dasuDaoOpt.get()
+  }
+  
   // The DASU
-  val dasu = new DasuImpl(dasuIdentifier,outputPublisher,inputsProvider,cdbReader,3,1)
+  val dasu = new DasuImpl(dasuIdentifier,dasuDao,outputPublisher,inputsProvider,3,1)
   
   // The identifer of the monitor system that produces the temperature in input to teh DASU
   val monSysId = new Identifier("MonitoredSystemID",IdentifierType.MONITORED_SOFTWARE_SYSTEM)

@@ -205,8 +205,8 @@ public class IASValue<T> {
 	 * @param newValue The value to set in the new IASValue
 	 * @return The new IASValue with the updated value
 	 */
-	public <X> IASValue<?> updateValue(X newValue) {
-		return new IASValue<X>(
+	public <X extends T> IASValue<T> updateValue(X newValue) {
+		return new IASValue<T>(
 				newValue,
 				this.mode,
 				this.iasValidity,
@@ -772,8 +772,8 @@ public class IASValue<T> {
 					Optional.ofNullable(dasuProductionTStamp),
 					depIds,
 					theProps);
-			case ALARM: return new IASValue<AlarmSample>(
-					(AlarmSample)value, 
+			case ALARM: return new IASValue<Alarm>(
+					(Alarm)value, 
 					mode,
 					iasValidity,
 					fullRunningId,
@@ -869,7 +869,7 @@ public class IASValue<T> {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		IASValue other = (IASValue) obj;
+		IASValue<?> other = (IASValue<?>) obj;
 		if (convertedProductionTStamp == null) {
 			if (other.convertedProductionTStamp != null)
 				return false;

@@ -1,8 +1,8 @@
 package org.eso.ias.plugin.test.publisher;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -16,16 +16,17 @@ import java.util.concurrent.TimeUnit;
 
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
-import org.eso.ias.plugin.filter.Filter.ValidatedSample;
+import org.eso.ias.plugin.filter.Filter.EnrichedSample;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.KafkaPublisher;
 import org.eso.ias.plugin.test.publisher.SimpleKafkaConsumer.KafkaConsumerListener;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.eso.ias.types.IasValidity;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.eso.ias.types.OperationalMode;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,7 +96,7 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 	/**
 	 * Initialization
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() {
 		// Build the publisher
 		logger.info("Initializing...");
@@ -114,7 +115,7 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 	/**
 	 * Clean up
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws PublisherException {
 		kPub.tearDown();
 		consumer.tearDown();
@@ -137,13 +138,13 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 		// very same record we offered
 		String mpId="MP-ID";
 		Long val = Long.valueOf(System.currentTimeMillis());
-		List<ValidatedSample> samples = Arrays.asList(new ValidatedSample(new Sample(val),IasValidity.RELIABLE));
-		ValueToSend fv = new ValueToSend("MP-ID", val, samples, System.currentTimeMillis());
+		List<EnrichedSample> samples = Arrays.asList(new EnrichedSample(new Sample(val),true));
+		ValueToSend fv = new ValueToSend("MP-ID", val, samples, System.currentTimeMillis(),OperationalMode.OPERATIONAL,IasValidity.RELIABLE);
 		
 		kPub.offer(fv);
 		
 		try {
-			assertTrue("Timeout, event not received",eventsToReceive.await(2, TimeUnit.MINUTES));
+			assertTrue(eventsToReceive.await(2, TimeUnit.MINUTES),"Timeout, event not received");
 		} catch (InterruptedException ie) {
 			ie.printStackTrace();
 		}
@@ -169,7 +170,7 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 		int eventsToPublish=50000;
 		eventsToReceive = new CountDownLatch(eventsToPublish);
 		
-		// The value is dinamically to be sure we are receiving the
+		// The value is dynamically to be sure we are receiving the
 		// very same record we offered
 		String mpIdPrefix="MPID-";
 		int valBase=10;
@@ -178,13 +179,13 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 		for (int t=0; t<eventsToPublish; t++) {
 			Integer val = Integer.valueOf(10+valIncrement*t);
 			String id = mpIdPrefix+t;
-			List<ValidatedSample> samples = Arrays.asList(new ValidatedSample(new Sample(val),IasValidity.RELIABLE));
-			ValueToSend fv = new ValueToSend(id, val, samples, System.currentTimeMillis());
+			List<EnrichedSample> samples = Arrays.asList(new EnrichedSample(new Sample(val),true));
+			ValueToSend fv = new ValueToSend(id, val, samples, System.currentTimeMillis(),OperationalMode.UNKNOWN,IasValidity.RELIABLE);
 			kPub.offer(fv);
 		}
 		
 		try {
-			assertTrue("Timeout, events not received",eventsToReceive.await(2, TimeUnit.MINUTES));
+			assertTrue(eventsToReceive.await(2, TimeUnit.MINUTES),"Timeout, events not received");
 		} catch (InterruptedException ie) {
 			ie.printStackTrace();
 		}

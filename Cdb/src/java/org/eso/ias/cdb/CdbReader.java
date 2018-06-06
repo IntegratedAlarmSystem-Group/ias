@@ -6,9 +6,11 @@ import java.util.Set;
 
 import org.eso.ias.cdb.pojos.AsceDao;
 import org.eso.ias.cdb.pojos.DasuDao;
+import org.eso.ias.cdb.pojos.DasuToDeployDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
+import org.eso.ias.cdb.pojos.TemplateDao;
 import org.eso.ias.cdb.pojos.TransferFunctionDao;
 
 /**
@@ -62,6 +64,15 @@ public interface CdbReader {
 	public Optional<TransferFunctionDao> getTransferFunction(String tf_id) throws IasCdbException;
 	
 	/**
+	 * Read the ttemplate configuration from the CDB. 
+	 * 
+	 * @param template_id The not <code>null</code> nor empty identifier of the template
+	 * @return The template read from the CDB
+	 * @throws IasCdbException in case of error reading from the CDB
+	 */
+	public Optional<TemplateDao> getTemplate(String template_id) throws IasCdbException;
+	
+	/**
 	 * Read the ASCE configuration from the CDB. 
 	 * 
 	 * @param id The not null nor empty ASCE identifier
@@ -80,14 +91,16 @@ public interface CdbReader {
 	public Optional<DasuDao> getDasu(String id) throws IasCdbException;
 	
 	/**
-	 * Return the DASUs belonging to the given Supervisor.
+	 * Return the DASUs to deploy in the Supervisor with the given identifier
 	 * 
 	 * @param id The not <code>null</code> nor empty identifier of the supervisor
-	 * @return A set of DASUs running in the supervisor with the passed id
+	 * @return A set of DASUs to deploy in the supervisor with the passed id
 	 * @throws IasCdbException in case of error reading CDB or if the 
 	 *                         supervisor with the give identifier does not exist
 	 */
-	public Set<DasuDao> getDasusForSupervisor(String id) throws IasCdbException;
+	public Set<DasuToDeployDao> getDasusToDeployInSupervisor(String id) throws IasCdbException;
+	
+
 	
 	/**
 	 * Return the ASCEs belonging to the given DASU.

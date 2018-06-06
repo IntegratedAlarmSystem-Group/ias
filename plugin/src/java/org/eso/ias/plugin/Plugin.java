@@ -16,12 +16,21 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.eso.ias.heartbeat.HbEngine;
+import org.eso.ias.heartbeat.HbMsgSerializer;
+import org.eso.ias.heartbeat.HbProducer;
+import org.eso.ias.heartbeat.HeartbeatStatus;
+import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
 import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.config.Value;
+import org.eso.ias.plugin.filter.Filter;
+import org.eso.ias.plugin.filter.FilterFactory;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.MonitorPointSender.SenderStats;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
+import org.eso.ias.types.Identifier;
+import org.eso.ias.types.IdentifierType;
 import org.eso.ias.types.OperationalMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +66,29 @@ import org.slf4j.LoggerFactory;
  * If the operational mode for the plugin is set, it takes priority over the operational mode 
  * of the monitor point value (i.e. if a operational mode is set at plugin level,
  * it will be sent as the operational mode of each monitored value independently of their settings).
+ * <P>
+ * The collected monitor points and alarms pass through the filtering and are finally sent to the 
+ * BSDB where they will be processed by the DASUs.
+ * Monitor points and alarms are sent on change and periodically 
+ * if their values did not change (@see #autoSendRefreshRate).
  * 
+ * <P><EM>Support for replication:</em>
+ * <BR>The same plugin can be replicated over different identical instances
+ * for example to collect monitor points and alarms from identical devices.
+ * The user defined parts must know to which specific device to connect for each
+ * replicated plugin.
+ * To replicate a plugin, only one JSON configuration file is needed and the number 
+ * of the instance must be passed in the constructor.
+ * The plugin will transparently map the monitor point by properly setting their IDs
+ * as defined in {@link ReplicatedIdsMapper}. 
+ * <BR>The advantage is that only one JSON configuration must be written for 
+ * all the replicated instances reducing the effort in configuring and reducing
+ * the risk of errors.
+ * <P>
+ * Implementation note: internally the IDs of the monitor points are those 
+ * read from the configuration: the IDs are changed just before sending to the BSDB
+ * in {@link #monitoredValueUpdated(ValueToSend)}.
+ * Only the ID of the plugin is changed at build time.
  *  
  * @author acaproni
  */
@@ -144,12 +175,40 @@ public class Plugin implements ChangeValueListener {
 	private static final Logger logger = LoggerFactory.getLogger(Plugin.class);
 	
 	/**
-	 * The identifier of the plugin
+	 * The ID of the plugin
 	 */
 	public final String pluginId;
 	
 	/**
+	 * The identifier of the plugin
+	 */
+	public final Identifier pluginIdentifier;
+	
+	/**
+	 * The property to set the auto-send time interval (in seconds)
+	 */
+	public static final String AUTO_SEND_TI_PROPNAME = "org.eso.ias.plugin.timeinterval";
+	
+	/**
+	 * The default value of the auto-send refresh rate
+	 */
+	public static final int defaultAutoSendRefreshRate = 5;
+	
+	/**
+	 * The refresh rate to automatically send the last 
+	 * values of the monitor points even if did not change
+	 */
+	public final int autoSendRefreshRate; 
+	
+	/**
 	 * The identifier of the system monitored by this plugin
+	 * 
+	 * The name of the monitored system is not affected by replication
+	 * because the user defined implementation getting monitor points from 
+	 * a device knows better the proper name to use.
+	 * 
+	 * For example a plugin getting values from an ALMA antenna
+	 * could use monitoredSystemId like DA45 or PM04
 	 */
 	public final String monitoredSystemId;
 	
@@ -171,14 +230,6 @@ public class Plugin implements ChangeValueListener {
 	 * The object that sends monitor points to the core of the IAS.
 	 */
 	private final MonitorPointSender mpPublisher;
-
-	/**
-	 * String filter and filterOptions
-	 * 
-	 */
-	public String filter;
-	public String filterOptions;
-	
 	
 	/**
 	 * The operational mode of the plugin.
@@ -188,6 +239,57 @@ public class Plugin implements ChangeValueListener {
 	 * operational mode.
 	 */
 	private Optional<OperationalMode> pluginOperationalMode = Optional.empty();
+	
+	/**
+	 * The mapper to translate identifiers of replicated plugins;
+	 * empty if the plugin is not replicated.
+	 */
+	private final Optional<ReplicatedIdsMapper> idsMapper;
+	
+	/**
+	 * ThE engine to send heartbeats
+	 */
+	private final HbEngine hbEngine;
+	
+	/**
+	 * Build a non templated plugin with the passed parameters.
+	 * 
+	 * @param id The Identifier of the plugin
+	 * @param monitoredSystemId: the identifier of the monitored system
+	 * @param values the monitor point values
+	 * @param props The user defined properties 
+	 * @param sender The publisher of monitor point values to the IAS core
+	 * @param defaultFilter the default filter (can be <code>null</code>) to apply
+	 *                      if there is not filter set in the value
+	 * @param defaultFilterOptions the options for the default filter
+	 *                             (can be <code>null</code>)                      
+	 * @param refreshRate The auto-send time interval in seconds
+	 * @param hbFrequency the frequency (seconds) to periodically publish HBs
+	 * @param hbProducer the publisher of HBs
+	 */
+	public Plugin(
+			String id, 
+			String monitoredSystemId,
+			Collection<Value> values,
+			Properties props,
+			MonitorPointSender sender,
+			String defaultFilter,
+			String defaultFilterOptions,
+			int refreshRate,
+			int hbFrequency,
+			HbProducer hbProducer) {
+		this(
+				id,
+				monitoredSystemId,
+				values,props,
+				sender,
+				defaultFilter,
+				defaultFilterOptions,
+				refreshRate,
+				null,
+				hbFrequency,
+				hbProducer);
+	}
 
 	/**
 	 * Build a plugin with the passed parameters.
@@ -197,42 +299,121 @@ public class Plugin implements ChangeValueListener {
 	 * @param values the monitor point values
 	 * @param props The user defined properties 
 	 * @param sender The publisher of monitor point values to the IAS core
+	 * @param defaultFilter the default filter (can be <code>null</code>) to apply
+	 *                      if there is not filter set in the value
+	 * @param defaultFilterOptions the options for the default filter
+	 *                             (can be <code>null</code>)                      
+	 * @param refreshRate The auto-send time interval in seconds
+	 * @param hbFrequency the frequency of the heartbeat in seconds
+	 * @param instanceNumber the number of the instance if the plugin is replicated,
+	 *                       <code>null</code> if not replicated
+	 * @param hbFrequency the frequency (seconds) to periodically publish HBs
+	 * @param hbProducer the publisher of HBs
 	 */
 	public Plugin(
 			String id, 
 			String monitoredSystemId,
 			Collection<Value> values,
 			Properties props,
-			MonitorPointSender sender) {
+			MonitorPointSender sender,
+			String defaultFilter,
+			String defaultFilterOptions,
+			int refreshRate,
+			Integer instanceNumber,
+			int hbFrequency,
+			HbProducer hbProducer) {
+		
+		// Immediately checks if the plugin is replicated
+		Optional<Integer> instanceNumberOpt = Optional.ofNullable(instanceNumber);
+		instanceNumberOpt.ifPresent( instance -> {
+			if (instance<0) {
+				throw new IllegalArgumentException("Invalid negative instance number "+instance);
+			}
+			logger.debug("This plugin is the replicated instance number {}",instance);
+		});
+		idsMapper = instanceNumberOpt.map( num -> new ReplicatedIdsMapper(num));
 		
 		if (id==null || id.trim().isEmpty()) {
 			throw new IllegalArgumentException("The ID can't be null nor empty");
 		}
-		this.pluginId=id.trim();
+		
+		Identifier monSystemIdentifier = new Identifier(monitoredSystemId, IdentifierType.MONITORED_SOFTWARE_SYSTEM);
+		pluginIdentifier = new Identifier(id, IdentifierType.PLUGIN,monSystemIdentifier);
+		
+		this.pluginId=idsMapper.map( mapper -> mapper.toRealId(id.trim()))
+				.orElse(id.trim());
+		
+		if (idsMapper.isPresent()) {
+			logger.info("New iID of the replicated plugin is [{}]",this.pluginId);
+		}
+		
 		if (monitoredSystemId==null || monitoredSystemId.trim().isEmpty()) {
 			throw new IllegalArgumentException("The ID of th emonitored system can't be null nor empty");
 		}
-		this.monitoredSystemId=monitoredSystemId.trim();
+		this.monitoredSystemId= monitoredSystemId.trim();
+		
 		if (values==null || values.isEmpty()) {
 			throw new IllegalArgumentException("No monitor points definition found"); 
 		}
+		
 		if (sender==null) {
 			throw new IllegalArgumentException("No monitor point sender");
 		}
 		
+		Integer refreshRateFromProp = Integer.getInteger(AUTO_SEND_TI_PROPNAME);
+		if (refreshRateFromProp!=null) {
+			this.autoSendRefreshRate = refreshRateFromProp;
+		} else {
+			this.autoSendRefreshRate = refreshRate;
+		}
+		if (this.autoSendRefreshRate<=0) {
+			throw new IllegalArgumentException("The auto-send time interval must be greater then 0 instead of "+refreshRate);
+		}
+
+		if (hbFrequency<=0) {
+			throw new IllegalArgumentException("The HB frequency must be >0");
+		}
+		Objects.requireNonNull(hbProducer);
+		this.hbEngine=HbEngine.apply(pluginIdentifier.fullRunningID(), hbFrequency, hbProducer);		
+		
 		flushProperties(props);
 		this.mpPublisher=sender;
-		logger.info("Plugin (ID=%s) started",pluginId);
 		
 		/** check if the monitor point has the filter or if take global*/ 
 		values.forEach(v -> { 
 			try {
 				logger.info("ID: {}, filter: {}, filterOptions: {}",v.getId(),v.getFilter(),v.getFilterOptions());
-			putMonitoredPoint(new MonitoredValue(v.getId(), v.getRefreshTime(), schedExecutorSvc, this));
+				
+				MonitoredValue mv = null;
+				
+				if (v.getFilter()==null && defaultFilter==null) {
+					logger.info("No filter, neither default filter set for {}",v.getId());
+					mv = new MonitoredValue(
+							v.getId(), 
+							v.getRefreshTime(), 
+							schedExecutorSvc, 
+							this,autoSendRefreshRate); 
+				} else {
+					
+					String filterName = (v.getFilter()!=null)?v.getFilter():defaultFilter;
+					String filterOptions = (v.getFilterOptions()!=null)?v.getFilterOptions():defaultFilterOptions;
+					
+					logger.debug("Instantiating filter {} for monitor point {}",filterName,v.getId());
+					Filter filter = FilterFactory.getFilter(filterName, filterOptions);
+					
+					mv = new MonitoredValue(
+							v.getId(), 
+							v.getRefreshTime(),
+							filter,
+							schedExecutorSvc, 
+							this,autoSendRefreshRate); 
+				}
+				
+				putMonitoredPoint(mv);
 		}catch (Exception e){
 			logger.error("Error adding monitor point "+v.getId(),e);
 		} });
-		
+		logger.info("Plugin [{}] built",pluginId);
 	}
 	
 	/**
@@ -260,23 +441,46 @@ public class Plugin implements ChangeValueListener {
 	}
 	
 	/**
-	 * Build a plugin from the passed configuration.
+	 * Build a non replicated plugin from the passed configuration.
 	 * 
 	 * @param config The plugin coinfiguration
 	 * @param sender The publisher of monitor point values to the IAS core
-	 * @see Plugin#Plugin(PluginConfig, MonitorPointSender)
+	 * @param hbProducer the publisher of HBs
 	 */
 	public Plugin(
 			PluginConfig config,
-			MonitorPointSender sender) {
+			MonitorPointSender sender,
+			HbProducer hbProducer) {
+		this(config,sender,null,hbProducer);
+		
+	}
+	
+	/**
+	 * Build a replicated plugin from the passed configuration.
+	 * 
+	 * @param config The plugin coinfiguration
+	 * @param sender The publisher of monitor point values to the IAS core
+	 * @param instanceNumber the number of the instance if the plugin is replicated,
+	 *                       <code>null</code> if not replicated
+	 * @param hbProducer the publisher of HBs
+	 */
+	public Plugin(
+			PluginConfig config,
+			MonitorPointSender sender,
+			Integer instanceNumber,
+			HbProducer hbProducer) {
 		this(
 				config.getId(),
 				config.getMonitoredSystemId(),
 				config.getValuesAsCollection(),
 				config.getProps(),
-/*				config.getDefaultFilter(),
-				config.getDefaultFilterOptions(),*/
-				sender);
+				sender,
+				config.getDefaultFilter(),
+				config.getDefaultFilterOptions(),
+				config.getAutoSendTimeInterval(),
+				instanceNumber,
+				config.getHbFrequency(),
+				hbProducer);
 	}
 	
 	/**
@@ -287,6 +491,9 @@ public class Plugin implements ChangeValueListener {
 	 */
 	public void start() throws PublisherException {
 		logger.debug("Initializing");
+		
+		// Start sending the HB
+		hbEngine.start();
 		
 		mpPublisher.setUp();
 		logger.info("Publisher initialized.");
@@ -316,6 +523,12 @@ public class Plugin implements ChangeValueListener {
 				shutdown();
 			}
 		}, "Plugin shutdown hook"));
+		
+		logger.debug("Initiailizing {} monitor points", monitorPoints.values().size());
+		monitorPoints.values().forEach(mp -> mp.start());
+		
+		hbEngine.updateHbState(HeartbeatStatus.RUNNING);
+		
 		logger.info("Plugin {} initialized",pluginId);
 	}
 	
@@ -325,6 +538,7 @@ public class Plugin implements ChangeValueListener {
 	 */
 	public void shutdown() {
 		boolean alreadyClosed=closed.getAndSet(true);
+		hbEngine.updateHbState(HeartbeatStatus.EXITING);
 		if (!alreadyClosed) {
 			shutdownExecutorSvc();
 			logger.info("Stopping the sending of monitor point values to the core of the IAS");
@@ -337,6 +551,12 @@ public class Plugin implements ChangeValueListener {
 				logger.error("Error clearing the publisher: {}",pe.getMessage());
 				pe.printStackTrace(System.err);
 			}
+			
+			logger.debug("Shutting down the monitor points");
+			monitorPoints.values().forEach(mp -> mp.shutdown());
+			
+			hbEngine.shutdown();
+			
 			logger.info("Plugin {} is shut down",pluginId);
 		}
 	}
@@ -436,12 +656,14 @@ public class Plugin implements ChangeValueListener {
 			monitorPoints.put(mPoint.id, mPoint);
 			sz=monitorPoints.size();
 		}
-		logger.info("IAS plugin %s now manages %d monitor points",pluginId,sz);
+		logger.debug("IAS plugin {} will manage {} monitor points",pluginId,sz);
 		return sz;
 	}
 
 	/**
 	 * A  monitor point value has been updated and must be forwarded to the core of the IAS.
+	 * <P>
+	 * If the plugin is replicated, the ID of the value is changed before publishing.
 	 * 
 	 * @param value The value to send to the core of the IAS
 	 * @see ChangeValueListener#monitoredValueUpdated(ValueToSend)
@@ -449,15 +671,26 @@ public class Plugin implements ChangeValueListener {
 	@Override
 	public void monitoredValueUpdated(ValueToSend value) {
 		Objects.requireNonNull(value, "Cannot update a null monitored value");
-		ValueToSend fv = pluginOperationalMode.map(mode -> value.withMode(mode)).orElse(value);
+		if (closed.get()) {
+			return;
+		}
+		
+		// Change the id if replicated
+		ValueToSend vts = idsMapper.map( mapper -> value.withId(mapper.toRealId(value.id))).orElse(value);
+		
+		// The operational mode of the plugin override that of the value
+		ValueToSend fv = pluginOperationalMode.map(mode -> vts.withMode(mode)).orElse(vts);
+		
+		// Finally publishes the value
 		mpPublisher.offer(fv);
-		logger.info("Filtered value {} with value {} and mode {} has been forwarded for sending to the IAS",fv.id,fv.value.toString(),fv.operationalMode.toString());
+		
+		logger.debug("Filtered value {} with value {} and mode {} has been forwarded for sending to the IAS",fv.id,fv.value.toString(),fv.operationalMode.toString());
 	}
 	
 	/**
 	 * Change the refresh rate of the monitor point with the passed ID.
 	 * <P>
-	 * The new refresh rate is bounded by a minimum ({@link MonitoredValue#minAllowedRefreshRate})
+	 * The new refresh rate is bounded by a minimum ({@link MonitoredValue#minAllowedSendRate})
 	 * and a maximum ({@link MonitoredValue#maxAllowedRefreshRate}) values.
 	 * 
 	 * @param mPointId The not <code>null</code> nor empty ID of a monitored point
@@ -485,15 +718,13 @@ public class Plugin implements ChangeValueListener {
 	 * @throws PluginException if the monitored value with the passed ID does not exist            
 	 */
 	public void enableMonitorPointPeriodicNotification(String mPointId, boolean enable) throws PluginException {
-		Objects.requireNonNull(mPointId, "The monitored point ID can't be null");
-		if (mPointId.isEmpty()) {
-			throw new IllegalArgumentException("The monitored point ID can't be empty");
+		if (Objects.isNull(mPointId) || mPointId.isEmpty()) {
+			throw new IllegalArgumentException("The monitored point ID can't be null nor empty");
 		}
-		MonitoredValue mVal = monitorPoints.get(mPointId);
-		if (mVal==null) {
-			throw new PluginException("Monitor point "+mPointId+" does not exist");
-		}
-		mVal.enablePeriodicNotification(enable);
+		// Change the ID if the plugin is replicated
+		Optional<MonitoredValue> mVal = Optional.ofNullable(monitorPoints.get(mPointId));
+		mVal.orElseThrow(() -> new PluginException("Monitor point "+mPointId+" does not exist"))
+			.enablePeriodicNotification(enable);
 	}
 	
 	/**

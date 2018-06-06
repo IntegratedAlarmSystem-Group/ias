@@ -6,18 +6,72 @@
      PRE-Requisite: IAS_ROOT envirnment variable defined and pointing to
                              an existing folder
 -->
-<project name="BuildIAS" default="build" basedir=".">
+<project xmlns:artifact="antlib:org.apache.maven.artifact.ant" name="BuildIAS" default="build" basedir=".">
 
 	<property environment="env" />
 	<property name="iasRoot" value="${env.IAS_ROOT}" />
+	<property name="artifact.group" value="org.eso.ias" />
+	<property name="artifact.pom" value="pom.xml" />
+	<property name="remote.repo.url" value="http://artifactory.inria.cl:8081/artifactory/inria-maven" />
+	<property name="mvn.ant.tasks.jar" value="${iasRoot}/lib/ExtTools/maven-ant-tasks-2.1.3.jar" />
 	<available file="${iasRoot}" type="dir" property="iasRoot.exists"/>
-
 	<taskdef resource="net/sf/antcontrib/antlib.xml"/>
+	<condition property="artifact.version" value="${env.ARTIFACT_VERSION}" >
+		<isset property="env.ARTIFACT_VERSION" />
+	</condition>
+	<property name="artifact.version" value="dev"/>
+	<target name="foo">
+		<echo>${artifact.version}</echo>
+	</target>
 
-	<property name="iasModules" value="Tools,Logging,Cdb,BasicTypes,KafkaUtils,plugin,Converter,CompElement,DistributedUnit,Supervisor,WebServerSender,TransferFunctions,Tests/SimpleLoopTest" />
+	<!-- configure ant maven plugin -->
+	<path id="maven-ant-tasks.classpath" path="${mvn.ant.tasks.jar}" />
+	<typedef resource="org/apache/maven/artifact/ant/antlib.xml" uri="antlib:org.apache.maven.artifact.ant" classpathref="maven-ant-tasks.classpath" />
+
+
+	<!-- IAS Modules -->
+	 <resources id="iasModsResources">
+        <string>Tools</string>
+        <string>Utils</string>
+        <string>Cdb</string>
+        <string>BasicTypes</string>
+        <string>KafkaUtils</string>
+        <string>Heartbeat</string>
+        <string>plugin</string>
+        <string>PythonPluginFeeder</string>
+        <string>Converter</string>
+        <string>CompElement</string>
+        <string>DistributedUnit</string>
+        <string>Supervisor</string>
+        <string>WebServerSender</string>
+        <string>TransferFunctions</string>
+        <string>Tests/SimpleLoopTest</string>
+    </resources>
+    <pathconvert property="iasModules" refid="iasModsResources" pathsep="," />
+
+    <!-- Extract git version into properties -->
+    <target name="git-version">
+	    <exec executable="git" outputproperty="git.branch"
+	     failifexecutionfails="false">
+	     <arg line="rev-parse --abbrev-ref HEAD"/>
+	    </exec>
+
+	    <exec executable="git" outputproperty="git.hash.long"
+	     failifexecutionfails="false">
+	     <arg line="rev-parse --verify HEAD"/>
+	    </exec>
+
+	    <exec executable="git" outputproperty="git.hash.short"
+	     failifexecutionfails="false">
+	     <arg line="rev-parse --short HEAD"/>
+	    </exec>
+
+	    <echo>Git: ${git.branch} ${git.hash.short} ${git.hash.long}</echo>
+    </target>
 
 	<target name="SanityCheck">
 		<!--
+
 			Runs some check failing in case of error
 		-->
 		<fail unless="iasRoot.exists">
@@ -63,12 +117,17 @@
 		</antcall>
     </target>
 
-	<target name="build" depends="SanityCheck">
+	<target name="build" depends="git-version, SanityCheck">
 		<echo>Building IAS modules: ${iasModules}</echo>
 		<antcall target="commontask">
 			<param name="ant-folder" value="src" />
 			<param name="anttasks" value="build,install" />
 		</antcall>
+		<echo>Generating IAS_VERSION</echo>
+        <exec executable="echo" failifexecutionfails="false">
+	        <arg line="${git.branch} ${git.hash.short} ${git.hash.long}"/>
+	        <redirector output="${iasRoot}/IAS_GIT_VERSION"/>
+        </exec>
 	</target>
 
 	<target name="install" depends="SanityCheck">
@@ -85,6 +144,32 @@
 			<param name="ant-folder" value="test" />
 			<param name="anttasks" value="build,test" />
 		</antcall>
+	</target>
+
+	<!-- Traverse list of JARs and execute uploadFile for each of them -->
+	<!-- <target name="upload" depends="build"> -->
+	<target name="upload" depends="SanityCheck">
+		<echo>Uploading JARs to artifactory group: ${artifact.group}</echo>
+		<foreach target="uploadFile" param="filepath">
+			<fileset dir="${iasRoot}/lib" casesensitive="yes">
+				<include name="*.jar"/>
+			</fileset>
+		</foreach>
+	</target>
+
+	<!-- Upload a single JAR -->
+	<target name="uploadFile">
+		<basename property="filename" file="${filepath}" suffix=".jar"/>
+		<echo message="${filepath}"/>
+		<echo message="${filename}"/>
+			<artifact:pom id="tmp.pom" groupid="${artifact.group}" artifactid="${filename}" version="${artifact.version}" packaging="jar" name="${filename}" />
+			<artifact:writepom pomRefId="tmp.pom" file="${artifact.pom}"/>
+			<artifact:deploy file="${filepath}">
+				<remoteRepository url="${remote.repo.url}">
+					<authentication username="${env.ARTIFACTORY_USERNAME}" password="${env.ARTIFACTORY_PASSWORD}" />
+				</remoteRepository>
+				<pom file="${artifact.pom}" />
+			</artifact:deploy>
 	</target>
 
 	<target name="doc" depends="SanityCheck">

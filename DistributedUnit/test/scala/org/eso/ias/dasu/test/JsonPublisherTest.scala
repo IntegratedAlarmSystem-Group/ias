@@ -10,18 +10,19 @@ import org.eso.ias.cdb.CdbReader
 import java.io.FileWriter
 import org.eso.ias.dasu.publisher.JsonWriterPublisher
 import org.eso.ias.cdb.json.JsonReader
-import org.ias.logging.IASLogger
+import org.eso.ias.logging.IASLogger
 import java.nio.file.FileSystems
 import org.eso.ias.types.IdentifierType
 import java.io.File
 import scala.io.Source
 import org.eso.ias.types.IASTypes
 import org.eso.ias.types.OperationalMode._
-import org.eso.ias.types.AlarmSample
+import org.eso.ias.types.Alarm
 import org.eso.ias.types.IasValidity._
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.dasu.publisher.DirectInputSubscriber
 import java.util.HashSet
+import org.eso.ias.cdb.pojos.DasuDao
 
 /** 
  *  Test the writing of the output of the DASU
@@ -48,8 +49,14 @@ class JsonPublisherTest extends FlatSpec {
   val supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR,None)
   val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervId)
   
+  val dasuDao: DasuDao = {
+    val dasuDaoOpt = cdbReader.getDasu(dasuId)
+    assert(dasuDaoOpt.isPresent())
+    dasuDaoOpt.get()
+  }
+  
   // The DASU
-  val dasu = new DasuImpl(dasuIdentifier,outputPublisher,inputsProvider,cdbReader,3,1)
+  val dasu = new DasuImpl(dasuIdentifier,dasuDao,outputPublisher,inputsProvider,3,1)
   
   // The identifer of the monitor system that produces the temperature in input to teh DASU
   val monSysId = new Identifier("MonitoredSystemID",IdentifierType.MONITORED_SOFTWARE_SYSTEM)
@@ -102,7 +109,7 @@ class JsonPublisherTest extends FlatSpec {
     val iasValue = jsonSerializer.valueOf(strReadFromFile)
     assert(iasValue.id=="ThresholdAlarm")
     assert(iasValue.valueType==IASTypes.ALARM)
-    assert(iasValue.value==AlarmSample.CLEARED)
+    assert(iasValue.value==Alarm.CLEARED)
     outputFile.deleteOnExit()
   }  
 }

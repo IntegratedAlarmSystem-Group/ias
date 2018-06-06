@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="Utils" default="build" basedir=".">
+
+	<property environment="env" />
+	<property name="iasRoot" value="${env.IAS_ROOT}" />
+	<include file="${iasRoot}/config/CommonAnt.xml" as="ias" />
+
+	<property name="jarName" value="ias-utils.jar"/>
+
+	<!--property name="log4j" value="log4j-1.2.17"/ -->
+
+	<property name="slf4j" value="slf4j-1.7.25"/>
+	<property name="logback" value="logback-1.2.3"/>
+	<property name="logback-jars" value="logback-core-1.2.3.jar,logback-classic-1.2.3.jar" />
+	<property name="scala-logging" value="scala-logging_2.12-3.9.0.jar" />
+
+	<property name="exttools" value="slf4j-api-1.7.25.jar,${logback-jars},${scala-logging}" />
+
+	<target name="prepareExtTools" depends="ias.init-ias-environment">
+		<echo>Unpacking ${logback} in ${exttools.dir}</echo>
+		<!-- Unzip extTools logback and get the jar out
+		     of the created folder ready to be installed during the build process
+		-->
+		<untar src="${exttools.dir}/${logback}.tar.gz" dest="${exttools.dir}" compression="gzip"/>
+		<copy todir="${exttools.dir}">
+			<fileset dir="${exttools.dir}/${exttools.dir}/${logback}" includes="*.jar" />
+		</copy>
+		<delete dir="${exttools.dir}/${logback}"/>
+
+		<echo>Unpacking ${slf4j} in ${exttools.dir}</echo>
+		<untar src="${exttools.dir}/${slf4j}.tar.gz" dest="${exttools.dir}" compression="gzip"/>
+		<copy todir="${exttools.dir}" file="${exttools.dir}/${slf4j}/slf4j-api-1.7.25.jar"/>
+		<delete dir="${exttools.dir}/${slf4j}"/>
+	</target>
+
+	<target name="clean" depends="ias.clean">
+		<delete>
+			<fileset dir="${exttools.dir}" includes="*.jar" excludes="${scala-logging}"/>
+		</delete>
+	</target>
+
+	<target name="install" depends="ias.install" />
+
+	<target name="build" depends="prepareExtTools, ias.build" />
+
+</project>

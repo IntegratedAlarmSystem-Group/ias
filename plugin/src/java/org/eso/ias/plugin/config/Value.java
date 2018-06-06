@@ -42,20 +42,6 @@ public class Value {
 	private String filterOptions;
 
 	/**
-	 * Add global filter e filterOptions
-	 */
-	/**
-	 * The optional filter to apply to the value
-	 */
-	private String defaultFilter;
-
-	/**
-	 * A optional comma separated list of options to pass
-	 * to the filter
-	 */
-	private String defaultFilterOptions;
-
-	/**
 	 * @return the id
 	 */
 	public String getId() {
@@ -87,79 +73,28 @@ public class Value {
 	 * @return the filter
 	 */
 	public String getFilter() {
-		if(Objects.isNull(filter)){
-			return getDefaultFilter();
-		}else{
-			return filter;
-		}
-
+		return filter;
 	}
 
 	/**
 	 * @param filter the filter to set
 	 */
 	public void setFilter(String filter) {
-		if(Objects.isNull(filter)){
-			this.filter = getDefaultFilter();
-		}else{
-			this.filter=filter;		
-		}
+		this.filter=filter;		
 	}
 
 	/**
 	 * @return the filterOptions
 	 */
 	public String getFilterOptions() {
-		if(Objects.isNull(filterOptions)){
-			return getDefaultFilterOptions();
-		}else{
-			return filterOptions;
-		}
+		return filterOptions;
 	}
 
 	/**
 	 * @param filterOptions the filterOptions to set
 	 */
 	public void setFilterOptions(String filterOptions) {
-		if(Objects.isNull(filterOptions)){
-			this.filter = getDefaultFilterOptions();
-		}else{
-			this.filterOptions=filterOptions;		
-		}
-	}
-
-	/*
-	 * Set and get defaultFilter and defaultFilterOptions
-	 *
-	 */
-
-
-	/**
-	 * @return the global Filter
-	 */
-	public String getDefaultFilter() {
-		return PluginConfig.defaultFilter;
-	}
-
-	/**
-	 * @param defaultFilter the default filter to set
-	 */
-	public void setDefaultFilter(String defaultFilter) {
-		PluginConfig.defaultFilter = defaultFilter;
-	}
-
-	/**
-	 * @return the global filterOptions
-	 */
-	public String getDefaultFilterOptions() {
-		return PluginConfig.defaultFilterOptions;
-	}
-
-	/**
-	 * @param defaultFilterOptions the filter options to set
-	 */
-	public void setDefaultFilterOptions(String defaultFilterOptions) {
-		PluginConfig.defaultFilterOptions = defaultFilterOptions;
+		this.filterOptions=filterOptions;		
 	}
 
 	@Override

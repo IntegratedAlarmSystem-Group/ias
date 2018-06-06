@@ -1,6 +1,7 @@
 package org.eso.ias.converter;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 
 import org.apache.kafka.common.serialization.Serdes;
@@ -49,20 +50,15 @@ public class ConverterKafkaStream extends ConverterStream {
 	private final String iasCoreOutputKTopicName;
 
 	/**
-	 * The name of the java property to get thename of the
+	 * The name of the java property to get the name of the
 	 * topic where plugins push values
 	 */
-	private static final String IASCORE_TOPIC_NAME_PROP_NAME = "org.eso.ias.converter.kafka.outputstream";
+	public static final String IASCORE_TOPIC_NAME_PROP_NAME = "org.eso.ias.converter.kafka.outputstream";
 
 	/**
 	 * The name of the property to pass the kafka servers to connect to
 	 */
-	private static final String KAFKA_SERVERS_PROP_NAME = "org.eso.ias.converter.kafka.servers";
-
-	/**
-	 * Default list of kafka servers to connect to
-	 */
-	private static final String DEFAULTKAFKASERVERS = "localhost:9092";
+	public static final String KAFKA_SERVERS_PROP_NAME = "org.eso.ias.converter.kafka.servers";
 
 	/**
 	 * The list of kafka servers to connect to
@@ -80,19 +76,37 @@ public class ConverterKafkaStream extends ConverterStream {
 	private KafkaStreams streams;
 
 	/**
-	 * The empty constructor gets the kafka servers, and the topics
+	 * The constructor takes the names of the topics
 	 * for the streaming from the passed properties or falls
 	 * back to the defaults.
+	 * 
+	 * The constructor takes the string to connect to kafka brokers 
+	 * from the parameters of from the passed properties.
+	 * The property overrides the value passed in <code>kafkaBrokers</code>.
+	 * If the parameter is empty and no property is defined, it falls to default
+	 * kafka broker URL defined in {@link KafkaHelper#DEFAULT_BOOTSTRAP_BROKERS}. 
 	 *
-	 * @param converterID The ID of the converter.
+	 * @param converterID The ID of the converter
+	 * @param kafkaBrokers The URL to connect to kafka broker(s) read from the CDB
 	 * @param props the properties to get kafka serves and topic anmes
 	 */
 	public ConverterKafkaStream(
 			String converterID,
+			Optional<String> kafkaBrokers,
 			Properties props) {
 		super(converterID);
 		Objects.requireNonNull(props);
-		kafkaServers = props.getProperty(KAFKA_SERVERS_PROP_NAME, DEFAULTKAFKASERVERS);
+		Objects.requireNonNull(kafkaBrokers);
+		
+		Optional<String> brokersFromProperties = Optional.ofNullable(props.getProperty(KAFKA_SERVERS_PROP_NAME));
+		if (brokersFromProperties.isPresent()) {
+			kafkaServers = brokersFromProperties.get();
+		} else if (kafkaBrokers.isPresent()) {
+			kafkaServers = kafkaBrokers.get();
+		} else {
+			kafkaServers = KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS;
+		}
+		
 		pluginsInputKTopicName=props.getProperty(PLUGIN_TOPIC_NAME_PROP_NAME, KafkaHelper.PLUGINS_TOPIC_NAME);
 		iasCoreOutputKTopicName=props.getProperty(IASCORE_TOPIC_NAME_PROP_NAME, KafkaHelper.IASIOs_TOPIC_NAME);
 
@@ -106,7 +120,7 @@ public class ConverterKafkaStream extends ConverterStream {
 	 * Constructor
 	 *
 	 * @param converterID The ID of the converter
-	 * @param servers The kafka servers to conncet to
+	 * @param servers The kafka servers to connect to
 	 * @param pluginTopicName The name of the topic to get monitor points from plugins
 	 * @param iasCoreTopicName The name of the topic to send values to the core of the IAS
 	 */

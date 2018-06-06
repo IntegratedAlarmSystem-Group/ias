@@ -1,8 +1,8 @@
 package org.eso.ias.plugin.test.publisher;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -20,7 +20,7 @@ import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.PublisherException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,7 +102,7 @@ public class BufferedPublisherStressTest extends PublisherTestCommon {
 	    // Give time to flush
 	    // Now all the elements in the queue have been added to a BufferedMonitoredSystemData
 	    // but could not yet been published
-	    assertTrue("Too slow processing events",expectedValues.await(1,TimeUnit.MINUTES));
+	    assertTrue(expectedValues.await(1,TimeUnit.MINUTES),"Too slow processing events");
 	    
 	    // Check if all values have been pushed
 	    assertEquals(numOfValuesForEachThread*numOfThreads,sum);

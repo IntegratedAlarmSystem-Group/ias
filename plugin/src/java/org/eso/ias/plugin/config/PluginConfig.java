@@ -42,6 +42,28 @@ public class PluginConfig {
 	 * and alarms to
 	 */
 	private String sinkServer;
+	
+	/**
+	 * The default time interval to automatically resend monitor point 
+	 * if their values did not change
+	 */
+	public static final int autoSendTimeIntervalDefault = 5;
+	
+	/**
+	 * The time interval (seconds) to automatically resend the monitor
+	 * points even if their values did not change.
+	 */
+	private int autoSendTimeInterval = autoSendTimeIntervalDefault;
+	
+	/**
+	 * The default value of the frequency of the heartbeat
+	 */
+	public static final int hbFrequencyDefault = 5;
+	
+	/**
+	 * The frequency of the heartbeat in seconds
+	 */
+	private int hbFrequency = hbFrequencyDefault;
 
 	/**
 	 * The port of the server to send monitor point values
@@ -64,12 +86,14 @@ public class PluginConfig {
 	private Value[] values;
 
 	/**
-	 *	The global filter and filterOptions
-	 *	@see defaultFilter and defaultFilterOptions
+	 *	The global default filter and filterOptions
 	 */
-	public static String defaultFilter;
+	private String defaultFilter;
 
-	public static String defaultFilterOptions;
+	/**
+	 *	The global default filterOptions
+	 */
+	private String defaultFilterOptions;
 
 
 	/**
@@ -206,6 +230,17 @@ public class PluginConfig {
 			logger.error("No values found");
 			return false;
 		}
+		
+		if (autoSendTimeInterval<=0) {
+			logger.error("Auto send time interval must be greater then 0");
+			return false;
+		}
+		
+		if (hbFrequency<=0) {
+			logger.error("The frequency must be greater then 0");
+			return false;
+		}
+		
 		// Ensure that all the IDs of the values differ
 		if (getMapOfValues().keySet().size()!=values.length) {
 			logger.error("Some values share the same ID");
@@ -347,7 +382,21 @@ public class PluginConfig {
 		this.defaultFilterOptions = defaultFilterOptions;
 	}
 
+	public int getAutoSendTimeInterval() {
+		return autoSendTimeInterval;
+	}
 
+	public void setAutoSendTimeInterval(int autoSendTimeINterval) {
+		this.autoSendTimeInterval = autoSendTimeINterval;
+}
+
+	public int getHbFrequency() {
+		return hbFrequency;
+	}
+
+	public void setHbFrequency(int hbFrequency) {
+		this.hbFrequency = hbFrequency;
+	}
 
 }
 

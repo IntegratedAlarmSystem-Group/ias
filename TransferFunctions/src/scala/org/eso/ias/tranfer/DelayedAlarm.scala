@@ -4,11 +4,11 @@ import org.eso.ias.asce.transfer.ScalaTransferExecutor
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 
-import org.eso.ias.types.AlarmSample
-import org.eso.ias.types.InOut
-import org.ias.logging.IASLogger
+import org.eso.ias.types.Alarm
+import org.eso.ias.logging.IASLogger
 import scala.util.Try
 import org.eso.ias.types.IASTypes
+import org.eso.ias.asce.transfer.IasIO
 
 /**
  * The exception thrown by this TF in case of 
@@ -32,11 +32,14 @@ class DelayedAlarmException(msg: String) extends Exception(msg)
  * The best way to get the alarm close to the required time frame
  * is to tune the refresh rate of the Supervisor where this TF is executed.
  * 
- * 
+ * @param asceId: the ID of the ASCE
+ * @param asceRunningId: the runningID of the ASCE
+ * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
+ * @param props: the user defined properties    
  * @author acaproni
  */
-class DelayedAlarm(cEleId: String, cEleRunningId: String, props: Properties) 
-extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
+class DelayedAlarm(cEleId: String, cEleRunningId: String, validityTimeFrame: Long, props: Properties) 
+extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,props) {
   
   /**
    * Get the value of the passed property, if defined
@@ -66,7 +69,7 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
   /**
    * The previously received alarm
    */
-  private var lastInputValue: Option[AlarmSample]=None
+  private var lastInputValue: Option[Alarm]=None
   
   /**
    * Initialization: it basically checks if the 
@@ -102,7 +105,7 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
 	 * 
 	 * @return the computed output of the ASCE
 	 */
-	override def eval(compInputs: Map[String, InOut[_]], actualOutput: InOut[AlarmSample]): InOut[AlarmSample] = {
+	override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
 	  // Here waitTimeToClear and waitTimeToSet must be defined because if they are not
 	  // an exception in thrown by initialize() and the execution of the TF never enabled
 	  assert(waitTimeToClear.isDefined && waitTimeToSet.isDefined)
@@ -131,21 +134,21 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
 	    // Initialization: ff the output was never activated then 
 	    // return a CLEARED alarm because the delay did not elapsed
 	    lastStateChangeTime=System.currentTimeMillis()
-	    lastInputValue=Some(iasio.value.get.asInstanceOf[AlarmSample])
-	    actualOutput.updateValue(Some(AlarmSample.CLEARED))
+	    lastInputValue=Some(iasio.value.get.asInstanceOf[Alarm])
+	    actualOutput.updateValue(Alarm.cleared)
 	  } else {
       
       // Did the input change?
       if (iasio.value.get!=lastInputValue.get) {
-        lastInputValue=Some(iasio.value.get.asInstanceOf[AlarmSample])
+        lastInputValue=Some(iasio.value.get.asInstanceOf[Alarm])
         lastStateChangeTime = System.currentTimeMillis()
       } 
       
       val delayFromLastChange = System.currentTimeMillis()-lastStateChangeTime
       
       if (
-          (actualOutput.value.get==AlarmSample.SET && delayFromLastChange<waitTimeToClear.get) ||
-          (actualOutput.value.get==AlarmSample.CLEARED && delayFromLastChange<waitTimeToSet.get)) {
+          (actualOutput.value.get==Alarm.getSetDefault && delayFromLastChange<waitTimeToClear.get) ||
+          (actualOutput.value.get==Alarm.cleared && delayFromLastChange<waitTimeToSet.get)) {
         // Not enough time elapsed from the last time the input changed: 
         // the output remains the same
         actualOutput
@@ -155,7 +158,7 @@ extends ScalaTransferExecutor[AlarmSample](cEleId,cEleRunningId,props) {
         if (iasio.value.get==actualOutput.value.get) {
           actualOutput
         } else {
-          actualOutput.updateValue(Some(iasio.value.get))
+          actualOutput.updateValue(iasio.value.get).updateProps(iasio.props)
         }
       }
 	  }

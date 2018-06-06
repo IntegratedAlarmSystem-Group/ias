@@ -11,7 +11,7 @@ import sys, os
 from subprocess import call
 from IASApiDocs.DocGenerator import DocGenerator
 from IASTools.CommonDefs import CommonDefs
-
+import logging
 
 class ScaladocBuilder(DocGenerator):
     '''

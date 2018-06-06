@@ -1,9 +1,10 @@
 package org.eso.ias.plugin.test.publisher;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -14,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
-import org.eso.ias.plugin.filter.Filter.ValidatedSample;
+import org.eso.ias.plugin.filter.Filter.EnrichedSample;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
@@ -23,7 +24,8 @@ import org.eso.ias.plugin.publisher.PublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
 import org.eso.ias.types.IasValidity;
-import org.junit.Test;
+import org.eso.ias.types.OperationalMode;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,11 +49,11 @@ public class PublisherBaseTest extends PublisherTestCommon {
 	@Test
 	public void testBasicData() {
 		assertNotNull(unbufferedPublisher);
-		assertEquals("Plugin-IDs differ",pluginId,unbufferedPublisher.pluginId);
-		assertEquals("Servers differ",pluginServerName,unbufferedPublisher.serverName);
-		assertEquals("Servers ports",pluginServerPort,unbufferedPublisher.serverPort);
-		assertEquals("Default buffer size",BufferedPublisherBase.defaultBufferSize,BufferedPublisherBase.maxBufferSize);
-		assertEquals("Default throttling time",BufferedPublisherBase.defaultThrottlingTime,BufferedPublisherBase.throttlingTime);
+		assertEquals(pluginId,unbufferedPublisher.pluginId,"Plugin-IDs differ");
+		assertEquals(pluginServerName,unbufferedPublisher.serverName,"Servers differ");
+		assertEquals(pluginServerPort,unbufferedPublisher.serverPort,"Servers ports");
+		assertEquals(BufferedPublisherBase.defaultBufferSize,BufferedPublisherBase.maxBufferSize,"Default buffer size");
+		assertEquals(BufferedPublisherBase.defaultThrottlingTime,BufferedPublisherBase.throttlingTime,"Default throttling time");
 	}
 
 	/**
@@ -61,26 +63,26 @@ public class PublisherBaseTest extends PublisherTestCommon {
 	@Test
 	public void testSetUp() throws PublisherException {
 		unbufferedPublisher.setUp();
-		assertEquals("Not initilized", 1L, unbufferedPublisher.getNumOfSetUpInvocations());
+		assertEquals( 1L, unbufferedPublisher.getNumOfSetUpInvocations(),"Not initilized");
 	}
 	
 	/**
 	 * Test if the initializing the publisher more then once throws an exception
 	 */
-	@Test(expected=PublisherException.class)
+	@Test
 	public void testSetUpTwice() throws PublisherException {
 		unbufferedPublisher.setUp();
-		assertEquals("Not initilized", 1L, unbufferedPublisher.getNumOfSetUpInvocations());
-		unbufferedPublisher.setUp();
+		assertEquals(1L, unbufferedPublisher.getNumOfSetUpInvocations(),"Not initilized");
+		assertThrows(PublisherException.class, () -> unbufferedPublisher.setUp());
 	}
 	
 	/**
 	 * Test if initializing a closed publisher throws an exception
 	 */
-	@Test(expected=PublisherException.class)
+	@Test
 	public void testSetUpWhenClosed() throws PublisherException {
 		unbufferedPublisher.setUp();
-		assertEquals("Not initilized", 1L, unbufferedPublisher.getNumOfSetUpInvocations());
+		assertEquals(1L, unbufferedPublisher.getNumOfSetUpInvocations(),"Not initilized");
 		
 		// Close the publisher
 		//
@@ -92,7 +94,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		} catch (PublisherException pe) {
 			throw new IllegalStateException("Unexpected exception while shuttig down");
 		}
-		unbufferedPublisher.setUp();
+		assertThrows(PublisherException.class, () -> unbufferedPublisher.setUp());
 	}
 	
 	/**
@@ -101,13 +103,13 @@ public class PublisherBaseTest extends PublisherTestCommon {
 	 */
 	@Test
 	public void testShutdown() throws PublisherException {
-		assertEquals("tearDown count wrong",0L,unbufferedPublisher.getNumOfTearDownInvocations());
+		assertEquals(0L,unbufferedPublisher.getNumOfTearDownInvocations(),"tearDown count wrong");
 		unbufferedPublisher.tearDown();
-		assertEquals("tearDown not executed",1L,unbufferedPublisher.getNumOfTearDownInvocations());
+		assertEquals(1L,unbufferedPublisher.getNumOfTearDownInvocations(),"tearDown not executed");
 		unbufferedPublisher.tearDown();
 		unbufferedPublisher.tearDown();
 		unbufferedPublisher.tearDown();
-		assertEquals("tearDown executed more then once",1L,unbufferedPublisher.getNumOfTearDownInvocations());
+		assertEquals(1L,unbufferedPublisher.getNumOfTearDownInvocations(),"tearDown executed more then once");
 	}
 	
 	/**
@@ -124,8 +126,8 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		unbufferedPublisher.startSending();
 		expectedValues = new CountDownLatch(1);
 		
-		List<ValidatedSample> samples = Arrays.asList(new ValidatedSample(new Sample(Integer.valueOf(67)),IasValidity.RELIABLE));
-		ValueToSend v = new ValueToSend("OneID", Integer.valueOf(67), samples, System.currentTimeMillis());
+		List<EnrichedSample> samples = Arrays.asList(new EnrichedSample(new Sample(Integer.valueOf(67)),true));
+		ValueToSend v = new ValueToSend("OneID", Integer.valueOf(67), samples, System.currentTimeMillis(),OperationalMode.OPERATIONAL,IasValidity.RELIABLE);
 		publishedValues.put(v.id,v);
 		unbufferedPublisher.offer(v);
 		try {
@@ -135,8 +137,8 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		}
 		assertEquals(1L,unbufferedPublisher.getPublishedMessages());
 		MonitorPointData d = receivedValuesFromUnbufferedPub.get(v.id);
-		assertNotNull("Expected value not published",d);
-		assertTrue("Offered and published values do not match "+v.toString()+"<->"+d.toString(), PublisherTestCommon.match(v,d));
+		assertNotNull(d,"Expected value not published");
+		assertTrue(PublisherTestCommon.match(v,d),"Offered and published values do not match "+v.toString()+"<->"+d.toString());
 		assertEquals(pluginId,d.getPluginID());
 		assertEquals(monitoredSystemId,d.getMonitoredSystemID());
 		assertTrue(d.getPublishTime()!=null && !d.getPublishTime().isEmpty());	
@@ -155,8 +157,8 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		assertEquals(0L,unbufferedPublisher.getPublishedMessages());
 		
 		Integer val = Integer.valueOf(67);
-		List<ValidatedSample> samples = Arrays.asList(new ValidatedSample(new Sample(val),IasValidity.RELIABLE));
-		ValueToSend v = new ValueToSend("OneID", val, samples, System.currentTimeMillis());
+		List<EnrichedSample> samples = Arrays.asList(new EnrichedSample(new Sample(val),true));
+		ValueToSend v = new ValueToSend("OneID", val, samples, System.currentTimeMillis(),OperationalMode.UNKNOWN,IasValidity.RELIABLE);
 		publishedValues.put(v.id,v);
 		unbufferedPublisher.offer(v);
 		
@@ -182,14 +184,14 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		unbufferedPublisher.startSending();
 		expectedValues = new CountDownLatch(5);
 		
-		List<ValidatedSample> samples = Arrays.asList(new ValidatedSample(new Sample(Integer.valueOf(67)),IasValidity.RELIABLE));
+		List<EnrichedSample> samples = Arrays.asList(new EnrichedSample(new Sample(Integer.valueOf(67)),true));
 		
 		List<ValueToSend> values = Arrays.asList(
-				new ValueToSend("FV-ID1", Integer.valueOf(67), samples, System.currentTimeMillis()),
-				new ValueToSend("FV-ID2", Long.valueOf(123), samples, System.currentTimeMillis()),
-				new ValueToSend("FV-ID3", "A string", samples, System.currentTimeMillis()),
-				new ValueToSend("FV-ID4", Boolean.valueOf(true), samples, System.currentTimeMillis()),
-				new ValueToSend("FV-ID5", Integer.valueOf(11), samples, System.currentTimeMillis()));
+				new ValueToSend("FV-ID1", Integer.valueOf(67), samples, System.currentTimeMillis(),OperationalMode.UNKNOWN,IasValidity.RELIABLE),
+				new ValueToSend("FV-ID2", Long.valueOf(123), samples, System.currentTimeMillis(),OperationalMode.OPERATIONAL,IasValidity.RELIABLE),
+				new ValueToSend("FV-ID3", "A string", samples, System.currentTimeMillis(),OperationalMode.DEGRADED,IasValidity.RELIABLE),
+				new ValueToSend("FV-ID4", Boolean.valueOf(true), samples, System.currentTimeMillis(),OperationalMode.UNKNOWN,IasValidity.RELIABLE),
+				new ValueToSend("FV-ID5", Integer.valueOf(11), samples, System.currentTimeMillis(),OperationalMode.CLOSING,IasValidity.RELIABLE));
 
 		for (ValueToSend v: values) {
 			publishedValues.put(v.id, v);
@@ -206,8 +208,8 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		
 		for (ValueToSend v: values) {
 			MonitorPointData d = receivedValuesFromUnbufferedPub.get(v.id);
-			assertNotNull("Expected value not published",d);
-			assertTrue("Offered and published values do not match", PublisherTestCommon.match(v,d));
+			assertNotNull(d,"Expected value not published");
+			assertTrue(PublisherTestCommon.match(v,d),"Offered and published values do not match");
 			assertEquals(pluginId,d.getPluginID());
 			assertEquals(monitoredSystemId,d.getMonitoredSystemID());
 			assertTrue(d.getPublishTime()!=null && !d.getPublishTime().isEmpty());
@@ -254,8 +256,8 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		assertEquals(publishedValues.size(), receivedValuesFromUnbufferedPub.size());
 		
 		MonitorPointData d = receivedValuesFromUnbufferedPub.get(lastOffered.id);
-		assertNotNull("Expected value not published",d);
-		assertTrue("Offered and published values do not match", PublisherTestCommon.match(lastOffered,d));
+		assertNotNull(d,"Expected value not published");
+		assertTrue(PublisherTestCommon.match(lastOffered,d),"Offered and published values do not match");
 		assertEquals(pluginId,d.getPluginID());
 		assertTrue(d.getPublishTime()!=null && !d.getPublishTime().isEmpty());
 	}
@@ -290,8 +292,8 @@ public class PublisherBaseTest extends PublisherTestCommon {
 		unbufferedPublisher.startSending();
 		expectedValues = new CountDownLatch(1);
 		
-		List<ValidatedSample> samples = Arrays.asList(new ValidatedSample(new Sample(Integer.valueOf(67)),IasValidity.UNRELIABLE));
-		ValueToSend v = new ValueToSend("OneID", Integer.valueOf(67), samples, System.currentTimeMillis());
+		List<EnrichedSample> samples = Arrays.asList(new EnrichedSample(new Sample(Integer.valueOf(67)),true));
+		ValueToSend v = new ValueToSend("OneID", Integer.valueOf(67), samples, System.currentTimeMillis(),OperationalMode.UNKNOWN,IasValidity.RELIABLE);
 		publishedValues.put(v.id,v);
 		unbufferedPublisher.offer(v);
 		try {

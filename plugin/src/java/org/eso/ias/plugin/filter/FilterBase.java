@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
  * newest items are in the head of the list.
  * <P>
  * Implementation of filters must take care of removing elements from the history when 
- * a new element is added ({@link #sampleAdded(org.eso.ias.plugin.filter.Filter.ValidatedSample)}) and/or when the filtered value
+ * a new element is added ({@link #sampleAdded(org.eso.ias.plugin.filter.Filter.EnrichedSample)}) and/or when the filtered value
  * is retrieved {@link Filter#apply()}.
  * <P>
  * Objects of this class stores also:
@@ -40,7 +40,7 @@ public abstract class FilterBase implements Filter {
 	 * The list is private to ensure it remains ordered: this class
 	 * provides methods to manipulate the history.
 	 */
-	private final LinkedList<ValidatedSample> history = new LinkedList<>();
+	private final LinkedList<EnrichedSample> history = new LinkedList<>();
 	
 	/**
 	 * The point in time then the last sample has been submitted to
@@ -60,7 +60,7 @@ public abstract class FilterBase implements Filter {
 	 * 
 	 * @param newSample The sample to add
 	 */
-	protected abstract void sampleAdded(ValidatedSample newSample);
+	protected abstract void sampleAdded(EnrichedSample newSample);
 	
 	/**
 	 * {@link #apply()} calls this method of the filter to get the 
@@ -95,7 +95,7 @@ public abstract class FilterBase implements Filter {
 	 * @return The filtered values after adding the new sample
 	 */
 	@Override
-	public final Optional<FilteredValue> newSample(ValidatedSample newSample) throws FilterException {
+	public final Optional<FilteredValue> newSample(EnrichedSample newSample) throws FilterException {
 		if (newSample==null) {
 			throw new IllegalArgumentException("A null sample is not permitted");
 		}
@@ -105,8 +105,8 @@ public abstract class FilterBase implements Filter {
 			// is more recent then that of the newest sample
 			// in the history
 			if (!history.isEmpty()) {
-				ValidatedSample s = history.peekFirst();
-				if (s.timestamp>=newSample.timestamp) {
+				EnrichedSample s = history.peekFirst();
+				if (s.timestamp>newSample.timestamp) {
 					throw new FilterException("The new sample is older then the last submitted sample!");
 				}
 			}
@@ -199,7 +199,7 @@ public abstract class FilterBase implements Filter {
 	 * 
 	 * @return a read-only snapshot of the actual history
 	 */
-	protected List<ValidatedSample> historySnapshot() {
+	protected List<EnrichedSample> historySnapshot() {
 		synchronized(history) {
 			return Collections.unmodifiableList(new Vector<>(history)); 
 		}
@@ -211,11 +211,18 @@ public abstract class FilterBase implements Filter {
 	 * 
 	 * @return the newest element of the history, or empty if the history is empty 
 	 */
-	protected Optional<ValidatedSample> peekNewest() {
+	protected Optional<EnrichedSample> peekNewest() {
 		// The newest element is at the head
 		synchronized(history) {
 			return Optional.ofNullable(history.peekFirst());
 		}
+	}
+	
+	/**
+	 * @return the size of the history
+	 */
+	protected int getHistorySize() {
+		return history.size();
 	}
 	
 	/**
@@ -237,7 +244,7 @@ public abstract class FilterBase implements Filter {
 	 * 
 	 * @return the newest element of the history, or empty if the history is empty 
 	 */
-	protected Optional<ValidatedSample> peekOldest() {
+	protected Optional<EnrichedSample> peekOldest() {
 		// The oldest sample is at the end of the list
 		synchronized(history) {
 			return Optional.ofNullable(history.peekLast());

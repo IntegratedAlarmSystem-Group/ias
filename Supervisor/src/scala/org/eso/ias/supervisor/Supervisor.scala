@@ -1,7 +1,7 @@
 package org.eso.ias.supervisor
 
 import org.eso.ias.cdb.CdbReader
-import org.ias.logging.IASLogger
+import org.eso.ias.logging.IASLogger
 import org.eso.ias.cdb.json.JsonReader
 import org.eso.ias.cdb.json.CdbFiles
 import org.eso.ias.cdb.json.CdbJsonFiles
@@ -26,6 +26,14 @@ import org.eso.ias.types.IdentifierType
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import org.eso.ias.cdb.rdb.RdbReader
+import org.eso.ias.cdb.pojos.DasuToDeployDao
+import org.eso.ias.heartbeat.HbProducer
+import org.eso.ias.kafkautils.KafkaHelper
+import org.eso.ias.heartbeat.publisher.HbKafkaProducer
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer
+import org.eso.ias.heartbeat.HbEngine
+import org.eso.ias.cdb.pojos.IasDao
+import org.eso.ias.heartbeat.HeartbeatStatus
 
 /**
  * A Supervisor is the container to run several DASUs into the same JVM.
@@ -54,7 +62,8 @@ import org.eso.ias.cdb.rdb.RdbReader
  * 
  * @param supervisorIdentifier the identifier of the Supervisor
  * @param outputPublisher the publisher to send the output
- * @param inputSubscriber the subscriber getting events to be processed 
+ * @param inputSubscriber the subscriber getting events to be processed
+ * @param hbProducer the subscriber to send heartbeats 
  * @param cdbReader the CDB reader to get the configuration of the DASU from the CDB
  * @param dasuFactory: factory to build DASU 
  */
@@ -63,8 +72,9 @@ class Supervisor(
     val supervisorIdentifier: Identifier,
     private val outputPublisher: OutputPublisher,
     private val inputSubscriber: InputSubscriber,
+    private val hbProducer: HbProducer,
     cdbReader: CdbReader,
-    dasuFactory: (DasuDao, Identifier, OutputPublisher, InputSubscriber, CdbReader) => Dasu) 
+    dasuFactory: (DasuDao, Identifier, OutputPublisher, InputSubscriber) => Dasu) 
     extends InputsListener with InputSubscriber with  OutputPublisher {
   require(Option(supervisorIdentifier).isDefined,"Invalid Supervisor identifier")
   require(Option(outputPublisher).isDefined,"Invalid output publisher")
@@ -74,10 +84,13 @@ class Supervisor(
   /** The ID of the Supervisor */
   val id = supervisorIdentifier.id
   
-  /** The logger */
-  val logger = IASLogger.getLogger(Supervisor.getClass)
+  Supervisor.logger.info("Building Supervisor [{}] with fullRunningId [{}]",id,supervisorIdentifier.fullRunningID)
   
-  logger.info("Building Supervisor [{}] with fullRunningId [{}]",id,supervisorIdentifier.fullRunningID)
+  /** The heartbeat Engine */
+  val hbEngine: HbEngine = {
+    val iasDao: IasDao = cdbReader.getIas.orElseThrow(() => new IllegalArgumentException("IasDao not found"))
+    HbEngine(supervisorIdentifier.fullRunningID,iasDao.getHbFrequency,hbProducer)
+  }
   
   // Get the configuration of the supervisor from the CDB
   val supervDao : SupervisorDao = {
@@ -85,41 +98,53 @@ class Supervisor(
     require(supervDaoOpt.isPresent(),"Supervisor ["+id+"] configuration not found on cdb")
     supervDaoOpt.get
   }
-  logger.info("Supervisor [{}] configuration retrived from CDB",id)
+  Supervisor.logger.info("Supervisor [{}] configuration retrived from CDB",id)
   
   /**
    * Gets the definitions of the DASUs to run in the Supervisor from the CDB
    */
-  val dasuDaos: Set[DasuDao] = JavaConverters.asScalaSet(cdbReader.getDasusForSupervisor(id)).toSet
-  require(dasuDaos.size>0,"No DASUs to run in Supervisor "+id)
-  logger.info("Supervisor [{}], {} DASUs to run: {}",id,dasuDaos.size.toString(),dasuDaos.map(d => d.getId()).mkString(", "))
+  val dasusToDelpoy: Set[DasuToDeployDao] = JavaConverters.asScalaSet(cdbReader.getDasusToDeployInSupervisor((id))).toSet
+  require(dasusToDelpoy.size>0,"No DASUs to run in Supervisor "+id)
+  Supervisor.logger.info("Supervisor [{}], {} DASUs to run: {}",
+      id,
+      dasusToDelpoy.size.toString(),
+      dasusToDelpoy.map(d => d.getDasu().getId()).mkString(", "))
   
   // Initialize the consumer and exit in case of error 
   val inputSubscriberInitialized = inputSubscriber.initializeSubscriber()
   inputSubscriberInitialized match {
-    case Failure(f) => logger.error("Supervisor [{}] failed to initialize the consumer", id,f);
+    case Failure(f) => Supervisor.logger.error("Supervisor [{}] failed to initialize the consumer", id,f);
                        System.exit(-1)
-    case Success(s) => logger.info("Supervisor [{}] subscriber successfully initialized",id)
+    case Success(s) => Supervisor.logger.info("Supervisor [{}] subscriber successfully initialized",id)
   }
   
   // Initialize the producer and exit in case of error 
   val outputProducerInitialized = outputPublisher.initializePublisher()
   outputProducerInitialized match {
-    case Failure(f) => logger.error("Supervisor [{}] failed to initialize the producer", id,f);
+    case Failure(f) => Supervisor.logger.error("Supervisor [{}] failed to initialize the producer", id,f);
                        System.exit(-2)
-    case Success(s) => logger.info("Supervisor [{}] producer successfully initialized",id)
+    case Success(s) => Supervisor.logger.info("Supervisor [{}] producer successfully initialized",id)
   }
   
+  // Get the DasuDaos from the set of DASUs to deploy:
+  // the helper transform the templated DASUS into normal ones
+  val dasuDaos = {
+    val helper = new TemplateHelper(dasusToDelpoy)
+    helper.normalize()
+  }
+  assert(dasuDaos.size==dasusToDelpoy.size)
+  
+  dasuDaos.foreach(d => Supervisor.logger.info("Supervisor [{}]: building DASU from DasuDao {}",id,d.toString()))
+  
   // Build all the DASUs
-  val dasus: Map[String, Dasu] = dasuDaos.foldLeft(Map.empty[String,Dasu])((m, dasuDao) => m + (dasuDao.getId -> dasuFactory(dasuDao,supervisorIdentifier,this,this,cdbReader)))
+  val dasus: Map[String, Dasu] = dasuDaos.foldLeft(Map.empty[String,Dasu])((m, dasuDao) => 
+    m + (dasuDao.getId -> dasuFactory(dasuDao,supervisorIdentifier,this,this)))
   
   /**
    * The IDs of the DASUs instantiated in the Supervisor
    */
   val dasuIds = dasuDaos.map(_.getId)
-  logger.info("Supervisor [{}] built {} DASUs: {}",id, dasus.size.toString(),dasuIds.mkString(", "))
-  
-  // TODO: close the cdbReader and free the resources (@see Issue #25)
+  Supervisor.logger.info("Supervisor [{}] built {} DASUs: {}",id, dasus.size.toString(),dasuIds.mkString(", "))
   
   /**
    * Associate each DASU with the Set of inputs it needs.
@@ -128,7 +153,7 @@ class Supervisor(
    * the set of inputs to send to the DASU
    */
   val iasiosToDasusMap: Map[String, Set[String]] = startDasus()
-  logger.info("Supervisor [{}] associated IASIOs IDs to DASUs", id)
+  Supervisor.logger.info("Supervisor [{}] associated IASIOs IDs to DASUs", id)
   
   val cleanedUp = new AtomicBoolean(false) // Avoid cleaning up twice
   val shutDownThread=addsShutDownHook()
@@ -136,7 +161,7 @@ class Supervisor(
   /** Flag to know if the Supervisor has been started */
   val started = new AtomicBoolean(false)
   
-  logger.info("Supervisor [{}] built",id)
+  Supervisor.logger.info("Supervisor [{}] built",id)
   
   /**
    * Start each DASU and gets the list of inputs it needs to forward to the ASCEs
@@ -174,12 +199,16 @@ class Supervisor(
   def start(): Try[Unit] = {
     val alreadyStarted = started.getAndSet(true) 
     if (!alreadyStarted) {
-      logger.debug("Starting Supervisor [{}]",id)
+      Supervisor.logger.debug("Starting Supervisor [{}]",id)
+      hbEngine.start()
       dasus.values.foreach(dasu => dasu.enableAutoRefreshOfOutput(true))
       val inputsOfSupervisor = dasus.values.foldLeft(Set.empty[String])( (s, dasu) => s ++ dasu.getInputIds())
-      inputSubscriber.startSubscriber(this, inputsOfSupervisor).flatMap(s => Try(logger.debug("Supervisor [{}] started",id)))
+      inputSubscriber.startSubscriber(this, inputsOfSupervisor).flatMap(s => {
+        Try{
+          Supervisor.logger.debug("Supervisor [{}] started",id)
+          hbEngine.updateHbState(HeartbeatStatus.RUNNING)}})
     } else {
-      logger.warn("Supervisor [{}] already started",id)
+      Supervisor.logger.warn("Supervisor [{}] already started",id)
       new Failure(new Exception("Supervisor already started"))
     }
   }
@@ -191,16 +220,17 @@ class Supervisor(
 
     val alreadyCleaned = cleanedUp.getAndSet(true)
     if (!alreadyCleaned) {
-      logger.debug("Cleaning up supervisor [{}]", id)
-
-      logger.debug("Releasing DASUs running in the supervisor [{}]", id)
+      Supervisor.logger.debug("Cleaning up supervisor [{}]", id)
+      hbEngine.updateHbState(HeartbeatStatus.EXITING)
+      Supervisor.logger.debug("Releasing DASUs running in the supervisor [{}]", id)
       dasus.values.foreach(_.cleanUp)
 
-      logger.debug("Supervisor [{}]: releasing the subscriber", id)
+      Supervisor.logger.debug("Supervisor [{}]: releasing the subscriber", id)
       Try(inputSubscriber.cleanUpSubscriber())
-      logger.debug("Supervisor [{}]: releasing the publisher", id)
+      Supervisor.logger.debug("Supervisor [{}]: releasing the publisher", id)
       Try(outputPublisher.cleanUpPublisher())
-      logger.info("Supervisor [{}]: cleaned up", id)
+      hbEngine.shutdown()
+      Supervisor.logger.info("Supervisor [{}]: cleaned up", id)
     }
   }
   
@@ -297,6 +327,8 @@ class Supervisor(
 
 object Supervisor {
   
+  /** The logger */
+  val logger = IASLogger.getLogger(Supervisor.getClass)
 
   /** Build the usage message */
   def printUsage() = {
@@ -334,32 +366,42 @@ object Supervisor {
      *  2 CDB
      *  3 default
      */
-    val (refreshRate, tolerance) = {
+    val (refreshRate, tolerance,kafkaBrokers) = {
       val RefreshTimeIntervalSeconds = Integer.getInteger(AutoSendPropName,AutoSendTimeIntervalDefault)
       val ToleranceSeconds = Integer.getInteger(TolerancePropName,ToleranceDefault)
       
       val iasDaoOpt = reader.getIas
+      logger.debug("IAS configuration read from CDB")
+      
       val fromCdb = if (iasDaoOpt.isPresent()) {
-        (iasDaoOpt.get.getRefreshRate,iasDaoOpt.get.getTolerance)
+        (iasDaoOpt.get.getRefreshRate,iasDaoOpt.get.getTolerance,Option(iasDaoOpt.get.getBsdbUrl))
       } else {
-        (AutoSendTimeIntervalDefault,ToleranceDefault)
+        (AutoSendTimeIntervalDefault,ToleranceDefault,None)
       }
+      logger.debug("Values from CDB autosend time={}, HB frequency={}, Kafka brokers={}",fromCdb._1,fromCdb._2,fromCdb._3)
       
       (Integer.getInteger(AutoSendPropName,fromCdb._1),
-      Integer.getInteger(TolerancePropName,fromCdb._2))
+      Integer.getInteger(TolerancePropName,fromCdb._2),
+      fromCdb._3)
     }
     
-    val outputPublisher: OutputPublisher = KafkaPublisher(supervisorId,System.getProperties)
-    val inputsProvider: InputSubscriber = new KafkaSubscriber(supervisorId,System.getProperties)
+    val outputPublisher: OutputPublisher = KafkaPublisher(supervisorId,None,kafkaBrokers,System.getProperties)
+    val inputsProvider: InputSubscriber = KafkaSubscriber(supervisorId,None,kafkaBrokers,System.getProperties)
     
     // The identifier of the supervisor
     val identifier = new Identifier(supervisorId, IdentifierType.SUPERVISOR, None)
     
-    val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber, cr: CdbReader) => 
-      DasuImpl(dd,i,op,id,cr,refreshRate,tolerance)
-    
+    val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) => 
+      DasuImpl(dd,i,op,id,refreshRate,tolerance)
+      
+    val hbProducer: HbProducer = {
+      val kafkaServers = System.getProperties.getProperty(KafkaHelper.BROKERS_PROPNAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
+      
+      new HbKafkaProducer(supervisorId,kafkaServers,new HbJsonSerializer())
+    }
+      
     // Build the supervisor
-    val supervisor = new Supervisor(identifier,outputPublisher,inputsProvider,reader,factory)
+    val supervisor = new Supervisor(identifier,outputPublisher,inputsProvider,hbProducer,reader,factory)
     
     val started = supervisor.start()
     

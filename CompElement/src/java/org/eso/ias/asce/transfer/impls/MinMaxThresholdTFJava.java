@@ -4,12 +4,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import org.eso.ias.types.AlarmSample;
+import org.eso.ias.types.Alarm;
 import org.eso.ias.types.IASTypes;
-import org.eso.ias.types.IASValue;
 import org.eso.ias.asce.exceptions.PropsMisconfiguredException;
 import org.eso.ias.asce.exceptions.TypeMismatchException;
 import org.eso.ias.asce.exceptions.UnexpectedNumberOfInputsException;
+import org.eso.ias.asce.transfer.IasIOJ;
 import org.eso.ias.asce.transfer.JavaTransferExecutor;
 import org.eso.ias.asce.transfer.TransferExecutor;
 
@@ -45,7 +45,7 @@ import org.eso.ias.asce.transfer.TransferExecutor;
  *   
  * @author acaproni
  */
-public class MinMaxThresholdTFJava extends JavaTransferExecutor {
+public class MinMaxThresholdTFJava extends JavaTransferExecutor<Alarm> {
 
 	/**
 	 * The name of the HighOn property
@@ -66,6 +66,11 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 	 * The name of the lowOff property
 	 */
 	public static final String lowOffPropName = "org.eso.ias.tf.minmaxthreshold.java.lowOff";
+	
+	/** 
+	 * The name of the property to set the priority of the alarm 
+	 */
+	public static final String alarmPriorityPropName = "org.eso.ias.tf.alarm.priority";
 
 	/**
 	 * The (high) alarm is activated when the value of the HIO is greater then
@@ -90,6 +95,9 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 	 * then LowOFF, then the alarm is deactivated
 	 */
 	public final double lowOff = getValue(props, MinMaxThresholdTFJava.lowOffPropName, Double.MIN_VALUE);
+	
+	public final Alarm alarmSet = Alarm.valueOf(
+			props.getProperty(MinMaxThresholdTFJava.alarmPriorityPropName, Alarm.getSetDefault().toString()));
 	
 	/** 
 	 * Additional properties
@@ -116,8 +124,16 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 		}
 	}
 
-	public MinMaxThresholdTFJava(String cEleId, String cEleRunningId, Properties props) {
-		super(cEleId, cEleRunningId, props);
+	/**
+	 * Constructor 
+	 * 
+	 * @param asceId: the ID of the ASCE
+	 * @param asceRunningId: the runningID of the ASCE
+	 * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
+	 * @param props: the user defined properties
+	 */
+	public MinMaxThresholdTFJava(String cEleId, String cEleRunningId, long validityTimeFrame, Properties props) {
+		super(cEleId, cEleRunningId, validityTimeFrame, props);
 	}
 
 	/**
@@ -161,40 +177,46 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor {
 	/**
 	 * @see JavaTransferExecutor#eval(Map, IASValue)
 	 */
-	public IASValue<?> eval(Map<String, IASValue<?>> compInputs, IASValue<?> actualOutput) throws Exception {
+	public IasIOJ<Alarm> eval(Map<String, IasIOJ<?>> compInputs, IasIOJ<Alarm> actualOutput) throws Exception {
 		if (compInputs.size() != 1)
 			throw new UnexpectedNumberOfInputsException(compInputs.size(), 1);
-		if (actualOutput.valueType != IASTypes.ALARM)
-			throw new TypeMismatchException(actualOutput.fullRunningId);
+		if (actualOutput.getType() != IASTypes.ALARM)
+			throw new TypeMismatchException(actualOutput.getFullrunningId());
 
 		// Get the input
-		IASValue<?> iasio = compInputs.values().iterator().next();
+		IasIOJ<?> iasio = compInputs.values().iterator().next();
 		
 		double hioValue;
 		
-		switch (iasio.valueType) {
+		switch (iasio.getType()) {
 		case LONG:
 		case INT:
 		case SHORT:
 		case BYTE:
 		case DOUBLE:
 		case FLOAT:
-			Number num = (Number)iasio.value;
+			Number num = (Number)iasio.getValue().get();
 			hioValue = num.doubleValue();
 			break;
 		default:
-			throw new TypeMismatchException(iasio.fullRunningId);
+			throw new TypeMismatchException(iasio.getFullrunningId());
 		}
 		
-		boolean wasActivated = (AlarmSample)actualOutput.value==AlarmSample.SET;
+		System.out.println("===>"+actualOutput.getId()+" "+actualOutput.getValue());
+		boolean wasActivated = actualOutput.getValue().isPresent() && ((Alarm)actualOutput.getValue().get()).isSet();
 		
 		boolean condition = 
 				hioValue >= highOn || hioValue <= lowOn ||
 				wasActivated && (hioValue>=highOff || hioValue<=lowOff);
 				
 				
-		AlarmSample newOutput = AlarmSample.fromBoolean(condition);
+		Alarm newOutput;
+		if (condition) {
+			newOutput=alarmSet;
+		} else {
+			newOutput=Alarm.cleared();
+		}
 		additionalProperties.put("actualValue", Double.valueOf(hioValue).toString());
-		return actualOutput.updateValue(newOutput).updateMode(iasio.mode).updateProperties(additionalProperties);
+		return actualOutput.updateValue(newOutput).updateMode(iasio.getMode()).updateProps(additionalProperties);
 	}
 }

@@ -1,0 +1,11 @@
+{
+	"logLevel":"INFO",
+	"refreshRate":"5",
+	"tolerance":"1",
+	"hbFrequency":"10",
+	"bsdbUrl":"127.0.0.1:9092",
+	"props": [
+		{ "name":"PropName1", "value":"PropValue1"},
+		{ "name":"PropName2", "value":"PropValue2"}
+	]
+}

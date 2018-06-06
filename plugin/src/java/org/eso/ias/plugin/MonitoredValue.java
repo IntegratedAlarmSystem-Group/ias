@@ -2,13 +2,15 @@ package org.eso.ias.plugin;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.eso.ias.plugin.filter.Filter;
-import org.eso.ias.plugin.filter.Filter.ValidatedSample;
+import org.eso.ias.plugin.filter.Filter.EnrichedSample;
 import org.eso.ias.plugin.filter.FilterException;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.filter.NoneFilter;
@@ -36,13 +38,20 @@ import org.slf4j.LoggerFactory;
  * 	<LI>if the value has not been sent to the IAS when the refresh time interval elapses,
  *      send the value again to the core
  * </UL>
- * <P>The <code>MonitoredValue</code> sends the value the {@link #listener}, that 
+ * <P>The <code>MonitoredValue</code> sends the value to the {@link #listener}, that 
  * will send it to the core of the IAS:
  * <UL>
  * 	<LI>immediately if the generated value changed
- * 	<LI>after the time interval elapses by a timer task.
+ * 	<LI>periodically by a timer task.
  * </UL>
  * A timer task implemented by the {@link #run()} resend to the core the last value sent. 
+ * <BR>Note that he periodic sending time interval is a global parameter
+ * of the plugin (of the IAS, actually) and must not be confused with the
+ * {@link #refreshRate} of the monitor point that is the time interval 
+ * that the monitor point is refreshed by the device.
+ * The validity depends on the time when the value has been produced by the remote
+ * system against the refresh rate and the actual time: the IAS periodic sending
+ * of the value does not play a role in the assessment of the validity. 
  * 
  * @author acaproni
  *
@@ -63,14 +72,7 @@ public class MonitoredValue implements Runnable {
 	 * The {@link #refreshRate} of the monitored can be dynamically changed
 	 * but can never be less then the allowed minimum. 
 	 */
-	public final static long minAllowedRefreshRate=50;
-	
-	/**
-	 * The {@link #refreshRate} of the monitored can be dynamically changed
-	 * but can never be greater then the allowed maximum 
-	 * to avoid the risk that the value is never sent to the core 
-	 */
-	public final static long maxAllowedRefreshRate=60000;
+	public final static long minAllowedSendRate=50;
 	
 	/**
 	 * The name of the property to set the delta time error
@@ -87,8 +89,8 @@ public class MonitoredValue implements Runnable {
 	
 	/**
 	 * The actual refresh rate (msec) of this monitored value:
-	 * the value must be sent to the IAS core on change or before the
-	 * refresh rate expires
+	 * the value depends on the time when the device provides a new value
+	 * ansd is used to evaluate the validity
 	 */
 	public long refreshRate;
 	
@@ -110,12 +112,16 @@ public class MonitoredValue implements Runnable {
 	private final ChangeValueListener listener;
 	
 	/**
-	 * The last value sent to the IAS core 
-	 * (i.e. to the {@link #listener}).
+	 * The last value produced by applying the filters
+	 * to the samples.
 	 * <P>
-	 * It is <code>null</code> when no value has been set.
+	 * The FilteredValue will be converted in a ValueToSend before being
+	 * sent to the BSDB to add, as a minimum, the validity
+	 * at the time of sending.
+	 * <P>
+	 * Can be <code>null</code> when no value has been set yet.
 	 */
-	private ValueToSend lastSentValue = null;
+	private AtomicReference<FilteredValue> lastProducedValue = new AtomicReference<>(null);
 	
 	/**
 	 * The point in time when the last value has been
@@ -135,6 +141,12 @@ public class MonitoredValue implements Runnable {
 	private ScheduledFuture<?> future=null;
 	
 	/**
+	 * The periodic time interval to automatically send the
+	 * last computed value to the BSDB
+	 */
+	public final int iasPeriodicSendingTime;
+	
+	/**
 	 * If <code>true</code> the <code>MonitoredValue</code> autonomously resends
 	 * the last value to the core of the IAS when the refresh rate elapses.
 	 * <P>
@@ -143,6 +155,16 @@ public class MonitoredValue implements Runnable {
 	 * new sample (or the same semple).
 	 */
 	private final AtomicBoolean isPeriodicNotificationEnabled = new AtomicBoolean(true);
+	
+	/**
+	 * Signal the the value has been started
+	 */
+	private final AtomicBoolean isStarted= new AtomicBoolean(false);
+	
+	/**
+	 * Signal the the value has been closed
+	 */
+	private final AtomicBoolean isClosed = new AtomicBoolean(false);
 	
 	/**
 	 * The operational mode of this monitored value.
@@ -163,17 +185,20 @@ public class MonitoredValue implements Runnable {
 	/**
 	 * Build a {@link MonitoredValue} with the passed filter
 	 * @param id The identifier of the value
-	 * @param refreshRate The refresh time interval in msec
+	 * @param refreshRate The refresh time interval  of the device (in msec)
 	 * @param filter The filter to apply to the samples
 	 * @param executorSvc The executor to schedule the thread
 	 * @param listener The listener of updates
+	 * @param iasPeriodicSendingTime The time interval (secs) 
+	 *           to periodically send the last computed value to the BSDB
 	 */
 	public MonitoredValue(
 			String id, 
 			long refreshRate, 
 			Filter filter, 
 			ScheduledExecutorService executorSvc,
-			ChangeValueListener listener) {
+			ChangeValueListener listener,
+			int iasPeriodicSendingTime) {
 		Objects.requireNonNull(id,"The ID can't be null");
 		if (id.trim().isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty monitored value ID string");
@@ -181,13 +206,15 @@ public class MonitoredValue implements Runnable {
 		Objects.requireNonNull(filter,"The filter can't be null");
 		Objects.requireNonNull(executorSvc,"The executor service can't be null");
 		Objects.requireNonNull(listener,"The listener can't be null");
+		if (iasPeriodicSendingTime<=0) {
+			throw new IllegalArgumentException("Invalid periodic time interval "+iasPeriodicSendingTime);
+		}
 		this.id=id.trim();
 		this.refreshRate=refreshRate;
 		this.filter = filter;
 		this.schedExecutorSvc=executorSvc;
 		this.listener=listener;
-		future = schedExecutorSvc.scheduleAtFixedRate(this, refreshRate, refreshRate, TimeUnit.MILLISECONDS);
-		logger.debug("Monitor point {} created with a refresh rate of {}ms",this.id,this.refreshRate);
+		this.iasPeriodicSendingTime=iasPeriodicSendingTime;
 	}
 
 	/**
@@ -197,18 +224,21 @@ public class MonitoredValue implements Runnable {
 	 * @param refreshRate The refresh time interval
 	 * @param executorSvc The executor to schedule the thread
 	 * @param listener The listener
+	 * @param iasPeriodicSendingTime The time interval (secs) 
+	 *           to periodically send the last computed value to the BSDB
 	 */
 	public MonitoredValue(
 			String id, 
 			long refreshRate, 
 			ScheduledExecutorService executorSvc,
-			ChangeValueListener listener) {
-		this(id,refreshRate, new NoneFilter(),executorSvc,listener);
+			ChangeValueListener listener,
+			int iasPeriodicSendingTime) {
+		this(id,refreshRate, new NoneFilter(null),executorSvc,listener,iasPeriodicSendingTime);
 	}
 	
 	/**
 	 * Get and return the value to send i.e. the value
-	 * returned applying the {@link #filter} to the #history of samples.
+	 * generated applying the {@link #filter} to the #history of samples.
 	 * 
 	 * @return The value to send
 	 */
@@ -217,16 +247,21 @@ public class MonitoredValue implements Runnable {
 	}
 	
 	/**
-	 * Calculate the validity of the newly submitted sample.
+	 * Calculate the validity of the value to send to the BSDB.
 	 * <P>
 	 * The heuristic is very simple as the validity at this stage 
 	 * is only based on timing.
+	 * A newly produced value is always valid but a value that is sent
+	 * after being produced can be valid or invalid depending on how
+	 * long after production it is efefctively sent.
 	 *  
 	 * @return the validity
 	 */
-	private IasValidity calcValidity() {
+	private IasValidity calcValidity(FilteredValue fValue) {
+		Objects.requireNonNull(fValue,"Cannot evaluate the validity of a null value");
 		long now = System.currentTimeMillis();
-		if (now-lastSubmittedTimestamp<=refreshRate+validityDelta) return IasValidity.RELIABLE;
+		long productionTime = fValue.producedTimestamp;
+		if (now-productionTime<=refreshRate+validityDelta) return IasValidity.RELIABLE;
 		else return IasValidity.UNRELIABLE;
 	}
 	
@@ -238,29 +273,53 @@ public class MonitoredValue implements Runnable {
 	 */
 	public void submitSample(Sample s) throws FilterException {
 		Objects.requireNonNull(s);
-		if(future.getDelay(TimeUnit.MILLISECONDS)<=minAllowedRefreshRate) {
-			rescheduleTimer();
+		if (isStarted.get() && !isClosed.get()) {
+			lastSubmittedTimestamp=System.currentTimeMillis();
+			
+			// Check if the new sample arrived before the refreshRate elapsed.
+			//
+			// The refresh rate depends on the rate at which the monitored software system
+			// or a device produces a new value.
+			//
+			// A newly received sample is by definition always valid but it can be
+			// useful to record if it arrived too late because there can be a problem 
+			// in the device that is too slow responding or in the algorithm 
+			// that read the value from the monitored system/device and notify the plugin
+			boolean generatedInTime = System.currentTimeMillis()-lastSubmittedTimestamp<=refreshRate+validityDelta;
+			
+			EnrichedSample validatedSample = new EnrichedSample(s, generatedInTime);
+			
+			filter.newSample(validatedSample).ifPresent(filteredValue -> {
+				FilteredValue oldfilteredValue = lastProducedValue.getAndSet(filteredValue);
+				if (oldfilteredValue==null || !filteredValue.value.equals(oldfilteredValue.value)) {
+					// The value changed so a immediate sending is triggered
+					if(future.getDelay(TimeUnit.MILLISECONDS)<=minAllowedSendRate) {
+						rescheduleTimer();
+					}
+					notifyListener();
+				}
+			});
 		}
-		ValidatedSample validatedSample = new ValidatedSample(s, calcValidity());
-		filter.newSample(validatedSample).ifPresent(filteredValue -> notifyListener(new ValueToSend(id,filteredValue,operationalMode)));
-		lastSubmittedTimestamp=System.currentTimeMillis();
 	}
 	
 	/**
-	 * Send the value to the listener that in turn will forward it to the IAS core.
-	 * 
-	 * @param value The not <code>null</code> value to send to the IAS
+	 * Send the last produced value to the listener
+	 * that in turn will forward it to the BSDB.
 	 */
-	private void notifyListener(ValueToSend value) {
-		Objects.requireNonNull(value, "Cannot notify a null value");
+	private void notifyListener() {
+		FilteredValue filteredValueToSend = lastProducedValue.get();
+		IasValidity actualValidity = calcValidity(filteredValueToSend);
+		ValueToSend valueToSend = new ValueToSend(
+				id, 
+				filteredValueToSend, 
+				operationalMode,
+				actualValidity);
 		try {
-			listener.monitoredValueUpdated(value);
+			listener.monitoredValueUpdated(valueToSend);
 			lastSentTimestamp=System.currentTimeMillis();
-			lastSentValue=value;
 		} catch (Exception e) {
 			// In case of error sending the value, we log the exception
-			// but do nothing else as we want to be ready to try to send it again
-			// later
+			// but do nothing else because we want to be ready to send it again later
 			logger.error("Error notifying the listener of the {} monitor point change", id, e);
 		}
 	}
@@ -272,9 +331,17 @@ public class MonitoredValue implements Runnable {
 	 * at the latest when the refresh rate elapse. 
 	 */
 	private synchronized void rescheduleTimer() {
+		if (isClosed.get()) {
+			return;
+		}
+		assert(isStarted.get());
 		future.cancel(false);
 		if (isPeriodicNotificationEnabled.get()) {
-			future = schedExecutorSvc.scheduleAtFixedRate(this, refreshRate, refreshRate, TimeUnit.MILLISECONDS);
+			future = schedExecutorSvc.scheduleAtFixedRate(
+					this, 
+					iasPeriodicSendingTime, 
+					iasPeriodicSendingTime, 
+					TimeUnit.SECONDS);
 		}
 	}
 
@@ -285,33 +352,32 @@ public class MonitoredValue implements Runnable {
 	 */
 	@Override
 	public void run() {
-		notifyListener(lastSentValue);
+		if (!isClosed.get()) {
+			notifyListener();
+		}
 	}
 	
 	/**
 	 * Set the new refresh rate for the monitored value with the given identifier.
 	 * <P>
-	 * If the periodic send is disabled, this method sets the new time interval 
-	 * but does not reactivate the periodic send that must be done by 
-	 * {@link #enablePeriodicNotification(boolean)}.
+	 * This method sets the refresh rate at which the monitored value is retrieved from
+	 * the remote monitored system and not the time the value is periodically
+	 * sent to the BSDB if its value did not change.
+	 * <P>
+	 * Setting this value affects the evaluation of the validity.
 	 * 
-	 * @param newRefreshRate The new refresh rate (msecs), must be greater then {@link #minAllowedRefreshRate}
-	 *                       and less then {@link #maxAllowedRefreshRate}
+	 * @param newRefreshRate The new refresh rate (msecs), must be greater 
+	 *                       then {@link #minAllowedSendRate}
 	 * @return The new refresh rate (msec)
 	 * 
 	 */
 	public synchronized long setRefreshRate(long newRefreshRate) {
-		if (newRefreshRate<minAllowedRefreshRate) {
-			logger.warn("The requested refresh rate {} for {} was too low: {} will be set instead",newRefreshRate,id,minAllowedRefreshRate);
-			newRefreshRate=minAllowedRefreshRate;
+		if (newRefreshRate<minAllowedSendRate) {
+			logger.warn("The requested refresh rate {} for {} was too low: {} will be set instead",newRefreshRate,id,minAllowedSendRate);
+			newRefreshRate=minAllowedSendRate;
 			
 		}
-		if (newRefreshRate>maxAllowedRefreshRate) {
-			logger.warn("The requested refresh rate {} for {} was too high: {} will be set instead",newRefreshRate,id,maxAllowedRefreshRate);
-			newRefreshRate=maxAllowedRefreshRate;
-		}
 		refreshRate=newRefreshRate;
-		rescheduleTimer();
 		return newRefreshRate;
 	}
 	
@@ -340,5 +406,34 @@ public class MonitoredValue implements Runnable {
 		OperationalMode ret = operationalMode;
 		operationalMode= opMode;
 		return ret;
+	}
+	
+	/**
+	 * Start the MonitorValue basically activating
+	 * the timer thread 
+	 */
+	public synchronized void start() {
+		boolean alreadyStarted = isStarted.getAndSet(true);
+		assert(!alreadyStarted);
+		future = schedExecutorSvc.scheduleAtFixedRate(
+				this, 
+				iasPeriodicSendingTime, 
+				iasPeriodicSendingTime, 
+				TimeUnit.SECONDS);
+		logger.debug("Monitor point {} initialized with a refresh rate of {} secs",id,iasPeriodicSendingTime);
+	}
+	
+	/**
+	 * Stops the periodic thread and release all the resources
+	 */
+	public synchronized void shutdown() {
+		boolean alreadyClosed = isClosed.getAndSet(true);
+		if (alreadyClosed) {
+			logger.warn("Monitor point {} already closed",id);
+		} else {
+			if (isStarted.get()) {
+				future.cancel(false);
+			}
+		}
 	}
 }

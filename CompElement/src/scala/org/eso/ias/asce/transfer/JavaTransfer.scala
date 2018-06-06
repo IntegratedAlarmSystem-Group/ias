@@ -6,8 +6,7 @@ import org.eso.ias.asce.ComputingElement
 import java.util.Properties
 import java.util.{Map => JavaMap, HashMap => JavaHashMap}
 import org.eso.ias.types.IASValue
-import org.eso.ias.types.JavaConverter
-import org.eso.ias.types.IASValue
+import scala.util.Try
 
 /**
  * <code>JavaTransfer</code> calls the java
@@ -27,11 +26,11 @@ trait JavaTransfer[T] extends ComputingElement[T] {
    * Flush the scala Map into a Java Map
    */
   private[this] def flushInputsOnJavaMap(
-      inputs: Map[String, InOut[_]]): JavaMap[String, IASValue[_]] = {
-    val map: JavaMap[String, IASValue[_]] = new JavaHashMap[String, IASValue[_]]()
+      inputs: Map[String, InOut[_]]): JavaMap[String, IasIOJ[_]] = {
+    val map: JavaMap[String, IasIOJ[_]] = new JavaHashMap[String, IasIOJ[_]]()
     
     inputs.values.foreach(iasio => {
-      map.put(iasio.id.id,iasio.toIASValue)
+      map.put(iasio.id.id,new IasIOJ(iasio))
     })
     map
   }
@@ -45,15 +44,13 @@ trait JavaTransfer[T] extends ComputingElement[T] {
   def transfer(
       inputs: Map[String, InOut[_]], 
       id: Identifier,
-      actualOutput: InOut[T]): Either[Exception,InOut[T]] = {
-    
-    try { 
-      val map: JavaMap[String, IASValue[_]] = flushInputsOnJavaMap(inputs)
-      val newOutput=tfSetting.transferExecutor.get.asInstanceOf[JavaTransferExecutor].
-      eval( map, actualOutput.toIASValue)
-      Right(actualOutput.update(newOutput).asInstanceOf[InOut[T]])
-    
-    } catch { case e:Exception => Left(e) }
+      actualOutput: InOut[T]): Try[InOut[T]] = {
+    Try[InOut[T]]{
+      val map: JavaMap[String, IasIOJ[_]] = flushInputsOnJavaMap(inputs)
+      val out: IasIOJ[T] = new IasIOJ(actualOutput)
+      tfSetting.transferExecutor.get.asInstanceOf[JavaTransferExecutor[T]].
+        eval( map, out).inOut.asInstanceOf[InOut[T]]
+    }
   }
   
 }

@@ -3,18 +3,30 @@ package org.eso.ias.converter;
 import java.io.File;
 import java.security.InvalidParameterException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import org.eso.ias.cdb.CdbReader;
+import org.eso.ias.cdb.IasCdbException;
 import org.eso.ias.cdb.json.CdbFiles;
 import org.eso.ias.cdb.json.CdbJsonFiles;
 import org.eso.ias.cdb.json.JsonReader;
+import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.converter.config.ConfigurationException;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
 import org.eso.ias.converter.config.IasioConfigurationDaoImpl;
+import org.eso.ias.heartbeat.HbEngine;
+import org.eso.ias.heartbeat.HbMsgSerializer;
+import org.eso.ias.heartbeat.HbProducer;
+import org.eso.ias.heartbeat.HeartbeatStatus;
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.types.IasValueJsonSerializer;
 import org.eso.ias.types.IasValueStringSerializer;
+import org.eso.ias.types.Identifier;
+import org.eso.ias.types.IdentifierType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -44,7 +56,7 @@ public class Converter {
 	/**
 	 * The identifier of the converter
 	 */
-	public final String converterID;
+	public final String converterId;
 
 	/**
 	 * The logger
@@ -54,12 +66,7 @@ public class Converter {
 	/**
 	 * Signal the thread to terminate
 	 */
-	private volatile boolean closed=false;
-
-	/**
-	 * The DAO to get the configuration from the CDB
-	 */
-	private final CdbReader cdbDAO;
+	private AtomicBoolean closed=new AtomicBoolean(false);
 
 	/**
 	 * The DAO to get the configuration of monitor points
@@ -82,6 +89,11 @@ public class Converter {
 	 * The function to map the json
 	 */
 	private final Function<String, String> mapper;
+	
+	/**
+	 * The engine to send HBs 
+	 */
+	private final HbEngine hbEngine;
 
 	/**
 	 * The shutdown thread for a clean exit
@@ -101,19 +113,49 @@ public class Converter {
 	 * @param id The not <code>null</code> nor empty ID of the converter
 	 * @param cdbReader The DAO of the configuration database
 	 * @param converterStream The stream to convert monitor point data into IAS values
+	 * @param hbProducer the sender of HB messages
 	 */
 	public Converter(
 			String id,
 			CdbReader cdbReader,
-			ConverterStream converterStream) {
+			ConverterStream converterStream,
+			HbProducer hbProducer) throws ConfigurationException {
 		Objects.requireNonNull(id);
 		if (id.trim().isEmpty()) {
 			throw new InvalidParameterException("The ID of the converter can't be empty");
 		}
-		converterID=id.trim();
+		converterId = id.trim();
+		
 		Objects.requireNonNull(cdbReader);
-		this.cdbDAO=cdbReader;
+		
+		Optional<IasDao> iasDao = null;
+		
+		try {
+			iasDao=cdbReader.getIas();
+		} catch (IasCdbException cdbExcp) {
+			throw new ConfigurationException("Error getting the configuration of the IAS",cdbExcp);
+		}
+		if (!iasDao.isPresent()) {
+			throw new ConfigurationException("Got and empty IAS configuration from the CDB reader");
+		}
+		
+		int hbFrequency = iasDao.get().getHbFrequency();
+		if (hbFrequency<=0) {
+			throw new ConfigurationException("Invalid HB frequency: "+hbFrequency);
+		}
+		
+		Objects.requireNonNull(hbProducer,"The producer to publish HBs can't be null");
+		hbEngine = new HbEngine(
+				converterId, 
+				hbFrequency, 
+				hbProducer);
+		
 		this.configDao= new IasioConfigurationDaoImpl(cdbReader);
+		try {
+			cdbReader.shutdown();
+		} catch (IasCdbException e) {
+			logger.warn("Exception got closing the CDB",e);
+		}
 
 		this.iasValueStrSerializer=	new IasValueJsonSerializer();
 
@@ -129,7 +171,10 @@ public class Converter {
 	 * @throws ConfigurationException in case of error in the configuration
 	 */
 	public void setUp() throws ConfigurationException {
-		logger.info("Converter {} initializing...", converterID);
+		logger.info("Converter {} initializing...", converterId);
+		
+		hbEngine.start();
+		
 		configDao.initialize();
 		Runtime.getRuntime().addShutdownHook(shutDownThread);
 		// Init the stream
@@ -144,27 +189,33 @@ public class Converter {
 		} catch (Exception e) {
 			throw new ConfigurationException("Error activating the stream",e);
 		}
-		logger.info("Converter {} initialized", converterID);
+		
+		hbEngine.updateHbState(HeartbeatStatus.RUNNING);
+		logger.info("Converter {} initialized", converterId);
 	}
 
 	/**
 	 * Shut down the loop and free the resources.
 	 */
 	public void tearDown() {
-		if (closed) {
-			logger.info("Converter {} already closed", converterID);
+		if (closed.getAndSet(true)) {
+			logger.info("Converter {} already closed", converterId);
 			return;
 		}
-		logger.info("Converter {} shutting down...", converterID);
+		logger.info("Converter {} shutting down...", converterId);
+		
+		hbEngine.updateHbState(HeartbeatStatus.EXITING);
+		
 		Runtime.getRuntime().removeShutdownHook(shutDownThread);
 
-		closed=true;
 		try {
 			converterStream.stop();
 		}  catch (Exception e) {
-			logger.error("Converter {}: exception got while terminating the streaming", converterID,e);
+			logger.error("Converter {}: exception got while terminating the streaming", converterId,e);
 		}
-		logger.info("Converter {} shutted down.", converterID);
+		
+		hbEngine.shutdown();
+		logger.info("Converter {} shutted down.", converterId);
 	}
 
 	private static void printUsage() {
@@ -220,12 +271,32 @@ public class Converter {
 			// Get from dependency injection
 			cdbReader = context.getBean("cdbReader",CdbReader.class);
 		}
+		
+		IasDao iasDao = null;
+		try { 
+			Optional<IasDao> iasDaoOpt = cdbReader.getIas();
+			iasDao=iasDaoOpt.get();
+		} catch (IasCdbException cdbEx) {
+			logger.error("Error getting IAS configuration from CDB",cdbEx);
+			System.exit(-1);
+		}
+		
+		Optional<String> kafkaBrokersFromCdb = Optional.ofNullable(iasDao.getBsdbUrl());
 
-		ConverterStream converterStream = context.getBean(ConverterStream.class,id, System.getProperties());
+		ConverterStream converterStream = context.getBean(ConverterStream.class,id, kafkaBrokersFromCdb, System.getProperties());
+		
+		HbProducer hbProducer = context.getBean(HbProducer.class,id,kafkaBrokersFromCdb,System.getProperties());
 
-		logger.info("Converter {} started",id);
+		logger.info("Building the {} Converter",id);
 
-		Converter converter = new Converter(id,cdbReader,converterStream);
+		Converter converter = null;
+		try { 
+			converter=new Converter(id,cdbReader,converterStream,hbProducer);
+		} catch (Exception e) {
+			logger.error("Exception building the converter {}",id,e);
+			System.exit(-1);
+		}
+		
 		try {
 			converter.setUp();
 			logger.info("Converter {} initialized",id);

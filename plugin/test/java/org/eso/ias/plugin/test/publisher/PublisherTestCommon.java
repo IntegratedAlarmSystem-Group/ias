@@ -1,9 +1,9 @@
 package org.eso.ias.plugin.test.publisher;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.text.SimpleDateFormat;
 import java.util.Collections;
@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
-import org.eso.ias.plugin.filter.Filter.ValidatedSample;
+import org.eso.ias.plugin.filter.Filter.EnrichedSample;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.MonitorPointData;
@@ -34,8 +34,9 @@ import org.eso.ias.plugin.publisher.impl.BufferedListenerPublisher.PublisherEven
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.eso.ias.types.IasValidity;
-import org.junit.After;
-import org.junit.Before;
+import org.eso.ias.types.OperationalMode;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -218,7 +219,7 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 			long baseValue,
 			long valueInc) {
 		List<ValueToSend> ret = new LinkedList<>();
-		List<ValidatedSample> samples = new LinkedList<>();
+		List<EnrichedSample> samples = new LinkedList<>();
 		int idCounter=0;
 		long valueCounter=baseValue;
 		for (int t=0; t<numOfValues; t++) {
@@ -226,8 +227,14 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 			long value=valueCounter;
 			valueCounter+=valueInc;
 			samples.clear();
-			samples.add(new ValidatedSample(new Sample(Long.valueOf(value)),IasValidity.RELIABLE));
-			ValueToSend fv = new ValueToSend(id, Long.valueOf(value), samples, System.currentTimeMillis());
+			samples.add(new EnrichedSample(new Sample(Long.valueOf(value)),true));
+			ValueToSend fv = new ValueToSend(
+					id, 
+					Long.valueOf(value), 
+					samples, 
+					System.currentTimeMillis(),
+					OperationalMode.UNKNOWN,
+					IasValidity.RELIABLE);
 			ret.add(fv);
 		}
 		return ret;
@@ -289,12 +296,12 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 	@Override
 	public void dataReceived(BufferedMonitoredSystemData data) {
 		assertNotNull(data);
-		assertEquals("ID differs",data.getSystemID(), pluginId);
+		assertEquals(data.getSystemID(), pluginId,"ID differs");
 		assertNotNull(data.getPublishTime());
 		assertFalse(data.getPublishTime().isEmpty());
-		assertTrue("There must be at least one monitor point value in a message",data.getMonitorPoints().size()>0);
-		assertTrue("The number of monitor point values in a message acn't be geater then the max size of the buffer",
-				data.getMonitorPoints().size()<=BufferedPublisherBase.maxBufferSize);
+		assertTrue(data.getMonitorPoints().size()>0,"There must be at least one monitor point value in a message");
+		assertTrue(data.getMonitorPoints().size()<=BufferedPublisherBase.maxBufferSize,
+				"The number of monitor point values in a message acn't be geater then the max size of the buffer");
 		numOfPublishInvocationInBufferedPub.incrementAndGet();
 		logger.info("{} monitor points received from {}",data.getMonitorPoints().size(),data.getSystemID());
 		for (MonitorPointDataToBuffer d: data.getMonitorPoints()) {
@@ -312,7 +319,7 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 	@Override
 	public void dataReceived(MonitorPointData mpData) {
 		assertNotNull(mpData);
-		assertEquals("ID differs",mpData.getPluginID(), pluginId);
+		assertEquals(mpData.getPluginID(), pluginId,"ID differs");
 		assertNotNull(mpData.getPublishTime());
 		assertFalse(mpData.getPublishTime().isEmpty());
 		numOfPublishInvocationInUnbufferedPub.incrementAndGet();
@@ -322,16 +329,15 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 		}
 	}
 	
-	@Before
+	@BeforeEach
 	public void setUp() {
 		// Build the publisher
-		int poolSize = Runtime.getRuntime().availableProcessors()/2;
 		bufferedPublisher = new BufferedListenerPublisher(pluginId, monitoredSystemId, pluginServerName, pluginServerPort, schedExecutorSvc,this);
 		unbufferedPublisher = new ListenerPublisher(pluginId, monitoredSystemId,pluginServerName, pluginServerPort, schedExecutorSvc,this);
 		logger.debug("Set up");
 	}
 	
-	@After
+	@AfterEach
 	public void tearDown() throws PublisherException {
 		logger.debug("Releasing resource");
 		receivedValuesFromBufferedPub.clear();

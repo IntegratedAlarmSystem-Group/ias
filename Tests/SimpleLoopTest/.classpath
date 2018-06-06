@@ -4,7 +4,6 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.scala-ide.sdt.launching.SCALA_CONTAINER"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-cdb.jar"/>
-	<classpathentry kind="var" path="IAS_ROOT/lib/ias-logging.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-dasu.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-basic-types.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/scalatest_2.12-3.0.4.jar"/>
@@ -13,5 +12,6 @@
 	<classpathentry kind="var" path="IAS_ROOT/lib/ExtTools/slf4j-api-1.7.25.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-kafka-tools.jar"/>
 	<classpathentry kind="var" path="IAS_ROOT/lib/ias-plugin.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ias-heartbeat.jar"/>
 	<classpathentry kind="output" path="lib"/>
 </classpath>

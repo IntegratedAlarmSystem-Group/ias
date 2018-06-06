@@ -4,7 +4,7 @@ import org.eso.ias.types.IASValue
 import scala.util.Try
 import org.eso.ias.kafkautils.KafkaIasiosProducer
 import java.util.Properties
-import org.ias.logging.IASLogger
+import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IasValueJsonSerializer
 import org.eso.ias.kafkautils.KafkaHelper
 
@@ -64,33 +64,33 @@ extends OutputPublisher {
 
 object KafkaPublisher {
   /** 
-   *  Factory method with more fine control over the options
+   *  Factory method
    *  
    * @param dasuId the identifier of the DASU
-   * @param kafkaTopic the kafka topic to send the output to
-   * @param kafkaServers kafka servers
+   * @param kafkaTopic the kafka topic to send the output to;
+   *                   if empty uses defaults from KafkaHelper
+   * @param kafkaServers kafka servers; 
+   *                     overridden by KafkaHelper.BROKERS_PROPNAME java property, if present
    * @param props additional set of properties
    */
   def apply(
       dasuId: String, 
-      kafkaTopic: String, 
-      kafkaServers: String, 
+      kafkaTopic: Option[String], 
+      kafkaServers: Option[String], 
       props: Properties): KafkaPublisher = {
-    val kafkaStringProducer = new KafkaIasiosProducer(kafkaServers,kafkaTopic,dasuId+"Producer",new IasValueJsonSerializer())
+    
+    // Get the topic from the parameter or from the default  
+    val topic = kafkaTopic.getOrElse(KafkaHelper.IASIOs_TOPIC_NAME);
+    
+    val serversFromProps = Option( props.getProperty(KafkaHelper.BROKERS_PROPNAME))
+    val kafkaBrokers = (serversFromProps, kafkaServers) match {
+      case (Some(servers), _) => servers
+      case ( None, Some(servers)) => servers
+      case (_, _) => KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS
+    }
+    
+    val kafkaStringProducer = new KafkaIasiosProducer(kafkaBrokers,topic,dasuId+"Producer",new IasValueJsonSerializer())
     new KafkaPublisher(dasuId,kafkaStringProducer,props)
   }
-  
-  /**
-   * Factory method with default topic name and servers list
-   *  
-   * @param dasuId the identifier of the DASU
-   * @param props additional set of properties
-   */
-  def apply(dasuId: String, props: Properties): KafkaPublisher = {
-    apply(
-        dasuId,
-        KafkaHelper.IASIOs_TOPIC_NAME,
-        props.getProperty(KafkaHelper.BROKERS_PROPNAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS),
-        props)
-  }
+
 }

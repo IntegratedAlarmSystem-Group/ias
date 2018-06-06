@@ -1,5 +1,8 @@
 package org.eso.ias.webserversender;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -14,28 +17,26 @@ import java.util.stream.Collectors;
 
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.websocket.server.WebSocketHandler;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
+import org.eso.ias.heartbeat.HbMsgSerializer;
+import org.eso.ias.heartbeat.HbProducer;
+import org.eso.ias.heartbeat.publisher.HbLogProducer;
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaIasiosProducer;
-import org.eso.ias.kafkautils.SimpleStringProducer;
-import org.eso.ias.types.Identifier;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
 import org.eso.ias.types.IasValidity;
 import org.eso.ias.types.IasValueJsonSerializer;
 import org.eso.ias.types.IasValueStringSerializer;
+import org.eso.ias.types.Identifier;
 import org.eso.ias.types.OperationalMode;
-import org.eso.ias.webserversender.WebServerSender;
 import org.eso.ias.webserversender.WebServerSender.WebServerSenderListener;
 import org.eso.ias.webserversender.WebSocketServerHandler.WebSocketServerListener;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Test that, when messages are published to the Kafka queue,
@@ -179,8 +180,20 @@ public class WebServerSenderTest {
 		props.put("org.eso.ias.senders.kafka.inputstream", this.kafkaTopic);
 		props.put("org.eso.ias.senders.kafka.servers", this.kafkaServer);
 		props.put("org.eso.ias.senders.webserver.uri", this.webserverUri);
-		this.webServerSender = new WebServerSender("WebServerSender", props, listener);
-		this.webServerSender.run();
+		
+		
+		HbMsgSerializer hbSer = new HbJsonSerializer();
+		HbProducer hProd = new HbLogProducer(hbSer);
+		
+		
+		this.webServerSender = new WebServerSender(
+				"WebServerSender",
+				KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
+				props, 
+				listener,
+				1,
+				hProd);
+		this.webServerSender.setUp();
 		logger.info("WebServerSender initialized...");
 	}
 
@@ -217,7 +230,7 @@ public class WebServerSenderTest {
 	/**
 	 * Test set up
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception {
 		logger.info("Starting Test Initialization");
 
@@ -237,7 +250,7 @@ public class WebServerSenderTest {
 		this.runSender();
 
 		Boolean status = this.serverReady.await(10, TimeUnit.SECONDS);
-		assertTrue("Server and sender never connected", status);
+		assertTrue(status,"Server and sender never connected");
 
 		logger.info("Test Initialization Completed.");
 	}
@@ -289,9 +302,9 @@ public class WebServerSenderTest {
 		logger.info("- [{}] messages were published in the Kafka queue",messagesDelivered);
 		logger.info("- [{}] messages were sent by the WebServerSender",this.sentMessages.size());
 		logger.info("- [{}] messages were received by the Mock Server",this.receivedMessages.size());
-		assertEquals("Some messages were not published in the Kafka Queue by Mock Producer", messagesNumber, messagesDelivered);
-		assertEquals("Some messages were not sent by the WebServerSender", messagesNumber, this.sentMessages.size());
-		assertEquals("Some messages were not received by the Mock Server", messagesNumber, this.receivedMessages.size());
+		assertEquals(messagesNumber, messagesDelivered,"Some messages were not published in the Kafka Queue by Mock Producer");
+		assertEquals(messagesNumber, this.sentMessages.size(),"Some messages were not sent by the WebServerSender");
+		assertEquals(messagesNumber, this.receivedMessages.size(),"Some messages were not received by the Mock Server");
 	}
 
 	/**
@@ -331,7 +344,7 @@ public class WebServerSenderTest {
 		this.numOfMessagesToSend = new CountDownLatch(messagesNumber/2);
 
 		Boolean status = this.serverReady.await(10, TimeUnit.SECONDS);
-		assertTrue("Sender did not reconnect to Server", status);
+		assertTrue(status,"Sender did not reconnect to Server");
 
 		// Send the other half of the messages:
 		while(iterator.hasNext()) {
@@ -370,19 +383,19 @@ public class WebServerSenderTest {
 		logger.info("- [{}] messages were published in the Kafka queue",messagesDelivered);
 		logger.info("- [{}] messages were sent by the WebServerSender",this.sentMessages.size());
 		logger.info("- [{}] messages were received by the Mock Server",this.receivedMessages.size());
-		assertEquals("Some messages were not published in the Kafka Queue by Mock Producer", messagesNumber, messagesDelivered);
-		assertEquals("Some messages were not sent by the WebServerSender", messagesNumber, this.sentMessages.size());
-		assertEquals("Some messages were not received by the Mock Server", messagesNumber, this.receivedMessages.size());
+		assertEquals(messagesNumber, messagesDelivered,"Some messages were not published in the Kafka Queue by Mock Producer");
+		assertEquals(messagesNumber, this.sentMessages.size(),"Some messages were not sent by the WebServerSender");
+		assertEquals(messagesNumber, this.receivedMessages.size(),"Some messages were not received by the Mock Server");
 	}
 
 	/**
 	 * Stop the WebserverSender, Server and Producer after the test is finished
 	 */
-	@After
+	@AfterEach
 	public void tearDown() throws Exception {
 		logger.info("Starting Test Finalization");
 		this.producer.tearDown();
-		this.webServerSender.stop();
+		this.webServerSender.shutdown();
 		this.server.stop();
 		logger.info("Test Finalization Completed");
 	}

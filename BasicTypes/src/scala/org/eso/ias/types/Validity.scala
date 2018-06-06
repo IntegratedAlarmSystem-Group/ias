@@ -52,21 +52,8 @@ class Validity(val iasValidity: IasValidity) extends Ordered[Validity] {
    */
   override def hashCode: Int = iasValidity.hashCode()
   
-  /**
-   * Return the lowest validity between the actual validity and
-   * the validities of the passed values
-   * 
-   * @param iasValues the IASValues to evaluate the new validity
-   * @return the minimum validity
-   */
-  def minValidity(iasValues: Set[IASValue[_]]) : Validity = {
-    require(Option(iasValues).isDefined,"Invalid set of values")
-    val validities = iasValues.map(_.iasValidity) +iasValidity
-    Validity.minValidity(validities)
-  }
   
-  
-  override def toString() = iasValidity.toString()
+  override def toString() = "Validity(IasValidity="+iasValidity.toString()+")"
 }
 
 object Validity {
@@ -93,15 +80,30 @@ object Validity {
   
   /**
    * Return the lowest validity between all
-   * the validities of the passed validities
+   * the validities of the passed iasValidities
    * 
-   * @param iasValues the non empty set of validities to evaluate the new validity
+   * @param iasValidities non empty set of validities to evaluate the new validity
    * @return the minimum validity between all the validities in the passed set
    */
-  def minValidity(iasValidities: Set[IasValidity]) : Validity = {
+  def minIasValidity(iasValidities: Set[IasValidity]) : IasValidity = {
     require(Option(iasValidities).isDefined,"Invalid set of validities")
     require(!iasValidities.isEmpty,"Cannot evaluate the min validity of an empty set of validities")
     
-    Validity(iasValidities.map(Validity(_)).min)
+    minValidity(iasValidities.map( iasV => Validity(iasV))).iasValidity
   }
+  
+  /**
+   * Return the lowest validity between all
+   * the validities of the passed validities
+   * 
+   * @param validities the non empty set of validities to evaluate the new validity
+   * @return the minimum validity between all the validities in the passed set
+   */
+  def minValidity(validities: Set[Validity]) : Validity = {
+    require(Option(validities).isDefined,"Invalid set of validities")
+    require(!validities.isEmpty,"Cannot evaluate the min validity of an empty set of validities")
+    
+    validities.min
+  }
+  
 }

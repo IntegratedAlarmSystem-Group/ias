@@ -17,7 +17,7 @@ import org.eso.ias.supervisor.Supervisor
 import scala.util.Success
 import scala.util.Failure
 import java.util.concurrent.CountDownLatch
-import org.ias.logging.IASLogger
+import org.eso.ias.logging.IASLogger
 import org.scalatest.FlatSpec
 import org.eso.ias.kafkautils.KafkaIasiosProducer
 import org.eso.ias.kafkautils.KafkaHelper
@@ -38,6 +38,8 @@ import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener
 import org.scalatest.BeforeAndAfterAll
 import java.util.concurrent.atomic.AtomicReference
 import java.util.HashSet
+import org.eso.ias.heartbeat.publisher.HbLogProducer
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer
 
 /**
  * Test the Supervisor connected to the kafka BSDB.
@@ -124,17 +126,23 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
   logger.info("Testing consumer started")
 
   /** The kafka publisher used by the supervisor to send the output of the DASUs to the BSDB*/
-  val outputPublisher: OutputPublisher = KafkaPublisher(supervisorId.id, new Properties())
+  val outputPublisher: OutputPublisher = KafkaPublisher(supervisorId.id, None, None, new Properties())
 
   /** The kafka consumer gets AISValues from the BSDB */
-  val inputConsumer: InputSubscriber = new KafkaSubscriber(supervisorId.id, new Properties())
+  val inputConsumer: InputSubscriber = KafkaSubscriber(supervisorId.id, None, None, new Properties())
   
   /** The test uses real DASu i.e. the factory instantiates a DasuImpl */
-  val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber, cr: CdbReader) => 
-    DasuImpl(dd, i, op, id, cr,1,1)
+  val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) => 
+    DasuImpl(dd, i, op, id, 1,1)
 
   /** The supervisor to test */
-  val supervisor = new Supervisor(supervisorId, outputPublisher, inputConsumer, cdbReader, factory)
+  val supervisor = new Supervisor(
+      supervisorId, 
+      outputPublisher, 
+      inputConsumer, 
+      new HbLogProducer(new HbJsonSerializer),
+      cdbReader,
+      factory)
   
   val latchRef: AtomicReference[CountDownLatch] = new AtomicReference
   

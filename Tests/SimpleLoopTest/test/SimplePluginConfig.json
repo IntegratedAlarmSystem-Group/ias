@@ -3,6 +3,8 @@
 	"monitoredSystemId":"SimulatedSystem",
 	"sinkServer":"localhost",
 	"sinkPort":"9092",
+	"autoSendTimeInterval":"3",
+	"hbFrequency":"10",
 	"properties": [],
 	"values":[
 		{"id":"MonitorPoint",

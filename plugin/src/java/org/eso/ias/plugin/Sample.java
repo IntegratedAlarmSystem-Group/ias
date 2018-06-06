@@ -1,6 +1,6 @@
 package org.eso.ias.plugin;
 
-import org.eso.ias.types.AlarmSample;
+import org.eso.ias.types.Alarm;
 
 /**
  * A sample of the value read from the remote system.
@@ -11,7 +11,7 @@ import org.eso.ias.types.AlarmSample;
  * can always access the configuration database.
  * <P>
  * The alarm is a special case: to send alarms to the core
- * the type of {@link #value} must be {@link AlarmSample}.
+ * the type of {@link #value} must be {@link Alarm}.
  * 
  * A sample is immutable.
  * 
@@ -23,7 +23,7 @@ public class Sample {
 	/**
 	 * The monitor point value or alarm red from the remote system.
 	 * <P>
-	 * Note that for alarms the value must be {@link AlarmSample}
+	 * Note that for alarms the value must be {@link Alarm}
 	 */
 	public final Object value;
 	
@@ -36,7 +36,7 @@ public class Sample {
 	 * Constructor.
 	 * <P>
 	 * Note that for alarms the of the value parameter
-	 * must be {@link AlarmSample}
+	 * must be {@link Alarm}
 	 * 
 	 * @param value The value red from the system
 	 * @param timestamp The timestamp
@@ -53,7 +53,7 @@ public class Sample {
 	 * Constructor
 	 * <P>
 	 * Note that for alarms the of the value parameter
-	 * must be {@link AlarmSample}
+	 * must be {@link Alarm}
 	 * 
 	 * @param value The value red from the system
 	 */

@@ -16,7 +16,7 @@ import org.eso.ias.asce.ComputingElement
 import org.eso.ias.asce.transfer.ScalaTransfer
 import org.eso.ias.asce.transfer.JavaTransfer
 import org.eso.ias.types.IdentifierType
-import org.eso.ias.types.AlarmSample
+import org.eso.ias.types.Alarm
 import org.eso.ias.types.IASValue
 import org.eso.ias.asce.AsceStates
 import org.eso.ias.types.IasValidity._
@@ -52,23 +52,28 @@ class TestComponent extends FlatSpec {
   val mp2 = InOut.asInput(mpI2Identifier, IASTypes.ALARM)
   val actualInputs: Set[InOut[_]] = Set(mp1,mp2)
   
+  // The threshold to assess the validity from the arrival time of the input
+  val validityThresholdInSecs = 2
+  
   behavior of "A Component"
   
   it must "catch an error instantiating a wrong TF class" in {
-    val output: InOut[AlarmSample] = InOut.asOutput(outId,IASTypes.ALARM)
+    val output: InOut[Alarm] = InOut.asOutput(outId,IASTypes.ALARM)
     
     val threadaFactory = new CompEleThreadFactory("Test-runninId")
     // A transfer function that does not exist
     val tfSetting =new TransferFunctionSetting(
         "org.eso.ias.asce.transfer.TransferExecutorImpl",
         TransferFunctionLanguage.java,
+        None,
         threadaFactory)
-    val comp: ComputingElement[AlarmSample] = new ComputingElement[AlarmSample](
+    val comp: ComputingElement[Alarm] = new ComputingElement[Alarm](
        compId,
        output,
        actualInputs,
        tfSetting,
-       new Properties()) with JavaTransfer[AlarmSample]
+       validityThresholdInSecs,
+       new Properties()) with JavaTransfer[Alarm]
     
     assert(comp.asceIdentifier==compId)
     assert(comp.output.id==outId)
@@ -82,20 +87,22 @@ class TestComponent extends FlatSpec {
   }
   
   it must "correctly instantiate the TF" in {
-    val output: InOut[AlarmSample] = InOut.asOutput(outId,IASTypes.ALARM)
+    val output: InOut[Alarm] = InOut.asOutput(outId,IASTypes.ALARM)
     
     val threadaFactory = new CompEleThreadFactory("Test-runninId")
     // A transfer function that does not exist
     val tfSetting =new TransferFunctionSetting(
         "org.eso.ias.asce.transfer.impls.MultiplicityTF",
         TransferFunctionLanguage.java,
+        None,
         threadaFactory)
-    val comp: ComputingElement[AlarmSample] = new ComputingElement[AlarmSample](
+    val comp: ComputingElement[Alarm] = new ComputingElement[Alarm](
        compId,
        output,
        actualInputs,
        tfSetting,
-       new Properties()) with JavaTransfer[AlarmSample]
+       validityThresholdInSecs,
+       new Properties()) with JavaTransfer[Alarm]
     
     assert(comp.asceIdentifier==compId)
     assert(comp.output.id==outId)

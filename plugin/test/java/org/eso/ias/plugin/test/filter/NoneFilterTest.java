@@ -1,21 +1,21 @@
 package org.eso.ias.plugin.test.filter;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import org.eso.ias.plugin.Sample;
-import org.eso.ias.plugin.filter.Filter.ValidatedSample;
+import org.eso.ias.plugin.filter.Filter.EnrichedSample;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.filter.NoneFilter;
 import org.eso.ias.types.IasValidity;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 /**
  * Test the {@link NoneFilter}.
@@ -40,11 +40,10 @@ public class NoneFilterTest {
 	public class TestFilter extends NoneFilter {
 
 		public TestFilter() {
-			super();
-			// TODO Auto-generated constructor stub
+			super("");
 		}
 
-		/* (non-Javadoc)
+		/**
 		 * @see org.eso.ias.plugin.filter.FilterBase#removeOldSamples(long)
 		 */
 		@Override
@@ -52,7 +51,7 @@ public class NoneFilterTest {
 			return super.removeOldSamples(time,unit);
 		}
 
-		/* (non-Javadoc)
+		/**
 		 * @see org.eso.ias.plugin.filter.FilterBase#removeLastSamples(int)
 		 */
 		@Override
@@ -60,7 +59,7 @@ public class NoneFilterTest {
 			return super.removeLastSamples(nSamples);
 		}
 
-		/* (non-Javadoc)
+		/**
 		 * @see org.eso.ias.plugin.filter.FilterBase#keepNewest(int)
 		 */
 		@Override
@@ -68,23 +67,23 @@ public class NoneFilterTest {
 			return super.keepNewest(nSamples);
 		}
 
-		/* (non-Javadoc)
+		/**
 		 * @see org.eso.ias.plugin.filter.FilterBase#historySnapshot()
 		 */
 		@Override
-		public List<ValidatedSample> historySnapshot() {
+		public List<EnrichedSample> historySnapshot() {
 			return super.historySnapshot();
 		}
 
-		/* (non-Javadoc)
+		/**
 		 * @see org.eso.ias.plugin.filter.FilterBase#peekNewest()
 		 */
 		@Override
-		public Optional<ValidatedSample> peekNewest() {
+		public Optional<EnrichedSample> peekNewest() {
 			return super.peekNewest();
 		}
 
-		/* (non-Javadoc)
+		/**
 		 * @see org.eso.ias.plugin.filter.FilterBase#clearHistory()
 		 */
 		@Override
@@ -96,7 +95,7 @@ public class NoneFilterTest {
 		 * @see org.eso.ias.plugin.filter.FilterBase#peekOldest()
 		 */
 		@Override
-		public Optional<ValidatedSample> peekOldest() {
+		public Optional<EnrichedSample> peekOldest() {
 			return super.peekOldest();
 		}
 		
@@ -110,7 +109,7 @@ public class NoneFilterTest {
 	 */
 	private TestFilter defaultFilter;
 
-	@Before
+	@BeforeEach
 	public void setUp() {
 		defaultFilter = new TestFilter();
 		assertNotNull(defaultFilter);
@@ -140,21 +139,21 @@ public class NoneFilterTest {
 	@Test
 	public void testApply() throws Exception {
 		Sample s = new Sample(Integer.valueOf(12));
-		ValidatedSample vs = new ValidatedSample(s,IasValidity.RELIABLE);
+		EnrichedSample vs = new EnrichedSample(s,true);
 		defaultFilter.newSample(vs);
 		
 		Optional<FilteredValue> value = defaultFilter.apply();
-		assertTrue("Value not assigned to the submitted sample",value.isPresent());
+		assertTrue(value.isPresent(),"Value not assigned to the submitted sample");
 		FilteredValue fValue = value.orElseThrow(() -> new Exception("Not present value"));
-		assertEquals("Unexpected assignement of the value",s.value,fValue.value);
-		assertEquals("Unexpected size of history",1,fValue.samples.size());
+		assertEquals(s.value,fValue.value,"Unexpected assignement of the value");
+		assertEquals(1,fValue.samples.size(),"Unexpected size of history");
 		
 		// Submit more samples the check again
-		List<ValidatedSample> samples=TestFilterBase.submitSamples(43,defaultFilter);
+		List<EnrichedSample> samples=TestFilterBase.submitSamples(43,defaultFilter);
 		value = defaultFilter.apply();
 		fValue = value.orElseThrow(() -> new Exception("Value not assigned to the submitted sample"));
-		assertEquals("Unexpected assignement of the value",samples.get(0).value,fValue.value);
-		assertEquals("Unexpected size of history",1,fValue.samples.size());
+		assertEquals(samples.get(0).value,fValue.value,"Unexpected assignement of the value");
+		assertEquals(1,fValue.samples.size(),"Unexpected size of history");
 	}
 	
 	/**
@@ -167,7 +166,7 @@ public class NoneFilterTest {
 		assertFalse(defaultFilter.getLastReturnedFilteredValue().isPresent());
 		
 		Sample s = new Sample(Long.valueOf(3));
-		ValidatedSample vs = new ValidatedSample(s,IasValidity.RELIABLE);
+		EnrichedSample vs = new EnrichedSample(s,true);
 		defaultFilter.newSample(vs);
 		Optional<FilteredValue> filteredValue = defaultFilter.apply();
 		Optional<FilteredValue> lastReturnedilteredValue = defaultFilter.getLastReturnedFilteredValue();
@@ -179,7 +178,7 @@ public class NoneFilterTest {
 		
 		Thread.sleep(25);
 		Sample s2 = new Sample(Long.valueOf(9));
-		vs = new ValidatedSample(s2,IasValidity.RELIABLE);
+		vs = new EnrichedSample(s2,true);
 		defaultFilter.newSample(vs);
 		
 		Optional<FilteredValue> anotherFilteredValue = defaultFilter.apply();

@@ -75,6 +75,13 @@ public class AsceDao {
 		inverseJoinColumns = @JoinColumn(name = "props_id"))
 	private Set<PropertyDao> props = new HashSet<>();
 	
+	/**
+	 * The ID of the template for implementing replication
+	 */
+	@Basic(optional=true)
+	@Column(name = "template_id")
+	private String templateId;
+	
 	public AsceDao() {}
 
 	public String getId() {
@@ -173,12 +180,26 @@ public class AsceDao {
 			ret.append(' ');
 			ret.append(prop.toString());
 		}
-		ret.append("}]");
+		ret.append("}");
+		if (templateId!=null) {
+			ret.append(", template id=\"");
+			ret.append(templateId);
+			ret.append('"');
+		}
+		ret.append("]");
 		return ret.toString();
 	}
 	
 	public Set<String> getIasiosIDs() {
 		return inputs.stream().map(x -> x.getId()).collect(Collectors.toSet());
+	}
+	
+	public String getTemplateId() {
+		return templateId;
+	}
+
+	public void setTemplateId(String templateId) {
+		this.templateId = templateId;
 	}
 
 	/**
@@ -188,7 +209,7 @@ public class AsceDao {
 	 */
 	@Override
 	public int hashCode() {
-		return Objects.hash(id);
+		return Objects.hash(id,templateId);
 	}
 
 	/**
@@ -236,6 +257,11 @@ public class AsceDao {
 			if (other.transferFunction != null)
 				return false;
 		} else if (!transferFunction.equals(other.transferFunction))
+			return false;
+		if (templateId == null) {
+			if (other.templateId != null)
+				return false;
+		} else if (!getTemplateId().equals(other.getTemplateId()))
 			return false;
 		return true;
 	}

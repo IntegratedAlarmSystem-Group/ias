@@ -5,7 +5,7 @@ import org.eso.ias.types.IasValueJsonSerializer
 import org.eso.ias.dasu.publisher.OutputPublisher
 import org.eso.ias.dasu.publisher.OutputListener
 import org.eso.ias.dasu.publisher.ListenerOutputPublisherImpl
-import org.ias.logging.IASLogger
+import org.eso.ias.logging.IASLogger
 import org.eso.ias.dasu.publisher.DirectInputSubscriber
 import org.eso.ias.types.IASValue
 import org.eso.ias.supervisor.Supervisor
@@ -23,6 +23,9 @@ import scala.collection.mutable.ArrayBuffer
 // The following import is required by the usage of the fixture
 import language.reflectiveCalls
 import java.util.HashSet
+import org.eso.ias.heartbeat.HbProducer
+import org.eso.ias.heartbeat.publisher.HbLogProducer
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer
 
 class SupervisorTest extends FlatSpec {
 
@@ -71,12 +74,13 @@ class SupervisorTest extends FlatSpec {
       val cdbReader: CdbReader = new JsonReader(cdbFiles)
 
       val supervIdentifier = new Identifier("SupervisorID", IdentifierType.SUPERVISOR, None)
-
+      
       /** The supervisor to test */
       val supervisor = new Supervisor(
         supervIdentifier,
         outputPublisher,
         inputsProvider,
+        new HbLogProducer(new HbJsonSerializer),
         cdbReader,
         DasuMock.apply)
 
