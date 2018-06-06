@@ -39,8 +39,7 @@ if __name__ == '__main__':
     (options, args) = parser.parse_args()
     stdoutLevel=args.levelStdOut
     consoleLevel=args.levelConsole
-    log=Log()
-    fileName=(os.path.basename(__file__),stdoutLevel,consoleLevel)
+    logger=Log.initLogging(__file__,stdoutLevel,consoleLevel)
     if not options.destFolder:
         logger.info("No destination folder given")
         sys.exit(-1)

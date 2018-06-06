@@ -39,8 +39,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     stdoutLevel=args.levelStdOut
     consoleLevel=args.levelConsole
-    log=Log()
-    logger=log.initLogging(os.path.basename(__file__),stdoutLevel,consoleLevel)
+    logger=Log.initLogging(__file__,stdoutLevel,consoleLevel)
     if args.erase:
         try:
             ModuleSupport.removeExistingModule(args.moduleName)
