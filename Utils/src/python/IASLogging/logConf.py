@@ -4,14 +4,19 @@ import os, errno
 import datetime
 
 
-class Log():
+class Log(object):
+    
   @staticmethod
   def initLogging (nameFile,stdoutLevel='info',consoleLevel='info'):
     #take the path for logs folder inside $IAS_ROOT
-    logPath=os.environ["IAS_ROOT"]
+    logPath=os.environ["IAS_LOGS_FOLDER"]
+    
+    # The file name without path
+    cleanedFileName = nameFile.split(os.sep)[len(nameFile.split(os.sep))-1]
+    
     #If the file doesn't exist it's created
     try:
-        os.makedirs(logPath+"/logs")
+        os.makedirs(logPath)
     except OSError as e:
         if e.errno != errno.EEXIST:
          raise
@@ -28,7 +33,7 @@ class Log():
     consoleLevel= consoleLevel
     stdLevel = LEVELS.get(stdLevel_name, logging.NOTSET)
     consoleLevel = LEVELS.get(consoleLevel, logging.NOTSET)
-    file=("{0}/logs/{1}.log".format(logPath, str(nameFile)+str(now)))
+    file=("{0}/{1}.log".format(logPath, str(cleanedFileName)+str(now)))
 
 
     logging.basicConfig(level=stdLevel,format='%(asctime)s%(msecs)d  | %(levelname)s | [%(filename)s %(lineno)d] [%(threadName)s] | %(message)s',
