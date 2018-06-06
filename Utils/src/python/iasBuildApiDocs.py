@@ -20,7 +20,7 @@ if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option("-d", "--destFolder", help="HTML destination folder", action="store", type="string", dest="destFolder")
     parser.add_option("-s", "--sourceFolder", help="IAS source folder", action="store", type="string", dest="srcFolder")
-    parser.add_argument(
+    parser.add_option(
                         '-lso',
                         '--levelStdOut',
                         help='Logging level: Set the level of the message for the file logger, default: Debug level',
@@ -28,7 +28,7 @@ if __name__ == '__main__':
                         choices=['info', 'debug', 'warning', 'error', 'critical'],
                         default='info',
                         required=False)
-    parser.add_argument(
+    parser.add_option(
                         '-lcon',
                         '--levelConsole',
                         help='Logging level: Set the level of the message for the console logger, default: Debug level',
