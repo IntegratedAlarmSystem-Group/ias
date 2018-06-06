@@ -40,8 +40,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     stdoutLevel=args.levelStdOut
     consoleLevel=args.levelConsole
-    log = Log()
-    fileName=(os.path.basename(__file__),stdoutLevel,consoleLevel)
+    logger = Log.initLogging(__file__,stdoutLevel,consoleLevel)
+    fileName=args.fileName
     try:
         if not args.fileType is None:
             fileSupport = FileSupport(args.fileName, args.fileType)
@@ -50,5 +50,5 @@ if __name__ == '__main__':
             fileSupport = FileSupport(args.fileName)
             filePath=fileSupport.findFile()
         print(filePath)
-    except OSError as e:
+    except FileNotFoundError as e:
         logger.error("File not found")
