@@ -135,6 +135,9 @@ class BackupSelectorTest extends FlatSpec {
     assert(res.value.get==1.1d)
     assert(res.id==outId.id)
     assert(res.mode==OperationalMode.OPERATIONAL)
+    assert(res.validityConstraints.isDefined)
+    assert(res.validityConstraints.get.size==1)
+    assert(res.validityConstraints.get.contains(main.id))
   }
   
   it must "produce the second output when the first one is not operational" in {
@@ -148,6 +151,9 @@ class BackupSelectorTest extends FlatSpec {
     assert(res.value.get==2.2d)
     assert(res.id==outId.id)
     assert(res.mode==OperationalMode.OPERATIONAL)
+    assert(res.validityConstraints.isDefined)
+    assert(res.validityConstraints.get.size==1)
+    assert(res.validityConstraints.get.contains(a.id))
     
     val inputs2 = Map(main.id-> main.updateMode(OperationalMode.DEGRADED), a.id -> a.updateMode(OperationalMode.UNKNOWN), b.id -> b, c.id -> c)
     val res2 = tf.eval(inputs2, out)
@@ -155,6 +161,9 @@ class BackupSelectorTest extends FlatSpec {
     assert(res2.value.get==3.3d)
     assert(res2.id==outId.id)
     assert(res2.mode==OperationalMode.OPERATIONAL)
+    assert(res2.validityConstraints.isDefined)
+    assert(res2.validityConstraints.get.size==1)
+    assert(res2.validityConstraints.get.contains(b.id))
   }
   
   it must "produce the second output when the first one is not valid" in {
@@ -171,6 +180,9 @@ class BackupSelectorTest extends FlatSpec {
     assert(res.value.get==2.2d)
     assert(res.id==outId.id)
     assert(res.mode==OperationalMode.OPERATIONAL)
+    assert(res.validityConstraints.isDefined)
+    assert(res.validityConstraints.get.size==1)
+    assert(res.validityConstraints.get.contains(a.id))
     
     val inputs2 = Map(main.id-> main.updateMode(OperationalMode.DEGRADED), a.id -> a.updateMode(OperationalMode.UNKNOWN), b.id -> b, c.id -> c)
     val res2 = tf.eval(inputs2, out)
@@ -178,9 +190,12 @@ class BackupSelectorTest extends FlatSpec {
     assert(res2.value.get==3.3d)
     assert(res2.id==outId.id)
     assert(res2.mode==OperationalMode.OPERATIONAL)
+    assert(res2.validityConstraints.isDefined)
+    assert(res2.validityConstraints.get.size==1)
+    assert(res2.validityConstraints.get.contains(b.id))
   }
   
-  it must "produce the first output when all are invaild/not oeprational" in {
+  it must "produce the first output when all are invaild/not operational" in {
     val props = new Properties
     props.put(BackupSelector.PrioritizedIdsPropName, "MAIN, A,B, C")
     val tf = new BackupSelector[Double](compID.id,compID.fullRunningID,validityTimeFrame,props)
@@ -198,5 +213,6 @@ class BackupSelectorTest extends FlatSpec {
     assert(res.value.isDefined)
     assert(res.value.get==1.1d)
     assert(res.mode==OperationalMode.OPERATIONAL)
+    assert(res.validityConstraints.isEmpty)
   }
 }
