@@ -180,7 +180,7 @@
 		<mkdir dir="${iasRoot}/apidocs/python" />
 
 		<echo>Generating API documentation</echo>
-		<exec executable="iasBuildApiDocs.py">
+		<exec executable="iasBuildApiDocs">
 		    <arg value="-d"/>
 		    <arg value="${iasRoot}/apidocs"/>
 		    <arg value="-s"/>

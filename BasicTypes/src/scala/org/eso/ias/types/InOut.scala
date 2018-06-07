@@ -283,6 +283,11 @@ case class InOut[A](
     require(validityTimeFrame>0, "Invalid time frame")
     require(!isOutput(),"The validty cannot by evaluated for output IASIO")
     
+    assert(
+      dasuProductionTStamp.isDefined && pluginProductionTStamp.isEmpty ||
+      dasuProductionTStamp.isEmpty && pluginProductionTStamp.isDefined,
+      "Inconsistent production TStamps")
+    
     val thresholdTStamp = System.currentTimeMillis() - validityTimeFrame
     val iasioTstamp: Long = dasuProductionTStamp.getOrElse(pluginProductionTStamp.get)
     

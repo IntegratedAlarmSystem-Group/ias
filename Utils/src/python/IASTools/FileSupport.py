@@ -104,8 +104,7 @@ class FileSupport(object):
                 if filePath is not None:
                     return filePath
         # Bad luck!
-        logging.error("%s not found",self.filename)
-        raise OSError(self.fileName+" not found")
+        raise FileNotFoundError(self.fileName+" not found")
     
     @classmethod
     def getIASRoot(cls):
