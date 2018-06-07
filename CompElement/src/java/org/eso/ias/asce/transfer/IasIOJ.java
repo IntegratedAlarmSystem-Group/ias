@@ -2,6 +2,7 @@ package org.eso.ias.asce.transfer;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -208,9 +209,25 @@ public class IasIOJ<T> {
     	return inOut.getValidity().iasValidity();
     }
     
-    /** The validity of an input taking times into account */
+    /** 
+     * The validity of an input taking times into account
+     * 
+     *  @return the validity by tim
+     */
     public IasValidity validityOfInputByTime(long threshold) {
     	return inOut.getValidityOfInputByTime(threshold).iasValidity();
+    }
+    
+    /**
+     * 
+     * @return the validity constraints
+     */
+    public Set<String> getValidityConstraints() {
+    	if (inOut.validityConstraint().isEmpty()) {
+    		return new HashSet<String>();
+    	} else {
+    		return JavaConverters.setAsJavaSet(inOut.validityConstraint().get());
+    	}
     }
 
 }

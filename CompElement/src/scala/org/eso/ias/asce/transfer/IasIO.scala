@@ -69,7 +69,10 @@ class IasIO[T](private[transfer] val inOut: InOut[T]) {
   val value: Option[T] = inOut.value.asInstanceOf[Option[T]]
   
   /** The operational mode */
-  val mode: OperationalMode = inOut.mode
+  lazy val mode: OperationalMode = inOut.mode
+  
+  /** The validity constraints */
+  lazy val validityConstraints: Option[Set[String]] = inOut.validityConstraint
   
   /** The validity of an input taking times into account */
   def validityOfInputByTime(threshold: Long): IasValidity = inOut.getValidityOfInputByTime(threshold).iasValidity
