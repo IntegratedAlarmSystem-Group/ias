@@ -82,13 +82,8 @@ extends ScalaTransferExecutor[T](cEleId,cEleRunningId,validityTimeFrame,props) {
       // get the validity from the inputs
       val inputValidity = input.validityOfInputByTime(validityTimeFrame)
       
-      println(id+" mode="+input.mode+", validity "+inputValidity+", validityTimeFrame "+validityTimeFrame)
-      
       input.mode==OperationalMode.OPERATIONAL && inputValidity==IasValidity.RELIABLE
     })
-    
-    selectedInputId.foreach(id => println("Selected ID ==> "+id))
-    if (selectedInputId.isEmpty) println("NO input selected!!!!")
     
     selectedInputId match {
       case Some(inputId) =>
