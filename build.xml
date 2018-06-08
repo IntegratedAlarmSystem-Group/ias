@@ -45,6 +45,7 @@
         <string>Supervisor</string>
         <string>WebServerSender</string>
         <string>TransferFunctions</string>
+        <string>Support</string>
         <string>Tests/SimpleLoopTest</string>
     </resources>
     <pathconvert property="iasModules" refid="iasModsResources" pathsep="," />
