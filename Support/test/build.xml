@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="SupportTest" default="build" basedir=".">
+	<!-- Include IAS common definition -->
+	<property environment="env" />
+	<property name="iasRoot" value="${env.IAS_ROOT}" />
+	<include file="${iasRoot}/config/CommonAnt.xml" as="ias" />
+	
+	<!-- ####################### TARGETS ####################### -->
+	
+	<target name="build" depends="ias.build" />
+
+	<target name="clean" depends="ias.clean" />
+
+	<target name="test" depends="ias.test" />
+	
+	<target name="doc" depends="ias.doc" />
+	
+</project>
