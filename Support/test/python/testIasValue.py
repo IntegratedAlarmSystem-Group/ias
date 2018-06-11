@@ -35,7 +35,7 @@ class TestIasValue(unittest.TestCase):
             "valueType":"ALARM"}"""
 
     def testName(self):
-        iasValue = IasValue(self.jSonStr)
+        iasValue = IasValue.fromJSon(self.jSonStr)
         
         self.assertEqual(iasValue.id,"TooManyHighTempAlarm")
         
@@ -68,7 +68,7 @@ class TestIasValue(unittest.TestCase):
         
         expectedDeps2 = ["(SupervId1:SUPERVISOR)@(dasuVID1:DASU)@(asceVID1:ASCE)@(AlarmID1:IASIO)","(SupervId2:SUPERVISOR)@(dasuVID2:DASU)@(asceVID2:ASCE)@(AlarmID2:IASIO)"]
         
-        iasValue2 = IasValue(self.jSonStr2)
+        iasValue2 = IasValue.fromJSon(self.jSonStr2)
         self.assertEqual(iasValue2.value,"SET")
         self.assertEqual(iasValue2.valueTypeStr,"ALARM")
         self.assertEqual(iasValue2.valueType,IASType.ALARM)
@@ -103,10 +103,10 @@ class TestIasValue(unittest.TestCase):
         self.assertEqual(iasValue2.dasuProductionTStamp,Iso8601TStamp.Iso8601ToDatetime(iasValue2.dasuProductionTStampStr))
     
     def testToJSON(self):
-        iasValue = IasValue(self.jSonStr)
+        iasValue = IasValue.fromJSon(self.jSonStr)
         
         iasValueJson = iasValue.toJSonString()
-        iasFomJson = IasValue(iasValueJson)
+        iasFomJson = IasValue.fromJSon(iasValueJson)
         
         self.assertEqual(iasValue.value,iasFomJson.value)
         self.assertEqual(iasValue.valueTypeStr,iasFomJson.valueTypeStr)
@@ -138,9 +138,9 @@ class TestIasValue(unittest.TestCase):
         
         #### Same test with the other JSON string
         
-        iasValue2 = IasValue(self.jSonStr2)
+        iasValue2 = IasValue.fromJSon(self.jSonStr2)
         iasValueJson2 = iasValue2.toJSonString()
-        iasFomJson2 = IasValue(iasValueJson2)
+        iasFomJson2 = IasValue.fromJSon(iasValueJson2)
         
         self.assertEqual(iasValue2.value,iasFomJson2.value)
         self.assertEqual(iasValue2.valueTypeStr,iasFomJson2.valueTypeStr)

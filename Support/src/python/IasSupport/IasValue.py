@@ -117,56 +117,106 @@ class IasValue(object):
     # The additional properties
     props = None
     
-    # The dictonary produced by reading the json string of the IAasValue
-    fromJson = None
-
-    def __init__(self, jsonStr):
+    def __init__(self, 
+                 value,
+                 valueType,
+                 fullRunningId,
+                 mode,
+                 iasValidity):
         '''
-        Constructor
+        Constructor 
+        
+        @param value the value of the value (string)
+        @param valueType the type of the IASIO (IASType or string)
+        @param fullRunningId the full running id (String)
+        @parm mode the operational mode (string or OperationalMode)
+        @param iasValidity the validity (string or Validity)
+        '''
+        if not value:
+            raise ValueError("Invalid value")
+        self.value = value
+        
+        if valueType is None:
+            raise ValueError("Invalid type")
+        if isinstance(valueType, IASType):
+            self.valueType = valueType
+            self.valueTypeStr = valueType.name()
+        else:
+            self.valueTypeStr = valueType
+            self.valueType = IASType.fromString(valueType)
+        
+        if not fullRunningId:
+            raise ValueError("Invalid full running id")
+        self.fullRunningId=fullRunningId
+        self.id = self.getIdFromFullRunningId(self.fullRunningId)
+        
+        if mode is None:
+            raise ValueError("Invalid mode")
+        if isinstance(mode, OperationalMode):
+            self.mode = mode
+            self.modeStr = mode.name()
+        else:
+            self.modeStr = mode
+            self.mode = OperationalMode.fromString(mode)
+            
+        if iasValidity is None:
+            raise ValueError("Invalid validity")
+        if isinstance(iasValidity, Validity):
+            self.iasValidity = iasValidity
+            self.iasValidityStr = iasValidity.name()
+        else:
+            self.iasValidityStr = iasValidity
+            self.iasValidity = Validity.fromString(iasValidity)
+    
+    @staticmethod
+    def fromJSon(jsonStr):
+        '''
+        Factory method to build a IasValue for a JSON string
         
         @param jsonStr the json string representing the IASValue
         '''
-        self.fromJson = json.loads(jsonStr)
+        fromJsonDict = json.loads(jsonStr)
         
-        self.value = self.fromJson["value"]
-        self.valueTypeStr = self.fromJson["valueType"]
-        self.valueType = IASType.fromString(self.valueTypeStr)
-        self.fullRunningId = self.fromJson["fullRunningId"]
-        self.id = self.getIdFromFullRunningId(self.fullRunningId)
-        self.dependentsFullRuningIds = self.getValue(self.fromJson,"depsFullRunningIds")
-        self.modeStr = self.fromJson["mode"]
-        self.mode = OperationalMode.fromString(self.modeStr)
-        self.iasValidityStr = self.fromJson["iasValidity"]
-        self.iasValidity = Validity.fromString(self.iasValidityStr)
-        self.props = self.getValue(self.fromJson,"props")
+        value = fromJsonDict["value"]
+        valueTypeStr = fromJsonDict["valueType"]
+        fullRunningId = fromJsonDict["fullRunningId"]
+        modeStr = fromJsonDict["mode"]
+        iasValidityStr = fromJsonDict["iasValidity"]
+        
+        iasValue = IasValue(value,valueTypeStr,fullRunningId,modeStr,iasValidityStr)
+        
+        iasValue.dependentsFullRuningIds = IasValue.getValue(fromJsonDict,"depsFullRunningIds")
+        iasValue.props = IasValue.getValue(fromJsonDict,"props")
     
-        self.pluginProductionTStampStr = self.getValue(self.fromJson,"pluginProductionTStamp")
-        if self.pluginProductionTStampStr is not None:
-            self.pluginProductionTStamp=Iso8601TStamp.Iso8601ToDatetime(self.pluginProductionTStampStr)
+        iasValue.pluginProductionTStampStr = IasValue.getValue(fromJsonDict,"pluginProductionTStamp")
+        if iasValue.pluginProductionTStampStr is not None:
+            iasValue.pluginProductionTStamp=Iso8601TStamp.Iso8601ToDatetime(iasValue.pluginProductionTStampStr)
             
-        self.sentToConverterTStampStr = self.getValue(self.fromJson,"sentToConverterTStamp")
-        if self.sentToConverterTStampStr is not None:
-            self.sentToConverterTStamp=Iso8601TStamp.Iso8601ToDatetime(self.sentToConverterTStampStr)
+        iasValue.sentToConverterTStampStr = IasValue.getValue(fromJsonDict,"sentToConverterTStamp")
+        if iasValue.sentToConverterTStampStr is not None:
+            iasValue.sentToConverterTStamp=Iso8601TStamp.Iso8601ToDatetime(iasValue.sentToConverterTStampStr)
             
-        self.receivedFromPluginTStampStr = self.getValue(self.fromJson,"receivedFromPluginTStamp")
-        if self.receivedFromPluginTStampStr is not None:
-            self.receivedFromPluginTStamp=Iso8601TStamp.Iso8601ToDatetime(self.receivedFromPluginTStampStr)
+        iasValue.receivedFromPluginTStampStr = IasValue.getValue(fromJsonDict,"receivedFromPluginTStamp")
+        if iasValue.receivedFromPluginTStampStr is not None:
+            iasValue.receivedFromPluginTStamp=Iso8601TStamp.Iso8601ToDatetime(iasValue.receivedFromPluginTStampStr)
             
-        self.convertedProductionTStampStr = self.getValue(self.fromJson,"convertedProductionTStamp")
-        if self.convertedProductionTStampStr is not None:
-            self.convertedProductionTStamp=Iso8601TStamp.Iso8601ToDatetime(self.convertedProductionTStampStr)
+        iasValue.convertedProductionTStampStr = IasValue.getValue(fromJsonDict,"convertedProductionTStamp")
+        if iasValue.convertedProductionTStampStr is not None:
+            iasValue.convertedProductionTStamp=Iso8601TStamp.Iso8601ToDatetime(iasValue.convertedProductionTStampStr)
         
-        self.sentToBsdbTStampStr = self.getValue(self.fromJson,"sentToBsdbTStamp")
-        if self.sentToBsdbTStampStr is not None:
-            self.sentToBsdbTStamp=Iso8601TStamp.Iso8601ToDatetime(self.sentToBsdbTStampStr)
+        iasValue.sentToBsdbTStampStr = IasValue.getValue(fromJsonDict,"sentToBsdbTStamp")
+        if iasValue.sentToBsdbTStampStr is not None:
+            iasValue.sentToBsdbTStamp=Iso8601TStamp.Iso8601ToDatetime(iasValue.sentToBsdbTStampStr)
         
-        self.readFromBsdbTStampStr = self.getValue(self.fromJson,"readFromBsdbTStamp")
-        if self.readFromBsdbTStampStr is not None:
-            self.readFromBsdbTStamp=Iso8601TStamp.Iso8601ToDatetime(self.readFromBsdbTStampStr)
+        iasValue.readFromBsdbTStampStr = IasValue.getValue(fromJsonDict,"readFromBsdbTStamp")
+        if iasValue.readFromBsdbTStampStr is not None:
+            iasValue.readFromBsdbTStamp=Iso8601TStamp.Iso8601ToDatetime(iasValue.readFromBsdbTStampStr)
         
-        self.dasuProductionTStampStr = self.getValue(self.fromJson,"dasuProductionTStamp")
-        if self.dasuProductionTStampStr is not None:
-            self.dasuProductionTStamp=Iso8601TStamp.Iso8601ToDatetime(self.dasuProductionTStampStr)
+        iasValue.dasuProductionTStampStr = IasValue.getValue(fromJsonDict,"dasuProductionTStamp")
+        if iasValue.dasuProductionTStampStr is not None:
+            iasValue.dasuProductionTStamp=Iso8601TStamp.Iso8601ToDatetime(iasValue.dasuProductionTStampStr)
+            
+        return iasValue
         
     def getIdFromFullRunningId(self, frid):
         """
@@ -184,8 +234,8 @@ class IasValue(object):
             raise ValueError("Invalid format of fullRunningId"+frid)
         return iasioId[1:-1].split(":")[0]
     
-      
-    def getValue(self, jsonDict,key):
+    @staticmethod
+    def getValue(jsonDict,key):
         """
         Get a value from the dictionary, if it exists
         
