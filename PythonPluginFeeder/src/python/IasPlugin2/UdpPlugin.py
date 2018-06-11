@@ -201,7 +201,7 @@ class UdpPlugin(object):
             logging.debug("Sending %d monitor points",len(self._MPointsToSend))
             self._lock.acquire()
             valuesToSend = list(self._MPointsToSend.values())
-            self._MPointsToSend.clear()
+            del self._MPointsToSend[:]
             self._lock.release()
             #
             # Send the monitor points with the UDP socket
@@ -209,7 +209,7 @@ class UdpPlugin(object):
             for mPoint in valuesToSend:
                 self._send(mPoint)
             logging.debug('Monitor points sent')
-            valuesToSend.clear()
+            del valuesToSend[:]
             
             ## reschedule the time if not closed
             self._timer = self._schedule()
