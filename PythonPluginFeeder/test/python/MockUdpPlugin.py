@@ -11,10 +11,10 @@ Created on May 10, 2018
 @author: acaproni
 '''
 import time
-from IasPlugin.UdpPlugin import UdpPlugin
-from IasPlugin.IasType import IASType
-from IasPlugin.OperationalMode import OperationalMode
-from IasPlugin.Alarm import Alarm
+from IasPlugin3.UdpPlugin import UdpPlugin
+from IasPlugin3.IasType import IASType
+from IasPlugin3.OperationalMode import OperationalMode
+from IasPlugin3.Alarm import Alarm
 
 if __name__ == '__main__':
     udpPlugin = UdpPlugin("localhost",10101)

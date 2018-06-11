@@ -10,11 +10,11 @@ import unittest
 import socket
 import time
 from threading import Thread
-from IasPlugin.UdpPlugin import UdpPlugin
-from IasPlugin.JsonMsg import JsonMsg
-from IasPlugin.OperationalMode import OperationalMode
-from IasPlugin.IasType import IASType
-from IasPlugin.Alarm import Alarm
+from IasPlugin3.UdpPlugin import UdpPlugin
+from IasPlugin3.JsonMsg import JsonMsg
+from IasPlugin3.OperationalMode import OperationalMode
+from IasPlugin3.IasType import IASType
+from IasPlugin3.Alarm import Alarm
 
 class MessageReceiver(Thread):
     

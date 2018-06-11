@@ -6,7 +6,7 @@ Created on May 9, 2018
 
 import socket, os
 from datetime import datetime
-from IasPlugin.JsonMsg import JsonMsg
+from IasPlugin3.JsonMsg import JsonMsg
 import logging
 from threading import Timer, RLock
 
