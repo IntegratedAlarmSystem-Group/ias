@@ -11,6 +11,8 @@ import argparse
 import signal, sys
 from kafka import KafkaConsumer
 from IasSupport.IasValue import IasValue
+from IasSupport.KafkaValueConsumer import IasValueListener, KafkaValueConsumer
+from Cython.Compiler.Main import verbose
 
 # The kafka consumer
 consumer = None
@@ -18,14 +20,28 @@ consumer = None
 # Signal that the user pressed CTRL+C
 terminated = False
 
-def signal_handler(signal, frame):
-    global consumer
-    global terminated
-    terminated = True
-    print()
-    if consumer is not None:
-        consumer.close()
-        sys.exit(0)
+class DumperListener(IasValueListener):
+    
+    
+    
+    def __init__(self,verbose, toJson):
+        """
+        Constructor
+        
+        @param if True prints verbose messages
+        @param if True print JSON string
+        """
+        self.verbose = verbose
+        self.toJson = toJson
+    
+    def iasValueReceived(self,iasValue):
+        """
+        Print the IasValue in the stdout
+        """
+        if self.toJson:
+            print(iasValue.toJSonString)
+        else:
+            print(iasValue.toString(verbose))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Dumps IasValue published in the BSDB')
@@ -70,33 +86,21 @@ if __name__ == '__main__':
                         action='store_true',
                         default=False,
                         required=False)
+    
     args = parser.parse_args()
-    consumer = KafkaConsumer(
-        args.topic,
-        bootstrap_servers=args.kafkabrokers,
-        client_id=args.clientid,
-        group_id=args.groupid,
-        auto_offset_reset="latest",
-        consumer_timeout_ms=1000,
-        enable_auto_commit=True)
+    listener = DumperListener(args.verbose,args.jsonformat)
+    consumer = KafkaValueConsumer(
+        listener, 
+        args.kafkabrokers, 
+        args.topic, 
+        args.clientid, 
+        args.groupid)
     
-    print()
+    consumer.start()
+    try:
+        consumer.join()
+    except KeyboardInterrupt:
+        pass
     
-    # Register the handler of CTRL+C
-    #signal.signal(signal.SIGINT, signal_handler)
-    
-    while True:
-        try:
-            messages = consumer.poll(500)
-        except:
-            KeyboardInterrupt
-            break
-        for listOfConsumerRecords in messages.values():
-            for cr in listOfConsumerRecords:
-                json = cr.value.decode("utf-8")
-                if args.jsonformat:
-                    print(json)
-                else:
-                    iasValue = IasValue.fromJSon(json)
-                    print(iasValue.toString(args.verbose))
+
     
