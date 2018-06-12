@@ -156,13 +156,13 @@ public class UdpPlugin implements Runnable {
 		try { 
 			cmd = parser.parse(options, args);
 		} catch (ParseException pe) {
-			System.err.println("Error parsing the comamnd line: "+pe.getMessage());
+			logger.error("Error parsing the comamnd line: "+pe.getMessage());
 			printUsage(options);
 			System.exit(-1);
 		}
 		
 		if (!cmd.hasOption("u")) {
-			System.err.println("UDP port missing");
+			logger.error("UDP port missing");
 			printUsage(options);
 			System.exit(-2);
 		}
@@ -171,7 +171,7 @@ public class UdpPlugin implements Runnable {
 			udpPort = Integer.parseInt(cmd.getOptionValue("u"));
 			UdpPlugin.logger.info("UDP port {}",udpPort);
 		} catch (Exception e) {
-			System.err.println("Invalid UDP port "+cmd.getOptionValue("u"));
+			logger.error("Invalid UDP port {}",cmd.getOptionValue("u"));
 			printUsage(options);
 			System.exit(-3);
 		}
@@ -190,7 +190,7 @@ public class UdpPlugin implements Runnable {
 			Future<PluginConfig> pluginConfigFuture = configFileReader.getPluginConfig();
 			pluginConfig = pluginConfigFuture.get(1, TimeUnit.MINUTES);
 		} catch (Exception e) {
-			System.err.println("Reading configuration file "+fileName+": "+e.getMessage());
+			logger.error("Error reading configuration file {}",fileName,e);
 			printUsage(options);
 			System.exit(-5);
 		}
