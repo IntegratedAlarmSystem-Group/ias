@@ -225,5 +225,5 @@ class UdpPlugin(object):
         jsonStr = mPoint.dumps()
         
         # send the string to the UDP socket
-        self._sock.sendto(bytes(jsonStr, "utf-8"),(self._ip, self._port))
+        self._sock.sendto(jsonStr.encode("utf-8"),(self._ip, self._port))
         
