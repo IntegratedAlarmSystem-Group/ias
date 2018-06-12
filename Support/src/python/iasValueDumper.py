@@ -8,8 +8,24 @@ Created on Jun 12, 2018
 @author: acaproni
 '''
 import argparse
+import signal, sys
 from kafka import KafkaConsumer
 from IasSupport.IasValue import IasValue
+
+# The kafka consumer
+consumer = None
+
+# Signal that the user pressed CTRL+C
+terminated = False
+
+def signal_handler(signal, frame):
+    global consumer
+    global terminated
+    terminated = True
+    print()
+    if consumer is not None:
+        consumer.close()
+        sys.exit(0)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Dumps IasValue published in the BSDB')
@@ -55,19 +71,32 @@ if __name__ == '__main__':
                         default=False,
                         required=False)
     args = parser.parse_args()
-    print(args)
     consumer = KafkaConsumer(
         args.topic,
         bootstrap_servers=args.kafkabrokers,
         client_id=args.clientid,
         group_id=args.groupid,
-        auto_offset_reset="latest")
-    for msg in consumer:
-        json = msg.value.decode("utf-8")
-        if args.jsonformat:
-            print(json)
-        else:
-            iasValue = IasValue.fromJSon(json)
-            print(iasValue.toString(args.verbose))
+        auto_offset_reset="latest",
+        consumer_timeout_ms=1000,
+        enable_auto_commit=True)
     
+    print()
+    
+    # Register the handler of CTRL+C
+    #signal.signal(signal.SIGINT, signal_handler)
+    
+    while True:
+        try:
+            messages = consumer.poll(500)
+        except:
+            KeyboardInterrupt
+            break
+        for listOfConsumerRecords in messages.values():
+            for cr in listOfConsumerRecords:
+                json = cr.value.decode("utf-8")
+                if args.jsonformat:
+                    print(json)
+                else:
+                    iasValue = IasValue.fromJSon(json)
+                    print(iasValue.toString(args.verbose))
     
