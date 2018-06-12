@@ -1,5 +1,7 @@
 package org.eso.ias.plugin.network;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
@@ -186,7 +188,8 @@ public class UdpPlugin implements Runnable {
 		
 		PluginConfig pluginConfig = null;
 		try  { 
-			PluginConfigFileReader configFileReader= new PluginConfigFileReader(fileName);
+			BufferedReader reader = new BufferedReader(new FileReader(fileName));
+			PluginConfigFileReader configFileReader= new PluginConfigFileReader(reader,fileName);
 			Future<PluginConfig> pluginConfigFuture = configFileReader.getPluginConfig();
 			pluginConfig = pluginConfigFuture.get(1, TimeUnit.MINUTES);
 		} catch (Exception e) {
