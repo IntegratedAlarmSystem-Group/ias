@@ -39,7 +39,7 @@ class DumperListener(IasValueListener):
         Print the IasValue in the stdout
         """
         if self.toJson:
-            print(iasValue.toJSonString)
+            print(iasValue.toJSonString())
         else:
             print(iasValue.toString(verbose))
 
