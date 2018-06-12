@@ -201,7 +201,7 @@ class UdpPlugin(object):
             logging.debug("Sending %d monitor points",len(self._MPointsToSend))
             self._lock.acquire()
             valuesToSend = list(self._MPointsToSend.values())
-            del self._MPointsToSend[:]
+            del self._MPointsToSend.clear()
             self._lock.release()
             #
             # Send the monitor points with the UDP socket
