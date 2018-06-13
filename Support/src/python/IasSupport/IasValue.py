@@ -5,9 +5,9 @@ Created on Jun 7, 2018
 '''
 import json
 from IasSupport.Iso8601TStamp import Iso8601TStamp
-from IasPlugin.OperationalMode import OperationalMode
+from IasPlugin3.OperationalMode import OperationalMode
 from IasSupport.Validity import Validity
-from IasPlugin.IasType import IASType
+from IasPlugin3.IasType import IASType
 
 class IasValue(object):
     '''
@@ -281,4 +281,59 @@ class IasValue(object):
             temp["dasuProductionTStamp"]=self.dasuProductionTStampStr
              
         return json.dumps(temp)
+    
+    def toString(self,verbose=False):
+        """
+        @param verbose if True prints all the fields
+        @return the JSON representation of the IasValue
+        """
+        temp = {
+             "value":self.value,
+             "valueType":self.valueTypeStr,
+             "fullRunningId":self.fullRunningId,
+             "mode":self.modeStr,
+             "iasValidity":self.iasValidityStr
+             }
+        
+        if not verbose:
+            return "ID=%s, value=%s, type=%s, mode=%s, validity=%s" % \
+            (self.id,self.value,self.valueTypeStr,self.modeStr,self.iasValidityStr)
+        
+        t = "ID="+self.id
+        t = t + "\nvalue="+self.value
+        t = t + "\ntype="+self.valueTypeStr
+        t = t + "\nmode="+self.modeStr
+        t = t + "\nvalidity="+self.iasValidityStr
+        
+        
+        if self.dependentsFullRuningIds is not None:
+            t= "%s\nfullRunningID=%s" % (t,self.dependentsFullRuningIds)
+            
+        if self.props is not None and len(self.props)>0:
+            t = t+"\nProperties:"
+            for k in self.props.keys():
+                t = "%s\n  %s=%s" % (t,k,self.props[k])
+            
+        if self.pluginProductionTStampStr is not None:
+            t = "%s\npluginProductionTStamp=%s" % (t,self.pluginProductionTStampStr)
+            
+        if self.sentToConverterTStampStr is not None:
+            t = "%s\nsentToConverterTStamp=%s" % (t,self.sentToConverterTStampStr)
+            
+        if self.receivedFromPluginTStampStr is not None:
+            t = "%s\nreceivedFromPluginTStamp=%s" % (t,self.receivedFromPluginTStampStr)
+            
+        if self.convertedProductionTStampStr is not None:
+            t = "%s\nconvertedProductionTStamp=%s" % (t,self.convertedProductionTStampStr)
+            
+        if self.sentToBsdbTStampStr is not None:
+            t = "%s\nsentToBsdbTStamp=%s" % (t,self.sentToBsdbTStampStr)
+            
+        if self.readFromBsdbTStampStr is not None:
+            t = "%s\nreadFromBsdbTStamp=%s" % (t,self.readFromBsdbTStampStr)
+            
+        if self.dasuProductionTStampStr is not None:
+            t = "%s\ndasuProductionTStamp=%s" % (t,self.dasuProductionTStampStr)
+             
+        return t
     

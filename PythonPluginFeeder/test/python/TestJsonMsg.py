@@ -9,10 +9,10 @@ Created on May 10, 2018
 '''
 import unittest
 import datetime
-from IasPlugin.JsonMsg import JsonMsg
-from IasPlugin.IasType import IASType
-from IasPlugin.OperationalMode import OperationalMode
-from IasPlugin.Alarm import Alarm
+from IasPlugin3.JsonMsg import JsonMsg
+from IasPlugin3.IasType import IASType
+from IasPlugin3.OperationalMode import OperationalMode
+from IasPlugin3.Alarm import Alarm
 
 class TestJsonMessage(unittest.TestCase):
     
