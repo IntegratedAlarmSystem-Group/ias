@@ -7,8 +7,8 @@ Created on May 9, 2018
 import json
 from datetime import datetime
 import dateutil.parser
-from IasPlugin.OperationalMode import OperationalMode
-from IasPlugin.IasType import IASType
+from IasPlugin3.OperationalMode import OperationalMode
+from IasPlugin3.IasType import IASType
 
 class JsonMsg(object):
     '''

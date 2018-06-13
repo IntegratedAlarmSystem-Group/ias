@@ -9,8 +9,8 @@ RUN yum update -y && \
   -y
 
 # Install Scala
-RUN wget https://www.scala-lang.org/files/archive/scala-2.12.4.rpm && \
-  rpm -i scala-2.12.4.rpm
+RUN wget https://www.scala-lang.org/files/archive/scala-2.12.6.rpm && \
+  rpm -i scala-2.12.6.rpm
 
 # Install Python 3
 RUN yum install https://centos7.iuscommunity.org/ius-release.rpm -y && \

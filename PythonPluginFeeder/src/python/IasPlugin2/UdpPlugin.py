@@ -6,13 +6,13 @@ Created on May 9, 2018
 
 import socket, os
 from datetime import datetime
-from IasPlugin.JsonMsg import JsonMsg
+from IasPlugin2.JsonMsg import JsonMsg
 import logging
 from threading import Timer, RLock
 
 class UdpPlugin(object):
     '''
-    UpdPlugin sends monitor points to the java plugin by means 
+    UpdPlugin for python 2 sends monitor points to the java plugin by means 
     of UDP sockets.
     
     Using UDP has pros and cons. Take into account that UDP
@@ -41,6 +41,35 @@ class UdpPlugin(object):
     
     # Monitor points are periodically sent in seconds
     SENDING_TIME_INTERVAL = 0.250
+    
+    # The operational mode
+    mode = [ 'STARTUP',
+            'INITIALIZATION',
+            'CLOSING',
+            'SHUTTEDDOWN', 
+            'MAINTENANCE',
+            'OPERATIONAL',
+            'DEGRADED',
+            'UNKNOWN']
+    
+    # The states of alarms
+    alarm = [ 'SET_CRITICAL',
+            'SET_HIGH',
+            'SET_MEDIUM',
+            'SET_LOW',
+            'CLEARED']
+    
+    # The types of the monitor points
+    valueType = ['LONG',
+                 'INT',
+                 'SHORT',
+                 'BYTE',
+                 'DOUBLE',
+                 'FLOAT',
+                 'BOOLEAN',
+                 'CHAR',
+                 'STRING',
+                 'ALARM']
     
     def __init__(self, hostname, port):
         '''
@@ -128,10 +157,10 @@ class UdpPlugin(object):
         
         @param mPointID: the not None nor empty ID of the monitor point
         @param value: the value of the monitor point
-        @param valueType: (IasTye)the IasType of the monitor point
+        @param valueType: the type of the monitor point (must be in self.valueType)
         @param timestamp: (datetime) the timestamp when the value has been
-                          red from the monitored system
-        @param operationalMode (OperationalMode) the optional operational mode
+                          read from the monitored system
+        @param operationalMode the optional operational mode must be in (self.mode)
         @see: JsonMsg.IAS_SUPPORTED_TYPES
         '''
         if not mPointID:
@@ -140,8 +169,15 @@ class UdpPlugin(object):
             raise ValueError("The timestamp can't be None")
         if value is None:
             raise ValueError("The value can't be None")
-        if valueType is None:
+        if not valueType:
             raise ValueError("The type can't be None")
+        if self.valueType.count(valueType)==0:
+            raise ValueError("Unrecognized type "+type)
+        
+        if not operationalMode:
+            raise ValueError("The operational mode can't be None")
+        if self.mode.count(operationalMode)==0:
+            raise ValueError("Unrecognized operational mode "+operationalMode)
         
         if self._shuttedDown:
             return
@@ -173,7 +209,7 @@ class UdpPlugin(object):
             for mPoint in valuesToSend:
                 self._send(mPoint)
             logging.debug('Monitor points sent')
-            valuesToSend.clear()
+            del valuesToSend[:]
             
             ## reschedule the time if not closed
             self._timer = self._schedule()
@@ -189,5 +225,5 @@ class UdpPlugin(object):
         jsonStr = mPoint.dumps()
         
         # send the string to the UDP socket
-        self._sock.sendto(bytes(jsonStr, "utf-8"),(self._ip, self._port))
+        self._sock.sendto(jsonStr.encode("utf-8"),(self._ip, self._port))
         
