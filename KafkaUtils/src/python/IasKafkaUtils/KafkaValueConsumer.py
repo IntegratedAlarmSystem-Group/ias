@@ -3,7 +3,7 @@ Created on Jun 12, 2018
 
 @author: acaproni
 '''
-import logging
+import logging, time
 from kafka import KafkaConsumer
 from threading import Thread
 from IasBasicTypes.IasValue import IasValue
@@ -36,6 +36,9 @@ class KafkaValueConsumer(Thread):
     Each received IasValue is sent to the listener.
     
     The listener must inherit from IasValueListener
+    
+    KafkaValueConsumer does not create a topic that must be created by the producer.
+    If the topic does not exists, the thread waits antil the producer creates it.
     '''
     
     # The listener to send IasValues to
@@ -46,6 +49,15 @@ class KafkaValueConsumer(Thread):
     
     # The topic
     topic = None
+    
+    # Signal the thread to terminate
+    terminateThread = False
+    
+    # Signal if the thread is getting event from the topic 
+    # This is not teh same of starting the thread vecause
+    ## if the topic does not exist, the thread wait until
+    # it is created but is not yet getting events
+    isGettingEvents = False
     
     def __init__(self, 
                  listener,
@@ -82,8 +94,29 @@ class KafkaValueConsumer(Thread):
         The thread to get IasValues from the BSDB
         """
         logger.info('Thread to poll for IasValues started')
-        self.consumer.seek_to_end()
-        while True:
+        
+        partitionsIds=None
+        n = 1 
+        if not self.terminateThread:
+            while partitionsIds is None: 
+                partitionsIds=self.consumer.partitions_for_topic(self.topic)
+                if partitionsIds is None:
+                    if n%10==0:
+                        logger.info("Waiting for topic %s to be created",self.topic)
+                    n = n + 1
+                    time.sleep(0.100)
+            
+            partitionsIds=self.consumer.partitions_for_topic(self.topic)
+            logger.info('%d partitions found on topic %s: %s',len(partitionsIds),self.topic,partitionsIds)
+            partitions=[]
+            for pId in partitionsIds:
+                partitions.append(TopicPartition(self.topic,pId))
+            self.consumer.assign(partitions)
+            
+            self.consumer.seek_to_end()
+        
+        self.isGettingEvents=True
+        while True and not self.terminateThread:
             try:
                 messages = self.consumer.poll(500)
             except:
@@ -94,15 +127,16 @@ class KafkaValueConsumer(Thread):
                     json = cr.value.decode("utf-8")
                     iasValue = IasValue.fromJSon(json)
                     self.listener.iasValueReceived(iasValue)
+        self.isGettingEvents=False
         logger.info('Thread terminated')
         
     def start(self):
-        partitionsIds=self.consumer.partitions_for_topic(self.topic)
-        logger.info('%d partitions found on topic %s: %s',len(partitionsIds),self.topic,partitionsIds)
-        partitions=[]
-        for pId in partitionsIds:
-            partitions.append(TopicPartition(self.topic,pId))
-        self.consumer.assign(partitions)
         logger.info('Starting thread to poll for IasValues')
         Thread.start(self)
+        
+    def close(self):
+        '''
+        Shuts down the thread
+        '''
+        self.terminateThread = True
         

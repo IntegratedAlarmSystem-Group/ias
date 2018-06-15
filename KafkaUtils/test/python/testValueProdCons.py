@@ -7,10 +7,10 @@ Created on Jun 14, 2018
 
 @author: acaproni
 '''
-import unittest
-from IasSupport.KafkaValueConsumer import IasValueListener, KafkaValueConsumer
-from IasSupport.KafkaValueProducer import KafkaValueProducer
-from IasSupport.IasValue import IasValue
+import unittest, time
+from IasKafkaUtils.KafkaValueConsumer import IasValueListener, KafkaValueConsumer
+from IasKafkaUtils.KafkaValueProducer import KafkaValueProducer
+from IasBasicTypes.IasValue import IasValue
 from IASLogging.logConf import Log
 
 class TestListener(IasValueListener):
@@ -82,7 +82,18 @@ class TestValueProdCons(unittest.TestCase):
         logger.info('Building the producer')
         producer = KafkaValueProducer(self.kafkabrokers,self.topic,'PyProducerTest-ID')
         
-        n=1000
+        n=1
+        while not consumer.isGettingEvents:
+            if n %10 == 0:
+                logger.info("Waiting for the consumer to connect")
+            n = n + 1
+            time.sleep(100)
+        
+        # Wait one second to be sure the consumer is ready
+        # Setting up partitions and assign consumers to group, rebalancing etc.
+        # can slow down the process even iof the consumer is ready and waiting 
+        # to get data
+        time.sleep(1)
         logger.info('Publishing %d IasValues',n)
         baseId='Test-ID#'
         for i in range(0,n):
@@ -95,6 +106,10 @@ class TestValueProdCons(unittest.TestCase):
         logger.info('Closing the producer')
         producer.close()
         logger.info('Producer closed')
+        
+        logger.info('Closing the consumer')
+        consumer.close()
+        logger.info('Consumer closed')
         
         self.assertEqual(n, len(self.listener.receivedValues), 'Messages mismatch')
 
