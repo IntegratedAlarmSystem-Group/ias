@@ -4,11 +4,11 @@ Created on Jun 7, 2018
 @author: acaproni
 '''
 import json
-from IasSupport.Iso8601TStamp import Iso8601TStamp
-from IasPlugin3.OperationalMode import OperationalMode
-from IasSupport.Validity import Validity
-from IasPlugin3.IasType import IASType
-from IasPlugin3.Alarm import Alarm
+from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
+from IasBasicTypes.OperationalMode import OperationalMode
+from IasBasicTypes.Validity import Validity
+from IasBasicTypes.IasType import IASType
+from IasBasicTypes.Alarm import Alarm
 
 class IasValue(object):
     '''

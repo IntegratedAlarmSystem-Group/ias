@@ -10,9 +10,8 @@ Created on Jun 12, 2018
 import argparse
 import signal, sys
 from kafka import KafkaConsumer
-from IasSupport.IasValue import IasValue
+from IasBasicTypes.IasValue import IasValue
 from IasSupport.KafkaValueConsumer import IasValueListener, KafkaValueConsumer
-from Cython.Compiler.Main import verbose
 
 # The kafka consumer
 consumer = None

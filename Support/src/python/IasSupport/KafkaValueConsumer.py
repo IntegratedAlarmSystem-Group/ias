@@ -6,7 +6,7 @@ Created on Jun 12, 2018
 import logging
 from kafka import KafkaConsumer
 from threading import Thread
-from IasSupport.IasValue import IasValue
+from IasBasicTypes.IasValue import IasValue
 from kafka.structs import TopicPartition
 
 logger = logging.getLogger(__file__)

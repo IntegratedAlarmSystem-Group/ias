@@ -4,7 +4,7 @@ Created on May 10, 2018
 @author: acaproni
 '''
 from enum import Enum
-from IasPlugin3.Alarm import Alarm
+from IasBasicTypes.Alarm import Alarm
 class IASType(Enum):
     '''
     The supported data types 

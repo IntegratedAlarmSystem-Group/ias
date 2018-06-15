@@ -6,11 +6,11 @@ Created on Jun 8, 2018
 '''
 import unittest
 from IASLogging.logConf import Log
-from IasSupport.IasValue import IasValue
-from IasSupport.Iso8601TStamp import Iso8601TStamp
-from IasSupport.Validity import Validity
-from IasPlugin3.OperationalMode import OperationalMode
-from IasPlugin3.IasType import IASType
+from IasBasicTypes.IasValue import IasValue
+from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
+from IasBasicTypes.Validity import Validity
+from IasBasicTypes.OperationalMode import OperationalMode
+from IasBasicTypes.IasType import IASType
 
 class TestIasValue(unittest.TestCase):
 
