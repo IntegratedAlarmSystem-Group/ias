@@ -197,8 +197,10 @@ public class UdpPlugin implements Runnable {
 			printUsage(options);
 			System.exit(-5);
 		}
+
+		String kafkaBroker = pluginConfig.getSinkServer()+":"+pluginConfig.getSinkPort();
 		
-		logger.info("Kafka server {}:{}", pluginConfig.getSinkServer(),pluginConfig.getSinkPort());
+		logger.info("Kafka broker {}", kafkaBroker);
 		MonitorPointSender mpSender = new KafkaPublisher(
 				pluginConfig.getId(), 
 				pluginConfig.getMonitoredSystemId(), 
@@ -206,7 +208,7 @@ public class UdpPlugin implements Runnable {
 				pluginConfig.getSinkPort(), 
 				Plugin.getScheduledExecutorService());
 		
-		HbProducer hbProducer = new HbKafkaProducer(pluginConfig.getId()+"HBSender", new HbJsonSerializer());
+		HbProducer hbProducer = new HbKafkaProducer(pluginConfig.getId()+"HBSender", kafkaBroker, new HbJsonSerializer());
 		
 		UdpPlugin udpPlugin = null; 
 		try {
