@@ -373,10 +373,12 @@ public class Plugin implements ChangeValueListener {
 		if (hbFrequency<=0) {
 			throw new IllegalArgumentException("The HB frequency must be >0");
 		}
+		
+		flushProperties(props);
+		
 		Objects.requireNonNull(hbProducer);
 		this.hbEngine=HbEngine.apply(pluginIdentifier.fullRunningID(), hbFrequency, hbProducer);		
 		
-		flushProperties(props);
 		this.mpPublisher=sender;
 		
 		/** check if the monitor point has the filter or if take global*/ 
