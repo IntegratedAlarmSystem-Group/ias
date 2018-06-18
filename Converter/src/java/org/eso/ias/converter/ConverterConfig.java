@@ -58,7 +58,7 @@ public class ConverterConfig {
 	@Lazy(value = true)
 	public HbProducer hbProducer(String cID, Optional<String> kafkaBrokers, Properties props) { 
 		return new HbKafkaProducer(
-				cID, getKafkaServer(kafkaBrokers, props),
+				cID+"HBSender", getKafkaServer(kafkaBrokers, props),
 				new HbJsonSerializer()); 
 	}
 }

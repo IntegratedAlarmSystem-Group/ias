@@ -397,7 +397,7 @@ object Supervisor {
     val hbProducer: HbProducer = {
       val kafkaServers = System.getProperties.getProperty(KafkaHelper.BROKERS_PROPNAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
       
-      new HbKafkaProducer(supervisorId,kafkaServers,new HbJsonSerializer())
+      new HbKafkaProducer(supervisorId+"HBSender",kafkaServers,new HbJsonSerializer())
     }
       
     // Build the supervisor

@@ -206,7 +206,7 @@ public class UdpPlugin implements Runnable {
 				pluginConfig.getSinkPort(), 
 				Plugin.getScheduledExecutorService());
 		
-		HbProducer hbProducer = new HbKafkaProducer(pluginConfig.getId(), new HbJsonSerializer());
+		HbProducer hbProducer = new HbKafkaProducer(pluginConfig.getId()+"HBSender", new HbJsonSerializer());
 		
 		UdpPlugin udpPlugin = null; 
 		try {
