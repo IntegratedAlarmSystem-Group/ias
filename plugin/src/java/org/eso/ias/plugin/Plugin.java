@@ -382,11 +382,11 @@ public class Plugin implements ChangeValueListener {
 		/** check if the monitor point has the filter or if take global*/ 
 		values.forEach(v -> { 
 			try {
-				logger.info("ID: {}, filter: {}, filterOptions: {}",v.getId(),v.getFilter(),v.getFilterOptions());
-				
 				MonitoredValue mv = null;
 				
-				if (v.getFilter()==null && defaultFilter==null) {
+				if (
+						(v.getFilter()==null || v.getFilter().isEmpty()) && 
+						(defaultFilter==null || defaultFilter.isEmpty())) {
 					logger.info("No filter, neither default filter set for {}",v.getId());
 					mv = new MonitoredValue(
 							v.getId(), 
