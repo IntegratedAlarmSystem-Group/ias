@@ -298,10 +298,14 @@ public class TestRdbCdb {
 	public void testIasios() throws Exception {
 		logger.info("testIasios");
 		IasioDao io1 = new IasioDao("IO-ID1", "IASIO descr1", IasTypeDao.INT,"http://www.eso.org");
+		io1.setEmails("noreply@noemail.com");
 		IasioDao io2 = new IasioDao("IO-ID2", "IASIO descr2", IasTypeDao.ALARM,"http://www.eso.org");
+		io2.setSound(SoundTypeDao.TYPE2);
 		IasioDao io3 = new IasioDao("IO-ID3", "IASIO descr3", IasTypeDao.BOOLEAN,"http://www.eso.org");
 		IasioDao io4 = new IasioDao("IO-ID4", "IASIO descr4", IasTypeDao.DOUBLE,"http://www.eso.org");
 		IasioDao io5 = new IasioDao("IO-ID5", "IASIO descr5", IasTypeDao.STRING,"http://www.eso.org");
+		io5.setEmails("test@fake.sever.org");
+		io5.setSound(SoundTypeDao.TYPE3);
 		Set<IasioDao> iasios = new HashSet<>();
 		iasios.add(io1);
 		iasios.add(io2);
