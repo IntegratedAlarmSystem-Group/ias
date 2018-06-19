@@ -19,6 +19,7 @@ import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.LogLevelDao;
 import org.eso.ias.cdb.pojos.PropertyDao;
+import org.eso.ias.cdb.pojos.SoundTypeDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
 import org.eso.ias.cdb.pojos.TFLanguageDao;
 import org.eso.ias.cdb.pojos.TemplateDao;
@@ -242,6 +243,8 @@ public class TestRdbCdb {
 				"IASIO description", 
 				IasTypeDao.INT,
 				"http://www.eso.org",false,
+				null,
+				SoundTypeDao.NONE,
 				null);
 		cdbWriter.writeIasio(io, true);
 
@@ -275,7 +278,9 @@ public class TestRdbCdb {
 				"IASIO template description", 
 				IasTypeDao.ALARM,
 				"http://www.eso.org",false,
-				template.getId());
+				template.getId(),
+				SoundTypeDao.TYPE4,
+				"email.addr@website.org");
 		cdbWriter.writeIasio(io, true);
 
 		Optional<IasioDao> iasioFromRdb = cdbReader.getIasio("T-IO-ID");

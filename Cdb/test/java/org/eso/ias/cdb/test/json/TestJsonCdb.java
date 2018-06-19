@@ -31,6 +31,7 @@ import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.LogLevelDao;
 import org.eso.ias.cdb.pojos.PropertyDao;
+import org.eso.ias.cdb.pojos.SoundTypeDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
 import org.eso.ias.cdb.pojos.TFLanguageDao;
 import org.eso.ias.cdb.pojos.TemplateDao;
@@ -374,7 +375,11 @@ public class TestJsonCdb {
 	@Test
 	public void testWriteIasio() throws Exception {
 		// Is the default value saved for IasioDao#canShelve?
-		IasioDao iasioDefaultShelve = new IasioDao("ioID2", "IASIO description", IasTypeDao.ALARM,"http://www.eso.org");
+		IasioDao iasioDefaultShelve = new IasioDao(
+				"ioID2", 
+				"IASIO description", 
+				IasTypeDao.ALARM,
+				"http://www.eso.org");
 		cdbWriter.writeIasio(iasioDefaultShelve, false);
 		Optional<IasioDao> optIasioDefShelve = cdbReader.getIasio(iasioDefaultShelve.getId());
 		assertTrue(optIasioDefShelve.isPresent(),"Got an empty IASIO!");
@@ -386,7 +391,9 @@ public class TestJsonCdb {
 				"IASIO description", 
 				IasTypeDao.ALARM,"http://wiki.alma.cl/ioID",
 				true,
-				"templateID");
+				"templateID",
+				SoundTypeDao.TYPE2,
+				"addr1@eso.org; addr@alma.cl");
 		cdbWriter.writeIasio(iasio, false);
 		
 		assertTrue(cdbFiles.getIasioFilePath(iasio.getId()).toFile().exists());
@@ -402,6 +409,8 @@ public class TestJsonCdb {
 
 		// Append another IASIO
 		IasioDao iasio2 = new IasioDao("ioID2", "Another IASIO", IasTypeDao.BOOLEAN,null);
+		iasio2.setSound(SoundTypeDao.TYPE3);
+		iasio2.setEmails("emailaddr@site.com");
 		cdbWriter.writeIasio(iasio2, true);
 		Optional<Set<IasioDao>> optSet2 = cdbReader.getIasios();
 		assertTrue(optSet2.isPresent(),"Got an empty set of IASIOs!");
@@ -448,6 +457,7 @@ public class TestJsonCdb {
 		Set<IasioDao> set2 = new HashSet<>();
 		for (int t=0; t<6; t++) {
 			IasioDao iasio = new IasioDao("2ndset-iasioID-"+t, "IASIO descr "+t*2, IasTypeDao.values()[t],"http://www.eso.org");
+			iasio.setSound(SoundTypeDao.TYPE1);
 			set2.add(iasio);
 		}
 		cdbWriter.writeIasios(set2, true);
@@ -459,11 +469,13 @@ public class TestJsonCdb {
 		set.clear();
 		for (int t=0; t<5; t++) {
 			IasioDao iasio = new IasioDao("iasioID-"+t, "IASIO "+t, IasTypeDao.values()[t],"http://www.eso.org");
+			iasio.setSound(SoundTypeDao.TYPE3);
 			set.add(iasio);
 		}
 		cdbWriter.writeIasios(set, true);
 		// Size must be the same
 		Optional<Set<IasioDao>> optSet3 = cdbReader.getIasios();
+		
 		assertTrue(optSet3.isPresent(),"Got an empty set of IASIOs!");
 		assertEquals(set.size()+set2.size(),optSet3.get().size(),"Size of set mismatch");
 		

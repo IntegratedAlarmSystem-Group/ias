@@ -63,6 +63,26 @@ public class IasioDao {
 	private boolean canShelve=canSheveDefault;
 	
 	/**
+	 * The sound to play when a given alarm becomes SET
+	 * 
+	 * This attribute is ignored for non alarm IASIOs
+	 */
+	@Enumerated(EnumType.STRING)
+	@Column(name = "Sound")
+	@Basic(optional=true)
+	private SoundTypeDao sound=SoundTypeDao.NONE;
+	
+	/**
+	 * The addresses to send emails when an alarm changes
+	 * it state SET/CLEAR
+	 * 
+	 * This attribute is ignored for non alarm IASIOs
+	 */
+	@Column(name = "emails")
+	@Basic(optional=true)
+	private String emails;
+	
+	/**
 	 * Empty constructor
 	 */
 	public IasioDao() {}
@@ -94,6 +114,8 @@ public class IasioDao {
 	 * @param canShelve <code>true</code> if this IASIO can be shelved, 
 	 *                  <code>false</code> otherwise
 	 * @param templateId the Id of the template for replication
+	 * @param sound the sound to play when an alarm is set
+	 * @param email the email to notify when an alarm is SET or CLEARED
 	 */
 	public IasioDao(
 			String id, 
@@ -101,10 +123,14 @@ public class IasioDao {
 			IasTypeDao type, 
 			String docUrl, 
 			boolean canShelve, 
-			String templateId) {
+			String templateId,
+			SoundTypeDao sound,
+			String emails) {
 		this(id,descr,type,docUrl);
 		this.canShelve=canShelve;
 		this.templateId=templateId;
+		setSound(sound);
+		setEmails(emails);
 	}
 
 	public String getId() {
@@ -143,12 +169,13 @@ public class IasioDao {
 		ret.append(getId());
 		ret.append(", type=");
 		ret.append(getIasType().toString());
-		ret.append(", desc=\"");
-		if (getShortDesc()!=null) { 
+		if (getShortDesc()!=null && !getShortDesc().isEmpty()) {
+			ret.append(", desc=\"");
 			ret.append(getShortDesc());
+			ret.append('"');
 		}
-		ret.append("\", URL=\"");
-		if (getDocUrl()!=null) {
+		if (getDocUrl()!=null && !getDocUrl().isEmpty()) {
+			ret.append(", URL=\"");
 			ret.append(getDocUrl());
 			ret.append('"');
 		}
@@ -160,6 +187,15 @@ public class IasioDao {
 		if (templateId!=null) {
 			ret.append(", template id=\"");
 			ret.append(templateId);
+			ret.append('"');
+		}
+		if (sound!=null) {
+			ret.append(", sound type=");
+			ret.append(sound);
+		}
+		if (emails!=null && !emails.isEmpty()) {
+			ret.append(", emails=\"");
+			ret.append(emails);
 			ret.append('"');
 		}
 		ret.append("]");
@@ -182,12 +218,14 @@ public class IasioDao {
 				Objects.equals(this.getShortDesc(),other.getShortDesc()) &&
 				Objects.equals(this.getDocUrl(),other.getDocUrl()) &&
 				this.isCanShelve()==other.isCanShelve() &&
-				Objects.equals(this.getTemplateId(),other.getTemplateId());
+				Objects.equals(this.getTemplateId(),other.getTemplateId()) &&
+				Objects.equals(this.getEmails(),other.getEmails()) &&
+				Objects.equals(this.getSound(),other.getSound());
 	}
 	
 	@Override
 	public int hashCode() {
-		return Objects.hash(id,iasType,shortDesc,docUrl,canShelve,templateId);
+		return Objects.hash(id,iasType,shortDesc,docUrl,canShelve,templateId,sound,emails);
 	}
 
 	public String getDocUrl() {
@@ -212,5 +250,25 @@ public class IasioDao {
 
 	public void setTemplateId(String templateId) {
 		this.templateId = templateId;
+	}
+
+	public SoundTypeDao getSound() {
+		return sound;
+	}
+
+	public void setSound(SoundTypeDao sound) {
+		if (sound ==null) {
+			this.sound = SoundTypeDao.NONE;
+		} else {
+			this.sound = sound;
+		}
+	}
+
+	public String getEmails() {
+		return emails;
+	}
+
+	public void setEmails(String emails) {
+		this.emails = emails;
 	}
 }
