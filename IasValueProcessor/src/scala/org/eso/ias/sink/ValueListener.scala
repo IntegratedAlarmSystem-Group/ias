@@ -2,7 +2,6 @@ package org.eso.ias.sink
 
 import java.util.concurrent.atomic.AtomicBoolean
 
-import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.pojos.IasioDao
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IASValue
@@ -31,54 +30,71 @@ abstract class ValueListener(val id: String) {
   var iasValuesDaos: Map[String,IasioDao] = Map.empty
 
   /**
+    * If one of the method of the listener threw one execption
+    * we falg the event and the listener stop processing values
+    */
+  private val broken = new AtomicBoolean(false)
+
+  /**
+    * @return true if the processor is broke; false otherwise
+    */
+  def isBroken: Boolean = broken.get()
+
+  /**
     * Initialization
     *
     * @param iasValues The configuration of the IASIOs read from the CDB
     */
-  final def setUp(iasValues: Map[String,IasioDao]): Try[Unit] = {
+  final def setUp(iasValues: Map[String,IasioDao]): Unit = {
     assert(!initialized.get(),"Already initialized")
     assert(Option(iasValues).isDefined && iasValues.nonEmpty,"Invalid IASIOs configuration")
     iasValuesDaos=iasValues
-    Try({
-      logger.debug("Initilizing listener {}",id)
-      init()
-      logger.info("Listener {} initialized",id)
-    })
+    logger.debug("Initilizing listener {}",id)
+    Try(init()) match {
+      case Success(_) =>logger.info("Listener {} initialized",id)
+      case Failure(e) => logger.error("Listener {} failed to init",id,e)
+                         broken.set(true)
+    }
   }
 
   /**
     * Initialization
     */
-  def init()
+  protected def init()
 
-  final def tearDown(): Try[Unit] = {
+  final def tearDown(): Unit = {
     val alreadyClosed = closed.getAndSet(true)
     if (alreadyClosed) {
       Try(logger.warn("{} already closed",id))
     } else {
-      Try( {
-        logger.debug("Closing {}",id)
-        close()
-        logger.info("Listener {} closed",id)
-      })
+      logger.debug("Closing {}",id)
+      Try(close()) match {
+        case Success(_) => logger.info("Listener {} successfully closed",id)
+        case Failure(e) => logger.warn("Listener {} failed to close",id,e)
+                           broken.set(true)
+      }
     }
   }
 
   /**
     * Free all the allocated resources
     */
-  def close()
+  protected def close()
 
   /**
     * A new set of IasValues has been received from the BSDB and needs to be processed
     *
     * @param iasValues the values read from the BSDB
     */
-  final def processIasValues(iasValues: Set[IASValue[_]]): Try[Unit] = {
+  final def processIasValues(iasValues: List[IASValue[_]]): Unit = {
     assert(initialized.get(),"Not initialized")
-    Try({
-      if (!closed.get() && Option(iasValues).isDefined && iasValues.nonEmpty) process(iasValues)
-    })
+    if (!closed.get() && Option(iasValues).isDefined && iasValues.nonEmpty && !broken.get()) {
+      Try(process(iasValues)) match {
+        case Failure(e) => logger.error("Listener {} failed to process events: will stop processing events",id,e)
+                           broken.set(true)
+        case _ =>
+      }
+    }
   }
 
   /**
@@ -86,5 +102,5 @@ abstract class ValueListener(val id: String) {
     *
     * @param iasValues the values read from the BSDB
     */
-  def process(iasValues: Set[IASValue[_]])
+  def process(iasValues: List[IASValue[_]])
 }
