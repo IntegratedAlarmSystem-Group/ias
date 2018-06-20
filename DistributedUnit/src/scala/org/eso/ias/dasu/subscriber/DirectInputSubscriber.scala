@@ -9,7 +9,7 @@ import org.eso.ias.types.IASValue
 import org.eso.ias.logging.IASLogger
 
 /** 
- *  The input subscriber to send event to the DASU
+ *  The input subscriber to send event to the listener
  *  
  *  This subscriber, especially useful for testing, allows to programamtically 
  *  submit inputs that will be immediately sent to the listener.
@@ -38,9 +38,14 @@ class DirectInputSubscriber extends InputSubscriber {
    * 
    * @param listener the listener of events
    * @param acceptedInputs the IDs of the inputs accepted by the listener
+   * 											(if empty accepts all the inputs)
    */
   def startSubscriber(listener: InputsListener, acceptedInputs: Set[String]): Try[Unit] = {
-    logger.info("Starting subscriber with accepted IDs {}",acceptedInputs.mkString(", "))
+    if (acceptedInputs.nonEmpty) {
+      logger.info("Starting subscriber with accepted IDs {}",acceptedInputs.mkString(", "))
+    } else {
+      logger.info("Starting subscriber accepting  all IDs")
+    }
     this.listener=Option(listener)
     this.acceptedInputs++=acceptedInputs
     Success(())
@@ -52,7 +57,10 @@ class DirectInputSubscriber extends InputSubscriber {
    */
   def sendInputs(iasios: Set[IASValue[_]]) = {
     require(Option(iasios).isDefined)
-    val iasiosToSend = iasios.filter(iasio => acceptedInputs.contains(iasio.id))
+    val iasiosToSend = {
+      if (acceptedInputs.nonEmpty) iasios.filter(iasio => acceptedInputs.contains(iasio.id))
+      else iasios
+    }
     this.listener.foreach(l => l.inputsReceived(iasiosToSend))
   }
 }

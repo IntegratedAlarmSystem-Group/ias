@@ -109,12 +109,8 @@ class Dasu7ASCEsTest extends FlatSpec {
   // The DASU to test
   val dasu = new DasuImpl(dasuIdentifier,dasuDao,outputPublisher,inputsProvider,3,1)
   
-  // The identifier of the monitored system that produces the temperature in input to the DASU
-  val monSysId = new Identifier("MonitoredSystemID",IdentifierType.MONITORED_SOFTWARE_SYSTEM)
-  // The identifier of the plugin
-  val pluginId = new Identifier("PluginID",IdentifierType.PLUGIN,monSysId)
   // The identifier of the converter
-  val converterId = new Identifier("ConverterID",IdentifierType.CONVERTER,pluginId)
+  val converterId = new Identifier("ConverterID",IdentifierType.CONVERTER,None)
   
   // The ID of the temperature 1 monitor point in unput to ASCE-Temp1
   val inputTemperature1ID = new Identifier("Temperature1", IdentifierType.IASIO,converterId)
