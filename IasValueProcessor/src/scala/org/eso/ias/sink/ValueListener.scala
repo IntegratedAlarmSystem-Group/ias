@@ -102,5 +102,5 @@ abstract class ValueListener(val id: String) {
     *
     * @param iasValues the values read from the BSDB
     */
-  def process(iasValues: List[IASValue[_]])
+  protected def process(iasValues: List[IASValue[_]])
 }
