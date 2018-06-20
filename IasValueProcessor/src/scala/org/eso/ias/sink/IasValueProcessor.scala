@@ -4,21 +4,15 @@ import java.util
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.{Callable, ExecutorCompletionService, Executors, Future}
 
-import org.eso.ias.logging.IASLogger
-import org.eso.ias.types.{IASValue, Identifier, IdentifierType}
+import com.typesafe.scalalogging.Logger
 import org.eso.ias.cdb.CdbReader
-import org.eso.ias.cdb.json.CdbFiles
-import org.eso.ias.cdb.json.CdbJsonFiles
-import org.eso.ias.cdb.json.JsonReader
 import org.eso.ias.cdb.pojos.{IasDao, IasioDao}
-import org.eso.ias.cdb.rdb.RdbReader
+import org.eso.ias.dasu.subscriber.{InputSubscriber, InputsListener}
 import org.eso.ias.heartbeat.{HbEngine, HbProducer, HeartbeatStatus}
-import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener
-import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition
-import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosConsumer}
+import org.eso.ias.logging.IASLogger
+import org.eso.ias.types.{IASValue, Identifier}
 
 import scala.collection.JavaConverters
-import scala.collection.concurrent.TrieMap
 import scala.collection.mutable.ListBuffer
 import scala.util.{Failure, Success, Try}
 
@@ -27,21 +21,22 @@ import scala.util.{Failure, Success, Try}
  * and sends them to the listener for further processing.
   *
   * @param processorIdentifier the idenmtifier of the value processor
-  * @param kafkaBrokers the kafka brokers to connect to
   * @param listeners the processors of the IasValues read from the BSDB
   * @param hbProducer The HB generator
+  * @param inputsSubscriber The subscriber to get events from the BDSB
   * @param cdbReader The CDB reader
  */
 class IasValueProcessor(
                          val processorIdentifier: Identifier,
-                         val kafkaBrokers: String,
                          val listeners: List[ValueListener],
                          private val hbProducer: HbProducer,
-                         cdbReader: CdbReader) extends IasioListener {
+                         private val inputsSubscriber: InputSubscriber,
+                         cdbReader: CdbReader) extends InputsListener {
   require(Option(processorIdentifier).isDefined,"Invalid identifier")
-  require(Option(listeners).isDefined && listeners.nonEmpty,"Mo listener defined")
+  require(Option(listeners).isDefined && listeners.nonEmpty,"Mo listeners defined")
   require(listeners.map(_.id).toSet.size==listeners.size,"Duplicated IDs of listeners")
   require(Option(hbProducer).isDefined,"Invalid HB producer")
+  require(Option(inputsSubscriber).isDefined,"Invalid inputs subscriber")
   require(Option(cdbReader).isDefined,"Invalid CDB reader")
 
   /** The executor service to async process the IasValues in the listeners */
@@ -49,16 +44,13 @@ class IasValueProcessor(
     Executors.newFixedThreadPool(2 * listeners.size, new ProcessorThreadFactory(processorIdentifier.id)))
 
   /** The configuration of IASIOs from the CDB */
-  val iasioDaos= {
+  val iasioDaos: List[IasioDao] = {
     val temp: util.Set[IasioDao] = cdbReader.getIasios.orElseThrow(() => new IllegalArgumentException("IasDaos not found in CDB"))
     JavaConverters.asScalaSet(temp).toList
   }
 
   /** The map of IasioDao by ID to pass to the listeners */
   val iasioDaosMap: Map[String,IasioDao] = iasioDaos.foldLeft(Map[String,IasioDao]()){ (z, dao) => z+(dao.getId -> dao)}
-
-  /** The Kafka consumer of IasValues */
-  val bsdbConsumer = new KafkaIasiosConsumer(kafkaBrokers, KafkaHelper.IASIOs_TOPIC_NAME, processorIdentifier.id)
 
   /** The heartbeat Engine */
   val hbEngine: HbEngine = {
@@ -110,7 +102,7 @@ class IasValueProcessor(
   /**
     * @return true if there is at leat one active listener; false otherwise
     */
-  def isThereActiveListener: Boolean = listeners.find(!_.isBroken).isDefined
+  def isThereActiveListener: Boolean = listeners.exists(!_.isBroken)
 
   /**
     * Extends Callable[Unit] with the ID of the listener
@@ -141,7 +133,10 @@ class IasValueProcessor(
         hbEngine.start(HeartbeatStatus.STARTING_UP)
         // Init the kafka consumer
         IasValueProcessor.logger.debug("Initializing the BSDB consumer")
-        bsdbConsumer.setUp()
+        inputsSubscriber.initializeSubscriber() match {
+          case Failure(e) => throw new Exception("Error initilizing the subscriber",e)
+          case Success(_) =>
+        }
         // Initialize the listeners
         IasValueProcessor.logger.debug("Initializing the listeners")
         initListeners()
@@ -150,7 +145,7 @@ class IasValueProcessor(
         }
         // Start getting events from the BSDB
         IasValueProcessor.logger.debug("Start getting events...")
-        bsdbConsumer.startGettingEvents(StartPosition.END,this)
+        inputsSubscriber.startSubscriber(this,Set.empty)
         initialized.set(true)
         hbEngine.updateHbState(HeartbeatStatus.RUNNING)
         IasValueProcessor.logger.info("Processor {} initialized",processorIdentifier.fullRunningID)
@@ -167,7 +162,7 @@ class IasValueProcessor(
       IasValueProcessor.logger.debug("Processor {} closing",processorIdentifier.fullRunningID)
       hbEngine.updateHbState(HeartbeatStatus.EXITING)
       // Closes the Kafka consumer
-      bsdbConsumer.tearDown()
+      inputsSubscriber.cleanUpSubscriber()
       // Shut down the listeners
       closeListeners()
       // Stop the HB
@@ -263,16 +258,16 @@ class IasValueProcessor(
     *
     * IASVales are initially grouped in the receivedIasValues
     *
-    * @param iasio the IasValue read from the BSDB
+    * @param iasios the IasValues read from the BSDB
     */
-  override def iasioReceived (iasio: IASValue[_]): Unit = {
-    assert(Option(iasio).isDefined)
+  override def inputsReceived(iasios: Set[IASValue[_]]): Unit = {
+    assert(Option(iasios).isDefined)
     // Is there at least one processor alive?
     if (!isThereActiveListener) {
       IasValueProcessor.logger.error("No active processors remaining: shutting down")
       close()
     }
-    receivedIasValues.append(iasio)
+    receivedIasValues.appendAll(iasios)
     if (receivedIasValues.length>minSizeOfValsToProcessAtOnce && !threadsRunning.get()) {
       val listOfIasValues = receivedIasValues.toList
       receivedIasValues.clear()
@@ -284,7 +279,7 @@ class IasValueProcessor(
 object IasValueProcessor {
   
   /** The logger */
-  val logger = IASLogger.getLogger(classOf[IasValueProcessor])
+  val logger: Logger = IASLogger.getLogger(classOf[IasValueProcessor])
 
   /**
     * The default size of IasValues sent to listeners to process
@@ -296,46 +291,5 @@ object IasValueProcessor {
     * size of IasValues sent to listeners to process
     */
   val sizeOfValsToProcPropName = "org.eso.ias.valueprocessor.minsize"
-  
-  /** Build the usage message */
-  def printUsage() = {
-		"""Usage: IasValueProcessor Processor-ID [-jcdb JSON-CDB-PATH]
-		-jcdb force the usage of the JSON CDB
-		   * Processor-ID: the identifier of the IasValueProcessor
-		   * JSON-CDB-PATH: the path of the JSON CDB"""
-	}
-  
-  def main(args: Array[String]) = {
-    require(!args.isEmpty, "Missing identifier in command line")
-    require(args.size == 1 || args.size == 3, "Invalid command line params\n" + printUsage())
-    require(if(args.size == 3) args(1)=="-jcdb" else true, "Invalid command line params\n" + printUsage())
-    val processorId = args(0)
-    // The identifier of the supervisor
-    val identifier = new Identifier(processorId, IdentifierType.SINK, None)
-    
-    val reader: CdbReader = {
-      if (args.size == 3) {
-        logger.info("Using JSON CDB at {}",args(2))
-        val cdbFiles: CdbFiles = new CdbJsonFiles(args(2))
-        new JsonReader(cdbFiles)
 
-      } else {
-        logger.info("Using CDB RDB")
-        new RdbReader()
-      }
-    }
-    
-    val kafkaBrokers = {
-      // The brokers from the java property
-      val fromPropsOpt=Option(System.getProperties().getProperty(KafkaHelper.BROKERS_PROPNAME))
-      val iasDaoJOptional = reader.getIas
-      val fromCdbOpt = if (iasDaoJOptional.isPresent) {
-        Option(iasDaoJOptional.get().getBsdbUrl)
-      } else {
-        None
-      }
-
-      fromPropsOpt.getOrElse(fromCdbOpt.getOrElse(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS))
-    }
-  }
 }
