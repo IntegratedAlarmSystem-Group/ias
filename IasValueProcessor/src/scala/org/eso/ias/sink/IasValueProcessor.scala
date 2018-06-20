@@ -10,7 +10,7 @@ import org.eso.ias.cdb.pojos.{IasDao, IasioDao}
 import org.eso.ias.dasu.subscriber.{InputSubscriber, InputsListener}
 import org.eso.ias.heartbeat.{HbEngine, HbProducer, HeartbeatStatus}
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types.{IASValue, Identifier}
+import org.eso.ias.types.{IASValue, Identifier, IdentifierType}
 
 import scala.collection.JavaConverters
 import scala.collection.mutable.ListBuffer
@@ -38,6 +38,10 @@ class IasValueProcessor(
   require(Option(hbProducer).isDefined,"Invalid HB producer")
   require(Option(inputsSubscriber).isDefined,"Invalid inputs subscriber")
   require(Option(cdbReader).isDefined,"Invalid CDB reader")
+  require(processorIdentifier.idType==IdentifierType.SINK,"Identifier tyope should be SINK")
+
+  IasValueProcessor.logger.info("{} processors will work on IAsValues read from the BSDB",listeners.length)
+
 
   /** The executor service to async process the IasValues in the listeners */
   val executorService = new ExecutorCompletionService[String](
@@ -48,6 +52,7 @@ class IasValueProcessor(
     val temp: util.Set[IasioDao] = cdbReader.getIasios.orElseThrow(() => new IllegalArgumentException("IasDaos not found in CDB"))
     JavaConverters.asScalaSet(temp).toList
   }
+  IasValueProcessor.logger.info("{} IASIO found in CDB",iasioDaos.length)
 
   /** The map of IasioDao by ID to pass to the listeners */
   val iasioDaosMap: Map[String,IasioDao] = iasioDaos.foldLeft(Map[String,IasioDao]()){ (z, dao) => z+(dao.getId -> dao)}
@@ -84,6 +89,8 @@ class IasValueProcessor(
     * until being processed by the listeners
     */
   val receivedIasValues: ListBuffer[IASValue[_]] = ListBuffer[IASValue[_]]()
+
+  IasValueProcessor.logger.debug("{} processor built",processorIdentifier.id)
 
   /**
     * The active listeners are those that are actively processing events.
