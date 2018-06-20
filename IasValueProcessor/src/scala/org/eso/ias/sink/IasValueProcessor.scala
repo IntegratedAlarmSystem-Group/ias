@@ -1,5 +1,6 @@
 package org.eso.ias.sink
 
+import java.util
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.{Callable, ExecutorCompletionService, Executors, Future}
 
@@ -9,12 +10,14 @@ import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.CdbFiles
 import org.eso.ias.cdb.json.CdbJsonFiles
 import org.eso.ias.cdb.json.JsonReader
-import org.eso.ias.cdb.pojos.IasioDao
+import org.eso.ias.cdb.pojos.{IasDao, IasioDao}
 import org.eso.ias.cdb.rdb.RdbReader
+import org.eso.ias.heartbeat.{HbEngine, HbProducer, HeartbeatStatus}
 import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener
 import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition
 import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosConsumer}
 
+import scala.collection.JavaConverters
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable.ListBuffer
 import scala.util.{Failure, Success, Try}
@@ -26,27 +29,45 @@ import scala.util.{Failure, Success, Try}
   * @param processorIdentifier the idenmtifier of the value processor
   * @param kafkaBrokers the kafka brokers to connect to
   * @param listeners the processors of the IasValues read from the BSDB
-  * @param iasioDaos The IASIOs configuration read from the CDB
+  * @param hbProducer The HB generator
+  * @param cdbReader The CDB reader
  */
 class IasValueProcessor(
                          val processorIdentifier: Identifier,
                          val kafkaBrokers: String,
                          val listeners: List[ValueListener],
-                         val iasioDaos: Set[IasioDao]) extends IasioListener {
+                         private val hbProducer: HbProducer,
+                         cdbReader: CdbReader) extends IasioListener {
   require(Option(processorIdentifier).isDefined,"Invalid identifier")
   require(Option(listeners).isDefined && listeners.nonEmpty,"Mo listener defined")
   require(listeners.map(_.id).toSet.size==listeners.size,"Duplicated IDs of listeners")
-  require(Option(iasioDaos).isDefined && iasioDaos.nonEmpty,"No IASIOs from CDB")
+  require(Option(hbProducer).isDefined,"Invalid HB producer")
+  require(Option(cdbReader).isDefined,"Invalid CDB reader")
 
   /** The executor service to async process the IasValues in the listeners */
   val executorService = new ExecutorCompletionService[String](
     Executors.newFixedThreadPool(2 * listeners.size, new ProcessorThreadFactory(processorIdentifier.id)))
+
+  /** The configuration of IASIOs from the CDB */
+  val iasioDaos= {
+    val temp: util.Set[IasioDao] = cdbReader.getIasios.orElseThrow(() => new IllegalArgumentException("IasDaos not found in CDB"))
+    JavaConverters.asScalaSet(temp).toList
+  }
 
   /** The map of IasioDao by ID to pass to the listeners */
   val iasioDaosMap: Map[String,IasioDao] = iasioDaos.foldLeft(Map[String,IasioDao]()){ (z, dao) => z+(dao.getId -> dao)}
 
   /** The Kafka consumer of IasValues */
   val bsdbConsumer = new KafkaIasiosConsumer(kafkaBrokers, KafkaHelper.IASIOs_TOPIC_NAME, processorIdentifier.id)
+
+  /** The heartbeat Engine */
+  val hbEngine: HbEngine = {
+    val iasDao: IasDao = cdbReader.getIas.orElseThrow(() => new IllegalArgumentException("IasDao not found"))
+    HbEngine(processorIdentifier.fullRunningID,iasDao.getHbFrequency,hbProducer)
+  }
+
+  // Closes the CDB reader
+  cdbReader.shutdown()
 
   /** Signal if the processor has been closed */
   val closed = new AtomicBoolean(false)
@@ -116,6 +137,8 @@ class IasValueProcessor(
         IasValueProcessor.logger.warn("Processor {} already initialized",processorIdentifier.fullRunningID)
       } else {
         IasValueProcessor.logger.debug("Processor {} initializing",processorIdentifier.fullRunningID)
+        // Start the HB
+        hbEngine.start(HeartbeatStatus.STARTING_UP)
         // Init the kafka consumer
         IasValueProcessor.logger.debug("Initializing the BSDB consumer")
         bsdbConsumer.setUp()
@@ -129,6 +152,7 @@ class IasValueProcessor(
         IasValueProcessor.logger.debug("Start getting events...")
         bsdbConsumer.startGettingEvents(StartPosition.END,this)
         initialized.set(true)
+        hbEngine.updateHbState(HeartbeatStatus.RUNNING)
         IasValueProcessor.logger.info("Processor {} initialized",processorIdentifier.fullRunningID)
       }
     })
@@ -141,10 +165,13 @@ class IasValueProcessor(
       IasValueProcessor.logger.warn("Processor {} already closed",processorIdentifier.fullRunningID)
     } else {
       IasValueProcessor.logger.debug("Processor {} closing",processorIdentifier.fullRunningID)
+      hbEngine.updateHbState(HeartbeatStatus.EXITING)
       // Closes the Kafka consumer
       bsdbConsumer.tearDown()
       // Shut down the listeners
       closeListeners()
+      // Stop the HB
+      hbEngine.shutdown()
     }
 
   }
