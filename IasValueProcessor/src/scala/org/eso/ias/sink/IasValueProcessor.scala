@@ -267,7 +267,16 @@ class IasValueProcessor(
       IasValueProcessor.logger.error("No active processors remaining: shutting down")
       close()
     }
-    receivedIasValues.appendAll(iasios)
+
+    // Discard the IASIOs not defined in the CDB
+    iasios.foreach(iasio => {
+      if (iasioDaosMap.get(iasio.id).isDefined) {
+        receivedIasValues.append(iasio)
+      } else {
+        IasValueProcessor.logger.warn("The CDB does not contain a IAS value with ID {}: value discarded",iasio.id)
+      }
+    })
+
     if (receivedIasValues.length>minSizeOfValsToProcessAtOnce && !threadsRunning.get()) {
       val listOfIasValues = receivedIasValues.toList
       receivedIasValues.clear()
