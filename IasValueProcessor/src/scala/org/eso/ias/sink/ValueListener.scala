@@ -2,6 +2,7 @@ package org.eso.ias.sink
 
 import java.util.concurrent.atomic.AtomicBoolean
 
+import com.typesafe.scalalogging.Logger
 import org.eso.ias.cdb.pojos.IasioDao
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IASValue
@@ -15,10 +16,10 @@ import scala.util.{Failure, Success, Try}
   *           Mainly used for logging messages
   */
 abstract class ValueListener(val id: String) {
-  require(Option(id).isDefined && !id.isEmpty,"Invalid listener id")
+  require(Option(id).isDefined && id.nonEmpty,"Invalid listener id")
 
   /** The logger */
-  val logger = IASLogger.getLogger(classOf[ValueListener])
+  val logger: Logger = IASLogger.getLogger(classOf[ValueListener])
 
   /** The listener has been initialized  */
   val initialized = new AtomicBoolean(false)
@@ -45,15 +46,28 @@ abstract class ValueListener(val id: String) {
     *
     * @param iasValues The configuration of the IASIOs read from the CDB
     */
-  final def setUp(iasValues: Map[String,IasioDao]): Unit = {
-    assert(!initialized.get(),"Already initialized")
-    assert(Option(iasValues).isDefined && iasValues.nonEmpty,"Invalid IASIOs configuration")
-    iasValuesDaos=iasValues
-    logger.debug("Initilizing listener {}",id)
-    Try(init()) match {
-      case Success(_) =>logger.info("Listener {} initialized",id)
-      case Failure(e) => logger.error("Listener {} failed to init",id,e)
-                         broken.set(true)
+  final def setUp(iasValues: Map[String,IasioDao]): String = {
+    require(Option(iasValues).isDefined)
+    val alreadyInited = initialized.getAndSet(true)
+    if (alreadyInited) {
+      IasValueProcessor.logger.warn("{} already initialized",id)
+      id
+    } else if (iasValues.isEmpty) {
+      IasValueProcessor.logger.warn("{} empty set of IASIO configurations from CDB: inhibited",id)
+      broken.set(true)
+      throw new Exception("Invalid empty set of IASIO from CDB")
+    } else{
+      assert(Option(iasValues).isDefined && iasValues.nonEmpty,"Invalid IASIOs configuration")
+      iasValuesDaos=iasValues
+      logger.debug("Initilizing listener {}",id)
+      Try(init()) match {
+        case Success(_) =>logger.info("Listener {} initialized",id)
+                          id
+        case Failure(e) => logger.error("Listener {} failed to init",id,e)
+                            broken.set(true)
+                            throw e
+
+      }
     }
   }
 
@@ -62,16 +76,19 @@ abstract class ValueListener(val id: String) {
     */
   protected def init()
 
-  final def tearDown(): Unit = {
+  final def tearDown(): String = {
     val alreadyClosed = closed.getAndSet(true)
     if (alreadyClosed) {
       Try(logger.warn("{} already closed",id))
+      id
     } else {
       logger.debug("Closing {}",id)
       Try(close()) match {
         case Success(_) => logger.info("Listener {} successfully closed",id)
+                           id
         case Failure(e) => logger.warn("Listener {} failed to close",id,e)
                            broken.set(true)
+                           throw e
       }
     }
   }
@@ -86,14 +103,17 @@ abstract class ValueListener(val id: String) {
     *
     * @param iasValues the values read from the BSDB
     */
-  final def processIasValues(iasValues: List[IASValue[_]]): Unit = {
+  final def processIasValues(iasValues: List[IASValue[_]]): String = {
     assert(initialized.get(),"Not initialized")
     if (!closed.get() && Option(iasValues).isDefined && iasValues.nonEmpty && !broken.get()) {
       Try(process(iasValues)) match {
         case Failure(e) => logger.error("Listener {} failed to process events: will stop processing events",id,e)
                            broken.set(true)
-        case _ =>
+                           throw e
+        case _ => id
       }
+    } else {
+      id
     }
   }
 

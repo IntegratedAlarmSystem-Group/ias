@@ -99,32 +99,32 @@ class IasValueProcessor(
     *
     * @return the active (not broken) listeners
     */
-  def activeListeners: List[ValueListener] = listeners.filterNot( _.isBroken)
+  def activeListeners(): List[ValueListener] = listeners.filterNot( _.isBroken)
 
   /**
     * @return The broken (i.e. not active) listeners
     */
-  def brokenListeners: List[ValueListener] = listeners.filter(!_.isBroken)
+  def brokenListeners(): List[ValueListener] = listeners.filter(!_.isBroken)
 
   /**
     * @return true if there is at leat one active listener; false otherwise
     */
-  def isThereActiveListener: Boolean = listeners.exists(!_.isBroken)
+  def isThereActiveListener(): Boolean = listeners.exists(!_.isBroken)
 
-  /**
-    * Extends Callable[Unit] with the ID of the listener
-    *
-    * The call method returns the identifier of the listener if succeded.
-    *
-    * @param id the identifier of the listener
-    * @param task the task of the listener to run
-    */
-  class IdentifiableCallable(val id: String, val task: Callable[Unit]) extends Callable[String] {
-    override def call(): String = {
-      task.call()
-      id
-    }
-  }
+//  /**
+//    * Extends Callable[Unit] with the ID of the listener
+//    *
+//    * The call method returns the identifier of the listener if succeded.
+//    *
+//    * @param id the identifier of the listener
+//    * @param task the task of the listener to run
+//    */
+//  class IdentifiableCallable(val id: String, val task: Callable[Unit]) extends Callable[String] {
+//    override def call(): String = {
+//      task.call()
+//      id
+//    }
+//  }
 
   /**
     * Initialize the processor
@@ -186,12 +186,11 @@ class IasValueProcessor(
     */
   private def notifyListeners(iasios: List[IASValue[_]]): Unit = {
     require(Option(iasios).isDefined && iasios.nonEmpty)
-    val callables: List[IdentifiableCallable] = activeListeners.map(listener => {
-      val callable = new Callable[Unit]() {
-        override def call(): Unit = listener.processIasValues(iasios)
+    val callables: List[Callable[String]] = activeListeners.map(listener =>
+      new Callable[String]() {
+        override def call(): String = listener.processIasValues(iasios)
       }
-      new IdentifiableCallable(listener.id,callable)
-    })
+    )
     sumbitTasks(callables)
   }
 
@@ -202,20 +201,30 @@ class IasValueProcessor(
     * @param callables the tasks to run concurrently
     * @return the list of IDs of listeners that threw an exception
     */
-  private def sumbitTasks(callables: List[IdentifiableCallable]): List[String] = synchronized {
+  private def sumbitTasks(callables: List[Callable[String]]): List[String] = synchronized {
     require(callables.nonEmpty)
+
+    // The IDs of all the listeners to run
+    val allIds: List[String] = activeListeners().map(_.id)
+
+    IasValueProcessor.logger.debug("Submitting {} tasks for {}",
+      callables.length.toString,
+      activeListeners.mkString(","))
+    assert(callables.length==allIds.length)
 
     // Check if there are still pending tasks
     assert(!threadsRunning.get())
     threadsRunning.set(true)
 
     // Concurrently run the callables
-    callables.map(task => executorService.submit(task))
+    var submittedFeatures = callables.map(task => executorService.submit(task))
 
     // Wait for the termination of the threads
+    IasValueProcessor.logger.debug("Waiting for termination of tasks")
     val features: Seq[Future[String]] = for {
       i <- 1 to callables.length
-      feature = executorService.poll()}  yield feature
+      feature = executorService.take()}  yield feature
+    IasValueProcessor.logger.debug("Tasks terminated")
 
     // Extract the IDs of the listeners that succeeded
     val idsOfListenersWhoSucceeded = features.foldLeft(List[String]()){ (z, feature) =>
@@ -231,7 +240,6 @@ class IasValueProcessor(
 
     // The list of IDs of the listener that failed nneds to be evaluated
     // indirectly because we have the IDs of the listener that succeded
-    val allIds = callables.map(_.id)
     allIds.filterNot(id => idsOfListenersWhoSucceeded.contains(id))
   }
 
@@ -240,12 +248,11 @@ class IasValueProcessor(
     */
   private def initListeners(): Unit = {
     IasValueProcessor.logger.debug("Initializing the listeners")
-    val callables: List[IdentifiableCallable] = activeListeners.map(listener => {
-      val callable = new Callable[Unit]() {
-        override def call(): Unit = listener.setUp(iasioDaosMap)
+    val callables: List[Callable[String]] = activeListeners.map(listener =>
+      new Callable[String]() {
+        override def call(): String = listener.setUp(iasioDaosMap)
       }
-      new IdentifiableCallable(listener.id,callable)
-    })
+    )
     sumbitTasks(callables)
     IasValueProcessor.logger.debug("Listeners initialized")
   }
