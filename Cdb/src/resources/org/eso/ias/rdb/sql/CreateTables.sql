@@ -43,7 +43,8 @@ CREATE TABLE IAS (
   refreshRate NUMBER(8) NOT NULL,
   tolerance NUMBER(8) NOT NULL,
   hbFrequency NUMBER(8) NOT NULL,
-  bsdbUrl VARCHAR(255),
+  bsdbUrl VARCHAR(255) NOT NULL,
+  smtp VARCHAR(64) NULL,
   CONSTRAINT IAS_PK PRIMARY KEY ( id ),
   CONSTRAINT refreshGreaterThenZero CHECK (refreshRate>0),
   CONSTRAINT toleranceGreaterThenZero CHECK (tolerance>0));

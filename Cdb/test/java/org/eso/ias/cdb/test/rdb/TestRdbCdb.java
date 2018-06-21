@@ -130,6 +130,7 @@ public class TestRdbCdb {
 		ias.setHbFrequency(5);
 		
 		ias.setBsdbUrl("localhost:9092");
+		ias.setSmtp("acaproni:inorpaca@another.smtp.org");
 
 		// Write the IAS
 		cdbWriter.writeIas(ias);
@@ -148,6 +149,7 @@ public class TestRdbCdb {
 		ias2.setTolerance(2);
 		ias2.setHbFrequency(10);
 		ias.setBsdbUrl("bsdb-server:9092");
+		ias.setSmtp("acaproni:inorpaca@test.smtp.org");
 		cdbWriter.writeIas(ias2);
 
 		// Get the IAS from the reader
