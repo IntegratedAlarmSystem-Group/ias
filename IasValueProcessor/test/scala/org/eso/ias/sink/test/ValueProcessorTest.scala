@@ -126,11 +126,23 @@ class ValueProcessorTest extends FlatSpec {
   it must "init all the listeners"  in {
     val f = fixture
     f.processor.init()
+    // Give the async initialization time to terminate
+    while (f.processor.threadsRunning.get()) Thread.sleep(100,0)
     assert(!f.processor.closed.get())
     assert(f.processor.initialized.get())
 
     assert(f.processor.listeners.forall(_.initialized.get()))
     assert(f.processor.listeners.forall(!_.isBroken))
+
+    assert(f.listeners.forall(_.callstoUserDefinedClose.get()==0))
+    assert(f.listeners.forall(_.callstoUserDefinedInit.get()==1))
+    assert(f.listeners.forall(_.callstoUserDefinedProcess.get()==0))
+
+    logger.info("Active listeners {}",f.processor.activeListeners().map(_.id).mkString(","))
+    assert(f.processor.activeListeners().length==f.listeners.length)
+    logger.info("broken listeners {}",f.processor.brokenListeners().map(_.id).mkString(","))
+    assert(f.processor.brokenListeners().isEmpty)
+    assert(f.processor.isThereActiveListener())
   }
 
 

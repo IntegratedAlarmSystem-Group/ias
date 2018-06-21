@@ -104,7 +104,7 @@ class IasValueProcessor(
   /**
     * @return The broken (i.e. not active) listeners
     */
-  def brokenListeners(): List[ValueListener] = listeners.filter(!_.isBroken)
+  def brokenListeners(): List[ValueListener] = listeners.filter(_.isBroken)
 
   /**
     * @return true if there is at leat one active listener; false otherwise
@@ -209,7 +209,7 @@ class IasValueProcessor(
 
     IasValueProcessor.logger.debug("Submitting {} tasks for {}",
       callables.length.toString,
-      activeListeners.mkString(","))
+      activeListeners.map(_.id).mkString(","))
     assert(callables.length==allIds.length)
 
     // Check if there are still pending tasks
@@ -220,7 +220,7 @@ class IasValueProcessor(
     var submittedFeatures = callables.map(task => executorService.submit(task))
 
     // Wait for the termination of the threads
-    IasValueProcessor.logger.debug("Waiting for termination of tasks")
+    IasValueProcessor.logger.debug("Waiting for termination of {} tasks",submittedFeatures.length)
     val features: Seq[Future[String]] = for {
       i <- 1 to callables.length
       feature = executorService.take()}  yield feature
