@@ -60,6 +60,16 @@ class HbEngine private[heartbeat] (
   
   /** The periodic feature that push the heartbeat */
   private val feature = new AtomicReference[ScheduledFuture[_]]()
+
+  /**
+    * @return true if the HB has been started; false otherwise
+    */
+  def isStarted = started.get()
+
+  /**
+    * @return true if the HB has been closed; false otherwise
+  */
+  def isClosed = closed.get()
   
   /**
    * Start periodic sending of the heartbeat with the 
