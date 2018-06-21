@@ -29,8 +29,8 @@ import language.reflectiveCalls
   *
   * @param id The identifier to distinguish between many listeners int he same processor
   *           Mainly used for logging messages
-  * @param throwExcInit if true the init throws an exception
-  * @param throwExcProcess if true the process throws an exception
+  * @param throwExcInit if true the init method throws an exception
+  * @param throwExcProcess if true the process method throws an exception
   */
 class ListenerForTest(id: String,throwExcInit: Boolean=false, throwExcProcess: Boolean=false) extends ValueListener(id) {
 
@@ -50,13 +50,24 @@ class ListenerForTest(id: String,throwExcInit: Boolean=false, throwExcProcess: B
 
   override def init(): Unit = {
     callstoUserDefinedInit.incrementAndGet()
-    logger.info("Listener {} initilized",id)
+    if (throwExcInit) {
+      logger.info("Listener {} is throwing exception in init()",id)
+      throw new Exception("Exception for testing")
+    } else {
+      logger.info("Listener {} initilized",id)
+    }
+
   }
 
   override def process(iasValues: List[IASValue[_]]): Unit = {
     callstoUserDefinedProcess.incrementAndGet()
-    receivedValues.appendAll(iasValues)
-    logger.info("Listener {} received {} values to process",id,iasValues.length)
+    if (throwExcProcess) {
+      logger.info("Listener {} is throwing exception in process()",id)
+      throw new Exception("Exception for testing")
+    } else {
+      receivedValues.appendAll(iasValues)
+      logger.info("Listener {} received {} values to process", id, iasValues.length)
+    }
   }
 }
 
@@ -95,11 +106,13 @@ class ValueProcessorTest extends FlatSpec {
       val processorIdentifier = new Identifier("ProcessorTestID", IdentifierType.SINK,None)
 
       // Build the listeners
-      val listeners: immutable.IndexedSeq[ListenerForTest] = for {
-        i <- 1 to 5
-        id = s"ListenerID-$i"
-        listener = new ListenerForTest(id)
-      } yield listener
+      val listeners: List[ListenerForTest] = {
+        for {
+            i <- 1 to 5
+            id = s"ListenerID-$i"
+            listener = new ListenerForTest(id)
+          } yield listener
+        }.toList
 
       val inputsProvider: DirectInputSubscriber = new DirectInputSubscriber()
 
@@ -114,10 +127,28 @@ class ValueProcessorTest extends FlatSpec {
         JavaConverters.asScalaSet(iasiosDaoJOpt.get()).toSet
       }
 
-      /** The processor to test */
+      /** The processor to test with no failing procesors*/
       val processor: IasValueProcessor  = new IasValueProcessor(
         processorIdentifier,
-        listeners.toList,
+        listeners,
+        new HbProducerTest(new HbJsonSerializer()),
+        inputsProvider,
+        cdbReader)
+
+      // The listeners with failures
+      val idOfFailingInit = "ListenerThatFailIniting"
+      val idOfFailinProcess = "ListenerThatFailProcessing"
+      val listenersWithFailure = new ListenerForTest(idOfFailingInit,throwExcInit = true)::
+        new ListenerForTest(idOfFailinProcess,throwExcProcess = true) ::
+        listeners
+
+      /** The identifier */
+      val processorIdentifierWF = new Identifier("ProcessorTestID-WithFailures", IdentifierType.SINK,None)
+
+      /** The processor to test with failing processors */
+      val processorWithFailures: IasValueProcessor  = new IasValueProcessor(
+        processorIdentifierWF,
+        listenersWithFailure,
         new HbProducerTest(new HbJsonSerializer()),
         inputsProvider,
         cdbReader)
@@ -334,13 +365,57 @@ class ValueProcessorTest extends FlatSpec {
     } yield  {
       buildValue(iasioDao.getId,alarm)
     }
-    logger.info("WGoing to process {} IASIOs",valuesToSend.length)
+    logger.info("Going to process {} IASIOs",valuesToSend.length)
 
     f.inputsProvider.sendInputs(valuesToSend.toSet)
     Thread.sleep(2*IasValueProcessor.defaultPeriodicSendingTimeInterval)
 
     assert(f.listeners.forall(_.receivedValues.length==valuesToSend.length))
     f.processor.close()
+  }
+
+  it must "cope with excetion in the init" in {
+    val f = fixture
+    f.processorWithFailures.init()
+
+    assert(f.processorWithFailures.brokenListeners().length==1)
+    assert(f.processorWithFailures.brokenListeners().map(_.id)==List(f.idOfFailingInit))
+    assert(f.processorWithFailures.activeListeners().length==f.listenersWithFailure.length-1)
+    assert(!f.processorWithFailures.activeListeners().map(_.id).contains(f.idOfFailingInit))
+    f.processorWithFailures.close()
+  }
+
+  it must "cope with excetion in the process" in {
+    val f = fixture
+    f.processorWithFailures.init()
+
+    val alarms = List(Alarm.CLEARED, Alarm.SET_CRITICAL, Alarm.SET_HIGH, Alarm.SET_LOW, Alarm.SET_MEDIUM)
+    val valuesToSend = for {
+      alarm <- alarms
+      iasioDao <- f.iasiosDaos
+      if (iasioDao.getIasType == IasTypeDao.ALARM)
+    } yield  {
+      buildValue(iasioDao.getId,alarm)
+    }
+    logger.info("Going to process {} IASIOs with a failing processor",valuesToSend.length)
+
+    f.inputsProvider.sendInputs(valuesToSend.toSet)
+    Thread.sleep(2*IasValueProcessor.defaultPeriodicSendingTimeInterval)
+
+    // both the init and the process failed
+    assert(f.processorWithFailures.brokenListeners().length==2)
+    assert(f.processorWithFailures.brokenListeners().map(_.id)==List(f.idOfFailingInit, f.idOfFailinProcess))
+    assert(f.processorWithFailures.activeListeners().length==f.listenersWithFailure.length-2)
+    assert(!f.processorWithFailures.activeListeners().map(_.id).contains(f.idOfFailingInit))
+    assert(!f.processorWithFailures.activeListeners().map(_.id).contains(f.idOfFailinProcess))
+
+    val successufullListeners=f.listenersWithFailure.filter(l => l.id!=f.idOfFailinProcess && l.id!=f.idOfFailingInit)
+    successufullListeners.foreach(l => assert(l.receivedValues.length==valuesToSend.length))
+    val failingListeners=f.listenersWithFailure.filter(l => l.id==f.idOfFailinProcess && l.id==f.idOfFailingInit)
+    failingListeners.foreach(l => assert(l.receivedValues.length==0))
+
+
+    f.processorWithFailures.close()
   }
 
 }
