@@ -1,8 +1,8 @@
 package org.eso.ias.sink
 
 import java.util
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.{Callable, ExecutorCompletionService, Executors, Future}
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
+import java.util.concurrent._
 
 import com.typesafe.scalalogging.Logger
 import org.eso.ias.cdb.CdbReader
@@ -17,8 +17,12 @@ import scala.collection.mutable.ListBuffer
 import scala.util.{Failure, Success, Try}
 
 /**
- * The IasValueProcessor gets all the IasValues published in the BSDB
- * and sends them to the listener for further processing.
+  * The IasValueProcessor gets all the IasValues published in the BSDB
+  * and sends them to the listener for further processing.
+  *
+  * The processing is triggered when the buffer receivedValues contains
+  * at least minSizeOfValsToProcessAtOnce itemes.
+  * It is also periodically triggered every periodicProcessingTime msecs.
   *
   * @param processorIdentifier the idenmtifier of the value processor
   * @param listeners the processors of the IasValues read from the BSDB
@@ -42,10 +46,21 @@ class IasValueProcessor(
 
   IasValueProcessor.logger.info("{} processors will work on IAsValues read from the BSDB",listeners.length)
 
+  /** The thread factory for the executors */
+  val threadFactory = new ProcessorThreadFactory(processorIdentifier.id)
 
   /** The executor service to async process the IasValues in the listeners */
   val executorService = new ExecutorCompletionService[String](
-    Executors.newFixedThreadPool(2 * listeners.size, new ProcessorThreadFactory(processorIdentifier.id)))
+    Executors.newFixedThreadPool(2 * listeners.size, threadFactory))
+
+  /** The periodic executor for periodic processing of values */
+  val periodicScheduledExecutor = Executors.newScheduledThreadPool(1,threadFactory)
+
+  /**
+    * The point in time when the values has been proccessed
+    * for the last time
+    */
+  val lastProcessingTime = new AtomicLong(0)
 
   /** The configuration of IASIOs from the CDB */
   val iasioDaos: List[IasioDao] = {
@@ -82,7 +97,12 @@ class IasValueProcessor(
   val minSizeOfValsToProcessAtOnce: Int = Integer.getInteger(
     IasValueProcessor.sizeOfValsToProcPropName,
     IasValueProcessor.defaultSizeOfValsToProcess)
-  IasValueProcessor.logger.info("Listeners will process {} IasValues at once",minSizeOfValsToProcessAtOnce)
+  IasValueProcessor.logger.info("Listeners will buffer {} IasValues before processing",minSizeOfValsToProcessAtOnce)
+
+  val periodicProcessingTime: Int = Integer.getInteger(
+    IasValueProcessor.periodicSendingTimeIntervalPropName,
+    IasValueProcessor.defaultPeriodicSendingTimeInterval)
+  IasValueProcessor.logger.info("Listeners will process IasValues every {}ms",periodicProcessingTime)
 
   /**
     * Values received from the BSDB are saved in this list
@@ -110,21 +130,6 @@ class IasValueProcessor(
     * @return true if there is at leat one active listener; false otherwise
     */
   def isThereActiveListener(): Boolean = listeners.exists(!_.isBroken)
-
-//  /**
-//    * Extends Callable[Unit] with the ID of the listener
-//    *
-//    * The call method returns the identifier of the listener if succeded.
-//    *
-//    * @param id the identifier of the listener
-//    * @param task the task of the listener to run
-//    */
-//  class IdentifiableCallable(val id: String, val task: Callable[Unit]) extends Callable[String] {
-//    override def call(): String = {
-//      task.call()
-//      id
-//    }
-//  }
 
   /**
     * Initialize the processor
@@ -155,6 +160,10 @@ class IasValueProcessor(
         inputsSubscriber.startSubscriber(this,Set.empty)
         initialized.set(true)
         hbEngine.updateHbState(HeartbeatStatus.RUNNING)
+        // Start the periodic processing
+        periodicScheduledExecutor.scheduleWithFixedDelay(new Runnable {
+            override def run(): Unit = notifyListeners()
+          }, periodicProcessingTime,periodicProcessingTime,TimeUnit.MILLISECONDS)
         IasValueProcessor.logger.info("Processor {} initialized",processorIdentifier.fullRunningID)
       }
     })
@@ -172,6 +181,11 @@ class IasValueProcessor(
       inputsSubscriber.cleanUpSubscriber()
       // Shut down the listeners
       closeListeners()
+      // Stops the periodic processing
+      periodicScheduledExecutor.shutdown()
+      if (!periodicScheduledExecutor.awaitTermination(10,TimeUnit.SECONDS)) {
+        IasValueProcessor.logger.warn("Periodic task dis not terminate in time")
+      }
       // Stop the HB
       hbEngine.shutdown()
     }
@@ -181,17 +195,23 @@ class IasValueProcessor(
   /**
     * Notify the processors that new values has been read from the BSDB
     * and needs to be processed
-    *
-    * @param iasios The list if IASValues read from the BSDB
     */
-  private def notifyListeners(iasios: List[IASValue[_]]): Unit = {
-    require(Option(iasios).isDefined && iasios.nonEmpty)
-    val callables: List[Callable[String]] = activeListeners.map(listener =>
-      new Callable[String]() {
-        override def call(): String = listener.processIasValues(iasios)
-      }
-    )
-    sumbitTasks(callables)
+  private def notifyListeners(): Unit = synchronized {
+    if (
+        !closed.get() &&
+        receivedIasValues.nonEmpty &&
+        System.currentTimeMillis()-lastProcessingTime.get()>periodicProcessingTime) {
+      val iasios = receivedIasValues.toList
+      val callables: List[Callable[String]] = activeListeners.map(listener =>
+        new Callable[String]() {
+          override def call(): String = listener.processIasValues(iasios)
+        }
+      )
+      receivedIasValues.clear()
+      // Submit for parallel processing
+      sumbitTasks(callables)
+      lastProcessingTime.set(System.currentTimeMillis())
+    }
   }
 
   /**
@@ -204,6 +224,9 @@ class IasValueProcessor(
   private def sumbitTasks(callables: List[Callable[String]]): List[String] = synchronized {
     require(callables.nonEmpty)
 
+    assert(!threadsRunning.get())
+    threadsRunning.set(true)
+
     // The IDs of all the listeners to run
     val allIds: List[String] = activeListeners().map(_.id)
 
@@ -211,10 +234,6 @@ class IasValueProcessor(
       callables.length.toString,
       activeListeners.map(_.id).mkString(","))
     assert(callables.length==allIds.length)
-
-    // Check if there are still pending tasks
-    assert(!threadsRunning.get())
-    threadsRunning.set(true)
 
     // Concurrently run the callables
     var submittedFeatures = callables.map(task => executorService.submit(task))
@@ -267,14 +286,19 @@ class IasValueProcessor(
     IasValueProcessor.logger.info("Listeners closed")
   }
 
+  /** Processes the values accumulated in the past time interval  */
+  private def periodicProcessTask() = synchronized {
+    IasValueProcessor.logger.debug("Periodic processing")
+  }
+
   /**
     * An IASIO has been read from the BSDB
     *
-    * IASVales are initially grouped in the receivedIasValues
+    * IASVales are initially grouped in the received IasValues
     *
     * @param iasios the IasValues read from the BSDB
     */
-  override def inputsReceived(iasios: Set[IASValue[_]]): Unit = {
+  override def inputsReceived(iasios: Set[IASValue[_]]): Unit = synchronized {
     assert(Option(iasios).isDefined)
     // Is there at least one processor alive?
     if (!isThereActiveListener) {
@@ -292,27 +316,36 @@ class IasValueProcessor(
     })
 
     if (receivedIasValues.length>minSizeOfValsToProcessAtOnce && !threadsRunning.get()) {
-      val listOfIasValues = receivedIasValues.toList
-      receivedIasValues.clear()
-      notifyListeners(listOfIasValues)
+      notifyListeners()
     }
   }
 }
 
 object IasValueProcessor {
-  
+
   /** The logger */
   val logger: Logger = IASLogger.getLogger(classOf[IasValueProcessor])
 
   /**
-    * The default size of IasValues sent to listeners to process
+    * The default min size of IasValues sent to listeners to process
     */
-  val defaultSizeOfValsToProcess = 10
+  val defaultSizeOfValsToProcess = 25
 
   /**
     * The name of the property to configure the
     * size of IasValues sent to listeners to process
     */
   val sizeOfValsToProcPropName = "org.eso.ias.valueprocessor.minsize"
+
+  /**
+    * The processing of IASValues is triggered every
+    * forceSendingTimeInterval msecs if there are no new inputs
+    */
+  val defaultPeriodicSendingTimeInterval = 500
+
+  /**
+    * The name of the property to change periodic processing of IASValue
+    */
+  val periodicSendingTimeIntervalPropName = "org.eso.ias.valueprocessor.periodic.process.time"
 
 }
