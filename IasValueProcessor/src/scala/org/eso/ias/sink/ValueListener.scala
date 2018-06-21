@@ -104,8 +104,8 @@ abstract class ValueListener(val id: String) {
     * @param iasValues the values read from the BSDB
     */
   final def processIasValues(iasValues: List[IASValue[_]]): String = {
-    assert(initialized.get(),"Not initialized")
-    if (!closed.get() && Option(iasValues).isDefined && iasValues.nonEmpty && !broken.get()) {
+    assert(Option(iasValues).isDefined,"Invalid empty list of values to process")
+    if (initialized.get && !closed.get() && iasValues.nonEmpty && !broken.get()) {
       Try(process(iasValues)) match {
         case Failure(e) => logger.error("Listener {} failed to process events: will stop processing events",id,e)
                            broken.set(true)
