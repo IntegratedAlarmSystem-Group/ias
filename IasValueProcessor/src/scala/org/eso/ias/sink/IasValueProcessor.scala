@@ -31,6 +31,10 @@ import scala.util.{Failure, Success, Try}
   * IasValueProcessor logs a warning. To avoid submitting
   * too many logs, the message is logged with a throttling.
   *
+  * The buffer is bounded by maxBufferSize: if threads do not consume
+  * values fast enough the oldest values in the buffer are removed to avoid
+  * out of memory
+  *
   * @param processorIdentifier the idenmtifier of the value processor
   * @param listeners the processors of the IasValues read from the BSDB
   * @param hbProducer The HB generator
@@ -119,8 +123,8 @@ class IasValueProcessor(
 
   /**
     * If the size of the buffer is greater than bufferSizeThreshold
-    * the processor emits a warning because the listener are too slow to
-    * process vales read fromt he BSDB
+    * the processor emits a warning because the listener are too slow
+    * processing vales read from the BSDB
     */
   val bufferSizeThreshold = 10000
 
@@ -142,6 +146,13 @@ class IasValueProcessor(
     * reporting the name of threads that did not yet terminate for investigation
     */
   val timeoutWaitingThreadsTermination = 3
+
+  /**
+    * The max allowed size of the buffer of received and not yet processed IASValues (receivedIasValues):
+    * if the buffer grows over this limit, oldest values are removed
+    */
+  val maxBufferSize: Int = Integer.getInteger(IasValueProcessor.maxBufferSizePropName,IasValueProcessor.maxBufferSizeDefault)
+  IasValueProcessor.logger.info("Max size of buffer of not processed values = {}",maxBufferSize)
 
   IasValueProcessor.logger.debug("{} processor built",processorIdentifier.id)
 
@@ -371,6 +382,10 @@ class IasValueProcessor(
 
     if (receivedIasValues.length>minSizeOfValsToProcessAtOnce && !threadsRunning.get()) {
       notifyListeners()
+    } else if (receivedIasValues.length>maxBufferSize) {
+      val numOfValuesTodiscard = receivedIasValues.length-maxBufferSize
+      receivedIasValues.remove(0,numOfValuesTodiscard)
+      IasValueProcessor.logger.warn("Max size of buffer reached: {} values discarded",numOfValuesTodiscard)
     }
   }
 }
@@ -383,13 +398,13 @@ object IasValueProcessor {
   /**
     * The default min size of IasValues sent to listeners to process
     */
-  val defaultSizeOfValsToProcess = 25
+  val defaultSizeOfValsToProcess = 50
 
   /**
     * The name of the property to configure the
     * size of IasValues sent to listeners to process
     */
-  val sizeOfValsToProcPropName = "org.eso.ias.valueprocessor.minsize"
+  val sizeOfValsToProcPropName = "org.eso.ias.valueprocessor.thread.minsize"
 
   /**
     * The processing of IASValues is triggered every
@@ -400,6 +415,16 @@ object IasValueProcessor {
   /**
     * The name of the property to change periodic processing of IASValue
     */
-  val periodicSendingTimeIntervalPropName = "org.eso.ias.valueprocessor.periodic.process.time"
+  val periodicSendingTimeIntervalPropName = "org.eso.ias.valueprocessor.thread.periodic.time"
+
+  /**
+    * The default value for the max allowd size of the buffer
+    */
+  val maxBufferSizeDefault = 100000
+
+  /**
+    * The name of the property to customize the max size of the buffer
+    */
+  val maxBufferSizePropName = "org.eso.ias.valueprocessor.maxbufsize"
 
 }
