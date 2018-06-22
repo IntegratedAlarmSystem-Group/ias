@@ -62,6 +62,9 @@ class IasValueProcessor(
     */
   val lastProcessingTime = new AtomicLong(0)
 
+  /** The configuration of the IAS read from the CDB */
+  val iasDao = cdbReader.getIas.orElseThrow(()=> new IllegalArgumentException("IasDao not found in CDB"))
+
   /** The configuration of IASIOs from the CDB */
   val iasioDaos: List[IasioDao] = {
     val temp: util.Set[IasioDao] = cdbReader.getIasios.orElseThrow(() => new IllegalArgumentException("IasDaos not found in CDB"))
@@ -73,10 +76,7 @@ class IasValueProcessor(
   val iasioDaosMap: Map[String,IasioDao] = iasioDaos.foldLeft(Map[String,IasioDao]()){ (z, dao) => z+(dao.getId -> dao)}
 
   /** The heartbeat Engine */
-  val hbEngine: HbEngine = {
-    val iasDao: IasDao = cdbReader.getIas.orElseThrow(() => new IllegalArgumentException("IasDao not found"))
-    HbEngine(processorIdentifier.fullRunningID,iasDao.getHbFrequency,hbProducer)
-  }
+  val hbEngine: HbEngine = HbEngine(processorIdentifier.fullRunningID,iasDao.getHbFrequency,hbProducer)
 
   // Closes the CDB reader
   cdbReader.shutdown()
@@ -269,7 +269,7 @@ class IasValueProcessor(
     IasValueProcessor.logger.debug("Initializing the listeners")
     val callables: List[Callable[String]] = activeListeners.map(listener =>
       new Callable[String]() {
-        override def call(): String = listener.setUp(iasioDaosMap)
+        override def call(): String = listener.setUp(iasDao,iasioDaosMap)
       }
     )
     sumbitTasks(callables)

@@ -3,7 +3,7 @@ package org.eso.ias.sink
 import java.util.concurrent.atomic.AtomicBoolean
 
 import com.typesafe.scalalogging.Logger
-import org.eso.ias.cdb.pojos.IasioDao
+import org.eso.ias.cdb.pojos.{IasioDao, IasDao}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IASValue
 
@@ -28,7 +28,10 @@ abstract class ValueListener(val id: String) {
   val closed = new AtomicBoolean(false)
 
   /** The configuration of the IASIOs from the CDB */
-  var iasValuesDaos: Map[String,IasioDao] = Map.empty
+  protected var iasValuesDaos: Map[String,IasioDao] = Map.empty
+
+  /** The configuration of the IAS read from the CDB */
+  protected var iasDao: IasDao = _
 
   /**
     * If one of the method of the listener threw one execption
@@ -44,10 +47,12 @@ abstract class ValueListener(val id: String) {
   /**
     * Initialization
     *
+    * @param iasDao The configuration of the IAS read from the CDB
     * @param iasValues The configuration of the IASIOs read from the CDB
     */
-  final def setUp(iasValues: Map[String,IasioDao]): String = {
-    require(Option(iasValues).isDefined)
+  final def setUp(iasDao: IasDao, iasValues: Map[String,IasioDao]): String = {
+    require(Option(iasDao).isDefined)
+    require(Option(iasValues).isDefined && iasValues.nonEmpty,"Invalid IASIOs configuration")
     val alreadyInited = initialized.getAndSet(true)
     if (alreadyInited) {
       IasValueProcessor.logger.warn("{} already initialized",id)
@@ -57,7 +62,6 @@ abstract class ValueListener(val id: String) {
       broken.set(true)
       throw new Exception("Invalid empty set of IASIO from CDB")
     } else{
-      assert(Option(iasValues).isDefined && iasValues.nonEmpty,"Invalid IASIOs configuration")
       iasValuesDaos=iasValues
       logger.debug("Initilizing listener {}",id)
       Try(init()) match {
