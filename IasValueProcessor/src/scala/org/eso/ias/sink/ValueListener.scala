@@ -40,9 +40,17 @@ abstract class ValueListener(val id: String) {
   private val broken = new AtomicBoolean(false)
 
   /**
-    * @return true if the processor is broke; false otherwise
+    * @return true if the processor is broken; false otherwise
     */
   def isBroken: Boolean = broken.get()
+
+  /**
+    * Mark the listener as broken so the it is not run anymore
+    *
+    * One possibe use case is when the processor detects that the thread is too slow
+    * and decide not to run it again
+    */
+  def markAsBroken() = broken.set(true)
 
   /**
     * Initialization

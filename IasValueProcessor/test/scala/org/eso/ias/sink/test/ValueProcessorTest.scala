@@ -31,8 +31,15 @@ import language.reflectiveCalls
   *           Mainly used for logging messages
   * @param throwExcInit if true the init method throws an exception
   * @param throwExcProcess if true the process method throws an exception
+  * @param timesOut if >0 the process methods trigger a timeout after timesOut seconds
   */
-class ListenerForTest(id: String,throwExcInit: Boolean=false, throwExcProcess: Boolean=false) extends ValueListener(id) {
+class ListenerForTest(
+                       id: String,
+                       throwExcInit: Boolean=false,
+                       throwExcProcess: Boolean=false,
+                       timesOut: Int = 0
+                     )
+  extends ValueListener(id) {
 
   val callstoUserDefinedClose = new AtomicInteger(0)
 
@@ -61,7 +68,9 @@ class ListenerForTest(id: String,throwExcInit: Boolean=false, throwExcProcess: B
 
   override def process(iasValues: List[IASValue[_]]): Unit = {
     callstoUserDefinedProcess.incrementAndGet()
-    if (throwExcProcess) {
+    if (timesOut>0) {
+      Thread.sleep(timesOut*1000)
+    } else if (throwExcProcess) {
       logger.info("Listener {} is throwing exception in process()",id)
       throw new Exception("Exception for testing")
     } else {
@@ -127,13 +136,15 @@ class ValueProcessorTest extends FlatSpec {
         JavaConverters.asScalaSet(iasiosDaoJOpt.get()).toSet
       }
 
-      /** The processor to test with no failing procesors*/
+      /** The processor to test with no failing procesors */
       val processor: IasValueProcessor  = new IasValueProcessor(
         processorIdentifier,
         listeners,
         new HbProducerTest(new HbJsonSerializer()),
         inputsProvider,
         cdbReader)
+
+      val inputsProviderWithFailures: DirectInputSubscriber = new DirectInputSubscriber()
 
       // The listeners with failures
       val idOfFailingInit = "ListenerThatFailIniting"
@@ -142,7 +153,7 @@ class ValueProcessorTest extends FlatSpec {
         new ListenerForTest(idOfFailinProcess,throwExcProcess = true) ::
         listeners
 
-      /** The identifier */
+      /** The identifier for the processor with timeout */
       val processorIdentifierWF = new Identifier("ProcessorTestID-WithFailures", IdentifierType.SINK,None)
 
       /** The processor to test with failing processors */
@@ -150,7 +161,28 @@ class ValueProcessorTest extends FlatSpec {
         processorIdentifierWF,
         listenersWithFailure,
         new HbProducerTest(new HbJsonSerializer()),
-        inputsProvider,
+        inputsProviderWithFailures,
+        cdbReader)
+
+      // Set the timeout of the processor
+      val timeout = 10
+      System.getProperties.put(IasValueProcessor.killThreadAfterPropName,timeout.toString)
+
+      val inputsProviderWithTO: DirectInputSubscriber = new DirectInputSubscriber()
+
+      // The listeners with timeout
+      val idOfFailingTO = "ListenerThatTimesOut"
+      val listenersWithTO = new ListenerForTest(idOfFailingTO,timesOut = timeout+5)::listeners
+
+      /** The identifier for the processor with timeout */
+      val processorIdentifierTO = new Identifier("ProcessorTestID-WithFailures", IdentifierType.SINK,None)
+
+      /** The processor to test with timeout */
+      val processorWithTO: IasValueProcessor  = new IasValueProcessor(
+        processorIdentifierTO,
+        listenersWithTO,
+        new HbProducerTest(new HbJsonSerializer()),
+        inputsProviderWithTO,
         cdbReader)
 
     }
@@ -399,7 +431,7 @@ class ValueProcessorTest extends FlatSpec {
     }
     logger.info("Going to process {} IASIOs with a failing processor",valuesToSend.length)
 
-    f.inputsProvider.sendInputs(valuesToSend.toSet)
+    f.inputsProviderWithFailures.sendInputs(valuesToSend.toSet)
     Thread.sleep(2*IasValueProcessor.defaultPeriodicSendingTimeInterval)
 
     // both the init and the process failed
@@ -413,9 +445,34 @@ class ValueProcessorTest extends FlatSpec {
     successufullListeners.foreach(l => assert(l.receivedValues.length==valuesToSend.length))
     val failingListeners=f.listenersWithFailure.filter(l => l.id==f.idOfFailinProcess && l.id==f.idOfFailingInit)
     failingListeners.foreach(l => assert(l.receivedValues.length==0))
-
-
     f.processorWithFailures.close()
+  }
+
+  it must "close not responding (timeout) threads" in {
+    val f = fixture
+    f.processorWithTO.init()
+
+    // Send one value to trigger the timeout
+    val value: IASValue[_] = buildValue("ASCEOnDasu2-ID1-Out",Alarm.SET_MEDIUM)
+    f.inputsProviderWithTO.sendInputs(Set(value))
+
+    logger.info("Giving thread time to fail")
+    Thread.sleep((f.timeout+10)*1000)
+    logger.info("Timeout elapsed")
+
+    // The listener with timeout must be marked as broken
+    assert(f.processorWithTO.brokenListeners().length==1)
+    assert(f.processorWithTO.brokenListeners().map(_.id).contains(f.idOfFailingTO))
+    assert(f.processorWithTO.activeListeners().length==f.listenersWithTO.length-1)
+
+    // Send another value
+    f.inputsProviderWithTO.sendInputs(Set(value))
+
+    f.listenersWithTO.forall(l => l.callstoUserDefinedInit.get()==2)
+    f.listenersWithTO.filterNot(_.id==f.idOfFailingTO).forall(l => l.callstoUserDefinedProcess.get()==2)
+    f.listenersWithTO.filter(_.id==f.idOfFailingTO).forall(l => l.callstoUserDefinedProcess.get()==1)
+    f.listenersWithTO.forall(l => l.callstoUserDefinedClose.get()==2)
+    f.processorWithTO.close()
   }
 
 }

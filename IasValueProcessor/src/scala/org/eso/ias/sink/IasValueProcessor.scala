@@ -33,7 +33,12 @@ import scala.util.{Failure, Success, Try}
   *
   * The buffer is bounded by maxBufferSize: if threads do not consume
   * values fast enough the oldest values in the buffer are removed to avoid
-  * out of memory
+  * out of memory.
+  *
+  * The IasValueProcessor monitors the termination time of the threads
+  * and kill threads that do not terminate in killThreadAfter seconds.
+  * To kill a thread, its close method is invoked and it will be removed
+  * from the active listener.
   *
   * @param processorIdentifier the idenmtifier of the value processor
   * @param listeners the processors of the IasValues read from the BSDB
@@ -160,6 +165,14 @@ class IasValueProcessor(
     */
   val maxBufferSize: Int = Integer.getInteger(IasValueProcessor.maxBufferSizePropName,IasValueProcessor.maxBufferSizeDefault)
   IasValueProcessor.logger.info("Max size of buffer of not processed values = {}",maxBufferSize)
+
+  /**
+    * Kill threads that do not terminate in killThreadAfter seconds
+    */
+  val killThreadAfter: Int = Integer.getInteger(
+    IasValueProcessor.killThreadAfterPropName,
+    IasValueProcessor.killThreadAfterDefault)
+  IasValueProcessor.logger.info("Will kill threads that do not terminate in {} seconds",killThreadAfter)
 
   IasValueProcessor.logger.debug("{} processor built",processorIdentifier.id)
 
@@ -289,6 +302,34 @@ class IasValueProcessor(
     * @return the list of IDs of listeners that threw an exception
     */
   private def sumbitTasks(callables: List[Callable[String]]): List[String] = synchronized {
+
+    /**
+      * kill the threads with the passed ID
+      *
+      * Killing is done by calling their close method: if the listener is well
+      * written it should notice the termination and cleanly terminate
+      *
+      * @param startTime the point in time when threads have been started
+      * @param threadIds The ids of the threads to terminate
+      * @return the number of threads terminated
+      */
+    def killThreads(startTime: Long, threadIds: List[String]): Int = {
+      require(Option(threadIds).isDefined && threadIds.nonEmpty)
+      val listenersToKill = listeners.filter(l => threadIds.contains(l.id))
+      listenersToKill.foreach(processor => {
+        IasValueProcessor.logger.error("Terminating slow processor {}",processor.id)
+        processor.markAsBroken()
+        Try(processor.tearDown()) match {
+          case Success(_) => IasValueProcessor.logger.info("Process {} successfully closed",processor.id)
+          case Failure(e) => IasValueProcessor.logger.warn("Processor {} terminated with exception {}",
+            processor.id,
+            e.getMessage)
+        }
+
+      })
+      listenersToKill.length
+    }
+
     require(callables.nonEmpty)
 
     assert(!threadsRunning.get())
@@ -319,10 +360,15 @@ class IasValueProcessor(
             case Success(id) => idsOfProcessorsWhoSucceeded.append(id)
             case Failure(procExc) => IasValueProcessor.logger.error("Exception for processor",procExc)
           }
-        case Success(None) => // No thread termionated: timeout!
+        case Success(None) => // No thread terminated: timeout!
+          val notTerminatedThreadIds = allIds.filterNot(id => idsOfProcessorsWhoSucceeded.contains(id))
           IasValueProcessor.logger.warn("Slow processors detected: {} did not terminate in {} seconds",
-            allIds.filterNot(id => idsOfProcessorsWhoSucceeded.contains(id)).mkString(","),
-            timeoutWaitingThreadsTermination)
+            notTerminatedThreadIds.mkString(","),
+            (System.currentTimeMillis()-startProcessingTime)/1000)
+          if (System.currentTimeMillis()-startProcessingTime>killThreadAfter*1000) {
+            IasValueProcessor.logger.info("Going to terminate {} processors",notTerminatedThreadIds.mkString(","))
+            terminatedProcs = terminatedProcs + killThreads(startProcessingTime,notTerminatedThreadIds)
+          }
         case Failure(e) => // InterruptedException => nothing to do
       }
     }
@@ -439,6 +485,12 @@ object IasValueProcessor {
 
   /** The name of the java property top customize the time to wait for termination of one thread */
   val threadWaitTimoutPropName = "org.eso.ias.valueprocessor.thread.timeout"
+
+  /** Kills thread that do not terminate in this number of seconds */
+  val killThreadAfterDefault = 60
+
+  /** Java property to customize the time to kill non responding threads */
+  val killThreadAfterPropName = "org.eso.ias.valueprocessor.thread.killafter"
 
   /** Interval of time (seconds) between consecutive identical logs */
   val logThrottlingTimeDefault = 5
