@@ -24,6 +24,13 @@ import scala.util.{Failure, Success, Try}
   * at least minSizeOfValsToProcessAtOnce itemes.
   * It is also periodically triggered every periodicProcessingTime msecs.
   *
+  * In this version the IasValueProcessor does not take any action if
+  * one of the listeners is too slow apart of logging messages.
+  * The slowness is detected when the queue of received and
+  * not yet proocessed values grows too much. In this case the
+  * IasValueProcessor logs a warning. To avoid submitting
+  * too many logs, the message is logged with a throttling.
+  *
   * @param processorIdentifier the idenmtifier of the value processor
   * @param listeners the processors of the IasValues read from the BSDB
   * @param hbProducer The HB generator
@@ -109,6 +116,32 @@ class IasValueProcessor(
     * until being processed by the listeners
     */
   val receivedIasValues: ListBuffer[IASValue[_]] = ListBuffer[IASValue[_]]()
+
+  /**
+    * If the size of the buffer is greater than bufferSizeThreshold
+    * the processor emits a warning because the listener are too slow to
+    * process vales read fromt he BSDB
+    */
+  val bufferSizeThreshold = 10000
+
+  /**
+    * A log to warn about the size of the buffer
+    * is submitted only if the the last one was published
+    * more then logThrottlingTime milliseconds before
+    */
+  val logThrottlingTime: Long = 5000
+
+  /** The point in time when the last warning log has been submitted */
+  val lastSubmittedWarningTime = new AtomicLong(0)
+
+  /** The number of warning messages suppressed by the throttling */
+  val suppressedWarningMessages = new AtomicLong(0)
+
+  /**
+    * Timeout (secs) waiting for termination of threads: if a timeout elapses a log is issued
+    * reporting the name of threads that did not yet terminate for investigation
+    */
+  val timeoutWaitingThreadsTermination = 3
 
   IasValueProcessor.logger.debug("{} processor built",processorIdentifier.id)
 
@@ -207,6 +240,22 @@ class IasValueProcessor(
           override def call(): String = listener.processIasValues(iasios)
         }
       )
+
+      // Is the size of the buffer growing too fast?
+      // Log a message (with throttling)
+      if (receivedIasValues.length>bufferSizeThreshold) {
+        if (System.currentTimeMillis() - lastSubmittedWarningTime.get() > logThrottlingTime) {
+          IasValueProcessor.logger.warn(
+            "Too many values ({}) to process. Is any of the the processors ({}) too slow? ({} similar messsages hidden in the past {} msecs)",
+            receivedIasValues.length,
+            activeListeners().map(_.id).mkString(","),
+            suppressedWarningMessages.getAndSet(0),
+            logThrottlingTime)
+        } else {
+          suppressedWarningMessages incrementAndGet()
+        }
+      }
+
       receivedIasValues.clear()
       // Submit for parallel processing
       sumbitTasks(callables)
@@ -236,30 +285,35 @@ class IasValueProcessor(
     assert(callables.length==allIds.length)
 
     // Concurrently run the callables
-    var submittedFeatures = callables.map(task => executorService.submit(task))
+    val startProcessingTime = System.currentTimeMillis()
+    val submittedFeatures = callables.map(task => executorService.submit(task))
 
     // Wait for the termination of the threads
     IasValueProcessor.logger.debug("Waiting for termination of {} tasks",submittedFeatures.length)
-    val features: Seq[Future[String]] = for {
-      i <- 1 to callables.length
-      feature = executorService.take()}  yield feature
-    IasValueProcessor.logger.debug("Tasks terminated")
-
-    // Extract the IDs of the listeners that succeeded
-    val idsOfListenersWhoSucceeded = features.foldLeft(List[String]()){ (z, feature) =>
-        Try[String](feature.get()) match {
-        case Success(id) => id::z
-        case Failure(e) => IasValueProcessor.logger.error("Exception for processor",e)
-                            z
+    val idsOfProcessorsWhoSucceeded = ListBuffer[String]()
+    var terminatedProcs = 0
+    while(terminatedProcs<callables.length && !closed.get()) {
+      val tryOptFuture = Try[Option[Future[String]]](Option(executorService.poll(timeoutWaitingThreadsTermination,TimeUnit.SECONDS)))
+      tryOptFuture match {
+        case Success(Some(future)) => // The thread termonated with or without exception
+          terminatedProcs = terminatedProcs + 1
+          Try(future.get()) match {
+            case Success(id) => idsOfProcessorsWhoSucceeded.append(id)
+            case Failure(procExc) => IasValueProcessor.logger.error("Exception for processor",procExc)
+          }
+        case Success(None) => // No thread termionated: timeout!
+          IasValueProcessor.logger.warn("Slow processors detected: {} did not terminate in {} seconds",
+            allIds.filterNot(id => idsOfProcessorsWhoSucceeded.contains(id)).mkString(","),
+            timeoutWaitingThreadsTermination)
+        case Failure(e) => // InterruptedException => nothing to do
       }
-
     }
 
     threadsRunning.set(false)
 
     // The list of IDs of the listener that failed nneds to be evaluated
     // indirectly because we have the IDs of the listener that succeded
-    allIds.filterNot(id => idsOfListenersWhoSucceeded.contains(id))
+    allIds.filterNot(id => idsOfProcessorsWhoSucceeded.contains(id))
   }
 
   /**
@@ -288,7 +342,7 @@ class IasValueProcessor(
 
   /** Processes the values accumulated in the past time interval  */
   private def periodicProcessTask() = synchronized {
-    IasValueProcessor.logger.debug("Periodic processing")
+    notifyListeners()
   }
 
   /**
