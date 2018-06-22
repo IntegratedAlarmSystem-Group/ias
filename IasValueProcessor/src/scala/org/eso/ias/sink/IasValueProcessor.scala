@@ -145,7 +145,10 @@ class IasValueProcessor(
     * Timeout (secs) waiting for termination of threads: if a timeout elapses a log is issued
     * reporting the name of threads that did not yet terminate for investigation
     */
-  val timeoutWaitingThreadsTermination = 3
+  val timeoutWaitingThreadsTermination: Int = Integer.getInteger(
+    IasValueProcessor.threadWaitTimoutPropName,
+    IasValueProcessor.threadWaitTimoutDefault)
+  IasValueProcessor.logger.info("Timeout for thread termination set to {}",timeoutWaitingThreadsTermination)
 
   /**
     * The max allowed size of the buffer of received and not yet processed IASValues (receivedIasValues):
@@ -426,5 +429,11 @@ object IasValueProcessor {
     * The name of the property to customize the max size of the buffer
     */
   val maxBufferSizePropName = "org.eso.ias.valueprocessor.maxbufsize"
+
+  /** The time (seconds) to wait for termination of one thread */
+  val threadWaitTimoutDefault = 3
+
+  /** The name of the java property top customize the time to wait for termination of one thread */
+  val threadWaitTimoutPropName = "org.eso.ias.valueprocessor.thread.timeout"
 
 }
