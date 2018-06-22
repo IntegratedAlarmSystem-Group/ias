@@ -126,14 +126,18 @@ class IasValueProcessor(
     * the processor emits a warning because the listener are too slow
     * processing vales read from the BSDB
     */
-  val bufferSizeThreshold = 10000
+  val bufferSizeThreshold = Integer.getInteger(
+    IasValueProcessor.bufferSizeWarnThresholdPropName,
+    IasValueProcessor.bufferSizeWarnThresholdDefault)
 
   /**
     * A log to warn about the size of the buffer
     * is submitted only if the the last one was published
     * more then logThrottlingTime milliseconds before
     */
-  val logThrottlingTime: Long = 5000
+  val logThrottlingTime: Long = Integer.getInteger(
+    IasValueProcessor.logThrottlingTimePropName,
+    IasValueProcessor.logThrottlingTimeDefault)*1000
 
   /** The point in time when the last warning log has been submitted */
   val lastSubmittedWarningTime = new AtomicLong(0)
@@ -435,5 +439,16 @@ object IasValueProcessor {
 
   /** The name of the java property top customize the time to wait for termination of one thread */
   val threadWaitTimoutPropName = "org.eso.ias.valueprocessor.thread.timeout"
+
+  /** Interval of time (seconds) between consecutive identical logs */
+  val logThrottlingTimeDefault = 5
+
+  /** The name of the java property to customize the interval of time (seconds) between consecutive identical logs */
+  val logThrottlingTimePropName = "org.eso.ias.valueprocessor.log.throttling"
+
+  /** The size of the buffer to log warnings */
+  val bufferSizeWarnThresholdDefault = 25000
+
+  val bufferSizeWarnThresholdPropName = "org.eso.ias.valueprocessor.log.warningbuffersize"
 
 }
