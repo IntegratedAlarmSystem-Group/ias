@@ -50,7 +50,7 @@ abstract class ValueListener(val id: String) {
     * One possibe use case is when the processor detects that the thread is too slow
     * and decide not to run it again
     */
-  def markAsBroken() = broken.set(true)
+  def markAsBroken(): Unit = broken.set(true)
 
   /**
     * Initialization

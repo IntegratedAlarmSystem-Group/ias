@@ -70,7 +70,7 @@ class IasValueProcessor(
     Executors.newFixedThreadPool(2 * listeners.size, threadFactory))
 
   /** The periodic executor for periodic processing of values */
-  val periodicScheduledExecutor = Executors.newScheduledThreadPool(1,threadFactory)
+  val periodicScheduledExecutor: ScheduledExecutorService = Executors.newScheduledThreadPool(1,threadFactory)
 
   /**
     * The point in time when the values has been proccessed
@@ -79,7 +79,7 @@ class IasValueProcessor(
   val lastProcessingTime = new AtomicLong(0)
 
   /** The configuration of the IAS read from the CDB */
-  val iasDao = cdbReader.getIas.orElseThrow(()=> new IllegalArgumentException("IasDao not found in CDB"))
+  val iasDao: IasDao = cdbReader.getIas.orElseThrow(()=> new IllegalArgumentException("IasDao not found in CDB"))
 
   /** The configuration of IASIOs from the CDB */
   val iasioDaos: List[IasioDao] = {
@@ -131,7 +131,7 @@ class IasValueProcessor(
     * the processor emits a warning because the listener are too slow
     * processing vales read from the BSDB
     */
-  val bufferSizeThreshold = Integer.getInteger(
+  val bufferSizeThreshold: Integer = Integer.getInteger(
     IasValueProcessor.bufferSizeWarnThresholdPropName,
     IasValueProcessor.bufferSizeWarnThresholdDefault)
 
@@ -183,17 +183,17 @@ class IasValueProcessor(
     *
     * @return the active (not broken) listeners
     */
-  def activeListeners(): List[ValueListener] = listeners.filterNot( _.isBroken)
+  def activeListeners: List[ValueListener] = listeners.filterNot( _.isBroken)
 
   /**
     * @return The broken (i.e. not active) listeners
     */
-  def brokenListeners(): List[ValueListener] = listeners.filter(_.isBroken)
+  def brokenListeners: List[ValueListener] = listeners.filter(_.isBroken)
 
   /**
     * @return true if there is at leat one active listener; false otherwise
     */
-  def isThereActiveListener(): Boolean = listeners.exists(!_.isBroken)
+  def isThereActiveListener: Boolean = listeners.exists(!_.isBroken)
 
   /**
     * Initialize the processor
@@ -225,9 +225,8 @@ class IasValueProcessor(
         initialized.set(true)
         hbEngine.updateHbState(HeartbeatStatus.RUNNING)
         // Start the periodic processing
-        periodicScheduledExecutor.scheduleWithFixedDelay(new Runnable {
-            override def run(): Unit = notifyListeners()
-          }, periodicProcessingTime,periodicProcessingTime,TimeUnit.MILLISECONDS)
+        periodicScheduledExecutor.scheduleWithFixedDelay(() =>
+          notifyListeners(), periodicProcessingTime,periodicProcessingTime,TimeUnit.MILLISECONDS)
         IasValueProcessor.logger.info("Processor {} initialized",processorIdentifier.fullRunningID)
       }
     })
@@ -279,7 +278,7 @@ class IasValueProcessor(
           IasValueProcessor.logger.warn(
             "Too many values ({}) to process. Is any of the the processors ({}) too slow? ({} similar messsages hidden in the past {} msecs)",
             receivedIasValues.length,
-            activeListeners().map(_.id).mkString(","),
+            activeListeners.map(_.id).mkString(","),
             suppressedWarningMessages.getAndSet(0),
             logThrottlingTime)
         } else {
@@ -336,7 +335,7 @@ class IasValueProcessor(
     threadsRunning.set(true)
 
     // The IDs of all the listeners to run
-    val allIds: List[String] = activeListeners().map(_.id)
+    val allIds: List[String] = activeListeners.map(_.id)
 
     IasValueProcessor.logger.debug("Submitting {} tasks for {}",
       callables.length.toString,
@@ -402,11 +401,6 @@ class IasValueProcessor(
     })
 
     IasValueProcessor.logger.info("Listeners closed")
-  }
-
-  /** Processes the values accumulated in the past time interval  */
-  private def periodicProcessTask() = synchronized {
-    notifyListeners()
   }
 
   /**

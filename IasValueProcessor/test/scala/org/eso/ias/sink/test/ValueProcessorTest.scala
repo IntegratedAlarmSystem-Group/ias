@@ -242,11 +242,11 @@ class ValueProcessorTest extends FlatSpec {
     assert(f.listeners.forall(_.callstoUserDefinedInit.get()==1))
     assert(f.listeners.forall(_.callstoUserDefinedProcess.get()==0))
 
-    logger.info("Active listeners {}",f.processor.activeListeners().map(_.id).mkString(","))
-    assert(f.processor.activeListeners().length==f.listeners.length)
-    logger.info("broken listeners {}",f.processor.brokenListeners().map(_.id).mkString(","))
-    assert(f.processor.brokenListeners().isEmpty)
-    assert(f.processor.isThereActiveListener())
+    logger.info("Active listeners {}",f.processor.activeListeners.map(_.id).mkString(","))
+    assert(f.processor.activeListeners.length==f.listeners.length)
+    logger.info("broken listeners {}",f.processor.brokenListeners.map(_.id).mkString(","))
+    assert(f.processor.brokenListeners.isEmpty)
+    assert(f.processor.isThereActiveListener)
     f.processor.close()
   }
 
@@ -264,11 +264,11 @@ class ValueProcessorTest extends FlatSpec {
     assert(f.listeners.forall(_.callstoUserDefinedInit.get()==1))
     assert(f.listeners.forall(_.callstoUserDefinedProcess.get()==0))
 
-    logger.info("Active listeners {}",f.processor.activeListeners().map(_.id).mkString(","))
-    assert(f.processor.activeListeners().length==f.listeners.length)
-    logger.info("broken listeners {}",f.processor.brokenListeners().map(_.id).mkString(","))
-    assert(f.processor.brokenListeners().isEmpty)
-    assert(f.processor.isThereActiveListener())
+    logger.info("Active listeners {}",f.processor.activeListeners.map(_.id).mkString(","))
+    assert(f.processor.activeListeners.length==f.listeners.length)
+    logger.info("broken listeners {}",f.processor.brokenListeners.map(_.id).mkString(","))
+    assert(f.processor.brokenListeners.isEmpty)
+    assert(f.processor.isThereActiveListener)
     f.processor.close()
   }
   it must "init the HB"  in {
@@ -302,9 +302,9 @@ class ValueProcessorTest extends FlatSpec {
     assert(f.listeners.forall(_.callstoUserDefinedInit.get()==1))
     assert(f.listeners.forall(_.callstoUserDefinedProcess.get()==0))
 
-    assert(f.processor.activeListeners().length==f.listeners.length)
-    assert(f.processor.brokenListeners().isEmpty)
-    assert(f.processor.isThereActiveListener())
+    assert(f.processor.activeListeners.length==f.listeners.length)
+    assert(f.processor.brokenListeners.isEmpty)
+    assert(f.processor.isThereActiveListener)
   }
 
   it must "close all the listeners only once"  in {
@@ -324,9 +324,9 @@ class ValueProcessorTest extends FlatSpec {
     assert(f.listeners.forall(_.callstoUserDefinedInit.get()==1))
     assert(f.listeners.forall(_.callstoUserDefinedProcess.get()==0))
 
-    assert(f.processor.activeListeners().length==f.listeners.length)
-    assert(f.processor.brokenListeners().isEmpty)
-    assert(f.processor.isThereActiveListener())
+    assert(f.processor.activeListeners.length==f.listeners.length)
+    assert(f.processor.brokenListeners.isEmpty)
+    assert(f.processor.isThereActiveListener)
   }
 
   it must "close the HB"  in {
@@ -410,10 +410,10 @@ class ValueProcessorTest extends FlatSpec {
     val f = fixture
     f.processorWithFailures.init()
 
-    assert(f.processorWithFailures.brokenListeners().length==1)
-    assert(f.processorWithFailures.brokenListeners().map(_.id)==List(f.idOfFailingInit))
-    assert(f.processorWithFailures.activeListeners().length==f.listenersWithFailure.length-1)
-    assert(!f.processorWithFailures.activeListeners().map(_.id).contains(f.idOfFailingInit))
+    assert(f.processorWithFailures.brokenListeners.length==1)
+    assert(f.processorWithFailures.brokenListeners.map(_.id)==List(f.idOfFailingInit))
+    assert(f.processorWithFailures.activeListeners.length==f.listenersWithFailure.length-1)
+    assert(!f.processorWithFailures.activeListeners.map(_.id).contains(f.idOfFailingInit))
     f.processorWithFailures.close()
   }
 
@@ -435,11 +435,11 @@ class ValueProcessorTest extends FlatSpec {
     Thread.sleep(2*IasValueProcessor.defaultPeriodicSendingTimeInterval)
 
     // both the init and the process failed
-    assert(f.processorWithFailures.brokenListeners().length==2)
-    assert(f.processorWithFailures.brokenListeners().map(_.id)==List(f.idOfFailingInit, f.idOfFailinProcess))
-    assert(f.processorWithFailures.activeListeners().length==f.listenersWithFailure.length-2)
-    assert(!f.processorWithFailures.activeListeners().map(_.id).contains(f.idOfFailingInit))
-    assert(!f.processorWithFailures.activeListeners().map(_.id).contains(f.idOfFailinProcess))
+    assert(f.processorWithFailures.brokenListeners.length==2)
+    assert(f.processorWithFailures.brokenListeners.map(_.id)==List(f.idOfFailingInit, f.idOfFailinProcess))
+    assert(f.processorWithFailures.activeListeners.length==f.listenersWithFailure.length-2)
+    assert(!f.processorWithFailures.activeListeners.map(_.id).contains(f.idOfFailingInit))
+    assert(!f.processorWithFailures.activeListeners.map(_.id).contains(f.idOfFailinProcess))
 
     val successufullListeners=f.listenersWithFailure.filter(l => l.id!=f.idOfFailinProcess && l.id!=f.idOfFailingInit)
     successufullListeners.foreach(l => assert(l.receivedValues.length==valuesToSend.length))
@@ -461,9 +461,9 @@ class ValueProcessorTest extends FlatSpec {
     logger.info("Timeout elapsed")
 
     // The listener with timeout must be marked as broken
-    assert(f.processorWithTO.brokenListeners().length==1)
-    assert(f.processorWithTO.brokenListeners().map(_.id).contains(f.idOfFailingTO))
-    assert(f.processorWithTO.activeListeners().length==f.listenersWithTO.length-1)
+    assert(f.processorWithTO.brokenListeners.length==1)
+    assert(f.processorWithTO.brokenListeners.map(_.id).contains(f.idOfFailingTO))
+    assert(f.processorWithTO.activeListeners.length==f.listenersWithTO.length-1)
 
     // Send another value
     f.inputsProviderWithTO.sendInputs(Set(value))
