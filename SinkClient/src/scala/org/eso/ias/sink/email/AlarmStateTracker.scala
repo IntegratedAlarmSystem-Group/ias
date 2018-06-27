@@ -49,11 +49,12 @@ class AlarmStateTracker private(
 
     val state = new AlarmState(alarm,validity,timestamp)
     (stateChanges, stateOfLastRound) match {
-      case (Nil, None) =>  new AlarmStateTracker(id,List(state),None)
+      case (Nil, None) =>  if (alarm.isSet) new AlarmStateTracker(id,List(state),None)
+                           else this
       case (Nil,Some(x)) => if (alarm==x.alarm && validity==x.validity) this
                             else new AlarmStateTracker(id,List(state),stateOfLastRound)
       case (x::rest, _) => if (alarm==x.alarm && validity==x.validity) this
-                      else new AlarmStateTracker(id,state::stateChanges,stateOfLastRound)
+                          else new AlarmStateTracker(id,state::stateChanges,stateOfLastRound)
     }
 
   }
