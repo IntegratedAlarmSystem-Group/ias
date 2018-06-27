@@ -1,25 +1,22 @@
 package org.eso.ias.sink.email
 
-import org.eso.ias.types.Alarm
+import org.eso.ias.types.{Alarm, Validity}
+
+/**
+  * The state of the alarm recorded by the tracker.
+  *
+  * @param alarm the activation state of the alarm
+  * @param validity the validity
+  * @param timestamp the timestamp when the alarm has been set or cleared
+  */
+class AlarmState(val alarm: Alarm, val validity: Validity, val timestamp: Long)
 
 /**
   * AlarmStateTracker records the changes of the state of an alarm to be notified
-  * to the user by email.
+  * to the user by email or some other mechanism.
   *
-  * The update of an alarm is a tuple composed of the alarm and the timestamp of the changes.
-  *
-  * The AlarmStateTracker records the change of states of an alarms that means that
-  * one update is accepted if the state of the alarm is different from the last recorded state.
-  * When the owner wants to send an email, it reset the AlarmStateTracker to let it ready to record the changes
-  * of the states in the next time interval.
-  *
-  * - The first recorded state is always a SET, if the initial state is
-  *   empty, the list of states stays empty until the first SEt alarm is notified.
-  * - The history of the alarms is reset after sending emails by calling the reset method.
-  *   The history of the states depends on the last notified alarm state:
-  *   - CLEARED: the history is cleared
-  *   - SET: the history contains only the last alarm state (i.e. only one item in stateChanges
-  *          that contains the last received SET alarm)
+  * The update of an alarm is a AlarmState.
+  * The state is one of the values defined in Alarm so it records acrtivation, priority, validity and deactivation.
   *
   * The AlarmStateTracker is immutable.
   * New change of state are added at the head of the list.
@@ -29,33 +26,34 @@ import org.eso.ias.types.Alarm
   */
 class AlarmStateTracker private(
                  id: String,
-                 val stateChanges: List[Tuple2[Alarm, Long]]) {
+                 val stateChanges: List[AlarmState]) {
   require(Option(id).isDefined && !id.isEmpty)
 
   /**
     * Build a new AlarmStateTracker that records the new alarm change at a given time.
     *
-    * @param alarm The new alarms
+    * @param alarm The new alarm
+    * @param validity the validity
     * @param timestamp The timestamp when the alarm has been produced
     * @return the AlarmStateTracker that records this change
     */
-  def stateUpdate(alarm: Alarm, timestamp: Long): AlarmStateTracker = {
+  def stateUpdate(alarm: Alarm, validity: Validity, timestamp: Long): AlarmStateTracker = {
     require(Option(alarm).isDefined,"Invalid empty alarm")
+    require(Option(validity).isDefined,"Invalid empty validity")
 
-    (stateChanges,alarm) match {
-      case (Nil, Alarm.CLEARED) => this
-      case (Nil, _) => new AlarmStateTracker(id,(alarm,timestamp)::Nil)
-      case (x::rest, alarm) =>
-        if (x._1==alarm) {
-          this
-        } else {
-          new AlarmStateTracker(id,(alarm,timestamp)::stateChanges)
-        }
+    val state = new AlarmState(alarm,validity,timestamp)
+    (stateChanges) match {
+      case Nil =>  new AlarmStateTracker(id,List(state))
+      case x::rest => if (x.alarm!=alarm || x.validity!=validity) new AlarmStateTracker(id,state::stateChanges)
+                      else this
     }
+
+
+    new AlarmStateTracker(id,state::stateChanges)
   }
 
   /**
-    * Reset the AlarmStateTracker to be ready to record the next changes of states
+    * Reset the AlarmStateTracker to be ready to record the changes of states
     * of the next time interval
     *
     * @return The AlarmStateTracker to record changes during the next time interval
@@ -63,24 +61,21 @@ class AlarmStateTracker private(
   def reset(): AlarmStateTracker = {
     stateChanges match {
       case Nil => this
-      case x::rest => if (x._1!=Alarm.CLEARED) new AlarmStateTracker(id,List(x)) else AlarmStateTracker(id)
+      case _ => new AlarmStateTracker(id,Nil)
     }
-  }
-
-  /**
-    * @return The actual state, if exists
-    */
-  def getActualAlarmState(): Option[Alarm] = {
-    if(stateChanges.isEmpty) None
-    else Some(stateChanges.head._1)
   }
 
   /**
     * @return the number of changes of states recorded
     */
-  def numOfChanges: Int = {
-    if (stateChanges.isEmpty) 0
-    else stateChanges.length
+  def numOfChanges: Int = stateChanges.length
+
+  /**
+    * @return The actual state, if exists
+    */
+  def getActualAlarmState(): Option[AlarmState] = {
+    if(stateChanges.isEmpty) None
+    else Some(stateChanges.head)
   }
 
 }
