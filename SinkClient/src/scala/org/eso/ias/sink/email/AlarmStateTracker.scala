@@ -1,6 +1,6 @@
 package org.eso.ias.sink.email
 
-import org.eso.ias.types.{Alarm, Validity}
+import org.eso.ias.types.{Alarm, IasValidity}
 
 /**
   * The state of the alarm recorded by the tracker.
@@ -9,7 +9,7 @@ import org.eso.ias.types.{Alarm, Validity}
   * @param validity the validity
   * @param timestamp the timestamp when the alarm has been set or cleared
   */
-class AlarmState(val alarm: Alarm, val validity: Validity, val timestamp: Long)
+class AlarmState(val alarm: Alarm, val validity: IasValidity, val timestamp: Long)
 
 /**
   * AlarmStateTracker records the changes of the state of an alarm to be notified
@@ -25,7 +25,7 @@ class AlarmState(val alarm: Alarm, val validity: Validity, val timestamp: Long)
   * @param stateChanges The state changes recorded so far
   */
 class AlarmStateTracker private(
-                 id: String,
+                 val id: String,
                  val stateChanges: List[AlarmState]) {
   require(Option(id).isDefined && !id.isEmpty)
 
@@ -37,7 +37,7 @@ class AlarmStateTracker private(
     * @param timestamp The timestamp when the alarm has been produced
     * @return the AlarmStateTracker that records this change
     */
-  def stateUpdate(alarm: Alarm, validity: Validity, timestamp: Long): AlarmStateTracker = {
+  def stateUpdate(alarm: Alarm, validity: IasValidity, timestamp: Long): AlarmStateTracker = {
     require(Option(alarm).isDefined,"Invalid empty alarm")
     require(Option(validity).isDefined,"Invalid empty validity")
 
