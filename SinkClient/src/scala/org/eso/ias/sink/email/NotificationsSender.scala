@@ -6,25 +6,18 @@ import com.typesafe.scalalogging.Logger
 import org.eso.ias.cdb.pojos.IasTypeDao
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.sink.ValueListener
-import org.eso.ias.types.{Alarm, IASTypes, IASValue}
+import org.eso.ias.types.{Alarm, IASTypes, IASValue, Validity}
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
+import scala.util.{Failure, Try}
 
 /**
-  * The NotificationsSender process the alarms published in the BSDB and sends mails to registered recipients.
+  * The NotificationsSender processes the alarms published in the BSDB and sends mails to registered recipients.
+  * One email is sent whenever an alarm becomes SET or CLEAR.
   *
-  * To avoid flooding the mail boxes of the recipients, one notification is immediately sent when an alarm is
-  * initially SET. All the other changes of states are collected and sent all together when a time interval elapses.
-  *
-  * To keep the heuristic simple, in one time interval one notification is sent
-  * - when the alarm state changes to set for the first time
-  * - after the time interval elapses: the notification summarizes the changes of states recorded in the time interval
-  * - if the alarm was set at the beginning of the time interval and its state did not change, the NotificationsSender
-  * does not send any notification
-  *
-  * In general, a condition to send a notification is when the alarm si set for the first time and,
-  * after the time interval elapses, and the number of recorded changes is greater then 1.
+  * In addition another email is sent at regular time intervals to notify about the history of the
+  * alarm.
   *
   * The sending of notification is delegated to the sender that allows to send notifications by different means
   * (email logs, GSM,...) providing the proper implementations of the Sender trait.
@@ -93,7 +86,7 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
 
     // Start the periodic notification
     executor.scheduleWithFixedDelay(new Runnable {
-      override def run(): Unit = ???
+      override def run(): Unit = periodicNotification()
     }, timeIntervalToSendEmails, timeIntervalToSendEmails, TimeUnit.MINUTES)
     msLogger.info("Periodic send of notifications every {} minutes",timeIntervalToSendEmails.toString)
   }
@@ -108,19 +101,31 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
   }
 
   /**
-    * Periodically sends the notifications (summary) of the changes of stats
-    * of th emonitored alarms during the time interval
+    * Periodically sends the notifications summary of the changes of the statss
+    * of all the monitored alarms.
     */
   def periodicNotification(): Unit = synchronized {
-
+    // Send one email to each user
+    //
+    // The email contains the summary of all the alarsm about which the user wants to get notifications
+    alarmsForUser.keys.foreach(user => {
+      logger.debug("Sending digest of {} alarms to {}",alarmsForUser(user).mkString(","),user)
+      val alarmStates = alarmsForUser(user).map(alarmId => alarmsToTrack(id))
+      val sendOp = Try(sender.digestNotify(List(user),alarmStates))
+      if (sendOp.isFailure) {
+        logger.error("Error sending periodic notification to {}",user, sendOp.asInstanceOf[Failure[_]].exception)
+      }
+    })
+    alarmsToTrack.keys.foreach(id => alarmsToTrack(id)=alarmsToTrack(id).reset())
   }
+
 
   /**
     * Process the IasValues read from the BSDB
     *
     * @param iasValues the values read from the BSDB
     */
-  override protected def process(iasValues: List[IASValue[_]]): Unit = {
+  override protected def process(iasValues: List[IASValue[_]]): Unit = synchronized {
     // Iterates over non-alarms IASIOs
     val valuesToUpdate = iasValues.filter(v => v.valueType==IASTypes.ALARM && alarmsToTrack.contains(v.id))
       .foreach(value => {
@@ -130,9 +135,25 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
         } else {
           value.dasuProductionTStamp.get()
         }
+        val validity = Validity(value.iasValidity)
+        val oldState: Option[AlarmState] = alarmsToTrack(value.id).getActualAlarmState()
+
         // Update the state of the alarm state tracker
-        val newStatesTracker=alarmsToTrack(value.id).stateUpdate(alarm,tStamp)
-        alarmsToTrack(value.id)=newStatesTracker
+        alarmsToTrack(value.id)=alarmsToTrack(value.id).stateUpdate(alarm,validity, tStamp)
+
+        // Send notification
+        val recipients: Array[String] = iasValuesDaos(value.id).getEmails.split(",")
+
+        // Send immediate notification if the new alarm is different from the previous one
+        // i..e the activation or the priority changed
+        if (oldState.isEmpty || oldState.get.alarm!=alarm) {
+          val recipients = iasValuesDaos(value.id).getEmails.split(",")
+          logger.debug("Sending tonitifcation of alarm {} status change to {}",value.id, recipients.mkString(","))
+          alarmsToTrack(value.id).getActualAlarmState().foreach( state => {
+             val sendOp = Try(sender.notify(recipients.map(_.trim).toList,value.id,state))
+            if (sendOp.isFailure) logger.error("Error sending alarm state notification notification to {}",recipients.mkString(","), sendOp.asInstanceOf[Failure[_]].exception)
+          })
+        }
       })
   }
 }
