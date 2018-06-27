@@ -8,11 +8,21 @@ package org.eso.ias.sink.email
   * @param pswd the optional passowrd to pass to the server
   */
 class SmtpSender(val server: String, val loginName: Option[String], val pswd: Option[String]) extends Sender {
+
   /**
-    * Notify the recipient of the state changes of the passed alarms
+    * Notify the recipients with the summary of the state changes of the passed alarms
     *
-    * @param recipient   the recipient to notify
+    * @param recipients   the recipients to notify
     * @param alarmStates the states of the alarms to notify
     */
-  override def notify(recipient: String, alarmStates: List[AlarmStateTracker]): Unit = {}
+  override def digestNotify(recipients: List[String], alarmStates: List[AlarmStateTracker]): Unit = {}
+
+  /**
+    * Send the notification to notify that an alarm has been set or cleared
+    *
+    * @param recipients the recipients to notify
+    * @param alarmId the ID of the alarm
+    * @param alarmState the state to notify
+    */
+  override def notify(recipients: List[String], alarmId: String, alarmState: AlarmState) = {}
 }
