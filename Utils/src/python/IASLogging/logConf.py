@@ -35,6 +35,7 @@ class Log(object):
     logger.setLevel(logging.INFO)
     # create file handler which logs even debug messages
     fh = logging.FileHandler(file)
+    fh.setLevel(stdLevel)
     # create console handler with a higher log level
     ch = logging.StreamHandler()
     ch.setLevel(consoleLevel)
