@@ -41,6 +41,9 @@ class ListenerForTest(
                      )
   extends ValueListener(id) {
 
+  /** The logger */
+	val logger = IASLogger.getLogger(classOf[ListenerForTest])
+
   val callstoUserDefinedClose = new AtomicInteger(0)
 
   val callstoUserDefinedInit = new AtomicInteger(0)

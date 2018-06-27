@@ -19,7 +19,7 @@ abstract class ValueListener(val id: String) {
   require(Option(id).isDefined && id.nonEmpty,"Invalid listener id")
 
   /** The logger */
-  val logger: Logger = IASLogger.getLogger(classOf[ValueListener])
+  private val logger: Logger = IASLogger.getLogger(classOf[ValueListener])
 
   /** The listener has been initialized  */
   val initialized = new AtomicBoolean(false)

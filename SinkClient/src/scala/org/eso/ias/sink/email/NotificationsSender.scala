@@ -56,7 +56,7 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
   val timeIntervalToSendEmails: Int = Integer.getInteger(
     NotificationsSender.sendEmailsTimeIntervalPropName,
     NotificationsSender.sendEmailsTimeIntervalDefault)
-  logger.info("Will send digest emails every {} minutes",timeIntervalToSendEmails)
+  msLogger.info("Will send digest emails every {} minutes",timeIntervalToSendEmails)
 
   val timeTostart: (Int, Int) = {
     val prop = System.getProperty(
@@ -64,7 +64,7 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
       NotificationsSender.startTimeOfPeriodicNotificationsDefault).split(":")
     (Integer.parseInt(prop(0)),Integer.parseInt(prop(1)))
   }
-  logger.info("First digest at {}:{}",timeTostart._1.toString,timeTostart._2.toString)
+  msLogger.info("First digest at {}:{}",timeTostart._1.toString,timeTostart._2.toString)
 
   private def startTimer() = {
     val localNow: ZonedDateTime  = ZonedDateTime.now().withZoneSameInstant(ZoneOffset.UTC)
@@ -133,11 +133,11 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
     //
     // The email contains the summary of all the alarsm about which the user wants to get notifications
     alarmsForUser.keys.foreach(user => {
-      logger.debug("Sending digest of {} alarms to {}",alarmsForUser(user).mkString(","),user)
+      msLogger.debug("Sending digest of {} alarms to {}",alarmsForUser(user).mkString(","),user)
       val alarmStates = alarmsForUser(user).map(alarmId => alarmsToTrack(id))
       val sendOp = Try(sender.digestNotify(user,alarmStates))
       if (sendOp.isFailure) {
-        logger.error("Error sending periodic notification to {}",user, sendOp.asInstanceOf[Failure[_]].exception)
+        msLogger.error("Error sending periodic notification to {}",user, sendOp.asInstanceOf[Failure[_]].exception)
       }
     })
     alarmsToTrack.keys.foreach(id => alarmsToTrack(id)=alarmsToTrack(id).reset())
@@ -153,9 +153,9 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
     require(Option(alarmId).isDefined && !alarmId.isEmpty)
     require(Option(state).isDefined)
     val recipients = iasValuesDaos(alarmId).getEmails.split(",")
-    logger.debug("Sending tonitifcation of alarm {} status change to {}", alarmId, recipients.mkString(","))
+    msLogger.debug("Sending tonitifcation of alarm {} status change to {}", alarmId, recipients.mkString(","))
     val sendOp = Try(sender.notify(recipients.map(_.trim).toList, alarmId, state))
-    if (sendOp.isFailure) logger.error("Error sending alarm state notification notification to {}", recipients.mkString(","), sendOp.asInstanceOf[Failure[_]].exception)
+    if (sendOp.isFailure) msLogger.error("Error sending alarm state notification notification to {}", recipients.mkString(","), sendOp.asInstanceOf[Failure[_]].exception)
   }
 
 

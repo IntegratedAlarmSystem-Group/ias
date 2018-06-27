@@ -9,6 +9,7 @@ package org.eso.ias.sink.email
   */
 class SmtpSender(val server: String, val loginName: Option[String], val pswd: Option[String]) extends Sender {
 
+
   /**
     * Notify the recipients with the summary of the state changes of the passed alarms
     *
