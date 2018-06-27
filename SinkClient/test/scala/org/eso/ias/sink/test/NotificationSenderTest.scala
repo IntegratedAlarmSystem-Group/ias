@@ -27,7 +27,7 @@ class SenderTest extends Sender {
   val notifications: ListBuffer[Notification] = ListBuffer()
 
   /** The type of the digest to send */
-  class Digest(val recipients: List[String], val alarmStates: List[AlarmStateTracker])
+  class Digest(val recipient: String, val alarmStates: List[AlarmStateTracker])
 
   /** The digests sent */
   val digests: ListBuffer[Digest] = ListBuffer()
@@ -36,13 +36,13 @@ class SenderTest extends Sender {
   /**
     * Notify the recipients of the state changes of the passed alarms
     *
-    * @param recipients  the recipients to notify
+    * @param recipient  the recipient to notify
     * @param alarmStates the states of the alarms to notify
     */
-  override def digestNotify(recipients: List[String], alarmStates: List[AlarmStateTracker]): Unit = {
-    require(Option(recipients).isDefined && recipients.nonEmpty)
+  override def digestNotify(recipient: String, alarmStates: List[AlarmStateTracker]): Unit = {
+    require(Option(recipient).isDefined && recipient.nonEmpty)
     require(Option(alarmStates).isDefined && alarmStates.nonEmpty)
-    digests.append(new Digest(recipients,alarmStates))
+    digests.append(new Digest(recipient,alarmStates))
   }
 
   /**

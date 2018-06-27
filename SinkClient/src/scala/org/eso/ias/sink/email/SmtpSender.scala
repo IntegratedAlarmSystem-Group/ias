@@ -12,11 +12,11 @@ class SmtpSender(val server: String, val loginName: Option[String], val pswd: Op
   /**
     * Notify the recipients with the summary of the state changes of the passed alarms
     *
-    * @param recipients   the recipients to notify
+    * @param recipient   the recipient to notify
     * @param alarmStates the states of the alarms to notify
     */
-  override def digestNotify(recipients: List[String], alarmStates: List[AlarmStateTracker]): Unit = {
-    require(Option(recipients).isDefined && recipients.nonEmpty,"No recipients given")
+  override def digestNotify(recipient: String, alarmStates: List[AlarmStateTracker]): Unit = {
+    require(Option(recipient).isDefined && recipient.nonEmpty,"No recipients given")
     require(Option(alarmStates).isDefined && alarmStates.nonEmpty,"No history to send")
   }
 

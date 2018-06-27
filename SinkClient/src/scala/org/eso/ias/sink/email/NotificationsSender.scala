@@ -135,7 +135,7 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
     alarmsForUser.keys.foreach(user => {
       logger.debug("Sending digest of {} alarms to {}",alarmsForUser(user).mkString(","),user)
       val alarmStates = alarmsForUser(user).map(alarmId => alarmsToTrack(id))
-      val sendOp = Try(sender.digestNotify(List(user),alarmStates))
+      val sendOp = Try(sender.digestNotify(user,alarmStates))
       if (sendOp.isFailure) {
         logger.error("Error sending periodic notification to {}",user, sendOp.asInstanceOf[Failure[_]].exception)
       }
