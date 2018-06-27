@@ -246,5 +246,23 @@ class NotificationSenderTest extends FlatSpec {
     f.valueListener.tearDown()
   }
 
+  it must "send notificatiomns to all the recipients" in {
+    val f = fixture
+    f.valueListener.setUp(f.iasDao,f.iasioDaosMap)
+
+    val alarm = buildValue("Dasu3-OutID", Alarm.SET_CRITICAL,IasValidity.RELIABLE,System.currentTimeMillis())
+    f.notificationsSender.processIasValues(List(alarm))
+
+    assert(f.sender.notifications.length==1)
+
+    val notification = f.sender.notifications(0)
+    assert(notification.alarmId=="Dasu3-OutID")
+    assert(notification.alarmState.alarm==Alarm.SET_CRITICAL)
+    assert(notification.alarmState.validity==IasValidity.RELIABLE)
+    assert(notification.recipients.toSet==Set("recp1@web.site.org", "recp3@web.site.org"))
+
+    f.valueListener.tearDown()
+  }
+
 
 }
