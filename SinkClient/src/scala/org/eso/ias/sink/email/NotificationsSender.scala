@@ -1,5 +1,6 @@
 package org.eso.ias.sink.email
 
+import java.time._
 import java.util.concurrent.{Executors, ThreadFactory, TimeUnit}
 
 import com.typesafe.scalalogging.Logger
@@ -40,9 +41,7 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
     */
   val alarmsForUser: mutable.Map[String, List[String]] = mutable.Map.empty
 
-  /**
-    * The executor to send notification: all the instances run in a single thread
-    */
+  /**The executor to send notification: all the instances run in a single thread */
   val executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory {
     override def newThread(runnable: Runnable): Thread = {
       require(Option(runnable).isDefined)
@@ -57,6 +56,34 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
   val timeIntervalToSendEmails: Int = Integer.getInteger(
     NotificationsSender.sendEmailsTimeIntervalPropName,
     NotificationsSender.sendEmailsTimeIntervalDefault)
+  logger.info("Will send digest emails every {} minutes",timeIntervalToSendEmails)
+
+  val timeTostart: (Int, Int) = {
+    val prop = System.getProperty(
+      NotificationsSender.startTimeOfPeriodicNotificationsPropName,
+      NotificationsSender.startTimeOfPeriodicNotificationsDefault).split(":")
+    (Integer.parseInt(prop(0)),Integer.parseInt(prop(1)))
+  }
+  logger.info("First digest at {}:{}",timeTostart._1.toString,timeTostart._2.toString)
+
+  private def startTimer() = {
+    val localNow: ZonedDateTime  = ZonedDateTime.now().withZoneSameInstant(ZoneOffset.UTC)
+
+    val nextZone: ZonedDateTime = {
+      val temp=localNow.withHour(timeTostart._1).withMinute(timeTostart._2).withSecond(0)
+      if(localNow.compareTo(temp) > 0)    temp.plusDays(1)
+      else temp
+    }
+
+
+    val duration: Duration = Duration.between(localNow, nextZone);
+    val initalDelay = duration.getSeconds();
+
+    executor.scheduleAtFixedRate(new Runnable() {
+      override def run(): Unit = periodicNotification()
+          },initalDelay,timeIntervalToSendEmails, TimeUnit.SECONDS);
+    msLogger.info("Periodic send of digest scheduled every {} minutes",timeIntervalToSendEmails.toString)
+  }
 
   /**
     * Initialization: scans the IasioDaos and prepare data structures for tracking state changes and
@@ -84,11 +111,8 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
     })
     tempMapOfAlarmsForUsers.keys.foreach(user => alarmsForUser(user)=tempMapOfAlarmsForUsers(user).toList)
 
-    // Start the periodic notification
-    executor.scheduleWithFixedDelay(new Runnable {
-      override def run(): Unit = periodicNotification()
-    }, timeIntervalToSendEmails, timeIntervalToSendEmails, TimeUnit.MINUTES)
-    msLogger.info("Periodic send of notifications every {} minutes",timeIntervalToSendEmails.toString)
+    startTimer()
+
   }
 
   /**
@@ -119,6 +143,21 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
     alarmsToTrack.keys.foreach(id => alarmsToTrack(id)=alarmsToTrack(id).reset())
   }
 
+  /**
+    * Send the notification of the last alarm activation/deactivation
+    *
+    * @param alarmId The ID of the alarm
+    * @param state the state of the alarm
+    */
+  def notifyAlarm(alarmId: String, state: AlarmState): Unit = {
+    require(Option(alarmId).isDefined && !alarmId.isEmpty)
+    require(Option(state).isDefined)
+    val recipients = iasValuesDaos(alarmId).getEmails.split(",")
+    logger.debug("Sending tonitifcation of alarm {} status change to {}", alarmId, recipients.mkString(","))
+    val sendOp = Try(sender.notify(recipients.map(_.trim).toList, alarmId, state))
+    if (sendOp.isFailure) logger.error("Error sending alarm state notification notification to {}", recipients.mkString(","), sendOp.asInstanceOf[Failure[_]].exception)
+  }
+
 
   /**
     * Process the IasValues read from the BSDB
@@ -135,24 +174,20 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
         } else {
           value.dasuProductionTStamp.get()
         }
-        val validity = Validity(value.iasValidity)
+        val validity = value.iasValidity
+
+        // The last state in the current time interval
         val oldState: Option[AlarmState] = alarmsToTrack(value.id).getActualAlarmState()
+        // The state of the last round interval
+        val lastRoundState: Option[AlarmState] = alarmsToTrack(value.id).stateOfLastRound
 
         // Update the state of the alarm state tracker
-        alarmsToTrack(value.id)=alarmsToTrack(value.id).stateUpdate(alarm,validity, tStamp)
+        alarmsToTrack(value.id) = alarmsToTrack(value.id).stateUpdate(alarm, validity, tStamp)
 
-        // Send notification
-        val recipients: Array[String] = iasValuesDaos(value.id).getEmails.split(",")
-
-        // Send immediate notification if the new alarm is different from the previous one
-        // i..e the activation or the priority changed
-        if (oldState.isEmpty || oldState.get.alarm!=alarm) {
-          val recipients = iasValuesDaos(value.id).getEmails.split(",")
-          logger.debug("Sending tonitifcation of alarm {} status change to {}",value.id, recipients.mkString(","))
-          alarmsToTrack(value.id).getActualAlarmState().foreach( state => {
-             val sendOp = Try(sender.notify(recipients.map(_.trim).toList,value.id,state))
-            if (sendOp.isFailure) logger.error("Error sending alarm state notification notification to {}",recipients.mkString(","), sendOp.asInstanceOf[Failure[_]].exception)
-          })
+        (oldState, lastRoundState) match {
+          case (None, None) => if (alarm.isSet) notifyAlarm(value.id,alarmsToTrack(value.id).getActualAlarmState().get)
+          case (Some(x), _) => if (x.alarm != alarm) notifyAlarm(value.id,alarmsToTrack(value.id).getActualAlarmState().get)
+          case (None, Some(x)) => if (x.alarm != alarm) notifyAlarm(value.id,alarmsToTrack(value.id).getActualAlarmState().get)
         }
       })
   }
@@ -160,8 +195,14 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
 
 object NotificationsSender {
   /** The default time interval (minutes) to send notifications */
-  val sendEmailsTimeIntervalDefault: Int = 60
+  val sendEmailsTimeIntervalDefault: Int = 60*24 // Once a day
 
   /** The name of the java property to customize the time interval to send notifications */
   val sendEmailsTimeIntervalPropName = "org.eso.ias.emails.timeinterval"
+
+  /** The time of the day to start periodic notifications */
+  val startTimeOfPeriodicNotificationsPropName = "org.eso.ias.emails.starttime"
+
+  /** The default time (UTC) of the day to start periodic notifications */
+  val startTimeOfPeriodicNotificationsDefault = "08:00"
 }
