@@ -28,6 +28,11 @@ class AlarmStateTrackerTest extends FlatSpec {
     assert(v.stateChanges.isEmpty)
   }
 
+  it must "have an empy last state at begining" in {
+    val v = AlarmStateTracker(id = "AlarmID")
+    assert(v.stateOfLastRound.isEmpty)
+  }
+
   it must "save all the changes" in {
     var v = AlarmStateTracker(id = "AlarmID")
 
@@ -41,22 +46,6 @@ class AlarmStateTrackerTest extends FlatSpec {
 
     assert(v.stateChanges.length == states.length * validities.length)
     assert(v.getActualAlarmState().isDefined)
-  }
-
-  it must "clear the history after a reset" in {
-    var v = AlarmStateTracker(id = "AlarmID")
-
-    for {
-      state <- states
-      validity <- validities
-    } {
-      v = v.stateUpdate(state, validity, System.currentTimeMillis())
-      Thread.sleep(25) // Have different timestamps
-    }
-
-    v = v.reset()
-    assert(v.stateChanges.isEmpty)
-    assert(v.getActualAlarmState().isEmpty)
   }
 
   it must "return the last alarm state" in {
@@ -77,6 +66,30 @@ class AlarmStateTrackerTest extends FlatSpec {
     assert(lastState.get.validity==IasValidity.RELIABLE)
     assert(lastState.get.timestamp==1024)
   }
+
+  it must "clear the history after a reset and save the last state" in {
+    var v = AlarmStateTracker(id = "AlarmID")
+
+    for {
+      state <- states
+      validity <- validities
+    } {
+      v = v.stateUpdate(state, validity, System.currentTimeMillis())
+      Thread.sleep(25) // Have different timestamps
+    }
+    v = v.stateUpdate(Alarm.SET_MEDIUM, IasValidity.RELIABLE, 1024)
+    v = v.reset()
+    assert(v.stateChanges.isEmpty)
+    assert(v.getActualAlarmState().isEmpty)
+    assert(v.stateOfLastRound.isDefined)
+    assert(v.stateOfLastRound.get.alarm==Alarm.SET_MEDIUM)
+    assert(v.stateOfLastRound.get.validity==IasValidity.RELIABLE)
+    assert(v.stateOfLastRound.get.timestamp==1024)
+  }
+
+
+
+
 
 
 }
