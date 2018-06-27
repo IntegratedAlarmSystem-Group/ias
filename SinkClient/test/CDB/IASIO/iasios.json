@@ -1,7 +1,7 @@
 [
-	{ "id":"Dasu1-OutID", "shortDesc":"sd", "iasType":"ALARM" },
-	{ "id":"Dasu2-OutID", "shortDesc":"sd", "iasType":"ALARM" },
-	{ "id":"Dasu3-OutID", "shortDesc":"sd", "iasType":"ALARM" },
+	{ "id":"Dasu1-OutID", "shortDesc":"sd", "iasType":"ALARM", "emails":"recp1@web.site.org" },
+	{ "id":"Dasu2-OutID", "shortDesc":"sd", "iasType":"ALARM", "emails":"recp2@web.site.org"},
+	{ "id":"Dasu3-OutID", "shortDesc":"sd", "iasType":"ALARM", "emails":"recp1@web.site.org, recp3@web.site.org" },
 	
 	{ "id":"ASCEOnDasu1-ID1-Out", "shortDesc":"sd", "iasType":"ALARM" },
 	{ "id":"ASCEOnDasu1-ID2-Out", "shortDesc":"sd", "iasType":"ALARM" },
