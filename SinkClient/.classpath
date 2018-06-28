@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src/scala"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ias-basic-types.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ias-cdb.jar"/>
+	<classpathentry kind="var" path="IAS_ROOT/lib/ias-utils.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

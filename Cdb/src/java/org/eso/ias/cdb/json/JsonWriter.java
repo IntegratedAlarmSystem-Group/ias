@@ -29,6 +29,7 @@ import org.eso.ias.cdb.pojos.DasuToDeployDao;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
+import org.eso.ias.cdb.pojos.SoundTypeDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
 import org.eso.ias.cdb.pojos.TFLanguageDao;
 import org.eso.ias.cdb.pojos.TemplateDao;
@@ -562,7 +563,15 @@ public class JsonWriter implements CdbWriter {
 		if (iasio.getDocUrl()!=null && !iasio.getDocUrl().isEmpty()) {
 			jg.writeStringField("docUrl",iasio.getDocUrl());
 		}
-		jg.writeStringField("templateId",iasio.getTemplateId());
+		if (iasio.getTemplateId()!=null && !iasio.getTemplateId().isEmpty()) {
+			jg.writeStringField("templateId",iasio.getTemplateId());
+		}
+		if (iasio.getEmails()!=null && !iasio.getEmails().isEmpty()) {
+			jg.writeStringField("emails",iasio.getEmails());
+		}
+		if (iasio.getSound()!=null) {
+			jg.writeStringField("sound",iasio.getSound().toString());
+		}
 		jg.writeEndObject();
 	}
 	
@@ -609,6 +618,9 @@ public class JsonWriter implements CdbWriter {
 		String iasioDesc=null;
 		String iasioType=null;
 		String iasioUrl=null;
+		String templateId=null;
+		String emails = null;
+		String soundType=null;
 		while(jp.nextToken() != JsonToken.END_OBJECT){
 			String name = jp.getCurrentName();
 			if ("id".equals(name)) {
@@ -627,8 +639,29 @@ public class JsonWriter implements CdbWriter {
 				jp.nextToken();
 				iasioUrl=jp.getText();
 			}
+			if ("templateId".equals(name)) {
+				jp.nextToken();
+				templateId=jp.getText();
+			}
+			if ("emails".equals(name)) {
+				jp.nextToken();
+				emails=jp.getText();
+			}
+			if ("sound".equals(name)) {
+				jp.nextToken();
+				soundType=jp.getText();
+			}
 		}
 		IasioDao ret = new IasioDao(iasioId,iasioDesc,IasTypeDao.valueOf(iasioType),iasioUrl);
+		if (templateId!=null && !templateId.isEmpty()) {
+			ret.setTemplateId(templateId);
+		}
+		if (emails!=null && !emails.isEmpty()) {
+			ret.setEmails(emails);
+		}
+		if (soundType!=null && !soundType.isEmpty()) {
+			ret.setSound(SoundTypeDao.valueOf(soundType));
+		}
 		return ret;
 	}
 	

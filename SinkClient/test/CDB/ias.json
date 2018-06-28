@@ -1,0 +1,11 @@
+{
+	"logLevel": "DEBUG",
+	"refreshRate": "3",
+	"tolerance": "1",
+	"hbFrequency":"5",
+	"smtp":"name:pswd@smtp.server.org",
+	"props":[
+		{"name":"Prop1-Name","value":"The value of P1"},
+		{"name":"Prop2-Name","value":"The value of P2"}
+		]
+}

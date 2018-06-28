@@ -15,11 +15,11 @@ import org.eso.ias.kafkautils.KafkaIasiosProducer
 
 /** 
  *  Read IASValues from the kafka queue 
- *  and forward them to the DASU for processing.
+ *  and forward them to the listener for processing.
  *  
  *  KafkaSubscriber delegates to KafkaIasiosConsumer.
  *  
- *  @param dasuId the identifier of the DASU
+ *  @param dasuId the identifier of the owner
  *  @param serversList the list of kafka brojkers to connect to
  *  @param topicName the name of the kafka topic to poll events from
  *  @param props additional properties
@@ -44,7 +44,10 @@ extends IasioListener with InputSubscriber {
   /** The listener of events */
   private var listener: Option[InputsListener] = None
   
-  /** The set of inputs accepted by the DASU */
+  /** 
+   *  The set of inputs accepted by the listener
+   *  If empty accepts all the inputs
+   */
   private val acceptedInputs = MutableSet[String]()
 
   
@@ -56,27 +59,29 @@ extends IasioListener with InputSubscriber {
 	 */
 	override def iasioReceived(iasValue: IASValue[_]) = {
 	  try {
-	    if (acceptedInputs.contains(iasValue.id)) listener.foreach( l => l.inputsReceived(Set(iasValue)))
+	    if (acceptedInputs.isEmpty || acceptedInputs.contains(iasValue.id)) {
+	      listener.foreach( l => l.inputsReceived(Set(iasValue)))
+	    }
 	  } catch {
-	    case e: Exception => logger.error("Subscriber of DASU [{}] got an error processing event [{}]", dasuId,iasValue.toString(),e)
+	    case e: Exception => logger.error("Subscriber of [{}] got an error processing event [{}]", dasuId,iasValue.toString(),e)
 	  }
 	}
   
   /** Initialize the subscriber */
   def initializeSubscriber(): Try[Unit] = {
-    logger.info("Initializing subscriber of DASU [{}]",dasuId)
+    logger.info("Initializing subscriber of [{}]",dasuId)
     Try{ 
       kafkaConsumer.setUp(props)
-      logger.info("Subscriber of DASU [{}] intialized", dasuId)
+      logger.info("Subscriber of [{}] intialized", dasuId)
     }
   }
   
   /** CleanUp and release the resources */
   def cleanUpSubscriber(): Try[Unit] = {
-    logger.info("Cleaning up subscriber of DASU [{}]",dasuId)
+    logger.info("Cleaning up subscriber of [{}]",dasuId)
     Try{
       kafkaConsumer.tearDown()
-      logger.info("Subscriber of DASU [{}] cleaned up", dasuId)
+      logger.info("Subscriber of [{}] cleaned up", dasuId)
     }
     
   }
@@ -88,17 +93,21 @@ extends IasioListener with InputSubscriber {
    * 
    * @param listener the listener of events
    * @param acceptedInputs the IDs of the inputs accepted by the listener
+   *                       (if empty accepts all the IasValues)
    */
   def startSubscriber(listener: InputsListener, acceptedInputs: Set[String]): Try[Unit] = {
     require(Option(listener).isDefined)
     require(Option(acceptedInputs).isDefined)
-    require(!acceptedInputs.isEmpty,"The list of IDs of accepted inputs can' be empty")
+    if (acceptedInputs.nonEmpty) {
+      logger.info("Starting subscriber with accepted IDs {}",acceptedInputs.mkString(", "))
+    } else {
+      logger.info("Starting subscriber accepting  all IDs")
+    }
     this.acceptedInputs++=acceptedInputs
     this.listener = Option(listener)
-    logger.info("The subscriber of DASU [{}] will start getting events",dasuId)
     Try {
       kafkaConsumer.startGettingEvents(StartPosition.END,this)
-      logger.info("The subscriber of DASU [{}] is polling events from kafka",dasuId)
+      logger.info("The subscriber of [{}] is polling events from kafka",dasuId)
     }
   }
 }
@@ -107,7 +116,7 @@ object KafkaSubscriber {
   /** 
    *  Factory method
    *  
-   * @param dasuId the identifier of the DASU
+   * @param dasuId the identifier 
    * @param kafkaTopic the kafka topic to send the output to;
    *                   if empty uses defaults from KafkaHelper
    * @param kafkaServers kafka servers; 
