@@ -9,6 +9,8 @@ import javax.mail.{Address, Message, Session, Transport}
 import org.eso.ias.types.{Alarm, IasValidity}
 import org.eso.ias.utils.ISO8601Helper
 
+import scala.collection.mutable.ListBuffer
+
 /**
   * The sender of notifications by emails.
   *
@@ -57,6 +59,22 @@ class SmtpSender(val server: String, val loginName: Option[String], val pswd: Op
 
 
   /**
+    * Fromat the alarm state and th epriority (if the alarm is not cleared)
+    * in a human readble
+    * @param alarmState the alarm state
+    * @return the activation state and the priority
+    */
+  private def formatAlarmSetAndPriority(alarmState: AlarmState): (String, String) = {
+    if (alarmState.alarm==Alarm.CLEARED) {
+      (Alarm.CLEARED.name(),"")
+    } else {
+      val p = alarmState.alarm.name().split("_")(1)
+      ("SET",s"priority $p")
+    }
+  }
+
+
+  /**
     * Notify the recipients with the summary of the state changes of the passed alarms
     *
     * @param recipient   the recipient to notify
@@ -65,6 +83,22 @@ class SmtpSender(val server: String, val loginName: Option[String], val pswd: Op
   override def digestNotify(recipient: String, alarmStates: List[AlarmStateTracker]): Unit = {
     require(Option(recipient).isDefined && recipient.nonEmpty,"No recipients given")
     require(Option(alarmStates).isDefined && alarmStates.nonEmpty,"No history to send")
+
+    val subject = "Alarm digest"
+
+    val text = new StringBuilder("Summary of the alarms changes since last notification\n")
+    alarmStates.sortWith(_.id < _.id).foreach( state => {
+      text.append(s"\n${state.id}")
+      text.append("\n")
+      state.stateChanges.sortWith(_.timestamp < _.timestamp).foreach(change => {
+        val tStamp = ISO8601Helper.getTimestamp(change.timestamp)
+        val (alarmActivation, priority)= formatAlarmSetAndPriority(change)
+        text.append(s"\n\t* $tStamp $alarmActivation $priority (${change.validity.toString})")
+      })
+    })
+
+    sendMessage(recipient,subject,text.toString())
+
   }
 
   /**
@@ -79,16 +113,7 @@ class SmtpSender(val server: String, val loginName: Option[String], val pswd: Op
     require(Option(alarmId).isDefined && !alarmId.trim.isEmpty,"Invalid alarm ID")
     require(Option(alarmState).isDefined,"No alarm state to notify")
 
-    val (alarmActivation, priority)= {
-      if (alarmState.alarm==Alarm.CLEARED) {
-        (Alarm.CLEARED.name(),"")
-      } else {
-        val p = alarmState.alarm.name().split("_")(1)
-        ("SET",s"priority $p")
-      }
-    }
-
-
+    val (alarmActivation, priority)= formatAlarmSetAndPriority(alarmState)
     val time = ISO8601Helper.getTimestamp(alarmState.timestamp)
     val subject = s"Alarm notification  $alarmId: $alarmActivation $priority"
     val text = s"Notification of alarm state change\n\n* $alarmId\n\t* $alarmActivation $priority\n\t*$time\n\t*${alarmState.validity.toString}"
@@ -97,17 +122,3 @@ class SmtpSender(val server: String, val loginName: Option[String], val pswd: Op
   }
 }
 
-object SmtpSender {
-  def main(args: Array[String]): Unit = {
-    val server="smtp-internal.osf.alma.cl"
-    val user =""
-    val paswd=""
-
-    val smtpSender = new SmtpSender(server,None,None)
-
-    val alarmState = new AlarmState(alarm = Alarm.SET_HIGH, timestamp = System.currentTimeMillis(),validity = IasValidity.RELIABLE)
-    val recipients = List("test@website.org")
-    smtpSender.notify(recipients,"AlarmID",alarmState)
-
-  }
-}
