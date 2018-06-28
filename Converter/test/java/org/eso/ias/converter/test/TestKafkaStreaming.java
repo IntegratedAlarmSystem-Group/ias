@@ -345,7 +345,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		mPointsProducer.flush();
 		logger.info("{} strings sent",numOfMPointsToSend);
 		logger.info("Waiting for the events from the converter...");
-		assertTrue(latch.await(1, TimeUnit.MINUTES),"Not all events received!");
+		assertTrue(latch.await(1, TimeUnit.MINUTES),"Not all events received! events="+eventsConsumer.valuesReceived.size());
 		assertEquals(numOfMPointsToSend,eventsConsumer.numOfEventsReceived());
 		logger.info("Test done");
 		
@@ -403,7 +403,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		mPointsProducer.flush();
 		logger.info("{} strings sent",numOfMPointsToSend);
 		logger.info("Waiting for the events from the converter...");
-		assertTrue(latch.await(1, TimeUnit.MINUTES),"Not all events received!");
+		assertTrue(latch.await(1, TimeUnit.MINUTES),"Not all events received! events="+eventsConsumer.valuesReceived.size());
 		assertEquals(numOfMPointsToSend,eventsConsumer.numOfEventsReceived());
 		logger.info("Test done");
 		
