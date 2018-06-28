@@ -133,10 +133,16 @@ class ValueProcessorTest extends FlatSpec {
       val cdbFiles = new CdbJsonFiles(cdbParentPath)
       val cdbReader: CdbReader = new JsonReader(cdbFiles)
 
-      val iasiosDaos: Set[IasioDao] = {
+      val iasDao = {
+        val iasDaoJOpt = cdbReader.getIas
+        assert(iasDaoJOpt.isPresent, "Error getting the IAS from the CDB")
+        iasDaoJOpt.get()
+      }
+
+      val iasiosDaos: List[IasioDao] = {
         val iasiosDaoJOpt = cdbReader.getIasios()
         assert(iasiosDaoJOpt.isPresent, "Error getting the IASIOs from the CDB")
-        JavaConverters.asScalaSet(iasiosDaoJOpt.get()).toSet
+        JavaConverters.asScalaSet(iasiosDaoJOpt.get()).toList
       }
 
       /** The processor to test with no failing procesors */
@@ -145,7 +151,8 @@ class ValueProcessorTest extends FlatSpec {
         listeners,
         new HbProducerTest(new HbJsonSerializer()),
         inputsProvider,
-        cdbReader)
+        iasDao,
+        iasiosDaos)
 
       val inputsProviderWithFailures: DirectInputSubscriber = new DirectInputSubscriber()
 
@@ -165,7 +172,8 @@ class ValueProcessorTest extends FlatSpec {
         listenersWithFailure,
         new HbProducerTest(new HbJsonSerializer()),
         inputsProviderWithFailures,
-        cdbReader)
+        iasDao,
+        iasiosDaos)
 
       // Set the timeout of the processor
       val timeout = 10
@@ -186,7 +194,8 @@ class ValueProcessorTest extends FlatSpec {
         listenersWithTO,
         new HbProducerTest(new HbJsonSerializer()),
         inputsProviderWithTO,
-        cdbReader)
+        iasDao,
+        iasiosDaos)
 
     }
 
