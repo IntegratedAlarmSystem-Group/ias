@@ -24,9 +24,9 @@ class TestTemplatedIdentifier extends FlatSpec {
     val plId=new Identifier("pluginId",IdentifierType.PLUGIN,Some(msId))
     
     assertThrows[IllegalArgumentException] {
-      new Identifier("converterId",Some(4),IdentifierType.CONVERTER,Some(plId))
+      new Identifier("converterId",Some(4),IdentifierType.CONVERTER,None)
     }
-    val convId=new Identifier("converterId",None,IdentifierType.CONVERTER,Some(plId))
+    val convId=new Identifier("converterId",None,IdentifierType.CONVERTER,None)
     
     assertThrows[IllegalArgumentException] {
       new Identifier("SupervId",Some(0),IdentifierType.SUPERVISOR,None)
