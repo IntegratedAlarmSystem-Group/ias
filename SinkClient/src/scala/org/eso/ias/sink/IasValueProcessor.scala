@@ -174,6 +174,11 @@ class IasValueProcessor(
     IasValueProcessor.killThreadAfterDefault)
   IasValueProcessor.logger.info("Will kill threads that do not terminate in {} seconds",killThreadAfter)
 
+  /** The hook for a clean shutdown */
+  val shutdownHookThread: Thread = new Thread() {
+    override def run(): Unit =  close()
+  }
+
   IasValueProcessor.logger.debug("{} processor built",processorIdentifier.id)
 
   /**
@@ -227,6 +232,9 @@ class IasValueProcessor(
         // Start the periodic processing
         periodicScheduledExecutor.scheduleWithFixedDelay(() =>
           notifyListeners(), periodicProcessingTime,periodicProcessingTime,TimeUnit.MILLISECONDS)
+
+        Runtime.getRuntime.addShutdownHook(shutdownHookThread)
+
         IasValueProcessor.logger.info("Processor {} initialized",processorIdentifier.fullRunningID)
       }
     })
@@ -235,6 +243,9 @@ class IasValueProcessor(
   /** Closes the processor */
   def close(): Unit = {
     val wasClosed = closed.getAndSet(true)
+    if (initialized.get()) {
+      Runtime.getRuntime.removeShutdownHook(shutdownHookThread)
+    }
     if (wasClosed) {
       IasValueProcessor.logger.warn("Processor {} already closed",processorIdentifier.fullRunningID)
     } else {
