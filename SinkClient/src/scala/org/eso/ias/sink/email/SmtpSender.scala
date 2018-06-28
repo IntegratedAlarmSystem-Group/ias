@@ -6,10 +6,10 @@ import org.eso.ias.logging.IASLogger
 import com.typesafe.scalalogging.Logger
 import javax.mail.internet.MimeMessage
 import javax.mail.{Address, Message, Session, Transport}
-import org.eso.ias.types.{Alarm, IasValidity}
+import org.eso.ias.types.Alarm
 import org.eso.ias.utils.ISO8601Helper
 
-import scala.collection.mutable.ListBuffer
+
 
 /**
   * The sender of notifications by emails.
@@ -25,8 +25,15 @@ class SmtpSender(val server: String, val loginName: Option[String], val pswd: Op
 
   logger.info("SMTP server {}, user name {}, password =*****",server,loginName)
 
-
+  /**
+    * Sends the email
+    *
+    * @param recipients the receipints of the message
+    * @param subject the subsject
+    * @param body the text of the email
+    */
   private def sendMessage(recipients: String, subject: String, body: String): Unit = {
+    logger.debug("Sending a message with title '{}' to {}",subject,recipients)
     val smtpPropName="mail.smtp.host"
     val props: Properties = System.getProperties
     if (!props.contains(smtpPropName)) {
@@ -55,6 +62,7 @@ class SmtpSender(val server: String, val loginName: Option[String], val pswd: Op
     mimeMsg.saveChanges();      // don't forget this
     tr.sendMessage(mimeMsg, mimeMsg.getAllRecipients);
     tr.close()
+    logger.debug("Message sent to {}",recipients)
   }
 
 
