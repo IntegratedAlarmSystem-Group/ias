@@ -54,14 +54,14 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
 
   /** The time interval (mins) to send notifications */
   val timeIntervalToSendEmails: Int = Integer.getInteger(
-    NotificationsSender.sendEmailsTimeIntervalPropName,
-    NotificationsSender.sendEmailsTimeIntervalDefault)
+    NotificationsSender.SendEmailsTimeIntervalPropName,
+    NotificationsSender.SendEmailsTimeIntervalDefault)
   msLogger.info("Will send digest emails every {} minutes",timeIntervalToSendEmails)
 
   val timeTostart: (Int, Int) = {
     val prop = System.getProperty(
-      NotificationsSender.startTimeOfPeriodicNotificationsPropName,
-      NotificationsSender.startTimeOfPeriodicNotificationsDefault).split(":")
+      NotificationsSender.StartTimeOfPeriodicNotificationsPropName,
+      NotificationsSender.StartTimeOfPeriodicNotificationsDefault).split(":")
     (Integer.parseInt(prop(0)),Integer.parseInt(prop(1)))
   }
   msLogger.info("First digest at {}:{} UTC",timeTostart._1.toString,timeTostart._2.toString)
@@ -208,14 +208,14 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
 
 object NotificationsSender {
   /** The default time interval (minutes) to send notifications */
-  val sendEmailsTimeIntervalDefault: Int = 60*24 // Once a day
+  val SendEmailsTimeIntervalDefault: Int = 60*24 // Once a day
 
   /** The name of the java property to customize the time interval to send notifications */
-  val sendEmailsTimeIntervalPropName = "org.eso.ias.emails.timeinterval"
+  val SendEmailsTimeIntervalPropName = "org.eso.ias.emails.timeinterval"
 
   /** The time of the day to start periodic notifications */
-  val startTimeOfPeriodicNotificationsPropName = "org.eso.ias.emails.starttime"
+  val StartTimeOfPeriodicNotificationsPropName = "org.eso.ias.emails.starttime"
 
   /** The default time (UTC) of the day to start periodic notifications */
-  val startTimeOfPeriodicNotificationsDefault = "08:00"
+  val StartTimeOfPeriodicNotificationsDefault = "08:00"
 }
