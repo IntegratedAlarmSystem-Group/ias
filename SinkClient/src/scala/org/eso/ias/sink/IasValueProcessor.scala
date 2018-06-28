@@ -51,13 +51,15 @@ class IasValueProcessor(
                          val listeners: List[ValueListener],
                          private val hbProducer: HbProducer,
                          private val inputsSubscriber: InputSubscriber,
-                         cdbReader: CdbReader) extends InputsListener {
+                         val iasDao: IasDao,
+                         val iasioDaos: List[IasioDao]) extends InputsListener {
   require(Option(processorIdentifier).isDefined,"Invalid identifier")
   require(Option(listeners).isDefined && listeners.nonEmpty,"Mo listeners defined")
   require(listeners.map(_.id).toSet.size==listeners.size,"Duplicated IDs of listeners")
   require(Option(hbProducer).isDefined,"Invalid HB producer")
   require(Option(inputsSubscriber).isDefined,"Invalid inputs subscriber")
-  require(Option(cdbReader).isDefined,"Invalid CDB reader")
+  require(Option(iasDao).isDefined,"Invalid IAS configuration")
+  require(Option(iasioDaos).isDefined && iasioDaos.nonEmpty,"Invalid configuration of IASIOs from CDB")
   require(processorIdentifier.idType==IdentifierType.SINK,"Identifier tyope should be SINK")
 
   IasValueProcessor.logger.info("{} processors will work on IAsValues read from the BSDB",listeners.length)
@@ -78,24 +80,11 @@ class IasValueProcessor(
     */
   val lastProcessingTime = new AtomicLong(0)
 
-  /** The configuration of the IAS read from the CDB */
-  val iasDao: IasDao = cdbReader.getIas.orElseThrow(()=> new IllegalArgumentException("IasDao not found in CDB"))
-
-  /** The configuration of IASIOs from the CDB */
-  val iasioDaos: List[IasioDao] = {
-    val temp: util.Set[IasioDao] = cdbReader.getIasios.orElseThrow(() => new IllegalArgumentException("IasDaos not found in CDB"))
-    JavaConverters.asScalaSet(temp).toList
-  }
-  IasValueProcessor.logger.info("{} IASIO found in CDB",iasioDaos.length)
-
   /** The map of IasioDao by ID to pass to the listeners */
   val iasioDaosMap: Map[String,IasioDao] = iasioDaos.foldLeft(Map[String,IasioDao]()){ (z, dao) => z+(dao.getId -> dao)}
 
   /** The heartbeat Engine */
   val hbEngine: HbEngine = HbEngine(processorIdentifier.fullRunningID,iasDao.getHbFrequency,hbProducer)
-
-  // Closes the CDB reader
-  cdbReader.shutdown()
 
   /** Signal if the processor has been closed */
   val closed = new AtomicBoolean(false)
