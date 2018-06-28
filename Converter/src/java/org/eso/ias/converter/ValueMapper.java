@@ -105,9 +105,7 @@ public class ValueMapper implements Function<String, String> {
 		Objects.requireNonNull(converterId);
 		Objects.requireNonNull(iasioId);
 		
-		Identifier monSystemId = new Identifier(monitoredSystemId,IdentifierType.MONITORED_SOFTWARE_SYSTEM);
-		Identifier plugId = new Identifier(pluginId,IdentifierType.PLUGIN,monSystemId);
-		Identifier converterIdent = new Identifier(converterID,IdentifierType.CONVERTER,plugId);
+		Identifier converterIdent = new Identifier(converterID,IdentifierType.CONVERTER);
 		Identifier iasioIdent = new Identifier(iasioId,IdentifierType.IASIO,converterIdent);
 		return iasioIdent.fullRunningID();
 	}
@@ -127,6 +125,8 @@ public class ValueMapper implements Function<String, String> {
 			long receptionTStamp) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(remoteSystemData);
+
+		logger.debug("Translating {}",remoteSystemData.getId());
 		
 		// Convert the received string in the proper object type
 		Object convertedValue=null;
@@ -171,7 +171,7 @@ public class ValueMapper implements Function<String, String> {
     		convertedValue=Alarm.valueOf(remoteSystemData.getValue());
     		break;
     	}
-		default: throw new UnsupportedOperationException("Unsupported type "+type);
+		default: logger.error("Error translating {}",remoteSystemData.getId());
 		}
 		
 		long pluginProductionTime;
@@ -190,8 +190,8 @@ public class ValueMapper implements Function<String, String> {
 		// by the streaming so the 2 timestamps (production and sent to BSDB)
 		// are the same point in time with thisimplementation
 		long producedAndSentTStamp = System.currentTimeMillis();
-		
-		return IASValue.build(
+
+		IASValue<?> ret = IASValue.build(
 				convertedValue, 
 				OperationalMode.valueOf(remoteSystemData.getOperationalMode()),
 				IasValidity.valueOf(remoteSystemData.getValidity()),
@@ -206,6 +206,8 @@ public class ValueMapper implements Function<String, String> {
 				null, // DASU prod time
 				null, // dependents
 				null); // additional properties
+		logger.debug("Translated to {} of type {}",ret.id,ret.valueType);
+		return ret;
 	}
 
 	/**
