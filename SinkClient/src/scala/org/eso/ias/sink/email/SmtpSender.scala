@@ -6,6 +6,8 @@ import org.eso.ias.logging.IASLogger
 import com.typesafe.scalalogging.Logger
 import javax.mail.internet.MimeMessage
 import javax.mail.{Address, Message, Session, Transport}
+import org.eso.ias.types.{Alarm, IasValidity}
+import org.eso.ias.utils.ISO8601Helper
 
 /**
   * The sender of notifications by emails.
@@ -24,7 +26,7 @@ class SmtpSender(val server: String, val loginName: Option[String], val pswd: Op
 
   private def sendMessage(recipients: String, subject: String, body: String): Unit = {
     val smtpPropName="mail.smtp.host"
-    val props: Properties = System.getProperties()
+    val props: Properties = System.getProperties
     if (!props.contains(smtpPropName)) {
       props.put(smtpPropName,server)
     }
@@ -35,7 +37,7 @@ class SmtpSender(val server: String, val loginName: Option[String], val pswd: Op
     mimeMsg.addHeader("format", "flowed")
     mimeMsg.addHeader("Content-Transfer-Encoding", "8bit")
     import javax.mail.internet.InternetAddress
-    mimeMsg.setFrom(new InternetAddress("no_reply@ias.org", "NoReply-IAS"))
+    mimeMsg.setFrom(new InternetAddress("no_reply@ias.org", "IAS notification system"))
 
     val replyToAddress: Array[Address] = InternetAddress.parse("no_reply@ias.org", false).asInstanceOf[Array[Address]]
     mimeMsg.setReplyTo(replyToAddress)
@@ -45,12 +47,12 @@ class SmtpSender(val server: String, val loginName: Option[String], val pswd: Op
     mimeMsg.setSentDate(new Date())
     mimeMsg.setRecipients(Message.RecipientType.TO, recipients)
 
-    val tr: Transport = session.getTransport("smtp");
+    val tr: Transport = session.getTransport("smtp")
     if (loginName.isDefined) tr.connect(server, loginName.get , pswd.get)
     else tr.connect(server,null,null)
     mimeMsg.saveChanges();      // don't forget this
-    tr.sendMessage(mimeMsg, mimeMsg.getAllRecipients());
-    tr.close();
+    tr.sendMessage(mimeMsg, mimeMsg.getAllRecipients);
+    tr.close()
   }
 
 
@@ -72,10 +74,26 @@ class SmtpSender(val server: String, val loginName: Option[String], val pswd: Op
     * @param alarmId the ID of the alarm
     * @param alarmState the state to notify
     */
-  override def notify(recipients: List[String], alarmId: String, alarmState: AlarmState) = {
+  override def notify(recipients: List[String], alarmId: String, alarmState: AlarmState): Unit = {
     require(Option(recipients).isDefined && recipients.nonEmpty,"No recipients given")
     require(Option(alarmId).isDefined && !alarmId.trim.isEmpty,"Invalid alarm ID")
     require(Option(alarmState).isDefined,"No alarm state to notify")
+
+    val (alarmActivation, priority)= {
+      if (alarmState.alarm==Alarm.CLEARED) {
+        (Alarm.CLEARED.name(),"")
+      } else {
+        val p = alarmState.alarm.name().split("_")(1)
+        ("SET",s"priority $p")
+      }
+    }
+
+
+    val time = ISO8601Helper.getTimestamp(alarmState.timestamp)
+    val subject = s"Alarm notification  $alarmId: $alarmActivation $priority"
+    val text = s"Notification of alarm state change\n\n* $alarmId\n\t* $alarmActivation $priority\n\t*$time\n\t*${alarmState.validity.toString}"
+    val to=recipients.mkString(",")
+    sendMessage(to,subject, text)
   }
 }
 
@@ -87,6 +105,9 @@ object SmtpSender {
 
     val smtpSender = new SmtpSender(server,None,None)
 
+    val alarmState = new AlarmState(alarm = Alarm.SET_HIGH, timestamp = System.currentTimeMillis(),validity = IasValidity.RELIABLE)
+    val recipients = List("test@website.org")
+    smtpSender.notify(recipients,"AlarmID",alarmState)
 
   }
 }
