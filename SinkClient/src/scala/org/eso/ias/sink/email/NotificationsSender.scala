@@ -336,7 +336,7 @@ object NotificationsSender {
 
     val hbProducer: HbProducer = {
       val kafkaServers = System.getProperties.getProperty(KafkaHelper.BROKERS_PROPNAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
-      new HbKafkaProducer(emailSenderId,kafkaServers,new HbJsonSerializer())
+      new HbKafkaProducer(emailSenderId + "HBSender",kafkaServers,new HbJsonSerializer())
     }
     msLogger.debug("HB producer instantiated")
 
