@@ -282,8 +282,8 @@ class NotificationSenderTest extends FlatSpec {
     val hour = nextZone.getHour
     val minute = nextZone.getMinute
     logger.info("Scheduling NotificationSender start time at {}:{} UTC",hour,minute)
-    System.getProperties.put(NotificationsSender.startTimeOfPeriodicNotificationsPropName,s"$hour:$minute")
-    System.getProperties.put(NotificationsSender.sendEmailsTimeIntervalPropName,"1")
+    System.getProperties.put(NotificationsSender.StartTimeOfPeriodicNotificationsPropName,s"$hour:$minute")
+    System.getProperties.put(NotificationsSender.SendEmailsTimeIntervalPropName,"1")
     val f = fixture
     f.valueListener.setUp(f.iasDao,f.iasioDaosMap)
 
