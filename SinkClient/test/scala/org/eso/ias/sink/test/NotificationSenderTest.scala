@@ -1,6 +1,9 @@
 package org.eso.ias.sink.test
 
 import java.nio.file.FileSystems
+import java.time.temporal.TemporalUnit
+import java.time.{Duration, ZoneOffset, ZonedDateTime}
+import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
@@ -23,6 +26,9 @@ class SenderTest extends Sender {
   /** The type of notification to send */
   class Notification(val recipients: List[String], val alarmId: String, val alarmState: AlarmState)
 
+  /** The logger */
+  private val logger = IASLogger.getLogger(classOf[SenderTest])
+
   /** The notifications sent */
   val notifications: ListBuffer[Notification] = ListBuffer()
 
@@ -31,6 +37,9 @@ class SenderTest extends Sender {
 
   /** The digests sent */
   val digests: ListBuffer[Digest] = ListBuffer()
+
+  /** The semaphore to detect to periodic notification */
+  val countDownLatch = new CountDownLatch(2)
 
 
   /**
@@ -42,7 +51,9 @@ class SenderTest extends Sender {
   override def digestNotify(recipient: String, alarmStates: List[AlarmStateTracker]): Unit = {
     require(Option(recipient).isDefined && recipient.nonEmpty)
     require(Option(alarmStates).isDefined && alarmStates.nonEmpty)
+    logger.info("Sending digest of {} alarms to {}",alarmStates.length.toString,recipient)
     digests.append(new Digest(recipient,alarmStates))
+    countDownLatch.countDown()
   }
 
   /**
@@ -56,7 +67,7 @@ class SenderTest extends Sender {
     require(Option(recipients).isDefined && recipients.nonEmpty)
     require(Option(alarmId).isDefined && !alarmId.trim.isEmpty)
     require(Option(alarmState).isDefined)
-
+    logger.info("Sending notification of alarm {} to {}",alarmId,recipients.mkString(","))
     notifications.append(new Notification(recipients,alarmId,alarmState))
   }
 }
@@ -262,6 +273,25 @@ class NotificationSenderTest extends FlatSpec {
     assert(notification.recipients.toSet==Set("recp1@web.site.org", "recp3@web.site.org"))
 
     f.valueListener.tearDown()
+  }
+
+  it must "periodically send digests" in {
+
+    val localNow: ZonedDateTime  = ZonedDateTime.now().withZoneSameInstant(ZoneOffset.UTC)
+    val nextZone: ZonedDateTime = localNow.plus(Duration.ZERO.plusMinutes(2))
+    val hour = nextZone.getHour
+    val minute = nextZone.getMinute
+    logger.info("Scheduling NotificationSender start time at {}:{} UTC",hour,minute)
+    System.getProperties.put(NotificationsSender.startTimeOfPeriodicNotificationsPropName,s"$hour:$minute")
+    System.getProperties.put(NotificationsSender.sendEmailsTimeIntervalPropName,"1")
+    val f = fixture
+    f.valueListener.setUp(f.iasDao,f.iasioDaosMap)
+
+    logger.info("Waiting for reception of 2 digests")
+    val ret = f.sender.countDownLatch.await(4,TimeUnit.MINUTES)
+    f.valueListener.tearDown()
+    assert(f.sender.digests.length>=2,s"Not all expected events has been received: ${f.sender.digests.length} out of 2")
+
   }
 
 

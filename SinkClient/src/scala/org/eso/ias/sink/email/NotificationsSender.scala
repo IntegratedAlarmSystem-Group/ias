@@ -64,8 +64,9 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
       NotificationsSender.startTimeOfPeriodicNotificationsDefault).split(":")
     (Integer.parseInt(prop(0)),Integer.parseInt(prop(1)))
   }
-  msLogger.info("First digest at {}:{}",timeTostart._1.toString,timeTostart._2.toString)
+  msLogger.info("First digest at {}:{} UTC",timeTostart._1.toString,timeTostart._2.toString)
 
+  /** Start the periodic tasl to send the digests */
   private def startTimer() = {
     val localNow: ZonedDateTime  = ZonedDateTime.now().withZoneSameInstant(ZoneOffset.UTC)
 
@@ -75,13 +76,17 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
       else temp
     }
 
-
     val duration: Duration = Duration.between(localNow, nextZone);
-    val initalDelay = duration.getSeconds();
+    val initalDelay = duration.getSeconds
+    val timeIntervalSecs = TimeUnit.SECONDS.convert(timeIntervalToSendEmails,TimeUnit.MINUTES)
 
     executor.scheduleAtFixedRate(new Runnable() {
-      override def run(): Unit = periodicNotification()
-          },initalDelay,timeIntervalToSendEmails, TimeUnit.SECONDS);
+      override def run(): Unit = {
+        msLogger.info("TASK")
+        sendDigests()
+      }
+          },initalDelay,timeIntervalSecs, TimeUnit.SECONDS);
+    msLogger.debug("Periodic thread scheduled to run in {} secs every {} secs",initalDelay.toString,timeIntervalSecs)
     msLogger.info("Periodic send of digest scheduled every {} minutes",timeIntervalToSendEmails.toString)
   }
 
@@ -128,19 +133,25 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
     * Periodically sends the notifications summary of the changes of the statss
     * of all the monitored alarms.
     */
-  def periodicNotification(): Unit = synchronized {
+  def sendDigests(): Unit = synchronized {
     // Send one email to each user
     //
     // The email contains the summary of all the alarsm about which the user wants to get notifications
+    msLogger.debug("Sending digests")
     alarmsForUser.keys.foreach(user => {
       msLogger.debug("Sending digest of {} alarms to {}",alarmsForUser(user).mkString(","),user)
-      val alarmStates = alarmsForUser(user).map(alarmId => alarmsToTrack(id))
+
+      val alarmStates: List[AlarmStateTracker] = alarmsForUser(user).map(alarmId => alarmsToTrack(alarmId))
+      msLogger.debug("Digests will report the state of {} alarm states for user {}",alarmStates.length,user)
       val sendOp = Try(sender.digestNotify(user,alarmStates))
       if (sendOp.isFailure) {
         msLogger.error("Error sending periodic notification to {}",user, sendOp.asInstanceOf[Failure[_]].exception)
+      } else {
+        msLogger.debug("Digest sent to {}",user)
       }
     })
     alarmsToTrack.keys.foreach(id => alarmsToTrack(id)=alarmsToTrack(id).reset())
+    msLogger.debug("Digests sent to the sender")
   }
 
   /**
@@ -165,6 +176,7 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
     * @param iasValues the values read from the BSDB
     */
   override protected def process(iasValues: List[IASValue[_]]): Unit = synchronized {
+    msLogger.debug("Processing {} values read from BSDB",iasValues.length)
     // Iterates over non-alarms IASIOs
     val valuesToUpdate = iasValues.filter(v => v.valueType==IASTypes.ALARM && alarmsToTrack.contains(v.id))
       .foreach(value => {
@@ -190,6 +202,7 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
           case (None, Some(x)) => if (x.alarm != alarm) notifyAlarm(value.id,alarmsToTrack(value.id).getActualAlarmState().get)
         }
       })
+    msLogger.debug("{} values processed",iasValues.length)
   }
 }
 
