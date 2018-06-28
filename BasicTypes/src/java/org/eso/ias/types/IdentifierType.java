@@ -37,7 +37,7 @@ public enum IdentifierType {
 	 * that translates a value or alarm produced by a remote
 	 * monitored system into a valid IAS data structure.
 	 */
-	CONVERTER(PLUGIN),
+	CONVERTER(),
 	
 	/**
 	 * The type of a supervisor identifier
@@ -57,7 +57,12 @@ public enum IdentifierType {
 	/**
 	 * The type of IASIO identifier
 	 */
-	IASIO(CONVERTER,ASCE);
+	IASIO(CONVERTER,ASCE),
+	
+	/**
+	 * A generic client like a GUI
+	 */
+	SINK();
 	
 	/**
 	 * Possible parents of a identifier

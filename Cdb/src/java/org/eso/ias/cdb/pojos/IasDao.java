@@ -74,6 +74,13 @@ public class IasDao {
 	 */
 	@Basic(optional=false)
 	private String bsdbUrl;
+
+	/**
+	 * The string to connect to the SMTP to send emails
+	 * Format username:password@hostname
+	 */
+	@Basic(optional = true)
+	private String smtp=null;
 	
 	/**
 	 * Empty constructor
@@ -121,6 +128,10 @@ public class IasDao {
 		ret.append(hbFrequency);
 		ret.append(", BSDB URL=`");
 		ret.append(bsdbUrl);
+		if (smtp!=null && !smtp.isEmpty()) {
+			ret.append("`, SMTP=`");
+			ret.append(smtp);
+		}
 		ret.append("`, props={");
 		for (PropertyDao prop: getProps()) {
 			ret.append(' ');
@@ -132,7 +143,7 @@ public class IasDao {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(logLevel,refreshRate,tolerance,props,hbFrequency,bsdbUrl);
+		return Objects.hash(logLevel,refreshRate,tolerance,props,hbFrequency,bsdbUrl,smtp);
 	}
 
 	@Override
@@ -149,7 +160,8 @@ public class IasDao {
 				Objects.equals(refreshRate, other.refreshRate) &&
 				Objects.equals(tolerance, other.tolerance) &&
 				Objects.equals(hbFrequency, other.hbFrequency) &&
-				Objects.equals(bsdbUrl, other.bsdbUrl) && 
+				Objects.equals(bsdbUrl, other.bsdbUrl) &&
+				Objects.equals(smtp, other.smtp) &&
 				Objects.equals(props, other.props);
 	}
 
@@ -167,5 +179,13 @@ public class IasDao {
 
 	public void setBsdbUrl(String bsdbUrl) {
 		this.bsdbUrl = bsdbUrl;
+	}
+
+	public String getSmtp() {
+		return smtp;
+	}
+
+	public void setSmtp(String smtp) {
+		this.smtp = smtp;
 	}
 }

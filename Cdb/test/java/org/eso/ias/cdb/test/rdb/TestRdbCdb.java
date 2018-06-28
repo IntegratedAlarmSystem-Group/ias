@@ -19,6 +19,7 @@ import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.LogLevelDao;
 import org.eso.ias.cdb.pojos.PropertyDao;
+import org.eso.ias.cdb.pojos.SoundTypeDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
 import org.eso.ias.cdb.pojos.TFLanguageDao;
 import org.eso.ias.cdb.pojos.TemplateDao;
@@ -129,6 +130,7 @@ public class TestRdbCdb {
 		ias.setHbFrequency(5);
 		
 		ias.setBsdbUrl("localhost:9092");
+		ias.setSmtp("acaproni:inorpaca@another.smtp.org");
 
 		// Write the IAS
 		cdbWriter.writeIas(ias);
@@ -147,6 +149,7 @@ public class TestRdbCdb {
 		ias2.setTolerance(2);
 		ias2.setHbFrequency(10);
 		ias.setBsdbUrl("bsdb-server:9092");
+		ias.setSmtp("acaproni:inorpaca@test.smtp.org");
 		cdbWriter.writeIas(ias2);
 
 		// Get the IAS from the reader
@@ -242,6 +245,8 @@ public class TestRdbCdb {
 				"IASIO description", 
 				IasTypeDao.INT,
 				"http://www.eso.org",false,
+				null,
+				SoundTypeDao.NONE,
 				null);
 		cdbWriter.writeIasio(io, true);
 
@@ -275,7 +280,9 @@ public class TestRdbCdb {
 				"IASIO template description", 
 				IasTypeDao.ALARM,
 				"http://www.eso.org",false,
-				template.getId());
+				template.getId(),
+				SoundTypeDao.TYPE4,
+				"email.addr@website.org");
 		cdbWriter.writeIasio(io, true);
 
 		Optional<IasioDao> iasioFromRdb = cdbReader.getIasio("T-IO-ID");
@@ -293,10 +300,14 @@ public class TestRdbCdb {
 	public void testIasios() throws Exception {
 		logger.info("testIasios");
 		IasioDao io1 = new IasioDao("IO-ID1", "IASIO descr1", IasTypeDao.INT,"http://www.eso.org");
+		io1.setEmails("noreply@noemail.com");
 		IasioDao io2 = new IasioDao("IO-ID2", "IASIO descr2", IasTypeDao.ALARM,"http://www.eso.org");
+		io2.setSound(SoundTypeDao.TYPE2);
 		IasioDao io3 = new IasioDao("IO-ID3", "IASIO descr3", IasTypeDao.BOOLEAN,"http://www.eso.org");
 		IasioDao io4 = new IasioDao("IO-ID4", "IASIO descr4", IasTypeDao.DOUBLE,"http://www.eso.org");
 		IasioDao io5 = new IasioDao("IO-ID5", "IASIO descr5", IasTypeDao.STRING,"http://www.eso.org");
+		io5.setEmails("test@fake.sever.org");
+		io5.setSound(SoundTypeDao.TYPE3);
 		Set<IasioDao> iasios = new HashSet<>();
 		iasios.add(io1);
 		iasios.add(io2);
