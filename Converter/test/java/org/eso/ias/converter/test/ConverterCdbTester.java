@@ -86,7 +86,7 @@ public class ConverterCdbTester {
 	/**
 	 * Populate the CDB with the passed number of IASIO
 	 * 
-	 * @param numOfIasio the number of IASIOs to write in the configurations
+	 * @param numOfIasios the number of IASIOs to write in the configurations
 	 * @param cdbFiles The folder struct of the CDB
 	 * @throws Exception
 	 */
@@ -101,7 +101,7 @@ public class ConverterCdbTester {
 	/**
 	 * Populate the CDB with the passed number of IASIO
 	 * 
-	 * @param numOfIasio the number of IASIOs to write in the configurations
+	 * @param numOfIasios the number of IASIOs to write in the configurations
 	 * @param cdbWriter The writer of the CDB
 	 * @throws Exception
 	 */
