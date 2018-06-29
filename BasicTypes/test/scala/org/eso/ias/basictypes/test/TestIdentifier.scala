@@ -34,7 +34,7 @@ class TestIdentifier extends FlatSpec {
     val dasuId = new Identifier("dasuId",IdentifierType.DASU,supervId)
     
     val plId=new Identifier("pluginId",IdentifierType.PLUGIN,Option(msId))
-    val convId=new Identifier("converterId",IdentifierType.CONVERTER,None)
+    val convId=new Identifier("converterId",IdentifierType.CONVERTER,Some(plId))
     val ioId=new Identifier("iasioId",IdentifierType.IASIO,Option(convId))
     
     assertThrows[IllegalArgumentException] {
@@ -47,22 +47,29 @@ class TestIdentifier extends FlatSpec {
    * Check the construction of the runningID.
    */
   it must "provide a non-empty runningID string" in {
-    val id3: Identifier = new Identifier("converterId",IdentifierType.CONVERTER,None)
+    val id1=new Identifier("monSysyId",IdentifierType.MONITORED_SOFTWARE_SYSTEM,None)
+    val id2=new Identifier("pluginId",IdentifierType.PLUGIN,Option(id1))
+    val id3: Identifier = new Identifier("converterId",IdentifierType.CONVERTER,Some(id2))
     assert(!id3.runningID.isEmpty())
     val id4: Identifier = new Identifier("iasioId",IdentifierType.IASIO,Option(id3))
     assert(!id4.runningID.isEmpty())
 
     assert(id4.runningID.contains(id4.id))
     assert(id4.runningID.contains(id3.id))
+    assert(id4.runningID.contains(id1.id))
+    assert(id4.runningID.contains(id2.id))
   }
   
   /**
    * Check the construction of the fullRunningID.
    */
   it must "provide a non-empty fullRunningID string" in {
-    val id3: Identifier = new Identifier("converterId",IdentifierType.CONVERTER,None)
+    val id1=new Identifier("monSysyId",IdentifierType.MONITORED_SOFTWARE_SYSTEM,None)
+    val id2=new Identifier("pluginId",IdentifierType.PLUGIN,Option(id1))
+    val id3: Identifier = new Identifier("converterId",IdentifierType.CONVERTER,Some(id2))
     assert(!id3.fullRunningID.isEmpty())
-    
+    assert(id3.fullRunningID.contains(id3.id))
+    assert(id3.fullRunningID.contains(id3.id))
     assert(id3.fullRunningID.contains(id3.id))
   }
   
@@ -129,7 +136,7 @@ class TestIdentifier extends FlatSpec {
   it must "allow to build a chain Identifiers" in {
     val id1: Identifier = new Identifier("monSysyId",IdentifierType.MONITORED_SOFTWARE_SYSTEM,None)
     val id2: Identifier = new Identifier("pluginId",IdentifierType.PLUGIN,Option(id1))
-    val id3: Identifier = new Identifier("converterId",IdentifierType.CONVERTER,None)
+    val id3: Identifier = new Identifier("converterId",IdentifierType.CONVERTER,Some(id2))
     val id4: Identifier = new Identifier("iasioId",IdentifierType.IASIO,Option(id3))
     
     val fullRunId = id4.fullRunningID
