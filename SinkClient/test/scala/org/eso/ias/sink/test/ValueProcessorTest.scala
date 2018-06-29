@@ -208,8 +208,14 @@ class ValueProcessorTest extends FlatSpec {
     */
   def buildValue(id: String, d: Alarm): IASValue[_] = {
 
+    // The identifier of the monitored system
+    val monSysId = new Identifier("ConverterID",IdentifierType.MONITORED_SOFTWARE_SYSTEM,None)
+
+    // The identifier of the plugin
+    val pluginId = new Identifier("ConverterID",IdentifierType.PLUGIN,Some(monSysId))
+
     // The identifier of the converter
-    val converterId = new Identifier("ConverterID",IdentifierType.CONVERTER,None)
+    val converterId = new Identifier("ConverterID",IdentifierType.CONVERTER,Some(pluginId))
 
     // The ID of the monitor point
     val inputId = new Identifier(id, IdentifierType.IASIO,converterId)
