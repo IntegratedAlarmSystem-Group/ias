@@ -167,8 +167,8 @@ class TestInOut extends FlatSpec {
   it must "build and update from a passed IASValue" in {
 
     val monitoredSysId = new Identifier("MonSysId", IdentifierType.MONITORED_SOFTWARE_SYSTEM, None)
-    val puginId = new Identifier("PluginId", IdentifierType.PLUGIN, Option(monitoredSysId))
-    val converterId = new Identifier("ConverterId", IdentifierType.CONVERTER, None)
+    val pluginId = new Identifier("PluginId", IdentifierType.PLUGIN, Option(monitoredSysId))
+    val converterId = new Identifier("ConverterId", IdentifierType.CONVERTER, Some(pluginId))
     val iasioId = new Identifier("IasioId", IdentifierType.IASIO, Option(converterId))
 
     // Build the IASIO from the passed IASValue
@@ -217,8 +217,8 @@ class TestInOut extends FlatSpec {
   
   it must "Update the properties" in {
     val monitoredSysId = new Identifier("MonSysId", IdentifierType.MONITORED_SOFTWARE_SYSTEM, None)
-    val puginId = new Identifier("PluginId", IdentifierType.PLUGIN, Option(monitoredSysId))
-    val converterId = new Identifier("ConverterId", IdentifierType.CONVERTER, None)
+    val pluginId = new Identifier("PluginId", IdentifierType.PLUGIN, Option(monitoredSysId))
+    val converterId = new Identifier("ConverterId", IdentifierType.CONVERTER, Some(pluginId))
     val iasioId = new Identifier("IasioId", IdentifierType.IASIO, Option(converterId))
     
     val properties = Map("key1"->"Value1", "key2"->"Value2")

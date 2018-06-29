@@ -93,19 +93,22 @@ public class ValueMapper implements Function<String, String> {
 	 * The generation of the string, is delegated to the {@link Identifier}
 	 * to ensure consistency along the system.
 	 * 
-	 * @param converterId The ID of the converter
 	 * @param pluginId The ID of the plugin
 	 * @param monitoredSystemId The ID of the monitored system
 	 * @param iasioId The ID of the monitor point value or alarm
 	 * @return
 	 */
-	private String  buildFullRunningId(String converterId, String pluginId, String monitoredSystemId, String iasioId) {
+	private String  buildFullRunningId(String pluginId, String monitoredSystemId, String iasioId) {
 		Objects.requireNonNull(monitoredSystemId);
 		Objects.requireNonNull(pluginId);
-		Objects.requireNonNull(converterId);
 		Objects.requireNonNull(iasioId);
-		
-		Identifier converterIdent = new Identifier(converterID,IdentifierType.CONVERTER);
+		if (monitoredSystemId.isEmpty() || pluginId.isEmpty() || iasioId.isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty identifier");
+		}
+
+		Identifier monSysIdent = new Identifier(monitoredSystemId,IdentifierType.MONITORED_SOFTWARE_SYSTEM);
+		Identifier pluginIdent = new Identifier(pluginId,IdentifierType.PLUGIN,monSysIdent);
+		Identifier converterIdent = new Identifier(converterID,IdentifierType.CONVERTER,pluginIdent);
 		Identifier iasioIdent = new Identifier(iasioId,IdentifierType.IASIO,converterIdent);
 		return iasioIdent.fullRunningID();
 	}
@@ -181,7 +184,6 @@ public class ValueMapper implements Function<String, String> {
 		pluginSentToConvertTime=ISO8601Helper.timestampToMillis(remoteSystemData.getPublishTime());
 		
 		String fullrunId = buildFullRunningId(
-				converterID,
 				remoteSystemData.getPluginID(),
 				remoteSystemData.getMonitoredSystemID(),
 				remoteSystemData.getId());
