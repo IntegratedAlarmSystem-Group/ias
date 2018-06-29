@@ -5,7 +5,7 @@ Created on Jun 8, 2018
 @author: acaproni
 '''
 import unittest
-from IasSupport.Iso8601TStamp import Iso8601TStamp
+from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
 
 
 class IsoTimestampTest(unittest.TestCase):

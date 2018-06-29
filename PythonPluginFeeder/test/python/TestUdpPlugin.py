@@ -12,9 +12,9 @@ import time
 from threading import Thread
 from IasPlugin3.UdpPlugin import UdpPlugin
 from IasPlugin3.JsonMsg import JsonMsg
-from IasPlugin3.OperationalMode import OperationalMode
-from IasPlugin3.IasType import IASType
-from IasPlugin3.Alarm import Alarm
+from IasBasicTypes.OperationalMode import OperationalMode
+from IasBasicTypes.IasType import IASType
+from IasBasicTypes.Alarm import Alarm
 
 class MessageReceiver(Thread):
     

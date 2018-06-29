@@ -49,13 +49,16 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, tolerance: Integer) ex
   
   // The DASU to test
   var dasu: Option[DasuImpl] = None
-  
-  // The identifer of the monitor system that produces the temperature in input to teh DASU
-  val monSysId = new Identifier("MonitoredSystemID",IdentifierType.MONITORED_SOFTWARE_SYSTEM)
+
+  // The identifier of the monitored system
+  val monSysId = new Identifier("ConverterID",IdentifierType.MONITORED_SOFTWARE_SYSTEM,None)
+
   // The identifier of the plugin
-  val pluginId = new Identifier("PluginID",IdentifierType.PLUGIN,monSysId)
+  val pluginId = new Identifier("ConverterID",IdentifierType.PLUGIN,Some(monSysId))
+  
   // The identifier of the converter
-  val converterId = new Identifier("ConverterID",IdentifierType.CONVERTER,pluginId)
+  val converterId = new Identifier("ConverterID",IdentifierType.CONVERTER,Some(pluginId))
+
   // The ID of the monitor point in unput (it matched the ID in theJSON file)
   val inputID = new Identifier("Temperature", IdentifierType.IASIO,converterId)
   

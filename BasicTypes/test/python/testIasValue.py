@@ -6,11 +6,11 @@ Created on Jun 8, 2018
 '''
 import unittest
 from IASLogging.logConf import Log
-from IasSupport.IasValue import IasValue
-from IasSupport.Iso8601TStamp import Iso8601TStamp
-from IasSupport.Validity import Validity
-from IasPlugin.OperationalMode import OperationalMode
-from IasPlugin.IasType import IASType
+from IasBasicTypes.IasValue import IasValue
+from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
+from IasBasicTypes.Validity import Validity
+from IasBasicTypes.OperationalMode import OperationalMode
+from IasBasicTypes.IasType import IASType
 
 class TestIasValue(unittest.TestCase):
 
@@ -25,7 +25,7 @@ class TestIasValue(unittest.TestCase):
             "props":{"key1":"value1","key2":"value2"}}"""
             
             
-    jSonStr2 = """{"value":"SET","pluginProductionTStamp":"1970-01-01T00:00:00.1",
+    jSonStr2 = """{"value":"SET_HIGH","pluginProductionTStamp":"1970-01-01T00:00:00.1",
             "sentToConverterTStamp":"1970-01-01T00:00:00.2", "receivedFromPluginTStamp":"1970-01-01T00:00:00.3",
             "convertedProductionTStamp":"1970-01-01T00:00:00.4","sentToBsdbTStamp":"1970-01-01T00:00:00.5",
             "readFromBsdbTStamp":"1970-01-01T00:00:00.6","dasuProductionTStamp":"1970-01-01T00:00:00.7",
@@ -69,7 +69,7 @@ class TestIasValue(unittest.TestCase):
         expectedDeps2 = ["(SupervId1:SUPERVISOR)@(dasuVID1:DASU)@(asceVID1:ASCE)@(AlarmID1:IASIO)","(SupervId2:SUPERVISOR)@(dasuVID2:DASU)@(asceVID2:ASCE)@(AlarmID2:IASIO)"]
         
         iasValue2 = IasValue.fromJSon(self.jSonStr2)
-        self.assertEqual(iasValue2.value,"SET")
+        self.assertEqual(iasValue2.value,"SET_HIGH")
         self.assertEqual(iasValue2.valueTypeStr,"ALARM")
         self.assertEqual(iasValue2.valueType,IASType.ALARM)
         self.assertEqual(iasValue2.fullRunningId,"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(AlarmType-ID:IASIO)")

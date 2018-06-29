@@ -43,7 +43,8 @@ CREATE TABLE IAS (
   refreshRate NUMBER(8) NOT NULL,
   tolerance NUMBER(8) NOT NULL,
   hbFrequency NUMBER(8) NOT NULL,
-  bsdbUrl VARCHAR(255),
+  bsdbUrl VARCHAR(255) NOT NULL,
+  smtp VARCHAR(64) NULL,
   CONSTRAINT IAS_PK PRIMARY KEY ( id ),
   CONSTRAINT refreshGreaterThenZero CHECK (refreshRate>0),
   CONSTRAINT toleranceGreaterThenZero CHECK (tolerance>0));
@@ -78,6 +79,8 @@ CREATE TABLE IASIO (
   docUrl VARCHAR2(256),
   canShelve NUMBER(1), -- boolean 0/1
   template_id VARCHAR2(64) NULL,
+  emails VARCHAR2(128) NULL,
+  sound VARCHAR2(16) NULL,
   CONSTRAINT IASIO_TEMPFK FOREIGN KEY(template_id) REFERENCES TEMPLATE_DEF(template_id),
   CONSTRAINT IASIO_PK PRIMARY KEY(io_id));
 
