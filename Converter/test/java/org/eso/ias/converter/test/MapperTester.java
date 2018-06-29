@@ -11,7 +11,6 @@ import org.eso.ias.types.Alarm;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -32,17 +31,13 @@ public class MapperTester extends ConverterTestBase {
 	
 	@BeforeEach
 	public void setUp() {
+		System.out.println("Setting up");
 		// Ensures we are going to test all implemented types
 		assertTrue(IASTypes.values().length==mpdHolders.length);
 		
 		IasioConfigurationDAO testerDao = new TesterConfigDao(mpdHolders);
 		
 		mapper = new ValueMapper(testerDao, iasValueSerializer, converterID);
-	}
-	
-	@AfterEach
-	public void tearDown() {
-		
 	}
 	
 	/**
@@ -55,6 +50,7 @@ public class MapperTester extends ConverterTestBase {
 	 */
 	@Test
 	public void testUnconfiguredMPD() throws Exception {
+		System.out.println("Testing testUnconfiguredMPD");
 		MonitorPointDataHolder unconfiguredMpdh = 
 				new MonitorPointDataHolder(
 						"Unrecognized",
@@ -80,6 +76,7 @@ public class MapperTester extends ConverterTestBase {
 	 */
 	@Test
 	public void testMapping() throws Exception {
+		System.out.println("Testing testMapping");
 		for (MonitorPointDataHolder mpdh: mpdHolders) {
 			MonitorPointData mpd = buildMonitorPointData(mpdh);
 			String iasValueStr = mapper.apply(mpd.toJsonString());

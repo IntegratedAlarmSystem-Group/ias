@@ -12,9 +12,9 @@ Created on May 10, 2018
 '''
 import time
 from IasPlugin3.UdpPlugin import UdpPlugin
-from IasPlugin3.IasType import IASType
-from IasPlugin3.OperationalMode import OperationalMode
-from IasPlugin3.Alarm import Alarm
+from IasBasicTypes.IasType import IASType
+from IasBasicTypes.OperationalMode import OperationalMode
+from IasBasicTypes.Alarm import Alarm
 
 if __name__ == '__main__':
     udpPlugin = UdpPlugin("localhost",10101)

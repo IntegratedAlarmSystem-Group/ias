@@ -57,7 +57,12 @@ public enum IdentifierType {
 	/**
 	 * The type of IASIO identifier
 	 */
-	IASIO(CONVERTER,ASCE);
+	IASIO(CONVERTER,ASCE),
+	
+	/**
+	 * A generic client like a GUI
+	 */
+	SINK();
 	
 	/**
 	 * Possible parents of a identifier

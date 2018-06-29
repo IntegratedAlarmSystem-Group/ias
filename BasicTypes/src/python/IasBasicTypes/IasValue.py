@@ -4,10 +4,11 @@ Created on Jun 7, 2018
 @author: acaproni
 '''
 import json
-from IasSupport.Iso8601TStamp import Iso8601TStamp
-from IasPlugin3.OperationalMode import OperationalMode
-from IasSupport.Validity import Validity
-from IasPlugin3.IasType import IASType
+from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
+from IasBasicTypes.OperationalMode import OperationalMode
+from IasBasicTypes.Validity import Validity
+from IasBasicTypes.IasType import IASType
+from IasBasicTypes.Alarm import Alarm
 
 class IasValue(object):
     '''
@@ -140,7 +141,7 @@ class IasValue(object):
             raise ValueError("Invalid type")
         if isinstance(valueType, IASType):
             self.valueType = valueType
-            self.valueTypeStr = valueType.name()
+            self.valueTypeStr = valueType.name
         else:
             self.valueTypeStr = valueType
             self.valueType = IASType.fromString(valueType)
@@ -183,7 +184,12 @@ class IasValue(object):
         modeStr = fromJsonDict["mode"]
         iasValidityStr = fromJsonDict["iasValidity"]
         
-        iasValue = IasValue(value,valueTypeStr,fullRunningId,modeStr,iasValidityStr)
+        # If the type is alarm, check if it is valid
+        valueType=IASType.fromString(valueTypeStr)
+        if valueType is IASType.ALARM:
+            alarm =Alarm.fromString(value)
+        
+        iasValue = IasValue(value,valueType,fullRunningId,modeStr,iasValidityStr)
         
         iasValue.dependentsFullRuningIds = IasValue.getValue(fromJsonDict,"depsFullRunningIds")
         iasValue.props = IasValue.getValue(fromJsonDict,"props")

@@ -93,21 +93,22 @@ public class ValueMapper implements Function<String, String> {
 	 * The generation of the string, is delegated to the {@link Identifier}
 	 * to ensure consistency along the system.
 	 * 
-	 * @param converterId The ID of the converter
 	 * @param pluginId The ID of the plugin
 	 * @param monitoredSystemId The ID of the monitored system
 	 * @param iasioId The ID of the monitor point value or alarm
 	 * @return
 	 */
-	private String  buildFullRunningId(String converterId, String pluginId, String monitoredSystemId, String iasioId) {
+	private String  buildFullRunningId(String pluginId, String monitoredSystemId, String iasioId) {
 		Objects.requireNonNull(monitoredSystemId);
 		Objects.requireNonNull(pluginId);
-		Objects.requireNonNull(converterId);
 		Objects.requireNonNull(iasioId);
-		
-		Identifier monSystemId = new Identifier(monitoredSystemId,IdentifierType.MONITORED_SOFTWARE_SYSTEM);
-		Identifier plugId = new Identifier(pluginId,IdentifierType.PLUGIN,monSystemId);
-		Identifier converterIdent = new Identifier(converterID,IdentifierType.CONVERTER,plugId);
+		if (monitoredSystemId.isEmpty() || pluginId.isEmpty() || iasioId.isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty identifier");
+		}
+
+		Identifier monSysIdent = new Identifier(monitoredSystemId,IdentifierType.MONITORED_SOFTWARE_SYSTEM);
+		Identifier pluginIdent = new Identifier(pluginId,IdentifierType.PLUGIN,monSysIdent);
+		Identifier converterIdent = new Identifier(converterID,IdentifierType.CONVERTER,pluginIdent);
 		Identifier iasioIdent = new Identifier(iasioId,IdentifierType.IASIO,converterIdent);
 		return iasioIdent.fullRunningID();
 	}
@@ -127,6 +128,8 @@ public class ValueMapper implements Function<String, String> {
 			long receptionTStamp) {
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(remoteSystemData);
+
+		logger.debug("Translating {}",remoteSystemData.getId());
 		
 		// Convert the received string in the proper object type
 		Object convertedValue=null;
@@ -171,7 +174,7 @@ public class ValueMapper implements Function<String, String> {
     		convertedValue=Alarm.valueOf(remoteSystemData.getValue());
     		break;
     	}
-		default: throw new UnsupportedOperationException("Unsupported type "+type);
+		default: logger.error("Error translating {}",remoteSystemData.getId());
 		}
 		
 		long pluginProductionTime;
@@ -181,7 +184,6 @@ public class ValueMapper implements Function<String, String> {
 		pluginSentToConvertTime=ISO8601Helper.timestampToMillis(remoteSystemData.getPublishTime());
 		
 		String fullrunId = buildFullRunningId(
-				converterID,
 				remoteSystemData.getPluginID(),
 				remoteSystemData.getMonitoredSystemID(),
 				remoteSystemData.getId());
@@ -190,8 +192,8 @@ public class ValueMapper implements Function<String, String> {
 		// by the streaming so the 2 timestamps (production and sent to BSDB)
 		// are the same point in time with thisimplementation
 		long producedAndSentTStamp = System.currentTimeMillis();
-		
-		return IASValue.build(
+
+		IASValue<?> ret = IASValue.build(
 				convertedValue, 
 				OperationalMode.valueOf(remoteSystemData.getOperationalMode()),
 				IasValidity.valueOf(remoteSystemData.getValidity()),
@@ -206,6 +208,8 @@ public class ValueMapper implements Function<String, String> {
 				null, // DASU prod time
 				null, // dependents
 				null); // additional properties
+		logger.debug("Translated to {} of type {}",ret.id,ret.valueType);
+		return ret;
 	}
 
 	/**
