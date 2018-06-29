@@ -37,7 +37,7 @@ public enum IdentifierType {
 	 * that translates a value or alarm produced by a remote
 	 * monitored system into a valid IAS data structure.
 	 */
-	CONVERTER(),
+	CONVERTER(PLUGIN),
 	
 	/**
 	 * The type of a supervisor identifier
