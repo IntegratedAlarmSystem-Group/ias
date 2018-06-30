@@ -149,7 +149,7 @@ class UdpPlugin(object):
         else:
             return None
         
-    def submit(self, mPointID, value, valueType, timestamp=datetime.utcnow(), operationalMode=None):
+    def submit(self, mPointID, value, valueType, timestamp=datetime.utcnow(), operationalMode='OPERATIONAL'):
         '''
         Submit a monitor point or alarm with the give ID to the java plugin.
         
