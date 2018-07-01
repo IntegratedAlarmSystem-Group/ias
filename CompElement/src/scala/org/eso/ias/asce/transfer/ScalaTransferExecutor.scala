@@ -45,6 +45,18 @@ extends TransferExecutor(cEleId,cEleRunningId,validityTimeFrame,props) {
       case (_, _) => fromMap
     }
   }
+
+	/**
+		*
+		* @param id the id to translate, templated or not
+		* @return teh identifer translated if the ASCE is templated
+		*/
+	protected final def getIdentifier(id: String): String = {
+		require(Option(id).isDefined && !id.isEmpty)
+		if (!isTemplated) id
+		else if (Identifier.isTemplatedIdentifier(id)) id
+		else Identifier.buildIdFromTemplate(id, getTemplateInstance.get)
+	}
   
   /**
 	 * Produces the output of the component by evaluating the inputs.
