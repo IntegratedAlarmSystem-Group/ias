@@ -13,7 +13,7 @@ import org.eso.ias.types.IasValidity
  * getting the value of the main implementation. The backup can 
  * be retrieved from a different device (for example a backup pressure sensor)
  * or from a different way to get the value from the hardware (for example
- * on that involves the network and another one by reading a database where the 
+ * one that involves the network and another one by reading a database where the
  * value is also stored)
  * 
  * BackupSelector picks up the best option among the inputs i.e.
@@ -40,21 +40,21 @@ import org.eso.ias.types.IasValidity
  * @param props: the user defined properties    
  * @author acaproni
  */
-class BackupSelector[T](cEleId: String, cEleRunningId: String, validityTimeFrame:Long, props: Properties)
-extends ScalaTransferExecutor[T](cEleId,cEleRunningId,validityTimeFrame,props) {
-  
+class BackupSelector[T](asceId: String, asceRunningId: String, validityTimeFrame:Long, props: Properties)
+extends ScalaTransferExecutor[T](asceId,asceRunningId,validityTimeFrame,props) {
+
   val prioritizedIDs: List[String] = {
     val propValueStr = Option(props.getProperty(BackupSelector.PrioritizedIdsPropName))
     require(propValueStr.isDefined,"PrioritizedIdsPropName property not found")
-    
+
     val ids = propValueStr.get.split(",")
-    ids.foldRight(List.empty[String]){ (str,z) => str.trim() :: z } 
+    ids.foldRight(List.empty[String]){ (str,z) => str.trim() :: z }
   }
-  
-  
+
+
   /**
 	 * Produces the output of the component by evaluating the inputs.
-	 * 
+	 *
 	 * @return the computed output of the ASCE
 	 */
 	override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[T]): IasIO[T] = {
@@ -65,64 +65,64 @@ extends ScalaTransferExecutor[T](cEleId,cEleRunningId,validityTimeFrame,props) {
     require(
         compInputs.keys.forall(key => prioritizedIDs.contains(key)),
         "Input ids ["+compInputs.keys.mkString(",")+"] not contained in constraint ["+prioritizedIDs.mkString(",")+"]")
-    
+
     def updateOutput[B >: T](
-        value: B, 
-        mode: OperationalMode, 
+        value: B,
+        mode: OperationalMode,
         props: Map[String, String],
         constraints: Option[Set[String]]): IasIO[T] = {
-      
+
       actualOutput.updateValue(value).updateMode(mode).updateProps(props).setValidityConstraint(constraints)
     }
-    
+
     // Select the ID of the first input that is both operational and valid
     val selectedInputId = prioritizedIDs.find(id => {
       val input = compInputs(id)
-      
+
       // get the validity from the inputs
       val inputValidity = input.validityOfInputByTime(validityTimeFrame)
-      
+
       input.mode==OperationalMode.OPERATIONAL && inputValidity==IasValidity.RELIABLE
     })
-    
+
     selectedInputId match {
       case Some(inputId) =>
         val selectedInput=compInputs(inputId)
         updateOutput(
-            selectedInput.value.get, 
-            selectedInput.mode, 
-            selectedInput.props, 
+            selectedInput.value.get,
+            selectedInput.mode,
+            selectedInput.props,
             Some(Set(inputId)))
-      case None => 
+      case None =>
         val fallBackInput = compInputs(prioritizedIDs.head)
         updateOutput(
-            fallBackInput.value.get, 
-            fallBackInput.mode, 
-            fallBackInput.props, 
+            fallBackInput.value.get,
+            fallBackInput.mode,
+            fallBackInput.props,
             None)
     }
-    
+
   }
-	
+
 	/**
-   * Initialization: it basically checks if the 
-   * provided delays are valid 
-   * 
+   * Initialization: it basically checks if the
+   * provided delays are valid
+   *
    * @see TransferExecutor#initialize()
    */
   override def initialize() {
-     BackupSelector.logger.debug("TF of [{}] initializing", cEleId)
-     
+     BackupSelector.logger.debug("TF of [{}] initializing", asceId)
+
      require(prioritizedIDs.length>1,s"$BackupSelector.PrioritizedIdsPropName must contain at least 2 IDs")
      require(prioritizedIDs.forall(!_.isEmpty()),s"$BackupSelector.PrioritizedIdsPropName malformed")
      BackupSelector.logger.info("Priority list of IDs  [{}]", prioritizedIDs.mkString(","))
   }
-  
+
   /**
    * @see TransferExecutor#shutdown()
    */
   override def shutdown() {
-    BackupSelector.logger.debug("TF of [{}] shut down", cEleId)
+    BackupSelector.logger.debug("TF of [{}] shut down", asceId)
   }
   
 }
