@@ -1,5 +1,6 @@
 package org.eso.ias.transfer.test
 
+import java.util.concurrent.TimeUnit
 import java.util.{Optional, Properties}
 
 import org.eso.ias.asce.exceptions.PropsMisconfiguredException
@@ -58,6 +59,13 @@ class ThresholdBackupAndDelayTest extends FlatSpec with BeforeAndAfterEach {
   /** Initial set of inputs */
   val inputs: List[IasIO[Double]] = inputIDentifiers.map(id => buildInput(id,0))
 
+  /** Delay before setting the alarm */
+  val delayTimeToSet = 3
+
+/** Delay before setting the alarm */
+  val delayTimeToClear = 5
+
+
   /** The initial map of input for the TF */
   val initialMapOfInputs: Map[String, IasIO[Double]] =
     inputs.foldLeft(Map[String, IasIO[Double]]())((z, iasio) => z ++ Map(iasio.id -> iasio))
@@ -76,8 +84,8 @@ class ThresholdBackupAndDelayTest extends FlatSpec with BeforeAndAfterEach {
     defaultProps.put(ThresholdWithBackupsAndDelay.LowOnPropName,"-12")
     defaultProps.put(ThresholdWithBackupsAndDelay.LowOffPropName,"-5")
     defaultProps.put(ThresholdWithBackupsAndDelay.AlarmPriorityPropName,alarmSetByTf.name())
-    defaultProps.put(ThresholdWithBackupsAndDelay.DelayToSetTimePropName,"2")
-    defaultProps.put(ThresholdWithBackupsAndDelay.DelayToClearTimePropName,"3")
+    defaultProps.put(ThresholdWithBackupsAndDelay.DelayToSetTimePropName,delayTimeToSet.toString)
+    defaultProps.put(ThresholdWithBackupsAndDelay.DelayToClearTimePropName,delayTimeToClear.toString)
     defaultProps.put(ThresholdWithBackupsAndDelay.MaindIdPropName,mainInputId)
 
     defaultTF = new ThresholdWithBackupsAndDelay(compID.id,compID.fullRunningID,validityTimeFrame,defaultProps)
@@ -114,8 +122,8 @@ class ThresholdBackupAndDelayTest extends FlatSpec with BeforeAndAfterEach {
     assert(defaultTF.lowOn==(-12))
     assert(defaultTF.lowOff==(-5))
     assert(defaultTF.alarmPriority==Alarm.SET_CRITICAL)
-    assert(defaultTF.delayToSet==2000)
-    assert(defaultTF.delayToClear==3000)
+    assert(defaultTF.delayToSet==delayTimeToSet*1000)
+    assert(defaultTF.delayToClear==delayTimeToClear*1000)
     assert(defaultTF.idOfMainInput==Some(mainInputId))
   }
 
@@ -285,6 +293,100 @@ class ThresholdBackupAndDelayTest extends FlatSpec with BeforeAndAfterEach {
     val pBackups2 = output.props.get("backups")
     assert(pBackups2.isEmpty)
 
+  }
+
+  it must "wait before activating" in {
+    val tf = new ThresholdWithBackupsAndDelay(compID.id, compID.fullRunningID, validityTimeFrame, defaultProps)
+    tf.internalInitialize(Optional.empty[Integer])
+
+    val mapSet = initialMapOfInputs +( mainInputId -> initialMapOfInputs(mainInputId).updateValue(30D))
+    val mapUnset =  initialMapOfInputs +( mainInputId -> initialMapOfInputs(mainInputId).updateValue(0D))
+
+    // Force activation
+    var output = initialOutput
+    output = tf.eval(mapSet, output)
+    assert(output.value.isDefined)
+    assert(!output.value.get.isSet)
+
+    val expectedTimeChange = System.currentTimeMillis()+TimeUnit.MILLISECONDS.convert(delayTimeToSet, TimeUnit.SECONDS)
+
+    // Continously try to set and check if activation
+    // happens only after delayTimeToSet time elapsed
+    while (System.currentTimeMillis() < expectedTimeChange-500) {
+      output = tf.eval(mapSet, output)
+      assert(output.value.isDefined)
+      assert(!output.value.get.isSet)
+      Thread.sleep(500)
+    }
+    // Now set again and the TF must finally activate
+    Thread.sleep(1000)
+    output = tf.eval(mapSet, output)
+    assert(output.value.isDefined)
+    assert(output.value.get==alarmSetByTf)
+
+  }
+
+  it must "wait before de-activating" in {
+    defaultProps.put(ThresholdWithBackupsAndDelay.DelayToSetTimePropName,"0")
+    val tf = new ThresholdWithBackupsAndDelay(compID.id, compID.fullRunningID, validityTimeFrame, defaultProps)
+    tf.internalInitialize(Optional.empty[Integer])
+
+    val mapSet = initialMapOfInputs +( mainInputId -> initialMapOfInputs(mainInputId).updateValue(-200D))
+    val mapUnset =  initialMapOfInputs +( mainInputId -> initialMapOfInputs(mainInputId).updateValue(0D))
+
+    // Force activation
+    var output = initialOutput
+    output = tf.eval(mapSet, output)
+    assert(output.value.isDefined)
+    assert(output.value.get.isSet)
+
+    val expectedTimeChange = System.currentTimeMillis()+TimeUnit.MILLISECONDS.convert(delayTimeToClear, TimeUnit.SECONDS)
+
+    // Continously try to set and check if activation
+    // happens only after delayTimeToSet time elapsed
+    while (System.currentTimeMillis() < expectedTimeChange-500) {
+      output = tf.eval(mapUnset, output)
+      assert(output.value.isDefined)
+      assert(output.value.get.isSet)
+      Thread.sleep(500)
+    }
+    // Now set again and the TF must finally activate
+    Thread.sleep(1000)
+    output = tf.eval(mapUnset, output)
+    assert(output.value.isDefined)
+    assert(!output.value.get.isSet)
+
+  }
+
+  it must "be steady if the input oscillates" in {
+    val tf = new ThresholdWithBackupsAndDelay(compID.id, compID.fullRunningID, validityTimeFrame, defaultProps)
+    tf.internalInitialize(Optional.empty[Integer])
+
+    val mapSet = initialMapOfInputs +( mainInputId -> initialMapOfInputs(mainInputId).updateValue(30D))
+    val mapUnset =  initialMapOfInputs +( mainInputId -> initialMapOfInputs(mainInputId).updateValue(0D))
+
+    // Force activation
+    var output = initialOutput
+    output = tf.eval(mapSet, output)
+    assert(!output.value.get.isSet)
+
+    Thread.sleep(TimeUnit.MILLISECONDS.convert(delayTimeToSet+1, TimeUnit.SECONDS))
+    output = tf.eval(mapSet, output)
+    assert(output.value.isDefined)
+    assert(output.value.get==alarmSetByTf)
+
+    val initialTime = System.currentTimeMillis()
+    val expectedTimeChange = initialTime+TimeUnit.MILLISECONDS.convert(delayTimeToClear+delayTimeToSet, TimeUnit.SECONDS)
+    var lastSentMap = mapSet
+    while (System.currentTimeMillis() < expectedTimeChange) {
+      logger.info("Sending input {}",lastSentMap.values.head.value.get)
+      output = tf.eval(lastSentMap, output)
+      lastSentMap = if (lastSentMap.eq(mapSet)) mapUnset else mapSet
+      assert(output.value.isDefined)
+      assert(output.value.get==alarmSetByTf)
+      logger.info("TF produced {}",output.value.get)
+      Thread.sleep(500)
+    }
   }
 
 }
