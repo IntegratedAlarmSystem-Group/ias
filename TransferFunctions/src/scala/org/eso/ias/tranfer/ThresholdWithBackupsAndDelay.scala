@@ -192,7 +192,7 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
     * Get the value of the inputs taking into account the validity of
     * the main monitor point or, in case of failure, the values of the backups.
     *
-    * The vaue is a list composed of the only main monitor point if it is reliable,
+    * The value is a list composed of the only main monitor point if it is reliable,
     * otherwise the list of the backups to consider, i.e. those that are reliable
     *
     * @param inputs the inputs
@@ -211,12 +211,11 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
     * over the threshold
     *
     * @param wasSet truee if the alarm was set
-    * @param iasios the IASIOs in input
+    * @param doubleValues the values of the IASIOs in input
     * @return true if the alarm must be set
     */
-  def mustBeSetByThreshold(wasSet: Boolean, iasios: List[IasIO[_]]): Boolean = {
-    require(iasios.nonEmpty)
-    val doubleValues: List[Double] = iasios.map(getDoubleValueOfIasio)
+  def mustBeSetByThreshold(wasSet: Boolean, doubleValues: List[Double]): Boolean = {
+    require(doubleValues.nonEmpty)
 
       (doubleValues.exists(_>=highOn) || doubleValues.exists(_<=lowOn)) ||
     wasSet && (doubleValues.exists(_>=highOff) || doubleValues.exists(_<=lowOff))
@@ -228,8 +227,9 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
     * @return the computed output of the ASCE
     */
   override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
-    require(getValue(compInputs, idOfMainInput.get).isDefined)
     assert(compInputs.values.forall(_.value.isDefined)) // This should be ensured by ASCE
+
+    require(getValue(compInputs, idOfMainInput.get).isDefined)
     if (actualOutput.iasType != ALARM) {
       throw new TypeMismatchException(actualOutput.fullRunningId, actualOutput.iasType, ALARM)
     }
@@ -240,16 +240,23 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
     // If not yet initialized, assumed alarm not set
     val wasSet = actualOutputAlarm.exists(_ != Alarm.cleared())
 
+    ThresholdWithBackupsAndDelay.logger.debug("TF of ASCE[{}]: wasSet={}",asceId,wasSet)
+
     // Get the valid IASIOs if any
     val iasios: List[IasIO[_]] = getIasiosWithBackup(compInputs)
+    ThresholdWithBackupsAndDelay.logger.debug("TF of ASCE[{}]: operational and valid iasios {}",asceId,iasios.map(_.id).mkString(","))
+
+    /** The values of the valid and operational inputs */
+    val iasioVals = iasios.map(iasio => getDoubleValueOfIasio(iasio))
 
     // True if the alarm must be SET
     val toBeSetByThreshold = {
-      if (iasios.isEmpty) mustBeSetByThreshold(wasSet, List(getValue(compInputs, idOfMainInput.get).get))
-      else mustBeSetByThreshold(wasSet, iasios)
+      if (iasios.isEmpty) mustBeSetByThreshold(wasSet, List(getDoubleValueOfIasio(getValue(compInputs, idOfMainInput.get).get)))
+      else mustBeSetByThreshold(wasSet, iasioVals)
     }
     // The alarm to set in the output by the Threshold only
     val requestedAlarmByThreshold: Alarm = if (toBeSetByThreshold) alarmPriority else Alarm.cleared()
+    ThresholdWithBackupsAndDelay.logger.debug("TF of ASCE[{}]: requested by thershold={}",asceId,requestedAlarmByThreshold.toString)
 
     // Setup data structure for the delay
     if (actualOutputAlarm.isEmpty) {
@@ -281,9 +288,9 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
     // The property must report the higher or lowest value between the IASIOs
     // used to calculate if the value passed the threshold
     val buildProps: Map[String, String] = {
-      if (iasios.isEmpty) Map("value" -> getDoubleValueOfIasio(getValue(compInputs, idOfMainInput.get).get).toString)
-      else {
-        val iasioVals = iasios.map(iasio => getDoubleValueOfIasio(iasio))
+      if (iasios.find(io => io.id==idOfMainInput.get).isDefined) {
+        Map("value" -> getDoubleValueOfIasio(getValue(compInputs, idOfMainInput.get).get).toString)
+      } else {
         Map("backups" -> iasioVals.mkString(","))
       }
     }
