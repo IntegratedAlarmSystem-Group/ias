@@ -1,18 +1,18 @@
 package org.eso.ias.transfer.test
 
-import java.util.Properties
+import java.util.{Optional, Properties}
 
 import org.eso.ias.asce.exceptions.PropsMisconfiguredException
 import org.eso.ias.asce.transfer.IasIO
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.tranfer.ThresholdWithBackupsAndDelay
 import org.eso.ias.types._
-import org.scalatest.FlatSpec
+import org.scalatest.{BeforeAndAfterEach, FlatSpec}
 
 /**
   * Test the ThresholdWithBackupsAndDelay transfer function
   */
-class ThresholdBackupAndDelayTest extends FlatSpec {
+class ThresholdBackupAndDelayTest extends FlatSpec with BeforeAndAfterEach {
 
   /** The logger */
   val logger = IASLogger.getLogger(this.getClass)
@@ -34,7 +34,14 @@ class ThresholdBackupAndDelayTest extends FlatSpec {
 
   val inputIds: List[String] = (for (i <- 1 to 5) yield "InputID"+i).toList
 
+  /** The Identifiers of the inputs */
   val inputIDentifiers= inputIds.map(id => new Identifier(id,IdentifierType.IASIO, Some(compID)))
+
+  /** the ID of themain input */
+  val mainInputId = "InputID1"
+
+  /** The Identifier of themain input */
+  val mainInputIdentifer = inputIDentifiers.find(id => id.id==mainInputId).get
 
   /** The ID of the main AISIO */
   val aId = new Identifier("A",IdentifierType.IASIO, Some(compID))
@@ -43,21 +50,38 @@ class ThresholdBackupAndDelayTest extends FlatSpec {
   val validityTimeFrame = 2000
 
   /** Default set of properties for testing */
-  val defaultProps: Properties = {
-    val props = new Properties
-    props.put(ThresholdWithBackupsAndDelay.HighOnPropName,"10")
-    props.put(ThresholdWithBackupsAndDelay.HighOffPropName,"8")
-    props.put(ThresholdWithBackupsAndDelay.LowOnPropName,"-12")
-    props.put(ThresholdWithBackupsAndDelay.LowOffPropName,"-5")
-    props.put(ThresholdWithBackupsAndDelay.AlarmPriorityPropName,Alarm.SET_CRITICAL.name())
-    props.put(ThresholdWithBackupsAndDelay.DelayToSetTimePropName,"2")
-    props.put(ThresholdWithBackupsAndDelay.DelayToClearTimePropName,"3")
-    props.put(ThresholdWithBackupsAndDelay.MaindIdPropName,"ID")
-    props
-  }
+  val defaultProps: Properties = new Properties
 
   /** Default ThresholdWithBackupsAndDelay TF to test */
-  val defaultTF = new ThresholdWithBackupsAndDelay(compID.id,compID.fullRunningID,validityTimeFrame,defaultProps)
+  var defaultTF: ThresholdWithBackupsAndDelay = _
+
+  /** Initial set of inputs */
+  val inputs: List[IasIO[Double]] = inputIDentifiers.map(id => buildInput(id,0))
+
+  /** The initial map of input for the TF */
+  val initialMapOfInputs: Map[String, IasIO[Double]] =
+    inputs.foldLeft(Map[String, IasIO[Double]]())((z, iasio) => z ++ Map(iasio.id -> iasio))
+  initialMapOfInputs.foreach( x => ThresholdWithBackupsAndDelay.logger.info("id={}, type={} value={}",x._2.id, x._2.iasType,x._2.value.toString))
+
+  /** The inital the IASIO in output */
+  val initialOutput: IasIO[Alarm] = new IasIO(InOut.asOutput(outId,IASTypes.ALARM))
+
+  /** The alarm set by the TF */
+  val alarmSetByTf = Alarm.SET_CRITICAL
+
+  override def beforeEach() : scala.Unit = {
+    logger.info("Initializing before running a test")
+    defaultProps.put(ThresholdWithBackupsAndDelay.HighOnPropName,"10")
+    defaultProps.put(ThresholdWithBackupsAndDelay.HighOffPropName,"8")
+    defaultProps.put(ThresholdWithBackupsAndDelay.LowOnPropName,"-12")
+    defaultProps.put(ThresholdWithBackupsAndDelay.LowOffPropName,"-5")
+    defaultProps.put(ThresholdWithBackupsAndDelay.AlarmPriorityPropName,alarmSetByTf.name())
+    defaultProps.put(ThresholdWithBackupsAndDelay.DelayToSetTimePropName,"2")
+    defaultProps.put(ThresholdWithBackupsAndDelay.DelayToClearTimePropName,"3")
+    defaultProps.put(ThresholdWithBackupsAndDelay.MaindIdPropName,mainInputId)
+
+    defaultTF = new ThresholdWithBackupsAndDelay(compID.id,compID.fullRunningID,validityTimeFrame,defaultProps)
+  }
 
   /**
     *  Build the IASIO in input with the passed id, type and timestamp
@@ -73,6 +97,8 @@ class ThresholdBackupAndDelayTest extends FlatSpec {
                   tStamp: Long = System.currentTimeMillis(),
                   mode: OperationalMode = OperationalMode.OPERATIONAL,
                   validity: IasValidity = IasValidity.RELIABLE): IasIO[Double] = {
+    require(Option(id).isDefined)
+    require(Option(value).isDefined)
 
     val inout: InOut[Double] = InOut.asInput(id,IASTypes.DOUBLE)
       .updateDasuProdTStamp(tStamp)
@@ -90,7 +116,7 @@ class ThresholdBackupAndDelayTest extends FlatSpec {
     assert(defaultTF.alarmPriority==Alarm.SET_CRITICAL)
     assert(defaultTF.delayToSet==2000)
     assert(defaultTF.delayToClear==3000)
-    assert(defaultTF.idOfMainInput==Some("ID"))
+    assert(defaultTF.idOfMainInput==Some(mainInputId))
   }
 
   it must "correctly intialize" in {
@@ -106,7 +132,7 @@ class ThresholdBackupAndDelayTest extends FlatSpec {
     props.put(ThresholdWithBackupsAndDelay.AlarmPriorityPropName,Alarm.SET_CRITICAL.name())
     props.put(ThresholdWithBackupsAndDelay.DelayToSetTimePropName,"2")
     props.put(ThresholdWithBackupsAndDelay.DelayToClearTimePropName,"3")
-    props.put(ThresholdWithBackupsAndDelay.MaindIdPropName,"ID")
+    props.put(ThresholdWithBackupsAndDelay.MaindIdPropName,mainInputId)
 
 
     val tf = new ThresholdWithBackupsAndDelay(compID.id,compID.fullRunningID,validityTimeFrame,props)
@@ -139,5 +165,126 @@ class ThresholdBackupAndDelayTest extends FlatSpec {
 
   }
 
+  it must "produce a CLEAR alarm at beginning" in {
+    defaultTF.internalInitialize(Optional.empty[Integer])
+    val newOutput: IasIO[Alarm] = defaultTF.eval(initialMapOfInputs, initialOutput)
+
+    assert(newOutput.value.isDefined)
+    assert(newOutput.value.get==Alarm.CLEARED)
+  }
+
+  it must "immediately SET and CLEAR if there are no delays" in {
+    defaultProps.put(ThresholdWithBackupsAndDelay.DelayToClearTimePropName, "0")
+    defaultProps.put(ThresholdWithBackupsAndDelay.DelayToSetTimePropName, "0")
+
+
+    val tf = new ThresholdWithBackupsAndDelay(compID.id, compID.fullRunningID, validityTimeFrame, defaultProps)
+    tf.internalInitialize(Optional.empty[Integer])
+
+    val io = initialMapOfInputs(mainInputId)
+    val newValue = io.updateValue(100.0)
+
+    val mapWithSet = initialMapOfInputs + (mainInputId -> newValue)
+
+    val newOutput: IasIO[Alarm] = tf.eval(mapWithSet, initialOutput)
+
+    assert(newOutput.value.isDefined)
+    assert(newOutput.value.get == alarmSetByTf)
+
+    val mapWithClear = initialMapOfInputs + (mainInputId -> initialMapOfInputs(mainInputId).updateValue(0.0))
+    val newOutput2: IasIO[Alarm] = tf.eval(mapWithClear, initialOutput)
+
+    assert(newOutput2.value.isDefined)
+    assert(!newOutput2.value.get.isSet)
+  }
+
+  it must "immediately SET and CLEAR respecting thresholds only" in {
+
+
+    defaultProps.put(ThresholdWithBackupsAndDelay.DelayToClearTimePropName, "0")
+    defaultProps.put(ThresholdWithBackupsAndDelay.DelayToSetTimePropName, "0")
+
+    val tf = new ThresholdWithBackupsAndDelay(compID.id, compID.fullRunningID, validityTimeFrame, defaultProps)
+    tf.internalInitialize(Optional.empty[Integer])
+
+    var output = initialOutput
+    for (i <- 0 to 15) {
+      val map = initialMapOfInputs + (mainInputId -> initialMapOfInputs(mainInputId).updateValue(i.toDouble))
+      output = tf.eval(map, output)
+      assert(output.value.isDefined)
+      if (i<tf.highOn) assert(output.value.get==Alarm.CLEARED)
+      else assert(output.value.get==alarmSetByTf)
+    }
+
+    for (i <- 20 to -20 by -1) {
+      val map = initialMapOfInputs + (mainInputId -> initialMapOfInputs(mainInputId).updateValue(i.toDouble))
+      output = tf.eval(map, output)
+      assert(output.value.isDefined)
+      if (i>=tf.highOff || i<=tf.lowOn) assert(output.value.get==alarmSetByTf)
+      else assert(output.value.get==Alarm.CLEARED)
+    }
+
+    for (i <- -20 to 0) {
+      val map = initialMapOfInputs + (mainInputId -> initialMapOfInputs(mainInputId).updateValue(i.toDouble))
+      output = tf.eval(map, output)
+      assert(output.value.isDefined)
+      if (i<=tf.lowOff) assert(output.value.get==alarmSetByTf)
+      else assert(output.value.get==Alarm.CLEARED)
+    }
+  }
+
+  it must "discard the main input if not Reliable and/or not valid" in {
+    defaultProps.put(ThresholdWithBackupsAndDelay.DelayToClearTimePropName, "0")
+    defaultProps.put(ThresholdWithBackupsAndDelay.DelayToSetTimePropName, "0")
+
+    val tf = new ThresholdWithBackupsAndDelay(compID.id, compID.fullRunningID, validityTimeFrame, defaultProps)
+    tf.internalInitialize(Optional.empty[Integer])
+
+    val inOut: InOut[Double] = InOut.asInput(mainInputIdentifer,IASTypes.DOUBLE).updateMode(OperationalMode.MAINTENANCE).updateValue(Some(3D))
+    val value =initialMapOfInputs("InputID3").updateValue(25.toDouble)
+    val map = initialMapOfInputs + (mainInputId -> new IasIO[Double](inOut))+("InputID3" ->value)
+
+    var output = initialOutput
+    output = tf.eval(map, output)
+    assert(output.value.isDefined)
+    assert(output.value.get==alarmSetByTf)
+
+    val map2 = map+
+      (mainInputId -> map(mainInputId).updateValue(30D))+
+      ("InputID3" -> value.updateValue(0D))
+    output = tf.eval(map2, output)
+    assert(output.value.isDefined)
+    assert(!output.value.get.isSet)
+  }
+
+  it must "set the properties" in {
+    defaultProps.put(ThresholdWithBackupsAndDelay.DelayToClearTimePropName, "0")
+    defaultProps.put(ThresholdWithBackupsAndDelay.DelayToSetTimePropName, "0")
+
+    val tf = new ThresholdWithBackupsAndDelay(compID.id, compID.fullRunningID, validityTimeFrame, defaultProps)
+    tf.internalInitialize(Optional.empty[Integer])
+
+    val inOut: InOut[Double] = InOut.asInput(mainInputIdentifer,IASTypes.DOUBLE).updateMode(OperationalMode.MAINTENANCE).updateValue(Some(3D))
+    val value =initialMapOfInputs("InputID3").updateValue(25.toDouble)
+    val map = initialMapOfInputs + (mainInputId -> new IasIO[Double](inOut))+("InputID3" ->value)
+
+    var output = tf.eval(map, initialOutput)
+
+    output.props.keys.foreach(k => logger.info("Property of output with backup {}->{}",k,output.props(k)))
+    val pMain = output.props.get("value")
+    assert(pMain.isEmpty)
+    val pBackups = output.props.get("backups")
+    assert(pBackups.isDefined)
+    assert(pBackups.get.contains("25.0"))
+
+    val map2 = map+(mainInputId -> buildInput(mainInputIdentifer,5D))
+    output = tf.eval(map2, output)
+    output.props.keys.foreach(k => logger.info("Property of output with main {}->{}",k,output.props(k)))
+    val pMain2 = output.props.get("value")
+    assert(pMain2.isDefined)
+    val pBackups2 = output.props.get("backups")
+    assert(pBackups2.isEmpty)
+
+  }
 
 }
