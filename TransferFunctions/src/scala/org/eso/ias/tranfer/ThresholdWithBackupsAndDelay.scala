@@ -3,14 +3,12 @@ package org.eso.ias.tranfer
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 
+import com.typesafe.scalalogging.Logger
 import org.eso.ias.asce.exceptions.{PropsMisconfiguredException, TypeMismatchException}
 import org.eso.ias.asce.transfer.{IasIO, ScalaTransferExecutor}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.{Alarm, IasValidity, OperationalMode}
 import org.eso.ias.types.IASTypes._
-
-import scala.collection.{JavaConverters, mutable}
-import scala.util.Try
 
 /**
   * This class is very similar to the BackupSelector but in case of a failure
@@ -124,39 +122,39 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
     ThresholdWithBackupsAndDelay.logger.debug("TF of ASCE [{}] initializing", asceId)
 
     if (delayToSet<0) {
-      throw new PropsMisconfiguredException(Map(ThresholdWithBackupsAndDelay.DelayToSetTimePropName->delayToSet.toString()))
+      throw new PropsMisconfiguredException(Map(ThresholdWithBackupsAndDelay.DelayToSetTimePropName->delayToSet.toString))
     }
     if (delayToSet==0) ThresholdWithBackupsAndDelay.logger.debug("No delay to set the alarm")
     else ThresholdWithBackupsAndDelay.logger.info("Delay to set alarm at {} seconds",delayToSet.toString)
 
     if (delayToClear<0) {
-      throw new PropsMisconfiguredException(Map(ThresholdWithBackupsAndDelay.DelayToClearTimePropName->delayToClear.toString()))
+      throw new PropsMisconfiguredException(Map(ThresholdWithBackupsAndDelay.DelayToClearTimePropName->delayToClear.toString))
     }
     if (delayToClear==0) ThresholdWithBackupsAndDelay.logger.debug("No delay to clear the alarm")
     else ThresholdWithBackupsAndDelay.logger.info("Delay to clear alarm at {} seconds",delayToClear.toString)
 
     if (highOn<highOff) {
       throw new PropsMisconfiguredException(
-        Map(ThresholdWithBackupsAndDelay.HighOnPropName->highOn.toString(),ThresholdWithBackupsAndDelay.HighOffPropName->highOff.toString()))
+        Map(ThresholdWithBackupsAndDelay.HighOnPropName->highOn.toString,ThresholdWithBackupsAndDelay.HighOffPropName->highOff.toString))
     }
 
     if (lowOff<lowOn) {
       throw new PropsMisconfiguredException(
-        Map(ThresholdWithBackupsAndDelay.LowOnPropName->lowOn.toString(),ThresholdWithBackupsAndDelay.LowOffPropName->lowOff.toString()))
+        Map(ThresholdWithBackupsAndDelay.LowOnPropName->lowOn.toString,ThresholdWithBackupsAndDelay.LowOffPropName->lowOff.toString))
     }
     if (lowOff>highOff) {
       throw new PropsMisconfiguredException(
-        Map(ThresholdWithBackupsAndDelay.LowOffPropName->lowOff.toString(),ThresholdWithBackupsAndDelay.HighOffPropName->highOff.toString()))
+        Map(ThresholdWithBackupsAndDelay.LowOffPropName->lowOff.toString,ThresholdWithBackupsAndDelay.HighOffPropName->highOff.toString))
     }
 
     if (idOfMainInput.isEmpty || idOfMainInput.get.isEmpty) {
       throw new PropsMisconfiguredException(
-        Map(ThresholdWithBackupsAndDelay.MaindIdPropName->lowOff.toString()))
+        Map(ThresholdWithBackupsAndDelay.MaindIdPropName->lowOff.toString))
     }
 
     if (alarmPriority==Alarm.CLEARED) {
       throw new PropsMisconfiguredException(
-        Map(ThresholdWithBackupsAndDelay.AlarmPriorityPropName->alarmPriority.toString()))
+        Map(ThresholdWithBackupsAndDelay.AlarmPriorityPropName->alarmPriority.toString))
     }
 
     ThresholdWithBackupsAndDelay.logger.info("TF of ASCE [{}]: ID of the main IASIO: [{}]",asceId,idOfMainInput)
@@ -201,24 +199,26 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
     * @return the values of the inputs, or empty if no IASIO is valid
     */
   def getIasiosWithBackup(inputs: Map[String, IasIO[_]]): List[IasIO[_]] = {
-    val validInputs = inputs.values.filter(
+    val validInputs: List[IasIO[_]] = inputs.values.filter(
       iasio => iasio.validity==IasValidity.RELIABLE && iasio.mode==OperationalMode.OPERATIONAL).toList
-    if (validInputs.contains(getIdentifier(idOfMainInput.get))) List(getValue(inputs,idOfMainInput.get).get)
+    if (validInputs.map(_.id).contains(getIdentifier(idOfMainInput.get))) List(getValue(inputs,idOfMainInput.get).get)
     else validInputs
   }
 
   /**
-    * Check if the output must be SET or CLEARED
+    * Check if the output must be SET or CLEARED because
+    * the value of the main input (or one of the backup) is
+    * over the threshold
     *
-    * @param wasSet
-    * @param iasios
-    * @return
+    * @param wasSet truee if the alarm was set
+    * @param iasios the IASIOs in input
+    * @return true if the alarm must be set
     */
   def mustBeSetByThreshold(wasSet: Boolean, iasios: List[IasIO[_]]): Boolean = {
-    require((iasios.nonEmpty))
-    val doubleValues: List[Double] = iasios.map(getDoubleValueOfIasio(_))
+    require(iasios.nonEmpty)
+    val doubleValues: List[Double] = iasios.map(getDoubleValueOfIasio)
 
-      (doubleValues.exists(_>=highOn) || doubleValues.exists((_<=lowOn))) ||
+      (doubleValues.exists(_>=highOn) || doubleValues.exists(_<=lowOn)) ||
     wasSet && (doubleValues.exists(_>=highOff) || doubleValues.exists(_<=lowOff))
   }
 
@@ -238,7 +238,7 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
     val actualOutputAlarm = actualOutput.value
 
     // If not yet initialized, assumed alarm not set
-    val wasSet = actualOutputAlarm.map(_ != Alarm.cleared()).getOrElse(false)
+    val wasSet = actualOutputAlarm.exists(_ != Alarm.cleared())
 
     // Get the valid IASIOs if any
     val iasios: List[IasIO[_]] = getIasiosWithBackup(compInputs)
@@ -256,7 +256,7 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
       // Immediate change as the output is not defined
       // This happens only once with the first set of input
       lastCalcAlarmState = Some(requestedAlarmByThreshold)
-    } else if (actualOutputAlarm.get != requestedAlarmByThreshold && requestedAlarmByThreshold != lastCalcAlarmState) {
+    } else if (actualOutputAlarm.get != requestedAlarmByThreshold && requestedAlarmByThreshold != lastCalcAlarmState.get) {
       lastStateChangeTimeRequest = System.currentTimeMillis()
       lastCalcAlarmState = Some(requestedAlarmByThreshold)
     }
@@ -308,38 +308,38 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
 object ThresholdWithBackupsAndDelay {
 
   /** The logger */
-  val logger = IASLogger.getLogger(ThresholdWithBackupsAndDelay.getClass)
+  val logger: Logger = IASLogger.getLogger(ThresholdWithBackupsAndDelay.getClass)
 
   /** The name of the HighOn property */
-  val HighOnPropName = "org.eso.ias.thresholdbackup.minmaxthreshold.highOn"
+  val HighOnPropName: String = "org.eso.ias.thresholdbackup.minmaxthreshold.highOn"
 
   /** The name of the HighOff property  */
-  val HighOffPropName = "org.eso.ias.thresholdbackup.minmaxthreshold.highOff"
+  val HighOffPropName: String = "org.eso.ias.thresholdbackup.minmaxthreshold.highOff"
 
   /** The name of the lowOn property */
-  val LowOnPropName = "org.eso.ias.thresholdbackup.minmaxthreshold.lowOn"
+  val LowOnPropName: String = "org.eso.ias.thresholdbackup.minmaxthreshold.lowOn"
 
   /** The name of the lowOff property  */
-  val LowOffPropName = "org.eso.ias.thresholdbackup.minmaxthreshold.lowOff"
+  val LowOffPropName: String = "org.eso.ias.thresholdbackup.minmaxthreshold.lowOff"
 
   /** The name of the property to set the priority of the alarm */
-  val AlarmPriorityPropName = "org.eso.ias.thresholdbackup.alarm.priority"
+  val AlarmPriorityPropName: String = "org.eso.ias.thresholdbackup.alarm.priority"
 
   /** The priority of the alarm generated by default */
   val AlarmPriorityDefault = Alarm.SET_MEDIUM
 
   /** The time to wait (seconds) before setting the alarm  */
-  val DelayToSetTimePropName = "org.eso.ias.thresholdbackup.delaiedthreshold.settime"
+  val DelayToSetTimePropName: String = "org.eso.ias.thresholdbackup.delaiedthreshold.settime"
 
   /** Delay to set is disabled by default */
   val DefaultDelayToSetTime =0
 
   /** The time to wait (seconds) before clearing the alarm  */
-  val DelayToClearTimePropName = "org.eso.ias.thresholdbackup.delaiedthreshold.cleartime"
+  val DelayToClearTimePropName: String = "org.eso.ias.thresholdbackup.delaiedthreshold.cleartime"
 
   /** Delay to clear is disabled by default */
   val DefaultDelayToClearTime =0
 
   /** The name of the property to set the ID of the main IASIO against the backups */
-  val MaindIdPropName = "org.eso.ias.thresholdbackup.selector.mainInputId"
+  val MaindIdPropName: String = "org.eso.ias.thresholdbackup.selector.mainInputId"
 }
