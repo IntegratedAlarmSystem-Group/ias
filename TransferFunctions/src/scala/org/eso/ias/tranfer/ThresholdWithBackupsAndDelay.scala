@@ -1,6 +1,7 @@
 package org.eso.ias.tranfer
 
 import java.util.Properties
+import java.util.concurrent.TimeUnit
 
 import org.eso.ias.asce.exceptions.{PropsMisconfiguredException, TypeMismatchException}
 import org.eso.ias.asce.transfer.{IasIO, ScalaTransferExecutor}
@@ -38,11 +39,18 @@ import scala.util.Try
 class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validityTimeFrame:Long, props: Properties)
   extends ScalaTransferExecutor[Alarm](asceId,asceRunningId,validityTimeFrame,props) {
 
-  /** Delay to set the alarm (secs) */
-  val delayToSet: Int = getValue(props, ThresholdWithBackupsAndDelay.DelayToSetTimePropName,ThresholdWithBackupsAndDelay.DefaultDelayToSetTime).toInt
+  /** Delay to set the alarm (msecs) */
+  val delayToSet: Long = {
+    val seconds = getValue(props, ThresholdWithBackupsAndDelay.DelayToSetTimePropName,ThresholdWithBackupsAndDelay.DefaultDelayToSetTime).toInt
+    TimeUnit.MILLISECONDS.convert(seconds,TimeUnit.SECONDS)
+  }
 
-  /** Delay to clear the alarm (secs) */
-  val delayToClear: Int = getValue(props, ThresholdWithBackupsAndDelay.DelayToClearTimePropName,ThresholdWithBackupsAndDelay.DefaultDelayToClearTime).toInt
+
+  /** Delay to clear the alarm (msecs) */
+  val delayToClear: Long = {
+    val seconds = getValue(props, ThresholdWithBackupsAndDelay.DelayToClearTimePropName,ThresholdWithBackupsAndDelay.DefaultDelayToClearTime).toInt
+    TimeUnit.MILLISECONDS.convert(seconds,TimeUnit.SECONDS)
+  }
 
   /**
     * The (high) alarm is activated when the value of the IASIO
@@ -60,7 +68,7 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
     * the (low) alarm is activated when the value of the IASIO is
     * lower then LowON
     */
-  val lowOn: Double =  getValue(props, ThresholdWithBackupsAndDelay.HighOnPropName, Double.MinValue)
+  val lowOn: Double =  getValue(props, ThresholdWithBackupsAndDelay.LowOnPropName, Double.MinValue)
 
   /**
     * if the (low) alarm is active and the value of the IASIO
@@ -141,10 +149,16 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
         Map(ThresholdWithBackupsAndDelay.LowOffPropName->lowOff.toString(),ThresholdWithBackupsAndDelay.HighOffPropName->highOff.toString()))
     }
 
-    if (idOfMainInput.isEmpty) {
+    if (idOfMainInput.isEmpty || idOfMainInput.get.isEmpty) {
       throw new PropsMisconfiguredException(
         Map(ThresholdWithBackupsAndDelay.MaindIdPropName->lowOff.toString()))
     }
+
+    if (alarmPriority==Alarm.CLEARED) {
+      throw new PropsMisconfiguredException(
+        Map(ThresholdWithBackupsAndDelay.AlarmPriorityPropName->alarmPriority.toString()))
+    }
+
     ThresholdWithBackupsAndDelay.logger.info("TF of ASCE [{}]: ID of the main IASIO: [{}]",asceId,idOfMainInput)
     ThresholdWithBackupsAndDelay.logger.info("TF of ASCE [{}]: priority of alarm: [{}]",asceId,alarmPriority.name())
 
