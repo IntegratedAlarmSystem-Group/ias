@@ -6,6 +6,7 @@ import java.util.Properties;
 
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.KStream;
 import org.apache.kafka.streams.StreamsBuilder;
@@ -60,6 +61,21 @@ public class ConverterKafkaStream extends ConverterStream {
 	 */
 	public static final String KAFKA_SERVERS_PROP_NAME = "org.eso.ias.converter.kafka.servers";
 
+    /**
+     * The name of the property to customize the group id of the consumer
+     */
+    public static final String KAFKA_CONSUMER_GROUP_ID_PROP_NAME = "org.eso.ias.converter.kafka.consumer.groupid";
+
+    /**
+     * The group.id used by the consumer of the KafkaStream
+     */
+    private final String streamConsumerGroupId;
+
+    /**
+     * The default groupid of the Kafka consumer
+     */
+    public static final String DEFAULT_CONSUMER_GROUPID = "ConvertersGroup";
+
 	/**
 	 * The list of kafka servers to connect to
 	 */
@@ -108,12 +124,11 @@ public class ConverterKafkaStream extends ConverterStream {
 		}
 		
 		pluginsInputKTopicName=props.getProperty(PLUGIN_TOPIC_NAME_PROP_NAME, KafkaHelper.PLUGINS_TOPIC_NAME);
+		Objects.requireNonNull(pluginsInputKTopicName);
 		iasCoreOutputKTopicName=props.getProperty(IASCORE_TOPIC_NAME_PROP_NAME, KafkaHelper.IASIOs_TOPIC_NAME);
+		Objects.requireNonNull(iasCoreOutputKTopicName);
+		streamConsumerGroupId=props.getProperty(KAFKA_CONSUMER_GROUP_ID_PROP_NAME,DEFAULT_CONSUMER_GROUPID);
 
-		logger.debug("Will connect to {} to send data from {} to {}",
-				kafkaServers,
-				pluginsInputKTopicName,
-				iasCoreOutputKTopicName);
 	}
 
 	/**
@@ -130,16 +145,14 @@ public class ConverterKafkaStream extends ConverterStream {
 			String pluginTopicName,
 			String iasCoreTopicName) {
 		super(converterID);
+
 		Objects.requireNonNull(servers);
 		kafkaServers = servers;
 		Objects.requireNonNull(pluginTopicName);
 		pluginsInputKTopicName = pluginTopicName;
 		Objects.requireNonNull(iasCoreTopicName);
 		iasCoreOutputKTopicName = iasCoreTopicName;
-		logger.debug("Will connect to {} to send data from {} to {}",
-				kafkaServers,
-				pluginsInputKTopicName,
-				iasCoreOutputKTopicName);
+		streamConsumerGroupId=System.getProperties().getProperty(KAFKA_CONSUMER_GROUP_ID_PROP_NAME,DEFAULT_CONSUMER_GROUPID);
 	}
 
 	/**
@@ -148,10 +161,19 @@ public class ConverterKafkaStream extends ConverterStream {
 	 */
 	public void init() {
 		logger.debug("Initializing...");
+		Properties props = setKafkaProps();
 		KStream<String, String> source = builder.stream(pluginsInputKTopicName);
         source.mapValues(jString -> mapper.apply(jString)).filter((key,value) -> value!=null && !value.isEmpty()).to(iasCoreOutputKTopicName);
-        streams = new KafkaStreams(builder.build(), setKafkaProps());
-        logger.debug("Initialized.");
+        for (String k: props.stringPropertyNames()) {
+            System.out.println("===> prop["+k+"]="+props.getProperty(k));
+
+        }
+        streams = new KafkaStreams(builder.build(), props);
+
+        logger.info("Initialized with {} kafka brokers, to send data from {} to {}",
+                kafkaServers,
+				pluginsInputKTopicName,
+				iasCoreOutputKTopicName);
 	}
 
 
@@ -163,11 +185,14 @@ public class ConverterKafkaStream extends ConverterStream {
 	 */
 	private Properties setKafkaProps() {
 		Properties props = new Properties();
-		props.put(StreamsConfig.APPLICATION_ID_CONFIG, converterID);
+		// Note that the application.id is used also to assign the group.id of the consumer
+		props.put(StreamsConfig.APPLICATION_ID_CONFIG, streamConsumerGroupId);
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaServers);
         props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());
         props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());
-		props.put("auto.offset.reset", "latest");
+        props.put(StreamsConfig.consumerPrefix(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG),"latest");
+        // Auto commit cannot be set because the stram uses its own way to commit
+        // props.put(StreamsConfig.consumerPrefix(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG),"true");
         return props;
 	}
 
