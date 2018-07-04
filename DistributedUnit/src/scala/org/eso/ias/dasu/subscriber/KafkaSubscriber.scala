@@ -20,8 +20,7 @@ import org.eso.ias.kafkautils.KafkaIasiosProducer
  *  KafkaSubscriber delegates to KafkaIasiosConsumer.
  *  
  *  @param dasuId the identifier of the owner
- *  @param serversList the list of kafka brojkers to connect to
- *  @param topicName the name of the kafka topic to poll events from
+ *  @param kafkaConsumer the Kafka consumer
  *  @param props additional properties
  */
 class KafkaSubscriber(
@@ -32,7 +31,8 @@ extends IasioListener with InputSubscriber {
   require(Option(dasuId).isDefined && !dasuId.isEmpty())
   require(Option(kafkaConsumer).isDefined && !dasuId.isEmpty())
   require(Option(props).isDefined)
-  
+
+  props.setProperty("client.id",dasuId)
   props.setProperty("group.id", dasuId+"-GroupID")
   
   /** The logger */
@@ -54,7 +54,7 @@ extends IasioListener with InputSubscriber {
   /**
 	 * Process an event (a String) received from the kafka topic
 	 * 
-	 * @param event The string received in the topic
+	 * @param iasValue The value received in the topic
 	 * @see KafkaConsumerListener
 	 */
 	override def iasioReceived(iasValue: IASValue[_]) = {
