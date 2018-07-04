@@ -106,10 +106,12 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame, pro
    * 
    * This method merely checks if the values of the properties are coherent
    * with the definitions given above.
-   * 
+   *
+   * @param inputIds The IDs of the inputs
+   * @param outputId The ID of the output
    * @see TransferExecutor#initialize()
    */
-  def initialize() {
+  override def initialize(inputIds: Set[String], outputId: String) {
     if (highOn<highOff) {
       throw new PropsMisconfiguredException(Map(highOnPropName->highOn.toString(),highOffPropName->highOff.toString()))
     }
@@ -129,7 +131,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame, pro
   /**
    * @see ScalaTransferExecutor#eval
    */
-  def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
+  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
     if (compInputs.size!=1) {
       throw new UnexpectedNumberOfInputsException(compInputs.size,1)
     }

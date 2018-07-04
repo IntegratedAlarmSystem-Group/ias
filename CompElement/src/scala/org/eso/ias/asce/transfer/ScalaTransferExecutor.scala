@@ -71,5 +71,13 @@ extends TransferExecutor(cEleId,cEleRunningId,validityTimeFrame,props) {
 	 * @return the computed value to set as output of the ASCE
 	 */
 	def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[T]): IasIO[T]
+
+	/**
+		* Initialize the transfer function
+		*
+		* @param inputIds The IDs of the inputs
+		* @param outputId The ID of the output
+		*/
+	def initialize(inputIds: Set[String], outputId: String): Unit
   
 }

@@ -3,6 +3,7 @@ package org.eso.ias.asce.transfer.impls;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import org.eso.ias.types.Alarm;
 import org.eso.ias.types.IASTypes;
@@ -142,11 +143,13 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor<Alarm> {
 	 * 
 	 * This method merely checks if the values of the properties are coherent
 	 * with the definitions given above.
-	 * 
-	 * @see TransferExecutor#initialize()
+	 *
+	 * @param inputIds The IDs of the inputs
+    * @param outputId The IdD of th output
+	 * @see TransferExecutor#initialize
 	 */
 	@Override
-	public void initialize() throws Exception {
+	public void initialize(Set<String> inputIds, String outputId) throws Exception {
 		if (highOn < highOff) {
 			Properties p = new Properties();
 			p.put(MinMaxThresholdTFJava.highOnPropName, "" + highOn);
@@ -203,7 +206,7 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor<Alarm> {
 		}
 		
 		System.out.println("===>"+actualOutput.getId()+" "+actualOutput.getValue());
-		boolean wasActivated = actualOutput.getValue().isPresent() && ((Alarm)actualOutput.getValue().get()).isSet();
+		boolean wasActivated = actualOutput.getValue().isPresent() && actualOutput.getValue().get().isSet();
 		
 		boolean condition = 
 				hioValue >= highOn || hioValue <= lowOn ||

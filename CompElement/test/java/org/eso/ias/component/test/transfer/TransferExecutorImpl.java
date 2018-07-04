@@ -2,6 +2,7 @@ package org.eso.ias.component.test.transfer;
 
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import org.eso.ias.asce.transfer.IasIOJ;
 import org.eso.ias.asce.transfer.JavaTransferExecutor;
@@ -25,15 +26,15 @@ public class TransferExecutorImpl  extends JavaTransferExecutor<Alarm> {
 	 * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
 	 * @param props: the user defined properties
 	 */
-	public TransferExecutorImpl(String cEleId, 
-			String cEleRunningId,
+	public TransferExecutorImpl(String asceId,
+			String asceRunningId,
 			long validityTimeFrame,
 			Properties props) {
-		super(cEleId,cEleRunningId,validityTimeFrame,props);
+		super(asceId,asceRunningId,validityTimeFrame,props);
 	}
 
 	@Override
-	public void initialize() throws Exception {
+	public void initialize(Set<String> inputIds, String outputId) throws Exception {
 		System.out.println("java TransferExecutorImpl: Initializing");
 	}
 

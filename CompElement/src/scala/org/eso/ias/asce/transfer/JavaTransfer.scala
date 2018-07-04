@@ -4,8 +4,11 @@ import org.eso.ias.types.Identifier
 import org.eso.ias.types.InOut
 import org.eso.ias.asce.ComputingElement
 import java.util.Properties
-import java.util.{Map => JavaMap, HashMap => JavaHashMap}
+import java.util.{HashMap => JavaHashMap, Map => JavaMap}
+
 import org.eso.ias.types.IASValue
+
+import scala.collection.JavaConverters
 import scala.util.Try
 
 /**
@@ -51,6 +54,21 @@ trait JavaTransfer[T] extends ComputingElement[T] {
       tfSetting.transferExecutor.get.asInstanceOf[JavaTransferExecutor[T]].
         eval( map, out).inOut.asInstanceOf[InOut[T]]
     }
+  }
+
+  /**
+    * Initialize the scala transfer function
+    *
+    * @param inputIds The IDs of the inputs
+    * @param outputId The IdD of th output
+    * @return
+    */
+  def initTransferFunction(inputIds: Set[String], outputId: String): Try[Unit] = {
+    require(Option(inputIds).isDefined && inputIds.nonEmpty,"Invalid empty set of IDs of inputs")
+    require(Option(outputId).isDefined && !outputId.isEmpty,"Invalid empty set ID of output")
+    val javaInputIds = JavaConverters.setAsJavaSet(inputIds)
+    Try(tfSetting.transferExecutor.get.asInstanceOf[JavaTransferExecutor[T]].
+      initialize(javaInputIds, outputId))
   }
   
 }

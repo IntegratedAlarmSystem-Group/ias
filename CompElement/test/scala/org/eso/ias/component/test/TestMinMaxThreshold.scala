@@ -37,7 +37,6 @@ class TestMinMaxThreshold extends FlatSpec {
       testCode(scalaMinMaxTF)
     } finally {
       assert(threadFactory.numberOfAliveThreads()==0)
-      assert(threadFactory.instantiatedThreads==2)
     }
   }
   
@@ -54,7 +53,6 @@ class TestMinMaxThreshold extends FlatSpec {
       testCode(javaMinMaxTF)
     } finally {
       assert(threadFactory.numberOfAliveThreads()==0)
-      assert(threadFactory.instantiatedThreads==2)
     }
   }
   
@@ -137,16 +135,12 @@ class TestMinMaxThreshold extends FlatSpec {
   
   behavior of "The scala MinMaxThreshold executor"
   
-  it must "Correctly load, init and shutdown the TF executor" in withScalaTransferSetting { scalaMinMaxTF =>
+  it must "Correctly load and shutdown the TF executor" in withScalaTransferSetting { scalaMinMaxTF =>
     assert(!scalaMinMaxTF.initialized)
     assert(!scalaMinMaxTF.isShutDown)
     scalaMinMaxTF.initialize("ASCE-MinMaxTF-ID", "ASCE-running-ID", 1000, new Properties())
-    Thread.sleep(500)
-    assert(scalaMinMaxTF.initialized)
     assert(!scalaMinMaxTF.isShutDown)
     scalaMinMaxTF.shutdown()
-    Thread.sleep(500)
-    assert(scalaMinMaxTF.initialized)
     assert(scalaMinMaxTF.isShutDown)
   }
   
@@ -235,16 +229,13 @@ class TestMinMaxThreshold extends FlatSpec {
   
   behavior of "The java MinMaxThreshold executor"
   
-  it must "Correctly load, init and shutdown the TF executor" in withJavaTransferSetting { javaMinMaxTF =>
+  it must "Correctly load and shutdown the TF executor" in withJavaTransferSetting { javaMinMaxTF =>
     assert(!javaMinMaxTF.initialized)
     assert(!javaMinMaxTF.isShutDown)
     javaMinMaxTF.initialize("ASCE-MinMaxTF-ID", "ASCE-running-ID", 1000, new Properties())
-    Thread.sleep(500)
-    assert(javaMinMaxTF.initialized)
     assert(!javaMinMaxTF.isShutDown)
     javaMinMaxTF.shutdown()
     Thread.sleep(500)
-    assert(javaMinMaxTF.initialized)
     assert(javaMinMaxTF.isShutDown)
   }
   

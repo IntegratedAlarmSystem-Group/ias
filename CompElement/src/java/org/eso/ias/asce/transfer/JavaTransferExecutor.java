@@ -3,6 +3,7 @@ package org.eso.ias.asce.transfer;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.Set;
 
 import org.eso.ias.types.IASValue;
 import org.eso.ias.types.Identifier;
@@ -88,5 +89,14 @@ public abstract class JavaTransferExecutor<T> extends TransferExecutor {
 	 * @throws Exception in case of error
 	 */
 	public abstract IasIOJ<T> eval(Map<String, IasIOJ<?>> compInputs, IasIOJ<T> actualOutput) throws Exception;
+
+	/**
+	 * Initialize the transfer function
+	 *
+	 * @param inputIds The IDs of the inputs
+	 * @param outputId The ID of the output
+	 * @throws Exception in case of errors
+	 */
+	public abstract void initialize(Set<String> inputIds, String outputId) throws Exception;
 
 }

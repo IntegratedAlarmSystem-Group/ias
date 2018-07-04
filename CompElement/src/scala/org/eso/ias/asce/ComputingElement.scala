@@ -269,6 +269,15 @@ abstract class ComputingElement[T](
       inputs: Map[String, InOut[_]], 
       id: Identifier,
       actualOutput: InOut[T]) : Try[InOut[T]]
+
+  /**
+    * Initialize the scala transfer function
+    *
+    * @param inputIds The IDs of the inputs
+    * @param outputId The IdD of th output
+    * @return
+    */
+  def initTransferFunction(inputIds: Set[String], outputId: String): Try[Unit]
   
   override def toString() = {
     val outStr: StringBuilder = new StringBuilder("State of ASCE [")
@@ -300,7 +309,8 @@ abstract class ComputingElement[T](
    */
   def initialize(): AsceStates.State = {
     assert(state.actualState==AsceStates.Initializing)
-    state = if (tfSetting.initialize(id, asceIdentifier.runningID, validityThreshold, props)) {
+    state = if (tfSetting.initialize(id, asceIdentifier.runningID, validityThreshold, props) &&
+      initTransferFunction(acceptedInputIds,output.id.id).isSuccess) {
       ComputingElementState.transition(state, new Initialized())
     } else { 
       ComputingElementState.transition(state, new Broken())

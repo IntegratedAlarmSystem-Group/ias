@@ -63,9 +63,11 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
     Option(props.getProperty(MultiplicityTF.alarmPriorityPropName)).map(Alarm.valueOf(_)).getOrElse(Alarm.getSetDefault)
   
   /**
+   * @param inputIds The IDs of the inputs
+   * @param outputId The ID of the output
    * @see TransferExecutor#shutdown()
    */
-  def initialize() {
+  def initialize(inputIds: Set[String], outputId: String) {
   }
   
   /**

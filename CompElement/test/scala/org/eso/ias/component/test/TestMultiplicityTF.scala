@@ -119,7 +119,7 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   
   behavior of "The scala MultiplicityTF executor"
   
-  it must "Correctly load, init and shutdown the multiplicity TF executor" in { 
+  it must "Correctly load and shutdown the multiplicity TF executor" in {
     val multuiplicityTF = new TransferFunctionSetting(
       "org.eso.ias.asce.transfer.impls.MultiplicityTF",
         TransferFunctionLanguage.scala,
@@ -129,12 +129,8 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
     assert(!multuiplicityTF.initialized)
     assert(!multuiplicityTF.isShutDown)
     multuiplicityTF.initialize("ASCE-MinMaxTF-ID", "ASCE-running-ID", 1000, new Properties())
-    Thread.sleep(500)
-    assert(multuiplicityTF.initialized)
     assert(!multuiplicityTF.isShutDown)
     multuiplicityTF.shutdown()
-    Thread.sleep(500)
-    assert(multuiplicityTF.initialized)
     assert(multuiplicityTF.isShutDown)
   }
   

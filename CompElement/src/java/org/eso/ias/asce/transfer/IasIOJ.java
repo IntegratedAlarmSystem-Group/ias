@@ -1,23 +1,18 @@
 package org.eso.ias.asce.transfer;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IasValidity;
 import org.eso.ias.types.InOut;
 import org.eso.ias.types.OperationalMode;
 
-import scala.Predef;
 import scala.Tuple2;
 import scala.Option;
 import scala.Some;
 import scala.collection.JavaConverters;
+import scala.collection.Seq;
 
 /**
  * The java countr part of the scala IasIO, that is
@@ -87,7 +82,7 @@ public class IasIOJ<T> {
 	   * 
 	   * To remove the constraints, the passed set must be empty
 	   * 
-	   * @param the constraint the constraints (can be null)
+	   * @param constraint the constraint the constraints (can be null)
 	   */
 	  public IasIOJ<T> setValidityConstraint(Set<String> constraint) {
 		  Option<scala.collection.immutable.Set<String>> scalaSet = Option.apply(null); // None
@@ -102,19 +97,22 @@ public class IasIOJ<T> {
 	  /**
 	   * Return a new IasIO with the passed additional properties.
 	   * 
-	   * @param The additional properties
+	   * @param additionalProps additional properties
 	   * @return a new IasIOJ with the passed additional properties
 	   */
-    public IasIOJ<T> updateProps(Map<String, String> additionalProps) {
+    public IasIOJ<T> updateProps(java.util.Map<String, String> additionalProps) {
     	if (additionalProps==null) {
     		additionalProps = new HashMap<String, String>();
     	}
-    	scala.collection.immutable.Map<String,String> immutableMap = 
-    			JavaConverters.mapAsScalaMapConverter(additionalProps).asScala().toMap(
-    		      Predef.<Tuple2<String, String>>conforms()
-    		    );
-    	
-    	return new IasIOJ<T>(inOut.updateProps(immutableMap));
+
+		List<Tuple2<String, String>> tuples = additionalProps.entrySet()
+				.stream()
+				.map(e -> Tuple2.apply(e.getKey(), e.getValue()))
+				.collect(Collectors.toList());
+
+		Seq<Tuple2<String, String>> scalaSeq = JavaConverters.asScalaBuffer(tuples).toSeq();
+
+		return new IasIOJ<T>(inOut.updateProps((scala.collection.immutable.Map<String, String>) scala.collection.immutable.Map$.MODULE$.apply(scalaSeq)));
     }
     
     /**
