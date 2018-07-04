@@ -5,6 +5,7 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.eso.ias.asce.transfer.IasIOJ;
+import org.eso.ias.asce.transfer.IasioInfo;
 import org.eso.ias.asce.transfer.JavaTransferExecutor;
 import org.eso.ias.types.Alarm;
 import org.eso.ias.types.OperationalMode;
@@ -33,8 +34,16 @@ public class TransferExecutorImpl  extends JavaTransferExecutor<Alarm> {
 		super(asceId,asceRunningId,validityTimeFrame,props);
 	}
 
+
+	/**
+	 * Initialize the transfer function
+	 *
+	 * @param inputsInfo The IDs and types of the inputs
+	 * @param outputInfo The Id and type of thr output
+	 * @throws Exception in case of errors
+	 */
 	@Override
-	public void initialize(Set<String> inputIds, String outputId) throws Exception {
+	public void initialize(Set<IasioInfo> inputsInfo, IasioInfo outputInfo) throws Exception {
 		System.out.println("java TransferExecutorImpl: Initializing");
 	}
 

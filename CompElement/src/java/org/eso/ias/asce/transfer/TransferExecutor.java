@@ -79,6 +79,15 @@ public abstract class TransferExecutor {
 			throw new IllegalArgumentException("Invalid empty ID and/orf FullRunningID");
 		}
 	}
+
+	/**
+	 * Set the instance of the template, if any
+	 *
+	 * @param templateInstance the instance of the template
+	 */
+	public final void setTemplateInstance(Optional<Integer> templateInstance) {
+		this.templateInstance=templateInstance;
+	}
 	
 	/**
 	 * @return <code>true</code> if the ASCE where the TF runs has been

@@ -2,16 +2,15 @@ package org.eso.ias.component.test.transfer
 
 import java.util.Properties
 
-import org.eso.ias.asce.transfer.ScalaTransferExecutor
+import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import org.eso.ias.types.OperationalMode
 import org.eso.ias.types.Alarm
-import org.eso.ias.asce.transfer.IasIO
 
 /**
  * A scala TransferExecutor for testing purposes
  * 
- * @param asceId: the ID of the ASCE
- * @param asceRunningId: the runningID of the ASCE
+ * @param cEleId: the ID of the ASCE
+ * @param cEleRunningId: the runningID of the ASCE
  * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
  * @param props: the user defined properties
  * @see TransferExecutor
@@ -21,13 +20,14 @@ class TransferExample(
 		cEleRunningId: String,
 		validityTimeFrame: Long,
 		props: Properties) extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,props) {
-  
+
   /**
-   * Intialization
-   * 
-   * @see TransferExecutor
-   */
-  override def initialize(inputIds: Set[String], outputId: String): Unit=  {
+    * Initialize the TF
+    *
+    * @param inputsInfo The IDs and types of the inputs
+    * @param outputInfo The Id and type of thr output
+    **/
+  override def initialize(inputsInfo: Set[IasioInfo], outputInfo: IasioInfo): Unit = {
     println("Scala TransferExample intializing")
   }
   

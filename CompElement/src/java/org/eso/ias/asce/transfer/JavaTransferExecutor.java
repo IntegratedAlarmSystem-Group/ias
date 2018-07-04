@@ -93,10 +93,10 @@ public abstract class JavaTransferExecutor<T> extends TransferExecutor {
 	/**
 	 * Initialize the transfer function
 	 *
-	 * @param inputIds The IDs of the inputs
-	 * @param outputId The ID of the output
+	 * @param inputsInfo The IDs and types of the inputs
+     * @param outputInfo The Id and type of thr output
 	 * @throws Exception in case of errors
 	 */
-	public abstract void initialize(Set<String> inputIds, String outputId) throws Exception;
+	public abstract void initialize(Set<IasioInfo> inputsInfo, IasioInfo outputInfo) throws Exception;
 
 }

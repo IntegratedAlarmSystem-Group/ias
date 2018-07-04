@@ -1,14 +1,14 @@
 package org.eso.ias.asce.transfer.impls
 
-import org.eso.ias.asce.transfer.ScalaTransferExecutor
+import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import java.util.Properties
+
 import org.eso.ias.asce.exceptions.PropsMisconfiguredException
 import org.eso.ias.asce.exceptions.UnexpectedNumberOfInputsException
 import org.eso.ias.types.IASTypes._
 import org.eso.ias.asce.exceptions.TypeMismatchException
 import MinMaxThresholdTF._
 import org.eso.ias.types.Alarm
-import org.eso.ias.asce.transfer.IasIO
 
 /**
  * The TF implementing a Min/Max threshold TF  (there is also
@@ -107,11 +107,10 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame, pro
    * This method merely checks if the values of the properties are coherent
    * with the definitions given above.
    *
-   * @param inputIds The IDs of the inputs
-   * @param outputId The ID of the output
-   * @see TransferExecutor#initialize()
+   * @param inputsInfo The IDs and types of the inputs
+   * @param outputInfo The Id and type of thr output
    */
-  override def initialize(inputIds: Set[String], outputId: String) {
+  def initialize(inputsInfo: Set[IasioInfo],outputInfo: IasioInfo): Unit = {
     if (highOn<highOff) {
       throw new PropsMisconfiguredException(Map(highOnPropName->highOn.toString(),highOffPropName->highOff.toString()))
     }
