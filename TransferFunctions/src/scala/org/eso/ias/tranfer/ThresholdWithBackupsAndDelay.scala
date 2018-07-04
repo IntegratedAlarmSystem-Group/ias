@@ -118,7 +118,7 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
     *
     * @see TransferExecutor#initialize()
     */
-  override def initialize() {
+  override def initialize(inputIds: Set[String], outputId: String): Unit = {
     ThresholdWithBackupsAndDelay.logger.debug("TF of ASCE [{}] initializing", asceId)
 
     if (delayToSet<0) {
@@ -228,8 +228,7 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
     */
   override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
     assert(compInputs.values.forall(_.value.isDefined)) // This should be ensured by ASCE
-
-    require(getValue(compInputs, idOfMainInput.get).isDefined)
+    assert(getValue(compInputs, idOfMainInput.get).isDefined,"ID of main input not found")
     if (actualOutput.iasType != ALARM) {
       throw new TypeMismatchException(actualOutput.fullRunningId, actualOutput.iasType, ALARM)
     }

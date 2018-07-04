@@ -1,13 +1,13 @@
 package org.eso.ias.component.test.transfer
 
 import java.util.Properties
-import org.eso.ias.asce.transfer.ScalaTransferExecutor
+
+import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import org.eso.ias.types.Alarm
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.InOut
 import org.eso.ias.types.OperationalMode
 import org.eso.ias.types.IASTypes
-import org.eso.ias.asce.transfer.IasIO
 
 /**
  * The TF to check the functioning of the setting of the validity
@@ -17,8 +17,8 @@ import org.eso.ias.asce.transfer.IasIO
  * and set the validity constraints according to the string contained in the
  * input with ID constraintSetterID
  * 
- * @param asceId: the ID of the ASCE
- * @param asceRunningId: the runningID of the ASCE
+ * @param cEleId: the ID of the ASCE
+ * @param cEleRunningId: the runningID of the ASCE
  * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
  * @param props: the user defined properties
  */
@@ -30,13 +30,12 @@ class ConstraintValidityTF (
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
-  
+
   /**
-   * Intialization
-   * 
-   * @see TransferExecutor
-   */
-  override def initialize(inputIds: Set[String], outputId: String): Unit= {
+    * @param inputsInfo The IDs and types of the inputs
+    * @param outputInfo The Id and type of thr output
+    **/
+  override def initialize(inputsInfo: Set[IasioInfo], outputInfo: IasioInfo): Unit = {
     logger.info("Initializing")
   }
   

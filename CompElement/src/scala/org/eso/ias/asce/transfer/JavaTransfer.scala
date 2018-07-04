@@ -3,8 +3,7 @@ package org.eso.ias.asce.transfer
 import org.eso.ias.types.Identifier
 import org.eso.ias.types.InOut
 import org.eso.ias.asce.ComputingElement
-import java.util.Properties
-import java.util.{HashMap => JavaHashMap, Map => JavaMap}
+import java.util.{Optional, Properties, HashMap => JavaHashMap, Map => JavaMap}
 
 import org.eso.ias.types.IASValue
 
@@ -59,16 +58,27 @@ trait JavaTransfer[T] extends ComputingElement[T] {
   /**
     * Initialize the scala transfer function
     *
-    * @param inputIds The IDs of the inputs
-    * @param outputId The IdD of th output
+    * @param inputsInfo The IDs and types of the inputs
+    * @param outputInfo The Id and type of thr output
+    * @param instance the instance
     * @return
     */
-  def initTransferFunction(inputIds: Set[String], outputId: String): Try[Unit] = {
-    require(Option(inputIds).isDefined && inputIds.nonEmpty,"Invalid empty set of IDs of inputs")
-    require(Option(outputId).isDefined && !outputId.isEmpty,"Invalid empty set ID of output")
-    val javaInputIds = JavaConverters.setAsJavaSet(inputIds)
+  def initTransferFunction(
+                            inputsInfo: Set[IasioInfo],
+                            outputInfo: IasioInfo,
+                            instance: Option[Int]): Try[Unit] = {
+    require(Option(inputsInfo).isDefined && inputsInfo.nonEmpty,"Invalid empty set of IDs of inputs")
+    require(Option(outputInfo).isDefined,"Invalid empty set ID of output")
+    require(Option(instance).isDefined,"Unknown if it is tempated or not")
+
+    if (instance.isDefined) {
+      tfSetting.transferExecutor.get.setTemplateInstance(Optional.of(Int.box(instance.get)));
+    } else {
+      tfSetting.transferExecutor.get.setTemplateInstance(Optional.empty());
+    }
+    val javaInputIds = JavaConverters.setAsJavaSet(inputsInfo)
     Try(tfSetting.transferExecutor.get.asInstanceOf[JavaTransferExecutor[T]].
-      initialize(javaInputIds, outputId))
+      initialize(javaInputIds, outputInfo))
   }
   
 }

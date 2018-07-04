@@ -2,6 +2,8 @@ package org.eso.ias.tranfer
 
 import org.eso.ias.asce.transfer.ScalaTransferExecutor
 import java.util.Properties
+
+import com.typesafe.scalalogging.Logger
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.OperationalMode
 import org.eso.ias.types.Validity
@@ -58,13 +60,8 @@ extends ScalaTransferExecutor[T](asceId,asceRunningId,validityTimeFrame,props) {
 	 * @return the computed output of the ASCE
 	 */
 	override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[T]): IasIO[T] = {
-    if (compInputs.size!=prioritizedIDs.size ||
-        !compInputs.keys.forall(key => prioritizedIDs.contains(key))) {
-      throw new BackupSelectorException("Input ids ["+compInputs.keys.mkString(",")+"] not contained in constraint ["+prioritizedIDs.mkString(",")+"]")
-    }
-    require(
-        compInputs.keys.forall(key => prioritizedIDs.contains(key)),
-        "Input ids ["+compInputs.keys.mkString(",")+"] not contained in constraint ["+prioritizedIDs.mkString(",")+"]")
+    assert(compInputs.size==prioritizedIDs.size && compInputs.keys.forall(id => prioritizedIDs.contains(id)))
+
 
     def updateOutput[B >: T](
         value: B,
@@ -110,11 +107,19 @@ extends ScalaTransferExecutor[T](asceId,asceRunningId,validityTimeFrame,props) {
    *
    * @see TransferExecutor#initialize()
    */
-  override def initialize() {
+  override def initialize(inputIds: Set[String], outputId: String) {
      BackupSelector.logger.debug("TF of [{}] initializing", asceId)
 
+    if (inputIds.size!=prioritizedIDs.size ||
+      !inputIds.forall(id => prioritizedIDs.contains(id))) {
+      throw new BackupSelectorException("Input ids ["+inputIds.mkString(",")+"] not contained in constraint ["+prioritizedIDs.mkString(",")+"]")
+    }
+    require(
+      inputIds.forall(key => prioritizedIDs.contains(key)),
+      "Input ids ["+inputIds.mkString(",")+"] not contained in constraint ["+prioritizedIDs.mkString(",")+"]")
+
      require(prioritizedIDs.length>1,s"$BackupSelector.PrioritizedIdsPropName must contain at least 2 IDs")
-     require(prioritizedIDs.forall(!_.isEmpty()),s"$BackupSelector.PrioritizedIdsPropName malformed")
+     require(prioritizedIDs.forall(!_.isEmpty),s"$BackupSelector.PrioritizedIdsPropName malformed")
      BackupSelector.logger.info("Priority list of IDs  [{}]", prioritizedIDs.mkString(","))
   }
 
@@ -138,7 +143,7 @@ object BackupSelector {
   /**
    * The logger
    */
-  val logger = IASLogger.getLogger(BackupSelector.getClass)
+  val logger: Logger = IASLogger.getLogger(BackupSelector.getClass)
       
   /** The property to get the prioritized list of IDs  */
   val PrioritizedIdsPropName = "org.eso.ias.tf.selector.prioritizedids"

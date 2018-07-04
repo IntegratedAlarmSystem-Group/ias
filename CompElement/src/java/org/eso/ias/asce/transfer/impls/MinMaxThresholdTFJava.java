@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import org.eso.ias.asce.transfer.IasioInfo;
 import org.eso.ias.types.Alarm;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.asce.exceptions.PropsMisconfiguredException;
@@ -144,12 +145,12 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor<Alarm> {
 	 * This method merely checks if the values of the properties are coherent
 	 * with the definitions given above.
 	 *
-	 * @param inputIds The IDs of the inputs
-    * @param outputId The IdD of th output
-	 * @see TransferExecutor#initialize
+	 * @param inputsInfo The IDs and types of the inputs
+	 * @param outputInfo The Id and type of thr output
+	 * @throws Exception in case of errors
 	 */
 	@Override
-	public void initialize(Set<String> inputIds, String outputId) throws Exception {
+	public void initialize(Set<IasioInfo> inputsInfo, IasioInfo outputInfo) throws Exception {
 		if (highOn < highOff) {
 			Properties p = new Properties();
 			p.put(MinMaxThresholdTFJava.highOnPropName, "" + highOn);

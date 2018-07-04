@@ -1,16 +1,17 @@
 package org.eso.ias.asce.transfer.impls
 
-import org.eso.ias.asce.transfer.ScalaTransferExecutor
+import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import org.eso.ias.types.IASTypes._
 import java.util.Properties
+
 import org.eso.ias.asce.exceptions.PropNotFoundException
 import org.eso.ias.asce.exceptions.WrongPropValue
+
 import scala.util.control.NonFatal
 import org.eso.ias.asce.exceptions.UnexpectedNumberOfInputsException
 import org.eso.ias.asce.exceptions.TypeMismatchException
 import org.eso.ias.asce.exceptions.TypeMismatchException
 import org.eso.ias.types.Alarm
-import org.eso.ias.asce.transfer.IasIO
 
 /**
  * Implements the Multiplicity transfer function.
@@ -63,12 +64,10 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
     Option(props.getProperty(MultiplicityTF.alarmPriorityPropName)).map(Alarm.valueOf(_)).getOrElse(Alarm.getSetDefault)
   
   /**
-   * @param inputIds The IDs of the inputs
-   * @param outputId The ID of the output
-   * @see TransferExecutor#shutdown()
-   */
-  def initialize(inputIds: Set[String], outputId: String) {
-  }
+   * @param inputsInfo The IDs and types of the inputs
+   * @param outputInfo The Id and type of thr output
+   **/
+  override def initialize(inputsInfo: Set[IasioInfo], outputInfo: IasioInfo): Unit = { }
   
   /**
    * @see TransferExecutor#shutdown()

@@ -1,8 +1,7 @@
 package org.eso.ias.component.test.transfer
 
-import org.eso.ias.asce.transfer.ScalaTransferExecutor
+import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import java.util.Properties
-import org.eso.ias.asce.transfer.IasIO
 
 /**
  * A transfer function that throws an exception: it allows to test if the
@@ -20,13 +19,14 @@ class ThrowExceptionTF(
 		cEleRunningId: String,
 		validityTimeFrame: Long,
 		props: Properties) extends ScalaTransferExecutor(cEleId,cEleRunningId,validityTimeFrame,props) {
-  
+
   /**
-   * Intialization
-   * 
-   * @see TransferExecutor
-   */
-  override def initialize(inputIds: Set[String], outputId: String): Unit=  { }
+    * Initialize the TF
+    *
+    * @param inputsInfo The IDs and types of the inputs
+    * @param outputInfo The Id and type of thr output
+    **/
+  override def initialize(inputsInfo: Set[IasioInfo], outputInfo: IasioInfo): Unit = {}
   
   /**
    * Shut dwon

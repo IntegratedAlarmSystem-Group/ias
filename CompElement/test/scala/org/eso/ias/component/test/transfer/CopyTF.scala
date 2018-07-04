@@ -2,11 +2,10 @@ package org.eso.ias.component.test.transfer
 
 import java.util.Properties
 
-import org.eso.ias.asce.transfer.ScalaTransferExecutor
+import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import org.eso.ias.types.OperationalMode
 import org.eso.ias.types.Alarm
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.asce.transfer.IasIO
 
 /**
  * A scala TransferExecutor for testing purposes.
@@ -28,13 +27,14 @@ class CopyTF(
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
-  
+
   /**
-   * Intialization
-   * 
-   * @see TransferExecutor
-   */
-  override def initialize(inputIds: Set[String], outputId: String): Unit= {
+    * Initialize the TF
+    *
+    * @param inputsInfo The IDs and types of the inputs
+    * @param outputInfo The Id and type of thr output
+    **/
+  override def initialize(inputsInfo: Set[IasioInfo], outputInfo: IasioInfo): Unit = {
     println("Scala TransferExample intializing")
   }
   

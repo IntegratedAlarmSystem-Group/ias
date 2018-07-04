@@ -75,9 +75,9 @@ extends TransferExecutor(cEleId,cEleRunningId,validityTimeFrame,props) {
 	/**
 		* Initialize the transfer function
 		*
-		* @param inputIds The IDs of the inputs
-		* @param outputId The ID of the output
+		* @param inputsInfo The IDs and types of the inputs
+    * @param outputInfo The Id and type of thr output
 		*/
-	def initialize(inputIds: Set[String], outputId: String): Unit
+	def initialize(inputsInfo: Set[IasioInfo],outputInfo: IasioInfo): Unit
   
 }

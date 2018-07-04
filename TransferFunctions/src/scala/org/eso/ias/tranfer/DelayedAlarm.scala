@@ -77,7 +77,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
    * 
    * @see TransferExecutor#initialize()
    */
-  override def initialize() {
+  override def initialize(inputIds: Set[String], outputId: String): Unit = {
     DelayedAlarm.logger.debug("Initializing TF of [{}]", cEleId)
     
     if (waitTimeToSet.isEmpty || waitTimeToClear.isEmpty) {
