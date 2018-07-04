@@ -2,7 +2,6 @@ package org.eso.ias.dasu.subscriber
 
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IasValueJsonSerializer
-import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener
 import java.util.Properties
 import org.eso.ias.kafkautils.KafkaHelper
 import scala.util.Try
@@ -11,7 +10,6 @@ import scala.collection.mutable.{HashSet => MutableSet}
 import org.eso.ias.kafkautils.KafkaIasiosConsumer
 import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener
 import org.eso.ias.types.IASValue
-import org.eso.ias.kafkautils.KafkaIasiosProducer
 
 /** 
  *  Read IASValues from the kafka queue 
@@ -28,8 +26,8 @@ class KafkaSubscriber(
     private val kafkaConsumer: KafkaIasiosConsumer,
     val props: Properties) 
 extends IasioListener with InputSubscriber {
-  require(Option(dasuId).isDefined && !dasuId.isEmpty())
-  require(Option(kafkaConsumer).isDefined && !dasuId.isEmpty())
+  require(Option(dasuId).isDefined && !dasuId.isEmpty)
+  require(Option(kafkaConsumer).isDefined && !dasuId.isEmpty)
   require(Option(props).isDefined)
 
   props.setProperty("client.id",dasuId)
@@ -57,13 +55,13 @@ extends IasioListener with InputSubscriber {
 	 * @param iasValue The value received in the topic
 	 * @see KafkaConsumerListener
 	 */
-	override def iasioReceived(iasValue: IASValue[_]) = {
+	override def iasioReceived(iasValue: IASValue[_]): Unit = {
 	  try {
 	    if (acceptedInputs.isEmpty || acceptedInputs.contains(iasValue.id)) {
 	      listener.foreach( l => l.inputsReceived(Set(iasValue)))
 	    }
 	  } catch {
-	    case e: Exception => logger.error("Subscriber of [{}] got an error processing event [{}]", dasuId,iasValue.toString(),e)
+	    case e: Exception => logger.error("Subscriber of [{}] got an error processing event [{}]", dasuId,iasValue.toString,e)
 	  }
 	}
   
@@ -130,7 +128,7 @@ object KafkaSubscriber {
       props: Properties): KafkaSubscriber = {
     
     // Get the topic from the parameter or from the default  
-    val topic = kafkaTopic.getOrElse(KafkaHelper.IASIOs_TOPIC_NAME);
+    val topic = kafkaTopic.getOrElse(KafkaHelper.IASIOs_TOPIC_NAME)
     
     val serversFromProps = Option( props.getProperty(KafkaHelper.BROKERS_PROPNAME))
     val kafkaBrokers = (serversFromProps, kafkaServers) match {
