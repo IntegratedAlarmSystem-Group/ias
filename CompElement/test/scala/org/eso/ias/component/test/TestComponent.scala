@@ -102,12 +102,12 @@ class TestComponent extends FlatSpec {
        actualInputs,
        tfSetting,
        validityThresholdInSecs,
-       new Properties()) with JavaTransfer[Alarm]
+       new Properties()) with ScalaTransfer[Alarm]
     
     assert(comp.asceIdentifier==compId)
     assert(comp.output.id==outId)
     
-    // A newly created ASCE haa a state equal to Initializing
+    // A newly created ASCE has a state equal to Initializing
     assert(comp.getState()==AsceStates.Initializing)
     
     // After a correct initialization, the state changes to InputsUndefined

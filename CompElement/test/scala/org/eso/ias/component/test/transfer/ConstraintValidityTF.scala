@@ -36,7 +36,7 @@ class ConstraintValidityTF (
    * 
    * @see TransferExecutor
    */
-  override def initialize() {
+  override def initialize(inputIds: Set[String], outputId: String): Unit= {
     logger.info("Initializing")
   }
   

@@ -99,8 +99,7 @@ class TransferFunctionSetting(
   }
   
   /**
-   * Load, build and initialize the object to run
-   * the transfer function.
+   * Load and build the executor of the  transfer function.
    * 
    * This can be slow and access remote resources
    *  so it must be run in a worker thread
@@ -137,49 +136,11 @@ class TransferFunctionSetting(
     if (transferExecutor.isEmpty) {
       logger.error("Error instantiating the TF {}",className)
     }
-    
-    transferExecutor.foreach( te => {
-      logger.debug("TF of type {} instantiated", className)
-      val thread = threadFactory.newThread(new Runnable() {
-          def run() {
-            logger.debug("Async initializing the executor of {}", className)
-            initialized = initExecutor(te)
-          }
-        })
-        thread.start()
-        thread.join(60000)
-        if (thread.isAlive()) {
-          logger.warn("User provided shutdown did not terminate in 60 secs.") 
-        } else {
-         logger.info("Async initialization of the executor of {} terminated", className) 
-        }
-    })
+
     transferExecutor.isDefined
     
   }
 
-  /**
-   * Initialize the passed executor
-   * 
-   * @param executor: The executor to initialize
-   * @return true if the TE has been correctly initialized, false otherwise
-   */
-  private[this] def initExecutor(executor: TransferExecutor): Boolean = {
-    require(Option(executor).isDefined)
-    try {
-      val instance: Optional[Integer] = templateInstance match {
-        case None => Optional.empty()
-        case Some(v) => Optional.of(v)
-      }
-      executor.internalInitialize(instance)
-      true
-    } catch {
-        case e: Exception => 
-          logger.error("Exception caught initializing {}",className,e)
-          false
-      }
-  }
-  
   /**
    * Shutdown the passed executor
    * 
