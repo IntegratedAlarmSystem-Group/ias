@@ -1,9 +1,9 @@
 package org.eso.ias.supervisor.test.tf
 
 import java.util.Properties
-import org.eso.ias.asce.transfer.ScalaTransferExecutor
+
+import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import org.eso.ias.types.Alarm
-import org.eso.ias.asce.transfer.IasIO
 
 /**
  * A TF to test the getting of values with getValue
@@ -13,8 +13,8 @@ import org.eso.ias.asce.transfer.IasIO
  * with templated and non templated TF i.e. when getting a 
  * templated value passing its ID only.
  * 
- * @param asceId: the ID of the ASCE
- * @param asceRunningId: the runningID of the ASCE
+ * @param cEleId: the ID of the ASCE
+ * @param cEleRunningId: the runningID of the ASCE
  * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
  * @param props: the user defined properties    
  * @author acaproni
@@ -31,8 +31,14 @@ extends ScalaTransferExecutor[Long](cEleId,cEleRunningId,validityTimeFrame,props
    * The ID of the templated param
    */
   val templatedId = "TemplatedId"
-  
-  override def initialize() {
+
+  /**
+    * Initialize the TF
+    *
+    * @param inputsInfo The IDs and types of the inputs
+    * @param outputInfo The Id and type of thr output
+    **/
+  override def initialize(inputsInfo: Set[IasioInfo], outputInfo: IasioInfo): Unit = {
     println("Initialized "+getTemplateInstance().orElse(null));
   }
   
