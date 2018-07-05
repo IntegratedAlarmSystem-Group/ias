@@ -3,6 +3,7 @@ package org.eso.ias.asce.transfer
 import java.util.Optional
 
 import org.eso.ias.asce.ComputingElement
+import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.{IASTypes, Identifier, InOut}
 
 import scala.util.Try
@@ -21,6 +22,9 @@ trait ScalaTransfer[T] extends ComputingElement[T] {
    * The programming language of this TF 
    */
   val tfLanguage = TransferFunctionLanguage.scala
+
+  /** The logger */
+  private val logger = IASLogger.getLogger(this.getClass)
 
   /**
     * Runs the scala transfer function
@@ -58,6 +62,10 @@ trait ScalaTransfer[T] extends ComputingElement[T] {
     require(Option(inputsInfo).isDefined && inputsInfo.nonEmpty,"Invalid empty set of IDs of inputs")
     require(Option(outputInfo).isDefined,"Invalid empty set ID of output")
     require(Option(instance).isDefined,"Unknown if it is tempated or not")
+
+    logger.debug("Initializing the transfer function wint inputs {} and output {}",
+      inputsInfo.map(_.iasioId).mkString(","),outputInfo.iasioId)
+    instance.foreach(i =>  logger.debug("This TF is templated with index {}",i))
     if(instance.isDefined) {
       tfSetting.transferExecutor.get.setTemplateInstance(Optional.of(Int.box(instance.get)))
     } else {
