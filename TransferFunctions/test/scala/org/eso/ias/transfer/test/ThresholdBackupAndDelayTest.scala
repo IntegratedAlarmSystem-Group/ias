@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit
 import java.util.{Optional, Properties}
 
 import org.eso.ias.asce.exceptions.PropsMisconfiguredException
-import org.eso.ias.asce.transfer.IasIO
+import org.eso.ias.asce.transfer.{IasIO, IasioInfo}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.tranfer.ThresholdWithBackupsAndDelay
 import org.eso.ias.types._
@@ -33,7 +33,13 @@ class ThresholdBackupAndDelayTest extends FlatSpec with BeforeAndAfterEach {
   /** the IASIO in output */
   val out: IasIO[Double] = new IasIO(InOut.asOutput(outId,IASTypes.ALARM))
 
+  /** Ouput info for the initialize */
+  val outputInfo = new IasioInfo(outId.id,IASTypes.ALARM)
+
   val inputIds: List[String] = (for (i <- 1 to 5) yield "InputID"+i).toList
+
+  /** Inputs Info for the initialize */
+  val inputinfos = inputIds.map(id => new IasioInfo(id,IASTypes.DOUBLE)).toSet
 
   /** The Identifiers of the inputs */
   val inputIDentifiers= inputIds.map(id => new Identifier(id,IdentifierType.IASIO, Some(compID)))
@@ -128,7 +134,7 @@ class ThresholdBackupAndDelayTest extends FlatSpec with BeforeAndAfterEach {
   }
 
   it must "correctly intialize" in {
-    defaultTF.initialize(inputIds.toSet,outId.id)
+    defaultTF.initialize(inputinfos,outputInfo)
   }
 
   it must "catch errors in parameters" in {
@@ -144,37 +150,38 @@ class ThresholdBackupAndDelayTest extends FlatSpec with BeforeAndAfterEach {
 
 
     val tf = new ThresholdWithBackupsAndDelay(compID.id,compID.fullRunningID,validityTimeFrame,props)
-    assertThrows[PropsMisconfiguredException] { tf.initialize(inputIds.toSet,outId.id) }
+    assertThrows[PropsMisconfiguredException] { tf.initialize(inputinfos,outputInfo) }
 
     props.put(ThresholdWithBackupsAndDelay.HighOffPropName,"8") // Removes previous error
     props.put(ThresholdWithBackupsAndDelay.LowOnPropName,"0") // New Error
     val tf2 = new ThresholdWithBackupsAndDelay(compID.id,compID.fullRunningID,validityTimeFrame,props)
-    assertThrows[PropsMisconfiguredException] { tf2.initialize(inputIds.toSet,outId.id) }
+    assertThrows[PropsMisconfiguredException] { tf2.initialize(inputinfos,outputInfo) }
 
     props.put(ThresholdWithBackupsAndDelay.LowOnPropName,"-12") // Removes previous error
     props.put(ThresholdWithBackupsAndDelay.AlarmPriorityPropName,Alarm.CLEARED.name())
     val tf3 = new ThresholdWithBackupsAndDelay(compID.id,compID.fullRunningID,validityTimeFrame,props)
-    assertThrows[PropsMisconfiguredException] { tf3.initialize(inputIds.toSet,outId.id) }
+    assertThrows[PropsMisconfiguredException] { tf3.initialize(inputinfos,outputInfo) }
 
     props.put(ThresholdWithBackupsAndDelay.AlarmPriorityPropName,Alarm.SET_MEDIUM.name()) // Removes previous error
     props.put(ThresholdWithBackupsAndDelay.DelayToSetTimePropName,"-1")
     val tf4 = new ThresholdWithBackupsAndDelay(compID.id,compID.fullRunningID,validityTimeFrame,props)
-    assertThrows[PropsMisconfiguredException] { tf4.initialize(inputIds.toSet,outId.id) }
+    assertThrows[PropsMisconfiguredException] { tf4.initialize(inputinfos,outputInfo) }
 
     props.put(ThresholdWithBackupsAndDelay.DelayToSetTimePropName,"0") // Removes previous error
     props.put(ThresholdWithBackupsAndDelay.DelayToClearTimePropName,"-1")
     val tf5 = new ThresholdWithBackupsAndDelay(compID.id,compID.fullRunningID,validityTimeFrame,props)
-    assertThrows[PropsMisconfiguredException] { tf5.initialize(inputIds.toSet,outId.id) }
+    assertThrows[PropsMisconfiguredException] { tf5.initialize(inputinfos,outputInfo) }
 
     props.put(ThresholdWithBackupsAndDelay.DelayToClearTimePropName,"5") // Removes previous error
     props.put(ThresholdWithBackupsAndDelay.MaindIdPropName,"")
     val tf6 = new ThresholdWithBackupsAndDelay(compID.id,compID.fullRunningID,validityTimeFrame,props)
-    assertThrows[PropsMisconfiguredException] { tf6.initialize(inputIds.toSet,outId.id) }
+    assertThrows[PropsMisconfiguredException] { tf6.initialize(inputinfos,outputInfo) }
 
   }
 
   it must "produce a CLEAR alarm at beginning" in {
-    defaultTF.initialize(inputIds.toSet,outId.id)
+    defaultTF.initialize(inputinfos,outputInfo)
+    defaultTF.setTemplateInstance(Optional.empty()) // Normally done by the ASCE
     val newOutput: IasIO[Alarm] = defaultTF.eval(initialMapOfInputs, initialOutput)
 
     assert(newOutput.value.isDefined)
@@ -187,7 +194,8 @@ class ThresholdBackupAndDelayTest extends FlatSpec with BeforeAndAfterEach {
 
 
     val tf = new ThresholdWithBackupsAndDelay(compID.id, compID.fullRunningID, validityTimeFrame, defaultProps)
-    tf.initialize(inputIds.toSet,outId.id)
+    tf.initialize(inputinfos,outputInfo)
+    tf.setTemplateInstance(Optional.empty()) // Normally done by the ASCE
 
     val io = initialMapOfInputs(mainInputId)
     val newValue = io.updateValue(100.0)
@@ -213,7 +221,8 @@ class ThresholdBackupAndDelayTest extends FlatSpec with BeforeAndAfterEach {
     defaultProps.put(ThresholdWithBackupsAndDelay.DelayToSetTimePropName, "0")
 
     val tf = new ThresholdWithBackupsAndDelay(compID.id, compID.fullRunningID, validityTimeFrame, defaultProps)
-    tf.initialize(inputIds.toSet,outId.id)
+    tf.initialize(inputinfos,outputInfo)
+    tf.setTemplateInstance(Optional.empty()) // Normally done by the ASCE
 
     var output = initialOutput
     for (i <- 0 to 15) {
@@ -246,7 +255,8 @@ class ThresholdBackupAndDelayTest extends FlatSpec with BeforeAndAfterEach {
     defaultProps.put(ThresholdWithBackupsAndDelay.DelayToSetTimePropName, "0")
 
     val tf = new ThresholdWithBackupsAndDelay(compID.id, compID.fullRunningID, validityTimeFrame, defaultProps)
-    tf.initialize(inputIds.toSet,outId.id)
+    tf.initialize(inputinfos,outputInfo)
+    tf.setTemplateInstance(Optional.empty()) // Normally done by the ASCE
 
     val inOut: InOut[Double] = InOut.asInput(mainInputIdentifer,IASTypes.DOUBLE).updateMode(OperationalMode.MAINTENANCE).updateValue(Some(3D))
     val value =initialMapOfInputs("InputID3").updateValue(25.toDouble)
@@ -270,7 +280,8 @@ class ThresholdBackupAndDelayTest extends FlatSpec with BeforeAndAfterEach {
     defaultProps.put(ThresholdWithBackupsAndDelay.DelayToSetTimePropName, "0")
 
     val tf = new ThresholdWithBackupsAndDelay(compID.id, compID.fullRunningID, validityTimeFrame, defaultProps)
-    tf.initialize(inputIds.toSet,outId.id)
+    tf.initialize(inputinfos,outputInfo)
+    tf.setTemplateInstance(Optional.empty()) // Normally done by the ASCE
 
     val inOut: InOut[Double] = InOut.asInput(mainInputIdentifer,IASTypes.DOUBLE).updateMode(OperationalMode.MAINTENANCE).updateValue(Some(3D))
     val value =initialMapOfInputs("InputID3").updateValue(25.toDouble)
@@ -297,7 +308,8 @@ class ThresholdBackupAndDelayTest extends FlatSpec with BeforeAndAfterEach {
 
   it must "wait before activating" in {
     val tf = new ThresholdWithBackupsAndDelay(compID.id, compID.fullRunningID, validityTimeFrame, defaultProps)
-    tf.initialize(inputIds.toSet,outId.id)
+    tf.initialize(inputinfos,outputInfo)
+    tf.setTemplateInstance(Optional.empty()) // Normally done by the ASCE
 
     val mapSet = initialMapOfInputs +( mainInputId -> initialMapOfInputs(mainInputId).updateValue(30D))
     val mapUnset =  initialMapOfInputs +( mainInputId -> initialMapOfInputs(mainInputId).updateValue(0D))
@@ -329,7 +341,8 @@ class ThresholdBackupAndDelayTest extends FlatSpec with BeforeAndAfterEach {
   it must "wait before de-activating" in {
     defaultProps.put(ThresholdWithBackupsAndDelay.DelayToSetTimePropName,"0")
     val tf = new ThresholdWithBackupsAndDelay(compID.id, compID.fullRunningID, validityTimeFrame, defaultProps)
-    tf.initialize(inputIds.toSet,outId.id)
+    tf.initialize(inputinfos,outputInfo)
+    tf.setTemplateInstance(Optional.empty()) // Normally done by the ASCE
 
     val mapSet = initialMapOfInputs +( mainInputId -> initialMapOfInputs(mainInputId).updateValue(-200D))
     val mapUnset =  initialMapOfInputs +( mainInputId -> initialMapOfInputs(mainInputId).updateValue(0D))
@@ -360,7 +373,8 @@ class ThresholdBackupAndDelayTest extends FlatSpec with BeforeAndAfterEach {
 
   it must "be steady if the input oscillates" in {
     val tf = new ThresholdWithBackupsAndDelay(compID.id, compID.fullRunningID, validityTimeFrame, defaultProps)
-    tf.initialize(inputIds.toSet,outId.id)
+    tf.initialize(inputinfos,outputInfo)
+    tf.setTemplateInstance(Optional.empty()) // Normally done by the ASCE
 
     val mapSet = initialMapOfInputs +( mainInputId -> initialMapOfInputs(mainInputId).updateValue(30D))
     val mapUnset =  initialMapOfInputs +( mainInputId -> initialMapOfInputs(mainInputId).updateValue(0D))
