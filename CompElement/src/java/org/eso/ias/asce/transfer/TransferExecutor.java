@@ -4,7 +4,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 
+import org.eso.ias.converter.Converter;
 import org.eso.ias.types.Identifier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 
@@ -48,6 +51,11 @@ public abstract class TransferExecutor {
 	 * if empty the ASCE is not generated out of a template
 	 */
 	private Optional<Integer> templateInstance;
+
+    /**
+     * The logger
+     */
+    private static final Logger logger = LoggerFactory.getLogger(Converter.class);
 	
 	/**
 	 * Constructor
@@ -86,6 +94,12 @@ public abstract class TransferExecutor {
 	 * @param templateInstance the instance of the template
 	 */
 	public final void setTemplateInstance(Optional<Integer> templateInstance) {
+		Objects.requireNonNull(templateInstance);
+		if (templateInstance.isPresent()) {
+		    logger.info("This TF IS templated with instance {}",templateInstance.get());
+        } else {
+		    logger.info("This TF is templated");
+        }
 		this.templateInstance=templateInstance;
 	}
 	
@@ -96,18 +110,6 @@ public abstract class TransferExecutor {
 	public boolean isTemplated() {
 		return templateInstance.isPresent();
 	}
-	
-	/**
-	 * Initialize the transfer function.
-	 * 
-	 * The life cycle method is called once by the IAS and always before running eval.
-	 * User initialization code goes here. In particular long lasting operations
-	 * like reading from a database should go here while eval is supposed 
-	 * to return as soon as possible.
-	 * 
-	 * @throws Exception In case of error initializing
-	 */
-//	public abstract void initialize() throws Exception;
 	
 	/**
 	 * Shuts down the BehaviorRunner when the IAS does not need it anymore.
