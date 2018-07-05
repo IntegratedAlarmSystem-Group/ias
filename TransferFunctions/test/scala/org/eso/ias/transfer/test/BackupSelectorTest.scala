@@ -111,12 +111,12 @@ class BackupSelectorTest extends FlatSpec {
     val tf = new BackupSelector[Double](compID.id,compID.fullRunningID,validityTimeFrame,props)
     
     val inputs = Map(main.id-> main, a.id -> a, b.id -> b, wrong.id -> wrong)
-    assertThrows[BackupSelectorException] {
+    assertThrows[AssertionError] {
       tf.eval(inputs, out)
     }
     
     val inputs2 = Map(main.id-> main, a.id -> a, b.id -> b, c.id -> c, wrong.id -> wrong)
-    assertThrows[BackupSelectorException] {
+    assertThrows[AssertionError] {
       tf.eval(inputs2, out)
     }
     

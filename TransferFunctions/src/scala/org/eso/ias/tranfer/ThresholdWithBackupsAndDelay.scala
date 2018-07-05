@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit
 
 import com.typesafe.scalalogging.Logger
 import org.eso.ias.asce.exceptions.{PropsMisconfiguredException, TypeMismatchException}
-import org.eso.ias.asce.transfer.{IasIO, ScalaTransferExecutor}
+import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.{Alarm, IasValidity, OperationalMode}
 import org.eso.ias.types.IASTypes._
@@ -113,13 +113,16 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
   }
 
   /**
-    * Initialization: it basically checks if the
-    * provided delays are valid
+    * Initialize the TF
     *
-    * @see TransferExecutor#initialize()
-    */
-  override def initialize(inputIds: Set[String], outputId: String): Unit = {
+    * @param inputsInfo The IDs and types of the inputs
+    * @param outputInfo The Id and type of thr output
+    **/
+  override def initialize(inputsInfo: Set[IasioInfo], outputInfo: IasioInfo): Unit = {
     ThresholdWithBackupsAndDelay.logger.debug("TF of ASCE [{}] initializing", asceId)
+    if (outputInfo.iasioType != ALARM) {
+      throw new TypeMismatchException(outputInfo.iasioId, outputInfo.iasioType, ALARM)
+    }
 
     if (delayToSet<0) {
       throw new PropsMisconfiguredException(Map(ThresholdWithBackupsAndDelay.DelayToSetTimePropName->delayToSet.toString))
@@ -157,7 +160,7 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
         Map(ThresholdWithBackupsAndDelay.AlarmPriorityPropName->alarmPriority.toString))
     }
 
-    ThresholdWithBackupsAndDelay.logger.info("TF of ASCE [{}]: ID of the main IASIO: [{}]",asceId,idOfMainInput)
+    ThresholdWithBackupsAndDelay.logger.info("TF of ASCE [{}]: ID of the main IASIO: [{}]",asceId,idOfMainInput.get)
     ThresholdWithBackupsAndDelay.logger.info("TF of ASCE [{}]: priority of alarm: [{}]",asceId,alarmPriority.name())
 
     ThresholdWithBackupsAndDelay.logger.info("TF of ASCE [{}] initialized", asceId)
@@ -229,9 +232,7 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
   override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
     assert(compInputs.values.forall(_.value.isDefined)) // This should be ensured by ASCE
     assert(getValue(compInputs, idOfMainInput.get).isDefined,"ID of main input not found")
-    if (actualOutput.iasType != ALARM) {
-      throw new TypeMismatchException(actualOutput.fullRunningId, actualOutput.iasType, ALARM)
-    }
+
 
     // The actual Alarm
     val actualOutputAlarm = actualOutput.value

@@ -5,13 +5,15 @@ import org.eso.ias.tranfer.DelayedAlarm
 import org.eso.ias.types.Identifier
 import org.eso.ias.types.IdentifierType
 import java.util.Properties
+
 import org.eso.ias.types.InOut
 import org.eso.ias.types.IASTypes
 import org.eso.ias.tranfer.DelayedAlarmException
 import org.eso.ias.types.Alarm
 import java.util.concurrent.TimeUnit
+
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.asce.transfer.IasIO
+import org.eso.ias.asce.transfer.{IasIO, IasioInfo}
 
 /**
  * test the DelayedAlarm TF
@@ -59,7 +61,7 @@ class DelayedAlarmTest extends FlatSpec {
     val tf = new DelayedAlarm(compID.id,compID.fullRunningID,1000,new Properties())
     
     assertThrows[DelayedAlarmException] {
-      tf.initialize(Set(initialInput.id),initialInput.id)
+      tf.initialize(Set(new IasioInfo(initialInput.id,IASTypes.ALARM)),new IasioInfo(initialOutput.id,initialOutput.iasType))
     }
     
     // Invalid times
@@ -69,7 +71,7 @@ class DelayedAlarmTest extends FlatSpec {
     
     val tf2 = new DelayedAlarm(compID.id,compID.fullRunningID,1000,props)
     assertThrows[DelayedAlarmException] {
-      tf.initialize(Set(initialInput.id),initialInput.id)
+      tf.initialize(Set(new IasioInfo(initialInput.id,IASTypes.ALARM)),new IasioInfo(initialOutput.id,initialOutput.iasType))
     }
     
     // Invalid times
@@ -79,16 +81,16 @@ class DelayedAlarmTest extends FlatSpec {
     
     val tf3 = new DelayedAlarm(compID.id,compID.fullRunningID,1000,props2)
     assertThrows[DelayedAlarmException] {
-      tf.initialize(Set(initialInput.id),initialInput.id)
+      tf.initialize(Set(new IasioInfo(initialInput.id,IASTypes.ALARM)),new IasioInfo(initialOutput.id,initialOutput.iasType))
     }
     
-    // Valid times: initialize succeeeds
+    // Valid times: initialize succeeds
     val props3 = new Properties
     props3.put(DelayedAlarm.delayToClearTimePropName, "5")
     props3.put(DelayedAlarm.delayToSetTimePropName, "10")
     
     val tf4 = new DelayedAlarm(compID.id,compID.fullRunningID,1000,props3)
-    tf.initialize(Set(initialInput.id),initialInput.id)
+    tf4.initialize(Set(new IasioInfo(initialInput.id,IASTypes.ALARM)),new IasioInfo(initialOutput.id,initialOutput.iasType))
   }
   
   it must "produce a CLEARED alarm at the beginning" in {
@@ -96,7 +98,7 @@ class DelayedAlarmTest extends FlatSpec {
     props.put(DelayedAlarm.delayToClearTimePropName, "5")
     props.put(DelayedAlarm.delayToSetTimePropName, "10")
     val tf = new DelayedAlarm(compID.id,compID.fullRunningID,1000,props)
-    tf.initialize(Set(initialInput.id),initialInput.id)
+    tf.initialize(Set(new IasioInfo(initialInput.id,IASTypes.ALARM)),new IasioInfo(initialOutput.id,initialOutput.iasType))
     val map = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.getSetDefault))
     
     val newOutput = tf.eval(map, initialOutput)
@@ -111,7 +113,7 @@ class DelayedAlarmTest extends FlatSpec {
     props.put(DelayedAlarm.delayToClearTimePropName, "15")
     props.put(DelayedAlarm.delayToSetTimePropName, timeToSet.toString())
     val tf = new DelayedAlarm(compID.id,compID.fullRunningID,1000,props)
-    tf.initialize(Set(initialInput.id),initialInput.id)
+    tf.initialize(Set(new IasioInfo(initialInput.id,IASTypes.ALARM)),new IasioInfo(initialOutput.id,initialOutput.iasType))
     
     // Send the initial value
     val map = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.getSetDefault))
@@ -145,7 +147,7 @@ class DelayedAlarmTest extends FlatSpec {
     props.put(DelayedAlarm.delayToClearTimePropName, timeToClear.toString())
     props.put(DelayedAlarm.delayToSetTimePropName, timeToSet.toString())
     val tf = new DelayedAlarm(compID.id,compID.fullRunningID,1000,props)
-    tf.initialize(Set(initialInput.id),initialInput.id)
+    tf.initialize(Set(new IasioInfo(initialInput.id,IASTypes.ALARM)),new IasioInfo(initialOutput.id,initialOutput.iasType))
     
     // Send the initial value
     val map = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.getSetDefault))
@@ -186,7 +188,7 @@ class DelayedAlarmTest extends FlatSpec {
     props.put(DelayedAlarm.delayToClearTimePropName, timeToClear.toString())
     props.put(DelayedAlarm.delayToSetTimePropName, timeToSet.toString())
     val tf = new DelayedAlarm(compID.id,compID.fullRunningID,1000,props)
-    tf.initialize(Set(initialInput.id),initialInput.id)
+    tf.initialize(Set(new IasioInfo(initialInput.id,IASTypes.ALARM)),new IasioInfo(initialOutput.id,initialOutput.iasType))
     
     val mapSet = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.getSetDefault))
     val mapUnset = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.CLEARED))

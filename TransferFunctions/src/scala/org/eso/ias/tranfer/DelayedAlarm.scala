@@ -1,14 +1,14 @@
 package org.eso.ias.tranfer
 
-import org.eso.ias.asce.transfer.ScalaTransferExecutor
+import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 
 import org.eso.ias.types.Alarm
 import org.eso.ias.logging.IASLogger
+
 import scala.util.Try
 import org.eso.ias.types.IASTypes
-import org.eso.ias.asce.transfer.IasIO
 
 /**
  * The exception thrown by this TF in case of 
@@ -32,14 +32,17 @@ class DelayedAlarmException(msg: String) extends Exception(msg)
  * The best way to get the alarm close to the required time frame
  * is to tune the refresh rate of the Supervisor where this TF is executed.
  * 
- * @param asceId: the ID of the ASCE
- * @param asceRunningId: the runningID of the ASCE
+ * @param cEleId: the ID of the ASCE
+ * @param cEleRunningId: the runningID of the ASCE
  * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
  * @param props: the user defined properties    
  * @author acaproni
  */
 class DelayedAlarm(cEleId: String, cEleRunningId: String, validityTimeFrame: Long, props: Properties) 
 extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,props) {
+
+  /** The logger */
+  private val logger = IASLogger.getLogger(this.getClass)
   
   /**
    * Get the value of the passed property, if defined
@@ -54,12 +57,14 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
    * The string with the delay (seconds) before setting the output if the input was set 
    */
   val waitTimeToSet: Option[Long] = getValue(DelayedAlarm.delayToSetTimePropName)
+  waitTimeToSet.foreach(wtts => logger.debug("Time to set: {}",wtts))
   
   /**
    * The  string with the delay (seconds) before setting the output if the input was set 
    */
   val waitTimeToClear: Option[Long] = getValue(DelayedAlarm.delayToClearTimePropName)
-  
+  waitTimeToClear.foreach(wttc => logger.debug("Time to clear: {}",wttc))
+
   /**
    * The point in time when the input changed its state
    * from SET to CLEAR or vice-versa
@@ -70,16 +75,26 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
    * The previously received alarm
    */
   private var lastInputValue: Option[Alarm]=None
-  
+
   /**
-   * Initialization: it basically checks if the 
-   * provided delays are valid 
-   * 
-   * @see TransferExecutor#initialize()
-   */
-  override def initialize(inputIds: Set[String], outputId: String): Unit = {
+    * Initialize the TF
+    *
+    * @param inputsInfo The IDs and types of the inputs
+    * @param outputInfo The Id and type of thr output
+    **/
+  override def initialize(inputsInfo: Set[IasioInfo], outputInfo: IasioInfo): Unit = {
     DelayedAlarm.logger.debug("Initializing TF of [{}]", cEleId)
-    
+
+    // This TF expects one and only one input
+	  if (inputsInfo.size!=1) {
+	    throw new DelayedAlarmException("Expected only 1 input but got "+inputsInfo.size)
+	  }
+    // Is the input an alarm?
+    if (inputsInfo.head.iasioType!=IASTypes.ALARM) {
+      throw new DelayedAlarmException("Input type is not alarm: "+inputsInfo.head.iasioType)
+    }
+
+
     if (waitTimeToSet.isEmpty || waitTimeToClear.isEmpty) {
       throw new DelayedAlarmException("Time to set and/or time to clear properties not provided")
     }
@@ -89,6 +104,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
     if (waitTimeToSet.get==0 && waitTimeToClear.get==0) {
       throw new DelayedAlarmException("No delays set: delayToSet=0, delayToClear==0")
     }
+
     DelayedAlarm.logger.debug("TF of [{}] initialized with delayToSet=[{}], delayToClear=[{}]", 
         cEleId, waitTimeToSet.get.toString(), waitTimeToClear.get.toString())
   }
@@ -109,22 +125,12 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
 	  // Here waitTimeToClear and waitTimeToSet must be defined because if they are not
 	  // an exception in thrown by initialize() and the execution of the TF never enabled
 	  assert(waitTimeToClear.isDefined && waitTimeToSet.isDefined)
-	  
-	  
-	  // This TF expects one and only one input
-	  if (compInputs.values.size!=1) {
-	    throw new DelayedAlarmException("Expected only 1 input but got "+compInputs.values.size)
-	  }
+
 	  
 	  // Get the input
 	  val iasio = compInputs.values.head
     assert(iasio.value.isDefined)
-	  
-	  // Is the input an alarm?
-    if (iasio.iasType!=IASTypes.ALARM) {
-      throw new DelayedAlarmException("Input type is not alarm: "+iasio.iasType)
-    }
-	  
+
 	  // Is the output an alarm?
     if (actualOutput.iasType!=IASTypes.ALARM) {
       throw new DelayedAlarmException("Output type is not alarm: "+actualOutput.iasType)

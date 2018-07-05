@@ -1,13 +1,12 @@
 package org.eso.ias.tranfer
 
-import org.eso.ias.asce.transfer.ScalaTransferExecutor
+import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import java.util.Properties
 
 import com.typesafe.scalalogging.Logger
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.OperationalMode
 import org.eso.ias.types.Validity
-import org.eso.ias.asce.transfer.IasIO
 import org.eso.ias.types.IasValidity
 
 /**
@@ -101,22 +100,22 @@ extends ScalaTransferExecutor[T](asceId,asceRunningId,validityTimeFrame,props) {
 
   }
 
-	/**
-   * Initialization: it basically checks if the
-   * provided delays are valid
-   *
-   * @see TransferExecutor#initialize()
-   */
-  override def initialize(inputIds: Set[String], outputId: String) {
+  /**
+    * Initialize the TF
+    *
+    * @param inputsInfo The IDs and types of the inputs
+    * @param outputInfo The Id and type of thr output
+    **/
+  override def initialize(inputsInfo: Set[IasioInfo], outputInfo: IasioInfo): Unit = {
      BackupSelector.logger.debug("TF of [{}] initializing", asceId)
 
-    if (inputIds.size!=prioritizedIDs.size ||
-      !inputIds.forall(id => prioritizedIDs.contains(id))) {
-      throw new BackupSelectorException("Input ids ["+inputIds.mkString(",")+"] not contained in constraint ["+prioritizedIDs.mkString(",")+"]")
+    if (inputsInfo.size!=prioritizedIDs.size ||
+      !inputsInfo.forall(info => prioritizedIDs.contains(info.iasioId))) {
+      throw new BackupSelectorException("Input ids ["+inputsInfo.map(_.iasioId).mkString(",")+"] not contained in constraint ["+prioritizedIDs.mkString(",")+"]")
     }
     require(
-      inputIds.forall(key => prioritizedIDs.contains(key)),
-      "Input ids ["+inputIds.mkString(",")+"] not contained in constraint ["+prioritizedIDs.mkString(",")+"]")
+      inputsInfo.forall(info => prioritizedIDs.contains(info.iasioId)),
+      "Input ids ["+inputsInfo.map(_.iasioId).mkString(",")+"] not contained in constraint ["+prioritizedIDs.mkString(",")+"]")
 
      require(prioritizedIDs.length>1,s"$BackupSelector.PrioritizedIdsPropName must contain at least 2 IDs")
      require(prioritizedIDs.forall(!_.isEmpty),s"$BackupSelector.PrioritizedIdsPropName malformed")
