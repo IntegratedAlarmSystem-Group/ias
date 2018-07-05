@@ -1,30 +1,33 @@
 package org.eso.ias.dasu.test.transferfunction
 
 import java.util.Properties
-import org.eso.ias.asce.transfer.ScalaTransferExecutor
+
+import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import org.eso.ias.types.InOut
 import org.eso.ias.types.IASTypes._
 import org.eso.ias.asce.exceptions.TypeMismatchException
-import org.eso.ias.asce.transfer.IasIO
 
 /**
  * A transfer function that calculate th e average of its inputs.
  * 
  * This is to test and show the case of a synthetic parameter
  * 
- * @param asceId: the ID of the ASCE
- * @param asceRunningId: the runningID of the ASCE
+ * @param cEleId: the ID of the ASCE
+ * @param cEleRunningId: the runningID of the ASCE
  * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
  * @param props: the user defined properties    
  * @author acaproni
  */
 class AverageTempsTF (cEleId: String, cEleRunningId: String, validityTimeFrame: Long,props: Properties) 
 extends ScalaTransferExecutor[Double] (cEleId,cEleRunningId,validityTimeFrame,props) {
+
   /**
-   * @see TransferExecutor#shutdown()
-   */
-  override def initialize() {
-  }
+    * Initialize the TF
+    *
+    * @param inputsInfo The IDs and types of the inputs
+    * @param outputInfo The Id and type of thr output
+    **/
+  override def initialize(inputsInfo: Set[IasioInfo], outputInfo: IasioInfo): Unit = { }
   
   /**
    * @see TransferExecutor#shutdown()
