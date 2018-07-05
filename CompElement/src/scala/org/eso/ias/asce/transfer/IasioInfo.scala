@@ -9,7 +9,7 @@ import org.eso.ias.types.IASTypes
   * @param iasioId the ID of the IASIO
   * @param iasioType Th etype of the IASIO
   */
-class IasioInfo(val iasioId: String, iasioType: IASTypes) {
+class IasioInfo(val iasioId: String, val iasioType: IASTypes) {
   require(Option(iasioId).isDefined,"Invalid undefined id")
   require(Option(iasioType).isDefined,"Invalid undefined id")
 }
