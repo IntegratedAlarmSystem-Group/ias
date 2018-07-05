@@ -6,10 +6,10 @@ import org.eso.ias.types.IASTypes
   * The association of ID and type to be passed to the initialize method
   * of the transfer function
   *
-  * @param iasioIs
-  * @param iasioType
+  * @param iasioId the ID of the IASIO
+  * @param iasioType Th etype of the IASIO
   */
-class IasioInfo(val iasioIs: String, iasioType: IASTypes) {
-  require(Option(iasioIs).isDefined,"Invalid undefined id")
+class IasioInfo(val iasioId: String, iasioType: IASTypes) {
+  require(Option(iasioId).isDefined,"Invalid undefined id")
   require(Option(iasioType).isDefined,"Invalid undefined id")
 }
