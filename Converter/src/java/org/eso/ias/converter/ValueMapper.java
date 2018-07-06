@@ -140,57 +140,61 @@ public class ValueMapper implements Function<String, String> {
 		
 		// Convert the received string in the proper object type
 		Object convertedValue=null;
-		switch (type) {
-		case LONG: {
-			convertedValue=Long.parseLong(remoteSystemData.getValue());
-			break;
-		}
-    	case INT: {
-    		convertedValue=Integer.parseInt(remoteSystemData.getValue());
-    		break;
-    	}
-    	case SHORT: {
-    		convertedValue=Short.parseShort(remoteSystemData.getValue());
-    		break;
-    	}
-    	case BYTE: {
-    		convertedValue=Byte.parseByte(remoteSystemData.getValue());
-    		break;
-    	}
-    	case DOUBLE: {
-    		convertedValue=Double.parseDouble(remoteSystemData.getValue());
-    		break;
-    	}
-    	case FLOAT: {
-    		convertedValue=Float.parseFloat(remoteSystemData.getValue());
-    		break;
-    	}
-    	case BOOLEAN: {
-    		convertedValue=Boolean.parseBoolean(remoteSystemData.getValue());
-    		break;
-    	}
-    	case CHAR: {
-    		convertedValue=Character.valueOf(remoteSystemData.getValue().charAt(0));
-    		break;
-    	}
-    	case STRING: {
-    		convertedValue=remoteSystemData.getValue();
-    		break;
-    	}
-    	case ALARM: {
-    		convertedValue=Alarm.valueOf(remoteSystemData.getValue());
-    		break;
-    	}
-		default: logger.error("Error translating {}",remoteSystemData.getId());
-		}
+		try {
+            switch (type) {
+                case LONG: {
+                    convertedValue=Long.parseLong(remoteSystemData.getValue());
+                    break;
+                }
+                case INT: {
+                    convertedValue=Integer.parseInt(remoteSystemData.getValue());
+                    break;
+                }
+                case SHORT: {
+                    convertedValue=Short.parseShort(remoteSystemData.getValue());
+                    break;
+                }
+                case BYTE: {
+                    convertedValue=Byte.parseByte(remoteSystemData.getValue());
+                    break;
+                }
+                case DOUBLE: {
+                    convertedValue=Double.parseDouble(remoteSystemData.getValue());
+                    break;
+                }
+                case FLOAT: {
+                    convertedValue=Float.parseFloat(remoteSystemData.getValue());
+                    break;
+                }
+                case BOOLEAN: {
+                    convertedValue=Boolean.parseBoolean(remoteSystemData.getValue());
+                    break;
+                }
+                case CHAR: {
+                    convertedValue=Character.valueOf(remoteSystemData.getValue().charAt(0));
+                    break;
+                }
+                case STRING: {
+                    convertedValue=remoteSystemData.getValue();
+                    break;
+                }
+                case ALARM: {
+                    convertedValue=Alarm.valueOf(remoteSystemData.getValue());
+                    break;
+                }
+                default: logger.error("Error translating {}",remoteSystemData.getId());
+            }
+        } catch (Exception e) {
+		    logger.error("Error converting value {} of type {}",remoteSystemData.getValue(),type);
+		    return null;
+        }
+
 		
 		long pluginProductionTime;
 		pluginProductionTime=ISO8601Helper.timestampToMillis(remoteSystemData.getSampleTime());
 		
 		long pluginSentToConvertTime;
 		pluginSentToConvertTime=ISO8601Helper.timestampToMillis(remoteSystemData.getPublishTime());
-		
-
 
 		// If templated check the index for consistency
 		// and if it is the case discard the value
@@ -295,12 +299,12 @@ public class ValueMapper implements Function<String, String> {
         }
 
 
-		MonitorPointConfiguration mpConfiguration=configDao.getConfiguration(mpId);
-		if (mpConfiguration==null) {
+		Optional<MonitorPointConfiguration> mpConfiguration=configDao.getConfiguration(mpId);
+		if (!mpConfiguration.isPresent()) {
 			logger.error("No configuration found for {}: raw value lost!",mpd.getId());
 			return null;
 		}
-		IASTypes iasType = mpConfiguration.mpType;
+		IASTypes iasType = mpConfiguration.get().mpType;
 
 		Optional<IASValue<?>> iasValueOpt;
 		try { 
@@ -309,8 +313,8 @@ public class ValueMapper implements Function<String, String> {
                         mPointIdentifier,
                         mpd,iasType,
                         receptionTimestamp,
-                        mpConfiguration.minTemplateIndex,
-                        mpConfiguration.maxTemplateIndex));
+                        mpConfiguration.get().minTemplateIndex,
+                        mpConfiguration.get().maxTemplateIndex));
 		} catch (Exception cfe) {
 			logger.error("Error converting {} to a core value type: value lost!",mpd.getId());
 			return null;
