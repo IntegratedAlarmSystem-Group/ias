@@ -236,7 +236,7 @@ object Identifier {
  *  
  * @constructor Builds an identifier with a ID, a type and its parent  
  * @param id: The not null nor empty identifier
- * @param iDType: The type of the identifier
+ * @param idType: The type of the identifier
  * @param parentID: The identifier of the parent
  */
 class Identifier(
@@ -304,7 +304,7 @@ extends {
    * 
    * @param id: the not <code>null</code> nor empty identifier
    * @param idType the not <code>null</code> nor empty type of the identifier
-   * @parm parent the parent of the identifier, can be <code>null</code>
+   * @param parent the parent of the identifier, can be <code>null</code>
    */
   def this(id: String, idType: IdentifierType, parent: Identifier) = {
     this(id,idType,Option(parent))
@@ -327,7 +327,7 @@ extends {
    * @param id: the not <code>null</code> nor empty identifier
    * @param instance the number of the instance of a templated identifier, if defined
    * @param idType the not <code>null</code> type of the identifier
-   * @param parent the parent of the identifier, can be <code>null</code>
+   * @param parentID the parent of the identifier, can be <code>null</code>
    */
   def this(id: String, instance: Option[Int], idType: IdentifierType, parentID: Option[Identifier]) {
     this(Identifier.buildIdFromTemplate(id,instance),idType,parentID)
@@ -340,7 +340,7 @@ extends {
    * @param id: the not <code>null</code> nor empty identifier
    * @param idType the not <code>null</code> type of the identifier
    * @param instance the number of the instance of a templated identifier, if not null
-   * @param parent the parent of the identifier, can be <code>null</code>
+   * @param parentID the parent of the identifier, can be <code>null</code>
    */
   def this(id: String, idType: IdentifierType, instance: Int, parentID: Identifier) {
     this(id,Option(instance),idType,Option(parentID))
