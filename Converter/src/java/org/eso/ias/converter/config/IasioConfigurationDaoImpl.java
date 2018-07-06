@@ -141,9 +141,9 @@ public class IasioConfigurationDaoImpl extends  ConfigurationDaoBase {
 	}
 
 	@Override
-	public MonitorPointConfiguration getConfiguration(String mpId) {
+	public Optional<MonitorPointConfiguration> getConfiguration(String mpId) {
 		Objects.requireNonNull(mpId);
-		return configuration.get(mpId);
+		return Optional.ofNullable(configuration.get(mpId));
 	}
 
 }

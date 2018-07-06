@@ -4,6 +4,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 import org.eso.ias.cdb.CdbReader;
@@ -209,9 +210,9 @@ class ConverterCdbTester {
 		
 		for (int t=0; t<mpPointsToCreate; t++) {
 			IasTypeDao iasType = buildIasType(t);
-			MonitorPointConfiguration mpConf=configDao.getConfiguration(buildIasId(t));
-			assertNotNull(mpConf);
-			assertEquals(IASTypes.valueOf(iasType.toString()), mpConf.mpType);
+			Optional<MonitorPointConfiguration> mpConf=configDao.getConfiguration(buildIasId(t));
+			assertTrue(mpConf.isPresent());
+			assertEquals(IASTypes.valueOf(iasType.toString()), mpConf.get().mpType);
 		}
 	}
 
@@ -221,12 +222,12 @@ class ConverterCdbTester {
        populateCDB(mpPointsToCreate,cdbFiles);
        populateCDB(mpPointsToCreate,cdbFiles);
        configDao.initialize();
-       MonitorPointConfiguration mpConf=configDao.getConfiguration(idOfTemplatedIasio);
-       assertNotNull(mpConf);
-       assertTrue(mpConf.minTemplateIndex.isPresent());
-       assertTrue(mpConf.maxTemplateIndex.isPresent());
-       assertTrue(5==mpConf.minTemplateIndex.get());
-       assertTrue(15==mpConf.maxTemplateIndex.get());
+        Optional<MonitorPointConfiguration> mpConf=configDao.getConfiguration(idOfTemplatedIasio);
+       assertTrue(mpConf.isPresent());
+       assertTrue(mpConf.get().minTemplateIndex.isPresent());
+       assertTrue(mpConf.get().maxTemplateIndex.isPresent());
+       assertTrue(5==mpConf.get().minTemplateIndex.get());
+       assertTrue(15==mpConf.get().maxTemplateIndex.get());
     }
 }
 
