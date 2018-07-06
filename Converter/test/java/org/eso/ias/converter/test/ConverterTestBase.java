@@ -1,10 +1,6 @@
 package org.eso.ias.converter.test;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 import org.eso.ias.converter.config.ConfigurationException;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
@@ -113,7 +109,7 @@ public class ConverterTestBase {
 		}
 		
 		/**
-		 * True if the DAO has been initializes
+		 * True if the DAO has been initialized
 		 */
 		private volatile boolean inited =false;
 		
@@ -147,7 +143,7 @@ public class ConverterTestBase {
 			if (mpdh==null) {
 				return null;
 			} else {
-				return new MonitorPointConfiguration(mpdh.iasType);
+				return new MonitorPointConfiguration(mpdh.iasType,Optional.empty(),Optional.empty());
 			}
 		}
 

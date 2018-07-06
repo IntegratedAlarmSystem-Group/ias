@@ -13,6 +13,8 @@ import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Test the mapper function i.e. the function that gets
@@ -28,10 +30,15 @@ public class MapperTester extends ConverterTestBase {
 	 * The object to test
 	 */
 	private ValueMapper mapper;
+
+	/**
+	 * The logger
+	 */
+	public static final Logger logger = LoggerFactory.getLogger(MapperTester.class);
 	
 	@BeforeEach
 	public void setUp() {
-		System.out.println("Setting up");
+		logger.info("Setting up");
 		// Ensures we are going to test all implemented types
 		assertTrue(IASTypes.values().length==mpdHolders.length);
 		
@@ -50,7 +57,7 @@ public class MapperTester extends ConverterTestBase {
 	 */
 	@Test
 	public void testUnconfiguredMPD() throws Exception {
-		System.out.println("Testing testUnconfiguredMPD");
+		logger.info("Testing testUnconfiguredMPD");
 		MonitorPointDataHolder unconfiguredMpdh = 
 				new MonitorPointDataHolder(
 						"Unrecognized",

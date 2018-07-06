@@ -3,6 +3,7 @@ package org.eso.ias.converter;
 import java.text.ParseException;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -22,6 +23,7 @@ import org.eso.ias.types.OperationalMode;
 import org.eso.ias.utils.ISO8601Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Int;
 
 /**
  * The function to convert a string received from a plugin
@@ -87,7 +89,7 @@ public class ValueMapper implements Function<String, String> {
 	
 	/**
 	 * /**
-	 * Build and return the running id of the passed
+	 * Build and return the identifier of the passed
 	 * monitor point id.
 	 * <P>
 	 * The generation of the string, is delegated to the {@link Identifier}
@@ -96,9 +98,9 @@ public class ValueMapper implements Function<String, String> {
 	 * @param pluginId The ID of the plugin
 	 * @param monitoredSystemId The ID of the monitored system
 	 * @param iasioId The ID of the monitor point value or alarm
-	 * @return
+	 * @return the Identifier
 	 */
-	private String  buildFullRunningId(String pluginId, String monitoredSystemId, String iasioId) {
+	private Identifier  buildIdentifier(String pluginId, String monitoredSystemId, String iasioId) {
 		Objects.requireNonNull(monitoredSystemId);
 		Objects.requireNonNull(pluginId);
 		Objects.requireNonNull(iasioId);
@@ -110,22 +112,27 @@ public class ValueMapper implements Function<String, String> {
 		Identifier pluginIdent = new Identifier(pluginId,IdentifierType.PLUGIN,monSysIdent);
 		Identifier converterIdent = new Identifier(converterID,IdentifierType.CONVERTER,pluginIdent);
 		Identifier iasioIdent = new Identifier(iasioId,IdentifierType.IASIO,converterIdent);
-		return iasioIdent.fullRunningID();
+		return iasioIdent;
 	}
 	
 	/**
 	 * Convert the {@link MonitorPointData} received by a plugin 
 	 * to a {@link IASValue} to send to the core of the IAS
-	 * 
+	 *
+     * @param identifier: the Identifier of the monitor point
 	 * @param remoteSystemData the monitor point to translate
 	 * @param type the type of the monitor point
 	 * @param receptionTStamp the timestamp when the monitor point data has been received
 	 * @return the IASValue corresponding on the monitor point
 	 */
 	public IASValue<?> translate(
+	        Identifier identifier,
 			MonitorPointData remoteSystemData, 
 			IASTypes type,
-			long receptionTStamp) {
+			long receptionTStamp,
+			Optional<Integer> minTemplateIndex,
+			Optional<Integer>maxTemplateIndex) {
+	    Objects.requireNonNull(identifier);
 		Objects.requireNonNull(type);
 		Objects.requireNonNull(remoteSystemData);
 
@@ -183,21 +190,39 @@ public class ValueMapper implements Function<String, String> {
 		long pluginSentToConvertTime;
 		pluginSentToConvertTime=ISO8601Helper.timestampToMillis(remoteSystemData.getPublishTime());
 		
-		String fullrunId = buildFullRunningId(
-				remoteSystemData.getPluginID(),
-				remoteSystemData.getMonitoredSystemID(),
-				remoteSystemData.getId());
+
+
+		// If templated check the index for consistency
+		// and if it is the case discard the value
+		if (identifier.templateInstance().isDefined()) {
+            Integer index = (Integer)identifier.templateInstance().get();
+			if (!minTemplateIndex.isPresent()) {
+				logger.error("IASIO {} appears template with instance {} but is not templated in CDB: value lost!",
+						remoteSystemData.getId(), index);
+			}
+
+			if (index<minTemplateIndex.get() || index>maxTemplateIndex.get()) {
+				logger.error("Template instance {} of {} outside of allowed range [{},{}]: value lost",
+						remoteSystemData.getId(), index,minTemplateIndex.get(),maxTemplateIndex);
+				return null;
+			}
+		} else if (minTemplateIndex.isPresent()) {
+			logger.error("IASIO {} is not templated but should be with index in [{},{}]: value lost!",
+					remoteSystemData.getId(),
+					minTemplateIndex.get(),
+					maxTemplateIndex.get());
+		}
 		
 		// The value is converted to a IASValue and immeaitely sent to the BSDB
 		// by the streaming so the 2 timestamps (production and sent to BSDB)
-		// are the same point in time with thisimplementation
+		// are the same point in time with this implementation
 		long producedAndSentTStamp = System.currentTimeMillis();
 
 		IASValue<?> ret = IASValue.build(
 				convertedValue, 
 				OperationalMode.valueOf(remoteSystemData.getOperationalMode()),
 				IasValidity.valueOf(remoteSystemData.getValidity()),
-				fullrunId,
+				identifier.fullRunningID(),
 				type,
 				pluginProductionTime, // PLUGIN production
 				pluginSentToConvertTime,  // Sent to converter
@@ -211,6 +236,23 @@ public class ValueMapper implements Function<String, String> {
 		logger.debug("Translated to {} of type {}",ret.id,ret.valueType);
 		return ret;
 	}
+
+    /**
+     * Get the id taking template into account
+     *
+     * @param identifier The identifier
+     * @return the ID cleaned of the template index
+     */
+	public String getId(Identifier identifier) {
+        // If templated removes the index
+        if (identifier.templateInstance().isDefined()) {
+            Integer index = (Integer)identifier.templateInstance().get();
+            int pos = identifier.id().indexOf(Identifier.templatedIdPrefix());
+            return identifier.id().substring(0,pos);
+        } else {
+            return identifier.id();
+        }
+    }
 
 	/**
 	 * Effectively translate the string received from the plugin in the string
@@ -235,31 +277,51 @@ public class ValueMapper implements Function<String, String> {
 			logger.error("Cannot parse [{}] to a MonitorPointData: vale lost!",mpString,pe);
 			return null;
 		}
+
+        Identifier mPointIdentifier = buildIdentifier(
+                mpd.getPluginID(),
+                mpd.getMonitoredSystemID(),
+                mpd.getId());
 		
 		// Get the configuration from the CDB
-		String mpId = mpd.getId();
+        // taking templates into account
+		String mpId;
+        try {
+		    mpId=getId(mPointIdentifier);
+            logger.debug("Will get the configuration of a monitor point of id {}", mpId);
+        } catch (Exception e) {
+		    logger.error("Error extracting the id of {}. Soemthing wrong with templates?",mPointIdentifier.id());
+		    return null;
+        }
+
+
 		MonitorPointConfiguration mpConfiguration=configDao.getConfiguration(mpId);
 		if (mpConfiguration==null) {
-			logger.error("No configuration found for {}: raw value lost!",mpId);
+			logger.error("No configuration found for {}: raw value lost!",mpd.getId());
 			return null;
 		}
 		IASTypes iasType = mpConfiguration.mpType;
-		
-		IASValue<?> iasValue;
+
+		Optional<IASValue<?>> iasValueOpt;
 		try { 
-			iasValue= translate(mpd,iasType,receptionTimestamp);
+			iasValueOpt= Optional.ofNullable(
+			        translate(
+                        mPointIdentifier,
+                        mpd,iasType,
+                        receptionTimestamp,
+                        mpConfiguration.minTemplateIndex,
+                        mpConfiguration.maxTemplateIndex));
 		} catch (Exception cfe) {
 			logger.error("Error converting {} to a core value type: value lost!",mpd.getId());
 			return null;
 		}
 		try {
-			return iasValueStrSerializer.iasValueToString(iasValue);
+			return (iasValueOpt.isPresent())? iasValueStrSerializer.iasValueToString(iasValueOpt.get()):null;
 		} catch (IasValueSerializerException ivse) {
-			logger.error("Error converting {} to a string to send to the core: value lost!",iasValue.toString());
+			iasValueOpt.ifPresent(iasValue ->
+                    logger.error("Error converting {} to a string to send to the core: value lost!",iasValue.toString()));
 			return null;
 		}
-		
-		
 	}
 
 }
