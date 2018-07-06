@@ -138,12 +138,12 @@ public class ConverterTestBase {
 		 * @see org.eso.ias.converter.config.IasioConfigurationDAO#getConfiguration(java.lang.String)
 		 */
 		@Override
-		public MonitorPointConfiguration getConfiguration(String mpId) {
+		public Optional<MonitorPointConfiguration> getConfiguration(String mpId) {
 			MonitorPointDataHolder mpdh = mpDefs.get(mpId);
 			if (mpdh==null) {
-				return null;
+				return Optional.empty();
 			} else {
-				return new MonitorPointConfiguration(mpdh.iasType,Optional.empty(),Optional.empty());
+				return Optional.ofNullable(new MonitorPointConfiguration(mpdh.iasType,Optional.empty(),Optional.empty()));
 			}
 		}
 

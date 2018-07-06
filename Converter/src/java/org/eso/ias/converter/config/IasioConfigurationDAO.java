@@ -1,5 +1,7 @@
 package org.eso.ias.converter.config;
 
+import java.util.Optional;
+
 /**
  * The DAO interface to get the configuration of the DAO.
  * <P>
@@ -36,7 +38,7 @@ public interface IasioConfigurationDAO {
 	 * @return The configuration of the MP with the passed ID
 	 *         or <code>null</code> if such configuration does not exist
 	 */
-	public MonitorPointConfiguration getConfiguration(String mpId);
+	public Optional<MonitorPointConfiguration> getConfiguration(String mpId);
 	
 	/**
 	 * Close the DAO freeing all the acquired resources
