@@ -9,9 +9,12 @@ import java.util.Set;
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.IasCdbException;
 import org.eso.ias.cdb.pojos.IasioDao;
+import org.eso.ias.cdb.pojos.TemplateDao;
 import org.eso.ias.types.IASTypes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.swing.text.html.Option;
 
 /**
  * This DAO keeps in memory the configuration of the IASIOs defined in the CDB.
@@ -82,9 +85,16 @@ public class IasioConfigurationDaoImpl extends  ConfigurationDaoBase {
 			config.clear();
 		}
 		logger.info("Reading IASIOs configuration from CDB...");
-		Optional<Set<IasioDao>> iasios = cdbReader.getIasios();
-		logger.info("Got the configuration of {} IASIOS",iasios.map( Set::size).orElse(0));
-		iasios.ifPresent( s -> s.forEach(iasioDao -> addConfiguration(iasioDao)));
+		Optional<Set<IasioDao>> iasiosOpt = cdbReader.getIasios();
+		logger.info("Got the configuration of {} IASIOS",iasiosOpt.map( Set::size).orElse(0));
+		if (!iasiosOpt.isPresent()) {
+			logger.error("No IASIOs got from CDB: will convert nothing!");
+		} else {
+			Set<IasioDao> iasios = iasiosOpt.get();
+			for (IasioDao iasio: iasios) {
+				addConfiguration(iasio,cdbReader);
+			}
+		}
 		logger.info("{} IASIO configurations in cache",configuration.size());
 	}
 	
@@ -92,9 +102,22 @@ public class IasioConfigurationDaoImpl extends  ConfigurationDaoBase {
 	 * Add the configuration of the passed IASIO to the map.
 	 * 
 	 * @param iasio The IASIO whose configuration must be added to the map
+	 * @param  cdbReader The DAO to get the templates from the CDB
+	 * @throws IasCdbException In case of error getting the template configuration from the DAO
 	 */
-	private void addConfiguration(IasioDao iasio) {
-		MonitorPointConfiguration mpConf = new MonitorPointConfiguration(IASTypes.fromIasioDaoType(iasio.getIasType()));
+	private void addConfiguration(IasioDao iasio, CdbReader cdbReader) throws IasCdbException {
+		Optional<String> templateId = Optional.ofNullable(iasio.getTemplateId());
+		Optional<TemplateDao> templateDaoOpt = Optional.empty();
+		if (templateId.isPresent()) {
+			logger.debug("IASIO {} has the {} template",iasio.getId(),templateId.get());
+			templateDaoOpt = cdbReader.getTemplate(templateId.get());
+		}
+		Optional<Integer> minTemplate = templateDaoOpt.map(tDao -> tDao.getMin());
+		Optional<Integer> maxTemplate = templateDaoOpt.map(tDao -> tDao.getMax());
+		MonitorPointConfiguration mpConf = new MonitorPointConfiguration(
+				IASTypes.fromIasioDaoType(iasio.getIasType()),
+				minTemplate,
+				maxTemplate);
 		configuration.put(iasio.getId(), mpConf);
 		logger.debug("[{}] IASIO configuration added in cache; {} IASIOs in cache",iasio.getId(),configuration.size());
 	}

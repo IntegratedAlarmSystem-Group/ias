@@ -1,9 +1,5 @@
 package org.eso.ias.converter.test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -19,12 +15,17 @@ import org.eso.ias.cdb.json.JsonReader;
 import org.eso.ias.cdb.json.JsonWriter;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
+import org.eso.ias.cdb.pojos.TemplateDao;
 import org.eso.ias.converter.config.IasioConfigurationDaoImpl;
 import org.eso.ias.converter.config.MonitorPointConfiguration;
 import org.eso.ias.types.IASTypes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test the CDB DAO of the converter,
@@ -33,17 +34,30 @@ import org.junit.jupiter.api.Test;
  * @author acaproni
  *
  */
-public class ConverterCdbTester {
+class ConverterCdbTester {
+
+    /**
+     * The logger
+     */
+    private static final Logger logger = LoggerFactory.getLogger(ConverterCdbTester.class);
 	
 	/**
 	 * The parent folder of the CDB is the actual folder
 	 */
-	public static final Path cdbParentPath =  FileSystems.getDefault().getPath(".");
+    public static final Path cdbParentPath =  FileSystems.getDefault().getPath(".");
 	
 	/**
 	 * The prefix of the IDs of the IASIOs written in the config file
 	 */
 	public static final String IasioIdPrefix="IoID-";
+
+    /**
+     * The ID of the template
+     */
+	public static String templateId = "TemplateId";
+
+	/** The ID of the tmeplated IASIO */
+	public static String idOfTemplatedIasio = "TempaltedIasioId";
 	
 	/**
 	 * The folder struct of the CDB
@@ -51,25 +65,14 @@ public class ConverterCdbTester {
 	private CdbFiles cdbFiles;
 	
 	private IasioConfigurationDaoImpl configDao;
-	
-	@BeforeEach
-	public void setUp() throws Exception {
-		// Remove any CDB folder if present
-		CdbFolders.ROOT.delete(cdbParentPath);
-		assertFalse(CdbFolders.ROOT.exists(cdbParentPath));
-		cdbFiles = new CdbJsonFiles(cdbParentPath);
-		CdbReader cdbReader = new JsonReader(cdbFiles);
-		configDao = new IasioConfigurationDaoImpl(cdbReader);
-		
-	}
-	
+
 	/**
 	 * Create a Iasio ID from the given index
 	 * 
 	 * @param n The index
 	 * @return The ID
 	 */
-	public String buildIasId(int n) {
+    private String buildIasId(int n) {
 		return IasioIdPrefix+n;
 	}
 	
@@ -79,7 +82,7 @@ public class ConverterCdbTester {
 	 * @param n The index
 	 * @return The IasTypeDao
 	 */
-	public static IasTypeDao buildIasType(int n) {
+    private static IasTypeDao buildIasType(int n) {
 		return IasTypeDao.values()[n%IasTypeDao.values().length];
 	}
 	
@@ -90,12 +93,16 @@ public class ConverterCdbTester {
 	 * @param cdbFiles The folder struct of the CDB
 	 * @throws Exception
 	 */
-	public void populateCDB(int numOfIasios,CdbFiles cdbFiles) throws Exception {
+    private void populateCDB(int numOfIasios,CdbFiles cdbFiles) throws Exception {
 		Objects.requireNonNull(cdbFiles);
 		if (numOfIasios<=0) {
 			throw new IllegalArgumentException("Invalid number of IASIOs to write in the CDB");
 		}
-		populateCDB(numOfIasios, new JsonWriter(cdbFiles));
+		logger.info("Populating JSON CDB in {}",cdbParentPath.toAbsolutePath().toString());
+		CdbWriter cdbWriter = new JsonWriter(cdbFiles);
+		createTmplate(cdbWriter);
+		populateCDB(numOfIasios, cdbWriter);
+		logger.info("CDB created");
 	}
 	
 	/**
@@ -105,12 +112,21 @@ public class ConverterCdbTester {
 	 * @param cdbWriter The writer of the CDB
 	 * @throws Exception
 	 */
-	public void populateCDB(int numOfIasios,CdbWriter cdbWriter) throws Exception {
+    private void populateCDB(int numOfIasios,CdbWriter cdbWriter) throws Exception {
 		Objects.requireNonNull(cdbWriter);
 		if (numOfIasios<=0) {
 			throw new IllegalArgumentException("Invalid number of IASIOs to write in the CDB");
 		}
-		Set<IasioDao> iasios = biuldIasios(numOfIasios);
+		logger.info("Adding {} IasioDao to the CDB",numOfIasios);
+		Set<IasioDao> iasios = buildIasios(numOfIasios);
+		// Adds one templated IASIO
+        IasTypeDao iasType = buildIasType(2);;
+        IasioDao iasio = new IasioDao(idOfTemplatedIasio, "IASIO description", iasType,"http://www.eso.org/almm/alarms");
+        iasio.setTemplateId(templateId);
+        iasios.add(iasio);
+
+        iasios.forEach( i -> logger.debug("IASIO to write {}",i.getId()));
+
 		cdbWriter.writeIasios(iasios, false);
 	}
 	
@@ -120,7 +136,7 @@ public class ConverterCdbTester {
 	 * @param numOfIasios the number of IASIOs to write in the configurations
 	 * @return the set of IASIOs configuration to write in the CDB
 	 */
-	public Set<IasioDao> biuldIasios(int numOfIasios) {
+    private Set<IasioDao> buildIasios(int numOfIasios) {
 		if (numOfIasios<=0) {
 			throw new IllegalArgumentException("Invalid number of IASIOs to write in the CDB");
 		}
@@ -132,6 +148,29 @@ public class ConverterCdbTester {
 		}
 		return iasios;
 	}
+
+    /**
+     * Write a template in the CDB
+     *
+     * @param cdbWriter the CDB writer
+     * @throws Exception
+     */
+    private void createTmplate(CdbWriter cdbWriter) throws Exception {
+	    logger.info("Adding template");
+        TemplateDao tDao = new TemplateDao(templateId, 5,15);
+        cdbWriter.writeTemplate(tDao);
+    }
+
+    @BeforeEach
+    public void setUp() throws Exception {
+        // Remove any CDB folder if present
+        CdbFolders.ROOT.delete(cdbParentPath);
+        assertFalse(CdbFolders.ROOT.exists(cdbParentPath));
+        cdbFiles = new CdbJsonFiles(cdbParentPath);
+        CdbReader cdbReader = new JsonReader(cdbFiles);
+        configDao = new IasioConfigurationDaoImpl(cdbReader);
+
+    }
 	
 	@AfterEach
 	public void tearDown() throws Exception{
@@ -175,4 +214,20 @@ public class ConverterCdbTester {
 			assertEquals(IASTypes.valueOf(iasType.toString()), mpConf.mpType);
 		}
 	}
+
+	@Test
+    public void testTemplatesIasio() throws  Exception {
+       int mpPointsToCreate=5;
+       populateCDB(mpPointsToCreate,cdbFiles);
+       populateCDB(mpPointsToCreate,cdbFiles);
+       configDao.initialize();
+       MonitorPointConfiguration mpConf=configDao.getConfiguration(idOfTemplatedIasio);
+       assertNotNull(mpConf);
+       assertTrue(mpConf.minTemplateIndex.isPresent());
+       assertTrue(mpConf.maxTemplateIndex.isPresent());
+       assertTrue(5==mpConf.minTemplateIndex.get());
+       assertTrue(15==mpConf.maxTemplateIndex.get());
+    }
 }
+
+
