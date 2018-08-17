@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="Tools" default="build" basedir=".">
 	<!-- Include IAS common definition -->
-	<include file="../config/CommonAnt.xml" as="ias" />
+	<include file="../../config/CommonAnt.xml" as="ias" />
 	
 	<!-- ####################### PROPERTIES ####################### -->
 	
