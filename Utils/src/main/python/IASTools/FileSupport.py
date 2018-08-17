@@ -36,7 +36,6 @@ class FileSupport(object):
         Search recursively for a file in the given folder
         
         @param folder: The folder to search for the file
-        @param name: the name of the file
         @return: the full name of the file if it exists,
                  None otherwise
         """
@@ -54,12 +53,6 @@ class FileSupport(object):
         * parent module folders (../lib for example)
         * $IAS_ROOT folders
         
-        The fileType tells where the file must be looked for and improves
-        the response time of the script.
-        
-        
-        @param fileName: The name of the file to look for
-        @param fileType: the type (iasFileType) of file to look for (example BINARY,LIB...)
         @return: if the file is found The full path name of the file
                  otherwise throws a OSError exception
         """
@@ -119,7 +112,7 @@ class FileSupport(object):
         Return the hierarchy of IAS folders.
         At the present it only contains the current module
         (the parent of the current folder i.e. assumes that
-        the tscript runs in src that is the typical case
+        the script runs in src that is the typical case
         for development) and IAS root; 
         in future can be expanded with one or more integration
         folders.
@@ -129,7 +122,7 @@ class FileSupport(object):
          @return A ordered tuple with the hierarchy of IAS folders
                  (at the present the current module and IAS_ROOT)
         '''
-        return (path.join(getcwd(),".."),cls.getIASRoot())
+        return (path.join(getcwd(),"../.."),cls.getIASRoot())
     
     @classmethod
     def getIASSearchFolders(cls, fileType):

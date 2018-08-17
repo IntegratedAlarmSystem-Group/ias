@@ -23,7 +23,7 @@
 		-->
 		<untar src="${exttools.dir}/${logback}.tar.gz" dest="${exttools.dir}" compression="gzip"/>
 		<copy todir="${exttools.dir}">
-			<fileset dir="${exttools.dir}/${exttools.dir}/${logback}" includes="*.jar" />
+			<fileset dir="${exttools.dir}/${logback}" includes="*.jar" />
 		</copy>
 		<delete dir="${exttools.dir}/${logback}"/>
 
