@@ -14,18 +14,18 @@
 		<property name="src.scala.dir" value="${basedir}/scala" />
 		<property name="src.python.dir" value="${basedir}/python" />
 		<property name="src.resources.dir" value="${basedir}/resources" />
-		<property name="build.dir" value="../classes" />
-		<property name="build.scala.dir" value="../classes/scala" />
-		<property name="build.java.dir" value="../classes/java" />
-  		<property name="lib.dir" value="../lib" />
-		<property name="libExtTools.dir" value="../lib/ExtTools" />
-		<property name="exttools.dir" value="../extTools" />
-  		<property name="bin.dir" value="../bin" />
+		<property name="build.dir" value="../../classes" />
+		<property name="build.scala.dir" value="../../classes/scala" />
+		<property name="build.java.dir" value="../../classes/java" />
+  		<property name="lib.dir" value="../../lib" />
+		<property name="libExtTools.dir" value="../../lib/ExtTools" />
+		<property name="exttools.dir" value="../../extTools" />
+  		<property name="bin.dir" value="../../bin" />
 		<property name="mods.python.dir" value="${lib.dir}/python" />
-		<property name="config.dir" value="../config" />
-		<property name="docs.java.dir" value="../apidocs/java" />
-		<property name="docs.scala.dir" value="../apidocs/scala" />
-		<property name="docs.python.dir" value="../apidocs/python" />
+		<property name="config.dir" value="../../config" />
+		<property name="docs.java.dir" value="../../apidocs/java" />
+		<property name="docs.scala.dir" value="../../apidocs/scala" />
+		<property name="docs.python.dir" value="../../apidocs/python" />
 		
 		<property name="ias.dir" value="${env.IAS_ROOT}" />
 		
