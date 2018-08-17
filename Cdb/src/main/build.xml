@@ -60,11 +60,11 @@
 		-->
 		<untar src="${exttools.dir}/${hibernate}-dist.tar.gz" dest="${exttools.dir}" compression="gzip"/>
 		<copy todir="${exttools.dir}">
-			<fileset dir="${exttools.dir}/${exttools.dir}/${hibernate}/dist/lib/required" includes="*.jar" />
+			<fileset dir="${exttools.dir}/${hibernate}/dist/lib/required" includes="*.jar" />
 		</copy>
 		<copy todir="${exttools.dir}">
-			<fileset dir="${exttools.dir}/${exttools.dir}/${hibernate}/dist/lib/provided" includes="hibernate-jpa-*.jar" />
-			<fileset dir="${exttools.dir}/${exttools.dir}/${hibernate}/dist/lib/provided" includes="jboss-transaction-api*.jar" />
+			<fileset dir="${exttools.dir}/${hibernate}/dist/lib/provided" includes="hibernate-jpa-*.jar" />
+			<fileset dir="${exttools.dir}/${hibernate}/dist/lib/provided" includes="jboss-transaction-api*.jar" />
 		</copy>
 		<delete dir="${exttools.dir}/${hibernate}"/>
 		
