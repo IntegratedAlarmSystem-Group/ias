@@ -538,7 +538,9 @@ public class JsonReader implements CdbReader {
 		}
 		
 		// Fix output IASIO
-		getIasio(jAsceDao.getOutputID()).ifPresent(o -> asce.setOutput(o));
+		Optional<IasioDao> outputOpt = getIasio(jAsceDao.getOutputID());
+		IasioDao outputIasio = outputOpt.orElseThrow( () -> new IasCdbException("Output "+jAsceDao.getOutputID()+" of ASCE "+jAsceDao.getId()+" not found in CDB"));
+		asce.setOutput(outputIasio);
 		
 		// Fix the inputs
 		for (String inId: jAsceDao.getInputIDs()) {
