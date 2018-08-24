@@ -516,7 +516,9 @@ public class JsonReader implements CdbReader {
 		}
 		
 		// Fix output IASIO
-		getIasio(jDasuDao.getOutputId()).ifPresent(o -> dasu.setOutput(o));
+		Optional<IasioDao> outputOpt = getIasio(jDasuDao.getOutputId());
+		IasioDao outputIasio = outputOpt.orElseThrow( () -> new IasCdbException("Output "+jDasuDao.getOutputId()+" of DASU "+jDasuDao.getId()+" not found in CDB"));
+		dasu.setOutput(outputIasio);
 	}
 	
 	/**
