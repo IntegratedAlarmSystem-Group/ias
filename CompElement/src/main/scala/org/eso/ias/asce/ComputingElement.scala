@@ -372,9 +372,6 @@ abstract class ComputingElement[T](
       iasio.validityConstraint.map( set => inputs.filter(input => set.contains(input.id.id)))
       .getOrElse(inputs)
     
-    iasio.validityConstraint.foreach(set => logger.info("Constraints=[{}]",set.mkString(",")))
-    logger.info("selectedInputsByConstraint={}",selectedInputsByConstraint.map(_.id.id).mkString(","))
-    
     if (iasio.validityConstraint.isDefined && selectedInputsByConstraint.size!=iasio.validityConstraint.get.size) {
       // There are constraints but the at least one ID of the constraints does not belong 
       // to any of the IDs of the IASIO in input
