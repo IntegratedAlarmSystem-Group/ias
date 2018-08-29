@@ -3,6 +3,7 @@ package org.eso.ias.plugin.publisher.impl;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -105,10 +106,14 @@ public class KafkaPublisher extends PublisherBase {
 	 */
 	@Override
 	protected long publish(MonitorPointData mpData) throws PublisherException {
+        synchronized (iso8601dateFormat) {
+            mpData.setPublishTime(iso8601dateFormat.format(new Date(System.currentTimeMillis())));
+        }
+
 		String jsonStrToSend = mpData.toJsonString();
 		// The partition is explicitly set: the passed key will not used
 		// for partitioning in the topic
-		ProducerRecord<String, String> record = new ProducerRecord<String, String>(topicName, partition,pluginId,jsonStrToSend);
+ProducerRecord<String, String> record = new ProducerRecord<String, String>(topicName, partition,pluginId,jsonStrToSend);
 		Future<RecordMetadata> future = producer.send(record);
 		
 		return jsonStrToSend.length();

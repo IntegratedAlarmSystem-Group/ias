@@ -42,6 +42,12 @@ public class IasValueJsonPojo {
 	 * The value of the output
 	 */
 	private String value;
+
+	/**
+	 * @see IASValue#readFromMonSysTStamp
+	 */
+	@JsonInclude(Include.NON_NULL)
+	private String readFromMonSysTStamp;
 	 
 	/**
 	 * @see IASValue#pluginProductionTStamp
@@ -136,7 +142,8 @@ public class IasValueJsonPojo {
 		fullRunningId=iasValue.fullRunningId;
 		valueType=iasValue.valueType;
 		iasValidity=iasValue.iasValidity;
-		
+
+		this.readFromMonSysTStamp=convertTStampToIso8601(iasValue.readFromMonSysTStamp);
 		this.pluginProductionTStamp=convertTStampToIso8601(iasValue.pluginProductionTStamp);
 		this.sentToConverterTStamp=convertTStampToIso8601(iasValue.sentToConverterTStamp);
 		this.receivedFromPluginTStamp=convertTStampToIso8601(iasValue.receivedFromPluginTStamp);
@@ -223,6 +230,8 @@ public class IasValueJsonPojo {
 		this.iasValidity = iasValidity;
 	}
 
+	public String getReadFromMonSysTStamp() { return readFromMonSysTStamp; }
+
 	public String getPluginProductionTStamp() {
 		return pluginProductionTStamp;
 	}
@@ -273,7 +282,8 @@ public class IasValueJsonPojo {
 				mode, 
 				iasValidity, 
 				fullRunningId, 
-				valueType, 
+				valueType,
+				convertIso8601ToTStamp(readFromMonSysTStamp),
 				convertIso8601ToTStamp(pluginProductionTStamp), 
 				convertIso8601ToTStamp(sentToConverterTStamp), 
 				convertIso8601ToTStamp(receivedFromPluginTStamp), 

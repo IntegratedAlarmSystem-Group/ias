@@ -93,10 +93,11 @@ class DasuImpl (
   
   // Instantiate the ASCEs
   val asces: Map[String, ComputingElement[_]] = {
+    val validityThreshold = autoSendTimeInterval + tolerance
     val addToMapFunc = (m: Map[String, ComputingElement[_]], asce: AsceDao) => {
       val propsForAsce = new Properties()
       asce.getProps.forEach(p => propsForAsce.setProperty(p.getName, p.getValue))
-      m + (asce.getId -> ComputingElement(asce,dasuIdentifier,autoSendTimeInterval,propsForAsce))
+      m + (asce.getId -> ComputingElement(asce,dasuIdentifier,validityThreshold,propsForAsce))
     }
     asceDaos.foldLeft(Map[String,ComputingElement[_]]())(addToMapFunc)
   }
