@@ -229,6 +229,7 @@ class ValueProcessorTest extends FlatSpec {
       inputId.fullRunningID,
       IASTypes.ALARM,
       t0,
+      t0+1,
       t0+5,
       t0+10,
       t0+15,
