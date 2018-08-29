@@ -144,6 +144,7 @@ class NotificationSenderTest extends FlatSpec {
       inputId.fullRunningID,
       IASTypes.ALARM,
       tStamp,
+      tStamp+1,
       tStamp+5,
       tStamp+10,
       tStamp+15,
