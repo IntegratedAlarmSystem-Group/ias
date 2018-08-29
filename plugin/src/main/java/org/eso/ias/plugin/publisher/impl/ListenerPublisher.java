@@ -1,5 +1,6 @@
 package org.eso.ias.plugin.publisher.impl;
 
+import java.util.Date;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -106,6 +107,11 @@ public class ListenerPublisher extends PublisherBase {
 	@Override
 	protected long publish(MonitorPointData mpData) throws PublisherException {
 		publishedMessages.incrementAndGet();
+
+		synchronized (iso8601dateFormat) {
+			mpData.setPublishTime(iso8601dateFormat.format(new Date(System.currentTimeMillis())));
+		}
+
 		listener.dataReceived(mpData);
 		return mpData.toJsonString().length();
 	}
