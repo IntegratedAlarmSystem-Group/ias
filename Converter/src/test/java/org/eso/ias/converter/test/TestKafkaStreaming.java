@@ -6,15 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.Set;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -211,6 +204,11 @@ public class TestKafkaStreaming extends ConverterTestBase {
 	 * The consumer to get IASValue published by the converter
 	 */
 	private static KafkaIasiosConsumer mPointsConsumer;
+
+	/**
+	 * ISO 8601 date formatter
+	 */
+	SimpleDateFormat iso8601dateFormat= new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
 	
 	
 	
@@ -281,6 +279,8 @@ public class TestKafkaStreaming extends ConverterTestBase {
 	 */
 	@BeforeEach
 	public void setUp() throws Exception {
+		iso8601dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+
 		// Builds the JSON CDB
 		cdbFiles = new CdbJsonFiles(cdbParentPath);
 		CdbWriter cdbWriter = new JsonWriter(cdbFiles);
@@ -338,6 +338,10 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		// Pushes all the monitor point in the plugin topic
 		for (MonitorPointDataHolder mpdh: mpdToSend) {
 			MonitorPointData mpd = buildMonitorPointData(mpdh);
+			synchronized (iso8601dateFormat) {
+                mpd.setPublishTime(iso8601dateFormat.format(new Date(System.currentTimeMillis())));
+            }
+
 			String mpdString = mpd.toJsonString();
 			mPointsProducer.push(mpdString, null, mpdh.id);
 			logger.debug("MPD{} sent",mpd.getId());
@@ -373,6 +377,9 @@ public class TestKafkaStreaming extends ConverterTestBase {
 				System.currentTimeMillis(),
 				IASTypes.LONG);
 		MonitorPointData mpd = buildMonitorPointData(unknown1);
+        synchronized (iso8601dateFormat) {
+            mpd.setPublishTime(iso8601dateFormat.format(new Date(System.currentTimeMillis())));
+        }
 		String mpdString = mpd.toJsonString();
 		mPointsProducer.push(mpdString, null, unknown1.id);
 		
@@ -383,10 +390,13 @@ public class TestKafkaStreaming extends ConverterTestBase {
 				System.currentTimeMillis(),
 				IASTypes.ALARM);
 		mpd = buildMonitorPointData(unknown2);
+        synchronized (iso8601dateFormat) {
+            mpd.setPublishTime(iso8601dateFormat.format(new Date(System.currentTimeMillis())));
+        }
 		mpdString = mpd.toJsonString();
 		mPointsProducer.push(mpdString, null, unknown2.id);
 		
-		logger.info("Waiting for unkonwn monitor point that should never arrived");
+		logger.info("Waiting for unkonwn monitor point that should never arrive");
 		assertFalse(latch.await(1, TimeUnit.MINUTES),"Should not have received any value!");
 		assertEquals(0,eventsConsumer.numOfEventsReceived());
 		
@@ -396,6 +406,9 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		logger.info("Pushing some mPoint to check if it works after the error");
 		for (MonitorPointDataHolder mpdh: mpdToSend) {
 			mpd = buildMonitorPointData(mpdh);
+            synchronized (iso8601dateFormat) {
+                mpd.setPublishTime(iso8601dateFormat.format(new Date(System.currentTimeMillis())));
+            }
 			mpdString = mpd.toJsonString();
 			mPointsProducer.push(mpdString, null, mpdh.id);
 			logger.debug("MPD{} sent",mpd.getId());

@@ -189,9 +189,11 @@ public class ValueMapper implements Function<String, String> {
 		    return null;
         }
 
+        long monSysProductionTime;
+		monSysProductionTime=ISO8601Helper.timestampToMillis(remoteSystemData.getSampleTime());
 		
 		long pluginProductionTime;
-		pluginProductionTime=ISO8601Helper.timestampToMillis(remoteSystemData.getSampleTime());
+		pluginProductionTime=ISO8601Helper.timestampToMillis(remoteSystemData.getProducedByPluginTime());
 		
 		long pluginSentToConvertTime;
 		pluginSentToConvertTime=ISO8601Helper.timestampToMillis(remoteSystemData.getPublishTime());
@@ -228,6 +230,7 @@ public class ValueMapper implements Function<String, String> {
 				IasValidity.valueOf(remoteSystemData.getValidity()),
 				identifier.fullRunningID(),
 				type,
+				monSysProductionTime,
 				pluginProductionTime, // PLUGIN production
 				pluginSentToConvertTime,  // Sent to converter
 				receptionTStamp, // received from plugin
@@ -316,7 +319,7 @@ public class ValueMapper implements Function<String, String> {
                         mpConfiguration.get().minTemplateIndex,
                         mpConfiguration.get().maxTemplateIndex));
 		} catch (Exception cfe) {
-			logger.error("Error converting {} to a core value type: value lost!",mpd.getId());
+			logger.error("Error converting {} to a core value type: value lost!",mpd.getId(),cfe);
 			return null;
 		}
 		try {
