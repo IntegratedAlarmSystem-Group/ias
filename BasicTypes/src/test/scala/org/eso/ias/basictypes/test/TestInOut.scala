@@ -41,22 +41,23 @@ class TestInOut extends FlatSpec {
 
   it must "Have the same ID after changing other props" in {
     val mp: InOut[Long] = new InOut(
-        None,
-        id, 
-        OperationalMode.OPERATIONAL, 
-        Some(RELIABLE),
-        None,
-        None,
-        IASTypes.LONG,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None)
+      None,
+      id,
+      OperationalMode.OPERATIONAL,
+      Some(RELIABLE),
+      None,
+      None,
+      IASTypes.LONG,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None,
+      None)
     
     // Change the value of the previous MP
     val mp2 = mp.updateValue(Some(3L))

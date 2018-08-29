@@ -58,7 +58,7 @@ class TestJavaConversion  extends FlatSpec {
         None,
         None,
         IASTypes.LONG,
-        None,None,None,None,None,None,None,None,None) 
+        None,None,None,None,None,None,None,None,None,None)
       val intHIO = new InOut[Int]( // Input
         intValue, 
         doubleHioId, 
@@ -67,7 +67,7 @@ class TestJavaConversion  extends FlatSpec {
         None,
         None,
         IASTypes.INT,
-        None,None,None,None,None,None,None,None,None) 
+        None,None,None,None,None,None,None,None,None,None)
       val shortHIO =  new InOut[Int]( // Input
         shortValue, 
         doubleHioId, 
@@ -76,7 +76,7 @@ class TestJavaConversion  extends FlatSpec {
         None,
         None,
         IASTypes.SHORT,
-        None,None,None,None,None,None,None,None,None) 
+        None,None,None,None,None,None,None,None,None,None)
       val byteHIO = new InOut[Byte]( // Input
         byteValue, 
         doubleHioId, 
@@ -85,7 +85,7 @@ class TestJavaConversion  extends FlatSpec {
         None,
         None,
         IASTypes.BYTE,
-        None,None,None,None,None,None,None,None,None)
+        None,None,None,None,None,None,None,None,None,None)
       val charHIO = new InOut[Char]( // Input
         charValue, 
         doubleHioId, 
@@ -94,7 +94,7 @@ class TestJavaConversion  extends FlatSpec {
         None,
         None,
         IASTypes.CHAR,
-        None,None,None,None,None,None,None,None,None) 
+        None,None,None,None,None,None,None,None,None,None)
       val stringHIO = new InOut[String]( // Input
         stringValue, 
         doubleHioId, 
@@ -103,7 +103,7 @@ class TestJavaConversion  extends FlatSpec {
         None,
         None,
         IASTypes.STRING,
-        None,None,None,None,None,None,None,None,None)
+        None,None,None,None,None,None,None,None,None,None)
       val boolHIO = new InOut[Boolean]( // Input
         boolValue, 
         doubleHioId, 
@@ -112,7 +112,7 @@ class TestJavaConversion  extends FlatSpec {
         None,
         None,
         IASTypes.BOOLEAN,
-        None,None,None,None,None,None,None,None,None)
+        None,None,None,None,None,None,None,None,None,None)
       val alarmHIO = new InOut[Alarm]( // Output
         alarmValue, 
         alarmHioId, 
@@ -121,7 +121,7 @@ class TestJavaConversion  extends FlatSpec {
         validity,
         None,
         IASTypes.ALARM,
-        None,None,None,None,None,None,None,None,None)
+        None,None,None,None,None,None,None,None,None,None)
       val doubleHIO = new InOut[Double]( // Input
         doubleValue, 
         doubleHioId, 
@@ -130,7 +130,7 @@ class TestJavaConversion  extends FlatSpec {
         None,
         None,
         IASTypes.DOUBLE,
-        None,None,None,None,None,None,None,None,None)
+        None,None,None,None,None,None,None,None,None,None)
       val floatHIO = new InOut[Float]( // Input
         floatValue, 
         doubleHioId, 
@@ -139,7 +139,7 @@ class TestJavaConversion  extends FlatSpec {
         None,
         None,
         IASTypes.FLOAT,
-        Some(1L),Some(2L),Some(3L),Some(4L),Some(5L),Some(6L),None,None,None)
+        Some(0L),Some(1L),Some(2L),Some(3L),Some(4L),Some(5L),Some(6L),None,None,None)
       
       // Ensure we are testing all possible types
       val hios = List (longHIO,intHIO,shortHIO,byteHIO,charHIO,stringHIO,boolHIO,alarmHIO,doubleHIO,floatHIO)
@@ -174,8 +174,11 @@ class TestJavaConversion  extends FlatSpec {
   it must "Update the times in the IASValue" in {
     val f = fixture
     val doubleVal = f.doubleHIO.toIASValue()
+
+    val monSystTime = doubleVal.updateMonSysProdTime(8L)
+    assert(monSystTime.readFromMonSysTStamp.get()==8L)
     
-    val updatePluginTime = doubleVal.updatePluginProdTime(1L)
+    val updatePluginTime = monSystTime.updatePluginProdTime(1L)
     assert(updatePluginTime.pluginProductionTStamp.get == 1L)
     
     val sentToConvTime = updatePluginTime.updateSentToConverterTime(2L)
@@ -195,6 +198,7 @@ class TestJavaConversion  extends FlatSpec {
    
    // This last IASValue must contain all the previously set timestamps
    val dasuProdTime = readBsdbTime.updateDasuProdTime(7L)
+    assert(dasuProdTime.readFromMonSysTStamp.get() == 8L)
    assert(dasuProdTime.pluginProductionTStamp.get == 1L)
    assert(dasuProdTime.sentToConverterTStamp.get == 2L)
    assert(dasuProdTime.receivedFromPluginTStamp.get == 3L)
@@ -255,7 +259,7 @@ class TestJavaConversion  extends FlatSpec {
         f.validity,
         None,
         IASTypes.ALARM,
-        None,None,None,None,None,None,None,Some(Set(depId1,depId2)),None)
+      None,None,None,None,None,None,None,None,Some(Set(depId1,depId2)),None)
     
     val alarmVal = alarmHIO.toIASValue()
     
@@ -274,7 +278,7 @@ class TestJavaConversion  extends FlatSpec {
         f.validity,
         None,
         IASTypes.ALARM,
-        None,None,None,None,None,None,None,None,None).update(alarmVal)
+        None,None,None,None,None,None,None,None,None,None).update(alarmVal)
         
     val deps = alarmHIO2.idsOfDependants
     assert(deps.isDefined)
@@ -307,7 +311,7 @@ class TestJavaConversion  extends FlatSpec {
         f.validity,
         None,
         IASTypes.ALARM,
-        None,None,None,None,None,None,None,None,Some(properties))
+        None,None,None,None,None,None,None,None,None,Some(properties))
     
     val alarmVal = alarmHIO.toIASValue()
     
@@ -328,7 +332,7 @@ class TestJavaConversion  extends FlatSpec {
         f.validity,
         None,
         IASTypes.ALARM,
-        None,None,None,None,None,None,None,None,None).update(alarmVal)
+        None,None,None,None,None,None,None,None,None,None).update(alarmVal)
     
     val valuePropsOpt = alarmHIO2.props
     assert(valuePropsOpt.isDefined)

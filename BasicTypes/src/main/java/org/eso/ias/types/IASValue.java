@@ -27,9 +27,18 @@ public class IASValue<T> {
 	 * The value of the HIO
 	 */
 	public final T value;
+
+	/**
+	 * The point in time when the value has been read from the
+	 * monitored system (set by the plugin only)
+	 */
+	public final Optional<Long> readFromMonSysTStamp;
 	
 	/**
 	 * The point in time when the plugin produced this value
+     *
+     * This timestamp is updated when the plugin re-send the last computed
+     * value to the converter
 	 */
 	public final Optional<Long> pluginProductionTStamp;
 	
@@ -127,6 +136,7 @@ public class IASValue<T> {
 	 * @param iasValidity The validity
 	 * @param fullRunningId: The full running id of this input and its parents
 	 * @param valueType: the IAS type of this input
+     * @param readFromMonSysTStamp: the point  in time when the value has been read from the monitored system
 	 * @param pluginProductionTStamp The point in time when the plugin produced this value
 	 * @param sentToConverterTStamp The point in time when the plugin sent the value to the converter
 	 * @param receivedFromPluginTStamp The point in time when the converter received the value from the plugin
@@ -142,6 +152,7 @@ public class IASValue<T> {
 			IasValidity iasValidity,
 			String fullRunningId,
 			IASTypes valueType,
+            Optional<Long> readFromMonSysTStamp,
 			Optional<Long> pluginProductionTStamp,
 			Optional<Long> sentToConverterTStamp,
 			Optional<Long> receivedFromPluginTStamp,
@@ -154,6 +165,7 @@ public class IASValue<T> {
 		Objects.requireNonNull(mode,"The mode can't be null");
 		Objects.requireNonNull(iasValidity,"The validity can't be null");
 		Objects.requireNonNull(valueType,"The type can't be null");
+		Objects.requireNonNull(readFromMonSysTStamp);
 		Objects.requireNonNull(pluginProductionTStamp);
 		Objects.requireNonNull(sentToConverterTStamp);
 		Objects.requireNonNull(receivedFromPluginTStamp);
@@ -177,7 +189,8 @@ public class IASValue<T> {
 		String lastCouple = parts[parts.length-1];
 		String[] coupleParts = lastCouple.split(Identifier.coupleSeparator());
 		this.id=coupleParts[0].substring(Identifier.coupleGroupPrefix().length());
-		
+
+		this.readFromMonSysTStamp = readFromMonSysTStamp;
 		this.pluginProductionTStamp=pluginProductionTStamp;
 		this.sentToConverterTStamp=sentToConverterTStamp;
 		this.receivedFromPluginTStamp=receivedFromPluginTStamp;
@@ -212,6 +225,7 @@ public class IASValue<T> {
 				this.iasValidity,
 				this.fullRunningId,
 				this.valueType,
+				this.readFromMonSysTStamp,
 				this.pluginProductionTStamp,
 				this.sentToConverterTStamp,
 				this.receivedFromPluginTStamp,
@@ -236,6 +250,7 @@ public class IASValue<T> {
 				this.iasValidity,
 				this.fullRunningId,
 				this.valueType,
+				this.readFromMonSysTStamp,
 				this.pluginProductionTStamp,
 				this.sentToConverterTStamp,
 				this.receivedFromPluginTStamp,
@@ -265,6 +280,7 @@ public class IASValue<T> {
 				this.iasValidity,
 				this.fullRunningId,
 				this.valueType,
+                this.readFromMonSysTStamp,
 				this.pluginProductionTStamp,
 				this.sentToConverterTStamp,
 				this.receivedFromPluginTStamp,
@@ -293,6 +309,7 @@ public class IASValue<T> {
 				this.iasValidity,
 				this.fullRunningId,
 				this.valueType,
+                this.readFromMonSysTStamp,
 				this.pluginProductionTStamp,
 				this.sentToConverterTStamp,
 				this.receivedFromPluginTStamp,
@@ -317,6 +334,7 @@ public class IASValue<T> {
 				validity,
 				this.fullRunningId,
 				this.valueType,
+                this.readFromMonSysTStamp,
 				this.pluginProductionTStamp,
 				this.sentToConverterTStamp,
 				this.receivedFromPluginTStamp,
@@ -327,7 +345,33 @@ public class IASValue<T> {
 				this.dependentsFullRuningIds,
 				this.props);
 	}
-	
+
+    /**
+     * Build a new IASValue with the passed monitored
+     * system production time
+     *
+     * @param timestamp The value to set in the new IASValue
+     * @return The new IASValue with the updated timestamp
+     */
+    public IASValue<T> updateMonSysProdTime(long timestamp) {
+        return new IASValue<T>(
+                this.value,
+                this.mode,
+                this.iasValidity,
+                this.fullRunningId,
+                this.valueType,
+                Optional.ofNullable(timestamp),
+                this.readFromMonSysTStamp,
+                this.sentToConverterTStamp,
+                this.receivedFromPluginTStamp,
+                this.convertedProductionTStamp,
+                this.sentToBsdbTStamp,
+                this.readFromBsdbTStamp,
+                this.dasuProductionTStamp,
+                this.dependentsFullRuningIds,
+                this.props);
+    }
+
 	/**
 	 * Build a new IASValue with the passed plugin production time
 	 * 
@@ -341,6 +385,7 @@ public class IASValue<T> {
 				this.iasValidity,
 				this.fullRunningId,
 				this.valueType,
+                this.readFromMonSysTStamp,
 				Optional.ofNullable(timestamp),
 				this.sentToConverterTStamp,
 				this.receivedFromPluginTStamp,
@@ -365,6 +410,7 @@ public class IASValue<T> {
 				this.iasValidity,
 				this.fullRunningId,
 				this.valueType,
+                this.readFromMonSysTStamp,
 				this.pluginProductionTStamp,
 				Optional.ofNullable(timestamp),
 				this.receivedFromPluginTStamp,
@@ -389,6 +435,7 @@ public class IASValue<T> {
 				this.iasValidity,
 				this.fullRunningId,
 				this.valueType,
+                this.readFromMonSysTStamp,
 				this.pluginProductionTStamp,
 				this.sentToConverterTStamp,
 				Optional.ofNullable(timestamp),
@@ -413,6 +460,7 @@ public class IASValue<T> {
 				this.iasValidity,
 				this.fullRunningId,
 				this.valueType,
+                this.readFromMonSysTStamp,
 				this.pluginProductionTStamp,
 				this.sentToConverterTStamp,
 				this.receivedFromPluginTStamp,
@@ -437,6 +485,7 @@ public class IASValue<T> {
 				this.iasValidity,
 				this.fullRunningId,
 				this.valueType,
+                this.readFromMonSysTStamp,
 				this.pluginProductionTStamp,
 				this.sentToConverterTStamp,
 				this.receivedFromPluginTStamp,
@@ -461,6 +510,7 @@ public class IASValue<T> {
 				this.iasValidity,
 				this.fullRunningId,
 				this.valueType,
+                this.readFromMonSysTStamp,
 				this.pluginProductionTStamp,
 				this.sentToConverterTStamp,
 				this.receivedFromPluginTStamp,
@@ -485,6 +535,7 @@ public class IASValue<T> {
 				this.iasValidity,
 				this.fullRunningId,
 				this.valueType,
+                this.readFromMonSysTStamp,
 				this.pluginProductionTStamp,
 				this.sentToConverterTStamp,
 				this.receivedFromPluginTStamp,
@@ -502,6 +553,10 @@ public class IASValue<T> {
 		ret.append(id);
 		ret.append("], runningID=");
 		ret.append(fullRunningId);
+		readFromMonSysTStamp.ifPresent(tStamp -> {
+			ret.append(", read from Monitored System at ");
+			ret.append(ISO8601Helper.getTimestamp(tStamp));
+		});
 		pluginProductionTStamp.ifPresent(tStamp -> {
 			ret.append(", produced by plugin at ");
 			ret.append(ISO8601Helper.getTimestamp(tStamp));
@@ -586,7 +641,7 @@ public class IASValue<T> {
 				iasValidity,
 				fullRunningId,
 				valueType,
-				null,null,null,null,null,null,null,
+				null,null,null,null,null,null,null,null,
 				null,null);
 	}
 	
@@ -599,6 +654,7 @@ public class IASValue<T> {
 	 * @param fullRunningId Full running ID
 	 * 
 	 * @param valueType The type of the value
+     * @param readFromMonSysTStamp: the pont in time when the value has been read from the monitored system
 	 * @param pluginProductionTStamp The point in time when the plugin produced this value
 	 * @param sentToConverterTStamp The point in time when the plugin sent the value to the converter
 	 * @param receivedFromPluginTStamp The point in time when the converter received the value from the plugin
@@ -617,6 +673,7 @@ public class IASValue<T> {
 			IasValidity iasValidity,
 			String fullRunningId,
 			IASTypes valueType,
+			Long readFromMonSysTStamp,
 			Long pluginProductionTStamp,
 			Long sentToConverterTStamp,
 			Long receivedFromPluginTStamp,
@@ -642,6 +699,7 @@ public class IASValue<T> {
 					iasValidity,
 					fullRunningId,
 					valueType,
+                    Optional.ofNullable(readFromMonSysTStamp),
 					Optional.ofNullable(pluginProductionTStamp),
 					Optional.ofNullable(sentToConverterTStamp),
 					Optional.ofNullable(receivedFromPluginTStamp),
@@ -657,6 +715,7 @@ public class IASValue<T> {
 					iasValidity,
 					fullRunningId,
 					valueType,
+                    Optional.ofNullable(readFromMonSysTStamp),
 					Optional.ofNullable(pluginProductionTStamp),
 					Optional.ofNullable(sentToConverterTStamp),
 					Optional.ofNullable(receivedFromPluginTStamp),
@@ -672,6 +731,7 @@ public class IASValue<T> {
 					iasValidity,
 					fullRunningId,
 					valueType,
+                    Optional.ofNullable(readFromMonSysTStamp),
 					Optional.ofNullable(pluginProductionTStamp),
 					Optional.ofNullable(sentToConverterTStamp),
 					Optional.ofNullable(receivedFromPluginTStamp),
@@ -687,6 +747,7 @@ public class IASValue<T> {
 					iasValidity,
 					fullRunningId,
 					valueType,
+                    Optional.ofNullable(readFromMonSysTStamp),
 					Optional.ofNullable(pluginProductionTStamp),
 					Optional.ofNullable(sentToConverterTStamp),
 					Optional.ofNullable(receivedFromPluginTStamp),
@@ -702,6 +763,7 @@ public class IASValue<T> {
 					iasValidity,
 					fullRunningId,
 					valueType,
+                    Optional.ofNullable(readFromMonSysTStamp),
 					Optional.ofNullable(pluginProductionTStamp),
 					Optional.ofNullable(sentToConverterTStamp),
 					Optional.ofNullable(receivedFromPluginTStamp),
@@ -717,6 +779,7 @@ public class IASValue<T> {
 					iasValidity,
 					fullRunningId,
 					valueType,
+                    Optional.ofNullable(readFromMonSysTStamp),
 					Optional.ofNullable(pluginProductionTStamp),
 					Optional.ofNullable(sentToConverterTStamp),
 					Optional.ofNullable(receivedFromPluginTStamp),
@@ -732,6 +795,7 @@ public class IASValue<T> {
 					iasValidity,
 					fullRunningId,
 					valueType,
+                    Optional.ofNullable(readFromMonSysTStamp),
 					Optional.ofNullable(pluginProductionTStamp),
 					Optional.ofNullable(sentToConverterTStamp),
 					Optional.ofNullable(receivedFromPluginTStamp),
@@ -747,6 +811,7 @@ public class IASValue<T> {
 					iasValidity,
 					fullRunningId,
 					valueType,
+                    Optional.ofNullable(readFromMonSysTStamp),
 					Optional.ofNullable(pluginProductionTStamp),
 					Optional.ofNullable(sentToConverterTStamp),
 					Optional.ofNullable(receivedFromPluginTStamp),
@@ -763,6 +828,7 @@ public class IASValue<T> {
 					iasValidity,
 					fullRunningId,
 					valueType,
+                    Optional.ofNullable(readFromMonSysTStamp),
 					Optional.ofNullable(pluginProductionTStamp),
 					Optional.ofNullable(sentToConverterTStamp),
 					Optional.ofNullable(receivedFromPluginTStamp),
@@ -778,6 +844,7 @@ public class IASValue<T> {
 					iasValidity,
 					fullRunningId,
 					valueType,
+                    Optional.ofNullable(readFromMonSysTStamp),
 					Optional.ofNullable(pluginProductionTStamp),
 					Optional.ofNullable(sentToConverterTStamp),
 					Optional.ofNullable(receivedFromPluginTStamp),
@@ -802,6 +869,7 @@ public class IASValue<T> {
 		result = prime * result + ((iasValidity == null) ? 0 : iasValidity.hashCode());
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		result = prime * result + ((mode == null) ? 0 : mode.hashCode());
+        result = prime * result + ((readFromMonSysTStamp == null) ? 0 : readFromMonSysTStamp.hashCode());
 		result = prime * result + ((pluginProductionTStamp == null) ? 0 : pluginProductionTStamp.hashCode());
 		result = prime * result + ((props == null) ? 0 : props.hashCode());
 		result = prime * result + ((readFromBsdbTStamp == null) ? 0 : readFromBsdbTStamp.hashCode());
@@ -903,6 +971,11 @@ public class IASValue<T> {
 			if (other.pluginProductionTStamp != null)
 				return false;
 		} else if (!pluginProductionTStamp.equals(other.pluginProductionTStamp))
+			return false;
+		if (readFromMonSysTStamp == null) {
+			if (other.readFromMonSysTStamp != null)
+				return false;
+		} else if (!readFromMonSysTStamp.equals(other.readFromMonSysTStamp))
 			return false;
 		if (props == null) {
 			if (other.props != null)
