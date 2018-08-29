@@ -91,7 +91,8 @@ import org.eso.ias.asce.exceptions.ValidityConstraintsMismatchException
  * @param initialInputs: The initial set of all the possible inputs.
  * @param tfSetting: The definition of the implementation of the transfer function
  *                   that manipulates the inputs to produce the new output
- * @param validityThresholdSecs the threshold (seconds) to set the validity of the output
+ * @param validityThresholdSecs the threshold (seconds), including toelerance,
+ *                              to set the validity of the output
  *                              taking into account when the timestamps of the inputs
  *                              and the constraint possibly set in the TF
  * @param props: the java properties to pass to this component and the TF
@@ -372,9 +373,6 @@ abstract class ComputingElement[T](
       iasio.validityConstraint.map( set => inputs.filter(input => set.contains(input.id.id)))
       .getOrElse(inputs)
     
-    iasio.validityConstraint.foreach(set => logger.info("Constraints=[{}]",set.mkString(",")))
-    logger.info("selectedInputsByConstraint={}",selectedInputsByConstraint.map(_.id.id).mkString(","))
-    
     if (iasio.validityConstraint.isDefined && selectedInputsByConstraint.size!=iasio.validityConstraint.get.size) {
       // There are constraints but the at least one ID of the constraints does not belong 
       // to any of the IDs of the IASIO in input
@@ -456,6 +454,7 @@ object ComputingElement {
    * @param asceDao the configuration of the ASCE red from the CDB
    * @param dasuId the identifier of the DASU where the ASCE runs
    * @param validityThresholdInSecs the time interval (secs) to check the validity
+    *                               It includes the tolerance
    * @param properties a optional set of properties
    */
   def apply[T](

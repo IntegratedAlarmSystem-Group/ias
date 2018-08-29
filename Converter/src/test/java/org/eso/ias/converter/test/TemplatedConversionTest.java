@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -124,6 +125,16 @@ public class TemplatedConversionTest {
                 IasValidity.RELIABLE);
 
         MonitorPointData mpd = new MonitorPointData(pluginId,monSysId,value);
+
+        /**
+         * ISO 8601 date formatter
+         */
+        SimpleDateFormat iso8601dateFormat= new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
+        iso8601dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+        synchronized (iso8601dateFormat) {
+            mpd.setPublishTime(iso8601dateFormat.format(new Date(System.currentTimeMillis())));
+        }
         return mpd.toJsonString();
     }
 

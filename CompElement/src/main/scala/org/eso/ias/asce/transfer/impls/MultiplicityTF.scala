@@ -11,12 +11,12 @@ import scala.util.control.NonFatal
 import org.eso.ias.asce.exceptions.UnexpectedNumberOfInputsException
 import org.eso.ias.asce.exceptions.TypeMismatchException
 import org.eso.ias.asce.exceptions.TypeMismatchException
-import org.eso.ias.types.Alarm
+import org.eso.ias.types.{Alarm, OperationalMode}
 
 /**
  * Implements the Multiplicity transfer function.
  * 
- * The HIOs in input to this TF are only alarms.
+ * The IASIOs in input to this TF are only alarms.
  * The alarm generate by this TF activates when the number
  * of alarms in input is equal or greater then the threshold retrieved
  * from the properties. 
@@ -62,17 +62,29 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
    */
   val alarmSet: Alarm = 
     Option(props.getProperty(MultiplicityTF.alarmPriorityPropName)).map(Alarm.valueOf(_)).getOrElse(Alarm.getSetDefault)
-  
+
   /**
+    * Check that all the inputs and the output are alarms
+    *
    * @param inputsInfo The IDs and types of the inputs
    * @param outputInfo The Id and type of thr output
    **/
-  override def initialize(inputsInfo: Set[IasioInfo], outputInfo: IasioInfo): Unit = { }
+  override def initialize(inputsInfo: Set[IasioInfo], outputInfo: IasioInfo): Unit = {
+    val types = inputsInfo.map(_.iasioType)
+    require(types.size==1 && types.head==ALARM,"All inputs must be ALARM")
+    require(outputInfo.iasioType==ALARM,"The output must be an ALARM")
+  }
   
   /**
    * @see TransferExecutor#shutdown()
    */
   def shutdown() {}
+
+  def getOutputMode(modes: Iterable[OperationalMode]): OperationalMode = {
+    val setOfModes = modes.toSet
+    if (setOfModes.size==1) setOfModes.head
+    else OperationalMode.UNKNOWN
+  }
   
   /**
    * @see ScalaTransferExecutor#eval
@@ -93,13 +105,12 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
     var activeAlarms=0
     val numOfActiveAlarms = for {
       hio <- compInputs.values
-      if (hio.iasType==ALARM)
       if (hio.value.isDefined)
       alarmValue = hio.value.get.asInstanceOf[Alarm]
       if (alarmValue.isSet())} activeAlarms=activeAlarms+1
     
       val newAlarm = if (activeAlarms>=threshold) alarmSet else Alarm.cleared()
-    actualOutput.updateValue(newAlarm)
+    actualOutput.updateValue(newAlarm).updateMode(getOutputMode(compInputs.values.map(_.mode)))
   }
 }
 

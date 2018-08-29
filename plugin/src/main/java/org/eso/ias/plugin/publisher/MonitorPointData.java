@@ -30,6 +30,11 @@ public class MonitorPointData extends MonitorPointDataToBuffer{
 	 * The id of the system monitored by the plugin.
 	 */
 	private String monitoredSystemID;
+
+    /**
+     * The point in time when the plugin produced this object
+     */
+    private String producedByPluginTime;
 	
 	/**
 	 * ISO-8601 formatted time when the 
@@ -59,7 +64,7 @@ public class MonitorPointData extends MonitorPointDataToBuffer{
 		setPluginID(pluginID);
 		setMonitoredSystemID(monitoredSystemID);
 		synchronized (iso8601dateFormat) {
-			setPublishTime(iso8601dateFormat.format(new Date(System.currentTimeMillis())));
+			setProducedByPluginTime(iso8601dateFormat.format(new Date(System.currentTimeMillis())));
 		}
 	}
 	
@@ -92,6 +97,24 @@ public class MonitorPointData extends MonitorPointDataToBuffer{
 		this.publishTime = publishTime;
 	}
 
+    /**
+     * Getter
+     *
+     * @return
+     */
+    public String getProducedByPluginTime() {
+        return producedByPluginTime;
+    }
+
+    /**
+     * Setter
+     *
+     * @param producedByPluginTime
+     */
+    public void setProducedByPluginTime(String producedByPluginTime) {
+        this.producedByPluginTime = producedByPluginTime;
+    }
+
 	/**
 	 * @see java.lang.Object#toString()
 	 */
@@ -101,6 +124,8 @@ public class MonitorPointData extends MonitorPointDataToBuffer{
 		ret.append(id);
 		ret.append(", SystemID=");
 		ret.append(pluginID);
+		ret.append(", produced at ");
+		ret.append(producedByPluginTime);
 		ret.append(", published at ");
 		ret.append(publishTime);
 		ret.append(", value=");
@@ -157,6 +182,11 @@ public class MonitorPointData extends MonitorPointDataToBuffer{
 				return false;
 		} else if (!publishTime.equals(other.publishTime))
 			return false;
+        if (producedByPluginTime == null) {
+            if (other.producedByPluginTime != null)
+                return false;
+        } else if (!producedByPluginTime.equals(other.producedByPluginTime))
+            return false;
 		if (sampleTime == null) {
 			if (other.sampleTime != null)
 				return false;

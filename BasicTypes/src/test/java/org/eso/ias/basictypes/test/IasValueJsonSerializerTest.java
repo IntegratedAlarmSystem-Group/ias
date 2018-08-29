@@ -216,6 +216,7 @@ public class IasValueJsonSerializerTest {
 			IasValidity.RELIABLE,
 			new Identifier(alarmId, IdentifierType.IASIO, asceIdentifier).fullRunningID(),
 			IASTypes.ALARM,
+			8L,
 			1L,
 			2L,
 			3L,
@@ -234,6 +235,8 @@ public class IasValueJsonSerializerTest {
 		
 		// Explicit check the values of the tstamps even if the assertEquals
 		// already ensure that
+		assertTrue(alarmFromSerializer.readFromMonSysTStamp.isPresent());
+		assertTrue(alarmFromSerializer.readFromMonSysTStamp.get()==8L);
 		assertTrue(alarmFromSerializer.pluginProductionTStamp.isPresent());
 		assertTrue(alarmFromSerializer.pluginProductionTStamp.get()==1L);
 		assertTrue(alarmFromSerializer.sentToConverterTStamp.isPresent());
@@ -258,6 +261,7 @@ public class IasValueJsonSerializerTest {
 			IasValidity.RELIABLE,
 			new Identifier(alarmId, IdentifierType.IASIO, asceIdentifier).fullRunningID(),
 			IASTypes.ALARM,
+			null,
 			1L,
 			null,
 			3L,
@@ -276,6 +280,7 @@ public class IasValueJsonSerializerTest {
 		
 		// Explicit check the values of the tstamps even if the assertEquals
 		// already ensure that
+		assertFalse(alarmFromSerializer.readFromMonSysTStamp.isPresent());
 		assertTrue(alarmFromSerializer.pluginProductionTStamp.isPresent());
 		assertTrue(alarmFromSerializer.pluginProductionTStamp.get()==1L);
 		assertFalse(alarmFromSerializer.sentToConverterTStamp.isPresent());
@@ -311,6 +316,7 @@ public class IasValueJsonSerializerTest {
 			IasValidity.RELIABLE,
 			new Identifier(alarmId, IdentifierType.IASIO, asceIdentifier).fullRunningID(),
 			IASTypes.ALARM,
+			8L,
 			1L,
 			2L,
 			3L,
@@ -351,6 +357,7 @@ public class IasValueJsonSerializerTest {
 			IasValidity.RELIABLE,
 			new Identifier(alarmId, IdentifierType.IASIO, asceIdentifier).fullRunningID(),
 			IASTypes.ALARM,
+			8L,
 			1L,
 			2L,
 			3L,
