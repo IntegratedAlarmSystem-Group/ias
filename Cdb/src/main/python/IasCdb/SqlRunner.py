@@ -72,12 +72,14 @@ class SqlRunner(object):
             n = n + self.executeSqlStatement(sqlCommand,cursorToUse)
         return n
 
-    def executeSqlFromFile(self,fileName,alternateCursor=None):
+    def executeSqlFromFile(self,fileName,alternateCursor=None, ignoreErrors=False):
         """
         Execute the script read from the passed file
 
         :param fileName: the name of the file with the SQL script
         :param alternateCursor: the cursor to use instead of the one passed in the constructor
+        :param ignoreErrors: if True ignore the errors returned by runnng a SQL comamnd
+                             otherwise terminates immediately if an error occurs
         :return: the total number of rows that have currently been fetched from the cursor (
                  for select statements) or that have been affected by the operation
                  (for insert, update and delete statements
@@ -90,7 +92,13 @@ class SqlRunner(object):
 
         n = 0
         for sqlStatement in sqlStatements:
-            n = n + self.executeSqlStatement(sqlStatement,alternateCursor)
+            try:
+                n = n + self.executeSqlStatement(sqlStatement,alternateCursor)
+            except Exception as e:
+                if not ignoreErrors:
+                    raise e
+                else:
+                    logging.warning("Cought (and ignored) error runnig SQL [%s]: %s",sqlStatement,str(e))
 
         return n
 
