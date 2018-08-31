@@ -98,23 +98,6 @@ class SqlRunner(object):
                 if not ignoreErrors:
                     raise e
                 else:
-                    logging.warning("Cought (and ignored) error runnig SQL [%s]: %s",sqlStatement,str(e))
+                    logging.warning("Caught (and ignored) error runnig SQL [%s]: %s",sqlStatement,str(e))
 
         return n
-
-    def getColumnNames(self,tableName,alternateCursor=None):
-        '''
-        Get the names of the columns of the passed table
-
-        :param tableName:
-        :param alternateCursor:
-        :return:
-        '''
-        if not tableName:
-           raise ValueError("Invalid name of TABLE")
-
-        logging.debug("Getting columns of [%s]",tableName)
-
-        sqlCommand = "SELECT table_name FROM all_tables WHERE nvl(tablespace_name, 'no tablespace') " \
-                     "NOT IN ('SYSTEM', 'SYSAUX') AND OWNER = :owner AND IOT_NAME IS NULL"
-        self.executeSqlStatement(sqlCommand,alternateCursor)
