@@ -4,6 +4,7 @@ from enum import Enum
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, ForeignKey, Table
+from sqlalchemy.schema import Sequence
 from sqlalchemy.orm import validates, relationship
 
 '''
@@ -20,7 +21,7 @@ ias_props_association_table = Table("IAS_PROPERTY", Base.metadata,
 class Property(Base):
     __tablename__ = "PROPERTY"
 
-    ID = Column(Integer, primary_key=True)
+    ID = Column(Integer, Sequence('PROP_SEQ_GENERATOR'), primary_key=True, autoincrement='auto')
     NAME = Column(String(255))
     VALUE = Column(String(255))
 
@@ -38,7 +39,7 @@ class Ias(Base):
 
     __tablename__ = 'IAS'
 
-    ID = Column(Integer, primary_key=True)
+    ID = Column(Integer, Sequence('IAS_SEQ_GENERATOR'), primary_key=True, autoincrement='auto')
     LOGLEVEL = Column(String(10))
     REFRESHRATE = Column(Integer, nullable=False)
     TOLERANCE= Column(Integer, nullable=False)
@@ -47,6 +48,21 @@ class Ias(Base):
     SMTP = Column(String(64))
 
     props = relationship("Property", secondary=ias_props_association_table,back_populates="iass")
+
+    @validates('REFRESHRATE')
+    def validate_refresh_rate(self,key,rate):
+        assert(rate>0)
+        return rate
+
+    @validates('HBFREQUENCY')
+    def validate_refresh_hbe(self,key,hb):
+        assert(hb>0)
+        return hb
+
+    @validates('TOLERANCE')
+    def validate_refresh_tolerancee(self,key,tolerance):
+        assert(tolerance>0)
+        return tolerance
 
     def __repr__(self):
         return "<IAS(id=%d, logLevel='%s', refreshRate=%d, tolerance=%d, hbFrequency=%d, bsdbUrl='%s', smtp='%s', props=%s)>" % (
@@ -145,7 +161,7 @@ class Supervisor(Base):
 class DasuToDeploy(Base):
     __tablename__ = 'DASUS_TO_DEPLOY'
 
-    ID = Column(Integer, primary_key=True)
+    ID = Column(Integer, Sequence('DASU_TO_DEPLOY_SEQ_GENERATOR'), primary_key=True, autoincrement='auto')
     SUPERVISOR_ID = Column(String(64), ForeignKey('SUPERVISOR.SUPERVISOR_ID'))
     DASU_ID = Column(String(64), ForeignKey('DASU.DASU_ID'))
     TEMPLATE_ID = Column(String(64), ForeignKey('TEMPLATE_DEF.TEMPLATE_ID'))
