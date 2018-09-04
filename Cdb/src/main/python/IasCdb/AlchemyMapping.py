@@ -76,11 +76,17 @@ class Template_def(Base):
     MAX = Column(Integer)
 
     @validates('MIN', 'MAX')
-    def validate_max(self,key,min,max):
-        assert(min>=0 and max>min)
+    def validate_max(self,key,field):
+        if key=='MIN':
+            assert(field>=0)
+        else:
+            assert(field>0)
+        if self.MIN is not None and self.MAX is not None:
+            assert(self.MAX>self.MIN)
+        return field
 
     def __repr__(self):
-        return "<TEMPLATE_DEF(tempalte_id='%s', min=%d, max=%d)>" % (self.TEMPLATE_ID, self.MIN, self.MAX)
+        return "<TEMPLATE_DEF(template_id='%s', min=%d, max=%d)>" % (self.TEMPLATE_ID, self.MIN, self.MAX)
 
 class Iasio(Base):
     __tablename__ = 'IASIO'
@@ -94,6 +100,8 @@ class Iasio(Base):
     EMAILS = Column(String(128), nullable=True)
     SOUND = Column(String(16))
 
+    template = relationship('Template_def')
+
     def __repr__(self):
         return "<IASIO(id='%s', type='%s', canShelve=%d,  template_id='%s', doc='%s', desc='%s', emails='%s', sound=-'%s')>" % (
             self.IO_ID, self.IASTYPE, self.CANSHELVE, self.TEMPLATE_ID, self.DOCURL, self.SHORTDESC, self.EMAILS, self.SOUND
@@ -106,6 +114,9 @@ class Dasu(Base):
     OUTPUT_ID = Column(String(64), ForeignKey('IASIO.IO_ID'))
     TEMPLATE_ID = Column(String(64), ForeignKey('TEMPLATE_DEF.TEMPLATE_ID'))
 
+    output = relationship('Iasio')
+    template = relationship('Template_def')
+
     def __repr__(self):
         return "<DASU(id='%s', logLevel='%s', outputId='%s', templateId='%s')>" % (
             self.DASU_ID, self.LOGLEVEL, self.OUTPUT_ID, self.TEMPLATE_ID
@@ -115,11 +126,11 @@ class TransferFunction(Base):
     __tablename__ = 'TRANSFER_FUNC'
 
     CLASSNAME_ID = Column(String(64), primary_key=True)
-    IMPL_LANG = Column(String(16), nullable=False)
+    IMPLLANG = Column(String(16), nullable=False)
 
     def __repr__(self):
         return "<TRANSFER_FUNC(classNameId='%s', implLang='%s')>" % (
-            self.CLASSNAME_ID, self.IMPL_LANG
+            self.CLASSNAME_ID, self.IMPLLANG
         )
 
 class Asce(Base):
@@ -130,6 +141,11 @@ class Asce(Base):
     OUTPUT_ID = Column(String(64), ForeignKey('IASIO.IO_ID'))
     DASU_ID = Column(String(64), ForeignKey('DASU.DASU_ID'))
     TEMPLATE_ID = Column(String(64), ForeignKey('TEMPLATE_DEF.TEMPLATE_ID'))
+
+    output = relationship('Iasio')
+    transferFunction = relationship('TransferFunction')
+    dasu = relationship("Dasu")
+    template = relationship('Template_def')
 
     def __repr__(self):
         return "<ASCE(id='%s', transfFuncId='%s', outputId='%s', dasuId='%s', templateId='%s')>" % (
