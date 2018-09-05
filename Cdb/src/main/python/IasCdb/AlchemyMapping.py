@@ -17,6 +17,10 @@ ias_props_association_table = Table("IAS_PROPERTY", Base.metadata,
                                     Column('IAS_ID',Integer, ForeignKey('IAS.ID')),
                                     Column('PROPS_ID',Integer, ForeignKey('PROPERTY.ID'))
                                     )
+asce_props_association_table = Table("ASCE_PROPERTY", Base.metadata,
+                                     Column('ASCE_ID',String(64), ForeignKey('ASCE.ASCE_ID')),
+                                     Column('PROPS_ID',Integer, ForeignKey('PROPERTY.ID'))
+                                     )
 
 class Property(Base):
     __tablename__ = "PROPERTY"
@@ -31,9 +35,13 @@ class Property(Base):
         return name
 
     iass = relationship("Ias", secondary=ias_props_association_table,back_populates="props")
+    asces = relationship("Asce", secondary=asce_props_association_table,back_populates="asceProps")
 
     def __repr__(self):
-        return "<PROPERTY(id='%d', name='%s', value='%s')>" % (self.ID,self.NAME,self.VALUE)
+        if self.ID is not None:
+            return "<PROPERTY(id='%d', name='%s', value='%s')>" % (self.ID,self.NAME,self.VALUE)
+        else:
+            return "<PROPERTY(id=<?>, name='%s', value='%s')>" % (self.NAME,self.VALUE)
 
 class Ias(Base):
 
@@ -65,8 +73,8 @@ class Ias(Base):
         return tolerance
 
     def __repr__(self):
-        return "<IAS(id=%d, logLevel='%s', refreshRate=%d, tolerance=%d, hbFrequency=%d, bsdbUrl='%s', smtp='%s', props=%s)>" % (
-            self.ID, self.LOGLEVEL,self.REFRESHRATE,self.TOLERANCE,self.HBFREQUENCY, self.BSDBURL, self.SMTP, self.props)
+        return "<IAS(logLevel='%s', refreshRate=%d, tolerance=%d, hbFrequency=%d, bsdbUrl='%s', smtp='%s', props=%s)>" % (
+            self.LOGLEVEL,self.REFRESHRATE,self.TOLERANCE,self.HBFREQUENCY, self.BSDBURL, self.SMTP, self.props)
 
 class Template_def(Base):
     __tablename__ = 'TEMPLATE_DEF'
@@ -116,6 +124,7 @@ class Dasu(Base):
 
     output = relationship('Iasio')
     template = relationship('Template_def')
+    asces = relationship('Asce',back_populates="dasu")
 
     def __repr__(self):
         return "<DASU(id='%s', logLevel='%s', outputId='%s', templateId='%s')>" % (
@@ -133,6 +142,11 @@ class TransferFunction(Base):
             self.CLASSNAME_ID, self.IMPLLANG
         )
 
+asce_iasio_association_table = Table("ASCE_IASIO", Base.metadata,
+                                     Column('ASCE_ID',String(64), ForeignKey('ASCE.ASCE_ID')),
+                                     Column('IO_ID',Integer, ForeignKey('IASIO.IO_ID'))
+                                     )
+
 class Asce(Base):
     __tablename__ = 'ASCE'
 
@@ -144,23 +158,16 @@ class Asce(Base):
 
     output = relationship('Iasio')
     transferFunction = relationship('TransferFunction')
-    dasu = relationship("Dasu")
+    dasu = relationship("Dasu",back_populates="asces")
     template = relationship('Template_def')
 
+    asceProps = relationship("Property", secondary=asce_props_association_table,back_populates="asces")
+    inputs = relationship("Iasio", secondary=asce_iasio_association_table)
+
     def __repr__(self):
-        return "<ASCE(id='%s', transfFuncId='%s', outputId='%s', dasuId='%s', templateId='%s')>" % (
-            self.ASCE_ID, self.TRANSF_FUN_ID, self.OUTPUT_ID, self.DASU_ID, self.TEMPLATE_ID
+        return "<ASCE(id='%s', transfFuncId='%s', outputId='%s', dasuId='%s', templateId='%s', props=%s)>" % (
+            self.ASCE_ID, self.TRANSF_FUN_ID, self.OUTPUT_ID, self.DASU_ID, self.TEMPLATE_ID, self.asceProps
         )
-
-asce_props_association_table = Table("ASCE_PROPERTY", Base.metadata,
-                                     Column('ASCE_ID',Integer, ForeignKey('ASCE.ASCE_ID')),
-                                     Column('PROPS_ID',Integer, ForeignKey('PROPERTY.ID'))
-                                     )
-
-asce_iasio_association_table = Table("ASCE_IASIO", Base.metadata,
-                                     Column('ASCE_ID',Integer, ForeignKey('ASCE.ASCE_ID')),
-                                     Column('IO_ID',Integer, ForeignKey('IASIO.IO_ID'))
-                                     )
 
 class Supervisor(Base):
     __tablename__ = 'SUPERVISOR'
@@ -168,6 +175,8 @@ class Supervisor(Base):
     SUPERVISOR_ID = Column(String(64), primary_key=True)
     HOSTNAME = Column(String(64), nullable=False)
     LOGLEVEL = Column(String(16))
+
+    dasusToDeploy = relationship('DasuToDeploy',back_populates="supervisor")
 
     def __repr__(self):
         return "<SUPERVISOR(id='%s', hostName='%s', logLevel='%s')>" % (
@@ -183,14 +192,21 @@ class DasuToDeploy(Base):
     TEMPLATE_ID = Column(String(64), ForeignKey('TEMPLATE_DEF.TEMPLATE_ID'))
     INSTANCE = Column(Integer)
 
+    dasu = relationship('Dasu')
+    template = relationship('Template_def')
+    supervisor = relationship('Supervisor',back_populates="dasusToDeploy")
+
     @validates('INSTANCE')
     def validate_instance(self,key,instance):
         assert(instance>=0)
         return instance
 
     def __repr__(self):
-        return "<DASUS_TO_DEPLOY(id=%d, supervisorId='%s', dasuId='%s', templateId='%s', instance=%d')>" % (
-            self.ID, self.SUPERVISOR_ID, self.DASU_ID, self.TEMPLATE_ID, self.INSTANCE
-        )
+        if self.ID is not None:
+            return "<DASUS_TO_DEPLOY(id=%d, supervisorId='%s', dasuId='%s', templateId='%s', instance=%d')>" % (
+                self.ID, self.SUPERVISOR_ID, self.DASU_ID, self.TEMPLATE_ID, self.INSTANCE)
+        else:
+            return "<DASUS_TO_DEPLOY(id=?, supervisorId='%s', dasuId='%s', templateId='%s', instance=%d')>" % (
+                self.SUPERVISOR_ID, self.DASU_ID, self.TEMPLATE_ID, self.INSTANCE)
 
 
