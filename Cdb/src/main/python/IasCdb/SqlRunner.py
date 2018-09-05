@@ -1,23 +1,44 @@
 import logging
+import atexit
+import cx_Oracle
 
 from IasCdb.SqlFile import SqlFile
 
 class SqlRunner(object):
     '''
-    Runs SQL scripts and statements.
+    Runs SQL scripts and statements after connecting to the oracle
+    database.
 
-    By default, statements and script uses the crusor
-    passed in the constructor
+    Requires cx_Oracle
     '''
 
-    def __init__(self, cursor):
-        if cursor is None:
-            raise ValueError("The cursor can't be None")
+    def __init__(self, user, pswd, dbUrl):
+        '''
+        Constructor
 
-        self.cursor = cursor
+        :param user: the user name to login to the RDBMS
+        :param pswd: the password
+        :param dbUrl: the URL to connect to the RDBMS
+        '''
         self.logger = logging.getLogger('SqlRunner')
 
-        logging.debug("SQLRunner built")
+        if user is None:
+            raise ValueError("Invalid null/empty user name")
+        if pswd is None:
+            raise ValueError("Invalid null/empty password")
+        if dbUrl is None:
+            raise ValueError("Invalid null/empty URL to connectr to the DB")
+
+        conStr = '%s/%s@%s' % (user,pswd,dbUrl)
+        self.connection = cx_Oracle.connect(conStr)
+        self.logger.debug('Oracle DB %s connected (user %s)',dbUrl,user)
+
+        self.cursor = self.connection.cursor()
+
+        # Register the handler to close the connection with the RDB
+        atexit.register(self.close)
+
+        self.logger.debug("SQLRunner built")
 
     def __getCursor(self,alternateCursor):
         '''
@@ -26,9 +47,12 @@ class SqlRunner(object):
         :return: the cursor to use
         '''
         if alternateCursor is None:
-            return self.cursor
+            ret = self.cursor
         else:
-            return alternateCursor
+            ret = alternateCursor
+        if ret is None:
+            raise ValueError('Invalid cursor: already closed?')
+        return ret
 
     def executeSqlStatement(self,cmd,alternateCursor=None):
         '''
@@ -43,9 +67,9 @@ class SqlRunner(object):
         if not cmd:
             raise ValueError("Invalid empty/None statement to execute")
         cursorToUse = self.__getCursor(alternateCursor)
-        logging.debug("Executing SQL [%s]",cmd)
+        self.logger.debug("Executing SQL [%s]",cmd)
         cursorToUse.execute(cmd)
-        logging.debug("SQL statement executed")
+        self.logger.debug("SQL statement executed")
         return cursorToUse.rowcount
 
     def executeSqlScript(self,script,alternateCursor=None):
@@ -66,7 +90,7 @@ class SqlRunner(object):
             raise ValueError("Invalid empty/None script to execute")
         cursorToUse = self.__getCursor(alternateCursor)
         n = 0
-        logging.debug("Executing SQL script")
+        self.logger.debug("Executing SQL script")
         sqlStatements = script.split(';')
         for sqlCommand in sqlStatements:
             n = n + self.executeSqlStatement(sqlCommand,cursorToUse)
@@ -98,6 +122,25 @@ class SqlRunner(object):
                 if not ignoreErrors:
                     raise e
                 else:
-                    logging.warning("Caught (and ignored) error runnig SQL [%s]: %s",sqlStatement,str(e))
+                    self.logger.warning("Caught (and ignored) error runnig SQL [%s]: %s",sqlStatement,str(e))
 
         return n
+
+
+    def close(self):
+        '''
+        Close the connection and the cursor.
+        Normally invoked by atexit but can be invoked anytime.
+
+        The SqlRunner object can't be used after closing, unless an alternate
+        cursor is passed to the methods.
+
+        :return:
+        '''
+        if self.cursor is not None:
+            self.cursor.close()
+            self.cursor=None
+        if self.connection is not None:
+            self.connection.close()
+            self.connection=None
+        self.logger.debug('SQL runner closed')
