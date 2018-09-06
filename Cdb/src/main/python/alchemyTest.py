@@ -27,7 +27,7 @@ class PyCdbTest(unittest.TestCase):
         self.assertEqual(len(files),1)
         sqlFile = files[0]
 
-        sqlRunner = SqlRunner('iastest','test','192.168.120.130:1521/XE')
+        sqlRunner = SqlRunner('iastest','test','iasdevel.hq.eso.org:1521/XE')
         sqlRunner.executeSqlFromFile(sqlFile,ignoreErrors=True)
 
         if create:
