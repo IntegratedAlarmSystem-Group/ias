@@ -2,21 +2,17 @@
 #
 # Scripts like createModuleStructure.py do not have
 # such list hardcoded but must read it from here
-src
-src/scala
-src/java
-src/python
-src/resources
-test
-test/scala
-test/java
-test/python
-test/resources
-test/cdb
-test/cdb/Supervisor
-test/cdb/Dasus
-test/cdb/Asce
-test/cdb/Iasio
+src/main
+src/main/scala
+src/main/java
+src/main/python
+src/main/resources
+src/test
+src/test/scala
+src/test/java
+src/test/python
+src/test/resources
+src/test/cdb
 bin
 lib
 lib/python
