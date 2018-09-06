@@ -144,7 +144,7 @@ class Iasio(Base):
     IASTYPE = Column(String(16),nullable=False)
     DOCURL = Column(String(256),nullable=True)
     CANSHELVE = Column(Integer)
-    TEMPLATE_ID = Column(String(64),ForeignKey("TEMPLATE_DEF.TEMPLATE_ID"))
+    TEMPLATE_ID = Column(String(64),ForeignKey("TEMPLATE_DEF.TEMPLATE_ID"),nullable=True)
     EMAILS = Column(String(128), nullable=True)
     SOUND = Column(String(16))
 
@@ -186,7 +186,7 @@ class Dasu(Base):
     DASU_ID  = Column(String(64), primary_key=True)
     LOGLEVEL = Column(String(16))
     OUTPUT_ID = Column(String(64), ForeignKey('IASIO.IO_ID'))
-    TEMPLATE_ID = Column(String(64), ForeignKey('TEMPLATE_DEF.TEMPLATE_ID'))
+    TEMPLATE_ID = Column(String(64), ForeignKey('TEMPLATE_DEF.TEMPLATE_ID'),nullable=True)
 
     output = relationship('Iasio')
     template = relationship('Template_def')
@@ -251,7 +251,7 @@ class Asce(Base):
     TRANSF_FUN_ID = Column(String(96), ForeignKey('TRANSFER_FUNC.CLASSNAME_ID'))
     OUTPUT_ID = Column(String(64), ForeignKey('IASIO.IO_ID'))
     DASU_ID = Column(String(64), ForeignKey('DASU.DASU_ID'))
-    TEMPLATE_ID = Column(String(64), ForeignKey('TEMPLATE_DEF.TEMPLATE_ID'))
+    TEMPLATE_ID = Column(String(64), ForeignKey('TEMPLATE_DEF.TEMPLATE_ID'),nullable=True)
 
     output = relationship('Iasio')
     transferFunction = relationship('TransferFunction')
@@ -316,7 +316,7 @@ class DasuToDeploy(Base):
     ID = Column(Integer, Sequence('DASU_TO_DEPLOY_SEQ_GENERATOR'), primary_key=True, autoincrement='auto')
     SUPERVISOR_ID = Column(String(64), ForeignKey('SUPERVISOR.SUPERVISOR_ID'))
     DASU_ID = Column(String(64), ForeignKey('DASU.DASU_ID'))
-    TEMPLATE_ID = Column(String(64), ForeignKey('TEMPLATE_DEF.TEMPLATE_ID'))
+    TEMPLATE_ID = Column(String(64), ForeignKey('TEMPLATE_DEF.TEMPLATE_ID'),nullable=True)
     INSTANCE = Column(Integer)
 
     dasu = relationship('Dasu')
