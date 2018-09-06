@@ -81,7 +81,7 @@ class DocGenerator(object):
         """
         ret = []
         for root, subdirs, files in os.walk(sourceFolder):
-            if root.endswith(os.path.sep+"src/"+folderName) or (includeTestFolder and root.endswith(os.path.sep+"test/"+folderName)):
+            if root.endswith(os.path.sep+"main/"+folderName) or (includeTestFolder and root.endswith(os.path.sep+"test/"+folderName)):
                 if self.containsSources(root,fileExtension):
                     ret.append(root)
         return ret
