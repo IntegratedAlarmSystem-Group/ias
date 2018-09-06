@@ -100,8 +100,6 @@ class PyCdbTest(unittest.TestCase):
         self.session.add(template)
         self.session.commit()
 
-
-
         i1 = Iasio(IO_ID="IASIO1", SHORTDESC = 'short desc',
             IASTYPE = IASType.ALARM.name,
             DOCURL = 'http:www.a.b.c.com',
@@ -154,18 +152,18 @@ class PyCdbTest(unittest.TestCase):
         print('Adding Supervisor:',superv)
         self.session.commit()
 
-        p2 = Property(NAME="n2",VALUE="v2")
-        p3 = Property(NAME="n3",VALUE="v3")
-        a = Asce(
+        pa2 = Property(NAME="n2",VALUE="v2")
+        pa3 = Property(NAME="n3",VALUE="v3")
+        asce = Asce(
             ASCE_ID = 'AsceId',
             TRANSF_FUN_ID = 'org.eso.ias.tf.MinMax',
             OUTPUT_ID = 'IASIO1',
             DASU_ID = 'DasuId',
             TEMPLATE_ID='A template',
-            asceProps=[p2,p3]
+            asceProps=[pa2,pa3]
         )
-        self.session.add(a)
-        print('Adding ASCE:',a)
+        self.session.add(asce)
+        print('Adding ASCE:',asce)
         self.session.commit()
 
         dtd=DasuToDeploy(
@@ -179,8 +177,50 @@ class PyCdbTest(unittest.TestCase):
 
 
         #
-        # --------- Reads the configuration
+        # --------- Reads back and check the configuration
         #
+        s=self.session.query(Supervisor)
+        self.assertEquals(s.count(),1)
+        sup=s.first()
+        self.assertTrue(sup==superv)
+
+        d = self.session.query(DasuToDeploy)
+        self.assertEquals(d.count(),1)
+        self.assertTrue(d.first()==dtd)
+
+        a = self.session.query(Asce)
+        self.assertEquals(a.count(),1)
+        self.assertTrue(a.first()==asce)
+
+        dd = self.session.query(Dasu)
+        self.assertEquals(dd.count(),1)
+        self.assertTrue(dd.first()==dasu)
+
+        i=self.session.query(Ias).order_by(Ias.ID).all()
+        self.assertEquals(len(i),2)
+        self.assertTrue(i[0]==ias)
+        self.assertTrue(i[1]==ias2)
+
+        p=self.session.query(Property).order_by(Property.ID).all()
+        self.assertEquals(len(p),8)
+        self.assertTrue(p[0]==p1)
+        self.assertTrue(p[1]==p11)
+        self.assertTrue(p[2]==p111)
+        self.assertTrue(p[3]==p2)
+        self.assertTrue(p[4]==p22)
+        self.assertTrue(p[5]==p222)
+        self.assertTrue(p[6]==pa2)
+        self.assertTrue(p[7]==pa3)
+
+        t=self.session.query(TransferFunction).order_by(TransferFunction.CLASSNAME_ID).all()
+        self.assertEquals(len(t),1)
+        self.assertTrue(t[0]==tf)
+
+        ios = self.session.query(Iasio).order_by(Iasio.IO_ID).all()
+        self.assertEquals(len(ios),3)
+        self.assertTrue(ios[0],i1)
+        self.assertTrue(ios[1],i2)
+        self.assertTrue(ios[2],i3)
         for s in self.session.query(Supervisor).filter(Supervisor.SUPERVISOR_ID=='SupervisorId'):
             print(s)
             dasuToD=s.dasusToDeploy[0]
