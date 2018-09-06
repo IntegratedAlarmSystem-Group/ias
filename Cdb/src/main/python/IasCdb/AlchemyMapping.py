@@ -200,7 +200,7 @@ class Dasu(Base):
 
     def __eq__(self, other):
         return type(other) is Dasu and \
-            self.ID == other.ID and \
+            self.DASU_ID == other.DASU_ID and \
             self.LOGLEVEL == other.LOGLEVEL and \
             self.OUTPUT_ID == other.OUTPUT_ID and \
             self.TEMPLATE_ID == other.TEMPLATE_ID
@@ -272,7 +272,11 @@ class Asce(Base):
             self.TRANSF_FUN_ID == other.TRANSF_FUN_ID and \
             self.OUTPUT_ID == other.OUTPUT_ID and \
             self.DASU_ID == other.DASU_ID and \
-            self.TEMPLATE_ID == other.TEMPLATE_ID
+            self.TEMPLATE_ID == other.TEMPLATE_ID and \
+            len(self.asceProps) == len(other.asceProps) and \
+            set(self.asceProps) == set(other.asceProps) and \
+            len(self.inputs) == len(other.inputs) and \
+            set(self.inputs) == set(other.inputs)
 
     def __hash__(self):
         return hash((self.ASCE_ID,self.TRANSF_FUN_ID,self.OUTPUT_ID,self.DASU_ID,self.TEMPLATE_ID))
