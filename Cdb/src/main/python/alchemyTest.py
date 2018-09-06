@@ -114,7 +114,7 @@ class PyCdbTest(unittest.TestCase):
             IASTYPE = IASType.DOUBLE.name,
             DOCURL = 'http:www.alma.cl',
             CANSHELVE = 0,
-            TEMPLATE_ID = 'A template',
+            TEMPLATE_ID = None,
             EMAILS = 'acaproni@gmail.com',
             SOUND = SoundType.NONE.name)
         self.session.add(i2)
@@ -231,6 +231,26 @@ class PyCdbTest(unittest.TestCase):
             print("Output=",dasuToD.dasu.output)
             for asce in asces:
                 print(asce)
+
+    def testWriteModifyDeleteTF(self):
+        tf =TransferFunction(CLASSNAME_ID='org.eso.ias.tf.Threshold',IMPLLANG=TFLanguage.SCALA.name)
+        print('Writing TF:',tf)
+        self.session.add(tf)
+        self.session.commit()
+
+        tf.IMPLLANG=TFLanguage.JAVA.name
+        self.session.commit()
+
+
+        t=self.session.query(TransferFunction).order_by(TransferFunction.CLASSNAME_ID).all()
+        self.assertEquals(len(t),1)
+        self.assertTrue(t[0]==tf)
+        print('TF read from DB:',t)
+
+        self.session.query(TransferFunction).filter(TransferFunction.CLASSNAME_ID=='org.eso.ias.tf.Threshold').delete()
+
+        t=self.session.query(TransferFunction).all()
+        self.assertEquals(len(t),0)
 
 if __name__ == '__main__':
     unittest.main()
