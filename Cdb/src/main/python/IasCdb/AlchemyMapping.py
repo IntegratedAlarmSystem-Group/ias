@@ -43,7 +43,7 @@ class Property(Base):
     asces = relationship("Asce", secondary=asce_props_association_table,back_populates="asceProps")
 
     def __eq__(self, other):
-        assert type(other) is Property and self.NAME==other.NAME and self.VALUE==other.VALUE
+        return type(other) is Property and self.NAME==other.NAME and self.VALUE==other.VALUE
 
     def __hash__(self):
         return hash((self.NAME, self.VALUE))
@@ -94,7 +94,7 @@ class Ias(Base):
             self.LOGLEVEL,self.REFRESHRATE,self.TOLERANCE,self.HBFREQUENCY, self.BSDBURL, self.SMTP, self.props)
 
     def __eq__(self,other):
-        assert type(other) is Ias and \
+        return type(other) is Ias and \
         self.LOGLEVEL == other.LOGLEVEL and \
         self.REFRESHRATE == other.REFRESHRATE and \
         self.TOLERANCE == other.TOLERANCE and \
@@ -127,7 +127,7 @@ class Template_def(Base):
         return "<TEMPLATE_DEF(template_id='%s', min=%d, max=%d)>" % (self.TEMPLATE_ID, self.MIN, self.MAX)
 
     def __eq__(self, other):
-        assert type(other) is Template_def and \
+        return type(other) is Template_def and \
             self.TEMPLATE_ID == other.TEMPLATE_ID and \
             self.MIN == other.MIN and \
             self.MAX == other.MAX
@@ -168,7 +168,7 @@ class Iasio(Base):
         )
 
     def __eq__(self, other):
-        assert type(other) is Iasio and \
+        return type(other) is Iasio and \
             self.IO_ID == other.IO_ID and \
             self.IASTYPE == other.IASTYPE and \
             self.SHORTDESC == other.SHORTDESC and \
@@ -199,7 +199,7 @@ class Dasu(Base):
         return logLevel
 
     def __eq__(self, other):
-        assert type(other) is Dasu and \
+        return type(other) is Dasu and \
             self.ID == other.ID and \
             self.LOGLEVEL == other.LOGLEVEL and \
             self.OUTPUT_ID == other.OUTPUT_ID and \
@@ -232,7 +232,7 @@ class TransferFunction(Base):
         )
 
     def __eq__(self, other):
-        assert type(other) is TransferFunction and \
+        return type(other) is TransferFunction and \
             self.CLASSNAME_ID == other.CLASSNAME_ID and \
             self.IMPLLANG == other.IMPLLANG
 
@@ -267,7 +267,7 @@ class Asce(Base):
         )
 
     def __eq__(self, other):
-        assert type(other) is Asce and \
+        return type(other) is Asce and \
             self.ASCE_ID == other.ASCE_ID and \
             self.TRANSF_FUN_ID == other.TRANSF_FUN_ID and \
             self.OUTPUT_ID == other.OUTPUT_ID and \
@@ -293,7 +293,7 @@ class Supervisor(Base):
         return logLevel
 
     def __eq__(self, other):
-        assert type(other) is Supervisor and \
+        return type(other) is Supervisor and \
             self.SUPERVISOR_ID == other.SUPERVISOR_ID and \
             self.HOSTNAME == other.HOSTNAME and \
             self.LOGLEVEL == other.LOGLEVEL
@@ -325,7 +325,7 @@ class DasuToDeploy(Base):
         return instance
 
     def __eq__(self, other):
-        assert type(other) is DasuToDeploy and \
+        return type(other) is DasuToDeploy and \
             self.ID == other.ID and \
             self.SUPERVISOR_ID == other.SUPERVISOR_ID and \
             self.DASU_ID == other.DASU_ID and \
