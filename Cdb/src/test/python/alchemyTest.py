@@ -16,6 +16,8 @@ class PyCdbTest(unittest.TestCase):
 
     '''
 
+
+
     def deleteAndCreateTables(self,create):
         '''
         Delete and optionally create the tables of the CDB by running the
@@ -27,7 +29,7 @@ class PyCdbTest(unittest.TestCase):
         self.assertEqual(len(files),1)
         sqlFile = files[0]
 
-        sqlRunner = SqlRunner('iastest','test','iasdevel.hq.eso.org:1521/XE')
+        sqlRunner = SqlRunner(self.userName,self.pswd, self.rdbmsUrl)
         sqlRunner.executeSqlFromFile(sqlFile,ignoreErrors=True)
 
         if create:
@@ -35,14 +37,17 @@ class PyCdbTest(unittest.TestCase):
             self.assertEqual(len(files),1)
             sqlFile = files[0]
 
-            sqlRunner = SqlRunner('iastest','test','192.168.120.130:1521/XE')
+            sqlRunner = SqlRunner(self.userName,self.pswd,self.rdbmsUrl)
             sqlRunner.executeSqlFromFile(sqlFile,ignoreErrors=False)
         sqlRunner.close()
 
 
     def setUp(self):
+        self.userName='iastest'
+        self.pswd='test'
+        self.rdbmsUrl='iasdevel.hq.eso.org:1521/XE'
         self.deleteAndCreateTables(True)
-        self.db = AlchemyDb('iastest','test','192.168.120.130:1521/XE')
+        self.db = AlchemyDb(self.userName,self.pswd,self.rdbmsUrl)
         self.session = self.db.getSession()
 
     def tearDown(self):
