@@ -50,10 +50,10 @@ public class IasioDao {
 	private String templateId=null;
 	
 	/**
-	 * The default value for canShelve: by default all
+	 * The default value for canShelve: by default no
 	 * alarms can be shelved
 	 */
-	public static final boolean canSheveDefault = true;
+	public static final boolean canSheveDefault = false;
 	
 	/**
 	 * The attribute saying if a IASIO can be shelved,
