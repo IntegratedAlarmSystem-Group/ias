@@ -279,6 +279,9 @@ public class JsonReader implements CdbReader {
 		}
 		ObjectsHolder holder = new ObjectsHolder();
 		if (jAsceOpt.isPresent()) {
+			if (!jAsceOpt.get().getId().equals(id)) {
+				throw  new IasCdbException("CDB ID vs File name misconfiguration for ASCE with ID=["+id+"]");
+			}
 			try {
 				updateAsceObjects(jAsceOpt.get(), holder);
 			} catch (IOException ioe) {
@@ -309,6 +312,9 @@ public class JsonReader implements CdbReader {
 		}
 		ObjectsHolder holder = new ObjectsHolder();
 		if (jDasuOpt.isPresent()) {
+		    if (!jDasuOpt.get().getId().equals(id)) {
+                throw  new IasCdbException("CDB ID vs File name misconfiguration for DASU with ID=["+id+"]");
+            }
 			try {
 				updateDasuObjects(jDasuOpt.get(), holder);
 			} catch (IOException ioe) {
@@ -370,6 +376,10 @@ public class JsonReader implements CdbReader {
 		if (jSupervOpt.isPresent()) { 
 			
 			JsonSupervisorDao jSuperv = jSupervOpt.get();
+
+			if (!jSuperv.getId().equals(id)) {
+                throw  new IasCdbException("CDB ID vs File name misconfiguration for Supervisor with ID=["+id+"]");
+            }
 			
 			// Build the SupervisorDao
 			SupervisorDao ret = new SupervisorDao();
