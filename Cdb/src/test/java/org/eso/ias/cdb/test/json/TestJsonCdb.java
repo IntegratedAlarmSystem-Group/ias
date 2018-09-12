@@ -392,7 +392,7 @@ public class TestJsonCdb {
 				"ioID", 
 				"IASIO description", 
 				IasTypeDao.ALARM,"http://wiki.alma.cl/ioID",
-				true,
+				false,
 				"templateID",
 				SoundTypeDao.TYPE2,
 				"addr1@eso.org; addr@alma.cl");
