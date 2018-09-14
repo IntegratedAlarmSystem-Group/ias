@@ -698,4 +698,55 @@ public class TestJsonCdb {
 		assertEquals(tDao2, optT2.get());
 	}
 
+	/**
+	 * Test the getter if IDs of Supervisors
+ 	 * @throws Exception
+	 */
+	@Test
+	public void testGetIdsOfSupervisor() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./testCdb");
+		cdbFiles = new CdbJsonFiles(path);
+		cdbReader = new JsonReader(cdbFiles);
+
+		Optional<Set<String>> idsOpt= cdbReader.getSupervisorIds();
+		assertTrue(idsOpt.isPresent());
+		Set<String> ids = idsOpt.get();
+		assertEquals(4,ids.size());
+		for (int i=1; i<=ids.size(); i++) assertTrue(ids.contains("Supervisor-ID"+i));
+	}
+
+
+    /**
+	 * Test the getter if IDs of DASUs
+ 	 * @throws Exception
+	 */
+	@Test
+	public void testGetIdsOfDasus() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./testCdb");
+		cdbFiles = new CdbJsonFiles(path);
+		cdbReader = new JsonReader(cdbFiles);
+
+		Optional<Set<String>> idsOpt= cdbReader.getDasuIds();
+		assertTrue(idsOpt.isPresent());
+		Set<String> ids = idsOpt.get();
+		assertEquals(6,ids.size());
+		for (int i=1; i<=ids.size(); i++) assertTrue(ids.contains("DasuID"+i));
+	}
+
+    /**
+     * Test the getter if IDs of ASCEs
+     * @throws Exception
+     */
+    @Test
+    public void testGetIdsOfAsces() throws Exception {
+        Path path = FileSystems.getDefault().getPath("./testCdb");
+        cdbFiles = new CdbJsonFiles(path);
+        cdbReader = new JsonReader(cdbFiles);
+
+        Optional<Set<String>> idsOpt= cdbReader.getAsceIds();
+        assertTrue(idsOpt.isPresent());
+        Set<String> ids = idsOpt.get();
+        assertEquals(6,ids.size());
+        for (int i=1; i<=ids.size(); i++) assertTrue(ids.contains("ASCE-ID"+i));
+    }
 }

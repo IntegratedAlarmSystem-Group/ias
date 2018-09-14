@@ -697,7 +697,14 @@ public class JsonReader implements CdbReader {
         for (File file: filesInFolder) {
             String jSonfFileName = file.toString();
             int i = jSonfFileName.lastIndexOf('.');
-            ret.add(jSonfFileName.substring(0,i));
+            String fileNameWithoutExtension=jSonfFileName.substring(0,i);
+            i = fileNameWithoutExtension.lastIndexOf(File.separatorChar);
+            if (i==-1) {
+                ret.add(fileNameWithoutExtension);
+            } else {
+                String cleanedFile = fileNameWithoutExtension.substring(i+1);
+                ret.add(cleanedFile);
+            }
         }
         return ret;
     }
