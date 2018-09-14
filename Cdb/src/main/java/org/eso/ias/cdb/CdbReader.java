@@ -31,7 +31,7 @@ public interface CdbReader {
 	/**
 	 * Get the IASIOs.
 	 * 
-	 * @return The IASIOs red from the CDB
+	 * @return The IASIOs read from the CDB
 	 * @throws IasCdbException In case of error getting the IASIOs
 	 */
 	public Optional<Set<IasioDao>> getIasios() throws IasCdbException;
@@ -40,7 +40,7 @@ public interface CdbReader {
 	 * Get the IASIO with the given ID
 	 * 
 	 * @param id The ID of the IASIO to read the configuration
-	 * @return The IASIO red from the CDB
+	 * @return The IASIO read from the CDB
 	 * @throws IasCdbException In case of error getting the IASIO
 	 */
 	public Optional<IasioDao> getIasio(String id) throws IasCdbException;
@@ -49,7 +49,7 @@ public interface CdbReader {
 	 * Read the supervisor configuration from the CDB. 
 	 * 
 	 * @param id The not null nor empty supervisor identifier
-	 * @return The Supervisor red from the CDB
+	 * @return The Supervisor read from the CDB
 	 * @throws IasCdbException In case of error getting the Supervisor
 	 */
 	public Optional<SupervisorDao> getSupervisor(String id) throws IasCdbException;
@@ -62,6 +62,14 @@ public interface CdbReader {
 	 * @throws IasCdbException in case of error reading from the CDB
 	 */
 	public Optional<TransferFunctionDao> getTransferFunction(String tf_id) throws IasCdbException;
+
+	/**
+	 * Get the transfer functions.
+	 *
+	 * @return The transfer functions read from the CDB
+	 * @throws IasCdbException In case of error getting the transfer functions
+	 */
+	public Optional<Set<TransferFunctionDao>> getTransferFunctions() throws IasCdbException;
 	
 	/**
 	 * Read the ttemplate configuration from the CDB. 
@@ -71,12 +79,20 @@ public interface CdbReader {
 	 * @throws IasCdbException in case of error reading from the CDB
 	 */
 	public Optional<TemplateDao> getTemplate(String template_id) throws IasCdbException;
+
+	/**
+	 * Get the templates.
+	 *
+	 * @return The templates read from the CDB
+	 * @throws IasCdbException In case of error getting the templates
+	 */
+	public Optional<Set<TemplateDao>> getTemplates() throws IasCdbException;
 	
 	/**
 	 * Read the ASCE configuration from the CDB. 
 	 * 
 	 * @param id The not null nor empty ASCE identifier
-	 * @return The ASCE red from the file
+	 * @return The ASCE read from the file
 	 * @throws IasCdbException In case of error getting the ASCE
 	 */
 	public Optional<AsceDao> getAsce(String id) throws IasCdbException;
@@ -85,7 +101,7 @@ public interface CdbReader {
 	 * Read the DASU configuration from the CDB. 
 	 * 
 	 * @param id The not null nor empty DASU identifier
-	 * @return The DASU red from the file
+	 * @return The DASU read from the file
 	 * @throws IasCdbException In case of error getting the DASU
 	 */
 	public Optional<DasuDao> getDasu(String id) throws IasCdbException;

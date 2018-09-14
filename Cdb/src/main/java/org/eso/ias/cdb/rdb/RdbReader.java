@@ -91,6 +91,44 @@ public class RdbReader implements CdbReader {
 	}
 
 	/**
+	 * Get the templates.
+	 *
+	 * @return The templates red from the file
+	 * @see org.eso.ias.cdb.CdbReader#getIasios()
+	 */
+	@Override
+	public Optional<Set<TemplateDao>> getTemplates() throws IasCdbException {
+		Session s=rdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		List templates = s.createCriteria(TemplateDao.class).list();
+		Set<TemplateDao> ret = new HashSet<>();
+		for (Iterator iterator = templates.iterator(); iterator.hasNext();){
+			ret.add((TemplateDao)iterator.next());
+		}
+		t.commit();
+		return Optional.of(ret);
+	}
+
+    /**
+     * Get the transfer functions.
+     *
+     * @return The transfer functions read from the file
+     * @see org.eso.ias.cdb.CdbReader#getIasios()
+     */
+    @Override
+    public Optional<Set<TransferFunctionDao>> getTransferFunctions() throws IasCdbException {
+        Session s=rdbUtils.getSession();
+        Transaction t =s.beginTransaction();
+        List tfs = s.createCriteria(TransferFunctionDao.class).list();
+        Set<TransferFunctionDao> ret = new HashSet<>();
+        for (Iterator iterator = tfs.iterator(); iterator.hasNext();){
+            ret.add((TransferFunctionDao)iterator.next());
+        }
+        t.commit();
+        return Optional.of(ret);
+    }
+
+	/**
 	 * Get the IASIO with the given ID
 	 * 
 	 * @param id The ID of the IASIO to read the configuration

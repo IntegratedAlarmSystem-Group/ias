@@ -134,14 +134,15 @@ public class JsonReader implements CdbReader {
 			}
 		}
 	}
-	
+
 	/**
 	 * Get all the TFs.
 	 * 
 	 * @return The TFs read from the configuration file
 	 * @throws IasCdbException In case of error getting the IASIOs
 	 */
-	private Optional<Set<TransferFunctionDao>> getTransferFunctions() throws IasCdbException {
+	@Override
+	public Optional<Set<TransferFunctionDao>> getTransferFunctions() throws IasCdbException {
 		File f;
 		try {
 			// The ID is not used for JSON: we pass a whatever sting
@@ -171,7 +172,8 @@ public class JsonReader implements CdbReader {
 	 * @return The templates read from the configuration file
 	 * @throws IasCdbException In case of error getting the IASIOs
 	 */
-	private Optional<Set<TemplateDao>> getTemplates() throws IasCdbException {
+	@Override
+	public Optional<Set<TemplateDao>> getTemplates() throws IasCdbException {
 		File f;
 		try {
 			// The ID is not used for JSON: we pass a whatever sting
