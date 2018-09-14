@@ -116,8 +116,6 @@ public interface CdbReader {
 	 */
 	public Set<DasuToDeployDao> getDasusToDeployInSupervisor(String id) throws IasCdbException;
 	
-
-	
 	/**
 	 * Return the ASCEs belonging to the given DASU.
 	 * 
@@ -137,6 +135,32 @@ public interface CdbReader {
 	 *                         ASCE with the give identifier does not exist
 	 */
 	public Collection<IasioDao> getIasiosForAsce(String id) throws IasCdbException;
+
+    /**
+     * Get the IDs of the Supervisors.
+     *
+     * This method is useful to deploy the supervisors
+     *
+     * @return The the IDs of the supervisors read from the CDB
+     * @throws IasCdbException In case of error getting the IDs of the supervisors
+     */
+    public Optional<Set<String>> getSupervisorIds() throws IasCdbException;
+
+    /**
+     * Get the IDs of the DASUs.
+     *
+     * @return The IDs of the DASUs read from the CDB
+     * @throws IasCdbException In case of error getting the IDs of the DASUs
+     */
+    public Optional<Set<String>> getDasuIds() throws IasCdbException;
+
+    /**
+     * Get the IDs of the ASCEs.
+     *
+     * @return The IDs of the ASCEs read from the CDB
+     * @throws IasCdbException In case of error getting the IDs of the ASCEs
+     */
+    public Optional<Set<String>> getAsceIds() throws IasCdbException;
 	
 	/**
 	 * Initialize the CDB
