@@ -62,8 +62,8 @@ class DasuTopology(
   /** The inputs of the DASU
    * 
    * The inputs of the DASU are all the inputs of the ASCEs running
-   * in the DASU that come from IASIO queue (i.e. not produced
-   * by ASCEs running in the DASU).
+   * in the DASU that come from IASIO queue of the BSDB (i.e. not produced
+   * by the ASCEs running in the DASU).
    */
   val dasuInputs: Set[String] = asces.flatMap(asce => asce.inputs).filterNot(asceOutputs.contains).toSet
   
@@ -384,7 +384,7 @@ class DasuTopology(
   
   /** Builds a human readable string describing the topology */
   override def toString = {
-    val ret = new StringBuilder("Topology of [")
+    val ret = new StringBuilder("Topology of DASU [")
     ret.append(dasuId)
     ret.append("]: output id=")
     ret.append(dasuOutputId)
