@@ -8,7 +8,7 @@ import org.eso.ias.cdb.CdbReader
 import org.eso.ias.types.Identifier
 import org.eso.ias.types.IdentifierType
 import scala.collection.mutable.{Map => MutableMap}
-import org.eso.ias.dasu.topology.Topology
+import org.eso.ias.dasu.topology.DasuTopology
 import org.eso.ias.asce.ComputingElement
 import scala.util.Properties
 import org.eso.ias.cdb.pojos.AsceDao
@@ -84,7 +84,7 @@ class DasuImpl (
   logger.info("Output of DASU [{}]: [{}]",id,dasuOutputId)
   
   // Build the topology
-  val dasuTopology: Topology = new Topology(
+  val dasuTopology: DasuTopology = new DasuTopology(
       id,
       dasuOutputId,
       asceDaos)

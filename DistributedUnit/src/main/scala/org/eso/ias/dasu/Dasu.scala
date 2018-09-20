@@ -6,7 +6,7 @@ import org.eso.ias.cdb.json.JsonReader
 import org.eso.ias.cdb.json.CdbFiles
 import org.eso.ias.cdb.json.CdbJsonFiles
 import org.eso.ias.cdb.pojos.DasuDao
-import org.eso.ias.dasu.topology.Topology
+import org.eso.ias.dasu.topology.DasuTopology
 
 import scala.collection.JavaConverters
 import org.eso.ias.cdb.pojos.DasuDao
