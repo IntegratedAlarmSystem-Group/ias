@@ -1,8 +1,8 @@
 package org.eso.ias.supervisor.test
 
 import org.eso.ias.dasu.Dasu
-import org.eso.ias.dasu.topology.DasuTopology
 import org.eso.ias.types.IASValue
+
 import scala.util.Try
 import org.eso.ias.types.Identifier
 import org.eso.ias.dasu.publisher.OutputPublisher
@@ -12,15 +12,19 @@ import org.eso.ias.cdb.pojos.DasuDao
 import org.eso.ias.cdb.pojos.AsceDao
 import org.eso.ias.types.IdentifierType
 import java.util.concurrent.atomic.AtomicInteger
+
 import scala.util.Success
 import scala.collection.mutable.ArrayBuffer
 import org.eso.ias.logging.IASLogger
+
 import scala.collection.JavaConverters
 import org.eso.ias.types.Alarm
 import org.eso.ias.types.OperationalMode
 import org.eso.ias.types.IasValidity
 import org.eso.ias.types.IASTypes
 import java.util.HashSet
+
+import org.eso.ias.cdb.checker.topology.DasuTopology
 import org.eso.ias.cdb.pojos.IasioDao
 
 

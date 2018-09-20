@@ -6,7 +6,6 @@ import org.eso.ias.cdb.json.JsonReader
 import org.eso.ias.cdb.json.CdbFiles
 import org.eso.ias.cdb.json.CdbJsonFiles
 import org.eso.ias.cdb.pojos.DasuDao
-import org.eso.ias.dasu.topology.DasuTopology
 
 import scala.collection.JavaConverters
 import org.eso.ias.cdb.pojos.DasuDao
@@ -20,16 +19,21 @@ import org.eso.ias.types.InOut
 import org.eso.ias.dasu.publisher.OutputPublisher
 import org.eso.ias.types.IASValue
 import org.eso.ias.dasu.executorthread.ScheduledExecutor
+
 import scala.util.Try
 import java.util.concurrent.atomic.AtomicLong
 import java.util.Properties
+
 import scala.collection.mutable.{Map => MutableMap}
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.TimeUnit
+
+import org.eso.ias.cdb.checker.topology.DasuTopology
 import org.eso.ias.dasu.subscriber.InputsListener
 import org.eso.ias.dasu.subscriber.InputSubscriber
+
 import scala.util.Failure
 import scala.util.Success
 
