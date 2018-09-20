@@ -1,7 +1,7 @@
 package org.eso.ias.supervisor.test
 
 import org.eso.ias.dasu.Dasu
-import org.eso.ias.dasu.topology.Topology
+import org.eso.ias.dasu.topology.DasuTopology
 import org.eso.ias.types.IASValue
 import scala.util.Try
 import org.eso.ias.types.Identifier
