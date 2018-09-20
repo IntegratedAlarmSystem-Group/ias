@@ -125,7 +125,7 @@ class DasuTopology(
    * There is one tree for each input of the DASU: each tree terminates
    * to the output of the DASU, if there are no cycles
    */
-  require(isACyclic(),"Invalid cyclic graph")
+  require(isACyclic(),s"DASU $dasuId: invalid cyclic graph")
   val trees: Set[Node] = buildTrees()
   trees.foreach(tree => assert(checkLastNodeId(tree,dasuOutputId)))
 
