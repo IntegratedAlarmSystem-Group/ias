@@ -1,4 +1,4 @@
-package org.eso.ias.cdb.checker.topology
+package org.eso.ias.cdb.topology
 
 import org.eso.ias.cdb.pojos.AsceDao
 
