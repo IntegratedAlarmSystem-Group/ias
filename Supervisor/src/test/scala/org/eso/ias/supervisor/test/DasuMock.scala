@@ -24,7 +24,6 @@ import org.eso.ias.types.IasValidity
 import org.eso.ias.types.IASTypes
 import java.util.HashSet
 
-import org.eso.ias.cdb.checker.topology.DasuTopology
 import org.eso.ias.cdb.pojos.IasioDao
 
 
