@@ -92,7 +92,7 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
     val tryToGetIds: Try[Optional[java.util.Set[String]]] = Try(reader.getSupervisorIds())
     convertIdsFromReader(tryToGetIds)
   }
-  CdbChecker.logger.info("Read {} IDs of Supervisors",idsOfSupervisors.size)
+  CdbChecker.logger.info("Read {} IDs of Supervisors: {}",idsOfSupervisors.size,idsOfSupervisors.mkString(","))
 
   /** The IDs of the DASUs */
   val idsOfDasus: Set[String] = {
@@ -110,7 +110,7 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
 
   /**
     * The DASUs to deploy in each Supervisor
-    * The key is the ID of teh Supervisor
+    * The key is the ID of the Supervisor
     */
   val dasusToDeploy: Map[String, Set[DasuToDeployDao]] = {
     idsOfSupervisors.foldLeft(Map.empty[String,Set[DasuToDeployDao]])( (z,id) => {
@@ -118,19 +118,70 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
       tryToGetDasus match {
         case Success(set) =>
           var setOfDtd: Set[DasuToDeployDao] = JavaConverters.asScalaSet(set).toSet
-          CdbChecker.logger.info("{} DASUs to deploy on Supervisor [{}]",setOfDtd.size.toString,id)
+          CdbChecker.logger.info("{} DASUs to deploy on Supervisor [{}]: {}",
+            setOfDtd.size.toString,
+            id,
+            setOfDtd.map(_.getDasu.getId).mkString(",")
+          )
           z+(id -> setOfDtd)
         case Failure(f) =>
-          CdbChecker.logger.error("Error getting DASUS of Supervisor [{}]",id,f)
+          CdbChecker.logger.error("Error getting DASUs of Supervisor [{}]",id,f)
           z
       }
     })
   }
-  // Check al the DASUs to deploy
+
+  // Check all the DASUs to deploy
   for {
     setOfDTD <- dasusToDeploy.values
     dtd <- setOfDTD
   } checkDasuToDeploy(dtd)
+
+  // Is there any DASU that is not part of the DASUs to deploy?
+  // We are looking for DASUs that will not be deployed and can be removed
+  // from the CDB
+  // The case of a DASU to deplo no t assicated to a DasuDao is already reported
+  // by checkDasuToDeploy
+  val idsOfDasusToDeploy: Set[String] = (for {
+    setOfDTD <- dasusToDeploy.values
+    dtd <- setOfDTD
+    dasu = Option(dtd.getDasu)
+    id = dasu.map(_.getId)
+    if (id.isDefined)
+  } yield id.get).toSet
+  if (idsOfDasusToDeploy.size!=idsOfDasus.size) {
+    CdbChecker.logger.error("Size of DASUS to deploy ({}) and DASUs ({}) mismatch",idsOfDasusToDeploy.size,idsOfDasus.size)
+  }
+  idsOfDasusToDeploy.foreach(idtd => {
+    if (!dasusToDeploy.contains(idtd)) {
+      CdbChecker.logger.error("DASU to deploy [{}] does not correspond to any DASU: must be fixed",idtd)
+    }
+  })
+  idsOfDasus.foreach(dtd => {
+    if (!idsOfDasusToDeploy.contains(dtd))
+      CdbChecker.logger.error(
+        "DASU [{}] does not correpond to abny DASU to deploy and will not be deployed (can be removed from CDB",
+        dtd)
+  })
+
+  // Check teh DASUs
+  for {
+    id <- idsOfDasus
+    dasu = {
+      val dasuOptional = Try(reader.getDasu(id)) match {
+        case Success(d) => d
+        case Failure(f) =>
+          CdbChecker.logger.error("Error getting DASU [{}] from CDB:",id,f)
+          Optional.empty()
+      }
+      if (dasuOptional.isPresent) Option(dasuOptional.get())
+      else None
+    }
+    if (dasu.isDefined)
+  } checkDasu(dasu.get)
+
+
+
 
   /**
     * Check if the passed template and instance are valid
@@ -170,14 +221,19 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
     }
     val dasuId: String = dasu.map(_.getId).getOrElse("?")
 
-    val templateOk:Boolean = checkTemplate(Option(dtd.getTemplate),Option(dtd.getInstance()))
+    val templateOk: Boolean = checkTemplate(Option(dtd.getTemplate),Option(dtd.getInstance()))
     if (!templateOk) CdbChecker.logger.error("Error in template definition of DauToDeploy [{}]",dasuId)
 
     !templateOk || dasu.isEmpty
   }
 
 
-  /** Check if the IAS has been defined */
+  /**
+    * Check if the IAS has been defined
+    *
+    * @param iasDaoOpt the IAS to check
+    * @return true in case of errors, false otherwise
+    */
   def checkIas(iasDaoOpt: Option[IasDao]): Boolean = {
     iasDaoOpt match {
       case None =>
@@ -230,8 +286,59 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
         }
         errorFound
     }
+  }
 
+  /**
+    * Check if there are errors in the DASU
+    *
+    * @param dasuDao The DasuDao to check for error
+    * @return true in case of errors; false otherwise
+    */
+  def checkDasu(dasuDao: DasuDao): Boolean = {
+    require(Option(dasuDao).isDefined)
+    var errorsFound = false
 
+    val id = Option(dasuDao.getId)
+
+    // This should never happen because the ID is the identifier
+    if (id.isEmpty || id.get.isEmpty) {
+      CdbChecker.logger.error("This DASU has no ID")
+      errorsFound = true
+    }
+
+    val output = Option(dasuDao.getOutput)
+    if (output.isEmpty || output.get.getId.isEmpty) {
+      CdbChecker.logger.error("No output fo DASU [{}]",id.getOrElse("?"))
+      errorsFound = true
+    } else {
+      if (!mapOfIasios.keySet.contains(output.get.getId)) {
+        CdbChecker.logger.error("Output [{}] of DASU [{}] not defined in CDB",
+          output.get.getId,
+          id.getOrElse("?"))
+        errorsFound = true
+      }
+    }
+
+    val asces: Set[AsceDao] = JavaConverters.asScalaSet(dasuDao.getAsces).toSet
+    if (asces.isEmpty) {
+      CdbChecker.logger.error("No ASCEs for DASU [{}] not defined in CDB", output.get.getId)
+      errorsFound = true
+    } else {
+      CdbChecker.logger.info("{} ASCEs to deploy in DASU [{}]: {}",
+        asces.size,
+        output.get.getId,
+        asces.map(_.getId).mkString(","))
+    }
+
+    val templateId = Option(dasuDao.getTemplateId)
+    templateId.foreach(tid => {
+      if (!mapOfTemplates.keySet.contains(tid)) {
+        CdbChecker.logger.error("Template [{}] not found for DASU [{}]",tid,output.get.getId)
+        errorsFound = true
+      }
+    })
+
+    errorsFound
   }
 
 
