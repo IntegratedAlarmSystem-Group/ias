@@ -30,7 +30,7 @@ import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.TimeUnit
 
-import org.eso.ias.cdb.checker.topology.DasuTopology
+import org.eso.ias.cdb.topology.DasuTopology
 import org.eso.ias.dasu.subscriber.InputsListener
 import org.eso.ias.dasu.subscriber.InputSubscriber
 

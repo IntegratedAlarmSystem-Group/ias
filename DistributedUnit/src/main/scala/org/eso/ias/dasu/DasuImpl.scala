@@ -35,7 +35,7 @@ import org.eso.ias.types.IasValidity
 import java.util.HashMap
 import java.util.Collections
 
-import org.eso.ias.cdb.checker.topology.DasuTopology
+import org.eso.ias.cdb.topology.DasuTopology
 
 /**
  * The implementation of the DASU.
