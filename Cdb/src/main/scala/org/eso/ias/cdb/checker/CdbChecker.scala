@@ -4,7 +4,7 @@ import java.util.Optional
 
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
-import org.eso.ias.cdb.pojos.{IasDao, IasioDao, TemplateDao, TransferFunctionDao}
+import org.eso.ias.cdb.pojos._
 import org.eso.ias.cdb.rdb.RdbReader
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.supervisor.Supervisor
@@ -107,6 +107,74 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
     convertIdsFromReader(tryToGetIds)
   }
   CdbChecker.logger.info("Read {} IDs of ASCEs",idsOfAsces.size)
+
+  /**
+    * The DASUs to deploy in each Supervisor
+    * The key is the ID of teh Supervisor
+    */
+  val dasusToDeploy: Map[String, Set[DasuToDeployDao]] = {
+    idsOfSupervisors.foldLeft(Map.empty[String,Set[DasuToDeployDao]])( (z,id) => {
+      var tryToGetDasus = Try(reader.getDasusToDeployInSupervisor(id))
+      tryToGetDasus match {
+        case Success(set) =>
+          var setOfDtd: Set[DasuToDeployDao] = JavaConverters.asScalaSet(set).toSet
+          CdbChecker.logger.info("{} DASUs to deploy on Supervisor [{}]",setOfDtd.size.toString,id)
+          z+(id -> setOfDtd)
+        case Failure(f) =>
+          CdbChecker.logger.error("Error getting DASUS of Supervisor [{}]",id,f)
+          z
+      }
+    })
+  }
+  // Check al the DASUs to deploy
+  for {
+    setOfDTD <- dasusToDeploy.values
+    dtd <- setOfDTD
+  } checkDasuToDeploy(dtd)
+
+  /**
+    * Check if the passed template and instance are valid
+    *
+    * @param template The template as set in the DASU to deploy for example
+    * @param instance the instance number
+    * @return false in case of error, true otherwise
+    */
+  def checkTemplate(template: Option[TemplateDao], instance: Option[Integer]): Boolean = {
+    (template.isDefined, instance.isDefined) match {
+      case (true, false) =>
+        CdbChecker.logger.error("Template is defined ({}) but instance number is not",  template.get.getId)
+        false
+      case (false, true) =>
+        CdbChecker.logger.error("Instance is defined ({}) but there is not template",instance.get.toString)
+        false
+      case (false, false) => true
+      case (true, true) =>
+        val i = instance.get
+        val min = template.get.getMin
+        val max = template.get.getMax
+        if (i<min || i>max) {
+          CdbChecker.logger.error("Instance ({}) out of range[{}.{}]",i.toString,min.toString,max.toString)
+          false
+        } else {
+          true
+        }
+    }
+  }
+
+  /** Check the DasuToDeploy */
+  def checkDasuToDeploy(dtd: DasuToDeployDao): Boolean = {
+    require(Option(dtd).isDefined)
+    val dasu = Option(dtd.getDasu)
+    if (dasu.isEmpty) {
+      CdbChecker.logger.error("No  DASU for this DasuToDeploy)")
+    }
+    val dasuId: String = dasu.map(_.getId).getOrElse("?")
+
+    val templateOk:Boolean = checkTemplate(Option(dtd.getTemplate),Option(dtd.getInstance()))
+    if (!templateOk) CdbChecker.logger.error("Error in template definition of DauToDeploy [{}]",dasuId)
+
+    !templateOk || dasu.isEmpty
+  }
 
 
   /** Check if the IAS has been defined */
