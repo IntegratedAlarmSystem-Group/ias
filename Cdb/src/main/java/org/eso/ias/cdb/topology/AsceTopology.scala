@@ -58,7 +58,7 @@ class AsceTopology(
   }
   
   override def toString = {
-    val ret = new StringBuilder("ASCE [")
+    val ret = new StringBuilder("Topology of ASCE [")
     ret.append(identifier)
     ret.append("]:  output=")
     ret.append(output)
