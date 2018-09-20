@@ -1,4 +1,4 @@
-package org.eso.ias.dasu.topology
+package org.eso.ias.cdb.checker.topology
 
 import org.eso.ias.cdb.pojos.AsceDao
 import org.eso.ias.logging.IASLogger

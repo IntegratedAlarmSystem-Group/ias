@@ -1,6 +1,7 @@
-package org.eso.ias.dasu.topology
+package org.eso.ias.cdb.checker.topology
 
 import org.eso.ias.cdb.pojos.AsceDao
+
 import scala.collection.JavaConverters.collectionAsScalaIterable
 
 /** The view of an ASCE based on its IASIOs in input

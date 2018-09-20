@@ -1,8 +1,7 @@
-package org.eso.ias.dasu.test
+package org.eso.ias.cdb.test.topology
 
+import org.eso.ias.cdb.checker.topology.{AsceTopology, DasuTopology}
 import org.scalatest.FlatSpec
-import org.eso.ias.dasu.topology.AsceTopology
-import org.eso.ias.dasu.topology.DasuTopology
 
 /** Test the Topology */
 class DasuTopologyTest extends FlatSpec {

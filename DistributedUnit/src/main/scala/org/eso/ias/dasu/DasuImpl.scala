@@ -2,14 +2,16 @@ package org.eso.ias.dasu
 
 import scala.util.Try
 import java.util.concurrent.ScheduledFuture
+
 import org.eso.ias.dasu.publisher.OutputPublisher
 import org.eso.ias.dasu.subscriber.InputSubscriber
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.types.Identifier
 import org.eso.ias.types.IdentifierType
+
 import scala.collection.mutable.{Map => MutableMap}
-import org.eso.ias.dasu.topology.DasuTopology
 import org.eso.ias.asce.ComputingElement
+
 import scala.util.Properties
 import org.eso.ias.cdb.pojos.AsceDao
 import org.eso.ias.types.IASValue
@@ -18,6 +20,7 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.Properties
+
 import scala.util.Failure
 import scala.util.Success
 import scala.collection.JavaConverters
@@ -25,11 +28,14 @@ import org.eso.ias.types.InOut
 import org.eso.ias.asce.AsceStates
 import org.eso.ias.dasu.executorthread.ScheduledExecutor
 import java.util.concurrent.TimeUnit
+
 import org.eso.ias.cdb.pojos.DasuDao
 import org.eso.ias.types.Validity
 import org.eso.ias.types.IasValidity
 import java.util.HashMap
 import java.util.Collections
+
+import org.eso.ias.cdb.checker.topology.DasuTopology
 
 /**
  * The implementation of the DASU.
