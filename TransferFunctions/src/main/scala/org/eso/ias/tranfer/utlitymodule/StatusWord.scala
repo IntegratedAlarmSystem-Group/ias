@@ -57,20 +57,31 @@ class StatusWord(umStatusWord: String) {
 
 object StatusWord {
 
+  val ACPower = "AC-POWER"
+  val ATZenith = "AT-ZENITH"
+  val Hvac = "HVAC"
+  val Fire = "FIRE"
+  val UpsPower = "UPS-POWER"
+  val StowPin = "STOW-PIN"
+  val RecvCabTemp = "RX-CAB-TEMP"
+  val DriveCabTemp = "DRIVE-CAB-TEMP"
+  val AntennaPos = "ANTENNA-POS"
+  val EStop = "E-STOP"
+
   /**
     * Associates the names of the monitor points to the status bits
     */
   val namesToBits: Map[String, Int] = Map(
-    "AC-POWER" -> 2,
-    "AT-ZENITH" -> 7,
-    "HVAC" -> 6,
-    "FIRE" -> 0,
-    "UPS-POWER" -> 3,
-    "STOW-PIN" -> 4,
-    "RX-CAB-TEMP" -> 5,
-    "DRIVE-CAB-TEMP" -> 8,
-    "ANTENNA-POS" -> 9,
-    "E-STOP" -> 1)
+    ACPower -> 2,
+    ATZenith -> 7,
+    Hvac -> 6,
+    Fire -> 0,
+    UpsPower -> 3,
+    StowPin -> 4,
+    RecvCabTemp -> 5,
+    DriveCabTemp -> 8,
+    AntennaPos -> 9,
+    EStop -> 1)
 
   /**
     * The name of the monitor point in the status string sent
