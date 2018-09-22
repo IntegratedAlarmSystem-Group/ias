@@ -9,6 +9,8 @@ import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.Alarm
 import org.eso.ias.types.IASTypes.{ALARM, STRING}
 
+import scala.collection.JavaConverters
+
 /**
   * The transfer function for to generate alarms if a bit of the UM is set
   * The number of the bit to check is passed through a java property
@@ -46,7 +48,7 @@ class UMAlarmByBit (asceId: String, asceRunningId: String, validityTimeFrame:Lon
     UMFireTF.logger.debug("TF of ASCE [{}] initializing", asceId)
 
     if (bitNumber<0 || bitNumber>=StatusWord.monitorPointNames.size) {
-      throw  new PropsMisconfiguredException(props)
+      throw  new PropsMisconfiguredException(Map(UMAlarmByBit.BitPropertyName->bitNumber.toString))
     }
 
     if (outputInfo.iasioType != ALARM) {
