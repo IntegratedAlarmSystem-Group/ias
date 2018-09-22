@@ -40,7 +40,7 @@ import java.util.Collections
  * - a thread for the throttling to avoid that processing too many 
  *   inputs takes 100% CPU
  * 
- * @param the identifier of the DASU
+ * @param dasuIdentifier the identifier of the DASU
  * @param refreshRate the refresh rate (seconds) to automatically resend the last calculated 
  *                    output even if it did not change
  * @param outputPublisher the publisher to send the output
