@@ -131,5 +131,5 @@ object AntPadInhibitor {
   val PadNameMatcherName: String = "org.eso.ias.antpadinhibitor.padnameregexp"
 
   /** The ID of the monitor point with the position (pad) of the antennas */
-  val AntennasToPadsID="Array-AntennasToPad"
+  val AntennasToPadsID="Array-AntennasToPads"
 }
