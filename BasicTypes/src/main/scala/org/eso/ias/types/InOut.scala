@@ -295,7 +295,8 @@ case class InOut[A](
     val thresholdTStamp = System.currentTimeMillis() - validityTimeFrame
     val iasioTstamp: Long = dasuProductionTStamp.getOrElse(pluginProductionTStamp.get)
 
-    assert(iasioTstamp<=thresholdTStamp+validityTimeFrame)
+    assert(iasioTstamp<=thresholdTStamp+validityTimeFrame,
+      "InOut "+id.id+": iasioTstamp="+iasioTstamp+" shall be less or equal than "+(thresholdTStamp+validityTimeFrame))
     
     val validityByTime = if (iasioTstamp<thresholdTStamp) {
         Validity(IasValidity.UNRELIABLE)
