@@ -21,7 +21,6 @@ class StatusWordBuilder(bitsSet: List[Int]) {
     strings.mkString(",")
   }
 
-  println(statusWordString)
   /** The StatusWord decoding  the string */
   val statusWord = new StatusWord(statusWordString)
 
