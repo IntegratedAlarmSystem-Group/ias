@@ -224,22 +224,29 @@ public class ValueMapper implements Function<String, String> {
 		// are the same point in time with this implementation
 		long producedAndSentTStamp = System.currentTimeMillis();
 
-		IASValue<?> ret = IASValue.build(
-				convertedValue, 
-				OperationalMode.valueOf(remoteSystemData.getOperationalMode()),
-				IasValidity.valueOf(remoteSystemData.getValidity()),
-				identifier.fullRunningID(),
-				type,
-				monSysProductionTime,
-				pluginProductionTime, // PLUGIN production
-				pluginSentToConvertTime,  // Sent to converter
-				receptionTStamp, // received from plugin
-				producedAndSentTStamp, // Produced by converter
-				producedAndSentTStamp, // Sent to BSDB
-				null, // Read from BSDB
-				null, // DASU prod time
-				null, // dependents
-				null); // additional properties
+		IASValue<?> ret;
+		try {
+			ret = IASValue.build(
+					convertedValue,
+					OperationalMode.valueOf(remoteSystemData.getOperationalMode()),
+					IasValidity.valueOf(remoteSystemData.getValidity()),
+					identifier.fullRunningID(),
+					type,
+					monSysProductionTime,
+					pluginProductionTime, // PLUGIN production
+					pluginSentToConvertTime,  // Sent to converter
+					receptionTStamp, // received from plugin
+					producedAndSentTStamp, // Produced by converter
+					producedAndSentTStamp, // Sent to BSDB
+					null, // Read from BSDB
+					null, // DASU prod time
+					null, // dependents
+					null); // additional properties
+
+		} catch (Exception e) {
+			logger.error("Error builduing the IASValue of {}",identifier.fullRunningID());
+			return null;
+		}
 		logger.debug("Translated to {} of type {}",ret.id,ret.valueType);
 		return ret;
 	}
@@ -309,7 +316,7 @@ public class ValueMapper implements Function<String, String> {
 		}
 		IASTypes iasType = mpConfiguration.get().mpType;
 
-		Optional<IASValue<?>> iasValueOpt;
+		Optional<IASValue<?>> iasValueOpt = Optional.empty();
 		try { 
 			iasValueOpt= Optional.ofNullable(
 			        translate(
