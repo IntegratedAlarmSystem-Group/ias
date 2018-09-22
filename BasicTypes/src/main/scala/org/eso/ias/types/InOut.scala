@@ -136,14 +136,14 @@ case class InOut[A](
        ret.append("Value: "+value.get.toString())
     }
 
-    readFromMonSysTStamp.foreach(t => { ret.append(", readFromMonSysTStamp="); ret.append(t); })
-    pluginProductionTStamp.foreach(t => { ret.append(", pluginProductionTStamp="); ret.append(t); })
-	  sentToConverterTStamp.foreach(t => { ret.append(", sentToConverterTStamp="); ret.append(t); })
-	  receivedFromPluginTStamp.foreach(t => { ret.append(", receivedFromPluginTStamp="); ret.append(t); })
-	  convertedProductionTStamp.foreach(t => { ret.append(", convertedProductionTStamp="); ret.append(t); })
-	  sentToBsdbTStamp.foreach(t => { ret.append(", sentToBsdbTStamp="); ret.append(t); })
-	  readFromBsdbTStamp.foreach(t => { ret.append(", readFromBsdbTStamp="); ret.append(t); })
-	  dasuProductionTStamp.foreach(t => { ret.append(", dasuProductionTStamp="); ret.append(t); })
+    readFromMonSysTStamp.foreach(t => { ret.append(", readFromMonSysTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
+    pluginProductionTStamp.foreach(t => { ret.append(", pluginProductionTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
+	  sentToConverterTStamp.foreach(t => { ret.append(", sentToConverterTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
+	  receivedFromPluginTStamp.foreach(t => { ret.append(", receivedFromPluginTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
+	  convertedProductionTStamp.foreach(t => { ret.append(", convertedProductionTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
+	  sentToBsdbTStamp.foreach(t => { ret.append(", sentToBsdbTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
+	  readFromBsdbTStamp.foreach(t => { ret.append(", readFromBsdbTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
+	  dasuProductionTStamp.foreach(t => { ret.append(", dasuProductionTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
 	  
 	  idsOfDependants.foreach( ids => {
 	    ret.append(", Ids of dependants=[")
