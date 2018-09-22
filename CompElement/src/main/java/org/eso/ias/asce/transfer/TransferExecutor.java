@@ -98,7 +98,7 @@ public abstract class TransferExecutor {
 		if (templateInstance.isPresent()) {
 		    logger.info("This TF IS templated with instance {}",templateInstance.get());
         } else {
-		    logger.info("This TF is templated");
+		    logger.info("This TF is not templated");
         }
 		this.templateInstance=templateInstance;
 	}
