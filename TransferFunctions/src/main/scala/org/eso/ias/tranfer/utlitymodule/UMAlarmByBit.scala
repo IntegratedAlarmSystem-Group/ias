@@ -3,7 +3,7 @@ package org.eso.ias.tranfer.utlitymodule
 import java.util.Properties
 
 import com.typesafe.scalalogging.Logger
-import org.eso.ias.asce.exceptions.{TypeMismatchException, UnexpectedNumberOfInputsException}
+import org.eso.ias.asce.exceptions.{PropsMisconfiguredException, TypeMismatchException, UnexpectedNumberOfInputsException}
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.Alarm
@@ -22,6 +22,13 @@ import org.eso.ias.types.IASTypes.{ALARM, STRING}
 class UMAlarmByBit (asceId: String, asceRunningId: String, validityTimeFrame:Long, props: Properties)
   extends ScalaTransferExecutor[Alarm](asceId,asceRunningId,validityTimeFrame,props){
 
+  /** The bitof the UM status word to check to generate alarms */
+  val bitNumber = {
+    val propStr = Option[String](props.getProperty(UMAlarmByBit.BitPropertyName))
+    require(propStr.isDefined,"Property "+UMAlarmByBit.BitPropertyName+"NOT found")
+    propStr.get.toInt
+  }
+
   /**
     * @see TransferExecutor#shutdown()
     */
@@ -37,6 +44,10 @@ class UMAlarmByBit (asceId: String, asceRunningId: String, validityTimeFrame:Lon
     **/
   override def initialize(inputsInfo: Set[IasioInfo], outputInfo: IasioInfo): Unit = {
     UMFireTF.logger.debug("TF of ASCE [{}] initializing", asceId)
+
+    if (bitNumber<0 || bitNumber>=StatusWord.monitorPointNames.size) {
+      throw  new PropsMisconfiguredException(props)
+    }
 
     if (outputInfo.iasioType != ALARM) {
       throw new TypeMismatchException(outputInfo.iasioId, outputInfo.iasioType, ALARM)
@@ -64,9 +75,9 @@ class UMAlarmByBit (asceId: String, asceRunningId: String, validityTimeFrame:Lon
 
     val status = new StatusWord(umStatusWord)
 
-    val fireActivated = status.statusOf(StatusWord.Fire) && status.statusOf(StatusWord.ACPower)
+    val alarmActivated = status.statusOf(bitNumber)
 
-    val newOutput = if (fireActivated) actualOutput.updateValue(Alarm.SET_CRITICAL) else
+    val newOutput = if (alarmActivated) actualOutput.updateValue(Alarm.SET_MEDIUM) else
       actualOutput.updateValue(Alarm.CLEARED)
 
     newOutput.updateProps(input.props).updateMode(input.mode)
@@ -78,7 +89,8 @@ object UMAlarmByBit {
   /** The logger */
   val logger: Logger = IASLogger.getLogger(UMAlarmByBit.getClass)
 
-  val BitProeprtyName = ""
+  /** The name of the property to pass the number of the bit to check */
+  val BitPropertyName = "org.eso.ias.transfer.utilitymodule.bitnumber"
 
 
 }
