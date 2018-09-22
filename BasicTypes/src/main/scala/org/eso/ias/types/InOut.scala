@@ -3,6 +3,8 @@ package org.eso.ias.types
 import java.text.{DateFormat, SimpleDateFormat}
 import java.util.{Optional, TimeZone}
 
+import org.eso.ias.utils.ISO8601Helper
+
 import scala.collection.JavaConverters
 
 /**
@@ -296,7 +298,9 @@ case class InOut[A](
     val iasioTstamp: Long = dasuProductionTStamp.getOrElse(pluginProductionTStamp.get)
 
     assert(iasioTstamp<=thresholdTStamp+validityTimeFrame,
-      "InOut "+id.id+": iasioTstamp="+iasioTstamp+" shall be less or equal than "+(thresholdTStamp+validityTimeFrame))
+      "InOut "+id.id+": iasioTstamp="+
+        ISO8601Helper.getTimestamp(iasioTstamp)+" shall be less or equal than "+
+        ISO8601Helper.getTimestamp(thresholdTStamp+validityTimeFrame)+"\n\n"+toString())
     
     val validityByTime = if (iasioTstamp<thresholdTStamp) {
         Validity(IasValidity.UNRELIABLE)
