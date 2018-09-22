@@ -179,7 +179,7 @@ class DasuImpl (
    */
   val delayedUpdateTask = new Runnable {
       override def run() = {
-        logger.info("DASU [{}] running the throttling task",id)
+        logger.debug("DASU [{}] running the throttling task",id)
         updateAndPublishOutput()
       }
   }
