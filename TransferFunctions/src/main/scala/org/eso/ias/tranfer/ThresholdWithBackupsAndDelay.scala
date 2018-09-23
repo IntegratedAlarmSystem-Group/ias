@@ -232,7 +232,7 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
   override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
     assert(compInputs.values.forall(_.value.isDefined)) // This should be ensured by ASCE
     assert(getValue(compInputs, idOfMainInput.get).isDefined,
-      "ASCE ["+compElementId+"] ID of main input "+idOfMainInput.get+"not found: received inputs "+compInputs.keySet.mkString(","))
+      "ASCE ["+compElementId+"] ID of main input "+idOfMainInput.get+" not found: received inputs "+compInputs.keySet.mkString(","))
 
 
     // The actual Alarm
