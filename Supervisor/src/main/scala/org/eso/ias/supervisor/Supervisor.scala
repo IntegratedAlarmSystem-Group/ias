@@ -266,6 +266,7 @@ class Supervisor(
       Supervisor.logger.whenDebugEnabled(Supervisor.logger.debug("Inputs sent to DASU [{}] for processing: {}",
         dasu.id,
         iasiosToSend.map(_.id).mkString(",")))
+      statsLogger.numOfInputsOfDasu(dasu.id,iasiosToSend.size)
       if (iasiosToSend.nonEmpty) {
         dasu.inputsReceived(iasiosToSend)
       }
