@@ -80,7 +80,7 @@ class Supervisor(
   require(Option(cdbReader).isDefined,"Invalid CDB reader")
   
   /** The ID of the Supervisor */
-  val id = supervisorIdentifier.id
+  val id: String = supervisorIdentifier.id
   
   Supervisor.logger.info("Building Supervisor [{}] with fullRunningId [{}]",id,supervisorIdentifier.fullRunningID)
   
@@ -130,7 +130,7 @@ class Supervisor(
   
   // Get the DasuDaos from the set of DASUs to deploy:
   // the helper transform the templated DASUS into normal ones
-  val dasuDaos = {
+  val dasuDaos: Set[DasuDao] = {
     val helper = new TemplateHelper(dasusToDelpoy)
     helper.normalize()
   }
@@ -157,8 +157,8 @@ class Supervisor(
   val iasiosToDasusMap: Map[String, Set[String]] = startDasus()
   Supervisor.logger.info("Supervisor [{}] associated IASIOs IDs to DASUs", id)
   
-  val cleanedUp = new AtomicBoolean(false) // Avoid cleaning up twice
-  val shutDownThread=addsShutDownHook()
+  val cleanedUp: AtomicBoolean = new AtomicBoolean(false) // Avoid cleaning up twice
+  val shutDownThread: Thread =addsShutDownHook()
   
   /** Flag to know if the Supervisor has been started */
   val started = new AtomicBoolean(false)
@@ -214,14 +214,14 @@ class Supervisor(
           hbEngine.updateHbState(HeartbeatStatus.RUNNING)}})
     } else {
       Supervisor.logger.warn("Supervisor [{}] already started",id)
-      new Failure(new Exception("Supervisor already started"))
+      Failure(new Exception("Supervisor already started"))
     }
   }
 
   /**
    * Release all the resources
    */
-  def cleanUp() = synchronized {
+  def cleanUp(): Unit = synchronized {
 
     val alreadyCleaned = cleanedUp.getAndSet(true)
     if (!alreadyCleaned) {
@@ -229,7 +229,7 @@ class Supervisor(
       statsLogger.cleanUp()
       hbEngine.updateHbState(HeartbeatStatus.EXITING)
       Supervisor.logger.debug("Releasing DASUs running in the supervisor [{}]", id)
-      dasus.values.foreach(_.cleanUp)
+      dasus.values.foreach(_.cleanUp())
 
       Supervisor.logger.debug("Supervisor [{}]: releasing the subscriber", id)
       Try(inputSubscriber.cleanUpSubscriber())
@@ -266,7 +266,7 @@ class Supervisor(
       Supervisor.logger.whenDebugEnabled(Supervisor.logger.debug("Inputs sent to DASU [{}] for processing: {}",
         dasu.id,
         iasiosToSend.map(_.id).mkString(",")))
-      if (!iasiosToSend.isEmpty) {
+      if (iasiosToSend.nonEmpty) {
         dasu.inputsReceived(iasiosToSend)
       }
     })
@@ -282,7 +282,7 @@ class Supervisor(
    *  @return Success or Failure if the initialization went well 
    *          or encountered a problem  
    */
-  def initializePublisher(): Try[Unit] = new Success(())
+  def initializePublisher(): Try[Unit] = Success(())
   
   /**
    * The Supervisor acts as publisher for the DASU
@@ -294,7 +294,7 @@ class Supervisor(
    *  @return Success or Failure if the clean up went well 
    *          or encountered a problem  
    */
-  def cleanUpPublisher(): Try[Unit] = new Success(())
+  def cleanUpPublisher(): Try[Unit] = Success(())
   
   /**
    * The Supervisor acts as publisher for the DASU
@@ -315,7 +315,7 @@ class Supervisor(
    *  The Supervisor has its own subscriber so this  clean up 
    *  invoked by each DASU, does nothing but returning Success. 
    */
-  def cleanUpSubscriber(): Try[Unit] = new Success(())
+  def cleanUpSubscriber(): Try[Unit] = Success(())
   
   /**
    * The Supervisor has its own subscriber to get events from: the list of
@@ -330,7 +330,7 @@ class Supervisor(
    * @param acceptedInputs the IDs of the inputs accepted by the listener
    */
   def startSubscriber(listener: InputsListener, acceptedInputs: Set[String]): Try[Unit] = {
-    new Success(())
+    Success(())
   }
 }
 
@@ -381,7 +381,7 @@ object Supervisor {
       
       val iasDaoOpt = reader.getIas
 
-      val fromCdb = if (iasDaoOpt.isPresent()) {
+      val fromCdb = if (iasDaoOpt.isPresent) {
         logger.debug("IAS configuration read from CDB")
         (iasDaoOpt.get.getRefreshRate,iasDaoOpt.get.getTolerance,Option(iasDaoOpt.get.getBsdbUrl))
       } else {
