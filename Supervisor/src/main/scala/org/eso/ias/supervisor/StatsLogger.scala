@@ -1,5 +1,6 @@
 package org.eso.ias.supervisor
 
+import java.lang.management.ManagementFactory
 import java.util
 import java.util.Collections
 import java.util.concurrent._
@@ -93,9 +94,13 @@ class StatsLogger (val dasusIds: Set[String] ) {
   def logStats(): Unit = {
     val totProcessedInputs = totInputsProcessed.getAndSet(0)
 
+    val getUsedHeapMemory = ManagementFactory.getMemoryMXBean.getHeapMemoryUsage.getUsed
+
     val message= StringBuilder.newBuilder
     message.append("Stats: ")
     message.append(totProcessedInputs)
+    message.append(" used heap ");
+    message.append(getUsedHeapMemory)
     message.append(" IASIOs processed so far ")
     message.append(" (")
     message.append(totProcessedInputs/StatsLogger.StatisticsTimeInterval)
