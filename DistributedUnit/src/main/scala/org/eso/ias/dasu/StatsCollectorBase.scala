@@ -2,8 +2,7 @@ package org.eso.ias.dasu
 
 import java.util.concurrent.{Executors, ScheduledExecutorService, ScheduledFuture, TimeUnit}
 import java.util.concurrent.atomic.AtomicReference
-
-import org.eso.ias.supervisor.StatsLogger
+import org.eso.ias.logging.IASLogger
 
 /**
   * Base class for generating statistics at definite time intervals
@@ -32,22 +31,26 @@ abstract class StatsCollectorBase(id: String, timeInterval: Long) {
   /** Start logging statistics */
   def start() = synchronized {
     Option(future.get()) match {
-      case Some(f) => StatsLogger.logger.warn("StatsCollector "+id+" already started")
-      case None => future.set(scheduer.scheduleAtFixedRate( () =>
+      case Some(f) => StatsCollectorBase.logger.warn("Stats generation for " + id + " already started")
+      case None => future.set(scheduer.scheduleAtFixedRate(() =>
         logStats(),
         timeInterval,
         timeInterval,
         TimeUnit.MINUTES))
     }
-    StatsLogger.logger.info("StatsLogger "+id+" started: will log stats every "+timeInterval+" minutes")
+    StatsCollectorBase.logger.info("Stats generation for " + id + " started: will log stats every " + timeInterval + " minutes")
   }
 
   /** Stop loging statistics */
   def cleanUp() = synchronized {
     Option(future.getAndSet(null)).foreach(f => {
       f.cancel(false)
-      StatsLogger.logger.info("StatsLogger +"+id+" closed")
+      StatsCollectorBase.logger.info("Stats generation for +"+id+" closed")
     })
   }
+}
 
+object StatsCollectorBase {
+  /** The logger */
+  val logger = IASLogger.getLogger(StatsCollectorBase.getClass)
 }
