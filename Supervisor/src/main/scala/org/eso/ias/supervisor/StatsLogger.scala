@@ -74,6 +74,7 @@ class StatsLogger (id: String, val dasusIds: Set[String]) extends StatsCollector
     message.append(" used heap ");
     message.append(getUsedHeapMemory/1024)
     message.append("Kb; IASIOs processed so far ")
+    message.append(totInputsProcessed.get)
     message.append(" (")
     message.append(totProcessedInputs/StatsLogger.StatisticsTimeInterval)
     message.append("/min); input in the last interval ")
