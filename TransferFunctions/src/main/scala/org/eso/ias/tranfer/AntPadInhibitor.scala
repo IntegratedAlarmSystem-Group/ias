@@ -139,6 +139,8 @@ class AntPadInhibitor(asceId: String, asceRunningId: String, validityTimeFrame:L
 
     val mode = if (alarmInput.mode==OperationalMode.OPERATIONAL && antPadMp.get.mode==OperationalMode.OPERATIONAL) {
       OperationalMode.OPERATIONAL
+    } else if (antPadMp.get.mode==OperationalMode.OPERATIONAL) {
+      alarmInput.mode
     } else {
       OperationalMode.UNKNOWN
     }
