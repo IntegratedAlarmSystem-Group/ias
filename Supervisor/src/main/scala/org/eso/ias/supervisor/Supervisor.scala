@@ -15,7 +15,6 @@ import org.eso.ias.types.IASValue
 import org.eso.ias.dasu.subscriber.InputsListener
 import org.eso.ias.dasu.Dasu
 import org.eso.ias.cdb.pojos.SupervisorDao
-import org.eso.ias.types.IasValueJsonSerializer
 import scala.util.Failure
 import java.util.concurrent.atomic.AtomicBoolean
 import org.eso.ias.types.Identifier
@@ -24,7 +23,6 @@ import org.eso.ias.dasu.publisher.KafkaPublisher
 import org.eso.ias.dasu.subscriber.KafkaSubscriber
 import org.eso.ias.types.IdentifierType
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import org.eso.ias.cdb.rdb.RdbReader
 import org.eso.ias.cdb.pojos.DasuToDeployDao
 import org.eso.ias.heartbeat.HbProducer
@@ -38,8 +36,8 @@ import org.eso.ias.heartbeat.HeartbeatStatus
 /**
  * A Supervisor is the container to run several DASUs into the same JVM.
  * 
- * The Supervisor blindly forward inputs to each DASU and sent the oupts to the BSDB 
- * without adding any other heuristic: things like for updating validities when an input
+ * The Supervisor blindly forward inputs to each DASU and sends the outpts to the BSDB
+ * without adding any other heuristic: things like updating validities when an input
  * is not refreshed are not part of the Supervisor.
  * 
  * The Supervisor gets IASIOs from a InputSubscriber and publishes
@@ -88,7 +86,11 @@ class Supervisor(
   
   /** The heartbeat Engine */
   val hbEngine: HbEngine = {
-    val iasDao: IasDao = cdbReader.getIas.orElseThrow(() => new IllegalArgumentException("IasDao not found"))
+    val iasDao: IasDao =
+      Try (cdbReader.getIas ) match {
+        case Success(value) => value.orElseThrow(() => new Exception("IasDao not found"))
+        case Failure(exception) => throw new Exception("Failure reading IAS from CDB",exception)
+    }
     HbEngine(supervisorIdentifier.fullRunningID,iasDao.getHbFrequency,hbProducer)
   }
   
@@ -160,6 +162,8 @@ class Supervisor(
   
   /** Flag to know if the Supervisor has been started */
   val started = new AtomicBoolean(false)
+
+  val statsLogger: StatsLogger = new StatsLogger(dasuIds)
   
   Supervisor.logger.info("Supervisor [{}] built",id)
   
@@ -200,6 +204,7 @@ class Supervisor(
     val alreadyStarted = started.getAndSet(true) 
     if (!alreadyStarted) {
       Supervisor.logger.debug("Starting Supervisor [{}]",id)
+      statsLogger.start()
       hbEngine.start()
       dasus.values.foreach(dasu => dasu.enableAutoRefreshOfOutput(true))
       val inputsOfSupervisor = dasus.values.foldLeft(Set.empty[String])( (s, dasu) => s ++ dasu.getInputIds())
@@ -221,6 +226,7 @@ class Supervisor(
     val alreadyCleaned = cleanedUp.getAndSet(true)
     if (!alreadyCleaned) {
       Supervisor.logger.debug("Cleaning up supervisor [{}]", id)
+      statsLogger.cleanUp()
       hbEngine.updateHbState(HeartbeatStatus.EXITING)
       Supervisor.logger.debug("Releasing DASUs running in the supervisor [{}]", id)
       dasus.values.foreach(_.cleanUp)
@@ -250,13 +256,16 @@ class Supervisor(
    *  
    *  @param iasios the inputs received
    */
-  def inputsReceived(iasios: Set[IASValue[_]]) {
+  override def inputsReceived(iasios: Set[IASValue[_]]) {
     
     val receivedIds = iasios.map(i => i.id)
+    statsLogger.numberOfInputsReceived(receivedIds.size)
     
     dasus.values.foreach(dasu => {
       val iasiosToSend = iasios.filter(iasio => iasiosToDasusMap(dasu.id).contains(iasio.id))
-      val idsOfIasiosToSend = iasiosToSend.map(_.id)
+      Supervisor.logger.whenDebugEnabled(Supervisor.logger.debug("Inputs sent to DASU [{}] for processing: {}",
+        dasu.id,
+        iasiosToSend.map(_.id).mkString(",")))
       if (!iasiosToSend.isEmpty) {
         dasu.inputsReceived(iasiosToSend)
       }
@@ -352,9 +361,9 @@ object Supervisor {
 
     val reader: CdbReader = {
       if (args.size == 3) {
+        Supervisor.logger.info("Using JSON CDB @ {}",args(2))
         val cdbFiles: CdbFiles = new CdbJsonFiles(args(2))
         new JsonReader(cdbFiles)
-
       } else {
         new RdbReader()
       }
@@ -371,14 +380,16 @@ object Supervisor {
       val ToleranceSeconds = Integer.getInteger(TolerancePropName,ToleranceDefault)
       
       val iasDaoOpt = reader.getIas
-      logger.debug("IAS configuration read from CDB")
-      
+
       val fromCdb = if (iasDaoOpt.isPresent()) {
+        logger.debug("IAS configuration read from CDB")
         (iasDaoOpt.get.getRefreshRate,iasDaoOpt.get.getTolerance,Option(iasDaoOpt.get.getBsdbUrl))
       } else {
+        logger.warn("IAS not found in CDB: using default values for auto send time interval ({}) and tolerance ({})",
+          AutoSendTimeIntervalDefault,ToleranceDefault)
         (AutoSendTimeIntervalDefault,ToleranceDefault,None)
       }
-      logger.debug("Values from CDB autosend time={}, HB frequency={}, Kafka brokers={}",fromCdb._1,fromCdb._2,fromCdb._3)
+      logger.debug("Using autosend time={}, HB frequency={}, Kafka brokers={}",fromCdb._1,fromCdb._2,fromCdb._3)
       
       (Integer.getInteger(AutoSendPropName,fromCdb._1),
       Integer.getInteger(TolerancePropName,fromCdb._2),
