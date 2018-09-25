@@ -5,6 +5,7 @@ import java.util
 import java.util.concurrent._
 import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
 
+import com.typesafe.scalalogging.Logger
 import org.eso.ias.dasu.StatsCollectorBase
 import org.eso.ias.logging.IASLogger
 
@@ -17,7 +18,7 @@ import scala.util.Try
   * @param dasusIds The IDs of the DAUS deployed in the Supervisur
   */
 class StatsLogger (id: String, val dasusIds: Set[String]) extends StatsCollectorBase(id,StatsLogger.StatisticsTimeInterval) {
-  require(Option(dasusIds).isDefined && !dasusIds.isEmpty,"Invalid undefined or empty list of DASU IDs")
+  require(Option(dasusIds).isDefined && dasusIds.nonEmpty,"Invalid undefined or empty list of DASU IDs")
 
   /** Total number of inputs forwarded to the DASU to be processed since when the Supervisor started */
   val totInputsProcessed = new AtomicLong(0)
@@ -71,7 +72,7 @@ class StatsLogger (id: String, val dasusIds: Set[String]) extends StatsCollector
     val message= StringBuilder.newBuilder
     message.append("Stats: ")
     message.append(totProcessedInputs)
-    message.append(" used heap ");
+    message.append(" used heap ")
     message.append(getUsedHeapMemory/1024)
     message.append("Kb; IASIOs processed so far ")
     message.append(totInputsProcessed.get)
@@ -101,7 +102,7 @@ class StatsLogger (id: String, val dasusIds: Set[String]) extends StatsCollector
 object StatsLogger {
 
   /** The logger */
-  val logger = IASLogger.getLogger(StatsLogger.getClass)
+  val logger: Logger = IASLogger.getLogger(StatsLogger.getClass)
 
   /** The time interval to log statistics (minutes) */
   val DefaultStatisticsTimeInterval = 10
