@@ -163,7 +163,7 @@ class Supervisor(
   /** Flag to know if the Supervisor has been started */
   val started = new AtomicBoolean(false)
 
-  val statsLogger: StatsLogger = new StatsLogger(dasuIds)
+  val statsLogger: StatsLogger = new StatsLogger(id,dasuIds)
   
   Supervisor.logger.info("Supervisor [{}] built",id)
   

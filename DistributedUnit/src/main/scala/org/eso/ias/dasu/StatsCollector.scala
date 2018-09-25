@@ -20,31 +20,28 @@ import java.util.concurrent.atomic.AtomicReference
  * @param dasuId: the ID of the DASU
  */
 class StatsCollector(
-    val dasuId: String) {
+    val dasuId: String) extends StatsCollectorBase(dasuId,StatsCollector.StatisticsTimeInterval) {
   require(Option(dasuId).isDefined && !dasuId.isEmpty(),"Invalid DASU ID")
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
   
-  logger.info("Building the statistics collector for DASU [{}]",dasuId)
+  logger.debug("Building the statistics collector for DASU [{}]",dasuId)
   
   /** The number of iterations executed so far */
   val iterationsRun = new AtomicLong(0L)
   
   /** The average execution time */
   val avgExecutionTime = new AtomicReference[Double](0.0)
-  
-  /** The time of the last publication of the statistics */
-  val lastStatsPublicationTime = new AtomicLong(System.currentTimeMillis())
-  
-  /** The time interval to publish statistics in msecs */ 
+
+  /** The time interval to publish statistics in msecs */
   val statsTimeInterval = TimeUnit.MILLISECONDS.convert(StatsCollector.StatisticsTimeInterval,TimeUnit.MINUTES)
   if (statsTimeInterval>0) {
     logger.info(f"DASU [$dasuId%s] will generate stats every ${StatsCollector.StatisticsTimeInterval} minutes")
   } else {
     logger.warn("Generation of stats for DASU [{}] disabled",dasuId)
   }
-  
+
   logger.info("DASU [{}] statistics collector built",dasuId)
   
   /**
@@ -60,6 +57,21 @@ class StatsCollector(
    * @param iter the number of iterations
    */
   private def mean(actMean: Double, sample: Long, iter: Long): Double = { actMean +(sample-actMean)/iter }
+
+  /**
+    * The method to log statistics, called at regular time intervals
+    */
+  override def logStats() = {
+    val numOfIterationsRun = {
+      val last=iterationsRun.incrementAndGet()
+      if (last<0) {
+        avgExecutionTime.set(0.0)
+        iterationsRun.set(0)
+      }
+      iterationsRun.get
+    }
+    logger.info(f"DASU [$dasuId%s]: avg time of calculation of the output ${avgExecutionTime.get()}%.2f ms, output calculated ${iterationsRun.get}%d times)")
+  }
   
   /**
    * Endorse the passed execution time to generate statistics.
@@ -69,21 +81,13 @@ class StatsCollector(
   def updateStats(lastExecTime: Long) {
     require(Option(lastExecTime).isDefined && lastExecTime>=0,"Invalid execution time")
     
-    val numOfIterationsRun = {
-      val last=iterationsRun.incrementAndGet()
-      if (last<0) {
-        avgExecutionTime.set(0.0)
-        iterationsRun.set(0)
-      }
-      iterationsRun.get
-    }
-    
-    avgExecutionTime.set(mean(avgExecutionTime.get,lastExecTime,numOfIterationsRun))
-    
-    // publish a log of stats if the time interval for stats elapsed
-    if (System.currentTimeMillis()>lastStatsPublicationTime.get+statsTimeInterval) {
-      logger.info(f"DASU [$dasuId%s]: average time of calculation of the output ${avgExecutionTime.get()}%.2f ms (last took $lastExecTime%d ms), output calculated $numOfIterationsRun%d times)")
-      lastStatsPublicationTime.set(System.currentTimeMillis())
+
+    val last=iterationsRun.incrementAndGet()
+    if (last<0) {
+      avgExecutionTime.set(0.0)
+      iterationsRun.set(0)
+    } else {
+      avgExecutionTime.set(mean(avgExecutionTime.get,lastExecTime,iterationsRun.get))
     }
   }
 }

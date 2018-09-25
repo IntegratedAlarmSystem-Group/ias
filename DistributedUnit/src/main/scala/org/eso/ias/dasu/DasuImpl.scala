@@ -480,6 +480,7 @@ class DasuImpl (
     val alreadyStarted = started.getAndSet(true)
     if (!alreadyStarted) {
       logger.debug("DASU [{}] starting", id)
+      statsCollector.start()
       inputSubscriberInitialized.map(x => inputSubscriber.startSubscriber(this, dasuTopology.dasuInputs))
     } else {
       new Failure(new Exception("DASU already started"))
@@ -519,6 +520,8 @@ class DasuImpl (
       logger.warn("DASU [{}]: already cleaned up!", id)
     } else {
       logger.info("DASU [{}]: releasing resources", id)
+      logger.debug("DASU [{}]: stopping statistics collector", id)
+      statsCollector.cleanUp()
       logger.debug("DASU [{}]: stopping the auto-refresh of the output", id)
       Try(enableAutoRefreshOfOutput(false))
       logger.debug("DASU [{}]: releasing the subscriber", id)
