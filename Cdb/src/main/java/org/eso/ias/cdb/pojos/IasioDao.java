@@ -115,7 +115,7 @@ public class IasioDao {
 	 *                  <code>false</code> otherwise
 	 * @param templateId the Id of the template for replication
 	 * @param sound the sound to play when an alarm is set
-	 * @param email the email to notify when an alarm is SET or CLEARED
+	 * @param emails the emails to notify when an alarm is SET or CLEARED
 	 */
 	public IasioDao(
 			String id, 
