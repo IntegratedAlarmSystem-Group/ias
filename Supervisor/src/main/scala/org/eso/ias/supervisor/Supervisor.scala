@@ -105,36 +105,36 @@ class Supervisor(
   /**
    * Gets the definitions of the DASUs to run in the Supervisor from the CDB
    */
-  val dasusToDelpoy: Set[DasuToDeployDao] = JavaConverters.asScalaSet(cdbReader.getDasusToDeployInSupervisor((id))).toSet
-  require(dasusToDelpoy.size>0,"No DASUs to run in Supervisor "+id)
+  val dasusToDeploy: Set[DasuToDeployDao] = JavaConverters.asScalaSet(cdbReader.getDasusToDeployInSupervisor((id))).toSet
+  require(dasusToDeploy.size>0,"No DASUs to run in Supervisor "+id)
   Supervisor.logger.info("Supervisor [{}], {} DASUs to run: {}",
       id,
-      dasusToDelpoy.size.toString(),
-      dasusToDelpoy.map(d => d.getDasu().getId()).mkString(", "))
-  
-  // Initialize the consumer and exit in case of error 
+      dasusToDeploy.size.toString(),
+      dasusToDeploy.map(d => d.getDasu().getId()).mkString(", "))
+
+  // Initialize the consumer and exit in case of error
   val inputSubscriberInitialized = inputSubscriber.initializeSubscriber()
   inputSubscriberInitialized match {
     case Failure(f) => Supervisor.logger.error("Supervisor [{}] failed to initialize the consumer", id,f);
                        System.exit(-1)
     case Success(s) => Supervisor.logger.info("Supervisor [{}] subscriber successfully initialized",id)
   }
-  
-  // Initialize the producer and exit in case of error 
+
+  // Initialize the producer and exit in case of error
   val outputProducerInitialized = outputPublisher.initializePublisher()
   outputProducerInitialized match {
     case Failure(f) => Supervisor.logger.error("Supervisor [{}] failed to initialize the producer", id,f);
                        System.exit(-2)
     case Success(s) => Supervisor.logger.info("Supervisor [{}] producer successfully initialized",id)
   }
-  
+
   // Get the DasuDaos from the set of DASUs to deploy:
   // the helper transform the templated DASUS into normal ones
   val dasuDaos: Set[DasuDao] = {
-    val helper = new TemplateHelper(dasusToDelpoy)
+    val helper = new TemplateHelper(dasusToDeploy)
     helper.normalize()
   }
-  assert(dasuDaos.size==dasusToDelpoy.size)
+  assert(dasuDaos.size==dasusToDeploy.size)
   
   dasuDaos.foreach(d => Supervisor.logger.info("Supervisor [{}]: building DASU from DasuDao {}",id,d.toString()))
   
