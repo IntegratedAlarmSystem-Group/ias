@@ -1,14 +1,10 @@
 package org.eso.ias.cdb.pojos;
 
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
-import javax.persistence.Basic;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 /**
  * The pojo for the IASIO
@@ -81,6 +77,13 @@ public class IasioDao {
 	@Column(name = "emails")
 	@Basic(optional=true)
 	private String emails;
+
+	/**
+	 * This one-to-many annotation matches with the many-to-one
+	 * annotation in the {@link AsceDao}
+	 */
+	@OneToMany(mappedBy = "iasio", cascade = CascadeType.ALL, orphanRemoval = true)
+	private Set<TemplateInstanceIasioDao> templateInstances = new HashSet<>();
 	
 	/**
 	 * Empty constructor
@@ -220,12 +223,13 @@ public class IasioDao {
 				this.isCanShelve()==other.isCanShelve() &&
 				Objects.equals(this.getTemplateId(),other.getTemplateId()) &&
 				Objects.equals(this.getEmails(),other.getEmails()) &&
-				Objects.equals(this.getSound(),other.getSound());
+				Objects.equals(this.getSound(),other.getSound()) &&
+				Objects.equals(this.templateInstances,other.templateInstances);
 	}
 	
 	@Override
 	public int hashCode() {
-		return Objects.hash(id,iasType,shortDesc,docUrl,canShelve,templateId,sound,emails);
+		return Objects.hash(id,iasType,shortDesc,docUrl,canShelve,templateId,sound,emails,templateInstances);
 	}
 
 	public String getDocUrl() {
@@ -254,6 +258,21 @@ public class IasioDao {
 
 	public SoundTypeDao getSound() {
 		return sound;
+	}
+
+	public Set<TemplateInstanceIasioDao> getTemplateInstances() {
+		return templateInstances;
+	}
+
+	public void addTemplateInstance(TemplateInstanceIasioDao tiIasioDao) {
+		Objects.requireNonNull(tiIasioDao);
+		templateInstances.add(tiIasioDao);
+		tiIasioDao.setIasio(this);
+	}
+
+	public void removeTemplateInstance(TemplateInstanceIasioDao tiIasioDao) {
+		Objects.requireNonNull(tiIasioDao);
+		templateInstances.remove(tiIasioDao);
 	}
 
 	public void setSound(SoundTypeDao sound) {

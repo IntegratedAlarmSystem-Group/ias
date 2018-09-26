@@ -74,6 +74,12 @@ public class AsceDao {
 		joinColumns = @JoinColumn(name="asce_id"),
 		inverseJoinColumns = @JoinColumn(name = "props_id"))
 	private Set<PropertyDao> props = new HashSet<>();
+
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+	@JoinTable(name= "ASCE_TEMPL_IASIO",
+			joinColumns = @JoinColumn(name="asce_id"),
+			inverseJoinColumns = @JoinColumn(name = "io_id"))
+	private Set<TemplateInstanceIasioDao> temolatedInstanceInputs = new HashSet<>();
 	
 	/**
 	 * The ID of the template for implementing replication
