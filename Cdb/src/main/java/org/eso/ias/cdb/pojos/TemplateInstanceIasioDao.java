@@ -22,6 +22,12 @@ public class TemplateInstanceIasioDao {
     private Long id;
 
     /**
+     * The template
+     */
+    @Basic(optional=false)
+    private TemplateDao template;
+
+    /**
      * The number of the instance of the IASIO
      */
     @Basic(optional=false)
@@ -51,18 +57,23 @@ public class TemplateInstanceIasioDao {
         this.iasio = iasio;
     }
 
+    public TemplateDao getTemplate() { return template; }
+
+    public void setTemplate(TemplateDao template) { this.template = template; }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TemplateInstanceIasioDao that = (TemplateInstanceIasioDao) o;
         return instance == that.instance &&
+                Objects.equals(id, that.id) &&
+                Objects.equals(template, that.template) &&
                 Objects.equals(iasio, that.iasio);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(instance, iasio);
+        return Objects.hash(id, template, instance, iasio);
     }
-
 }
