@@ -260,15 +260,21 @@ class Supervisor(
     
     val receivedIds = iasios.map(i => i.id)
     statsLogger.numberOfInputsReceived(receivedIds.size)
+
+    Supervisor.logger.debug("New inputs to send to DASUs: {}", receivedIds.mkString(","))
     
     dasus.values.foreach(dasu => {
       val iasiosToSend = iasios.filter(iasio => iasiosToDasusMap(dasu.id).contains(iasio.id))
-      Supervisor.logger.whenDebugEnabled(Supervisor.logger.debug("Inputs sent to DASU [{}] for processing: {}",
-        dasu.id,
-        iasiosToSend.map(_.id).mkString(",")))
+
       statsLogger.numOfInputsOfDasu(dasu.id,iasiosToSend.size)
       if (iasiosToSend.nonEmpty) {
         dasu.inputsReceived(iasiosToSend)
+
+        Supervisor.logger.debug("Inputs sent to DASU [{}] for processing: {}",
+          dasu.id,
+          iasiosToSend.map(_.id).mkString(","))
+      } else {
+        Supervisor.logger.debug("No inputs for DASU [{}]",dasu.id)
       }
     })
   }
