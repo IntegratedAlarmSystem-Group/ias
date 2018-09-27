@@ -46,7 +46,7 @@ public class TemplateDao {
 	/**
 	 * Constructor
 	 * 
-	 * @param The not <code>null</code> nor empty identifier of the template
+	 * @param id The not <code>null</code> nor empty identifier of the template
 	 * @param min The minimal index of replicated devices, inclusive
 	 * @param max The maximal index of replicated devices, inclusive
 	 */
