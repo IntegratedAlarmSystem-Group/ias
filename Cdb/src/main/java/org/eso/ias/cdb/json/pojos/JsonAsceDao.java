@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 import javax.persistence.Basic;
 
 import org.eso.ias.cdb.pojos.AsceDao;
+import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.PropertyDao;
 
 /**
@@ -43,6 +44,11 @@ public class JsonAsceDao {
 	 * The ID of the transfer function
 	 */
 	private String transferFunctionID;
+
+    /**
+     * The templated inputs of the ASCE
+     */
+	private final Set<JsonTemplatedInputsDao> templatedInputs= new HashSet<>();
 	
 	/**
 	 * The ID of the template for implementing replication
@@ -76,8 +82,15 @@ public class JsonAsceDao {
 		this.outputID=this.asce.getOutput().getId();
 		this.transferFunctionID=this.asce.getTransferFunction().getClassName();
 		this.templateId=this.asce.getTemplateId();
-		
+
 		asce.getInputs().stream().forEach(iasio -> inputIds.add(iasio.getId()));
+        asce.getTemplatedInstanceInputs().stream().forEach( templInput -> {
+            templatedInputs.add(
+                    new JsonTemplatedInputsDao(
+                            templInput.getIasio().getId(),
+                            templInput.getTemplate().getId(),
+                            templInput.getInstance()));
+        });
 	}
 
 	/**
