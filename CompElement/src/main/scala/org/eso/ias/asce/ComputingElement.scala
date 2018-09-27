@@ -116,10 +116,7 @@ abstract class ComputingElement[T](
   
   assert(initialInputs.forall(_.fromIasValueValidity.isDefined))
   assert(_output.fromIasValueValidity.isEmpty)
-  
-  /** The logger */
-  private val logger = IASLogger.getLogger(this.getClass)
-  
+
   /** The ID of the ASCE */
   val id = asceIdentifier.id
   
@@ -137,8 +134,8 @@ abstract class ComputingElement[T](
   
   /** The threshold (msecs) to evaluate the validity */
   lazy val validityThreshold = TimeUnit.MILLISECONDS.convert(validityThresholdSecs, TimeUnit.SECONDS)
-  
-  logger.info("Building ASCE [{}] with running id {}",id,asceIdentifier.fullRunningID)
+
+  ComputingElement.logger.info("Building ASCE [{}] with running id {}",id,asceIdentifier.fullRunningID)
   
   /**
    * The programming language of this TF is abstract
@@ -188,8 +185,8 @@ abstract class ComputingElement[T](
    * <code>true</code> if this component generates an alarm
    */
   lazy val isOutputAnAlarm = !isOutputASyntheticParam
-  
-  logger.info("ASCE [{}] built",id)
+
+  ComputingElement.logger.info("ASCE [{}] built",id)
   
   /** 
    * Getter for the private _output
@@ -246,16 +243,13 @@ abstract class ComputingElement[T](
           } else {
             ComputingElementState.transition(actualState, new Normal())
           }
-          logger.whenDebugEnabled( () => {
-            logger.debug("ASCE [{}] produced a new output: {}",id,v.toString())
-            logger.debug("ASCE [{}]: The inputs to produce the output are {}",id,immutableMapOfInputs.keySet.mkString(","))
-            immutableMapOfInputs.values.foreach( input => {
-              logger.debug("ASCE [{}]: Input [{}] is {}",id,input.id.id,input.toString())
-            })
-          })
-          (v,newState)
-      case Failure(ex) => 
-        logger.error("TF of [{}] inhibited for the time being",asceIdentifier,ex)
+        ComputingElement.logger.debug("ASCE [{}] produced a new output: {}",id,v.toString())
+        ComputingElement.logger.debug("ASCE [{}]: The inputs that produced the output are {}",id,immutableMapOfInputs.keySet.mkString(","))
+          immutableMapOfInputs.values.foreach( input => {
+            ComputingElement.logger.debug("ASCE [{}]: Input [{}] is {}",id,input.id.id,input.toString()) })
+        (v,newState)
+      case Failure(ex) =>
+        ComputingElement.logger.error("TF of [{}] inhibited for the time being",asceIdentifier,ex)
         // Change the state so that the TF is never executed again
         (actualOutput,ComputingElementState.transition(actualState, new Broken()))
     }
@@ -438,7 +432,7 @@ abstract class ComputingElement[T](
       val minValidityOfInputs = getMinValidityOfInputs(newOut, inputs.values)
       minValidityOfInputs match {
         case Failure(cause) =>
-          logger.error("TF of [{}] inhibited for the time being",asceIdentifier,cause)
+          ComputingElement.logger.error("TF of [{}] inhibited for the time being",asceIdentifier,cause)
           state=ComputingElementState.transition(state, new Broken())
         case Success(validitity) => 
           _output=newOut.updateFromIinputsValidity(validitity).updateDasuProdTStamp(System.currentTimeMillis())    
@@ -454,6 +448,9 @@ abstract class ComputingElement[T](
  * The ComputingElement object to build a ComputingElement from the AsceDao red from the CDB
  */
 object ComputingElement {
+
+  /** The logger */
+  private val logger = IASLogger.getLogger(this.getClass)
   
   /**
    * build a ComputingElement from the AsceDao red from the CDB
