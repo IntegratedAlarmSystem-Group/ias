@@ -29,7 +29,7 @@ class StatsCollector(
   logger.debug("Building the statistics collector for DASU [{}]",dasuId)
   
   /** The number of iterations executed so far */
-  val iterationsRun = new AtomicLong(0L)
+  val iterationsRun = new AtomicLong(1L)
   
   /** The average execution time */
   val avgExecutionTime = new AtomicReference[Double](0.0)
@@ -66,7 +66,7 @@ class StatsCollector(
       val last=iterationsRun.incrementAndGet()
       if (last<0) {
         avgExecutionTime.set(0.0)
-        iterationsRun.set(0)
+        iterationsRun.set(1)
       }
       iterationsRun.get
     }
