@@ -246,6 +246,13 @@ abstract class ComputingElement[T](
           } else {
             ComputingElementState.transition(actualState, new Normal())
           }
+          logger.whenDebugEnabled( () => {
+            logger.debug("ASCE [{}] produced a new output: {}",id,v.toString())
+            logger.debug("ASCE [{}]: The inputs to produce the output are {}",id,immutableMapOfInputs.keySet.mkString(","))
+            immutableMapOfInputs.values.foreach( input => {
+              logger.debug("ASCE [{}]: Input [{}] is {}",id,input.id.id,input.toString())
+            })
+          })
           (v,newState)
       case Failure(ex) => 
         logger.error("TF of [{}] inhibited for the time being",asceIdentifier,ex)
