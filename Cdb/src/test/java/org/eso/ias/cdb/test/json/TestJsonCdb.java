@@ -23,19 +23,7 @@ import org.eso.ias.cdb.json.CdbFolders;
 import org.eso.ias.cdb.json.CdbJsonFiles;
 import org.eso.ias.cdb.json.JsonReader;
 import org.eso.ias.cdb.json.JsonWriter;
-import org.eso.ias.cdb.pojos.AsceDao;
-import org.eso.ias.cdb.pojos.DasuDao;
-import org.eso.ias.cdb.pojos.DasuToDeployDao;
-import org.eso.ias.cdb.pojos.IasDao;
-import org.eso.ias.cdb.pojos.IasTypeDao;
-import org.eso.ias.cdb.pojos.IasioDao;
-import org.eso.ias.cdb.pojos.LogLevelDao;
-import org.eso.ias.cdb.pojos.PropertyDao;
-import org.eso.ias.cdb.pojos.SoundTypeDao;
-import org.eso.ias.cdb.pojos.SupervisorDao;
-import org.eso.ias.cdb.pojos.TFLanguageDao;
-import org.eso.ias.cdb.pojos.TemplateDao;
-import org.eso.ias.cdb.pojos.TransferFunctionDao;
+import org.eso.ias.cdb.pojos.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -698,4 +686,30 @@ public class TestJsonCdb {
 		assertEquals(tDao2, optT2.get());
 	}
 
+	/**
+	 * Test the getting of templated inputs of an ASCE
+	 * <P>
+	 * This test runs against the JSON CDB contained in testCdb
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	public void testTemplatedInputsOfAsce() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./testCdb");
+		cdbFiles = new CdbJsonFiles(path);
+		cdbReader = new JsonReader(cdbFiles);
+
+		// Get the ASCE of DasuID1 that has no ASCE
+		Set<AsceDao> asces = cdbReader.getAscesForDasu("DasuID1");
+		assertTrue(asces.isEmpty());
+		// Get the ASCEs of DasuID2 that contains ASCE-ID1
+		Optional<AsceDao> asce = cdbReader.getAsce("ASCE-WITH-TEMPLATED-INPUTS");
+		assertTrue(asce.isPresent());
+
+		assertTrue(asce.get().getTemplatedInstanceInputs().isEmpty());
+
+		Set<TemplateInstanceIasioDao> templInstances= asce.get().getTemplatedInstanceInputs();
+		assertEquals(templInstances.size(),1);
+	}
 }
+
