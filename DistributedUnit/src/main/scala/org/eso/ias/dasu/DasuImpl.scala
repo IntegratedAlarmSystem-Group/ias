@@ -365,7 +365,7 @@ class DasuImpl (
   def calcOutputValidity(): Validity = {
     val lastOutput= {
       val temp = lastCalculatedOutput.get
-      require(temp.isDefined,"DASU ["+id+"] Cannot calc the validity if there is no output")
+      assert(temp.isDefined,"DASU ["+id+"] Cannot calc the validity if there is no output")
       temp.get
     }
     
@@ -480,7 +480,7 @@ class DasuImpl (
     val alreadyStarted = started.getAndSet(true)
     if (!alreadyStarted) {
       logger.debug("DASU [{}] starting", id)
-      statsCollector.start()
+      //statsCollector.start()
       inputSubscriberInitialized.map(x => inputSubscriber.startSubscriber(this, dasuTopology.dasuInputs))
     } else {
       new Failure(new Exception("DASU already started"))
@@ -521,7 +521,7 @@ class DasuImpl (
     } else {
       logger.info("DASU [{}]: releasing resources", id)
       logger.debug("DASU [{}]: stopping statistics collector", id)
-      statsCollector.cleanUp()
+      //statsCollector.cleanUp()
       logger.debug("DASU [{}]: stopping the auto-refresh of the output", id)
       Try(enableAutoRefreshOfOutput(false))
       logger.debug("DASU [{}]: releasing the subscriber", id)
