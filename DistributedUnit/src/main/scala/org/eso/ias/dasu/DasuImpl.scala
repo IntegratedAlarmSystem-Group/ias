@@ -365,7 +365,7 @@ class DasuImpl (
   def calcOutputValidity(): Validity = {
     val lastOutput= {
       val temp = lastCalculatedOutput.get
-      require(temp.isDefined,"Cannot calc the validity if there is no output")
+      require(temp.isDefined,"DASU ["+id+"] Cannot calc the validity if there is no output")
       temp.get
     }
     
