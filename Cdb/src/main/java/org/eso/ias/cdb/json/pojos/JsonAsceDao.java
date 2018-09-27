@@ -88,7 +88,7 @@ public class JsonAsceDao {
             templatedInputs.add(
                     new JsonTemplatedInputsDao(
                             templInput.getIasio().getId(),
-                            templInput.getTemplate().getId(),
+                            templInput.getTemplateId(),
                             templInput.getInstance()));
         });
 	}
