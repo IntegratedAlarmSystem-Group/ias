@@ -80,11 +80,11 @@ public class IasioDao {
 
 	/**
 	 * This one-to-many annotation matches with the many-to-one
-	 * annotation in the {@link AsceDao}
+	 * annotation in the {@link TemplateInstanceIasioDao}
 	 */
 	@OneToMany(mappedBy = "iasio", cascade = CascadeType.ALL, orphanRemoval = true)
 	private Set<TemplateInstanceIasioDao> templateInstances = new HashSet<>();
-	
+
 	/**
 	 * Empty constructor
 	 */
