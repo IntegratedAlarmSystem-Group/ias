@@ -155,19 +155,6 @@ CREATE SEQUENCE TEMPL_INST_SEQ_GENERATOR
   ORDER;
 
 /*
-  One ASCE can have zero to many properties.
-  This is the link table between ASCE and properties
-  (veery similar to the IAS_PROPERTY table)
-*/
-CREATE TABLE ASCE_TEMPL_IASIO (
-  asce_id VARCHAR2(64) NOT NULL,
-  io_id   VARCHAR2(64) NOT NULL,
-  CONSTRAINT ASCETI_PROP_Props_UQ UNIQUE(io_id),
-  CONSTRAINT ASCETI_IASIO_FK FOREIGN KEY(io_id) REFERENCES IASIO(io_id),
-  CONSTRAINT ASCETI_ASCE_FK FOREIGN KEY(asce_id) REFERENCES ASCE(asce_id),
-  CONSTRAINT ASCETI__PK PRIMARY KEY (asce_id, io_id));
-
-/*
     Associates IASIOs with templated instances
 */
 CREATE TABLE TEMPL_INST_IASIO (
@@ -176,6 +163,21 @@ CREATE TABLE TEMPL_INST_IASIO (
     instance_num  NUMBER(8) NOT NULL CHECK (instance_num>=0),
     CONSTRAINT INST__FK_IASIO FOREIGN KEY (io_id) REFERENCES IASIO(io_id),
     CONSTRAINT INST_IASIO_PK PRIMARY KEY ( id ));
+
+/*
+  One ASCE can have zero to many properties.
+  This is the link table between ASCE and properties
+  (veery similar to the IAS_PROPERTY table)
+*/
+CREATE TABLE ASCE_TEMPL_IASIO (
+  asce_id VARCHAR2(64) NOT NULL,
+  templ_id   NUMBER(15) NOT NULL,
+  CONSTRAINT ASCETI_PROP_Props_UQ UNIQUE(templ_id),
+  CONSTRAINT ASCETI_IASIO_FK FOREIGN KEY(templ_id) REFERENCES TEMPL_INST_IASIO(id),
+  CONSTRAINT ASCETI_ASCE_FK FOREIGN KEY(asce_id) REFERENCES ASCE(asce_id),
+  CONSTRAINT ASCETI__PK PRIMARY KEY (asce_id, templ_id));
+
+
 
   
   /*
