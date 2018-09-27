@@ -268,7 +268,7 @@ public class JsonReader implements CdbReader {
 		try {
 			jAsceOpt = getJsonAsce(cleanedID);
 		} catch (IOException ioe) {
-			throw new IasCdbException("Error getting the JSON ASCE",ioe);
+			throw new IasCdbException("Error getting the JSON ASCE "+cleanedID,ioe);
 		}
 		ObjectsHolder holder = new ObjectsHolder();
 		if (jAsceOpt.isPresent()) {

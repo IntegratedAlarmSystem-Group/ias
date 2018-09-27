@@ -5,7 +5,7 @@
 <hibernate-configuration>
     <session-factory name="java:hibernate/SessionFactory">
         <property name="connection.driver_class">oracle.jdbc.driver.OracleDriver</property>
-        <property name="connection.url">jdbc:oracle:thin:@iasdevel.hq.eso.org:1521:XE</property>
+        <property name="connection.url">jdbc:oracle:thin:@192.168.11.131:1521:XE</property>
         <property name="connection.username">iastest</property>
         <property name="connection.password">test</property>
         <property name="hibernate.show_sql">true</property>
@@ -33,6 +33,7 @@
 	    <mapping class="org.eso.ias.cdb.pojos.PropertyDao"></mapping>
 	    <mapping class="org.eso.ias.cdb.pojos.IasioDao"></mapping>
 	    <mapping class="org.eso.ias.cdb.pojos.TransferFunctionDao"></mapping>
+        <mapping class="org.eso.ias.cdb.pojos.TemplateInstanceIasioDao"></mapping>
 		<mapping class="org.eso.ias.cdb.pojos.AsceDao"></mapping>
 		<mapping class="org.eso.ias.cdb.pojos.DasuDao"></mapping>
 		<mapping class="org.eso.ias.cdb.pojos.SupervisorDao"></mapping>
