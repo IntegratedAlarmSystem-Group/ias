@@ -60,7 +60,7 @@ public class JsonTemplatedInputsDao {
     public JsonTemplatedInputsDao(TemplateInstanceIasioDao tempInstanceDao) {
         Objects.requireNonNull(tempInstanceDao,"Invalid null TemplateInstanceIasioDao");
         this.iasioId =  tempInstanceDao.getIasio().getId();
-        this.templateId=tempInstanceDao.getTemplate().getId();
+        this.templateId=tempInstanceDao.getTemplateId();
         this.instanceNum=tempInstanceDao.getInstance();
     }
 
