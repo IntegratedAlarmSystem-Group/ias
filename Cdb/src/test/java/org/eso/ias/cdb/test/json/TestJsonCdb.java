@@ -547,8 +547,8 @@ public class TestJsonCdb {
 		assertTrue(asces.isEmpty());
 		// Get the ASCEs of DasuID2 that contains ASCE-ID1
 		asces = cdbReader.getAscesForDasu("DasuID2");
-		assertEquals(1, asces.size());
-		asces.forEach( asce -> assertEquals("ASCE-ID1",asce.getId()));
+		assertEquals(2, asces.size());
+		asces.forEach( asce -> assertTrue("ASCE-ID1".equals(asce.getId()) || "ASCE-WITH-TEMPLATED-INPUTS".equals(asce.getId())));
 		
 		// Get the ASCE of DasuID3 that has 3 ASCEs
 		asces = cdbReader.getAscesForDasu("DasuID3");
