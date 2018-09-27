@@ -25,6 +25,7 @@ public class TemplateInstanceIasioDao {
      * The number of the instance of the IASIO
      */
     @Basic(optional=false)
+    @Column(name = "instance_num")
     private int instance;
 
     /**
