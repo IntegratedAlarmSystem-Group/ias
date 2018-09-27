@@ -75,12 +75,12 @@ public class AsceDao {
 		inverseJoinColumns = @JoinColumn(name = "props_id"))
 	private Set<PropertyDao> props = new HashSet<>();
 
-	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+	@ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
 	@JoinTable(name= "ASCE_TEMPL_IASIO",
 			joinColumns = @JoinColumn(name="asce_id"),
-			inverseJoinColumns = @JoinColumn(name = "io_id"))
-	private Set<TemplateInstanceIasioDao> temolatedInstanceInputs = new HashSet<>();
-	
+			inverseJoinColumns = @JoinColumn(name = "id"))
+	private Set<TemplateInstanceIasioDao> templatedInstanceInputs = new HashSet<>();
+
 	/**
 	 * The ID of the template for implementing replication
 	 */
@@ -207,6 +207,29 @@ public class AsceDao {
 	public void setTemplateId(String templateId) {
 		this.templateId = templateId;
 	}
+
+    /**
+     * Getter
+     *
+     * @param tInst
+     * @return
+     */
+    public Set<TemplateInstanceIasioDao> getTemplatedInstanceInputs(TemplateInstanceIasioDao tInst ) {
+        return templatedInstanceInputs;
+    }
+
+    /**
+     * Setter
+     *
+     * @param templateInstances
+     */
+    public void setTemplatedInstanceInputs(Set<TemplateInstanceIasioDao> templateInstances) {
+        if (templateInstances==null) {
+            templatedInstanceInputs=new HashSet<TemplateInstanceIasioDao>();
+        } else {
+            templatedInstanceInputs=templateInstances;
+        }
+    }
 
 	/**
 	 * <code>hashCode</code> is based on unique the ID only.
