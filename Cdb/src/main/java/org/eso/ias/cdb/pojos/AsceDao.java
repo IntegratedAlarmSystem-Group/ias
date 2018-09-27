@@ -211,10 +211,9 @@ public class AsceDao {
     /**
      * Getter
      *
-     * @param tInst
      * @return
      */
-    public Set<TemplateInstanceIasioDao> getTemplatedInstanceInputs(TemplateInstanceIasioDao tInst ) {
+    public Set<TemplateInstanceIasioDao> getTemplatedInstanceInputs() {
         return templatedInstanceInputs;
     }
 
