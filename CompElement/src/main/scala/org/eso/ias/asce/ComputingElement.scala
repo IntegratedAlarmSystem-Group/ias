@@ -243,10 +243,20 @@ abstract class ComputingElement[T](
           } else {
             ComputingElementState.transition(actualState, new Normal())
           }
-        ComputingElement.logger.debug("ASCE [{}] produced a new output: {}",id,v.toString())
+        ComputingElement.logger.debug("ASCE [{}] produced a new output [{}]: {} {} {}"
+          ,id,
+          v.id.id,
+          v.mode,
+          v.getValidity.iasValidity,
+          (v.value.getOrElse("NONE")).toString)
         ComputingElement.logger.debug("ASCE [{}]: The inputs that produced the output are {}",id,immutableMapOfInputs.keySet.mkString(","))
           immutableMapOfInputs.values.foreach( input => {
-            ComputingElement.logger.debug("ASCE [{}]: Input [{}] is {}",id,input.id.id,input.toString()) })
+            ComputingElement.logger.debug("ASCE [{}]: Input [{}]  {} {} {}",
+              id,
+              input.id.id,
+              input.mode,
+              input.getValidity.iasValidity,
+              (input.value.getOrElse("NONE")).toString) })
         (v,newState)
       case Failure(ex) =>
         ComputingElement.logger.error("TF of [{}] inhibited for the time being",asceIdentifier,ex)
