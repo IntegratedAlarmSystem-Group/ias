@@ -213,7 +213,7 @@ class DasuImpl (
   }
   
   /** The generator of statistics */
-  val statsCollector = new StatsCollector(id)
+  val statsCollector = new DasuStatistics(id)
   
   logger.info("DASU [{}] built", id)
   

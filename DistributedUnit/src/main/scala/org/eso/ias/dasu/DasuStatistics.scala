@@ -19,39 +19,39 @@ import java.util.concurrent.atomic.AtomicReference
  * 
  * @param dasuId: the ID of the DASU
  */
-class StatsCollector(
-    val dasuId: String) extends StatsCollectorBase(dasuId,StatsCollector.StatisticsTimeInterval) {
+class DasuStatistics(
+    val dasuId: String) extends StatsCollectorBase(dasuId,DasuStatistics.StatisticsTimeInterval) {
   require(Option(dasuId).isDefined && !dasuId.isEmpty(),"Invalid DASU ID")
-  
+
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
-  
+
   logger.debug("Building the statistics collector for DASU [{}]",dasuId)
-  
+
   /** The number of iterations executed so far */
   val iterationsRun = new AtomicLong(0L)
-  
+
   /** The average execution time */
   val avgExecutionTime = new AtomicReference[Double](0.0)
 
   /** The time interval to publish statistics in msecs */
-  val statsTimeInterval = TimeUnit.MILLISECONDS.convert(StatsCollector.StatisticsTimeInterval,TimeUnit.MINUTES)
+  val statsTimeInterval = TimeUnit.MILLISECONDS.convert(DasuStatistics.StatisticsTimeInterval,TimeUnit.MINUTES)
   if (statsTimeInterval>0) {
-    logger.info(f"DASU [$dasuId%s] will generate stats every ${StatsCollector.StatisticsTimeInterval} minutes")
+    logger.info(f"DASU [$dasuId%s] will generate stats every ${DasuStatistics.StatisticsTimeInterval} minutes")
   } else {
     logger.warn("Generation of stats for DASU [{}] disabled",dasuId)
   }
 
   logger.info("DASU [{}] statistics collector built",dasuId)
-  
+
   /**
    * Calculate the (aprox) mean of last executions.
-   * 
+   *
    * We approximate the mean but do not have to stare the samples.
-   * 
-   * I took the algorithm from 
+   *
+   * I took the algorithm from
    * [[https://math.stackexchange.com/questions/106700/incremental-averageing math.stackexchange]]
-   * 
+   *
    * @param actMean the actual mean
    * @param sample the new sample
    * @param iter the number of iterations
@@ -72,15 +72,15 @@ class StatsCollector(
     }
     logger.info(f"DASU [$dasuId%s]: avg time of calculation of the output ${avgExecutionTime.get()}%.2f ms, output calculated ${iterationsRun.get}%d times)")
   }
-  
+
   /**
    * Endorse the passed execution time to generate statistics.
-   * 
+   *
    * @param lastExecTime the execution time (msec) taken to update the output in the last run
    */
   def updateStats(lastExecTime: Long) {
     require(Option(lastExecTime).isDefined && lastExecTime>=0,"Invalid execution time")
-    
+
 
     val last=iterationsRun.incrementAndGet()
     if (last<0) {
@@ -93,7 +93,7 @@ class StatsCollector(
 }
 
 /** Companion object with definitions of constants*/
-object StatsCollector {
+object DasuStatistics {
   
   /** The time interval to log statistics (minutes) */
   val DeafaultStatisticsTimeInterval = 10
