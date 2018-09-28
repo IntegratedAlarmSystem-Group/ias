@@ -85,11 +85,11 @@ class SupervisorStatistics(id: String, val dasusIds: Set[String]) extends StatsC
     message.append(inputsProcessed.get)
     SupervisorStatistics.logger.info(message.toString())
 
-    message.clear()
-    message.append("Statistics collected from DASUS: [")
+
     dasusInputsAndFrequency.keySet().forEach(id => {
+      message.clear()
       val dasuStats = dasusInputsAndFrequency.get(id)
-      message.append("DASU ")
+      message.append("Stats of DASU ")
       message.append(id)
       message.append(" #inputs=")
       message.append(dasuStats._1)
@@ -97,8 +97,8 @@ class SupervisorStatistics(id: String, val dasusIds: Set[String]) extends StatsC
       message.append(dasuStats._2/SupervisorStatistics.StatisticsTimeInterval)
       message.append("/min")
       message.append("] ")
+      SupervisorStatistics.logger.info(message.toString())
     })
-    SupervisorStatistics.logger.info(message.toString())
     // Reset counters
     inputsProcessed.set(0)
     dasusInputsAndFrequency.keySet().forEach(id => dasusInputsAndFrequency.put(id, (0,0)))
