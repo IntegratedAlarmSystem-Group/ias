@@ -314,12 +314,6 @@ case class InOut[A](
     val iasioTSTampDateFormatted = formatter.format(date)
     val thresholdDateFormatted = formatter.format(new java.util.Date(thresholdTStamp))
 
-    println(id.id+
-      ": iasioTstamp="+iasioTSTampDateFormatted+
-      " threshold="+thresholdDateFormatted+
-      " (diff="+(thresholdTStamp-iasioTstamp)+
-      ") validityByTime="+validityByTime.iasValidity)
-
     Validity.minValidity(Set(validityByTime,getValidity))
   }
   
