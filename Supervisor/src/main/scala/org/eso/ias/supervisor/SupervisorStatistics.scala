@@ -67,24 +67,22 @@ class SupervisorStatistics(id: String, val dasusIds: Set[String]) extends StatsC
   override def logStats(): Unit = {
     val totProcessedInputs = totInputsProcessed.getAndSet(0)
 
-    val getUsedHeapMemory = ManagementFactory.getMemoryMXBean.getHeapMemoryUsage.getUsed
+    val usedHeapMemory = ManagementFactory.getMemoryMXBean.getHeapMemoryUsage.getUsed
     val totNumberOfThreads = ManagementFactory.getThreadMXBean.getThreadCount
 
     val message= StringBuilder.newBuilder
     message.append("Stats: ")
-    message.append(totProcessedInputs)
     message.append(" used heap ")
-    message.append(getUsedHeapMemory/1024)
-    message.append("Kb; alive thrreads ")
+    message.append(usedHeapMemory/1024)
+    message.append("Kb; alive threads ")
     message.append(totNumberOfThreads)
     message.append("; IASIOs processed so far ")
-    message.append(totInputsProcessed.get)
+    message.append(totProcessedInputs)
     message.append(" (")
     message.append(totProcessedInputs/SupervisorStatistics.StatisticsTimeInterval)
-    message.append("/min); input in the last interval ")
+    message.append("/min); inputs processed in the last interval ")
     message.append(inputsProcessed.get)
     SupervisorStatistics.logger.info(message.toString())
-
 
     dasusInputsAndFrequency.keySet().forEach(id => {
       message.clear()
