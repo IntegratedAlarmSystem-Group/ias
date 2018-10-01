@@ -219,7 +219,7 @@ object TransferFunctionSetting {
   val MaxTFTimePropName="org.eso.ias.asce.transfer.maxexectime"
   
   /**
-    * If the execution time of the TF is higher the this value (msec)
+    * If the execution time of the TF is higher than this value (msec)
     * then the state of the ASCE changes to Slow.
     *
     * When the TF is too slow, the ASCE logs a message. It the slowness persists,
