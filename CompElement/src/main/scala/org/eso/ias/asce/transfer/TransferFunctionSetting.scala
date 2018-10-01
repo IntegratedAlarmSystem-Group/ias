@@ -9,8 +9,6 @@ import org.eso.ias.logging.IASLogger
 import scala.sys.SystemProperties
 import scala.util.Success
 import scala.util.Failure
-import java.util.Optional
-
 
 /**
  * Implemented types of transfer functions
@@ -22,7 +20,7 @@ object TransferFunctionLanguage extends Enumeration {
 /**
  * The settings for the transfer function are retrieved
  * from the configuration (DB, XML, text file) and passed
- * to the {@link ComputingElement}.
+ * to the ComputingElement.
  * 
  * Objects of this class contain all the information 
  * to run the transfer function independently from the 
@@ -44,14 +42,14 @@ object TransferFunctionLanguage extends Enumeration {
  *                          if empty the ASCE is not generated out of a template
  * @param threadFactory: The thread factory to async. run init and
  *                       shutdown on the user provided TF object
- * @see {@link ComputingElement}
+ * @see ComputingElement
  */
 class TransferFunctionSetting(
     val className: String, 
     val language: TransferFunctionLanguage.Value,
     templateInstance: Option[Int],
     private[this] val threadFactory: ThreadFactory) {
-  require(Option[String](className).isDefined && !className.isEmpty())
+  require(Option[String](className).isDefined && !className.isEmpty)
   require(Option[TransferFunctionLanguage.Value](language).isDefined)
       
   /**
@@ -74,26 +72,24 @@ class TransferFunctionSetting(
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
   
-  override def toString(): String = {
+  override def toString: String = {
     "Transfer function implemented in "+language+" by "+className
   }
   
-  /**
-   * Shutsdown the TF
-   */
+  /** Shuts the TF down */
   def shutdown() {
     assert(!isShutDown)
     // Init the executor if it has been correctly instantiated 
     if (transferExecutor.isDefined) {
       val shutdownThread = threadFactory.newThread(new Runnable() {
-        def run() {
+        override def run() {
           shutdownExecutor(transferExecutor)
        }
       })
       shutdownThread.start()
       // Wait for the termination
       shutdownThread.join(10000)
-      if (shutdownThread.isAlive()) {
+      if (shutdownThread.isAlive) {
         logger.warn("User provided shutdown did not terminate in 10 secs.") 
       }
     }
@@ -126,7 +122,7 @@ class TransferFunctionSetting(
     logger.info("Initializing the TF {}",className)
     
     // Load the class
-    val tfExecutorClass: Try[Class[_]] = Try((this.getClass.getClassLoader().loadClass(className)))
+    val tfExecutorClass: Try[Class[_]] = Try(this.getClass.getClassLoader.loadClass(className))
     transferExecutor = tfExecutorClass match {
       case Failure(e) => logger.error("Error loading {}",className,e); None
       case Success(tec) => this.synchronized {
@@ -176,14 +172,14 @@ class TransferFunctionSetting(
     validityTimeFrame: Long,
     props: Properties): Option[TransferExecutor] = {
     assert(Option(executorClass).isDefined)
-    require(Option(asceId).isDefined && asceId.size>0)
-    require(Option(asceRunningId).isDefined && asceRunningId.size>0)
+    require(Option(asceId).isDefined && asceId.nonEmpty)
+    require(Option(asceRunningId).isDefined && asceRunningId.nonEmpty)
     require(validityTimeFrame>0)
     require(Option(props).isDefined)
 
     // Get the constructor with 3 parameters
-    val ctors = executorClass.getConstructors().filter(c => c.getParameterTypes().size == 4)
-    logger.debug("Found {} constructors with 4 parameters for class {}",ctors.size.toString(),className)
+    val ctors = executorClass.getConstructors.filter(c => c.getParameterTypes.length == 4)
+    logger.debug("Found {} constructors with 4 parameters for class {}",ctors.length.toString,className)
     
     // Get the constructor
     val ctor = ctors.find(c =>
@@ -240,6 +236,6 @@ object TransferFunctionSetting {
   lazy val MaxAcceptableSlowDuration: Long = new SystemProperties().getOrElse(MaxAcceptableSlowDurationPropName,"5").toInt
 
   /** The MaxAcceptableSlowDuration in milliseconds */
-  lazy val MaxAcceptableSlowDurationMillis = TimeUnit.MILLISECONDS.convert(MaxAcceptableSlowDuration, TimeUnit.SECONDS)
+  lazy val MaxAcceptableSlowDurationMillis:Long = TimeUnit.MILLISECONDS.convert(MaxAcceptableSlowDuration, TimeUnit.SECONDS)
 
 }
