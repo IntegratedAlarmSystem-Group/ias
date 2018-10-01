@@ -222,7 +222,7 @@ object TransferFunctionSetting {
    * not block the execution but in future we could prefer to block
    * slow TFs unless it is a transient problem.
    */
-  lazy val MaxTolerableTFTime : Int=new SystemProperties().getOrElse(MaxTFTimePropName,"1000").toInt // msec
+  lazy val MaxTolerableTFTime : Int=new SystemProperties().getOrElse(MaxTFTimePropName,"500").toInt // msec
   
   /**
    * The name of the property to set MaxAcceptableSlowDuration
