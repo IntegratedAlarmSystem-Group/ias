@@ -6,23 +6,29 @@ import org.eso.ias.cdb.json.JsonReader
 import org.eso.ias.cdb.json.CdbFiles
 import org.eso.ias.cdb.json.CdbJsonFiles
 import org.eso.ias.cdb.pojos.DasuDao
+
 import scala.collection.JavaConverters
 import org.eso.ias.dasu.subscriber.InputSubscriber
 import org.eso.ias.dasu.publisher.OutputPublisher
+
 import scala.util.Success
 import scala.util.Try
 import org.eso.ias.types.IASValue
 import org.eso.ias.dasu.subscriber.InputsListener
 import org.eso.ias.dasu.Dasu
 import org.eso.ias.cdb.pojos.SupervisorDao
+
 import scala.util.Failure
 import java.util.concurrent.atomic.AtomicBoolean
+
 import org.eso.ias.types.Identifier
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.dasu.publisher.KafkaPublisher
 import org.eso.ias.dasu.subscriber.KafkaSubscriber
 import org.eso.ias.types.IdentifierType
-import java.util.concurrent.CountDownLatch
+import java.util.concurrent.{CountDownLatch, TimeUnit}
+
+import com.typesafe.scalalogging.Logger
 import org.eso.ias.cdb.rdb.RdbReader
 import org.eso.ias.cdb.pojos.DasuToDeployDao
 import org.eso.ias.heartbeat.HbProducer
@@ -32,6 +38,7 @@ import org.eso.ias.heartbeat.serializer.HbJsonSerializer
 import org.eso.ias.heartbeat.HbEngine
 import org.eso.ias.cdb.pojos.IasDao
 import org.eso.ias.heartbeat.HeartbeatStatus
+import org.eso.ias.utils.ISO8601Helper
 
 /**
  * A Supervisor is the container to run several DASUs into the same JVM.
@@ -83,21 +90,30 @@ class Supervisor(
   val id: String = supervisorIdentifier.id
   
   Supervisor.logger.info("Building Supervisor [{}] with fullRunningId [{}]",id,supervisorIdentifier.fullRunningID)
+
+  val iasDao: IasDao =
+    Try (cdbReader.getIas ) match {
+      case Success(value) => value.orElseThrow(() => new Exception("IasDao not found"))
+      case Failure(exception) => throw new Exception("Failure reading IAS from CDB",exception)
+    }
   
   /** The heartbeat Engine */
-  val hbEngine: HbEngine = {
-    val iasDao: IasDao =
-      Try (cdbReader.getIas ) match {
-        case Success(value) => value.orElseThrow(() => new Exception("IasDao not found"))
-        case Failure(exception) => throw new Exception("Failure reading IAS from CDB",exception)
-    }
-    HbEngine(supervisorIdentifier.fullRunningID,iasDao.getHbFrequency,hbProducer)
-  }
+  val hbEngine: HbEngine = HbEngine(supervisorIdentifier.fullRunningID,iasDao.getHbFrequency,hbProducer)
+
+  /**
+    * The refresh rate in mseconds
+    *
+    * The refresh rate is used only to detetct if the Supervisor is too slow
+    * processing values.
+    * Auto refresh is, in fact, implemented by DASUs
+    */
+  val refreshRate: Long = TimeUnit.MILLISECONDS.convert(iasDao.getRefreshRate, TimeUnit.SECONDS)
+
   
   // Get the configuration of the supervisor from the CDB
   val supervDao : SupervisorDao = {
     val supervDaoOpt = cdbReader.getSupervisor(id)
-    require(supervDaoOpt.isPresent(),"Supervisor ["+id+"] configuration not found on cdb")
+    require(supervDaoOpt.isPresent,"Supervisor ["+id+"] configuration not found on cdb")
     supervDaoOpt.get
   }
   Supervisor.logger.info("Supervisor [{}] configuration retrived from CDB",id)
@@ -106,10 +122,10 @@ class Supervisor(
    * Gets the definitions of the DASUs to run in the Supervisor from the CDB
    */
   val dasusToDelpoy: Set[DasuToDeployDao] = JavaConverters.asScalaSet(cdbReader.getDasusToDeployInSupervisor((id))).toSet
-  require(dasusToDelpoy.size>0,"No DASUs to run in Supervisor "+id)
+  require(dasusToDelpoy.nonEmpty,"No DASUs to run in Supervisor "+id)
   Supervisor.logger.info("Supervisor [{}], {} DASUs to run: {}",
       id,
-      dasusToDelpoy.size.toString(),
+      dasusToDelpoy.size.toString,
       dasusToDelpoy.map(d => d.getDasu().getId()).mkString(", "))
   
   // Initialize the consumer and exit in case of error 
@@ -121,7 +137,7 @@ class Supervisor(
   }
   
   // Initialize the producer and exit in case of error 
-  val outputProducerInitialized = outputPublisher.initializePublisher()
+  val outputProducerInitialized: Try[Unit] = outputPublisher.initializePublisher()
   outputProducerInitialized match {
     case Failure(f) => Supervisor.logger.error("Supervisor [{}] failed to initialize the producer", id,f);
                        System.exit(-2)
@@ -136,7 +152,7 @@ class Supervisor(
   }
   assert(dasuDaos.size==dasusToDelpoy.size)
   
-  dasuDaos.foreach(d => Supervisor.logger.info("Supervisor [{}]: building DASU from DasuDao {}",id,d.toString()))
+  dasuDaos.foreach(d => Supervisor.logger.info("Supervisor [{}]: building DASU from DasuDao {}",id,d.toString))
   
   // Build all the DASUs
   val dasus: Map[String, Dasu] = dasuDaos.foldLeft(Map.empty[String,Dasu])((m, dasuDao) => 
@@ -146,7 +162,7 @@ class Supervisor(
    * The IDs of the DASUs instantiated in the Supervisor
    */
   val dasuIds = dasuDaos.map(_.getId)
-  Supervisor.logger.info("Supervisor [{}] built {} DASUs: {}",id, dasus.size.toString(),dasuIds.mkString(", "))
+  Supervisor.logger.info("Supervisor [{}] built {} DASUs: {}",id, dasus.size.toString,dasuIds.mkString(", "))
   
   /**
    * Associate each DASU with the Set of inputs it needs.
@@ -243,11 +259,11 @@ class Supervisor(
     /** Adds a shutdown hook to cleanup resources before exiting */
   private def addsShutDownHook(): Thread = {
     val t = new Thread() {
-        override def run() = {
+        override def run(): Unit = {
           cleanUp()
         }
     }
-    Runtime.getRuntime().addShutdownHook(t)
+    Runtime.getRuntime.addShutdownHook(t)
     t
   }
   
@@ -262,6 +278,23 @@ class Supervisor(
     statsLogger.numberOfInputsReceived(receivedIds.size)
 
     Supervisor.logger.debug("New inputs to send to DASUs: {}", receivedIds.mkString(","))
+
+    // Check if the Supervisor is too slow to cope with the flow of values published in the BSDB.
+    //
+    // The check is done by comparing the current time with the moment the value has been
+    // pushed in the BSDB.
+    // Normally a new value arrives after the refresh time (plus a tolerance): the test assumes that
+    // there is a problem if the the point in time when an input has been published in the kafka
+    // topic is greater than 2 times the refresh rate
+    //
+    // The Supervisor does not start any action if a delay is detected: it only emits a waring.
+    val now = System.currentTimeMillis()
+    val oldIasValue = iasios.find(iasValue => now-iasValue.sentToBsdbTStamp.get()>2*refreshRate)
+    if (oldIasValue.isDefined) {
+      Supervisor.logger.warn("Supervisor too slow: input [{}] sent to BSDB at {} but scheduled for processing only now!",
+        id,ISO8601Helper.getTimestamp(oldIasValue.get.sentToBsdbTStamp.get()))
+    }
+
     
     dasus.values.foreach(dasu => {
       val iasiosToSend = iasios.filter(iasio => iasiosToDasusMap(dasu.id).contains(iasio.id))
@@ -316,7 +349,7 @@ class Supervisor(
    *  The Supervisor has its own subscriber so this initialization,
    *  invoked by each DASU, does nothing but returning Success.
    */
-  def initializeSubscriber(): Try[Unit] = new Success(())
+  def initializeSubscriber(): Try[Unit] = Success(())
   
   /** 
    *  The Supervisor has its own subscriber so this  clean up 
@@ -344,10 +377,10 @@ class Supervisor(
 object Supervisor {
   
   /** The logger */
-  val logger = IASLogger.getLogger(Supervisor.getClass)
+  val logger: Logger = IASLogger.getLogger(Supervisor.getClass)
 
   /** Build the usage message */
-  def printUsage() = {
+  def printUsage(): String = {
 		"""Usage: Supervisor Supervisor-ID [-jcdb JSON-CDB-PATH]
 		-jcdb force the usage of the JSON CDB
 		   * Supervisor-ID: the identifier of the supervisor
@@ -360,14 +393,14 @@ object Supervisor {
    *
    *  Kill to terminate.
    */
-  def main(args: Array[String]) = {
-    require(!args.isEmpty, "Missing identifier in command line")
-    require(args.size == 1 || args.size == 3, "Invalid command line params\n" + printUsage())
-    require(if(args.size == 3) args(1)=="-jcdb" else true, "Invalid command line params\n" + printUsage())
+  def main(args: Array[String]): Unit = {
+    require(args.nonEmpty, "Missing identifier in command line")
+    require(args.length == 1 || args.length == 3, "Invalid command line params\n" + printUsage())
+    require(if(args.length == 3) args(1)=="-jcdb" else true, "Invalid command line params\n" + printUsage())
     val supervisorId = args(0)
 
     val reader: CdbReader = {
-      if (args.size == 3) {
+      if (args.length == 3) {
         Supervisor.logger.info("Using JSON CDB @ {}",args(2))
         val cdbFiles: CdbFiles = new CdbJsonFiles(args(2))
         new JsonReader(cdbFiles)
