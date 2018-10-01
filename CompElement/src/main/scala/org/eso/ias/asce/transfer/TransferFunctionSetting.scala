@@ -1,9 +1,11 @@
 package org.eso.ias.asce.transfer
 
 import java.util.Properties
-import java.util.concurrent.ThreadFactory
+import java.util.concurrent.{ThreadFactory, TimeUnit}
+
 import scala.util.Try
 import org.eso.ias.logging.IASLogger
+
 import scala.sys.SystemProperties
 import scala.util.Success
 import scala.util.Failure
@@ -217,10 +219,11 @@ object TransferFunctionSetting {
   val MaxTFTimePropName="org.eso.ias.asce.transfer.maxexectime"
   
   /**
-   * If the execution time of the TF is higher the this value
-   * the the state of the ASCE changes. At the present we do 
-   * not block the execution but in future we could prefer to block
-   * slow TFs unless it is a transient problem.
+    * If the execution time of the TF is higher the this value (msec)
+    * then the state of the ASCE changes to Slow.
+    *
+    * When the TF is too slow, the ASCE logs a message. It the slowness persists,
+    * the ASCE will eventually stop running the TF
    */
   lazy val MaxTolerableTFTime : Int=new SystemProperties().getOrElse(MaxTFTimePropName,"500").toInt // msec
   
@@ -228,11 +231,15 @@ object TransferFunctionSetting {
    * The name of the property to set MaxAcceptableSlowDuration
    */
   val MaxAcceptableSlowDurationPropName = "org.eso.ias.asce.transfer.maxtimeinslow"
-  
+
   /**
    * If the TF is slow responding for more then the amount of seconds
    * of  MaxAcceptableSlowDuration then the TF is marked as broken and 
    * will not be executed anymore
    */
-  lazy val MaxAcceptableSlowDuration = new SystemProperties().getOrElse(MaxAcceptableSlowDurationPropName,"30").toInt
+  lazy val MaxAcceptableSlowDuration: Long = new SystemProperties().getOrElse(MaxAcceptableSlowDurationPropName,"5").toInt
+
+  /** The MaxAcceptableSlowDuration in milliseconds */
+  lazy val MaxAcceptableSlowDurationMillis = TimeUnit.MILLISECONDS.convert(MaxAcceptableSlowDuration, TimeUnit.SECONDS)
+
 }
