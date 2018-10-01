@@ -4,8 +4,6 @@ import org.eso.ias.types.Identifier
 import org.eso.ias.types.InOut
 import org.eso.ias.types.Validity
 
-import scala.util.control.NonFatal
-import scala.collection.mutable.HashMap
 import org.eso.ias.asce.transfer._
 
 import scala.collection.mutable.{Map => MutableMap}
@@ -56,7 +54,7 @@ import org.eso.ias.asce.exceptions.ValidityConstraintsMismatchException
  * when the state of the inputs change. 
  * Which programming language the user wrote the object with
  * is stored in the configuration database; programmatically it is 
- * visible in the {@link TransferFunctionSetting} object.
+ * visible in the TransferFunctionSetting object.
  * Depending on the programming language, there might be some 
  * preparatory step before running the TF.
  * 
@@ -112,7 +110,7 @@ abstract class ComputingElement[T](
     val props: Properties) {
   require(Option(asceIdentifier).isDefined,"Invalid empty identifier")
   require(asceIdentifier.idType==IdentifierType.ASCE)
-  require(Option(initialInputs).isDefined && !initialInputs.isEmpty,"Invalid (empty or null) set of required inputs to the component")
+  require(Option(initialInputs).isDefined && initialInputs.nonEmpty,"Invalid (empty or null) set of required inputs to the component")
   require(Option(validityThreshold).isDefined,"Invalid empty validity threshold")
   require(validityThreshold>0, "Validity threshold must be greater then 0")
   require(Option(props).isDefined,"Invalid null properties")
@@ -122,7 +120,7 @@ abstract class ComputingElement[T](
   assert(_output.fromIasValueValidity.isEmpty)
 
   /** The ID of the ASCE */
-  val id = asceIdentifier.id
+  val id: String = asceIdentifier.id
   
   /** 
    *  True if the DASU has been generated from a template,
@@ -137,7 +135,7 @@ abstract class ComputingElement[T](
   lazy val templateInstance: Option[Int] = asceIdentifier.templateInstance
   
   /** The threshold (msecs) to evaluate the validity */
-  lazy val validityThreshold = TimeUnit.MILLISECONDS.convert(validityThresholdSecs, TimeUnit.SECONDS)
+  lazy val validityThreshold: Long = TimeUnit.MILLISECONDS.convert(validityThresholdSecs, TimeUnit.SECONDS)
 
   ComputingElement.logger.info("Building ASCE [{}] with running id {}",id,asceIdentifier.fullRunningID)
   
@@ -151,13 +149,13 @@ abstract class ComputingElement[T](
   /**
    * The point in time when this object has been created.
    */
-  protected[asce] val creationTStamp = System.currentTimeMillis()
+  protected[asce] val creationTStamp: Long = System.currentTimeMillis()
   
   /**
    * The point in time when the output of this computing element has been
    * updated for the last time.
    */
-  protected[asce] var lastOutputUpdateTStamp = creationTStamp
+  protected[asce] var lastOutputUpdateTStamp: Long = creationTStamp
   
   /**
    * The state of the ASCE
@@ -183,12 +181,12 @@ abstract class ComputingElement[T](
    * <code>true</code> if this component produces 
    * a synthetic parameter instead of an alarm
    */
-  lazy val isOutputASyntheticParam = output.iasType!=IASTypes.ALARM
+  lazy val isOutputASyntheticParam: Boolean = output.iasType!=IASTypes.ALARM
   
   /**
    * <code>true</code> if this component generates an alarm
    */
-  lazy val isOutputAnAlarm = !isOutputASyntheticParam
+  lazy val isOutputAnAlarm: Boolean = !isOutputASyntheticParam
 
   /** It is true when the execution tie of the TF is too slow */
   val isTooSlow = new AtomicBoolean(false)
@@ -238,7 +236,7 @@ abstract class ComputingElement[T](
   private def transfer(
       immutableMapOfInputs: Map[String, InOut[_]], 
       actualOutput: InOut[T],
-      actualState: ComputingElementState): Tuple2[InOut[T], ComputingElementState] = {
+      actualState: ComputingElementState): (InOut[T], ComputingElementState) = {
     
     assert(actualState.canRunTF(),"Wrong state "+actualState.toString+" to run the TF")
     
@@ -253,10 +251,10 @@ abstract class ComputingElement[T](
         val newState =
           if (endedAt-startedAt>TransferFunctionSetting.MaxTolerableTFTime) {
             // The TF has been too slow producing the output
-            ComputingElement.logger.warn("TF of ASCE [{}] took too long to terminate: {} msecs max allowed {} secs",
+            ComputingElement.logger.warn("TF of ASCE [{}] took too long to terminate: {} max allowed {}",
               id,
               endedAt-startedAt,
-              TransferFunctionSetting.MaxAcceptableSlowDuration)
+              TransferFunctionSetting.MaxTolerableTFTime)
 
             // Was it slow before?
             val wasSlow = isTooSlow.getAndSet(true)
@@ -267,19 +265,19 @@ abstract class ComputingElement[T](
               case (false, _) =>
                 // The exec. time was ok before: it remember when the TF started to be slow
                 tooSlowStartTime.set(endedAt)
-                ComputingElementState.transition(actualState, new Slow())
+                ComputingElementState.transition(actualState, Slow())
               case (true, false) =>
                 // Slow but still for not enough time to be stopped
-                ComputingElementState.transition(actualState, new Slow())
+                ComputingElementState.transition(actualState, Slow())
               case (true, true) =>
                 // The TF has been too slow producing the output for a time interval
                 // longer than the max allowed: teh TF is marked as broken
                 ComputingElement.logger.error("TF of ASCE [{}] too slow for too long: marked ar broken!",id)
-                ComputingElementState.transition(actualState, new Broken())
+                ComputingElementState.transition(actualState, Broken())
             }
           } else {
             isTooSlow.getAndSet(false)
-            ComputingElementState.transition(actualState, new Normal())
+            ComputingElementState.transition(actualState, Normal())
           }
 
         ComputingElement.logger.debug("ASCE [{}] produced a new output [{}]: {} {} {}"
@@ -287,7 +285,7 @@ abstract class ComputingElement[T](
           v.id.id,
           v.mode,
           v.getValidity.iasValidity,
-          (v.value.getOrElse("NONE")).toString)
+          v.value.getOrElse("NONE").toString)
 
         ComputingElement.logger.debug("ASCE [{}]: The inputs that produced the output are {}",id,immutableMapOfInputs.keySet.mkString(","))
           immutableMapOfInputs.values.foreach( input => {
@@ -296,13 +294,13 @@ abstract class ComputingElement[T](
               input.id.id,
               input.mode,
               input.getValidity.iasValidity,
-              (input.value.getOrElse("NONE")).toString) })
+              input.value.getOrElse("NONE").toString) })
 
         (v,newState)
       case Failure(ex) =>
         ComputingElement.logger.error("TF of [{}] inhibited for the time being due to failure",id,ex)
         // Change the state so that the TF is never executed again
-        (actualOutput,ComputingElementState.transition(actualState, new Broken()))
+        (actualOutput,ComputingElementState.transition(actualState, Broken()))
     }
 
   }
@@ -336,7 +334,7 @@ abstract class ComputingElement[T](
   
   override def toString() = {
     val outStr: StringBuilder = new StringBuilder("State of ASCE [")
-    outStr.append(id.toString())
+    outStr.append(id.toString)
     outStr.append("] built at ")
     outStr.append(ISO8601Helper.getTimestamp(creationTStamp))
     outStr.append("\n>Output: ")
@@ -370,9 +368,9 @@ abstract class ComputingElement[T](
 
     state = if (tfSetting.initialize(id, asceIdentifier.runningID, validityThreshold, props) &&
       initTransferFunction(inputsInfo,outputInfo,templateInstance).isSuccess) {
-      ComputingElementState.transition(state, new Initialized())
+      ComputingElementState.transition(state, Initialized())
     } else { 
-      ComputingElementState.transition(state, new Broken())
+      ComputingElementState.transition(state, Broken())
     }
     state.actualState
   }
@@ -385,9 +383,9 @@ abstract class ComputingElement[T](
    * to update the output i.e. to execute the transfer function.
    */
   def shutdown(): Unit = synchronized {
-    state = ComputingElementState.transition(state, new Shutdown())
+    state = ComputingElementState.transition(state, Shutdown())
     tfSetting.shutdown()
-    state = ComputingElementState.transition(state, new Close())
+    state = ComputingElementState.transition(state, Close())
   }
   
   /**
@@ -450,13 +448,13 @@ abstract class ComputingElement[T](
    *            It is None if at least one of the inputs has not yet been initialized
    *         2) the state of the ASCE
    */
-  def update(iasValues: Set[IASValue[_]]): Tuple2[Option[InOut[T]], AsceStates.State] = synchronized {
+  def update(iasValues: Set[IASValue[_]]): (Option[InOut[T]], AsceStates.State) = synchronized {
     require(Option(iasValues).isDefined,"Set of inputs not defined")
     
     // Check if the passed set of IASIOs contains at least one IASIO that is 
     // not accepted by the ASCE
     assert(
-        !iasValues.exists(iasio => !acceptedInputIds.contains(iasio.id)),
+        iasValues.forall(iasio => acceptedInputIds.contains(iasio.id)),
         "Received at least one IASIO that does not belong to this ASCE: "+iasValues.map(_.id).mkString(","))
         
     // Does the passed set contains 2 IASIOs with the same ID?
@@ -467,7 +465,7 @@ abstract class ComputingElement[T](
     
     // If all the inputs have been initialized, change the state to be able to run the TF
     if (state.actualState==AsceStates.InputsUndefined && inputs.values.forall(i => i.value.isDefined)) {
-      state = ComputingElementState.transition(state, new InputsInitialized())
+      state = ComputingElementState.transition(state, InputsInitialized())
     }
     
     // Apply the transfer function to the inputs
@@ -484,7 +482,7 @@ abstract class ComputingElement[T](
       minValidityOfInputs match {
         case Failure(cause) =>
           ComputingElement.logger.error("TF of [{}] inhibited for the time being",asceIdentifier,cause)
-          state=ComputingElementState.transition(state, new Broken())
+          state=ComputingElementState.transition(state, Broken())
         case Success(validitity) => 
           _output=newOut.updateFromIinputsValidity(validitity).updateDasuProdTStamp(System.currentTimeMillis())    
       }
@@ -549,7 +547,7 @@ object ComputingElement {
     val initialIasios: Set[InOut[_]] = inputsIasioDaos.map(iDao => 
       InOut.asInput(
           new Identifier(iDao.getId,IdentifierType.IASIO,None),
-          IASTypes.fromIasioDaoType(iDao.getIasType())))
+          IASTypes.fromIasioDaoType(iDao.getIasType)))
     
     if (tfLanguage==TransferFunctionLanguage.java) new ComputingElement[T](
         asceId,out, 
