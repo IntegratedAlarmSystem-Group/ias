@@ -1,4 +1,4 @@
-package org.eso.ias.component.test
+package org.eso.ias.asce.test
 
 import org.scalatest.FlatSpec
 import org.eso.ias.asce.transfer.TransferFunctionSetting

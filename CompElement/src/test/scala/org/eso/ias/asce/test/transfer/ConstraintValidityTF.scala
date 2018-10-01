@@ -1,4 +1,4 @@
-package org.eso.ias.component.test.transfer
+package org.eso.ias.asce.test.transfer
 
 import java.util.Properties
 
