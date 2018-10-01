@@ -1,4 +1,4 @@
-package org.ias.logging.test
+package org.eso.ias.utils.test
 
 import org.eso.ias.logging.IASLogger
 
