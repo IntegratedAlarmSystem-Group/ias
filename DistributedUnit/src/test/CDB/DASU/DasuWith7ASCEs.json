@@ -8,6 +8,5 @@
 		"ASCE-AvgTempsAlarm",
 		"ASCE-AlarmsThreshold"],
 	"outputId":"TooManyHighTempAlarm",
-	"logLevel":"FATAL",
 	"id":"DasuWith7ASCEs"
 }
