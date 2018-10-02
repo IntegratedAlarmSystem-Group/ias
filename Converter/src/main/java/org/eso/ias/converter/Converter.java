@@ -2,31 +2,27 @@ package org.eso.ias.converter;
 
 import java.io.File;
 import java.security.InvalidParameterException;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
+import org.apache.commons.cli.*;
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.IasCdbException;
 import org.eso.ias.cdb.json.CdbFiles;
 import org.eso.ias.cdb.json.CdbJsonFiles;
 import org.eso.ias.cdb.json.JsonReader;
 import org.eso.ias.cdb.pojos.IasDao;
+import org.eso.ias.cdb.pojos.LogLevelDao;
 import org.eso.ias.converter.config.ConfigurationException;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
 import org.eso.ias.converter.config.IasioConfigurationDaoImpl;
 import org.eso.ias.heartbeat.HbEngine;
-import org.eso.ias.heartbeat.HbMsgSerializer;
 import org.eso.ias.heartbeat.HbProducer;
 import org.eso.ias.heartbeat.HeartbeatStatus;
-import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
+import org.eso.ias.logging.IASLogger;
 import org.eso.ias.types.IasValueJsonSerializer;
 import org.eso.ias.types.IasValueStringSerializer;
-import org.eso.ias.types.Identifier;
-import org.eso.ias.types.IdentifierType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -218,11 +214,80 @@ public class Converter {
 		logger.info("Converter {} shutted down.", converterId);
 	}
 
-	private static void printUsage() {
-		System.out.println("Usage: Converter Convert-ID [-jcdb JSON-CDB-PATH]");
-		System.out.println("-jcdb force the usage of the JSON CDB");
-		System.out.println("   * Convert-ID: the identifier of the converter");
-		System.out.println("   * JSON-CDB-PATH: the path of the JSON CDB\n");
+    /**
+     * The string shown by the help
+     */
+	private static String cmdLineSyntax = "Usage: Converter Converter-ID [-j|-jcdb JSON-CDB-PATH] [-h|--help] [-x|--logLevel] level";
+
+
+	/**
+	 * Parse the command line.
+	 *
+	 * If help is requested, prints the message and exits.
+	 *
+	 * @param args The params read from the command line
+	 * @param params the map of values read from the command line
+	 */
+	public static void parseCommandLine(String[] args, Map<String, Optional<?>> params) {
+        Options options = new Options();
+        options.addOption("h", "help", false, "Print help and exit");
+        options.addOption("j", "jcdb", true, "Use the JSON Cdb at the passed path");
+        options.addOption("x", "logLevel", true, "Set the log level (TRACE, DEBUG, INFO, WARN, ERROR)");
+
+        CommandLineParser parser = new DefaultParser();
+
+        CommandLine cmdLine = null;
+        try {
+            cmdLine = parser.parse(options, args);
+        } catch (Exception e) {
+            HelpFormatter helpFormatter = new HelpFormatter();
+            System.err.println("Exception parsing the comamnd line: " + e.getMessage());
+            e.printStackTrace(System.err);
+            helpFormatter.printHelp(cmdLineSyntax, options);
+            System.exit(-1);
+        }
+        boolean help = cmdLine.hasOption('h');
+
+        Optional<String> jcdb = Optional.ofNullable(cmdLine.getOptionValue('j'));
+        Optional<String> logLevelName = Optional.ofNullable(cmdLine.getOptionValue('x'));
+        Optional<LogLevelDao> logLvl=null;
+        try {
+            logLvl = logLevelName.map(name -> LogLevelDao.valueOf(name));
+        } catch (Exception e) {
+            System.err.println("Unrecognized log level");
+            HelpFormatter helpFormatter = new HelpFormatter();
+            helpFormatter.printHelp(cmdLineSyntax, options);
+            System.exit(-1);
+        }
+
+
+        List<String> remaingArgs = cmdLine.getArgList();
+
+        Optional<String> supervId;
+        if (remaingArgs.isEmpty()) {
+            supervId = Optional.empty();
+        } else {
+            supervId = Optional.of(remaingArgs.get(0));
+        }
+
+        if (help) {
+            new HelpFormatter().printHelp(cmdLineSyntax, options);
+            System.exit(0);
+        }
+		if (!help && !supervId.isPresent()) {
+			System.err.println("Missing Supervisor ID");
+			new HelpFormatter().printHelp(cmdLineSyntax, options);
+			System.exit(-1);
+		}
+
+        params.put("ID",supervId);
+		params.put("jcdb",jcdb);
+		params.put("log",logLvl);
+
+		Converter.logger.info("Params from command line: jcdb={}, logLevel={} supervisor ID={}",
+				jcdb.orElse("Undefined"),
+				logLvl.map( l -> l.name()).orElse("Undefined"),
+				supervId.orElse("Undefined"));
 	}
 
 	/**
@@ -233,11 +298,14 @@ public class Converter {
 	 * @param args arguments
 	 */
 	public static void main(String[] args) {
-		if (args.length!=1 && args.length!=3) {
-			printUsage();
-			System.exit(-1);
-		}
-		String id=args[0];
+	    Map<String,Optional<?>> params = new HashMap<>();
+	    parseCommandLine(args,params);
+
+	    Optional<?> supervIdOpt = params.get("ID");
+	    if (!supervIdOpt.isPresent()) {
+	        throw new IllegalArgumentException("Missing converter ID");
+        }
+        String id= (String)supervIdOpt.get();
 
 		CdbReader cdbReader = null;
 
@@ -246,32 +314,28 @@ public class Converter {
 		 */
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ConverterConfig.class);
 
-		if (args.length==3) {
-			String cmdLineSwitch = args[1];
-			if (cmdLineSwitch.compareTo("-jcdb")!=0) {
-				printUsage();
-				System.exit(-2);
-			}
-			String cdbPath = args[2];
-			File f = new File(cdbPath);
-			if (!f.isDirectory() || !f.canRead()) {
-				System.err.println("Invalid file path "+cdbPath);
-				System.exit(-3);
-			}
+		 Optional<?> jcdbOpt = params.get("jcdb");
+		 if (jcdbOpt.isPresent()) {
+		     String cdbPath = (String)jcdbOpt.get();
+             File f = new File(cdbPath);
+             if (!f.isDirectory() || !f.canRead()) {
+                 System.err.println("Invalid file path "+cdbPath);
+                 System.exit(-3);
+             }
 
-			CdbFiles cdbFiles=null;
-			try {
-				cdbFiles= new CdbJsonFiles(f);
-			} catch (Exception e) {
-				System.err.println("Error initializing JSON CDB "+e.getMessage());
-				System.exit(-4);
-			}
-			cdbReader = new JsonReader(cdbFiles);
-		} else {
-			// Get from dependency injection
+             CdbFiles cdbFiles=null;
+             try {
+                 cdbFiles= new CdbJsonFiles(f);
+             } catch (Exception e) {
+                 System.err.println("Error initializing JSON CDB "+e.getMessage());
+                 System.exit(-4);
+             }
+             cdbReader = new JsonReader(cdbFiles);
+         } else {
+		     // Get from dependency injection
 			cdbReader = context.getBean("cdbReader",CdbReader.class);
-		}
-		
+         }
+
 		IasDao iasDao = null;
 		try { 
 			Optional<IasDao> iasDaoOpt = cdbReader.getIas();
@@ -280,7 +344,15 @@ public class Converter {
 			logger.error("Error getting IAS configuration from CDB",cdbEx);
 			System.exit(-1);
 		}
-		
+
+		// Set the log level
+		Optional<LogLevelDao> logLevelFromIasOpt = Optional.ofNullable(iasDao.getLogLevel());
+		Optional<LogLevelDao> logLevelFromCmdLineOpt = (Optional<LogLevelDao>)params.get("log");
+        IASLogger.setLogLevel(
+             logLevelFromCmdLineOpt.map(l -> l.toLoggerLogLevel()).orElse(null),
+             logLevelFromCmdLineOpt  .map(l -> l.toLoggerLogLevel()).orElse(null),
+             null);
+
 		Optional<String> kafkaBrokersFromCdb = Optional.ofNullable(iasDao.getBsdbUrl());
 
 		ConverterStream converterStream = context.getBean(ConverterStream.class,id, kafkaBrokersFromCdb, System.getProperties());
