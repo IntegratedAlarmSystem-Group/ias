@@ -292,7 +292,7 @@ class Supervisor(
     val oldIasValue = iasios.find(iasValue => now-iasValue.sentToBsdbTStamp.get()>2*refreshRate)
     if (oldIasValue.isDefined) {
       Supervisor.logger.warn("Supervisor too slow: input [{}] sent to BSDB at {} but scheduled for processing only now!",
-        id,ISO8601Helper.getTimestamp(oldIasValue.get.sentToBsdbTStamp.get()))
+        oldIasValue.get.id,ISO8601Helper.getTimestamp(oldIasValue.get.sentToBsdbTStamp.get()))
     }
 
     
