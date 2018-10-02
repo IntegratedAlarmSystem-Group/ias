@@ -314,6 +314,9 @@ public class FilteredConsumerTest implements IasioListener {
 		valuesToSubmit.addAll(alarmIasios); // accepted
 		valuesToSubmit.addAll(doubleIasios); // rejected
 		int expected = longIasios.size()+alarmIasios.size();
+
+		// We should have a timeout since we expect to receive less values then those submitted
+		numOfEventsToReceive = new CountDownLatch(valuesToSubmit.size());
 		
 		// Start getting events
 		consumer.startGettingEvents(StartPosition.END,this);
@@ -321,9 +324,6 @@ public class FilteredConsumerTest implements IasioListener {
 		// Push the values
 		logger.info("Going to submit {} IASValues and expect to be notified of {}",valuesToSubmit.size(),expected);
 		producer.push(valuesToSubmit);
-		
-		// We should have a timeout since we expect to receive less values then those submitted
-		numOfEventsToReceive = new CountDownLatch(valuesToSubmit.size());
 
 		logger.info("Waiting for events (timeout expected)....");
 		
@@ -397,6 +397,9 @@ public class FilteredConsumerTest implements IasioListener {
 		valuesToSubmit.addAll(doubleIasios); // rejected
 		
 		int expected = Math.min(longIasios.size()+alarmIasios.size(), accpetedIDs.size());
+
+		// We should have a timeout since we expect to receive less values then those submitted
+		numOfEventsToReceive = new CountDownLatch(valuesToSubmit.size());
 		
 		// Start getting events
 		consumer.startGettingEvents(StartPosition.END,this);
@@ -404,9 +407,6 @@ public class FilteredConsumerTest implements IasioListener {
 		// Push the values
 		logger.info("Going to submit {} IASValues and expect to be notified of {}",valuesToSubmit.size(),expected);
 		producer.push(valuesToSubmit);
-		
-		// We should have a timeout since we expect to receive less values then those submitted
-		numOfEventsToReceive = new CountDownLatch(valuesToSubmit.size());
 
 		logger.info("Waiting for events (timeout expected)....");
 		
