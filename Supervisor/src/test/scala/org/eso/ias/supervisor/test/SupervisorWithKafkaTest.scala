@@ -142,7 +142,8 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
       inputConsumer, 
       new HbLogProducer(new HbJsonSerializer),
       cdbReader,
-      factory)
+      factory,
+    None)
   
   val latchRef: AtomicReference[CountDownLatch] = new AtomicReference
   

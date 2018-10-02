@@ -5,7 +5,7 @@ import org.eso.ias.logging.IASLogger
 import org.eso.ias.cdb.json.JsonReader
 import org.eso.ias.cdb.json.CdbFiles
 import org.eso.ias.cdb.json.CdbJsonFiles
-import org.eso.ias.cdb.pojos.DasuDao
+import org.eso.ias.cdb.pojos._
 
 import scala.collection.JavaConverters
 import org.eso.ias.dasu.subscriber.InputSubscriber
@@ -16,7 +16,6 @@ import scala.util.Try
 import org.eso.ias.types.IASValue
 import org.eso.ias.dasu.subscriber.InputsListener
 import org.eso.ias.dasu.Dasu
-import org.eso.ias.cdb.pojos.SupervisorDao
 
 import scala.util.Failure
 import java.util.concurrent.atomic.AtomicBoolean
@@ -28,15 +27,15 @@ import org.eso.ias.dasu.subscriber.KafkaSubscriber
 import org.eso.ias.types.IdentifierType
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 
+import ch.qos.logback.classic.Level
 import com.typesafe.scalalogging.Logger
+import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
 import org.eso.ias.cdb.rdb.RdbReader
-import org.eso.ias.cdb.pojos.DasuToDeployDao
 import org.eso.ias.heartbeat.HbProducer
 import org.eso.ias.kafkautils.KafkaHelper
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
 import org.eso.ias.heartbeat.HbEngine
-import org.eso.ias.cdb.pojos.IasDao
 import org.eso.ias.heartbeat.HeartbeatStatus
 import org.eso.ias.utils.ISO8601Helper
 
@@ -70,7 +69,10 @@ import org.eso.ias.utils.ISO8601Helper
  * @param inputSubscriber the subscriber getting events to be processed
  * @param hbProducer the subscriber to send heartbeats 
  * @param cdbReader the CDB reader to get the configuration of the DASU from the CDB
- * @param dasuFactory: factory to build DASU 
+ * @param dasuFactory: factory to build DASU
+  * @param logLevelFromCommandLine The log level from the command line;
+  *                                None if the parameter was not set in the command line
+  *
  */
 
 class Supervisor(
@@ -79,12 +81,14 @@ class Supervisor(
     private val inputSubscriber: InputSubscriber,
     private val hbProducer: HbProducer,
     cdbReader: CdbReader,
-    dasuFactory: (DasuDao, Identifier, OutputPublisher, InputSubscriber) => Dasu) 
+    dasuFactory: (DasuDao, Identifier, OutputPublisher, InputSubscriber) => Dasu,
+    logLevelFromCommandLine: Option[LogLevelDao])
     extends InputsListener with InputSubscriber with  OutputPublisher {
   require(Option(supervisorIdentifier).isDefined,"Invalid Supervisor identifier")
   require(Option(outputPublisher).isDefined,"Invalid output publisher")
   require(Option(inputSubscriber).isDefined,"Invalid input subscriber")
   require(Option(cdbReader).isDefined,"Invalid CDB reader")
+  require(Option(logLevelFromCommandLine).isDefined,"Invalid log level")
   
   /** The ID of the Supervisor */
   val id: String = supervisorIdentifier.id
@@ -116,7 +120,17 @@ class Supervisor(
     require(supervDaoOpt.isPresent,"Supervisor ["+id+"] configuration not found on cdb")
     supervDaoOpt.get
   }
-  Supervisor.logger.info("Supervisor [{}] configuration retrived from CDB",id)
+  Supervisor.logger.info("Supervisor [{}] configuration retrieved from CDB",id)
+
+  // Set the log level
+  {
+    val iasLogLevel: Option[Level] = Option(iasDao.getLogLevel).map(_.toLoggerLogLevel)
+    val supervLogLevel: Option[Level] =  Option(supervDao.getLogLevel).map(_.toLoggerLogLevel)
+    val cmdLogLevel: Option[Level] = logLevelFromCommandLine.map(_.toLoggerLogLevel)
+    val level: Option[Level] = IASLogger.setLogLevel(cmdLogLevel,iasLogLevel,supervLogLevel)
+    // Log a message that, depending on the log level can be discarded
+    level.foreach(l => Supervisor.logger.info("Log level set to {}",l.toString))
+  }
   
   /**
    * Gets the definitions of the DASUs to run in the Supervisor from the CDB
@@ -380,12 +394,69 @@ object Supervisor {
   val logger: Logger = IASLogger.getLogger(Supervisor.getClass)
 
   /** Build the usage message */
-  def printUsage(): String = {
-		"""Usage: Supervisor Supervisor-ID [-jcdb JSON-CDB-PATH]
-		-jcdb force the usage of the JSON CDB
-		   * Supervisor-ID: the identifier of the supervisor
-		   * JSON-CDB-PATH: the path of the JSON CDB"""
-	}
+  val cmdLineSyntax: String = "Supervisor Supervisor-ID [-h|--help] [-j|-jcdb JSON-CDB-PATH] [-x|--logLevel log level]"
+
+  /**
+    * Parse the command line.
+    *
+    * If help is requested, prints the message and exits.
+    *
+    * @param args The params read from the command line
+    * @return a tuple with the Id of the supervisor, the path of the cdb and the log level dao
+    */
+  def parseCommandLine(args: Array[String]): (Option[String],  Option[String], Option[LogLevelDao]) = {
+    val options: Options = new Options
+    options.addOption("h", "help",false,"Print help and exit")
+    options.addOption("j", "jcdb", true, "Use the JSON Cdb at the passed path")
+    options.addOption("x", "logLevel", true, "Set the log level (TRACE, DEBUG, INFO, WARN, ERROR)")
+
+    val parser: CommandLineParser = new DefaultParser
+    val cmdLineParseAction = Try(parser.parse(options,args))
+    if (cmdLineParseAction.isFailure) {
+      val e = cmdLineParseAction.asInstanceOf[Failure[Exception]].exception
+      println(e + "\n")
+      new HelpFormatter().printHelp(cmdLineSyntax, options)
+      System.exit(-1)
+    }
+
+    val cmdLine = cmdLineParseAction.asInstanceOf[Success[CommandLine]].value
+    val help = cmdLine.hasOption('h')
+    val jcdb = Option(cmdLine.getOptionValue('j'))
+
+    val logLvl: Option[LogLevelDao] = {
+      val t = Try(Option(cmdLine.getOptionValue('x')).map(level => LogLevelDao.valueOf(level)))
+      t match {
+        case Success(opt) => opt
+        case Failure(f) =>
+          println("Unrecognized log level")
+          new HelpFormatter().printHelp(cmdLineSyntax, options)
+          System.exit(-1)
+          None
+      }
+    }
+
+    val remaingArgs = cmdLine.getArgList
+
+    val supervId = if (remaingArgs.isEmpty) None else Some(remaingArgs.get(0))
+
+    if (!help && supervId.isEmpty) {
+      println("Missing Supervisor ID")
+      new HelpFormatter().printHelp(cmdLineSyntax, options)
+      System.exit(-1)
+    }
+    if (help) {
+      new HelpFormatter().printHelp(cmdLineSyntax, options)
+      System.exit(0)
+    }
+
+    val ret = (supervId, jcdb, logLvl)
+    Supervisor.logger.info("Params from command line: jcdb={}, logLevel={} supervisor ID={}",
+      ret._2.getOrElse("Undefined"),
+      ret._3.getOrElse("Undefined"),
+      ret._1.getOrElse("Undefined"))
+    ret
+
+  }
 
   /**
    *  Application: run a Supervisor with the passed ID and
@@ -394,15 +465,16 @@ object Supervisor {
    *  Kill to terminate.
    */
   def main(args: Array[String]): Unit = {
-    require(args.nonEmpty, "Missing identifier in command line")
-    require(args.length == 1 || args.length == 3, "Invalid command line params\n" + printUsage())
-    require(if(args.length == 3) args(1)=="-jcdb" else true, "Invalid command line params\n" + printUsage())
-    val supervisorId = args(0)
+    val parsedArgs = parseCommandLine(args)
+    require(parsedArgs._1.nonEmpty, "Missing identifier in command line")
+
+    val supervisorId = parsedArgs._1.get
 
     val reader: CdbReader = {
-      if (args.length == 3) {
-        Supervisor.logger.info("Using JSON CDB @ {}",args(2))
-        val cdbFiles: CdbFiles = new CdbJsonFiles(args(2))
+      if (parsedArgs._2.isDefined) {
+        val jsonCdbPath = parsedArgs._2.get
+        Supervisor.logger.info("Using JSON CDB @ {}",jsonCdbPath)
+        val cdbFiles: CdbFiles = new CdbJsonFiles(jsonCdbPath)
         new JsonReader(cdbFiles)
       } else {
         new RdbReader()
@@ -452,7 +524,7 @@ object Supervisor {
     }
       
     // Build the supervisor
-    val supervisor = new Supervisor(identifier,outputPublisher,inputsProvider,hbProducer,reader,factory)
+    val supervisor = new Supervisor(identifier,outputPublisher,inputsProvider,hbProducer,reader,factory,parsedArgs._3)
     
     val started = supervisor.start()
     
