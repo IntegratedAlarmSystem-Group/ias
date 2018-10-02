@@ -66,4 +66,38 @@ object IASLogger {
    val rootLogger: LogBackLogger = loggerFactory.getLogger("org.eso.ias").asInstanceOf[LogBackLogger]
    rootLogger.setLevel(level)
   }
+
+  /**
+    * Set the log level depending if it is passed in the command line,
+    * the IAS configuration or the configuration of the tool like the Supervisor)
+    *
+    * If none of the level is defined, no log level is set.
+    *
+    * @param commandLineLevel the level read from the command line, if present
+    * @param iasConfigLevel the level read from the IAS configuration in the CDB, if present
+    * @param toolLevel the level read from the tool configuration in the CDB, if present
+    */
+  def setLogLevel(commandLineLevel: Option[Level], iasConfigLevel: Option[Level], toolLevel: Option[Level]): Unit = {
+    require (commandLineLevel.isDefined || iasConfigLevel.isDefined || toolLevel.isDefined)
+    (commandLineLevel, iasConfigLevel, toolLevel) match {
+      case (Some(level), _, _ ) => setRootLogLevel(level)
+      case (None, Some(level), _) => setRootLogLevel(level)
+      case (None, None, Some(level)) => setRootLogLevel(level)
+      case (None, None, None) => globalLogger.info("No log level defined: default from configuration will be used")
+    }
+  }
+
+  /**
+    * Set the log level depending if it is passed in the command line,
+    * the IAS configuration or the configuration of the tool like the Supervisor)
+    *
+    * This is a helper method for java
+    *
+    * @param commandLineLevel the level read from the command line (can be null)
+    * @param iasConfigLevel the level read from the IAS configuration in the CDB  (can be null)
+    * @param toolLevel the level read from the tool configuration in the CDB  (can be null)
+    */
+  def setLogLevel(commandLineLevel: Level, iasConfigLevel: Level, toolLevel: Level): Unit = {
+    setLogLevel(Option(commandLineLevel), Option(iasConfigLevel), Option(toolLevel))
+  }
 }
