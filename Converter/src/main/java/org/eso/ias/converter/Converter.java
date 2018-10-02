@@ -350,7 +350,7 @@ public class Converter {
 		Optional<LogLevelDao> logLevelFromCmdLineOpt = (Optional<LogLevelDao>)params.get("log");
         IASLogger.setLogLevel(
              logLevelFromCmdLineOpt.map(l -> l.toLoggerLogLevel()).orElse(null),
-             logLevelFromCmdLineOpt  .map(l -> l.toLoggerLogLevel()).orElse(null),
+             logLevelFromIasOpt.map(l -> l.toLoggerLogLevel()).orElse(null),
              null);
 
 		Optional<String> kafkaBrokersFromCdb = Optional.ofNullable(iasDao.getBsdbUrl());
