@@ -2,7 +2,7 @@
 	"asceIDs":[
 		"SimpleLoopAsce"],
 	"outputId":"Alarm",
-	"logLevel":"FATAL",
+	"logLevel":"DEBUG",
 	"id":"SimpleLoopDasu",
 	"supervisorID":"SimpleLoopSuperv"
 }
