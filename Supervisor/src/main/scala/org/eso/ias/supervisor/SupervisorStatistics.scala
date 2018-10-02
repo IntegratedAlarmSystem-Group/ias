@@ -65,7 +65,8 @@ class SupervisorStatistics(id: String, val dasusIds: Set[String]) extends StatsC
 
   /** Emit the logs with the statistics and reset the counters */
   override def logStats(): Unit = {
-    val totProcessedInputs = totInputsProcessed.getAndSet(0)
+    val totProcessedInputs = totInputsProcessed
+    val inputsProcessedLastInterval = inputsProcessed.getAndSet(0)
 
     val usedHeapMemory = ManagementFactory.getMemoryMXBean.getHeapMemoryUsage.getUsed
     val totNumberOfThreads = ManagementFactory.getThreadMXBean.getThreadCount
@@ -78,10 +79,11 @@ class SupervisorStatistics(id: String, val dasusIds: Set[String]) extends StatsC
     message.append(totNumberOfThreads)
     message.append("; IASIOs processed so far ")
     message.append(totProcessedInputs)
-    message.append(" (")
+    message.append(" (IASIOs in the last time interval ")
+    message.append(inputsProcessedLastInterval)
     message.append(totProcessedInputs/SupervisorStatistics.StatisticsTimeInterval)
     message.append("/min); inputs processed in the last interval ")
-    message.append(inputsProcessed.get)
+    message.append(inputsProcessedLastInterval)
     SupervisorStatistics.logger.info(message.toString())
 
     dasusInputsAndFrequency.keySet().forEach(id => {
@@ -98,7 +100,6 @@ class SupervisorStatistics(id: String, val dasusIds: Set[String]) extends StatsC
       SupervisorStatistics.logger.info(message.toString())
     })
     // Reset counters
-    inputsProcessed.set(0)
     dasusInputsAndFrequency.keySet().forEach(id => dasusInputsAndFrequency.put(id, (0,0)))
   }
 }
