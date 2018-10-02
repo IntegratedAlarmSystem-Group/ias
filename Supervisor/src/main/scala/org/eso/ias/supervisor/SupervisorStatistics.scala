@@ -79,11 +79,12 @@ class SupervisorStatistics(id: String, val dasusIds: Set[String]) extends StatsC
     message.append(totNumberOfThreads)
     message.append("; IASIOs processed so far ")
     message.append(totProcessedInputs)
-    message.append(" (IASIOs in the last time interval ")
+    message.append("; IASIOs processed in the last time interval ")
     message.append(inputsProcessedLastInterval)
-    message.append(totProcessedInputs/SupervisorStatistics.StatisticsTimeInterval)
-    message.append("/min); inputs processed in the last interval ")
-    message.append(inputsProcessedLastInterval)
+    message.append('(')
+    message.append(inputsProcessedLastInterval/SupervisorStatistics.StatisticsTimeInterval)
+    message.append("/min)")
+
     SupervisorStatistics.logger.info(message.toString())
 
     dasusInputsAndFrequency.keySet().forEach(id => {
