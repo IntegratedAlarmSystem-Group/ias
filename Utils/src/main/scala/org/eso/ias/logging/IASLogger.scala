@@ -84,7 +84,6 @@ object IASLogger {
     * @return the log level that has been set; undefined otherwise
     */
   def setLogLevel(commandLineLevel: Option[Level], iasConfigLevel: Option[Level], toolLevel: Option[Level]): Option[Level] = {
-    require (commandLineLevel.isDefined || iasConfigLevel.isDefined || toolLevel.isDefined)
     (commandLineLevel, iasConfigLevel, toolLevel) match {
       case (Some(level), _, _ ) => setRootLogLevel(level) // Command line
         Some(level)
