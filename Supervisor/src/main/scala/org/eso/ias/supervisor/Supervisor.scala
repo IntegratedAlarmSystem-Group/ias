@@ -394,7 +394,7 @@ object Supervisor {
   val logger: Logger = IASLogger.getLogger(Supervisor.getClass)
 
   /** Build the usage message */
-  val cmdLineSyntax: String = "Supervisor Supervisor-ID [-h] [-jcdb JSON-CDB-PATH] [-x log level]"
+  val cmdLineSyntax: String = "Supervisor Supervisor-ID [-h|--help] [-j|-jcdb JSON-CDB-PATH] [-x|--logLevel log level]"
 
   /**
     * Parse the command line.
