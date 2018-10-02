@@ -116,7 +116,8 @@ class TemplatedInputTest extends FlatSpec {
         inputsProvider,
         new HbLogProducer(new HbJsonSerializer),
         cdbReader,
-        factory)
+        factory,
+        None)
       
       supervisor.start()
       supervisor.enableAutoRefreshOfOutput(false)

@@ -186,7 +186,7 @@ public class TestJsonCdb {
 		// Adds the DASUs
 		DasuDao dasu1 = new DasuDao();
 		dasu1.setId("DasuID1");
-		dasu1.setLogLevel(LogLevelDao.FATAL);
+		dasu1.setLogLevel(LogLevelDao.TRACE);
 		IasioDao dasuOutIasio1 = new IasioDao("DASU_OUTPUT1", "desc-dasu-out", IasTypeDao.ALARM,"http://www.eso.org");
 		dasu1.setOutput(dasuOutIasio1);
 		
@@ -228,7 +228,7 @@ public class TestJsonCdb {
 		// The DASU to test
 		DasuDao dasu = new DasuDao();
 		dasu.setId("DasuID1");
-		dasu.setLogLevel(LogLevelDao.FATAL);
+		dasu.setLogLevel(LogLevelDao.TRACE);
 		
 		TransferFunctionDao tfDao = new TransferFunctionDao();
 		tfDao.setClassName("org.eso.ias.tf.Threshold");
@@ -311,7 +311,7 @@ public class TestJsonCdb {
 		// The DASU that owns the ASCE to test
 		DasuDao dasu = new DasuDao();
 		dasu.setId("DasuID1");
-		dasu.setLogLevel(LogLevelDao.FATAL);
+		dasu.setLogLevel(LogLevelDao.TRACE);
 
 		IasioDao dasuOutIasio = new IasioDao("DASU_OUTPUT", "desc-dasu-out", IasTypeDao.ALARM,"http://www.eso.org");
 		dasu.setOutput(dasuOutIasio);

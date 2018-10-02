@@ -5,9 +5,10 @@ import java.util
 import java.util.concurrent.{Executors, ThreadFactory, TimeUnit}
 
 import com.typesafe.scalalogging.Logger
+import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbFiles, CdbJsonFiles, JsonReader}
-import org.eso.ias.cdb.pojos.{IasDao, IasTypeDao, IasioDao}
+import org.eso.ias.cdb.pojos.{IasDao, IasTypeDao, IasioDao, LogLevelDao}
 import org.eso.ias.cdb.rdb.RdbReader
 import org.eso.ias.dasu.subscriber.{InputSubscriber, KafkaSubscriber}
 import org.eso.ias.heartbeat.HbProducer
@@ -21,7 +22,7 @@ import org.eso.ias.types._
 
 import scala.collection.{JavaConverters, mutable}
 import scala.collection.mutable.ListBuffer
-import scala.util.{Failure, Try}
+import scala.util.{Failure, Success, Try}
 
 /**
   * The NotificationsSender processes the alarms published in the BSDB and sends mails to registered recipients.
@@ -228,30 +229,88 @@ object NotificationsSender {
   /** The logger */
   val msLogger: Logger = IASLogger.getLogger(classOf[NotificationsSender])
 
-  def printUsage() = {
-    """Usage: emailSender <identifier> [-jcdb JSON-CDB-PATH]
-		-jcdb force the usage of the JSON CDB
-		   * identifier: the identifier of the mail sender
-		   * JSON-CDB-PATH: the path of the JSON CDB"""
+  /** Build the usage message */
+  val cmdLineSyntax: String = "NotificationSender NotificationSender-ID [-h|--help] [-j|-jcdb JSON-CDB-PATH] [-x|--logLevel log level]"
+
+  /**
+    * Parse the command line.
+    *
+    * If help is requested, prints the message and exits.
+    *
+    * @param args The params read from the command line
+    * @return a tuple with the Id of the supervisor, the path of the cdb and the log level dao
+    */
+  def parseCommandLine(args: Array[String]): (Option[String],  Option[String], Option[LogLevelDao]) = {
+    val options: Options = new Options
+    options.addOption("h", "help",false,"Print help and exit")
+    options.addOption("j", "jcdb", true, "Use the JSON Cdb at the passed path")
+    options.addOption("x", "logLevel", true, "Set the log level (TRACE, DEBUG, INFO, WARN, ERROR)")
+
+    val parser: CommandLineParser = new DefaultParser
+    val cmdLineParseAction = Try(parser.parse(options,args))
+    if (cmdLineParseAction.isFailure) {
+      val e = cmdLineParseAction.asInstanceOf[Failure[Exception]].exception
+      println(e + "\n")
+      new HelpFormatter().printHelp(cmdLineSyntax, options)
+      System.exit(-1)
+    }
+
+    val cmdLine = cmdLineParseAction.asInstanceOf[Success[CommandLine]].value
+    val help = cmdLine.hasOption('h')
+    val jcdb = Option(cmdLine.getOptionValue('j'))
+
+    val logLvl: Option[LogLevelDao] = {
+      val t = Try(Option(cmdLine.getOptionValue('x')).map(level => LogLevelDao.valueOf(level)))
+      t match {
+        case Success(opt) => opt
+        case Failure(f) =>
+          println("Unrecognized log level")
+          new HelpFormatter().printHelp(cmdLineSyntax, options)
+          System.exit(-1)
+          None
+      }
+    }
+
+    val remaingArgs = cmdLine.getArgList
+
+    val supervId = if (remaingArgs.isEmpty) None else Some(remaingArgs.get(0))
+
+    if (!help && supervId.isEmpty) {
+      println("Missing Supervisor ID")
+      new HelpFormatter().printHelp(cmdLineSyntax, options)
+      System.exit(-1)
+    }
+    if (help) {
+      new HelpFormatter().printHelp(cmdLineSyntax, options)
+      System.exit(0)
+    }
+
+    val ret = (supervId, jcdb, logLvl)
+    msLogger.info("Params from command line: jcdb={}, logLevel={} supervisor ID={}",
+      ret._2.getOrElse("Undefined"),
+      ret._3.getOrElse("Undefined"),
+      ret._1.getOrElse("Undefined"))
+    ret
+
   }
 
   /** Launch the emmail sender */
   def main(args: Array[String]): Unit = {
-    require(args.nonEmpty,s"No command line\n${printUsage()}")
-    require(args.length==1 || args.length==3,s"Invalid number of parameters\n${printUsage()}")
-    require(if(args.size == 3) args(1)=="-jcdb" else true, s"Invalid command line params\n${printUsage()}")
+    val parsedArgs = parseCommandLine(args)
+    require(parsedArgs._1.nonEmpty, "Missing identifier in command line")
 
     // The id of the sender
-    val emailSenderId = args(0).trim
+    val emailSenderId = parsedArgs._1.get
 
     // The identifier
     val emailSenderIdentifier = new Identifier(emailSenderId,IdentifierType.SINK,None)
 
     // Get the CDB
     val cdbReader: CdbReader = {
-      if (args.size == 3) {
-        msLogger.debug("Using JSON CDB in {}",args(2))
-        val cdbFiles: CdbFiles = new CdbJsonFiles(args(2))
+      if (parsedArgs._2.isDefined) {
+        val jsonCdbPath = parsedArgs._2.get
+        msLogger.info("Using JSON CDB @ {}",jsonCdbPath)
+        val cdbFiles: CdbFiles = new CdbJsonFiles(jsonCdbPath)
         new JsonReader(cdbFiles)
       } else {
         new RdbReader()
@@ -267,6 +326,13 @@ object NotificationsSender {
       }
       iasOpt.get()
     }
+
+    // Set the log level
+    val actualLogLevel = IASLogger.setLogLevel(
+      parsedArgs._3.map(_.toLoggerLogLevel),
+      Option(iasDao.getLogLevel).map(_.toLoggerLogLevel),
+      None)
+    msLogger.info("Log level set to {}",actualLogLevel.getOrElse("default from logback configuration").toString)
 
     /** The configuration of IASIOs from the CDB */
     logger.debug("Getting the IASIOs frm the CDB")
