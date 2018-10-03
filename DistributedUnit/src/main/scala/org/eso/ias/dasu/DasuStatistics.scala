@@ -31,8 +31,11 @@ class DasuStatistics(
   /** The average execution time */
   val avgExecutionTime = new AtomicReference[Double](0.0)
 
-  /** The xecution time of the sta time the outpuit has been produced */
+  /** The execution time spent by the DASU to produce the last output */
   val lastExecutionTime = new AtomicLong(0)
+
+  /** The max time spent by the DASU to produce the output */
+  val maxExecutionTime  = new AtomicLong(0)
 
   /** The time interval to publish statistics in msecs */
   val statsTimeInterval = TimeUnit.MILLISECONDS.convert(DasuStatistics.StatisticsTimeInterval,TimeUnit.MINUTES)
@@ -71,7 +74,7 @@ class DasuStatistics(
       iterationsRun.get
     }
     DasuStatistics.logger.info(
-      f"DASU [$dasuId%s]: last calculation time of ouput=${lastExecutionTime.get}%d ms (avg  ${avgExecutionTime.get()}%.2f ms); output calculated ${iterationsRun.get}%d times)")
+      f"DASU [$dasuId%s]: last prod. time of output=${lastExecutionTime.get}%d ms, max time=${maxExecutionTime.get}%d ms (avg  ${avgExecutionTime.get()}%.2f ms); output calculated ${iterationsRun.get}%d times)")
 
   }
 
@@ -84,6 +87,7 @@ class DasuStatistics(
     require(Option(lastExecTime).isDefined && lastExecTime>0,"Invalid execution time")
 
     lastExecutionTime.set(lastExecTime)
+    if (lastExecTime>maxExecutionTime.get) maxExecutionTime.set(lastExecTime)
 
     val last=iterationsRun.incrementAndGet()
     if (last<0) {
