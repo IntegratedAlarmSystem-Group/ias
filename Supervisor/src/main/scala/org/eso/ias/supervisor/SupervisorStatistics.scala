@@ -3,7 +3,7 @@ package org.eso.ias.supervisor
 import java.lang.management.ManagementFactory
 import java.util
 import java.util.concurrent._
-import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
+import java.util.concurrent.atomic.AtomicLong
 
 import com.typesafe.scalalogging.Logger
 import org.eso.ias.dasu.StatsCollectorBase
@@ -94,10 +94,10 @@ class SupervisorStatistics(id: String, val dasusIds: Set[String]) extends StatsC
       message.append(id)
       message.append(" #inputs=")
       message.append(dasuStats._1)
-      message.append(' ')
+      message.append(" (")
       message.append(dasuStats._2/SupervisorStatistics.StatisticsTimeInterval)
       message.append("/min")
-      message.append("] ")
+      message.append(')')
       SupervisorStatistics.logger.info(message.toString())
     })
     // Reset counters
