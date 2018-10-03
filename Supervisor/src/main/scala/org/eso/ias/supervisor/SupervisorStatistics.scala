@@ -26,6 +26,9 @@ class SupervisorStatistics(id: String, val dasusIds: Set[String]) extends StatsC
   /** Total number of inputs forwarded to the DASU to be processed in the last time interval */
   val inputsProcessed = new AtomicLong(0)
 
+  /** The longest time spent by the Supervisor to send IASIOs to all the DASUs */
+  val maxSupervisorPropagationTime = new AtomicLong(0)
+
   /**
     * The map to associate the execution time and processed inputs
     * to each DASU.
@@ -63,6 +66,17 @@ class SupervisorStatistics(id: String, val dasusIds: Set[String]) extends StatsC
     dasusInputsAndFrequency.put(id, (newNumOfInputs, iterations))
   }
 
+  /**
+    * Updates the time spent by the Supervisor to propagate the inputs
+    * to the DASUs
+    *
+    * @param time The time spent by the Supervisor
+    */
+  def supervisorPropagationTime(time: Long) = {
+    val now = maxSupervisorPropagationTime.get()
+    if (time>now) maxSupervisorPropagationTime(time)
+  }
+
   /** Emit the logs with the statistics and reset the counters */
   override def logStats(): Unit = {
     val totProcessedInputs = totInputsProcessed
@@ -83,7 +97,8 @@ class SupervisorStatistics(id: String, val dasusIds: Set[String]) extends StatsC
     message.append(inputsProcessedLastInterval)
     message.append('(')
     message.append(inputsProcessedLastInterval/SupervisorStatistics.StatisticsTimeInterval)
-    message.append("/min)")
+    message.append("/min) max time spent to send inputs to DASUs ")
+    message.append(maxSupervisorPropagationTime.get())
 
     SupervisorStatistics.logger.info(message.toString())
 

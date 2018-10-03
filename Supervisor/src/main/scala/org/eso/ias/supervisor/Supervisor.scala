@@ -1,43 +1,28 @@
 package org.eso.ias.supervisor
 
-import org.eso.ias.cdb.CdbReader
-import org.eso.ias.logging.IASLogger
-import org.eso.ias.cdb.json.JsonReader
-import org.eso.ias.cdb.json.CdbFiles
-import org.eso.ias.cdb.json.CdbJsonFiles
-import org.eso.ias.cdb.pojos._
-
-import scala.collection.JavaConverters
-import org.eso.ias.dasu.subscriber.InputSubscriber
-import org.eso.ias.dasu.publisher.OutputPublisher
-
-import scala.util.Success
-import scala.util.Try
-import org.eso.ias.types.IASValue
-import org.eso.ias.dasu.subscriber.InputsListener
-import org.eso.ias.dasu.Dasu
-
-import scala.util.Failure
 import java.util.concurrent.atomic.AtomicBoolean
-
-import org.eso.ias.types.Identifier
-import org.eso.ias.dasu.DasuImpl
-import org.eso.ias.dasu.publisher.KafkaPublisher
-import org.eso.ias.dasu.subscriber.KafkaSubscriber
-import org.eso.ias.types.IdentifierType
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 import ch.qos.logback.classic.Level
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
+import org.eso.ias.cdb.CdbReader
+import org.eso.ias.cdb.json.{CdbFiles, CdbJsonFiles, JsonReader}
+import org.eso.ias.cdb.pojos._
 import org.eso.ias.cdb.rdb.RdbReader
-import org.eso.ias.heartbeat.HbProducer
-import org.eso.ias.kafkautils.KafkaHelper
+import org.eso.ias.dasu.publisher.{KafkaPublisher, OutputPublisher}
+import org.eso.ias.dasu.subscriber.{InputSubscriber, InputsListener, KafkaSubscriber}
+import org.eso.ias.dasu.{Dasu, DasuImpl}
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
-import org.eso.ias.heartbeat.HbEngine
-import org.eso.ias.heartbeat.HeartbeatStatus
+import org.eso.ias.heartbeat.{HbEngine, HbProducer, HeartbeatStatus}
+import org.eso.ias.kafkautils.KafkaHelper
+import org.eso.ias.logging.IASLogger
+import org.eso.ias.types.{IASValue, Identifier, IdentifierType}
 import org.eso.ias.utils.ISO8601Helper
+
+import scala.collection.JavaConverters
+import scala.util.{Failure, Success, Try}
 
 /**
  * A Supervisor is the container to run several DASUs into the same JVM.
@@ -324,6 +309,8 @@ class Supervisor(
         Supervisor.logger.debug("No inputs for DASU [{}]",dasu.id)
       }
     })
+    statsLogger.supervisorPropagationTime(System.currentTimeMillis()-now)
+
   }
   
   /** 
