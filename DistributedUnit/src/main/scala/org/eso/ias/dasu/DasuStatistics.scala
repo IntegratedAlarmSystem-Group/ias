@@ -23,10 +23,7 @@ class DasuStatistics(
     val dasuId: String) extends StatsCollectorBase(dasuId,DasuStatistics.StatisticsTimeInterval) {
   require(Option(dasuId).isDefined && !dasuId.isEmpty(),"Invalid DASU ID")
 
-  /** The logger */
-  private val logger = IASLogger.getLogger(this.getClass)
-
-  logger.debug("Building the statistics collector for DASU [{}]",dasuId)
+  DasuStatistics.logger.debug("Building the statistics collector for DASU [{}]",dasuId)
 
   /** The number of iterations executed so far */
   val iterationsRun = new AtomicLong(0L)
@@ -34,15 +31,18 @@ class DasuStatistics(
   /** The average execution time */
   val avgExecutionTime = new AtomicReference[Double](0.0)
 
+  /** The xecution time of the sta time the outpuit has been produced */
+  val lastExecutionTime = new AtomicLong(0)
+
   /** The time interval to publish statistics in msecs */
   val statsTimeInterval = TimeUnit.MILLISECONDS.convert(DasuStatistics.StatisticsTimeInterval,TimeUnit.MINUTES)
   if (statsTimeInterval>0) {
-    logger.info(f"DASU [$dasuId%s] will generate stats every ${DasuStatistics.StatisticsTimeInterval} minutes")
+    DasuStatistics.logger.info(f"DASU [$dasuId%s] will generate stats every ${DasuStatistics.StatisticsTimeInterval} minutes")
   } else {
-    logger.warn("Generation of stats for DASU [{}] disabled",dasuId)
+    DasuStatistics.logger.warn("Generation of stats for DASU [{}] disabled",dasuId)
   }
 
-  logger.info("DASU [{}] statistics collector built",dasuId)
+  DasuStatistics.logger.info("DASU [{}] statistics collector built",dasuId)
 
   /**
    * Calculate the (aprox) mean of last executions.
@@ -70,7 +70,9 @@ class DasuStatistics(
       }
       iterationsRun.get
     }
-    logger.info(f"DASU [$dasuId%s]: avg time of calculation of the output ${avgExecutionTime.get()}%.2f ms, output calculated ${iterationsRun.get}%d times)")
+    DasuStatistics.logger.info(
+      f"DASU [$dasuId%s]: last calculation time of ouput=${lastExecutionTime.get}%d ms (avg  ${avgExecutionTime.get()}%.2f ms); output calculated ${iterationsRun.get}%d times)")
+
   }
 
   /**
@@ -79,8 +81,9 @@ class DasuStatistics(
    * @param lastExecTime the execution time (msec) taken to update the output in the last run
    */
   def updateStats(lastExecTime: Long) {
-    require(Option(lastExecTime).isDefined && lastExecTime>=0,"Invalid execution time")
+    require(Option(lastExecTime).isDefined && lastExecTime>0,"Invalid execution time")
 
+    lastExecutionTime.set(lastExecTime)
 
     val last=iterationsRun.incrementAndGet()
     if (last<0) {
@@ -94,6 +97,9 @@ class DasuStatistics(
 
 /** Companion object with definitions of constants*/
 object DasuStatistics {
+
+  /** The logger */
+  private val logger = IASLogger.getLogger(this.getClass)
   
   /** The time interval to log statistics (minutes) */
   val DeafaultStatisticsTimeInterval = 10
