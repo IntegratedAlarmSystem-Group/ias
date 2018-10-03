@@ -1,10 +1,11 @@
 package org.eso.ias.dasu
 
-import org.eso.ias.logging.IASLogger
-import scala.util.Try
-import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.{AtomicLong, AtomicReference}
+
+import org.eso.ias.logging.IASLogger
+
+import scala.util.Try
 
 /**
  * StasCollector generates and publish statistics of the generation of the output
@@ -81,7 +82,7 @@ class DasuStatistics(
    * @param lastExecTime the execution time (msec) taken to update the output in the last run
    */
   def updateStats(lastExecTime: Long) {
-    require(Option(lastExecTime).isDefined && lastExecTime>0,"Invalid execution time")
+    require(Option(lastExecTime).isDefined && lastExecTime=>0,"Invalid execution time")
 
     lastExecutionTime.set(lastExecTime)
     if (lastExecTime>maxExecutionTime.get) maxExecutionTime.set(lastExecTime)
