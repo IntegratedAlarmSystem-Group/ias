@@ -176,7 +176,13 @@ class DasuImpl (
   val delayedUpdateTask = new Runnable {
       override def run() = {
         DasuImpl.logger.debug("DASU [{}] running the throttling task",id)
-        updateAndPublishOutput()
+        Try(updateAndPublishOutput()) match {
+          case Failure(exception) =>
+            DasuImpl.logger.error("Exception caught in DASU [{}] while producing the output with throttling",
+              id,
+              exception)
+          case _ =>
+        }
       }
   }
   
@@ -230,15 +236,22 @@ class DasuImpl (
       val lastTimerScheduledFeature: Option[ScheduledFuture[_]] = Option(autoSendTimerTask.get)
       lastTimerScheduledFeature.foreach(_.cancel(false))
       val runnable = new Runnable {
-            /** The task to refresh the output when no new inputs have been received */
-            override def run() = publishOutput(calcOutputValidity())
-        }
-        val newTask=scheduledExecutor.scheduleWithFixedDelay(
-            runnable, 
-            autoSendTimeInterval.toLong, 
-            autoSendTimeInterval.toLong, 
-            TimeUnit.SECONDS)
-        autoSendTimerTask.set(newTask)
+          /** The task to refresh the output when no new inputs have been received */
+          override def run() = {
+            Try(publishOutput(calcOutputValidity())) match {
+              case Failure(exception) => DasuImpl.logger.error("Exception caught publishing output {} of DASU [{}]",
+                dasuOutputId,id,exception)
+              case Success(value) =>
+            }
+          }
+      }
+
+      val newTask=scheduledExecutor.scheduleWithFixedDelay(
+          runnable,
+          autoSendTimeInterval.toLong,
+          autoSendTimeInterval.toLong,
+          TimeUnit.SECONDS)
+      autoSendTimerTask.set(newTask)
     }
   }
   
@@ -330,7 +343,12 @@ class DasuImpl (
     
     (throttlingIsScheduled, beforeEndOfThrottling) match {
       case (true, true)  => {} // delayed: do nothing
-      case (_ , false)   => updateAndPublishOutput() // send immediately
+      case (_ , false)   =>  // send immediately
+        Try(updateAndPublishOutput()) match {
+          case Failure(exception) =>
+            DasuImpl.logger.error("Exception caught while producing the output of DASU [{}]",id,exception)
+          case _ =>
+        }
       case (false, true) => // Activate throttling
         val delay =  throttling+now-lastSentTime.get
         val schedFeature = scheduledExecutor.schedule(delayedUpdateTask,delay,TimeUnit.MILLISECONDS)
@@ -408,15 +426,14 @@ class DasuImpl (
    */
   private def updateAndPublishOutput() = {
     val oldCalculatedOutput = lastCalculatedOutput.get
+
+
     val startTime = System.currentTimeMillis()
-
-
     // Converts the inputs from the synchronized java map into a immutable scala Set
     val inputsFromMap: Set[IASValue[_]] = JavaConverters.collectionAsScalaIterable(notYetProcessedInputs.values).toSet
-
     lastCalculatedOutput.set(propagateIasios(inputsFromMap))
-
     val endTime = System.currentTimeMillis()
+
     lastUpdateTime.set(endTime)
     notYetProcessedInputs.clear()
 
