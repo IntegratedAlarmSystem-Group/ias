@@ -74,7 +74,7 @@ class SupervisorStatistics(id: String, val dasusIds: Set[String]) extends StatsC
     */
   def supervisorPropagationTime(time: Long) = {
     val now = maxSupervisorPropagationTime.get()
-    if (time>now) maxSupervisorPropagationTime(time)
+    if (time>now) maxSupervisorPropagationTime.set(time)
   }
 
   /** Emit the logs with the statistics and reset the counters */
