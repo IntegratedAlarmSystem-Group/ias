@@ -275,4 +275,22 @@ implements KafkaConsumerListener {
         }
 	}
 
+    /**
+     * Getter
+     *
+     * @return the unmodifiable set of accepted IDs
+     */
+	public Set<String> getAcceptedIds() {
+	    return acceptedIds;
+    }
+
+    /**
+     * Getter
+     *
+     * @return the unmodifiable set of accepted IAS types
+     */
+    public Set<IASTypes> getAcceptedTypes() {
+        return acceptedTypes;
+    }
+
 }
