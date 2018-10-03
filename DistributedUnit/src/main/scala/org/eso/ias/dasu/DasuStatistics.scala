@@ -82,7 +82,7 @@ class DasuStatistics(
    * @param lastExecTime the execution time (msec) taken to update the output in the last run
    */
   def updateStats(lastExecTime: Long) {
-    require(Option(lastExecTime).isDefined && lastExecTime=>0,"Invalid execution time")
+    require(Option(lastExecTime).isDefined && lastExecTime>=0,"Invalid execution time")
 
     lastExecutionTime.set(lastExecTime)
     if (lastExecTime>maxExecutionTime.get) maxExecutionTime.set(lastExecTime)
