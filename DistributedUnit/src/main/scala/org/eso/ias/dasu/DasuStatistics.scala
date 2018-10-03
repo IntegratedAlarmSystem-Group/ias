@@ -1,9 +1,6 @@
 package org.eso.ias.dasu
 
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.cdb.pojos.DasuDao
-import scala.collection.JavaConverters
-import org.eso.ias.cdb.pojos.IasioDao
 import scala.util.Try
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.TimeUnit
@@ -21,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference
  */
 class DasuStatistics(
     val dasuId: String) extends StatsCollectorBase(dasuId,DasuStatistics.StatisticsTimeInterval) {
-  require(Option(dasuId).isDefined && !dasuId.isEmpty(),"Invalid DASU ID")
+  require(Option(dasuId).isDefined && !dasuId.isEmpty,"Invalid DASU ID")
 
   DasuStatistics.logger.debug("Building the statistics collector for DASU [{}]",dasuId)
 
@@ -38,7 +35,7 @@ class DasuStatistics(
   val maxExecutionTime  = new AtomicLong(0)
 
   /** The time interval to publish statistics in msecs */
-  val statsTimeInterval = TimeUnit.MILLISECONDS.convert(DasuStatistics.StatisticsTimeInterval,TimeUnit.MINUTES)
+  val statsTimeInterval: Long = TimeUnit.MILLISECONDS.convert(DasuStatistics.StatisticsTimeInterval,TimeUnit.MINUTES)
   if (statsTimeInterval>0) {
     DasuStatistics.logger.info(f"DASU [$dasuId%s] will generate stats every ${DasuStatistics.StatisticsTimeInterval} minutes")
   } else {
@@ -64,7 +61,7 @@ class DasuStatistics(
   /**
     * The method to log statistics, called at regular time intervals
     */
-  override def logStats() = {
+  override def logStats(): Unit = {
     val numOfIterationsRun = {
       val last=iterationsRun.incrementAndGet()
       if (last<0) {
