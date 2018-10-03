@@ -1,8 +1,8 @@
 package org.eso.ias.dasu
 
-import java.util.{Collections, HashMap, Properties}
-import java.util.concurrent.{ScheduledFuture, TimeUnit}
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong, AtomicReference}
+import java.util.concurrent.{ScheduledFuture, TimeUnit}
+import java.util.{Collections, HashMap, Properties}
 
 import org.eso.ias.asce.{AsceStates, ComputingElement}
 import org.eso.ias.cdb.pojos.{AsceDao, DasuDao}
@@ -215,7 +215,7 @@ class DasuImpl (
       val runnable = new Runnable {
           /** The task to refresh the output when no new inputs have been received */
           override def run(): Unit = {
-            Try(publishOutput(calcOutputValidity())) match {
+            Try(asceThatProducesTheOutput.output.value.foreach(_ => publishOutput(calcOutputValidity()))) match {
               case Failure(exception) => DasuImpl.logger.error("Exception caught publishing output {} of DASU [{}]",
                 dasuOutputId,id,exception)
               case _ =>
@@ -357,39 +357,41 @@ class DasuImpl (
    * the arrival time
    */
   def calcOutputValidity(): Validity = {
-    val lastOutput= {
-      val temp = lastCalculatedOutput.get
-      assert(temp.isDefined,"DASU ["+id+"] Cannot calc the validity if there is no output")
-      temp.get
-    }
-    
-    assert(
-            lastOutput.dasuProductionTStamp.isPresent && !lastOutput.pluginProductionTStamp.isPresent||
+
+    // The output can be not defined if the DASU tries to publish
+    // before it is updated
+    lastCalculatedOutput.get match {
+      case None =>  // The output can be not defined if the DASU tries to publish before it is updated
+        Validity(IasValidity.UNRELIABLE)
+      case Some(lastOutput) =>
+        assert(
+          lastOutput.dasuProductionTStamp.isPresent && !lastOutput.pluginProductionTStamp.isPresent||
             !lastOutput.dasuProductionTStamp.isPresent && lastOutput.pluginProductionTStamp.isPresent,
-            "Invariant violation for IasValue "+lastOutput.toString)
-    
-    val thresholdTStamp = System.currentTimeMillis() - autoSendTimeIntervalMillis - toleranceMillis
-    
-    val iasioTstamp = {
-      if (lastOutput.dasuProductionTStamp.isPresent) {
-        lastOutput.dasuProductionTStamp.get()
-      } else {
-        lastOutput.pluginProductionTStamp.get()
-      }
+          "Invariant violation for IasValue "+lastOutput.toString)
+
+        val thresholdTStamp = System.currentTimeMillis() - autoSendTimeIntervalMillis - toleranceMillis
+
+        val iasioTstamp = {
+          if (lastOutput.dasuProductionTStamp.isPresent) {
+            lastOutput.dasuProductionTStamp.get()
+          } else {
+            lastOutput.pluginProductionTStamp.get()
+          }
+        }
+
+
+        val validityByTime = if (iasioTstamp<thresholdTStamp) {
+          Validity(IasValidity.UNRELIABLE)
+        } else {
+          Validity(IasValidity.RELIABLE)
+        }
+
+        // The validity of the output calculated by the ASCE
+        val validityByAsce = Validity(lastOutput.iasValidity)
+
+        Validity.minValidity(Set(validityByTime,validityByAsce))
     }
 
-          
-    val validityByTime = if (iasioTstamp<thresholdTStamp) {
-        Validity(IasValidity.UNRELIABLE)
-    } else {
-        Validity(IasValidity.RELIABLE)
-    }
-    
-    // The validity of the output calculated by the ASCE 
-    val validityByAsce = Validity(lastOutput.iasValidity)
-    
-    Validity.minValidity(Set(validityByTime,validityByAsce))
-    
   }
   
   /**
