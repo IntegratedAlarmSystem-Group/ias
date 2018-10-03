@@ -65,12 +65,12 @@ implements KafkaConsumerListener {
 	/**
 	 * The set of accepted IDs of IASIOs for the filtering
 	 */
-	private final Set<String> acceptedIds = Collections.synchronizedSet(new HashSet<>());
+	private volatile Set<String> acceptedIds = Collections.unmodifiableSet(new HashSet<>());
 	
 	/**
 	 * The set of accepted IDs of IASValue types for the filtering
 	 */
-	private final Set<IASTypes> acceptedTypes = Collections.synchronizedSet(new HashSet<>());
+	private volatile  Set<IASTypes> acceptedTypes = Collections.unmodifiableSet(new HashSet<>());
 	
 	/**
 	 * The listener to be notified when a IASIOs is read from the kafka topic
@@ -155,20 +155,27 @@ implements KafkaConsumerListener {
 			}
 		}
 	}
-	
+
+    /**
+     * Accepts or rejects a IASValue against the filters, if set
+     *
+     * @param iasio The IASValue to accept or discard
+     * @return true if teh value is accpted; false otherwise
+     */
 	private boolean accept(IASValue<?> iasio) {
 		assert(iasio!=null);
-		boolean acceptedById;
-		synchronized(acceptedIds) {
-			acceptedById = acceptedIds.contains(iasio.id) || acceptedIds.isEmpty();
-		}
-		boolean acceptedByType=false;
-		if (acceptedById) { // No reason to check if already discarded
-			synchronized(acceptedTypes) {
-				acceptedByType = acceptedTypes.contains(iasio.valueType) || acceptedTypes.isEmpty();
-			}
-		}
-		return acceptedById && acceptedByType;
+
+		// Locally copy the sets that are immutable and volatile
+        // In case the setFilter is called in the mean time...
+		Set<String> acceptedIdsNow = acceptedIds;
+		Set<IASTypes> acceptedTypesNow = acceptedTypes;
+
+		boolean acceptedById = acceptedIdsNow.contains(iasio.id) || acceptedIdsNow.isEmpty();
+		if (!acceptedById) {
+		    return false;
+        } else {
+		    return acceptedTypesNow.isEmpty() || acceptedTypesNow.contains(iasio.valueType);
+        }
 	}
 
 	/**
@@ -214,8 +221,8 @@ implements KafkaConsumerListener {
 	 * Entirely remove the filtering 
 	 */
 	public void clearFilter() {
-		acceptedIds.clear();
-		acceptedTypes.clear();
+	    acceptedIds = Collections.unmodifiableSet(new HashSet<>());
+	    acceptedTypes = Collections.unmodifiableSet(new HashSet<>());
 	}
 	
 	/**
@@ -224,9 +231,11 @@ implements KafkaConsumerListener {
 	 * @param idsToAdd The filters to add
 	 */
 	public void addIdsToFilter(Set<String> idsToAdd) {
-		if (idsToAdd!=null) {
-			acceptedIds.addAll(idsToAdd);
-		}
+	    Objects.requireNonNull(idsToAdd);
+	    Set<String> temp = new HashSet<>(acceptedIds);
+	    temp.addAll(idsToAdd);
+	    acceptedIds=Collections.unmodifiableSet(temp);
+
 	}
 	
 	/**
@@ -235,9 +244,12 @@ implements KafkaConsumerListener {
 	 * @param typesToAdd The types to add
 	 */
 	public void addTypesToFilter(Set<IASTypes> typesToAdd) {
-		if (typesToAdd!=null) {
-			acceptedTypes.addAll(typesToAdd);
-		}
+	    Objects.requireNonNull(typesToAdd);
+
+	    Set<IASTypes> temp = new HashSet<>(acceptedTypes);
+	    temp.addAll(typesToAdd);
+
+		acceptedTypes=Collections.unmodifiableSet(temp);
 	}
 	
 	/** 
@@ -250,18 +262,17 @@ implements KafkaConsumerListener {
 	 *                      if <code>null</code> or empty the filtering by types is removed
 	 */
 	public void setFilter(Set<String> idsToAccept, Set<IASTypes> typesToAccept) {
-		synchronized(acceptedIds) {
-			acceptedIds.clear();
-			if (idsToAccept!=null) {
-				acceptedIds.addAll(idsToAccept);
-			}
-		}
-		synchronized(acceptedTypes) {
-			acceptedTypes.clear();
-			if (typesToAccept!=null) {
-				acceptedTypes.addAll(typesToAccept);
-			}
-		}
+	    if (idsToAccept==null) {
+	       acceptedIds = Collections.unmodifiableSet(new HashSet<>());
+        } else {
+	       acceptedIds = Collections.unmodifiableSet(idsToAccept);
+        }
+
+        if (typesToAccept==null) {
+           acceptedTypes = Collections.unmodifiableSet(new HashSet<>());
+        } else {
+           acceptedTypes = Collections.unmodifiableSet(typesToAccept);
+        }
 	}
 
 }
