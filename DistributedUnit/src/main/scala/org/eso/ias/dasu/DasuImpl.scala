@@ -12,6 +12,7 @@ import org.eso.ias.dasu.subscriber.InputSubscriber
 import org.eso.ias.dasu.topology.Topology
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types._
+import org.eso.ias.utils.ISO8601Helper
 
 import scala.collection.JavaConverters
 import scala.util.{Failure, Success, Try}
@@ -390,6 +391,12 @@ class DasuImpl (
 
 
         val validityByTime = if (iasioTstamp<thresholdTStamp) {
+          // TODO: remove log after fixing
+          DasuImpl.logger.warn("DASU [{}]: output UNRELIABLE by time: threshold {}, iasio timestamp={} diff ={}",
+            id,
+            ISO8601Helper.getTimestamp(thresholdTStamp),
+            ISO8601Helper.getTimestamp(iasioTstamp),
+            thresholdTStamp-iasioTstamp)
           Validity(IasValidity.UNRELIABLE)
         } else {
           Validity(IasValidity.RELIABLE)
@@ -397,6 +404,18 @@ class DasuImpl (
 
         // The validity of the output calculated by the ASCE
         val validityByAsce = Validity(lastOutput.iasValidity)
+        // TODO: remove log after fixing
+        if (validityByAsce.iasValidity==IasValidity.UNRELIABLE) {
+          val inputsOfAsce = asceThatProducesTheOutput.inputs.values
+          DasuImpl.logger.warn("DASU [{}]: output UNRELIABLE by ASCE",  id)
+          inputsOfAsce.foreach(i =>
+            DasuImpl.logger.warn("DASU [{}]: input of ASCE: id={} getValidity={} output validity={}",
+              id,
+              i.id,
+              i.getValidity,
+            lastOutput.iasValidity)
+          )}
+
 
         Validity.minValidity(Set(validityByTime,validityByAsce))
     }
