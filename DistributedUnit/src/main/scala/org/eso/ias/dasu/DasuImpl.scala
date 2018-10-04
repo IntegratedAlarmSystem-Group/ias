@@ -409,7 +409,7 @@ class DasuImpl (
               id,
               lastOutput.id,
               i.id.id,
-              i.getValidity,
+              i.getValidity.iasValidity,
               ISO8601Helper.getTimestamp(i.pluginProductionTStamp.getOrElse(i.dasuProductionTStamp.get)))
           )}
 
