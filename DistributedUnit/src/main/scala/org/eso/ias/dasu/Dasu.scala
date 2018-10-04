@@ -46,7 +46,7 @@ abstract class Dasu(
   private val logger = IASLogger.getLogger(this.getClass)
   
   /** The ID of the DASU */
-  val id = dasuIdentifier.id
+  val id: String = dasuIdentifier.id
   
   /** 
    *  True if the DASU has been generated from a template,
@@ -63,22 +63,22 @@ abstract class Dasu(
   /** 
    *  Auto send time interval in milliseconds
    */
-  val autoSendTimeIntervalMillis = TimeUnit.MILLISECONDS.convert(autoSendTimeInterval.toLong, TimeUnit.SECONDS)
+  val autoSendTimeIntervalMillis: Long = TimeUnit.MILLISECONDS.convert(autoSendTimeInterval.toLong, TimeUnit.SECONDS)
   
   /** 
    *  The tolerance in milliseconds
    */
-  val toleranceMillis = TimeUnit.MILLISECONDS.convert(tolerance.toLong, TimeUnit.SECONDS)
+  val toleranceMillis: Long = TimeUnit.MILLISECONDS.convert(tolerance.toLong, TimeUnit.SECONDS)
   
   /**
    * The minimum allowed refresh rate when a flow of inputs arrive (i.e. the throttiling) 
    * is given by [[Dasu.DefaultMinAllowedRefreshRate]], if not overridden by a java property
    */
-  val throttling = {
+  val throttling: Long = {
     val prop = Option(System.getProperties.getProperty(Dasu.MinAllowedRefreshRatePropName))
     prop.map(s => Try(s.toInt).getOrElse(Dasu.DefaultMinAllowedRefreshRate)).getOrElse(Dasu.DefaultMinAllowedRefreshRate).abs.toLong
   }
-  logger.debug("Output calculation throttling of DASU [{}] set to {}",id,throttling.toString())
+  logger.debug("Output calculation throttling of DASU [{}] set to {}",id,throttling.toString)
       
   
   /** The IDs of the inputs of the DASU */
