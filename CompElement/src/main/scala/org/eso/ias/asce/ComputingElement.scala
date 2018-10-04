@@ -420,9 +420,7 @@ abstract class ComputingElement[T](
     } else {
 
       val validityOfInputsByTime = selectedInputsByConstraint.map(_.getValidityOfInputByTime(validityThreshold))
-      ComputingElement.logger.info("Validity of inputs by time {}",validityOfInputsByTime.mkString)
       val validitiesOfInputs=selectedInputsByConstraint.map(_.getValidity)
-      ComputingElement.logger.info("Validity of inputs no time {}",validitiesOfInputs.mkString)
 
       Success(Validity.minValidity(validityOfInputsByTime++validitiesOfInputs))
     }
