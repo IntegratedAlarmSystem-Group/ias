@@ -38,7 +38,7 @@ class DumperListener(IasValueListener):
         if self.toJson:
             print(iasValue.toJSonString())
         else:
-            print(iasValue.toString(verbose))
+            print(iasValue.toString(self.verbose))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Dumps IasValue published in the BSDB')
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     parser.add_argument(
                         '-t',
                         '--topic',
-                        help='The kafka bootstrap servers to connect to like iasdevel.hq.eso.org:9092',
+                        help='The topic to connect to; defaults to BsdbCoreKTopic',
                         action='store',
                         default="BsdbCoreKTopic",
                         required=False)
