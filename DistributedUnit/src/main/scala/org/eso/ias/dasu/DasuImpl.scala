@@ -206,10 +206,10 @@ class DasuImpl (
   DasuImpl.logger.info("DASU [{}] built", id)
   
   /**
-   * Reschedule the auto send time interval if the output is generated before
+   * Reschedule the auto send task if the output is generated before
    * the autoSendTimeInterval elapses.
    */
-  private def rescheduleAutoSendTimeInterval(): Unit = synchronized {
+  private def rescheduleAutoSendTimerTask(): Unit = synchronized {
     val autoSendIsEnabled = timelyRefreshing.get()
     if (autoSendIsEnabled) {
       
@@ -363,37 +363,30 @@ class DasuImpl (
   }
   
   /**
-   * Calculate the validity of the output depending on
-   * the arrival time
-   */
+    * Calculate the validity of the output depending on its last update time.
+    * The DASU consider that the IASIO is valid if it has been generated
+    * resh rate+tolerance  milliseconds before.
+    */
   def calcOutputValidity(): Validity = {
 
-    // The output can be not defined if the DASU tries to publish
-    // before it is updated
+    // The output can be undefined if the DASU tries to publish
+    // before it is updated for the first time by the auto refresh task
     lastCalculatedOutput.get match {
       case None =>  // The output can be not defined if the DASU tries to publish before it is updated
         Validity(IasValidity.UNRELIABLE)
       case Some(lastOutput) =>
-        assert(
-          lastOutput.dasuProductionTStamp.isPresent && !lastOutput.pluginProductionTStamp.isPresent||
-            !lastOutput.dasuProductionTStamp.isPresent && lastOutput.pluginProductionTStamp.isPresent,
-          "Invariant violation for IasValue "+lastOutput.toString)
+        assert(lastOutput.dasuProductionTStamp.isPresent && !lastOutput.pluginProductionTStamp.isPresent,
+          "IASIO is not an output! "+lastOutput.toString)
 
         val thresholdTStamp = System.currentTimeMillis() - autoSendTimeIntervalMillis - toleranceMillis
 
-        val iasioTstamp = {
-          if (lastOutput.dasuProductionTStamp.isPresent) {
-            lastOutput.dasuProductionTStamp.get()
-          } else {
-            lastOutput.pluginProductionTStamp.get()
-          }
-        }
+        val iasioTstamp = lastOutput.dasuProductionTStamp.get()
 
-
-        val validityByTime = if (iasioTstamp<thresholdTStamp) {
+        val validityByTime= if (iasioTstamp<thresholdTStamp) {
           // TODO: remove log after fixing
-          DasuImpl.logger.warn("DASU [{}]: output UNRELIABLE by time: threshold {}, iasio timestamp={} diff ={}",
+          DasuImpl.logger.warn("DASU [{}]: output {} UNRELIABLE by time (i.e. refreshed too late): threshold {}, iasio timestamp={} diff ={}",
             id,
+            lastOutput.id,
             ISO8601Helper.getTimestamp(thresholdTStamp),
             ISO8601Helper.getTimestamp(iasioTstamp),
             thresholdTStamp-iasioTstamp)
@@ -406,16 +399,19 @@ class DasuImpl (
         val validityByAsce = Validity(lastOutput.iasValidity)
         // TODO: remove log after fixing
         if (validityByAsce.iasValidity==IasValidity.UNRELIABLE) {
+          DasuImpl.logger.warn("DASU [{}] validity of output {} and timesptmp {} set to UNRELIABLE by ASCE. Listing ASCE inputs",
+            id,
+            lastOutput.id,
+            ISO8601Helper.getTimestamp(lastOutput.dasuProductionTStamp.get()))
           val inputsOfAsce = asceThatProducesTheOutput.inputs.values
-          DasuImpl.logger.warn("DASU [{}]: output UNRELIABLE by ASCE",  id)
           inputsOfAsce.foreach(i =>
-            DasuImpl.logger.warn("DASU [{}]: input of ASCE: id={} getValidity={} output validity={}",
+            DasuImpl.logger.warn("DASU [{}]: input of {} has  id={} and validity={} and timestamp {}",
               id,
+              lastOutput.id,
               i.id.id,
               i.getValidity,
-            lastOutput.iasValidity)
+              ISO8601Helper.getTimestamp(i.pluginProductionTStamp.getOrElse(i.dasuProductionTStamp.get)))
           )}
-
 
         Validity.minValidity(Set(validityByTime,validityByAsce))
     }
@@ -453,21 +449,22 @@ class DasuImpl (
         output.iasValidity)
 
       // The validity of the output
+      //
+      // The output has been calculated right now so this step is not really needed
       val outputValidity = calcOutputValidity()
 
       // Do we really need to send the output immediately?
       // If it did not change then it will be sent by the auto-send
       val prevSentOutputAndValidity = lastSentOutputAndValidity.get()
 
-      prevSentOutputAndValidity.foreach(tuple => {
-        assert(tuple._1.value.isDefined)
-      })
+      assert(prevSentOutputAndValidity.forall(_._1.value.isDefined))
+
       if (prevSentOutputAndValidity.isEmpty ||
           prevSentOutputAndValidity.get._2!=outputValidity.iasValidity ||
           prevSentOutputAndValidity.get._1.value.get!= output.value ||
           prevSentOutputAndValidity.get._1.mode!=output.mode) {
         publishOutput(outputValidity)
-        rescheduleAutoSendTimeInterval()
+        rescheduleAutoSendTimerTask()
         statsCollector.updateStats(endTime-startTime)
       }
     })
@@ -526,7 +523,7 @@ class DasuImpl (
       case (true, true) => 
         DasuImpl.logger.warn("DASU [{}]: automatic refresh of output already ative",id)
       case (true, false) => 
-        rescheduleAutoSendTimeInterval()
+        rescheduleAutoSendTimerTask()
         DasuImpl.logger.info("DASU [{}]: automatic send of output enabled at intervals of {} secs (aprox)",id, autoSendTimeInterval.toString)
       case (false , _) => 
         val oldTask: Option[ScheduledFuture[_]] = Option(autoSendTimerTask.getAndSet(null))
