@@ -1,37 +1,12 @@
 package org.eso.ias.dasu
 
-import org.eso.ias.logging.IASLogger
-import org.eso.ias.cdb.CdbReader
-import org.eso.ias.cdb.json.JsonReader
-import org.eso.ias.cdb.json.CdbFiles
-import org.eso.ias.cdb.json.CdbJsonFiles
-import org.eso.ias.cdb.pojos.DasuDao
-import org.eso.ias.dasu.topology.Topology
-
-import scala.collection.JavaConverters
-import org.eso.ias.cdb.pojos.DasuDao
-import org.eso.ias.types.Identifier
-import org.eso.ias.types.IdentifierType
-import org.eso.ias.cdb.pojos.AsceDao
-import org.eso.ias.asce.ComputingElement
-import org.eso.ias.asce.ComputingElementState
-import org.eso.ias.asce.AsceStates
-import org.eso.ias.types.InOut
-import org.eso.ias.dasu.publisher.OutputPublisher
-import org.eso.ias.types.IASValue
-import org.eso.ias.dasu.executorthread.ScheduledExecutor
-import scala.util.Try
-import java.util.concurrent.atomic.AtomicLong
-import java.util.Properties
-import scala.collection.mutable.{Map => MutableMap}
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.TimeUnit
+
 import org.eso.ias.dasu.subscriber.InputsListener
-import org.eso.ias.dasu.subscriber.InputSubscriber
-import scala.util.Failure
-import scala.util.Success
+import org.eso.ias.logging.IASLogger
+import org.eso.ias.types.{IASValue, Identifier}
+
+import scala.util.Try
 
 /**
  * The Distributed Alarm System Unit (DASU).
@@ -97,8 +72,7 @@ abstract class Dasu(
   
   /**
    * The minimum allowed refresh rate when a flow of inputs arrive (i.e. the throttiling) 
-   * is given by [[TimeScheduler.DefaultMinAllowedRefreshRate]] 
-   * if not overridden by a java property
+   * is given by [[Dasu.DefaultMinAllowedRefreshRate]], if not overridden by a java property
    */
   val throttling = {
     val prop = Option(System.getProperties.getProperty(Dasu.MinAllowedRefreshRatePropName))
