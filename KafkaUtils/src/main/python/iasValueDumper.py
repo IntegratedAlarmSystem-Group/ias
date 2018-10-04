@@ -8,10 +8,8 @@ Created on Jun 12, 2018
 @author: acaproni
 '''
 import argparse
-import signal, sys
-from kafka import KafkaConsumer
-from IasBasicTypes.IasValue import IasValue
-from IasSupport.KafkaValueConsumer import IasValueListener, KafkaValueConsumer
+
+from IasKafkaUtils.KafkaValueConsumer import IasValueListener, KafkaValueConsumer
 
 # The kafka consumer
 consumer = None
