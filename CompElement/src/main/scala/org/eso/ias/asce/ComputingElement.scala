@@ -392,7 +392,8 @@ abstract class ComputingElement[T](
    * is not known so it can potentially contain errors like a typo in one of the IDs
    * of constraints.
    * 
-   * @param iasio the IASIO to calculate the validity of the input
+   * @param iasio the IASIO to calculate the validity of the input, required
+    *             for geting the constraint
    * @param inputs the inputs of the ASCE 
    * @return the validity from the inputs of the IASIO  
    */
@@ -405,9 +406,9 @@ abstract class ComputingElement[T](
     
     // If there are constraints, discard the inputs whose ID 
     // is not contained in the constraints
-    val selectedInputsByConstraint = 
+    val selectedInputsByConstraint: Set[InOut[_]] =
       iasio.validityConstraint.map( set => inputs.filter(input => set.contains(input.id.id)))
-      .getOrElse(inputs)
+      .getOrElse(inputs).toSet
     
     if (iasio.validityConstraint.isDefined && selectedInputsByConstraint.size!=iasio.validityConstraint.get.size) {
       // There are constraints but the at least one ID of the constraints does not belong 
@@ -417,8 +418,13 @@ abstract class ComputingElement[T](
           iasio.validityConstraint.get,
           inputs.map(input => input.id.id)))
     } else {
-      
-      Success(Validity.minValidity(selectedInputsByConstraint.map(_.getValidityOfInputByTime(validityThreshold)).toSet))
+
+      val validityOfInputsByTime = selectedInputsByConstraint.map(_.getValidityOfInputByTime(validityThreshold))
+      ComputingElement.logger.info("Validity of inputs by time {}",validityOfInputsByTime.mkString)
+      val validitiesOfInputs=selectedInputsByConstraint.map(_.getValidity)
+      ComputingElement.logger.info("Validity of inputs no time {}",validitiesOfInputs.mkString)
+
+      Success(Validity.minValidity(validityOfInputsByTime++validitiesOfInputs))
     }
   }
   
@@ -470,7 +476,7 @@ abstract class ComputingElement[T](
           ComputingElement.logger.error("TF of [{}] inhibited for the time being",asceIdentifier,cause)
           state=ComputingElementState.transition(state, Broken())
         case Success(validitity) => 
-          _output=newOut.updateFromIinputsValidity(validitity).updateDasuProdTStamp(System.currentTimeMillis())    
+          _output=newOut.updateFromInputsValidity(validitity).updateDasuProdTStamp(System.currentTimeMillis())
       }
       ( Some(output),state.actualState)
     } else {
