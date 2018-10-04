@@ -3,10 +3,14 @@ Created on Jun 12, 2018
 
 @author: acaproni
 '''
-import logging, time
-from kafka import KafkaConsumer
+import logging
+import time
+from datetime import datetime
 from threading import Thread
+
 from IasBasicTypes.IasValue import IasValue
+from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
+from kafka import KafkaConsumer
 from kafka.structs import TopicPartition
 
 logger = logging.getLogger(__file__)
@@ -126,6 +130,8 @@ class KafkaValueConsumer(Thread):
                 for cr in listOfConsumerRecords:
                     json = cr.value.decode("utf-8")
                     iasValue = IasValue.fromJSon(json)
+                    iasValue.readFromBsdbTStamp=datetime.utcnow()
+                    iasValue.readFromBsdbTStampStr=Iso8601TStamp.datetimeToIsoTimestamp(iasValue.readFromBsdbTStamp)
                     self.listener.iasValueReceived(iasValue)
         self.isGettingEvents=False
         logger.info('Thread terminated')
