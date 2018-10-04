@@ -1,11 +1,7 @@
 package org.eso.ias.kafkautils;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.Set;
-
+import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener;
+import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
 import org.eso.ias.types.IasValueJsonSerializer;
@@ -13,8 +9,7 @@ import org.eso.ias.types.IasValueStringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener;
-import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
+import java.util.*;
 /**
  * KafkaIasiosConsumer gets the strings from the passed IASIO kafka topic
  * from the SimpleStringConsumer and forwards IASIOs to the listener.
@@ -149,7 +144,7 @@ implements KafkaConsumerListener {
 		}
 		if (accept(iasio)) {
 			try {
-				iasioListener.iasioReceived(iasio);
+				iasioListener.iasioReceived(iasio.updateReadFromBsdbTime(System.currentTimeMillis()));
 			} catch (Exception e) {
 				logger.error("Error notifying the IASValue [{}] to the listener: value lost",iasio.toString(),e);
 			}
