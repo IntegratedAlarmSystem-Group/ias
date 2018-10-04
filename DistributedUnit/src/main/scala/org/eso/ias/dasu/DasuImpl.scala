@@ -411,7 +411,7 @@ class DasuImpl (
           inputsOfAsce.foreach(i =>
             DasuImpl.logger.warn("DASU [{}]: input of ASCE: id={} getValidity={} output validity={}",
               id,
-              i.id,
+              i.id.id,
               i.getValidity,
             lastOutput.iasValidity)
           )}
