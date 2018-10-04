@@ -3,11 +3,8 @@ package org.eso.ias.asce.test.transfer
 import java.util.Properties
 
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
-import org.eso.ias.types.Alarm
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types.InOut
-import org.eso.ias.types.OperationalMode
-import org.eso.ias.types.IASTypes
+import org.eso.ias.types.{Alarm, IASTypes, OperationalMode}
 
 /**
  * The TF to check the functioning of the setting of the validity
@@ -49,7 +46,7 @@ class ConstraintValidityTF (
   }
   
   override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
-    logger.info("Evaluating {} inputs for comp. with ID [] and output []",
+    logger.info("Evaluating {} inputs for comp. with ID {} and output {}",
         compInputs.size.toString(),
         compElementId,
         actualOutput.id)
