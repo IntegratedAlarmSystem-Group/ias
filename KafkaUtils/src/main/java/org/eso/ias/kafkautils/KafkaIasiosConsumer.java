@@ -1,7 +1,7 @@
 package org.eso.ias.kafkautils;
 
+import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition;
 import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener;
-import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
 import org.eso.ias.types.IasValueJsonSerializer;
