@@ -1,8 +1,15 @@
 package org.eso.ias.kafkautils.test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.eso.ias.kafkautils.KafkaHelper;
+import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition;
+import org.eso.ias.kafkautils.SimpleStringConsumer;
+import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener;
+import org.eso.ias.kafkautils.SimpleStringProducer;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,16 +19,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.eso.ias.kafkautils.KafkaHelper;
-import org.eso.ias.kafkautils.SimpleStringConsumer;
-import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener;
-import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
-import org.eso.ias.kafkautils.SimpleStringProducer;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test the consumer and producer by submitting strings
