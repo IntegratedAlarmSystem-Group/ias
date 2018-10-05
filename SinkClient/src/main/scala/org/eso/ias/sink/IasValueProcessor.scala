@@ -1,18 +1,15 @@
 package org.eso.ias.sink
 
-import java.util
-import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 import java.util.concurrent._
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
 import com.typesafe.scalalogging.Logger
-import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.pojos.{IasDao, IasioDao}
 import org.eso.ias.dasu.subscriber.{InputSubscriber, InputsListener}
 import org.eso.ias.heartbeat.{HbEngine, HbProducer, HeartbeatStatus}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.{IASValue, Identifier, IdentifierType}
 
-import scala.collection.JavaConverters
 import scala.collection.mutable.ListBuffer
 import scala.util.{Failure, Success, Try}
 
@@ -44,7 +41,8 @@ import scala.util.{Failure, Success, Try}
   * @param listeners the processors of the IasValues read from the BSDB
   * @param hbProducer The HB generator
   * @param inputsSubscriber The subscriber to get events from the BDSB
-  * @param cdbReader The CDB reader
+  * @param iasDao The configuration of the IAS read from the CDB
+  * @param iasioDaos The configuration of the IASIOs read from the CDB
  */
 class IasValueProcessor(
                          val processorIdentifier: Identifier,
@@ -410,7 +408,7 @@ class IasValueProcessor(
     *
     * @param iasios the IasValues read from the BSDB
     */
-  override def inputsReceived(iasios: Set[IASValue[_]]): Unit = synchronized {
+  override def inputsReceived(iasios: Iterable[IASValue[_]]): Unit = synchronized {
     assert(Option(iasios).isDefined)
     // Is there at least one processor alive?
     if (!isThereActiveListener) {
