@@ -152,7 +152,10 @@ implements KafkaStringsConsumer.StringsConsumer {
         });
 
         try {
-            iasioListener.iasiosReceived(ret);
+            logger.debug("Notifying {} IASIOs to the listener listener",ret.size());
+            if (!ret.isEmpty()) {
+                iasioListener.iasiosReceived(ret);
+            }
         } catch (Exception e) {
             logger.error("Error notifying IASValues to the listener: {} values potentially lost",ret.size(),e);
         }
