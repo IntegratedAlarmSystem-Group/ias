@@ -12,7 +12,6 @@ import org.eso.ias.dasu.subscriber.InputSubscriber
 import org.eso.ias.dasu.topology.Topology
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types._
-import org.eso.ias.utils.ISO8601Helper
 
 import scala.collection.JavaConverters
 import scala.util.{Failure, Success, Try}
@@ -383,13 +382,6 @@ class DasuImpl (
         val iasioTstamp = lastOutput.dasuProductionTStamp.get()
 
         val validityByTime= if (iasioTstamp<thresholdTStamp) {
-          // TODO: remove log after fixing
-          DasuImpl.logger.warn("DASU [{}]: output {} UNRELIABLE by time (i.e. refreshed too late): threshold {}, iasio timestamp={} diff ={}",
-            id,
-            lastOutput.id,
-            ISO8601Helper.getTimestamp(thresholdTStamp),
-            ISO8601Helper.getTimestamp(iasioTstamp),
-            thresholdTStamp-iasioTstamp)
           Validity(IasValidity.UNRELIABLE)
         } else {
           Validity(IasValidity.RELIABLE)
@@ -397,22 +389,6 @@ class DasuImpl (
 
         // The validity of the output calculated by the ASCE
         val validityByAsce = Validity(lastOutput.iasValidity)
-        // TODO: remove log after fixing
-        if (validityByAsce.iasValidity==IasValidity.UNRELIABLE) {
-          DasuImpl.logger.warn("DASU [{}] validity of output {} and timesptmp {} set to UNRELIABLE by ASCE. Listing ASCE inputs",
-            id,
-            lastOutput.id,
-            ISO8601Helper.getTimestamp(lastOutput.dasuProductionTStamp.get()))
-          val inputsOfAsce = asceThatProducesTheOutput.inputs.values
-          inputsOfAsce.foreach(i =>
-            DasuImpl.logger.warn("DASU [{}]: input of {} has  id={} and validity={} and timestamp {}",
-              id,
-              lastOutput.id,
-              i.id.id,
-              i.getValidity.iasValidity,
-              ISO8601Helper.getTimestamp(i.pluginProductionTStamp.getOrElse(i.dasuProductionTStamp.get)))
-          )}
-
         Validity.minValidity(Set(validityByTime,validityByAsce))
     }
 
