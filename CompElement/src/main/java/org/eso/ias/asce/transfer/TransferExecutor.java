@@ -50,7 +50,7 @@ public abstract class TransferExecutor {
 	 * If defined, this is the instance of the ASCE where the TF runs;
 	 * if empty the ASCE is not generated out of a template
 	 */
-	private Optional<Integer> templateInstance;
+	private Optional<Integer> templateInstance = Optional.empty();
 
     /**
      * The logger
@@ -98,7 +98,7 @@ public abstract class TransferExecutor {
 		if (templateInstance.isPresent()) {
 		    logger.info("This TF IS templated with instance {}",templateInstance.get());
         } else {
-		    logger.info("This TF is templated");
+		    logger.debug("This TF is not templated");
         }
 		this.templateInstance=templateInstance;
 	}

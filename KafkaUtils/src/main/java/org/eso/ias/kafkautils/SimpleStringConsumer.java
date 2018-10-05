@@ -1,5 +1,6 @@
 package org.eso.ias.kafkautils;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -107,7 +108,7 @@ public class SimpleStringConsumer implements Runnable {
 	/**
 	 * The time, in milliseconds, spent waiting in poll if data is not available in the buffer
 	 */
-	private static final int POLLING_TIMEOUT = 60000;
+	private static final Duration POLLING_TIMEOUT = Duration.ofSeconds(15);
 
 	/**
 	 * The consumer getting events from the kafka topic
@@ -253,7 +254,7 @@ public class SimpleStringConsumer implements Runnable {
 
 		try {
 			if (!polling.await(WAIT_FOR_PARTITIONS_TIMEOUT, TimeUnit.MINUTES)) {
-				throw new KafkaUtilsException("Timed out while waiting for assignemn to kafka partitions");
+				throw new KafkaUtilsException("Timed out while waiting for assignemnt to kafka partitions");
 			}
 		} catch (InterruptedException e) {
 			logger.warn("Consumer [{}] Interrupted",consumerID);
@@ -398,7 +399,8 @@ public class SimpleStringConsumer implements Runnable {
 	        	 logger.debug("Consumer [{}] got an event read with {} records", consumerID, records.count());
 	        	 processedRecords.incrementAndGet();
 	         } catch (WakeupException we) {
-	        	 continue;
+	         	logger.warn("No values read from the topic {} in the past {} seconds",topicName,POLLING_TIMEOUT.getSeconds());
+	         	continue;
 	         }
 	         try {
 	        	 for (ConsumerRecord<String, String> record: records) {

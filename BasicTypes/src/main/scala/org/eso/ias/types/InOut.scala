@@ -1,7 +1,8 @@
 package org.eso.ias.types
 
-import java.text.{DateFormat, SimpleDateFormat}
-import java.util.{Optional, TimeZone}
+import java.util.Optional
+
+import org.eso.ias.utils.ISO8601Helper
 
 import scala.collection.JavaConverters
 
@@ -134,14 +135,14 @@ case class InOut[A](
        ret.append("Value: "+value.get.toString())
     }
 
-    readFromMonSysTStamp.foreach(t => { ret.append(", readFromMonSysTStamp="); ret.append(t); })
-    pluginProductionTStamp.foreach(t => { ret.append(", pluginProductionTStamp="); ret.append(t); })
-	  sentToConverterTStamp.foreach(t => { ret.append(", sentToConverterTStamp="); ret.append(t); })
-	  receivedFromPluginTStamp.foreach(t => { ret.append(", receivedFromPluginTStamp="); ret.append(t); })
-	  convertedProductionTStamp.foreach(t => { ret.append(", convertedProductionTStamp="); ret.append(t); })
-	  sentToBsdbTStamp.foreach(t => { ret.append(", sentToBsdbTStamp="); ret.append(t); })
-	  readFromBsdbTStamp.foreach(t => { ret.append(", readFromBsdbTStamp="); ret.append(t); })
-	  dasuProductionTStamp.foreach(t => { ret.append(", dasuProductionTStamp="); ret.append(t); })
+    readFromMonSysTStamp.foreach(t => { ret.append(", readFromMonSysTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
+    pluginProductionTStamp.foreach(t => { ret.append(", pluginProductionTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
+	  sentToConverterTStamp.foreach(t => { ret.append(", sentToConverterTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
+	  receivedFromPluginTStamp.foreach(t => { ret.append(", receivedFromPluginTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
+	  convertedProductionTStamp.foreach(t => { ret.append(", convertedProductionTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
+	  sentToBsdbTStamp.foreach(t => { ret.append(", sentToBsdbTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
+	  readFromBsdbTStamp.foreach(t => { ret.append(", readFromBsdbTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
+	  dasuProductionTStamp.foreach(t => { ret.append(", dasuProductionTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
 	  
 	  idsOfDependants.foreach( ids => {
 	    ret.append(", Ids of dependants=[")
@@ -220,7 +221,7 @@ case class InOut[A](
   /**
    * Update the validity Inherited from the inputs
    */
-  def updateFromIinputsValidity(validity: Validity):InOut[A] = {
+  def updateFromInputsValidity(validity: Validity):InOut[A] = {
     val validityOpt = Option(validity)
     require(validityOpt.isDefined)
     assert(isOutput() && fromInputsValidity.isDefined, "Cannot update the validities of inputs of an input")
@@ -267,7 +268,7 @@ case class InOut[A](
   }
   
   /**
-   * The validity of a InOut in input, taking times into account.
+   * The validity of a InOut in input, taking only times into account.
    * 
    * This validity takes into account only the time of the update of
    * this monitor point. The validity of the output of a monitor
@@ -295,27 +296,16 @@ case class InOut[A](
     val thresholdTStamp = System.currentTimeMillis() - validityTimeFrame
     val iasioTstamp: Long = dasuProductionTStamp.getOrElse(pluginProductionTStamp.get)
 
-    assert(iasioTstamp<=thresholdTStamp+validityTimeFrame)
+    assert(iasioTstamp<=thresholdTStamp+validityTimeFrame,
+      "InOut "+id.id+": iasioTstamp="+
+        ISO8601Helper.getTimestamp(iasioTstamp)+" shall be less or equal than "+
+        ISO8601Helper.getTimestamp(thresholdTStamp+validityTimeFrame)+"\n\n"+toString())
     
-    val validityByTime = if (iasioTstamp<thresholdTStamp) {
+    if (iasioTstamp<thresholdTStamp) {
         Validity(IasValidity.UNRELIABLE)
     } else {
         Validity(IasValidity.RELIABLE)
     }
-
-    val  date: java.util.Date = new java.util.Date(iasioTstamp)
-    val formatter: DateFormat = new SimpleDateFormat("HH:mm:ss.SSS")
-    formatter.setTimeZone(TimeZone.getTimeZone("UTC"))
-    val iasioTSTampDateFormatted = formatter.format(date)
-    val thresholdDateFormatted = formatter.format(new java.util.Date(thresholdTStamp))
-
-    println(id.id+
-      ": iasioTstamp="+iasioTSTampDateFormatted+
-      " threshold="+thresholdDateFormatted+
-      " (diff="+(thresholdTStamp-iasioTstamp)+
-      ") validityByTime="+validityByTime.iasValidity)
-
-    Validity.minValidity(Set(validityByTime,getValidity))
   }
   
   /**

@@ -89,7 +89,7 @@ public class JsonWriter implements CdbWriter {
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
 		try {
-			mapper.writeValue(f, ias);
+			mapper.writerWithDefaultPrettyPrinter().writeValue(f, ias);
 		} catch (Throwable t) {
 			throw new IasCdbException("Error writing JSON IAS",t);
 		}
@@ -113,7 +113,7 @@ public class JsonWriter implements CdbWriter {
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
 		try {
-			mapper.writeValue(f, jsonSup);
+			mapper.writerWithDefaultPrettyPrinter().writeValue(f, jsonSup);
 		}catch (Throwable t) {
 			throw new IasCdbException("Error writing JSON Supervisor",t);
 		}
@@ -136,7 +136,7 @@ public class JsonWriter implements CdbWriter {
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
 		try {
-			mapper.writeValue(f, jsonDasu);
+			mapper.writerWithDefaultPrettyPrinter().writeValue(f, jsonDasu);
 		}catch (Throwable t) {
 			throw new IasCdbException("Error writing JSON DASU",t);
 		}
@@ -159,7 +159,7 @@ public class JsonWriter implements CdbWriter {
 		ObjectMapper mapper = new ObjectMapper();
 		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
 		try {
-			mapper.writeValue(f, jsonAsce);
+			mapper.writerWithDefaultPrettyPrinter().writeValue(f, jsonAsce);
 		}catch (Throwable t) {
 			throw new IasCdbException("Error writing JSON ASCE",t);
 		}
@@ -207,7 +207,7 @@ public class JsonWriter implements CdbWriter {
 		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
 		if (!f.exists() || !append) {
 			try {
-				mapper.writeValue(f, iasios);
+				mapper.writerWithDefaultPrettyPrinter().writeValue(f, iasios);
 			}catch (Throwable t) {
 				throw new IasCdbException("Error writing JSON IASIOs",t);
 			}
@@ -247,7 +247,7 @@ public class JsonWriter implements CdbWriter {
 				throw new IasCdbException("Error creating the JSON generator", ioe);
 			} 
 			
-			jg.setPrettyPrinter(new DefaultPrettyPrinter());
+			jg.useDefaultPrettyPrinter();
 
 			// Builds a map of IASIOs to replace existing IASIOs 
 			Map<String,IasioDao> iasiosMap = iasios.stream().collect(Collectors.toMap(
@@ -328,7 +328,7 @@ public class JsonWriter implements CdbWriter {
 		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
 		if (!f.exists() || !append) {
 			try {
-				mapper.writeValue(f, tfs);
+				mapper.writerWithDefaultPrettyPrinter().writeValue(f, tfs);
 			}catch (Throwable t) {
 				throw new IasCdbException("Error writing JSON TFss",t);
 			}
@@ -368,7 +368,7 @@ public class JsonWriter implements CdbWriter {
 				throw new IasCdbException("Error creating the JSON generator", ioe);
 			} 
 			
-			jg.setPrettyPrinter(new DefaultPrettyPrinter());
+			jg.useDefaultPrettyPrinter();
 
 			// Builds a map of TFs to replace existing TFs 
 			Map<String,TransferFunctionDao> tfsMap = tfs.stream().collect(Collectors.toMap(
@@ -432,7 +432,7 @@ public class JsonWriter implements CdbWriter {
 	 * <BR>If a emplate in <code>templates</code> already exists in the file, the latter
 	 * is replaced by that in the set.
 	 * 
-	 * @param tfs The TFs to write in the file
+	 * @param templates The templates to write in the file
 	 * @param append: if <code>true</code> the passed TFs are appended to the file
 	 *                otherwise a new file is created
 	 */
@@ -449,7 +449,7 @@ public class JsonWriter implements CdbWriter {
 		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
 		if (!f.exists() || !append) {
 			try {
-				mapper.writeValue(f, templates);
+				mapper.writerWithDefaultPrettyPrinter().writeValue(f, templates);
 			}catch (Throwable t) {
 				throw new IasCdbException("Error writing JSON TFss",t);
 			}
@@ -489,7 +489,7 @@ public class JsonWriter implements CdbWriter {
 				throw new IasCdbException("Error creating the JSON generator", ioe);
 			} 
 			
-			jg.setPrettyPrinter(new DefaultPrettyPrinter());
+			jg.useDefaultPrettyPrinter();
 
 			// Builds a map of templates to replace existing Templates 
 			Map<String,TemplateDao> templatesMap = templates.stream().collect(Collectors.toMap(
@@ -554,6 +554,7 @@ public class JsonWriter implements CdbWriter {
 	 */
 	private void putNextIasio(IasioDao iasio, JsonGenerator jg) throws IOException {
 		Objects.requireNonNull(iasio);
+		jg.useDefaultPrettyPrinter();
 		jg.writeStartObject();
 		jg.writeStringField("id",iasio.getId());
 		if (iasio.getShortDesc()!=null && !iasio.getShortDesc().isEmpty()) {
@@ -584,6 +585,7 @@ public class JsonWriter implements CdbWriter {
 	 */
 	private void putNextTF(TransferFunctionDao tf, JsonGenerator jg) throws IOException {
 		Objects.requireNonNull(tf);
+        jg.useDefaultPrettyPrinter();
 		jg.writeStartObject();
 		jg.writeStringField("className",tf.getClassName());
 		jg.writeStringField("implLang",tf.getImplLang().toString());
@@ -599,6 +601,7 @@ public class JsonWriter implements CdbWriter {
 	 */
 	private void putNextTemplate(TemplateDao tDao, JsonGenerator jg) throws IOException {
 		Objects.requireNonNull(tDao);
+        jg.useDefaultPrettyPrinter();
 		jg.writeStartObject();
 		jg.writeStringField("id",tDao.getId());
 		jg.writeStringField("min",Integer.valueOf(tDao.getMin()).toString());
