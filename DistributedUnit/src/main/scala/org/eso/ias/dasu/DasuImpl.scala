@@ -301,17 +301,34 @@ class DasuImpl (
    */
   override def inputsReceived(iasios: Iterable[IASValue[_]]): Unit = synchronized {
     assert(iasios.nonEmpty)
+
+    def acceptIasValue(value: IASValue[_]): Boolean = {
+      assert(Option(value).isDefined)
+      // Accept the value if
+      //  * its ID is the ID of an input
+      //  * its timetsamp is newer that that already in the map of inputs to process
+      getInputIds().contains(value.id)
+
+      val valueFromMap = Option(notYetProcessedInputs.get(value.id))
+      valueFromMap.map (v => {
+        val valueTstamp = value.dasuProductionTStamp.orElse(value.pluginProductionTStamp.get())
+        val tstampOfValueInMap = v.dasuProductionTStamp.orElse(v.pluginProductionTStamp.get())
+
+        valueTstamp>=tstampOfValueInMap
+      }).getOrElse(true) // Not in map: accept the value
+
+
+    }
         
     // Merge the inputs with the buffered ones to keep only the last updated values
-    iasios.filter( p => getInputIds().contains(p.id)).foreach(iasio => {
-     fullRunningIdsOfInputs.synchronized{
-       fullRunningIdsOfInputs.put(iasio.id, iasio.fullRunningId)
-     }
-      notYetProcessedInputs.synchronized{
+    notYetProcessedInputs.synchronized {
+      iasios.filter( acceptIasValue(_)).foreach(iasio => {
+        fullRunningIdsOfInputs.synchronized { fullRunningIdsOfInputs.put(iasio.id, iasio.fullRunningId) }
+
         notYetProcessedInputs.put(iasio.id,iasio)
-      }
-    })
-    
+      })
+    }
+
     // The new output must be immediately recalculated and sent unless 
     // * the throttling is already in place (i.e. calculation already delayed)
     // * the last value has been updated shortly before 
