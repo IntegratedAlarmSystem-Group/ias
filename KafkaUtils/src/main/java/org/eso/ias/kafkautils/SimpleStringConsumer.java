@@ -14,6 +14,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * <P>
  * The strings are passed one at a time to the listener for further processing.
  *
+ * This class is inefficient compared to {@link KafkaStringsConsumer} that allows to process
+ * bounce of events in one single call.
  *
  * @author acaproni
  *

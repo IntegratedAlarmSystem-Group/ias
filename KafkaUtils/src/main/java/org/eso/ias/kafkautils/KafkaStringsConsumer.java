@@ -20,6 +20,15 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * A generic kafka consumer that forwards all the strings received in
  * each message to the listener.
+ *
+ * Kafka optimize the polling by returning a bounch of messages to each poll:
+ * objects of this class returns all the records received in a poll to the listener.
+ * If the listener wants to process one message at a time, should use {@link SimpleStringConsumer}
+ * instead.
+ *
+ * {@link KafkaStringsConsumer} runs the next poll after the listener terminates processing the
+ * records.
+ *
  * <P>
  * Kafka properties are fully customizable by calling {@link #setUp(Properties)}:
  * defaults values are used for the missing ones.
@@ -27,10 +36,10 @@ import java.util.concurrent.atomic.AtomicReference;
  * <EM>Life cycle</em>: {@link #setUp()} or {@link #setUp(Properties)}
  *                         must be called to initialize the object;
  *                         {@link #tearDown()} must be called when finished using the object;
- *                         {@link #startGettingEvents(StartPosition, StringsConsumer)} must be called to start
+ *                         {@link #startGettingEvents(StringsConsumer, StartPosition)} must be called to start
  *                         polling events from the kafka topic
  *
- * {@link #startGettingEvents(StartPosition, StringsConsumer)} returns when the consumer has been assigned to
+ * {@link #startGettingEvents(StringsConsumer, StartPosition)} returns when the consumer has been assigned to
  * at least one partition. There are situations when the partitions assigned to the consumer
  * can be revoked and reassigned like for example when another consumer subscribe or disconnect
  * as the assignment of consumers to partitions is left to kafka in this version.
