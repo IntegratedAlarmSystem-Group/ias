@@ -299,7 +299,7 @@ class DasuImpl (
    * @param iasios the inputs received
    * @see InputsListener
    */
-  override def inputsReceived(iasios: Set[IASValue[_]]): Unit = synchronized {
+  override def inputsReceived(iasios: Iterable[IASValue[_]]): Unit = synchronized {
     assert(iasios.nonEmpty)
         
     // Merge the inputs with the buffered ones to keep only the last updated values
