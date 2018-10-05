@@ -104,12 +104,15 @@ public class FilteredConsumerTest implements IasioListener {
 	}
 
 	@Override
-	public void iasioReceived(IASValue<?> event) {
-		assertNotNull(event);
-		processedMessages.incrementAndGet();
-		receivedIasios.add(event);
-		numOfEventsToReceive.countDown();
-		logger.info("Event of id [{}] received",event.id);
+	public void iasiosReceived(Collection<IASValue<?>> events) {
+		assertNotNull(events);
+
+		events.forEach( value -> {
+            processedMessages.incrementAndGet();
+            receivedIasios.add(value);
+            numOfEventsToReceive.countDown();
+            logger.info("Event of id [{}] received",value.id);
+        });
 	}
 	
 	/**
