@@ -108,7 +108,7 @@ abstract class Dasu(
    * @param iasios the inputs received
    * @see InputsListener
    */
-  override def inputsReceived(iasios: Set[IASValue[_]])
+  override def inputsReceived(iasios: Iterable[IASValue[_]])
   
   /**
    * Release all the resources before exiting
