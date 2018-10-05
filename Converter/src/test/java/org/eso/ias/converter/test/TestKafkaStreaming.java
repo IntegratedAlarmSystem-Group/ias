@@ -100,7 +100,8 @@ public class TestKafkaStreaming extends ConverterTestBase {
 			coundownLatch.set(new CountDownLatch(n));
 			return coundownLatch.get();
 		}
-		
+
+		@Override
 		public synchronized void iasiosReceived(Collection<IASValue<?>> iasValues) {
 			iasValues.forEach( iasValue -> {
 				logger.info("Events received [{}]",iasValue.toString());
