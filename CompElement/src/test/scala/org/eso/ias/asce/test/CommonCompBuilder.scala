@@ -1,4 +1,4 @@
-package org.eso.ias.component.test
+package org.eso.ias.asce.test
 
 import org.eso.ias.types.Identifier
 import org.eso.ias.types.InOut

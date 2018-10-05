@@ -46,7 +46,7 @@ export IAS_LOGS_FOLDER=$IAS_ROOT/logs
 export IAS_TMP_FOLDER=$IAS_ROOT/tmp
 export IAS_CONFIG_FOLDER=$IAS_ROOT/config
 
-export PYTHONPATH="../lib/python:$IAS_ROOT/lib/python:$PYTHONPATH"
+export PYTHONPATH="../../lib/python:$IAS_ROOT/lib/python:$PYTHONPATH"
 
 PATH="../../bin:$IAS_ROOT/bin:$JAVA_HOME/bin:$JRE_HOME/bin:$SCALA_HOME/bin:$PATH"
 export PATH
