@@ -10,45 +10,32 @@ import java.util.Set;
  * @author acaproni
  */
 public enum OperationalMode {
-    CLOSING/**
-     * Shutting down
-     */
-    ,
+    /** Shutting down */
+    CLOSING,
 
-    DEGRADED/**
-     * Only partially operational
-     */
-    ,
+    /** Only partially operational */
+    DEGRADED,
 
-    INITIALIZATION/**
-     * Initialization on going
-     */
-    ,
+    /** Initialization on going */
+    INITIALIZATION,
 
-    MAINTENANCE/**
-     * Maintenance
-     */
-    ,
+    /** Maintenance */
+    MAINTENANCE,
 
-    OPERATIONAL/**
-     * Fully operational
-     */
-    ,
+    /** Fully operational */
+    OPERATIONAL,
 
-    SHUTTEDDOWN/**
-     * Shutted down
-     */
-    ,
+    /** Shut down */
+    SHUTTEDDOWN,
 
-    STARTUP/**
-     * Starting up
-     */
-    ,
+    /** Starting up */
+    STARTUP,
 
-    UNKNOWN/**
-     * Unknown state
-     */
-    ;
+    /** Unknown state */
+    UNKNOWN,
+
+    /** Device malfunctioning */
+    MALFUNCTIONING;
 
     /**
      * Get the OperationalMode from the modes if they agree or
