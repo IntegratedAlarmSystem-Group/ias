@@ -57,7 +57,7 @@ public class KafkaStringsConsumer implements Runnable {
          * Sends the strings received from the kafka topic
          * to the listener
          */
-        public void stringsReceived(Collection<String> strings);
+        void stringsReceived(Collection<String> strings);
     }
 
     /**
@@ -210,13 +210,11 @@ public class KafkaStringsConsumer implements Runnable {
         mergeDefaultProps(userPros);
         consumer = new KafkaConsumer<>(userPros);
 
-        shutDownThread = new Thread() {
-            @Override
-            public void run() {
-                isShuttingDown.set(true);
-                tearDown();
-            }
-        };
+        shutDownThread = new Thread( () -> {
+            isShuttingDown.set(true);
+            tearDown();
+        });
+
         Runtime.getRuntime().addShutdownHook(shutDownThread);
 
         isInitialized.set(true);
@@ -302,7 +300,7 @@ public class KafkaStringsConsumer implements Runnable {
 
     /**
      * Build and return the default properties for the consumer
-     * @return
+     * @return the default properites
      */
     private Properties getDefaultProps() {
         Properties props = new Properties();
@@ -364,11 +362,14 @@ public class KafkaStringsConsumer implements Runnable {
                  * @return a string of topic:partition
                  */
                 private String formatPartitionsStr(Collection<TopicPartition> parts) {
-                    String partitions = "";
+                    StringBuilder partitions = new StringBuilder();
                     for (TopicPartition topicPartition: parts ) {
-                        partitions=partitions+topicPartition.topic()+":"+topicPartition.partition()+" ";
+                        partitions.append(topicPartition.topic());
+                        partitions.append(':');
+                        partitions.append(topicPartition.partition());
+                        partitions.append(' ');
                     }
-                    return partitions;
+                    return partitions.toString();
                 }
 
                 @Override
