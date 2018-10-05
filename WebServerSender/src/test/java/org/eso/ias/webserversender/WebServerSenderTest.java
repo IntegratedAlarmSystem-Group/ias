@@ -14,6 +14,7 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.*;
 
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.websocket.server.WebSocketHandler;
@@ -180,19 +181,23 @@ public class WebServerSenderTest {
 		props.put("org.eso.ias.senders.kafka.inputstream", this.kafkaTopic);
 		props.put("org.eso.ias.senders.kafka.servers", this.kafkaServer);
 		props.put("org.eso.ias.senders.webserver.uri", this.webserverUri);
-		
-		
+
+
 		HbMsgSerializer hbSer = new HbJsonSerializer();
 		HbProducer hProd = new HbLogProducer(hbSer);
-		
-		
+
+		Set<String> idsOfIDsToAccept = new HashSet<>();
+		Set<IASTypes> idsOfTypesToAccept = new HashSet<>();
+
 		this.webServerSender = new WebServerSender(
 				"WebServerSender",
 				KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
-				props, 
+				props,
 				listener,
 				1,
-				hProd);
+				hProd,
+				idsOfIDsToAccept,
+				idsOfTypesToAccept);
 		this.webServerSender.setUp();
 		logger.info("WebServerSender initialized...");
 	}
