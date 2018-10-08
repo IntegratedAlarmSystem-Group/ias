@@ -9,7 +9,9 @@
   "transferFunctionID":"org.eso.ias.tf.AnotherFunction",
   "inputIDs":["iasioID-1","iasioID-2"],
   "templatedInputs": [
-    { "iasioId":"", "templateId":"", "instanceNum":3 }
+    { "iasioId":"TempInput", "templateId":"templated-inputs", "instanceNum":3 },
+    { "iasioId":"TempInput", "templateId":"templated-inputs", "instanceNum":4 },
+    { "iasioId":"TempInput", "templateId":"templated-inputs", "instanceNum":5 }
   ]
 
 }

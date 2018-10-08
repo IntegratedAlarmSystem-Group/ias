@@ -2,5 +2,5 @@
   "id":"DasuID2",
   "asceIDs":["ASCE-ID1","ASCE-WITH-TEMPLATED-INPUTS"],
   "outputId":"OUTID-DASU2",
-  "logLevel":"FATAL"
+  "logLevel":"WARN"
 }
