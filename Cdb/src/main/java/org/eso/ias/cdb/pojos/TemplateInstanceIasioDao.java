@@ -15,6 +15,11 @@ import java.util.Objects;
 @Table(name = "TEMPL_INST_IASIO")
 public class TemplateInstanceIasioDao {
 
+    /**
+     * Empty constructor
+     */
+    public TemplateInstanceIasioDao() {}
+
     @Id
     @SequenceGenerator(name="TEMPL_INST_SEQ_GENERATOR", sequenceName="TEMPL_INST_SEQ_GENERATOR", allocationSize=1)
     @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="TEMPL_INST_SEQ_GENERATOR")
@@ -76,5 +81,17 @@ public class TemplateInstanceIasioDao {
     @Override
     public int hashCode() {
         return Objects.hash(id, templateId, instance, iasio);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder ret = new StringBuilder("Templated IASIO = [ IASIO ID=");
+        ret.append(iasio.getId());
+        ret.append(", template id =");
+        ret.append(templateId);
+        ret.append(", instance=");
+        ret.append(instance);
+        ret.append(']');
+        return ret.toString();
     }
 }
