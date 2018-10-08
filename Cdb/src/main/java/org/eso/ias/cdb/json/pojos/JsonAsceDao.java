@@ -1,5 +1,6 @@
 package org.eso.ias.cdb.json.pojos;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.eso.ias.cdb.pojos.AsceDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.PropertyDao;
@@ -48,12 +49,14 @@ public class JsonAsceDao {
      * The templated inputs of the ASCE
      */
     @Basic(optional=true)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
 	private final Set<JsonTemplatedInputsDao> templatedInputs= new HashSet<>();
 	
 	/**
 	 * The ID of the template for implementing replication
 	 */
 	@Basic(optional=true)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
 	private String templateId;
 	
 	/**
