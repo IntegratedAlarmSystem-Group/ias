@@ -1,14 +1,6 @@
 package org.eso.ias.webserversender;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-
+import org.apache.commons.cli.*;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
@@ -21,6 +13,7 @@ import org.eso.ias.cdb.json.CdbFiles;
 import org.eso.ias.cdb.json.CdbJsonFiles;
 import org.eso.ias.cdb.json.JsonReader;
 import org.eso.ias.cdb.pojos.IasDao;
+import org.eso.ias.cdb.pojos.LogLevelDao;
 import org.eso.ias.cdb.rdb.RdbReader;
 import org.eso.ias.heartbeat.HbEngine;
 import org.eso.ias.heartbeat.HbMsgSerializer;
@@ -31,12 +24,22 @@ import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener;
-import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
+import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition;
+import org.eso.ias.logging.IASLogger;
+import org.eso.ias.types.IASTypes;
+import org.eso.ias.types.IASValue;
 import org.eso.ias.types.IasValueJsonSerializer;
 import org.eso.ias.types.IasValueSerializerException;
-import org.eso.ias.types.IASValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @WebSocket(maxTextMessageSize = 64 * 1024)
 public class WebServerSender implements IasioListener {
@@ -118,12 +121,12 @@ public class WebServerSender implements IasioListener {
 	 * Time in seconds to wait before attempt to reconnect
 	 */
 	private int reconnectionInterval = 2;
-	
+
 	/**
 	 * The sender of heartbeats
 	 */
 	private final HbEngine hbEngine;
-	
+
 	/**
 	 * A flag set to <code>true</code> if the socket is connected
 	 */
@@ -153,27 +156,31 @@ public class WebServerSender implements IasioListener {
 	 * Constructor
 	 *
 	 * @param senderID Identifier of the WebServerSender
-	 * @param kafkaServers Kafka servers URL 
+	 * @param kafkaServers Kafka servers URL
 	 * @param props the properties to get kafka servers, topic names and webserver uri
 	 * @param listener The listenr of the messages sent to the websocket server
 	 * @param hbFrequency the frequency of the heartbeat (seconds)
 	 * @param hbProducer the sender of HBs
-	 * @throws URISyntaxException 
+	 * @param idsOfIDsToAccept The IDs of the IASIOs to consume
+	 * @param idsOfTypesToAccept The IASTypes to consume
+	 * @throws URISyntaxException
 	 */
 	public WebServerSender(
-			String senderID, 
+			String senderID,
 			String kafkaServers,
-			Properties props, 
+			Properties props,
 			WebServerSenderListener listener,
 			int hbFrequency,
-			HbProducer hbProducer) throws URISyntaxException {
+			HbProducer hbProducer,
+			Set<String> idsOfIDsToAccept,
+			Set<IASTypes> idsOfTypesToAccept) throws URISyntaxException {
 		Objects.requireNonNull(senderID);
 		if (senderID.trim().isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty converter ID");
 		}
 		this.senderID=senderID.trim();
-		
-		
+
+
 		Objects.requireNonNull(kafkaServers);
 		if (kafkaServers.trim().isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty kafka servers list");
@@ -187,15 +194,16 @@ public class WebServerSender implements IasioListener {
 		logger.debug("Websocket connection URI: "+ webserverUri);
 		logger.debug("Kafka server: "+ kafkaServers);
 		senderListener = Optional.ofNullable(listener);
-		kafkaConsumer = new KafkaIasiosConsumer(kafkaServers, sendersInputKTopicName, this.senderID);
-		
+		kafkaConsumer = new KafkaIasiosConsumer(kafkaServers, sendersInputKTopicName, this.senderID, idsOfIDsToAccept, idsOfTypesToAccept);
+
 		if (hbFrequency<=0) {
 			throw new IllegalArgumentException("Invalid frequency "+hbFrequency);
 		}
-		
+
 		Objects.requireNonNull(hbProducer);
 		hbEngine = HbEngine.apply(senderID, hbFrequency, hbProducer);
 	}
+
 
 	/**
 	 * Operations performed on connection close
@@ -245,29 +253,34 @@ public class WebServerSender implements IasioListener {
 	/**
 	 * This method receives IASValues published in the BSDB.
 	 *
-	 * @see {@link IasioListener#iasioReceived(IASValue)}
+	 * @see {@link IasioListener#iasiosReceived(Collection)}
 	 */
 	@Override
-	public synchronized void iasioReceived(IASValue<?> event) {
-		if (!socketConnected.get()) {
-			// The socket is not connected: discard the event
-			return;
-		}
-		final String value;
-		try {
-			value = serializer.iasValueToString(event);
-		} catch (IasValueSerializerException avse){
-			logger.error("Error converting the event into a string", avse);
-			return;
-		}
-		
-		sessionOpt.ifPresent( session -> {
-			session.getRemote().sendStringByFuture(value);
-			logger.debug("Value sent: " + value);
-			this.notifyListener(value);
-		});
-	}
-	
+	public synchronized void iasiosReceived(Collection<IASValue<?>> events) {
+        if (!socketConnected.get()) {
+            // The socket is not connected: discard the event
+            return;
+        }
+
+        events.forEach( event -> {
+            final String value;
+            try {
+                value = serializer.iasValueToString(event);
+            } catch (IasValueSerializerException avse){
+                logger.error("Error converting the event into a string", avse);
+                return;
+            }
+
+            sessionOpt.ifPresent( session -> {
+                session.getRemote().sendStringByFuture(value);
+                logger.debug("Value sent: " + value);
+                this.notifyListener(value);
+            });
+        });
+
+
+    }
+
 	public void setUp() {
 		hbEngine.start();
 		kafkaConsumer.setUp();
@@ -331,54 +344,163 @@ public class WebServerSender implements IasioListener {
 	public void setReconnectionInverval(int interval) {
 		reconnectionInterval = interval;
 	}
-	
-	/** 
-	 * Build the usage message 
+
+	// /**
+	//  * Build the usage message
+	//  */
+	// public static void printUsage() {
+	// 	System.out.println("Usage: WebServerSender Sender-ID [-jcdb JSON-CDB-PATH]");
+	// 	System.out.println("  -jcdb force the usage of the JSON CDB");
+	// 	System.out.println("  Sender-ID: the identifier of the web server sender");
+	// 	System.out.println("  JSON-CDB-PATH: the path of the JSON CDB");
+	// }
+
+	/**
+	 * Print the usage string
+	 *
+	 * @param options The options expected in the command line
 	 */
-	public static void printUsage() {
-		System.out.println("Usage: WebServerSender Sender-ID [-jcdb JSON-CDB-PATH]");
-		System.out.println("  -jcdb force the usage of the JSON CDB");
-		System.out.println("  Sender-ID: the identifier of the web server sender");
-		System.out.println("  JSON-CDB-PATH: the path of the JSON CDB");
+	private static void printUsage(Options options) {
+		HelpFormatter formatter = new HelpFormatter();
+		formatter.printHelp( "WebServerSender Sender-ID ", options );
 	}
 
 	public static void main(String[] args) throws Exception {
-		if (args.length!=1 && args.length!=3) {
-			printUsage();
-			throw new IllegalArgumentException();
+
+		// Use apache CLI for command line parsing
+		Options options = new Options();
+        options.addOption("h", "help", false, "Print help and exit");
+        options.addOption("j", "jcdb", true, "Use the JSON Cdb at the passed path");
+		options.addOption(Option.builder("t").longOpt("filter-types").desc("Space separated list of types to send (LONG, INT, SHORT, BYTE, DOUBLE, FLOAT, BOOLEAN, CHAR, STRING, ALARM)").hasArgs().argName("TYPES").build());
+		options.addOption(Option.builder("i").longOpt("filter-ids").desc("Space separated list of ids to send").hasArgs().argName("IASIOS-IDS").build());
+        options.addOption("x", "logLevel", true, "Set the log level (TRACE, DEBUG, INFO, WARN, ERROR)");
+
+		// Parse the command line
+        CommandLineParser parser = new DefaultParser();
+        CommandLine cmdLine = null;
+        try {
+            cmdLine = parser.parse(options, args);
+        } catch (Exception e) {
+			logger.error("Error parsing the comamnd line: " + e.getMessage());
+			printUsage(options);
+			System.exit(-1);
+        }
+
+		// Get help option
+		boolean help = cmdLine.hasOption('h');
+
+		// Get Required Sender ID
+		List<String> remaingArgs = cmdLine.getArgList();
+        Optional<String> senderId;
+        if (remaingArgs.isEmpty()) {
+            senderId = Optional.empty();
+        } else {
+            senderId = Optional.of(remaingArgs.get(0));
+        }
+
+		// Show help or error message if Sender ID is not specified
+		if (help) {
+			printUsage(options);
+			System.exit(0);
 		}
-		
-		String id = args[0].trim();
-		if (id.isEmpty()) {
-			printUsage();
-			throw new IllegalArgumentException("Invalid identifier");
+		if (!help && !senderId.isPresent()) {
+			System.err.println("Missing Sender ID");
+			printUsage(options);
+			System.exit(-1);
 		}
-		
-		if (args.length==3 && !args[1].equals("-jcdb")) {
-			printUsage();
-			throw new IllegalArgumentException();
+
+		// Get filtered TYPES
+		Set<IASTypes> acceptedTypes = new HashSet<>();
+		if (cmdLine.hasOption("t")) {
+			List<String> typesNames = Arrays.asList(cmdLine.getOptionValues('t'));
+			for (String typeName : typesNames) {
+				if (typeName.toUpperCase().equals("LONG")) acceptedTypes.add(IASTypes.LONG);
+		    	else if (typeName.toUpperCase().equals("INT")) acceptedTypes.add(IASTypes.INT);
+		    	else if (typeName.toUpperCase().equals("SHORT")) acceptedTypes.add(IASTypes.SHORT);
+		    	else if (typeName.toUpperCase().equals("BYTE")) acceptedTypes.add(IASTypes.BYTE);
+		    	else if (typeName.toUpperCase().equals("DOUBLE")) acceptedTypes.add(IASTypes.DOUBLE);
+		    	else if (typeName.toUpperCase().equals("FLOAT")) acceptedTypes.add(IASTypes.FLOAT);
+		    	else if (typeName.toUpperCase().equals("BOOLEAN")) acceptedTypes.add(IASTypes.BOOLEAN);
+		    	else if (typeName.toUpperCase().equals("CHAR")) acceptedTypes.add(IASTypes.CHAR);
+		    	else if (typeName.toUpperCase().equals("STRING")) acceptedTypes.add(IASTypes.STRING);
+		    	else if (typeName.toUpperCase().equals("ALARM")) acceptedTypes.add(IASTypes.ALARM);
+		    	else {
+					System.err.println("Unsupported Type");
+					printUsage(options);
+					System.exit(-1);
+				}
+			}
+			String types = "";
+			for (IASTypes type: acceptedTypes) {
+				types += "," + type.typeName;
+			}
+			logger.info("Sender will accept IASIOS of types: [" + types.substring(1) + "]");
 		}
-		
-		CdbReader reader;
-		if (args.length == 3) {
-			CdbFiles cdbFiles = new CdbJsonFiles(args[2]);
-			reader= new JsonReader(cdbFiles);
-		} else {
-			reader= new RdbReader();
+
+		// Get filtered IASIOS ids
+		Set<String> acceptedIds = new HashSet<>();
+		if (cmdLine.hasOption("i")) {
+			acceptedIds = new HashSet<String>(Arrays.asList(cmdLine.getOptionValues('i')));
+			String ids = "";
+			for (String item: acceptedIds) {
+				ids += "," + item;
+			}
+			logger.info("Sender will accept IASIOS with ids: [" + ids.substring(1) + "]");
 		}
-		
-		Optional<IasDao> optIasdao = reader.getIas();
-		reader.shutdown();
-		
+
+		// Get Optional CDB filepath
+		CdbReader cdbReader = null;
+		if (cmdLine.hasOption("j")) {
+			String cdbPath = cmdLine.getOptionValue('j').trim();
+            File f = new File(cdbPath);
+            if (!f.isDirectory() || !f.canRead()) {
+                System.err.println("Invalid file path "+cdbPath);
+                System.exit(-3);
+            }
+
+            CdbFiles cdbFiles=null;
+            try {
+                cdbFiles= new CdbJsonFiles(f);
+            } catch (Exception e) {
+                System.err.println("Error initializing JSON CDB "+e.getMessage());
+                System.exit(-4);
+            }
+            cdbReader = new JsonReader(cdbFiles);
+        } else {
+			cdbReader = new RdbReader();
+        }
+
+		// Read ias configuration from CDB
+		Optional<IasDao> optIasdao = cdbReader.getIas();
+		cdbReader.shutdown();
+
 		if (!optIasdao.isPresent()) {
 			throw new IllegalArgumentException("IAS DAO not fund");
 		}
+
+		// Set the log level
+		Optional<LogLevelDao> logLvl=null;
+		Optional<String> logLevelName = Optional.ofNullable(cmdLine.getOptionValue('x'));
+        try {
+            logLvl = logLevelName.map(name -> LogLevelDao.valueOf(name));
+        } catch (Exception e) {
+            System.err.println("Unrecognized log level");
+			printUsage(options);
+            System.exit(-1);
+        }
+		Optional<LogLevelDao> logLevelFromIasOpt = Optional.ofNullable(optIasdao.get().getLogLevel());
+        IASLogger.setLogLevel(
+             logLvl.map(l -> l.toLoggerLogLevel()).orElse(null),
+             logLevelFromIasOpt.map(l -> l.toLoggerLogLevel()).orElse(null),
+             null);
+
+		// Set HB frequency
 		int frequency = optIasdao.get().getHbFrequency();
-		
-		
-		// Serializer of HB messages
+
+		// Set serializer of HB messages
 		HbMsgSerializer hbSerializer = new HbJsonSerializer();
-		
+
+		// Set kafka server from properties or default
 		String kServers=System.getProperty(KAFKA_SERVERS_PROP_NAME);
 		if (kServers==null || kServers.isEmpty()) {
 			kServers=optIasdao.get().getBsdbUrl();
@@ -387,17 +509,20 @@ public class WebServerSender implements IasioListener {
 			kServers=KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS;
 		}
 
+		String id = senderId.get();
 		HbProducer hbProd = new HbKafkaProducer(id, kServers, hbSerializer);
-		
+
 		WebServerSender ws=null;
-		try { 
+		try {
 			ws = new WebServerSender(
-				id, 
+				id,
 				kServers,
-				System.getProperties(), 
+				System.getProperties(),
 				null,
 				frequency,
-				hbProd);
+				hbProd,
+				acceptedIds,
+				acceptedTypes);
 		} catch (URISyntaxException e) {
 			logger.error("Could not instantiate the WebServerSender",e);
 			System.exit(-1);

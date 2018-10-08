@@ -1,25 +1,31 @@
 package org.eso.ias.dasu.subscriber
 
-import org.eso.ias.logging.IASLogger
-import org.eso.ias.types.IasValueJsonSerializer
-import java.util.Properties
-import org.eso.ias.kafkautils.KafkaHelper
-import scala.util.Try
-import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition
-import scala.collection.mutable.{HashSet => MutableSet}
-import org.eso.ias.kafkautils.KafkaIasiosConsumer
+import java.util.{Collection, Properties}
+
+import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosConsumer}
 import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener
+import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition
+import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IASValue
 
+import scala.collection.JavaConverters
+import scala.util.{Failure, Try}
+
 /** 
- *  Read IASValues from the kafka queue 
- *  and forward them to the listener for processing.
- *  
- *  KafkaSubscriber delegates to KafkaIasiosConsumer.
- *  
- *  @param dasuId the identifier of the owner
- *  @param kafkaConsumer the Kafka consumer
- *  @param props additional properties
+  *  Read IASValues from the kafka queue
+  *  and forward them to the listener for processing.
+  *
+  *  KafkaSubscriber delegates to KafkaIasiosConsumer and it is mostly
+  *  a covenience class to use the java KafkaIasiosConsumer class from scala
+  *
+  *  Filtering by ID, passed in startSuscriber, is supported by delegating
+  *  to the KafkaIasiosConsumer.
+  *
+  *  @param dasuId the identifier of the owner
+  *  @param kafkaConsumer the Kafka consumer
+  *  @param props additional properties
+  *
+  * @author acaproni
  */
 class KafkaSubscriber(
     val dasuId: String, 
@@ -33,55 +39,46 @@ extends IasioListener with InputSubscriber {
   props.setProperty("client.id",dasuId)
   props.setProperty("group.id", dasuId+"-GroupID")
   
-  /** The logger */
-  private val logger = IASLogger.getLogger(this.getClass)
-  
-  /** To serialize IASValues to JSON strings */
-  private val jsonSerializer = new IasValueJsonSerializer()
-  
   /** The listener of events */
   private var listener: Option[InputsListener] = None
-  
-  /** 
-   *  The set of inputs accepted by the listener
-   *  If empty accepts all the inputs
-   */
-  private val acceptedInputs = MutableSet[String]()
 
-  
   /**
-	 * Process an event (a String) received from the kafka topic
-	 * 
-	 * @param iasValue The value received in the topic
-	 * @see KafkaConsumerListener
+	  * Forward the IASValue received from the kafka topic
+    * to the listener
+	  *
+	  * @param iasValues The values read from the BSDB
+	  * @see IasiosListener
 	 */
-	override def iasioReceived(iasValue: IASValue[_]): Unit = {
-	  try {
-	    if (acceptedInputs.isEmpty || acceptedInputs.contains(iasValue.id)) {
-	      listener.foreach( l => l.inputsReceived(Set(iasValue)))
-	    }
-	  } catch {
-	    case e: Exception => logger.error("Subscriber of [{}] got an error processing event [{}]", dasuId,iasValue.toString,e)
-	  }
+	override def iasiosReceived(iasValues: Collection[IASValue[_]]): Unit = {
+    assert(Option(iasValues).isDefined)
+    val receivedIasios = JavaConverters.collectionAsScalaIterable(iasValues)
+     KafkaSubscriber.logger.debug(("Subscriber of [{}] receeved {} events "),dasuId,receivedIasios.size)
+    Try(listener.foreach( l => l.inputsReceived(receivedIasios))) match {
+      case Failure(e) =>
+        KafkaSubscriber.logger.error("Subscriber of [{}] got an exception processing events: up to {} values potentially lost!",
+          dasuId,
+          receivedIasios.size,
+          e)
+      case _ =>
+    }
 	}
   
   /** Initialize the subscriber */
   def initializeSubscriber(): Try[Unit] = {
-    logger.info("Initializing subscriber of [{}]",dasuId)
+    KafkaSubscriber.logger.debug("Initializing subscriber of [{}]",dasuId)
     Try{ 
       kafkaConsumer.setUp(props)
-      logger.info("Subscriber of [{}] intialized", dasuId)
+      KafkaSubscriber.logger.info("Subscriber of [{}] intialized", dasuId)
     }
   }
   
   /** CleanUp and release the resources */
   def cleanUpSubscriber(): Try[Unit] = {
-    logger.info("Cleaning up subscriber of [{}]",dasuId)
+    KafkaSubscriber.logger.debug("Cleaning up subscriber of [{}]",dasuId)
     Try{
       kafkaConsumer.tearDown()
-      logger.info("Subscriber of [{}] cleaned up", dasuId)
+      KafkaSubscriber.logger.info("Subscriber of [{}] cleaned up", dasuId)
     }
-    
   }
   
   /**
@@ -94,23 +91,35 @@ extends IasioListener with InputSubscriber {
    *                       (if empty accepts all the IasValues)
    */
   def startSubscriber(listener: InputsListener, acceptedInputs: Set[String]): Try[Unit] = {
-    require(Option(listener).isDefined)
+    val newListener = Option(listener)
+    require(newListener.isDefined)
     require(Option(acceptedInputs).isDefined)
+
+
     if (acceptedInputs.nonEmpty) {
-      logger.info("Starting subscriber with accepted IDs {}",acceptedInputs.mkString(", "))
+      kafkaConsumer.addIdsToFilter(JavaConverters.setAsJavaSet(acceptedInputs))
+      KafkaSubscriber.logger.info("New accepted IDs added by [{}]: {}",dasuId,acceptedInputs.mkString)
+
+      val acceptedIDs =JavaConverters.asScalaSet(kafkaConsumer.getAcceptedIds)
+      KafkaSubscriber.logger.info("Filter of IDs set in the subscriber of [{}]: {}",dasuId, acceptedIDs.mkString)
     } else {
-      logger.info("Starting subscriber accepting  all IDs")
+      KafkaSubscriber.logger.info("New accepted IDs set by [{}]: ",dasuId)
     }
-    this.acceptedInputs++=acceptedInputs
-    this.listener = Option(listener)
+
+    this.listener = newListener
+
     Try {
-      kafkaConsumer.startGettingEvents(StartPosition.END,this)
-      logger.info("The subscriber of [{}] is polling events from kafka",dasuId)
+      kafkaConsumer.startGettingEvents(StartPosition.END, this)
+      KafkaSubscriber.logger.info("The subscriber of [{}] is polling events from kafka",dasuId)
     }
   }
 }
 
+/**  KafkaSubscriber companion object */
 object KafkaSubscriber {
+  /** The logger */
+  private[KafkaSubscriber] val logger = IASLogger.getLogger(this.getClass)
+
   /** 
    *  Factory method
    *  
@@ -141,6 +150,6 @@ object KafkaSubscriber {
     val kafkaConsumer = new KafkaIasiosConsumer(kafkaBrokers,topic,dasuId+"Consumer")
     new KafkaSubscriber(dasuId,kafkaConsumer,props)
   }
-  
-  
+
 }
+

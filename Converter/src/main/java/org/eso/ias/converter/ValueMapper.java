@@ -185,7 +185,10 @@ public class ValueMapper implements Function<String, String> {
                 default: logger.error("Error translating {}",remoteSystemData.getId());
             }
         } catch (Exception e) {
-		    logger.error("Error converting value {} of type {}",remoteSystemData.getValue(),type);
+		    logger.error("Error converting moitor point [{}] with value {} of type {}",
+					remoteSystemData.getId(),
+					remoteSystemData.getValue(),
+                    type);
 		    return null;
         }
 

@@ -1,6 +1,6 @@
 {
 	"asceIDs":["ASCE-ID1"],
 	"outputId":"ThresholdAlarm",
-	"logLevel":"FATAL",
+	"logLevel":"WARN",
 	"id":"DasuWithOneASCE"
 }

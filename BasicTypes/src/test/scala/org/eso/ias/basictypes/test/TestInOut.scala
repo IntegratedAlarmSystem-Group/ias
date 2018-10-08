@@ -1,16 +1,8 @@
 package org.eso.ias.basictypes.test
 
-import org.scalatest.FlatSpec
-import org.eso.ias.types.Validity
-import org.eso.ias.types.Identifier
-import org.eso.ias.types.InOut
-import org.eso.ias.types.IASTypes
-import org.eso.ias.types.IdentifierType
-import org.eso.ias.types.IASValue
 import org.eso.ias.types.IasValidity._
-import org.eso.ias.types.OperationalMode
-import org.eso.ias.types.Alarm
-import org.eso.ias.types.IasValidity
+import org.eso.ias.types._
+import org.scalatest.FlatSpec
 
 /**
  * Test the LongMP
@@ -108,7 +100,7 @@ class TestInOut extends FlatSpec {
     val mpOutput: InOut[Long] = InOut.asOutput(id, IASTypes.LONG)
     assert(mpOutput.fromInputsValidity.isDefined)
 
-    val mp2 = mpOutput.updateFromIinputsValidity(Validity(RELIABLE))
+    val mp2 = mpOutput.updateFromInputsValidity(Validity(RELIABLE))
     assert(mp2.fromInputsValidity.isDefined)
     assert(mp2.fromInputsValidity.get == Validity(RELIABLE), "The validities differ")
   }
