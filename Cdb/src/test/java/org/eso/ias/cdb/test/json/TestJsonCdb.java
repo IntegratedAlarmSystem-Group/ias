@@ -1,32 +1,19 @@
 package org.eso.ias.cdb.test.json;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
-
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
-import org.eso.ias.cdb.json.CdbFiles;
-import org.eso.ias.cdb.json.CdbFolders;
-import org.eso.ias.cdb.json.CdbJsonFiles;
-import org.eso.ias.cdb.json.JsonReader;
-import org.eso.ias.cdb.json.JsonWriter;
+import org.eso.ias.cdb.json.*;
 import org.eso.ias.cdb.pojos.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test reading and writing of JSON CDB.
@@ -699,17 +686,23 @@ public class TestJsonCdb {
 		cdbFiles = new CdbJsonFiles(path);
 		cdbReader = new JsonReader(cdbFiles);
 
-		// Get the ASCE of DasuID1 that has no ASCE
-		Set<AsceDao> asces = cdbReader.getAscesForDasu("DasuID1");
-		assertTrue(asces.isEmpty());
-		// Get the ASCEs of DasuID2 that contains ASCE-ID1
-		Optional<AsceDao> asce = cdbReader.getAsce("ASCE-WITH-TEMPLATED-INPUTS");
+		// Get on ASCE without templated inputs
+        Optional<AsceDao> asce = cdbReader.getAsce("ASCE-ID4");
+        assertTrue(asce.isPresent());
+        assertTrue(asce.get().getTemplatedInstanceInputs().isEmpty());
+
+        // Get one ASCE with templated inputs
+		asce = cdbReader.getAsce("ASCE-WITH-TEMPLATED-INPUTS");
 		assertTrue(asce.isPresent());
 
-		assertTrue(asce.get().getTemplatedInstanceInputs().isEmpty());
-
 		Set<TemplateInstanceIasioDao> templInstances= asce.get().getTemplatedInstanceInputs();
-		assertEquals(templInstances.size(),1);
+		assertEquals(3,templInstances.size());
+
+		templInstances.forEach( ti -> {
+		    assertEquals("templated-inputs",ti.getTemplateId());
+		    assertEquals("TempInput",ti.getIasio().getId());
+		    assertTrue(ti.getInstance()>=3 && ti.getInstance()<=5);
+        });
 	}
 }
 

@@ -1,15 +1,14 @@
 package org.eso.ias.cdb.json.pojos;
 
+import org.eso.ias.cdb.pojos.AsceDao;
+import org.eso.ias.cdb.pojos.IasioDao;
+import org.eso.ias.cdb.pojos.PropertyDao;
+
+import javax.persistence.Basic;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import javax.persistence.Basic;
-
-import org.eso.ias.cdb.pojos.AsceDao;
-import org.eso.ias.cdb.pojos.IasioDao;
-import org.eso.ias.cdb.pojos.PropertyDao;
 
 /**
  * Pojos for JSON that replaces objects inclusion in the ASCE with their IDS.
@@ -48,6 +47,7 @@ public class JsonAsceDao {
     /**
      * The templated inputs of the ASCE
      */
+    @Basic(optional=true)
 	private final Set<JsonTemplatedInputsDao> templatedInputs= new HashSet<>();
 	
 	/**
@@ -230,4 +230,11 @@ public class JsonAsceDao {
 	public void setTemplateId(String templateId) {
 		this.templateId = templateId;
 	}
+
+    public Set<JsonTemplatedInputsDao> getTemplatedInputs() { return templatedInputs; }
+
+    public void setTemplatedInputs(Set<JsonTemplatedInputsDao> templInputs) {
+	    this.templatedInputs.clear();
+	    this.templatedInputs.addAll(templInputs);
+    }
 }
