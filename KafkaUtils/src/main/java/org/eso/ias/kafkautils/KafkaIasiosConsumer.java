@@ -1,11 +1,6 @@
 package org.eso.ias.kafkautils;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.Set;
-
+import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
 import org.eso.ias.types.IasValueJsonSerializer;
@@ -13,13 +8,12 @@ import org.eso.ias.types.IasValueStringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener;
-import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
+import java.util.*;
 /**
  * KafkaIasiosConsumer gets the strings from the passed IASIO kafka topic
- * from the SimpleStringConsumer and forwards IASIOs to the listener.
+ * from the {@link KafkaStringsConsumer} and forwards IASIOs to the listener.
  * <P>
- * Filtering is based on the ID of the IASIOs _and_ IASValue type: 
+ * Filtering is based on the ID of the IASIOs _and_ the IASValue type:
  * - if the ID of the received String is contained in {@link #acceptedIds}
  *   then the IASIO is forwarded to the listener otherwise is rejected.
  * - if the type of the {@link IASValue} is contained in {@link #acceptedTypes}
@@ -27,12 +21,13 @@ import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
  * 
  * <BR>If the caller does not set any filter, then all the received IASIOs 
  * will be forwarded to the listener.
+ *
  * IDs and type are evaluated in AND. 
  * 
  * @author acaproni
  */
 public class KafkaIasiosConsumer 
-implements KafkaConsumerListener {
+implements KafkaStringsConsumer.StringsConsumer {
 
 	/**
 	 * The listener to be notified of Iasios read
@@ -44,11 +39,11 @@ implements KafkaConsumerListener {
 	public interface IasioListener {
 
 		/**
-		 * Process an IASIO received from the kafka topic.
+		 * Process the IASIOs read from the kafka topic.
 		 *
-		 * @param event The IASIO received in the topic
+		 * @param events The IASIOs received in the topic
 		 */
-		public void iasioReceived(IASValue<?> event);
+		void iasiosReceived(Collection<IASValue<?>> events);
 	}
 	
 	/**
@@ -65,12 +60,12 @@ implements KafkaConsumerListener {
 	/**
 	 * The set of accepted IDs of IASIOs for the filtering
 	 */
-	private final Set<String> acceptedIds = Collections.synchronizedSet(new HashSet<>());
+	private volatile Set<String> acceptedIds = Collections.unmodifiableSet(new HashSet<>());
 	
 	/**
 	 * The set of accepted IDs of IASValue types for the filtering
 	 */
-	private final Set<IASTypes> acceptedTypes = Collections.synchronizedSet(new HashSet<>());
+	private volatile  Set<IASTypes> acceptedTypes = Collections.unmodifiableSet(new HashSet<>());
 	
 	/**
 	 * The listener to be notified when a IASIOs is read from the kafka topic
@@ -81,7 +76,7 @@ implements KafkaConsumerListener {
 	/**
 	 * The string consumer to get strings from teh kafka topic
 	 */
-	private final SimpleStringConsumer stringConsumer;
+	private final KafkaStringsConsumer stringsConsumer;
 
 	/**
 	 * Build a FilteredStringConsumer with no filters (i.e. all the
@@ -92,7 +87,7 @@ implements KafkaConsumerListener {
 	 * @param consumerID the ID of the consumer
 	 */
 	public KafkaIasiosConsumer(String servers, String topicName, String consumerID) {
-		stringConsumer = new SimpleStringConsumer(servers, topicName, consumerID);
+		stringsConsumer = new SimpleStringConsumer(servers, topicName, consumerID);
 	}
 	
 	/**
@@ -129,46 +124,63 @@ implements KafkaConsumerListener {
 	throws KafkaUtilsException {
 		Objects.requireNonNull(listener);
 		this.iasioListener=listener;
-		stringConsumer.startGettingEvents(startReadingFrom, this);
+		stringsConsumer.startGettingEvents(this,startReadingFrom);
 	}
 
 	/** 
-	 * Receive string published in the kafka topic and
-	 * forward IASIOs to the listener
+	 * Receive the string consumed from the kafka topic and
+	 * forward the IASIOs to the listener
 	 * 
-	 * @param event The string read from the Kafka topic
+	 * @param strings The strings read from the Kafka topic
 	 */
-	public void stringEventReceived(String event) {
-		assert(event!=null && !event.isEmpty());
-		IASValue<?> iasio=null;
-		try {
-			iasio = serializer.valueOf(event);
-		} catch (Exception e) {
-			logger.error("Error building the IASValue from string [{}]: value lost",event,e);
-			return;
-		}
-		if (accept(iasio)) {
-			try {
-				iasioListener.iasioReceived(iasio);
-			} catch (Exception e) {
-				logger.error("Error notifying the IASValue [{}] to the listener: value lost",iasio.toString(),e);
-			}
-		}
+	@Override
+	public void stringsReceived(Collection<String> strings) {
+		assert(strings!=null && !strings.isEmpty());
+
+		Collection<IASValue<?>> ret = new ArrayList<>();
+		strings.forEach( str -> {
+		    IASValue<?> iasio=null;
+		    try {
+			    iasio = serializer.valueOf(str);
+            } catch (Exception e) {
+                    logger.error("Error building the IASValue from string [{}]: value lost",str,e);
+                    return;
+            }
+            if (accept(iasio)) {
+                ret.add(iasio.updateReadFromBsdbTime(System.currentTimeMillis()));
+            }
+        });
+
+        try {
+            logger.debug("Notifying {} IASIOs to the listener listener",ret.size());
+            if (!ret.isEmpty()) {
+                iasioListener.iasiosReceived(ret);
+            }
+        } catch (Exception e) {
+            logger.error("Error notifying IASValues to the listener: {} values potentially lost",ret.size(),e);
+        }
 	}
-	
+
+    /**
+     * Accepts or rejects a IASValue against the filters, if set
+     *
+     * @param iasio The IASValue to accept or discard
+     * @return true if teh value is accpted; false otherwise
+     */
 	private boolean accept(IASValue<?> iasio) {
 		assert(iasio!=null);
-		boolean acceptedById;
-		synchronized(acceptedIds) {
-			acceptedById = acceptedIds.contains(iasio.id) || acceptedIds.isEmpty();
-		}
-		boolean acceptedByType=false;
-		if (acceptedById) { // No reason to check if already discarded
-			synchronized(acceptedTypes) {
-				acceptedByType = acceptedTypes.contains(iasio.valueType) || acceptedTypes.isEmpty();
-			}
-		}
-		return acceptedById && acceptedByType;
+
+		// Locally copy the sets that are immutable and volatile
+        // In case the setFilter is called in the mean time...
+		Set<String> acceptedIdsNow = acceptedIds;
+		Set<IASTypes> acceptedTypesNow = acceptedTypes;
+
+		boolean acceptedById = acceptedIdsNow.contains(iasio.id) || acceptedIdsNow.isEmpty();
+		if (!acceptedById) {
+		    return false;
+        } else {
+		    return acceptedTypesNow.isEmpty() || acceptedTypesNow.contains(iasio.valueType);
+        }
 	}
 
 	/**
@@ -179,43 +191,43 @@ implements KafkaConsumerListener {
 	 * @param userPros The user defined kafka properties
 	 */
 	public void setUp(Properties userPros) {
-		stringConsumer.setUp(userPros);
+		stringsConsumer.setUp(userPros);
 	}
 
 	/**
 	 * Initializes the consumer with default kafka properties
 	 */
 	public void setUp() {
-		stringConsumer.setUp();
+		stringsConsumer.setUp();
 	}
 
 	/**
 	 * Close and cleanup the consumer
 	 */
 	public void tearDown() {
-		stringConsumer.tearDown();
+		stringsConsumer.tearDown();
 	}
 
 	/**
 	 * @return the number of records processed
 	 */
 	public long getNumOfProcessedRecords() {
-		return stringConsumer.getNumOfProcessedRecords();
+		return stringsConsumer.getNumOfProcessedRecords();
 	}
 
 	/**
 	 * @return the number of strings processed
 	 */
-	public long getNumOfProcessedStrings() {
-		return stringConsumer.getNumOfProcessedStrings();
-	}
+//	public long getNumOfProcessedStrings() {
+//		return stringsConsumer.getNumOfProcessedStrings();
+//	}
 	
 	/**
 	 * Entirely remove the filtering 
 	 */
 	public void clearFilter() {
-		acceptedIds.clear();
-		acceptedTypes.clear();
+	    acceptedIds = Collections.unmodifiableSet(new HashSet<>());
+	    acceptedTypes = Collections.unmodifiableSet(new HashSet<>());
 	}
 	
 	/**
@@ -224,9 +236,11 @@ implements KafkaConsumerListener {
 	 * @param idsToAdd The filters to add
 	 */
 	public void addIdsToFilter(Set<String> idsToAdd) {
-		if (idsToAdd!=null) {
-			acceptedIds.addAll(idsToAdd);
-		}
+	    Objects.requireNonNull(idsToAdd);
+	    Set<String> temp = new HashSet<>(acceptedIds);
+	    temp.addAll(idsToAdd);
+	    acceptedIds=Collections.unmodifiableSet(temp);
+
 	}
 	
 	/**
@@ -235,9 +249,12 @@ implements KafkaConsumerListener {
 	 * @param typesToAdd The types to add
 	 */
 	public void addTypesToFilter(Set<IASTypes> typesToAdd) {
-		if (typesToAdd!=null) {
-			acceptedTypes.addAll(typesToAdd);
-		}
+	    Objects.requireNonNull(typesToAdd);
+
+	    Set<IASTypes> temp = new HashSet<>(acceptedTypes);
+	    temp.addAll(typesToAdd);
+
+		acceptedTypes=Collections.unmodifiableSet(temp);
 	}
 	
 	/** 
@@ -250,18 +267,35 @@ implements KafkaConsumerListener {
 	 *                      if <code>null</code> or empty the filtering by types is removed
 	 */
 	public void setFilter(Set<String> idsToAccept, Set<IASTypes> typesToAccept) {
-		synchronized(acceptedIds) {
-			acceptedIds.clear();
-			if (idsToAccept!=null) {
-				acceptedIds.addAll(idsToAccept);
-			}
-		}
-		synchronized(acceptedTypes) {
-			acceptedTypes.clear();
-			if (typesToAccept!=null) {
-				acceptedTypes.addAll(typesToAccept);
-			}
-		}
+	    if (idsToAccept==null) {
+	       acceptedIds = Collections.unmodifiableSet(new HashSet<>());
+        } else {
+	       acceptedIds = Collections.unmodifiableSet(idsToAccept);
+        }
+
+        if (typesToAccept==null) {
+           acceptedTypes = Collections.unmodifiableSet(new HashSet<>());
+        } else {
+           acceptedTypes = Collections.unmodifiableSet(typesToAccept);
+        }
 	}
+
+    /**
+     * Getter
+     *
+     * @return the unmodifiable set of accepted IDs
+     */
+	public Set<String> getAcceptedIds() {
+	    return acceptedIds;
+    }
+
+    /**
+     * Getter
+     *
+     * @return the unmodifiable set of accepted IAS types
+     */
+    public Set<IASTypes> getAcceptedTypes() {
+        return acceptedTypes;
+    }
 
 }

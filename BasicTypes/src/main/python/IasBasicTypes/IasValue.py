@@ -4,11 +4,13 @@ Created on Jun 7, 2018
 @author: acaproni
 '''
 import json
+
+from IasBasicTypes.Alarm import Alarm
+from IasBasicTypes.IasType import IASType
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
 from IasBasicTypes.OperationalMode import OperationalMode
 from IasBasicTypes.Validity import Validity
-from IasBasicTypes.IasType import IASType
-from IasBasicTypes.Alarm import Alarm
+
 
 class IasValue(object):
     '''
@@ -306,40 +308,40 @@ class IasValue(object):
             (self.id,self.value,self.valueTypeStr,self.modeStr,self.iasValidityStr)
         
         t = "ID="+self.id
-        t = t + "\nvalue="+self.value
-        t = t + "\ntype="+self.valueTypeStr
-        t = t + "\nmode="+self.modeStr
-        t = t + "\nvalidity="+self.iasValidityStr
+        t = t + "\n\tvalue="+self.value
+        t = t + "\n\ttype="+self.valueTypeStr
+        t = t + "\n\tmode="+self.modeStr
+        t = t + "\n\tvalidity="+self.iasValidityStr
         
         
         if self.dependentsFullRuningIds is not None:
-            t= "%s\nfullRunningID=%s" % (t,self.dependentsFullRuningIds)
+            t= "%s\n\tfullRunningID=%s" % (t,self.dependentsFullRuningIds)
             
         if self.props is not None and len(self.props)>0:
-            t = t+"\nProperties:"
+            t = t+"\n\tProperties:"
             for k in self.props.keys():
-                t = "%s\n  %s=%s" % (t,k,self.props[k])
+                t = "%s\n\t   %s=%s" % (t,k,self.props[k])
             
         if self.pluginProductionTStampStr is not None:
-            t = "%s\npluginProductionTStamp=%s" % (t,self.pluginProductionTStampStr)
+            t = "%s\n\tpluginProductionTStamp=%s" % (t,self.pluginProductionTStampStr)
             
         if self.sentToConverterTStampStr is not None:
-            t = "%s\nsentToConverterTStamp=%s" % (t,self.sentToConverterTStampStr)
+            t = "%s\n\tsentToConverterTStamp=%s" % (t,self.sentToConverterTStampStr)
             
         if self.receivedFromPluginTStampStr is not None:
-            t = "%s\nreceivedFromPluginTStamp=%s" % (t,self.receivedFromPluginTStampStr)
+            t = "%s\n\treceivedFromPluginTStamp=%s" % (t,self.receivedFromPluginTStampStr)
             
         if self.convertedProductionTStampStr is not None:
-            t = "%s\nconvertedProductionTStamp=%s" % (t,self.convertedProductionTStampStr)
+            t = "%s\n\tconvertedProductionTStamp=%s" % (t,self.convertedProductionTStampStr)
             
         if self.sentToBsdbTStampStr is not None:
-            t = "%s\nsentToBsdbTStamp=%s" % (t,self.sentToBsdbTStampStr)
+            t = "%s\n\tsentToBsdbTStamp=%s" % (t,self.sentToBsdbTStampStr)
             
         if self.readFromBsdbTStampStr is not None:
-            t = "%s\nreadFromBsdbTStamp=%s" % (t,self.readFromBsdbTStampStr)
+            t = "%s\n\treadFromBsdbTStamp=%s" % (t,self.readFromBsdbTStampStr)
             
         if self.dasuProductionTStampStr is not None:
-            t = "%s\ndasuProductionTStamp=%s" % (t,self.dasuProductionTStampStr)
+            t = "%s\n\tdasuProductionTStamp=%s" % (t,self.dasuProductionTStampStr)
              
         return t
     

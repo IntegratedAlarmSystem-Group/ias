@@ -1,13 +1,12 @@
 package org.eso.ias.tranfer
 
-import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import java.util.Properties
 
 import com.typesafe.scalalogging.Logger
+import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import org.eso.ias.logging.IASLogger
+import org.eso.ias.types.IasValidity._
 import org.eso.ias.types.OperationalMode
-import org.eso.ias.types.Validity
-import org.eso.ias.types.IasValidity
 
 /**
  * Sometimes a monitor point has a backup to be used in case of failure 
@@ -59,7 +58,6 @@ extends ScalaTransferExecutor[T](asceId,asceRunningId,validityTimeFrame,props) {
 	 * @return the computed output of the ASCE
 	 */
 	override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[T]): IasIO[T] = {
-    assert(compInputs.size==prioritizedIDs.size && compInputs.keys.forall(id => prioritizedIDs.contains(id)))
 
 
     def updateOutput[B >: T](
@@ -71,14 +69,17 @@ extends ScalaTransferExecutor[T](asceId,asceRunningId,validityTimeFrame,props) {
       actualOutput.updateValue(value).updateMode(mode).updateProps(props).setValidityConstraint(constraints)
     }
 
+    assert(compInputs.size==prioritizedIDs.length)
+
     // Select the ID of the first input that is both operational and valid
-    val selectedInputId = prioritizedIDs.find(id => {
+    val selectedInputId: Option[String] = prioritizedIDs.find(id => {
       val input = compInputs(id)
 
       // get the validity from the inputs
-      val inputValidity = input.validityOfInputByTime(validityTimeFrame)
+      val inputValidityByTime = input.validityOfInputByTime(validityTimeFrame)
+      val inputValidityFromInputs = input.validity
 
-      input.mode==OperationalMode.OPERATIONAL && inputValidity==IasValidity.RELIABLE
+      input.mode==OperationalMode.OPERATIONAL && inputValidityByTime==RELIABLE && inputValidityFromInputs==RELIABLE
     })
 
     selectedInputId match {

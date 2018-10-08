@@ -17,10 +17,7 @@ abstract class StatsCollectorBase(id: String, timeInterval: Long) {
   /** The scheduler to log statistics */
   private val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
-  /** The scheduler to log statistics */
-  private val scheduer: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-
-  /** Th efuture to cancel logging of statistics */
+  /** The future to cancel logging of statistics */
   private var future = new AtomicReference[ScheduledFuture[_]]()
 
   /**
@@ -32,7 +29,7 @@ abstract class StatsCollectorBase(id: String, timeInterval: Long) {
   def start() = synchronized {
     Option(future.get()) match {
       case Some(f) => StatsCollectorBase.logger.warn("Stats generation for " + id + " already started")
-      case None => future.set(scheduer.scheduleAtFixedRate(() =>
+      case None => future.set(scheduler.scheduleAtFixedRate(() =>
         logStats(),
         timeInterval,
         timeInterval,

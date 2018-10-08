@@ -181,7 +181,7 @@ public class TestRdbCdb {
 		// Adds the DASU to deploy
 		DasuDao dasu1 = new DasuDao();
 		dasu1.setId("DasuID1");
-		dasu1.setLogLevel(LogLevelDao.FATAL);
+		dasu1.setLogLevel(LogLevelDao.TRACE);
 		DasuToDeployDao dtd1 = new DasuToDeployDao(dasu1, tDao1, 5);
 		superv.addDasuToDeploy(dtd1);
 
@@ -213,7 +213,7 @@ public class TestRdbCdb {
 		
 		DasuDao dasu3 = new DasuDao();
 		dasu3.setId("DasuID3");
-		dasu3.setLogLevel(LogLevelDao.FATAL);
+		dasu3.setLogLevel(LogLevelDao.TRACE);
 		DasuToDeployDao dtd3 = new DasuToDeployDao(dasu3, null, null);
 		superv.addDasuToDeploy(dtd3);
 		

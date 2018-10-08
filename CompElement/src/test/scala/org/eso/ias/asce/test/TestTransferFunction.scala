@@ -1,19 +1,21 @@
-package org.eso.ias.component.test
+package org.eso.ias.asce.test
 
 import org.scalatest.FlatSpec
 import org.eso.ias.types.InOut
 import org.eso.ias.types.Identifier
-import org.eso.ias.types.OperationalMode
 import org.eso.ias.types.Validity
 import org.eso.ias.asce.ComputingElement
 import org.eso.ias.types.IASTypes
-import scala.collection.mutable.{Map => MutableMap }
+
+import scala.collection.mutable.{Map => MutableMap}
 import org.eso.ias.asce.transfer.TransferFunctionSetting
 import java.util.Properties
+
 import org.eso.ias.asce.transfer.TransferFunctionLanguage
-import java.util.concurrent.ScheduledThreadPoolExecutor
+
 import org.eso.ias.asce.CompEleThreadFactory
 import org.eso.ias.asce.AsceStates
+import org.eso.ias.asce.test.transfer.ConstraintValidityTF
 import org.eso.ias.asce.transfer.JavaTransfer
 import org.eso.ias.asce.transfer.ScalaTransfer
 import org.eso.ias.types.IdentifierType
@@ -22,7 +24,7 @@ import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IasValidity._
 import org.eso.ias.types.IASValue
 import org.eso.ias.types.IasValidity
-import org.eso.ias.component.test.transfer.ConstraintValidityTF
+import org.eso.ias.asce.test.transfer.ConstraintValidityTF
 
 class TestTransferFunction extends FlatSpec {
   
@@ -80,7 +82,7 @@ class TestTransferFunction extends FlatSpec {
     
     // Instantiate on ASCE with a java TF implementation
     val javaTFSetting =new TransferFunctionSetting(
-        "org.eso.ias.component.test.transfer.TransferExecutorImpl",
+        "org.eso.ias.asce.test.transfer.TransferExecutorImpl",
         TransferFunctionLanguage.java,
         None,
         threadFactory)
@@ -95,7 +97,7 @@ class TestTransferFunction extends FlatSpec {
     
     // Instantiate one ASCE with a scala TF implementation
     val scalaTFSetting =new TransferFunctionSetting(
-        "org.eso.ias.component.test.transfer.TransferExample",
+        "org.eso.ias.asce.test.transfer.TransferExample",
         TransferFunctionLanguage.scala,
         None,
         threadFactory)
@@ -109,7 +111,7 @@ class TestTransferFunction extends FlatSpec {
     
      // Instantiate an ASCE with a scala TF implementation
     val brokenScalaTFSetting =new TransferFunctionSetting(
-        "org.eso.ias.component.test.transfer.ThrowExceptionTF",
+        "org.eso.ias.asce.test.transfer.ThrowExceptionTF",
         TransferFunctionLanguage.scala,
         None,
         threadFactory)
@@ -123,7 +125,7 @@ class TestTransferFunction extends FlatSpec {
     
     // Instantiate an ASCE to test the setting of thevalidity with constraints
     val validityConstraintTFSetting = new TransferFunctionSetting(
-        "org.eso.ias.component.test.transfer.ConstraintValidityTF",
+        "org.eso.ias.asce.test.transfer.ConstraintValidityTF",
         TransferFunctionLanguage.scala,
         None,
         threadFactory)

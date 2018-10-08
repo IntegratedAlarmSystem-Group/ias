@@ -1,45 +1,29 @@
 package org.eso.ias.supervisor.test
 
-import java.nio.file.FileSystems
-import org.eso.ias.cdb.json.CdbJsonFiles
-import org.eso.ias.cdb.json.JsonReader
-import org.eso.ias.cdb.CdbReader
-import org.eso.ias.dasu.publisher.KafkaPublisher
+import java.nio.file.{FileSystems, Path}
+import java.util
 import java.util.Properties
-import org.eso.ias.dasu.publisher.OutputPublisher
-import org.eso.ias.dasu.subscriber.InputSubscriber
-import org.eso.ias.dasu.subscriber.KafkaSubscriber
-import org.eso.ias.types.IdentifierType
-import org.eso.ias.types.Identifier
+import java.util.concurrent.{CountDownLatch, TimeUnit}
+import java.util.concurrent.atomic.AtomicReference
+
+import org.eso.ias.cdb.CdbReader
+import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.DasuDao
 import org.eso.ias.dasu.DasuImpl
-import org.eso.ias.supervisor.Supervisor
-import scala.util.Success
-import scala.util.Failure
-import java.util.concurrent.CountDownLatch
-import org.eso.ias.logging.IASLogger
-import org.scalatest.FlatSpec
-import org.eso.ias.kafkautils.KafkaIasiosProducer
-import org.eso.ias.kafkautils.KafkaHelper
-import org.eso.ias.types.IasValueStringSerializer
-import org.eso.ias.types.IasValueJsonSerializer
-import org.eso.ias.kafkautils.KafkaIasiosConsumer
-import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition
-import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener
-import org.eso.ias.types.IASValue
-import org.eso.ias.types.OperationalMode
-import org.eso.ias.types.IasValidity
-import org.eso.ias.types.IASTypes
-import scala.collection.mutable.ListBuffer
-
-import java.util.concurrent.TimeUnit
-import org.scalatest.BeforeAndAfter
-import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener
-import org.scalatest.BeforeAndAfterAll
-import java.util.concurrent.atomic.AtomicReference
-import java.util.HashSet
+import org.eso.ias.dasu.publisher.{KafkaPublisher, OutputPublisher}
+import org.eso.ias.dasu.subscriber.{InputSubscriber, KafkaSubscriber}
 import org.eso.ias.heartbeat.publisher.HbLogProducer
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
+import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener
+import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosConsumer, KafkaIasiosProducer}
+import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition
+import org.eso.ias.logging.IASLogger
+import org.eso.ias.supervisor.Supervisor
+import org.eso.ias.types._
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FlatSpec}
+
+import scala.collection.JavaConverters
+import scala.collection.mutable.ListBuffer
 
 /**
  * Test the Supervisor connected to the kafka BSDB.
@@ -86,7 +70,7 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
   val supervisorId = new Identifier("SupervisorWithKafka", IdentifierType.SUPERVISOR, None)
 
   // The JSON CDB reader
-  val cdbParentPath = FileSystems.getDefault().getPath(".");
+  val cdbParentPath: Path = FileSystems.getDefault.getPath(".")
   val cdbFiles = new CdbJsonFiles(cdbParentPath)
   val cdbReader: CdbReader = new JsonReader(cdbFiles)
 
@@ -132,8 +116,8 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
   val inputConsumer: InputSubscriber = KafkaSubscriber(supervisorId.id, None, None, new Properties())
   
   /** The test uses real DASu i.e. the factory instantiates a DasuImpl */
-  val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) => 
-    DasuImpl(dd, i, op, id, 1,1)
+  val factory: (DasuDao, Identifier, OutputPublisher, InputSubscriber) =>
+    DasuImpl = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) => DasuImpl(dd, i, op, id, 1,1)
 
   /** The supervisor to test */
   val supervisor = new Supervisor(
@@ -142,7 +126,8 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
       inputConsumer, 
       new HbLogProducer(new HbJsonSerializer),
       cdbReader,
-      factory)
+      factory,
+    None)
   
   val latchRef: AtomicReference[CountDownLatch] = new AtomicReference
   
@@ -161,23 +146,28 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
      */
     val iasioListener = new IasioListener {
       /**
-       * A value has been read from the BSDB
-       * i.e. it has been received by iasiosConsumer
-       */
-      def iasioReceived(value: IASValue[_]) {
-        logger.info("IASValue received {}: [{}]", value.id, value.toString())
-        receivedIasValues.append(value)
-        val latch = latchRef.get
-        if (latch!=null) {
-          latch.countDown()
-        }
-        logger.info("{} events in the queue", receivedIasValues.size.toString())
+        * A value has been read from the BSDB
+        * i.e. it has been received by iasiosConsumer
+        */
+      override def iasiosReceived(events: util.Collection[IASValue[_]]): Unit = {
+        val iasValuesReceived = JavaConverters.collectionAsScalaIterable(events)
+
+        logger.info("{} IASValues received", iasValuesReceived.size)
+
+        iasValuesReceived.foreach(iasio => {
+          logger.info("IASValue received {}: [{}]", iasio.id, iasio.toString)
+          receivedIasValues.append(iasio)
+          val latch = latchRef.get
+          if (latch != null) {
+            latch.countDown()
+          }
+          logger.info("{} events in the queue", receivedIasValues.size.toString)
+        })
       }
     }
 
     iasiosConsumer.startGettingEvents(StartPosition.END, iasioListener)
     
-    // .get returns the value from this Success or throws the exception if this is a Failure.
     assert(supervisor.start().isSuccess)
     
     supervisor.enableAutoRefreshOfOutput(false)
@@ -196,7 +186,7 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
   /**
    * Build a IASVlaue to submit to the BSDB
    */
-  def buildIasioToSubmit(identifier: Identifier, value: Double) = {
+  def buildIasioToSubmit(identifier: Identifier, value: Double): IASValue[_] = {
     val t0 = System.currentTimeMillis()-100
       IASValue.build(
         value,
@@ -229,7 +219,7 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
     val latch = new CountDownLatch(2)
     latchRef.set(latch)
     
-    val iasio = buildIasioToSubmit(temperatureID, 5);
+    val iasio = buildIasioToSubmit(temperatureID, 5)
 
     // Disable the auto-refresh to avoid replication
     logger.info("Disabling auto-refresh of the output by the DASU")
@@ -255,8 +245,8 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
     val latch = new CountDownLatch(4)
     latchRef.set(latch)
     
-    val iasioTemp = buildIasioToSubmit(temperatureID, 40);
-    val iasioStrenght = buildIasioToSubmit(strenghtID, 10);
+    val iasioTemp = buildIasioToSubmit(temperatureID, 40)
+    val iasioStrenght = buildIasioToSubmit(strenghtID, 10)
 
     // Desable the autorefresh to avoid replication
     logger.info("Disabling auto-refresh of the output by the DASU")

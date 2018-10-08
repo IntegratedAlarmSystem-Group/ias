@@ -1,6 +1,6 @@
 {
 	"dasuID":"Dasu2",
-	"outputID":"ASCEOnDasu2-ID1-Out15",
+	"outputID":"ASCEOnDasu2-ID15-Out",
 	"props":[],
 	"id":"ASCEOnDasu2-ID15",
 	"transferFunctionID":"org.eso.ias.asce.transfer.impls.MinMaxThresholdTF",
