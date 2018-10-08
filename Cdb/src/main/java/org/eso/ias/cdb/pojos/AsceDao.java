@@ -197,7 +197,14 @@ public class AsceDao {
 			ret.append(templateId);
 			ret.append('"');
 		}
-		ret.append("]");
+		if (templatedInstanceInputs!=null && !templatedInstanceInputs.isEmpty()) {
+            ret.append(", templated inputs={");
+            templatedInstanceInputs.forEach( ti -> {
+                ret.append(' ');
+                ret.append(ti.toString());
+            });
+        }
+		ret.append("}]");
 		return ret.toString();
 	}
 
@@ -295,6 +302,11 @@ public class AsceDao {
 			if (other.templateId != null)
 				return false;
 		} else if (!getTemplateId().equals(other.getTemplateId()))
+			return false;
+		if (templatedInstanceInputs == null) {
+			if (other.templatedInstanceInputs != null)
+				return false;
+		} else if (!getTemplatedInstanceInputs().equals(other.getTemplatedInstanceInputs()))
 			return false;
 		return true;
 	}
