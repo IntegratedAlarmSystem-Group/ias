@@ -1,27 +1,15 @@
 package org.eso.ias.cdb.json;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Stream;
-
-import org.eso.ias.cdb.CdbReader;
-import org.eso.ias.cdb.IasCdbException;
-import org.eso.ias.cdb.json.pojos.JsonAsceDao;
-import org.eso.ias.cdb.json.pojos.JsonDasuDao;
-import org.eso.ias.cdb.json.pojos.JsonDasuToDeployDao;
-import org.eso.ias.cdb.json.pojos.JsonSupervisorDao;
-import org.eso.ias.cdb.pojos.*;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eso.ias.cdb.CdbReader;
+import org.eso.ias.cdb.IasCdbException;
+import org.eso.ias.cdb.json.pojos.*;
+import org.eso.ias.cdb.pojos.*;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Read CDB configuration from JSON files.
@@ -268,6 +256,7 @@ public class JsonReader implements CdbReader {
 		try {
 			jAsceOpt = getJsonAsce(cleanedID);
 		} catch (IOException ioe) {
+			ioe.printStackTrace();
 			throw new IasCdbException("Error getting the JSON ASCE "+cleanedID,ioe);
 		}
 		ObjectsHolder holder = new ObjectsHolder();
@@ -278,6 +267,7 @@ public class JsonReader implements CdbReader {
 			try {
 				updateAsceObjects(jAsceOpt.get(), holder);
 			} catch (IOException ioe) {
+			    ioe.printStackTrace();
 				throw new IasCdbException("Error updating ASCE objects",ioe);
 			}
 		}
@@ -301,7 +291,7 @@ public class JsonReader implements CdbReader {
 		try {
 			jDasuOpt = getJsonDasu(cleanedID);
 		}  catch (IOException ioe) {
-			throw new IasCdbException("Error getting JSON DASU",ioe);
+			throw new IasCdbException("Error getting JSON DASU "+id,ioe);
 		}
 		ObjectsHolder holder = new ObjectsHolder();
 		if (jDasuOpt.isPresent()) {
@@ -553,7 +543,36 @@ public class JsonReader implements CdbReader {
 			} else {
 				throw new IasCdbException("Inconsistent ASCE record: IASIO ["+inId+"] not found in CDB");
 			}
-		} 
+		}
+
+		// Fix templated inputs
+		for (JsonTemplatedInputsDao templatedinput: jAsceDao.getTemplatedInputs()) {
+		    TemplateInstanceIasioDao tiid = new TemplateInstanceIasioDao();
+
+		    int instance=templatedinput.getInstanceNum();
+            String iasioId= templatedinput.getIasioId();
+		    String templateId = templatedinput.getTemplateId();
+
+		    Optional<TemplateDao> templateDaoOpt = getTemplate(templateId);
+		    if (!templateDaoOpt.isPresent()) {
+		        throw new IasCdbException("Template "+templateId+" of IASIO "+iasioId+" NOR found in CDB");
+            } else {
+		        if (instance<templateDaoOpt.get().getMin() || instance>templateDaoOpt.get().getMax()) {
+		         throw new IasCdbException("Instance "+instance+" of IASIO "+iasioId+" out of allowed range ["+
+                         templateDaoOpt.get().getMin()+","+templateDaoOpt.get().getMax()+"]");
+                }
+            }
+
+            tiid.setInstance(instance);
+		    tiid.setTemplateId(templateId);
+			Optional<IasioDao> iasio = getIasio(iasioId);
+			if (iasio.isPresent()) {
+			    tiid.setIasio(iasio.get());
+			    asce.addTemplatedInstanceInput(tiid,true);
+			} else {
+				throw new IasCdbException("Inconsistent ASCE record: IASIO ["+templatedinput.getIasioId()+"] not found in CDB");
+			}
+		}
 		
 		// Fix the DASU
 		Optional<DasuDao> optDasu = Optional.ofNullable(holder.dasus.get(jAsceDao.getDasuID()));
