@@ -296,10 +296,16 @@ public class TestJsonCdb {
 		TransferFunctionDao tfDao1 = new TransferFunctionDao();
 		tfDao1.setClassName("org.eso.ias.tf.Threshold");
 		tfDao1.setImplLang(TFLanguageDao.JAVA);
+
+		// The template of the ASCE
+		TemplateDao templateForAsce = new TemplateDao("TemplateID",2,7);
+
+		// The template for templated inputs
+        TemplateDao templateForTemplatedInputs = new TemplateDao("TemplateForTempInputsID",1,3);
 		
 		// The ASCE to test
 		AsceDao asce = new AsceDao();
-		asce.setId("ASCE-ID-For-Testsing");
+		asce.setId("ASCE-ID-For-Testing");
 		asce.setDasu(dasu);
 		asce.setTransferFunction(tfDao1);
 		
@@ -313,6 +319,29 @@ public class TestJsonCdb {
 			cdbWriter.writeIasio(input, true);
 		}
 		assertEquals(IasTypeDao.values().length,asce.getInputs().size(),"Not all the inputs have bene added to the ASCE");
+
+		// Templated INPUT definition in IASIO
+        IasioDao templatedInputIasio = new IasioDao(
+                "TEMPL-INPUT-ID",
+                "Templated IASIO",
+                IasTypeDao.ALARM,
+                "http://www.eso.org");
+        templatedInputIasio.setTemplateId("TemplateForTempInputsID");
+        cdbWriter.writeIasio(templatedInputIasio,true);
+
+		// Adds 2 template inputs
+        TemplateInstanceIasioDao templatedInput1 = new TemplateInstanceIasioDao();
+        templatedInput1.setIasio(templatedInputIasio);
+        templatedInput1.setTemplateId("TemplateForTempInputsID");
+        templatedInput1.setInstance(1);
+        asce.addTemplatedInstanceInput(templatedInput1,true);
+
+        TemplateInstanceIasioDao templatedInput2 = new TemplateInstanceIasioDao();
+        templatedInput2.setIasio(templatedInputIasio);
+        templatedInput2.setTemplateId("TemplateForTempInputsID");
+        templatedInput2.setInstance(3);
+        asce.addTemplatedInstanceInput(templatedInput2,true);
+
 		
 		// Adds few properties
 		PropertyDao p1 = new PropertyDao();
@@ -335,7 +364,8 @@ public class TestJsonCdb {
 		cdbWriter.writeSupervisor(superv);
 		cdbWriter.writeDasu(dasu);
 		cdbWriter.writeTransferFunction(tfDao1);
-		
+		cdbWriter.writeTemplate(templateForAsce);
+        cdbWriter.writeTemplate(templateForTemplatedInputs);
 		
 		cdbWriter.writeAsce(asce);
 		assertTrue(cdbFiles.getAsceFilePath(asce.getId()).toFile().exists());
@@ -344,6 +374,8 @@ public class TestJsonCdb {
 		assertTrue(optAsce.isPresent(),"Got a null ASCE with ID "+asce.getId()+" from CDB");
 		assertEquals(asce.getOutput(),optAsce.get().getOutput());
 		assertEquals(asce,optAsce.get(),"The ASCEs differ!");
+
+		assertEquals(2,optAsce.get().getTemplatedInstanceInputs().size());
 
         System.out.println("testWriteAsce done.");
 	}
