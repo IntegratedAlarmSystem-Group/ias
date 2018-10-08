@@ -1,46 +1,31 @@
 package org.eso.ias.cdb.json;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Scanner;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import org.eso.ias.cdb.CdbWriter;
-import org.eso.ias.cdb.IasCdbException;
-import org.eso.ias.cdb.json.pojos.JsonAsceDao;
-import org.eso.ias.cdb.json.pojos.JsonDasuDao;
-import org.eso.ias.cdb.json.pojos.JsonSupervisorDao;
-import org.eso.ias.cdb.pojos.AsceDao;
-import org.eso.ias.cdb.pojos.DasuDao;
-import org.eso.ias.cdb.pojos.DasuToDeployDao;
-import org.eso.ias.cdb.pojos.IasDao;
-import org.eso.ias.cdb.pojos.IasTypeDao;
-import org.eso.ias.cdb.pojos.IasioDao;
-import org.eso.ias.cdb.pojos.SoundTypeDao;
-import org.eso.ias.cdb.pojos.SupervisorDao;
-import org.eso.ias.cdb.pojos.TFLanguageDao;
-import org.eso.ias.cdb.pojos.TemplateDao;
-import org.eso.ias.cdb.pojos.TransferFunctionDao;
-
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eso.ias.cdb.CdbWriter;
+import org.eso.ias.cdb.IasCdbException;
+import org.eso.ias.cdb.json.pojos.JsonAsceDao;
+import org.eso.ias.cdb.json.pojos.JsonDasuDao;
+import org.eso.ias.cdb.json.pojos.JsonSupervisorDao;
+import org.eso.ias.cdb.pojos.*;
+
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Writes IAS structures into JSON files.
@@ -178,6 +163,7 @@ public class JsonWriter implements CdbWriter {
 	public void writeIasio(IasioDao iasio, boolean append) throws IasCdbException {
 		Set<IasioDao> iasios = new HashSet<>();
 		iasios.add(iasio);
+
 		writeIasios(iasios,append);
 	}
 
@@ -197,6 +183,8 @@ public class JsonWriter implements CdbWriter {
 	 */
 	@Override
 	public void writeIasios(Set<IasioDao> iasios, boolean append) throws IasCdbException {
+	    Objects.requireNonNull(iasios);
+
 		File f;
 		try { 
 			f = cdbFileNames.getIasioFilePath("UnusedID").toFile();
@@ -264,6 +252,7 @@ public class JsonWriter implements CdbWriter {
 					}
 					if (curToken==JsonToken.START_OBJECT) {
 						IasioDao iasioinFile = getNextIasio(jp);
+
 						if (iasiosMap.containsKey(iasioinFile.getId())) {
 							// The IASIO in the set replaces the one in the file
 							putNextIasio(iasiosMap.get(iasioinFile.getId()),jg);
@@ -557,17 +546,17 @@ public class JsonWriter implements CdbWriter {
 		jg.useDefaultPrettyPrinter();
 		jg.writeStartObject();
 		jg.writeStringField("id",iasio.getId());
-		if (iasio.getShortDesc()!=null && !iasio.getShortDesc().isEmpty()) {
+		if (iasio.getShortDesc()!=null && !iasio.getShortDesc().trim().isEmpty()) {
 			jg.writeStringField("shortDesc",iasio.getShortDesc());
 		}
 		jg.writeStringField("iasType",iasio.getIasType().toString());
-		if (iasio.getDocUrl()!=null && !iasio.getDocUrl().isEmpty()) {
+		if (iasio.getDocUrl()!=null && !iasio.getDocUrl().trim().isEmpty()) {
 			jg.writeStringField("docUrl",iasio.getDocUrl());
 		}
-		if (iasio.getTemplateId()!=null && !iasio.getTemplateId().isEmpty()) {
+		if (iasio.getTemplateId()!=null && !iasio.getTemplateId().trim().isEmpty()) {
 			jg.writeStringField("templateId",iasio.getTemplateId());
 		}
-		if (iasio.getEmails()!=null && !iasio.getEmails().isEmpty()) {
+		if (iasio.getEmails()!=null && !iasio.getEmails().trim().isEmpty()) {
 			jg.writeStringField("emails",iasio.getEmails());
 		}
 		if (iasio.getSound()!=null) {
@@ -648,21 +637,23 @@ public class JsonWriter implements CdbWriter {
 			}
 			if ("emails".equals(name)) {
 				jp.nextToken();
-				emails=jp.getText();
+				String temp = jp.getText();
+				if (temp!=null) emails=temp;
 			}
 			if ("sound".equals(name)) {
 				jp.nextToken();
 				soundType=jp.getText();
 			}
 		}
+
 		IasioDao ret = new IasioDao(iasioId,iasioDesc,IasTypeDao.valueOf(iasioType),iasioUrl);
-		if (templateId!=null && !templateId.isEmpty()) {
+		if (templateId!=null && !templateId.trim().isEmpty()) {
 			ret.setTemplateId(templateId);
 		}
-		if (emails!=null && !emails.isEmpty()) {
+		if (emails!=null && !emails.trim().isEmpty()) {
 			ret.setEmails(emails);
 		}
-		if (soundType!=null && !soundType.isEmpty()) {
+		if (soundType!=null && !soundType.trim().isEmpty()) {
 			ret.setSound(SoundTypeDao.valueOf(soundType));
 		}
 		return ret;

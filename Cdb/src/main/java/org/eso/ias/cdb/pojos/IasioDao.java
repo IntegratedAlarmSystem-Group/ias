@@ -1,10 +1,11 @@
 package org.eso.ias.cdb.pojos;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-
-import javax.persistence.*;
 
 /**
  * The pojo for the IASIO
@@ -23,6 +24,7 @@ public class IasioDao {
 	 *  Human readable description of the IASIO
 	 */
 	@Basic(optional=true)
+	@JsonInclude(JsonInclude.Include.NON_NULL)
 	private String shortDesc;
 	
 	/**
@@ -36,6 +38,7 @@ public class IasioDao {
 	 * The URL with the documentation
 	 */
 	@Basic(optional=true)
+	@JsonInclude(JsonInclude.Include.NON_NULL)
 	private String docUrl=null;
 	
 	/**
@@ -43,6 +46,7 @@ public class IasioDao {
 	 */
 	@Basic(optional=true)
 	@Column(name = "template_id")
+	@JsonInclude(JsonInclude.Include.NON_NULL)
 	private String templateId=null;
 	
 	/**
@@ -66,6 +70,7 @@ public class IasioDao {
 	@Enumerated(EnumType.STRING)
 	@Column(name = "Sound")
 	@Basic(optional=true)
+	@JsonInclude(JsonInclude.Include.NON_NULL)
 	private SoundTypeDao sound=SoundTypeDao.NONE;
 	
 	/**
@@ -76,6 +81,7 @@ public class IasioDao {
 	 */
 	@Column(name = "emails")
 	@Basic(optional=true)
+	@JsonInclude(JsonInclude.Include.NON_NULL)
 	private String emails;
 
 	/**

@@ -538,10 +538,20 @@ public class JsonReader implements CdbReader {
 		// Fix the inputs
 		for (String inId: jAsceDao.getInputIDs()) {
 			Optional<IasioDao> iasio = getIasio(inId);
-			if (iasio.isPresent()) { 
+			if (iasio.isPresent()) {
+
+			    // Check consistency of template
+			    String templateId = iasio.get().getTemplateId();
+			    if (templateId!=null && !templateId.isEmpty()) {
+                    Optional<TemplateDao> templateDaoOpt = getTemplate(templateId);
+                    if (!templateDaoOpt.isPresent()) {
+                        throw new IasCdbException("Template "+templateId+" of IASIO "+inId+" NOT found in CDB");
+                    }
+                }
+
 				asce.addInput(iasio.get(), true);
 			} else {
-				throw new IasCdbException("Inconsistent ASCE record: IASIO ["+inId+"] not found in CDB");
+				throw new IasCdbException("Inconsistent ASCE record: IASIO ["+inId+"] NOT found in CDB");
 			}
 		}
 
@@ -555,7 +565,7 @@ public class JsonReader implements CdbReader {
 
 		    Optional<TemplateDao> templateDaoOpt = getTemplate(templateId);
 		    if (!templateDaoOpt.isPresent()) {
-		        throw new IasCdbException("Template "+templateId+" of IASIO "+iasioId+" NOR found in CDB");
+		        throw new IasCdbException("Template "+templateId+" of IASIO "+iasioId+" NOT found in CDB");
             } else {
 		        if (instance<templateDaoOpt.get().getMin() || instance>templateDaoOpt.get().getMax()) {
 		         throw new IasCdbException("Instance "+instance+" of IASIO "+iasioId+" out of allowed range ["+
