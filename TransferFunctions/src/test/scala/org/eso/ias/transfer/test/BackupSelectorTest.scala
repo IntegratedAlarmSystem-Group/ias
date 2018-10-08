@@ -1,27 +1,21 @@
 package org.eso.ias.transfer.test
 
-import org.eso.ias.logging.IASLogger
-import org.eso.ias.types.Identifier
-import org.eso.ias.asce.transfer.IasIO
-import org.eso.ias.types.Alarm
-import org.scalatest.FlatSpec
-import org.eso.ias.types.IdentifierType
-import org.eso.ias.types.InOut
-import org.eso.ias.types.IASTypes
 import java.util.Properties
-import org.eso.ias.tranfer.BackupSelector
-import org.eso.ias.tranfer.BackupSelectorException
-import org.eso.ias.types.OperationalMode
-import org.eso.ias.types.IasValidity
-import org.eso.ias.types.Validity
+
+import com.typesafe.scalalogging.Logger
+import org.eso.ias.asce.transfer.{IasIO, IasioInfo}
+import org.eso.ias.logging.IASLogger
+import org.eso.ias.tranfer.{BackupSelector, BackupSelectorException}
+import org.eso.ias.types._
+import org.scalatest.{BeforeAndAfterEach, FlatSpec}
 
 /**
  * Test the BackupSelector with 4 DOUBLE inputs
  */
-class BackupSelectorTest extends FlatSpec {
+class BackupSelectorTest extends FlatSpec with BeforeAndAfterEach {
   
   /** The logger */
-  val logger = IASLogger.getLogger(this.getClass)
+  val logger: Logger = IASLogger.getLogger(this.getClass)
   
   /**  The ID of the SUPERVISOR where the components runs */
   val supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR,None)
@@ -70,6 +64,9 @@ class BackupSelectorTest extends FlatSpec {
   
   /** The time frame for the validity */
   val validityTimeFrame = 2000
+
+  /** The TF to test */
+  var tf: BackupSelector[Double] = _
   
   /** 
    *  Build the IASIO in input with the passed id, type and timestamp
@@ -89,45 +86,42 @@ class BackupSelectorTest extends FlatSpec {
     val inout: InOut[Double] = InOut.asInput(id,IASTypes.DOUBLE)
       .updateDasuProdTStamp(tStamp)
       .updateValueValidity(Some(value),Some(Validity(validity))) 
-    (new IasIO(inout)).updateMode(mode)
+    new IasIO(inout).updateMode(mode)
   }
+
+  override def beforeEach() : scala.Unit = {
+    val props = new Properties
+    props.put(BackupSelector.PrioritizedIdsPropName, "MAIN, A,B, C")
+    tf = new BackupSelector[Double](compID.id,compID.fullRunningID,validityTimeFrame,props)
+  }
+
+
   
   behavior of "The BackupSelector transfer function"
   
   it must "get the list from the property" in {
-    val props = new Properties
-    props.put(BackupSelector.PrioritizedIdsPropName, "MAIN, A,B, C")
-    val tf = new BackupSelector(compID.id,compID.fullRunningID,validityTimeFrame,props)
     assert(tf.prioritizedIDs.size==4)
     assert(tf.prioritizedIDs.contains("MAIN"))
     assert(tf.prioritizedIDs.contains("A"))
     assert(tf.prioritizedIDs.contains("B"))
     assert(tf.prioritizedIDs.contains("C"))
   }
-  
-  it must "throw an exception for IDs mismatch" in {
-    val props = new Properties
-    props.put(BackupSelector.PrioritizedIdsPropName, "MAIN, A,B, C")
-    val tf = new BackupSelector[Double](compID.id,compID.fullRunningID,validityTimeFrame,props)
-    
-    val inputs = Map(main.id-> main, a.id -> a, b.id -> b, wrong.id -> wrong)
-    assertThrows[AssertionError] {
-      tf.eval(inputs, out)
+
+  it must "throws exception in intialize if IDs mismatch" in {
+    val inputs: Set[IasIO[_]] = Set (main,a,b,wrong)
+    val inputInfos = inputs.map (iasio => new IasioInfo(iasio.id,iasio.iasType))
+    assertThrows[BackupSelectorException] {
+      tf.initialize(inputInfos,new IasioInfo(out.id,out.iasType))
     }
-    
-    val inputs2 = Map(main.id-> main, a.id -> a, b.id -> b, c.id -> c, wrong.id -> wrong)
-    assertThrows[AssertionError] {
-      tf.eval(inputs2, out)
-    }
-    
-    val inputsOk = Map(main.id-> main, a.id -> a, b.id -> b, c.id -> c)
-    tf.eval(inputsOk, out)
   }
-  
+
+  it must "successfully initialize with correct IDs" in {
+    val inputs: Set[IasIO[_]] = Set (main,a,b,c)
+    val inputInfos = inputs.map (iasio => new IasioInfo(iasio.id,iasio.iasType))
+     tf.initialize(inputInfos,new IasioInfo(out.id,out.iasType))
+  }
+
   it must "produce the first output when operational and valid" in {
-    val props = new Properties
-    props.put(BackupSelector.PrioritizedIdsPropName, "MAIN, A,B, C")
-    val tf = new BackupSelector[Double](compID.id,compID.fullRunningID,validityTimeFrame,props)
     val inputs = Map(main.id-> main, a.id -> a, b.id -> b, c.id -> c)
     val res = tf.eval(inputs, out)
     
@@ -141,9 +135,6 @@ class BackupSelectorTest extends FlatSpec {
   }
   
   it must "produce the second output when the first one is not operational" in {
-    val props = new Properties
-    props.put(BackupSelector.PrioritizedIdsPropName, "MAIN, A,B, C")
-    val tf = new BackupSelector[Double](compID.id,compID.fullRunningID,validityTimeFrame,props)
     val inputs = Map(main.id-> main.updateMode(OperationalMode.DEGRADED), a.id -> a, b.id -> b, c.id -> c)
     val res = tf.eval(inputs, out)
     
@@ -167,15 +158,20 @@ class BackupSelectorTest extends FlatSpec {
   }
   
   it must "produce the second output when the first one is not valid" in {
-    val props = new Properties
-    props.put(BackupSelector.PrioritizedIdsPropName, "MAIN, A,B, C")
-    val tf = new BackupSelector[Double](compID.id,compID.fullRunningID,validityTimeFrame,props)
-    
-    val mainInvalid = buildInput(mainId,1.1d,validity=IasValidity.UNRELIABLE)
-    
-    val inputs = Map(main.id-> mainInvalid, a.id -> a, b.id -> b, c.id -> c)
-    val res = tf.eval(inputs, out)
-    
+
+    val inputs = Map(main.id-> main, a.id -> a, b.id -> b, c.id -> c)
+    val resNotUseful = tf.eval(inputs, out)
+
+    // Give time to invalidate
+    Thread.sleep(validityTimeFrame+100)
+
+    val inputsInvalidByTime = Map(
+      main.id-> main,
+      a.id -> buildInput(aId,2.2d),
+      b.id -> buildInput(bId,3.3d),
+      c.id -> buildInput(cId,4.4d))
+    val res = tf.eval(inputsInvalidByTime, out)
+
     assert(res.value.isDefined)
     assert(res.value.get==2.2d)
     assert(res.id==outId.id)
@@ -184,7 +180,11 @@ class BackupSelectorTest extends FlatSpec {
     assert(res.validityConstraints.get.size==1)
     assert(res.validityConstraints.get.contains(a.id))
     
-    val inputs2 = Map(main.id-> main.updateMode(OperationalMode.DEGRADED), a.id -> a.updateMode(OperationalMode.UNKNOWN), b.id -> b, c.id -> c)
+    val inputs2 = Map(
+      main.id-> buildInput(mainId, value=1.1d, mode=OperationalMode.DEGRADED),
+      a.id -> buildInput(aId, value=2.2d, mode=OperationalMode.UNKNOWN),
+      b.id -> buildInput(bId,3.3d),
+      c.id -> buildInput(cId,4.4d))
     val res2 = tf.eval(inputs2, out)
     assert(res2.value.isDefined)
     assert(res2.value.get==3.3d)
@@ -196,18 +196,16 @@ class BackupSelectorTest extends FlatSpec {
   }
   
   it must "produce the first output when all are invaild/not operational" in {
-    val props = new Properties
-    props.put(BackupSelector.PrioritizedIdsPropName, "MAIN, A,B, C")
-    val tf = new BackupSelector[Double](compID.id,compID.fullRunningID,validityTimeFrame,props)
-    
-    val mainInvalid = buildInput(mainId,1.1d,validity=IasValidity.UNRELIABLE)
-    val aInvalid = buildInput(aId,1.1d,validity=IasValidity.UNRELIABLE)
-    
+
     val inputs = Map(
-        main.id-> mainInvalid, 
-        a.id -> aInvalid, 
+        main.id-> main,
+        a.id -> a,
         b.id -> b.updateMode(OperationalMode.DEGRADED), 
         c.id -> c.updateMode(OperationalMode.DEGRADED))
+    val res1 = tf.eval(inputs, out)
+
+    // Give time to invalidate
+    Thread.sleep(validityTimeFrame+100)
     val res = tf.eval(inputs, out)
     
     assert(res.value.isDefined)
