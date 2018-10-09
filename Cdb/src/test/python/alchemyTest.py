@@ -1,14 +1,17 @@
 #! /usr/bin/env python
 
-import unittest, glob, sys
+import glob
+import unittest
 
-from IasCdb.SqlRunner import SqlRunner
-from IasCdb.AlchemyDb import AlchemyDb
-from IasCdb.AlchemyMapping import Property, Ias, Template_def, Iasio, Dasu,TransferFunction, Asce, Supervisor,DasuToDeploy
 from IasBasicTypes.IasType import IASType
-from IasCdb.SoundType import SoundType
+from IasCdb.AlchemyDb import AlchemyDb
+from IasCdb.AlchemyMapping import Property, Ias, Template_def, Iasio, Dasu, TransferFunction, Asce, Supervisor, \
+    DasuToDeploy, TemplatedInstance
 from IasCdb.LogLevel import LogLevel
+from IasCdb.SoundType import SoundType
+from IasCdb.SqlRunner import SqlRunner
 from IasCdb.TFLanguage import TFLanguage
+
 
 class PyCdbTest(unittest.TestCase):
     '''
@@ -105,6 +108,11 @@ class PyCdbTest(unittest.TestCase):
         self.session.add(template)
         self.session.commit()
 
+        template2= Template_def(TEMPLATE_ID='TemplateForAsceTInputs', MIN=2,MAX=5)
+        print("Adding template",template2)
+        self.session.add(template2)
+        self.session.commit()
+
         i1 = Iasio(IO_ID="IASIO1", SHORTDESC = 'short desc',
             IASTYPE = IASType.ALARM.name,
             DOCURL = 'http:www.a.b.c.com',
@@ -129,7 +137,7 @@ class PyCdbTest(unittest.TestCase):
                    DOCURL = 'http:www.eso.org',
                    CANSHELVE = 0,
                    TEMPLATE_ID = 'A template',
-                   EMAILS = 'acaproni.eso@gmail.com',
+                   EMAILS = 'name.familyName@gmail.com',
                    SOUND = SoundType.TYPE4.name)
         self.session.add(i3)
         self.session.commit()
@@ -137,6 +145,19 @@ class PyCdbTest(unittest.TestCase):
         print(i1)
         print(i2)
         print(i3)
+
+        # The input for the templated inputs of the ASCE
+        templInput = Iasio(IO_ID="TEMPLATED-IASIO", SHORTDESC = 'Templated input',
+                   IASTYPE = IASType.ALARM.name,
+                   DOCURL = 'http:www.eso.org',
+                   CANSHELVE = 0,
+                   TEMPLATE_ID = 'TemplateForAsceTInputs',
+                   EMAILS = 'name.familyName@gmail.com',
+                   SOUND = SoundType.TYPE1.name)
+        self.session.add(templInput)
+        self.session.commit()
+        print('Added input for templated inputs of ASCE:')
+        print(templInput)
 
         tf =TransferFunction(CLASSNAME_ID='org.eso.ias.tf.MinMax',IMPLLANG=TFLanguage.SCALA.name)
         print('Adding TF:',tf)
@@ -159,13 +180,18 @@ class PyCdbTest(unittest.TestCase):
 
         pa2 = Property(NAME="n2",VALUE="v2")
         pa3 = Property(NAME="n3",VALUE="v3")
+
+        templatedInput1 = TemplatedInstance(TEMPLATE_ID="TemplateForAsceTInputs", IO_ID='TEMPLATED-IASIO', INSTANCE_NUM=3)
+        templatedInput2 = TemplatedInstance(TEMPLATE_ID="TemplateForAsceTInputs", IO_ID='TEMPLATED-IASIO', INSTANCE_NUM=4)
+
         asce = Asce(
             ASCE_ID = 'AsceId',
             TRANSF_FUN_ID = 'org.eso.ias.tf.MinMax',
             OUTPUT_ID = 'IASIO1',
             DASU_ID = 'DasuId',
             TEMPLATE_ID='A template',
-            asceProps=[pa2,pa3]
+            asceProps=[pa2,pa3],
+            asceTemplatedInputs=[templatedInput1,templatedInput2]
         )
         self.session.add(asce)
         print('Adding ASCE:',asce)
@@ -180,7 +206,7 @@ class PyCdbTest(unittest.TestCase):
         print('Adding a DASU to deploy:',dtd)
         self.session.commit()
 
-
+        print('Reading from RDB')
         #
         # --------- Reads back and check the configuration
         #
@@ -222,10 +248,13 @@ class PyCdbTest(unittest.TestCase):
         self.assertTrue(t[0]==tf)
 
         ios = self.session.query(Iasio).order_by(Iasio.IO_ID).all()
-        self.assertEquals(len(ios),3)
+        self.assertEquals(len(ios),4)
         self.assertTrue(ios[0],i1)
         self.assertTrue(ios[1],i2)
         self.assertTrue(ios[2],i3)
+
+        templInputs = self.session.query(TemplatedInstance).order_by(TemplatedInstance.ID).all()
+        self.assertEquals(len(templInputs),2)
         for s in self.session.query(Supervisor).filter(Supervisor.SUPERVISOR_ID=='SupervisorId'):
             print(s)
             dasuToD=s.dasusToDeploy[0]
@@ -238,6 +267,8 @@ class PyCdbTest(unittest.TestCase):
                 print(asce)
 
     def testWriteModifyDeleteTF(self):
+        print('testWriteModifyDeleteTF')
+
         tf =TransferFunction(CLASSNAME_ID='org.eso.ias.tf.Threshold',IMPLLANG=TFLanguage.SCALA.name)
         print('Writing TF:',tf)
         self.session.add(tf)
