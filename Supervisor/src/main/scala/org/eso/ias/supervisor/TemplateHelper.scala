@@ -162,6 +162,11 @@ class TemplateHelper(
     TemplateHelper.logger.debug("Normalizing templated input instances of ASCE [{}] with inputs {}",
       asce.getId,
       JavaConverters.collectionAsScalaIterable(asce.getIasiosIDs).mkString(","))
+
+    val numOfInputsBefore = asce.getInputs.size()
+    val numOfTemplatedInstanceInputs = asce.getTemplatedInstanceInputs.size()
+
+
     if (!asce.getTemplatedInstanceInputs.isEmpty) {
       val templatedInstanceInputs = JavaConverters.collectionAsScalaIterable(asce.getTemplatedInstanceInputs)
       templatedInstanceInputs.foreach( templatedInstance => {
@@ -172,6 +177,8 @@ class TemplateHelper(
         asce.getId,
         JavaConverters.collectionAsScalaIterable(asce.getIasiosIDs).mkString(","))
     }
+
+    assert(numOfInputsBefore+numOfTemplatedInstanceInputs==asce.getInputs.size(), "Wrong number of templated input instances converted")
   }
   
   /**
