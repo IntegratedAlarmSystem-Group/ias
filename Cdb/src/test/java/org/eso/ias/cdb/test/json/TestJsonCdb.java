@@ -740,5 +740,26 @@ public class TestJsonCdb {
 		    assertTrue(ti.getInstance()>=3 && ti.getInstance()<=5);
         });
 	}
+
+    /**
+     * Test the ASCE with templated inputs
+     *
+     * @throws Exception
+     */
+	@Test
+	public void testGetAsceWithTemplatedInputs() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./testCdb");
+		cdbFiles = new CdbJsonFiles(path);
+		cdbReader = new JsonReader(cdbFiles);
+
+		Optional<AsceDao> asceWithTemplatedInputs = cdbReader.getAsce("ASCE-WITH-TEMPLATED-INPUTS");
+		assertTrue(asceWithTemplatedInputs.isPresent());
+		assertEquals(3,asceWithTemplatedInputs.get().getTemplatedInstanceInputs().size());
+		assertEquals(2,asceWithTemplatedInputs.get().getInputs().size());
+        Optional<AsceDao> asceWithTemplatedInputsOnly = cdbReader.getAsce("ASCE-WITH-TEMPLATED-INPUTS-ONLY");
+        assertTrue(asceWithTemplatedInputsOnly.isPresent());
+        assertTrue(asceWithTemplatedInputsOnly.get().getInputs().isEmpty());
+        assertEquals(3,asceWithTemplatedInputsOnly.get().getTemplatedInstanceInputs().size());
+	}
 }
 
