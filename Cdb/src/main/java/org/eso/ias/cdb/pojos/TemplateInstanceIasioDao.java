@@ -73,23 +73,22 @@ public class TemplateInstanceIasioDao {
         if (o == null || getClass() != o.getClass()) return false;
         TemplateInstanceIasioDao that = (TemplateInstanceIasioDao) o;
         return instance == that.instance &&
-                Objects.equals(id, that.id) &&
                 Objects.equals(templateId, that.templateId) &&
                 Objects.equals(iasio, that.iasio);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, templateId, instance, iasio);
+        return Objects.hash(templateId, instance, iasio);
     }
 
     @Override
     public String toString() {
-        StringBuilder ret = new StringBuilder("Templated IASIO = [ IASIO ID=");
+        StringBuilder ret = new StringBuilder("Templated input instance = [ IASIO id=");
         ret.append(iasio.getId());
-        ret.append(", template id =");
+        ret.append(", template id=");
         ret.append(templateId);
-        ret.append(", instance=");
+        ret.append(", instance #");
         ret.append(instance);
         ret.append(']');
         return ret.toString();

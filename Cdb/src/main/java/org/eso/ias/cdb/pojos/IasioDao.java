@@ -3,9 +3,7 @@ package org.eso.ias.cdb.pojos;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import javax.persistence.*;
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * The pojo for the IASIO
@@ -83,13 +81,6 @@ public class IasioDao {
 	@Basic(optional=true)
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	private String emails;
-
-	/**
-	 * This one-to-many annotation matches with the many-to-one
-	 * annotation in the {@link TemplateInstanceIasioDao}
-	 */
-	@OneToMany(mappedBy = "iasio", cascade = CascadeType.ALL, orphanRemoval = true)
-	private Set<TemplateInstanceIasioDao> templateInstances = new HashSet<>();
 
 	/**
 	 * Empty constructor
@@ -229,13 +220,12 @@ public class IasioDao {
 				this.isCanShelve()==other.isCanShelve() &&
 				Objects.equals(this.getTemplateId(),other.getTemplateId()) &&
 				Objects.equals(this.getEmails(),other.getEmails()) &&
-				Objects.equals(this.getSound(),other.getSound()) &&
-				Objects.equals(this.templateInstances,other.templateInstances);
+				Objects.equals(this.getSound(),other.getSound());
 	}
 	
 	@Override
 	public int hashCode() {
-		return Objects.hash(id,iasType,shortDesc,docUrl,canShelve,templateId,sound,emails,templateInstances);
+		return Objects.hash(id,iasType,shortDesc,docUrl,canShelve,templateId,sound,emails);
 	}
 
 	public String getDocUrl() {
@@ -264,21 +254,6 @@ public class IasioDao {
 
 	public SoundTypeDao getSound() {
 		return sound;
-	}
-
-	public Set<TemplateInstanceIasioDao> getTemplateInstances() {
-		return templateInstances;
-	}
-
-	public void addTemplateInstance(TemplateInstanceIasioDao tiIasioDao) {
-		Objects.requireNonNull(tiIasioDao);
-		templateInstances.add(tiIasioDao);
-		tiIasioDao.setIasio(this);
-	}
-
-	public void removeTemplateInstance(TemplateInstanceIasioDao tiIasioDao) {
-		Objects.requireNonNull(tiIasioDao);
-		templateInstances.remove(tiIasioDao);
 	}
 
 	public void setSound(SoundTypeDao sound) {
