@@ -1,16 +1,13 @@
 #! /usr/bin/env python
 
-from enum import Enum
-
+from IasBasicTypes.IasType import IASType
 from IasCdb.LogLevel import LogLevel
 from IasCdb.SoundType import SoundType
 from IasCdb.TFLanguage import TFLanguage
-from IasBasicTypes.IasType import IASType
-
-from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, ForeignKey, Table
-from sqlalchemy.schema import Sequence
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import validates, relationship
+from sqlalchemy.schema import Sequence
 
 '''
 Defines the mapping of the CDB with  alchemy
@@ -244,6 +241,30 @@ asce_iasio_association_table = Table("ASCE_IASIO", Base.metadata,
                                      Column('IO_ID',Integer, ForeignKey('IASIO.IO_ID'))
                                      )
 
+asce_templated_inputs_association_table = Table("ASCE_TEMPL_IASIO", Base.metadata,
+                                     Column('ASCE_ID',String(64), ForeignKey('ASCE.ASCE_ID')),
+                                     Column('TEMPLATED_INPUT_ID',Integer, ForeignKey('TEMPL_INST_IASIO.ID'))
+                                     )
+
+class TemplatedInstance(Base):
+    __tablename__ = 'TEMPL_INST_IASIO'
+
+    ID = Column(Integer, Sequence('TEMPL_INST_SEQ_GENERATOR'), primary_key=True, autoincrement='auto')
+    IO_ID = Column(String(64), ForeignKey('IASIO.IO_ID'),nullable=True)
+    TEMPLATE_ID  = Column(String(64), ForeignKey('TEMPLATE_DEF.TEMPLATE_ID'),nullable=True)
+    INSTANCE_NUM = Column(Integer, nullable=False)
+
+    def __repr__(self):
+        return "<TemplatedInput(id='%s', template_id='%s', instance_num=%s)>" % (
+            self.ID, self.TEMPLATE_ID, self.INSTANCE_NUM
+        )
+
+    def __eq__(self, other):
+        return type(other) is TemplatedInstance and self.TEMPLATE_ID==other.TEMPLATE_ID and self.INSTANCE_NUM==other.INSTANCE_NUM
+
+    def __hash__(self):
+        return hash((self.TEMPLATE_ID, self.INSTANCE_NUM))
+
 class Asce(Base):
     __tablename__ = 'ASCE'
 
@@ -260,6 +281,8 @@ class Asce(Base):
 
     asceProps = relationship("Property", secondary=asce_props_association_table,back_populates="asces")
     inputs = relationship("Iasio", secondary=asce_iasio_association_table)
+
+    asceTemplatedInputs = relationship("TemplatedInstance", secondary=asce_templated_inputs_association_table)
 
     def __repr__(self):
         return "<ASCE(id='%s', transfFuncId='%s', outputId='%s', dasuId='%s', templateId='%s', props=%s)>" % (
