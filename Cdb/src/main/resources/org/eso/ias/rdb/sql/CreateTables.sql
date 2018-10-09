@@ -167,17 +167,17 @@ CREATE TABLE TEMPL_INST_IASIO (
     CONSTRAINT INST_IASIO_PK PRIMARY KEY ( id ));
 
 /*
-  One ASCE can have zero to many properties.
-  This is the link table between ASCE and properties
+  One ASCE can have zero to many templated inputs.
+  This is the link table between ASCE and templated inputs
   (veery similar to the IAS_PROPERTY table)
 */
 CREATE TABLE ASCE_TEMPL_IASIO (
   asce_id VARCHAR2(64) NOT NULL,
-  templ_id   NUMBER(15) NOT NULL,
-  CONSTRAINT ASCETI_PROP_Props_UQ UNIQUE(templ_id),
-  CONSTRAINT ASCETI_IASIO_FK FOREIGN KEY(templ_id) REFERENCES TEMPL_INST_IASIO(id),
+  templated_input_id   NUMBER(15) NOT NULL,
+  CONSTRAINT ASCETI_PROP_Props_UQ UNIQUE(templated_input_id),
+  CONSTRAINT ASCETI_TEMPL_FK FOREIGN KEY(templated_input_id) REFERENCES TEMPL_INST_IASIO(id),
   CONSTRAINT ASCETI_ASCE_FK FOREIGN KEY(asce_id) REFERENCES ASCE(asce_id),
-  CONSTRAINT ASCETI__PK PRIMARY KEY (asce_id, templ_id));
+  CONSTRAINT ASCETI__PK PRIMARY KEY (asce_id, templated_input_id));
 
 
 
