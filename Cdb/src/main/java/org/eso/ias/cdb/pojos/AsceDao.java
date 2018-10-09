@@ -61,7 +61,7 @@ public class AsceDao {
 	@ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
 	@JoinTable(name= "ASCE_TEMPL_IASIO",
 			joinColumns = @JoinColumn(name="asce_id"),
-			inverseJoinColumns = @JoinColumn(name = "id"))
+			inverseJoinColumns = @JoinColumn(name = "templated_input_id"))
 	private Set<TemplateInstanceIasioDao> templatedInstanceInputs = new HashSet<>();
 
 	/**
