@@ -1,17 +1,20 @@
 package org.eso.ias.supervisor.test
 
-import org.scalatest.FlatSpec
-import org.eso.ias.cdb.CdbReader
-import org.eso.ias.cdb.json.CdbJsonFiles
 import java.nio.file.FileSystems
-import org.eso.ias.cdb.json.JsonReader
+
+import org.eso.ias.cdb.CdbReader
+import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
+import org.eso.ias.cdb.pojos.DasuToDeployDao
 import org.eso.ias.supervisor.TemplateHelper
+import org.scalatest.FlatSpec
+
 import scala.collection.JavaConverters
 
 // The following import is required by the usage of the fixture
-import language.reflectiveCalls
-import org.eso.ias.types.Identifier
 import org.eso.ias.cdb.pojos.AsceDao
+import org.eso.ias.types.Identifier
+
+import scala.language.reflectiveCalls
 
 /**
  * Test the TemplateHelper class
@@ -40,7 +43,7 @@ class TemplateHelperTest extends FlatSpec {
         supervOpt.get
       }
       
-      val dasusToDeploy = JavaConverters.asScalaSet(superv.getDasusToDeploy).toSet
+      val dasusToDeploy: Set[DasuToDeployDao] = JavaConverters.asScalaSet(superv.getDasusToDeploy).toSet
       
       val templateHelper = new TemplateHelper(dasusToDeploy)
   }
@@ -49,11 +52,11 @@ class TemplateHelperTest extends FlatSpec {
   
   it must "distinguish between templated and non templated DASUs" in {
     val f = fixture
-    assert(f.dasusToDeploy.size==3)
+    assert(f.dasusToDeploy.size==4)
     assert(f.templateHelper.normalDasusToDeploy.size==1)
     assert(f.templateHelper.normalDasusToDeploy.filter(d => d.getDasu.getId=="Dasu1").size==1)
     
-    assert(f.templateHelper.templatedDasusToDeploy.size==2)
+    assert(f.templateHelper.templatedDasusToDeploy.size==3)
     val tempIds = f.templateHelper.templatedDasusToDeploy.map(dtd => dtd.getDasu.getId)
     assert(tempIds.contains("DasuTemplateID1"))
     assert(tempIds.contains("DasuTemplateID2"))
