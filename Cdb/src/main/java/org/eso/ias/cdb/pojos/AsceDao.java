@@ -58,7 +58,7 @@ public class AsceDao {
 		inverseJoinColumns = @JoinColumn(name = "props_id"))
 	private Set<PropertyDao> props = new HashSet<>();
 
-	@ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+	@ManyToMany(cascade = CascadeType.ALL)
 	@JoinTable(name= "ASCE_TEMPL_IASIO",
 			joinColumns = @JoinColumn(name="asce_id"),
 			inverseJoinColumns = @JoinColumn(name = "templated_input_id"))
