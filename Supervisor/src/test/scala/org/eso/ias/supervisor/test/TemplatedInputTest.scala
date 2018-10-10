@@ -27,14 +27,15 @@ import scala.language.reflectiveCalls
  * is able to get the inputs by their IDs by calling getValue.
  * 
  * It instantiates a templated DASU with one ASCE that
- * sums 2 inputs of type Long.
- * One input is from a non templated input while the other 
- * one is templated.
+ * has 2 inputs of type Long plus 2 inputs of type alarm.
+  * The TF simes the values of the longs plus 2 and 1 for the alarms.
+ * One input is from a non templated input, other one
+ * one is templated annd the alarms are templated input instances.
  * The TF gets the values of the inputs by calling getEval
  * and not directly accessing the map. 
  * getEval must recognize the templated and not templated parameters. 
  * For templated parameters, getValue must take into account the 
- * instance of the DASU/ASCE.
+ * instance of the DASU/ASCE and the instance of templated inputs instances.
  * 
  * The test instantiates the DASU with the ASCE and send the inputs.
  * Finally, it checks the output.
@@ -169,7 +170,7 @@ class TemplatedInputTest extends FlatSpec {
 		  null,
 		null,null)
 
-    val t2 = System.currentTimeMillis()-50
+    val t2 = System.currentTimeMillis()-25
     val templInstValue1 = IASValue.build(
       Alarm.SET_MEDIUM,
       OperationalMode.OPERATIONAL,
@@ -186,20 +187,20 @@ class TemplatedInputTest extends FlatSpec {
       null,
       null,null)
 
-    val t3 = System.currentTimeMillis()-50
+    val t3 = System.currentTimeMillis()-10
     val templInstValue2 = IASValue.build(
       Alarm.SET_CRITICAL,
       OperationalMode.OPERATIONAL,
       IasValidity.RELIABLE,
       f.idTemplInstanceInput2.fullRunningID,
       IASTypes.ALARM,
-      t2,
-      t2+1,
-      t2+5,
-      t2+10,
-      t2+15,
-      t2+20,
-      t2+25,
+      t3,
+      t3+1,
+      t3+5,
+      t3+10,
+      t3+15,
+      t3+20,
+      t3+25,
       null,
       null,null)
     
@@ -213,7 +214,7 @@ class TemplatedInputTest extends FlatSpec {
     assert(f.outputEventsreceived.size==1)
     
     val valueOfOutput = f.outputEventsreceived.head.value.asInstanceOf[Long]
-    assert(valueOfOutput==11L)
+    assert(valueOfOutput==14L)
     
     f.supervisor.cleanUp()
   }
