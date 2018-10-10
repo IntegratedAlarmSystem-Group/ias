@@ -1,1 +1,6 @@
-{"asceIDs":["ASCE-ID1"],"outputId":"OUTID-DASU2","logLevel":"WARN","id":"DasuID2"}
+{
+  "id":"DasuID2",
+  "asceIDs":["ASCE-ID1","ASCE-WITH-TEMPLATED-INPUTS"],
+  "outputId":"OUTID-DASU2",
+  "logLevel":"WARN"
+}

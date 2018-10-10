@@ -1,12 +1,9 @@
 package org.eso.ias.asce.transfer;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.Set;
-
 import org.eso.ias.types.IASValue;
 import org.eso.ias.types.Identifier;
+
+import java.util.*;
 
 /**
  * The JavaTransferExecutor provides the interface
@@ -34,6 +31,32 @@ public abstract class JavaTransferExecutor<T> extends TransferExecutor {
 			) {
 		super(cEleId,cEleRunningId,validityTimeFrame,props);
 	}
+
+    /**
+     * This method is mostly to get templated input instances for which the
+     * instance, not known to the ACSE, must be passed.
+     *
+     * If the instance is empty, it delegates to {@link JavaTransferExecutor#getValue(Map, String)}.
+     *
+     *
+     * @param inputs the map of the inputs
+     * @param id The (non templated) identifier of the value
+     * @param instance The instance defined for templated input instances
+     * @return the IASValue of the given ID or <code>null</code>
+	 *         if a IASValue with the passed id is not in the map
+     */
+	protected final IasIOJ<?> getValue(
+	        Map<String, IasIOJ<?>> inputs,
+            String id,
+            Optional<Integer> instance) {
+	    if (instance.isPresent()) {
+	        String templatedID = Identifier.buildIdFromTemplate(id,instance.get());
+			return inputs.get(templatedID);
+        } else {
+	        return getValue(inputs,id);
+        }
+
+    }
 	
 	/**
 	 * This method transparently return a value from the passed ID,

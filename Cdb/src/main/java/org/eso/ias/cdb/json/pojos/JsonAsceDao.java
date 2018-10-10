@@ -1,14 +1,15 @@
 package org.eso.ias.cdb.json.pojos;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import org.eso.ias.cdb.pojos.AsceDao;
+import org.eso.ias.cdb.pojos.IasioDao;
+import org.eso.ias.cdb.pojos.PropertyDao;
+
+import javax.persistence.Basic;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import javax.persistence.Basic;
-
-import org.eso.ias.cdb.pojos.AsceDao;
-import org.eso.ias.cdb.pojos.PropertyDao;
 
 /**
  * Pojos for JSON that replaces objects inclusion in the ASCE with their IDS.
@@ -43,11 +44,19 @@ public class JsonAsceDao {
 	 * The ID of the transfer function
 	 */
 	private String transferFunctionID;
+
+    /**
+     * The templated inputs of the ASCE
+     */
+    @Basic(optional=true)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+	private final Set<JsonTemplatedInputsDao> templatedInputs= new HashSet<>();
 	
 	/**
 	 * The ID of the template for implementing replication
 	 */
 	@Basic(optional=true)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
 	private String templateId;
 	
 	/**
@@ -76,8 +85,15 @@ public class JsonAsceDao {
 		this.outputID=this.asce.getOutput().getId();
 		this.transferFunctionID=this.asce.getTransferFunction().getClassName();
 		this.templateId=this.asce.getTemplateId();
-		
+
 		asce.getInputs().stream().forEach(iasio -> inputIds.add(iasio.getId()));
+        asce.getTemplatedInstanceInputs().stream().forEach( templInput -> {
+            templatedInputs.add(
+                    new JsonTemplatedInputsDao(
+                            templInput.getIasio().getId(),
+                            templInput.getTemplateId(),
+                            templInput.getInstance()));
+        });
 	}
 
 	/**
@@ -217,4 +233,11 @@ public class JsonAsceDao {
 	public void setTemplateId(String templateId) {
 		this.templateId = templateId;
 	}
+
+    public Set<JsonTemplatedInputsDao> getTemplatedInputs() { return templatedInputs; }
+
+    public void setTemplatedInputs(Set<JsonTemplatedInputsDao> templInputs) {
+	    this.templatedInputs.clear();
+	    this.templatedInputs.addAll(templInputs);
+    }
 }

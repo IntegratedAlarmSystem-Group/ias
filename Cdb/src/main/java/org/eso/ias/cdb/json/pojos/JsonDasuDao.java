@@ -1,13 +1,13 @@
 package org.eso.ias.cdb.json.pojos;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import org.eso.ias.cdb.pojos.DasuDao;
+import org.eso.ias.cdb.pojos.LogLevelDao;
+
+import javax.persistence.Basic;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import javax.persistence.Basic;
-
-import org.eso.ias.cdb.pojos.DasuDao;
-import org.eso.ias.cdb.pojos.LogLevelDao;
 
 /**
  * Pojo for JSON that replaces object inclusion with their IDS.
@@ -38,6 +38,7 @@ public class JsonDasuDao {
 	 * The ID of the template for implementing replication
 	 */
 	@Basic(optional=true)
+	@JsonInclude(JsonInclude.Include.NON_NULL)
 	private String templateId;
 	
 	/**
