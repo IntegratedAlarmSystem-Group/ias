@@ -159,23 +159,18 @@ class TemplateHelper(
     */
   def normalizeAsceWithTemplatedInstanceInputs(asce: AsceDao) {
     require(Option(asce).isDefined)
-    TemplateHelper.logger.debug("Normalizing templated input instances of ASCE [{}] with inputs {}",
-      asce.getId,
-      JavaConverters.collectionAsScalaIterable(asce.getIasiosIDs).mkString(","))
+    TemplateHelper.logger.debug("Normalizing templated input instances of ASCE [{}]", asce.getId)
 
     val numOfInputsBefore = asce.getInputs.size()
     val numOfTemplatedInstanceInputs = asce.getTemplatedInstanceInputs.size()
 
 
     if (!asce.getTemplatedInstanceInputs.isEmpty) {
-      val templatedInstanceInputs = JavaConverters.collectionAsScalaIterable(asce.getTemplatedInstanceInputs)
-      templatedInstanceInputs.foreach( templatedInstance => {
-        asce.addInput(normalizeIasio(templatedInstance.getIasio,templatedInstance.getInstance()), false)
+      val templatedInstanceInputs = JavaConverters.collectionAsScalaIterable(asce.getTemplatedInstanceInputs).toSet
+      templatedInstanceInputs.foreach(templatedInstance => {
+        asce.addInput(normalizeIasio(templatedInstance.getIasio, templatedInstance.getInstance()), false)
       })
       asce.getTemplatedInstanceInputs.clear()
-      TemplateHelper.logger.debug("New inputs of ASCE [{}] after normalizing tempated input instances: {}",
-        asce.getId,
-        JavaConverters.collectionAsScalaIterable(asce.getIasiosIDs).mkString(","))
     }
 
     assert(numOfInputsBefore+numOfTemplatedInstanceInputs==asce.getInputs.size(), "Wrong number of templated input instances converted")
@@ -292,8 +287,7 @@ class TemplateHelper(
 
       z++ascesOfDasu
     })
-    TemplateHelper.logger.debug("Normalizing templated input instances of all ASCEs ({})",
-      allAsces.map(_.getId).mkString(","))
+    TemplateHelper.logger.info("Normalizing templated input instances of all ASCEs")
     allAsces.foreach(normalizeAsceWithTemplatedInstanceInputs(_))
     TemplateHelper.logger.info("Normalization completed")
     
