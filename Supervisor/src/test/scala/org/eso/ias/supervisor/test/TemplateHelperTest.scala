@@ -4,7 +4,7 @@ import java.nio.file.FileSystems
 
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
-import org.eso.ias.cdb.pojos.DasuToDeployDao
+import org.eso.ias.cdb.pojos.{DasuToDeployDao, IasioDao}
 import org.eso.ias.supervisor.TemplateHelper
 import org.scalatest.FlatSpec
 
@@ -131,6 +131,53 @@ class TemplateHelperTest extends FlatSpec {
     val nonTemplatedDasus = dasus.filter(!_.getId.matches(Identifier.templatedIdRegExp.regex))
     val nonTemplatedAsces: Set[AsceDao] = nonTemplatedDasus.foldLeft(Set.empty[AsceDao])( (s, d) => s++JavaConverters.collectionAsScalaIterable(d.getAsces))
     assert(!nonTemplatedAsces.forall(_.getOutput.getId.matches(Identifier.templatedIdRegExp.regex)))
+  }
+
+  it must "normalize templated instance inputs" in {
+    // Templated instance inputs are converted and added to the inputs of the ASCE
+    //
+    // This test checks if the templated input instances are contained in the inputs of the ASCE
+    val f = fixture
+
+    // Get the templated instance inputs: this must be done before normalizing
+    // because th list of templated instances is emptied during nromalization
+    // and the ASCE contains the templated instances in its inputs
+    val allDasus= f.dasusToDeploy.map(_.getDasu)
+    // For each ASCE, the ascesWithTemplatedInstanceInputs map save the
+    // ID and instance of the templated input instances
+    val ascesWithTemplatedInstanceInputs: Map[AsceDao, Set[(String, Int)]] = {
+      var map = Map.empty[AsceDao, Set[(String, Int)]]
+      val allAsces = allDasus.foldLeft(Set.empty[AsceDao]) ( (z,dasu) => z++JavaConverters.asScalaSet(dasu.getAsces).toSet)
+      val ascesWithTemplatedInstanceInputs = allAsces.filter(!_.getTemplatedInstanceInputs.isEmpty)
+
+      ascesWithTemplatedInstanceInputs.foreach( asce => {
+        val tempInstInputs = JavaConverters.asScalaSet(asce.getTemplatedInstanceInputs).toSet
+        // We save the id before conversion and the instance number
+        val dataToSave = tempInstInputs.map(tii => (tii.getIasio.getId, tii.getInstance()))
+        if (!tempInstInputs.isEmpty) map=map+(asce -> dataToSave)
+      })
+      map
+    }
+    assert(ascesWithTemplatedInstanceInputs.nonEmpty, "No templated instance inputs found")
+
+    val normalizedDasus = f.templateHelper.normalize()
+    val allAsces = normalizedDasus.foldLeft(Set.empty[AsceDao]) ( (z,dasu) => z++JavaConverters.asScalaSet(dasu.getAsces).toSet)
+    // After normalizing all the templated inputs must have been cleared
+    assert(allAsces.filter(asce => !asce.getTemplatedInstanceInputs.isEmpty).isEmpty)
+
+    ascesWithTemplatedInstanceInputs.keySet.forall( asce => {
+      val templatedInstanceInputs: Set[(String, Int)] = ascesWithTemplatedInstanceInputs(asce)
+      val asceInputs: Set[IasioDao] = JavaConverters.collectionAsScalaIterable(asce.getInputs).toSet
+      val asceInputIds = asceInputs.map( i => i.getId)
+
+      templatedInstanceInputs.forall( tii => {
+        val tiiId = tii._1 // Identifier
+        val tiiInstance= tii._2 // Instance
+        val expectedId = Identifier.buildIdFromTemplate(tiiId,tiiInstance)
+
+        asceInputIds.contains(expectedId)
+      })
+    })
   }
   
 }
