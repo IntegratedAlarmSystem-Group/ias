@@ -83,10 +83,10 @@ class SupervisorWithTemplatesTest extends FlatSpec {
   it must "instantiate the templated DASUs defined in the CDB" in {
     val f = fixture
     // There are 2 templated DASUs and one non templated DASU
-    assert(f.supervisor.dasuIds.size == 3)
+    assert(f.supervisor.dasuIds.size == 4)
     logger.info("DASUs of Supervisor {}: {}",f.supervIdentifier.fullRunningID,f.supervisor.dasuIds.mkString(", "))
     
-    assert(f.supervisor.dasus.values.size==3)
+    assert(f.supervisor.dasus.values.size==4)
     
     val templatedDasus=f.supervisor.dasus.values.filter(d => d.id.startsWith("DasuTemplateID"))
     assert(templatedDasus.size==2)
@@ -113,6 +113,12 @@ class SupervisorWithTemplatesTest extends FlatSpec {
     val inputsToDasu2 = f.supervisor.iasiosToDasusMap(Identifier.buildIdFromTemplate("DasuTemplateID2", Some(5)))
     assert(inputsToDasu2.size == 1)
     assert(inputsToDasu2.forall(id => id.startsWith("AsceTemp2-ID1-In")))
+
+    // Chelk the inputs of the DASU with templated instance inputs
+    val inputsToDasu3 = f.supervisor.iasiosToDasusMap(Identifier.buildIdFromTemplate("DasuToTestInputs", Some(4)))
+    assert(inputsToDasu3.size == 4) // 2 template + 2 templated instance inputs
+    assert(inputsToDasu3.forall(id =>
+      id.startsWith("TemplatedIput") || id.startsWith("TemplatedI") || id.startsWith("NonTemplatedId")))
   }
 
   it must "start each DASU" in {
