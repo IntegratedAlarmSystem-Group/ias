@@ -57,14 +57,17 @@ extends ScalaTransferExecutor[Long](cEleId,cEleRunningId,validityTimeFrame,props
     assert(tempInOut.isDefined)
 
     // Get the templated instance inputs
-    val tempInst1 =
-    getValue(compInputs,
+    val tempInst1 = getValue(compInputs, "TemplatedInput", Some(3))
+    val valOfTempInst1 = if (tempInst1.isDefined) 1 else 0;
+    val tempInst2 = getValue(compInputs, "TemplatedInput", Some(4))
+    val valOfTempInst2 = if (tempInst1.isDefined) 2 else 0;
+
     val nonTempVal = nonTempInOut.get.value.get.asInstanceOf[Long]
     print("Non templated value ="+nonTempVal)
     val tempVal = tempInOut.get.value.get.asInstanceOf[Long]
     print("Templated value ="+tempVal)
 
-    actualOutput.updateValue(nonTempVal+tempVal)
+    actualOutput.updateValue(nonTempVal+tempVal+valOfTempInst1+valOfTempInst2)
   }
   
 }
