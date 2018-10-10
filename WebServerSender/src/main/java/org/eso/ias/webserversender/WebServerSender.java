@@ -153,6 +153,11 @@ public class WebServerSender implements IasioListener {
 	private CountDownLatch connectionReady;
 
 	/**
+	 * User java properties
+	 */
+	Properties props;
+
+	/**
 	 * Constructor
 	 *
 	 * @param senderID Identifier of the WebServerSender
@@ -188,7 +193,9 @@ public class WebServerSender implements IasioListener {
 		this.kafkaServers=kafkaServers.trim();
 
 		Objects.requireNonNull(props);
-		sendersInputKTopicName = props.getProperty(IASCORE_TOPIC_NAME_PROP_NAME, KafkaHelper.IASIOs_TOPIC_NAME);
+		this.props=props;
+		this.props.put("group.id", this.senderID + ".kafka.group");
+ 		sendersInputKTopicName = props.getProperty(IASCORE_TOPIC_NAME_PROP_NAME, KafkaHelper.IASIOs_TOPIC_NAME);
 		webserverUri = props.getProperty(WEBSERVER_URI_PROP_NAME, DEFAULT_WEBSERVER_URI);
 		uri = new URI(webserverUri);
 		logger.debug("Websocket connection URI: "+ webserverUri);
@@ -243,7 +250,7 @@ public class WebServerSender implements IasioListener {
 	       logger.error("WebSocket couldn't send the message",t);
 	   }
 	   socketConnected.set(true);
-	}
+   }
 
 	@OnWebSocketMessage
     public void onMessage(String message) {
@@ -283,7 +290,7 @@ public class WebServerSender implements IasioListener {
 
 	public void setUp() {
 		hbEngine.start();
-		kafkaConsumer.setUp();
+		kafkaConsumer.setUp(this.props);
 		connect();
 	}
 
@@ -344,16 +351,6 @@ public class WebServerSender implements IasioListener {
 	public void setReconnectionInverval(int interval) {
 		reconnectionInterval = interval;
 	}
-
-	// /**
-	//  * Build the usage message
-	//  */
-	// public static void printUsage() {
-	// 	System.out.println("Usage: WebServerSender Sender-ID [-jcdb JSON-CDB-PATH]");
-	// 	System.out.println("  -jcdb force the usage of the JSON CDB");
-	// 	System.out.println("  Sender-ID: the identifier of the web server sender");
-	// 	System.out.println("  JSON-CDB-PATH: the path of the JSON CDB");
-	// }
 
 	/**
 	 * Print the usage string
