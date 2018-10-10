@@ -3,7 +3,6 @@ package org.eso.ias.supervisor.test.tf
 import java.util.Properties
 
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
-import org.eso.ias.types.Alarm
 
 /**
  * A TF to test the getting of values with getValue
@@ -56,12 +55,15 @@ extends ScalaTransferExecutor[Long](cEleId,cEleRunningId,validityTimeFrame,props
     assert(nonTempInOut.isDefined)
     val tempInOut = getValue(compInputs, templatedId)
     assert(tempInOut.isDefined)
-    
+
+    // Get the templated instance inputs
+    val tempInst1 =
+    getValue(compInputs,
     val nonTempVal = nonTempInOut.get.value.get.asInstanceOf[Long]
     print("Non templated value ="+nonTempVal)
     val tempVal = tempInOut.get.value.get.asInstanceOf[Long]
     print("Templated value ="+tempVal)
-    
+
     actualOutput.updateValue(nonTempVal+tempVal)
   }
   

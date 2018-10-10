@@ -1,32 +1,26 @@
 package org.eso.ias.supervisor.test
 
-import org.scalatest.FlatSpec
-import org.eso.ias.logging.IASLogger
-import org.eso.ias.types.IasValueJsonSerializer
-import scala.collection.mutable.ArrayBuffer
-import org.eso.ias.dasu.publisher.OutputListener
-import org.eso.ias.dasu.publisher.ListenerOutputPublisherImpl
-import org.eso.ias.types.IASValue
-import org.eso.ias.dasu.publisher.OutputPublisher
-import org.eso.ias.dasu.publisher.DirectInputSubscriber
 import java.nio.file.FileSystems
-import org.eso.ias.cdb.json.CdbJsonFiles
+
 import org.eso.ias.cdb.CdbReader
-import org.eso.ias.cdb.json.JsonReader
-import org.eso.ias.types.Identifier
-import org.eso.ias.types.IdentifierType
-import org.eso.ias.supervisor.Supervisor
+import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.DasuDao
-import org.eso.ias.dasu.subscriber.InputSubscriber
 import org.eso.ias.dasu.DasuImpl
-import org.eso.ias.types.OperationalMode
-import org.eso.ias.types.IasValidity
+import org.eso.ias.dasu.publisher.{DirectInputSubscriber, ListenerOutputPublisherImpl, OutputListener, OutputPublisher}
+import org.eso.ias.dasu.subscriber.InputSubscriber
+import org.eso.ias.logging.IASLogger
+import org.eso.ias.supervisor.Supervisor
+import org.eso.ias.types._
+import org.scalatest.FlatSpec
+
+import scala.collection.mutable.ArrayBuffer
 
 // The following import is required by the usage of the fixture
-import language.reflectiveCalls
-import org.eso.ias.types.IASTypes
-import org.eso.ias.heartbeat.serializer.HbJsonSerializer
 import org.eso.ias.heartbeat.publisher.HbLogProducer
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer
+import org.eso.ias.types.IASTypes
+
+import scala.language.reflectiveCalls
 
 /**
  * This test checks if the the TF running in a templated ASCE
@@ -129,6 +123,8 @@ class TemplatedInputTest extends FlatSpec {
       
       val idTemplated = new Identifier(Identifier.buildIdFromTemplate("TemplatedId",4), IdentifierType.IASIO, AsceId)
       val idNonTemplated = new Identifier("NonTemplatedId", IdentifierType.IASIO, AsceId)
+      val idTemplInstanceInput1 = new Identifier(Identifier.buildIdFromTemplate("TemplatedInput",3), IdentifierType.IASIO, AsceId)
+      val idTemplInstanceInput2 = new Identifier(Identifier.buildIdFromTemplate("TemplatedInput",4), IdentifierType.IASIO, AsceId)
       
       val outputId = "TemplatedOutId"
 
@@ -172,8 +168,42 @@ class TemplatedInputTest extends FlatSpec {
 		  t1+25,
 		  null,
 		null,null)
+
+    val t2 = System.currentTimeMillis()-50
+    val templInstValue1 = IASValue.build(
+      Alarm.SET_MEDIUM,
+      OperationalMode.OPERATIONAL,
+      IasValidity.RELIABLE,
+      f.idTemplInstanceInput1.fullRunningID,
+      IASTypes.ALARM,
+      t2,
+      t2+1,
+      t2+5,
+      t2+10,
+      t2+15,
+      t2+20,
+      t2+25,
+      null,
+      null,null)
+
+    val t3 = System.currentTimeMillis()-50
+    val templInstValue2 = IASValue.build(
+      Alarm.SET_CRITICAL,
+      OperationalMode.OPERATIONAL,
+      IasValidity.RELIABLE,
+      f.idTemplInstanceInput2.fullRunningID,
+      IASTypes.ALARM,
+      t2,
+      t2+1,
+      t2+5,
+      t2+10,
+      t2+15,
+      t2+20,
+      t2+25,
+      null,
+      null,null)
     
-    val inputs:  Set[IASValue[_]] = Set(nonTemplatedValue,templatedValue)
+    val inputs:  Set[IASValue[_]] = Set(nonTemplatedValue,templatedValue,templInstValue1,templInstValue2)
     
     // Sends the input to the Supervisor and the DASU
     f.inputsProvider.sendInputs(inputs)
