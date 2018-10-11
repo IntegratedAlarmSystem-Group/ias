@@ -1,6 +1,5 @@
 package org.eso.ias.kafkautils;
 
-import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
 import org.eso.ias.types.IasValueJsonSerializer;
@@ -8,7 +7,10 @@ import org.eso.ias.types.IasValueStringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 /**
  * Extends {@link SimpleKafkaIasiosConsumer} providing filtering by IDs and types.
  * <P>
@@ -24,6 +26,7 @@ import java.util.*;
  * IDs and type are evaluated in AND. 
  * 
  * @author acaproni
+ * @deprecated Use {@link FilteredKafkaIasiosConsumer} instead
  */
 public class KafkaIasiosConsumer extends SimpleKafkaIasiosConsumer {
 
