@@ -2,6 +2,7 @@ package org.eso.ias.extras.cdbchecker
 
 import java.util.Optional
 
+import com.typesafe.scalalogging.Logger
 import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
@@ -45,7 +46,7 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
     if (iasDaoOptional.isPresent) Some(iasDaoOptional.get()) else None
   }
   iasDaoOpt.foreach(ias => CdbChecker.logger.info("IAS read"))
-  val iasError = checkIas(iasDaoOpt)
+  val iasError: Boolean = checkIas(iasDaoOpt)
 
   /** The map of transferfunctions where the key is the class of the TF */
   val mapOfTfs: Map[String, TransferFunctionDao] = {
@@ -63,7 +64,7 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
     val templates: Set[TemplateDao] = if (!templatesOptional.isPresent) Set.empty else {
       JavaConverters.asScalaSet(templatesOptional.get()).toSet
     }
-    templates.foldLeft(Map.empty[String,TemplateDao])( (z, t) => z+(t.getId() -> t))
+    templates.foldLeft(Map.empty[String,TemplateDao])( (z, t) => z+(t.getId -> t))
   }
   CdbChecker.logger.info("Read {} templates",mapOfTemplates.size)
 
@@ -73,7 +74,7 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
     val iasios: Set[IasioDao] = if (!iasiosOptional.isPresent) Set.empty else {
       JavaConverters.asScalaSet(iasiosOptional.get()).toSet
     }
-    iasios.foldLeft(Map.empty[String,IasioDao])( (z, i) => z+(i.getId() -> i))
+    iasios.foldLeft(Map.empty[String,IasioDao])( (z, i) => z+(i.getId -> i))
   }
   CdbChecker.logger.info("Read {} IASIOs",mapOfIasios.size)
 
@@ -93,7 +94,7 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
 
   /** The IDs of the supervisors */
   val idsOfSupervisors: Set[String] = {
-    val tryToGetIds: Try[Optional[java.util.Set[String]]] = Try(reader.getSupervisorIds())
+    val tryToGetIds: Try[Optional[java.util.Set[String]]] = Try(reader.getSupervisorIds)
     convertIdsFromReader(tryToGetIds)
   }
   CdbChecker.logger.info("Read {} IDs of Supervisors: {}",idsOfSupervisors.size,idsOfSupervisors.mkString(","))
@@ -118,7 +119,7 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
 
   /** The IDs of the DASUs read from the CDB */
   val idsOfDasus: Set[String] = {
-    val tryToGetIds: Try[Optional[java.util.Set[String]]] = Try(reader.getDasuIds())
+    val tryToGetIds: Try[Optional[java.util.Set[String]]] = Try(reader.getDasuIds)
     convertIdsFromReader(tryToGetIds)
   }
   CdbChecker.logger.info("Read {} IDs of DASUs",idsOfDasus.size)
@@ -143,7 +144,7 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
 
   /** The IDs of the ASCEs */
   val idsOfAsces: Set[String] = {
-    val tryToGetIds: Try[Optional[java.util.Set[String]]] = Try(reader.getAsceIds())
+    val tryToGetIds: Try[Optional[java.util.Set[String]]] = Try(reader.getAsceIds)
     convertIdsFromReader(tryToGetIds)
   }
   CdbChecker.logger.info("Read {} IDs of ASCEs",idsOfAsces.size)
@@ -172,10 +173,10 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
     */
   val mapOfDasusToDeploy: Map[String, Set[DasuToDeployDao]] = {
     idsOfSupervisors.foldLeft(Map.empty[String,Set[DasuToDeployDao]])( (z,id) => {
-      var tryToGetDasus = Try(reader.getDasusToDeployInSupervisor(id))
+      val tryToGetDasus = Try(reader.getDasusToDeployInSupervisor(id))
       tryToGetDasus match {
         case Success(set) =>
-          var setOfDtd: Set[DasuToDeployDao] = JavaConverters.asScalaSet(set).toSet
+          val setOfDtd: Set[DasuToDeployDao] = JavaConverters.asScalaSet(set).toSet
           CdbChecker.logger.info("{} DASUs to deploy on Supervisor [{}]: {}",
             setOfDtd.size.toString,
             id,
@@ -205,7 +206,7 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
     dtd <- setOfDTD
     dasu = Option(dtd.getDasu)
     id = dasu.map(_.getId)
-    if (id.isDefined)
+    if id.isDefined
   } yield id.get).toSet
   if (idsOfDasusToDeploy.size!=idsOfDasus.size) {
     CdbChecker.logger.error("Size of DASUS to deploy ({}) and DASUs ({}) mismatch",idsOfDasusToDeploy.size,idsOfDasus.size)
@@ -226,7 +227,7 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
   for {
     id <- idsOfDasus
     dasu = mapOfDasus.get(id)
-    if (dasu.isDefined)
+    if dasu.isDefined
   } checkDasu(dasu.get)
 
   /** The IDs of the ASCEs to run in each DASU */
@@ -238,21 +239,21 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
   // Is there any ASCE not instantiated by any DASU?
   for {
     asce <- idsOfAsces
-    if (!ascesOfDasus.contains(asce))
+    if !ascesOfDasus.contains(asce)
   } CdbChecker.logger.error("ASCE [{}] not deployed in any DASU: can be removed",asce)
 
   // Are all the ASCE defined in the CDB?
   for {
     asce <- ascesOfDasus
-    if (!idsOfAsces.contains(asce))
+    if !idsOfAsces.contains(asce)
   } CdbChecker.logger.error("ASCE [{}] not defined in the CDB",asce)
 
   // Check the ASCEs
   for {
     asceId <- ascesOfDasus
-    if (idsOfAsces.contains(asceId))
+    if idsOfAsces.contains(asceId)
     asce = mapOfAsces.get(asceId)
-    if (asce.isDefined)
+    if asce.isDefined
   } checkAsce(asce.get)
 
   /**
@@ -266,7 +267,7 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
     idsOfDasus.foldLeft(Map.empty[String, Set[String]])((z, idOfDasu) => {
       mapOfDasus.get(idOfDasu) match {
         case Some(d) =>
-          val asceIds = JavaConverters.asScalaSet(d.getAscesIDs()).toSet
+          val asceIds = JavaConverters.asScalaSet(d.getAscesIDs).toSet
           z + (idOfDasu -> asceIds)
         case None =>
           CdbChecker.logger.error("Error getting DASU [{}]:", idOfDasu)
@@ -295,10 +296,10 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
     }
 
     val dasu = Option(asceDao.getDasu)
-    if (!dasu.isDefined) {
+    if (dasu.isEmpty) {
       CdbChecker.logger.error("No DASU for ASCE [{}]",id.getOrElse("?"))
     } else {
-      val dasuId = dasu.get.getId()
+      val dasuId = dasu.get.getId
       if (!idsOfDasus.contains(dasuId)) {
         CdbChecker.logger.error("ASCE [{}] will be deployied in DASU [{}} that is not defined in CDB",
           id.getOrElse("?"),
@@ -448,22 +449,22 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
         false
       case Some(ias) =>
         var errorFound = false
-        if (ias.getRefreshRate()<=0) {
-          CdbChecker.logger.error("Refresh rate must be >0: {} found",ias.getRefreshRate())
+        if (ias.getRefreshRate<=0) {
+          CdbChecker.logger.error("Refresh rate must be >0: {} found",ias.getRefreshRate)
           errorFound = true
         }
 
-        if (ias.getTolerance()<=0) {
-          CdbChecker.logger.error("Tolerance must be >0: {} found",ias.getTolerance())
+        if (ias.getTolerance<=0) {
+          CdbChecker.logger.error("Tolerance must be >0: {} found",ias.getTolerance)
           errorFound = true
         }
 
-        if (ias.getHbFrequency()<=0) {
-          CdbChecker.logger.error("HB frequency must be >0: {} found",ias.getHbFrequency())
+        if (ias.getHbFrequency<=0) {
+          CdbChecker.logger.error("HB frequency must be >0: {} found",ias.getHbFrequency)
           errorFound = true
         }
 
-        val bsdb = Option(ias.getBsdbUrl())
+        val bsdb = Option(ias.getBsdbUrl)
         if (bsdb.isEmpty || bsdb.get.isEmpty) {
           CdbChecker.logger.error("BSDB URL must be defined and not empty")
           errorFound = true
@@ -610,7 +611,7 @@ object CdbChecker {
   }
 
   /** The logger */
-  val logger = IASLogger.getLogger(Supervisor.getClass)
+  val logger: Logger = IASLogger.getLogger(Supervisor.getClass)
 
   def main(args: Array[String]): Unit = {
     val parsedArgs = parseCommandLine(args)
