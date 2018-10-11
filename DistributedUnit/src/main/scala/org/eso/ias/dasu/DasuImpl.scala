@@ -309,7 +309,7 @@ class DasuImpl (
       //  * its timetsamp is newer that that already in the map of inputs to process
       getInputIds().contains(value.id)
 
-      val valueFromMap = Option(notYetProcessedInputs.get(value.id))
+      val valueFromMap: Option[IASValue[_]] = Option(notYetProcessedInputs.get(value.id))
       valueFromMap.map (v => {
         val valueTstamp = value.dasuProductionTStamp.orElse(value.pluginProductionTStamp.get())
         val tstampOfValueInMap = v.dasuProductionTStamp.orElse(v.pluginProductionTStamp.get())
