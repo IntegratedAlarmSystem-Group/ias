@@ -1,5 +1,5 @@
 {
-	"logLevel":"INFO",
+	"logLevel":"DEBUG",
 	"id":"SupervisorWithKafka",
 	"hostName":"almaias.eso.org",
 	"dasusToDeploy":[

@@ -1,41 +1,24 @@
 package org.eso.ias.kafkautils.test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
-
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer;
-import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener;
+import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener;
 import org.eso.ias.kafkautils.KafkaIasiosProducer;
-import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
-import org.eso.ias.types.Alarm;
-import org.eso.ias.types.IASTypes;
-import org.eso.ias.types.IASValue;
-import org.eso.ias.types.IasValidity;
-import org.eso.ias.types.IasValueJsonSerializer;
-import org.eso.ias.types.IasValueStringSerializer;
-import org.eso.ias.types.Identifier;
-import org.eso.ias.types.OperationalMode;
+import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition;
+import org.eso.ias.types.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * A test to 
@@ -49,12 +32,12 @@ import org.slf4j.LoggerFactory;
  * <P>
  * @author acaproni
  */
-public class FilteredConsumerTest implements IasioListener {
+public class KafkaIasiosConsumerTest implements IasioListener {
 	
 	/**
 	 * The logger
 	 */
-	private static final Logger logger = LoggerFactory.getLogger(FilteredConsumerTest.class);
+	private static final Logger logger = LoggerFactory.getLogger(KafkaIasiosConsumerTest.class);
 	
 	/**
 	 * The consumer of IASIOs received from the Kafka topic
@@ -99,7 +82,11 @@ public class FilteredConsumerTest implements IasioListener {
 	@BeforeEach
 	public void setUp() throws Exception {
 		logger.info("Initializing...");
-		consumer = new KafkaIasiosConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, topicName, "FilteredConsumser-Test");
+		consumer = new KafkaIasiosConsumer(
+				KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
+				topicName, "FilteredConsumser-Test",
+				new HashSet<>(),
+				new HashSet<>());
 		consumer.setUp();
 		receivedIasios.clear();
 		producer = new KafkaIasiosProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, topicName, "Consumer-ID",serializer);
@@ -121,12 +108,15 @@ public class FilteredConsumerTest implements IasioListener {
 	}
 
 	@Override
-	public void iasioReceived(IASValue<?> event) {
-		assertNotNull(event);
-		processedMessages.incrementAndGet();
-		receivedIasios.add(event);
-		numOfEventsToReceive.countDown();
-		logger.info("Event of id [{}] received",event.id);
+	public void iasiosReceived(Collection<IASValue<?>> events) {
+		assertNotNull(events);
+
+		events.forEach( value -> {
+            processedMessages.incrementAndGet();
+            receivedIasios.add(value);
+            numOfEventsToReceive.countDown();
+            logger.info("Event of id [{}] received",value.id);
+        });
 	}
 	
 	/**
@@ -314,6 +304,9 @@ public class FilteredConsumerTest implements IasioListener {
 		valuesToSubmit.addAll(alarmIasios); // accepted
 		valuesToSubmit.addAll(doubleIasios); // rejected
 		int expected = longIasios.size()+alarmIasios.size();
+
+		// We should have a timeout since we expect to receive less values then those submitted
+		numOfEventsToReceive = new CountDownLatch(valuesToSubmit.size());
 		
 		// Start getting events
 		consumer.startGettingEvents(StartPosition.END,this);
@@ -321,9 +314,6 @@ public class FilteredConsumerTest implements IasioListener {
 		// Push the values
 		logger.info("Going to submit {} IASValues and expect to be notified of {}",valuesToSubmit.size(),expected);
 		producer.push(valuesToSubmit);
-		
-		// We should have a timeout since we expect to receive less values then those submitted
-		numOfEventsToReceive = new CountDownLatch(valuesToSubmit.size());
 
 		logger.info("Waiting for events (timeout expected)....");
 		
@@ -397,6 +387,9 @@ public class FilteredConsumerTest implements IasioListener {
 		valuesToSubmit.addAll(doubleIasios); // rejected
 		
 		int expected = Math.min(longIasios.size()+alarmIasios.size(), accpetedIDs.size());
+
+		// We should have a timeout since we expect to receive less values then those submitted
+		numOfEventsToReceive = new CountDownLatch(valuesToSubmit.size());
 		
 		// Start getting events
 		consumer.startGettingEvents(StartPosition.END,this);
@@ -404,9 +397,6 @@ public class FilteredConsumerTest implements IasioListener {
 		// Push the values
 		logger.info("Going to submit {} IASValues and expect to be notified of {}",valuesToSubmit.size(),expected);
 		producer.push(valuesToSubmit);
-		
-		// We should have a timeout since we expect to receive less values then those submitted
-		numOfEventsToReceive = new CountDownLatch(valuesToSubmit.size());
 
 		logger.info("Waiting for events (timeout expected)....");
 		

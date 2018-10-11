@@ -1,5 +1,6 @@
 package org.eso.ias.plugin.test.publisher;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -65,7 +66,7 @@ public class SimpleKafkaConsumer implements Runnable {
 	/**
 	 * The time, in milliseconds, spent waiting in poll if data is not available in the buffer
 	 */
-	private static final int pollingTimeout = 60000;
+	private static final Duration pollingTimeout = Duration.ofSeconds(15);
 	
 	/**
 	 * The consumer getting events from the kafka topic

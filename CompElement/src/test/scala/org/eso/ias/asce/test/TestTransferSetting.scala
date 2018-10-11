@@ -1,4 +1,4 @@
-package org.eso.ias.component.test
+package org.eso.ias.asce.test
 
 import org.scalatest.FlatSpec
 import java.util.concurrent.ThreadFactory
@@ -21,13 +21,13 @@ class TestTransferFunctionSetting extends FlatSpec {
     val threadFactory = new TestThreadFactory()
     
     val javaTF = new TransferFunctionSetting(
-        "org.eso.ias.component.test.transfer.TransferExecutorImpl",
+        "org.eso.ias.asce.test.transfer.TransferExecutorImpl",
         TransferFunctionLanguage.java,
         None,
         threadFactory)
     
     val scalaTF = new TransferFunctionSetting(
-        "org.eso.ias.component.test.transfer.TransferExample",
+        "org.eso.ias.asce.test.transfer.TransferExample",
         TransferFunctionLanguage.scala,
         None,
         threadFactory)

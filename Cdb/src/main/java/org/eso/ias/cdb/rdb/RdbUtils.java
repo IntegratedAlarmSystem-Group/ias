@@ -10,15 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.eso.ias.cdb.IasCdbException;
-import org.eso.ias.cdb.pojos.AsceDao;
-import org.eso.ias.cdb.pojos.DasuDao;
-import org.eso.ias.cdb.pojos.DasuToDeployDao;
-import org.eso.ias.cdb.pojos.IasDao;
-import org.eso.ias.cdb.pojos.IasioDao;
-import org.eso.ias.cdb.pojos.PropertyDao;
-import org.eso.ias.cdb.pojos.SupervisorDao;
-import org.eso.ias.cdb.pojos.TemplateDao;
-import org.eso.ias.cdb.pojos.TransferFunctionDao;
+import org.eso.ias.cdb.pojos.*;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.Metadata;
@@ -168,6 +160,7 @@ public class RdbUtils {
 			sources.addAnnotatedClass(SupervisorDao.class);
 			sources.addAnnotatedClass(TemplateDao.class);
 			sources.addAnnotatedClass(DasuToDeployDao.class);
+			sources.addAnnotatedClass(TemplateInstanceIasioDao.class);
 			Metadata data = sources.buildMetadata();
 			logger.debug("Building the SessionFactory");
 			sessionFactory = data.buildSessionFactory();

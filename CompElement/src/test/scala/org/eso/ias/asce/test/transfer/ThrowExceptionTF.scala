@@ -1,4 +1,4 @@
-package org.eso.ias.component.test.transfer
+package org.eso.ias.asce.test.transfer
 
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import java.util.Properties

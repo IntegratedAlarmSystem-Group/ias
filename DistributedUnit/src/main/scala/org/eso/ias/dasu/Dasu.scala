@@ -1,5 +1,8 @@
 package org.eso.ias.dasu
 
+import java.util.concurrent.TimeUnit
+
+import org.eso.ias.dasu.subscriber.InputsListener
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.JsonReader
@@ -36,6 +39,9 @@ import org.eso.ias.dasu.subscriber.InputSubscriber
 
 import scala.util.Failure
 import scala.util.Success
+import org.eso.ias.types.{IASValue, Identifier}
+
+import scala.util.Try
 
 /**
  * The Distributed Alarm System Unit (DASU).
@@ -75,7 +81,7 @@ abstract class Dasu(
   private val logger = IASLogger.getLogger(this.getClass)
   
   /** The ID of the DASU */
-  val id = dasuIdentifier.id
+  val id: String = dasuIdentifier.id
   
   /** 
    *  True if the DASU has been generated from a template,
@@ -92,23 +98,22 @@ abstract class Dasu(
   /** 
    *  Auto send time interval in milliseconds
    */
-  val autoSendTimeIntervalMillis = TimeUnit.MILLISECONDS.convert(autoSendTimeInterval.toLong, TimeUnit.SECONDS)
+  val autoSendTimeIntervalMillis: Long = TimeUnit.MILLISECONDS.convert(autoSendTimeInterval.toLong, TimeUnit.SECONDS)
   
   /** 
    *  The tolerance in milliseconds
    */
-  val toleranceMillis = TimeUnit.MILLISECONDS.convert(tolerance.toLong, TimeUnit.SECONDS)
+  val toleranceMillis: Long = TimeUnit.MILLISECONDS.convert(tolerance.toLong, TimeUnit.SECONDS)
   
   /**
    * The minimum allowed refresh rate when a flow of inputs arrive (i.e. the throttiling) 
-   * is given by [[TimeScheduler.DefaultMinAllowedRefreshRate]] 
-   * if not overridden by a java property
+   * is given by [[Dasu.DefaultMinAllowedRefreshRate]], if not overridden by a java property
    */
-  val throttling = {
+  val throttling: Long = {
     val prop = Option(System.getProperties.getProperty(Dasu.MinAllowedRefreshRatePropName))
     prop.map(s => Try(s.toInt).getOrElse(Dasu.DefaultMinAllowedRefreshRate)).getOrElse(Dasu.DefaultMinAllowedRefreshRate).abs.toLong
   }
-  logger.debug("Output calculation throttling of DASU [{}] set to {}",id,throttling.toString())
+  logger.debug("Output calculation throttling of DASU [{}] set to {}",id,throttling.toString)
       
   
   /** The IDs of the inputs of the DASU */
@@ -138,7 +143,7 @@ abstract class Dasu(
    * @param iasios the inputs received
    * @see InputsListener
    */
-  override def inputsReceived(iasios: Set[IASValue[_]])
+  override def inputsReceived(iasios: Iterable[IASValue[_]])
   
   /**
    * Release all the resources before exiting

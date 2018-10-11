@@ -3,6 +3,6 @@
 	"id":"SupervisorToTestInputs",
 	"hostName":"almaias.eso.org",
 	"dasusToDeploy":[
-		{"dasuId":"DasuToTestInputs","templateId":"TemplToTestInputs","instance":"4"}
+		{"dasuId":"DasuToTestInputs","templateId":"temp-ID2","instance":"4"}
 	]
 }
