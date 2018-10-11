@@ -10,42 +10,23 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 /**
- * KafkaIasiosConsumer gets the strings from the passed IASIO kafka topic
- * from the {@link KafkaStringsConsumer} and forwards IASIOs to the listener.
+ * Extends {@link SimpleKafkaIasiosConsumer} providing filtering by IDs and types.
  * <P>
  * Filtering is based on the ID of the IASIOs _and_ the IASValue type:
  * - if the ID of the received String is contained in {@link #acceptedIds}
- *   then the IASIO is forwarded to the listener otherwise is rejected.
+ *   then the IASIO is forwarded to the listener otherwise it is rejected.
  * - if the type of the {@link IASValue} is contained in {@link #acceptedTypes}
  *   then the IASIO is forwarded to the listener otherwise is rejected.
  * 
- * <BR>If the caller does not set any filter, then all the received IASIOs 
+ * <P>If the caller does not set any filter, then all the received IASIOs
  * will be forwarded to the listener.
  *
  * IDs and type are evaluated in AND. 
  * 
  * @author acaproni
  */
-public class KafkaIasiosConsumer 
-implements KafkaStringsConsumer.StringsConsumer {
+public class KafkaIasiosConsumer extends SimpleKafkaIasiosConsumer {
 
-	/**
-	 * The listener to be notified of Iasios read
-	 * from the kafka topic.
-	 *
-	 * @author acaproni
-	 *
-	 */
-	public interface IasioListener {
-
-		/**
-		 * Process the IASIOs read from the kafka topic.
-		 *
-		 * @param events The IASIOs received in the topic
-		 */
-		void iasiosReceived(Collection<IASValue<?>> events);
-	}
-	
 	/**
 	 * The logger
 	 */
@@ -67,29 +48,7 @@ implements KafkaStringsConsumer.StringsConsumer {
 	 */
 	private volatile  Set<IASTypes> acceptedTypes = Collections.unmodifiableSet(new HashSet<>());
 	
-	/**
-	 * The listener to be notified when a IASIOs is read from the kafka topic
-	 * and accepted by the filtering.
-	 */
-	private IasioListener iasioListener;
-	
-	/**
-	 * The string consumer to get strings from teh kafka topic
-	 */
-	private final KafkaStringsConsumer stringsConsumer;
 
-	/**
-	 * Build a FilteredStringConsumer with no filters (i.e. all the
-	 * strings read from the kafka topic are forwarded to the listener)
-	 * 
-	 * @param servers The kafka servers to connect to
-	 * @param topicName The name of the topic to get events from
-	 * @param consumerID the ID of the consumer
-	 */
-	public KafkaIasiosConsumer(String servers, String topicName, String consumerID) {
-		stringsConsumer = new SimpleStringConsumer(servers, topicName, consumerID);
-	}
-	
 	/**
 	 * Build a FilteredStringConsumer with the passed initial filters.
 	 * 
@@ -105,61 +64,10 @@ implements KafkaStringsConsumer.StringsConsumer {
 			String consumerID, 
 			Set<String> idsOfIDsToAccept,
 			Set<IASTypes> idsOfTypesToAccept) {
-		this(servers, topicName, consumerID);
+		super(servers, topicName, consumerID);
 		setFilter(idsOfIDsToAccept, idsOfTypesToAccept);
 	}
 	
-	/**
-	 * Start processing received by the SimpleStringConsumer from the kafka channel.
-	 * <P>
-	 * This method starts the thread that polls the kafka topic
-	 * and returns after the consumer has been assigned to at least
-	 * one partition.
-	 *
-	 * @param startReadingFrom Starting position in the kafka partition
-	 * @param listener The listener of events published in the topic
-	 * @throws KafkaUtilsException in case of timeout subscribing to the kafkatopic
-	 */
-	public void startGettingEvents(StartPosition startReadingFrom, IasioListener listener)
-	throws KafkaUtilsException {
-		Objects.requireNonNull(listener);
-		this.iasioListener=listener;
-		stringsConsumer.startGettingEvents(this,startReadingFrom);
-	}
-
-	/** 
-	 * Receive the string consumed from the kafka topic and
-	 * forward the IASIOs to the listener
-	 * 
-	 * @param strings The strings read from the Kafka topic
-	 */
-	@Override
-	public void stringsReceived(Collection<String> strings) {
-		assert(strings!=null && !strings.isEmpty());
-
-		Collection<IASValue<?>> ret = new ArrayList<>();
-		strings.forEach( str -> {
-		    IASValue<?> iasio=null;
-		    try {
-			    iasio = serializer.valueOf(str);
-            } catch (Exception e) {
-                    logger.error("Error building the IASValue from string [{}]: value lost",str,e);
-                    return;
-            }
-            if (accept(iasio)) {
-                ret.add(iasio.updateReadFromBsdbTime(System.currentTimeMillis()));
-            }
-        });
-
-        try {
-            logger.debug("Notifying {} IASIOs to the listener listener",ret.size());
-            if (!ret.isEmpty()) {
-                iasioListener.iasiosReceived(ret);
-            }
-        } catch (Exception e) {
-            logger.error("Error notifying IASValues to the listener: {} values potentially lost",ret.size(),e);
-        }
-	}
 
     /**
      * Accepts or rejects a IASValue against the filters, if set
@@ -167,7 +75,8 @@ implements KafkaStringsConsumer.StringsConsumer {
      * @param iasio The IASValue to accept or discard
      * @return true if teh value is accpted; false otherwise
      */
-	private boolean accept(IASValue<?> iasio) {
+    @Override
+	protected boolean accept(IASValue<?> iasio) {
 		assert(iasio!=null);
 
 		// Locally copy the sets that are immutable and volatile
@@ -183,45 +92,6 @@ implements KafkaStringsConsumer.StringsConsumer {
         }
 	}
 
-	/**
-	 * Initializes the consumer with the passed kafka properties.
-	 * <P>
-	 * The defaults are used if not found in the parameter
-	 *
-	 * @param userPros The user defined kafka properties
-	 */
-	public void setUp(Properties userPros) {
-		stringsConsumer.setUp(userPros);
-	}
-
-	/**
-	 * Initializes the consumer with default kafka properties
-	 */
-	public void setUp() {
-		stringsConsumer.setUp();
-	}
-
-	/**
-	 * Close and cleanup the consumer
-	 */
-	public void tearDown() {
-		stringsConsumer.tearDown();
-	}
-
-	/**
-	 * @return the number of records processed
-	 */
-	public long getNumOfProcessedRecords() {
-		return stringsConsumer.getNumOfProcessedRecords();
-	}
-
-	/**
-	 * @return the number of strings processed
-	 */
-//	public long getNumOfProcessedStrings() {
-//		return stringsConsumer.getNumOfProcessedStrings();
-//	}
-	
 	/**
 	 * Entirely remove the filtering 
 	 */
