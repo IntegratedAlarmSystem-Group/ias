@@ -26,7 +26,6 @@ import java.util.Set;
  * IDs and type are evaluated in AND. 
  * 
  * @author acaproni
- * @deprecated Use {@link FilteredKafkaIasiosConsumer} instead
  */
 public class KafkaIasiosConsumer extends SimpleKafkaIasiosConsumer {
 
