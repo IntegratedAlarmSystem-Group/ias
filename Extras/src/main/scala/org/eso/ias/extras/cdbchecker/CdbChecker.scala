@@ -1,7 +1,8 @@
-package org.eso.ias.cdb.checker
+package org.eso.ias.extras.cdbchecker
 
 import java.util.Optional
 
+import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos._
@@ -552,30 +553,72 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
 }
 
 object CdbChecker {
-  val usage = """
-      |USAGE: CdbChecker [-jcdb <PATH>]
-      |-jcdb <PATH>: checks the JSON CDB at the PATH location
-      |              if not present connects to the RDB
-      |
-      |Checks the RDB of JSON CDB.
-    """.stripMargin
+
+  /** Build the usage message */
+  val cmdLineSyntax: String = "cdbChecker [-h|--help] [-j|-jcdb JSON-CDB-PATH] [-x|--logLevel log level]"
+
+  /**
+    * Parse the command line.
+    *
+    * If help is requested, prints the message and exits.
+    *
+    * @param args The params read from the command line
+    * @return the path of the cdb and the log level dao
+    */
+  def parseCommandLine(args: Array[String]): (Option[String], Option[LogLevelDao]) = {
+    val options: Options = new Options
+    options.addOption("h", "help",false,"Print help and exit")
+    options.addOption("j", "jcdb", true, "Use the JSON Cdb at the passed path instead of the RDB")
+    options.addOption("x", "logLevel", true, "Set the log level (TRACE, DEBUG, INFO, WARN, ERROR)")
+
+    val parser: CommandLineParser = new DefaultParser
+    val cmdLineParseAction = Try(parser.parse(options,args))
+    if (cmdLineParseAction.isFailure) {
+      val e = cmdLineParseAction.asInstanceOf[Failure[Exception]].exception
+      println(e + "\n")
+      new HelpFormatter().printHelp(cmdLineSyntax, options)
+      System.exit(-1)
+    }
+
+    val cmdLine = cmdLineParseAction.asInstanceOf[Success[CommandLine]].value
+    val help = cmdLine.hasOption('h')
+    val jcdb = Option(cmdLine.getOptionValue('j'))
+
+    val logLvl: Option[LogLevelDao] = {
+      val t = Try(Option(cmdLine.getOptionValue('x')).map(level => LogLevelDao.valueOf(level)))
+      t match {
+        case Success(opt) => opt
+        case Failure(f) =>
+          println("Unrecognized log level")
+          new HelpFormatter().printHelp(cmdLineSyntax, options)
+          System.exit(-1)
+          None
+      }
+    }
+
+    if (help) {
+      new HelpFormatter().printHelp(cmdLineSyntax, options)
+      System.exit(0)
+    }
+
+    val ret = (jcdb, logLvl)
+    CdbChecker.logger.info("Params from command line: jcdb={}, logLevel={}",
+      ret._1.getOrElse("Undefined"),
+      ret._2.getOrElse("Undefined"))
+    ret
+
+  }
 
   /** The logger */
   val logger = IASLogger.getLogger(Supervisor.getClass)
 
   def main(args: Array[String]): Unit = {
-    args.size match {
-      case 0 =>
-        // RDB
-        val checker = new CdbChecker(None)
-      case 2 =>
-        // JSON
-        val checker = new CdbChecker(Some(args(1)))
-      case _ =>
-        // Wrong command line args
-        logger.error("Invalid command line")
-        println(usage)
-        System.exit(-1)
-    }
+    val parsedArgs = parseCommandLine(args)
+
+    // Set the log level
+    parsedArgs._2.foreach( level => IASLogger.setRootLogLevel(level.toLoggerLogLevel))
+
+    // Invoke the cdb checker
+    new CdbChecker(parsedArgs._1)
   }
 }
