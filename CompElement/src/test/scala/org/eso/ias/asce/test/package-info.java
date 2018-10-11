@@ -5,4 +5,4 @@
  * @author acaproni
  *
  */
-package org.eso.ias.component.test;
+package org.eso.ias.asce.test;

@@ -15,6 +15,10 @@ import scala.util.matching.Regex
   * - an ALARM
   * It inhibits the alarm if there are no antennas in the pads
   * whose name matches with the given pattern.
+  * It is also possible to add a filter by antenna type by setting
+  * antTypePropName to one of the possible antenna types: the
+  * alarm is propagated if there is antennas in the pads AND at least
+  * one antenna of the passed type.
   *
   * No check is done on the ID of the input but it must be an ALARM.
   * The TF produces an alarm that is always CLEAR if there
@@ -44,6 +48,22 @@ class AntPadInhibitor(asceId: String, asceRunningId: String, validityTimeFrame:L
   }
   AntPadInhibitor.logger.info("Pad names pattern: {}",antPadRegExp.toString())
 
+  /*
+   *The optional antenna type to add the filter by antenna type
+   *
+   * The type can only be one if the string in AntPadInhibitor.AntennaTypes
+   */
+  val antType: Option[String] = {
+    val propVal = Option(props.getProperty(AntPadInhibitor.AntTypePropName))
+    propVal.map(antTypeStr => {
+      val antTypeUpperCase = antTypeStr.toUpperCase
+      require(AntPadInhibitor.AntennaTypes.contains(antTypeUpperCase),
+        "Unrecognized antenna type: "+antTypeUpperCase+" not in "+AntPadInhibitor.AntTypePropName.mkString(","))
+      AntPadInhibitor.logger.info("Added a filter by antenna type {}",antTypeUpperCase)
+      antTypeUpperCase
+    })
+  }
+
   /**
     * Initialize the TF by making some consistency checks
     *
@@ -71,20 +91,27 @@ class AntPadInhibitor(asceId: String, asceRunningId: String, validityTimeFrame:L
 
   /**
     * Check if there is at least one antenna in one of the pads whose name matches with
-    * the regular expression passed int he java properties
+    * the regular expression passed in the java properties
+    *
+    * It takes into account also the type of teh antennas, if requested (i.e. if antType
+    * is defined)
     *
     * @param antsPadsMP: the natennas to pads string received in input
     * @return true if there is at least one antennas in the pads;
     *         false otherwise
     */
   def isAntennaInPad(antsPadsMP: String): Boolean = {
+
     // Return false if the input is empty as I imagine that
     // it could happen in operation that the association is
     // not available during short periods of time
     val antsPads = antsPadsMP.split(",")
     antsPads.exists(antPad => {
+      val couple = antPad.split(":")
       assert(antPad.isEmpty || antPad.count(_==':')==1,"Antenna/Pad mismatch: \""+antPad+"\" should be name:pad")
-      !antPad.isEmpty && antPadRegExp.pattern.matcher(antPad.split(":")(1)).matches()
+      !antPad.isEmpty &&
+        antPadRegExp.pattern.matcher(couple(1)).matches() &&
+        antType.map(aType => couple(0).toUpperCase().startsWith(aType)).getOrElse(true)
     })
   }
 
@@ -112,6 +139,8 @@ class AntPadInhibitor(asceId: String, asceRunningId: String, validityTimeFrame:L
 
     val mode = if (alarmInput.mode==OperationalMode.OPERATIONAL && antPadMp.get.mode==OperationalMode.OPERATIONAL) {
       OperationalMode.OPERATIONAL
+    } else if (antPadMp.get.mode==OperationalMode.OPERATIONAL) {
+      alarmInput.mode
     } else {
       OperationalMode.UNKNOWN
     }
@@ -130,6 +159,12 @@ object AntPadInhibitor {
   /** The name of the property to pass the regular expression */
   val PadNameMatcherName: String = "org.eso.ias.antpadinhibitor.padnameregexp"
 
+  /** The name of the property to pass the regular expression */
+  val AntTypePropName: String = "org.eso.ias.antpadinhibitor.anttype"
+
   /** The ID of the monitor point with the position (pad) of the antennas */
-  val AntennasToPadsID="Array-AntennasToPad"
+  val AntennasToPadsID="Array-AntennasToPads"
+
+  /** The possible antenna type to be set in the AntTypePropName property */
+  val AntennaTypes = List("DV","DA","CM","PM")
 }

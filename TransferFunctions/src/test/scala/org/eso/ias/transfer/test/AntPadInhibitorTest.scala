@@ -23,7 +23,10 @@ class AntPadInhibitorTest extends FlatSpec with BeforeAndAfterEach {
   val padPattern = "A.*"
 
   /** Default set of properties for testing */
-  val defaultProps: Properties = new Properties
+  val nonTypedProps: Properties = new Properties
+
+  /** Default set of properties for testing */
+  val typedProps: Properties = new Properties
 
   /**  The ID of the SUPERVISOR where the components runs */
   val supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR,None)
@@ -44,7 +47,10 @@ class AntPadInhibitorTest extends FlatSpec with BeforeAndAfterEach {
   val outputInfo = new IasioInfo(outId.id,IASTypes.ALARM)
 
    /** Default AntPadInhibitor TF to test */
-  var defaultTF: AntPadInhibitor = _
+  var nonTypedTF: AntPadInhibitor = _
+
+  /**  AntPadInhibitor TF to test with antenna type filter*/
+  var typedTF: AntPadInhibitor = _
 
   /** The time frame for the validity */
   val validityTimeFrame = 2000
@@ -78,16 +84,45 @@ class AntPadInhibitorTest extends FlatSpec with BeforeAndAfterEach {
   override def beforeEach() : scala.Unit = {
     logger.info("Initializing before running a test")
 
-    defaultProps.put(AntPadInhibitor.PadNameMatcherName, padPattern)
+    nonTypedProps.put(AntPadInhibitor.PadNameMatcherName, padPattern)
 
-    defaultTF = new AntPadInhibitor(compID.id, compID.fullRunningID, validityTimeFrame, defaultProps)
+    nonTypedTF = new AntPadInhibitor(compID.id, compID.fullRunningID, validityTimeFrame, nonTypedProps)
+
+    typedProps.put(AntPadInhibitor.PadNameMatcherName, padPattern)
+    typedProps.put(AntPadInhibitor.AntTypePropName,"PM")
+    typedTF = new AntPadInhibitor(compID.id, compID.fullRunningID, validityTimeFrame, typedProps)
+
+  }
+
+  override def afterEach(): Unit = {
+    nonTypedProps.clear()
+    typedProps.clear()
   }
 
   behavior of "The AntPadInhibitor TF"
 
   it must "get the ant/pad regular expression from the properties" in {
-    assert(defaultTF.antPadRegExp.toString()==padPattern)
+    assert(nonTypedTF.antPadRegExp.toString()==padPattern)
   }
+
+  it must "have an empty filter by antenna type if no property is given" in {
+      assert(nonTypedTF.antType.isEmpty)
+  }
+
+  it must "reject wrong antenna types" in {
+    nonTypedProps.put(AntPadInhibitor.AntTypePropName,"AC")
+    assertThrows[IllegalArgumentException] {
+      new AntPadInhibitor(compID.id, compID.fullRunningID, validityTimeFrame, nonTypedProps)
+    }
+  }
+
+  it must "get the correct antenna types" in {
+    nonTypedProps.put(AntPadInhibitor.AntTypePropName,"PM")
+    val tf = new AntPadInhibitor(compID.id, compID.fullRunningID, validityTimeFrame, nonTypedProps)
+    assert(tf.antType.isDefined)
+    assert(tf.antType.get=="PM")
+  }
+
 
   it must "return CLEAR when ant/pad input is empty" in {
     val i: InOut[_] = inputInOut.updateValue(Some(Alarm.SET_HIGH))
@@ -95,7 +130,7 @@ class AntPadInhibitorTest extends FlatSpec with BeforeAndAfterEach {
 
     val inputMap: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i), antPadInputId-> new IasIO(a))
 
-    val ret = defaultTF.eval(inputMap,out)
+    val ret = nonTypedTF.eval(inputMap,out)
 
     assert(ret.value.isDefined)
     assert(ret.value.get.asInstanceOf[Alarm]==Alarm.CLEARED)
@@ -108,7 +143,7 @@ class AntPadInhibitorTest extends FlatSpec with BeforeAndAfterEach {
 
     val inputMap: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i), antPadInputId-> new IasIO(a))
 
-    val ret = defaultTF.eval(inputMap,out)
+    val ret = nonTypedTF.eval(inputMap,out)
 
     assert(ret.value.isDefined)
     assert(ret.value.get.asInstanceOf[Alarm]==Alarm.CLEARED)
@@ -121,7 +156,7 @@ class AntPadInhibitorTest extends FlatSpec with BeforeAndAfterEach {
 
     val inputMap: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i), antPadInputId-> new IasIO(a))
 
-    val ret = defaultTF.eval(inputMap,out)
+    val ret = nonTypedTF.eval(inputMap,out)
 
     assert(ret.value.isDefined)
     assert(ret.value.get.asInstanceOf[Alarm]==Alarm.SET_HIGH)
@@ -134,12 +169,35 @@ class AntPadInhibitorTest extends FlatSpec with BeforeAndAfterEach {
 
     val inputMap: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i), antPadInputId-> new IasIO(a))
 
-    val ret = defaultTF.eval(inputMap,out)
+    val ret = nonTypedTF.eval(inputMap,out)
 
     assert(ret.value.isDefined)
     assert(ret.value.get.asInstanceOf[Alarm]==Alarm.CLEARED)
 
   }
 
+  it must "return CLEAR when there are antennas in the pads but none of the proper type" in {
+    val i: InOut[_] = inputInOut.updateValue(Some(Alarm.SET_HIGH))
+    val a: InOut[_] = antPadInOut.updateValue(Some("DA41:W001,DV01:S003,DA54:A025"))
 
+    val inputMap: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i), antPadInputId-> new IasIO(a))
+
+    val ret = typedTF.eval(inputMap,out)
+
+    assert(ret.value.isDefined)
+    assert(ret.value.get.asInstanceOf[Alarm]==Alarm.CLEARED)
+  }
+
+  it must "return SET when there are antennas in the pads with one of the proper type" in {
+    val i: InOut[_] = inputInOut.updateValue(Some(Alarm.SET_HIGH))
+    val a: InOut[_] = antPadInOut.updateValue(Some("DA41:W001,DV01:S003,DA54:A025,PM07:A022"))
+
+    val inputMap: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i), antPadInputId-> new IasIO(a))
+
+    val ret = nonTypedTF.eval(inputMap,out)
+
+    assert(ret.value.isDefined)
+    assert(ret.value.get.asInstanceOf[Alarm]==Alarm.SET_HIGH)
+
+  }
 }

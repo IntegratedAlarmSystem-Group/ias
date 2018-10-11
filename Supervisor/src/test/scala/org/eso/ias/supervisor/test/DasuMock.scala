@@ -1,5 +1,8 @@
 package org.eso.ias.supervisor.test
 
+import java.util.concurrent.atomic.AtomicInteger
+
+import org.eso.ias.cdb.pojos.{AsceDao, DasuDao, IasioDao}
 import org.eso.ias.dasu.Dasu
 import org.eso.ias.types.IASValue
 
@@ -25,7 +28,14 @@ import org.eso.ias.types.IASTypes
 import java.util.HashSet
 
 import org.eso.ias.cdb.pojos.IasioDao
+import org.eso.ias.dasu.publisher.OutputPublisher
+import org.eso.ias.dasu.subscriber.InputSubscriber
+import org.eso.ias.logging.IASLogger
+import org.eso.ias.types._
 
+import scala.collection.JavaConverters
+import scala.collection.mutable.ArrayBuffer
+import scala.util.{Success, Try}
 
 /** 
  *  A mockup of the DASUs to run in the Supervisor without the 
@@ -74,17 +84,20 @@ extends Dasu(dasuIdentifier,5,1) {
   /**
    * The configuration of the ASCEs that run in the DASU
    */
-  val asceDaos = JavaConverters.asScalaSet(dasuDao.getAsces).toList
+  val asceDaos: Seq[AsceDao] = JavaConverters.asScalaSet(dasuDao.getAsces).toList
   
   /** The inputs of the DASU */
   val inputsOfTheDasu: Set[String] = {
     val inputs = asceDaos.foldLeft(Set.empty[IasioDao])( (set, asce) => set++JavaConverters.collectionAsScalaIterable(asce.getInputs))
     inputs.map(_.getId)
   }
-  logger.info("{} inputs required by Mock_DASU [{}]: {}", inputsOfTheDasu.size.toString(), dasuIdentifier.id,inputsOfTheDasu.mkString(", "))
+  logger.info("{} inputs required by Mock_DASU [{}]: {}",
+    inputsOfTheDasu.size.toString,
+    dasuIdentifier.id,
+    inputsOfTheDasu.mkString(", "))
   
   /** The output published when inputs are received */
-  val output = {
+  val output: IASValue[_] = {
     val asceId = new Identifier("ASCE_ID_RUNTIME_GENERATED",IdentifierType.ASCE,dasuIdentifier)
     val outputId = new Identifier(dasuDao.getOutput.getId,IdentifierType.IASIO,asceId)
     IASValue.build(
@@ -116,17 +129,17 @@ extends Dasu(dasuIdentifier,5,1) {
    * @param iasios the inputs received
    * @see InputsListener
    */
-  override def inputsReceived(iasios: Set[IASValue[_]]) {
+  override def inputsReceived(iasios: Iterable[IASValue[_]]) {
     iasios.foreach(iasio => {
       val id = iasio.id
       inputsReceivedFromSuperv.append(id)
       if (!getInputIds().contains(id)) unexpectedInputsReceived.append(id)
-      })
+    })
       
-      val depIds = iasios.filter(value => getInputIds().contains(value.id)).map(_.fullRunningId)
+    val depIds = iasios.filter(value => getInputIds().contains(value.id)).map(_.fullRunningId)
       
-      // Publish the simulated output
-      outputPublisher.publish(output.updateFullIdsOfDependents(JavaConverters.setAsJavaSet(depIds)))
+    // Publish the simulated output
+    outputPublisher.publish(output.updateFullIdsOfDependents(JavaConverters.asJavaCollection(depIds)))
   }
   
   /** The inputs of the DASU */
@@ -141,7 +154,7 @@ extends Dasu(dasuIdentifier,5,1) {
    */
   def start(): Try[Unit] = {
     numOfStarts.incrementAndGet()
-    new Success(())
+    Success(())
   }
   
   /**
@@ -151,7 +164,7 @@ extends Dasu(dasuIdentifier,5,1) {
    * Most likely, the value of the output remains the same 
    * while the validity could change.
    */
-  override def enableAutoRefreshOfOutput(enable: Boolean) = {
+  override def enableAutoRefreshOfOutput(enable: Boolean): Unit = {
     if (enable) {
       numOfEnableAutorefresh.incrementAndGet()
     } else {
@@ -162,7 +175,7 @@ extends Dasu(dasuIdentifier,5,1) {
   /**
    * Release all the resources before exiting
    */
-  def cleanUp() = numOfCleanUps.incrementAndGet();
+  def cleanUp(): Unit = numOfCleanUps.incrementAndGet()
 }
 
 /**
