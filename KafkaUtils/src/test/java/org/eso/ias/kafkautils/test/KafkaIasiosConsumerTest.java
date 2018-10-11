@@ -2,7 +2,7 @@ package org.eso.ias.kafkautils.test;
 
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer;
-import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener;
+import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener;
 import org.eso.ias.kafkautils.KafkaIasiosProducer;
 import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition;
 import org.eso.ias.types.*;
@@ -32,12 +32,12 @@ import static org.junit.jupiter.api.Assertions.*;
  * <P>
  * @author acaproni
  */
-public class FilteredConsumerTest implements IasioListener {
+public class KafkaIasiosConsumerTest implements IasioListener {
 	
 	/**
 	 * The logger
 	 */
-	private static final Logger logger = LoggerFactory.getLogger(FilteredConsumerTest.class);
+	private static final Logger logger = LoggerFactory.getLogger(KafkaIasiosConsumerTest.class);
 	
 	/**
 	 * The consumer of IASIOs received from the Kafka topic
@@ -82,7 +82,11 @@ public class FilteredConsumerTest implements IasioListener {
 	@BeforeEach
 	public void setUp() throws Exception {
 		logger.info("Initializing...");
-		consumer = new KafkaIasiosConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, topicName, "FilteredConsumser-Test");
+		consumer = new KafkaIasiosConsumer(
+				KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
+				topicName, "FilteredConsumser-Test",
+				new HashSet<>(),
+				new HashSet<>());
 		consumer.setUp();
 		receivedIasios.clear();
 		producer = new KafkaIasiosProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, topicName, "Consumer-ID",serializer);

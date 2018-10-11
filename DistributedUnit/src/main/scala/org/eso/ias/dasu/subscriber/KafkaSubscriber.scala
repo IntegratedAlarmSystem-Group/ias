@@ -1,12 +1,13 @@
 package org.eso.ias.dasu.subscriber
 
+import java.util
 import java.util.{Collection, Properties}
 
 import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosConsumer}
-import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener
+import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener
 import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types.IASValue
+import org.eso.ias.types.{IASTypes, IASValue}
 
 import scala.collection.JavaConverters
 import scala.util.{Failure, Try}
@@ -147,7 +148,7 @@ object KafkaSubscriber {
     }
     
     
-    val kafkaConsumer = new KafkaIasiosConsumer(kafkaBrokers,topic,dasuId+"Consumer")
+    val kafkaConsumer = new KafkaIasiosConsumer(kafkaBrokers,topic,dasuId+"Consumer", new util.HashSet[String](), new util.HashSet[IASTypes]())
     new KafkaSubscriber(dasuId,kafkaConsumer,props)
   }
 
