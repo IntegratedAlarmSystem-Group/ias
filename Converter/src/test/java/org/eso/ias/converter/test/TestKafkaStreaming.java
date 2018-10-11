@@ -15,7 +15,7 @@ import org.eso.ias.heartbeat.publisher.HbLogProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer;
-import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener;
+import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener;
 import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition;
 import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.eso.ias.plugin.publisher.MonitorPointData;
