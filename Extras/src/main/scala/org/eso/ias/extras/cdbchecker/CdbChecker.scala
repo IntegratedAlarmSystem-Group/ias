@@ -29,7 +29,7 @@ import scala.util.{Failure, Success, Try}
 class CdbChecker(val jsonCdbPath: Option[String]) {
   Option(jsonCdbPath).orElse(throw new IllegalArgumentException("Invalid null jsonCdbPath"))
 
-  /** The reader of the the JSON of RDB CDB */
+  /** The reader of the JSON of RDB CDB */
   val reader: CdbReader = {
     jsonCdbPath match {
       case None => new RdbReader
@@ -48,7 +48,7 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
   iasDaoOpt.foreach(ias => CdbChecker.logger.info("IAS read"))
   val iasError: Boolean = checkIas(iasDaoOpt)
 
-  /** The map of transferfunctions where the key is the class of the TF */
+  /** The map of transfer functions: the key is the class of the TF */
   val mapOfTfs: Map[String, TransferFunctionDao] = {
     val tfsOptional = reader.getTransferFunctions
     val tfs: Set[TransferFunctionDao] = if (!tfsOptional.isPresent) Set.empty else {
@@ -58,7 +58,7 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
   }
   CdbChecker.logger.info("Read {} transfer functions",mapOfTfs.size)
 
-  /** The map of transfer functions where the key is the ID of the template */
+  /** The map of templates where the key is the ID of the template */
   val mapOfTemplates: Map[String, TemplateDao] = {
     val templatesOptional = reader.getTemplates
     val templates: Set[TemplateDao] = if (!templatesOptional.isPresent) Set.empty else {
@@ -81,7 +81,7 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
   /** The IDs of the IASIOs read from the CDB */
   val idsOfIasios: Set[String] = mapOfIasios.values.map(_.getId).toSet
 
-  /** Method that convert IDs of Supervisors, DASUs and ASCEs to String  */
+  /** Method to convert IDs of Supervisors, DASUs and ASCEs to String  */
   private[this] def convertIdsFromReader(idsFromCdb: Try[Optional[java.util.Set[String]]]): Set[String] = {
     idsFromCdb match {
       case Failure(e) =>
@@ -99,6 +99,7 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
   }
   CdbChecker.logger.info("Read {} IDs of Supervisors: {}",idsOfSupervisors.size,idsOfSupervisors.mkString(","))
 
+  /** Map of Supervisors, the key is the ID of the supervisor */
   val mapOfSupervisors: Map[String, SupervisorDao] = {
     idsOfSupervisors.foldLeft(Map.empty[String, SupervisorDao])( (z,id) => {
       val attempt = Try(reader.getSupervisor(id))
@@ -190,6 +191,13 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
     })
   }
 
+  // Check if all the Supervisors have at least one DASU to deploy
+  mapOfSupervisors.values.foreach( supervisorDao => {
+    if (supervisorDao.getDasusToDeploy.isEmpty) {
+      CdbChecker.logger.error("Supervisor [{}] has no DASU to run",supervisorDao.getId)
+    }
+  })
+
   // Check all the DASUs to deploy
   for {
     setOfDTD <- mapOfDasusToDeploy.values
@@ -199,7 +207,7 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
   // Is there any DASU that is not part of the DASUs to deploy?
   // We are looking for DASUs that will not be deployed and can be removed
   // from the CDB
-  // The case of a DASU to deplo no t assicated to a DasuDao is already reported
+  // The case of a DASU to deploy not assicated to a DasuDao is already reported
   // by checkDasuToDeploy
   val idsOfDasusToDeploy: Set[String] = (for {
     setOfDTD <- mapOfDasusToDeploy.values
@@ -318,8 +326,9 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
 
     // Are all the inputs defined?
     val inputs = JavaConverters.asScalaSet(asceDao.getIasiosIDs).toSet
-    if (inputs.isEmpty) {
-      CdbChecker.logger.error("No inputs defined for ASCE [{}]",id.getOrElse("?"))
+    val templatedInputs = JavaConverters.asScalaSet(asceDao.getTemplatedInstanceInputs).toSet
+    if (inputs.isEmpty && templatedInputs.isEmpty) {
+      CdbChecker.logger.error("No inputs neither templated inputs defined for ASCE [{}]",id.getOrElse("?"))
       errorsFound = true
     }
 
@@ -327,6 +336,30 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
       if (!idsOfIasios.contains(inputId)) CdbChecker.logger.error("Input [{}] not defined for ASCE [{}]",
         inputId,
         id.getOrElse("?"))
+    })
+
+    templatedInputs.foreach( tii =>{
+      val inputId = tii.getIasio.getId
+      val template = tii.getTemplateId
+      val instance = tii.getInstance()
+      if (!idsOfIasios.contains(inputId)) CdbChecker.logger.error("Templated instance input [{}] not defined for ASCE [{}]",
+        inputId,
+        id.getOrElse("?"))
+
+
+      val templateDao = mapOfTemplates.get(template)
+      templateDao match {
+        case None =>
+          CdbChecker.logger.error("Template {} of templated instance input {} not defined for ASCE [{}]",
+            template,
+            inputId,
+            id.getOrElse("?"))
+        case _ =>
+          if (!checkTemplate(templateDao, Some(instance)))
+            CdbChecker.logger.error("Template {} of templated instance input {} error for ASCE [{}] (see previous erro)",
+              template,
+              inputId, id.getOrElse("?"))
+      }
     })
 
     val output: Option[IasioDao] = Option(asceDao.getOutput)
@@ -356,9 +389,7 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
       }
     })
 
-
     errorsFound
-
   }
 
   def checkIasio(iasioDao: IasioDao): Boolean = {
