@@ -19,18 +19,18 @@ class SupervisorTopology(val supervId: String, dasuTopology: List[DasuTopology])
     * As such, the outputs of the ASCEs are not part of supervisorInputs
     */
   val inputsOfDasus: Map[String,Set[String]] = dasuTopology.foldLeft(Map.empty[String,Set[String]])( (z,dasuTopology) =>
-    z+(dasuTopology.dasuId ->dasuTopology.dasuInputs))
+    z+(dasuTopology.id ->dasuTopology.inputsIds))
 
   /** The inputs of the Supervisor */
   val inputsSupervisor: Set[String] = inputsOfDasus.values.foldLeft(Set.empty[String])( (z,set) => z++set)
 
   /** The output produced by each DASU in the Supervisor */
   val outputsOfDasus: Map[String,String] = dasuTopology.foldLeft(Map.empty[String,String])( (z,dasuTopology) =>
-    z+(dasuTopology.dasuId -> dasuTopology.dasuOutputId))
+    z+(dasuTopology.id -> dasuTopology.outputId))
 
   /** The outputs produced by all the DASU of the Supervisor */
   val supervisorOutputs = dasuTopology.foldLeft(Set.empty[String])( (z,dasuTopology) =>
-    z+dasuTopology.dasuOutputId)
+    z+dasuTopology.outputId)
 
   require(supervisorOutputs.size==dasuTopology.size,"Supervisor "+supervId+" Number of outputs and number of DASU mismatch")
 
