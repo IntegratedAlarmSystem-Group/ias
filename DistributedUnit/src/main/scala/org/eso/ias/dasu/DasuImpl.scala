@@ -1,45 +1,12 @@
 package org.eso.ias.dasu
 
-import scala.util.Try
-import java.util.concurrent.ScheduledFuture
-
-import org.eso.ias.dasu.publisher.OutputPublisher
-import org.eso.ias.dasu.subscriber.InputSubscriber
-import org.eso.ias.cdb.CdbReader
-import org.eso.ias.types.Identifier
-import org.eso.ias.types.IdentifierType
-
-import scala.collection.mutable.{Map => MutableMap}
-import org.eso.ias.asce.ComputingElement
-
-import scala.util.Properties
-import org.eso.ias.cdb.pojos.AsceDao
-import org.eso.ias.types.IASValue
-import org.eso.ias.logging.IASLogger
-import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicReference
-import java.util.Properties
-
-import scala.util.Failure
-import scala.util.Success
-import scala.collection.JavaConverters
-import org.eso.ias.types.InOut
-import org.eso.ias.asce.AsceStates
-import org.eso.ias.dasu.executorthread.ScheduledExecutor
-import java.util.concurrent.TimeUnit
-
-import org.eso.ias.cdb.pojos.DasuDao
-import org.eso.ias.types.Validity
-import org.eso.ias.types.IasValidity
-import java.util.HashMap
-import java.util.Collections
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong, AtomicReference}
 import java.util.concurrent.{ScheduledFuture, TimeUnit}
 import java.util.{HashMap, Properties}
 
 import org.eso.ias.asce.{AsceStates, ComputingElement}
 import org.eso.ias.cdb.pojos.{AsceDao, DasuDao}
+import org.eso.ias.cdb.topology.DasuTopology
 import org.eso.ias.dasu.executorthread.ScheduledExecutor
 import org.eso.ias.dasu.publisher.OutputPublisher
 import org.eso.ias.dasu.subscriber.InputSubscriber
@@ -48,8 +15,6 @@ import org.eso.ias.types._
 
 import scala.collection.JavaConverters
 import scala.util.{Failure, Success, Try}
-
-import org.eso.ias.cdb.topology.DasuTopology
 
 /**
  * The implementation of the DASU.
@@ -532,7 +497,7 @@ class DasuImpl (
     if (!alreadyStarted) {
       DasuImpl.logger.debug("DASU [{}] starting", id)
       statsCollector.start()
-      inputSubscriberInitialized.map(_ => inputSubscriber.startSubscriber(this, dasuTopology.dasuInputs))
+      inputSubscriberInitialized.map(_ => inputSubscriber.startSubscriber(this, dasuTopology.inputsIds))
     } else {
       Failure(new Exception("DASU already started"))
     }
@@ -584,7 +549,7 @@ class DasuImpl (
   }
   
   /** @return the IDs of the inputs of the DASU */
-  def getInputIds(): Set[String] = dasuTopology.dasuInputs
+  def getInputIds(): Set[String] = dasuTopology.inputsIds
   
   /** @return the IDs of the ASCEs running in the DASU  */
   def getAsceIds(): Set[String] = asces.keys.toSet
