@@ -6,10 +6,10 @@ import java.util.{HashMap, Properties}
 
 import org.eso.ias.asce.{AsceStates, ComputingElement}
 import org.eso.ias.cdb.pojos.{AsceDao, DasuDao}
+import org.eso.ias.cdb.topology.DasuTopology
 import org.eso.ias.dasu.executorthread.ScheduledExecutor
 import org.eso.ias.dasu.publisher.OutputPublisher
 import org.eso.ias.dasu.subscriber.InputSubscriber
-import org.eso.ias.dasu.topology.Topology
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types._
 
@@ -63,7 +63,7 @@ class DasuImpl (
   DasuImpl.logger.info("Output of DASU [{}]: [{}]",id,dasuOutputId)
   
   // Build the topology
-  val dasuTopology: Topology = new Topology(
+  val dasuTopology: DasuTopology = new DasuTopology(
       id,
       dasuOutputId,
       asceDaos)
@@ -497,7 +497,7 @@ class DasuImpl (
     if (!alreadyStarted) {
       DasuImpl.logger.debug("DASU [{}] starting", id)
       statsCollector.start()
-      inputSubscriberInitialized.map(_ => inputSubscriber.startSubscriber(this, dasuTopology.dasuInputs))
+      inputSubscriberInitialized.map(_ => inputSubscriber.startSubscriber(this, dasuTopology.inputsIds))
     } else {
       Failure(new Exception("DASU already started"))
     }
@@ -549,7 +549,7 @@ class DasuImpl (
   }
   
   /** @return the IDs of the inputs of the DASU */
-  def getInputIds(): Set[String] = dasuTopology.dasuInputs
+  def getInputIds(): Set[String] = dasuTopology.inputsIds
   
   /** @return the IDs of the ASCEs running in the DASU  */
   def getAsceIds(): Set[String] = asces.keys.toSet

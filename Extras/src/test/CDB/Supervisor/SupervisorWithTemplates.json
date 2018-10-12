@@ -1,0 +1,11 @@
+{
+	"logLevel":"INFO",
+	"id":"SupervisorWithTemplates",
+	"hostName":"almaias.eso.org",
+	"dasusToDeploy":[
+		{"dasuId":"DasuTemplateID1" ,"templateId":"temp-ID1","instance":"3"},
+		{"dasuId":"DasuTemplateID2" ,"templateId":"temp-ID2","instance":"5"},
+		{"dasuId":"DasuToTestInputs","templateId":"temp-ID2","instance":"4"},
+		{"dasuId":"Dasu1","templateId":null,"instance":null}
+	]
+}
