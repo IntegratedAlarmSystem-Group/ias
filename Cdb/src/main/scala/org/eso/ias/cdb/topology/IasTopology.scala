@@ -5,16 +5,14 @@ package org.eso.ias.cdb.topology
   *
   * This class is used to check if the graph of the nodes is a-cyclic.
   *
-  * @param supervisorTopology The Supervisors to run
+  * @param dasus The DASUs to run in all the supervisors
   */
-class IasTopology(val supervisorTopology: List[SupervisorTopology]) {
-  require(Option(supervisorTopology).isDefined && !supervisorTopology.isEmpty,"No supervisors to run")
+class IasTopology(val dasus: List[DasuTopology]) {
+  require(Option(dasus).isDefined && dasus.nonEmpty,"No DASUs to run")
 
-  /** Human readable representation of the topology */
-  override def toString = {
-    val ret = new StringBuilder("Topology of the IAS: Supervisors ")
-    ret.append(supervisorTopology.map(_.supervId).mkString(","))
-    ret.toString()
-  }
+  /** The inputs of the alarm system are the inputs of all the DASUs */
+  val alSysInputsIds = dasus.foldLeft(Set.empty[String])( (z,dasu) => z++dasu.inputsIds)
 
+  /** Check if there are cycles in the IAS */
+  def isAcyclic=CyclesFinder.isACyclic(alSysInputsIds,dasus.toSet)
 }
