@@ -8,9 +8,9 @@ package org.eso.ias.cdb.topology
   * @param supervId: the identifier of the Supervisor
   * @param dasuTopology: the DASUs deployed in the Supervisor
   */
-class SupervisorTopology(val supervId: String, dasuTopology: List[DasuTopology]) {
-  require(Option(supervId).isDefined && !supervId.isEmpty,"Invalid empty Supervisor identifier")
-  require(Option(dasuTopology).isDefined && !dasuTopology.isEmpty,"No DASUs for Supervisor "+supervId)
+class SupervisorTopology(val supervId: String, val dasuTopology: List[DasuTopology]) {
+  require(Option(supervId).isDefined && supervId.nonEmpty,"Invalid empty Supervisor identifier")
+  require(Option(dasuTopology).isDefined && dasuTopology.nonEmpty,"No DASUs for Supervisor "+supervId)
 
   /**
     * The inputs of each Dasu of the Supervisor.
@@ -31,6 +31,9 @@ class SupervisorTopology(val supervId: String, dasuTopology: List[DasuTopology])
   /** The outputs produced by all the DASU of the Supervisor */
   val supervisorOutputs = dasuTopology.foldLeft(Set.empty[String])( (z,dasuTopology) =>
     z+dasuTopology.outputId)
+
+  /** Check if the Supervisor is contains cycles */
+  def isAcyclic: Boolean = CyclesFinder.isACyclic(inputsSupervisor,dasuTopology.toSet)
 
   require(supervisorOutputs.size==dasuTopology.size,"Supervisor "+supervId+" Number of outputs and number of DASU mismatch")
 
