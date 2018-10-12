@@ -42,9 +42,9 @@ class DasuTopologyTest extends FlatSpec {
     
     val anotherTopology = new DasuTopology(List(asce1,asce2,asce3),"DASU-ID","ASCE3-OUT")
     
-    val allInputs: Set[String] = (asce1.inputs++asce2.inputs++asce3.inputs).filter(s => s.startsWith("IN"))
+    val allInputs: Set[String] = (asce1.inputsIds++asce2.inputsIds++asce3.inputsIds).filter(s => s.startsWith("IN"))
     
-    allInputs.foreach(input => assert(anotherTopology.dasuInputs.contains(input)))
+    allInputs.foreach(input => assert(anotherTopology.inputsIds.contains(input)))
   }
   
   it must "correctly build the graph of connections" in {
@@ -96,11 +96,11 @@ class DasuTopologyTest extends FlatSpec {
   }
   
   it must "correctly return the ID of the ASCE that produces the output" in {
-    val asceId3 = topology.asceProducingOutput(asce3.output)
-    assert(asceId3.isDefined && asce3.identifier==asceId3.get)
+    val asceId3 = topology.asceProducingOutput(asce3.outputId)
+    assert(asceId3.isDefined && asce3.id==asceId3.get)
     
-    val asceId6 =topology.asceProducingOutput(asce6.output)
-    assert(asceId6.isDefined && asceId6.get==asce6.identifier)
+    val asceId6 =topology.asceProducingOutput(asce6.outputId)
+    assert(asceId6.isDefined && asceId6.get==asce6.id)
   }
   
   it must "properly return the set of inputs of a given ASCEs" in {
