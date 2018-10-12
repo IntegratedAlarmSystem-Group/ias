@@ -3,8 +3,8 @@ package org.eso.ias.supervisor.test
 import java.nio.file.{FileSystems, Path}
 import java.util
 import java.util.Properties
-import java.util.concurrent.{CountDownLatch, TimeUnit}
 import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.{CountDownLatch, TimeUnit}
 
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
@@ -14,9 +14,9 @@ import org.eso.ias.dasu.publisher.{KafkaPublisher, OutputPublisher}
 import org.eso.ias.dasu.subscriber.{InputSubscriber, KafkaSubscriber}
 import org.eso.ias.heartbeat.publisher.HbLogProducer
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
-import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener
-import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosConsumer, KafkaIasiosProducer}
 import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition
+import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener
+import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosProducer, SimpleKafkaIasiosConsumer}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.supervisor.Supervisor
 import org.eso.ias.types._
@@ -102,10 +102,11 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
    * To have finer control over the test, we do not setup filters
    * to this consumer
    */
-  val iasiosConsumer = new KafkaIasiosConsumer(
+  val iasiosConsumer = new SimpleKafkaIasiosConsumer(
     KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
     KafkaHelper.IASIOs_TOPIC_NAME,
-    "SupervisorWithKafka-Consumer")
+    "SupervisorWithKafka-Consumer",
+    )
   iasiosConsumer.setUp()
   logger.info("Testing consumer started")
 
