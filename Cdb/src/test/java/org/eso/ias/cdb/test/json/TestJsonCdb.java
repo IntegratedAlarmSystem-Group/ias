@@ -758,7 +758,10 @@ public class TestJsonCdb {
         assertTrue(idsOpt.isPresent());
         Set<String> ids = idsOpt.get();
         assertEquals(8,ids.size());
-        for (int i=1; i<=ids.size(); i++) assertTrue(ids.contains("ASCE-ID"+i));
+        for (int i=1; i<=6; i++) assertTrue(ids.contains("ASCE-ID"+i));
+		assertTrue(ids.contains("ASCE-WITH-TEMPLATED-INPUTS"));
+		assertTrue(ids.contains("ASCE-WITH-TEMPLATED-INPUTS-ONLY"));
+
     }
 
     /**
