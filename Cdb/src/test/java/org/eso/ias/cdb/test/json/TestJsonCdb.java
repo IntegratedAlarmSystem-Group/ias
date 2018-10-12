@@ -757,7 +757,7 @@ public class TestJsonCdb {
         Optional<Set<String>> idsOpt= cdbReader.getAsceIds();
         assertTrue(idsOpt.isPresent());
         Set<String> ids = idsOpt.get();
-        assertEquals(6,ids.size());
+        assertEquals(8,ids.size());
         for (int i=1; i<=ids.size(); i++) assertTrue(ids.contains("ASCE-ID"+i));
     }
 
