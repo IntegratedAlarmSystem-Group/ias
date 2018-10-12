@@ -1,7 +1,6 @@
 package org.eso.ias.cdb.topology
 
 import org.eso.ias.cdb.pojos.AsceDao
-import org.eso.ias.logging.IASLogger
 
 /** The topology to forward IASIOs to ASCEs.
  * 
@@ -39,9 +38,6 @@ class DasuTopology(
   require(Option(id).isDefined && !id.isEmpty)
   require(Option(outputId).isDefined && outputId.nonEmpty)
 
-  /** The logger */
-  private val logger = IASLogger.getLogger(this.getClass)
-
   /** The output produced by all ASCEs
    *
    *  One of The ASCE must produce the output of the DASU
@@ -68,7 +64,7 @@ class DasuTopology(
   override val inputsIds: Set[String] = asces.flatMap(asce => asce.inputsIds).filterNot(asceOutputs.contains).toSet
 
   /** The Ids of the ASCEs running in the DASU */
-  val asceIds = asces.map(_.id).toSet
+  val asceIds: Set[String] = asces.map(_.id).toSet
   require(asces.size==asceIds.size,"The list of topologies contains duplicate")
 
   /**
@@ -116,7 +112,7 @@ class DasuTopology(
 
   }
   assert(
-      ascesOfInput.keys.forall( id => !ascesOfInput(id).isEmpty),
+      ascesOfInput.keys.forall( id => ascesOfInput(id).nonEmpty),
       "Some of the inputs is not required by any ASCE")
   assert(ascesOfInput.keys.size>=inputsIds.size)
 
@@ -125,7 +121,7 @@ class DasuTopology(
    * There is one tree for each input of the DASU: each tree terminates
    * to the output of the DASU, if there are no cycles
    */
-  require(isACyclic(),s"DASU $id: invalid cyclic graph")
+  require(isACyclic,s"DASU $id: invalid cyclic graph")
   val trees: Set[Node] = buildTrees()
   trees.foreach(tree => assert(checkLastNodeId(tree,outputId)))
 
@@ -207,7 +203,7 @@ class DasuTopology(
    * @param neighbors the connected nodes
    */
   class Node(val id: String, val nodeType: NodeType.NType, val neighbors:List[Node]) {
-    override def toString = id+":"+nodeType+":"+neighbors.size
+    override def toString: String = id+":"+nodeType+":"+neighbors.size
   }
 
   /** Check if the passed tree is linear
@@ -300,15 +296,14 @@ class DasuTopology(
     (node.neighbors,node.nodeType) match {
       case (Nil,_)    => List(root):::trees
       case (s::Nil,_) => linearizeTree(root,s,trees)
-      case (s::rest,NodeType.IASIO) => {
+      case (s::rest,NodeType.IASIO) =>
         // New root
         val newRoot: Node = new Node(root.id,root.nodeType,List(s))
         val linearizedNewRoot = linearizeTree(newRoot, newRoot,trees)
         val newRootRest: Node = new Node(root.id,root.nodeType,rest)
         val linearizeRest = linearizeTree(newRootRest,newRootRest,trees)
         linearizedNewRoot:::linearizeRest:::trees
-        }
-      case (s::rest,NodeType.ASCE) => {
+      case (s::rest,NodeType.ASCE) =>
         // Root remains the same
         val newNode: Node = new Node(node.id,node.nodeType,List(s))
         val newTree = cloneReplaceTree(root,newNode,newNode)
@@ -318,10 +313,7 @@ class DasuTopology(
         val newRestTree = cloneReplaceTree(root,newNodeRest,newNodeRest)
         val linearizedRest = linearizeTree(newRestTree,newRestTree,trees)
         linearizedNewNode:::linearizedRest:::trees
-      }
-      case (List(_,_),_) => {
-        Nil
-      }
+      case (List(_,_),_) => _
     }
   }
 
@@ -374,7 +366,7 @@ class DasuTopology(
     ret.append(" isLinear=")
     ret.append(isLinearTree(node))
     val childStrs: List[String] = node.neighbors.map(n => printTree(n))
-    if (!childStrs.isEmpty) {
+    if (childStrs.nonEmpty) {
       ret.append(" -> [")
       ret.append(childStrs.mkString(","))
       ret.append(']')
@@ -383,7 +375,7 @@ class DasuTopology(
   }
 
   /** Builds a human readable string describing the topology */
-  override def toString = {
+  override def toString: String = {
     val ret = new StringBuilder("Topology of DASU [")
     ret.append(id)
     ret.append("]: output id=")
@@ -409,50 +401,8 @@ class DasuTopology(
     ret.toString()
   }
 
-  /** Check the a-cyclicity of the graph.
-   *
-   *  The method repeats the same test for each input
-   *  of the DASU
-   */
-  private def isACyclic(): Boolean = {
-
-    /**
-      * The check is done checking each input and the
-      * ASCEs that need it. Then the output produced
-      * by a ASCE is checked against the ASCEs that need it
-      * and so on until there are no more ASCEs.
-      * The ASCEs and input already checked are put in the acc
-      * set.
-      *
-      * For a given output x of an ASCE, acc contains
-      * a possible path input, output) of the ASCE that prodiuced it.
-      * The acc is a path from the input to the output so there is a cycle if an output of an ASCE
-      * is contained in acc.
-      *
-      * A cycle is resent if the passed input
-      * is already present in the acc set.
-      *
-      * @param in The input to check
-      * @param acc The accumulator
-      */
-    def iasAcyclic(in: String, acc: Set[String]): Boolean = {
-      // List of ASCEs that wants the passed input
-      val ascesThatWantThisInput: List[AsceTopology] = asces.filter(asce => asce.isRequiredInput(in))
-
-      // The outputs generated by all the ASCEs that want this output
-      val outputs: List[String] = ascesThatWantThisInput.map( asceDao => asceDao.outputId)
-      if (outputs.isEmpty) true
-      else {
-        outputs.forall(s => {
-          val newSet = acc+in
-          !newSet.contains(s) && iasAcyclic(s,newSet)
-        })
-      }
-    }
-
-    inputsIds.forall(input => iasAcyclic(input, Set()))
-
-  }
+  /** Check the a-cyclicity of the graph by delegating to the CyclesFinder */
+  def isACyclic: Boolean = CyclesFinder.isACyclic(inputsIds,asceTopology.values.toSet)
 
   /**
    * Build the levels of ASCE to move IASIOs from one ASCE to another
@@ -501,7 +451,7 @@ class DasuTopology(
    * @return the ID, if any, of the ASCE that produces the passed output ID
    */
   def asceProducingOutput(outputId: String): Option[String] = {
-    require(Option(outputId).isDefined && !outputId.isEmpty(),"Invalid output identifier")
+    require(Option(outputId).isDefined && outputId.nonEmpty,"Invalid output identifier")
     
     asces.find(_.outputId==outputId).map(_.id)
   }
