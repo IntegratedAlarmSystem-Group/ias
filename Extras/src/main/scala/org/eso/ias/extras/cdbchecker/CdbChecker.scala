@@ -124,6 +124,7 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
   }
   CdbChecker.logger.info("Read {} IDs of DASUs",idsOfDasus.size)
 
+  /** The map of DasuDao; the key is the id of the DASU */
   val mapOfDasus: Map[String, DasuDao] = {
     idsOfDasus.foldLeft(Map.empty[String, DasuDao])( (z,id) => {
       val attempt = Try(reader.getDasu(id))
@@ -262,6 +263,21 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
     asce = mapOfAsces.get(asceId)
     if asce.isDefined
   } checkAsce(asce.get)
+
+  // Check for cycles
+  val cyclesChecker = new CdbCyclesChecker(mapOfDasus,mapOfDasusToDeploy)
+  val dasuWithCycles = cyclesChecker.getDasusWithCycles()
+  if (dasuWithCycles.nonEmpty) {
+    CdbChecker.logger.error("Found DASUs with cycles: {}",dasuWithCycles.mkString(","))
+  } else {
+    CdbChecker.logger.info("NO cycles found in the DASUs")
+  }
+  val dasuTodeployWithCycles = cyclesChecker.getDasusToDeployWithCycles()
+  if (dasuTodeployWithCycles.nonEmpty) {
+    CdbChecker.logger.error("Found DASUs to deploy with cycles: {}",dasuTodeployWithCycles.mkString(","))
+  } else {
+    CdbChecker.logger.info("NO cycles found in the DASUs")
+  }
 
   /**
     * Build the map of the ASCEs to run in each DASU
