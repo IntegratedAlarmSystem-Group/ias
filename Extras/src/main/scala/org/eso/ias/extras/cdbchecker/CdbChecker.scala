@@ -9,7 +9,6 @@ import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos._
 import org.eso.ias.cdb.rdb.RdbReader
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.supervisor.Supervisor
 
 import scala.collection.JavaConverters
 import scala.util.{Failure, Success, Try}
@@ -642,7 +641,7 @@ object CdbChecker {
   }
 
   /** The logger */
-  val logger: Logger = IASLogger.getLogger(Supervisor.getClass)
+  val logger: Logger = IASLogger.getLogger(CdbChecker.getClass)
 
   def main(args: Array[String]): Unit = {
     val parsedArgs = parseCommandLine(args)
