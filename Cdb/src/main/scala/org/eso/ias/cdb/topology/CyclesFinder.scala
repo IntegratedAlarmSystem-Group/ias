@@ -71,7 +71,7 @@ object CyclesFinder {
       * @param in The input to check
       * @param acc The accumulator
       */
-    def iasAcyclic(in: String, acc: Set[String]): Boolean = {
+    def isAcyclic(in: String, acc: Set[String]): Boolean = {
       // List of ASCEs that wants the passed input
       val prodsThatWantThisInput: Set[OutputProducer] = producers.filter(_.inputsIds.contains(in))
 
@@ -86,11 +86,11 @@ object CyclesFinder {
             CyclesFinder.logger.error("Cycle found for output {} and path {}",
               s,newSet.mkString(","))
           }
-          !newSet.contains(s) && iasAcyclic(s,newSet)
+          !newSet.contains(s) && isAcyclic(s,newSet)
         })
       }
     }
-    inputsIds.forall( inputId => iasAcyclic(inputId, Set()))
+    inputsIds.forall( inputId => isAcyclic(inputId, Set()))
   }
 }
 
