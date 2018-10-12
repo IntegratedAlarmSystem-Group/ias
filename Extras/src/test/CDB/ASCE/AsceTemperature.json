@@ -1,0 +1,12 @@
+{
+	"dasuID":"DasuTemperature",
+	"outputID":"TemperatureAlarm",
+	"props":[
+		{"name":"org.eso.ias.tf.minmaxthreshold.highOn","value":"30"},
+		{"name":"org.eso.ias.tf.minmaxthreshold.highOff","value":"15"},
+		{"name":"org.eso.ias.tf.minmaxthreshold.lowOn","value":"-20"},
+		{"name":"org.eso.ias.tf.minmaxthreshold.lowOff","value":"-10"}],
+	"id":"AsceTemperature",
+	"transferFunctionID":"org.eso.ias.asce.transfer.impls.MinMaxThresholdTF",
+	"inputIDs":["Temperature"]
+}
