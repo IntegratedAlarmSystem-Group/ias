@@ -9,6 +9,7 @@ import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos._
 import org.eso.ias.cdb.rdb.RdbReader
 import org.eso.ias.logging.IASLogger
+import org.eso.ias.supervisor.TemplateHelper
 
 import scala.collection.JavaConverters
 import scala.util.{Failure, Success, Try}
@@ -183,6 +184,9 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
             id,
             setOfDtd.map(_.getDasu.getId).mkString(",")
           )
+          // Normalize the DASUs to transform template input instances and
+          // templates into concrete values
+          new TemplateHelper(setOfDtd).normalize()
           z+(id -> setOfDtd)
         case Failure(f) =>
           CdbChecker.logger.error("Error getting DASUs of Supervisor [{}]",id,f)
@@ -265,8 +269,8 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
   } checkAsce(asce.get)
 
   // Check for cycles
-  val cyclesChecker = new CdbCyclesChecker(mapOfDasus,mapOfDasusToDeploy)
-  val dasuWithCycles = cyclesChecker.getDasusWithCycles()
+  val cyclesChecker: CdbCyclesChecker = new CdbCyclesChecker(mapOfDasus,mapOfDasusToDeploy)
+  val dasuWithCycles: Iterable[String] = cyclesChecker.getDasusWithCycles()
   if (dasuWithCycles.nonEmpty) {
     CdbChecker.logger.error("Found DASUs with cycles: {}",dasuWithCycles.mkString(","))
   } else {
