@@ -44,10 +44,10 @@ class DasuTopology(
    */
   val asceOutputs: Set[String] = asces.map(asce => asce.outputId).toSet
   require(asceOutputs.contains(outputId),
-      "The output ["+outputId+"] of the DASU ["+id+"] is not produced by any of its ASCEs"+asceOutputs.mkString(","))
+      "The output ["+outputId+"] of the DASU ["+id+"] is not produced by any of its ASCEs: "+asceOutputs.mkString(","))
 
   // Ensure that the output produced by one ASCE is not produced by any other ASCE
-  require(asces.size==asceOutputs.size,"Number of outputs of ASCEs and number of ASCEs mismatch")
+  require(asces.size==asceOutputs.size,"Number of outputs of ASCEs ("+asceOutputs.size+")and number of ASCEs ("+asces.size+")mismatch")
 
   // Check if the output produced by the ASCEs running in this DASU
   // is used by other ASCEs in this same DASU. The only exception is
@@ -313,7 +313,7 @@ class DasuTopology(
         val newRestTree = cloneReplaceTree(root,newNodeRest,newNodeRest)
         val linearizedRest = linearizeTree(newRestTree,newRestTree,trees)
         linearizedNewNode:::linearizedRest:::trees
-      case (List(_,_),_) => _
+      case (List(_,_),_) => Nil
     }
   }
 
