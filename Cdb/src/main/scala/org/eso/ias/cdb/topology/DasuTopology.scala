@@ -34,7 +34,7 @@ class DasuTopology(
                     asces: List[AsceTopology],
                     override val id: String,
                     override val outputId: String) extends OutputProducer {
-  require(Option(asces).isDefined && asces.nonEmpty)
+  require(Option(asces).isDefined && asces.nonEmpty,"Invalid null or empty list of ASCEs of DASU "+id)
   require(Option(id).isDefined && !id.isEmpty)
   require(Option(outputId).isDefined && outputId.nonEmpty)
 
@@ -44,16 +44,16 @@ class DasuTopology(
    */
   val asceOutputs: Set[String] = asces.map(asce => asce.outputId).toSet
   require(asceOutputs.contains(outputId),
-      "The output ["+outputId+"] of the DASU ["+id+"] is not produced by any of its ASCEs: "+asceOutputs.mkString(","))
+      s"The output $outputId of the DASU [$id] is not produced by any of its ASCEs: ${asceOutputs.mkString(",")}")
 
   // Ensure that the output produced by one ASCE is not produced by any other ASCE
-  require(asces.size==asceOutputs.size,"Number of outputs of ASCEs ("+asceOutputs.size+")and number of ASCEs ("+asces.size+")mismatch")
+  require(asces.size==asceOutputs.size,s"Number of outputs of ASCEs (${asceOutputs.size})and number of ASCEs (${asces.size}) mismatch")
 
   // Check if the output produced by the ASCEs running in this DASU
   // is used by other ASCEs in this same DASU. The only exception is
   // output produced by the last ASCE that is the output of the DASU itself
   require(asces.map(_.outputId).filterNot(_==outputId).toSet.subsetOf(asces.flatMap(_.inputsIds).toSet),
-      "The ouput produced by some ASCEs of this DASU is unused")
+      s"The ouput produced by some ASCEs of DASU [$id] is unused")
 
   /** The inputs of the DASU
    *
