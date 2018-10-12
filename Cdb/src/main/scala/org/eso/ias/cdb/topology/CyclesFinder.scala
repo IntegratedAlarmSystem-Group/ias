@@ -42,6 +42,11 @@ object CyclesFinder {
     * Check if the producers create cycles
     *
     *  The method repeats the same test for each input
+    *
+    * @param inputsIds th eIDs of the inputs of the producer
+    * @param producers th eproducer of the outputs
+    *
+    * @return true if the producer is acyclic and false if contains a cycle
     */
   def isACyclic(inputsIds: Set[String], producers: Set[OutputProducer]): Boolean = {
     require(Option(inputsIds).isDefined && inputsIds.nonEmpty)
@@ -76,6 +81,11 @@ object CyclesFinder {
       else {
         outputs.forall(s => {
           val newSet = acc+in
+
+          if (newSet.contains(s)) {
+            CyclesFinder.logger.error("Cycle found for output {} and path {}",
+              s,newSet.mkString(","))
+          }
           !newSet.contains(s) && iasAcyclic(s,newSet)
         })
       }
