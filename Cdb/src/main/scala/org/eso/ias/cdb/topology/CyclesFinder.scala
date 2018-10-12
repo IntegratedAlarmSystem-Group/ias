@@ -41,7 +41,7 @@ class CyclesFinder(val inputsIds: Set[String], val producers: Set[OutputProducer
     *
     *  The method repeats the same test for each input
     */
-  def isACyclic(): Boolean = {
+  def isACyclic: Boolean = {
 
     /**
       * The check is done checking each input and the
