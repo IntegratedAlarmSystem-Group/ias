@@ -1,0 +1,9 @@
+{
+	"logLevel":"DEBUG",
+	"id":"SupervisorWithKafka",
+	"hostName":"almaias.eso.org",
+	"dasusToDeploy":[
+		{"dasuId":"DasuTemperature", "templateId":null, "instance":null},
+		{"dasuId":"DasuStrenght", "templateId":null, "instance":null}
+	]
+}

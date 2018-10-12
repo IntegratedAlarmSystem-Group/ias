@@ -1,5 +1,6 @@
 package org.eso.ias.tranfer.utlitymodule
 
+
 import java.util.Properties
 
 import com.typesafe.scalalogging.Logger
@@ -96,4 +97,3 @@ object UMAlarmByBit {
 
 
 }
-
