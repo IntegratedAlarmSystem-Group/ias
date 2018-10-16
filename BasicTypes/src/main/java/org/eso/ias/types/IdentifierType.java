@@ -1,7 +1,5 @@
 package org.eso.ias.types;
 
-import org.eso.ias.types.Identifier;
-
 /**
  * The types of an identifier.
  * <P>
@@ -60,9 +58,24 @@ public enum IdentifierType {
 	IASIO(CONVERTER,ASCE),
 	
 	/**
-	 * A generic client like a GUI
+	 * SINK clients are those that get values from the core topic and perform some action
+     * like sending email or saving in the LTDB.
+     * The name, sink, comes from the fact that these clients do not put anything back in the kafka topics
+     * but consumes events published there.
+     *
+     * The alarm system monitors this kind of clients and report alarms if they are not running.
 	 */
-	SINK();
+	SINK(),
+
+    /**
+     * A generic client that like a engineering panel.
+     *
+     * The alarm system will not make any check on the functioning of this kind of clients
+     * that are assumed not important for the functioning of the alarm system.
+     *
+     *
+     */
+	CLIENT();
 	
 	/**
 	 * Possible parents of a identifier
