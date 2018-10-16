@@ -2,7 +2,7 @@ package org.eso.ias.sink.email
 
 import java.time._
 import java.util
-import java.util.concurrent.{Executors, ThreadFactory, TimeUnit}
+import java.util.concurrent.{Executors, ScheduledExecutorService, TimeUnit}
 
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
@@ -20,8 +20,8 @@ import org.eso.ias.sink.{IasValueProcessor, ValueListener}
 import org.eso.ias.supervisor.Supervisor._
 import org.eso.ias.types._
 
-import scala.collection.{JavaConverters, mutable}
 import scala.collection.mutable.ListBuffer
+import scala.collection.{JavaConverters, mutable}
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -50,14 +50,12 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
   val alarmsForUser: mutable.Map[String, List[String]] = mutable.Map.empty
 
   /**The executor to send notification: all the instances run in a single thread */
-  val executor = Executors.newSingleThreadScheduledExecutor(new ThreadFactory {
-    override def newThread(runnable: Runnable): Thread = {
+  val executor: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor( (runnable: Runnable) =>  {
       require(Option(runnable).isDefined)
       val threadId = "NotificationSenderThread"
       val ret = new Thread(runnable,threadId)
       ret.setDaemon(true)
       ret
-    }
   })
 
   /** The time interval (mins) to send notifications */
@@ -75,7 +73,7 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
   NotificationsSender.msLogger.info("First digest at {}:{} UTC",timeTostart._1.toString,timeTostart._2.toString)
 
   /** Start the periodic tasl to send the digests */
-  private def startTimer() = {
+  private def startTimer(): Unit = {
     val localNow: ZonedDateTime  = ZonedDateTime.now().withZoneSameInstant(ZoneOffset.UTC)
 
     val nextZone: ZonedDateTime = {
@@ -84,16 +82,13 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
       else temp
     }
 
-    val duration: Duration = Duration.between(localNow, nextZone);
+    val duration: Duration = Duration.between(localNow, nextZone)
     val initalDelay = duration.getSeconds
     val timeIntervalSecs = TimeUnit.SECONDS.convert(timeIntervalToSendEmails,TimeUnit.MINUTES)
 
-    executor.scheduleAtFixedRate(new Runnable() {
-      override def run(): Unit = {
-        NotificationsSender.msLogger.info("TASK")
-        sendDigests()
-      }
-          },initalDelay,timeIntervalSecs, TimeUnit.SECONDS);
+    executor.scheduleAtFixedRate( () => {
+        NotificationsSender.msLogger.debug("TASK")
+        sendDigests() },initalDelay,timeIntervalSecs, TimeUnit.SECONDS)
     NotificationsSender.msLogger.debug("Periodic thread scheduled to run in {} secs every {} secs",initalDelay.toString,timeIntervalSecs)
     NotificationsSender.msLogger.info("Periodic send of digest scheduled every {} minutes",timeIntervalToSendEmails.toString)
   }
@@ -185,7 +180,7 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
   override protected def process(iasValues: List[IASValue[_]]): Unit = synchronized {
     NotificationsSender.msLogger.debug("Processing {} values read from BSDB",iasValues.length)
     // Iterates over non-alarms IASIOs
-    val valuesToUpdate = iasValues.filter(v => v.valueType==IASTypes.ALARM && alarmsToTrack.contains(v.id))
+    val valuesToUpdate: Unit = iasValues.filter(v => v.valueType==IASTypes.ALARM && alarmsToTrack.contains(v.id))
       .foreach(value => {
         val alarm = value.asInstanceOf[IASValue[Alarm]].value
         val tStamp: Long = if (value.pluginProductionTStamp.isPresent) {
