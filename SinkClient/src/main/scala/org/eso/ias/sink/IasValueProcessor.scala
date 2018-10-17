@@ -18,13 +18,13 @@ import scala.util.{Failure, Success, Try}
   * and sends them to the listener for further processing.
   *
   * The processing is triggered when the buffer receivedValues contains
-  * at least minSizeOfValsToProcessAtOnce itemes.
+  * at least minSizeOfValsToProcessAtOnce items.
   * It is also periodically triggered every periodicProcessingTime msecs.
   *
   * In this version the IasValueProcessor does not take any action if
   * one of the listeners is too slow apart of logging messages.
   * The slowness is detected when the queue of received and
-  * not yet proocessed values grows too much. In this case the
+  * not yet processed values grows too much. In this case the
   * IasValueProcessor logs a warning. To avoid submitting
   * too many logs, the message is logged with a throttling.
   *
