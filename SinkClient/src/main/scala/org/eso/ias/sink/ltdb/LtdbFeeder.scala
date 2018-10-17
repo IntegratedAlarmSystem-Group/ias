@@ -84,7 +84,7 @@ class LtdbFeeder(id: String, val onChange: Boolean, val feeder: DatabaseFeeder) 
               iasiosToStore.put(value.id, value)
               true
             case Some(v) =>
-              if (v.value != value.value || v.id != value.mode || v.iasValidity != value.iasValidity) {
+              if (v.value != value.value || v.mode != value.mode || v.iasValidity != value.iasValidity) {
                 // Value changed
                 iasiosToStore.put(value.id, value)
                 true
