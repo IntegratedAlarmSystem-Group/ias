@@ -72,14 +72,14 @@ class LtdbFeederTest extends FlatSpec with BeforeAndAfterAll {
   /** Map of IASIOs */
   var iasioDaosMap: Map[String, IasioDao] = _
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
     // Build the CDB reader
-    val cdbParentPath = FileSystems.getDefault().getPath(".");
+    val cdbParentPath = FileSystems.getDefault.getPath(".");
     val cdbFiles = new CdbJsonFiles(cdbParentPath)
     val cdbReader: CdbReader = new JsonReader(cdbFiles)
 
     iasiosDaos = {
-      val iasiosDaoJOpt = cdbReader.getIasios()
+      val iasiosDaoJOpt = cdbReader.getIasios
       assert(iasiosDaoJOpt.isPresent, "Error getting the IASIOs from the CDB")
       JavaConverters.asScalaSet(iasiosDaoJOpt.get()).toSet
     }
