@@ -7,8 +7,9 @@ import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.{IasDao, IasioDao}
 import org.eso.ias.logging.IASLogger
+import org.eso.ias.sink.IasValueProcessor
 import org.eso.ias.sink.ltdb.{DatabaseFeeder, LtdbFeeder}
-import org.eso.ias.types.IASValue
+import org.eso.ias.types._
 import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 
 import scala.collection.{JavaConverters, mutable}
@@ -97,6 +98,50 @@ class LtdbFeederTest extends FlatSpec with BeforeAndAfterAll {
     }
   }
 
+  /**
+    * Build a IASValue to be stored in the LTDB
+    *
+    * @param id The identifier of the IASIO
+    * @param alarm the value
+    * @param mode the mode
+    * @param validity the validity
+    * @return the IASValue
+    */
+  def buildValue(id: String, alarm: Alarm, mode: OperationalMode, validity: IasValidity): IASValue[_] = {
+
+    // The identifier of the monitored system
+    val monSysId = new Identifier("ConverterID",IdentifierType.MONITORED_SOFTWARE_SYSTEM,None)
+
+    // The identifier of the plugin
+    val pluginId = new Identifier("ConverterID",IdentifierType.PLUGIN,Some(monSysId))
+
+    // The identifier of the converter
+    val converterId = new Identifier("ConverterID",IdentifierType.CONVERTER,Some(pluginId))
+
+    // The ID of the monitor point
+    val inputId = new Identifier(id, IdentifierType.IASIO,converterId)
+
+    // Timestamp
+    val tStamp = System.currentTimeMillis()
+
+    IASValue.build(
+      alarm,
+      mode,
+      validity,
+      inputId.fullRunningID,
+      IASTypes.ALARM,
+      tStamp,
+      tStamp+1,
+      tStamp+5,
+      tStamp+10,
+      tStamp+15,
+      tStamp+20,
+      null,
+      null,
+      null,
+      null)
+  }
+
   behavior of "The LtdbFeeder"
 
   it must "ïnit the databse feeder" in {
@@ -107,13 +152,102 @@ class LtdbFeederTest extends FlatSpec with BeforeAndAfterAll {
     assert(dbFeeder.inited,"Database feeder not initialized")
   }
 
-  it must "close the databse feeder" in {
+  it must "close the database feeder" in {
     val dbFeeder = new DatabaseFeederForTesting
     val ltdbFeeder: LtdbFeeder = new LtdbFeeder("FeederId",true,dbFeeder)
     ltdbFeeder.setUp(iasDao,iasioDaosMap)
     ltdbFeeder.tearDown()
     assert(ltdbFeeder.closed.get(),"Feeder not closed")
     assert(dbFeeder.closed,"Database feeder not closed")
+  }
+
+  it must "not store values before being inited" in {
+    val dbFeeder = new DatabaseFeederForTesting
+    val ltdbFeeder: LtdbFeeder = new LtdbFeeder("FeederId",true,dbFeeder)
+
+    val values: List[IASValue[_]] = List(
+      buildValue("A",Alarm.CLEARED,OperationalMode.OPERATIONAL, IasValidity.RELIABLE),
+      buildValue("B",Alarm.CLEARED,OperationalMode.CLOSING, IasValidity.UNRELIABLE),
+      buildValue("C",Alarm.CLEARED,OperationalMode.MALFUNCTIONING, IasValidity.RELIABLE))
+
+    ltdbFeeder.processIasValues(values)
+    Thread.sleep(IasValueProcessor.defaultPeriodicSendingTimeInterval+100)
+    assert(dbFeeder.storedIasios.isEmpty)
+    ltdbFeeder.tearDown()
+  }
+
+  it must "store values after being inited" in {
+    val dbFeeder = new DatabaseFeederForTesting
+    val ltdbFeeder: LtdbFeeder = new LtdbFeeder("FeederId",true,dbFeeder)
+    ltdbFeeder.setUp(iasDao,iasioDaosMap)
+    val values: List[IASValue[_]] = List(
+      buildValue("A",Alarm.CLEARED,OperationalMode.OPERATIONAL, IasValidity.RELIABLE),
+      buildValue("B",Alarm.CLEARED,OperationalMode.CLOSING, IasValidity.UNRELIABLE),
+      buildValue("C",Alarm.CLEARED,OperationalMode.MALFUNCTIONING, IasValidity.RELIABLE))
+
+    ltdbFeeder.processIasValues(values)
+    Thread.sleep(IasValueProcessor.defaultPeriodicSendingTimeInterval+100)
+    assert(dbFeeder.storedIasios.nonEmpty)
+    ltdbFeeder.tearDown()
+  }
+
+  it must "not store values after being closed" in {
+    val dbFeeder = new DatabaseFeederForTesting
+    val ltdbFeeder: LtdbFeeder = new LtdbFeeder("FeederId",true,dbFeeder)
+    ltdbFeeder.setUp(iasDao,iasioDaosMap)
+    ltdbFeeder.tearDown()
+    val values: List[IASValue[_]] = List(
+      buildValue("A",Alarm.CLEARED,OperationalMode.OPERATIONAL, IasValidity.RELIABLE),
+      buildValue("B",Alarm.SET_HIGH,OperationalMode.CLOSING, IasValidity.UNRELIABLE),
+      buildValue("C",Alarm.SET_MEDIUM,OperationalMode.MALFUNCTIONING, IasValidity.RELIABLE))
+
+    ltdbFeeder.processIasValues(values)
+    Thread.sleep(IasValueProcessor.defaultPeriodicSendingTimeInterval+100)
+    assert(dbFeeder.storedIasios.isEmpty)
+
+
+  }
+
+  it must "store all IASIOs if on change is disabled" in {
+    val dbFeeder = new DatabaseFeederForTesting
+    val ltdbFeeder: LtdbFeeder = new LtdbFeeder("FeederId",false,dbFeeder)
+    ltdbFeeder.setUp(iasDao,iasioDaosMap)
+
+    // Send the same 3 values, 2 times
+    val values: List[IASValue[_]] = List(
+      buildValue("A",Alarm.CLEARED,OperationalMode.OPERATIONAL, IasValidity.RELIABLE),
+      buildValue("B",Alarm.SET_HIGH,OperationalMode.CLOSING, IasValidity.UNRELIABLE),
+      buildValue("C",Alarm.SET_MEDIUM,OperationalMode.MALFUNCTIONING, IasValidity.RELIABLE),
+      buildValue("A",Alarm.CLEARED,OperationalMode.OPERATIONAL, IasValidity.RELIABLE),
+      buildValue("B",Alarm.SET_HIGH,OperationalMode.CLOSING, IasValidity.UNRELIABLE),
+      buildValue("C",Alarm.SET_MEDIUM,OperationalMode.MALFUNCTIONING, IasValidity.RELIABLE))
+
+    ltdbFeeder.processIasValues(values)
+    Thread.sleep(IasValueProcessor.defaultPeriodicSendingTimeInterval+100)
+    assert(dbFeeder.storedIasios.length==values.length)
+
+    ltdbFeeder.tearDown()
+  }
+
+  it must "store changed IASIOs only, if on change is enabled" in {
+    val dbFeeder = new DatabaseFeederForTesting
+    val ltdbFeeder: LtdbFeeder = new LtdbFeeder("FeederId",true,dbFeeder)
+    ltdbFeeder.setUp(iasDao,iasioDaosMap)
+
+    // Send the same 3 values, 2 times
+    val values: List[IASValue[_]] = List(
+      buildValue("A",Alarm.CLEARED,OperationalMode.OPERATIONAL, IasValidity.RELIABLE),
+      buildValue("B",Alarm.SET_HIGH,OperationalMode.CLOSING, IasValidity.UNRELIABLE),
+      buildValue("C",Alarm.SET_MEDIUM,OperationalMode.MALFUNCTIONING, IasValidity.RELIABLE),
+      buildValue("A",Alarm.CLEARED,OperationalMode.OPERATIONAL, IasValidity.RELIABLE),
+      buildValue("B",Alarm.SET_HIGH,OperationalMode.CLOSING, IasValidity.UNRELIABLE),
+      buildValue("C",Alarm.SET_MEDIUM,OperationalMode.MALFUNCTIONING, IasValidity.RELIABLE))
+
+    ltdbFeeder.processIasValues(values)
+    Thread.sleep(IasValueProcessor.defaultPeriodicSendingTimeInterval+100)
+    assert(dbFeeder.storedIasios.length==values.length/2)
+
+    ltdbFeeder.tearDown()
   }
 
 
