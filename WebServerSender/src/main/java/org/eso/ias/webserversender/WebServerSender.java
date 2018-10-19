@@ -223,8 +223,13 @@ public class WebServerSender implements IasioListener {
 	   logger.info("WebSocket connection closed. status: " + statusCode + ", reason: " + reason);
 	   socketConnected.set(false);
 	   sessionOpt = Optional.empty();
-	   logger.info("Trying to reconnect");
-	   this.connect();
+		 if (statusCode != 1001) {
+			 logger.info("Trying to reconnect");
+			 this.connect();
+		 } else {
+			 logger.info("The Server is going away");
+			 this.shutdown();
+		 }
 	}
 
 	/**
@@ -315,7 +320,7 @@ public class WebServerSender implements IasioListener {
 	/**
 	 * Shutdown the WebSocket client and Kafka consumer
 	 */
-	public  void shutdown() {
+	public void shutdown() {
 		hbEngine.updateHbState(HeartbeatStatus.EXITING);
 		kafkaConsumer.tearDown();
 		sessionOpt = Optional.empty();
