@@ -25,6 +25,8 @@ import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer;
 import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener;
 import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition;
+import org.eso.ias.kafkautils.FilteredKafkaIasiosConsumer;
+import org.eso.ias.kafkautils.FilteredKafkaIasiosConsumer.FilterIasValue;
 import org.eso.ias.logging.IASLogger;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
@@ -50,9 +52,9 @@ public class WebServerSender implements IasioListener {
 	public final String senderID;
 
 	/**
-	 * IAS Core Kafka Consumer to get messages from the Core
-	 */
-	private final KafkaIasiosConsumer kafkaConsumer;
+	* IAS Core Kafka Consumer to get messages from the Core
+	*/
+	private final FilteredKafkaIasiosConsumer kafkaConsumer;
 
 	/**
 	 * The name of the topic where webserver senders get
@@ -166,8 +168,8 @@ public class WebServerSender implements IasioListener {
 	 * @param listener The listenr of the messages sent to the websocket server
 	 * @param hbFrequency the frequency of the heartbeat (seconds)
 	 * @param hbProducer the sender of HBs
-	 * @param idsOfIDsToAccept The IDs of the IASIOs to consume
-	 * @param idsOfTypesToAccept The IASTypes to consume
+	 * @param acceptedIds The IDs of the IASIOs to consume
+	 * @param acceptedTypes The IASTypes to consume
 	 * @throws URISyntaxException
 	 */
 	public WebServerSender(
@@ -177,8 +179,8 @@ public class WebServerSender implements IasioListener {
 			WebServerSenderListener listener,
 			int hbFrequency,
 			HbProducer hbProducer,
-			Set<String> idsOfIDsToAccept,
-			Set<IASTypes> idsOfTypesToAccept) throws URISyntaxException {
+			Set<String> acceptedIds,
+			Set<IASTypes> acceptedTypes) throws URISyntaxException {
 		Objects.requireNonNull(senderID);
 		if (senderID.trim().isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty converter ID");
@@ -201,7 +203,24 @@ public class WebServerSender implements IasioListener {
 		logger.debug("Websocket connection URI: "+ webserverUri);
 		logger.debug("Kafka server: "+ kafkaServers);
 		senderListener = Optional.ofNullable(listener);
-		kafkaConsumer = new KafkaIasiosConsumer(kafkaServers, sendersInputKTopicName, this.senderID, idsOfIDsToAccept, idsOfTypesToAccept);
+
+		logger.debug("*********** acceptedIds: " + Arrays.toString(acceptedIds.toArray()));
+		logger.debug("*********** acceptedTypes: " + Arrays.toString(acceptedTypes.toArray()));
+		FilterIasValue filter = new FilterIasValue() {
+			public boolean accept(IASValue<?> value) {
+				assert(value!=null);
+
+				// Locally copy the sets that are immutable and volatile
+		        // In case the setFilter is called in the mean time...
+				Set<String> acceptedIdsNow = acceptedIds;
+				Set<IASTypes> acceptedTypesNow = acceptedTypes;
+
+				boolean acceptedById = acceptedIdsNow.isEmpty() || acceptedIdsNow.contains(value.id);
+				boolean acceptedByType = acceptedTypesNow.isEmpty() || acceptedTypesNow.contains(value.valueType);
+				return acceptedById || acceptedByType;
+			}
+		};
+		kafkaConsumer = new FilteredKafkaIasiosConsumer(kafkaServers, sendersInputKTopicName, this.senderID, filter);
 
 		if (hbFrequency<=0) {
 			throw new IllegalArgumentException("Invalid frequency "+hbFrequency);
