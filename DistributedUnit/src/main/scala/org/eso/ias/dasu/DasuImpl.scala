@@ -6,10 +6,10 @@ import java.util.{HashMap, Properties}
 
 import org.eso.ias.asce.{AsceStates, ComputingElement}
 import org.eso.ias.cdb.pojos.{AsceDao, DasuDao}
+import org.eso.ias.cdb.topology.DasuTopology
 import org.eso.ias.dasu.executorthread.ScheduledExecutor
 import org.eso.ias.dasu.publisher.OutputPublisher
 import org.eso.ias.dasu.subscriber.InputSubscriber
-import org.eso.ias.dasu.topology.Topology
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types._
 
@@ -63,7 +63,7 @@ class DasuImpl (
   DasuImpl.logger.info("Output of DASU [{}]: [{}]",id,dasuOutputId)
   
   // Build the topology
-  val dasuTopology: Topology = new Topology(
+  val dasuTopology: DasuTopology = new DasuTopology(
       id,
       dasuOutputId,
       asceDaos)
@@ -299,19 +299,36 @@ class DasuImpl (
    * @param iasios the inputs received
    * @see InputsListener
    */
-  override def inputsReceived(iasios: Set[IASValue[_]]): Unit = synchronized {
+  override def inputsReceived(iasios: Iterable[IASValue[_]]): Unit = synchronized {
     assert(iasios.nonEmpty)
+
+    def acceptIasValue(value: IASValue[_]): Boolean = {
+      assert(Option(value).isDefined)
+      // Accept the value if
+      //  * its ID is the ID of an input
+      //  * its timetsamp is newer that that already in the map of inputs to process
+      getInputIds().contains(value.id)
+
+      val valueFromMap: Option[IASValue[_]] = Option(notYetProcessedInputs.get(value.id))
+      valueFromMap.map (v => {
+        val valueTstamp = value.dasuProductionTStamp.orElse(value.pluginProductionTStamp.get())
+        val tstampOfValueInMap = v.dasuProductionTStamp.orElse(v.pluginProductionTStamp.get())
+
+        valueTstamp>=tstampOfValueInMap
+      }).getOrElse(true) // Not in map: accept the value
+
+
+    }
         
     // Merge the inputs with the buffered ones to keep only the last updated values
-    iasios.filter( p => getInputIds().contains(p.id)).foreach(iasio => {
-     fullRunningIdsOfInputs.synchronized{
-       fullRunningIdsOfInputs.put(iasio.id, iasio.fullRunningId)
-     }
-      notYetProcessedInputs.synchronized{
+    notYetProcessedInputs.synchronized {
+      iasios.filter( acceptIasValue(_)).foreach(iasio => {
+        fullRunningIdsOfInputs.synchronized { fullRunningIdsOfInputs.put(iasio.id, iasio.fullRunningId) }
+
         notYetProcessedInputs.put(iasio.id,iasio)
-      }
-    })
-    
+      })
+    }
+
     // The new output must be immediately recalculated and sent unless 
     // * the throttling is already in place (i.e. calculation already delayed)
     // * the last value has been updated shortly before 
@@ -480,7 +497,7 @@ class DasuImpl (
     if (!alreadyStarted) {
       DasuImpl.logger.debug("DASU [{}] starting", id)
       statsCollector.start()
-      inputSubscriberInitialized.map(_ => inputSubscriber.startSubscriber(this, dasuTopology.dasuInputs))
+      inputSubscriberInitialized.map(_ => inputSubscriber.startSubscriber(this, dasuTopology.inputsIds))
     } else {
       Failure(new Exception("DASU already started"))
     }
@@ -532,7 +549,7 @@ class DasuImpl (
   }
   
   /** @return the IDs of the inputs of the DASU */
-  def getInputIds(): Set[String] = dasuTopology.dasuInputs
+  def getInputIds(): Set[String] = dasuTopology.inputsIds
   
   /** @return the IDs of the ASCEs running in the DASU  */
   def getAsceIds(): Set[String] = asces.keys.toSet

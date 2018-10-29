@@ -45,9 +45,9 @@
         <string>Supervisor</string>
         <string>WebServerSender</string>
         <string>TransferFunctions</string>
-        <string>Support</string>
         <string>SinkClient</string>
         <string>Tests/SimpleLoopTest</string>
+        <string>Extras</string>
     </resources>
     <pathconvert property="iasModules" refid="iasModsResources" pathsep="," />
 

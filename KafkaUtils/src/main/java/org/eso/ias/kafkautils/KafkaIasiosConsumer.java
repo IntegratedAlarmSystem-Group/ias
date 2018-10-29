@@ -1,7 +1,5 @@
 package org.eso.ias.kafkautils;
 
-import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener;
-import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
 import org.eso.ias.types.IasValueJsonSerializer;
@@ -9,43 +7,28 @@ import org.eso.ias.types.IasValueStringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 /**
- * KafkaIasiosConsumer gets the strings from the passed IASIO kafka topic
- * from the SimpleStringConsumer and forwards IASIOs to the listener.
+ * Extends {@link SimpleKafkaIasiosConsumer} providing filtering by IDs and types.
  * <P>
- * Filtering is based on the ID of the IASIOs _and_ IASValue type: 
+ * Filtering is based on the ID of the IASIOs _and_ the IASValue type:
  * - if the ID of the received String is contained in {@link #acceptedIds}
- *   then the IASIO is forwarded to the listener otherwise is rejected.
+ *   then the IASIO is forwarded to the listener otherwise it is rejected.
  * - if the type of the {@link IASValue} is contained in {@link #acceptedTypes}
  *   then the IASIO is forwarded to the listener otherwise is rejected.
  * 
- * <BR>If the caller does not set any filter, then all the received IASIOs 
+ * <P>If the caller does not set any filter, then all the received IASIOs
  * will be forwarded to the listener.
+ *
  * IDs and type are evaluated in AND. 
  * 
  * @author acaproni
  */
-public class KafkaIasiosConsumer 
-implements KafkaConsumerListener {
+public class KafkaIasiosConsumer extends SimpleKafkaIasiosConsumer {
 
-	/**
-	 * The listener to be notified of Iasios read
-	 * from the kafka topic.
-	 *
-	 * @author acaproni
-	 *
-	 */
-	public interface IasioListener {
-
-		/**
-		 * Process an IASIO received from the kafka topic.
-		 *
-		 * @param event The IASIO received in the topic
-		 */
-		public void iasioReceived(IASValue<?> event);
-	}
-	
 	/**
 	 * The logger
 	 */
@@ -67,29 +50,7 @@ implements KafkaConsumerListener {
 	 */
 	private volatile  Set<IASTypes> acceptedTypes = Collections.unmodifiableSet(new HashSet<>());
 	
-	/**
-	 * The listener to be notified when a IASIOs is read from the kafka topic
-	 * and accepted by the filtering.
-	 */
-	private IasioListener iasioListener;
-	
-	/**
-	 * The string consumer to get strings from teh kafka topic
-	 */
-	private final SimpleStringConsumer stringConsumer;
 
-	/**
-	 * Build a FilteredStringConsumer with no filters (i.e. all the
-	 * strings read from the kafka topic are forwarded to the listener)
-	 * 
-	 * @param servers The kafka servers to connect to
-	 * @param topicName The name of the topic to get events from
-	 * @param consumerID the ID of the consumer
-	 */
-	public KafkaIasiosConsumer(String servers, String topicName, String consumerID) {
-		stringConsumer = new SimpleStringConsumer(servers, topicName, consumerID);
-	}
-	
 	/**
 	 * Build a FilteredStringConsumer with the passed initial filters.
 	 * 
@@ -105,51 +66,10 @@ implements KafkaConsumerListener {
 			String consumerID, 
 			Set<String> idsOfIDsToAccept,
 			Set<IASTypes> idsOfTypesToAccept) {
-		this(servers, topicName, consumerID);
+		super(servers, topicName, consumerID);
 		setFilter(idsOfIDsToAccept, idsOfTypesToAccept);
 	}
 	
-	/**
-	 * Start processing received by the SimpleStringConsumer from the kafka channel.
-	 * <P>
-	 * This method starts the thread that polls the kafka topic
-	 * and returns after the consumer has been assigned to at least
-	 * one partition.
-	 *
-	 * @param startReadingFrom Starting position in the kafka partition
-	 * @param listener The listener of events published in the topic
-	 * @throws KafkaUtilsException in case of timeout subscribing to the kafkatopic
-	 */
-	public void startGettingEvents(StartPosition startReadingFrom, IasioListener listener)
-	throws KafkaUtilsException {
-		Objects.requireNonNull(listener);
-		this.iasioListener=listener;
-		stringConsumer.startGettingEvents(startReadingFrom, this);
-	}
-
-	/** 
-	 * Receive string published in the kafka topic and
-	 * forward IASIOs to the listener
-	 * 
-	 * @param event The string read from the Kafka topic
-	 */
-	public void stringEventReceived(String event) {
-		assert(event!=null && !event.isEmpty());
-		IASValue<?> iasio=null;
-		try {
-			iasio = serializer.valueOf(event);
-		} catch (Exception e) {
-			logger.error("Error building the IASValue from string [{}]: value lost",event,e);
-			return;
-		}
-		if (accept(iasio)) {
-			try {
-				iasioListener.iasioReceived(iasio.updateReadFromBsdbTime(System.currentTimeMillis()));
-			} catch (Exception e) {
-				logger.error("Error notifying the IASValue [{}] to the listener: value lost",iasio.toString(),e);
-			}
-		}
-	}
 
     /**
      * Accepts or rejects a IASValue against the filters, if set
@@ -157,7 +77,8 @@ implements KafkaConsumerListener {
      * @param iasio The IASValue to accept or discard
      * @return true if teh value is accpted; false otherwise
      */
-	private boolean accept(IASValue<?> iasio) {
+    @Override
+	protected boolean accept(IASValue<?> iasio) {
 		assert(iasio!=null);
 
 		// Locally copy the sets that are immutable and volatile
@@ -173,45 +94,6 @@ implements KafkaConsumerListener {
         }
 	}
 
-	/**
-	 * Initializes the consumer with the passed kafka properties.
-	 * <P>
-	 * The defaults are used if not found in the parameter
-	 *
-	 * @param userPros The user defined kafka properties
-	 */
-	public void setUp(Properties userPros) {
-		stringConsumer.setUp(userPros);
-	}
-
-	/**
-	 * Initializes the consumer with default kafka properties
-	 */
-	public void setUp() {
-		stringConsumer.setUp();
-	}
-
-	/**
-	 * Close and cleanup the consumer
-	 */
-	public void tearDown() {
-		stringConsumer.tearDown();
-	}
-
-	/**
-	 * @return the number of records processed
-	 */
-	public long getNumOfProcessedRecords() {
-		return stringConsumer.getNumOfProcessedRecords();
-	}
-
-	/**
-	 * @return the number of strings processed
-	 */
-	public long getNumOfProcessedStrings() {
-		return stringConsumer.getNumOfProcessedStrings();
-	}
-	
 	/**
 	 * Entirely remove the filtering 
 	 */

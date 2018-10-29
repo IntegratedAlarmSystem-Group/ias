@@ -1,11 +1,10 @@
 package org.eso.ias.cdb.json.pojos;
 
-import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import org.eso.ias.cdb.pojos.DasuToDeployDao;
 
 import javax.persistence.Basic;
-
-import org.eso.ias.cdb.pojos.DasuToDeployDao;
-import org.eso.ias.cdb.pojos.DasuDao;
+import java.util.Objects;
 /**
  * The DASU to deploy to replace the reference to the DASU 
  * ant the template with their IDs
@@ -25,6 +24,7 @@ public class JsonDasuToDeployDao {
 	 * The ID of the template
 	 */
 	@Basic(optional=true)
+	@JsonInclude(JsonInclude.Include.NON_NULL)
 	private String templateId=null;
 	
 	/**
@@ -32,6 +32,7 @@ public class JsonDasuToDeployDao {
 	 * to deploy
 	 */
 	@Basic(optional=true)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
 	private Integer instance=null;
 	
 	/**

@@ -42,9 +42,17 @@ fi
 #
 # IAS setup
 #
-export IAS_LOGS_FOLDER=$IAS_ROOT/logs
-export IAS_TMP_FOLDER=$IAS_ROOT/tmp
-export IAS_CONFIG_FOLDER=$IAS_ROOT/config
+if [ -z "$IAS_LOGS_FOLDER" ]; then
+    export IAS_LOGS_FOLDER=$IAS_ROOT/logs
+fi
+
+if [ -z "$IAS_TMP_FOLDER" ]; then
+    export IAS_TMP_FOLDER=$IAS_ROOT/tmp
+fi
+
+if [ -z "$IAS_CONFIG_FOLDER" ]; then
+    export IAS_CONFIG_FOLDER=$IAS_ROOT/config
+fi
 
 export PYTHONPATH="../../lib/python:$IAS_ROOT/lib/python:$PYTHONPATH"
 

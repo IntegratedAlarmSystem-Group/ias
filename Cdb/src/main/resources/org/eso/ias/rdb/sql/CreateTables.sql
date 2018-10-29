@@ -84,8 +84,6 @@ CREATE TABLE IASIO (
   CONSTRAINT IASIO_TEMPFK FOREIGN KEY(template_id) REFERENCES TEMPLATE_DEF(template_id),
   CONSTRAINT IASIO_PK PRIMARY KEY(io_id));
 
-
-
 /*
 The table describing a DASU
 */
@@ -122,7 +120,7 @@ CREATE TABLE ASCE (
   CONSTRAINT ASCE_DASU_FK FOREIGN KEY (dasu_id) REFERENCES DASU(dasu_id),
   CONSTRAINT ASCE_TRANSFUN_FK FOREIGN KEY(transf_fun_id) REFERENCES TRANSFER_FUNC(className_id));
   
-  /*
+/*
   One ASCE can have zero to many properties.
   This is the link table between ASCE and properties
   (veery similar to the IAS_PROPERTY table)
@@ -143,6 +141,46 @@ CREATE TABLE ASCE_IASIO (
   io_id  varchar2(64) NOT NULL,
   CONSTRAINT ASCE_IASIO_ASCE_FK FOREIGN KEY(asce_id) REFERENCES ASCE(asce_id),
   CONSTRAINT ASCE_IASIO_IASIO_FK FOREIGN KEY(io_id) REFERENCES IASIO(io_id));
+
+/*
+  The sequence for the instance of templated IASIOs
+*/
+CREATE SEQUENCE TEMPL_INST_SEQ_GENERATOR
+  START WITH 1
+  MAXVALUE 999999999999999999999999999
+  MINVALUE 1
+  INCREMENT BY   1
+  NOCYCLE
+  CACHE 20
+  ORDER;
+
+/*
+    Associates IASIOs with templated instances
+*/
+CREATE TABLE TEMPL_INST_IASIO (
+    id NUMBER(15) NOT NULL,
+    io_id  VARCHAR2(64) NOT NULL,
+    template_id  VARCHAR2(64) NULL,
+    instance_num  NUMBER(8) NOT NULL CHECK (instance_num>=0),
+    CONSTRAINT INST_FK_TEMPLATE FOREIGN KEY (template_id) REFERENCES TEMPLATE_DEF(template_id),
+    CONSTRAINT INST__FK_IASIO FOREIGN KEY (io_id) REFERENCES IASIO(io_id),
+    CONSTRAINT INST_IASIO_PK PRIMARY KEY ( id ));
+
+/*
+  One ASCE can have zero to many templated inputs.
+  This is the link table between ASCE and templated inputs
+  (veery similar to the IAS_PROPERTY table)
+*/
+CREATE TABLE ASCE_TEMPL_IASIO (
+  asce_id VARCHAR2(64) NOT NULL,
+  templated_input_id   NUMBER(15) NOT NULL,
+  CONSTRAINT ASCETI_PROP_Props_UQ UNIQUE(templated_input_id),
+  CONSTRAINT ASCETI_TEMPL_FK FOREIGN KEY(templated_input_id) REFERENCES TEMPL_INST_IASIO(id),
+  CONSTRAINT ASCETI_ASCE_FK FOREIGN KEY(asce_id) REFERENCES ASCE(asce_id),
+  CONSTRAINT ASCETI__PK PRIMARY KEY (asce_id, templated_input_id));
+
+
+
   
   /*
     The Supervisor 
@@ -164,7 +202,7 @@ CREATE SEQUENCE DASU_TO_DEPLOY_SEQ_GENERATOR
   NOCYCLE
   CACHE 20
   ORDER;
- 
+
   /*
    * The DASUs that the supervisor runs
    */
@@ -178,4 +216,5 @@ CREATE SEQUENCE DASU_TO_DEPLOY_SEQ_GENERATOR
 	CONSTRAINT DTD_FK_DASUS FOREIGN KEY (dasu_id) REFERENCES DASU(dasu_id),
 	CONSTRAINT DTD_FK_TEMP FOREIGN KEY(template_id) REFERENCES TEMPLATE_DEF(template_id),
 	CONSTRAINT DTD_PK PRIMARY KEY ( id ));
-	
+
+

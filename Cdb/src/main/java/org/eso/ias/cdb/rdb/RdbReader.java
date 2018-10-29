@@ -14,14 +14,7 @@ import java.util.Set;
 
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.IasCdbException;
-import org.eso.ias.cdb.pojos.AsceDao;
-import org.eso.ias.cdb.pojos.DasuDao;
-import org.eso.ias.cdb.pojos.DasuToDeployDao;
-import org.eso.ias.cdb.pojos.IasDao;
-import org.eso.ias.cdb.pojos.IasioDao;
-import org.eso.ias.cdb.pojos.SupervisorDao;
-import org.eso.ias.cdb.pojos.TemplateDao;
-import org.eso.ias.cdb.pojos.TransferFunctionDao;
+import org.eso.ias.cdb.pojos.*;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
@@ -89,6 +82,44 @@ public class RdbReader implements CdbReader {
 		t.commit();
 		return Optional.of(ret);
 	}
+
+	/**
+	 * Get the templates.
+	 *
+	 * @return The templates red from the file
+	 * @see org.eso.ias.cdb.CdbReader#getIasios()
+	 */
+	@Override
+	public Optional<Set<TemplateDao>> getTemplates() throws IasCdbException {
+		Session s=rdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		List templates = s.createCriteria(TemplateDao.class).list();
+		Set<TemplateDao> ret = new HashSet<>();
+		for (Iterator iterator = templates.iterator(); iterator.hasNext();){
+			ret.add((TemplateDao)iterator.next());
+		}
+		t.commit();
+		return Optional.of(ret);
+	}
+
+    /**
+     * Get the transfer functions.
+     *
+     * @return The transfer functions read from the file
+     * @see org.eso.ias.cdb.CdbReader#getIasios()
+     */
+    @Override
+    public Optional<Set<TransferFunctionDao>> getTransferFunctions() throws IasCdbException {
+        Session s=rdbUtils.getSession();
+        Transaction t =s.beginTransaction();
+        List tfs = s.createCriteria(TransferFunctionDao.class).list();
+        Set<TransferFunctionDao> ret = new HashSet<>();
+        for (Iterator iterator = tfs.iterator(); iterator.hasNext();){
+            ret.add((TransferFunctionDao)iterator.next());
+        }
+        t.commit();
+        return Optional.of(ret);
+    }
 
 	/**
 	 * Get the IASIO with the given ID
@@ -273,14 +304,97 @@ public class RdbReader implements CdbReader {
 	 * @throws IasCdbException in case of error reading CDB or if the 
 	 *                         ASCE with the give identifier does not exist
 	 */
+	@Override
 	public Collection<IasioDao> getIasiosForAsce(String id) throws IasCdbException {
-		Objects.requireNonNull(id, "The ID cant't be null");
-		if (id.isEmpty()) {
-			throw new IllegalArgumentException("Invalid empty ID");
+		if (id==null || id.isEmpty()) {
+			throw new IllegalArgumentException("Invalid null or empty ID");
 		}
 		Optional<AsceDao> asce = getAsce(id);
 		Collection<IasioDao> ret = asce.orElseThrow(() -> new IasCdbException("ASCE ["+id+"] not dound")).getInputs();
 		return (ret==null)? new ArrayList<>() : ret;
+	}
+
+    /**
+     * Get the IDs of the Supervisors.
+     *
+     * This method is useful to deploy the supervisors
+     *
+     * @return The the IDs of the supervisors read from the CDB
+     * @throws IasCdbException In case of error getting the IDs of the supervisors
+     */
+    @Override
+    public Optional<Set<String>> getSupervisorIds() throws IasCdbException {
+		Session s=rdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		List supervisors = s.createCriteria(SupervisorDao.class).list();
+		Set<String> ret = new HashSet<>();
+		for (Iterator iterator = supervisors.iterator(); iterator.hasNext();) {
+			ret.add(((SupervisorDao)iterator.next()).getId());
+		}
+		t.commit();
+		return Optional.of(ret);
+	}
+
+    /**
+     * Get the IDs of the DASUs.
+     *
+     * @return The IDs of the DASUs read from the CDB
+     * @throws IasCdbException In case of error getting the IDs of the DASUs
+     */
+    @Override
+    public Optional<Set<String>> getDasuIds() throws IasCdbException {
+        Session s=rdbUtils.getSession();
+        Transaction t =s.beginTransaction();
+        List supervisors = s.createCriteria(DasuDao.class).list();
+        Set<String> ret = new HashSet<>();
+        for (Iterator iterator = supervisors.iterator(); iterator.hasNext();) {
+            ret.add(((DasuDao)iterator.next()).getId());
+        }
+        t.commit();
+        return Optional.of(ret);
+    }
+
+    /**
+     * Get the IDs of the ASCEs.
+     *
+     * @return The IDs of the ASCEs read from the CDB
+     * @throws IasCdbException In case of error getting the IDs of the ASCEs
+     */
+    @Override
+    public Optional<Set<String>> getAsceIds() throws IasCdbException {
+        Session s=rdbUtils.getSession();
+        Transaction t =s.beginTransaction();
+        List supervisors = s.createCriteria(AsceDao.class).list();
+        Set<String> ret = new HashSet<>();
+        for (Iterator iterator = supervisors.iterator(); iterator.hasNext();) {
+            ret.add(((AsceDao)iterator.next()).getId());
+        }
+        t.commit();
+        return Optional.of(ret);
+    }
+
+	/**
+	 * Return the templated IASIOs in input to the given ASCE.
+	 *
+	 * These inputs are the one generated by a different template than
+	 * that of the ASCE
+	 * (@see <A href="https://github.com/IntegratedAlarmSystem-Group/ias/issues/124">#!@$</A>)
+	 *
+	 * @param id The not <code>null</code> nor empty identifier of the ASCE
+	 * @return A set of template instance of IASIOs in input to the ASCE
+	 * @throws IasCdbException in case of error reading CDB or if the
+	 *                         ASCE with the give identifier does not exist
+	 *
+	 */
+	@Override
+	public Collection<TemplateInstanceIasioDao> getTemplateInstancesIasiosForAsce(String id) throws IasCdbException {
+		Objects.requireNonNull(id,"Invalid null identifier");
+		if (id==null || id.isEmpty()) {
+			throw new IllegalArgumentException("Invalid null orempty ID");
+		}
+        Optional<AsceDao> asce = getAsce(id);
+        Collection<TemplateInstanceIasioDao> ret = asce.orElseThrow(() -> new IasCdbException("ASCE ["+id+"] not dound")).getTemplatedInstanceInputs();
+        return (ret==null)? new ArrayList<>() : ret;
 	}
 
 	/**
