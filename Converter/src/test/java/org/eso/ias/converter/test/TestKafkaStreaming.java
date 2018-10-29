@@ -1,18 +1,5 @@
 package org.eso.ias.converter.test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.apache.kafka.streams.kstream.ValueMapper;
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
 import org.eso.ias.cdb.json.CdbJsonFiles;
@@ -24,28 +11,28 @@ import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.LogLevelDao;
 import org.eso.ias.converter.Converter;
 import org.eso.ias.converter.ConverterKafkaStream;
-import org.eso.ias.heartbeat.HbMsgSerializer;
 import org.eso.ias.heartbeat.publisher.HbLogProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer;
-import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener;
-import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
+import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener;
+import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition;
 import org.eso.ias.kafkautils.SimpleStringProducer;
-import org.eso.ias.types.Alarm;
 import org.eso.ias.plugin.publisher.MonitorPointData;
-import org.eso.ias.types.IASTypes;
-import org.eso.ias.types.IASValue;
-import org.eso.ias.types.IasValueJsonSerializer;
-import org.eso.ias.types.IasValueSerializerException;
-import org.eso.ias.types.IasValueStringSerializer;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import org.eso.ias.types.*;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test the kafka streaming by pushing string as they were
@@ -113,14 +100,18 @@ public class TestKafkaStreaming extends ConverterTestBase {
 			coundownLatch.set(new CountDownLatch(n));
 			return coundownLatch.get();
 		}
-		
-		public synchronized void iasioReceived(IASValue<?> iasValue) {
-			logger.info("Event received [{}]",iasValue.toString());
-			valuesReceived.add(iasValue);
-			CountDownLatch latch = coundownLatch.get();
-			if (latch!=null) {
-				latch.countDown();
-			}
+
+		@Override
+		public synchronized void iasiosReceived(Collection<IASValue<?>> iasValues) {
+			iasValues.forEach( iasValue -> {
+				logger.info("Events received [{}]",iasValue.toString());
+				valuesReceived.add(iasValue);
+				CountDownLatch latch = coundownLatch.get();
+				if (latch!=null) {
+					latch.countDown();
+				}
+			});
+
 		}
 		
 		/**
@@ -249,7 +240,9 @@ public class TestKafkaStreaming extends ConverterTestBase {
 		mPointsConsumer = new KafkaIasiosConsumer(
 				defaultKafkaBootstrapServers,
 				KafkaHelper.IASIOs_TOPIC_NAME,
-				"KafkaConverterTest");
+				"KafkaConverterTest",
+       				new HashSet<>(),
+				new HashSet<>());
 		Properties props = new Properties();
 		props.put("auto.offset.reset", "latest");
 		mPointsConsumer.setUp(props);

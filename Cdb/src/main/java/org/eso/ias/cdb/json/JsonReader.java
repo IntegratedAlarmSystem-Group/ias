@@ -1,6 +1,7 @@
 package org.eso.ias.cdb.json;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -10,25 +11,15 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Stream;
-
-import org.eso.ias.cdb.CdbReader;
-import org.eso.ias.cdb.IasCdbException;
-import org.eso.ias.cdb.json.pojos.JsonAsceDao;
-import org.eso.ias.cdb.json.pojos.JsonDasuDao;
-import org.eso.ias.cdb.json.pojos.JsonDasuToDeployDao;
-import org.eso.ias.cdb.json.pojos.JsonSupervisorDao;
-import org.eso.ias.cdb.pojos.AsceDao;
-import org.eso.ias.cdb.pojos.DasuDao;
-import org.eso.ias.cdb.pojos.DasuToDeployDao;
-import org.eso.ias.cdb.pojos.IasDao;
-import org.eso.ias.cdb.pojos.IasioDao;
-import org.eso.ias.cdb.pojos.SupervisorDao;
-import org.eso.ias.cdb.pojos.TemplateDao;
-import org.eso.ias.cdb.pojos.TransferFunctionDao;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eso.ias.cdb.CdbReader;
+import org.eso.ias.cdb.IasCdbException;
+import org.eso.ias.cdb.json.pojos.*;
+import org.eso.ias.cdb.pojos.*;
+
+import java.io.IOException;
 
 /**
  * Read CDB configuration from JSON files.
@@ -134,14 +125,15 @@ public class JsonReader implements CdbReader {
 			}
 		}
 	}
-	
+
 	/**
 	 * Get all the TFs.
 	 * 
 	 * @return The TFs read from the configuration file
 	 * @throws IasCdbException In case of error getting the IASIOs
 	 */
-	private Optional<Set<TransferFunctionDao>> getTransferFunctions() throws IasCdbException {
+	@Override
+	public Optional<Set<TransferFunctionDao>> getTransferFunctions() throws IasCdbException {
 		File f;
 		try {
 			// The ID is not used for JSON: we pass a whatever sting
@@ -171,7 +163,8 @@ public class JsonReader implements CdbReader {
 	 * @return The templates read from the configuration file
 	 * @throws IasCdbException In case of error getting the IASIOs
 	 */
-	private Optional<Set<TemplateDao>> getTemplates() throws IasCdbException {
+	@Override
+	public Optional<Set<TemplateDao>> getTemplates() throws IasCdbException {
 		File f;
 		try {
 			// The ID is not used for JSON: we pass a whatever sting
@@ -275,7 +268,8 @@ public class JsonReader implements CdbReader {
 		try {
 			jAsceOpt = getJsonAsce(cleanedID);
 		} catch (IOException ioe) {
-			throw new IasCdbException("Error getting the JSON ASCE",ioe);
+			ioe.printStackTrace();
+			throw new IasCdbException("Error getting the JSON ASCE "+cleanedID,ioe);
 		}
 		ObjectsHolder holder = new ObjectsHolder();
 		if (jAsceOpt.isPresent()) {
@@ -285,6 +279,7 @@ public class JsonReader implements CdbReader {
 			try {
 				updateAsceObjects(jAsceOpt.get(), holder);
 			} catch (IOException ioe) {
+			    ioe.printStackTrace();
 				throw new IasCdbException("Error updating ASCE objects",ioe);
 			}
 		}
@@ -308,7 +303,7 @@ public class JsonReader implements CdbReader {
 		try {
 			jDasuOpt = getJsonDasu(cleanedID);
 		}  catch (IOException ioe) {
-			throw new IasCdbException("Error getting JSON DASU",ioe);
+			throw new IasCdbException("Error getting JSON DASU "+id,ioe);
 		}
 		ObjectsHolder holder = new ObjectsHolder();
 		if (jDasuOpt.isPresent()) {
@@ -555,12 +550,51 @@ public class JsonReader implements CdbReader {
 		// Fix the inputs
 		for (String inId: jAsceDao.getInputIDs()) {
 			Optional<IasioDao> iasio = getIasio(inId);
-			if (iasio.isPresent()) { 
+			if (iasio.isPresent()) {
+
+			    // Check consistency of template
+			    String templateId = iasio.get().getTemplateId();
+			    if (templateId!=null && !templateId.isEmpty()) {
+                    Optional<TemplateDao> templateDaoOpt = getTemplate(templateId);
+                    if (!templateDaoOpt.isPresent()) {
+                        throw new IasCdbException("Template "+templateId+" of IASIO "+inId+" NOT found in CDB");
+                    }
+                }
+
 				asce.addInput(iasio.get(), true);
 			} else {
-				throw new IasCdbException("Inconsistent ASCE record: IASIO ["+inId+"] not found in CDB");
+				throw new IasCdbException("Inconsistent ASCE record: IASIO ["+inId+"] NOT found in CDB");
 			}
-		} 
+		}
+
+		// Fix templated inputs
+		for (JsonTemplatedInputsDao templatedinput: jAsceDao.getTemplatedInputs()) {
+		    TemplateInstanceIasioDao tiid = new TemplateInstanceIasioDao();
+
+		    int instance=templatedinput.getInstanceNum();
+            String iasioId= templatedinput.getIasioId();
+		    String templateId = templatedinput.getTemplateId();
+
+		    Optional<TemplateDao> templateDaoOpt = getTemplate(templateId);
+		    if (!templateDaoOpt.isPresent()) {
+		        throw new IasCdbException("Template "+templateId+" of IASIO "+iasioId+" NOT found in CDB");
+            } else {
+		        if (instance<templateDaoOpt.get().getMin() || instance>templateDaoOpt.get().getMax()) {
+		         throw new IasCdbException("Instance "+instance+" of IASIO "+iasioId+" out of allowed range ["+
+                         templateDaoOpt.get().getMin()+","+templateDaoOpt.get().getMax()+"]");
+                }
+            }
+
+            tiid.setInstance(instance);
+		    tiid.setTemplateId(templateId);
+			Optional<IasioDao> iasio = getIasio(iasioId);
+			if (iasio.isPresent()) {
+			    tiid.setIasio(iasio.get());
+			    asce.addTemplatedInstanceInput(tiid,true);
+			} else {
+				throw new IasCdbException("Inconsistent ASCE record: IASIO ["+templatedinput.getIasioId()+"] not found in CDB");
+			}
+		}
 		
 		// Fix the DASU
 		Optional<DasuDao> optDasu = Optional.ofNullable(holder.dasus.get(jAsceDao.getDasuID()));
@@ -636,15 +670,39 @@ public class JsonReader implements CdbReader {
 	 * @throws IasCdbException in case of error reading CDB or if the 
 	 *                         ASCE with the give identifier does not exist
 	 */
+	@Override
 	public Collection<IasioDao> getIasiosForAsce(String id) throws IasCdbException {
-		Objects.requireNonNull(id, "The ID cant't be null");
-		if (id.isEmpty()) {
-			throw new IllegalArgumentException("Invalid empty ID");
+		if (id ==null || id.isEmpty()) {
+			throw new IllegalArgumentException("Invalid null or empty ID");
 		}
 		Optional<AsceDao> asce = getAsce(id);
 		Collection<IasioDao> ret = asce.orElseThrow(() -> new IasCdbException("ASCE ["+id+"] not dound")).getInputs();
 		return (ret==null)? new ArrayList<>() : ret;
 	}
+
+	/**
+	 * Return the templated IASIOs in input to the given ASCE.
+	 *
+	 * These inputs are the one generated by a different template than
+	 * that of the ASCE
+	 * (@see <A href="https://github.com/IntegratedAlarmSystem-Group/ias/issues/124">#!@$</A>)
+	 *
+	 * @param id The not <code>null</code> nor empty identifier of the ASCE
+	 * @return A set of template instance of IASIOs in input to the ASCE
+	 * @throws IasCdbException in case of error reading CDB or if the
+	 *                         ASCE with the give identifier does not exist
+	 */
+	@Override
+	public Collection<TemplateInstanceIasioDao> getTemplateInstancesIasiosForAsce(String id)
+            throws IasCdbException {
+        if (id ==null || id.isEmpty()) {
+            throw new IllegalArgumentException("Invalid null or empty ID");
+        }
+        Optional<AsceDao> asce = getAsce(id);
+        Collection<TemplateInstanceIasioDao> ret = asce.orElseThrow(() -> new IasCdbException("ASCE ["+id+"] not dound")).getTemplatedInstanceInputs();
+        return (ret==null)? new ArrayList<>() : ret;
+    }
+
 
 	@Override
 	public Optional<TransferFunctionDao> getTransferFunction(String tf_id) throws IasCdbException {
@@ -663,6 +721,111 @@ public class JsonReader implements CdbReader {
 		}
 		return Optional.empty();
 	}
+
+    /**
+     * Retrun teh IDs in the passed folders.
+     *
+     * For Supetrvisors, DASUs and ASCEs, the Ids are teh names of the
+     * json files in the folder.
+     *
+     * This method is to avoid replication as the same alghoritm works
+     * for Supervisors, DASUs and ASCEs.
+     *
+     * @param placeHolderFilename A place holder for a file in the folder
+     * @return
+     */
+	private Set<String> getIdsInFolder(File placeHolderFilename) throws IasCdbException {
+        String fName = placeHolderFilename.toString();
+        int pos = fName.lastIndexOf(File.separatorChar);
+        if (pos <=0) throw new IasCdbException("Invalid file name!");
+
+        FilenameFilter filter = new FilenameFilter() {
+            @Override
+            public boolean accept(File file, String s) {
+                return s.toLowerCase().endsWith(".json");
+            }
+        };
+        String folderName= fName.substring(0,pos);
+        File folder = new File(folderName);
+        File[] filesInFolder = folder.listFiles(filter);
+
+        Set<String> ret = new HashSet<>();
+        for (File file: filesInFolder) {
+            String jSonfFileName = file.toString();
+            int i = jSonfFileName.lastIndexOf('.');
+            String fileNameWithoutExtension=jSonfFileName.substring(0,i);
+            i = fileNameWithoutExtension.lastIndexOf(File.separatorChar);
+            if (i==-1) {
+                ret.add(fileNameWithoutExtension);
+            } else {
+                String cleanedFile = fileNameWithoutExtension.substring(i+1);
+                ret.add(cleanedFile);
+            }
+        }
+        return ret;
+    }
+
+	/**
+	 * Get the IDs of the Supervisors.
+	 *
+	 * This method is useful to deploy the supervisors
+	 *
+	 * @return The the IDs of the supervisors read from the CDB
+	 * @throws IasCdbException In case of error getting the IDs of the supervisors
+	 */
+	@Override
+	public Optional<Set<String>> getSupervisorIds() throws IasCdbException {
+	    // We do not care if this supervisor exists or not as we need the
+        // to scan the folder for the names of all the files if contains
+        File supervFile;
+        try {
+            supervFile = cdbFileNames.getSuperivisorFilePath("PlaceHolder").toFile();
+        } catch (IOException ioe) {
+            throw new IasCdbException("Error getting path",ioe);
+        }
+
+        return Optional.of(getIdsInFolder(supervFile));
+    }
+
+	/**
+	 * Get the IDs of the DASUs.
+	 *
+	 * @return The IDs of the DASUs read from the CDB
+	 * @throws IasCdbException In case of error getting the IDs of the DASUs
+	 */
+	@Override
+	public Optional<Set<String>> getDasuIds() throws IasCdbException {
+        // We do not care if this DASU exists or not as we need the
+        // to scan the folder for the names of all the files if contains
+        File dasuFile;
+        try {
+            dasuFile = cdbFileNames.getDasuFilePath("PlaceHolder").toFile();
+        } catch (IOException ioe) {
+            throw new IasCdbException("Error getting path",ioe);
+        }
+
+        return Optional.of(getIdsInFolder(dasuFile));
+    }
+
+	/**
+	 * Get the IDs of the ASCEs.
+	 *
+	 * @return The IDs of the ASCEs read from the CDB
+	 * @throws IasCdbException In case of error getting the IDs of the ASCEs
+	 */
+	@Override
+	public Optional<Set<String>> getAsceIds() throws IasCdbException {
+	   // We do not care if this ASCE exists or not as we need the
+        // to scan the folder for the names of all the files if contains
+        File asceFile;
+        try {
+            asceFile = cdbFileNames.getAsceFilePath("PlaceHolder").toFile();
+        } catch (IOException ioe) {
+            throw new IasCdbException("Error getting path",ioe);
+        }
+
+        return Optional.of(getIdsInFolder(asceFile));
+    }
 	
 	/**
 	 * Initialize the CDB

@@ -1,15 +1,6 @@
 package org.eso.ias.webserversender;
 
-import java.io.File;
-import java.security.InvalidParameterException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.cli.*;
-
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
@@ -20,7 +11,6 @@ import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.json.CdbFiles;
 import org.eso.ias.cdb.json.CdbJsonFiles;
-import org.eso.ias.cdb.IasCdbException;
 import org.eso.ias.cdb.json.JsonReader;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.LogLevelDao;
@@ -33,15 +23,25 @@ import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer;
-import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener;
-import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition;
+import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener;
+import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition;
+import org.eso.ias.kafkautils.FilteredKafkaIasiosConsumer;
+import org.eso.ias.kafkautils.FilteredKafkaIasiosConsumer.FilterIasValue;
+import org.eso.ias.logging.IASLogger;
+import org.eso.ias.types.IASTypes;
+import org.eso.ias.types.IASValue;
 import org.eso.ias.types.IasValueJsonSerializer;
 import org.eso.ias.types.IasValueSerializerException;
-import org.eso.ias.types.IASValue;
-import org.eso.ias.types.IASTypes;
-import org.eso.ias.logging.IASLogger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @WebSocket(maxTextMessageSize = 64 * 1024)
 public class WebServerSender implements IasioListener {
@@ -52,9 +52,9 @@ public class WebServerSender implements IasioListener {
 	public final String senderID;
 
 	/**
-	 * IAS Core Kafka Consumer to get messages from the Core
-	 */
-	private final KafkaIasiosConsumer kafkaConsumer;
+	* IAS Core Kafka Consumer to get messages from the Core
+	*/
+	private final FilteredKafkaIasiosConsumer kafkaConsumer;
 
 	/**
 	 * The name of the topic where webserver senders get
@@ -155,6 +155,11 @@ public class WebServerSender implements IasioListener {
 	private CountDownLatch connectionReady;
 
 	/**
+	 * User java properties
+	 */
+	Properties props;
+
+	/**
 	 * Constructor
 	 *
 	 * @param senderID Identifier of the WebServerSender
@@ -163,8 +168,8 @@ public class WebServerSender implements IasioListener {
 	 * @param listener The listenr of the messages sent to the websocket server
 	 * @param hbFrequency the frequency of the heartbeat (seconds)
 	 * @param hbProducer the sender of HBs
-	 * @param idsOfIDsToAccept The IDs of the IASIOs to consume
-	 * @param idsOfTypesToAccept The IASTypes to consume
+	 * @param acceptedIds The IDs of the IASIOs to consume
+	 * @param acceptedTypes The IASTypes to consume
 	 * @throws URISyntaxException
 	 */
 	public WebServerSender(
@@ -174,8 +179,8 @@ public class WebServerSender implements IasioListener {
 			WebServerSenderListener listener,
 			int hbFrequency,
 			HbProducer hbProducer,
-			Set<String> idsOfIDsToAccept,
-			Set<IASTypes> idsOfTypesToAccept) throws URISyntaxException {
+			Set<String> acceptedIds,
+			Set<IASTypes> acceptedTypes) throws URISyntaxException {
 		Objects.requireNonNull(senderID);
 		if (senderID.trim().isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty converter ID");
@@ -190,13 +195,32 @@ public class WebServerSender implements IasioListener {
 		this.kafkaServers=kafkaServers.trim();
 
 		Objects.requireNonNull(props);
-		sendersInputKTopicName = props.getProperty(IASCORE_TOPIC_NAME_PROP_NAME, KafkaHelper.IASIOs_TOPIC_NAME);
+		this.props=props;
+		this.props.put("group.id", this.senderID + ".kafka.group");
+ 		sendersInputKTopicName = props.getProperty(IASCORE_TOPIC_NAME_PROP_NAME, KafkaHelper.IASIOs_TOPIC_NAME);
 		webserverUri = props.getProperty(WEBSERVER_URI_PROP_NAME, DEFAULT_WEBSERVER_URI);
 		uri = new URI(webserverUri);
 		logger.debug("Websocket connection URI: "+ webserverUri);
 		logger.debug("Kafka server: "+ kafkaServers);
 		senderListener = Optional.ofNullable(listener);
-		kafkaConsumer = new KafkaIasiosConsumer(kafkaServers, sendersInputKTopicName, this.senderID, idsOfIDsToAccept, idsOfTypesToAccept);
+
+		logger.debug("*********** acceptedIds: " + Arrays.toString(acceptedIds.toArray()));
+		logger.debug("*********** acceptedTypes: " + Arrays.toString(acceptedTypes.toArray()));
+		FilterIasValue filter = new FilterIasValue() {
+			public boolean accept(IASValue<?> value) {
+				assert(value!=null);
+
+				// Locally copy the sets that are immutable and volatile
+		        // In case the setFilter is called in the mean time...
+				Set<String> acceptedIdsNow = acceptedIds;
+				Set<IASTypes> acceptedTypesNow = acceptedTypes;
+
+				boolean acceptedById = acceptedIdsNow.isEmpty() || acceptedIdsNow.contains(value.id);
+				boolean acceptedByType = acceptedTypesNow.isEmpty() || acceptedTypesNow.contains(value.valueType);
+				return acceptedById || acceptedByType;
+			}
+		};
+		kafkaConsumer = new FilteredKafkaIasiosConsumer(kafkaServers, sendersInputKTopicName, this.senderID, filter);
 
 		if (hbFrequency<=0) {
 			throw new IllegalArgumentException("Invalid frequency "+hbFrequency);
@@ -218,13 +242,13 @@ public class WebServerSender implements IasioListener {
 	   logger.info("WebSocket connection closed. status: " + statusCode + ", reason: " + reason);
 	   socketConnected.set(false);
 	   sessionOpt = Optional.empty();
-	   if (statusCode != 1001) {
-		   logger.info("Trying to reconnect");
-		   this.connect();
-	   }
-	   else {
-		   logger.info("WebServerSender was stopped");
-	   }
+		 if (statusCode != 1001) {
+			 logger.info("Trying to reconnect");
+			 this.connect();
+		 } else {
+			 logger.info("The Server is going away");
+			 this.shutdown();
+		 }
 	}
 
 	/**
@@ -245,7 +269,7 @@ public class WebServerSender implements IasioListener {
 	       logger.error("WebSocket couldn't send the message",t);
 	   }
 	   socketConnected.set(true);
-	}
+   }
 
 	@OnWebSocketMessage
     public void onMessage(String message) {
@@ -255,32 +279,37 @@ public class WebServerSender implements IasioListener {
 	/**
 	 * This method receives IASValues published in the BSDB.
 	 *
-	 * @see {@link IasioListener#iasioReceived(IASValue)}
+	 * @see {@link IasioListener#iasiosReceived(Collection)}
 	 */
 	@Override
-	public synchronized void iasioReceived(IASValue<?> event) {
-		if (!socketConnected.get()) {
-			// The socket is not connected: discard the event
-			return;
-		}
-		final String value;
-		try {
-			value = serializer.iasValueToString(event);
-		} catch (IasValueSerializerException avse){
-			logger.error("Error converting the event into a string", avse);
-			return;
-		}
+	public synchronized void iasiosReceived(Collection<IASValue<?>> events) {
+        if (!socketConnected.get()) {
+            // The socket is not connected: discard the event
+            return;
+        }
 
-		sessionOpt.ifPresent( session -> {
-			session.getRemote().sendStringByFuture(value);
-			logger.debug("Value sent: " + value);
-			this.notifyListener(value);
-		});
-	}
+        events.forEach( event -> {
+            final String value;
+            try {
+                value = serializer.iasValueToString(event);
+            } catch (IasValueSerializerException avse){
+                logger.error("Error converting the event into a string", avse);
+                return;
+            }
+
+            sessionOpt.ifPresent( session -> {
+                session.getRemote().sendStringByFuture(value);
+                logger.debug("Value sent: " + value);
+                this.notifyListener(value);
+            });
+        });
+
+
+    }
 
 	public void setUp() {
 		hbEngine.start();
-		kafkaConsumer.setUp();
+		kafkaConsumer.setUp(this.props);
 		connect();
 	}
 
@@ -295,22 +324,22 @@ public class WebServerSender implements IasioListener {
 			client.start();
 			client.connect(this, this.uri, new ClientUpgradeRequest());
 			if(!this.connectionReady.await(reconnectionInterval, TimeUnit.SECONDS)) {
-				logger.info("WebSocketSender could not establish the connection with the server.");
-				logger.info("Trying to reconnect");
+				logger.info("The connection with the server is taking too long. Trying again.");
 				connect();
 			}
 			logger.debug("Connection started!");
 		}
 		catch( Exception e) {
 			logger.error("Error on WebSocket connection", e);
-			this.shutdown();
+			logger.info("Trying to reconnect.");
+			connect();
 		}
 	}
 
 	/**
 	 * Shutdown the WebSocket client and Kafka consumer
 	 */
-	public  void shutdown() {
+	public void shutdown() {
 		hbEngine.updateHbState(HeartbeatStatus.EXITING);
 		kafkaConsumer.tearDown();
 		sessionOpt = Optional.empty();
@@ -341,16 +370,6 @@ public class WebServerSender implements IasioListener {
 	public void setReconnectionInverval(int interval) {
 		reconnectionInterval = interval;
 	}
-
-	// /**
-	//  * Build the usage message
-	//  */
-	// public static void printUsage() {
-	// 	System.out.println("Usage: WebServerSender Sender-ID [-jcdb JSON-CDB-PATH]");
-	// 	System.out.println("  -jcdb force the usage of the JSON CDB");
-	// 	System.out.println("  Sender-ID: the identifier of the web server sender");
-	// 	System.out.println("  JSON-CDB-PATH: the path of the JSON CDB");
-	// }
 
 	/**
 	 * Print the usage string

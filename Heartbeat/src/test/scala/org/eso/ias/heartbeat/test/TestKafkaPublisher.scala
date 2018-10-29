@@ -1,20 +1,17 @@
 package org.eso.ias.heartbeat.test
 
-import org.scalatest.FlatSpec
-import org.eso.ias.heartbeat.serializer.HbJsonSerializer
-import org.eso.ias.heartbeat.publisher.HbKafkaProducer
-import org.eso.ias.kafkautils.KafkaHelper
-import org.eso.ias.kafkautils.SimpleStringConsumer
-import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener
-import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition
-import scala.collection.mutable.ArrayBuffer
-import org.scalatest.BeforeAndAfter
 import org.eso.ias.heartbeat.HeartbeatStatus
-import java.util.EnumSet
-import scala.util.Try
+import org.eso.ias.heartbeat.publisher.HbKafkaProducer
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer
+import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition
+import org.eso.ias.kafkautils.{KafkaHelper, SimpleStringConsumer}
+import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types.Identifier
-import org.eso.ias.types.IdentifierType
+import org.eso.ias.types.{Identifier, IdentifierType}
+import org.scalatest.{BeforeAndAfter, FlatSpec}
+
+import scala.collection.mutable.ArrayBuffer
+import scala.util.Try
 
 /**
  * Test the HB kafka publisher

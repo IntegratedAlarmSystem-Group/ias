@@ -1,30 +1,32 @@
 package org.eso.ias.dasu.subscriber
 
+import java.util
+import java.util.{Collection, Properties}
+
+import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosConsumer}
+import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener
+import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition
 import org.eso.ias.logging.IASLogger
-import java.util.Properties
-
-import org.eso.ias.kafkautils.KafkaHelper
-
-import scala.util.{Failure, Try}
-import org.eso.ias.kafkautils.SimpleStringConsumer.StartPosition
-import org.eso.ias.kafkautils.KafkaIasiosConsumer
-import org.eso.ias.kafkautils.KafkaIasiosConsumer.IasioListener
-import org.eso.ias.types.IASValue
+import org.eso.ias.types.{IASTypes, IASValue}
 
 import scala.collection.JavaConverters
+import scala.util.{Failure, Try}
 
 /** 
- *  Read IASValues from the kafka queue 
- *  and forward them to the listener for processing.
- *  
- *  KafkaSubscriber delegates to KafkaIasiosConsumer.
+  *  Read IASValues from the kafka queue
+  *  and forward them to the listener for processing.
+  *
+  *  KafkaSubscriber delegates to KafkaIasiosConsumer and it is mostly
+  *  a covenience class to use the java KafkaIasiosConsumer class from scala
   *
   *  Filtering by ID, passed in startSuscriber, is supported by delegating
   *  to the KafkaIasiosConsumer.
- *  
- *  @param dasuId the identifier of the owner
- *  @param kafkaConsumer the Kafka consumer
- *  @param props additional properties
+  *
+  *  @param dasuId the identifier of the owner
+  *  @param kafkaConsumer the Kafka consumer
+  *  @param props additional properties
+  *
+  * @author acaproni
  */
 class KafkaSubscriber(
     val dasuId: String, 
@@ -45,18 +47,21 @@ extends IasioListener with InputSubscriber {
 	  * Forward the IASValue received from the kafka topic
     * to the listener
 	  *
-	  * @param iasValue The value received in the topic
-	  * @see KafkaConsumerListener
+	  * @param iasValues The values read from the BSDB
+	  * @see IasiosListener
 	 */
-	override def iasioReceived(iasValue: IASValue[_]): Unit = {
-      Try(listener.foreach( l => l.inputsReceived(Set(iasValue)))) match {
-        case Failure(e) =>
-          KafkaSubscriber.logger.error("Subscriber of [{}] got an exception processing event [{}]: value lost!",
-            dasuId,
-            iasValue.toString,
-            e)
-        case _ =>
-      }
+	override def iasiosReceived(iasValues: Collection[IASValue[_]]): Unit = {
+    assert(Option(iasValues).isDefined)
+    val receivedIasios = JavaConverters.collectionAsScalaIterable(iasValues)
+     KafkaSubscriber.logger.debug(("Subscriber of [{}] receeved {} events "),dasuId,receivedIasios.size)
+    Try(listener.foreach( l => l.inputsReceived(receivedIasios))) match {
+      case Failure(e) =>
+        KafkaSubscriber.logger.error("Subscriber of [{}] got an exception processing events: up to {} values potentially lost!",
+          dasuId,
+          receivedIasios.size,
+          e)
+      case _ =>
+    }
 	}
   
   /** Initialize the subscriber */
@@ -105,7 +110,7 @@ extends IasioListener with InputSubscriber {
     this.listener = newListener
 
     Try {
-      kafkaConsumer.startGettingEvents(StartPosition.END,this)
+      kafkaConsumer.startGettingEvents(StartPosition.END, this)
       KafkaSubscriber.logger.info("The subscriber of [{}] is polling events from kafka",dasuId)
     }
   }
@@ -143,7 +148,7 @@ object KafkaSubscriber {
     }
     
     
-    val kafkaConsumer = new KafkaIasiosConsumer(kafkaBrokers,topic,dasuId+"Consumer")
+    val kafkaConsumer = new KafkaIasiosConsumer(kafkaBrokers,topic,dasuId+"Consumer", new util.HashSet[String](), new util.HashSet[IASTypes]())
     new KafkaSubscriber(dasuId,kafkaConsumer,props)
   }
 

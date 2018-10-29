@@ -25,40 +25,40 @@ import scala.collection.JavaConverters
 import scala.util.{Failure, Success, Try}
 
 /**
- * A Supervisor is the container to run several DASUs into the same JVM.
- * 
- * The Supervisor blindly forward inputs to each DASU and sends the outpts to the BSDB
- * without adding any other heuristic: things like updating validities when an input
- * is not refreshed are not part of the Supervisor.
- * 
- * The Supervisor gets IASIOs from a InputSubscriber and publishes
- * IASValues to the BSDB by means of a OutputPublisher.
- * The Supervisor itself is the publisher and subscriber for the DASUs i.e.
- * the Supervisor acts as a bridge:
- *  * IASIOs read from the BSDB are forwarded to the DASUs that need them as input:
- *    the Supervisor has its own subscriber to receive values from the BSDB that 
- *    are then forwarded to each DASU for processing
- *  * values produced by the DASUs are forwarded to the BSDB: the DASUs publishes the output 
- *    they produce to the supervisor that, in turn, forward each of them to its own publisher.
- * 
- * The same interfaces, InputSubscriber and OutputPublisher, 
- * are used by DASUs and Supervisors in this way a DASU can be easily tested
- * directly connected to Kafka (for example) without the need to have
- * it running into a Supervisor.
- * 
- * DASUs are built by invoking the dasufactory passed in the constructor: 
- * test can let the Supervisor run with their mockup implementation of a DASU.
- * 
- * @param supervisorIdentifier the identifier of the Supervisor
- * @param outputPublisher the publisher to send the output
- * @param inputSubscriber the subscriber getting events to be processed
- * @param hbProducer the subscriber to send heartbeats 
- * @param cdbReader the CDB reader to get the configuration of the DASU from the CDB
- * @param dasuFactory: factory to build DASU
+  * A Supervisor is the container to run several DASUs into the same JVM.
+  *
+  * The Supervisor blindly forward inputs to each DASU and sends the outpts to the BSDB
+  * without adding any other heuristic: things like updating validities when an input
+  * is not refreshed are not part of the Supervisor.
+  *
+  * The Supervisor gets IASIOs from a InputSubscriber and publishes
+  * IASValues to the BSDB by means of a OutputPublisher.
+  * The Supervisor itself is the publisher and subscriber for the DASUs i.e.
+  * the Supervisor acts as a bridge:
+  *  * IASIOs read from the BSDB are forwarded to the DASUs that need them as input:
+  *    the Supervisor has its own subscriber to receive values from the BSDB that
+  *    are then forwarded to each DASU for processing
+  *  * values produced by the DASUs are forwarded to the BSDB: the DASUs publishes the output
+  *    they produce to the supervisor that, in turn, forward each of them to its own publisher.
+  *
+  * The same interfaces, InputSubscriber and OutputPublisher,
+  * are used by DASUs and Supervisors in this way a DASU can be easily tested
+  * directly connected to Kafka (for example) without the need to have
+  * it running into a Supervisor.
+  *
+  * DASUs are built by invoking the dasufactory passed in the constructor:
+  * test can let the Supervisor run with their mockup implementation of a DASU.
+  *
+  * @param supervisorIdentifier the identifier of the Supervisor
+  * @param outputPublisher the publisher to send the output
+  * @param inputSubscriber the subscriber getting events to be processed
+  * @param hbProducer the subscriber to send heartbeats
+  * @param cdbReader the CDB reader to get the configuration of the DASU from the CDB
+  * @param dasuFactory: factory to build DASU
   * @param logLevelFromCommandLine The log level from the command line;
   *                                None if the parameter was not set in the command line
-  *
- */
+  * @author acaproni
+  */
 
 class Supervisor(
     val supervisorIdentifier: Identifier,
@@ -120,36 +120,36 @@ class Supervisor(
   /**
    * Gets the definitions of the DASUs to run in the Supervisor from the CDB
    */
-  val dasusToDelpoy: Set[DasuToDeployDao] = JavaConverters.asScalaSet(cdbReader.getDasusToDeployInSupervisor((id))).toSet
-  require(dasusToDelpoy.nonEmpty,"No DASUs to run in Supervisor "+id)
+  val dasusToDeploy: Set[DasuToDeployDao] = JavaConverters.asScalaSet(cdbReader.getDasusToDeployInSupervisor(id)).toSet
+  require(dasusToDeploy.nonEmpty,"No DASUs to run in Supervisor "+id)
   Supervisor.logger.info("Supervisor [{}], {} DASUs to run: {}",
       id,
-      dasusToDelpoy.size.toString,
-      dasusToDelpoy.map(d => d.getDasu().getId()).mkString(", "))
+    dasusToDeploy.size.toString,
+    dasusToDeploy.map(d => d.getDasu.getId).mkString(", "))
   
   // Initialize the consumer and exit in case of error 
   val inputSubscriberInitialized = inputSubscriber.initializeSubscriber()
   inputSubscriberInitialized match {
-    case Failure(f) => Supervisor.logger.error("Supervisor [{}] failed to initialize the consumer", id,f);
+    case Failure(f) => Supervisor.logger.error("Supervisor [{}] failed to initialize the consumer", id,f)
                        System.exit(-1)
     case Success(s) => Supervisor.logger.info("Supervisor [{}] subscriber successfully initialized",id)
   }
-  
+
   // Initialize the producer and exit in case of error 
   val outputProducerInitialized: Try[Unit] = outputPublisher.initializePublisher()
   outputProducerInitialized match {
-    case Failure(f) => Supervisor.logger.error("Supervisor [{}] failed to initialize the producer", id,f);
+    case Failure(f) => Supervisor.logger.error("Supervisor [{}] failed to initialize the producer", id,f)
                        System.exit(-2)
     case Success(s) => Supervisor.logger.info("Supervisor [{}] producer successfully initialized",id)
   }
-  
+
   // Get the DasuDaos from the set of DASUs to deploy:
   // the helper transform the templated DASUS into normal ones
   val dasuDaos: Set[DasuDao] = {
-    val helper = new TemplateHelper(dasusToDelpoy)
+    val helper = new TemplateHelper(dasusToDeploy)
     helper.normalize()
   }
-  assert(dasuDaos.size==dasusToDelpoy.size)
+  assert(dasuDaos.size==dasusToDeploy.size)
   
   dasuDaos.foreach(d => Supervisor.logger.info("Supervisor [{}]: building DASU from DasuDao {}",id,d.toString))
   
@@ -160,7 +160,7 @@ class Supervisor(
   /**
    * The IDs of the DASUs instantiated in the Supervisor
    */
-  val dasuIds = dasuDaos.map(_.getId)
+  val dasuIds: Set[String] = dasuDaos.map(_.getId)
   Supervisor.logger.info("Supervisor [{}] built {} DASUs: {}",id, dasus.size.toString,dasuIds.mkString(", "))
   
   /**
@@ -271,7 +271,7 @@ class Supervisor(
    *  
    *  @param iasios the inputs received
    */
-  override def inputsReceived(iasios: Set[IASValue[_]]) {
+  override def inputsReceived(iasios: Iterable[IASValue[_]]) {
     
     val receivedIds = iasios.map(i => i.id)
     statsLogger.numberOfInputsReceived(receivedIds.size)
