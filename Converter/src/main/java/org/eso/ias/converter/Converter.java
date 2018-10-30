@@ -275,7 +275,7 @@ public class Converter {
             System.exit(0);
         }
 		if (!help && !supervId.isPresent()) {
-			System.err.println("Missing Supervisor ID");
+			System.err.println("Missing Converter ID");
 			new HelpFormatter().printHelp(cmdLineSyntax, options);
 			System.exit(-1);
 		}
@@ -284,7 +284,7 @@ public class Converter {
 		params.put("jcdb",jcdb);
 		params.put("log",logLvl);
 
-		Converter.logger.info("Params from command line: jcdb={}, logLevel={} supervisor ID={}",
+		Converter.logger.info("Params from command line: jcdb={}, logLevel={} converter ID={}",
 				jcdb.orElse("Undefined"),
 				logLvl.map( l -> l.name()).orElse("Undefined"),
 				supervId.orElse("Undefined"));
