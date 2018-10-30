@@ -250,7 +250,7 @@ public class Converter {
 
         Optional<String> jcdb = Optional.ofNullable(cmdLine.getOptionValue('j'));
         Optional<String> logLevelName = Optional.ofNullable(cmdLine.getOptionValue('x'));
-        Optional<LogLevelDao> logLvl=null;
+        Optional<LogLevelDao> logLvl=Optional.empty();
         try {
             logLvl = logLevelName.map(name -> LogLevelDao.valueOf(name));
         } catch (Exception e) {
@@ -274,7 +274,7 @@ public class Converter {
             new HelpFormatter().printHelp(cmdLineSyntax, options);
             System.exit(0);
         }
-		if (!help && !supervId.isPresent()) {
+		if (!supervId.isPresent()) {
 			System.err.println("Missing Converter ID");
 			new HelpFormatter().printHelp(cmdLineSyntax, options);
 			System.exit(-1);
@@ -339,6 +339,10 @@ public class Converter {
 		IasDao iasDao = null;
 		try { 
 			Optional<IasDao> iasDaoOpt = cdbReader.getIas();
+			if (!iasDaoOpt.isPresent()) {
+			   logger.error("IAS config not found in the CDB");
+			   System.exit(-1);
+            }
 			iasDao=iasDaoOpt.get();
 		} catch (IasCdbException cdbEx) {
 			logger.error("Error getting IAS configuration from CDB",cdbEx);
