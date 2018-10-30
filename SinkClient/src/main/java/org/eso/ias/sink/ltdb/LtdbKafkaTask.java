@@ -32,6 +32,8 @@ public class LtdbKafkaTask extends SinkTask {
     @Override
     public void start(Map<String, String> map) {
         LtdbKafkaTask.logger.info("Started");
+
+
     }
 
     @Override
@@ -46,5 +48,6 @@ public class LtdbKafkaTask extends SinkTask {
 
     @Override
     public void flush(Map<TopicPartition, OffsetAndMetadata> currentOffsets) {
+        LtdbKafkaTask.logger.info("Flushing");
     }
 }
