@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.*;
+import java.util.logging.Level;
 
 /**
  * The Kafka connector for the LTDB
@@ -103,63 +104,6 @@ public class LtdbKafkaConnector extends SinkConnector {
                 jcdb.orElse("Undefined"),
                 logLvl.map(Enum::name).orElse("Undefined"),
                 supervId.orElse("Undefined"));
-    }
-
-    public static void main(String[] args) {
-        Map<String,Optional<?>> params = new HashMap<>();
-        parseCommandLine(args,params);
-
-        CdbReader cdbReader;
-
-        Optional<?> jcdbOpt = params.get("jcdb");
-        if (jcdbOpt.isPresent()) {
-            String cdbPath = (String)jcdbOpt.get();
-            File f = new File(cdbPath);
-            if (!f.isDirectory() || !f.canRead()) {
-                System.err.println("Invalid file path "+cdbPath);
-                System.exit(-3);
-            }
-
-            CdbFiles cdbFiles=null;
-            try {
-                cdbFiles= new CdbJsonFiles(f);
-            } catch (Exception e) {
-                System.err.println("Error initializing JSON CDB "+e.getMessage());
-                System.exit(-4);
-            }
-            cdbReader = new JsonReader(cdbFiles);
-            LtdbKafkaConnector.logger.info("Using JSON CDB at {}",cdbPath);
-        } else {
-            // Get the RDB CDB
-            cdbReader = new RdbReader();
-        }
-
-        IasDao iasDao = null;
-        try {
-            Optional<IasDao> iasDaoOpt = cdbReader.getIas();
-            if (!iasDaoOpt.isPresent()) {
-                logger.error("Got an empty IAS from CDB");
-                System.exit(-1);
-            }
-            iasDao=iasDaoOpt.get();
-        } catch (IasCdbException cdbEx) {
-            logger.error("Error getting IAS configuration from CDB",cdbEx);
-            System.exit(-1);
-        }
-
-        // Set the log level
-        Optional<LogLevelDao> logLevelFromIasOpt = Optional.ofNullable(iasDao.getLogLevel());
-        Optional<LogLevelDao> logLevelFromCmdLineOpt = (Optional<LogLevelDao>)params.get("log");
-        org.eso.ias.logging.IASLogger.setLogLevel(
-                logLevelFromCmdLineOpt.map(LogLevelDao::toLoggerLogLevel).orElse(null),
-                logLevelFromIasOpt.map(LogLevelDao::toLoggerLogLevel).orElse(null),
-                null);
-
-        try {
-            cdbReader.shutdown();
-        } catch (Exception e) {
-            LtdbKafkaConnector.logger.warn("Ignored exception while closing the RDB reader",e);
-        }
     }
 
     @Override
