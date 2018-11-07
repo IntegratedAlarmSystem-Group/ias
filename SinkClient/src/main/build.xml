@@ -7,7 +7,7 @@
 
     <property name="cassandra-java-driver" value="cassandra-java-driver-3.6.0" />
 
-    <resources id="iasExtsResources">
+    <!-- resources id="iasExtsResources">
         <string>cassandra-driver-core-3.6.0.jar</string>
         <string>asm-5.0.3.jar</string>
         <string>asm-analysis-5.0.3.jar</string>
@@ -29,6 +29,26 @@
         <string>netty-handler-4.0.56.Final.jar</string>
         <string>netty-transport-4.0.56.Final.jar</string>
         <string>snappy-java-1.1.2.6.jar</string>
+    </resources -->
+
+    <resources id="iasExtsResources">
+        <string>cassandra-driver-core-3.6.0.jar</string>
+        <string>asm-5.0.3.jar</string>
+        <string>asm-analysis-5.0.3.jar</string>
+        <string>asm-commons-5.0.3.jar</string>
+        <string>asm-tree-5.0.3.jar</string>
+        <string>asm-util-5.0.3.jar</string>
+        <string>guava-19.0.jar</string>
+        <string>HdrHistogram-2.1.10.jar</string>
+        <string>jffi-1.2.16.jar</string>
+        <string>jffi-1.2.16-native.jar</string>
+        <string>jnr-constants-0.9.9.jar</string>
+        <string>jnr-ffi-2.1.7.jar</string>
+        <string>jnr-posix-3.0.44.jar</string>
+        <string>jnr-x86asm-1.0.2.jar</string>
+        <string>lz4-java-1.4.1.jar</string>
+        <string>metrics-core-3.2.2.jar</string>
+        <string>snappy-java-1.1.2.6.jar</string>
     </resources>
     <pathconvert property="cassandra-ext-tools" refid="iasExtsResources" pathsep="," />
 
@@ -42,11 +62,11 @@
                 <exclude name ="slf4j-api-1.7.25.jar"/>
             </fileset>
         </copy>
-<delete dir="${exttools.dir}/extras"/>
+        <delete dir="${exttools.dir}/extras"/>
     </target>
 	
 	<property name="jarName" value="iasValueProcessor.jar"/>
-	<property name="exttools" value="javax.mail.jar,connect-api-2.0.0.jar,${cassandra-ext-tools}" />
+	<property name="exttools" value="javax.mail.jar,connect-api-2.0.0.jar,netty-all-4.1.31.Final.jar,${cassandra-ext-tools}" />
 	
 	<target name="clean" depends="ias.clean">
         <delete dir="${exttools.dir}/${cassandra-java-driver}"/>
@@ -55,6 +75,8 @@
                 <include name="**/*.jar"/>
                 <exclude name="javax.mail.jar"/>
                 <exclude name="connect-api-2.0.0.jar"/>
+                <exclude name="netty-all-4.1.31.Final.jar"/>
+
             </fileset>
         </delete>
     </target>
