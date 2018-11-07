@@ -31,6 +31,11 @@ public class LtdbKafkaConnector extends SinkConnector {
     public static final String CASSANDRA_KEYSPACE_PROPNAME = "cassandra.keyspace";
 
     /**
+     * The name of the property to pass the cassandra keyspace
+     */
+    public static final String CASSANDRA_TTL_PROPNAME = "cassandra.ttl";
+
+    /**
      * The properties to pass to the task
      */
     private final Map<String, String> propsForTask = new HashMap<>();
@@ -41,12 +46,14 @@ public class LtdbKafkaConnector extends SinkConnector {
 
         String contactPoints = map.get(CASSANDRA_CONTACT_POINTS_PROPNAME);
         String keyspace= map.get(CASSANDRA_KEYSPACE_PROPNAME);
+        String ttl = map.getOrDefault(CASSANDRA_TTL_PROPNAME,"0");
 
         LtdbKafkaConnector.logger.info("Cassandra contact points: {}",contactPoints);
         LtdbKafkaConnector.logger.info("Cassandra keyspace: {}",keyspace);
 
         propsForTask.put(CASSANDRA_CONTACT_POINTS_PROPNAME,contactPoints);
         propsForTask.put(CASSANDRA_KEYSPACE_PROPNAME,keyspace);
+        propsForTask.put(CASSANDRA_TTL_PROPNAME,ttl);
     }
 
     @Override
