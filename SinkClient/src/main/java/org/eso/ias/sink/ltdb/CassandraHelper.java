@@ -22,16 +22,6 @@ import java.util.concurrent.TimeUnit;
 public class CassandraHelper {
 
     /**
-     * Cassandra contact points
-     */
-    private String contactPoints;
-
-    /**
-     * Cassandra keyspace
-     */
-    private String keyspace;
-
-    /**
      * Time to leave in seconds
      * If <=0 no time to leave will be set
      */
@@ -78,8 +68,6 @@ public class CassandraHelper {
         Objects.requireNonNull(contactPoints);
         Objects.requireNonNull(keyspace);
 
-        this.contactPoints=contactPoints;
-        this.keyspace=keyspace;
         this.ttl= TimeUnit.SECONDS.convert(ttl,TimeUnit.HOURS);
 
         try {
@@ -125,7 +113,7 @@ public class CassandraHelper {
      * Build the timetsamp string for inserting the value in the LTDB
      * with a format like 2018-11-07T08:48
      *
-     * @param timestamp
+     * @param timestamp the timestamp
      * @return the date for the INSERT
      */
     private String buildTimestampForLTDB(long timestamp) {
@@ -200,9 +188,12 @@ public class CassandraHelper {
             }
             insert.append(';');
 
-            System.out.println(insert.toString());
+            CassandraHelper.logger.debug(insert.toString());
 
             ResultSet rs = session.execute(insert.toString());
+            if (!rs.wasApplied()) {
+                CassandraHelper.logger.error("INSERT was not executed: value {} NOT stored in the LTDB",id);
+            }
         }
     }
 
