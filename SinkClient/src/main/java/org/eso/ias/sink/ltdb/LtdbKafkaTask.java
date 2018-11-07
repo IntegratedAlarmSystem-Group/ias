@@ -9,10 +9,13 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Vector;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import static org.eso.ias.sink.ltdb.LtdbKafkaConnector.CASSANDRA_CONTACT_POINTS_PROPNAME;
 import static org.eso.ias.sink.ltdb.LtdbKafkaConnector.CASSANDRA_KEYSPACE_PROPNAME;
+import static org.eso.ias.sink.ltdb.LtdbKafkaConnector.CASSANDRA_TTL_PROPNAME;
 
 /**
  * The task run by the kafka connector for the LTDB.
@@ -54,6 +57,11 @@ public class LtdbKafkaTask extends SinkTask implements Runnable {
      */
     private volatile boolean terminateThread=false;
 
+    /**
+     * The helper to store IASValues in the Cassandra LTDB
+     */
+    private CassandraHelper cassandraHelper = new CassandraHelper();
+
     @Override
     public String version() {
         return getClass().getSimpleName();
@@ -63,8 +71,13 @@ public class LtdbKafkaTask extends SinkTask implements Runnable {
     public void start(Map<String, String> map) {
         String contactPoints = map.get(CASSANDRA_CONTACT_POINTS_PROPNAME);
         String keyspace= map.get(CASSANDRA_KEYSPACE_PROPNAME);
+        String ttl = map.getOrDefault(CASSANDRA_TTL_PROPNAME,"0");
+
         LtdbKafkaTask.logger.info("Cassandra contact points: {}",contactPoints);
         LtdbKafkaTask.logger.info("Cassandra keyspace: {}",keyspace);
+        LtdbKafkaTask.logger.info("Cassandra TTL: {}",ttl);
+
+        cassandraHelper.start(contactPoints,keyspace,Long.valueOf(ttl));
 
         thread = new Thread(this,"LtdbKafkaTask-thread");
         thread.setDaemon(true);
@@ -85,12 +98,20 @@ public class LtdbKafkaTask extends SinkTask implements Runnable {
     public  void stop() {
         LtdbKafkaTask.logger.info("Stopped");
         terminateThread=true;
-        thread.interrupt();
+        if (thread!=null) {
+            thread.interrupt();
+        }
+
+        cassandraHelper.stop();
     }
 
     @Override
     public void flush(Map<TopicPartition, OffsetAndMetadata> currentOffsets) {
         LtdbKafkaTask.logger.info("Flushing {} items",buffer.size());
+
+        Collection<String> jsonStrings = new Vector<>();
+        buffer.drainTo(jsonStrings);
+        cassandraHelper.store(jsonStrings);
 
         super.flush(currentOffsets);
     }
@@ -98,7 +119,15 @@ public class LtdbKafkaTask extends SinkTask implements Runnable {
     @Override
     public void run() {
         while (!terminateThread) {
-
+            String jStr;
+            try {
+                jStr = buffer.poll(1, TimeUnit.SECONDS);
+            } catch (Exception e) {
+                continue;
+            }
+            if (jStr!=null) {
+                cassandraHelper.store(jStr);
+            }
         }
     }
 }
