@@ -135,7 +135,7 @@ public class CassandraHelper {
      *
      * @param iasValue the JSON string encoding a IASValue
      */
-    public void store(IASValue<?> iasValue) {
+    private void store(IASValue<?> iasValue) {
         Objects.requireNonNull(iasValue);
         if (session.isClosed()) {
             CassandraHelper.logger.warn("Session is closed: {} will NOT be stored in the LTDB",iasValue.id);
@@ -169,6 +169,14 @@ public class CassandraHelper {
     }
 
 
+    /**
+     * Insert a row in cassandra
+     *
+     * @param date The date of the IASValue
+     * @param id The id of the IASVAlue
+     * @param eventTime the DASU or plugin production time
+     * @param json the json string encoding the IASValue
+     */
     private void storeOnCassandra(String date, String id, String eventTime, String json) {
         if (!closed) {
             StringBuilder insert = new StringBuilder("INSERT INTO iasio_by_day JSON '{");
@@ -203,7 +211,7 @@ public class CassandraHelper {
      *
      * @param jsonStrings a collection of JSON strings encoding IASValues
      */
-    public void store(Collection<String> jsonStrings) {
+    public synchronized void store(Collection<String> jsonStrings) {
         if (jsonStrings!=null && !closed) {
             for (String jsonString: jsonStrings) {
                 store(jsonString);
@@ -217,7 +225,7 @@ public class CassandraHelper {
      *
      * @param jsonString the JSON string encoding a IASValue
      */
-     public void store(String jsonString) {
+     public synchronized void store(String jsonString) {
          IASValue<?> value;
          try {
              value= jsonSerializer.valueOf(jsonString);
