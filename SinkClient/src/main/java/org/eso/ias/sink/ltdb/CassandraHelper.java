@@ -222,7 +222,7 @@ public class CassandraHelper {
          try {
              value= jsonSerializer.valueOf(jsonString);
          } catch (Exception e) {
-             CassandraHelper.logger.error("Error converting {} into a IASValue: will niot be stored in the LTDB!",jsonString,e);
+             CassandraHelper.logger.error("Error converting {} into a IASValue: will NOT be stored in the LTDB!",jsonString,e);
              return;
          }
          store(value.updateReadFromBsdbTime(System.currentTimeMillis()));
