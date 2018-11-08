@@ -10,10 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.ZoneId;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Objects;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -39,14 +36,9 @@ public class CassandraLtdbFeeder {
     private static final Logger logger = LoggerFactory.getLogger(CassandraLtdbFeeder.class);
 
     /**
-     * Cassandra cluster
+     * Cassandra utils to execute statements in the database
      */
-    private Cluster cluster;
-
-    /**
-     * Database session
-     */
-    private Session session;
+    private CassandraUtils cassandra;
 
     /**
      * The serializer to convert IASValues to/from Strings
@@ -66,8 +58,8 @@ public class CassandraLtdbFeeder {
     /**
      * Connect to cassandra and allocate resources
      *
-     * @param contactPoints Cassandra contact points
-     * @param keyspace keyspace
+     * @param contactPoints Cassandra contact points (nor null neither empty)
+     * @param keyspace keyspace (nor null neither empty)
      * @param ttl the time to leave in hours (if <=0, no TTL)
      */
     public void start(String contactPoints, String keyspace, long ttl) {
@@ -77,23 +69,17 @@ public class CassandraLtdbFeeder {
         this.ttl= TimeUnit.SECONDS.convert(ttl,TimeUnit.HOURS);
 
         try {
-            CassandraLtdbFeeder.logger.debug("Building cluster");
-            cluster = Cluster.builder().withClusterName("IAS-LTDB").addContactPoint(contactPoints).build();
-            CassandraLtdbFeeder.logger.info("Cluster built with {} contact point", contactPoints);
+            CassandraLtdbFeeder.logger.debug("Building the cassandra utils");
+            cassandra = new CassandraUtils(contactPoints);
 
-            CassandraLtdbFeeder.logger.debug("Connecting session");
-            session = cluster.connect(keyspace);
-            CassandraLtdbFeeder.logger.info("Session instantiated with {} keyspace", keyspace);
+            cassandra.start(Optional.of(keyspace));
         } catch (Exception e) {
-            CassandraLtdbFeeder.logger.error("Error initiating cluster and/or session",e);
-            CassandraLtdbFeeder.logger.debug("Closing session and cluster");
-            if (session!=null) {
-                session.close();
+            CassandraLtdbFeeder.logger.error("Error initializing cassandra",e);
+            try {
+                cassandra.stop();
+            } catch (Exception closingExc) {
+                CassandraLtdbFeeder.logger.warn("Error closing cassandra after errors initializing",closingExc);
             }
-            if (cluster!=null) {
-                cluster.close();
-            }
-            CassandraLtdbFeeder.logger.info("Session and cluster closed");
         }
     }
 
@@ -101,18 +87,12 @@ public class CassandraLtdbFeeder {
      * Close the connection with cassandra
      */
     public void stop() {
-        if (session!=null) {
-            CassandraLtdbFeeder.logger.debug("Closing session");
-            session.close();
-            CassandraLtdbFeeder.logger.info("Session closed");
+        try {
+            cassandra.stop();
+            CassandraLtdbFeeder.logger.info("Closed");
+        } catch (Exception e) {
+            CassandraLtdbFeeder.logger.warn("Error closing cassandra",e);
         }
-
-        if (cluster!=null) {
-            CassandraLtdbFeeder.logger.debug("Closing cluster");
-            cluster.close();
-            CassandraLtdbFeeder.logger.info("Cluster closed");
-        }
-        CassandraLtdbFeeder.logger.info("Closed");
     }
 
     /**
@@ -143,11 +123,6 @@ public class CassandraLtdbFeeder {
      */
     private void store(IASValue<?> iasValue) {
         Objects.requireNonNull(iasValue);
-        if (session.isClosed()) {
-            CassandraLtdbFeeder.logger.warn("Session is closed: {} will NOT be stored in the LTDB",iasValue.id);
-            numOfErrors.incrementAndGet();
-            return;
-        }
 
         Long prodTime;
         if (iasValue.dasuProductionTStamp.isPresent()) {
@@ -207,8 +182,8 @@ public class CassandraLtdbFeeder {
 
             CassandraLtdbFeeder.logger.debug(insert.toString());
 
-            ResultSet rs = session.execute(insert.toString());
-            if (!rs.wasApplied()) {
+            ResultSet rs = cassandra.executeStatement(insert.toString());
+            if (rs==null || !rs.wasApplied()) {
                 CassandraLtdbFeeder.logger.error("INSERT was not executed: value {} NOT stored in the LTDB",id);
                 numOfErrors.incrementAndGet();
             }
