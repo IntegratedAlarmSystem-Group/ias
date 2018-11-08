@@ -94,7 +94,7 @@ public class LtdbKafkaTask extends SinkTask implements Runnable {
     /**
      * The helper to store IASValues in the Cassandra LTDB
      */
-    private CassandraLtdbFeeder cassandraHelper = new CassandraLtdbFeeder();
+    private CassandraLtdbFeeder cassandraFeeder = new CassandraLtdbFeeder();
 
     @Override
     public String version() {
@@ -121,7 +121,7 @@ public class LtdbKafkaTask extends SinkTask implements Runnable {
             LtdbKafkaTask.logger.info("Will NOT log statistics");
         }
 
-        cassandraHelper.start(contactPoints,keyspace,Long.valueOf(ttl));
+        cassandraFeeder.start(contactPoints,keyspace,Long.valueOf(ttl));
 
         thread = new Thread(this,"LtdbKafkaTask-thread");
         thread.setDaemon(true);
@@ -150,7 +150,7 @@ public class LtdbKafkaTask extends SinkTask implements Runnable {
             thread.interrupt();
         }
 
-        cassandraHelper.stop();
+        cassandraFeeder.stop();
     }
 
     @Override
@@ -161,7 +161,7 @@ public class LtdbKafkaTask extends SinkTask implements Runnable {
         int numOfElementsToStore=buffer.drainTo(jsonStrings);
 
         long before = System.currentTimeMillis();
-        cassandraHelper.store(jsonStrings);
+        cassandraFeeder.store(jsonStrings);
         long storeTime = System.currentTimeMillis()-before;
 
         super.flush(currentOffsets);
@@ -183,8 +183,8 @@ public class LtdbKafkaTask extends SinkTask implements Runnable {
             messagesProcessedInTheLastTimeIneterval.getAndSet(0)/timeInterval,
             timeInterval);
         LtdbKafkaTask.logger.info("Stats: {} effectively stored in the LTDB ({} errors and IASIOs lost) in the past {} minutes",
-            cassandraHelper.getValuesStored(true),
-            cassandraHelper.getErrors(true),
+            cassandraFeeder.getValuesStored(true),
+            cassandraFeeder.getErrors(true),
             timeInterval);
         LtdbKafkaTask.logger.info("Stats: max buffer size {} ({} in the past {} minutes)",
             maxBufferSizeSinceEver.get(),
@@ -212,7 +212,7 @@ public class LtdbKafkaTask extends SinkTask implements Runnable {
                 continue;
             }
             if (jStr!=null) {
-                cassandraHelper.store(jStr);
+                cassandraFeeder.store(jStr);
                 // Update stats
                 messagesProcessedInTheLastTimeIneterval.incrementAndGet();
             }
