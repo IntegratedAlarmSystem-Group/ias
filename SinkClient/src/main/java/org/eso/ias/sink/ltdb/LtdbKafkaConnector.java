@@ -36,6 +36,11 @@ public class LtdbKafkaConnector extends SinkConnector {
     public static final String CASSANDRA_TTL_PROPNAME = "cassandra.ttl";
 
     /**
+     * The name of the property to set the time interval to log statistics
+     */
+    public static final String CASSANDRA_STATS_TIME_INTERVAL_PROPNAME = "task.stats.time.interval";
+
+    /**
      * The properties to pass to the task
      */
     private final Map<String, String> propsForTask = new HashMap<>();
@@ -48,12 +53,15 @@ public class LtdbKafkaConnector extends SinkConnector {
         String keyspace= map.get(CASSANDRA_KEYSPACE_PROPNAME);
         String ttl = map.getOrDefault(CASSANDRA_TTL_PROPNAME,"0");
 
+        String statsTimeInt = map.getOrDefault(CASSANDRA_STATS_TIME_INTERVAL_PROPNAME,"10");
+
         LtdbKafkaConnector.logger.info("Cassandra contact points: {}",contactPoints);
         LtdbKafkaConnector.logger.info("Cassandra keyspace: {}",keyspace);
 
         propsForTask.put(CASSANDRA_CONTACT_POINTS_PROPNAME,contactPoints);
         propsForTask.put(CASSANDRA_KEYSPACE_PROPNAME,keyspace);
         propsForTask.put(CASSANDRA_TTL_PROPNAME,ttl);
+        propsForTask.put(CASSANDRA_STATS_TIME_INTERVAL_PROPNAME,statsTimeInt);
     }
 
     @Override
@@ -80,6 +88,8 @@ public class LtdbKafkaConnector extends SinkConnector {
 
         ret.define(CASSANDRA_CONTACT_POINTS_PROPNAME, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH,"Cassandra contact points");
         ret.define(CASSANDRA_KEYSPACE_PROPNAME, ConfigDef.Type.STRING, ConfigDef.Importance.HIGH,"LTDB keyspace");
+        ret.define(CASSANDRA_TTL_PROPNAME, ConfigDef.Type.INT, ConfigDef.Importance.LOW,"Time To Leave (hours)");
+        ret.define(CASSANDRA_STATS_TIME_INTERVAL_PROPNAME, ConfigDef.Type.INT, ConfigDef.Importance.LOW,"Stats generation time interval (minutes; <=0 no statistic");
         return ret;
     }
 
