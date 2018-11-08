@@ -179,8 +179,8 @@ public class LtdbKafkaTask extends SinkTask implements Runnable {
     private void logStats() {
         long timeInterval = TimeUnit.MINUTES.convert(statsTimeInterval,TimeUnit.MILLISECONDS);
         LtdbKafkaTask.logger.info("Stats: {} IASIOs stored in the BSDB in the past {} minutes ({} per minute)",
-                messagesProcessedInTheLastTimeIneterval.get()/timeInterval,
-                messagesProcessedInTheLastTimeIneterval.getAndSet(0),
+                messagesProcessedInTheLastTimeIneterval.get(),
+                messagesProcessedInTheLastTimeIneterval.getAndSet(0)/timeInterval,
                 timeInterval);
         LtdbKafkaTask.logger.info("Stats: max buffer size {} ({} in the past {} minutes)",
                 maxBufferSizeSinceEver.get(),
