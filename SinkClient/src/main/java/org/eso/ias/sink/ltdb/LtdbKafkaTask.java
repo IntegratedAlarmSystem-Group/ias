@@ -12,10 +12,9 @@ import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
-import static org.eso.ias.sink.ltdb.LtdbKafkaConnector.CASSANDRA_CONTACT_POINTS_PROPNAME;
-import static org.eso.ias.sink.ltdb.LtdbKafkaConnector.CASSANDRA_KEYSPACE_PROPNAME;
-import static org.eso.ias.sink.ltdb.LtdbKafkaConnector.CASSANDRA_TTL_PROPNAME;
+import static org.eso.ias.sink.ltdb.LtdbKafkaConnector.*;
 
 /**
  * The task run by the kafka connector for the LTDB.
@@ -58,6 +57,41 @@ public class LtdbKafkaTask extends SinkTask implements Runnable {
     private volatile boolean terminateThread=false;
 
     /**
+     * The time interval (msecs) to log statistics
+     */
+    private long statsTimeInterval=0;
+
+    /**
+     * The last point in time when statistics have been logged
+     */
+    private AtomicLong lastStatGenerationTime = new AtomicLong(System.currentTimeMillis());
+
+    /**
+     * The number of IASIOs read from the BSDB and stored in the LTDB in the last time interval
+     */
+    private AtomicLong messagesProcessedInTheLastTimeIneterval = new AtomicLong(0);
+
+    /**
+     * The max size of the buffer in the last time interval
+     */
+    private AtomicLong maxBufferSizeInTheLastTimeInterval = new AtomicLong(0);
+
+    /**
+     * The max size of the buffer since beginning of execution
+     */
+    private AtomicLong maxBufferSizeSinceEver = new AtomicLong(0);
+
+    /**
+     * The max time to flush the buffer (msec) in the past time interval
+     */
+    private AtomicLong maxBufferFlushTimeInTheLastTimeInterval = new AtomicLong(0);
+
+    /**
+     * The max time to flush the buffer since beginning of execution
+     */
+    private AtomicLong maxBufferFlushTimeSinceEver = new AtomicLong(0);
+
+    /**
      * The helper to store IASValues in the Cassandra LTDB
      */
     private CassandraHelper cassandraHelper = new CassandraHelper();
@@ -72,10 +106,20 @@ public class LtdbKafkaTask extends SinkTask implements Runnable {
         String contactPoints = map.get(CASSANDRA_CONTACT_POINTS_PROPNAME);
         String keyspace= map.get(CASSANDRA_KEYSPACE_PROPNAME);
         String ttl = map.getOrDefault(CASSANDRA_TTL_PROPNAME,"0");
+        String statsTI = map.getOrDefault(CASSANDRA_STATS_TIME_INTERVAL_PROPNAME,"0");
+
+        Long statsTimeIntervalMinutes = Long.parseLong(statsTI);
+        statsTimeInterval = TimeUnit.MILLISECONDS.convert(statsTimeIntervalMinutes,TimeUnit.MINUTES);
 
         LtdbKafkaTask.logger.info("Cassandra contact points: {}",contactPoints);
         LtdbKafkaTask.logger.info("Cassandra keyspace: {}",keyspace);
         LtdbKafkaTask.logger.info("Cassandra TTL: {}",ttl);
+
+        if (statsTimeIntervalMinutes>0) {
+           LtdbKafkaTask.logger.info("Will log statistics every {} minutes",statsTimeIntervalMinutes);
+        } else {
+            LtdbKafkaTask.logger.info("Will NOT log statistics");
+        }
 
         cassandraHelper.start(contactPoints,keyspace,Long.valueOf(ttl));
 
@@ -91,6 +135,10 @@ public class LtdbKafkaTask extends SinkTask implements Runnable {
         for (SinkRecord record: records) {
             String jsonStr=record.value().toString();
             buffer.offer(jsonStr);
+
+            // Update stats
+            maxBufferSizeInTheLastTimeInterval.set(Long.max(maxBufferSizeInTheLastTimeInterval.get(),buffer.size()));
+            maxBufferSizeSinceEver.set(Long.max(maxBufferSizeSinceEver.get(),buffer.size()));
         }
     }
 
@@ -107,15 +155,47 @@ public class LtdbKafkaTask extends SinkTask implements Runnable {
 
     @Override
     public void flush(Map<TopicPartition, OffsetAndMetadata> currentOffsets) {
-        LtdbKafkaTask.logger.info("Flushing {} items",buffer.size());
+        LtdbKafkaTask.logger.debug("Flushing {} items",buffer.size());
 
         Collection<String> jsonStrings = new Vector<>();
-        buffer.drainTo(jsonStrings);
+        int numOfElementsToStore=buffer.drainTo(jsonStrings);
+
+        long before = System.currentTimeMillis();
         cassandraHelper.store(jsonStrings);
+        long storeTime = System.currentTimeMillis()-before;
 
         super.flush(currentOffsets);
+        LtdbKafkaTask.logger.debug("Buffer flushed and items stored in the LTDB in {} msecs",storeTime);
+
+        // Update stats
+        messagesProcessedInTheLastTimeIneterval.addAndGet(numOfElementsToStore);
+        maxBufferFlushTimeInTheLastTimeInterval.set(Long.max(maxBufferFlushTimeInTheLastTimeInterval.get(),storeTime));
+        maxBufferFlushTimeSinceEver.set(Long.max(maxBufferFlushTimeSinceEver.get(),storeTime));
     }
 
+    /**
+     * Log statistics
+     */
+    public void logStats() {
+        long timeInterval = TimeUnit.MINUTES.convert(statsTimeInterval,TimeUnit.MILLISECONDS);
+        LtdbKafkaTask.logger.info("Stats: {} IASIOs stored in the BSDB in the past {} minutes",
+                messagesProcessedInTheLastTimeIneterval.getAndSet(0), timeInterval);
+        LtdbKafkaTask.logger.info("Stats: max buffer size {} ({} in the past {} minutes)",
+                maxBufferSizeSinceEver.get(),
+                maxBufferSizeInTheLastTimeInterval.getAndSet(0),
+                timeInterval);
+        LtdbKafkaTask.logger.info("Stats: max time to flush the buffer {} msecs ({} msecs in the past {} minutes)",
+                maxBufferFlushTimeSinceEver.get(),
+                maxBufferFlushTimeInTheLastTimeInterval.getAndSet(0),
+                timeInterval);
+        lastStatGenerationTime.set(System.currentTimeMillis());
+    }
+
+    /**
+     * The thread that store elements in the LTDB before the flush is called.
+     *
+     * The thread logs statistics if the time interval elapsed.
+     */
     @Override
     public void run() {
         while (!terminateThread) {
@@ -127,6 +207,11 @@ public class LtdbKafkaTask extends SinkTask implements Runnable {
             }
             if (jStr!=null) {
                 cassandraHelper.store(jStr);
+                // Update stats
+                messagesProcessedInTheLastTimeIneterval.incrementAndGet();
+            }
+            if (statsTimeInterval>0 && System.currentTimeMillis()>lastStatGenerationTime.get()+statsTimeInterval) {
+                logStats();
             }
         }
     }
