@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * The helper to interact with cassandra.
@@ -51,6 +52,16 @@ public class CassandraHelper {
      * The serializer to convert IASValues to/from Strings
      */
     private final IasValueJsonSerializer jsonSerializer = new IasValueJsonSerializer();
+
+    /**
+     * Record the number of errors (for statistics)
+     */
+    private final AtomicLong numOfErrors = new AtomicLong(0);
+
+    /**
+     * Record the number of IASValues effectively stored in the LTDB (for statistics)
+     */
+    private final AtomicLong numValuesStoredInLTDB = new AtomicLong(0);
 
     /**
      * Connect to cassandra and allocate resources
@@ -134,6 +145,7 @@ public class CassandraHelper {
         Objects.requireNonNull(iasValue);
         if (session.isClosed()) {
             CassandraHelper.logger.warn("Session is closed: {} will NOT be stored in the LTDB",iasValue.id);
+            numOfErrors.incrementAndGet();
             return;
         }
 
@@ -144,6 +156,7 @@ public class CassandraHelper {
             prodTime=iasValue.pluginProductionTStamp.get();
         } else {
             CassandraHelper.logger.error("No DASU prod timestamp neither plugin prod timestamp defined for {}: value will NOT be stored in theLTDB",iasValue.id);
+            numOfErrors.incrementAndGet();
             return;
         }
 
@@ -157,6 +170,7 @@ public class CassandraHelper {
             json=jsonSerializer.iasValueToString(iasValue);
         } catch (Exception e) {
             CassandraHelper.logger.error("Error converting IASValue {} in a JSON string: will NOT be stored in the LTDB!",iasValue.id,e);
+            numOfErrors.incrementAndGet();
             return;
         }
 
@@ -196,7 +210,9 @@ public class CassandraHelper {
             ResultSet rs = session.execute(insert.toString());
             if (!rs.wasApplied()) {
                 CassandraHelper.logger.error("INSERT was not executed: value {} NOT stored in the LTDB",id);
+                numOfErrors.incrementAndGet();
             }
+            numValuesStoredInLTDB.incrementAndGet();
         }
     }
 
@@ -226,8 +242,37 @@ public class CassandraHelper {
              value= jsonSerializer.valueOf(jsonString);
          } catch (Exception e) {
              CassandraHelper.logger.error("Error converting {} into a IASValue: will NOT be stored in the LTDB!",jsonString,e);
+             numOfErrors.incrementAndGet();
              return;
          }
          store(value.updateReadFromBsdbTime(System.currentTimeMillis()));
      }
+
+    /**
+     * Return the number of errors recorded so far
+     *
+     * @param reset if true reset the number of errors recorded so far
+     * @return the number of errors
+     */
+    public long getErrors(boolean reset) {
+        if (reset) {
+            return numOfErrors.getAndSet(0);
+        } else {
+            return numOfErrors.get();
+        }
+    }
+
+    /**
+     * Return the number of IASValues stored in the LTDB
+     *
+     * @param reset if true reset the number of IASValues stored in the LTDB so far
+     * @return the number of IASValues stored in the LTDB
+     */
+    public long getValuesStored(boolean reset) {
+        if (reset) {
+            return numValuesStoredInLTDB.getAndSet(0);
+        } else {
+            return numValuesStoredInLTDB.get();
+        }
+    }
 }
