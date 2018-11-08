@@ -21,4 +21,12 @@ CREATE TABLE iasio_by_day (
     event_time timestamp,
     value FROZEN<iasio>,
     PRIMARY KEY ((iasio_id, date), event_time) )
-    WITH CLUSTERING ORDER BY (event_time DESC);
+    WITH CLUSTERING ORDER BY (event_time DESC)
+    AND gc_grace_seconds = 3600;
+
+CREATE MATERIALIZED VIEW iasio_by_time 
+    AS SELECT iasio_id, event_time, value 
+    FROM iasio_by_day WHERE iasio_id is not null and event_time is not null and date is not null 
+    PRIMARY KEY ((iasio_id), date, event_time) WITH CLUSTERING ORDER BY (date DESC, event_time DESC)
+    AND gc_grace_seconds = 3600;
+
