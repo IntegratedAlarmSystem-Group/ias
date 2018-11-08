@@ -64,32 +64,32 @@ public class LtdbKafkaTask extends SinkTask implements Runnable {
     /**
      * The last point in time when statistics have been logged
      */
-    private AtomicLong lastStatGenerationTime = new AtomicLong(System.currentTimeMillis());
+    private final AtomicLong lastStatGenerationTime = new AtomicLong(System.currentTimeMillis());
 
     /**
      * The number of IASIOs read from the BSDB and stored in the LTDB in the last time interval
      */
-    private AtomicLong messagesProcessedInTheLastTimeIneterval = new AtomicLong(0);
+    private final AtomicLong messagesProcessedInTheLastTimeIneterval = new AtomicLong(0);
 
     /**
      * The max size of the buffer in the last time interval
      */
-    private AtomicLong maxBufferSizeInTheLastTimeInterval = new AtomicLong(0);
+    private final AtomicLong maxBufferSizeInTheLastTimeInterval = new AtomicLong(0);
 
     /**
      * The max size of the buffer since beginning of execution
      */
-    private AtomicLong maxBufferSizeSinceEver = new AtomicLong(0);
+    private final AtomicLong maxBufferSizeSinceEver = new AtomicLong(0);
 
     /**
      * The max time to flush the buffer (msec) in the past time interval
      */
-    private AtomicLong maxBufferFlushTimeInTheLastTimeInterval = new AtomicLong(0);
+    private final AtomicLong maxBufferFlushTimeInTheLastTimeInterval = new AtomicLong(0);
 
     /**
      * The max time to flush the buffer since beginning of execution
      */
-    private AtomicLong maxBufferFlushTimeSinceEver = new AtomicLong(0);
+    private final AtomicLong maxBufferFlushTimeSinceEver = new AtomicLong(0);
 
     /**
      * The helper to store IASValues in the Cassandra LTDB
@@ -178,18 +178,22 @@ public class LtdbKafkaTask extends SinkTask implements Runnable {
      */
     private void logStats() {
         long timeInterval = TimeUnit.MINUTES.convert(statsTimeInterval,TimeUnit.MILLISECONDS);
-        LtdbKafkaTask.logger.info("Stats: {} IASIOs stored in the BSDB in the past {} minutes ({} per minute)",
-                messagesProcessedInTheLastTimeIneterval.get(),
-                messagesProcessedInTheLastTimeIneterval.getAndSet(0)/timeInterval,
-                timeInterval);
+        LtdbKafkaTask.logger.info("Stats: {} IASIOs processed in the past {} minutes ({} per minute)",
+            messagesProcessedInTheLastTimeIneterval.get(),
+            messagesProcessedInTheLastTimeIneterval.getAndSet(0)/timeInterval,
+            timeInterval);
+        LtdbKafkaTask.logger.info("Stats: {} effectively stored in the LTDB ({} errors and IASIOs lost) in the past {} minutes",
+            cassandraHelper.getValuesStored(true),
+            cassandraHelper.getErrors(true),
+            timeInterval);
         LtdbKafkaTask.logger.info("Stats: max buffer size {} ({} in the past {} minutes)",
-                maxBufferSizeSinceEver.get(),
-                maxBufferSizeInTheLastTimeInterval.getAndSet(0),
-                timeInterval);
+            maxBufferSizeSinceEver.get(),
+            maxBufferSizeInTheLastTimeInterval.getAndSet(0),
+            timeInterval);
         LtdbKafkaTask.logger.info("Stats: max time to flush the buffer {} msecs ({} msecs in the past {} minutes)",
-                maxBufferFlushTimeSinceEver.get(),
-                maxBufferFlushTimeInTheLastTimeInterval.getAndSet(0),
-                timeInterval);
+            maxBufferFlushTimeSinceEver.get(),
+            maxBufferFlushTimeInTheLastTimeInterval.getAndSet(0),
+            timeInterval);
         lastStatGenerationTime.set(System.currentTimeMillis());
     }
 
