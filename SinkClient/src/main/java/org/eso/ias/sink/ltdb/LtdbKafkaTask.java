@@ -108,7 +108,7 @@ public class LtdbKafkaTask extends SinkTask implements Runnable {
         String ttl = map.getOrDefault(CASSANDRA_TTL_PROPNAME,"0");
         String statsTI = map.getOrDefault(CASSANDRA_STATS_TIME_INTERVAL_PROPNAME,"0");
 
-        Long statsTimeIntervalMinutes = Long.parseLong(statsTI);
+        long statsTimeIntervalMinutes = Long.parseLong(statsTI);
         statsTimeInterval = TimeUnit.MILLISECONDS.convert(statsTimeIntervalMinutes,TimeUnit.MINUTES);
 
         LtdbKafkaTask.logger.info("Cassandra contact points: {}",contactPoints);
@@ -176,10 +176,12 @@ public class LtdbKafkaTask extends SinkTask implements Runnable {
     /**
      * Log statistics
      */
-    public void logStats() {
+    private void logStats() {
         long timeInterval = TimeUnit.MINUTES.convert(statsTimeInterval,TimeUnit.MILLISECONDS);
-        LtdbKafkaTask.logger.info("Stats: {} IASIOs stored in the BSDB in the past {} minutes",
-                messagesProcessedInTheLastTimeIneterval.getAndSet(0), timeInterval);
+        LtdbKafkaTask.logger.info("Stats: {} IASIOs stored in the BSDB in the past {} minutes ({} per minute)",
+                messagesProcessedInTheLastTimeIneterval.get()/timeInterval,
+                messagesProcessedInTheLastTimeIneterval.getAndSet(0),
+                timeInterval);
         LtdbKafkaTask.logger.info("Stats: max buffer size {} ({} in the past {} minutes)",
                 maxBufferSizeSinceEver.get(),
                 maxBufferSizeInTheLastTimeInterval.getAndSet(0),

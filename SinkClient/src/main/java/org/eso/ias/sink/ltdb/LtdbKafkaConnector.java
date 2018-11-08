@@ -23,22 +23,22 @@ public class LtdbKafkaConnector extends SinkConnector {
     /**
      * The name of the property to pass the cassandra contact points
      */
-    public static final String CASSANDRA_CONTACT_POINTS_PROPNAME = "cassandra.contact.points";
+    static final String CASSANDRA_CONTACT_POINTS_PROPNAME = "cassandra.contact.points";
 
     /**
      * The name of the property to pass the cassandra keyspace
      */
-    public static final String CASSANDRA_KEYSPACE_PROPNAME = "cassandra.keyspace";
+    static final String CASSANDRA_KEYSPACE_PROPNAME = "cassandra.keyspace";
 
     /**
      * The name of the property to pass the cassandra keyspace
      */
-    public static final String CASSANDRA_TTL_PROPNAME = "cassandra.ttl";
+    static final String CASSANDRA_TTL_PROPNAME = "cassandra.ttl";
 
     /**
      * The name of the property to set the time interval to log statistics
      */
-    public static final String CASSANDRA_STATS_TIME_INTERVAL_PROPNAME = "task.stats.time.interval";
+    static final String CASSANDRA_STATS_TIME_INTERVAL_PROPNAME = "task.stats.time.interval";
 
     /**
      * The properties to pass to the task

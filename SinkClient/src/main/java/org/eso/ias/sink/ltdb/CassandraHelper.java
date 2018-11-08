@@ -53,11 +53,6 @@ public class CassandraHelper {
     private final IasValueJsonSerializer jsonSerializer = new IasValueJsonSerializer();
 
     /**
-     * Empty constructor
-     */
-    public CassandraHelper() {}
-
-    /**
      * Connect to cassandra and allocate resources
      *
      * @param contactPoints Cassandra contact points
