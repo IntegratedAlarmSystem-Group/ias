@@ -1,0 +1,24 @@
+CREATE TYPE integratedalarmsystem.iasio (
+    fullrunningid text,
+    valuetype text,
+    iasvalidity text,
+    mode text,
+    props map<text, text>,
+    depsfullrunningids set<text>,
+    dasuproductiontstamp timestamp,
+    readfrombsdbtstamp timestamp,
+    senttobsdbtstamp timestamp,
+    convertedproductiontstamp timestamp,
+    receivedfromplugintstamp timestamp,
+    senttoconvertertstamp timestamp,
+    pluginproductiontstamp timestamp,
+    readfrommonsyststamp timestamp,
+    value text);
+
+CREATE TABLE iasio_by_day (
+    iasio_id text,
+    date text,
+    event_time timestamp,
+    value FROZEN<iasio>,
+    PRIMARY KEY ((iasio_id, date), event_time) )
+    WITH CLUSTERING ORDER BY (event_time DESC);
