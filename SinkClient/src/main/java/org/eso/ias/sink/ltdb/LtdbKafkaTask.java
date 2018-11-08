@@ -94,7 +94,7 @@ public class LtdbKafkaTask extends SinkTask implements Runnable {
     /**
      * The helper to store IASValues in the Cassandra LTDB
      */
-    private CassandraHelper cassandraHelper = new CassandraHelper();
+    private CassandraLtdbFeeder cassandraHelper = new CassandraLtdbFeeder();
 
     @Override
     public String version() {

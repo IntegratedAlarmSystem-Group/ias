@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * The helper to interact with cassandra.
  */
-public class CassandraHelper {
+public class CassandraLtdbFeeder {
 
     /**
      * Time to leave in seconds
@@ -36,7 +36,7 @@ public class CassandraHelper {
     /**
      * The logger
      */
-    private static final Logger logger = LoggerFactory.getLogger(CassandraHelper.class);
+    private static final Logger logger = LoggerFactory.getLogger(CassandraLtdbFeeder.class);
 
     /**
      * Cassandra cluster
@@ -77,23 +77,23 @@ public class CassandraHelper {
         this.ttl= TimeUnit.SECONDS.convert(ttl,TimeUnit.HOURS);
 
         try {
-            CassandraHelper.logger.debug("Building cluster");
+            CassandraLtdbFeeder.logger.debug("Building cluster");
             cluster = Cluster.builder().withClusterName("IAS-LTDB").addContactPoint(contactPoints).build();
-            CassandraHelper.logger.info("Cluster built with {} contact point", contactPoints);
+            CassandraLtdbFeeder.logger.info("Cluster built with {} contact point", contactPoints);
 
-            CassandraHelper.logger.debug("Connecting session");
+            CassandraLtdbFeeder.logger.debug("Connecting session");
             session = cluster.connect(keyspace);
-            CassandraHelper.logger.info("Session instantiated with {} keyspace", keyspace);
+            CassandraLtdbFeeder.logger.info("Session instantiated with {} keyspace", keyspace);
         } catch (Exception e) {
-            CassandraHelper.logger.error("Error initiating cluster and/or session",e);
-            CassandraHelper.logger.debug("Closing session and cluster");
+            CassandraLtdbFeeder.logger.error("Error initiating cluster and/or session",e);
+            CassandraLtdbFeeder.logger.debug("Closing session and cluster");
             if (session!=null) {
                 session.close();
             }
             if (cluster!=null) {
                 cluster.close();
             }
-            CassandraHelper.logger.info("Session and cluster closed");
+            CassandraLtdbFeeder.logger.info("Session and cluster closed");
         }
     }
 
@@ -102,17 +102,17 @@ public class CassandraHelper {
      */
     public void stop() {
         if (session!=null) {
-            CassandraHelper.logger.debug("Closing session");
+            CassandraLtdbFeeder.logger.debug("Closing session");
             session.close();
-            CassandraHelper.logger.info("Session closed");
+            CassandraLtdbFeeder.logger.info("Session closed");
         }
 
         if (cluster!=null) {
-            CassandraHelper.logger.debug("Closing cluster");
+            CassandraLtdbFeeder.logger.debug("Closing cluster");
             cluster.close();
-            CassandraHelper.logger.info("Cluster closed");
+            CassandraLtdbFeeder.logger.info("Cluster closed");
         }
-        CassandraHelper.logger.info("Closed");
+        CassandraLtdbFeeder.logger.info("Closed");
     }
 
     /**
@@ -144,7 +144,7 @@ public class CassandraHelper {
     private void store(IASValue<?> iasValue) {
         Objects.requireNonNull(iasValue);
         if (session.isClosed()) {
-            CassandraHelper.logger.warn("Session is closed: {} will NOT be stored in the LTDB",iasValue.id);
+            CassandraLtdbFeeder.logger.warn("Session is closed: {} will NOT be stored in the LTDB",iasValue.id);
             numOfErrors.incrementAndGet();
             return;
         }
@@ -155,7 +155,7 @@ public class CassandraHelper {
         } else if (iasValue.pluginProductionTStamp.isPresent()) {
             prodTime=iasValue.pluginProductionTStamp.get();
         } else {
-            CassandraHelper.logger.error("No DASU prod timestamp neither plugin prod timestamp defined for {}: value will NOT be stored in theLTDB",iasValue.id);
+            CassandraLtdbFeeder.logger.error("No DASU prod timestamp neither plugin prod timestamp defined for {}: value will NOT be stored in theLTDB",iasValue.id);
             numOfErrors.incrementAndGet();
             return;
         }
@@ -169,7 +169,7 @@ public class CassandraHelper {
         try {
             json=jsonSerializer.iasValueToString(iasValue);
         } catch (Exception e) {
-            CassandraHelper.logger.error("Error converting IASValue {} in a JSON string: will NOT be stored in the LTDB!",iasValue.id,e);
+            CassandraLtdbFeeder.logger.error("Error converting IASValue {} in a JSON string: will NOT be stored in the LTDB!",iasValue.id,e);
             numOfErrors.incrementAndGet();
             return;
         }
@@ -205,11 +205,11 @@ public class CassandraHelper {
             }
             insert.append(';');
 
-            CassandraHelper.logger.debug(insert.toString());
+            CassandraLtdbFeeder.logger.debug(insert.toString());
 
             ResultSet rs = session.execute(insert.toString());
             if (!rs.wasApplied()) {
-                CassandraHelper.logger.error("INSERT was not executed: value {} NOT stored in the LTDB",id);
+                CassandraLtdbFeeder.logger.error("INSERT was not executed: value {} NOT stored in the LTDB",id);
                 numOfErrors.incrementAndGet();
             }
             numValuesStoredInLTDB.incrementAndGet();
@@ -241,7 +241,7 @@ public class CassandraHelper {
          try {
              value= jsonSerializer.valueOf(jsonString);
          } catch (Exception e) {
-             CassandraHelper.logger.error("Error converting {} into a IASValue: will NOT be stored in the LTDB!",jsonString,e);
+             CassandraLtdbFeeder.logger.error("Error converting {} into a IASValue: will NOT be stored in the LTDB!",jsonString,e);
              numOfErrors.incrementAndGet();
              return;
          }
