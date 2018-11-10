@@ -37,7 +37,7 @@ class VisualInspectionAlarm(cEleId: String, cEleRunningId: String, validityTimeF
   var idOfTstampInput: String = _
 
   /** The point in time of the last timestamp */
-  var lastInspectionTimestamp: Long = -1
+  var lastInspectionTimestamp: Long = Long.MinValue
 
   /**
     * The point in time when the alarm was cleared
@@ -47,7 +47,10 @@ class VisualInspectionAlarm(cEleId: String, cEleRunningId: String, validityTimeF
     *
     * It must be greater the the [[lastInspectionTimestamp]] to cope with the initial case
     */
-  var alarmDeactivationTimestamp: Long = 0
+  var alarmDeactivationTimestamp: Long = lastInspectionTimestamp+1
+
+  /** Remeber if the input was set to catch when it has been cleared */
+  var wasAlarmSet: Boolean = false
 
   /**
     * The initialization checks if there are only 2 inputs one of type ALARM and one of type STRING
@@ -92,6 +95,18 @@ class VisualInspectionAlarm(cEleId: String, cEleRunningId: String, validityTimeF
 
     // Update the timestamp
     lastInspectionTimestamp=lastInspectionTimestamp.max(ISO8601Helper.timestampToMillis(visualInput.value.get.toString))
+
+    // Set the flag to record if the alarm was activated at the next iteration
+    // At the same time, if the alarm was active and is now cleared,
+    // save the deactivation timesstamp
+    (alarmInput.value.get.asInstanceOf[Alarm].isSet, wasAlarmSet) match {
+      case (true, _) => wasAlarmSet=true
+      case (false, true) =>
+        alarmDeactivationTimestamp= alarmInput.dasuProductionTStamp.getOrElse(alarmInput.pluginProductionTStamp.getOrElse(System.currentTimeMillis()))
+        VisualInspectionAlarm.logger.debug("Wind speed alarm deactivated at {}",ISO8601Helper.getTimestamp(alarmDeactivationTimestamp))
+        wasAlarmSet=false
+      case (false, false) =>
+    }
 
     if (alarmInput.value.get.asInstanceOf[Alarm].isSet) {
       // If the alarm is set, the output must always be set
