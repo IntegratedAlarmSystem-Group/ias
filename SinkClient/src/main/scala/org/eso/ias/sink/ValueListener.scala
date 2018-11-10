@@ -3,7 +3,7 @@ package org.eso.ias.sink
 import java.util.concurrent.atomic.AtomicBoolean
 
 import com.typesafe.scalalogging.Logger
-import org.eso.ias.cdb.pojos.{IasioDao, IasDao}
+import org.eso.ias.cdb.pojos.{IasDao, IasioDao}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IASValue
 
@@ -12,7 +12,7 @@ import scala.util.{Failure, Success, Try}
 /**
   * The listener of IasValues to be processed
   *
-  * @param id The identifier to distinguish between many listeners int he same processor
+  * @param id The identifier to distinguish between many listeners in the same processor
   *           Mainly used for logging messages
   */
 abstract class ValueListener(val id: String) {
@@ -71,7 +71,7 @@ abstract class ValueListener(val id: String) {
       throw new Exception("Invalid empty set of IASIO from CDB")
     } else{
       iasValuesDaos=iasValues
-      logger.debug("Initilizing listener {}",id)
+      logger.debug("Initializing listener {}",id)
       Try(init()) match {
         case Success(_) =>logger.info("Listener {} initialized",id)
                           id

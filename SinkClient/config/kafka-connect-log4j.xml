@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+  <appender name="console" class="org.apache.log4j.ConsoleAppender">
+    <param name="Target" value="System.out"/>
+    <layout class="org.apache.log4j.PatternLayout">
+      <param name="ConversionPattern" value="%d{HH:mm:ss.SSS} |%p| [%F:%L] [%t] - %m%n"/>
+    </layout>
+  </appender>
+    <appender name="Rolling" class="org.apache.log4j.RollingFileAppender">
+        <param name="file" value="${ias.logs.folder}/LtdbKafkaConnector.log"/>
+        <param name="MaxFileSize" value="100KB"/>
+        <param name="MaxBackupIndex" value="30"/>
+        <rollingPolicy class="org.apache.log4j.rolling.TimeBasedRollingPolicy">
+            <!-- The file to roll to, this is a fairly intelligent parameter, if the file
+            ends in .gz, it gzips it, based on the date stamp it rolls at that time,
+            default is yyyy-MM-dd, (rolls at midnight)
+            See: http://logging.apache.org/log4j/companions/extras/apidocs/org/apache/log4j/rolling/TimeBasedRollingPolicy.html -->
+            <param name="FileNamePattern" value="${ias.logs.folder}/LtdbKafkaConnector.%d.log.gz" />
+        </rollingPolicy>
+        <layout class="org.apache.log4j.PatternLayout">
+             <param name="ConversionPattern" value="%d{yyyy-MM-dd'T'HH:mm:ss.SSS} | %p [%l] [%t] %m%n"/>
+        </layout>
+    </appender>
+
+    <logger name="org.reflections" additivity="false">
+        <level value="error"/>
+        <appender-ref ref="console" />
+        <appender-ref ref="Rolling" />
+    </logger>
+    <logger name="org.apache.kafka" additivity="false">
+        <level value="warn"/>
+        <appender-ref ref="console" />
+        <appender-ref ref="Rolling" />
+    </logger>
+
+  <root>
+    <priority value ="info" />
+    <appender-ref ref="console" />
+      <appender-ref ref="Rolling" />
+  </root>
+
+</log4j:configuration>
+
+
