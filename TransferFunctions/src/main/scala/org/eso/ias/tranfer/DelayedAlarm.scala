@@ -4,6 +4,7 @@ import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 
+import com.typesafe.scalalogging.Logger
 import org.eso.ias.types.Alarm
 import org.eso.ias.logging.IASLogger
 
@@ -41,14 +42,11 @@ class DelayedAlarmException(msg: String) extends Exception(msg)
 class DelayedAlarm(cEleId: String, cEleRunningId: String, validityTimeFrame: Long, props: Properties) 
 extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,props) {
 
-  /** The logger */
-  private val logger = IASLogger.getLogger(this.getClass)
-  
   /**
    * Get the value of the passed property, if defined
    */
   def getValue(propName: String): Option[Long] = {
-    require(Option(propName).isDefined && !propName.isEmpty())
+    require(Option(propName).isDefined && !propName.isEmpty)
     val propValueStr = Option(props.getProperty(propName))
     propValueStr.flatMap( str => { Try[Long](TimeUnit.MILLISECONDS.convert(str.toInt,TimeUnit.SECONDS)).toOption })
   }
@@ -57,13 +55,13 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
    * The string with the delay (seconds) before setting the output if the input was set 
    */
   val waitTimeToSet: Option[Long] = getValue(DelayedAlarm.delayToSetTimePropName)
-  waitTimeToSet.foreach(wtts => logger.debug("Time to set: {}",wtts))
+  waitTimeToSet.foreach(wtts => DelayedAlarm.logger.debug("Time to set: {}",wtts))
   
   /**
    * The  string with the delay (seconds) before setting the output if the input was set 
    */
   val waitTimeToClear: Option[Long] = getValue(DelayedAlarm.delayToClearTimePropName)
-  waitTimeToClear.foreach(wttc => logger.debug("Time to clear: {}",wttc))
+  waitTimeToClear.foreach(wttc => DelayedAlarm.logger.debug("Time to clear: {}",wttc))
 
   /**
    * The point in time when the input changed its state
@@ -106,7 +104,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
     }
 
     DelayedAlarm.logger.debug("TF of [{}] initialized with delayToSet=[{}], delayToClear=[{}]", 
-        cEleId, waitTimeToSet.get.toString(), waitTimeToClear.get.toString())
+        cEleId, waitTimeToSet.get.toString, waitTimeToClear.get.toString)
   }
   
   /**
@@ -176,7 +174,7 @@ object DelayedAlarm {
   /**
    * The logger
    */
-  val logger = IASLogger.getLogger(DelayedAlarm.getClass)
+  val logger: Logger = IASLogger.getLogger(DelayedAlarm.getClass)
   
   /**
    * The time to wait (seconds) before setting the alarm
