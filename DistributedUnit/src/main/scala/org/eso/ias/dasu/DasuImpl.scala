@@ -318,7 +318,7 @@ class DasuImpl (
         val valueTstamp = if (value.dasuProductionTStamp.isPresent) value.dasuProductionTStamp.get else value.pluginProductionTStamp.get
         assert(v.dasuProductionTStamp.isPresent||v.pluginProductionTStamp.isPresent,
           "Wrong timestamp for value from map: "+value.toString)
-        val tstampOfValueInMap = v.dasuProductionTStamp.orElse(v.pluginProductionTStamp.get())
+        val tstampOfValueInMap = if (v.dasuProductionTStamp.isPresent) v.dasuProductionTStamp.get else v.pluginProductionTStamp.get
 
         valueTstamp>=tstampOfValueInMap
       }).getOrElse(true) // Not in map: accept the value
