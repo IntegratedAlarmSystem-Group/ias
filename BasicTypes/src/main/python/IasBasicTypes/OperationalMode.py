@@ -33,6 +33,9 @@ class OperationalMode(Enum):
     
     # Unknown state
     UNKNOWN = 8
+
+    # Malfunctionimg
+    MALFUNCTIONING = 9
     
     @staticmethod
     def fromString(alarmString):
