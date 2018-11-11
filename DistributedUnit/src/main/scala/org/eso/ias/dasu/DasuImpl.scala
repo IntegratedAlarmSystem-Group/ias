@@ -304,6 +304,8 @@ class DasuImpl (
 
     def acceptIasValue(value: IASValue[_]): Boolean = {
       assert(Option(value).isDefined)
+      assert(value.dasuProductionTStamp.isPresent||value.pluginProductionTStamp.isPresent,
+        "Wrong timestamp for "+value.toString)
       // Accept the value if
       //  * its ID is the ID of an input
       //  * its timetsamp is newer that that already in the map of inputs to process
@@ -311,7 +313,10 @@ class DasuImpl (
 
       val valueFromMap: Option[IASValue[_]] = Option(notYetProcessedInputs.get(value.id))
       valueFromMap.map (v => {
+
         val valueTstamp = value.dasuProductionTStamp.orElse(value.pluginProductionTStamp.get())
+        assert(v.dasuProductionTStamp.isPresent||v.pluginProductionTStamp.isPresent,
+          "Wrong timestamp for value from map: "+value.toString)
         val tstampOfValueInMap = v.dasuProductionTStamp.orElse(v.pluginProductionTStamp.get())
 
         valueTstamp>=tstampOfValueInMap
