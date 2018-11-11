@@ -48,6 +48,7 @@ class UdpPlugin(object):
             'CLOSING',
             'SHUTTEDDOWN', 
             'MAINTENANCE',
+            'MALFUNCTIONING',
             'OPERATIONAL',
             'DEGRADED',
             'UNKNOWN']
