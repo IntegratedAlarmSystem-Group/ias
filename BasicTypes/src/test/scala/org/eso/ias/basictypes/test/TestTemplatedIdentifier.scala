@@ -71,6 +71,32 @@ class TestTemplatedIdentifier extends FlatSpec {
      assert(dasuId.fromTemplate)
      assert(dasuId.templateInstance.get==5)
   }
+
+  it must "return the base ID of a templated identifier" in {
+
+    val supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR)
+    assert(!supervId.fromTemplate)
+
+    val dasuId = new Identifier("dasuID",IdentifierType.DASU,12,supervId)
+
+    val instance = dasuId.templateInstance
+    assert(instance.isDefined)
+    val baseId = dasuId.baseId
+    assert(baseId=="dasuID")
+
+    val dasuIdNoTemplate = new Identifier("dasuID-NT",IdentifierType.DASU,supervId)
+    val baseId2 = dasuIdNoTemplate.baseId
+    assert(baseId2=="dasuID-NT")
+
+  }
+
+  it must "get baseid and instance number" in {
+    val identifier = Identifier.buildIdFromTemplate("Test",Option(23))
+    println(identifier)
+    assert(Identifier.getBaseId(identifier)=="Test")
+    assert(Identifier.getTemplateInstance(identifier).isDefined)
+    assert(Identifier.getTemplateInstance(identifier).get==23)
+  }
   
   
 }

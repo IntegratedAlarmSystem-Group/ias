@@ -4,7 +4,7 @@ import java.util.concurrent._
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
 import com.typesafe.scalalogging.Logger
-import org.eso.ias.cdb.pojos.{IasDao, IasioDao}
+import org.eso.ias.cdb.pojos.{IasDao, IasioDao, TemplateDao}
 import org.eso.ias.dasu.subscriber.{InputSubscriber, InputsListener}
 import org.eso.ias.heartbeat.{HbEngine, HbProducer, HeartbeatStatus}
 import org.eso.ias.logging.IASLogger
@@ -43,6 +43,7 @@ import scala.util.{Failure, Success, Try}
   * @param inputsSubscriber The subscriber to get events from the BDSB
   * @param iasDao The configuration of the IAS read from the CDB
   * @param iasioDaos The configuration of the IASIOs read from the CDB
+  *
  */
 class IasValueProcessor(
                          val processorIdentifier: Identifier,
@@ -50,14 +51,15 @@ class IasValueProcessor(
                          private val hbProducer: HbProducer,
                          private val inputsSubscriber: InputSubscriber,
                          val iasDao: IasDao,
-                         val iasioDaos: List[IasioDao]) extends InputsListener {
-  require(Option(processorIdentifier).isDefined,"Invalid identifier")
+                         val iasioDaos: List[IasioDao],
+                         val templateDaos: List[TemplateDao]) extends InputsListener {
   require(Option(listeners).isDefined && listeners.nonEmpty,"Mo listeners defined")
   require(listeners.map(_.id).toSet.size==listeners.size,"Duplicated IDs of listeners")
   require(Option(hbProducer).isDefined,"Invalid HB producer")
   require(Option(inputsSubscriber).isDefined,"Invalid inputs subscriber")
   require(Option(iasDao).isDefined,"Invalid IAS configuration")
   require(Option(iasioDaos).isDefined && iasioDaos.nonEmpty,"Invalid configuration of IASIOs from CDB")
+  require(Option(templateDaos).isDefined,"Invalid configuration of templates from CDB")
   require(processorIdentifier.idType==IdentifierType.SINK,"Identifier tyope should be SINK")
 
   IasValueProcessor.logger.info("{} processors will work on IAsValues read from the BSDB",listeners.length)
@@ -418,8 +420,39 @@ class IasValueProcessor(
 
     // Discard the IASIOs not defined in the CDB
     iasios.foreach(iasio => {
-      if (iasioDaosMap.get(iasio.id).isDefined) {
-        receivedIasValues.append(iasio)
+
+      val isTemplated  = Identifier.isTemplatedIdentifier(iasio.id)
+
+      // The ids in the map do not contain the template instance
+      val id =Identifier.getBaseId(iasio.id)
+
+      val iasioDaoFromMap = iasioDaosMap.get(id)
+
+      if (iasioDaoFromMap.isDefined) {
+
+        if (isTemplated) {
+          // Templated => check template constraints
+          val template=iasioDaoFromMap.get.getTemplateId
+          val templateDao = templateDaos.find(_.getId==template)
+          if (templateDao.isEmpty) {
+            IasValueProcessor.logger.warn("Template {} for IASIO {} not found: value discarded",template,iasio.id)
+          } else {
+            val instance = Identifier.getTemplateInstance(iasio.id)
+            assert(instance.isDefined,iasio.id+ "is templated with no instance?")
+            val allowedMin=templateDao.get.getMin
+            val allowedMax=templateDao.get.getMax
+            if (instance.get>=allowedMin && instance.get<=allowedMax) {
+              // Accepted
+              receivedIasValues.append(iasio)
+            } else {
+              IasValueProcessor.logger.warn("Invalid template instance {} for IASIO {} should be in [{},{}]: value discarded",
+                instance,iasio.id,allowedMin,allowedMax)
+            }
+          }
+        } else {
+          // Not templated => accept
+          receivedIasValues.append(iasio)
+        }
       } else {
         IasValueProcessor.logger.warn("The CDB does not contain a IAS value with ID {}: value discarded",iasio.id)
       }
