@@ -89,6 +89,14 @@ class TestTemplatedIdentifier extends FlatSpec {
     assert(baseId2=="dasuID-NT")
 
   }
+
+  it must "get baseid and instance number" in {
+    val identifier = Identifier.buildIdFromTemplate("Test",Option(23))
+    println(identifier)
+    assert(Identifier.getBaseId(identifier)=="Test")
+    assert(Identifier.getTemplateInstance(identifier).isDefined)
+    assert(Identifier.getTemplateInstance(identifier).get==23)
+  }
   
   
 }
