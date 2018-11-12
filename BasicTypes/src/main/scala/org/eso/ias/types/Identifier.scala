@@ -105,7 +105,9 @@ object Identifier {
   def getTemplateInstance(id: String): Option[Int] = {
     require(Option(id).isDefined && id.nonEmpty)
     // Extract the instance from a string like [!#333!]
-    def extractInstance(temp: String): Int = temp.split("#")(1).split("!")(0).toInt
+    def extractInstance(temp: String): Int =
+      temp.replace(templatedIdPrefix,"").
+        replace(templateSuffix,"").toInt
 
     val templates = Identifier.templateRegExp.findAllMatchIn(id).map(_.matched).toList
 
