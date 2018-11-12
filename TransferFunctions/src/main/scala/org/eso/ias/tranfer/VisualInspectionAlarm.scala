@@ -108,7 +108,7 @@ class VisualInspectionAlarm(cEleId: String, cEleRunningId: String, validityTimeF
       case (false, false) =>
     }
 
-    if (alarmInput.value.get.asInstanceOf[Alarm].isSet) {
+    val ret=if (alarmInput.value.get.asInstanceOf[Alarm].isSet) {
       // If the alarm is set, the output must always be set
       if (actualOutput.value.isDefined && actualOutput.value.get.isSet) actualOutput
       else actualOutput.updateValue(Alarm.getSetDefault)
@@ -123,6 +123,9 @@ class VisualInspectionAlarm(cEleId: String, cEleRunningId: String, validityTimeF
         else actualOutput.updateValue(Alarm.getSetDefault)
       }
     }
+
+    if (alarmInput.mode!=ret.mode) ret.updateMode(alarmInput.mode)
+    else ret
   }
 }
 
