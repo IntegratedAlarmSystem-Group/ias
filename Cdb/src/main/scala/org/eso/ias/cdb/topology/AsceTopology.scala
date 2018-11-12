@@ -20,12 +20,12 @@ class AsceTopology(
   require(Option(id).isDefined)
   require(id.nonEmpty,"Invalid ASCE identifier")
   require(Option(inputsIds).isDefined)
-  require(inputsIds.nonEmpty,"An ASCE must have inputs")
+  require(inputsIds.nonEmpty,"ASCE "+id+" has NO inputs")
   require(Option(outputId).isDefined)
-  require(outputId.nonEmpty,"Invalid output identifier")
+  require(outputId.nonEmpty,"ASCE "+id+" has invalid output")
 
   // Consistency check
-  require(!inputsIds.contains(outputId),"The same IASIO can't be input and output of the same ASCE")
+  require(!inputsIds.contains(outputId),"The same IASIO can't be input and output of the same ASCE "+id)
 
   /** Builds a AcseTopology from its CDB configuration
    *
