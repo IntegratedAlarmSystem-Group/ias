@@ -36,7 +36,7 @@ class DasuTopology(
                     override val outputId: String) extends OutputProducer {
   require(Option(asces).isDefined && asces.nonEmpty,"Invalid null or empty list of ASCEs of DASU "+id)
   require(Option(id).isDefined && !id.isEmpty)
-  require(Option(outputId).isDefined && outputId.nonEmpty)
+  require(Option(outputId).isDefined && outputId.nonEmpty,"Invalid empty outputId of DASU "+id)
 
   /** The output produced by all ASCEs
    *
@@ -47,7 +47,7 @@ class DasuTopology(
       s"The output $outputId of the DASU [$id] is not produced by any of its ASCEs: ${asceOutputs.mkString(",")}")
 
   // Ensure that the output produced by one ASCE is not produced by any other ASCE
-  require(asces.size==asceOutputs.size,s"Number of outputs of ASCEs (${asceOutputs.size})and number of ASCEs (${asces.size}) mismatch")
+  require(asces.size==asceOutputs.size,s"DASU [$id]: number of outputs of ASCEs (${asceOutputs.size})and number of ASCEs (${asces.size}) mismatch")
 
   // Check if the output produced by the ASCEs running in this DASU
   // is used by other ASCEs in this same DASU. The only exception is
@@ -65,7 +65,7 @@ class DasuTopology(
 
   /** The Ids of the ASCEs running in the DASU */
   val asceIds: Set[String] = asces.map(_.id).toSet
-  require(asces.size==asceIds.size,"The list of topologies contains duplicate")
+  require(asces.size==asceIds.size,s"The list of topologies of DASU [$id] contains duplicate")
 
   /**
    * The map associating each ASCE ID to its topology
@@ -113,7 +113,7 @@ class DasuTopology(
   }
   assert(
       ascesOfInput.keys.forall( id => ascesOfInput(id).nonEmpty),
-      "Some of the inputs is not required by any ASCE")
+      s"Some of the inputs of DASU [$id] is not required by any ASCE")
   assert(ascesOfInput.keys.size>=inputsIds.size)
 
   /** The trees of nodes from the inputs to the output of the DASU
