@@ -330,6 +330,13 @@ class NotificationSenderTest extends FlatSpec {
     logger.info("Waiting for reception of 2 digests")
     val ret = f.sender.countDownLatch.await(4,TimeUnit.MINUTES)
     f.valueListener.tearDown()
+
+    logger.debug("Digest sents to recipeients: {}", f.sender.digests.map(d => d.recipient).mkString(","))
+
+    f.sender.digests.foreach(d => {
+      logger.debug("Digest sent to {}, for alarms {}",d.recipient,d.alarmStates.map(_.id).mkString(","))
+    })
+
     assert(f.sender.digests.length>=2,s"Not all expected events has been received: ${f.sender.digests.length} out of 2")
 
   }
