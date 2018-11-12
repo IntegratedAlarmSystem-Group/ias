@@ -18,9 +18,6 @@ import scala.util.{Failure, Success, Try}
 abstract class ValueListener(val id: String) {
   require(Option(id).isDefined && id.nonEmpty,"Invalid listener id")
 
-  /** The logger */
-  private val logger: Logger = IASLogger.getLogger(classOf[ValueListener])
-
   /** The listener has been initialized  */
   val initialized = new AtomicBoolean(false)
 
@@ -63,19 +60,19 @@ abstract class ValueListener(val id: String) {
     require(Option(iasValues).isDefined && iasValues.nonEmpty,"Invalid IASIOs configuration")
     val alreadyInited = initialized.getAndSet(true)
     if (alreadyInited) {
-      IasValueProcessor.logger.warn("{} already initialized",id)
+      ValueListener.logger.warn("{} already initialized",id)
       id
     } else if (iasValues.isEmpty) {
-      IasValueProcessor.logger.warn("{} empty set of IASIO configurations from CDB: inhibited",id)
+      ValueListener.logger.warn("{} empty set of IASIO configurations from CDB: inhibited",id)
       broken.set(true)
       throw new Exception("Invalid empty set of IASIO from CDB")
     } else{
       iasValuesDaos=iasValues
-      logger.debug("Initializing listener {}",id)
+      ValueListener.logger.debug("Initializing listener {}",id)
       Try(init()) match {
-        case Success(_) =>logger.info("Listener {} initialized",id)
+        case Success(_) =>ValueListener.logger.info("Listener {} initialized",id)
                           id
-        case Failure(e) => logger.error("Listener {} failed to init",id,e)
+        case Failure(e) => ValueListener.logger.error("Listener {} failed to init",id,e)
                             broken.set(true)
                             throw e
 
@@ -91,14 +88,14 @@ abstract class ValueListener(val id: String) {
   final def tearDown(): String = {
     val alreadyClosed = closed.getAndSet(true)
     if (alreadyClosed) {
-      Try(logger.warn("{} already closed",id))
+      Try(ValueListener.logger.warn("{} already closed",id))
       id
     } else {
-      logger.debug("Closing {}",id)
+      ValueListener.logger.debug("Closing {}",id)
       Try(close()) match {
-        case Success(_) => logger.info("Listener {} successfully closed",id)
+        case Success(_) => ValueListener.logger.info("Listener {} successfully closed",id)
                            id
-        case Failure(e) => logger.warn("Listener {} failed to close",id,e)
+        case Failure(e) => ValueListener.logger.warn("Listener {} failed to close",id,e)
                            broken.set(true)
                            throw e
       }
@@ -119,7 +116,7 @@ abstract class ValueListener(val id: String) {
     assert(Option(iasValues).isDefined,"Invalid empty list of values to process")
     if (initialized.get && !closed.get() && iasValues.nonEmpty && !broken.get()) {
       Try(process(iasValues)) match {
-        case Failure(e) => logger.error("Listener {} failed to process events: will stop processing events",id,e)
+        case Failure(e) => ValueListener.logger.error("Listener {} failed to process events: will stop processing events",id,e)
                            broken.set(true)
                            throw e
         case _ => id
@@ -135,4 +132,9 @@ abstract class ValueListener(val id: String) {
     * @param iasValues the values read from the BSDB
     */
   protected def process(iasValues: List[IASValue[_]])
+}
+
+object ValueListener {
+  /** The logger */
+  val logger: Logger = IASLogger.getLogger(ValueListener.getClass)
 }
