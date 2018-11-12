@@ -8,7 +8,7 @@ import com.typesafe.scalalogging.Logger
 import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbFiles, CdbJsonFiles, JsonReader}
-import org.eso.ias.cdb.pojos.{IasDao, IasTypeDao, IasioDao, LogLevelDao}
+import org.eso.ias.cdb.pojos._
 import org.eso.ias.cdb.rdb.RdbReader
 import org.eso.ias.dasu.subscriber.{InputSubscriber, KafkaSubscriber}
 import org.eso.ias.heartbeat.HbProducer
@@ -335,7 +335,16 @@ object NotificationsSender {
       val temp: util.Set[IasioDao] = cdbReader.getIasios.orElseThrow(() => new IllegalArgumentException("IasDaos not found in CDB"))
       JavaConverters.asScalaSet(temp).toList
     }
-    logger.debug("Get {} IASIOs frm the CDB",iasioDaos.length)
+    logger.debug("Got {} IASIOs frm the CDB",iasioDaos.length)
+
+    logger.debug("Getting templates frm the CDB")
+    val templateDaos: List[TemplateDao] = {
+      val templatesFromCdb =  cdbReader.getTemplates
+
+      if (!templatesFromCdb.isPresent) List.empty[TemplateDao]
+      else JavaConverters.asScalaSet(templatesFromCdb.get()).toList
+    }
+    logger.debug("Got {} templates frm the CDB",templateDaos.length)
 
     cdbReader.shutdown()
     logger.debug("CdbReader closed")
@@ -410,7 +419,8 @@ object NotificationsSender {
       hbProducer,
       inputsProvider,
       iasDao,
-      iasioDaos)
+      iasioDaos,
+      templateDaos)
     msLogger.debug("IAS values processor instantiated")
 
     // Start
