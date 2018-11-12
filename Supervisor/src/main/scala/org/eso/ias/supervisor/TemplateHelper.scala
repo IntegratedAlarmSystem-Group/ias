@@ -70,7 +70,6 @@ class TemplateHelper(
       val asces = JavaConverters.asScalaSet(dtd.getDasu.getAsces)
       
       // Do all the ASCEs have the same template of the DASU?
-      asces.foreach(a => println(a.getTemplateId))
       val ascesOk = asces.forall(asce => templateId==asce.getTemplateId)
       
       if (!ascesOk) {
