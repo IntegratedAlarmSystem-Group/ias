@@ -21,6 +21,7 @@ import scala.collection.mutable.ListBuffer
 // The following import is required by the usage of the fixture
 import language.reflectiveCalls
 
+/** Sender mockup */
 class SenderTest extends Sender {
 
   /** The type of notification to send */
@@ -164,13 +165,20 @@ class NotificationSenderTest extends FlatSpec {
   }
 
   it must "Get the list of alarms to notify from CDB after init" in {
+    logger.debug("Started")
     val f = fixture
     f.valueListener.setUp(f.iasDao,f.iasioDaosMap)
 
-    assert(f.notificationsSender.alarmsToTrack.keys.size==3)
+    val temp = f.iasioDaosMap.values.filter(i => Option(i.getEmails).isDefined && i.getEmails.nonEmpty)
+    logger.debug("IASIOS in map with emails = {}",temp.map(t => t.getId).mkString(","))
+
+    logger.debug("keys in alarmsToTrack= {}",f.notificationsSender.alarmsToTrack.keySet.mkString(","))
+
+    assert(f.notificationsSender.alarmsToTrack.keys.size==4)
     assert(f.notificationsSender.alarmsToTrack.keySet.contains("Dasu1-OutID"))
     assert(f.notificationsSender.alarmsToTrack.keySet.contains("Dasu2-OutID"))
     assert(f.notificationsSender.alarmsToTrack.keySet.contains("Dasu3-OutID"))
+    assert(f.notificationsSender.alarmsToTrack.keySet.contains("TemplatedId"))
 
     val alarmsForRec1 = f.notificationsSender.alarmsForUser("recp1@web.site.org")
     assert(alarmsForRec1.toSet==List("Dasu1-OutID","Dasu3-OutID").toSet)
@@ -178,8 +186,11 @@ class NotificationSenderTest extends FlatSpec {
     assert(alarmsForRec2.toSet==List("Dasu2-OutID").toSet)
     val alarmsForRec3 = f.notificationsSender.alarmsForUser("recp3@web.site.org")
     assert(alarmsForRec3.toSet==List("Dasu3-OutID").toSet)
+    val alarmsForRec4 = f.notificationsSender.alarmsForUser("template@web.site.org")
+    assert(alarmsForRec4.toSet==List("TemplatedId").toSet)
 
     f.valueListener.tearDown()
+    logger.debug("Done")
   }
 
   it must "not send notification for unrecognized alarms" in {
@@ -211,6 +222,28 @@ class NotificationSenderTest extends FlatSpec {
 
     f.valueListener.tearDown()
   }
+
+
+  it must "send notification for templated alarm being SET" in {
+    val f = fixture
+    f.valueListener.setUp(f.iasDao,f.iasioDaosMap)
+
+    val templatedId = Identifier.buildIdFromTemplate("TemplatedId",7)
+
+    val alarm = buildValue(templatedId,Alarm.SET_CRITICAL,IasValidity.RELIABLE,System.currentTimeMillis())
+    f.notificationsSender.processIasValues(List(alarm))
+
+    assert(f.sender.notifications.length==1)
+
+    val notification = f.sender.notifications(0)
+    assert(notification.alarmId==templatedId)
+    assert(notification.alarmState.alarm==Alarm.SET_CRITICAL)
+    assert(notification.alarmState.validity==IasValidity.RELIABLE)
+    assert(notification.recipients==List("template@web.site.org"))
+
+    f.valueListener.tearDown()
+  }
+
 
   it must "not send notification if the state did not change" in {
     val f = fixture
@@ -297,6 +330,13 @@ class NotificationSenderTest extends FlatSpec {
     logger.info("Waiting for reception of 2 digests")
     val ret = f.sender.countDownLatch.await(4,TimeUnit.MINUTES)
     f.valueListener.tearDown()
+
+    logger.debug("Digest sents to recipeients: {}", f.sender.digests.map(d => d.recipient).mkString(","))
+
+    f.sender.digests.foreach(d => {
+      logger.debug("Digest sent to {}, for alarms {}",d.recipient,d.alarmStates.map(_.id).mkString(","))
+    })
+
     assert(f.sender.digests.length>=2,s"Not all expected events has been received: ${f.sender.digests.length} out of 2")
 
   }

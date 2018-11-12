@@ -8,7 +8,7 @@ import com.typesafe.scalalogging.Logger
 import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbFiles, CdbJsonFiles, JsonReader}
-import org.eso.ias.cdb.pojos.{IasDao, IasTypeDao, IasioDao, LogLevelDao}
+import org.eso.ias.cdb.pojos._
 import org.eso.ias.cdb.rdb.RdbReader
 import org.eso.ias.dasu.subscriber.{InputSubscriber, KafkaSubscriber}
 import org.eso.ias.heartbeat.HbProducer
@@ -40,7 +40,12 @@ import scala.util.{Failure, Success, Try}
 class NotificationsSender(id: String, val sender: Sender) extends ValueListener(id) {
   require(Option(sender).isDefined)
 
-  /** The alarms that have a registered recipients to send notification */
+  /**
+    * The alarms that have a registered recipients to send notification.
+    *
+    * Templated alarms are added as they arrive so this map contains an entry
+    * for the baseId of the identifier and one entry for each templated alarm
+    */
   val alarmsToTrack:  mutable.Map[String, AlarmStateTracker] = mutable.Map.empty
 
   /** Maps each recipient with the alarms to notify:
@@ -105,7 +110,7 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
       !iasioDao.getEmails.trim.isEmpty)
     NotificationsSender.msLogger.info("Tracks and send email notifications for {} alarms",alarmsWithRecipients.size)
 
-    // Saves the ID of the alarms to send notifications in the map to track the changes of states
+    // Saves the base ID of the alarms to send notifications in the map to track the changes of states
     alarmsWithRecipients.foreach({
       iasioD => alarmsToTrack(iasioD.getId)=AlarmStateTracker(iasioD.getId)
     })
@@ -165,7 +170,7 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
   def notifyAlarm(alarmId: String, state: AlarmState): Unit = {
     require(Option(alarmId).isDefined && !alarmId.isEmpty)
     require(Option(state).isDefined)
-    val recipients = iasValuesDaos(alarmId).getEmails.split(",")
+    val recipients = iasValuesDaos(Identifier.getBaseId(alarmId)).getEmails.split(",")
     NotificationsSender.msLogger.debug("Sending tonitifcation of alarm {} status change to {}", alarmId, recipients.mkString(","))
     val sendOp = Try(sender.notify(recipients.map(_.trim).toList, alarmId, state))
     if (sendOp.isFailure) NotificationsSender.msLogger.error("Error sending alarm state notification notification to {}", recipients.mkString(","), sendOp.asInstanceOf[Failure[_]].exception)
@@ -179,9 +184,18 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
     */
   override protected def process(iasValues: List[IASValue[_]]): Unit = synchronized {
     NotificationsSender.msLogger.debug("Processing {} values read from BSDB",iasValues.length)
-    // Iterates over non-alarms IASIOs
-    val valuesToUpdate: Unit = iasValues.filter(v => v.valueType==IASTypes.ALARM && alarmsToTrack.contains(v.id))
+    // Iterates over alarm IASIOs
+    val valuesToUpdate: Unit = iasValues.filter(v => v.valueType==IASTypes.ALARM && alarmsToTrack.contains(Identifier.getBaseId(v.id)))
       .foreach(value => {
+
+        val id = value.id
+
+        // Ensure that templated alarms are in the map
+        if (Identifier.isTemplatedIdentifier(id) && !alarmsToTrack.keySet.contains(id)) {
+          alarmsToTrack(id)=AlarmStateTracker(id)
+          print ("Added alarm with ID "+id)
+        }
+
         val alarm = value.asInstanceOf[IASValue[Alarm]].value
         val tStamp: Long = if (value.pluginProductionTStamp.isPresent) {
           value.pluginProductionTStamp.get()
@@ -191,17 +205,17 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
         val validity = value.iasValidity
 
         // The last state in the current time interval
-        val oldState: Option[AlarmState] = alarmsToTrack(value.id).getActualAlarmState()
+        val oldState: Option[AlarmState] = alarmsToTrack(id).getActualAlarmState()
         // The state of the last round interval
-        val lastRoundState: Option[AlarmState] = alarmsToTrack(value.id).stateOfLastRound
+        val lastRoundState: Option[AlarmState] = alarmsToTrack(id).stateOfLastRound
 
         // Update the state of the alarm state tracker
-        alarmsToTrack(value.id) = alarmsToTrack(value.id).stateUpdate(alarm, validity, tStamp)
+        alarmsToTrack(id) = alarmsToTrack(id).stateUpdate(alarm, validity, tStamp)
 
         (oldState, lastRoundState) match {
-          case (None, None) => if (alarm.isSet) notifyAlarm(value.id,alarmsToTrack(value.id).getActualAlarmState().get)
-          case (Some(x), _) => if (x.alarm != alarm) notifyAlarm(value.id,alarmsToTrack(value.id).getActualAlarmState().get)
-          case (None, Some(x)) => if (x.alarm != alarm) notifyAlarm(value.id,alarmsToTrack(value.id).getActualAlarmState().get)
+          case (None, None) => if (alarm.isSet) notifyAlarm(id,alarmsToTrack(id).getActualAlarmState().get)
+          case (Some(x), _) => if (x.alarm != alarm) notifyAlarm(id,alarmsToTrack(id).getActualAlarmState().get)
+          case (None, Some(x)) => if (x.alarm != alarm) notifyAlarm(id,alarmsToTrack(id).getActualAlarmState().get)
         }
       })
     NotificationsSender.msLogger.debug("{} values processed",iasValues.length)
@@ -330,12 +344,21 @@ object NotificationsSender {
     msLogger.info("Log level set to {}",actualLogLevel.getOrElse("default from logback configuration").toString)
 
     /** The configuration of IASIOs from the CDB */
-    logger.debug("Getting the IASIOs frm the CDB")
+    logger.debug("Getting the IASIOs from the CDB")
     val iasioDaos: List[IasioDao] = {
       val temp: util.Set[IasioDao] = cdbReader.getIasios.orElseThrow(() => new IllegalArgumentException("IasDaos not found in CDB"))
       JavaConverters.asScalaSet(temp).toList
     }
-    logger.debug("Get {} IASIOs frm the CDB",iasioDaos.length)
+    logger.debug("Got {} IASIOs from the CDB",iasioDaos.length)
+
+    logger.debug("Getting templates from the CDB")
+    val templateDaos: List[TemplateDao] = {
+      val templatesFromCdb =  cdbReader.getTemplates
+
+      if (!templatesFromCdb.isPresent) List.empty[TemplateDao]
+      else JavaConverters.asScalaSet(templatesFromCdb.get()).toList
+    }
+    logger.debug("Got {} templates from the CDB",templateDaos.length)
 
     cdbReader.shutdown()
     logger.debug("CdbReader closed")
@@ -410,7 +433,8 @@ object NotificationsSender {
       hbProducer,
       inputsProvider,
       iasDao,
-      iasioDaos)
+      iasioDaos,
+      templateDaos)
     msLogger.debug("IAS values processor instantiated")
 
     // Start
