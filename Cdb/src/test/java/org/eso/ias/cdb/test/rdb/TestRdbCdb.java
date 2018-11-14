@@ -113,7 +113,7 @@ public class TestRdbCdb {
 		ias.getProps().add(p2);
 
 		ias.setRefreshRate(4);
-		ias.setTolerance(3);
+		ias.setValidityThreshold(7);
 
 		ias.setHbFrequency(5);
 
@@ -134,7 +134,7 @@ public class TestRdbCdb {
 		assertTrue(ias2.getProps().remove(p1),"Error removing a property from the IAS");
 
 		ias2.setRefreshRate(5);
-		ias2.setTolerance(2);
+		ias2.setValidityThreshold(8);
 		ias2.setHbFrequency(10);
 		ias.setBsdbUrl("bsdb-server:9092");
 		ias.setSmtp("acaproni:inorpaca@test.smtp.org");
