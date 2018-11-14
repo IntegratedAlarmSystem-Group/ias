@@ -54,11 +54,13 @@ public class IasDao {
 	private int refreshRate;
 	
 	/**
-	 * The tolerance added by clients to the refresh rate
-	 * to invalidate a monitor point
+	 * The validity threshold (seconds) to invalidate
+	 * IASIOs not refreshed in time
+	 *
+	 * The validity threshold must always be greater than {@link #refreshRate}
 	 */
 	@Basic(optional=false)
-	private int tolerance;
+	private int validityThreshold;
 	
 	/**
 	 * The frequency of the heartbeat sent by each IAS tool
@@ -107,12 +109,12 @@ public class IasDao {
 		this.refreshRate = refreshRate;
 	}
 	
-	public int getTolerance() {
-		return tolerance;
+	public int getValidityThreshold() {
+		return validityThreshold;
 	}
-	
-	public void setTolerance(int tolerance) {
-		this.tolerance = tolerance;
+
+	public void setValidityThreshold(int validityThreshold) {
+		this.validityThreshold = validityThreshold;
 	}
 	
 	@Override
@@ -122,8 +124,8 @@ public class IasDao {
 		ret.append(getLogLevel().toString());
 		ret.append(", refreshRate=");
 		ret.append(refreshRate);
-		ret.append(", tolerance=");
-		ret.append(tolerance);
+		ret.append(", validityThreshold=");
+		ret.append(validityThreshold);
 		ret.append(", heartebeat frequency=");
 		ret.append(hbFrequency);
 		ret.append(", BSDB URL=`");
@@ -143,7 +145,7 @@ public class IasDao {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(logLevel,refreshRate,tolerance,props,hbFrequency,bsdbUrl,smtp);
+		return Objects.hash(logLevel,refreshRate,validityThreshold,props,hbFrequency,bsdbUrl,smtp);
 	}
 
 	@Override
@@ -158,7 +160,7 @@ public class IasDao {
 		
 		return 	Objects.equals(logLevel, other.logLevel) &&
 				Objects.equals(refreshRate, other.refreshRate) &&
-				Objects.equals(tolerance, other.tolerance) &&
+				Objects.equals(validityThreshold, other.validityThreshold) &&
 				Objects.equals(hbFrequency, other.hbFrequency) &&
 				Objects.equals(bsdbUrl, other.bsdbUrl) &&
 				Objects.equals(smtp, other.smtp) &&
