@@ -282,8 +282,8 @@ class Supervisor(
     //
     // The check is done by comparing the current time with the moment the value has been
     // pushed in the BSDB.
-    // Normally a new value arrives after the refresh time (plus a tolerance): the test assumes that
-    // there is a problem if the the point in time when an input has been published in the kafka
+    // Normally a new value arrives after the refresh time: the check assumes that
+    // there is a problem if the point in time when an input has been published in the kafka
     // topic is greater than 2 times the refresh rate
     //
     // The Supervisor does not start any action if a delay is detected: it only emits a waring.
@@ -469,84 +469,84 @@ object Supervisor {
     }
     
     /** 
-     *  Refresh rate and tolerance: it uses the first defined ones:
+     *  Refresh rate and validityThreshold: it uses the first defined ones:
      *  1 java properties,
      *  2 CDB
      *  3 default
      */
-    val (refreshRate, tolerance,kafkaBrokers) = {
+    val (refreshRate, validityThreshold,kafkaBrokers) = {
       val RefreshTimeIntervalSeconds = Integer.getInteger(AutoSendPropName,AutoSendTimeIntervalDefault)
-      val ToleranceSeconds = Integer.getInteger(TolerancePropName,ToleranceDefault)
-      
+      val ValidityThresholdSeconds = Integer.getInteger(ValidityThresholdPropName,ValidityThresholdDefault)
+
       val iasDaoOpt = reader.getIas
 
       val fromCdb = if (iasDaoOpt.isPresent) {
         logger.debug("IAS configuration read from CDB")
-        (iasDaoOpt.get.getRefreshRate,iasDaoOpt.get.getTolerance,Option(iasDaoOpt.get.getBsdbUrl))
+        (iasDaoOpt.get.getRefreshRate,iasDaoOpt.get.getValidityThreshold,Option(iasDaoOpt.get.getBsdbUrl))
       } else {
-        logger.warn("IAS not found in CDB: using default values for auto send time interval ({}) and tolerance ({})",
-          AutoSendTimeIntervalDefault,ToleranceDefault)
-        (AutoSendTimeIntervalDefault,ToleranceDefault,None)
+        logger.warn("IAS not found in CDB: using default values for auto send time interval ({}) and validity threshold ({})",
+          AutoSendTimeIntervalDefault,ValidityThresholdDefault)
+        (AutoSendTimeIntervalDefault,ValidityThresholdDefault,None)
       }
       logger.debug("Using autosend time={}, HB frequency={}, Kafka brokers={}",fromCdb._1,fromCdb._2,fromCdb._3)
-      
+
       (Integer.getInteger(AutoSendPropName,fromCdb._1),
-      Integer.getInteger(TolerancePropName,fromCdb._2),
+      Integer.getInteger(ValidityThresholdPropName,fromCdb._2),
       fromCdb._3)
     }
-    
+
     val outputPublisher: OutputPublisher = KafkaPublisher(supervisorId,None,kafkaBrokers,System.getProperties)
     val inputsProvider: InputSubscriber = KafkaSubscriber(supervisorId,None,kafkaBrokers,System.getProperties)
-    
+
     // The identifier of the supervisor
     val identifier = new Identifier(supervisorId, IdentifierType.SUPERVISOR, None)
-    
-    val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) => 
-      DasuImpl(dd,i,op,id,refreshRate,tolerance)
-      
+
+    val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) =>
+      DasuImpl(dd,i,op,id,refreshRate,validityThreshold)
+
     val hbProducer: HbProducer = {
       val kafkaServers = System.getProperties.getProperty(KafkaHelper.BROKERS_PROPNAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
-      
+
       new HbKafkaProducer(supervisorId+"HBSender",kafkaServers,new HbJsonSerializer())
     }
-      
+
     // Build the supervisor
     val supervisor = new Supervisor(identifier,outputPublisher,inputsProvider,hbProducer,reader,factory,parsedArgs._3)
-    
+
     val started = supervisor.start()
-    
+
     // Release CDB resources
     reader.shutdown()
-    
+
     started match {
       case Success(_) => val latch = new CountDownLatch(1); latch.await();
       case Failure(ex) => System.err.println("Error starting the supervisor: "+ex.getMessage)
     }
   }
-  
+
   /**
    * The name of the property to override the auto send time interval
    * read from the CDB
    */
   val AutoSendPropName = "ias.supervisor.autosend.time"
-  
+
   /**
    * The default time interval to automatically send the last calculated output
    * in seconds
    */
   val AutoSendTimeIntervalDefault = 5
-  
+
   /**
-   * The name of the property to override the tolerance
+   * The name of the property to override the validity threshold
    * read from the CDB
    */
-  val TolerancePropName = "ias.supervisor.autosend.tolerance"
-  
+  val ValidityThresholdPropName = "ias.supervisor.autosend.validity.threshold"
+
   /**
    * The default tolarance in seconds: it is the time added to the auto-refresh before
    * invalidate an input
    */
-  val ToleranceDefault = 1
+  val ValidityThresholdDefault = 15
   
 
 }
