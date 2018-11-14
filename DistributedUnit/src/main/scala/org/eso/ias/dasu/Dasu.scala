@@ -68,14 +68,14 @@ import scala.util.Try
  * @param dasuIdentifier the identifier of the DASU
  * @param autoSendTimeInterval the refresh rate (seconds) to automatically re-send the last calculated 
  *                    output even if it did not change
- * @param tolerance the max delay (secs) before declaring an input unreliable
+ * @param validityThreshold the max delay (secs) before declaring an input unreliable
  */
 abstract class Dasu(
     val dasuIdentifier: Identifier, 
     val autoSendTimeInterval: Integer,
-    val tolerance: Integer) extends InputsListener {
+    val validityThreshold: Integer) extends InputsListener {
   require(autoSendTimeInterval>0)
-  require(tolerance>=0)
+  require(validityThreshold>=autoSendTimeInterval,"Validity threshold must be greater than the refresh rate")
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
@@ -101,9 +101,9 @@ abstract class Dasu(
   val autoSendTimeIntervalMillis: Long = TimeUnit.MILLISECONDS.convert(autoSendTimeInterval.toLong, TimeUnit.SECONDS)
   
   /** 
-   *  The tolerance in milliseconds
+   *  The validityThreshold in milliseconds
    */
-  val toleranceMillis: Long = TimeUnit.MILLISECONDS.convert(tolerance.toLong, TimeUnit.SECONDS)
+  val validityThresholdMillis: Long = TimeUnit.MILLISECONDS.convert(validityThreshold.toLong, TimeUnit.SECONDS)
   
   /**
    * The minimum allowed refresh rate when a flow of inputs arrive (i.e. the throttiling) 
