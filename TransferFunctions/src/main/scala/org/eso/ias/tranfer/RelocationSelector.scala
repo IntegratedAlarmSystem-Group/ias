@@ -29,16 +29,14 @@ import org.eso.ias.types.IasValidity
   * as consequence of relocation. The difference with [[BackupSelector]] is that one and only one
   * input is expected to be valid at a given point in time.
   *
-  * The type of this class is [[Any]] to cope with all the possible IAS types.
-  *
   * @param cEleId: The id of the ASCE
   * @param cEleRunningId: the running ID of the ASCE
   * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
   * @param props: The properties for the executor
   * @author acaproni
   */
-class RelocationSelector(cEleId: String, cEleRunningId: String, validityTimeFrame: Long, props: Properties)
-extends ScalaTransferExecutor[Any](cEleId,cEleRunningId,validityTimeFrame,props) {
+class RelocationSelector[T](cEleId: String, cEleRunningId: String, validityTimeFrame: Long, props: Properties)
+extends ScalaTransferExecutor[T](cEleId,cEleRunningId,validityTimeFrame,props) {
 
   /**
     * Initialize the TF.
@@ -54,6 +52,9 @@ extends ScalaTransferExecutor[Any](cEleId,cEleRunningId,validityTimeFrame,props)
     }
     if (inputsInfo.exists(_.iasioType != inputsInfo.head.iasioType)) {
       throw new TypeMismatchException("Inputs have different types " + inputsInfo.map(_.iasioType).mkString(","))
+    }
+    if (outputInfo.iasioType!=inputsInfo.head.iasioType) {
+      throw new TypeMismatchException("Output must be of the same type of inputs the")
     }
     RelocationSelector.logger.debug("Intialized")
   }
@@ -73,30 +74,28 @@ extends ScalaTransferExecutor[Any](cEleId,cEleRunningId,validityTimeFrame,props)
     *
     * @return the computed output of the ASCE
     */
-  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Any]): IasIO[Any] = {
+  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[T]): IasIO[T] = {
 
     // Gets the first input that is reliable by time and from inputs.
-    val selectedInput: Option[IasIO[_]] = compInputs.values.find(input => {
+    val selectedInput: Option[IasIO[T]] = compInputs.values.find(input => {
       // get the validity from the inputs
       val inputValidityByTime = input.validityOfInputByTime(validityTimeFrame)
       val inputValidityFromInputs = input.validity
       inputValidityByTime == IasValidity.RELIABLE && inputValidityFromInputs == IasValidity.RELIABLE
-    })
+    }).asInstanceOf[Option[IasIO[T]]]
 
     ( selectedInput, actualOutput.value)  match {
       case (Some(out), _) =>
         actualOutput.
-          updateValue(out.value).
+          updateValue(out.value.get).
           updateMode(out.mode).
           updateProps(out.props).
           setValidityConstraint(Some(Set(out.id)))
       case ( None, None ) =>
         val firstInput = compInputs.values.head
         actualOutput.
-          updateValue(firstInput.value).
-          updateMode(firstInput.mode).
-          updateProps(firstInput.props).
-          setValidityConstraint(Some(Set(firstInput.id)))
+          updateValue(firstInput.value.get).
+          updateProps(firstInput.props)
       case ( _, _ ) => actualOutput
     }
 
