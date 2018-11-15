@@ -248,7 +248,7 @@
 	{ "id":"AsceTemp2-ID1-In", "shortDesc":"Templated in1D2", "iasType":"DOUBLE", "templateId":"temp-ID2" },
 	{ "id":"DasuTemp2-OutID", "shortDesc":"Templated output 2", "iasType":"ALARM", "templateId":"temp-ID2" },
 	
-	{ "id":"TemplatedId", "shortDesc":"Templated", "iasType":"LONG", "templateId":"TemplToTestInputs" },
+	{ "id":"TemplatedId", "shortDesc":"Templated", "iasType":"ALARM", "templateId":"TemplToTestInputs","emails":"template@web.site.org"  },
 	{ "id":"NonTemplatedId", "shortDesc":"NON Templated", "iasType":"LONG" },
 	{ "id":"TemplatedOutId", "shortDesc":"Templated output", "iasType":"LONG", "templateId":"TemplToTestInputs" }
 ]

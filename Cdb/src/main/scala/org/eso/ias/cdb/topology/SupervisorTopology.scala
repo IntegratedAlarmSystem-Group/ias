@@ -35,7 +35,7 @@ class SupervisorTopology(val supervId: String, val dasuTopology: List[DasuTopolo
   /** Check if the Supervisor is contains cycles */
   def isAcyclic: Boolean = CyclesFinder.isACyclic(inputsSupervisor,dasuTopology.toSet)
 
-  require(supervisorOutputs.size==dasuTopology.size,"Supervisor "+supervId+" Number of outputs and number of DASU mismatch")
+  require(supervisorOutputs.size==dasuTopology.size,s"Supervisor $supervId: Number of outputs and number of DASUs mismatch")
 
   /** Human readable representation of the topology */
   override def toString = {

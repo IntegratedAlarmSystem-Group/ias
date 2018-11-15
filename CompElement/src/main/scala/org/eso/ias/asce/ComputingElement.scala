@@ -476,6 +476,12 @@ abstract class ComputingElement[T](
         case Success(validitity) => 
           _output=newOut.updateFromInputsValidity(validitity).updateDasuProdTStamp(System.currentTimeMillis())
       }
+      ComputingElement.logger.debug("Output of [{}]]: id={} value {}, validity from inputs={} mode={}",
+        asceIdentifier,
+        output.id.id,
+        if (output.value.isDefined) output.value.get.toString else "Undefined",
+        if (output.fromInputsValidity.isDefined) output.fromInputsValidity.get.toString else "Undefined",
+        output.mode)
       ( Some(output),state.actualState)
     } else {
       ( None,state.actualState)

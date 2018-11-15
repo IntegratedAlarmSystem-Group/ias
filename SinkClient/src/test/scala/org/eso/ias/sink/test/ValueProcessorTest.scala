@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
 
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
-import org.eso.ias.cdb.pojos.{IasTypeDao, IasioDao}
+import org.eso.ias.cdb.pojos.{IasTypeDao, IasioDao, TemplateDao}
 import org.eso.ias.dasu.publisher.DirectInputSubscriber
 import org.eso.ias.dasu.subscriber.InputSubscriber
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
@@ -145,14 +145,17 @@ class ValueProcessorTest extends FlatSpec {
         JavaConverters.asScalaSet(iasiosDaoJOpt.get()).toList
       }
 
-      /** The processor to test with no failing procesors */
+      val templateDao = new TemplateDao("TemplToTestInputs",1,25)
+
+      /** The processor to test with no failing processors */
       val processor: IasValueProcessor  = new IasValueProcessor(
         processorIdentifier,
         listeners,
         new HbProducerTest(new HbJsonSerializer()),
         inputsProvider,
         iasDao,
-        iasiosDaos)
+        iasiosDaos,
+        List(templateDao))
 
       val inputsProviderWithFailures: DirectInputSubscriber = new DirectInputSubscriber()
 
@@ -173,7 +176,8 @@ class ValueProcessorTest extends FlatSpec {
         new HbProducerTest(new HbJsonSerializer()),
         inputsProviderWithFailures,
         iasDao,
-        iasiosDaos)
+        iasiosDaos,
+        List.empty[TemplateDao])
 
       // Set the timeout of the processor
       val timeout = 10
@@ -195,7 +199,8 @@ class ValueProcessorTest extends FlatSpec {
         new HbProducerTest(new HbJsonSerializer()),
         inputsProviderWithTO,
         iasDao,
-        iasiosDaos)
+        iasiosDaos,
+        List.empty[TemplateDao])
 
     }
 
@@ -401,6 +406,21 @@ class ValueProcessorTest extends FlatSpec {
     Thread.sleep(2*IasValueProcessor.defaultPeriodicSendingTimeInterval)
 
     assert(f.listeners.forall(_.callstoUserDefinedProcess.get()==0))
+    f.processor.close()
+  }
+
+  it must "recognized templated values" in {
+    val f = fixture
+    f.processor.init()
+
+    val templatedId = Identifier.buildIdFromTemplate("TemplatedId",12)
+    println("Submitting a value with ID "+templatedId)
+    assert(Identifier.isTemplatedIdentifier(templatedId))
+    val value: IASValue[_] = buildValue(templatedId,Alarm.SET_MEDIUM)
+    f.inputsProvider.sendInputs(Set(value))
+    Thread.sleep(2*IasValueProcessor.defaultPeriodicSendingTimeInterval)
+
+    assert(f.listeners.forall(_.callstoUserDefinedProcess.get()==1))
     f.processor.close()
   }
 

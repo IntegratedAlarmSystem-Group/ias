@@ -10,12 +10,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 /**
- * The a java pojo with the fields  of a {@link HbMessage}
- * plus the timestamp
+ * The a java pojo with the heartbeat message.
  * 
- * @see HbMessage
  * @author acaproni
- *
  */
 public class HeartbeatMessagePojo {
 	
@@ -48,7 +45,7 @@ public class HeartbeatMessagePojo {
 	/**
 	 * Constructor
 	 * 
-	 * @param id the full running id
+	 * @param fullRunningId the full running id
 	 * @param hbStatus the status
 	 * @param props additional properties
 	 * @param tStamp the timestamp
