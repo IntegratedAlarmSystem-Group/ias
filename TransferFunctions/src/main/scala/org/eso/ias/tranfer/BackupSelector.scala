@@ -9,37 +9,41 @@ import org.eso.ias.types.IasValidity._
 import org.eso.ias.types.OperationalMode
 
 /**
- * Sometimes a monitor point has a backup to be used in case of failure 
- * getting the value of the main implementation. The backup can 
- * be retrieved from a different device (for example a backup pressure sensor)
- * or from a different way to get the value from the hardware (for example
- * one that involves the network and another one by reading a database where the
- * value is also stored)
- * 
- * BackupSelector picks up the best option among the inputs i.e.
- * if the main value is operational and reliable then return this value otherwise
- * check if the first backup is operational and valid and return this one otherwise
- * checks the second backup and so on.
- * 
- * BackupSelector does not do any computation on the value but returns
- * the first operational and valid input among the main and the backups.
- * 
- * If none of the inputs is operational and valid, BackupSelector returns the 
- * first option.
- * 
- * The order of preference must be passed as a java property of comma
- * separated list of ids of monitor points like
- * "T1Main, T1Backup1, T1Backup2"
- * 
- * The list of IDs passed with the SelectionPriorityPropName property
- * must match with the IDs of the inputs processed by the eval method.
- * 
- * @param asceId: the ID of the ASCE
- * @param asceRunningId: the runningID of the ASCE
- * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
- * @param props: the user defined properties    
- * @author acaproni
- */
+  * Sometimes a monitor point has a backup to be used in case of failure
+  * getting the value of the main implementation. The backup can
+  * be retrieved from a different device (for example a backup pressure sensor)
+  * or from a different way to get the value from the hardware (for example
+  * one that involves the network and another one by reading a database where the
+  * value is also stored)
+  *
+  * BackupSelector picks up the best option among the inputs i.e.
+  * if the main value is operational and reliable then return this value otherwise
+  * check if the first backup is operational and valid and return this one otherwise
+  * checks the second backup and so on.
+  *
+  * BackupSelector does not do any computation on the value but returns
+  * the first operational and valid input among the main and the backups.
+  *
+  * If none of the inputs is operational and valid, BackupSelector returns the
+  * first option.
+  *
+  * The order of preference must be passed as a java property of comma
+  * separated list of ids of monitor points like
+  * "T1Main, T1Backup1, T1Backup2"
+  *
+  * The list of IDs passed with the SelectionPriorityPropName property
+  * must match with the IDs of the inputs processed by the eval method.
+  *
+  * [[RelocationSelector]] is very similar to this TF but copes with relocation instead
+  * of replication.
+  *
+  * @param asceId: the ID of the ASCE
+  * @param asceRunningId: the runningID of the ASCE
+  * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
+  * @param props: the user defined properties
+  *@see [[RelocationSelector]]
+  * @author acaproni
+  */
 class BackupSelector[T](asceId: String, asceRunningId: String, validityTimeFrame:Long, props: Properties)
 extends ScalaTransferExecutor[T](asceId,asceRunningId,validityTimeFrame,props) {
 
