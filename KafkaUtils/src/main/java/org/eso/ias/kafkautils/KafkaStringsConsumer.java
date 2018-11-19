@@ -259,7 +259,7 @@ public class KafkaStringsConsumer implements Runnable {
         } catch (InterruptedException e) {
             KafkaStringsConsumer.logger.warn("Consumer [{}] Interrupted",consumerID);
             Thread.currentThread().interrupt();
-            throw new KafkaUtilsException(consumerID+" interrupted while waiting for assignemn to kafka partitions", e);
+            throw new KafkaUtilsException(consumerID+" interrupted while waiting for assignemnt to kafka partitions", e);
         }
     }
 
