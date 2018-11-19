@@ -243,7 +243,7 @@ public class KafkaStringsConsumer implements Runnable {
             throw new IllegalStateException("Not initialized");
         }
         if (thread.get()!=null) {
-            KafkaStringsConsumer.logger.error("Consumer [{}] cannot start receiving: already receiving events!",consumerID);
+            KafkaStringsConsumer.logger.warn("Consumer [{}] cannot start receiving: already receiving events!",consumerID);
             return;
         }
         startReadingPos = startReadingFrom;
