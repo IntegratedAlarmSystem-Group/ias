@@ -239,8 +239,8 @@ public class WebServerSender implements IasioListener {
 	 */
 	@OnWebSocketClose
 	public void onClose(int statusCode, String reason) {
-	   logger.info("WebSocket connection closed. status: " + statusCode + ", reason: " + reason);
-	   socketConnected.set(false);
+		logger.info("WebSocket connection closed. status: " + statusCode + ", reason: " + reason);
+		socketConnected.set(false);
 	   sessionOpt = Optional.empty();
 		 if (statusCode != 1001) {
 			 logger.info("Trying to reconnect");
@@ -258,17 +258,10 @@ public class WebServerSender implements IasioListener {
 	 */
 	@OnWebSocketConnect
 	public void onConnect(Session session) {
-	   logger.info("WebSocket got connect. remoteAdress: " + session.getRemoteAddress());
 	   sessionOpt = Optional.ofNullable(session);
 	   this.connectionReady.countDown();
-	   try {
-	       kafkaConsumer.startGettingEvents(StartPosition.END, this);
-	       logger.info("Starting to listen events");
-	   }
-	   catch (Throwable t) {
-	       logger.error("WebSocket couldn't send the message",t);
-	   }
 	   socketConnected.set(true);
+	   logger.info("WebSocket got connect. remoteAdress: " + session.getRemoteAddress());
    }
 
 	@OnWebSocketMessage
@@ -284,7 +277,7 @@ public class WebServerSender implements IasioListener {
 	@Override
 	public synchronized void iasiosReceived(Collection<IASValue<?>> events) {
         if (!socketConnected.get()) {
-            // The socket is not connected: discard the event
+			logger.debug("The WebSocket is not connected: discard the event");
             return;
         }
 
@@ -309,8 +302,15 @@ public class WebServerSender implements IasioListener {
 
 	public void setUp() {
 		hbEngine.start();
-		kafkaConsumer.setUp(this.props);
 		connect();
+		try {
+			kafkaConsumer.setUp(this.props);
+			kafkaConsumer.startGettingEvents(StartPosition.END, this);
+			logger.info("Kafka consumer starts getting events");
+ 	    }
+ 	    catch (Throwable t) {
+ 	        logger.error("Kafka consumer initialization fails", t);
+ 	    }
 	}
 
 	/**
