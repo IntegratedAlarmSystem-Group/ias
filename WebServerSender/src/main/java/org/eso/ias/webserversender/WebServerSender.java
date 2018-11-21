@@ -21,12 +21,11 @@ import org.eso.ias.heartbeat.HbProducer;
 import org.eso.ias.heartbeat.HeartbeatStatus;
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
-import org.eso.ias.kafkautils.KafkaHelper;
-import org.eso.ias.kafkautils.KafkaIasiosConsumer;
-import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener;
-import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition;
 import org.eso.ias.kafkautils.FilteredKafkaIasiosConsumer;
 import org.eso.ias.kafkautils.FilteredKafkaIasiosConsumer.FilterIasValue;
+import org.eso.ias.kafkautils.KafkaHelper;
+import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition;
+import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener;
 import org.eso.ias.logging.IASLogger;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
@@ -40,8 +39,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 @WebSocket(maxTextMessageSize = 64 * 1024)
 public class WebServerSender implements IasioListener {
@@ -133,6 +135,38 @@ public class WebServerSender implements IasioListener {
 	 * A flag set to <code>true</code> if the socket is connected
 	 */
 	public final AtomicBoolean socketConnected = new AtomicBoolean(false);
+
+    /**
+     * For statistics: the number of IASIOs consumbed from the BSDB in past interval
+     */
+	private final AtomicLong iasiosReceived = new AtomicLong(0);
+
+    /**
+     * For statistics: the number of IASIOs sent to the web server  in past interval
+     */
+    private final AtomicLong iasiosSentToWebServer = new AtomicLong(0);
+
+    /**
+     * The property to set the time interval for the generation of statistics
+     * in minutes
+     */
+    public static final String STATISTIC_TIME_INTERVAL_PROP_NAME = "org.eso.ias.senders.webserver.stats.interval";
+
+    /**
+     * The defualt interval to publish statistics in minutes
+     */
+    public static final long DEFAULT_STATS_TIME_INTERVAL = 10;
+
+
+    /** The time interval (minutes) to publish sttistics read from the
+     * system properties or DEFAULT_STATS_TIME_INTERVAL if not found
+     */
+    private final long statsTimeInterval = Long.getLong(STATISTIC_TIME_INTERVAL_PROP_NAME,DEFAULT_STATS_TIME_INTERVAL);
+
+    /**
+     * The scheduler to publish statistics
+     */
+    private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
 	/**
 	 * The interface of the listener to be notified of Strings received
@@ -239,12 +273,14 @@ public class WebServerSender implements IasioListener {
 	 */
 	@OnWebSocketClose
 	public void onClose(int statusCode, String reason) {
+	    hbEngine.updateHbState(HeartbeatStatus.PARTIALLY_RUNNING);
 		logger.info("WebSocket connection closed. status: " + statusCode + ", reason: " + reason);
 		socketConnected.set(false);
-	   sessionOpt = Optional.empty();
-		 if (statusCode != 1001) {
+	    sessionOpt = Optional.empty();
+		if (statusCode != 1001) {
 			 logger.info("Trying to reconnect");
 			 this.connect();
+			 hbEngine.updateHbState(HeartbeatStatus.RUNNING);
 		 } else {
 			 logger.info("The Server is going away");
 			 this.shutdown();
@@ -276,6 +312,7 @@ public class WebServerSender implements IasioListener {
 	 */
 	@Override
 	public synchronized void iasiosReceived(Collection<IASValue<?>> events) {
+	    iasiosReceived.addAndGet(events.size());
         if (!socketConnected.get()) {
 			logger.debug("The WebSocket is not connected: discard the event");
             return;
@@ -294,14 +331,36 @@ public class WebServerSender implements IasioListener {
                 session.getRemote().sendStringByFuture(value);
                 logger.debug("Value sent: " + value);
                 this.notifyListener(value);
+                iasiosSentToWebServer.incrementAndGet();
             });
         });
-
-
     }
 
 	public void setUp() {
 		hbEngine.start();
+
+		if (statsTimeInterval>0) {
+		    logger.info("Will publish stats every {} minutes",statsTimeInterval);
+
+		    Runnable statsRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    long msgConsumed = iasiosReceived.getAndSet(0);
+                    long msgSent = iasiosSentToWebServer.getAndSet(0);
+                    long msgLost = msgConsumed-msgSent;
+                    if (msgLost<0) {
+                        msgLost=0;
+                    }
+
+                    logger.info("Stats: {} IASIOs consumed from BSDB; {} messages sent to the web server; {} messages lost",
+                            msgConsumed, msgSent,msgLost);
+                }
+            };
+
+            scheduler.scheduleAtFixedRate(statsRunnable,statsTimeInterval,statsTimeInterval,TimeUnit.MINUTES);
+        } else {
+		    logger.info("Stats generation disabled");
+        }
 		connect();
 		try {
 			kafkaConsumer.setUp(this.props);
@@ -310,7 +369,9 @@ public class WebServerSender implements IasioListener {
  	    }
  	    catch (Throwable t) {
  	        logger.error("Kafka consumer initialization fails", t);
+ 	        System.exit(-1);
  	    }
+ 	    hbEngine.updateHbState(HeartbeatStatus.RUNNING);
 	}
 
 	/**
@@ -323,8 +384,9 @@ public class WebServerSender implements IasioListener {
 			client = new WebSocketClient();
 			client.start();
 			client.connect(this, this.uri, new ClientUpgradeRequest());
+
 			if(!this.connectionReady.await(reconnectionInterval, TimeUnit.SECONDS)) {
-				logger.info("The connection with the server is taking too long. Trying again.");
+				logger.warn("The connection with the server is taking too long. Trying again.");
 				connect();
 			}
 			logger.debug("Connection started!");
@@ -341,6 +403,7 @@ public class WebServerSender implements IasioListener {
 	 */
 	public void shutdown() {
 		hbEngine.updateHbState(HeartbeatStatus.EXITING);
+		scheduler.shutdown();
 		kafkaConsumer.tearDown();
 		sessionOpt = Optional.empty();
 		try {
@@ -348,7 +411,7 @@ public class WebServerSender implements IasioListener {
 			logger.debug("Connection stopped!");
 		}
 		catch( Exception e) {
-			logger.error("Error on Websocket stop");
+			logger.error("Error on Websocket stop",e);
 		}
 		hbEngine.shutdown();
 	}
@@ -419,7 +482,7 @@ public class WebServerSender implements IasioListener {
 			printUsage(options);
 			System.exit(0);
 		}
-		if (!help && !senderId.isPresent()) {
+		if (!senderId.isPresent()) {
 			System.err.println("Missing Sender ID");
 			printUsage(options);
 			System.exit(-1);
