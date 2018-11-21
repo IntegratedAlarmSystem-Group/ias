@@ -21,12 +21,11 @@ import org.eso.ias.heartbeat.HbProducer;
 import org.eso.ias.heartbeat.HeartbeatStatus;
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
-import org.eso.ias.kafkautils.KafkaHelper;
-import org.eso.ias.kafkautils.KafkaIasiosConsumer;
-import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener;
-import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition;
 import org.eso.ias.kafkautils.FilteredKafkaIasiosConsumer;
 import org.eso.ias.kafkautils.FilteredKafkaIasiosConsumer.FilterIasValue;
+import org.eso.ias.kafkautils.KafkaHelper;
+import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition;
+import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener;
 import org.eso.ias.logging.IASLogger;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
@@ -310,7 +309,9 @@ public class WebServerSender implements IasioListener {
  	    }
  	    catch (Throwable t) {
  	        logger.error("Kafka consumer initialization fails", t);
+ 	        System.exit(-1);
  	    }
+ 	    hbEngine.updateHbState(HeartbeatStatus.RUNNING);
 	}
 
 	/**
@@ -419,7 +420,7 @@ public class WebServerSender implements IasioListener {
 			printUsage(options);
 			System.exit(0);
 		}
-		if (!help && !senderId.isPresent()) {
+		if (!senderId.isPresent()) {
 			System.err.println("Missing Sender ID");
 			printUsage(options);
 			System.exit(-1);
