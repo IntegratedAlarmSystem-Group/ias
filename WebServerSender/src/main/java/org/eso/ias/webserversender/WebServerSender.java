@@ -238,12 +238,14 @@ public class WebServerSender implements IasioListener {
 	 */
 	@OnWebSocketClose
 	public void onClose(int statusCode, String reason) {
+	    hbEngine.updateHbState(HeartbeatStatus.PARTIALLY_RUNNING);
 		logger.info("WebSocket connection closed. status: " + statusCode + ", reason: " + reason);
 		socketConnected.set(false);
-	   sessionOpt = Optional.empty();
-		 if (statusCode != 1001) {
+	    sessionOpt = Optional.empty();
+		if (statusCode != 1001) {
 			 logger.info("Trying to reconnect");
 			 this.connect();
+			 hbEngine.updateHbState(HeartbeatStatus.RUNNING);
 		 } else {
 			 logger.info("The Server is going away");
 			 this.shutdown();
@@ -324,8 +326,9 @@ public class WebServerSender implements IasioListener {
 			client = new WebSocketClient();
 			client.start();
 			client.connect(this, this.uri, new ClientUpgradeRequest());
+
 			if(!this.connectionReady.await(reconnectionInterval, TimeUnit.SECONDS)) {
-				logger.info("The connection with the server is taking too long. Trying again.");
+				logger.warn("The connection with the server is taking too long. Trying again.");
 				connect();
 			}
 			logger.debug("Connection started!");
@@ -349,7 +352,7 @@ public class WebServerSender implements IasioListener {
 			logger.debug("Connection stopped!");
 		}
 		catch( Exception e) {
-			logger.error("Error on Websocket stop");
+			logger.error("Error on Websocket stop",e);
 		}
 		hbEngine.shutdown();
 	}
