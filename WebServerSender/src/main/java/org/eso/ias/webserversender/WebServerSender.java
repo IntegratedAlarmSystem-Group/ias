@@ -27,10 +27,7 @@ import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition;
 import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener;
 import org.eso.ias.logging.IASLogger;
-import org.eso.ias.types.IASTypes;
-import org.eso.ias.types.IASValue;
-import org.eso.ias.types.IasValueJsonSerializer;
-import org.eso.ias.types.IasValueSerializerException;
+import org.eso.ias.types.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -261,7 +258,8 @@ public class WebServerSender implements IasioListener {
 		}
 
 		Objects.requireNonNull(hbProducer);
-		hbEngine = HbEngine.apply(senderID, hbFrequency, hbProducer);
+		Identifier id = new Identifier(senderID,IdentifierType.SINK);
+		hbEngine = HbEngine.apply(id.fullRunningID(), hbFrequency, hbProducer);
 	}
 
 
