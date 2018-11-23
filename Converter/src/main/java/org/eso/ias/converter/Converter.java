@@ -1,11 +1,5 @@
 package org.eso.ias.converter;
 
-import java.io.File;
-import java.security.InvalidParameterException;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
-
 import org.apache.commons.cli.*;
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.IasCdbException;
@@ -26,6 +20,12 @@ import org.eso.ias.types.IasValueStringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
+import java.io.File;
+import java.security.InvalidParameterException;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 /**
  * The tool to convert raw monitor point values and alarms
@@ -380,10 +380,5 @@ public class Converter {
 			logger.error("Error initializing the converter {}",id,e);
 
 		}
-		context.close();
-		logger.info("Converter {} terminated",id);
 	}
-
-
-
 }
