@@ -1,0 +1,13 @@
+{
+	"dasuID":"DasuToTestInputs",
+	"outputID":"TemplatedOutId",
+	"props":[],
+	"id":"AsceToTestInputs",
+	"transferFunctionID":"org.eso.ias.supervisor.test.tf.TemplatedTF",
+	"inputIDs":["TemplatedId", "NonTemplatedId"],
+	"templateId":"temp-ID2",
+	"templatedInputs": [
+		{ "iasioId":"TemplatedInput", "templateId":"TemplateIDForTemplatedInputs", "instanceNum":3 },
+		{ "iasioId":"TemplatedInput", "templateId":"TemplateIDForTemplatedInputs", "instanceNum":4 }
+	]
+}
