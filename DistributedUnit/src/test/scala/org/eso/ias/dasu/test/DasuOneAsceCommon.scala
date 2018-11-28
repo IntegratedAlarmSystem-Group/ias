@@ -27,7 +27,7 @@ import org.eso.ias.cdb.pojos.DasuDao
  * 
  * @param autoRefreshTimeInterval The auto-refresh time (msec) to pass to the DASU 
  */
-class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, tolerance: Integer) extends OutputListener {
+class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, validityThreshold: Integer) extends OutputListener {
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass);
   
@@ -93,7 +93,7 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, tolerance: Integer) ex
   }
   
   def buildDasu(): Option[DasuImpl] = {
-    Some(new DasuImpl(dasuIdentifier,dasuDao,outputPublisher,inputsProvider,autoRefreshTimeInterval,tolerance))
+    Some(new DasuImpl(dasuIdentifier,dasuDao,outputPublisher,inputsProvider,autoRefreshTimeInterval,validityThreshold))
   }
   
   

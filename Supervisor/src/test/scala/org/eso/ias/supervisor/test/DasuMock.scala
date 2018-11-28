@@ -50,7 +50,7 @@ class DasuMock(
     dasuDao: DasuDao,
     private val outputPublisher: OutputPublisher,
     private val inputSubscriber: InputSubscriber)
-extends Dasu(dasuIdentifier,5,1) {
+extends Dasu(dasuIdentifier,5,6) {
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)

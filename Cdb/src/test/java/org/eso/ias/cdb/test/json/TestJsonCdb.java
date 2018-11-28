@@ -89,7 +89,7 @@ public class TestJsonCdb {
 		props.add(p2);
 
 		ias.setRefreshRate(4);
-		ias.setTolerance(3);
+		ias.setValidityThreshold(6);
 
 		ias.setHbFrequency(5);
 
@@ -130,7 +130,7 @@ public class TestJsonCdb {
 
 		assertEquals(LogLevelDao.INFO,ias.getLogLevel());
 		assertEquals(5,ias.getRefreshRate());
-		assertEquals(1,ias.getTolerance());
+		assertEquals(11,ias.getValidityThreshold());
 		assertEquals(10,ias.getHbFrequency());
 		assertEquals("127.0.0.1:9092",ias.getBsdbUrl());
 		assertEquals("acaproni:pswd@smtp.test.org",ias.getSmtp());
