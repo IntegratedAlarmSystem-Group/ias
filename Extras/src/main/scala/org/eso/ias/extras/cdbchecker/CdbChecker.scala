@@ -504,8 +504,8 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
           errorFound = true
         }
 
-        if (ias.getTolerance<=0) {
-          CdbChecker.logger.error("Tolerance must be >0: {} found",ias.getTolerance)
+        if (ias.getValidityThreshold<=ias.getRefreshRate) {
+          CdbChecker.logger.error("Validity threshold must be > refresh rate: {} found",ias.getValidityThreshold)
           errorFound = true
         }
 

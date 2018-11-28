@@ -36,7 +36,7 @@ import org.scalatest.BeforeAndAfter
  */
 class DasuOneASCETest extends FlatSpec  with BeforeAndAfter {
   
-  val f = new DasuOneAsceCommon(3,1)
+  val f = new DasuOneAsceCommon(3,4)
   
   before {
     f.outputValuesReceived.clear()
