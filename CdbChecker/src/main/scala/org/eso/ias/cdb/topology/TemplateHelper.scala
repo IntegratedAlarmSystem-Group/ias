@@ -126,16 +126,59 @@ class TemplateHelper(
       instanceOk && ascesOk && outputsOfAscesOk && outputOk && inputsOk && templatedInputsOk
     })
   }
-  
+
   /**
-   * Normalize the passed IasioDao to a IasioDao where the identifier
-   * has been replaced with the version generated from the instance of the template 
+   * Build the list of DasuDao, converting the templated ones
+   * into normal DASUs
    * 
-   * @param iasio The IasioDao to whose identifier needs to be converted 
-   * @return the converted IasioDao if the parameter was templated, 
-   *         the same iasio otherwise
+   * @return The normalized DASU generated out of their templates and instances
    */
-  private def normalizeIasio(iasio: IasioDao, instance: Int): IasioDao = {
+  def normalize(): Set[DasuDao] = {
+    
+    // Nothing to do for the normal DASUs
+    val normalDasus = normalDasusToDeploy.map(_.getDasu)
+
+    // Normalize templated DASUs
+    TemplateHelper.logger.info("Normalizing templated DASUs, ASCEs and IASIOs")
+    val templatedDasus = templatedDasusToDeploy.map(dtd => TemplateHelper.normalizeDasu(dtd.getDasu, dtd.getInstance))
+
+
+    val allDasus = normalDasus++templatedDasus
+
+    // Are there templated instance inputs in the ASCE?
+    // They need to be normalized as well
+    val allAsces: Set[AsceDao] =  allDasus.foldLeft(Set.empty[AsceDao])((z, dasu) => {
+      val ascesOfDasu = JavaConverters.asScalaSet(dasu.getAsces).toSet
+      TemplateHelper.logger.debug("Adding ASCEs of DASU {}: {}",
+        dasu.getId,
+        ascesOfDasu.map(_.getId).mkString(","))
+
+      z++ascesOfDasu
+    })
+    TemplateHelper.logger.info("Normalizing templated input instances of all ASCEs")
+    allAsces.foreach(TemplateHelper.normalizeAsceWithTemplatedInstanceInputs(_))
+    TemplateHelper.logger.info("Normalization completed")
+    
+    allDasus
+  }
+  
+  
+}
+
+/** Companion object */
+object TemplateHelper {
+  /** The logger */
+  val logger: Logger = IASLogger.getLogger(this.getClass)
+
+  /**
+    * Normalize the passed IasioDao to a IasioDao where the identifier
+    * has been replaced with the version generated from the instance of the template
+    *
+    * @param iasio The IasioDao to whose identifier needs to be converted
+    * @return the converted IasioDao if the parameter was templated,
+    *         the same iasio otherwise
+    */
+  def normalizeIasio(iasio: IasioDao, instance: Int): IasioDao = {
     if (Option(iasio.getTemplateId).isDefined) {
       TemplateHelper.logger.debug("Normalizing templated IASIO [{}] with instance []", iasio.getId, instance.toString)
       val idFromTemplate = Identifier.buildIdFromTemplate(iasio.getId, Some(instance))
@@ -167,14 +210,51 @@ class TemplateHelper(
     if (!asce.getTemplatedInstanceInputs.isEmpty) {
       val templatedInstanceInputs = JavaConverters.collectionAsScalaIterable(asce.getTemplatedInstanceInputs).toSet
       templatedInstanceInputs.foreach(templatedInstance => {
-        asce.addInput(normalizeIasio(templatedInstance.getIasio, templatedInstance.getInstance()), false)
+        asce.addInput(TemplateHelper.normalizeIasio(templatedInstance.getIasio, templatedInstance.getInstance()), false)
       })
       asce.getTemplatedInstanceInputs.clear()
     }
 
     assert(numOfInputsBefore+numOfTemplatedInstanceInputs==asce.getInputs.size(), "Wrong number of templated input instances converted")
   }
-  
+
+  /**
+    * Normalize the passed  DASU
+    *
+    * @param dasu the DasuDao to normalize
+    * @return the normalized DasuDao
+    */
+  private def normalizeDasu(dasu: DasuDao, instance: Int): DasuDao = {
+    require(Option(dasu).isDefined)
+    require(Option(dasu.getTemplateId).isDefined,"Template DASU required")
+
+    TemplateHelper.logger.debug("Normalizing templated DASU [{}] with instance []", dasu.getId, instance.toString)
+
+    // Set the identifier
+    dasu.setId(Identifier.buildIdFromTemplate(dasu.getId, Some(instance)))
+
+    // The output is templated (it is a constraint)
+    val newOutput = TemplateHelper.normalizeIasio(dasu.getOutput,instance)
+    dasu.setOutput(newOutput)
+
+    val asces = JavaConverters.collectionAsScalaIterable(dasu.getAsces).toSet
+    TemplateHelper.logger.debug("{} ASCEs to check",asces.size)
+
+    asces.foreach(a => TemplateHelper.logger.debug("DASU [{}] will convert ASCE [{}]",
+      dasu.getId,
+      a.getId))
+
+    dasu.getAsces.clear()
+    asces.foreach(asce => dasu.addAsce(normalizeAsce(asce,instance)))
+    assert(asces.size==dasu.getAsces.size(),"Wrong number of ASCEs of DASU!")
+
+    TemplateHelper.logger.debug("DASU normalized with new ID [{}], ASCES =[{}]",
+      dasu.getId,
+      JavaConverters.collectionAsScalaIterable(dasu.getAsces).map(_.getId).mkString(", "))
+
+    dasu
+  }
+
   /**
     * Normalize the passed ASCE:
     * - the output is always templated
@@ -194,20 +274,20 @@ class TemplateHelper(
     require(Option(asce.getTemplateId).isDefined,"Template ASCE required")
 
     TemplateHelper.logger.debug("Normalizing templated ASCE [{}] with instance {}", asce.getId, instance.toString)
-    
+
     // Set the identifier
     asce.setId(Identifier.buildIdFromTemplate(asce.getId, Some(instance)))
-    
+
     // The output is templated (it is a constraint)
-    val newOutput = normalizeIasio(asce.getOutput,instance)
+    val newOutput = TemplateHelper.normalizeIasio(asce.getOutput,instance)
     asce.setOutput(newOutput)
-    
+
     // Normalize the inputs that have the same teplate of the ASCE
     val inputs = JavaConverters.collectionAsScalaIterable(asce.getInputs).toSet
     asce.getInputs.clear()
     inputs.foreach( input => {
       if (Option(input.getTemplateId).isDefined) {
-        asce.addInput(normalizeIasio(input,instance), false)
+        asce.addInput(TemplateHelper.normalizeIasio(input,instance), false)
       } else {
         asce.addInput(input,false)
       }
@@ -216,88 +296,8 @@ class TemplateHelper(
 
 
     TemplateHelper.logger.debug("ASCE normalized with new ID [{}] and inputs=[{}]",
-        asce.getId,
-        JavaConverters.collectionAsScalaIterable(asce.getInputs).map(_.getId).mkString(","))
+      asce.getId,
+      JavaConverters.collectionAsScalaIterable(asce.getInputs).map(_.getId).mkString(","))
     asce
   }
-  
-  /**
-   * Normalize the passed  DASU
-   * 
-   * @param dasu the DasuDao to normalize
-   * @return the normalized DasuDao
-   */
-  private def normalizeDasu(dasu: DasuDao, instance: Int): DasuDao = {
-    require(Option(dasu).isDefined)
-    require(Option(dasu.getTemplateId).isDefined,"Template DASU required")
-
-    TemplateHelper.logger.debug("Normalizing templated DASU [{}] with instance []", dasu.getId, instance.toString)
-    
-    // Set the identifier
-    dasu.setId(Identifier.buildIdFromTemplate(dasu.getId, Some(instance)))
-    
-    // The output is templated (it is a constraint)
-    val newOutput = normalizeIasio(dasu.getOutput,instance)
-    dasu.setOutput(newOutput)
-    
-    val asces = JavaConverters.collectionAsScalaIterable(dasu.getAsces).toSet
-    TemplateHelper.logger.debug("{} ASCEs to check",asces.size)
-
-    asces.foreach(a => TemplateHelper.logger.debug("DASU [{}] will convert ASCE [{}]",
-        dasu.getId,
-        a.getId))
-
-    dasu.getAsces.clear()
-    asces.foreach(asce => dasu.addAsce(normalizeAsce(asce,instance)))
-    assert(asces.size==dasu.getAsces.size(),"Wrong number of ASCEs of DASU!")
-
-    TemplateHelper.logger.debug("DASU normalized with new ID [{}], ASCES =[{}]",
-        dasu.getId,
-        JavaConverters.collectionAsScalaIterable(dasu.getAsces).map(_.getId).mkString(", "))
-    
-    dasu
-  }
-    
-  /**
-   * Build the list of DasuDao, converting the templated ones
-   * into normal DASUs
-   * 
-   * @return The normalized DASU generated out of their templates and instances
-   */
-  def normalize(): Set[DasuDao] = {
-    
-    // Nothing to do for the normal DASUs
-    val normalDasus = normalDasusToDeploy.map(_.getDasu)
-
-    // Normalize templated DASUs
-    TemplateHelper.logger.info("Normalizing templated DASUs, ASCEs and IASIOs")
-    val templatedDasus = templatedDasusToDeploy.map(dtd => normalizeDasu(dtd.getDasu, dtd.getInstance))
-
-
-    val allDasus = normalDasus++templatedDasus
-
-    // Are there templated instance inputs in the ASCE?
-    // They need to be normalized as well
-    val allAsces: Set[AsceDao] =  allDasus.foldLeft(Set.empty[AsceDao])((z, dasu) => {
-      val ascesOfDasu = JavaConverters.asScalaSet(dasu.getAsces).toSet
-      TemplateHelper.logger.debug("Adding ASCEs of DASU {}: {}",
-        dasu.getId,
-        ascesOfDasu.map(_.getId).mkString(","))
-
-      z++ascesOfDasu
-    })
-    TemplateHelper.logger.info("Normalizing templated input instances of all ASCEs")
-    allAsces.foreach(normalizeAsceWithTemplatedInstanceInputs(_))
-    TemplateHelper.logger.info("Normalization completed")
-    
-    allDasus
-  }
-  
-  
-}
-
-/** Companion object */
-object TemplateHelper {
-  /** The logger */
-  val logger: Logger = IASLogger.getLogger(this.getClass)
 }
