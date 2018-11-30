@@ -68,7 +68,11 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
   }
   CdbChecker.logger.info("Read {} templates",mapOfTemplates.size)
 
-   /** The map of IASIOs where the key is the ID of the IASIOS */
+   /**
+     * The map of IASIOs where the key is the ID of the IASIOs
+     *
+     * These IASIOs do not take templates into account
+     */
   val mapOfIasios: Map[String, IasioDao] = {
     val iasiosOptional = reader.getIasios
     val iasios: Set[IasioDao] = if (!iasiosOptional.isPresent) Set.empty else {
@@ -211,7 +215,7 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
   // Is there any DASU that is not part of the DASUs to deploy?
   // We are looking for DASUs that will not be deployed and can be removed
   // from the CDB
-  // The case of a DASU to deploy not assicated to a DasuDao is already reported
+  // The case of a DASU to deploy not associated to a DasuDao is already reported
   // by checkDasuToDeploy
   val idsOfDasusToDeploy: Set[String] = (for {
     setOfDTD <- mapOfDasusToDeploy.values
