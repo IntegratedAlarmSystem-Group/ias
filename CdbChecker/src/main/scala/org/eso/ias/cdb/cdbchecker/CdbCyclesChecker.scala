@@ -1,14 +1,15 @@
 package org.eso.ias.extras.cdbchecker
 
 import com.typesafe.scalalogging.Logger
-import org.eso.ias.cdb.pojos.{DasuDao, DasuToDeployDao}
+import org.eso.ias.cdb.pojos.{DasuDao, DasuToDeployDao, TemplateInstanceIasioDao}
 import org.eso.ias.cdb.topology.{AsceTopology, DasuTopology}
 import org.eso.ias.logging.IASLogger
+import org.eso.ias.types.Identifier
 
 import scala.collection.JavaConverters
 
 /**
-  * Check and report cycles in the IAS by delgating to
+  * Check and report cycles in the IAS by delegating to
   * classes in the cdb topology package
   *
   * @param mapOfDasus all the DASUs defined in the CDB
@@ -19,7 +20,7 @@ class CdbCyclesChecker(
                         val mapOfDasusToDeploy: Map[String, Set[DasuToDeployDao]]) {
 
   /**
-    * Check if the ASCEs defined in the pased DasuDao
+    * Check if the ASCEs defined in the passed DasuDao
     * create cycle
     *
     * @param dasu The dasu to check
@@ -28,11 +29,20 @@ class CdbCyclesChecker(
   def isDasuACyclic(dasu: DasuDao): Boolean = {
     require(Option(dasu).isDefined)
     CdbCyclesChecker.logger.debug("Checking cyclicity of DASU [{}]",dasu.getId)
-    // The ASCE to deply in the DASU
+    // The ASCE to deploy in the DASU
     val asces = JavaConverters.asScalaSet(dasu.getAsces).toList
     // The topology of the ASCEs to run in the DASU
     val ascesTopology = asces.map(asceDao => {
-      new AsceTopology(asceDao.getId,JavaConverters.asScalaSet(asceDao.getIasiosIDs).toSet,asceDao.getOutput.getId)
+
+      // Does this ASCE have template inputs
+      val templatedInputs: Set[TemplateInstanceIasioDao] = JavaConverters.asScalaSet(asceDao.getTemplatedInstanceInputs).toSet
+      val templatedInputsIds = templatedInputs.map(ti =>
+        Identifier.buildIdFromTemplate(ti.getIasio.getId, ti.getInstance()))
+
+      new AsceTopology(
+        asceDao.getId,
+        JavaConverters.asScalaSet(asceDao.getIasiosIDs).toSet++templatedInputsIds,
+        asceDao.getOutput.getId)
     })
     new DasuTopology(ascesTopology,dasu.getId,dasu.getOutput.getId).isACyclic
   }
