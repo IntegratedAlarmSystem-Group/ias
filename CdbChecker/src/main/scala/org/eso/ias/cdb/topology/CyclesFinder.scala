@@ -12,7 +12,8 @@ import org.eso.ias.logging.IASLogger
   * - DASU by propagating the inputs to the ASCEs
   *
   * To check if there are cycles, CyclesFinder build all the possible paths
-  * from the inputs to the out collecting at each step, the output already produced.
+  * from the inputs to the output collecting at each step, the output already produced.
+  *
   * A cycle is found if a producer generates an output that has already been produced.
   */
 trait OutputProducer {
