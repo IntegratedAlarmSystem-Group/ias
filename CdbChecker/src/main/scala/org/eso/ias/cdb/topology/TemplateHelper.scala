@@ -8,164 +8,9 @@ import org.eso.ias.types.Identifier
 import scala.collection.JavaConverters
 
 /**
- * TemplateHelper helps transforming DASUs, ASCEs and IASIOs 
- * defined by templates into concrete instances.
- * 
- * @param dasusToDeploy The dasus to deploy in the Supervisor
- */
-class TemplateHelper(
-    val dasusToDeploy :Set[DasuToDeployDao]) {
-  require(Option(dasusToDeploy).isDefined)
-
-  // The DASUs with a template that needs to be normalized
-  val templatedDasusToDeploy: Set[DasuToDeployDao] = dasusToDeploy.filter(dtd => Option(dtd.getTemplate).isDefined)
-  assert(templatedDasusToDeploy.forall(dtd => Option(dtd.getInstance).isDefined))
-  
-  // The DASUs to deploy in the Supervisor that have no template
-  val normalDasusToDeploy: Set[DasuToDeployDao] = dasusToDeploy.filter(dtd => Option(dtd.getTemplate).isEmpty)
-  assert(normalDasusToDeploy.forall(dtd => Option(dtd.getInstance).isEmpty))
-  
-  require(checkTemplateConstraints(templatedDasusToDeploy),"Template constraints violated")
-  TemplateHelper.logger.info("Template constraints OK")
-
-  TemplateHelper.logger.info("{} DasuDao to convert from template ({}) and {} standard DasuDao ({})",
-      templatedDasusToDeploy.size,
-      templatedDasusToDeploy.map(_.getDasu.getId).mkString(","),
-      normalDasusToDeploy.size,
-      normalDasusToDeploy.map(_.getDasu.getId).mkString(","))
-      
-  /**
-   * Ensure that 
-   * - all the ASCEs of a DASU have the same template
-   * - all the inputs have the same template or are not templated
-   * - all the output have the same template templated
-    *
-    * Templated inputs are a special case because their template can differ from that
-    * of the DASU.
-   * 
-   * @param dasusToDep the templated DASUs to deploy in the supervisor
-   * @return true if all the DASU, ASCEs and IASIOs respect the constraints of the template
-   */
-  def checkTemplateConstraints(dasusToDep: Set[DasuToDeployDao]): Boolean = {
-    TemplateHelper.logger.debug("Checking constraints of {} templated DASUs ({})",
-        dasusToDep.size.toString,
-        dasusToDep.map(_.getDasu.getId).mkString(", "))
-    dasusToDep.forall(dtd => { 
-      require(Option(dtd.getTemplate).isDefined,"The DASU to deploy must be templated")
-      val templateId = dtd.getTemplate.getId
-      val instance = dtd.getInstance
-      
-      // Is the instance in the range of the allowed instances of the template
-      val instanceOk = instance>=dtd.getTemplate.getMin && instance<=dtd.getTemplate.getMax
-      
-      if (!instanceOk) {
-        TemplateHelper.logger.error("Instance {} out of range [{},{}] of template {}",
-            instance,
-            dtd.getTemplate.getMin.toString,
-            dtd.getTemplate.getMin.toString,
-            dtd.getTemplate.getId)
-      }
-
-      // The ASCEs to deploy in the DASU
-      val asces = JavaConverters.asScalaSet(dtd.getDasu.getAsces)
-      
-      // Do all the ASCEs have the same template of the DASU?
-      val ascesOk = asces.forall(asce => templateId==asce.getTemplateId)
-      
-      if (!ascesOk) {
-        TemplateHelper.logger.error("Template mismatch in the ASCEs {} of the DASU {}: should be {}",
-            asces.map(_.getId).mkString(", "),
-            dtd.getDasu.getId,
-            templateId)
-      }
-      
-      // Do the output of each ASCE (and so the output of the DASU)
-      // have the same template of the DASU?
-      val outputsOfAscesOk = asces.forall(asce => templateId==asce.getOutput.getTemplateId)
-      
-      if (!outputsOfAscesOk) {
-        TemplateHelper.logger.error("Template mismatch in the outputs {} of the ASCEs ({}) of the DASU {}: template should be {}",
-            asces.map(_.getOutput.getId).mkString(", "),
-            asces.map(_.getId).mkString(", "),
-            dtd.getDasu.getId,
-            templateId)
-      }
-      
-      // Does the output have the same template of the DASU?
-      //
-      // This is redundand, actually because the output of the DASU is the outputt
-      // of one of its ASCEs already checked in outputsOfAscesOk
-      val outputOk = templateId==dtd.getDasu.getOutput.getTemplateId
-      
-      if (!outputOk) {
-        TemplateHelper.logger.error("Template mismatch in the output {} of the DASU {}",
-            dtd.getDasu.getOutput.getId,
-            dtd.getDasu.getId)
-      }
-      
-      // Inputs can have the same template of the DASU or being not templated
-      val inputs = asces.foldLeft(Set.empty[IasioDao])( (set, asce) => set++JavaConverters.collectionAsScalaIterable(asce.getInputs))
-      val inputsOk = inputs.isEmpty || inputs.forall(iasio => Option(iasio.getTemplateId).isEmpty || templateId==iasio.getTemplateId)
-      
-      if (!inputsOk) {
-        TemplateHelper.logger.error("Inputs ({}) of DASU {} must have no template or {}",
-            inputs.map(_.getId).mkString(", "),
-            dtd.getDasu.getId,
-            templateId)
-      }
-
-      // Templated inputs can have a different template but and have an instance defined
-      val templatedInputs = asces.foldLeft(Set.empty[TemplateInstanceIasioDao])((set, asce) => set++JavaConverters.collectionAsScalaIterable(asce.getTemplatedInstanceInputs))
-      val templatedInputsOk = templatedInputs.isEmpty || templatedInputs.forall( ti => Option(ti.getTemplateId).isDefined)
-      if (!templatedInputsOk) {
-        TemplateHelper.logger.error("Templated inputs ({}) of DASU {} must have a defined template",
-          templatedInputs.map(_.getIasio.getId).mkString(", "),
-          dtd.getDasu.getId)
-      }
-
-      instanceOk && ascesOk && outputsOfAscesOk && outputOk && inputsOk && templatedInputsOk
-    })
-  }
-
-  /**
-   * Build the list of DasuDao, converting the templated ones
-   * into normal DASUs
-   * 
-   * @return The normalized DASU generated out of their templates and instances
-   */
-  def normalize(): Set[DasuDao] = {
-    
-    // Nothing to do for the normal DASUs
-    val normalDasus = normalDasusToDeploy.map(_.getDasu)
-
-    // Normalize templated DASUs
-    TemplateHelper.logger.info("Normalizing templated DASUs, ASCEs and IASIOs")
-    val templatedDasus = templatedDasusToDeploy.map(dtd => TemplateHelper.normalizeDasu(dtd.getDasu, dtd.getInstance))
-
-
-    val allDasus = normalDasus++templatedDasus
-
-    // Are there templated instance inputs in the ASCE?
-    // They need to be normalized as well
-    val allAsces: Set[AsceDao] =  allDasus.foldLeft(Set.empty[AsceDao])((z, dasu) => {
-      val ascesOfDasu = JavaConverters.asScalaSet(dasu.getAsces).toSet
-      TemplateHelper.logger.debug("Adding ASCEs of DASU {}: {}",
-        dasu.getId,
-        ascesOfDasu.map(_.getId).mkString(","))
-
-      z++ascesOfDasu
-    })
-    TemplateHelper.logger.info("Normalizing templated input instances of all ASCEs")
-    allAsces.foreach(TemplateHelper.normalizeAsceWithTemplatedInstanceInputs(_))
-    TemplateHelper.logger.info("Normalization completed")
-    
-    allDasus
-  }
-  
-  
-}
-
-/** Companion object */
+  * TemplateHelper is a collection of helper methods to transformi
+  * DASUs, ASCEs and IASIOs defined by templates into concrete instances.
+  */
 object TemplateHelper {
   /** The logger */
   val logger: Logger = IASLogger.getLogger(this.getClass)
@@ -299,5 +144,174 @@ object TemplateHelper {
       asce.getId,
       JavaConverters.collectionAsScalaIterable(asce.getInputs).map(_.getId).mkString(","))
     asce
+  }
+
+  /**
+    * Get the templated DASUs to deploy from the passed set
+    *
+    * @param dasusToDeploy the set of DASUs to deploy
+    * @return The DASUs to deploy that have a template
+    */
+  def getTemplatedDasusToDeploy(dasusToDeploy: Set[DasuToDeployDao]): Set[DasuToDeployDao] = {
+    require(Option(dasusToDeploy).isDefined)
+    dasusToDeploy.filter(dtd => Option(dtd.getTemplate).isDefined)
+  }
+
+  /**
+    * Get the non-templated DASUs to deploy from the passed set
+    *
+    * @param dasusToDeploy the set of DASUs to deploy
+    * @return The DASUs to deploy that have no template
+    */
+  def getNormalDasusToDeploy(dasusToDeploy: Set[DasuToDeployDao]): Set[DasuToDeployDao] = {
+    require(Option(dasusToDeploy).isDefined)
+    dasusToDeploy.filter(dtd => Option(dtd.getTemplate).isEmpty)
+  }
+
+  /**
+    *
+    * Normalize the passed DASUs to deploy.
+    *
+    * @param dasusToDeploy The DASUs to deploy
+    * @return The DASUs with templates replaced by concrete instances
+    */
+  def normalizeDasusToDeploy(dasusToDeploy: Set[DasuToDeployDao]): Set[DasuDao] = {
+    require(Option(dasusToDeploy).isDefined)
+
+    // The DASUs with a template that needs to be normalized
+    val templatedDasusToDeploy: Set[DasuToDeployDao] = getTemplatedDasusToDeploy(dasusToDeploy)
+    assert(templatedDasusToDeploy.forall(dtd => Option(dtd.getInstance).isDefined))
+
+    // The DASUs to deploy in the Supervisor that have no template
+    val normalDasusToDeploy: Set[DasuToDeployDao] = getNormalDasusToDeploy(dasusToDeploy)
+    assert(normalDasusToDeploy.forall(dtd => Option(dtd.getInstance).isEmpty))
+
+    require(checkTemplateConstraints(templatedDasusToDeploy),"Template constraints violated")
+    TemplateHelper.logger.info("Template constraints OK")
+
+    TemplateHelper.logger.info("{} DasuDao to convert from template ({}) and {} standard DasuDao ({})",
+      templatedDasusToDeploy.size,
+      templatedDasusToDeploy.map(_.getDasu.getId).mkString(","),
+      normalDasusToDeploy.size,
+      normalDasusToDeploy.map(_.getDasu.getId).mkString(","))
+
+    // Nothing to do for the normal DASUs
+    val normalDasus = normalDasusToDeploy.map(_.getDasu)
+
+    // Normalize templated DASUs
+    TemplateHelper.logger.info("Normalizing templated DASUs, ASCEs and IASIOs")
+    val templatedDasus = templatedDasusToDeploy.map(dtd => TemplateHelper.normalizeDasu(dtd.getDasu, dtd.getInstance))
+
+    val allDasus = normalDasus++templatedDasus
+
+    // Are there templated instance inputs in the ASCE?
+    // They need to be normalized as well
+    val allAsces: Set[AsceDao] =  allDasus.foldLeft(Set.empty[AsceDao])((z, dasu) => {
+      val ascesOfDasu = JavaConverters.asScalaSet(dasu.getAsces).toSet
+      TemplateHelper.logger.debug("Adding ASCEs of DASU {}: {}",
+        dasu.getId,
+        ascesOfDasu.map(_.getId).mkString(","))
+
+      z++ascesOfDasu
+    })
+    TemplateHelper.logger.info("Normalizing templated input instances of all ASCEs")
+    allAsces.foreach(TemplateHelper.normalizeAsceWithTemplatedInstanceInputs(_))
+    TemplateHelper.logger.info("Normalization completed")
+
+    allDasus
+
+  }
+
+  /**
+    * Ensure that
+    * - all the ASCEs of a DASU have the same template
+    * - all the inputs have the same template or are not templated
+    * - all the output have the same template templated
+    *
+    * Templated inputs are a special case because their template can differ from that
+    * of the DASU.
+    *
+    * @param dasusToDep the templated DASUs to deploy in the supervisor
+    * @return true if all the DASU, ASCEs and IASIOs respect the constraints of the template
+    */
+  def checkTemplateConstraints(dasusToDep: Set[DasuToDeployDao]): Boolean = {
+    TemplateHelper.logger.debug("Checking constraints of {} templated DASUs ({})",
+      dasusToDep.size.toString,
+      dasusToDep.map(_.getDasu.getId).mkString(", "))
+    dasusToDep.forall(dtd => {
+      require(Option(dtd.getTemplate).isDefined,"The DASU to deploy must be templated")
+      val templateId = dtd.getTemplate.getId
+      val instance = dtd.getInstance
+
+      // Is the instance in the range of the allowed instances of the template
+      val instanceOk = instance>=dtd.getTemplate.getMin && instance<=dtd.getTemplate.getMax
+
+      if (!instanceOk) {
+        TemplateHelper.logger.error("Instance {} out of range [{},{}] of template {}",
+          instance,
+          dtd.getTemplate.getMin.toString,
+          dtd.getTemplate.getMin.toString,
+          dtd.getTemplate.getId)
+      }
+
+      // The ASCEs to deploy in the DASU
+      val asces = JavaConverters.asScalaSet(dtd.getDasu.getAsces)
+
+      // Do all the ASCEs have the same template of the DASU?
+      val ascesOk = asces.forall(asce => templateId==asce.getTemplateId)
+
+      if (!ascesOk) {
+        TemplateHelper.logger.error("Template mismatch in the ASCEs {} of the DASU {}: should be {}",
+          asces.map(_.getId).mkString(", "),
+          dtd.getDasu.getId,
+          templateId)
+      }
+
+      // Do the output of each ASCE (and so the output of the DASU)
+      // have the same template of the DASU?
+      val outputsOfAscesOk = asces.forall(asce => templateId==asce.getOutput.getTemplateId)
+
+      if (!outputsOfAscesOk) {
+        TemplateHelper.logger.error("Template mismatch in the outputs {} of the ASCEs ({}) of the DASU {}: template should be {}",
+          asces.map(_.getOutput.getId).mkString(", "),
+          asces.map(_.getId).mkString(", "),
+          dtd.getDasu.getId,
+          templateId)
+      }
+
+      // Does the output have the same template of the DASU?
+      //
+      // This is redundand, actually because the output of the DASU is the outputt
+      // of one of its ASCEs already checked in outputsOfAscesOk
+      val outputOk = templateId==dtd.getDasu.getOutput.getTemplateId
+
+      if (!outputOk) {
+        TemplateHelper.logger.error("Template mismatch in the output {} of the DASU {}",
+          dtd.getDasu.getOutput.getId,
+          dtd.getDasu.getId)
+      }
+
+      // Inputs can have the same template of the DASU or being not templated
+      val inputs = asces.foldLeft(Set.empty[IasioDao])( (set, asce) => set++JavaConverters.collectionAsScalaIterable(asce.getInputs))
+      val inputsOk = inputs.isEmpty || inputs.forall(iasio => Option(iasio.getTemplateId).isEmpty || templateId==iasio.getTemplateId)
+
+      if (!inputsOk) {
+        TemplateHelper.logger.error("Inputs ({}) of DASU {} must have no template or {}",
+          inputs.map(_.getId).mkString(", "),
+          dtd.getDasu.getId,
+          templateId)
+      }
+
+      // Templated inputs can have a different template but and have an instance defined
+      val templatedInputs = asces.foldLeft(Set.empty[TemplateInstanceIasioDao])((set, asce) => set++JavaConverters.collectionAsScalaIterable(asce.getTemplatedInstanceInputs))
+      val templatedInputsOk = templatedInputs.isEmpty || templatedInputs.forall( ti => Option(ti.getTemplateId).isDefined)
+      if (!templatedInputsOk) {
+        TemplateHelper.logger.error("Templated inputs ({}) of DASU {} must have a defined template",
+          templatedInputs.map(_.getIasio.getId).mkString(", "),
+          dtd.getDasu.getId)
+      }
+
+      instanceOk && ascesOk && outputsOfAscesOk && outputOk && inputsOk && templatedInputsOk
+    })
   }
 }
