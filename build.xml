@@ -35,6 +35,7 @@
         <string>Utils</string>
         <string>Cdb</string>
         <string>BasicTypes</string>
+        <string>CdbChecker</string>
         <string>KafkaUtils</string>
         <string>Heartbeat</string>
         <string>plugin</string>

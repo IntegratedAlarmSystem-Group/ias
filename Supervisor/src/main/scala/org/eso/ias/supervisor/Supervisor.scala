@@ -10,6 +10,7 @@ import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbFiles, CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos._
 import org.eso.ias.cdb.rdb.RdbReader
+import org.eso.ias.cdb.topology.TemplateHelper
 import org.eso.ias.dasu.publisher.{KafkaPublisher, OutputPublisher}
 import org.eso.ias.dasu.subscriber.{InputSubscriber, InputsListener, KafkaSubscriber}
 import org.eso.ias.dasu.{Dasu, DasuImpl}
@@ -145,10 +146,7 @@ class Supervisor(
 
   // Get the DasuDaos from the set of DASUs to deploy:
   // the helper transform the templated DASUS into normal ones
-  val dasuDaos: Set[DasuDao] = {
-    val helper = new TemplateHelper(dasusToDeploy)
-    helper.normalize()
-  }
+  val dasuDaos: Set[DasuDao] = TemplateHelper.normalizeDasusToDeploy(dasusToDeploy)
   assert(dasuDaos.size==dasusToDeploy.size)
   
   dasuDaos.foreach(d => Supervisor.logger.info("Supervisor [{}]: building DASU from DasuDao {}",id,d.toString))
