@@ -817,5 +817,22 @@ public class TestJsonCdb {
         assertEquals(3,asceWithTemplatedInputsOnly.get().getTemplatedInstanceInputs().size());
 	}
 
+	/**
+     * Test the getting of an IASIO form file
+     *
+     * @throws Exception
+     */
+	@Test
+	public void testGetIasio() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./testCdb");
+		cdbFiles = new CdbJsonFiles(path);
+		cdbReader = new JsonReader(cdbFiles);
+
+		Optional<IasioDao> iDao=cdbReader.getIasio("SoundInput");
+		assertTrue(iDao.isPresent());
+		assertEquals(iDao.get().getSound(),SoundTypeDao.TYPE2);
+		assertTrue(iDao.get().isCanShelve());
+	}
+
 }
 
