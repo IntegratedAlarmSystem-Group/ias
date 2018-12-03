@@ -45,7 +45,6 @@ class TemplateHelperTest extends FlatSpec {
       
       val dasusToDeploy: Set[DasuToDeployDao] = JavaConverters.asScalaSet(superv.getDasusToDeploy).toSet
       
-      val templateHelper = new TemplateHelper(dasusToDeploy)
   }
   
   behavior of "The TemplateHelper"
@@ -53,24 +52,26 @@ class TemplateHelperTest extends FlatSpec {
   it must "distinguish between templated and non templated DASUs" in {
     val f = fixture
     assert(f.dasusToDeploy.size==4)
-    assert(f.templateHelper.normalDasusToDeploy.size==1)
-    assert(f.templateHelper.normalDasusToDeploy.filter(d => d.getDasu.getId=="Dasu1").size==1)
-    
-    assert(f.templateHelper.templatedDasusToDeploy.size==3)
-    val tempIds = f.templateHelper.templatedDasusToDeploy.map(dtd => dtd.getDasu.getId)
+    val normalDasus=TemplateHelper.getNormalDasusToDeploy(f.dasusToDeploy)
+    assert(normalDasus.size==1)
+    assert(normalDasus.filter(d => d.getDasu.getId=="Dasu1").size==1)
+
+    val templatedDasus = TemplateHelper.getTemplatedDasusToDeploy(f.dasusToDeploy)
+    assert(templatedDasus.size==3)
+    val tempIds = templatedDasus.map(dtd => dtd.getDasu.getId)
     assert(tempIds.contains("DasuTemplateID1"))
     assert(tempIds.contains("DasuTemplateID2"))
   }
   
   it must "return all the DASUs when normalizing" in {
     val f = fixture
-    val dasus = f.templateHelper.normalize()
+    val dasus = TemplateHelper.normalizeDasusToDeploy(f.dasusToDeploy)
     assert(dasus.size==f.dasusToDeploy.size)
   }
   
   it must "not normalize a non templated DASU" in {
     val f = fixture
-    val dasus = f.templateHelper.normalize()
+    val dasus = TemplateHelper.normalizeDasusToDeploy(f.dasusToDeploy)
     val dasuIds = dasus.map(_.getId)
     assert(dasuIds.contains("Dasu1"))
     assert(!dasuIds.contains("DasuTemplateID1"))
@@ -79,15 +80,15 @@ class TemplateHelperTest extends FlatSpec {
   
   it must "normalize the templated DASUs" in {
     val f = fixture
-    val dasus = f.templateHelper.normalize()
+    val dasus = TemplateHelper.normalizeDasusToDeploy(f.dasusToDeploy)
     val dasuIds = dasus.map(_.getId).filter(s => "Dasu1"!=s)
-    assert(dasuIds.size==f.templateHelper.templatedDasusToDeploy.size)
+    assert(dasuIds.size==TemplateHelper.getTemplatedDasusToDeploy(f.dasusToDeploy).size)
     assert(dasuIds.forall( _.matches(Identifier.templatedIdRegExp.regex)))
   }
   
   it must "not normalize the ASCEs of non templated DASUs" in {
     val f = fixture
-    val dasus = f.templateHelper.normalize()
+    val dasus = TemplateHelper.normalizeDasusToDeploy(f.dasusToDeploy)
     val nonTemplatedDasus = dasus.filter(!_.getId.matches(Identifier.templatedIdRegExp.regex))
     val nonTemplatedAsces: Set[AsceDao] = nonTemplatedDasus.foldLeft(Set.empty[AsceDao])( (s, d) => s++JavaConverters.collectionAsScalaIterable(d.getAsces))
     assert(nonTemplatedAsces.forall(!_.getId.matches(Identifier.templatedIdRegExp.regex)))
@@ -95,7 +96,7 @@ class TemplateHelperTest extends FlatSpec {
   
   it must "normalize the ASCEs of the templated DASUs" in {
     val f = fixture
-    val dasus = f.templateHelper.normalize()
+    val dasus = TemplateHelper.normalizeDasusToDeploy(f.dasusToDeploy)
     val templatedDasus = dasus.filter(_.getId.matches(Identifier.templatedIdRegExp.regex))
     val templatedAsces: Set[AsceDao] = templatedDasus.foldLeft(Set.empty[AsceDao])( (s, d) => s++JavaConverters.collectionAsScalaIterable(d.getAsces))
     assert(templatedAsces.forall(_.getId.matches(Identifier.templatedIdRegExp.regex)))
@@ -103,7 +104,7 @@ class TemplateHelperTest extends FlatSpec {
   
   it must "normalize the output of the templated DASUs" in {
     val f = fixture
-    val dasus = f.templateHelper.normalize()
+    val dasus = TemplateHelper.normalizeDasusToDeploy(f.dasusToDeploy)
     val templatedDasus = dasus.filter(_.getId.matches(Identifier.templatedIdRegExp.regex))
     val outputs = templatedDasus.map(_.getOutput)
     assert(outputs.forall(_.getId.matches(Identifier.templatedIdRegExp.regex)))
@@ -111,7 +112,7 @@ class TemplateHelperTest extends FlatSpec {
   
   it must "not normalize the output of non templated DASUs" in {
     val f = fixture
-    val dasus = f.templateHelper.normalize()
+    val dasus = TemplateHelper.normalizeDasusToDeploy(f.dasusToDeploy)
     val nonTemplatedDasus = dasus.filter(!_.getId.matches(Identifier.templatedIdRegExp.regex))
     val nonTemplateoutputs = nonTemplatedDasus.map(_.getOutput)
     assert(!nonTemplateoutputs.forall(_.getId.matches(Identifier.templatedIdRegExp.regex)))
@@ -119,7 +120,7 @@ class TemplateHelperTest extends FlatSpec {
   
   it must "normalize the output of the templated ASCEs" in {
     val f = fixture
-    val dasus = f.templateHelper.normalize()
+    val dasus = TemplateHelper.normalizeDasusToDeploy(f.dasusToDeploy)
     val templatedDasus = dasus.filter(_.getId.matches(Identifier.templatedIdRegExp.regex))
     val templatedAsces: Set[AsceDao] = templatedDasus.foldLeft(Set.empty[AsceDao])( (s, d) => s++JavaConverters.collectionAsScalaIterable(d.getAsces))
     assert(templatedAsces.forall(_.getOutput.getId.matches(Identifier.templatedIdRegExp.regex)))
@@ -127,7 +128,7 @@ class TemplateHelperTest extends FlatSpec {
   
   it must "not normalize the output of non templated ASCEs" in {
     val f = fixture
-    val dasus = f.templateHelper.normalize()
+    val dasus = TemplateHelper.normalizeDasusToDeploy(f.dasusToDeploy)
     val nonTemplatedDasus = dasus.filter(!_.getId.matches(Identifier.templatedIdRegExp.regex))
     val nonTemplatedAsces: Set[AsceDao] = nonTemplatedDasus.foldLeft(Set.empty[AsceDao])( (s, d) => s++JavaConverters.collectionAsScalaIterable(d.getAsces))
     assert(!nonTemplatedAsces.forall(_.getOutput.getId.matches(Identifier.templatedIdRegExp.regex)))
@@ -160,7 +161,7 @@ class TemplateHelperTest extends FlatSpec {
     }
     assert(ascesWithTemplatedInstanceInputs.nonEmpty, "No templated instance inputs found")
 
-    val normalizedDasus = f.templateHelper.normalize()
+    val normalizedDasus = TemplateHelper.normalizeDasusToDeploy(f.dasusToDeploy)
     val allAsces = normalizedDasus.foldLeft(Set.empty[AsceDao]) ( (z,dasu) => z++JavaConverters.asScalaSet(dasu.getAsces).toSet)
     // After normalizing all the templated inputs must have been cleared
     assert(allAsces.filter(asce => !asce.getTemplatedInstanceInputs.isEmpty).isEmpty)
