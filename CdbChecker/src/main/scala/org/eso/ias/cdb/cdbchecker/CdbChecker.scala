@@ -8,7 +8,6 @@ import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos._
 import org.eso.ias.cdb.rdb.RdbReader
-import org.eso.ias.cdb.topology.TemplateHelper
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.Identifier
 
@@ -199,12 +198,6 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
     })
   }
 
-  // Normalize all the DASUs to deploy
-  val mapOfNormalizedDasusToDeploy: Map[String, Set[DasuDao]] =
-    mapOfDasusToDeploy.keys.foldLeft(Map.empty[String,Set[DasuDao]])( (z,id) =>
-      z+(id -> TemplateHelper.normalizeDasusToDeploy(mapOfDasusToDeploy(id))))
-
-
   // Check if all the Supervisors have at least one DASU to deploy
   mapOfSupervisors.values.foreach( supervisorDao => {
     val dasusToDeployInSupervisor= supervisorDao.getDasusToDeploy
@@ -223,11 +216,7 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
     dtd <- setOfDTD
   } checkDasuToDeploy(dtd)
 
-  // Is there any DASU that is not part of the DASUs to deploy?
-  // We are looking for DASUs that will not be deployed and can be removed
-  // from the CDB
-  // The case of a DASU to deploy not associated to a DasuDao is already reported
-  // by checkDasuToDeploy
+  // The IDs of all the DASUs to deploy (the id contains the instance of the template, if defined)
   val idsOfDasusToDeploy: Set[String] = (for {
     setOfDTD <- mapOfDasusToDeploy.values
     dtd <- setOfDTD
@@ -235,21 +224,13 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
     id = dasu.map(_.getId)
     if id.isDefined
   } yield id.get).toSet
-  if (idsOfDasusToDeploy.size!=idsOfDasus.size) {
-    CdbChecker.logger.error("Size of DASUS to deploy ({}) and DASUs ({}) mismatch",idsOfDasusToDeploy.size,idsOfDasus.size)
-  }
-  // Check if a DASU to deploy correspond to a DASU
+
+  // Check if each DASU to deploy corresponds to a DASU
   // taking into account that the DASU to deploy can be templated while the DASU is not
   idsOfDasusToDeploy.foreach(idtd => {
     if (!idsOfDasus.contains(Identifier.getBaseId(idtd))) {
       CdbChecker.logger.error("DASU to deploy [{}] does not correspond to any DASU: must be fixed",idtd)
     }
-  })
-  idsOfDasus.foreach(dtd => {
-    if (!idsOfDasusToDeploy.contains(dtd))
-      CdbChecker.logger.warn(
-        "DASU [{}] does not correpond to any DASU to deploy and will not be deployed (can be removed from the CDB)",
-        dtd)
   })
 
   // Check the DASUs
@@ -338,6 +319,7 @@ class CdbChecker(val jsonCdbPath: Option[String]) {
       CdbChecker.logger.error("This DASU has no ID")
       errorsFound = true
     }
+    CdbChecker.logger.trace("Checking ASCE [{}]",id.getOrElse("?"))
 
     val dasu = Option(asceDao.getDasu)
     if (dasu.isEmpty) {
