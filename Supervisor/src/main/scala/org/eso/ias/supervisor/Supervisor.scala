@@ -146,10 +146,7 @@ class Supervisor(
 
   // Get the DasuDaos from the set of DASUs to deploy:
   // the helper transform the templated DASUS into normal ones
-  val dasuDaos: Set[DasuDao] = {
-    val helper = new TemplateHelper(dasusToDeploy)
-    helper.normalize()
-  }
+  val dasuDaos: Set[DasuDao] = TemplateHelper.normalizeDasusToDeploy(dasusToDeploy)
   assert(dasuDaos.size==dasusToDeploy.size)
   
   dasuDaos.foreach(d => Supervisor.logger.info("Supervisor [{}]: building DASU from DasuDao {}",id,d.toString))
