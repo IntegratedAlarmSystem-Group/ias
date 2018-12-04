@@ -13,6 +13,11 @@ public class CdbJsonFiles implements CdbFiles {
 	 * The extension of json file names
 	 */
 	public static final String jsonFileExtension=".json";
+
+	/**
+	 * The extension of configuration files of the clients
+	 */
+	public static final String confFileExtension=".conf";
 	
 	/**
 	 * The name of the file containing all the templates
@@ -187,6 +192,6 @@ public class CdbJsonFiles implements CdbFiles {
 		if (clientID==null || clientID.isEmpty()) {
 			throw new IllegalArgumentException("Invalid null or empty DASU ID");
 		}
-		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.CLIENT, true).resolve(clientID+jsonFileExtension);
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.CLIENT, true).resolve(clientID+confFileExtension);
 	}
 }
