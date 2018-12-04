@@ -50,7 +50,8 @@ public enum CdbFolders {
 	ASCE("ASCE"),
 	IASIO("IASIO"),
 	TF("TF"),
-	TEMPLATE("TEMPLATE");
+	TEMPLATE("TEMPLATE"),
+	CLIENT("CLIENT");
 	
 	/**
 	 *  The name of the folder
