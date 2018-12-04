@@ -78,4 +78,13 @@ public interface CdbFiles {
 	 */
 	public Path getIasioFilePath(String iasioID) throws IOException;
 
+	/**
+	 *
+	 * @param clientID The identifier of the client
+	 * @return The path for the configuration of the client
+	 *         with the passed ID
+	 * @throws IOException In case of IO error getting the path
+	 */
+	public Path getClientFilePath(String clientID) throws IOException;
+
 }

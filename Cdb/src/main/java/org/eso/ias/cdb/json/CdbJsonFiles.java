@@ -174,4 +174,19 @@ public class CdbJsonFiles implements CdbFiles {
 	public Path getTemplateFilePath(String templateID) throws IOException {
 		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.TEMPLATE, true).resolve(templatesFileName);
 	}
+
+	/**
+	 *
+	 * @param clientID The identifier of the client
+	 * @return The path for the configuration of the client
+	 *         with the passed ID
+	 * @throws IOException In case of IO error getting the path
+	 */
+	@Override
+	public Path getClientFilePath(String clientID) throws IOException {
+		if (clientID==null || clientID.isEmpty()) {
+			throw new IllegalArgumentException("Invalid null or empty DASU ID");
+		}
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.CLIENT, true).resolve(clientID+jsonFileExtension);
+	}
 }

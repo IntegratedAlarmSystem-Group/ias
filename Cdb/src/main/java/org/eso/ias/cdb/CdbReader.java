@@ -1,10 +1,10 @@
 package org.eso.ias.cdb;
 
+import org.eso.ias.cdb.pojos.*;
+
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
-
-import org.eso.ias.cdb.pojos.*;
 
 /**
  * Interface to build CDB pojos from the configuration database.
@@ -168,6 +168,18 @@ public interface CdbReader {
 	 *                         ASCE with the give identifier does not exist
 	 */
 	public Collection<TemplateInstanceIasioDao> getTemplateInstancesIasiosForAsce(String id) throws IasCdbException;
+
+	/**
+	 * Get the configuraton of the client with the passed identifier.
+	 *
+	 * The configuration is passed as a string whose format depends
+	 * on the client implementation.
+	 *
+	 * @param id The not null nor empty ID of the IAS client
+	 * @return The configuration of the client
+	 * @throws IasCdbException In case of error getting the configuration of the client
+	 */
+	public Optional<ClientConfigDao> getClientConfig(String id) throws IasCdbException;
 
 	/**
 	 * Initialize the CDB
