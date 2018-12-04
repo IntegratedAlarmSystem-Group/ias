@@ -1,13 +1,26 @@
 FROM centos:7
 
-# Install Java and Ant
+# Install Java
 RUN yum update -y && \
   yum install java-1.8.0-openjdk \
   java-1.8.0-openjdk-devel \
-  ant \
-  ant-contrib \
-  wget \
   -y
+
+# Install wget and unzip
+RUN yum install wget unzip -y
+
+# Install ant
+# RUN wget http://archive.apache.org/dist/ant/source/apache-ant-1.9.3-src.zip
+# RUN unzip apache-ant-1.9.3-src.zip
+RUN wget https://www-eu.apache.org/dist//ant/binaries/apache-ant-1.9.13-bin.zip
+RUN unzip apache-ant-1.9.13-bin.zip
+ENV JAVA_HOME /usr/lib/jvm/java-1.8.0-openjdk
+WORKDIR apache-ant-1.9.13
+RUN pwd
+RUN chmod +x INSTALL
+RUN ./INSTALL
+RUN ant -version
+RUN yum install ant-contrib-1.0-0.23.b3.el7.noarch
 
 
 # Install Kafka
