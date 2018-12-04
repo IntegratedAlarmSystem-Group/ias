@@ -32,6 +32,10 @@ import java.util.Objects;
  *     | IASIO.json
  *  |+ TEMPLATE
  *     | templates.json
+ *  |+ CLIENT
+ *     | <ClientId-1>.conf
+ *     | ...
+ *     | <ClientId-x>.conf
  * }
  * </pre>
  * 
