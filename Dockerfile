@@ -4,13 +4,34 @@ FROM centos:7
 RUN yum update -y && \
   yum install java-1.8.0-openjdk \
   java-1.8.0-openjdk-devel \
-  ant \
-  ant-contrib \
-  wget \
   -y
 
+# Set java environment variables
+ENV JAVA_HOME /usr/lib/jvm/java-1.8.0-openjdk
+ENV JRE_HOME $JAVA_HOME/jre
+
+# Install wget and unzip
+RUN yum install wget unzip -y
+
+# Install ant
+RUN wget https://www-eu.apache.org/dist//ant/binaries/apache-ant-1.9.13-bin.zip && \
+  unzip apache-ant-1.9.13-bin.zip && \
+  mv apache-ant-1.9.13 /opt/
+ENV ANT_HOME /opt/apache-ant-1.9.13
+ENV PATH $PATH:$ANT_HOME/bin
+
+WORKDIR $ANT_HOME
+RUN ant -f fetch.xml -Ddest=system
+RUN ant -version
+
+# Install ant contrib
+WORKDIR /
+RUN wget http://www.java2s.com/Code/JarDownload/ant-contrib/ant-contrib-1.0.jar.zip && \
+  unzip ant-contrib-1.0.jar.zip -d . && \
+  mv ant-contrib-1.0.jar $ANT_HOME/lib/
 
 # Install Kafka
+WORKDIR /
 RUN wget http://www-us.apache.org/dist/kafka/2.0.0/kafka_2.12-2.0.0.tgz && \
   tar -zxvf kafka_2.12-2.0.0.tgz && \
   mv kafka_2.12-2.0.0 /opt/
@@ -29,8 +50,6 @@ RUN mkdir -p /usr/src/IntegratedAlarmSystemRoot
 WORKDIR /usr/src/ias
 COPY . /usr/src/ias
 
-ENV JAVA_HOME /usr/lib/jvm/java-1.8.0-openjdk
-ENV JRE_HOME $JAVA_HOME/jre
 ENV KAFKA_HOME /opt/kafka_2.12-2.0.0
 ENV SCALA_HOME /usr/share/scala
 ENV IAS_ROOT /usr/src/IntegratedAlarmSystemRoot
