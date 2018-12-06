@@ -27,7 +27,7 @@ trait  HbListener {
     * @param state the state of the producer
     * @param props The properties
     */
-  def hbReceived(tStamp: Long, id: String, state: HeartbeatStatus, props: Map[String, String]);
+  def hbReceived(tStamp: Long, id: String, state: HeartbeatStatus, props: Map[String, String])
 }
 
 /**
@@ -47,7 +47,7 @@ class HbKafkaConsumer(brokers: String, consumerId: String)
     with Runnable {
 
   /** The message read from the kafka topic */
-  case class HbMsg(val id: String, val status: HeartbeatStatus, val props: Map[String, String], val timestamp: Long) {
+  case class HbMsg(id: String, status: HeartbeatStatus, props: Map[String, String], timestamp: Long) {
     require(Option(id).isDefined && id.nonEmpty, "Invalid identifier")
     require(Option(status).isDefined,"Invalid empty status")
     require(Option(props).isDefined,"Invalid empty props")
