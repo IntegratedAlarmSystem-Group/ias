@@ -27,7 +27,7 @@ trait  HbListener {
     * @param state the state of the producer
     * @param props The properties
     */
-  def hbReceived(hbMsh: HbMsg)
+  def hbReceived(hbMsg: HbMsg)
 }
 
 /** The message read from the kafka topic */
@@ -69,11 +69,9 @@ case class HbMsg(id: String, status: HeartbeatStatus, props: Map[String, String]
   * @param consumerId The id for the consumer
   */
 class HbKafkaConsumer(brokers: String, consumerId: String)
-  extends KafkaStringsConsumer(brokers, KafkaHelper.HEARTBEAT_TOPIC_NAME, consumerId)
-    with StringsConsumer
-    with Runnable {
+    extends StringsConsumer with Runnable {
 
-
+  val stringConsumer = new KafkaStringsConsumer(brokers, KafkaHelper.HEARTBEAT_TOPIC_NAME, consumerId)
 
   /** The buffer of events read from the kafka topic */
   private val buffer: LinkedBlockingQueue[HbMsg] = new LinkedBlockingQueue[HbMsg]()
@@ -106,9 +104,14 @@ class HbKafkaConsumer(brokers: String, consumerId: String)
   override def run(): Unit = {
     HbKafkaConsumer.logger.info("Thread started")
      while (!closed.get()) {
-       Try{
-         val msg = Option(buffer.poll(1, TimeUnit.HOURS))
-         msg.foreach(notifyListeners(_))
+       // Interrupted exception must be caught with try not Try
+       try {
+         val msg = buffer.poll(1, TimeUnit.HOURS)
+         val event = Option(msg)
+         event.foreach(notifyListeners(_))
+       } catch {
+        case e: InterruptedException => HbKafkaConsumer.logger.debug("Interrupted")
+        case t: Exception =>  HbKafkaConsumer.logger.warn("Error notifying listener",t)
        }
      }
     HbKafkaConsumer.logger.info("Thread terminated")
@@ -122,6 +125,7 @@ class HbKafkaConsumer(brokers: String, consumerId: String)
     */
   def notifyListeners(event: HbMsg): Unit = {
     require(Option(event).isDefined)
+    HbKafkaConsumer.logger.debug("Notifying conumers of event {}",event)
     listeners.synchronized {
       listeners.foreach(l => {
         Try(l.hbReceived(event)) match {
@@ -153,18 +157,31 @@ class HbKafkaConsumer(brokers: String, consumerId: String)
   /** Start getting events */
   def start(): Unit = {
     require(Option(thread.get()).isEmpty,"Thread already started")
-    thread.set(new Thread(this))
+    require(!closed.get(),"Cannot start a HB consumer already closed")
+    thread.set(new Thread(this, "HbKafkaConsumerThread"))
     thread.get.setDaemon(true)
     thread.get().start()
     HbKafkaConsumer.logger.debug("Thread started")
-    startGettingEvents(this,KafkaStringsConsumer.StartPosition.END)
+    HbKafkaConsumer.logger.debug("Initializing the string consumer")
+    stringConsumer.setUp()
+    HbKafkaConsumer.logger.debug("Starting the string consumer")
+    stringConsumer.startGettingEvents(this,KafkaStringsConsumer.StartPosition.END)
+    HbKafkaConsumer.logger.info("Initialized")
   }
 
   /** Stop getting events */
-  def sutdown(): Unit = {
-    closed.set(true)
-    Option(thread.get()).foreach(_.interrupt())
-    super.tearDown()
+  def shutdown(): Unit = {
+    HbKafkaConsumer.logger.debug("Shutting down")
+    val wasClosed=closed.getAndSet(true)
+    if (!wasClosed) {
+      Option(thread.get()).foreach(_.interrupt())
+      HbKafkaConsumer.logger.debug("Closing the string consumer")
+      stringConsumer.tearDown()
+      HbKafkaConsumer.logger.info("Shut down")
+    } else {
+      HbKafkaConsumer.logger.warn("Already closed")
+    }
+
   }
 
 
