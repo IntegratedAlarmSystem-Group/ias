@@ -27,7 +27,34 @@ trait  HbListener {
     * @param state the state of the producer
     * @param props The properties
     */
-  def hbReceived(tStamp: Long, id: String, state: HeartbeatStatus, props: Map[String, String])
+  def hbReceived(hbMsh: HbMsg)
+}
+
+/** The message read from the kafka topic */
+case class HbMsg(id: String, status: HeartbeatStatus, props: Map[String, String], timestamp: Long) {
+  require(Option(id).isDefined && id.nonEmpty, "Invalid identifier")
+  require(Option(status).isDefined,"Invalid empty status")
+  require(Option(props).isDefined,"Invalid empty props")
+
+  override def toString: String = {
+    val s = new StringBuilder("HB message [id=")
+    s.append(id)
+    s.append(", status=")
+    s.append(status)
+    s.append(", at ")
+    s.append(ISO8601Helper.getTimestamp(timestamp))
+    if (Option(props).isDefined && props.nonEmpty) {
+      s.append(", props={")
+      val propsStr=for {
+        (k,v) <- props
+        s = k+'='+v
+      } yield s
+      s.append(propsStr.mkString(","))
+      s.append('}')
+    }
+    s.append(']')
+    s.toString()
+  }
 }
 
 /**
@@ -46,32 +73,7 @@ class HbKafkaConsumer(brokers: String, consumerId: String)
     with StringsConsumer
     with Runnable {
 
-  /** The message read from the kafka topic */
-  case class HbMsg(id: String, status: HeartbeatStatus, props: Map[String, String], timestamp: Long) {
-    require(Option(id).isDefined && id.nonEmpty, "Invalid identifier")
-    require(Option(status).isDefined,"Invalid empty status")
-    require(Option(props).isDefined,"Invalid empty props")
 
-    override def toString: String = {
-      val s = new StringBuilder("HB message [id=")
-      s.append(id)
-      s.append(", status=")
-      s.append(status)
-      s.append(", at ")
-      s.append(ISO8601Helper.getTimestamp(timestamp))
-      if (Option(props).isDefined && props.nonEmpty) {
-        s.append(", props={")
-        val propsStr=for {
-          (k,v) <- props
-          s = k+'='+v
-        } yield s
-        s.append(propsStr.mkString(","))
-        s.append('}')
-      }
-      s.append(']')
-      s.toString()
-    }
-  }
 
   /** The buffer of events read from the kafka topic */
   private val buffer: LinkedBlockingQueue[HbMsg] = new LinkedBlockingQueue[HbMsg]()
@@ -122,7 +124,7 @@ class HbKafkaConsumer(brokers: String, consumerId: String)
     require(Option(event).isDefined)
     listeners.synchronized {
       listeners.foreach(l => {
-        Try(l.hbReceived(event.timestamp,event.id,event.status,event.props)) match {
+        Try(l.hbReceived(event)) match {
           case Failure(exception) =>  HbKafkaConsumer.logger.error("Error notifying listener",exception)
           case _ => HbKafkaConsumer.logger.debug("HB event successfully notified: ",event.toString)
         }
