@@ -1,4 +1,4 @@
-package org.eso.ias.kafkautils.test
+package org.eso.ias.heartbeat.test
 
 import org.eso.ias.heartbeat.consumer.{HbListener, HbMsg}
 import org.eso.ias.logging.IASLogger
