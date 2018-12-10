@@ -1,5 +1,8 @@
 package org.eso.ias.monitor
 
+import java.io.File
+import java.util.concurrent.CountDownLatch
+
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
 import org.eso.ias.cdb.CdbReader
@@ -9,6 +12,7 @@ import org.eso.ias.cdb.rdb.RdbReader
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.{Identifier, IdentifierType}
 
+import scala.collection.JavaConverters
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -18,8 +22,31 @@ import scala.util.{Failure, Success, Try}
   * from there by the web server.
   * TODO: send alarms (al least some of them) to the web server even wehn
   *       kafka is down
+  *
+  * @param identifier The identifier of the monitor tool
   */
-class IasMonitor {
+class IasMonitor(
+                  val identifier: Identifier,
+                  pluginIds: Set[String],
+                  converterIds: Set[String],
+                  clientIds: Set[String],
+                  sinkIds: Set[String],
+                  supervisorIds: Set[String],
+                  kafkaConenctorConfigs: Set[KafkaSinkConnectorConfig],
+                  val threshold: Long,
+                  val refreshRate: Long) {
+
+  val hbMonitor: HbMonitor = new HbMonitor(pluginIds,converterIds,clientIds,sinkIds,supervisorIds,threshold)
+
+  /** Start the monitoring */
+  def start(): Unit = {
+    hbMonitor.start()
+  }
+
+  /** Stop monitoring and free resources */
+  def shutdown(): Unit = {
+    hbMonitor.shutdown()
+  }
 }
 
 object IasMonitor {
@@ -38,11 +65,12 @@ object IasMonitor {
     * @param args The params read from the command line
     * @return a tuple with the Id of the monitor, the path of the cdb and the log level dao
     */
-  def parseCommandLine(args: Array[String]): (Option[String],  Option[String], Option[LogLevelDao]) = {
+  def parseCommandLine(args: Array[String]): (Option[String],  Option[String], Option[LogLevelDao], Option[String]) = {
     val options: Options = new Options
     options.addOption("h", "help",false,"Print help and exit")
     options.addOption("j", "jcdb", true, "Use the JSON Cdb at the passed path")
     options.addOption("x", "logLevel", true, "Set the log level (TRACE, DEBUG, INFO, WARN, ERROR)")
+    options.addOption("f", "configFile", true, "Config file")
 
     val parser: CommandLineParser = new DefaultParser
     val cmdLineParseAction = Try(parser.parse(options,args))
@@ -56,6 +84,7 @@ object IasMonitor {
     val cmdLine = cmdLineParseAction.asInstanceOf[Success[CommandLine]].value
     val help = cmdLine.hasOption('h')
     val jcdb = Option(cmdLine.getOptionValue('j'))
+    val file = Option(cmdLine.getOptionValue('f'))
 
     val logLvl: Option[LogLevelDao] = {
       val t = Try(Option(cmdLine.getOptionValue('x')).map(level => LogLevelDao.valueOf(level)))
@@ -83,11 +112,13 @@ object IasMonitor {
       System.exit(0)
     }
 
-    val ret = (monitorId, jcdb, logLvl)
-    IasMonitor.logger.info("Params from command line: jcdb={}, logLevel={} supervisor ID={}",
+    val ret = (monitorId, jcdb, logLvl,file)
+    IasMonitor.logger.info("Params from command line: jcdb={}, logLevel={} monitor ID={}, config file {}",
       ret._2.getOrElse("Undefined"),
       ret._3.getOrElse("Undefined"),
-      ret._1.getOrElse("Undefined"))
+      ret._1.getOrElse("Undefined"),
+      ret._4.getOrElse("Undefined")
+    )
     ret
 
   }
@@ -131,13 +162,100 @@ object IasMonitor {
       (refRate, hbRate, logLvl, brokers)
     }
 
-    val supervisorIds = {
-      val idsOpt = reader.getSupervisorIds
-
+    // Get the configuration from the CDB or from the passed
+    // configuration file
+    val config: IasMonitorConfig = {
+      if (parsedArgs._4.isDefined) {
+        val fName = parsedArgs._4.get
+        IasMonitor.logger.info("Reading configuration from file {}",fName)
+        IasMonitorConfig.fromFile(new File(fName))
+      } else {
+        IasMonitor.logger.info("Reading configuration of Monitor {} from CDB",monitorId)
+        val configOpt = reader.getClientConfig(monitorId)
+        require(configOpt.isPresent,"Config of client "+monitorId+" NOT found in CDB")
+        require(configOpt.get().getId==monitorId,"Wrong ID from config file: found "+configOpt.get().getId+" instead of "+monitorId)
+        val configStr = configOpt.get().getConfig
+        IasMonitorConfig.valueOf(configStr)
+      }
     }
+
+    // The IDs of the Supervisor to monitor
+    //
+    // The IDS of the supervisor are read from the CDB
+    // but the ones included in the configration must be discarded
+    val supervisorIds = {
+      val supervisorIdsFromCdb = reader.getSupervisorIds
+      val ids: Set[String] = if (supervisorIdsFromCdb.isPresent) {
+        JavaConverters.asScalaSet(supervisorIdsFromCdb.get).toSet
+      } else {
+        Set.empty[String]
+      }
+      IasMonitor.logger.info("Found {} supervisors from CDB: {}",ids.size,ids.mkString(","))
+
+      val excludedIds = JavaConverters.asScalaSet(config.excludedSupervisorIds).toSet
+      if (excludedIds.nonEmpty) {
+        IasMonitor.logger.info("Will not monitor {} supervisors: {}",excludedIds.size,excludedIds.mkString(","))
+      }
+
+      ids.filter(id => excludedIds.contains(id))
+    }
+    IasMonitor.logger.info("{} supervisors to monitor: {}",supervisorIds.size,supervisorIds.mkString(","))
+
+    val pluginIds = JavaConverters.asScalaSet(config.getPluginIds).toSet
+    IasMonitor.logger.info("{} plugins to monitor: {}",pluginIds.size,pluginIds.mkString(","))
+
+    val converterIds = JavaConverters.asScalaSet(config.getConverterIds).toSet
+    IasMonitor.logger.info("{} converters to monitor: {}",converterIds.size,converterIds.mkString(","))
+
+    val clientIds = JavaConverters.asScalaSet(config.getClientIds).toSet
+    IasMonitor.logger.info("{} clients to monitor: {}",clientIds.size,clientIds.mkString(","))
+
+    val sinkIds = JavaConverters.asScalaSet(config.getSinkIds).toSet
+    IasMonitor.logger.info("{} sink clients to monitor: {}",sinkIds.size,sinkIds.mkString(","))
+
+    val kafkaConenctorConfigs = JavaConverters.asScalaSet(config.getKafkaSinkConnectors).toSet
+    IasMonitor.logger.info("{} kafka connectors to monitor: {}",
+      kafkaConenctorConfigs.size,
+      kafkaConenctorConfigs.mkString(","))
+
+    val threshold = config.getThreshold
+
     reader.shutdown()
 
      // The identifier of the monitor
     val identifier = new Identifier(monitorId, IdentifierType.CLIENT, None)
+
+    val monitor = new IasMonitor(
+      identifier,
+      pluginIds,
+      converterIds,
+      clientIds,
+      sinkIds,
+      supervisorIds,
+      kafkaConenctorConfigs,
+      threshold,
+      refreshRate)
+
+    logger.debug("Starting the monitoring")
+    monitor.start()
+    logger.info("Monitoring started")
+
+    val latch = new CountDownLatch(1)
+
+    val shutdownHookThread = {
+      val r = new Runnable{
+        override def run(): Unit = {
+          monitor.shutdown()
+          latch.countDown()
+        }
+      }
+      new Thread(r,"IasMonitor-ShutdownHook")
+    }
+    Runtime.getRuntime.addShutdownHook( shutdownHookThread)
+
+    // Wait forever
+    latch.await()
+    logger.info("Done")
+
   }
 }
