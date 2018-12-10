@@ -208,7 +208,7 @@ object IasMonitor {
         IasMonitor.logger.info("Will not monitor {} supervisors: {}",excludedIds.size,excludedIds.mkString(","))
       }
 
-      ids.filter(id => excludedIds.contains(id))
+      ids.filter(id => !excludedIds.contains(id))
     }
     IasMonitor.logger.info("{} supervisors to monitor: {}",supervisorIds.size,supervisorIds.mkString(","))
 
