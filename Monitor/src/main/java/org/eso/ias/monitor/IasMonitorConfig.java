@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.persistence.Basic;
+import java.io.File;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -191,5 +192,25 @@ public class IasMonitorConfig {
         } catch (Exception e) {
             throw new Exception("Error serializing the configuration into a JSON string",e);
         }
+    }
+
+    /**
+     * Reads the configuration from the passed file
+     *
+     * @param f The file with the configuration
+     * @return The IasMonitorConfig object
+     * @throws Exception in case of error parsing the JSON string
+     */
+    public static IasMonitorConfig fromFile(File f) throws  Exception {
+        Objects.requireNonNull(f);
+        // The jackson 2 mapper
+        ObjectMapper jsonMapper = new ObjectMapper();
+        IasMonitorConfig jsonPojo = null;
+        try {
+            jsonPojo=jsonMapper.readValue(f, IasMonitorConfig.class);
+        } catch (Exception e) {
+            throw new Exception("Error parsing the configuration from file "+f.getAbsolutePath(),e);
+        }
+        return jsonPojo;
     }
 }
