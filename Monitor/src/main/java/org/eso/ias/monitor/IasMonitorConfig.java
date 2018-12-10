@@ -143,6 +143,13 @@ public class IasMonitorConfig {
     }
 
     /**
+     * Serialize this configuration into a JSON string
+     */
+    public String toJsonString() throws Exception {
+        return IasMonitorConfig.configToJsonString(this);
+    }
+
+    /**
      * Build the {@link IasMonitorConfig} from the passed JSON string
      *
      * @param jsonString The JSON string with the configuration
