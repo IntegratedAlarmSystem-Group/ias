@@ -1,0 +1,31 @@
+{
+  "threshold":15,
+  "excludedSupervisorIds":[
+    "ExcSup1",
+    "ExcSup2"
+  ],
+  "pluginIds":[
+    "p1",
+    "p2",
+    "p3"
+  ],
+  "converterIds":[
+    "conv1",
+    "conv2"
+  ],
+  "clientIds":[
+    "client1",
+    "client2",
+    "client3",
+    "client4"
+  ],
+  "sinkIds":[
+    "sink1"
+  ],
+  "kafkaSinkConnectors":[
+    {"hostName":"host.name.org","port":8192,"id":"IdA"},
+    {"hostName":"name.host.org","port":8193,"id":"IdB"},
+    {"hostName":"host.name.com","port":8194,"id":"IdC"}
+  ]
+}
+
