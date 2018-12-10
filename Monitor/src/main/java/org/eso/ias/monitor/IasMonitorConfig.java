@@ -37,6 +37,11 @@ public class IasMonitorConfig {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public Set<String> pluginIds = new HashSet<>();
 
+    /**
+     * Empty constructor
+     */
+    public IasMonitorConfig() {}
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
