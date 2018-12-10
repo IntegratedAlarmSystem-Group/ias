@@ -9,6 +9,7 @@ import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbFiles, CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.LogLevelDao
 import org.eso.ias.cdb.rdb.RdbReader
+import org.eso.ias.heartbeat.consumer.HbKafkaConsumer
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.{Identifier, IdentifierType}
 
@@ -23,20 +24,30 @@ import scala.util.{Failure, Success, Try}
   * TODO: send alarms (al least some of them) to the web server even wehn
   *       kafka is down
   *
+  * @param hbKafkaConsumer the consumer of HBs from the kafka topic
   * @param identifier The identifier of the monitor tool
+  * @param pluginIds The IDs of the plugins to monitor
+  * @param converterIds The IDs of the converters to monitor
+  * @param clientIds The IDs of the clients to monitor
+  * @param sinkIds The IDs of the sink clients to monitor
+  * @param supervisorIds The IDs of the supervisors to monitor
+  * @param kafkaConenctorConfigs The IDs of the kafka sink connectors to monitor
+  * @param threshold The threshold to decide when a HB is too late
+  * @param refreshRate the refresh rate (seconds) to send alarms produced by the monitor
   */
 class IasMonitor(
-                  val identifier: Identifier,
-                  pluginIds: Set[String],
-                  converterIds: Set[String],
-                  clientIds: Set[String],
-                  sinkIds: Set[String],
-                  supervisorIds: Set[String],
-                  kafkaConenctorConfigs: Set[KafkaSinkConnectorConfig],
-                  val threshold: Long,
-                  val refreshRate: Long) {
-
-  val hbMonitor: HbMonitor = new HbMonitor(pluginIds,converterIds,clientIds,sinkIds,supervisorIds,threshold)
+                hbKafkaConsumer: HbKafkaConsumer,
+                val identifier: Identifier,
+                pluginIds: Set[String],
+                converterIds: Set[String],
+                clientIds: Set[String],
+                sinkIds: Set[String],
+                supervisorIds: Set[String],
+                kafkaConenctorConfigs: Set[KafkaSinkConnectorConfig],
+                threshold: Long,
+                val refreshRate: Long) {
+  require(refreshRate>0,"Invalid negative or zero refresh rate")
+  val hbMonitor: HbMonitor = new HbMonitor(hbKafkaConsumer,pluginIds,converterIds,clientIds,sinkIds,supervisorIds,threshold)
 
   /** Start the monitoring */
   def start(): Unit = {
@@ -225,7 +236,11 @@ object IasMonitor {
      // The identifier of the monitor
     val identifier = new Identifier(monitorId, IdentifierType.CLIENT, None)
 
+    // The consumer of HBs
+    val hbConsumer: HbKafkaConsumer = new HbKafkaConsumer(kafkaBrokers,identifier.id)
+
     val monitor = new IasMonitor(
+      hbConsumer,
       identifier,
       pluginIds,
       converterIds,
