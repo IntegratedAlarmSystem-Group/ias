@@ -30,6 +30,11 @@ public class KafkaSinkConnectorConfig {
     private String id;
 
     /**
+     * Empty constructor
+     */
+    public KafkaSinkConnectorConfig() {}
+
+    /**
      * Construcotr
      * @param hostName The host name to contact with the REST API
      * @param port The port to query the REST API
