@@ -1,5 +1,7 @@
 package org.eso.ias.monitor.test
 
+import java.io.File
+
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.monitor.{IasMonitorConfig, KafkaSinkConnectorConfig}
 import org.scalatest.FlatSpec
@@ -84,6 +86,11 @@ class ConfigTest extends FlatSpec {
     val jsonStr = config.toJsonString
     val fromJSonString = IasMonitorConfig.valueOf(jsonStr)
 
+    assert(fromJSonString.getClientIds.isEmpty)
+    assert(fromJSonString.getExcludedSupervisorIds.isEmpty)
+    assert(fromJSonString.getPluginIds.isEmpty)
+    assert(fromJSonString.getConverterIds.isEmpty)
+
     assert(fromJSonString.getSinkIds.size()==4)
     assert(fromJSonString.getSinkIds.contains("SinkA-id"));
     assert(fromJSonString.getSinkIds.contains("SinkB-id"));
@@ -105,12 +112,50 @@ class ConfigTest extends FlatSpec {
     val jsonStr = config.toJsonString
     val fromJSonString = IasMonitorConfig.valueOf(jsonStr)
 
-    println(jsonStr)
-
     assert(fromJSonString.getKafkaSinkConnectors.size()==3)
     assert(fromJSonString.getKafkaSinkConnectors.contains(kConnectorA));
     assert(fromJSonString.getKafkaSinkConnectors.contains(kConnectorB));
     assert(fromJSonString.getKafkaSinkConnectors.contains(kConnectorC));
+  }
+
+  it must "read the configuration from a file" in {
+    val f = new File("./config.json")
+
+    val config = IasMonitorConfig.fromFile(f)
+
+    assert(config.getThreshold==15.toLong)
+
+    assert(config.getExcludedSupervisorIds.size()==2)
+    assert(config.getPluginIds.size()==3)
+    assert(config.getConverterIds.size()==2)
+    assert(config.getClientIds.size()==4)
+    assert(config.getSinkIds.size()==1)
+    assert(config.getKafkaSinkConnectors.size()==3)
+
+    assert(config.getExcludedSupervisorIds.contains("ExcSup1"));
+    assert(config.getExcludedSupervisorIds.contains("ExcSup2"));
+
+    assert(config.getPluginIds.contains("p1"));
+    assert(config.getPluginIds.contains("p2"));
+    assert(config.getPluginIds.contains("p3"));
+
+    assert(config.getConverterIds.contains("conv1"));
+    assert(config.getConverterIds.contains("conv2"));
+
+    assert(config.getClientIds.contains("client1"));
+    assert(config.getClientIds.contains("client2"));
+    assert(config.getClientIds.contains("client3"));
+    assert(config.getClientIds.contains("client4"));
+
+    assert(config.getSinkIds.contains("sink1"));
+
+    val kConnectorA = new KafkaSinkConnectorConfig("host.name.org",8192,"IdA")
+    val kConnectorB = new KafkaSinkConnectorConfig("name.host.org",8193,"IdB")
+    val kConnectorC = new KafkaSinkConnectorConfig("host.name.com",8194,"IdC")
+
+    assert(config.getKafkaSinkConnectors.contains(kConnectorA))
+    assert(config.getKafkaSinkConnectors.contains(kConnectorB))
+    assert(config.getKafkaSinkConnectors.contains(kConnectorC))
   }
 
 }
