@@ -93,4 +93,13 @@ public class KafkaSinkConnectorConfig {
     public int hashCode() {
         return Objects.hash(hostName, port, id);
     }
+
+    @Override
+    public String toString() {
+        return "KafkaSinkConnectorConfig{" +
+                "hostName='" + hostName + '\'' +
+                ", port=" + port +
+                ", id='" + id + '\'' +
+                '}';
+    }
 }
