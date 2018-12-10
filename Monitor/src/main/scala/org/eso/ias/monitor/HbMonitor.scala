@@ -3,7 +3,7 @@ package org.eso.ias.monitor
 import java.util.concurrent.{Executors, ScheduledExecutorService, ThreadFactory, TimeUnit}
 
 import com.typesafe.scalalogging.Logger
-import org.eso.ias.heartbeat.consumer.{HbListener, HbMsg}
+import org.eso.ias.heartbeat.consumer.{HbKafkaConsumer, HbListener, HbMsg}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IdentifierType._
 import org.eso.ias.types.{Alarm, Identifier}
@@ -37,6 +37,7 @@ import scala.collection.mutable.{Map => MutableMap}
   *       this needs to be changed when [[https://github.com/IntegratedAlarmSystem-Group/ias/issues/145 #145]]
   *       will be fixed
   *
+  * @param hbConsumer The consumer of HBs
   * @param pluginIds The IDs of the plugins whose IDs must be monitored
   * @param converterIds The IDs of the converters whose IDs must be monitored
   * @param clientIds The IDs of the clients whose IDs must be monitored
@@ -53,6 +54,7 @@ import scala.collection.mutable.{Map => MutableMap}
   * @param supervisorsAlarmPriority the priority of the alarm for faulty supervisors
   */
 class HbMonitor(
+               val hbConsumer: HbKafkaConsumer,
                  val pluginIds: Set[String],
                  val converterIds: Set[String],
                  val clientIds: Set[String],
@@ -64,6 +66,7 @@ class HbMonitor(
                  val clientsAlarmPriority: Alarm=Alarm.getSetDefault,
                  val sinksAlarmPriority: Alarm=Alarm.getSetDefault,
                  val supervisorsAlarmPriority: Alarm=Alarm.getSetDefault) extends HbListener with Runnable {
+  require(Option(hbConsumer).isDefined)
   require(threshold>0,"Invalid negative threshold")
   require(Option(pluginIds).isDefined)
   require(Option(converterIds).isDefined)
@@ -103,6 +106,9 @@ class HbMonitor(
 
   def start(): Unit = {
     HbMonitor.logger.debug("Starting up")
+    hbConsumer.addListener(this)
+    hbConsumer.start()
+    HbMonitor.logger.debug("HB consumer started")
     schedExecutorSvc.scheduleWithFixedDelay(this,threshold,threshold,TimeUnit.SECONDS)
     HbMonitor.logger.debug("Thread scheduled every {} seconds",threshold)
     HbMonitor.logger.info("Started up")
@@ -110,6 +116,8 @@ class HbMonitor(
 
   def shutdown(): Unit = {
     HbMonitor.logger.debug("Shutting down")
+    hbConsumer.shutdown()
+    HbMonitor.logger.debug("HB consumer shut down")
     schedExecutorSvc.shutdown()
     HbMonitor.logger.info("Shut down")
   }
