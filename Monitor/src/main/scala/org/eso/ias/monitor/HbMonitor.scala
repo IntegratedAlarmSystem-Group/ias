@@ -46,11 +46,11 @@ import scala.collection.mutable.{Map => MutableMap}
   * @param supervisorIds The IDs of the supervisors whose IDs must be monitored
   * @param threshold An alarm is emitted if the HB has not been received before the threshold elapses
   *                  (in seconds)
-  * @param pluginsAlarmpriority the priority of the alarm for faulty plugins
-  * @param convertersAlarmpriority the priority of the alarm for faulty converters
-  * @param clientsAlarmpriority the priority of the alarm for faulty clients
-  * @param sinksAlarmpriority the priority of the alarm for faulty sink connectors
-  * @param supervisorsAlarmpriority the priority of the alarm for faulty supervisors
+  * @param pluginsAlarmPriority the priority of the alarm for faulty plugins
+  * @param convertersAlarmPriority the priority of the alarm for faulty converters
+  * @param clientsAlarmPriority the priority of the alarm for faulty clients
+  * @param sinksAlarmPriority the priority of the alarm for faulty sink connectors
+  * @param supervisorsAlarmPriority the priority of the alarm for faulty supervisors
   */
 class HbMonitor(
                  val pluginIds: Set[String],
@@ -59,11 +59,11 @@ class HbMonitor(
                  val sinks: Set[String],
                  val supervisorIds: Set[String],
                  val threshold: Long,
-                 val pluginsAlarmpriority: Alarm=Alarm.getSetDefault,
-                 val convertersAlarmpriority: Alarm=Alarm.getSetDefault,
-                 val clientsAlarmpriority: Alarm=Alarm.getSetDefault,
-                 val sinksAlarmpriority: Alarm=Alarm.getSetDefault,
-                 val supervisorsAlarmpriority: Alarm=Alarm.getSetDefault) extends HbListener with Runnable {
+                 val pluginsAlarmPriority: Alarm=Alarm.getSetDefault,
+                 val convertersAlarmPriority: Alarm=Alarm.getSetDefault,
+                 val clientsAlarmPriority: Alarm=Alarm.getSetDefault,
+                 val sinksAlarmPriority: Alarm=Alarm.getSetDefault,
+                 val supervisorsAlarmPriority: Alarm=Alarm.getSetDefault) extends HbListener with Runnable {
   require(threshold>0,"Invalid negative threshold")
   require(Option(pluginIds).isDefined)
   require(Option(converterIds).isDefined)
@@ -150,11 +150,11 @@ class HbMonitor(
     def updateAlarm(alarm: MonitorAlarm, faultyIds: List[String], priority: Alarm=Alarm.getSetDefault): Unit =
       alarm.set(priority,faultyIds.mkString(","))
 
-    val faultyPlugins = updateAlarm(MonitorAlarm.PLUGIN_DEAD,faultyIds(pluginsHbMsgs),pluginsAlarmpriority)
-    val faultySupervisors = updateAlarm(MonitorAlarm.SUPERVISOR_DEAD,faultyIds(supervisorsHbMsgs),supervisorsAlarmpriority)
-    val faultyConverters = updateAlarm(MonitorAlarm.CONVERTER_DEAD,faultyIds(convertersHbMsgs),convertersAlarmpriority)
-    val faultySinkConnectors = updateAlarm(MonitorAlarm.SINK_DEAD,faultyIds(sinksHbMsgs),sinksAlarmpriority)
-    val faultyClients = updateAlarm(MonitorAlarm.CLIENT_DEAD,faultyIds(clientsHbMsgs),clientsAlarmpriority)
+    val faultyPlugins = updateAlarm(MonitorAlarm.PLUGIN_DEAD,faultyIds(pluginsHbMsgs),pluginsAlarmPriority)
+    val faultySupervisors = updateAlarm(MonitorAlarm.SUPERVISOR_DEAD,faultyIds(supervisorsHbMsgs),supervisorsAlarmPriority)
+    val faultyConverters = updateAlarm(MonitorAlarm.CONVERTER_DEAD,faultyIds(convertersHbMsgs),convertersAlarmPriority)
+    val faultySinkConnectors = updateAlarm(MonitorAlarm.SINK_DEAD,faultyIds(sinksHbMsgs),sinksAlarmPriority)
+    val faultyClients = updateAlarm(MonitorAlarm.CLIENT_DEAD,faultyIds(clientsHbMsgs),clientsAlarmPriority)
 
     // reset the maps to be ready for the next iteration
     hbMaps.foreach(m => m.keySet.foreach(k => m(k)=false))
