@@ -1,7 +1,7 @@
 {
 	"logLevel": "DEBUG",
 	"refreshRate": "3",
-	"tolerance": "1",
+	"validityThreshold": "4",
 	"hbFrequency":"5",
 	"smtp":"name:pswd@smtp.server.org",
 	"props":[

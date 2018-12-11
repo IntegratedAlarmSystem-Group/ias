@@ -37,7 +37,7 @@ public abstract class TransferExecutor {
 	 * The time frame (msec) to invalidate monitor points that have been refreshed
 	 * after the time frame.
 	 * 
-	 * The validityTimeFrame is given by autoRefreshRate+tolerance 
+	 * The validityTimeFrame is given by validityThreshold prop. of the IAS
 	 */
 	protected final long validityTimeFrame;
 	

@@ -89,7 +89,7 @@ public class TestJsonCdb {
 		props.add(p2);
 
 		ias.setRefreshRate(4);
-		ias.setTolerance(3);
+		ias.setValidityThreshold(6);
 
 		ias.setHbFrequency(5);
 
@@ -130,7 +130,7 @@ public class TestJsonCdb {
 
 		assertEquals(LogLevelDao.INFO,ias.getLogLevel());
 		assertEquals(5,ias.getRefreshRate());
-		assertEquals(1,ias.getTolerance());
+		assertEquals(11,ias.getValidityThreshold());
 		assertEquals(10,ias.getHbFrequency());
 		assertEquals("127.0.0.1:9092",ias.getBsdbUrl());
 		assertEquals("acaproni:pswd@smtp.test.org",ias.getSmtp());
@@ -815,6 +815,23 @@ public class TestJsonCdb {
         assertTrue(asceWithTemplatedInputsOnly.isPresent());
         assertTrue(asceWithTemplatedInputsOnly.get().getInputs().isEmpty());
         assertEquals(3,asceWithTemplatedInputsOnly.get().getTemplatedInstanceInputs().size());
+	}
+
+	/**
+     * Test the getting of an IASIO form file
+     *
+     * @throws Exception
+     */
+	@Test
+	public void testGetIasio() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./testCdb");
+		cdbFiles = new CdbJsonFiles(path);
+		cdbReader = new JsonReader(cdbFiles);
+
+		Optional<IasioDao> iDao=cdbReader.getIasio("SoundInput");
+		assertTrue(iDao.isPresent());
+		assertEquals(iDao.get().getSound(),SoundTypeDao.TYPE2);
+		assertTrue(iDao.get().isCanShelve());
 	}
 
 }

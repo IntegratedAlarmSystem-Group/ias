@@ -1,0 +1,7 @@
+{
+	"logLevel": "INFO",
+	"refreshRate": "3",
+	"validityThreshold": "15",
+	"hbFrequency":"5",
+	"props":[]
+}

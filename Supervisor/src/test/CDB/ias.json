@@ -1,7 +1,7 @@
 {
 	"logLevel": "INFO",
 	"refreshRate": "3",
-	"tolerance": "1",
+	"validityThreshold": "4",
 	"hbFrequency":"5",
 	"props":[
 		{"name":"Prop1-Name","value":"The value of P1"},

@@ -280,8 +280,7 @@ case class InOut[A](
    * 
    *  
    * 
-   * @param validityTimeFrame the time (msecs) to consider the value valid
-   *                          it is composed of the autoSendTimeInterval+tolerance 
+   * @param validityTimeFrame the time (msecs) to consider the value valid i.e. the validityThrshold
    * @return the validity taking times into account
    */
   def getValidityOfInputByTime(validityTimeFrame: Long): Validity = {

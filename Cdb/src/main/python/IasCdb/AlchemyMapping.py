@@ -58,7 +58,7 @@ class Ias(Base):
     ID = Column(Integer, Sequence('IAS_SEQ_GENERATOR'), primary_key=True, autoincrement='auto')
     LOGLEVEL = Column(String(10))
     REFRESHRATE = Column(Integer, nullable=False)
-    TOLERANCE= Column(Integer, nullable=False)
+    VALIDITYTHRESHOLD= Column(Integer, nullable=False)
     HBFREQUENCY = Column(Integer, nullable=False)
     BSDBURL = Column(String(255), nullable=False)
     SMTP = Column(String(64))
@@ -75,10 +75,10 @@ class Ias(Base):
         assert(hb>0)
         return hb
 
-    @validates('TOLERANCE')
-    def validate_tolerancee(self,key,tolerance):
-        assert(tolerance>0)
-        return tolerance
+    @validates('VALIDITYTHRESHOLD')
+    def validate_validityTh(self,key,validityThreshold):
+        assert(validityThreshold>0)
+        return validityThreshold
 
     @validates('LOGLEVEL')
     def validate_logLevel(self,key,logLevel):
@@ -87,21 +87,21 @@ class Ias(Base):
         return logLevel
 
     def __repr__(self):
-        return "<IAS(logLevel='%s', refreshRate=%d, tolerance=%d, hbFrequency=%d, bsdbUrl='%s', smtp='%s', props=%s)>" % (
-            self.LOGLEVEL,self.REFRESHRATE,self.TOLERANCE,self.HBFREQUENCY, self.BSDBURL, self.SMTP, self.props)
+        return "<IAS(logLevel='%s', refreshRate=%d, validityThreshold=%d, hbFrequency=%d, bsdbUrl='%s', smtp='%s', props=%s)>" % (
+            self.LOGLEVEL,self.REFRESHRATE,self.VALIDITYTHRESHOLD,self.HBFREQUENCY, self.BSDBURL, self.SMTP, self.props)
 
     def __eq__(self,other):
         return type(other) is Ias and \
         self.LOGLEVEL == other.LOGLEVEL and \
         self.REFRESHRATE == other.REFRESHRATE and \
-        self.TOLERANCE == other.TOLERANCE and \
+        self.VALIDITYTHRESHOLD == other.VALIDITYTHRESHOLD and \
         self.HBFREQUENCY == other.HBFREQUENCY and \
         self.BSDBURL == other.BSDBURL and \
         self.SMTP == other.SMTP and \
         set(self.props) == set(other.props)
 
     def __hash__(self):
-        return hash((self.LOGLEVEL,self.REFRESHRATE,self.TOLERANCE,self.HBFREQUENCY,self.BSDBURL,self.SMTP))
+        return hash((self.LOGLEVEL,self.REFRESHRATE,self.VALIDITYTHRESHOLD,self.HBFREQUENCY,self.BSDBURL,self.SMTP))
 
 class Template_def(Base):
     __tablename__ = 'TEMPLATE_DEF'
