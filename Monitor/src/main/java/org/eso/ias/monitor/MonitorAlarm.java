@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public enum MonitorAlarm {
 
+    // Health
     PLUGIN_DEAD,
     CONVERTER_DEAD,
     SUPERVISOR_DEAD,
