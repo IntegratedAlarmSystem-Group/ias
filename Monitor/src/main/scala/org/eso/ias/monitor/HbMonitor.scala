@@ -139,7 +139,7 @@ class HbMonitor(
     */
   override def hbReceived(hbMsg: HbMsg): Unit = synchronized {
     HbMonitor.logger.debug("HB received from {}",hbMsg.id)
-    if (Identifier.checkFullRunningIdFormat(hbMsg.id)) {
+    if (!Identifier.checkFullRunningIdFormat(hbMsg.id)) {
       // The converter due to a bug sends its ID instead of
       // its fullRunningId
       // @see #145
@@ -161,12 +161,13 @@ class HbMonitor(
     HbMonitor.logger.debug("Checking reception of HBs")
 
     // Return the IDs of the alarms in the map that have not been updated
-    // These IDs are sent as properties in the alarms
+    // These IDs are set as properties in the alarms
     def faultyIds(m: MutableMap[String, Boolean]): List[String] = m.filterKeys(k => !m(k)).keys.toList
 
     // Update the passed alarm
     def updateAlarm(alarm: MonitorAlarm, faultyIds: List[String], priority: Alarm=Alarm.getSetDefault): Unit =
-      alarm.set(priority,faultyIds.mkString(","))
+      if (faultyIds.isEmpty) alarm.set(Alarm.cleared(),faultyIds.mkString(","))
+      else alarm.set(priority,faultyIds.mkString(","))
 
     updateAlarm(MonitorAlarm.PLUGIN_DEAD,faultyIds(pluginsHbMsgs),pluginsAlarmPriority)
     updateAlarm(MonitorAlarm.SUPERVISOR_DEAD,faultyIds(supervisorsHbMsgs),supervisorsAlarmPriority)
