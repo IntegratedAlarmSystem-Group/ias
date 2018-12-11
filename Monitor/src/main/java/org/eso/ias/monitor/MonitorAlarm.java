@@ -42,6 +42,24 @@ public enum MonitorAlarm {
     }
 
     /**
+     * Getter
+     *
+     * @return The alarm
+     */
+    public Alarm getAlarm() {
+        return alarm.get();
+    }
+
+    /**
+     * Getter
+     *
+     * @return The faulty IDs
+     */
+    public String getProperties() {
+        return faultyIds.get();
+    }
+
+    /**
      * Clear the alarm
      */
     public void clear() {
