@@ -95,7 +95,7 @@ class HbMonitor(
   /** The factory to generate the periodic thread */
   private val factory: ThreadFactory = new ThreadFactory {
     override def newThread(runnable: Runnable): Thread = {
-      val t: Thread = new Thread("HbMonitor-Thread")
+      val t: Thread = new Thread(runnable,"HbMonitor-Thread")
       t.setDaemon(true)
       t
     }
@@ -111,7 +111,7 @@ class HbMonitor(
     HbMonitor.logger.debug("HB consumer started")
     schedExecutorSvc.scheduleWithFixedDelay(this,threshold,threshold,TimeUnit.SECONDS)
     HbMonitor.logger.debug("Thread scheduled every {} seconds",threshold)
-    HbMonitor.logger.info("Started up")
+    HbMonitor.logger.info("Started")
   }
 
   def shutdown(): Unit = {
@@ -158,11 +158,11 @@ class HbMonitor(
     def updateAlarm(alarm: MonitorAlarm, faultyIds: List[String], priority: Alarm=Alarm.getSetDefault): Unit =
       alarm.set(priority,faultyIds.mkString(","))
 
-    val faultyPlugins = updateAlarm(MonitorAlarm.PLUGIN_DEAD,faultyIds(pluginsHbMsgs),pluginsAlarmPriority)
-    val faultySupervisors = updateAlarm(MonitorAlarm.SUPERVISOR_DEAD,faultyIds(supervisorsHbMsgs),supervisorsAlarmPriority)
-    val faultyConverters = updateAlarm(MonitorAlarm.CONVERTER_DEAD,faultyIds(convertersHbMsgs),convertersAlarmPriority)
-    val faultySinkConnectors = updateAlarm(MonitorAlarm.SINK_DEAD,faultyIds(sinksHbMsgs),sinksAlarmPriority)
-    val faultyClients = updateAlarm(MonitorAlarm.CLIENT_DEAD,faultyIds(clientsHbMsgs),clientsAlarmPriority)
+    updateAlarm(MonitorAlarm.PLUGIN_DEAD,faultyIds(pluginsHbMsgs),pluginsAlarmPriority)
+    updateAlarm(MonitorAlarm.SUPERVISOR_DEAD,faultyIds(supervisorsHbMsgs),supervisorsAlarmPriority)
+    updateAlarm(MonitorAlarm.CONVERTER_DEAD,faultyIds(convertersHbMsgs),convertersAlarmPriority)
+    updateAlarm(MonitorAlarm.SINK_DEAD,faultyIds(sinksHbMsgs),sinksAlarmPriority)
+    updateAlarm(MonitorAlarm.CLIENT_DEAD,faultyIds(clientsHbMsgs),clientsAlarmPriority)
 
     // reset the maps to be ready for the next iteration
     hbMaps.foreach(m => m.keySet.foreach(k => m(k)=false))
