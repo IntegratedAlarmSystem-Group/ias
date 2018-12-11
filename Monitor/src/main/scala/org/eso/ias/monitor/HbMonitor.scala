@@ -41,7 +41,7 @@ import scala.collection.mutable.{Map => MutableMap}
   * @param pluginIds The IDs of the plugins whose IDs must be monitored
   * @param converterIds The IDs of the converters whose IDs must be monitored
   * @param clientIds The IDs of the clients whose IDs must be monitored
-  * @param sinks The IDs of the sink connectors whose IDs must be monitored
+  * @param sinkIds The IDs of the sink connectors whose IDs must be monitored
   *              Kafka sink connectors does not publish HBs and must be monitored elsewhere;
   *              however the IAs has sink conenctors like the email sender that publishes HBs
   * @param supervisorIds The IDs of the supervisors whose IDs must be monitored
@@ -54,11 +54,11 @@ import scala.collection.mutable.{Map => MutableMap}
   * @param supervisorsAlarmPriority the priority of the alarm for faulty supervisors
   */
 class HbMonitor(
-               val hbConsumer: HbKafkaConsumer,
+                 val hbConsumer: HbKafkaConsumer,
                  val pluginIds: Set[String],
                  val converterIds: Set[String],
                  val clientIds: Set[String],
-                 val sinks: Set[String],
+                 val sinkIds: Set[String],
                  val supervisorIds: Set[String],
                  val threshold: Long,
                  val pluginsAlarmPriority: Alarm=Alarm.getSetDefault,
@@ -71,23 +71,33 @@ class HbMonitor(
   require(Option(pluginIds).isDefined)
   require(Option(converterIds).isDefined)
   require(Option(clientIds).isDefined)
-  require(Option(sinks).isDefined)
+  require(Option(sinkIds).isDefined)
   require(Option(supervisorIds).isDefined)
 
   /** The map to store the last HB of plugins */
   private val pluginsHbMsgs: MutableMap[String, Boolean] = MutableMap.empty
+  pluginIds.foreach(pluginsHbMsgs.put(_,false))
+  HbMonitor.logger.debug("{} plugins to monitor: {}",pluginsHbMsgs.keySet.size,pluginsHbMsgs.keySet.mkString(","))
 
   /** The map to store the last HB of converters */
   private val convertersHbMsgs: MutableMap[String, Boolean] = MutableMap.empty
+  converterIds.foreach(convertersHbMsgs.put(_,false))
+  HbMonitor.logger.debug("{} converters to monitor: {}",convertersHbMsgs.keySet.size,convertersHbMsgs.keySet.mkString(","))
 
   /** The map to store the last HB of clients */
   private val clientsHbMsgs: MutableMap[String, Boolean] = MutableMap.empty
+  clientIds.foreach(clientsHbMsgs.put(_,false))
+  HbMonitor.logger.debug("{} clients to monitor: {}",clientsHbMsgs.keySet.size,clientsHbMsgs.keySet.mkString(","))
 
   /** The map to store the last HB of sink connectors */
   private val sinksHbMsgs: MutableMap[String, Boolean] = MutableMap.empty
+  sinkIds.foreach(sinksHbMsgs.put(_,false))
+  HbMonitor.logger.debug("{} sink clients to monitor: {}",sinksHbMsgs.keySet.size,sinksHbMsgs.keySet.mkString(","))
 
   /** The map to store the last HB of supervisor */
   private val supervisorsHbMsgs: MutableMap[String, Boolean] = MutableMap.empty
+  supervisorIds.foreach(supervisorsHbMsgs.put(_,false))
+  HbMonitor.logger.debug("{} supervisors to monitor: {}",supervisorsHbMsgs.keySet.size,supervisorsHbMsgs.keySet.mkString(","))
 
   /** A list with all the maps of HB */
   private val hbMaps= List(pluginsHbMsgs,convertersHbMsgs,sinksHbMsgs,clientsHbMsgs,supervisorsHbMsgs)
