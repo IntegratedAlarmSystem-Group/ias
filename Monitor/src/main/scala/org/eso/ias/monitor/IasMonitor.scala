@@ -47,7 +47,7 @@ class IasMonitor(
                 threshold: Long,
                 val refreshRate: Long) {
   require(refreshRate>0,"Invalid negative or zero refresh rate")
-
+  require(threshold>0,"Invalid negative or zero threshold")
 
   // The consumer of HBs
   val hbConsumer: HbKafkaConsumer = new HbKafkaConsumer(kafkaBrokers,identifier.id)
@@ -229,19 +229,19 @@ object IasMonitor {
     }
     IasMonitor.logger.info("{} supervisors to monitor: {}",supervisorIds.size,supervisorIds.mkString(","))
 
-    val pluginIds = JavaConverters.asScalaSet(config.getPluginIds).toSet
+    val pluginIds: Set[String] = JavaConverters.asScalaSet(config.getPluginIds).toSet
     IasMonitor.logger.info("{} plugins to monitor: {}",pluginIds.size,pluginIds.mkString(","))
 
-    val converterIds = JavaConverters.asScalaSet(config.getConverterIds).toSet
+    val converterIds: Set[String] = JavaConverters.asScalaSet(config.getConverterIds).toSet
     IasMonitor.logger.info("{} converters to monitor: {}",converterIds.size,converterIds.mkString(","))
 
-    val clientIds = JavaConverters.asScalaSet(config.getClientIds).toSet
+    val clientIds: Set[String] = JavaConverters.asScalaSet(config.getClientIds).toSet
     IasMonitor.logger.info("{} clients to monitor: {}",clientIds.size,clientIds.mkString(","))
 
-    val sinkIds = JavaConverters.asScalaSet(config.getSinkIds).toSet
+    val sinkIds: Set[String] = JavaConverters.asScalaSet(config.getSinkIds).toSet
     IasMonitor.logger.info("{} sink clients to monitor: {}",sinkIds.size,sinkIds.mkString(","))
 
-    val kafkaConenctorConfigs = JavaConverters.asScalaSet(config.getKafkaSinkConnectors).toSet
+    val kafkaConenctorConfigs: Set[KafkaSinkConnectorConfig] = JavaConverters.asScalaSet(config.getKafkaSinkConnectors).toSet
     IasMonitor.logger.info("{} kafka connectors to monitor: {}",
       kafkaConenctorConfigs.size,
       kafkaConenctorConfigs.mkString(","))
