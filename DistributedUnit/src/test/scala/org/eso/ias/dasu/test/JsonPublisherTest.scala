@@ -56,7 +56,7 @@ class JsonPublisherTest extends FlatSpec {
   }
   
   // The DASU
-  val dasu = new DasuImpl(dasuIdentifier,dasuDao,outputPublisher,inputsProvider,3,1)
+  val dasu = new DasuImpl(dasuIdentifier,dasuDao,outputPublisher,inputsProvider,3,4)
 
   // The identifier of the monitored system
   val monSysId = new Identifier("ConverterID",IdentifierType.MONITORED_SOFTWARE_SYSTEM,None)

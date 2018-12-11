@@ -4,41 +4,6 @@ import java.util.concurrent.TimeUnit
 
 import org.eso.ias.dasu.subscriber.InputsListener
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.cdb.CdbReader
-import org.eso.ias.cdb.json.JsonReader
-import org.eso.ias.cdb.json.CdbFiles
-import org.eso.ias.cdb.json.CdbJsonFiles
-import org.eso.ias.cdb.pojos.DasuDao
-
-import scala.collection.JavaConverters
-import org.eso.ias.cdb.pojos.DasuDao
-import org.eso.ias.types.Identifier
-import org.eso.ias.types.IdentifierType
-import org.eso.ias.cdb.pojos.AsceDao
-import org.eso.ias.asce.ComputingElement
-import org.eso.ias.asce.ComputingElementState
-import org.eso.ias.asce.AsceStates
-import org.eso.ias.types.InOut
-import org.eso.ias.dasu.publisher.OutputPublisher
-import org.eso.ias.types.IASValue
-import org.eso.ias.dasu.executorthread.ScheduledExecutor
-
-import scala.util.Try
-import java.util.concurrent.atomic.AtomicLong
-import java.util.Properties
-
-import scala.collection.mutable.{Map => MutableMap}
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.TimeUnit
-
-import org.eso.ias.cdb.topology.DasuTopology
-import org.eso.ias.dasu.subscriber.InputsListener
-import org.eso.ias.dasu.subscriber.InputSubscriber
-
-import scala.util.Failure
-import scala.util.Success
 import org.eso.ias.types.{IASValue, Identifier}
 
 import scala.util.Try
@@ -68,14 +33,14 @@ import scala.util.Try
  * @param dasuIdentifier the identifier of the DASU
  * @param autoSendTimeInterval the refresh rate (seconds) to automatically re-send the last calculated 
  *                    output even if it did not change
- * @param tolerance the max delay (secs) before declaring an input unreliable
+ * @param validityThreshold the max delay (secs) before declaring an input unreliable
  */
 abstract class Dasu(
     val dasuIdentifier: Identifier, 
     val autoSendTimeInterval: Integer,
-    val tolerance: Integer) extends InputsListener {
+    val validityThreshold: Integer) extends InputsListener {
   require(autoSendTimeInterval>0)
-  require(tolerance>=0)
+  require(validityThreshold>=autoSendTimeInterval,"Validity threshold must be greater than the refresh rate")
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
@@ -101,9 +66,9 @@ abstract class Dasu(
   val autoSendTimeIntervalMillis: Long = TimeUnit.MILLISECONDS.convert(autoSendTimeInterval.toLong, TimeUnit.SECONDS)
   
   /** 
-   *  The tolerance in milliseconds
+   *  The validityThreshold in milliseconds
    */
-  val toleranceMillis: Long = TimeUnit.MILLISECONDS.convert(tolerance.toLong, TimeUnit.SECONDS)
+  val validityThresholdMillis: Long = TimeUnit.MILLISECONDS.convert(validityThreshold.toLong, TimeUnit.SECONDS)
   
   /**
    * The minimum allowed refresh rate when a flow of inputs arrive (i.e. the throttiling) 

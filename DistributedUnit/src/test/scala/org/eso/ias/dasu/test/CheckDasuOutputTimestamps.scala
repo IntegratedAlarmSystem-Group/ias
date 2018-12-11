@@ -22,9 +22,9 @@ class CheckDasuOutputTimestamps extends FlatSpec with BeforeAndAfter {
   val logger = IASLogger.getLogger(this.getClass);
   
   val autoRefreshTime = 3
-  val tolerance = 3
+  val validityThreshold = 5
   
-  val f = new DasuOneAsceCommon(autoRefreshTime,tolerance)
+  val f = new DasuOneAsceCommon(autoRefreshTime,validityThreshold)
   
   before {
     f.outputValuesReceived.clear()

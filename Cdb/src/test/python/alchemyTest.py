@@ -75,7 +75,7 @@ class PyCdbTest(unittest.TestCase):
         ias = Ias(
             LOGLEVEL='debug',
             REFRESHRATE=12,
-            TOLERANCE=2,
+            VALIDITYTHRESHOLD=20,
             HBFREQUENCY=7,
             BSDBURL='localhost:9092',
             SMTP='smtp.alma.cl',
@@ -93,7 +93,7 @@ class PyCdbTest(unittest.TestCase):
         ias2 = Ias(
             LOGLEVEL='debug',
             REFRESHRATE=12,
-            TOLERANCE=2,
+            VALIDITYTHRESHOLD=20,
             HBFREQUENCY=7,
             BSDBURL='localhost:9092',
             SMTP='smtp.alma.cl',

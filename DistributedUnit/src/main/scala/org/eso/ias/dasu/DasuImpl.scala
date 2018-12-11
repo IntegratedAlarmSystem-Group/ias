@@ -30,7 +30,7 @@ import scala.util.{Failure, Success, Try}
  * @param outputPublisher      the publisher to send the output
  * @param inputSubscriber      the subscriber getting events to be processed
  * @param autoSendTimeInterval the time (seconds) to automatically resend the last calculated
- * @param tolerance            the max delay (secs) before declaring an input unreliable
+ * @param validityThreshold    the max delay (secs) before declaring an input unreliable
  */
 class DasuImpl (
     dasuIdentifier: Identifier,
@@ -38,8 +38,8 @@ class DasuImpl (
     private val outputPublisher: OutputPublisher,
     private val inputSubscriber: InputSubscriber,
     autoSendTimeInterval: Integer,
-    tolerance: Integer)
-    extends Dasu(dasuIdentifier,autoSendTimeInterval,tolerance) {
+    validityThreshold: Integer)
+    extends Dasu(dasuIdentifier,autoSendTimeInterval,validityThreshold) {
   require(Option(dasuIdentifier).isDefined,"Invalid Identifier")
   require(Option(dasuDao).isDefined,"Invalid DASU CDB configuration")
   require(dasuIdentifier.idType==IdentifierType.DASU,"Invalid identifier type for DASU")
@@ -72,7 +72,6 @@ class DasuImpl (
   
   // Instantiate the ASCEs
   val asces: Map[String, ComputingElement[_]] = {
-    val validityThreshold = autoSendTimeInterval + tolerance
     val addToMapFunc = (m: Map[String, ComputingElement[_]], asce: AsceDao) => {
       val propsForAsce = new Properties()
       asce.getProps.forEach(p => propsForAsce.setProperty(p.getName, p.getValue))
@@ -387,7 +386,7 @@ class DasuImpl (
   /**
     * Calculate the validity of the output depending on its last update time.
     * The DASU consider that the IASIO is valid if it has been generated
-    * resh rate+tolerance  milliseconds before.
+    * resh validityThreshold milliseconds before.
     */
   def calcOutputValidity(): Validity = {
 
@@ -400,7 +399,7 @@ class DasuImpl (
         assert(lastOutput.dasuProductionTStamp.isPresent && !lastOutput.pluginProductionTStamp.isPresent,
           "IASIO is not an output! "+lastOutput.toString)
 
-        val thresholdTStamp = System.currentTimeMillis() - autoSendTimeIntervalMillis - toleranceMillis
+        val thresholdTStamp = System.currentTimeMillis() - validityThresholdMillis
 
         val iasioTstamp = lastOutput.dasuProductionTStamp.get()
 
@@ -575,7 +574,7 @@ object DasuImpl {
    * @param inputSubscriber: the consumer to get values from the BSDB
    * @param autoSendTimeInterval refresh rate (msec) to automatically send the output
    *                             when no new inputs have been received
-   * @param tolerance the max delay (secs) before declaring an input unreliable
+   * @param validityThreshold the max delay (secs) before declaring an input unreliable
    */
   def apply(
     dasuDao: DasuDao, 
@@ -583,7 +582,7 @@ object DasuImpl {
     outputPublisher: OutputPublisher,
     inputSubscriber: InputSubscriber,
     autoSendTimeInterval: Integer,
-    tolerance: Integer): DasuImpl = {
+    validityThreshold: Integer): DasuImpl = {
     
     
     require(Option(dasuDao).isDefined)
@@ -591,7 +590,7 @@ object DasuImpl {
     require(Option(outputPublisher).isDefined)
     require(Option(inputSubscriber).isDefined)
     require(Option(autoSendTimeInterval).isDefined)
-    require(Option(tolerance).isDefined)
+    require(Option(validityThreshold).isDefined)
     
     val dasuId = dasuDao.getId
     
@@ -603,7 +602,7 @@ object DasuImpl {
         outputPublisher,
         inputSubscriber,
         autoSendTimeInterval,
-        tolerance)
+        validityThreshold)
   }
 
   /** The logger */

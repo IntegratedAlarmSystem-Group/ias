@@ -502,8 +502,7 @@ object ComputingElement {
    * 
    * @param asceDao the configuration of the ASCE red from the CDB
    * @param dasuId the identifier of the DASU where the ASCE runs
-   * @param validityThresholdInSecs the time interval (secs) to check the validity
-    *                               It includes the tolerance
+   * @param validityThresholdInSecs the validity threshold (secs) to check the validity
    * @param properties a optional set of properties
    */
   def apply[T](
