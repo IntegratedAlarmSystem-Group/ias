@@ -24,7 +24,7 @@ import scala.util.{Failure, Success, Try}
   * TODO: send alarms (al least some of them) to the web server even wehn
   *       kafka is down
   *
-  * @param hbKafkaConsumer the consumer of HBs from the kafka topic
+  * @param kafkaBrokes Kafka brokers
   * @param identifier The identifier of the monitor tool
   * @param pluginIds The IDs of the plugins to monitor
   * @param converterIds The IDs of the converters to monitor
@@ -36,7 +36,7 @@ import scala.util.{Failure, Success, Try}
   * @param refreshRate the refresh rate (seconds) to send alarms produced by the monitor
   */
 class IasMonitor(
-                hbKafkaConsumer: HbKafkaConsumer,
+                val kafkaBrokers: String,
                 val identifier: Identifier,
                 pluginIds: Set[String],
                 converterIds: Set[String],
@@ -47,16 +47,33 @@ class IasMonitor(
                 threshold: Long,
                 val refreshRate: Long) {
   require(refreshRate>0,"Invalid negative or zero refresh rate")
-  val hbMonitor: HbMonitor = new HbMonitor(hbKafkaConsumer,pluginIds,converterIds,clientIds,sinkIds,supervisorIds,threshold)
+
+
+  // The consumer of HBs
+  val hbConsumer: HbKafkaConsumer = new HbKafkaConsumer(kafkaBrokers,identifier.id)
+
+  /** The object to monitor HBs */
+  val hbMonitor: HbMonitor = new HbMonitor(hbConsumer,pluginIds,converterIds,clientIds,sinkIds,supervisorIds,threshold)
+
+  /** Th eobject that sends the alarms periodically */
+  val alarmsProducer = new MonitorAlarmsProducer(kafkaBrokers,identifier.id,refreshRate)
 
   /** Start the monitoring */
   def start(): Unit = {
+    IasMonitor.logger.debug("Starting up the monitor of HBs")
     hbMonitor.start()
+    IasMonitor.logger.debug("Starting up the sender of alarms")
+    alarmsProducer.start()
+    IasMonitor.logger.info("Started")
   }
 
   /** Stop monitoring and free resources */
   def shutdown(): Unit = {
+    IasMonitor.logger.debug("Shutting down the alarm sender")
+    alarmsProducer.shutdown()
+    IasMonitor.logger.debug("Shutting down the monitor of HBs")
     hbMonitor.shutdown()
+    IasMonitor.logger.info("Shut down")
   }
 }
 
@@ -236,11 +253,10 @@ object IasMonitor {
      // The identifier of the monitor
     val identifier = new Identifier(monitorId, IdentifierType.CLIENT, None)
 
-    // The consumer of HBs
-    val hbConsumer: HbKafkaConsumer = new HbKafkaConsumer(kafkaBrokers,identifier.id)
+
 
     val monitor = new IasMonitor(
-      hbConsumer,
+      kafkaBrokers,
       identifier,
       pluginIds,
       converterIds,
