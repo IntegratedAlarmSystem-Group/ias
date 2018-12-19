@@ -91,9 +91,7 @@ public enum MonitorAlarm {
      * @param faultyIds the comma separated IDs of tools that did not sent the HB
      */
     public void set(String faultyIds) {
-        Objects.requireNonNull(faultyIds);
-        alarm.set(Alarm.getSetDefault());
-        this.faultyIds.set(faultyIds);
+        set(Alarm.getSetDefault(),faultyIds);
     }
 }
 
