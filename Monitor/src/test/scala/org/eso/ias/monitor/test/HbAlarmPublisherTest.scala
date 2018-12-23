@@ -6,8 +6,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import com.typesafe.scalalogging.Logger
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.monitor.MonitorAlarmsProducer
-import org.eso.ias.types.IASValue
+import org.eso.ias.monitor.{MonitorAlarm, MonitorAlarmsProducer}
+import org.eso.ias.types.{Alarm, IASValue}
 import org.scalatest.{BeforeAndAfterEach, FlatSpec}
 
 import scala.collection.JavaConverters
@@ -40,15 +40,7 @@ class HbAlarmPublisherTest extends FlatSpec with AlarmPublisherListener with Bef
     */
   override def alarmsPublished(iasValues: Array[IASValue[_]]): Unit = {
     alarmsReceived.addAll(JavaConverters.asJavaCollection(iasValues))
-    iasValues.foreach(value => {
-      val propStr = if (value.props.isPresent) {
-        val map = value.props.get()
-        val propValueOpt = Option(map.get(MonitorAlarmsProducer.faultyIdsPropName))
-        propValueOpt.getOrElse("")
-      } else ""
-      MonitorAlarmsProducer.logger.info("Alarm received {} with value {} and properties {}",
-        value.id,value.value.toString,value.props,propStr)
-    })
+    iasValues.foreach(value => MonitorAlarmsProducer.logger.info("Alarm received [{}]",value.toString))
   }
 
   /**
@@ -70,7 +62,7 @@ class HbAlarmPublisherTest extends FlatSpec with AlarmPublisherListener with Bef
   val logger: Logger = IASLogger.getLogger(classOf[HbAlarmPublisherTest])
 
   /** Refresh rate (seconds) */
-  val refreshRate: Long = 1L
+  val refreshRate: Long = 2L
 
   /**
     * The producer sends alarms to this object
@@ -138,6 +130,59 @@ class HbAlarmPublisherTest extends FlatSpec with AlarmPublisherListener with Bef
     monitorAlarm.start()
     assert(tearDownExecutions.get()==1)
     assert(setUpExecutions.get()==1)
+  }
+
+  it must "send all alarms at startup" in {
+    monitorAlarm.start()
+    Thread.sleep(refreshRate*1000+500)
+    assert(alarmsReceived.size()==MonitorAlarm.values.size)
+
+    monitorAlarm.shutdown()
+  }
+
+  it must "not send alarm after shutdown" in {
+    monitorAlarm.start()
+    Thread.sleep(refreshRate*1000+500)
+    assert(alarmsReceived.size()==MonitorAlarm.values.size)
+
+    monitorAlarm.shutdown()
+    Thread.sleep(refreshRate*1000+500)
+    assert(alarmsReceived.size()==MonitorAlarm.values.size)
+
+  }
+
+  it must "send the property and alarm activation" in {
+    MonitorAlarm.CLIENT_DEAD.set(Alarm.SET_CRITICAL,"id")
+    monitorAlarm.start()
+    Thread.sleep(refreshRate*1000+500)
+    assert(alarmsReceived.size()==MonitorAlarm.values.size)
+
+    monitorAlarm.shutdown()
+
+    alarmsReceived.forEach( alarm => {
+      val al = Alarm.valueOf(alarm.value.toString)
+      if (alarm.id==MonitorAlarm.CLIENT_DEAD.id || alarm.id==MonitorAlarm.GLOBAL.id) {
+        assert(al==Alarm.SET_CRITICAL)
+
+        val p = alarm.props
+        assert(p.isPresent)
+        val props = p.get()
+        val fIds = Option(props.get(MonitorAlarmsProducer.faultyIdsPropName))
+        assert(fIds.isDefined)
+        assert(fIds.get=="id")
+      } else {
+        assert(!al.isSet)
+      }
+    })
+  }
+
+  it must "periodically send alarms" in {
+    monitorAlarm.start()
+    Thread.sleep(3*refreshRate*1000+500)
+
+    monitorAlarm.shutdown()
+
+    assert(alarmsReceived.size()==3*MonitorAlarm.values().size)
   }
 
 }
