@@ -2,4 +2,5 @@
 iasRun -l s org.scalatest.run org.eso.ias.monitor.test.ConfigTest
 iasRun -l s org.scalatest.run org.eso.ias.monitor.test.MonitorAlarmTest
 iasRun -l s org.scalatest.run org.eso.ias.monitor.test.HbAlarmGenerationTest
+iasRun -l s org.scalatest.run org.eso.ias.monitor.test.HbAlarmPublisherTest
 
