@@ -51,9 +51,9 @@ public enum MonitorAlarm {
     /**
      * Calculate and return the Alarm state of GLOBAL
      *
-     * @return
+     * @return the value of the GLOBAL alarm (multiplicity)
      */
-    private Alarm getGlobalAlarmValue() {
+    private Alarm getGlobalAlarm() {
         if (this!=GLOBAL) {
             throw new UnsupportedOperationException("Must be called for GLOABL only");
         }
@@ -73,13 +73,38 @@ public enum MonitorAlarm {
     }
 
     /**
+     * Get and return the properties of the GLOBAL alarm.
+     *
+     * The faulty IDs of GLOBAL is composed of all the faulty IDs of the MonitorAlarms
+     * that are set
+     *
+     * @return the properties of the GLOBAL alarm.
+     */
+    private String getGlobalProperties() {
+        if (this!=GLOBAL) {
+            throw new UnsupportedOperationException("Must be called for GLOABL only");
+        }
+
+        StringBuilder ret = new StringBuilder();
+        for (MonitorAlarm monAlarm: MonitorAlarm.values()) {
+            if (monAlarm != GLOBAL && monAlarm.getAlarm().isSet() && !monAlarm.getProperties().isEmpty()) {
+                if (!ret.toString().isEmpty()) {
+                    ret.append(',');
+                }
+                ret.append(monAlarm.getProperties());
+            }
+        }
+        return ret.toString();
+    }
+
+    /**
      * Getter
      *
      * @return The alarm
      */
     public Alarm getAlarm() {
         if (this==GLOBAL) {
-            return getGlobalAlarmValue();
+            return getGlobalAlarm();
         } else {
             return alarm.get();
         }
@@ -91,7 +116,11 @@ public enum MonitorAlarm {
      * @return The faulty IDs
      */
     public String getProperties() {
-        return faultyIds.get();
+        if (this!=GLOBAL) {
+            return faultyIds.get();
+        } else {
+            return getGlobalProperties();
+        }
     }
 
     /**
