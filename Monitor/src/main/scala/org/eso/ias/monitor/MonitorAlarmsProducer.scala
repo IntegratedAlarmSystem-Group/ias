@@ -4,11 +4,9 @@ import java.util
 import java.util.concurrent.{Executors, ScheduledExecutorService, ThreadFactory, TimeUnit}
 
 import com.typesafe.scalalogging.Logger
-import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosProducer}
 import org.eso.ias.logging.IASLogger
+import org.eso.ias.monitor.alarmpublisher.MonitorAlarmPublisher
 import org.eso.ias.types._
-
-import scala.collection.JavaConverters
 
 /**
   * The alarms producer that periodically publishes
@@ -25,16 +23,9 @@ import scala.collection.JavaConverters
   * @param id The id of the consumer
   * @param refreshRate The refresh rate (seconds) to peridically send alarms
   */
-class MonitorAlarmsProducer(val brokers: String, val id: String, val refreshRate: Long) extends Runnable {
+class MonitorAlarmsProducer(val producer: MonitorAlarmPublisher, val refreshRate: Long) extends Runnable {
+  require(Option(producer).isDefined,"Undefined plublisher of alarms")
   require(refreshRate>0,"Invalid refresh rate "+refreshRate)
-
-  /** The producer of alarms */
-  private val producer: KafkaIasiosProducer = new KafkaIasiosProducer(
-    brokers,
-    KafkaHelper.IASIOs_TOPIC_NAME,
-    id,
-    new IasValueJsonSerializer
-  )
 
   /** The factory to generate the periodic thread */
   private val factory: ThreadFactory = new ThreadFactory {
@@ -151,9 +142,9 @@ class MonitorAlarmsProducer(val brokers: String, val id: String, val refreshRate
       buildIasValue(a.id,a.getAlarm,a.getProperties)
     })
 
-    producer.push(JavaConverters.asJavaCollection(iasValues))
+    producer.push(iasValues)
     producer.flush()
-    MonitorAlarmsProducer.logger.debug("Sent {} alarms to the BSDB",iasValues.size)
+    MonitorAlarmsProducer.logger.debug("Sent {} alarms to the BSDB",iasValues.length)
   }
 }
 

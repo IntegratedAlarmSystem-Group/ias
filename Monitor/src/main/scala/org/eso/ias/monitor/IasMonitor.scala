@@ -11,6 +11,7 @@ import org.eso.ias.cdb.pojos.LogLevelDao
 import org.eso.ias.cdb.rdb.RdbReader
 import org.eso.ias.heartbeat.consumer.HbKafkaConsumer
 import org.eso.ias.logging.IASLogger
+import org.eso.ias.monitor.alarmpublisher.{BsdbAlarmPublisherImpl, MonitorAlarmPublisher}
 import org.eso.ias.types.{Identifier, IdentifierType}
 
 import scala.collection.JavaConverters
@@ -55,8 +56,11 @@ class IasMonitor(
   /** The object to monitor HBs */
   val hbMonitor: HbMonitor = new HbMonitor(hbConsumer,pluginIds,converterIds,clientIds,sinkIds,supervisorIds,threshold)
 
-  /** Th eobject that sends the alarms periodically */
-  val alarmsProducer = new MonitorAlarmsProducer(kafkaBrokers,identifier.id,refreshRate)
+  /** The object that publishes the alarms */
+  val alarmsPublisher: MonitorAlarmPublisher = new BsdbAlarmPublisherImpl(kafkaBrokers,identifier.id)
+
+  /** The object that periodically sends the alarms */
+  val alarmsProducer: MonitorAlarmsProducer = new MonitorAlarmsProducer(alarmsPublisher,refreshRate)
 
   /** Start the monitoring */
   def start(): Unit = {
