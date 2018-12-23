@@ -98,6 +98,9 @@ public enum MonitorAlarm {
      * Clear the alarm
      */
     public void clear() {
+        if (this==GLOBAL) {
+            throw new UnsupportedOperationException("Cannot set the state of GLoBAL");
+        }
         alarm.set(Alarm.cleared());
         faultyIds.set("");
     }
