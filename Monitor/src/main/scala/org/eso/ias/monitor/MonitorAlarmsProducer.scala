@@ -1,6 +1,7 @@
 package org.eso.ias.monitor
 
 import java.util
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.{Executors, ScheduledExecutorService, ThreadFactory, TimeUnit}
 
 import com.typesafe.scalalogging.Logger
@@ -66,26 +67,46 @@ class MonitorAlarmsProducer(val producer: MonitorAlarmPublisher, val refreshRate
   /** Empty property map */
   private val emptyProps = new util.HashMap[String,String]()
 
-  /** The name of the property with the fault IDs */
-  private val faultyIdsPropName = "faultyIDs"
+  /** Set if the object has been started */
+  private val started = new AtomicBoolean(false)
+
+  /** Set if the object has been closed */
+  private val closed = new AtomicBoolean(false)
 
   /** Start sending alarms */
   def start(): Unit = {
-    MonitorAlarmsProducer.logger.debug("Starting up the producer")
-    producer.setUp()
-    MonitorAlarmsProducer.logger.debug("Starting up the thread at a rate of {} secs",refreshRate)
-    schedExecutorSvc.scheduleAtFixedRate(this,refreshRate,refreshRate,TimeUnit.SECONDS)
-    MonitorAlarmsProducer.logger.info("Started")
+    val alreadyStarted = started.getAndSet(true)
+    val alreadyClosed = closed.get
+
+    (alreadyStarted, alreadyClosed) match {
+      case (false, false) =>
+        MonitorAlarmsProducer.logger.debug("Starting up the producer")
+        producer.setUp()
+        MonitorAlarmsProducer.logger.debug("Starting up the thread at a rate of {} secs",refreshRate)
+        schedExecutorSvc.scheduleAtFixedRate(this,refreshRate,refreshRate,TimeUnit.SECONDS)
+        MonitorAlarmsProducer.logger.info("Started")
+      case (_, true) => MonitorAlarmsProducer.logger.error("Cannot be started: already closed")
+      case (true, _) => MonitorAlarmsProducer.logger.error("Already started")
+    }
+
   }
 
   /** Stops sending alarms and frees resources */
   def shutdown(): Unit = {
-    MonitorAlarmsProducer.logger.debug("Shutting down")
-    MonitorAlarmsProducer.logger.debug("Stopping thread to send alarms")
-    schedExecutorSvc.shutdown()
-    MonitorAlarmsProducer.logger.debug("Closing the Kafka IASIOs producer")
-    producer.tearDown()
-    MonitorAlarmsProducer.logger.info("Shut down")
+    val alreadyStarted = started.get()
+    val alreadyShutDown = closed.getAndSet(true)
+
+    (alreadyStarted, alreadyShutDown) match {
+      case (_, true) => MonitorAlarmsProducer.logger.warn("Already shut down")
+      case (false, false) => MonitorAlarmsProducer.logger.warn("Cannot shut down: not initialized")
+      case (true, false) =>
+        MonitorAlarmsProducer.logger.debug("Shutting down")
+        MonitorAlarmsProducer.logger.debug("Stopping thread to send alarms")
+        schedExecutorSvc.shutdown()
+        MonitorAlarmsProducer.logger.debug("Closing the Kafka IASIOs producer")
+        producer.tearDown()
+        MonitorAlarmsProducer.logger.info("Shut down")
+    }
   }
 
   /**
@@ -107,7 +128,7 @@ class MonitorAlarmsProducer(val producer: MonitorAlarmPublisher, val refreshRate
         emptyProps
     else {
       val p = new util.HashMap[String,String]()
-        p.put(faultyIdsPropName,prop)
+        p.put(MonitorAlarmsProducer.faultyIdsPropName,prop)
         p
     }
 
@@ -133,18 +154,20 @@ class MonitorAlarmsProducer(val producer: MonitorAlarmPublisher, val refreshRate
   /** Periodically sends the alarms defined in [[org.eso.ias.monitor.MonitorAlarm]] */
   override def run(): Unit = {
     MonitorAlarmsProducer.logger.debug("Sending alarms to the BSDB")
+    if (!closed.get()) {
+      val iasValues = MonitorAlarm.values().map( a => {
+        MonitorAlarmsProducer.logger.debug("Sending {} with activation status {} and faulty IDs {}",
+          a.id,
+          a.getAlarm,
+          a.getProperties)
+        buildIasValue(a.id,a.getAlarm,a.getProperties)
+      })
 
-    val iasValues = MonitorAlarm.values().map( a => {
-      MonitorAlarmsProducer.logger.debug("Sending {} with activation status {} and faulty IDs {}",
-        a.id,
-        a.getAlarm,
-        a.getProperties)
-      buildIasValue(a.id,a.getAlarm,a.getProperties)
-    })
+      producer.push(iasValues)
+      producer.flush()
+      MonitorAlarmsProducer.logger.debug("Sent {} alarms to the BSDB",iasValues.length)
+    }
 
-    producer.push(iasValues)
-    producer.flush()
-    MonitorAlarmsProducer.logger.debug("Sent {} alarms to the BSDB",iasValues.length)
   }
 }
 
@@ -152,4 +175,7 @@ class MonitorAlarmsProducer(val producer: MonitorAlarmPublisher, val refreshRate
 object MonitorAlarmsProducer {
   /** The logger */
   val logger: Logger = IASLogger.getLogger(MonitorAlarmsProducer.getClass)
+
+  /** The name of the property with the fault IDs */
+  val faultyIdsPropName = "faultyIDs"
 }
