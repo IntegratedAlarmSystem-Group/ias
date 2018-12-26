@@ -32,6 +32,10 @@ import java.util.Objects;
  *     | IASIO.json
  *  |+ TEMPLATE
  *     | templates.json
+ *  |+ CLIENT
+ *     | <ClientId-1>.conf
+ *     | ...
+ *     | <ClientId-x>.conf
  * }
  * </pre>
  * 
@@ -50,7 +54,8 @@ public enum CdbFolders {
 	ASCE("ASCE"),
 	IASIO("IASIO"),
 	TF("TF"),
-	TEMPLATE("TEMPLATE");
+	TEMPLATE("TEMPLATE"),
+	CLIENT("CLIENT");
 	
 	/**
 	 *  The name of the folder

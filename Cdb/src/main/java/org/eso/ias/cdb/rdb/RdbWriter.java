@@ -3,23 +3,16 @@
  */
 package org.eso.ias.cdb.rdb;
 
+import org.eso.ias.cdb.CdbWriter;
+import org.eso.ias.cdb.IasCdbException;
+import org.eso.ias.cdb.pojos.*;
+import org.hibernate.Session;
+import org.hibernate.Transaction;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-
-import org.eso.ias.cdb.CdbWriter;
-import org.eso.ias.cdb.IasCdbException;
-import org.eso.ias.cdb.pojos.AsceDao;
-import org.eso.ias.cdb.pojos.DasuDao;
-import org.eso.ias.cdb.pojos.DasuToDeployDao;
-import org.eso.ias.cdb.pojos.IasDao;
-import org.eso.ias.cdb.pojos.IasioDao;
-import org.eso.ias.cdb.pojos.SupervisorDao;
-import org.eso.ias.cdb.pojos.TemplateDao;
-import org.eso.ias.cdb.pojos.TransferFunctionDao;
-import org.hibernate.Session;
-import org.hibernate.Transaction;
 
 /**
  * Writes IAS configuration into RDB.
@@ -164,6 +157,22 @@ public class RdbWriter implements CdbWriter {
 		Session s=rdbUtils.getSession();
 		Transaction t =s.beginTransaction();
 		s.merge(template);
+		t.commit();
+		s.flush();
+	}
+
+	/**
+	 * Write the configuration of the client with the passed identifier
+	 *
+	 * @param clientConfig the configuraton of the client
+	 * @throws IasCdbException In case of error writing the configuration
+	 */
+	@Override
+	public void writeClientConfig(ClientConfigDao clientConfig) throws IasCdbException {
+		Objects.requireNonNull(clientConfig,"The config DAO cannot be null");
+		Session s=rdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		s.merge(clientConfig);
 		t.commit();
 		s.flush();
 	}
