@@ -3,20 +3,13 @@
  */
 package org.eso.ias.cdb.rdb;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.IasCdbException;
 import org.eso.ias.cdb.pojos.*;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+
+import java.util.*;
 
 /**
  * Read CDB configuration from RDB.
@@ -395,6 +388,29 @@ public class RdbReader implements CdbReader {
         Optional<AsceDao> asce = getAsce(id);
         Collection<TemplateInstanceIasioDao> ret = asce.orElseThrow(() -> new IasCdbException("ASCE ["+id+"] not dound")).getTemplatedInstanceInputs();
         return (ret==null)? new ArrayList<>() : ret;
+	}
+
+	/**
+	 * Get the configuraton of the client with the passed identifier.
+	 *
+	 * The configuration is passed as a string whose format depends
+	 * on the client implementation.
+	 *
+	 * @param id The not null nor empty ID of the IAS client
+	 * @return The configuration of the client
+	 * @throws IasCdbException In case of error getting the configuration of the client
+	 */
+	@Override
+	public Optional<ClientConfigDao> getClientConfig(String id) throws IasCdbException {
+		if (id==null || id.isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty or null ID");
+		}
+		Session s=rdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		ClientConfigDao clientConf = s.get(ClientConfigDao.class,id);
+		t.commit();
+
+		return Optional.ofNullable(clientConf);
 	}
 
 	/**

@@ -1,14 +1,5 @@
 package org.eso.ias.cdb.rdb;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.net.URL;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-
 import org.eso.ias.cdb.IasCdbException;
 import org.eso.ias.cdb.pojos.*;
 import org.hibernate.Session;
@@ -20,6 +11,15 @@ import org.hibernate.cfg.Configuration;
 import org.hibernate.service.ServiceRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.URL;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A singleton with a set of utility methods to use while reading/writing 
@@ -161,6 +161,7 @@ public class RdbUtils {
 			sources.addAnnotatedClass(TemplateDao.class);
 			sources.addAnnotatedClass(DasuToDeployDao.class);
 			sources.addAnnotatedClass(TemplateInstanceIasioDao.class);
+			sources.addAnnotatedClass(ClientConfigDao.class);
 			Metadata data = sources.buildMetadata();
 			logger.debug("Building the SessionFactory");
 			sessionFactory = data.buildSessionFactory();
