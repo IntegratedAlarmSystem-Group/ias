@@ -1,22 +1,21 @@
 package org.eso.ias.heartbeat.test
 
 import org.eso.ias.heartbeat.HeartbeatStatus
+import org.eso.ias.heartbeat.consumer.{HbKafkaConsumer, HbListener, HbMsg}
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
-import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition
-import org.eso.ias.kafkautils.{KafkaHelper, SimpleStringConsumer}
-import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener
+import org.eso.ias.kafkautils.KafkaHelper
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.{Identifier, IdentifierType}
 import org.scalatest.{BeforeAndAfter, FlatSpec}
 
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.ListBuffer
 import scala.util.Try
 
 /**
- * Test the HB kafka publisher
+ * Test the HB kafka publisher and consumer
  */
-class TestKafkaPublisher extends FlatSpec with KafkaConsumerListener with BeforeAndAfter {
+class TestKafkaPublisher extends FlatSpec with HbListener with BeforeAndAfter {
   
   /** The logger */
   val logger = IASLogger.getLogger(classOf[TestKafkaPublisher])
@@ -24,45 +23,39 @@ class TestKafkaPublisher extends FlatSpec with KafkaConsumerListener with Before
   /** The serializer */
   val serializer = new HbJsonSerializer
   
-  /** The ide of the HB producer */
+  /** The id of the HB producer */
   val id = "TheID"
   
   /** The identifier of the supervisor */
   val supervIdentifier = new Identifier("SupervisorID", IdentifierType.SUPERVISOR, None)
-  
-  /**
-   * The consumer getting events from the HB topic
-   */
-  val stringConsumer = new SimpleStringConsumer(
-      KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, 
-      KafkaHelper.HEARTBEAT_TOPIC_NAME,
-      "Tester-ID")
-  
-  /**
-   * The strings read from the kafka topic
-   */
-  val receivedStrings: ArrayBuffer[String] = new ArrayBuffer
-  
+
+  /** The consumer receiving events from the HB topic */
+  var hbKafkaConsumer: HbKafkaConsumer = _
+
+  private val buffer: ListBuffer[HbMsg] = new ListBuffer[HbMsg]
+
+  def hbReceived(hbMsg: HbMsg): Unit = {
+    require(Option(hbMsg).isDefined)
+    buffer.append(hbMsg)
+    logger.info("HB received: {}",hbMsg.toString)
+  }
+
   /** The kafka producer to test */
-  val kProd = new HbKafkaProducer(
+  var kProd: HbKafkaProducer = _
+
+  before {
+    logger.info("Initializing string consumer")
+    buffer.clear()
+    hbKafkaConsumer = new HbKafkaConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,"HbConsumer")
+    logger.info("Initializing HB kafka consumer")
+    hbKafkaConsumer.addListener(this)
+    hbKafkaConsumer.start()
+
+    logger.info("Building HB kafka producer")
+    kProd = new HbKafkaProducer(
       id,
       KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
       serializer)
-  
-  override def stringEventReceived(event: String) {
-    val str = Option(event)
-    str.filter(!_.isEmpty).foreach(s => {
-      logger.info("HB received {}",s)
-      receivedStrings.append(s)
-    })
-  }
-  
-  before {
-    logger.info("Initializing string consumer")
-    receivedStrings.clear()
-    stringConsumer.setUp()
-    stringConsumer.startGettingEvents(StartPosition.END, this)
-    
     logger.info("Initializing HB kafka producer")
     kProd.init()
     
@@ -70,17 +63,18 @@ class TestKafkaPublisher extends FlatSpec with KafkaConsumerListener with Before
   }
   
   after {
+    logger.info("Shutting down the HB consumer")
+    Option(hbKafkaConsumer).foreach(_.shutdown())
+
     logger.info("Shutting down HB kafka producer")
-    kProd.shutdown()
-    logger.info("Shutting down string consumer")
-    stringConsumer.tearDown;
+    Option(kProd).foreach(_.shutdown())
     
-    logger.info("Shutted down")
+    logger.info("Shut down")
   }
   
-  behavior of "The KafkaConsumer" 
+  behavior of "The KafkaConsumer and the producer"
   
-  it must "send correctly send all the messages" in {
+  they must "send correctly send and receive all the messages" in {
     
     // Sends one message for each HeartbeatStatus type
     val hbStates = HeartbeatStatus.values().foreach( state => {
@@ -97,14 +91,12 @@ class TestKafkaPublisher extends FlatSpec with KafkaConsumerListener with Before
     // Give some time to read all strings
     val op = Try(Thread.sleep(1000))
     
-    assert(receivedStrings.size==HeartbeatStatus.values().length)
+    assert(buffer.size==HeartbeatStatus.values().length)
     
-    val hbMessages = receivedStrings.map(str => serializer.deserializeFromString(str))
-    
-    assert(hbMessages.forall( msg => msg._1==supervIdentifier.fullRunningID))
+    assert(buffer.forall( msg => msg.id==supervIdentifier.fullRunningID))
     
     assert(HeartbeatStatus.values().forall( state => {
-      hbMessages.filter(msg => msg._2==state).size==1
+      buffer.filter(msg => msg.status==state).size==1
     }))
   }
   

@@ -1,6 +1,6 @@
 package org.eso.ias.types
 
-import IdentifierType._
+import org.eso.ias.types.IdentifierType._
 
 /**
  * Companion object
@@ -207,7 +207,7 @@ object Identifier {
    */
   def apply(fullRunningId: String): Identifier = {
     require(Option(fullRunningId).isDefined)
-    require(checkFullRunningIdFormat(fullRunningId),"Invalid fullRunningId format")
+    require(checkFullRunningIdFormat(fullRunningId),"Invalid fullRunningId format "+fullRunningId)
     
     // The id and type of each element passed in the parameter
     val identifiersDescr=fullRunningId.split(separator)

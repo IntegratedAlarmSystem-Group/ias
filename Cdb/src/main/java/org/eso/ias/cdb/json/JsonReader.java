@@ -1,17 +1,5 @@
 package org.eso.ias.cdb.json;
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eso.ias.cdb.CdbReader;
@@ -19,7 +7,12 @@ import org.eso.ias.cdb.IasCdbException;
 import org.eso.ias.cdb.json.pojos.*;
 import org.eso.ias.cdb.pojos.*;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 
 /**
  * Read CDB configuration from JSON files.
@@ -826,6 +819,42 @@ public class JsonReader implements CdbReader {
 
         return Optional.of(getIdsInFolder(asceFile));
     }
+
+	/**
+	 * Get the configuration of the client with the passed identifier.
+	 *
+	 * The configuration is passed as a string whose format depends
+	 * on the client implementation.
+	 *
+	 * @param id The not null nor empty ID of the IAS client
+	 * @return The configuration of the client
+	 * @throws IasCdbException In case of error getting the configuration of the client
+	 */
+	@Override
+	public Optional<ClientConfigDao> getClientConfig(String id) throws IasCdbException {
+	    Objects.requireNonNull(id,"The identifier can't be an null");
+        String cleanedID = id.trim();
+        if (cleanedID.isEmpty()) {
+            throw new IllegalArgumentException("The identifier can't be an empty string");
+        }
+
+        try {
+            Path configFilePath =  cdbFileNames.getClientFilePath(id);
+            if (!canReadFromFile(configFilePath.toFile())) {
+                return Optional.empty();
+            } else {
+                List<String> lines = Files.readAllLines(configFilePath);
+                StringBuilder builder = new StringBuilder();
+                lines.forEach(l -> {
+                    builder.append(l);
+                });
+                return Optional.of(new ClientConfigDao(cleanedID,builder.toString()));
+            }
+        } catch (IOException ioe) {
+            throw new IasCdbException("Error getting the configuration of the client "+id,ioe);
+        }
+
+	}
 	
 	/**
 	 * Initialize the CDB

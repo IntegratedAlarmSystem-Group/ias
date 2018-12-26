@@ -1,16 +1,8 @@
 package org.eso.ias.cdb;
 
-import java.util.Optional;
-import java.util.Set;
+import org.eso.ias.cdb.pojos.*;
 
-import org.eso.ias.cdb.pojos.AsceDao;
-import org.eso.ias.cdb.pojos.DasuDao;
-import org.eso.ias.cdb.pojos.DasuToDeployDao;
-import org.eso.ias.cdb.pojos.IasDao;
-import org.eso.ias.cdb.pojos.IasioDao;
-import org.eso.ias.cdb.pojos.SupervisorDao;
-import org.eso.ias.cdb.pojos.TemplateDao;
-import org.eso.ias.cdb.pojos.TransferFunctionDao;
+import java.util.Set;
 
 /**
  * Interface to flush the content of the CDB pojos
@@ -86,6 +78,14 @@ public interface CdbWriter {
 	 * @throws IasCdbException In case of error writing the IASIOs
 	 */
 	public void writeIasios(Set<IasioDao> iasios, boolean append) throws IasCdbException;
+
+	/**
+	 * Write the configuration of the client with the passed identifier
+	 *
+	 * @param clientConfigDao the configuraton of the client
+	 * @throws IasCdbException In case of error writing the configuration
+	 */
+	public void writeClientConfig(ClientConfigDao clientConfigDao) throws IasCdbException;
 	
 	/**
 	 * Initialize the CDB
