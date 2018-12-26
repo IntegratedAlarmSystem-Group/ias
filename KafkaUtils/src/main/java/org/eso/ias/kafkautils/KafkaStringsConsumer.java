@@ -239,6 +239,7 @@ public class KafkaStringsConsumer implements Runnable {
         Objects.requireNonNull(startReadingFrom);
         Objects.requireNonNull(listener);
         this.stringsListener=listener;
+        KafkaStringsConsumer.logger.info("Preparing to consume strings");
         if (!isInitialized.get()) {
             throw new IllegalStateException("Not initialized");
         }
@@ -253,14 +254,17 @@ public class KafkaStringsConsumer implements Runnable {
         getterThread.start();
 
         try {
+            KafkaStringsConsumer.logger.debug("Waiting for kafka partition assignment...");
             if (!polling.await(WAIT_FOR_PARTITIONS_TIMEOUT, TimeUnit.MINUTES)) {
-                throw new KafkaUtilsException("Timed out while waiting for assignemnt to kafka partitions");
+                throw new KafkaUtilsException("Timed out while waiting for assignmnt to kafka partitions");
             }
+            KafkaStringsConsumer.logger.debug("Kafka partition assigned");
         } catch (InterruptedException e) {
             KafkaStringsConsumer.logger.warn("Consumer [{}] Interrupted",consumerID);
             Thread.currentThread().interrupt();
             throw new KafkaUtilsException(consumerID+" interrupted while waiting for assignemnt to kafka partitions", e);
         }
+        KafkaStringsConsumer.logger.info("Is consuming strings");
     }
 
     /**
@@ -347,7 +351,7 @@ public class KafkaStringsConsumer implements Runnable {
      */
     @Override
     public void run() {
-        KafkaStringsConsumer.logger.info("Thread of consumer [{}] to get events from the topic started",consumerID);
+        KafkaStringsConsumer.logger.info("Thread of consumer [{}] to get events from the topic {} started",consumerID,topicName);
 
         if (startReadingPos==StartPosition.DEFAULT) {
             consumer.subscribe(Arrays.asList(topicName));
@@ -402,7 +406,7 @@ public class KafkaStringsConsumer implements Runnable {
                 KafkaStringsConsumer.logger.debug("Consumer [{}] got an event read with {} records", consumerID, records.count());
                 processedRecords.incrementAndGet();
             } catch (WakeupException we) {
-                KafkaStringsConsumer.logger.warn("Consumer [{}]: ho values read from the topic {} in the past {} seconds",
+                KafkaStringsConsumer.logger.warn("Consumer [{}]: no values read from the topic {} in the past {} seconds",
                         consumerID,
                         topicName,
                         POLLING_TIMEOUT.getSeconds());

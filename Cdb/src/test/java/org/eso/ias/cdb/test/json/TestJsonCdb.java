@@ -834,5 +834,42 @@ public class TestJsonCdb {
 		assertTrue(iDao.get().isCanShelve());
 	}
 
+
+	 /** Test the writing and reading of the configuration of clients
+	 *
+			 * @throws Exception
+	 */
+	@Test
+	public void testClientConfig() throws Exception {
+
+		ClientConfigDao configDao1 = new ClientConfigDao("ID1", "Configuration 1");
+		ClientConfigDao configDao2 = new ClientConfigDao("ID2", "Configuration 2");
+
+		cdbWriter.writeClientConfig(configDao1);
+		cdbWriter.writeClientConfig(configDao2);
+
+		Optional<ClientConfigDao> c1 = cdbReader.getClientConfig("ID1");
+		assertTrue(c1.isPresent());
+		System.out.println("configDao1="+configDao1.toString());
+		System.out.println("c1="+c1.get().toString());
+		assertEquals(configDao1,c1.get());
+		Optional<ClientConfigDao> c2 = cdbReader.getClientConfig("ID2");
+		assertTrue(c2.isPresent());
+		assertEquals(configDao2,c2.get());
+
+		// Now try with a big config
+		StringBuilder builder = new StringBuilder();
+		for (int t=0; builder.length()<100000; t++) {
+			builder.append(t);
+			builder.append (' ');
+		}
+		ClientConfigDao longConfig = new ClientConfigDao("LongConfigId", builder.toString());
+		cdbWriter.writeClientConfig(longConfig);
+
+		Optional<ClientConfigDao> c3 = cdbReader.getClientConfig("LongConfigId");
+		assertTrue(c3.isPresent());
+		assertEquals(longConfig,c3.get());
+	}
+
 }
 
