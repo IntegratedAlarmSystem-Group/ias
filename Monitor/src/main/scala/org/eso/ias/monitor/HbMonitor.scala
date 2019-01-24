@@ -3,10 +3,10 @@ package org.eso.ias.monitor
 import java.util.concurrent.{Executors, ScheduledExecutorService, ThreadFactory, TimeUnit}
 
 import com.typesafe.scalalogging.Logger
+import org.eso.ias.heartbeat.HeartbeatProducerType._
 import org.eso.ias.heartbeat.consumer.{HbKafkaConsumer, HbListener, HbMsg}
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types.IdentifierType._
-import org.eso.ias.types.{Alarm, Identifier}
+import org.eso.ias.types.Alarm
 
 import scala.collection.mutable.{Map => MutableMap}
 
@@ -138,21 +138,14 @@ class HbMonitor(
     * @param hbMsg The HB consumed from the HB topic
     */
   override def hbReceived(hbMsg: HbMsg): Unit = synchronized {
-    HbMonitor.logger.debug("HB received from {}",hbMsg.hb)
-    if (!Identifier.checkFullRunningIdFormat(hbMsg.hb)) {
-      // The converter due to a bug sends its ID instead of
-      // its fullRunningId
-      // @see #145
-      convertersHbMsgs.put(hbMsg.hb,true)
-    } else {
-      val identifier = Identifier(hbMsg.hb)
-      identifier.idType match {
-        case PLUGIN => pluginsHbMsgs.put(identifier.id,true)
-        case SUPERVISOR => supervisorsHbMsgs.put(identifier.id,true)
-        case SINK => sinksHbMsgs.put(identifier.id,true)
-        case CLIENT => clientsHbMsgs.put(identifier.id,true)
-        case idType => HbMonitor.logger.warn("Unknown HB type to monitor: {} from fullRunningId {}",idType,hbMsg.hb)
-      }
+    HbMonitor.logger.debug("HB received: {}",hbMsg.hb.stringRepr)
+    hbMsg.hb.hbType match {
+      case PLUGIN => pluginsHbMsgs.put(hbMsg.hb.name,true)
+      case SUPERVISOR => supervisorsHbMsgs.put(hbMsg.hb.name,true)
+      case SINK => sinksHbMsgs.put(hbMsg.hb.name,true)
+      case CONVERTER => convertersHbMsgs.put(hbMsg.hb.name,true)
+      case CLIENT => clientsHbMsgs.put(hbMsg.hb.name,true)
+      case idType => HbMonitor.logger.warn("Unknown HB type to monitor: {} from fullRunningId {}",idType,hbMsg.hb)
     }
   }
 
