@@ -1,13 +1,12 @@
 package org.eso.ias.heartbeat.serializer;
 
-import java.util.Map;
-import java.util.Objects;
-
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import org.eso.ias.heartbeat.HeartbeatStatus;
 import org.eso.ias.utils.ISO8601Helper;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * The a java pojo with the heartbeat message.
@@ -24,7 +23,7 @@ public class HeartbeatMessagePojo {
 	/**
 	 * The full running ID
 	 */
-	private String fullRunningId;
+	private String hbStringrepresentation;
 	
 	/**
 	 * The state of the tool
@@ -45,23 +44,23 @@ public class HeartbeatMessagePojo {
 	/**
 	 * Constructor
 	 * 
-	 * @param fullRunningId the full running id
+	 * @param hbStringrepresentation the string representation of the HB
 	 * @param hbStatus the status
 	 * @param props additional properties
 	 * @param tStamp the timestamp
 	 */
 	public HeartbeatMessagePojo(
-			String fullRunningId,
+			String hbStringrepresentation,
 			HeartbeatStatus hbStatus,
 			Map<String, String> props,
 			long tStamp) {
-		if (Objects.isNull(fullRunningId) || fullRunningId.isEmpty()) {
+		if (Objects.isNull(hbStringrepresentation) || hbStringrepresentation.isEmpty()) {
 			throw new IllegalArgumentException("Invalid null/empty full running id");
 		}
 		Objects.requireNonNull(hbStatus);
 		
 		this.timestamp=ISO8601Helper.getTimestamp(tStamp);
-		this.fullRunningId=fullRunningId;
+		this.hbStringrepresentation = hbStringrepresentation;
 		this.state=hbStatus;
 		
 		if (props!=null && !props.isEmpty()) {
@@ -77,12 +76,12 @@ public class HeartbeatMessagePojo {
 		this.timestamp = timestamp;
 	}
 
-	public String getFullRunningId() {
-		return fullRunningId;
+	public String getHbStringrepresentation() {
+		return hbStringrepresentation;
 	}
 
-	public void setFullRunningId(String fullRunningId) {
-		this.fullRunningId = fullRunningId;
+	public void setHbStringrepresentation(String hbStringrepresentation) {
+		this.hbStringrepresentation = hbStringrepresentation;
 	}
 
 	public HeartbeatStatus getState() {

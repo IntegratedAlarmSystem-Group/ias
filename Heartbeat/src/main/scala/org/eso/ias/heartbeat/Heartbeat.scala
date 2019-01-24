@@ -23,8 +23,10 @@ class Heartbeat private (val hbType: HeartbeatProducerType, val name: String, va
   /** The ID is composed of the type and the name */
   val id: String = name+Heartbeat.typeNameSeparator+hbType.name()
 
-  /** The string representation of the HEartbet, returned by toString */
-  private val stringRepr: String = id+Heartbeat.idHostnameSeparator+hostName
+  /** The string representation of the heartbeat
+    *
+    * The representation is sent in the HB topic and returned by toString */
+  val stringRepr: String = id+Heartbeat.idHostnameSeparator+hostName
 
   /**
     * Auxiliary constructor
