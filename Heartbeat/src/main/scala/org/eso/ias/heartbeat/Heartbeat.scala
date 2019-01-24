@@ -63,7 +63,7 @@ object Heartbeat {
     * @return the heartebeat
     */
   def apply(hbType: HeartbeatProducerType, name: String): Heartbeat = {
-    new Heartbeat(hbType, name, System.getProperty("ias.hostname","Unknown host name"))
+    new Heartbeat(hbType, name)
   }
 
   /**
