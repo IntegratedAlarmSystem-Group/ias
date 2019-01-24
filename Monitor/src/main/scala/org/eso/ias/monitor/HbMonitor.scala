@@ -138,20 +138,20 @@ class HbMonitor(
     * @param hbMsg The HB consumed from the HB topic
     */
   override def hbReceived(hbMsg: HbMsg): Unit = synchronized {
-    HbMonitor.logger.debug("HB received from {}",hbMsg.id)
-    if (!Identifier.checkFullRunningIdFormat(hbMsg.id)) {
+    HbMonitor.logger.debug("HB received from {}",hbMsg.hb)
+    if (!Identifier.checkFullRunningIdFormat(hbMsg.hb)) {
       // The converter due to a bug sends its ID instead of
       // its fullRunningId
       // @see #145
-      convertersHbMsgs.put(hbMsg.id,true)
+      convertersHbMsgs.put(hbMsg.hb,true)
     } else {
-      val identifier = Identifier(hbMsg.id)
+      val identifier = Identifier(hbMsg.hb)
       identifier.idType match {
         case PLUGIN => pluginsHbMsgs.put(identifier.id,true)
         case SUPERVISOR => supervisorsHbMsgs.put(identifier.id,true)
         case SINK => sinksHbMsgs.put(identifier.id,true)
         case CLIENT => clientsHbMsgs.put(identifier.id,true)
-        case idType => HbMonitor.logger.warn("Unknown HB type to monitor: {} from fullRunningId {}",idType,hbMsg.id)
+        case idType => HbMonitor.logger.warn("Unknown HB type to monitor: {} from fullRunningId {}",idType,hbMsg.hb)
       }
     }
   }

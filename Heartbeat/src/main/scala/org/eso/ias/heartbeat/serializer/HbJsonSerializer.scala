@@ -1,9 +1,9 @@
 package org.eso.ias.heartbeat.serializer
 
-import org.eso.ias.heartbeat.HbMsgSerializer
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.eso.ias.heartbeat.HeartbeatStatus
+import org.eso.ias.heartbeat.{HbMsgSerializer, Heartbeat, HeartbeatStatus}
 import org.eso.ias.utils.ISO8601Helper
+
 import scala.collection.JavaConverters
 
 /**
@@ -24,16 +24,16 @@ class HbJsonSerializer extends HbMsgSerializer {
    * @return A string representation of the message and the timestamp
    */
   def serializeToString(
-      fullRunningId: String,
+      hb: Heartbeat,
       status: HeartbeatStatus, 
       additionalProeprties: Map[String,String],
       timestamp: Long): String = {
-    require(Option(fullRunningId).isDefined && !fullRunningId.isEmpty())
+    require(Option(hb).isDefined)
     require(Option(status).isDefined)
     require(Option(additionalProeprties).isDefined)
     
     val javaProps = JavaConverters.mapAsJavaMap(additionalProeprties)
-    val pojo: HeartbeatMessagePojo = new HeartbeatMessagePojo(fullRunningId,status,javaProps,timestamp)
+    val pojo: HeartbeatMessagePojo = new HeartbeatMessagePojo(hb.stringRepr,status,javaProps,timestamp)
     
     
     mapper.writeValueAsString(pojo)
@@ -47,7 +47,7 @@ class HbJsonSerializer extends HbMsgSerializer {
    *  @return a tuple with the full running id, the status, properties and the timestamp
    */
   def deserializeFromString(hbStrMessage: String): 
-    Tuple4[String,HeartbeatStatus, Map[String,String], Long] = {
+    Tuple4[Heartbeat,HeartbeatStatus, Map[String,String], Long] = {
     val pojo: HeartbeatMessagePojo = mapper.readValue(hbStrMessage, classOf[HeartbeatMessagePojo])
     
     val props: Map[String, String] = Option(pojo.getProps) match {
@@ -58,7 +58,7 @@ class HbJsonSerializer extends HbMsgSerializer {
     
     val timeStamp = ISO8601Helper.timestampToMillis(pojo.getTimestamp)
     
-    ( pojo.getFullRunningId,
+    ( Heartbeat(pojo.getHbStringrepresentation),
         pojo.getState,
         props,
         timeStamp)
