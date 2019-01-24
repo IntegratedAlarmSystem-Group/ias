@@ -1,12 +1,11 @@
 package org.eso.ias.heartbeat.test
 
-import org.eso.ias.heartbeat.HeartbeatStatus
 import org.eso.ias.heartbeat.consumer.{HbKafkaConsumer, HbListener, HbMsg}
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
+import org.eso.ias.heartbeat.{Heartbeat, HeartbeatProducerType, HeartbeatStatus}
 import org.eso.ias.kafkautils.KafkaHelper
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types.{Identifier, IdentifierType}
 import org.scalatest.{BeforeAndAfter, FlatSpec}
 
 import scala.collection.mutable.ListBuffer
@@ -25,9 +24,12 @@ class TestKafkaPublisher extends FlatSpec with HbListener with BeforeAndAfter {
   
   /** The id of the HB producer */
   val id = "TheID"
-  
-  /** The identifier of the supervisor */
-  val supervIdentifier = new Identifier("SupervisorID", IdentifierType.SUPERVISOR, None)
+
+  /** The ID of th esupervisor */
+  val supervId = "SupervisorID"
+
+  /** The HB of the supervisor */
+  val supervHeartbeat = Heartbeat(HeartbeatProducerType.SUPERVISOR,supervId)
 
   /** The consumer receiving events from the HB topic */
   var hbKafkaConsumer: HbKafkaConsumer = _
@@ -83,7 +85,7 @@ class TestKafkaPublisher extends FlatSpec with HbListener with BeforeAndAfter {
       // Build the message
       val now = System.currentTimeMillis()
       
-      kProd.send(supervIdentifier.fullRunningID,state,aProp)
+      kProd.send(supervHeartbeat,state,aProp)
       val op = Try(Thread.sleep(50))
       
     })
@@ -93,7 +95,7 @@ class TestKafkaPublisher extends FlatSpec with HbListener with BeforeAndAfter {
     
     assert(buffer.size==HeartbeatStatus.values().length)
     
-    assert(buffer.forall( msg => msg.id==supervIdentifier.fullRunningID))
+    assert(buffer.forall( msg => msg.hb.name==supervHeartbeat.name && msg.hb.hbType==supervHeartbeat.hbType))
     
     assert(HeartbeatStatus.values().forall( state => {
       buffer.filter(msg => msg.status==state).size==1
