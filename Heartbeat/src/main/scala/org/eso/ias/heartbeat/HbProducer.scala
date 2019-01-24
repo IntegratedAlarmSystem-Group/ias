@@ -1,7 +1,5 @@
 package org.eso.ias.heartbeat
 
-import org.eso.ias.heartbeat.serializer.HeartbeatMessagePojo
-
 /**
  * Implementation of HbProducer pushes the HB status message
  * 
@@ -19,16 +17,16 @@ abstract class HbProducer(val serializer: HbMsgSerializer) {
   /**
    * Publish the HB message with the passed time stamp 
    * 
-   * @param fullRunningId full running id
+   * @param hb the heartbeat
    * @param status the status of the tool
    * @paran additionalProeprties a map of additional properties
    */
-  def send(fullRunningId: String,
+  def send(hb: Heartbeat,
       status: HeartbeatStatus, 
       additionalProperties: Map[String,String]) = {
-    require(Option(fullRunningId).isDefined && !fullRunningId.isEmpty(),"Invalid null/empty full running ID")
+    require(Option(hb).isDefined,"Invalid empty heartbeat")
     
-     val strToSend = serializer.serializeToString(fullRunningId,status,additionalProperties,System.currentTimeMillis())
+     val strToSend = serializer.serializeToString(hb,status,additionalProperties,System.currentTimeMillis())
      push(strToSend)
   }
   
