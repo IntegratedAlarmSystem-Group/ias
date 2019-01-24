@@ -1,20 +1,17 @@
 package org.eso.ias.heartbeat.test
 
-import org.eso.ias.heartbeat.HbProducer
+import org.eso.ias.heartbeat.{HbProducer, Heartbeat, HeartbeatProducerType}
+
 import scala.collection.mutable.ArrayBuffer
 
 // The following import is required by the usage of the fixture
-import language.reflectiveCalls
-import java.util.concurrent.TimeUnit
-import org.eso.ias.heartbeat.HbEngine
-import org.eso.ias.heartbeat.HeartbeatStatus
-import scala.util.Try
-import org.eso.ias.logging.IASLogger
-import org.eso.ias.heartbeat.HbMsgSerializer
+import org.eso.ias.heartbeat.{HbEngine, HbMsgSerializer, HeartbeatStatus}
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
+import org.eso.ias.logging.IASLogger
 import org.scalatest.FlatSpec
-import org.eso.ias.types.Identifier
-import org.eso.ias.types.IdentifierType
+
+import scala.language.reflectiveCalls
+import scala.util.Try
 
 /**
  * A mock producer to record what the Engine sends
@@ -65,20 +62,23 @@ class TestEngine extends FlatSpec {
   /** Fixture to build the HB engine to tests */
   def fixture =
     new {
+
+      /** The ID of th esupervisor */
+      val supervId = "SupervisorID"
+
+      /** The HB of the supervisor */
+      val supervHeartbeat = Heartbeat(HeartbeatProducerType.SUPERVISOR,supervId)
     
-    /** The identifier of the supervisor */
-    val supervIdentifier = new Identifier("SupervisorID", IdentifierType.SUPERVISOR, None)
-    
-    val frequency = 2
-    
-    val serializer = new HbJsonSerializer
-    
-    val producer = new MockProducer(serializer)
-    
-    /**
-     * The engine to test
-     */
-    val engine = new HbEngine(supervIdentifier.fullRunningID,frequency,producer)
+      val frequency = 2
+
+      val serializer = new HbJsonSerializer
+
+      val producer = new MockProducer(serializer)
+
+      /**
+       * The engine to test
+       */
+      val engine = new HbEngine(supervHeartbeat,frequency,producer)
     
   }
   
