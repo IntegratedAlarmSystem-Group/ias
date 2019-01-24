@@ -23,7 +23,7 @@ class HbJsonSerializer extends HbMsgSerializer {
    * @param timestamp the timestamp to associate to the message
    * @return A string representation of the message and the timestamp
    */
-  def serializeToString(
+  override def serializeToString(
       hb: Heartbeat,
       status: HeartbeatStatus, 
       additionalProeprties: Map[String,String],
@@ -46,7 +46,7 @@ class HbJsonSerializer extends HbMsgSerializer {
    *  @param A string representation of the message with the timestamp
    *  @return a tuple with the full running id, the status, properties and the timestamp
    */
-  def deserializeFromString(hbStrMessage: String): 
+  override def deserializeFromString(hbStrMessage: String):
     Tuple4[Heartbeat,HeartbeatStatus, Map[String,String], Long] = {
     val pojo: HeartbeatMessagePojo = mapper.readValue(hbStrMessage, classOf[HeartbeatMessagePojo])
     
