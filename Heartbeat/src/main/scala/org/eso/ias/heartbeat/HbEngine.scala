@@ -1,12 +1,10 @@
 package org.eso.ias.heartbeat
 
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.{Executors, ScheduledFuture, TimeUnit}
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
+
 import org.eso.ias.logging.IASLogger
-import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledFuture
+
 import scala.collection.mutable.{Map => MutableMap}
 
 /**
@@ -20,23 +18,20 @@ import scala.collection.mutable.{Map => MutableMap}
  * tool does not send the HB twice.
  * 
  * The initial status is STARTING_UP; then it must be updated by
- * calling [[HbEngine.updateHbState]] to follow the
+ * calling [[updateHbState]] to follow the
  * computational phases of the tool that sends the HB.
  * 
- * @param fullRunningId the full running ID of the tool
+ * @param hb the heartbeat of the tool
  * @param frequency the frequency to send the heartbeat (seconds)
  * @param publisher publish HB messages
  */
 class HbEngine private[heartbeat] (
-    fullRunningId: String,
-    frequency: Long,
-    publisher: HbProducer) extends Runnable {
-  
+    val hb: Heartbeat,
+    val frequency: Long,
+    val publisher: HbProducer) extends Runnable {
+  require(Option(hb).isDefined)
   require(Option(publisher).isDefined)
-  
-  /** The logger */
-  val logger = IASLogger.getLogger(classOf[HbEngine])
-  
+
   /** Signal if the object has been started */
   private val started = new AtomicBoolean(false)
   
@@ -77,15 +72,15 @@ class HbEngine private[heartbeat] (
    */
   def start(): Unit = synchronized {
     if (!started.getAndSet(true)) {
-      logger.debug("Initializing the Heartbeat engine")
-      logger.debug("Initializing the HB publisher")
+      HbEngine.logger.debug("Initializing the Heartbeat engine")
+      HbEngine.logger.debug("Initializing the HB publisher")
       publisher.init()
-      logger.debug("HB publisher initialized")
+      HbEngine.logger.debug("HB publisher initialized")
       val executorService = Executors.newSingleThreadScheduledExecutor();
       feature.set(executorService.scheduleWithFixedDelay(this, frequency, frequency, TimeUnit.SECONDS))
-      logger.info("Heartbeat engine started with a frequency of {} seconds",frequency.toString())  
+      HbEngine.logger.info("Heartbeat engine started with a frequency of {} seconds",frequency.toString())
     } else {
-      logger.warn("HB engine Already started")
+      HbEngine.logger.warn("HB engine Already started")
     }
   }
   
@@ -133,11 +128,11 @@ class HbEngine private[heartbeat] (
    */
   def shutdown() = synchronized {
     if (!closed.getAndSet(true)) {
-      logger.debug("HB engine shutting down")
+      HbEngine.logger.debug("HB engine shutting down")
       Option(feature.get).foreach( f => f.cancel(false))
-      logger.debug("HB engine is shutting down the publisher")
+      HbEngine.logger.debug("HB engine is shutting down the publisher")
       publisher.shutdown()
-      logger.info("HB engine down")
+      HbEngine.logger.info("HB engine down")
     }
   }
   
@@ -145,10 +140,10 @@ class HbEngine private[heartbeat] (
    * Sends the heartbeat to the publisher
    */
   override def run() {
-    logger.debug("Sending HB!")
+    HbEngine.logger.debug("Sending HB")
     assert(started.get,"HB engine not initialized")
     if (!closed.get) {
-      publisher.send(fullRunningId,hbStatus.get,props.toMap)
+      publisher.send(hb,hbStatus.get,props.toMap)
     }
   }
   
@@ -189,31 +184,49 @@ class HbEngine private[heartbeat] (
  * 
  */
 object HbEngine {
+
+  /** The logger */
+  val logger = IASLogger.getLogger(classOf[HbEngine])
   
-  /** 
-   *  The singleton
-   */
+  /** The singleton */
   var engine: Option[HbEngine] = None
   
   /**
-   * Return the HbEngine singleton 
-   */
+    * Return the HbEngine singleton
+    *
+    * @param name the name of the tool
+    * @param toolType the type of the tool
+    * @param frequency the frequency to publish HBs in the topic
+    * @param publisher the publisher that sends the HBs
+    * @return the HbEngine
+    */
   def apply(
-    fullRunningId: String,
+    name: String,
+    toolType: HeartbeatProducerType,
     frequency: Long,
     publisher: HbProducer) = {
        engine match {
          case None =>
-         engine = Some(new HbEngine(fullRunningId,frequency,publisher))
-         engine.get
+            engine = Some(new HbEngine(Heartbeat(toolType,name),frequency,publisher))
+            engine.get
          case Some(hbEng) => hbEng
        }
   }
   
-  /** Alias more familiar fto java developers */
+  /**
+    * Alias more familiar to java developers that delegates
+    * to [[apply()]]
+    *
+    * @param name the name of the tool
+    * @param toolType the type of the tool
+    * @param frequency the frequency to publish HBs in the topic
+    * @param publisher the publisher that sends the HBs
+    * @return the HbEngine
+    */
   def getInstance(
-      fullRunningId: String,
+      name: String,
+      toolType: HeartbeatProducerType,
       frequency: Long,
-      publisher: HbProducer)() = apply(fullRunningId,frequency,publisher)
+      publisher: HbProducer)() = apply(name,toolType,frequency,publisher)
   
 }

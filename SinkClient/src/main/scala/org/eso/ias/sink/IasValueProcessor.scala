@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 import com.typesafe.scalalogging.Logger
 import org.eso.ias.cdb.pojos.{IasDao, IasioDao, TemplateDao}
 import org.eso.ias.dasu.subscriber.{InputSubscriber, InputsListener}
-import org.eso.ias.heartbeat.{HbEngine, HbProducer, HeartbeatStatus}
+import org.eso.ias.heartbeat.{HbEngine, HbProducer, HeartbeatProducerType, HeartbeatStatus}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.{IASValue, Identifier, IdentifierType}
 
@@ -84,7 +84,7 @@ class IasValueProcessor(
   val iasioDaosMap: Map[String,IasioDao] = iasioDaos.foldLeft(Map[String,IasioDao]()){ (z, dao) => z+(dao.getId -> dao)}
 
   /** The heartbeat Engine */
-  val hbEngine: HbEngine = HbEngine(processorIdentifier.fullRunningID,iasDao.getHbFrequency,hbProducer)
+  val hbEngine: HbEngine = HbEngine(processorIdentifier.id,HeartbeatProducerType.SINK,iasDao.getHbFrequency,hbProducer)
 
   /** Signal if the processor has been closed */
   val closed = new AtomicBoolean(false)

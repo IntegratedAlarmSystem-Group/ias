@@ -2,14 +2,14 @@ package org.eso.ias.monitor.test
 
 import java.util.concurrent.TimeUnit
 
-import org.eso.ias.heartbeat.HeartbeatStatus
 import org.eso.ias.heartbeat.consumer.HbKafkaConsumer
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
+import org.eso.ias.heartbeat.{Heartbeat, HeartbeatProducerType, HeartbeatStatus}
 import org.eso.ias.kafkautils.KafkaHelper
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.monitor.{HbMonitor, MonitorAlarm}
-import org.eso.ias.types.{Alarm, Identifier, IdentifierType}
+import org.eso.ias.types.Alarm
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec}
 
 /**
@@ -25,49 +25,41 @@ class HbAlarmGenerationTest extends FlatSpec with BeforeAndAfterAll with BeforeA
   /** The logger */
   val logger = IASLogger.getLogger(classOf[HbAlarmGenerationTest])
 
-  /** The identifir of the monitored system */
-  val monitoredSystemIdentifier = new Identifier("MonSysId",IdentifierType.MONITORED_SOFTWARE_SYSTEM,None)
-
   /** The serializer of HBs */
   val hbSerializer = new HbJsonSerializer
 
-  // Identifier of the three plugins
-  val p1Identifier = new Identifier("p1",IdentifierType.PLUGIN, Some(monitoredSystemIdentifier))
-  val p2Identifier = new Identifier("p2",IdentifierType.PLUGIN, Some(monitoredSystemIdentifier))
-  val p3Identifier = new Identifier("p3",IdentifierType.PLUGIN, Some(monitoredSystemIdentifier))
-
-  val pluginIds = Set(p1Identifier.id,p2Identifier.id,p3Identifier.id)
-  val pluginsFrIds = Set(p1Identifier.fullRunningID,p2Identifier.fullRunningID,p3Identifier.fullRunningID)
+  // HBs of the three plugins
+  val p1Heartbeat = Heartbeat(HeartbeatProducerType.PLUGIN,"p1")
+  val p2Heartbeat = Heartbeat(HeartbeatProducerType.PLUGIN,"p2")
+  val p3Heartbeat = Heartbeat(HeartbeatProducerType.PLUGIN,"p3")
+  val pluginHBs = Set(p1Heartbeat,p2Heartbeat,p3Heartbeat)
+  val pluginIds = pluginHBs.map(_.name)
 
   // Identifiers of the 2 converters
-  val conv1Identifier = new Identifier("conv1",IdentifierType.CONVERTER, Some(p1Identifier))
-  val conv2Identifier = new Identifier("conv2",IdentifierType.CONVERTER, Some(p2Identifier))
-  val converterIds = Set(conv1Identifier.id, conv2Identifier.id)
-  val converterFrIds = Set(conv1Identifier.fullRunningID, conv2Identifier.fullRunningID)
+  val conv1Heartbeat = Heartbeat(HeartbeatProducerType.CONVERTER,"conv1")
+  val conv2Heartbeat = Heartbeat(HeartbeatProducerType.CONVERTER,"conv2")
+  val converterHBs = Set(conv1Heartbeat, conv2Heartbeat)
+  val converterIds = converterHBs.map(_.name)
 
   // Identifiers of the 3 clients
-  val client1Identifier = new Identifier("client1",IdentifierType.CLIENT,None)
-  val client2Identifier = new Identifier("client2",IdentifierType.CLIENT,None)
-  val client3Identifier = new Identifier("client3",IdentifierType.CLIENT,None)
-  val client4Identifier = new Identifier("client4",IdentifierType.CLIENT,None)
-  val clientIds = Set(client1Identifier.id,client2Identifier.id,client3Identifier.id,client4Identifier.id)
-  val clientFrIds = Set(
-    client1Identifier.fullRunningID,
-    client2Identifier.fullRunningID,
-    client3Identifier.fullRunningID,
-    client4Identifier.fullRunningID)
+  val client1Heartbeat = Heartbeat(HeartbeatProducerType.CLIENT,"client1")
+  val client2Heartbeat = Heartbeat(HeartbeatProducerType.CLIENT,"client2")
+  val client3Heartbeat = Heartbeat(HeartbeatProducerType.CLIENT,"client3")
+  val client4Heartbeat = Heartbeat(HeartbeatProducerType.CLIENT,"client4")
+  val clientHBs = Set(client1Heartbeat,client2Heartbeat,client3Heartbeat,client4Heartbeat)
+  val clientIds = clientHBs.map(_.name)
 
   // Identifier of the sink client
-  val sink1Identifier = new Identifier("sink1",IdentifierType.SINK,None)
-  val sinkIds = Set(sink1Identifier.id)
-  val sinkFrIds = Set(sink1Identifier.fullRunningID)
+  val sink1Heartbeat = Heartbeat(HeartbeatProducerType.SINK,"sink1")
+  val sinkHBs = Set(sink1Heartbeat)
+  val sinkIds = sinkHBs.map(_.name)
 
   /** Identifiers of supervisors */
-  val superv1Identifier = new Identifier("superv1",IdentifierType.SUPERVISOR)
-  val superv12dentifier = new Identifier("superv2",IdentifierType.SUPERVISOR)
-  val superv3Identifier = new Identifier("superv3",IdentifierType.SUPERVISOR)
-  val supervisorIds = Set(superv1Identifier.id,superv12dentifier.id,superv3Identifier.id)
-  val supervisorFrIds = Set(superv1Identifier.fullRunningID,superv12dentifier.fullRunningID,superv3Identifier.fullRunningID)
+  val superv1Heartbeat = Heartbeat(HeartbeatProducerType.SUPERVISOR,"superv1")
+  val superv12Heartbeat = Heartbeat(HeartbeatProducerType.SUPERVISOR,"superv2")
+  val superv3Heartbeat = Heartbeat(HeartbeatProducerType.SUPERVISOR,"superv3")
+  val supervisorHBs = Set(superv1Heartbeat,superv12Heartbeat,superv3Heartbeat)
+  val supervisorIds = supervisorHBs.map(_.name)
 
   /** The producer of HBs */
   var hbProducer: HbKafkaProducer = _
@@ -82,13 +74,14 @@ class HbAlarmGenerationTest extends FlatSpec with BeforeAndAfterAll with BeforeA
   val threshold: Long = 5
 
   /**
-    * Sends the HBs with the passed fullRunningIds
-    * @param frIds The fullRunningIds of the HBs to send
+    * Sends the passed HBs
+    *
+    * @param heartbeats The HBs to send
     *
     */
-  def sendHBs(frIds: Set[String]): Unit = {
-    frIds.foreach(frid => {
-      val str = hbSerializer.serializeToString(frid,HeartbeatStatus.RUNNING,Map.empty, System.currentTimeMillis())
+  def sendHBs(heartbeats: Set[Heartbeat]): Unit = {
+    heartbeats.foreach(heartbeat => {
+      val str = hbSerializer.serializeToString(heartbeat,HeartbeatStatus.RUNNING,Map.empty, System.currentTimeMillis())
       hbProducer.push(str)
     })
   }
@@ -143,11 +136,11 @@ class HbAlarmGenerationTest extends FlatSpec with BeforeAndAfterAll with BeforeA
     logger.info("Giving time to invalidate")
     Thread.sleep(TimeUnit.MILLISECONDS.convert(threshold+1,TimeUnit.SECONDS))
     MonitorAlarm.values().foreach( ma => assert(ma.getAlarm!=Alarm.CLEARED))
-    sendHBs(pluginsFrIds)
-    sendHBs(converterIds)
-    sendHBs(clientFrIds)
-    sendHBs(sinkFrIds)
-    sendHBs(supervisorFrIds)
+    sendHBs(pluginHBs)
+    sendHBs(converterHBs)
+    sendHBs(clientHBs)
+    sendHBs(sinkHBs)
+    sendHBs(supervisorHBs)
     logger.info("Giving time to update")
     Thread.sleep(TimeUnit.MILLISECONDS.convert(threshold+1,TimeUnit.SECONDS))
     MonitorAlarm.values().foreach( ma => {
