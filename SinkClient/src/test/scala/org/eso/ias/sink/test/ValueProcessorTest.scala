@@ -1,28 +1,25 @@
 package org.eso.ias.sink.test
 
 import java.nio.file.FileSystems
-import java.util.Optional
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
 
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.{IasTypeDao, IasioDao, TemplateDao}
 import org.eso.ias.dasu.publisher.DirectInputSubscriber
-import org.eso.ias.dasu.subscriber.InputSubscriber
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
+import org.eso.ias.heartbeat.{HbMsgSerializer, HbProducer}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.sink.{IasValueProcessor, ValueListener}
+import org.eso.ias.types.IasValidity.UNRELIABLE
 import org.eso.ias.types._
 import org.scalatest.FlatSpec
-import org.eso.ias.heartbeat.{HbMsgSerializer, HbProducer}
-import org.eso.ias.types.IasValidity.UNRELIABLE
 
-import scala.collection.JavaConverters._
-import scala.collection.{JavaConverters, immutable}
+import scala.collection.JavaConverters
 import scala.collection.mutable.ListBuffer
 
 // The following import is required by the usage of the fixture
-import language.reflectiveCalls
+import scala.language.reflectiveCalls
 
 /**
   * The listner for testing
@@ -115,7 +112,7 @@ class ValueProcessorTest extends FlatSpec {
   def fixture =
     new {
       /** The identifier */
-      val processorIdentifier = new Identifier("ProcessorTestID", IdentifierType.SINK,None)
+      val processorIdentifier = "ProcessorTestID"
 
       // Build the listeners
       val listeners: List[ListenerForTest] = {
@@ -167,7 +164,7 @@ class ValueProcessorTest extends FlatSpec {
         listeners
 
       /** The identifier for the processor with timeout */
-      val processorIdentifierWF = new Identifier("ProcessorTestID-WithFailures", IdentifierType.SINK,None)
+      val processorIdentifierWF = "ProcessorTestID-WithFailures"
 
       /** The processor to test with failing processors */
       val processorWithFailures: IasValueProcessor  = new IasValueProcessor(
@@ -190,7 +187,7 @@ class ValueProcessorTest extends FlatSpec {
       val listenersWithTO = new ListenerForTest(idOfFailingTO,timesOut = timeout+5)::listeners
 
       /** The identifier for the processor with timeout */
-      val processorIdentifierTO = new Identifier("ProcessorTestID-WithFailures", IdentifierType.SINK,None)
+      val processorIdentifierTO = "ProcessorTestID-WithFailures"
 
       /** The processor to test with timeout */
       val processorWithTO: IasValueProcessor  = new IasValueProcessor(
