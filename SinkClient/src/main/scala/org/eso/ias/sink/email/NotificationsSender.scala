@@ -311,9 +311,6 @@ object NotificationsSender {
     // The id of the sender
     val emailSenderId = parsedArgs._1.get
 
-    // The identifier
-    val emailSenderIdentifier = new Identifier(emailSenderId,IdentifierType.SINK,None)
-
     // Get the CDB
     val cdbReader: CdbReader = {
       if (parsedArgs._2.isDefined) {
@@ -428,7 +425,7 @@ object NotificationsSender {
     msLogger.debug("IAS values consumer instantiated")
 
     val valuesProcessor: IasValueProcessor = new IasValueProcessor(
-      emailSenderIdentifier,
+      emailSenderId,
       List(valueListener),
       hbProducer,
       inputsProvider,
