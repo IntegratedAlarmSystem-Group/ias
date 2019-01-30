@@ -20,9 +20,10 @@ import scala.util.{Failure, Success, Try}
 /**
   * Monitor the stat of the IAS and sends alarms
   *
-  * In this version, alarms are pushed in the core topic and willl  be read
+  * In this version, alarms are pushed in the core topic and will  be read
   * from there by the web server.
-  * TODO: send alarms (al least some of them) to the web server even wehn
+  *
+  * TODO: send alarms (al least some of them) to the web server even when
   *       kafka is down
   *
   * @param kafkaBrokes Kafka brokers
