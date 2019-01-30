@@ -20,11 +20,19 @@ public enum HeartbeatProducerType {
     SUPERVISOR,
 
     /** Generic client like an engineering client.
-     * Note necessarily the core monitors this kind of clients
+     * Not necessarily the core monitors this kind of clients.
      */
     CLIENT,
+
     /**
      * A consumer of IASIOs
      */
-    SINK
+    SINK,
+
+    /**
+     * A core tool that can generate alarms other than a DASU
+     *
+     * The IAS monitor is one of such tools.
+     */
+    CORETOOL
 }
