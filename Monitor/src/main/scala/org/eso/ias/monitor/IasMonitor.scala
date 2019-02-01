@@ -12,7 +12,6 @@ import org.eso.ias.cdb.rdb.RdbReader
 import org.eso.ias.heartbeat.consumer.HbKafkaConsumer
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.monitor.alarmpublisher.{BsdbAlarmPublisherImpl, MonitorAlarmPublisher}
-import org.eso.ias.types.{Identifier, IdentifierType}
 
 import scala.collection.JavaConverters
 import scala.util.{Failure, Success, Try}
@@ -39,7 +38,7 @@ import scala.util.{Failure, Success, Try}
   */
 class IasMonitor(
                 val kafkaBrokers: String,
-                val identifier: Identifier,
+                val identifier: String,
                 pluginIds: Set[String],
                 converterIds: Set[String],
                 clientIds: Set[String],
@@ -52,13 +51,13 @@ class IasMonitor(
   require(threshold>0,"Invalid negative or zero threshold")
 
   // The consumer of HBs
-  val hbConsumer: HbKafkaConsumer = new HbKafkaConsumer(kafkaBrokers,identifier.id)
+  val hbConsumer: HbKafkaConsumer = new HbKafkaConsumer(kafkaBrokers,identifier)
 
   /** The object to monitor HBs */
   val hbMonitor: HbMonitor = new HbMonitor(hbConsumer,pluginIds,converterIds,clientIds,sinkIds,supervisorIds,threshold)
 
   /** The object that publishes the alarms */
-  val alarmsPublisher: MonitorAlarmPublisher = new BsdbAlarmPublisherImpl(kafkaBrokers,identifier.id)
+  val alarmsPublisher: MonitorAlarmPublisher = new BsdbAlarmPublisherImpl(kafkaBrokers,identifier)
 
   /** The object that periodically sends the alarms */
   val alarmsProducer: MonitorAlarmsProducer = new MonitorAlarmsProducer(alarmsPublisher,refreshRate)
@@ -255,14 +254,9 @@ object IasMonitor {
 
     reader.shutdown()
 
-     // The identifier of the monitor
-    val identifier = new Identifier(monitorId, IdentifierType.CLIENT, None)
-
-
-
     val monitor = new IasMonitor(
       kafkaBrokers,
-      identifier,
+      monitorId,
       pluginIds,
       converterIds,
       clientIds,
