@@ -29,9 +29,9 @@ import scala.collection.JavaConverters
   *
   * @see isOutput()
  * 
- * A IASIO can only be produced by a plugin or by a DASU i.e.
- * only one between pluginProductionTStamp and dasuProductionTStamp
- * can be defined (another invariant)
+ * A IASIO can be produced by a plugin, by a DASU or a core tool;
+ * independently of the toll that generated the value, the timestamp is saved in the [[productionTStamp]].
+  * The tool that generated the value can be identified by the recursive [[Identifier]] of the inOut.
  * 
  * A property of the InOut contains the list of the dependent monitor points.
  * Only an output can have dependent monitor points i.e. the InOut in input to the
@@ -56,7 +56,8 @@ import scala.collection.JavaConverters
  *                           validityConstraint is defined only when fromInputsValidity
  *                           is defined but not the other way around
  * @param iasType: is the IAS type of this InOut
- * @param pluginProductionTStamp The point in time when the plugin produced this value
+ * @param productionTStamp The point in time when the value of the InOut has been produced
+  *                        by a plugin, a DASU or a core tool
  * @param sentToConverterTStamp The point in time when the plugin sent the value to the converter
  * @param receivedFromPluginTStamp The point in time when the converter received the value from the plugin
  * @param convertedProductionTStamp The point in time when the converter generated
@@ -80,13 +81,12 @@ case class InOut[A](
     validityConstraint: Option[Set[String]],
     iasType: IASTypes,
     readFromMonSysTStamp: Option[Long],
-    pluginProductionTStamp: Option[Long],
+    productionTStamp: Option[Long],
 	  sentToConverterTStamp: Option[Long],
 	  receivedFromPluginTStamp: Option[Long],
 	  convertedProductionTStamp: Option[Long],
 	  sentToBsdbTStamp: Option[Long],
 	  readFromBsdbTStamp: Option[Long],
-	  dasuProductionTStamp: Option[Long],
 	  idsOfDependants: Option[Set[Identifier]],
 	  props: Option[Map[String,String]]) {
   require(Option[Identifier](id).isDefined,"The identifier must be defined")
@@ -104,13 +104,7 @@ case class InOut[A](
   require(validityConstraint.forall( c => {
     !c.isEmpty && isOutput
   }), "Inconsistent validity constraint")
-      
-  // Check that no more then one between the plugin and the DASU production
-  // timestamps is defined
-  require(
-      pluginProductionTStamp.size+dasuProductionTStamp.size<=1,
-      "Inconsistent production timestamps")
-  
+
   value.foreach(v => assert(InOut.checkType(v,iasType),"Type mismatch: ["+v+"] is not "+iasType))
   
   override def toString(): String = {
@@ -136,14 +130,13 @@ case class InOut[A](
     }
 
     readFromMonSysTStamp.foreach(t => { ret.append(", readFromMonSysTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
-    pluginProductionTStamp.foreach(t => { ret.append(", pluginProductionTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
+    productionTStamp.foreach(t => { ret.append(", productionTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
 	  sentToConverterTStamp.foreach(t => { ret.append(", sentToConverterTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
 	  receivedFromPluginTStamp.foreach(t => { ret.append(", receivedFromPluginTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
 	  convertedProductionTStamp.foreach(t => { ret.append(", convertedProductionTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
 	  sentToBsdbTStamp.foreach(t => { ret.append(", sentToBsdbTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
 	  readFromBsdbTStamp.foreach(t => { ret.append(", readFromBsdbTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
-	  dasuProductionTStamp.foreach(t => { ret.append(", dasuProductionTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
-	  
+
 	  idsOfDependants.foreach( ids => {
 	    ret.append(", Ids of dependants=[")
 	    val listOfIds = ids.map(_.id).toList.sorted
@@ -286,14 +279,9 @@ case class InOut[A](
   def getValidityOfInputByTime(validityTimeFrame: Long): Validity = {
     require(validityTimeFrame>0, "Invalid time frame")
     require(!isOutput(),"The validty cannot by evaluated for output IASIO")
-    
-    assert(
-      dasuProductionTStamp.isDefined && pluginProductionTStamp.isEmpty ||
-      dasuProductionTStamp.isEmpty && pluginProductionTStamp.isDefined,
-      "Inconsistent production TStamps")
-    
+
     val thresholdTStamp = System.currentTimeMillis() - validityTimeFrame
-    val iasioTstamp: Long = dasuProductionTStamp.getOrElse(pluginProductionTStamp.get)
+    val iasioTstamp: Long = productionTStamp.get
 
     assert(iasioTstamp<=thresholdTStamp+validityTimeFrame,
       "InOut "+id.id+": iasioTstamp="+
@@ -326,7 +314,7 @@ case class InOut[A](
   /**
    * Return a new inOut with the passed additional properties
    * 
-   * @param The additional properties
+   * @param additionalProps The additional properties
    * @return a new inOut with the passed additional properties
    */
   def updateProps(additionalProps: Map[String,String]): InOut[A] = {
@@ -375,13 +363,12 @@ case class InOut[A](
         None,
         iasValue.valueType,
         if (iasValue.readFromMonSysTStamp.isPresent) Some(iasValue.readFromMonSysTStamp.get()) else None,
-        if (iasValue.pluginProductionTStamp.isPresent()) Some(iasValue.pluginProductionTStamp.get()) else None,
+        if (iasValue.productionTStamp.isPresent()) Some(iasValue.productionTStamp.get()) else None,
 	      if (iasValue.sentToConverterTStamp.isPresent()) Some(iasValue.sentToConverterTStamp.get()) else None,
 	      if (iasValue.receivedFromPluginTStamp.isPresent()) Some(iasValue.receivedFromPluginTStamp.get()) else None,
 	      if (iasValue.convertedProductionTStamp.isPresent()) Some(iasValue.convertedProductionTStamp.get()) else None,
 	      if (iasValue.sentToBsdbTStamp.isPresent()) Some(iasValue.sentToBsdbTStamp.get()) else None,
 	      if (iasValue.readFromBsdbTStamp.isPresent()) Some(iasValue.readFromBsdbTStamp.get()) else None,
-	      if (iasValue.dasuProductionTStamp.isPresent()) Some(iasValue.dasuProductionTStamp.get()) else None,
 	      depIds,
 	      addProps)
   }
@@ -392,12 +379,13 @@ case class InOut[A](
     
     this.copy(sentToBsdbTStamp=newTimestamp)
   }
-  
-  def updateDasuProdTStamp(timestamp: Long): InOut[A] = {
+
+  /** Updates the production timestamp */
+  def updateProdTStamp(timestamp: Long): InOut[A] = {
     val newTimestamp = Option(timestamp)
     require(newTimestamp.isDefined)
     
-    this.copy(dasuProductionTStamp=newTimestamp)
+    this.copy(productionTStamp=newTimestamp)
   }
   /**
    * Build and return the IASValue representation of this IASIO
@@ -405,36 +393,34 @@ case class InOut[A](
    * @return The IASValue representation of this IASIO
    */
   def toIASValue(): IASValue[A] = {
-    
-    val ids = idsOfDependants.map( i => JavaConverters.setAsJavaSet(i.map(_.fullRunningID)))
-    
-    val p = props.map( p => JavaConverters.mapAsJavaMap(p))
-    
+
+    val ids = idsOfDependants.map(i => JavaConverters.setAsJavaSet(i.map(_.fullRunningID)))
+
+    val p = props.map(p => JavaConverters.mapAsJavaMap(p))
+
     val theValue = if (value.isDefined) {
       value.get.asInstanceOf[A]
     } else {
       null
     }
-    
+
     new IASValue[A](
-        theValue.asInstanceOf[A],
-			  mode,
-			  getValidity.iasValidity,
-			  id.fullRunningID,
-			  iasType,
-        Optional.ofNullable(if (readFromMonSysTStamp.isDefined) readFromMonSysTStamp.get else null),
-			  Optional.ofNullable(if (pluginProductionTStamp.isDefined) pluginProductionTStamp.get else null),
-  			Optional.ofNullable(if (sentToConverterTStamp.isDefined) sentToConverterTStamp.get else null),
-  			Optional.ofNullable(if (receivedFromPluginTStamp.isDefined) receivedFromPluginTStamp.get else null),
-  			Optional.ofNullable(if (convertedProductionTStamp.isDefined) convertedProductionTStamp.get else null),
-  			Optional.ofNullable(if (sentToBsdbTStamp.isDefined) sentToBsdbTStamp.get else null),
-  			Optional.ofNullable(if (readFromBsdbTStamp.isDefined) readFromBsdbTStamp.get else null),
-  			Optional.ofNullable(if (dasuProductionTStamp.isDefined) dasuProductionTStamp.get else null),
-  			Optional.ofNullable(if (idsOfDependants.isDefined) ids.get else null),
-  			Optional.ofNullable(if (p.isDefined) p.get else null))
+      theValue.asInstanceOf[A],
+      mode,
+      getValidity.iasValidity,
+      id.fullRunningID,
+      iasType,
+      Optional.ofNullable(if (readFromMonSysTStamp.isDefined) readFromMonSysTStamp.get else null),
+      Optional.ofNullable(if (productionTStamp.isDefined) productionTStamp.get else null),
+      Optional.ofNullable(if (sentToConverterTStamp.isDefined) sentToConverterTStamp.get else null),
+      Optional.ofNullable(if (receivedFromPluginTStamp.isDefined) receivedFromPluginTStamp.get else null),
+      Optional.ofNullable(if (convertedProductionTStamp.isDefined) convertedProductionTStamp.get else null),
+      Optional.ofNullable(if (sentToBsdbTStamp.isDefined) sentToBsdbTStamp.get else null),
+      Optional.ofNullable(if (readFromBsdbTStamp.isDefined) readFromBsdbTStamp.get else null),
+      Optional.ofNullable(if (idsOfDependants.isDefined) ids.get else null),
+      Optional.ofNullable(if (p.isDefined) p.get else null))
 
   }
-  
   
 }
 
@@ -495,7 +481,6 @@ object InOut {
         None,
         None,
         None,
-        None,
         None)
   }
   
@@ -521,7 +506,6 @@ object InOut {
         None,
         None,
         iasType,
-        None,
         None,
         None,
         None,

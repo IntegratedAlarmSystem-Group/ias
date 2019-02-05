@@ -48,7 +48,6 @@ class TestInOut extends FlatSpec {
       None,
       None,
       None,
-      None,
       None)
     
     // Change the value of the previous MP
@@ -57,7 +56,7 @@ class TestInOut extends FlatSpec {
     assert(mp2.value.isDefined)
     assert(mp2.value.get == 3L)
     // Trivial check of the update of the timestamp 
-    assert(mp2.dasuProductionTStamp.isEmpty)
+    assert(mp2.productionTStamp.isEmpty)
     assert(mp2.mode == OperationalMode.OPERATIONAL)
     assert(mp2.fromIasValueValidity.isDefined)
     assert(mp2.fromIasValueValidity.get == Validity(RELIABLE))
@@ -120,11 +119,11 @@ class TestInOut extends FlatSpec {
     assert(mpUpdated.fromInputsValidity.get == Validity(RELIABLE), "The validities differ")
   }
 
-  it must "update the DASU production timestamp" in {
+  it must "update the production timestamp" in {
     val mp = InOut.asInput(id,IASTypes.LONG)
-    assert(mp.dasuProductionTStamp.isEmpty)
-    val mp2=mp.updateDasuProdTStamp(System.currentTimeMillis());
-    assert(mp2.dasuProductionTStamp.isDefined)
+    assert(mp.productionTStamp.isEmpty)
+    val mp2=mp.updateProdTStamp(System.currentTimeMillis());
+    assert(mp2.productionTStamp.isDefined)
   }
 
   it must "support all types" in {
@@ -251,7 +250,7 @@ class TestInOut extends FlatSpec {
   
   it must "calculate the validity by time of inputs" in {
     val timeFrame = 3000;
-    val inOut = InOut.asInput(id,IASTypes.LONG).updateValueValidity(Some(5L), Some(RELIABLE)).updateDasuProdTStamp(System.currentTimeMillis())
+    val inOut = InOut.asInput(id,IASTypes.LONG).updateValueValidity(Some(5L), Some(RELIABLE)).updateProdTStamp(System.currentTimeMillis())
     assert(inOut.getValidityOfInputByTime(timeFrame).iasValidity==RELIABLE,"Shall not be RELIABLE")
     // Give time to invalidate
     Thread.sleep(timeFrame+1000)
@@ -259,7 +258,7 @@ class TestInOut extends FlatSpec {
   }
   
   it must "NOT calculate the validity by time of outputs" in {
-    val inOut = InOut.asOutput(id,IASTypes.LONG).updateValueValidity(Some(125L), Some(RELIABLE)).updateDasuProdTStamp(System.currentTimeMillis())
+    val inOut = InOut.asOutput(id,IASTypes.LONG).updateValueValidity(Some(125L), Some(RELIABLE)).updateProdTStamp(System.currentTimeMillis())
     // Calculating the validity by time thoros an exception
     assertThrows[IllegalArgumentException] {
       inOut.getValidityOfInputByTime(1000)
