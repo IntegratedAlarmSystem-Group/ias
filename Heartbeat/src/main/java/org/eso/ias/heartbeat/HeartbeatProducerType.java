@@ -3,7 +3,7 @@ package org.eso.ias.heartbeat;
 /**
  * The type of the producer of a Heartbeat
  *
- * Such type includes plugins, converters, Supervisor, clients
+ * Such type includes plugins, converters, Supervisor, clients...
  */
 public enum HeartbeatProducerType {
     /**

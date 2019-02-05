@@ -4,6 +4,7 @@ import java.io.File
 
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.monitor.{IasMonitorConfig, KafkaSinkConnectorConfig}
+import org.scalatest.FlatSpec
 
 import scala.collection.JavaConverters
 
