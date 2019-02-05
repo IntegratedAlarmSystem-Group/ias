@@ -21,6 +21,9 @@ import scala.collection.JavaConverters
   */
 class HbAlarmPublisherTest extends FlatSpec with AlarmPublisherListener with BeforeAndAfterEach {
 
+  /** Th e identifier */
+  val identifier = "IasmoitorToolId"
+
   /** The number of times setUp has been invoked */
   val setUpExecutions = new AtomicInteger()
 
@@ -79,7 +82,7 @@ class HbAlarmPublisherTest extends FlatSpec with AlarmPublisherListener with Bef
     tearDownExecutions.set(0)
     alarmsReceived.clear()
 
-    monitorAlarm = new MonitorAlarmsProducer(producer,refreshRate)
+    monitorAlarm = new MonitorAlarmsProducer(producer,refreshRate,identifier)
   }
 
   override protected def afterEach(): Unit = super.afterEach()
