@@ -197,11 +197,7 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
         }
 
         val alarm = value.asInstanceOf[IASValue[Alarm]].value
-        val tStamp: Long = if (value.pluginProductionTStamp.isPresent) {
-          value.pluginProductionTStamp.get()
-        } else {
-          value.dasuProductionTStamp.get()
-        }
+        val tStamp: Long = value.productionTStamp.get()
         val validity = value.iasValidity
 
         // The last state in the current time interval
