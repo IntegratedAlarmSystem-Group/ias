@@ -1,13 +1,6 @@
 package org.eso.ias.asce.transfer
 
-import org.eso.ias.types.IASTypes;
-import org.eso.ias.types.Identifier;
-import org.eso.ias.types.InOut
-import org.eso.ias.types.OperationalMode;
-
-import scala.Option;
-import org.eso.ias.types.Validity
-import org.eso.ias.types.IasValidity
+import org.eso.ias.types.{IASTypes, IasValidity, InOut, OperationalMode}
 
 /**
  * The view of an InOut for the TF
@@ -43,23 +36,12 @@ class IasIO[T](private[transfer] val inOut: InOut[T]) {
   lazy val validity: IasValidity = inOut.getValidity.iasValidity
   
   /**
-   * The point in time when this monitor point has been produced by the DASU
+   * The point in time when this monitor point has been produced by a DASU,
+    * a plugin or a IAS core tool
    * 
-   * Note that a monitor point can be produced by a DASU or by a plugin:
-   * one and only one between the plugin production timestamp and the
-   * DASU production timestamp is defined.
    */
-  lazy val dasuProductionTStamp: Option[Long] = inOut.dasuProductionTStamp
-  
-  /**
-   * The point in time when this monitor point has been produced by the plugin
-   * 
-   * Note that a monitor point can be produced by a DASU or by a plugin:
-   * one and only one between the plugin production timestamp and the
-   * DASU production timestamp is defined.
-   */
-  lazy val pluginProductionTStamp: Option[Long] = inOut.pluginProductionTStamp
-  
+  lazy val productionTStamp: Option[Long] = inOut.productionTStamp
+
   /**
    * The additional properties
    */
