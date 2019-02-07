@@ -1,31 +1,22 @@
 package org.eso.ias.supervisor.test
 
-import org.scalatest.FlatSpec
-import org.eso.ias.types.IasValueJsonSerializer
-import org.eso.ias.dasu.publisher.OutputPublisher
-import org.eso.ias.dasu.publisher.OutputListener
-import org.eso.ias.dasu.publisher.ListenerOutputPublisherImpl
-import org.eso.ias.logging.IASLogger
-import org.eso.ias.dasu.publisher.DirectInputSubscriber
-import org.eso.ias.types.IASValue
-import org.eso.ias.supervisor.Supervisor
-import org.eso.ias.types.Identifier
-import org.eso.ias.types.IdentifierType
-import org.eso.ias.cdb.CdbReader
-import org.eso.ias.cdb.json.CdbJsonFiles
-import org.eso.ias.cdb.json.JsonReader
 import java.nio.file.FileSystems
-import org.eso.ias.types.OperationalMode
-import org.eso.ias.types.IasValidity
-import org.eso.ias.types.IASTypes
+
+import org.eso.ias.cdb.CdbReader
+import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
+import org.eso.ias.dasu.publisher.{DirectInputSubscriber, ListenerOutputPublisherImpl, OutputListener, OutputPublisher}
+import org.eso.ias.logging.IASLogger
+import org.eso.ias.supervisor.Supervisor
+import org.eso.ias.types._
+import org.scalatest.FlatSpec
+
 import scala.collection.mutable.ArrayBuffer
 
 // The following import is required by the usage of the fixture
-import language.reflectiveCalls
-import java.util.HashSet
-import org.eso.ias.heartbeat.HbProducer
 import org.eso.ias.heartbeat.publisher.HbLogProducer
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
+
+import scala.language.reflectiveCalls
 
 class SupervisorTest extends FlatSpec {
 
@@ -164,7 +155,6 @@ class SupervisorTest extends FlatSpec {
 			  t0+10,
 			  t0+15,
 			  t0+20,
-			  t0+25,
 			  null,
 			null,null)
     }
@@ -202,7 +192,6 @@ class SupervisorTest extends FlatSpec {
 			  t0+10,
 			  t0+15,
 			  t0+20,
-			  t0+25,
 			null,
 			null,null)
 			
@@ -253,7 +242,6 @@ class SupervisorTest extends FlatSpec {
 			  t0+10,
 			  t0+15,
 			  t0+20,
-			  t0+25,
 			  null,
 			  null,null)
     }
@@ -278,7 +266,6 @@ class SupervisorTest extends FlatSpec {
 			  t0+10,
 			  t0+15,
 			  t0+20,
-			  t0+25,
 			  null,
 			  null,null)
       
