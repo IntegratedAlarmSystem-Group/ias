@@ -1,25 +1,17 @@
 package org.eso.ias.dasu.test
 
-import org.eso.ias.logging.IASLogger
 import java.nio.file.FileSystems
-import org.eso.ias.cdb.json.CdbJsonFiles
-import org.eso.ias.cdb.json.JsonReader
+
 import org.eso.ias.cdb.CdbReader
-import org.eso.ias.types.IasValueJsonSerializer
-import org.eso.ias.dasu.publisher.OutputPublisher
-import org.eso.ias.dasu.publisher.DirectInputSubscriber
-import org.eso.ias.types.Identifier
-import org.eso.ias.dasu.DasuImpl
-import org.eso.ias.types.IdentifierType
-import org.eso.ias.types.IASValue
-import org.eso.ias.types.IasValidity._
-import org.eso.ias.types.OperationalMode
-import org.eso.ias.dasu.publisher.ListenerOutputPublisherImpl
-import org.eso.ias.dasu.publisher.OutputListener
-import scala.collection.mutable.ArrayBuffer
-import org.eso.ias.types.IASTypes
-import java.util.HashSet
+import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.DasuDao
+import org.eso.ias.dasu.DasuImpl
+import org.eso.ias.dasu.publisher.{DirectInputSubscriber, ListenerOutputPublisherImpl, OutputListener, OutputPublisher}
+import org.eso.ias.logging.IASLogger
+import org.eso.ias.types.IasValidity._
+import org.eso.ias.types._
+
+import scala.collection.mutable.ArrayBuffer
 
 /**
  * Setup the DASU with one ASCE as it is reused by more 
@@ -112,7 +104,6 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, validityThreshold: Int
 			t0+5,
 			t0+10,
 			t0+15,
-			t0+20,
 			null,
 			null,
 			null,

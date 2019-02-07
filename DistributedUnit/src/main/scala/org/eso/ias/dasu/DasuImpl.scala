@@ -282,7 +282,7 @@ class DasuImpl (
       
       if (!closed.get) {
         val outputs = dasuTopology.levels.foldLeft(iasios){ (s: Set[IASValue[_]], ids: Set[String]) => s ++ updateOneLevel(ids, s) }
-        outputs.find(_.id==dasuOutputId).map(_.updateDasuProdTime(System.currentTimeMillis()))
+        outputs.find(_.id==dasuOutputId).map(_.updateProdTime(System.currentTimeMillis()))
       } else {
         None
       }
@@ -303,9 +303,7 @@ class DasuImpl (
 
     def acceptIasValue(value: IASValue[_]): Boolean = {
       assert(Option(value).isDefined)
-      assert(value.dasuProductionTStamp.isPresent && !value.pluginProductionTStamp.isPresent ||
-        !value.dasuProductionTStamp.isPresent && value.pluginProductionTStamp.isPresent,
-        "Wrong timestamp for "+value.toString)
+      assert(value.productionTStamp.isPresent,"Undefined production timestamp for "+value.toString)
       // Accept the value if
       //  * its ID is the ID of an input
       //  * its timetsamp is newer that that already in the map of inputs to process
@@ -314,10 +312,9 @@ class DasuImpl (
       val valueFromMap: Option[IASValue[_]] = Option(notYetProcessedInputs.get(value.id))
       valueFromMap.map (v => {
 
-        val valueTstamp = if (value.dasuProductionTStamp.isPresent) value.dasuProductionTStamp.get else value.pluginProductionTStamp.get
-        assert(v.dasuProductionTStamp.isPresent||v.pluginProductionTStamp.isPresent,
-          "Wrong timestamp for value from map: "+value.toString)
-        val tstampOfValueInMap = if (v.dasuProductionTStamp.isPresent) v.dasuProductionTStamp.get else v.pluginProductionTStamp.get
+        val valueTstamp = value.productionTStamp.get
+        assert(v.productionTStamp.isPresent, "Misisng production timestamp Wrong timestamp for value from map: "+value.toString)
+        val tstampOfValueInMap = v.productionTStamp.get()
 
         valueTstamp>=tstampOfValueInMap
       }).getOrElse(true) // Not in map: accept the value
@@ -396,12 +393,11 @@ class DasuImpl (
       case None =>  // The output can be not defined if the DASU tries to publish before it is updated
         Validity(IasValidity.UNRELIABLE)
       case Some(lastOutput) =>
-        assert(lastOutput.dasuProductionTStamp.isPresent && !lastOutput.pluginProductionTStamp.isPresent,
-          "IASIO is not an output! "+lastOutput.toString)
+        assert(lastOutput.productionTStamp.isPresent, "IASIO has no production timestamp "+lastOutput.toString)
 
         val thresholdTStamp = System.currentTimeMillis() - validityThresholdMillis
 
-        val iasioTstamp = lastOutput.dasuProductionTStamp.get()
+        val iasioTstamp = lastOutput.productionTStamp.get()
 
         val validityByTime= if (iasioTstamp<thresholdTStamp) {
           Validity(IasValidity.UNRELIABLE)

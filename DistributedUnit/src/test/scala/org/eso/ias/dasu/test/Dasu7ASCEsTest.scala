@@ -1,38 +1,24 @@
 package org.eso.ias.dasu.test
 
-import org.scalatest.FlatSpec
 import java.nio.file.FileSystems
-import org.eso.ias.cdb.CdbReader
-import org.eso.ias.cdb.json.CdbJsonFiles
-import org.eso.ias.cdb.json.JsonReader
-import org.eso.ias.dasu.Dasu
-import org.eso.ias.dasu.publisher.OutputListener
-import org.eso.ias.dasu.publisher.ListenerOutputPublisherImpl
-import org.eso.ias.dasu.publisher.OutputPublisher
-import org.eso.ias.types.IasValueJsonSerializer
-import org.eso.ias.logging.IASLogger
-import org.eso.ias.types.IASValue
-import org.eso.ias.types.Identifier
-import org.eso.ias.types.IdentifierType
-import org.eso.ias.types.OperationalMode
-import org.eso.ias.types.InOut
-import org.eso.ias.dasu.subscriber.InputsListener
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.locks.ReentrantLock
-import java.util.concurrent.TimeUnit
-import scala.collection.mutable.ListBuffer
-import org.eso.ias.types.IASTypes
-import org.eso.ias.types.Alarm
-import org.eso.ias.types.IasValidity._
+
+import org.eso.ias.cdb.CdbReader
+import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.dasu.DasuImpl
-import org.eso.ias.dasu.publisher.DirectInputSubscriber
-import org.eso.ias.dasu.publisher.OutputListener
+import org.eso.ias.dasu.publisher.{DirectInputSubscriber, ListenerOutputPublisherImpl, OutputListener, OutputPublisher}
+import org.eso.ias.logging.IASLogger
+import org.eso.ias.types.IasValidity._
+import org.eso.ias.types._
+import org.scalatest.FlatSpec
+
+import scala.collection.mutable.ListBuffer
 
 // The following import is required by the usage of the fixture
-import language.reflectiveCalls
-import org.eso.ias.types.IasValidity
-import java.util.HashSet
 import org.eso.ias.cdb.pojos.DasuDao
+import org.eso.ias.types.IasValidity
+
+import scala.language.reflectiveCalls
 
 /**
  * Test the DASU with 7 ASCEs (in 3 levels).
@@ -162,7 +148,6 @@ class Dasu7ASCEsTest extends FlatSpec {
 			t0+5,
 			t0+10,
 			t0+15,
-			t0+20,
 			null,
 			null,
 			null,
@@ -248,7 +233,7 @@ class Dasu7ASCEsTest extends FlatSpec {
     val outputProducedByDasu = f.iasValuesReceived.last
     assert(outputProducedByDasu.valueType==IASTypes.ALARM)
     assert(outputProducedByDasu.value.asInstanceOf[Alarm]== Alarm.CLEARED)
-    assert(outputProducedByDasu.dasuProductionTStamp.isPresent())
+    assert(outputProducedByDasu.productionTStamp.isPresent())
     
     // wait to avoid the throttling
     Thread.sleep(2*f.dasu.throttling)
@@ -266,7 +251,7 @@ class Dasu7ASCEsTest extends FlatSpec {
     val outputProducedByDasu2 = f.iasValuesReceived.last
     assert(outputProducedByDasu2.valueType==IASTypes.ALARM)
     assert(outputProducedByDasu2.value.asInstanceOf[Alarm]== Alarm.getSetDefault)
-    assert(outputProducedByDasu2.dasuProductionTStamp.isPresent())
+    assert(outputProducedByDasu2.productionTStamp.isPresent())
     
     assert(outputProducedByDasu2.dependentsFullRuningIds.isPresent())
     assert(outputProducedByDasu2.dependentsFullRuningIds.get.size()==f.dasu.getInputIds().size)
