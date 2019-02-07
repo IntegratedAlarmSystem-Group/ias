@@ -2,13 +2,11 @@ package org.eso.ias.asce.test
 
 import java.util.Properties
 
-import org.eso.ias.asce.{AsceStates, ComputingElement, ComputingElementState}
-import org.eso.ias.asce.transfer.{IasioInfo, ScalaTransfer, TransferFunctionLanguage, TransferFunctionSetting}
+import org.eso.ias.asce.transfer.{ScalaTransfer, TransferFunctionLanguage, TransferFunctionSetting}
+import org.eso.ias.asce.{AsceStates, ComputingElement}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types._
 import org.scalatest.{BeforeAndAfterEach, FlatSpec}
-
-import scala.util.Try
 
 class TestSlowTF  extends FlatSpec with BeforeAndAfterEach {
 
@@ -70,7 +68,7 @@ class TestSlowTF  extends FlatSpec with BeforeAndAfterEach {
     * a TF that returns in time
     */
   it must "not change state for normal TFs" in {
-    val iasValue = input.updateValue(Some(false)).toIASValue().updateDasuProdTime(System.currentTimeMillis())
+    val iasValue = input.updateValue(Some(false)).toIASValue().updateProdTime(System.currentTimeMillis())
 
     for (i <- 1 to 25) {
       val ret = asce.update(Set(iasValue))
@@ -85,11 +83,11 @@ class TestSlowTF  extends FlatSpec with BeforeAndAfterEach {
     */
   it must "mark a TF as slow but not block before the allowed duration elapses" in {
     for (i <- 1 to 5) {
-      val iasValueSlow = input.updateValue(Some(true)).toIASValue().updateDasuProdTime(System.currentTimeMillis())
+      val iasValueSlow = input.updateValue(Some(true)).toIASValue().updateProdTime(System.currentTimeMillis())
       val retSlow = asce.update(Set(iasValueSlow))
       assert(retSlow._2==AsceStates.TFSlow)
 
-      val iasValueOk = iasValueSlow.updateValue(false).updateDasuProdTime(System.currentTimeMillis())
+      val iasValueOk = iasValueSlow.updateValue(false).updateProdTime(System.currentTimeMillis())
       val retOk = asce.update(Set(iasValueOk))
       assert(retOk._2==AsceStates.Healthy)
     }
@@ -99,16 +97,16 @@ class TestSlowTF  extends FlatSpec with BeforeAndAfterEach {
     val duration = TransferFunctionSetting.MaxAcceptableSlowDurationMillis
     val startTime = System.currentTimeMillis()
     while (System.currentTimeMillis()-startTime<duration) {
-      val iasValueSlow = input.updateValue(Some(true)).toIASValue().updateDasuProdTime(System.currentTimeMillis())
+      val iasValueSlow = input.updateValue(Some(true)).toIASValue().updateProdTime(System.currentTimeMillis())
       val retSlow = asce.update(Set(iasValueSlow))
       assert(retSlow._2!=AsceStates.Healthy)
     }
-    val iasValueSlow = input.updateValue(Some(true)).toIASValue().updateDasuProdTime(System.currentTimeMillis())
+    val iasValueSlow = input.updateValue(Some(true)).toIASValue().updateProdTime(System.currentTimeMillis())
     val retSlow = asce.update(Set(iasValueSlow))
     assert(retSlow._2==AsceStates.TFBroken)
 
     // Check that it remains broken (the TF is actually not executed)
-    val iasValueOk = iasValueSlow.updateValue(false).updateDasuProdTime(System.currentTimeMillis())
+    val iasValueOk = iasValueSlow.updateValue(false).updateProdTime(System.currentTimeMillis())
     val retOk = asce.update(Set(iasValueOk))
     assert(retOk._2==AsceStates.TFBroken)
   }

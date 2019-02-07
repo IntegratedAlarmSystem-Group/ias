@@ -1,23 +1,12 @@
 package org.eso.ias.asce.test
 
-import org.scalatest.FlatSpec
-import org.eso.ias.asce.transfer.TransferFunctionSetting
-import org.eso.ias.asce.transfer.TransferFunctionLanguage
-import org.eso.ias.types.Identifier
-import org.eso.ias.types.InOut
-import org.eso.ias.types.OperationalMode
-import org.eso.ias.types.Validity
-import org.eso.ias.types.IASTypes
-import org.eso.ias.asce.ComputingElement
-import scala.collection.mutable.{Map => MutableMap }
-import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.Properties
-import org.eso.ias.asce.transfer.impls.MinMaxThresholdTF
-import org.eso.ias.asce.transfer.impls.MinMaxThresholdTFJava
-import org.eso.ias.asce.transfer.ScalaTransfer
-import org.eso.ias.asce.transfer.JavaTransfer
-import org.eso.ias.types.Alarm
-import org.eso.ias.types.IASValue
+
+import org.eso.ias.asce.ComputingElement
+import org.eso.ias.asce.transfer.{JavaTransfer, ScalaTransfer, TransferFunctionLanguage, TransferFunctionSetting}
+import org.eso.ias.asce.transfer.impls.{MinMaxThresholdTF, MinMaxThresholdTFJava}
+import org.eso.ias.types.{Alarm, IASTypes, InOut}
+import org.scalatest.FlatSpec
 
 class TestMinMaxThreshold extends FlatSpec {
   
@@ -164,12 +153,12 @@ class TestMinMaxThreshold extends FlatSpec {
     scalaComp.initialize()
     Thread.sleep(1000)
     // Change the input to trigger the TF
-    val changedMP = inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(5L)).updateDasuProdTStamp(System.currentTimeMillis())
+    val changedMP = inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(5L)).updateProdTStamp(System.currentTimeMillis())
     scalaComp.update(Set(changedMP.toIASValue()))
     assert(checkAlarmActivation(scalaComp,Alarm.CLEARED))
     
     // Activate high
-    val highMp = changedMP.updateValue(Some(100L)).updateDasuProdTStamp(System.currentTimeMillis())
+    val highMp = changedMP.updateValue(Some(100L)).updateProdTStamp(System.currentTimeMillis())
     scalaComp.update(Set(highMp.toIASValue()))
     assert(checkAlarmActivation(scalaComp,Alarm.SET_CRITICAL))
     
@@ -181,7 +170,7 @@ class TestMinMaxThreshold extends FlatSpec {
     
     
     // Increase does not deactivate the alarm
-    val moreHigh=highMp.updateValue(Some(150L)).updateDasuProdTStamp(System.currentTimeMillis())
+    val moreHigh=highMp.updateValue(Some(150L)).updateProdTStamp(System.currentTimeMillis())
     scalaComp.update(Set(moreHigh.toIASValue()))
     assert(checkAlarmActivation(scalaComp,Alarm.SET_CRITICAL))
     
@@ -189,12 +178,12 @@ class TestMinMaxThreshold extends FlatSpec {
     assert(propValueMap2("actualValue")==150L.toDouble.toString())
     
     // Decreasing without passing HighOn does not deactivate
-    val noDeact = moreHigh.updateValue(Some(40L)).updateDasuProdTStamp(System.currentTimeMillis())
+    val noDeact = moreHigh.updateValue(Some(40L)).updateProdTStamp(System.currentTimeMillis())
     scalaComp.update(Set(noDeact.toIASValue()))
     assert(checkAlarmActivation(scalaComp,Alarm.SET_CRITICAL))
     
     // Below HighOff deactivate the alarm
-    val deact = noDeact.updateValue(Some(10L)).updateDasuProdTStamp(System.currentTimeMillis())
+    val deact = noDeact.updateValue(Some(10L)).updateProdTStamp(System.currentTimeMillis())
     scalaComp.update(Set(deact.toIASValue()))
     assert(checkAlarmActivation(scalaComp,Alarm.CLEARED))
     
@@ -202,27 +191,27 @@ class TestMinMaxThreshold extends FlatSpec {
     assert(propValueMap3("actualValue")==10L.toDouble.toString())
     
     // Below LowOff but not passing LowOn does not activate
-    val aBitLower = deact.updateValue(Some(-15L)).updateDasuProdTStamp(System.currentTimeMillis())
+    val aBitLower = deact.updateValue(Some(-15L)).updateProdTStamp(System.currentTimeMillis())
     scalaComp.update(Set(aBitLower.toIASValue()))
     assert(checkAlarmActivation(scalaComp,Alarm.CLEARED))
     
     // Passing LowOn activate
-    val actLow = aBitLower.updateValue(Some(-30L)).updateDasuProdTStamp(System.currentTimeMillis())
+    val actLow = aBitLower.updateValue(Some(-30L)).updateProdTStamp(System.currentTimeMillis())
     scalaComp.update(Set(actLow.toIASValue()))
     assert(checkAlarmActivation(scalaComp,Alarm.SET_CRITICAL))
     
     // Decreasing more remain activate
-    val evenLower = actLow.updateValue(Some(-40L)).updateDasuProdTStamp(System.currentTimeMillis())
+    val evenLower = actLow.updateValue(Some(-40L)).updateProdTStamp(System.currentTimeMillis())
     scalaComp.update(Set(evenLower.toIASValue()))
     assert(checkAlarmActivation(scalaComp,Alarm.SET_CRITICAL))
     
     // Increasing but not passing LowOff remains active
-    val aBitHigher = evenLower.updateValue(Some(-15L)).updateDasuProdTStamp(System.currentTimeMillis())
+    val aBitHigher = evenLower.updateValue(Some(-15L)).updateProdTStamp(System.currentTimeMillis())
     scalaComp.update(Set(aBitHigher.toIASValue()))
     assert(checkAlarmActivation(scalaComp,Alarm.SET_CRITICAL))
     
     // Passing LowOff deactivate
-    val deactFromLow = aBitHigher.updateValue(Some(0L)).updateDasuProdTStamp(System.currentTimeMillis())
+    val deactFromLow = aBitHigher.updateValue(Some(0L)).updateProdTStamp(System.currentTimeMillis())
     scalaComp.update(Set(deactFromLow.toIASValue()))
     assert(checkAlarmActivation(scalaComp,Alarm.CLEARED))
   }
@@ -243,13 +232,13 @@ class TestMinMaxThreshold extends FlatSpec {
     javaComp.initialize()
     Thread.sleep(1000)
     // Change the input to trigger the TF
-    val changedMP = inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(5L)).updateDasuProdTStamp(System.currentTimeMillis())
+    val changedMP = inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(5L)).updateProdTStamp(System.currentTimeMillis())
     javaComp.update(Set(changedMP.toIASValue()))
 
     assert(checkAlarmActivation(javaComp,Alarm.CLEARED))
     
     // Activate high
-    val highMp = changedMP.updateValue(Some(100L)).updateDasuProdTStamp(System.currentTimeMillis())
+    val highMp = changedMP.updateValue(Some(100L)).updateProdTStamp(System.currentTimeMillis())
     javaComp.update(Set(highMp.toIASValue()))
     println("===> "+javaComp.output.value.get)
     assert(checkAlarmActivation(javaComp,Alarm.SET_HIGH))
@@ -261,7 +250,7 @@ class TestMinMaxThreshold extends FlatSpec {
     assert(propValueMap("actualValue")==100L.toDouble.toString())
     
     // Increase does not deactivate the alarm
-    val moreHigh=highMp.updateValue(Some(150L)).updateDasuProdTStamp(System.currentTimeMillis())
+    val moreHigh=highMp.updateValue(Some(150L)).updateProdTStamp(System.currentTimeMillis())
     javaComp.update(Set(moreHigh.toIASValue()))
     assert(checkAlarmActivation(javaComp,Alarm.SET_HIGH))
     
@@ -269,12 +258,12 @@ class TestMinMaxThreshold extends FlatSpec {
     assert(propValueMap2("actualValue")==150L.toDouble.toString())
     
     // Decreasing without passing HighOn does not deactivate
-    val noDeact = moreHigh.updateValue(Some(40L)).updateDasuProdTStamp(System.currentTimeMillis())
+    val noDeact = moreHigh.updateValue(Some(40L)).updateProdTStamp(System.currentTimeMillis())
     javaComp.update(Set(noDeact.toIASValue()))
     assert(checkAlarmActivation(javaComp,Alarm.SET_HIGH))
     
     // Below HighOff deactivate the alarm
-    val deact = noDeact.updateValue(Some(10L)).updateDasuProdTStamp(System.currentTimeMillis())
+    val deact = noDeact.updateValue(Some(10L)).updateProdTStamp(System.currentTimeMillis())
     javaComp.update(Set(deact.toIASValue()))
     assert(checkAlarmActivation(javaComp,Alarm.CLEARED))
     
@@ -282,27 +271,27 @@ class TestMinMaxThreshold extends FlatSpec {
     assert(propValueMap3("actualValue")==10L.toDouble.toString())
     
     // Below LowOff but not passing LowOn does not activate
-    val aBitLower = deact.updateValue(Some(-15L)).updateDasuProdTStamp(System.currentTimeMillis())
+    val aBitLower = deact.updateValue(Some(-15L)).updateProdTStamp(System.currentTimeMillis())
     javaComp.update(Set(aBitLower.toIASValue()))
     assert(checkAlarmActivation(javaComp,Alarm.CLEARED))
     
     // Passing LowOn activate
-    val actLow = aBitLower.updateValue(Some(-30L)).updateDasuProdTStamp(System.currentTimeMillis())
+    val actLow = aBitLower.updateValue(Some(-30L)).updateProdTStamp(System.currentTimeMillis())
     javaComp.update(Set(actLow.toIASValue()))
     assert(checkAlarmActivation(javaComp,Alarm.SET_HIGH))
     
     // Decreasing more remain activate
-    val evenLower = actLow.updateValue(Some(-40L)).updateDasuProdTStamp(System.currentTimeMillis())
+    val evenLower = actLow.updateValue(Some(-40L)).updateProdTStamp(System.currentTimeMillis())
     javaComp.update(Set(evenLower.toIASValue()))
     assert(checkAlarmActivation(javaComp,Alarm.SET_HIGH))
     
     // Increasing but not passing LowOff remains active
-    val aBitHigher = evenLower.updateValue(Some(-15L)).updateDasuProdTStamp(System.currentTimeMillis())
+    val aBitHigher = evenLower.updateValue(Some(-15L)).updateProdTStamp(System.currentTimeMillis())
     javaComp.update(Set(aBitHigher.toIASValue()))
     assert(checkAlarmActivation(javaComp,Alarm.SET_HIGH))
     
     // Passing LowOff deactivate
-    val deactFromLow = aBitHigher.updateValue(Some(0L)).updateDasuProdTStamp(System.currentTimeMillis())
+    val deactFromLow = aBitHigher.updateValue(Some(0L)).updateProdTStamp(System.currentTimeMillis())
     javaComp.update(Set(deactFromLow.toIASValue()))
     assert(checkAlarmActivation(javaComp,Alarm.CLEARED))
   }

@@ -474,7 +474,7 @@ abstract class ComputingElement[T](
           ComputingElement.logger.error("TF of [{}] inhibited for the time being",asceIdentifier,cause)
           state=ComputingElementState.transition(state, Broken())
         case Success(validitity) => 
-          _output=newOut.updateFromInputsValidity(validitity).updateDasuProdTStamp(System.currentTimeMillis())
+          _output=newOut.updateFromInputsValidity(validitity).updateProdTStamp(System.currentTimeMillis())
       }
       ComputingElement.logger.debug("Output of [{}]]: id={} value {}, validity from inputs={} mode={}",
         asceIdentifier,

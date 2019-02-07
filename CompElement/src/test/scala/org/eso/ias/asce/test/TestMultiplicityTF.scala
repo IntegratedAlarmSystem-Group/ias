@@ -1,22 +1,12 @@
 package org.eso.ias.asce.test
 
-import org.scalatest.FlatSpec
-import org.eso.ias.asce.transfer.impls.MultiplicityTF
 import java.util.Properties
+
 import org.eso.ias.asce.ComputingElement
-import org.eso.ias.types.Alarm
-import org.eso.ias.asce.transfer.ScalaTransfer
-import org.eso.ias.asce.transfer.TransferFunctionLanguage
-import org.eso.ias.asce.transfer.TransferFunctionSetting
-import org.eso.ias.types.Identifier
-import org.eso.ias.types.IdentifierType
-import org.eso.ias.types.InOut
-import org.eso.ias.types.IASTypes
-import org.eso.ias.types.IASValue
-import org.scalatest.BeforeAndAfterEach
-import org.eso.ias.types.Validity
-import org.eso.ias.types.IasValidity
-import org.eso.ias.types.OperationalMode
+import org.eso.ias.asce.transfer.{ScalaTransfer, TransferFunctionLanguage, TransferFunctionSetting}
+import org.eso.ias.asce.transfer.impls.MultiplicityTF
+import org.eso.ias.types._
+import org.scalatest.{BeforeAndAfterEach, FlatSpec}
 
 /**
  * Test the multiplicity transfer function
@@ -108,8 +98,8 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
     require(n>0)
     val inputsMPsList = inputsMPs.toList
     val list = for (i <- 0 to inputsMPsList.size-1) yield {
-      if (i<=n-1) inputsMPsList(i).updateValue(Some(Alarm.getSetDefault)).updateDasuProdTStamp(System.currentTimeMillis()).toIASValue()
-      else inputsMPsList(i).updateValue(Some(Alarm.CLEARED)).updateDasuProdTStamp(System.currentTimeMillis()).toIASValue()
+      if (i<=n-1) inputsMPsList(i).updateValue(Some(Alarm.getSetDefault)).updateProdTStamp(System.currentTimeMillis()).toIASValue()
+      else inputsMPsList(i).updateValue(Some(Alarm.CLEARED)).updateProdTStamp(System.currentTimeMillis()).toIASValue()
     }
     val ret = list.toSet
     assert(ret.size==inputsMPs.size)
@@ -136,12 +126,12 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   
   it must "run the multiplicity TF" in {
     // Change all inputs do  trigger the TF
-    val changedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getSetDefault)).updateDasuProdTStamp(System.currentTimeMillis()).toIASValue())
+    val changedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getSetDefault)).updateProdTStamp(System.currentTimeMillis()).toIASValue())
     scalaComp.get.update(changedMPs)
     assert(checkAlarmActivation(scalaComp.get,Alarm.SET_LOW))
     
     // Clearing all must disable
-    val clearedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.CLEARED)).updateDasuProdTStamp(System.currentTimeMillis()).toIASValue())
+    val clearedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.CLEARED)).updateProdTStamp(System.currentTimeMillis()).toIASValue())
     scalaComp.get.update(clearedMPs)
     assert(checkAlarmActivation(scalaComp.get,Alarm.CLEARED))
     
