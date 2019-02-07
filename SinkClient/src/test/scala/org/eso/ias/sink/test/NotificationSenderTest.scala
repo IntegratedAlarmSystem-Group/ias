@@ -147,7 +147,6 @@ class NotificationSenderTest extends FlatSpec {
       tStamp+5,
       tStamp+10,
       tStamp+15,
-      tStamp+20,
       null,
       null,
       null,
