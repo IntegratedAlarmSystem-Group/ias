@@ -149,7 +149,6 @@ class TemplatedInputTest extends FlatSpec {
 		  t0+10,
 		  t0+15,
 		  t0+20,
-		  t0+25,
 		  null,
 		null,null)
 		
@@ -166,7 +165,6 @@ class TemplatedInputTest extends FlatSpec {
 		  t1+10,
 		  t1+15,
 		  t1+20,
-		  t1+25,
 		  null,
 		null,null)
 
@@ -183,7 +181,6 @@ class TemplatedInputTest extends FlatSpec {
       t2+10,
       t2+15,
       t2+20,
-      t2+25,
       null,
       null,null)
 
@@ -200,7 +197,6 @@ class TemplatedInputTest extends FlatSpec {
       t3+10,
       t3+15,
       t3+20,
-      t3+25,
       null,
       null,null)
     

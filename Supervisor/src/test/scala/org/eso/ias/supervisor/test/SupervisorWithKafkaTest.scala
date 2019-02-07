@@ -201,7 +201,6 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
 			  t0+10,
 			  t0+15,
 			  t0+20,
-			  t0+25,
 			null,
 			null,null)
     
