@@ -5,13 +5,12 @@ CREATE TYPE integratedalarmsystem.iasio (
     mode text,
     props map<text, text>,
     depsfullrunningids set<text>,
-    dasuproductiontstamp timestamp,
+    productiontstamp timestamp,
     readfrombsdbtstamp timestamp,
     senttobsdbtstamp timestamp,
     convertedproductiontstamp timestamp,
     receivedfromplugintstamp timestamp,
     senttoconvertertstamp timestamp,
-    pluginproductiontstamp timestamp,
     readfrommonsyststamp timestamp,
     value text);
 
