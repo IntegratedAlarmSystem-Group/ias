@@ -352,13 +352,24 @@ abstract class ComputingElement[T](
     val inputsInfo = acceptedInputIds.map(inId => new IasioInfo(inId,inputs(inId).iasType))
     val outputInfo = new IasioInfo(output.id.id,output.iasType)
 
-    state = if (tfSetting.initialize(id, asceIdentifier.runningID, validityThreshold, props) &&
-      initTransferFunction(inputsInfo,outputInfo,templateInstance).isSuccess) {
-      ComputingElementState.transition(state, Initialized())
+    val initializedTFSettings = tfSetting.initialize(id, asceIdentifier.runningID, validityThreshold, props)
+    state = if (initializedTFSettings) {
+      val initTF = initTransferFunction(inputsInfo,outputInfo,templateInstance)
+      initTF match {
+        case Success(_) =>
+          ComputingElement.logger.debug("TF initialized")
+          ComputingElementState.transition(state, Initialized())
+        case Failure(ex) =>
+          ComputingElement.logger.error("Error initializing the transfer function",ex)
+          ComputingElementState.transition(state, Broken())
+      }
     } else {
-      ComputingElement.logger.error("Error initializing the transfer function")
+      ComputingElement.logger.error("Error initializing the transfer function settings")
       ComputingElementState.transition(state, Broken())
     }
+
+    if (state.actualState==AsceStates.TFBroken)
+      ComputingElement.logger.error("TF marked as broken after initialization: the ASCE {} will never produce the output",id)
     state.actualState
   }
   
