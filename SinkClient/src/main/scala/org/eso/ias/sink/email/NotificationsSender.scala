@@ -197,11 +197,7 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
         }
 
         val alarm = value.asInstanceOf[IASValue[Alarm]].value
-        val tStamp: Long = if (value.pluginProductionTStamp.isPresent) {
-          value.pluginProductionTStamp.get()
-        } else {
-          value.dasuProductionTStamp.get()
-        }
+        val tStamp: Long = value.productionTStamp.get()
         val validity = value.iasValidity
 
         // The last state in the current time interval
@@ -310,9 +306,6 @@ object NotificationsSender {
 
     // The id of the sender
     val emailSenderId = parsedArgs._1.get
-
-    // The identifier
-    val emailSenderIdentifier = new Identifier(emailSenderId,IdentifierType.SINK,None)
 
     // Get the CDB
     val cdbReader: CdbReader = {
@@ -428,7 +421,7 @@ object NotificationsSender {
     msLogger.debug("IAS values consumer instantiated")
 
     val valuesProcessor: IasValueProcessor = new IasValueProcessor(
-      emailSenderIdentifier,
+      emailSenderId,
       List(valueListener),
       hbProducer,
       inputsProvider,

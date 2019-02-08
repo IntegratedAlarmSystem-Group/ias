@@ -1,25 +1,11 @@
 package org.eso.ias.basictypes.test;
 
-import org.eso.ias.types.Alarm;
-import org.eso.ias.types.IASTypes;
-import org.eso.ias.types.IASValue;
-import org.eso.ias.types.IasValidity;
-import org.eso.ias.types.IasValueJsonSerializer;
-import org.eso.ias.types.Identifier;
-import org.eso.ias.types.IdentifierType;
-import org.eso.ias.types.OperationalMode;
+import org.eso.ias.types.*;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.*;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test the JSON serialization of {@link IASValue}
@@ -223,7 +209,6 @@ public class IasValueJsonSerializerTest {
 			4L,
 			5L,
 			6L,
-			7L,
 			new HashSet<String>(),
 			null);
 		
@@ -237,8 +222,8 @@ public class IasValueJsonSerializerTest {
 		// already ensure that
 		assertTrue(alarmFromSerializer.readFromMonSysTStamp.isPresent());
 		assertTrue(alarmFromSerializer.readFromMonSysTStamp.get()==8L);
-		assertTrue(alarmFromSerializer.pluginProductionTStamp.isPresent());
-		assertTrue(alarmFromSerializer.pluginProductionTStamp.get()==1L);
+		assertTrue(alarmFromSerializer.productionTStamp.isPresent());
+		assertTrue(alarmFromSerializer.productionTStamp.get()==1L);
 		assertTrue(alarmFromSerializer.sentToConverterTStamp.isPresent());
 		assertTrue(alarmFromSerializer.sentToConverterTStamp.get()==2L);
 		assertTrue(alarmFromSerializer.receivedFromPluginTStamp.isPresent());
@@ -249,9 +234,7 @@ public class IasValueJsonSerializerTest {
 		assertTrue(alarmFromSerializer.sentToBsdbTStamp.get()==5L);
 		assertTrue(alarmFromSerializer.readFromBsdbTStamp.isPresent());
 		assertTrue(alarmFromSerializer.readFromBsdbTStamp.get()==6L);
-		assertTrue(alarmFromSerializer.dasuProductionTStamp.isPresent());
-		assertTrue(alarmFromSerializer.dasuProductionTStamp.get()==7L);
-		
+
 		// Another test when some tstamps are unset to be
 		// sure the property is empty
 		String alarmId2 = "AlarmType-ID2";
@@ -268,7 +251,6 @@ public class IasValueJsonSerializerTest {
 			null,
 			5L,
 			null,
-			7L,
 			new HashSet<String>(),
 			null);
 		
@@ -281,8 +263,8 @@ public class IasValueJsonSerializerTest {
 		// Explicit check the values of the tstamps even if the assertEquals
 		// already ensure that
 		assertFalse(alarmFromSerializer.readFromMonSysTStamp.isPresent());
-		assertTrue(alarmFromSerializer.pluginProductionTStamp.isPresent());
-		assertTrue(alarmFromSerializer.pluginProductionTStamp.get()==1L);
+		assertTrue(alarmFromSerializer.productionTStamp.isPresent());
+		assertTrue(alarmFromSerializer.productionTStamp.get()==1L);
 		assertFalse(alarmFromSerializer.sentToConverterTStamp.isPresent());
 		assertTrue(alarmFromSerializer.receivedFromPluginTStamp.isPresent());
 		assertTrue(alarmFromSerializer.receivedFromPluginTStamp.get()==3L);
@@ -290,9 +272,7 @@ public class IasValueJsonSerializerTest {
 		assertTrue(alarmFromSerializer.sentToBsdbTStamp.isPresent());
 		assertTrue(alarmFromSerializer.sentToBsdbTStamp.get()==5L);
 		assertFalse(alarmFromSerializer.readFromBsdbTStamp.isPresent());
-		assertTrue(alarmFromSerializer.dasuProductionTStamp.isPresent());
-		assertTrue(alarmFromSerializer.dasuProductionTStamp.get()==7L);
-		
+
 		assertTrue(!alarmFromSerializer.dependentsFullRuningIds.isPresent());
 	}
 	
@@ -323,7 +303,6 @@ public class IasValueJsonSerializerTest {
 			4L,
 			5L,
 			6L,
-			7L,
 			deps,
 			null);
 		String jsonStr = jsonSerializer.iasValueToString(alarm);
@@ -364,7 +343,6 @@ public class IasValueJsonSerializerTest {
 			4L,
 			5L,
 			6L,
-			7L,
 			new HashSet<String>(),
 			props);
 		String jsonStr = jsonSerializer.iasValueToString(alarm);

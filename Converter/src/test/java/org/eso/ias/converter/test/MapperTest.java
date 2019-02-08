@@ -1,20 +1,17 @@
 package org.eso.ias.converter.test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import org.eso.ias.converter.ValueMapper;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
-import org.eso.ias.types.Alarm;
 import org.eso.ias.plugin.publisher.MonitorPointData;
+import org.eso.ias.types.Alarm;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test the mapper function i.e. the function that gets
@@ -24,7 +21,7 @@ import org.slf4j.LoggerFactory;
  * @author acaproni
  *
  */
-public class MapperTester extends ConverterTestBase {
+public class MapperTest extends ConverterTestBase {
 	
 	/**
 	 * The object to test
@@ -34,7 +31,7 @@ public class MapperTester extends ConverterTestBase {
 	/**
 	 * The logger
 	 */
-	public static final Logger logger = LoggerFactory.getLogger(MapperTester.class);
+	public static final Logger logger = LoggerFactory.getLogger(MapperTest.class);
 	
 	@BeforeEach
 	public void setUp() {
@@ -67,13 +64,17 @@ public class MapperTester extends ConverterTestBase {
 						IASTypes.ALARM);
 		
 		MonitorPointData mpd = buildMonitorPointData(unconfiguredMpdh);
+		mpd.setPublishTime(org.eso.ias.utils.ISO8601Helper.getTimestamp(System.currentTimeMillis()));
 		
 		String ret = mapper.apply(mpd.toJsonString());
 		assertNull(ret);
 		
 		// Translate another mp to be sure the previous error
 		// did not brake the processor
-		assertNotNull(mapper.apply(buildMonitorPointData(mpdHolders[0]).toJsonString()));
+		MonitorPointData mpd2 = buildMonitorPointData(mpdHolders[0]);
+		mpd2.setPublishTime(org.eso.ias.utils.ISO8601Helper.getTimestamp(System.currentTimeMillis()));
+		assertNotNull(mapper.apply(mpd2.toJsonString()));
+		logger.info("testUnconfiguredMPD done");
 	}
 	
 	/**
@@ -83,17 +84,23 @@ public class MapperTester extends ConverterTestBase {
 	 */
 	@Test
 	public void testMapping() throws Exception {
-		System.out.println("Testing testMapping");
+		logger.info("Testing testMapping");
 		for (MonitorPointDataHolder mpdh: mpdHolders) {
 			MonitorPointData mpd = buildMonitorPointData(mpdh);
+			mpd.setPublishTime(org.eso.ias.utils.ISO8601Helper.getTimestamp(System.currentTimeMillis()));
+			logger.debug("MonitorPointData built {}",mpd);
 			String iasValueStr = mapper.apply(mpd.toJsonString());
 			assertNotNull(iasValueStr);
 			
 			IASValue<?> iasValue =  iasValueSerializer.valueOf(iasValueStr);
+			logger.debug("Mapped IASValue {} ",iasValue);
 			
 			assertEquals(mpdh.iasType, iasValue.valueType);
-			assertTrue(iasValue.pluginProductionTStamp.isPresent());
-			assertEquals(Long.valueOf(mpdh.pluginProductionTSamp), iasValue.pluginProductionTStamp.get());
+			assertTrue(iasValue.productionTStamp.isPresent());
+			assertEquals(iasValue.value.toString(),mpd.getValue());
+			assertEquals(
+					mpd.getProducedByPluginTime(),
+					org.eso.ias.utils.ISO8601Helper.getTimestamp(iasValue.productionTStamp.get()));
 			
 			// The timestamp when the value is sent to the converter is set by the mapper
 			// so we expect sentToConverterTStamp to represent a timestamp close to the actual date

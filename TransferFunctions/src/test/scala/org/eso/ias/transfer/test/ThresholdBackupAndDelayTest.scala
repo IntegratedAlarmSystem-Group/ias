@@ -115,7 +115,7 @@ class ThresholdBackupAndDelayTest extends FlatSpec with BeforeAndAfterEach {
     require(Option(value).isDefined)
 
     val inout: InOut[Double] = InOut.asInput(id,IASTypes.DOUBLE)
-      .updateDasuProdTStamp(tStamp)
+      .updateProdTStamp(tStamp)
       .updateValueValidity(Some(value),Some(Validity(validity)))
     (new IasIO(inout)).updateMode(mode)
   }

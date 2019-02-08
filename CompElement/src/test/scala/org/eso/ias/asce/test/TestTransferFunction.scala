@@ -1,30 +1,16 @@
 package org.eso.ias.asce.test
 
-import org.scalatest.FlatSpec
-import org.eso.ias.types.InOut
-import org.eso.ias.types.Identifier
-import org.eso.ias.types.Validity
-import org.eso.ias.asce.ComputingElement
-import org.eso.ias.types.IASTypes
-
-import scala.collection.mutable.{Map => MutableMap}
-import org.eso.ias.asce.transfer.TransferFunctionSetting
 import java.util.Properties
 
-import org.eso.ias.asce.transfer.TransferFunctionLanguage
-
-import org.eso.ias.asce.CompEleThreadFactory
-import org.eso.ias.asce.AsceStates
+import org.eso.ias.asce.{AsceStates, CompEleThreadFactory, ComputingElement}
 import org.eso.ias.asce.test.transfer.ConstraintValidityTF
-import org.eso.ias.asce.transfer.JavaTransfer
-import org.eso.ias.asce.transfer.ScalaTransfer
-import org.eso.ias.types.IdentifierType
-import org.eso.ias.types.Alarm
+import org.eso.ias.asce.transfer.{JavaTransfer, ScalaTransfer, TransferFunctionLanguage, TransferFunctionSetting}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IasValidity._
-import org.eso.ias.types.IASValue
-import org.eso.ias.types.IasValidity
-import org.eso.ias.asce.test.transfer.ConstraintValidityTF
+import org.eso.ias.types._
+import org.scalatest.FlatSpec
+
+import scala.collection.mutable.{Map => MutableMap}
 
 class TestTransferFunction extends FlatSpec {
   
@@ -68,10 +54,10 @@ class TestTransferFunction extends FlatSpec {
       val mpId = new Identifier(id,IdentifierType.IASIO,Option(compID))
       i=i+1
       val mp = if ((i%2)==0) {
-        InOut.asInput(mpId,IASTypes.ALARM).updateValue(Some(Alarm.CLEARED)).updateDasuProdTStamp(System.currentTimeMillis())
+        InOut.asInput(mpId,IASTypes.ALARM).updateValue(Some(Alarm.CLEARED)).updateProdTStamp(System.currentTimeMillis())
       } else {
         val mpVal = 1L
-        InOut.asInput(mpId,IASTypes.LONG).updateValue(Some(1L)).updateDasuProdTStamp(System.currentTimeMillis())
+        InOut.asInput(mpId,IASTypes.LONG).updateValue(Some(1L)).updateProdTStamp(System.currentTimeMillis())
       }
       inputsMPs+=(mp.id.id -> mp)
     }
@@ -242,7 +228,7 @@ class TestTransferFunction extends FlatSpec {
     assert(selectorInput.id.id==ConstraintValidityTF.constraintSetterID)
     
     // Empty String
-    val empty=selectorInput.updateValue(Some("")).updateDasuProdTStamp(System.currentTimeMillis())
+    val empty=selectorInput.updateValue(Some("")).updateProdTStamp(System.currentTimeMillis())
     // Send the inputs and get the result
     val result = constraintValidityScalaComponent.update(convert(inputsMPs.values.toSet+empty))
     assert(result._1.isDefined)
@@ -250,7 +236,7 @@ class TestTransferFunction extends FlatSpec {
     assert(result._2==AsceStates.Healthy)
     
     // Valid constraint with one ID
-    val oneId = selectorInput.updateValue(Some("ID2")).updateDasuProdTStamp(System.currentTimeMillis())
+    val oneId = selectorInput.updateValue(Some("ID2")).updateProdTStamp(System.currentTimeMillis())
     // Send the inputs and get the result
     val resultOneId = constraintValidityScalaComponent.update(convert(inputsMPs.values.toSet+oneId))
     assert(resultOneId._1.isDefined)
@@ -259,7 +245,7 @@ class TestTransferFunction extends FlatSpec {
     assert(resultOneId._2==AsceStates.Healthy)
     
     // Valid constraint with more IDs
-    val moreIds = selectorInput.updateValue(Some("ID1,ID3,ID4")).updateDasuProdTStamp(System.currentTimeMillis())
+    val moreIds = selectorInput.updateValue(Some("ID1,ID3,ID4")).updateProdTStamp(System.currentTimeMillis())
     // Send the inputs and get the result
     val resultMoreIds = constraintValidityScalaComponent.update(convert(inputsMPs.values.toSet+moreIds))
     assert(resultMoreIds._1.isDefined)
@@ -294,7 +280,7 @@ class TestTransferFunction extends FlatSpec {
     assert(selectorInput.id.id==ConstraintValidityTF.constraintSetterID)
     
     // Consider only the validity of the LONG (odd ID)
-    val moreIds = selectorInput.updateValue(Some("ID1,ID3,ID5")).updateDasuProdTStamp(System.currentTimeMillis())
+    val moreIds = selectorInput.updateValue(Some("ID1,ID3,ID5")).updateProdTStamp(System.currentTimeMillis())
     // Send the inputs and get the result
     val resultMoreIds = constraintValidityScalaComponent.update(convert(inputsMPs.values.toSet+moreIds))
     logger.info("The TF returned with {} validity from inputs",resultMoreIds._1.get.fromInputsValidity)
@@ -333,7 +319,7 @@ class TestTransferFunction extends FlatSpec {
     assert(selectorInput.id.id==ConstraintValidityTF.constraintSetterID)
     
     // Consider only the validity of the LONG (odd ID)
-    val moreIds = selectorInput.updateValue(Some("ID1,ID3,ID5")).updateDasuProdTStamp(System.currentTimeMillis())
+    val moreIds = selectorInput.updateValue(Some("ID1,ID3,ID5")).updateProdTStamp(System.currentTimeMillis())
     // Send the inputs and get the result
     val resultMoreIds = constraintValidityScalaComponent.update(convert(inputsMPs.values.toSet+moreIds))
     logger.info("The TF returned with {} validity from inputs",resultMoreIds._1.get.fromInputsValidity)
@@ -362,9 +348,9 @@ class TestTransferFunction extends FlatSpec {
     // Now One of the inputs, id3WithDealy, has not been refreshed in timne
     logger.info("Giving time to invalidate one of the inputs")
     Thread.sleep((validityThresholdInSecs+1)*1000)
-    val id1WithDealy = id1.updateValue(Some(10L)).updateDasuProdTStamp(System.currentTimeMillis())
+    val id1WithDealy = id1.updateValue(Some(10L)).updateProdTStamp(System.currentTimeMillis())
     val id3WithDealy = id3.updateValue(Some(15L)) // Do not update the production time
-    val id5WithDealy = id5.updateValue(Some(20L)).updateDasuProdTStamp(System.currentTimeMillis())
+    val id5WithDealy = id5.updateValue(Some(20L)).updateProdTStamp(System.currentTimeMillis())
     val resultWintConstraintsAnddelays = constraintValidityScalaComponent.update(convert(Set(id1WithDealy,id3WithDealy,id5WithDealy)))
     logger.info("The TF returned with {} validity from inputs",resultWintConstraintsAnddelays._1.get.fromInputsValidity)
     assert(resultWintConstraintsAnddelays._1.isDefined)
@@ -375,7 +361,7 @@ class TestTransferFunction extends FlatSpec {
     assert(resultWintConstraintsAnddelays._1.get.fromInputsValidity.get.iasValidity==UNRELIABLE)
     
     // Now restore the time stamps and check again
-    val id3WithDeleay2 = id3.updateValue(Some(30L)).updateDasuProdTStamp(System.currentTimeMillis())
+    val id3WithDeleay2 = id3.updateValue(Some(30L)).updateProdTStamp(System.currentTimeMillis())
     val dealayFixedResult = constraintValidityScalaComponent.update(convert(Set(id3WithDeleay2)))
     logger.info("The TF returned with {} validity from inputs",dealayFixedResult._1.get.fromInputsValidity)
     assert(dealayFixedResult._1.isDefined)
