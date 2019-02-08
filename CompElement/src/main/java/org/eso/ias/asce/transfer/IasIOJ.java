@@ -1,18 +1,17 @@
 package org.eso.ias.asce.transfer;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IasValidity;
 import org.eso.ias.types.InOut;
 import org.eso.ias.types.OperationalMode;
-
-import scala.Tuple2;
 import scala.Option;
 import scala.Some;
+import scala.Tuple2;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * The java countr part of the scala IasIO, that is
@@ -35,7 +34,7 @@ public class IasIOJ<T> {
 	/**
 	 * The InOut to delegate
 	 * 
-	 * The visibility is limited to the package to avoi user implementation of the TF
+	 * The visibility is limited to the package to avoid that user implementations of the TF
 	 * access internals of the IAS
 	 */
 	final InOut<T> inOut;
@@ -140,25 +139,13 @@ public class IasIOJ<T> {
     }
     
     /**
-     * Note that a monitor point can be produced by a DASU or by a plugin
-     * so only one between the plugin production timestamp and the
-     * DASU production timestamp is defined.
+     * Th eproduction timestamp of the IASIO independently if it has been produced by a plugin,
+	 * a DASU or a CORE tool
      * 
      * @return The point in time when this monitor point has been produced by the DASU
      */
-    public Optional<Long> dasuProductionTStamp() {
-    	return Optional.ofNullable(inOut.dasuProductionTStamp().getOrElse(null));
-    }
-    
-    /**
-     * Note that a monitor point can be produced by a DASU or by a plugin
-     * so only one between the plugin production timestamp and the
-     * DASU production timestamp is defined.
-     *  
-     * @return The point in time when this monitor point has been produced by the plugin
-     */
-    public Optional<Long> pluginProductionTStamp() {
-    	return Optional.ofNullable(inOut.pluginProductionTStamp().getOrElse(null));
+    public Optional<Long> productionTStamp() {
+    	return Optional.ofNullable(inOut.productionTStamp().getOrElse(null));
     }
     
     /**

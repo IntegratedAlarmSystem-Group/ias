@@ -1,10 +1,8 @@
 package org.eso.ias.dasu.test
 
-import org.scalatest.FlatSpec
-import org.scalatest.BeforeAndAfter
-import org.eso.ias.dasu.DasuImpl
-import org.eso.ias.types.IASValue
 import org.eso.ias.logging.IASLogger
+import org.eso.ias.types.IASValue
+import org.scalatest.{BeforeAndAfter, FlatSpec}
 
 /**
  * Checks the timestamps of the output produced by a DASU
@@ -72,7 +70,7 @@ class CheckDasuOutputTimestamps extends FlatSpec with BeforeAndAfter {
     }
      
     val firstValue =  f.outputValuesReceived(0)
-    assert(firstValue.dasuProductionTStamp.isPresent())
+    assert(firstValue.productionTStamp.isPresent())
     for (t <- 1 until f.outputStringsReceived.size) {
       assert(f.outputValuesReceived(t).value==firstValue.value)
       assert(f.outputValuesReceived(t).sentToBsdbTStamp!=firstValue.sentToBsdbTStamp)
@@ -81,7 +79,7 @@ class CheckDasuOutputTimestamps extends FlatSpec with BeforeAndAfter {
       assert(f.outputValuesReceived(t).id==firstValue.id)
       assert(f.outputValuesReceived(t).fullRunningId==firstValue.fullRunningId)
       assert(f.outputValuesReceived(t).valueType==firstValue.valueType)
-      assert(f.outputValuesReceived(t).dasuProductionTStamp.isPresent())
+      assert(f.outputValuesReceived(t).productionTStamp.isPresent())
     }
     
      

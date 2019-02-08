@@ -1,28 +1,20 @@
 package org.eso.ias.dasu.test
 
-import org.scalatest.FlatSpec
-import org.eso.ias.types.IasValueJsonSerializer
-import org.eso.ias.dasu.Dasu
-import org.eso.ias.types.Identifier
-import org.eso.ias.types.IASValue
-import org.eso.ias.cdb.json.CdbJsonFiles
-import org.eso.ias.cdb.CdbReader
-import java.io.FileWriter
-import org.eso.ias.dasu.publisher.JsonWriterPublisher
-import org.eso.ias.cdb.json.JsonReader
-import org.eso.ias.logging.IASLogger
+import java.io.{File, FileWriter}
 import java.nio.file.FileSystems
-import org.eso.ias.types.IdentifierType
-import java.io.File
-import scala.io.Source
-import org.eso.ias.types.IASTypes
-import org.eso.ias.types.OperationalMode._
-import org.eso.ias.types.Alarm
-import org.eso.ias.types.IasValidity._
-import org.eso.ias.dasu.DasuImpl
-import org.eso.ias.dasu.publisher.DirectInputSubscriber
-import java.util.HashSet
+
+import org.eso.ias.cdb.CdbReader
+import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.DasuDao
+import org.eso.ias.dasu.DasuImpl
+import org.eso.ias.dasu.publisher.{DirectInputSubscriber, JsonWriterPublisher}
+import org.eso.ias.logging.IASLogger
+import org.eso.ias.types.IasValidity._
+import org.eso.ias.types._
+import org.eso.ias.types.OperationalMode._
+import org.scalatest.FlatSpec
+
+import scala.io.Source
 
 /** 
  *  Test the writing of the output of the DASU
@@ -85,7 +77,6 @@ class JsonPublisherTest extends FlatSpec {
 			t0+5,
 			t0+10,
 			t0+15,
-			t0+20,
 			null,
 			null,
 			null,

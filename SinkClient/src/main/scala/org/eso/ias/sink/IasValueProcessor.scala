@@ -8,7 +8,7 @@ import org.eso.ias.cdb.pojos.{IasDao, IasioDao, TemplateDao}
 import org.eso.ias.dasu.subscriber.{InputSubscriber, InputsListener}
 import org.eso.ias.heartbeat.{HbEngine, HbProducer, HeartbeatProducerType, HeartbeatStatus}
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types.{IASValue, Identifier, IdentifierType}
+import org.eso.ias.types.{IASValue, Identifier}
 
 import scala.collection.mutable.ListBuffer
 import scala.util.{Failure, Success, Try}
@@ -37,7 +37,7 @@ import scala.util.{Failure, Success, Try}
   * To kill a thread, its close method is invoked and it will be removed
   * from the active listener.
   *
-  * @param processorIdentifier the idenmtifier of the value processor
+  * @param processorIdentifier the identifier of the value processor
   * @param listeners the processors of the IasValues read from the BSDB
   * @param hbProducer The HB generator
   * @param inputsSubscriber The subscriber to get events from the BDSB
@@ -46,7 +46,7 @@ import scala.util.{Failure, Success, Try}
   *
  */
 class IasValueProcessor(
-                         val processorIdentifier: Identifier,
+                         val processorIdentifier: String,
                          val listeners: List[ValueListener],
                          private val hbProducer: HbProducer,
                          private val inputsSubscriber: InputSubscriber,
@@ -60,12 +60,12 @@ class IasValueProcessor(
   require(Option(iasDao).isDefined,"Invalid IAS configuration")
   require(Option(iasioDaos).isDefined && iasioDaos.nonEmpty,"Invalid configuration of IASIOs from CDB")
   require(Option(templateDaos).isDefined,"Invalid configuration of templates from CDB")
-  require(processorIdentifier.idType==IdentifierType.SINK,"Identifier tyope should be SINK")
+  require(Option(processorIdentifier).isDefined && processorIdentifier.nonEmpty,"Invalid empty identifier")
 
   IasValueProcessor.logger.info("{} processors will work on IAsValues read from the BSDB",listeners.length)
 
   /** The thread factory for the executors */
-  val threadFactory = new ProcessorThreadFactory(processorIdentifier.id)
+  val threadFactory = new ProcessorThreadFactory(processorIdentifier)
 
   /** The executor service to async process the IasValues in the listeners */
   val executorService = new ExecutorCompletionService[String](
@@ -84,7 +84,7 @@ class IasValueProcessor(
   val iasioDaosMap: Map[String,IasioDao] = iasioDaos.foldLeft(Map[String,IasioDao]()){ (z, dao) => z+(dao.getId -> dao)}
 
   /** The heartbeat Engine */
-  val hbEngine: HbEngine = HbEngine(processorIdentifier.id,HeartbeatProducerType.SINK,iasDao.getHbFrequency,hbProducer)
+  val hbEngine: HbEngine = HbEngine(processorIdentifier,HeartbeatProducerType.SINK,iasDao.getHbFrequency,hbProducer)
 
   /** Signal if the processor has been closed */
   val closed = new AtomicBoolean(false)
@@ -168,7 +168,7 @@ class IasValueProcessor(
     override def run(): Unit =  close()
   }
 
-  IasValueProcessor.logger.debug("{} processor built",processorIdentifier.id)
+  IasValueProcessor.logger.debug("{} processor built",hbEngine.hb.stringRepr)
 
   /**
     * The active listeners are those that are actively processing events.
@@ -196,9 +196,9 @@ class IasValueProcessor(
     val alreadyInitialized=initialized.get()
     Try({
       if (alreadyInitialized) {
-        IasValueProcessor.logger.warn("Processor {} already initialized",processorIdentifier.fullRunningID)
+        IasValueProcessor.logger.warn("Processor {} already initialized",hbEngine.hb.stringRepr)
       } else {
-        IasValueProcessor.logger.debug("Processor {} initializing",processorIdentifier.fullRunningID)
+        IasValueProcessor.logger.debug("Processor {} initializing",hbEngine.hb.stringRepr)
         // Start the HB
         hbEngine.start(HeartbeatStatus.STARTING_UP)
         // Init the kafka consumer
@@ -224,7 +224,7 @@ class IasValueProcessor(
 
         Runtime.getRuntime.addShutdownHook(shutdownHookThread)
 
-        IasValueProcessor.logger.info("Processor {} initialized",processorIdentifier.fullRunningID)
+        IasValueProcessor.logger.info("Processor {} initialized",hbEngine.hb.stringRepr)
       }
     })
   }
@@ -236,9 +236,9 @@ class IasValueProcessor(
       Runtime.getRuntime.removeShutdownHook(shutdownHookThread)
     }
     if (wasClosed) {
-      IasValueProcessor.logger.warn("Processor {} already closed",processorIdentifier.fullRunningID)
+      IasValueProcessor.logger.warn("Processor {} already closed",hbEngine.hb.stringRepr)
     } else {
-      IasValueProcessor.logger.debug("Processor {} closing",processorIdentifier.fullRunningID)
+      IasValueProcessor.logger.debug("Processor {} closing",hbEngine.hb.stringRepr)
       hbEngine.updateHbState(HeartbeatStatus.EXITING)
       // Closes the Kafka consumer
       inputsSubscriber.cleanUpSubscriber()

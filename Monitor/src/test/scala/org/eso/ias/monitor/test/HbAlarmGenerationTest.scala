@@ -61,6 +61,12 @@ class HbAlarmGenerationTest extends FlatSpec with BeforeAndAfterAll with BeforeA
   val supervisorHBs = Set(superv1Heartbeat,superv12Heartbeat,superv3Heartbeat)
   val supervisorIds = supervisorHBs.map(_.name)
 
+  // Identifiers of the 2 converters
+  val core1Heartbeat = Heartbeat(HeartbeatProducerType.CORETOOL,"ct1")
+  val core2Heartbeat = Heartbeat(HeartbeatProducerType.CORETOOL,"ct2")
+  val coreHBs = Set(core1Heartbeat, core2Heartbeat)
+  val coreIds = coreHBs.map(_.name)
+
   /** The producer of HBs */
   var hbProducer: HbKafkaProducer = _
 
@@ -100,7 +106,7 @@ class HbAlarmGenerationTest extends FlatSpec with BeforeAndAfterAll with BeforeA
     super.beforeEach()
     hbConsumer = new HbKafkaConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,"HB-Consumer")
 
-    hbMonitor = new HbMonitor(hbConsumer,pluginIds,converterIds,clientIds,sinkIds,supervisorIds,threshold)
+    hbMonitor = new HbMonitor(hbConsumer,pluginIds,converterIds,clientIds,sinkIds,supervisorIds,coreIds, threshold)
     hbMonitor.start()
   }
 
@@ -117,6 +123,7 @@ class HbAlarmGenerationTest extends FlatSpec with BeforeAndAfterAll with BeforeA
     assert(hbMonitor.clientIds==clientIds)
     assert(hbMonitor.sinkIds==sinkIds)
     assert(hbMonitor.supervisorIds==supervisorIds)
+    assert(hbMonitor.coreToolIds==coreIds)
   }
 
   it must "properly get the threshold" in {
@@ -141,6 +148,7 @@ class HbAlarmGenerationTest extends FlatSpec with BeforeAndAfterAll with BeforeA
     sendHBs(clientHBs)
     sendHBs(sinkHBs)
     sendHBs(supervisorHBs)
+    sendHBs(coreHBs)
     logger.info("Giving time to update")
     Thread.sleep(TimeUnit.MILLISECONDS.convert(threshold+1,TimeUnit.SECONDS))
     MonitorAlarm.values().foreach( ma => {
@@ -150,7 +158,10 @@ class HbAlarmGenerationTest extends FlatSpec with BeforeAndAfterAll with BeforeA
 
     logger.info("Giving time to invalidate")
     Thread.sleep(TimeUnit.MILLISECONDS.convert(threshold+1,TimeUnit.SECONDS))
-    MonitorAlarm.values().foreach( ma => assert(ma.getAlarm!=Alarm.CLEARED))
+    MonitorAlarm.values().foreach( ma => {
+      logger.info("State of {} is {}",ma.id,ma.getAlarm)
+      assert(ma.getAlarm!=Alarm.CLEARED)}
+    )
   }
 
 

@@ -102,7 +102,7 @@ class VisualInspectionAlarm(cEleId: String, cEleRunningId: String, validityTimeF
     (alarmInput.value.get.asInstanceOf[Alarm].isSet, wasAlarmSet) match {
       case (true, _) => wasAlarmSet=true
       case (false, true) =>
-        alarmDeactivationTimestamp= alarmInput.dasuProductionTStamp.getOrElse(alarmInput.pluginProductionTStamp.getOrElse(System.currentTimeMillis()))
+        alarmDeactivationTimestamp= alarmInput.productionTStamp.getOrElse(System.currentTimeMillis())
         VisualInspectionAlarm.logger.debug("Wind speed alarm deactivated at {}",ISO8601Helper.getTimestamp(alarmDeactivationTimestamp))
         wasAlarmSet=false
       case (false, false) =>
