@@ -1,32 +1,32 @@
 package org.eso.ias.asce.transfer.impls
 
-import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
-import org.eso.ias.types.IASTypes._
 import java.util.Properties
 
-import org.eso.ias.asce.exceptions.PropNotFoundException
-import org.eso.ias.asce.exceptions.WrongPropValue
-
-import scala.util.control.NonFatal
-import org.eso.ias.asce.exceptions.UnexpectedNumberOfInputsException
-import org.eso.ias.asce.exceptions.TypeMismatchException
-import org.eso.ias.asce.exceptions.TypeMismatchException
+import org.eso.ias.asce.exceptions.{PropNotFoundException, WrongPropValue}
+import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
+import org.eso.ias.types.IASTypes._
 import org.eso.ias.types.{Alarm, OperationalMode}
 
+import scala.util.control.NonFatal
+
 /**
- * Implements the Multiplicity transfer function.
- * 
- * The IASIOs in input to this TF are only alarms.
- * The alarm generate by this TF activates when the number
- * of alarms in input is equal or greater then the threshold retrieved
- * from the properties. 
- * 
- * @param asceId: the ID of the ASCE
- * @param asceRunningId: the runningID of the ASCE
- * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
- * @param props: the user defined properties
- * @author acaproni
- */
+  * Implements the Multiplicity transfer function.
+  *
+  * The IASIOs in input to this TF are only alarms.
+  * The alarm generate by this TF activates when the number
+  * of alarms in input is equal or greater then the threshold retrieved
+  * from the properties.
+  *
+  * The priority of the alarm produced by this TF is the highest of the priorities
+  * of the alarms in input unelss a priority is passed by setting the alarm priority property
+  * in the CDB
+  *
+  * @param asceId: the ID of the ASCE
+  * @param asceRunningId: the runningID of the ASCE
+  * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
+  * @param props: the user defined properties
+  * @author acaproni
+  */
 class MultiplicityTF (cEleId: String, cEleRunningId: String, validityTimeFrame: Long, props: Properties) 
 extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,props) {
   
@@ -57,11 +57,11 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
   }
   
   /**
-   * The priority of the alarm can be set defining a property; 
-   * otherwise use the default
+   * The priority of the alarm from the java prorty or None if not defined
    */
-  val alarmSet: Alarm = 
-    Option(props.getProperty(MultiplicityTF.alarmPriorityPropName)).map(Alarm.valueOf(_)).getOrElse(Alarm.getSetDefault)
+  val alarmFromCDB: Option[Alarm] =
+    Option(props.getProperty(MultiplicityTF.alarmPriorityPropName)).map(Alarm.valueOf(_))
+  alarmFromCDB.foreach( alarm=> require(alarm!=Alarm.CLEARED, "The alarm for multiplicty must be SET"))
 
   /**
     * Check that all the inputs and the output are alarms
@@ -73,6 +73,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
     val types = inputsInfo.map(_.iasioType)
     require(types.size==1 && types.head==ALARM,"All inputs must be ALARM")
     require(outputInfo.iasioType==ALARM,"The output must be an ALARM")
+    require(inputsInfo.size>=threshold, "Too few inputs to activate this TF")
   }
   
   /**
@@ -90,26 +91,18 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
    * @see ScalaTransferExecutor#eval
    */
   def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
-    if (compInputs.size<threshold) {
-      throw new UnexpectedNumberOfInputsException(compInputs.size,threshold)
-    }
-    if (actualOutput.iasType!=ALARM) {
-      throw new TypeMismatchException(actualOutput.fullRunningId,actualOutput.iasType,ALARM)
-    }
-    
-    for (hio <- compInputs.values if hio.iasType!=ALARM) {
-      throw new TypeMismatchException(actualOutput.fullRunningId,hio.iasType,ALARM)
-    }
-    
-    // Get the number of active alarms in input
-    var activeAlarms=0
-    val numOfActiveAlarms = for {
-      hio <- compInputs.values
-      if (hio.value.isDefined)
-      alarmValue = hio.value.get.asInstanceOf[Alarm]
-      if (alarmValue.isSet())} activeAlarms=activeAlarms+1
-    
-      val newAlarm = if (activeAlarms>=threshold) alarmSet else Alarm.cleared()
+
+    // Get the active alarms in input
+    val activeAlarms= compInputs.values.filter(input =>{
+      input.value.isDefined && input.value.get.asInstanceOf[Alarm].isSet
+    })
+
+    val newAlarm = if (activeAlarms.size>=threshold) {
+      alarmFromCDB.getOrElse({
+        Alarm.fromPriority(activeAlarms.map(_.asInstanceOf[Alarm].priorityLevel.get()).max)
+      })
+    } else Alarm.cleared()
+
     actualOutput.updateValue(newAlarm).updateMode(getOutputMode(compInputs.values.map(_.mode)))
   }
 }
