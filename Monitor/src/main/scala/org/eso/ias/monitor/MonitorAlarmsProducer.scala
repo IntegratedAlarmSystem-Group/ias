@@ -118,14 +118,13 @@ class MonitorAlarmsProducer(val publisher: MonitorAlarmPublisher, val refreshRat
       IasValidity.RELIABLE,
       identifier.fullRunningID,
       IASTypes.ALARM,
-      now-4,
-      now-3,
-      now-2,
-      now-1,
-      now,
-      null, // sentToBsdbTStamp
-      null, // readFromBsdbTStamp
-      null, // dasuProductionTStamp
+      null,
+       now, // production timestamp
+      null,
+      null,
+      null, // converted timestamp
+      null, // sent to BSDB timestamp
+      null, // read from BSDB TStamp
       emptySetOfDependant, // dependentsFullrunningIds
       props) // properties
 
