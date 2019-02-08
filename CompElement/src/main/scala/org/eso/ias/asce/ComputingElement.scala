@@ -355,7 +355,8 @@ abstract class ComputingElement[T](
     state = if (tfSetting.initialize(id, asceIdentifier.runningID, validityThreshold, props) &&
       initTransferFunction(inputsInfo,outputInfo,templateInstance).isSuccess) {
       ComputingElementState.transition(state, Initialized())
-    } else { 
+    } else {
+      ComputingElement.logger.error("Error initializing the transfer function")
       ComputingElementState.transition(state, Broken())
     }
     state.actualState
