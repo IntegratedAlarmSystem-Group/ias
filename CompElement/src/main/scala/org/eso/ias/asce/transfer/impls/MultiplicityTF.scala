@@ -4,6 +4,7 @@ import java.util.Properties
 
 import org.eso.ias.asce.exceptions.{PropNotFoundException, WrongPropValue}
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
+import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IASTypes._
 import org.eso.ias.types.{Alarm, OperationalMode}
 
@@ -70,10 +71,14 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
    * @param outputInfo The Id and type of thr output
    **/
   override def initialize(inputsInfo: Set[IasioInfo], outputInfo: IasioInfo): Unit = {
+    MultiplicityTF.logger.debug("Initializing")
     val types = inputsInfo.map(_.iasioType)
     require(types.size==1 && types.head==ALARM,"All inputs must be ALARM")
     require(outputInfo.iasioType==ALARM,"The output must be an ALARM")
+
+    MultiplicityTF.logger.info("The TF accepts {} inputs with a threshold of {}", inputsInfo.size,threshold)
     require(inputsInfo.size>=threshold, "Too few inputs to activate this TF")
+    MultiplicityTF.logger.debug("Initialized")
   }
   
   /**
@@ -95,11 +100,11 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
     // Get the active alarms in input
     val activeAlarms= compInputs.values.filter(input =>{
       input.value.isDefined && input.value.get.asInstanceOf[Alarm].isSet
-    })
+    }).map(_.asInstanceOf[IasIO[Alarm]])
 
     val newAlarm = if (activeAlarms.size>=threshold) {
       alarmFromCDB.getOrElse({
-        Alarm.fromPriority(activeAlarms.map(_.asInstanceOf[Alarm].priorityLevel.get()).max)
+        Alarm.fromPriority(activeAlarms.map(_.value.get.priorityLevel.get()).max)
       })
     } else Alarm.cleared()
 
@@ -108,6 +113,9 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
 }
 
 object MultiplicityTF {
+
+  /** The logger */
+  private val logger = IASLogger.getLogger(MultiplicityTF.getClass)
   
   /** The name of the property with the integer value of the threshold */
   val ThresholdPropName="org.eso.ias.tf.mutliplicity.threshold"

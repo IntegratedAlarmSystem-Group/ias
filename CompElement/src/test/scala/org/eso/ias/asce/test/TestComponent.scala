@@ -1,26 +1,13 @@
 package org.eso.ias.asce.test
 
-import org.scalatest.FlatSpec
-import org.eso.ias.types.Identifier
-import org.eso.ias.types.OperationalMode
-import org.eso.ias.types.Validity
-import scala.collection.mutable.HashMap
-import org.eso.ias.types.IASTypes
-import org.eso.ias.types.InOut
-import scala.collection.mutable.{Map => MutableMap }
-import org.eso.ias.asce.transfer.TransferFunctionSetting
-import org.eso.ias.asce.transfer.TransferFunctionLanguage
 import java.util.Properties
-import org.eso.ias.asce.CompEleThreadFactory
-import org.eso.ias.asce.ComputingElement
-import org.eso.ias.asce.transfer.ScalaTransfer
-import org.eso.ias.asce.transfer.JavaTransfer
-import org.eso.ias.types.IdentifierType
-import org.eso.ias.types.Alarm
-import org.eso.ias.types.IASValue
-import org.eso.ias.asce.AsceStates
-import org.eso.ias.types.IasValidity._
-import org.eso.ias.types.IasValidity
+
+import org.eso.ias.asce.{AsceStates, CompEleThreadFactory, ComputingElement}
+import org.eso.ias.asce.transfer.{JavaTransfer, ScalaTransfer, TransferFunctionLanguage, TransferFunctionSetting}
+import org.eso.ias.asce.transfer.impls.MultiplicityTF
+import org.eso.ias.logging.IASLogger
+import org.eso.ias.types._
+import org.scalatest.FlatSpec
 
 /**
  * Test the basic functionalities of the IAS Component,
@@ -28,6 +15,9 @@ import org.eso.ias.types.IasValidity
  * is checked elsewhere.
  */
 class TestComponent extends FlatSpec {
+
+  /** The logger */
+  private val logger = IASLogger.getLogger(this.getClass)
   
   // The ID of the DASU where the components runs
   val supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR,None)
@@ -58,6 +48,7 @@ class TestComponent extends FlatSpec {
   behavior of "A Component"
   
   it must "catch an error instantiating a wrong TF class" in {
+    logger.info("Testing with wrong TF class name")
     val output: InOut[Alarm] = InOut.asOutput(outId,IASTypes.ALARM)
     
     val threadaFactory = new CompEleThreadFactory("Test-runninId")
@@ -84,16 +75,22 @@ class TestComponent extends FlatSpec {
     // After an error in the initialization, the state changes to TFBroken
     comp.initialize()
     assert(comp.getState()==AsceStates.TFBroken)
+    comp.shutdown()
+    logger.info("Testing with wrong TF class name done")
   }
   
   it must "correctly instantiate the TF" in {
+    logger.info("Testing with good TF class name")
     val output: InOut[Alarm] = InOut.asOutput(outId,IASTypes.ALARM)
-    
+
+    val props = new Properties()
+    props.put(MultiplicityTF.ThresholdPropName,"1")
     val threadaFactory = new CompEleThreadFactory("Test-runninId")
-    // A transfer function that does not exist
+
+    // The transfer function
     val tfSetting =new TransferFunctionSetting(
         "org.eso.ias.asce.transfer.impls.MultiplicityTF",
-        TransferFunctionLanguage.java,
+        TransferFunctionLanguage.scala,
         None,
         threadaFactory)
     val comp: ComputingElement[Alarm] = new ComputingElement[Alarm](
@@ -102,7 +99,7 @@ class TestComponent extends FlatSpec {
        actualInputs,
        tfSetting,
        validityThresholdInSecs,
-       new Properties()) with ScalaTransfer[Alarm]
+      props) with ScalaTransfer[Alarm]
     
     assert(comp.asceIdentifier==compId)
     assert(comp.output.id==outId)
@@ -113,6 +110,8 @@ class TestComponent extends FlatSpec {
     // After a correct initialization, the state changes to InputsUndefined
     comp.initialize()
     assert(comp.getState()==AsceStates.InputsUndefined)
+    comp.shutdown()
+    logger.info("Testing with good TF class name done")
   }
   
 }
