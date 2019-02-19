@@ -41,7 +41,7 @@ class AntPadInhibitor(asceId: String, asceRunningId: String, validityTimeFrame:L
   /**
     * Names of pads must match with this regular expression
     */
-  val antPadRegExp = {
+  val antPadRegExp: Regex = {
     val propVal = Option(props.getProperty(AntPadInhibitor.PadNameMatcherName))
       require(propVal.isDefined,AntPadInhibitor.PadNameMatcherName+" property not defined")
     new Regex(propVal.get)
@@ -75,7 +75,7 @@ class AntPadInhibitor(asceId: String, asceRunningId: String, validityTimeFrame:L
     require(inputsInfo.size==2,"Expected inputs are the alarm and the anttenna to pad monitor points")
 
     val antsPadsIasioInfo = inputsInfo.filter(_.iasioId==AntPadInhibitor.AntennasToPadsID)
-    require(!antsPadsIasioInfo.isEmpty,AntPadInhibitor.AntennasToPadsID+" is not in input")
+    require(antsPadsIasioInfo.nonEmpty,AntPadInhibitor.AntennasToPadsID+" is not in input")
     require (antsPadsIasioInfo.head.iasioType==IASTypes.STRING,AntPadInhibitor.AntennasToPadsID+" is not a STRING")
 
     val otherIasios =  inputsInfo--antsPadsIasioInfo
@@ -108,7 +108,7 @@ class AntPadInhibitor(asceId: String, asceRunningId: String, validityTimeFrame:L
       val couple = antPad.split(":")
       antPad.nonEmpty &&
         antPadRegExp.pattern.matcher(couple(1)).matches() &&
-        antType.map(aType => couple(0).toUpperCase().startsWith(aType)).getOrElse(true)
+        antType.forall(aType => couple(0).toUpperCase().startsWith(aType))
     })
 
     // Extracts only the names of the antennas
