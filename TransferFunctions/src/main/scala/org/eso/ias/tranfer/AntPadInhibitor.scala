@@ -131,7 +131,6 @@ class AntPadInhibitor(asceId: String, asceRunningId: String, validityTimeFrame:L
 
     val alarmInput = compInputs.values.filter(_.iasType==IASTypes.ALARM).head
 
-
     val alarmOut = if (foundAntennaInPad) {
       actualOutput.updateValue(alarmInput.value.get)
     } else {
@@ -147,7 +146,11 @@ class AntPadInhibitor(asceId: String, asceRunningId: String, validityTimeFrame:L
       OperationalMode.UNKNOWN
     }
 
-    alarmOut.updateMode(mode).updateProps(alarmInput.props)
+    val outputWiithUpdatedMode=alarmOut.updateMode(mode)
+    if (foundAntennaInPad && alarmOut.value.get.isSet)
+      outputWiithUpdatedMode.updateProps(alarmInput.props++Map(AntPadInhibitor.AffectedAntennaAlarmPropName -> antennasInPads))
+    else
+      outputWiithUpdatedMode.updateProps(alarmInput.props)
 
   }
 
@@ -169,4 +172,7 @@ object AntPadInhibitor {
 
   /** The possible antenna type to be set in the AntTypePropName property */
   val AntennaTypes = List("DV","DA","CM","PM")
+
+  /** The property set in the alarm in output ith the list of affected antennas */
+  val AffectedAntennaAlarmPropName = "affectedAntennas"
 }

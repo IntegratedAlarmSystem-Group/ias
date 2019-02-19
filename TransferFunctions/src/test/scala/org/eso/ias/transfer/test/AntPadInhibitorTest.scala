@@ -134,7 +134,7 @@ class AntPadInhibitorTest extends FlatSpec with BeforeAndAfterEach {
 
     assert(ret.value.isDefined)
     assert(ret.value.get.asInstanceOf[Alarm]==Alarm.CLEARED)
-
+    assert(ret.props.isEmpty)
   }
 
   it must "return CLEAR when there are no antennas in the pads" in {
@@ -147,7 +147,7 @@ class AntPadInhibitorTest extends FlatSpec with BeforeAndAfterEach {
 
     assert(ret.value.isDefined)
     assert(ret.value.get.asInstanceOf[Alarm]==Alarm.CLEARED)
-
+    assert(ret.props.isEmpty)
   }
 
   it must "return SET when there are antennas in the pads" in {
@@ -160,7 +160,9 @@ class AntPadInhibitorTest extends FlatSpec with BeforeAndAfterEach {
 
     assert(ret.value.isDefined)
     assert(ret.value.get.asInstanceOf[Alarm]==Alarm.SET_HIGH)
-
+    val antInpAds= ret.props.get(AntPadInhibitor.AffectedAntennaAlarmPropName)
+    assert(antInpAds.nonEmpty)
+    logger.info("Found antennas in pad {}",antInpAds.get)
   }
 
   it must "return CLEAR when there are antennas in the pads but input is CLEAR" in {
@@ -173,7 +175,7 @@ class AntPadInhibitorTest extends FlatSpec with BeforeAndAfterEach {
 
     assert(ret.value.isDefined)
     assert(ret.value.get.asInstanceOf[Alarm]==Alarm.CLEARED)
-
+    assert(ret.props.isEmpty)
   }
 
   it must "return CLEAR when there are antennas in the pads but none of the proper type" in {
@@ -186,6 +188,7 @@ class AntPadInhibitorTest extends FlatSpec with BeforeAndAfterEach {
 
     assert(ret.value.isDefined)
     assert(ret.value.get.asInstanceOf[Alarm]==Alarm.CLEARED)
+    assert(ret.props.isEmpty)
   }
 
   it must "return SET when there are antennas in the pads with one of the proper type" in {
@@ -198,6 +201,8 @@ class AntPadInhibitorTest extends FlatSpec with BeforeAndAfterEach {
 
     assert(ret.value.isDefined)
     assert(ret.value.get.asInstanceOf[Alarm]==Alarm.SET_HIGH)
-
+    val antInpAds= ret.props.get(AntPadInhibitor.AffectedAntennaAlarmPropName)
+    assert(antInpAds.nonEmpty)
+    logger.info("Found antennas in pad {}",antInpAds.get)
   }
 }
