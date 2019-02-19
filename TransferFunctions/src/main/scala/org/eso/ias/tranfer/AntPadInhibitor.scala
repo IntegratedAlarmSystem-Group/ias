@@ -116,21 +116,6 @@ class AntPadInhibitor(asceId: String, asceRunningId: String, validityTimeFrame:L
   }
 
   /**
-    * Check if there is at least one antenna in one of the pads whose name matches with
-    * the regular expression passed in the java properties
-    *
-    * It takes into account also the type of teh antennas, if requested (i.e. if antType
-    * is defined)
-    *
-    * @param antsPadsMP: the natennas to pads string received in input
-    * @return true if there is at least one antennas in the pads;
-    *         false otherwise
-    */
-  def isAntennaInPad(antsPadsMP: String): Boolean = {
-       affectedAntennas(antsPadsMP).nonEmpty
-  }
-
-  /**
     * Produces the output of the component by evaluating the inputs.
     *
     * @return the computed output of the ASCE
@@ -140,7 +125,9 @@ class AntPadInhibitor(asceId: String, asceRunningId: String, validityTimeFrame:L
     assert(antPadMp.isDefined,AntPadInhibitor.AntennasToPadsID+" inputs not defined!")
 
     val antPadMPValue = antPadMp.get.value.get.asInstanceOf[String]
-    val foundAntennaInPad = isAntennaInPad(antPadMPValue)
+
+    val antennasInPads = affectedAntennas(antPadMPValue)
+    val foundAntennaInPad = antennasInPads.nonEmpty
 
     val alarmInput = compInputs.values.filter(_.iasType==IASTypes.ALARM).head
 
