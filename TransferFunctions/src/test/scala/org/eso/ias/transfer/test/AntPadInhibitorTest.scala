@@ -11,8 +11,8 @@ import org.scalatest.{BeforeAndAfterEach, FlatSpec}
 /**
   * Test the AntPadInhibitor
   *
-  * The TF takes 2 inputs and produces one ouput.
-  * One of the input is always the antenna/pad association while the other one is an alarm.
+  * The TF takes 2 inputs and produces one output.
+  * One of the inputs is always the antenna/pad association while the other one is an alarm.
   */
 class AntPadInhibitorTest extends FlatSpec with BeforeAndAfterEach {
 
