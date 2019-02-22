@@ -20,10 +20,8 @@ import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.nio.file.StandardOpenOption;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -111,6 +109,7 @@ public class JsonWriter implements CdbWriter {
 	 */
 	@Override
 	public void writeDasu(DasuDao dasu) throws IasCdbException {
+		Objects.requireNonNull(dasu);
 		File f;
 		try { 
 			f = cdbFileNames.getDasuFilePath(dasu.getId()).toFile();
@@ -740,6 +739,36 @@ public class JsonWriter implements CdbWriter {
 		Set<TemplateDao> templates = new HashSet<>();
 		templates.add(templateDao);
 		writeTemplates(templates, true);
+	}
+
+	/**
+	 * Write the configuration of the client with the passed identifier.
+	 *
+	 * The configuration is written as it is i.e. without converting to JSON
+	 * because the format of the config is defined by each client
+	 *
+	 * @param clientConfigDao the configuraton of the client
+	 * @throws IasCdbException In case of error writing the configuration
+	 */
+	@Override
+	public void writeClientConfig(ClientConfigDao clientConfigDao) throws IasCdbException {
+		Objects.requireNonNull(clientConfigDao);
+		Path f;
+		try {
+			f = cdbFileNames.getClientFilePath(clientConfigDao.getId());
+		} catch (IOException ioe) {
+			throw new IasCdbException("Error getting client file "+clientConfigDao.getId(),ioe);
+		}
+
+		List<String> strings = new ArrayList();
+		strings.add(clientConfigDao.getConfig());
+		try {
+			Files.write(f,strings, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+		} catch (IOException ioe) {
+			throw new IasCdbException("Error reading client file "+f.toString(),ioe);
+		}
+
+
 	}
 	
 	/**

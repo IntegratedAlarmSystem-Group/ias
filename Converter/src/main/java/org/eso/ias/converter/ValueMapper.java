@@ -1,29 +1,19 @@
 package org.eso.ias.converter;
 
-import java.text.ParseException;
+import org.eso.ias.converter.config.IasioConfigurationDAO;
+import org.eso.ias.converter.config.MonitorPointConfiguration;
+import org.eso.ias.plugin.publisher.MonitorPointData;
+import org.eso.ias.plugin.publisher.PublisherException;
+import org.eso.ias.types.*;
+import org.eso.ias.utils.ISO8601Helper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-
-import org.eso.ias.converter.config.IasioConfigurationDAO;
-import org.eso.ias.converter.config.MonitorPointConfiguration;
-import org.eso.ias.plugin.publisher.MonitorPointData;
-import org.eso.ias.plugin.publisher.PublisherException;
-import org.eso.ias.types.Identifier;
-import org.eso.ias.types.Alarm;
-import org.eso.ias.types.IASTypes;
-import org.eso.ias.types.IASValue;
-import org.eso.ias.types.IasValidity;
-import org.eso.ias.types.IasValueSerializerException;
-import org.eso.ias.types.IasValueStringSerializer;
-import org.eso.ias.types.IdentifierType;
-import org.eso.ias.types.OperationalMode;
-import org.eso.ias.utils.ISO8601Helper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import scala.Int;
 
 /**
  * The function to convert a string received from a plugin
@@ -195,8 +185,8 @@ public class ValueMapper implements Function<String, String> {
         long monSysProductionTime;
 		monSysProductionTime=ISO8601Helper.timestampToMillis(remoteSystemData.getSampleTime());
 		
-		long pluginProductionTime;
-		pluginProductionTime=ISO8601Helper.timestampToMillis(remoteSystemData.getProducedByPluginTime());
+		long productionTime;
+		productionTime=ISO8601Helper.timestampToMillis(remoteSystemData.getProducedByPluginTime());
 		
 		long pluginSentToConvertTime;
 		pluginSentToConvertTime=ISO8601Helper.timestampToMillis(remoteSystemData.getPublishTime());
@@ -236,13 +226,12 @@ public class ValueMapper implements Function<String, String> {
 					identifier.fullRunningID(),
 					type,
 					monSysProductionTime,
-					pluginProductionTime, // PLUGIN production
+					productionTime, // PLUGIN production
 					pluginSentToConvertTime,  // Sent to converter
 					receptionTStamp, // received from plugin
 					producedAndSentTStamp, // Produced by converter
 					producedAndSentTStamp, // Sent to BSDB
 					null, // Read from BSDB
-					null, // DASU prod time
 					null, // dependents
 					null); // additional properties
 

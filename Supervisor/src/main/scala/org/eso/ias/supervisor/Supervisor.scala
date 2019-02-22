@@ -16,7 +16,7 @@ import org.eso.ias.dasu.subscriber.{InputSubscriber, InputsListener, KafkaSubscr
 import org.eso.ias.dasu.{Dasu, DasuImpl}
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
-import org.eso.ias.heartbeat.{HbEngine, HbProducer, HeartbeatStatus}
+import org.eso.ias.heartbeat.{HbEngine, HbProducer, HeartbeatProducerType, HeartbeatStatus}
 import org.eso.ias.kafkautils.KafkaHelper
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.{IASValue, Identifier, IdentifierType}
@@ -88,7 +88,7 @@ class Supervisor(
     }
   
   /** The heartbeat Engine */
-  val hbEngine: HbEngine = HbEngine(supervisorIdentifier.fullRunningID,iasDao.getHbFrequency,hbProducer)
+  val hbEngine: HbEngine = HbEngine(supervisorIdentifier.id,HeartbeatProducerType.SUPERVISOR,iasDao.getHbFrequency,hbProducer)
 
   /**
     * The refresh rate in mseconds

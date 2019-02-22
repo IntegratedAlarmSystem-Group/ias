@@ -1,27 +1,21 @@
 package org.eso.ias.asce.test
 
-import org.scalatest.FlatSpec
-import org.eso.ias.asce.transfer.impls.MultiplicityTF
 import java.util.Properties
-import org.eso.ias.asce.ComputingElement
-import org.eso.ias.types.Alarm
-import org.eso.ias.asce.transfer.ScalaTransfer
-import org.eso.ias.asce.transfer.TransferFunctionLanguage
-import org.eso.ias.asce.transfer.TransferFunctionSetting
-import org.eso.ias.types.Identifier
-import org.eso.ias.types.IdentifierType
-import org.eso.ias.types.InOut
-import org.eso.ias.types.IASTypes
-import org.eso.ias.types.IASValue
-import org.scalatest.BeforeAndAfterEach
-import org.eso.ias.types.Validity
-import org.eso.ias.types.IasValidity
-import org.eso.ias.types.OperationalMode
+
+import org.eso.ias.asce.transfer.impls.MultiplicityTF
+import org.eso.ias.asce.transfer.{ScalaTransfer, TransferFunctionLanguage, TransferFunctionSetting}
+import org.eso.ias.asce.{AsceStates, ComputingElement}
+import org.eso.ias.logging.IASLogger
+import org.eso.ias.types._
+import org.scalatest.{BeforeAndAfterEach, FlatSpec}
 
 /**
  * Test the multiplicity transfer function
  */
 class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
+
+  /** The logger */
+  private val logger = IASLogger.getLogger(MultiplicityTF.getClass)
   
   val props = new Properties()
   props.put(MultiplicityTF.ThresholdPropName,"3")
@@ -57,75 +51,105 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   // The threshold to assess the validity from the arrival time of the input
   val validityThresholdInSecs = 2
   
-  /** The ASCE running the multiplicity TF */
-  var scalaComp: Option[ComputingElement[Alarm]]= None
-  
+  /** The ASCE running the multiplicity TF with a priority set in the property */
+  var scalaCompWithPriority: Option[ComputingElement[Alarm]]= None
+
+  /** The ASCE running the multiplicity TF with no priority set in the property */
+  var scalaCompWithNoPriority: Option[ComputingElement[Alarm]]= None
+
   override def beforeEach() {
-  val scalaMultuiplicityTF = new TransferFunctionSetting(
+    val scalaMultiplicityTFWithProperty = new TransferFunctionSetting(
       "org.eso.ias.asce.transfer.impls.MultiplicityTF",
         TransferFunctionLanguage.scala,
         None,
         threadFactory)
-    
-    scalaComp = Some(new ComputingElement[Alarm](
+
+    scalaCompWithPriority = Some(new ComputingElement[Alarm](
        compID,
        output,
        inputsMPs,
-       scalaMultuiplicityTF,
+       scalaMultiplicityTFWithProperty,
        validityThresholdInSecs,
        props) with ScalaTransfer[Alarm])
-    
-    scalaComp.get.initialize()
+
+    scalaCompWithPriority.get.initialize()
     Thread.sleep(1000)
+    assert(scalaCompWithPriority.get.state.actualState!=AsceStates.TFBroken)
+
+    val scalaMultiplicityTFNoProperty = new TransferFunctionSetting(
+      "org.eso.ias.asce.transfer.impls.MultiplicityTF",
+      TransferFunctionLanguage.scala,
+      None,
+      threadFactory)
+
+
+    val prop2 = new Properties()
+    prop2.put(MultiplicityTF.ThresholdPropName,"3")
+    scalaCompWithNoPriority = Some(new ComputingElement[Alarm](
+      compID,
+      output,
+      inputsMPs,
+      scalaMultiplicityTFNoProperty,
+      validityThresholdInSecs,
+      prop2) with ScalaTransfer[Alarm])
+
+    scalaCompWithNoPriority.get.initialize()
+    Thread.sleep(1000)
+    assert(scalaCompWithNoPriority.get.state.actualState!=AsceStates.TFBroken)
+
   }
-  
+
   override def afterEach() {
-    scalaComp.get.shutdown()
+    scalaCompWithPriority.get.shutdown()
+    scalaCompWithNoPriority.get.shutdown()
   }
-  
+
   /**
    * Check the state of the alarm of the passed IASIO
-   * 
-   * @param hio: the IASIO to check the alarm state
-   * @param alarmState: The expected alarm
+   *
+   * @param asce: the ASCE to check the alarm state of the output
+   * @param alarmState: The expected alarm in output
    */
   def checkAlarmActivation(asce: ComputingElement[Alarm], alarmState: Alarm): Boolean = {
-    assert(asce.isOutputAnAlarm)
+    assert(asce.isOutputAnAlarm,"The output is not an alarm")
     val iasio = asce.output
     assert(iasio.iasType==IASTypes.ALARM)
-    
-    iasio.value.forall(a => a==alarmState)
+
+
+    iasio.value.forall(a => {
+      logger.info("Checking if {} is {}",a,alarmState)
+      a==alarmState
+    })
   }
-  
+
   /**
    * Build and return a set of IASValue with a
-   * defined number of ativated alarms 
-   * 
-   * @param the desired number of activated alarms
-   * @param a set of alarms with n activaetd and the other cleared
+   * defined number of ativated alarms
+   *
+   * @param n desired number of activated alarms
    */
   def activate(n: Integer): Set[IASValue[_]] = {
     require(n>0)
     val inputsMPsList = inputsMPs.toList
     val list = for (i <- 0 to inputsMPsList.size-1) yield {
-      if (i<=n-1) inputsMPsList(i).updateValue(Some(Alarm.getSetDefault)).updateDasuProdTStamp(System.currentTimeMillis()).toIASValue()
-      else inputsMPsList(i).updateValue(Some(Alarm.CLEARED)).updateDasuProdTStamp(System.currentTimeMillis()).toIASValue()
+      if (i<=n-1) inputsMPsList(i).updateValue(Some(Alarm.SET_HIGH)).updateProdTStamp(System.currentTimeMillis()).toIASValue()
+      else inputsMPsList(i).updateValue(Some(Alarm.CLEARED)).updateProdTStamp(System.currentTimeMillis()).toIASValue()
     }
     val ret = list.toSet
     assert(ret.size==inputsMPs.size)
-    assert(ret.count(value => value.value==Alarm.getSetDefault)==n)
+    assert(ret.count(value => value.value==Alarm.SET_HIGH)==n)
     ret
   }
-  
-  behavior of "The scala MultiplicityTF executor"
-  
+
+  behavior of "The scala MultiplicityTF executor with given priority"
+
   it must "Correctly load and shutdown the multiplicity TF executor" in {
     val multuiplicityTF = new TransferFunctionSetting(
       "org.eso.ias.asce.transfer.impls.MultiplicityTF",
         TransferFunctionLanguage.scala,
         None,
         threadFactory)
-    
+
     assert(!multuiplicityTF.initialized)
     assert(!multuiplicityTF.isShutDown)
     multuiplicityTF.initialize("ASCE-MinMaxTF-ID", "ASCE-running-ID", 1000, new Properties())
@@ -133,40 +157,80 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
     multuiplicityTF.shutdown()
     assert(multuiplicityTF.isShutDown)
   }
-  
+
   it must "run the multiplicity TF" in {
     // Change all inputs do  trigger the TF
-    val changedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getSetDefault)).updateDasuProdTStamp(System.currentTimeMillis()).toIASValue())
-    scalaComp.get.update(changedMPs)
-    assert(checkAlarmActivation(scalaComp.get,Alarm.SET_LOW))
-    
+    val changedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getSetDefault)).updateProdTStamp(System.currentTimeMillis()).toIASValue())
+    scalaCompWithPriority.get.update(changedMPs)
+    assert(checkAlarmActivation(scalaCompWithPriority.get,Alarm.SET_LOW))
+
     // Clearing all must disable
-    val clearedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.CLEARED)).updateDasuProdTStamp(System.currentTimeMillis()).toIASValue())
-    scalaComp.get.update(clearedMPs)
-    assert(checkAlarmActivation(scalaComp.get,Alarm.CLEARED))
-    
+    val clearedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.CLEARED)).updateProdTStamp(System.currentTimeMillis()).toIASValue())
+    scalaCompWithPriority.get.update(clearedMPs)
+    assert(checkAlarmActivation(scalaCompWithPriority.get,Alarm.CLEARED))
+
     val act1=activate(1)
-    scalaComp.get.update(act1)
-    assert(checkAlarmActivation(scalaComp.get,Alarm.CLEARED))
-    
+    scalaCompWithPriority.get.update(act1)
+    assert(checkAlarmActivation(scalaCompWithPriority.get,Alarm.CLEARED))
+
     val act2=activate(2)
-    scalaComp.get.update(act2)
-    assert(checkAlarmActivation(scalaComp.get,Alarm.CLEARED))
-    
+    scalaCompWithPriority.get.update(act2)
+    assert(checkAlarmActivation(scalaCompWithPriority.get,Alarm.CLEARED))
+
     val act3=activate(3)
-    scalaComp.get.update(act3)
-    assert(checkAlarmActivation(scalaComp.get,Alarm.SET_LOW))
-    
+    scalaCompWithPriority.get.update(act3)
+    assert(checkAlarmActivation(scalaCompWithPriority.get,Alarm.SET_LOW))
+
     val act4=activate(4)
-    scalaComp.get.update(act4)
-    assert(checkAlarmActivation(scalaComp.get,Alarm.SET_LOW))
+    scalaCompWithPriority.get.update(act4)
+    assert(checkAlarmActivation(scalaCompWithPriority.get,Alarm.SET_LOW))
 
     // Activate all again
-    scalaComp.get.update(changedMPs)
-    assert(checkAlarmActivation(scalaComp.get,Alarm.SET_LOW))
-    
+    scalaCompWithPriority.get.update(changedMPs)
+    assert(checkAlarmActivation(scalaCompWithPriority.get,Alarm.SET_LOW))
+
     // Clear all again
-    scalaComp.get.update(clearedMPs)
-    assert(checkAlarmActivation(scalaComp.get,Alarm.CLEARED))
+    scalaCompWithPriority.get.update(clearedMPs)
+    assert(checkAlarmActivation(scalaCompWithPriority.get,Alarm.CLEARED))
+  }
+
+  behavior of "The scala MultiplicityTF executor with NO given priority"
+
+  it must "run the multiplicity TF" in {
+    // The same test as before but now the TF ruturn the inputs with the highest priority
+
+   // Change all inputs do  trigger the TF
+    val changedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getSetDefault)).updateProdTStamp(System.currentTimeMillis()).toIASValue())
+    scalaCompWithNoPriority.get.update(changedMPs)
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get,Alarm.SET_MEDIUM))
+
+    // Clearing all must disable
+    val clearedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.CLEARED)).updateProdTStamp(System.currentTimeMillis()).toIASValue())
+    scalaCompWithNoPriority.get.update(clearedMPs)
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get,Alarm.CLEARED))
+
+    val act1=activate(1)
+    scalaCompWithNoPriority.get.update(act1)
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get,Alarm.CLEARED))
+
+    val act2=activate(2)
+    scalaCompWithNoPriority.get.update(act2)
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get,Alarm.CLEARED))
+
+    val act3=activate(3)
+    scalaCompWithNoPriority.get.update(act3)
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get,Alarm.SET_HIGH))
+
+    val act4=activate(4)
+    scalaCompWithNoPriority.get.update(act4)
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get,Alarm.SET_HIGH))
+
+    // Activate all again
+    scalaCompWithNoPriority.get.update(changedMPs)
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get,Alarm.SET_MEDIUM))
+
+    // Clear all again
+    scalaCompWithNoPriority.get.update(clearedMPs)
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get,Alarm.CLEARED))
   }
 }

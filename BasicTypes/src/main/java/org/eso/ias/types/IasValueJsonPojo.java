@@ -1,16 +1,15 @@
 package org.eso.ias.types;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import org.eso.ias.utils.ISO8601Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * A java pojo to serialize/deserialize {@link IASValue} objects.
@@ -50,12 +49,11 @@ public class IasValueJsonPojo {
 	private String readFromMonSysTStamp;
 	 
 	/**
-	 * @see IASValue#pluginProductionTStamp
+	 * @see IASValue#productionTStamp
 	 */
 	@JsonInclude(Include.NON_NULL)
-	private String pluginProductionTStamp;
-	
-	
+	private String productionTStamp;
+
 	/**
 	 * @see IASValue#sentToConverterTStamp
 	 */
@@ -85,12 +83,6 @@ public class IasValueJsonPojo {
 	 */
 	@JsonInclude(Include.NON_NULL)
 	private String readFromBsdbTStamp;
-	
-	/**
-	 * @see IASValue#dasuProductionTStamp
-	 */
-	@JsonInclude(Include.NON_NULL)
-	private String dasuProductionTStamp;
 	
 	/**
 	 * @see IASValue#dependentsFullRuningIds
@@ -144,13 +136,12 @@ public class IasValueJsonPojo {
 		iasValidity=iasValue.iasValidity;
 
 		this.readFromMonSysTStamp=convertTStampToIso8601(iasValue.readFromMonSysTStamp);
-		this.pluginProductionTStamp=convertTStampToIso8601(iasValue.pluginProductionTStamp);
+		this.productionTStamp=convertTStampToIso8601(iasValue.productionTStamp);
 		this.sentToConverterTStamp=convertTStampToIso8601(iasValue.sentToConverterTStamp);
 		this.receivedFromPluginTStamp=convertTStampToIso8601(iasValue.receivedFromPluginTStamp);
 		this.convertedProductionTStamp=convertTStampToIso8601(iasValue.convertedProductionTStamp);
 		this.sentToBsdbTStamp=convertTStampToIso8601(iasValue.sentToBsdbTStamp);
 		this.readFromBsdbTStamp=convertTStampToIso8601(iasValue.readFromBsdbTStamp);
-		this.dasuProductionTStamp=convertTStampToIso8601(iasValue.dasuProductionTStamp);
 
 		this.depsFullRunningIds=iasValue.dependentsFullRuningIds.orElse(null);
 		this.props = iasValue.props.orElse(null);
@@ -232,8 +223,8 @@ public class IasValueJsonPojo {
 
 	public String getReadFromMonSysTStamp() { return readFromMonSysTStamp; }
 
-	public String getPluginProductionTStamp() {
-		return pluginProductionTStamp;
+	public String getProductionTStamp() {
+		return productionTStamp;
 	}
 
 	public String getSentToConverterTStamp() {
@@ -256,10 +247,6 @@ public class IasValueJsonPojo {
 		return readFromBsdbTStamp;
 	}
 
-	public String getDasuProductionTStamp() {
-		return dasuProductionTStamp;
-	}
-	
 	public IASValue<?> toIasValue() {
 		// Convert the string to the proper type
 		Object theValue;
@@ -284,13 +271,12 @@ public class IasValueJsonPojo {
 				fullRunningId, 
 				valueType,
 				convertIso8601ToTStamp(readFromMonSysTStamp),
-				convertIso8601ToTStamp(pluginProductionTStamp), 
+				convertIso8601ToTStamp(productionTStamp),
 				convertIso8601ToTStamp(sentToConverterTStamp), 
 				convertIso8601ToTStamp(receivedFromPluginTStamp), 
 				convertIso8601ToTStamp(convertedProductionTStamp), 
 				convertIso8601ToTStamp(sentToBsdbTStamp), 
 				convertIso8601ToTStamp(readFromBsdbTStamp), 
-				convertIso8601ToTStamp(dasuProductionTStamp),
 				Optional.ofNullable(depsFullRunningIds),
 				Optional.ofNullable(props));
 	}
