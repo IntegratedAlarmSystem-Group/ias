@@ -26,9 +26,9 @@ RUN ant -version
 
 # Install ant contrib
 WORKDIR /
-RUN wget http://www.java2s.com/Code/JarDownload/ant-contrib/ant-contrib-1.0.jar.zip && \
-  unzip ant-contrib-1.0.jar.zip -d . && \
-  mv ant-contrib-1.0.jar $ANT_HOME/lib/
+RUN  wget https://sourceforge.net/projects/ant-contrib/files/ant-contrib/1.0b3/ant-contrib-1.0b3-bin.zip/download -O ant-contrib-1.0b3-bin.zip && \
+  unzip ant-contrib-1.0b3-bin.zip && \
+  mv ant-contrib/ant-contrib-1.0b3.jar $ANT_HOME/lib/ant-contrib-1.0.jar
 
 # Install Kafka
 WORKDIR /
