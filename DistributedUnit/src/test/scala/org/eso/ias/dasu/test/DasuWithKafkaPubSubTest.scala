@@ -114,7 +114,6 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener {
 			  t0+10,
 			  t0+15,
 			  t0+20,
-			  t0+25,
 			  null,
 			  null,
 			  null)

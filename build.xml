@@ -49,6 +49,7 @@
         <string>SinkClient</string>
         <string>Tests/SimpleLoopTest</string>
         <string>Extras</string>
+        <string>Monitor</string>
     </resources>
     <pathconvert property="iasModules" refid="iasModsResources" pathsep="," />
 

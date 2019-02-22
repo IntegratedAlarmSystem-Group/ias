@@ -7,7 +7,7 @@ import java.util.concurrent.{Executors, ScheduledExecutorService, TimeUnit}
 import com.typesafe.scalalogging.Logger
 import org.eso.ias.kafkautils.{KafkaHelper, KafkaStringsConsumer, SimpleKafkaIasiosConsumer}
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types.IASValue
+import org.eso.ias.types.{IASValue, Identifier, IdentifierType}
 
 import scala.collection.JavaConverters
 import scala.util.Try
@@ -143,7 +143,9 @@ class CalcConversionTime(servers: String)
     val iasios = JavaConverters.collectionAsScalaIterable(events)
 
     // Discard IASIOs produced by DASUs
-    val iasiosFromPlugin =iasios.filter( _.pluginProductionTStamp.isPresent)
+   val iasiosFromPlugin = iasios.filter( iasValue =>
+     Identifier(iasValue.fullRunningId).getIdOfType(IdentifierType.PLUGIN).isDefined)
+
 
     CalcConversionTime.logger.debug("Got {} events of which {} from plugins",
       iasios.size,

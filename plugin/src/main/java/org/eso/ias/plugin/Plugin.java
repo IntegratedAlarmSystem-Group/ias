@@ -1,26 +1,9 @@
 package org.eso.ias.plugin;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import org.eso.ias.heartbeat.HbEngine;
-import org.eso.ias.heartbeat.HbMsgSerializer;
 import org.eso.ias.heartbeat.HbProducer;
+import org.eso.ias.heartbeat.HeartbeatProducerType;
 import org.eso.ias.heartbeat.HeartbeatStatus;
-import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
 import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.config.Value;
 import org.eso.ias.plugin.filter.Filter;
@@ -34,6 +17,13 @@ import org.eso.ias.types.IdentifierType;
 import org.eso.ias.types.OperationalMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**
@@ -377,7 +367,7 @@ public class Plugin implements ChangeValueListener {
 		flushProperties(props);
 		
 		Objects.requireNonNull(hbProducer);
-		this.hbEngine=HbEngine.apply(pluginIdentifier.fullRunningID(), hbFrequency, hbProducer);		
+		this.hbEngine=HbEngine.apply(pluginId, HeartbeatProducerType.PLUGIN, hbFrequency, hbProducer);
 		
 		this.mpPublisher=sender;
 		
