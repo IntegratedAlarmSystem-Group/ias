@@ -2,6 +2,7 @@ package org.eso.ias.asce.transfer.impls
 
 import java.util.Properties
 
+import com.typesafe.scalalogging.Logger
 import org.eso.ias.asce.exceptions.{PropNotFoundException, WrongPropValue}
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import org.eso.ias.logging.IASLogger
@@ -142,18 +143,34 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
       })
     } else Alarm.cleared()
 
-    actualOutput.updateValue(newAlarm).updateMode(getOutputMode(compInputs.values.map(_.mode)))
+    // The properties of the output
+    val props = if (newAlarm.isSet) {
+      val idOfActiveAlarms = activeAlarms.map(_.id).mkString(",")
+      getPropsOfOutput(activeAlarms.map(_.props)) + (MultiplicityTF.inputAlarmsSetPropName->idOfActiveAlarms)
+    } else {
+      Map.empty[String,String]
+    }
+
+    actualOutput.updateValue(newAlarm).updateMode(getOutputMode(compInputs.values.map(_.mode))).updateProps(props)
   }
 }
 
 object MultiplicityTF {
 
   /** The logger */
-  private val logger = IASLogger.getLogger(MultiplicityTF.getClass)
+  private val logger: Logger = IASLogger.getLogger(MultiplicityTF.getClass)
   
   /** The name of the property with the integer value of the threshold */
-  val ThresholdPropName="org.eso.ias.tf.mutliplicity.threshold"
+  val ThresholdPropName: String ="org.eso.ias.tf.mutliplicity.threshold"
   
   /** The name of the property to set the priority of the alarm */
-  val alarmPriorityPropName = "org.eso.ias.tf.alarm.priority"
+  val alarmPriorityPropName: String = "org.eso.ias.tf.alarm.priority"
+
+  /**
+    * The name of the property with the IDs of the alarms in input that are set
+    * and activate the output.
+    *
+    * This is a property of the output that can be useful for clients like the display
+    */
+  val inputAlarmsSetPropName: String = "IdsOfAlarmsSet"
 }
