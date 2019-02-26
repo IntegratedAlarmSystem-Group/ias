@@ -9,6 +9,8 @@ import org.eso.ias.logging.IASLogger
 import org.eso.ias.types._
 import org.scalatest.{BeforeAndAfterEach, FlatSpec}
 
+import scala.collection.JavaConverters
+
 /**
  * Test the multiplicity transfer function
  */
@@ -19,7 +21,7 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   
   val props = new Properties()
   props.put(MultiplicityTF.ThresholdPropName,"3")
-  props.put(MultiplicityTF.alarmPriorityPropName,Alarm.SET_LOW.toString())
+  props.put(MultiplicityTF.alarmPriorityPropName,Alarm.SET_LOW.toString)
   
   val threadFactory = new TestThreadFactory()
   
@@ -42,7 +44,7 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   val inputsMPs: Set[InOut[_]]  = {
     val v = for (i <- 1 to 5) yield {
     InOut.asInput(
-        new Identifier(("INPUT-HIO-ID#"+i), IdentifierType.IASIO,compID),
+        new Identifier("INPUT-HIO-ID#"+i, IdentifierType.IASIO,compID),
         IASTypes.ALARM)  
     }
     v.toSet
@@ -131,7 +133,7 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   def activate(n: Integer): Set[IASValue[_]] = {
     require(n>0)
     val inputsMPsList = inputsMPs.toList
-    val list = for (i <- 0 to inputsMPsList.size-1) yield {
+    val list = for (i <- inputsMPsList.indices) yield {
       if (i<=n-1) inputsMPsList(i).updateValue(Some(Alarm.SET_HIGH)).updateProdTStamp(System.currentTimeMillis()).toIASValue()
       else inputsMPsList(i).updateValue(Some(Alarm.CLEARED)).updateProdTStamp(System.currentTimeMillis()).toIASValue()
     }
@@ -192,6 +194,107 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
     // Clear all again
     scalaCompWithPriority.get.update(clearedMPs)
     assert(checkAlarmActivation(scalaCompWithPriority.get,Alarm.CLEARED))
+  }
+
+  it must "set the IDs of active inputs in a property" in {
+    // Change all inputs do  trigger the TF
+    val changedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getSetDefault)).updateProdTStamp(System.currentTimeMillis()).toIASValue())
+    scalaCompWithPriority.get.update(changedMPs)
+    assert(scalaCompWithPriority.get.output.value.isDefined)
+    assert(scalaCompWithPriority.get.output.value.get.asInstanceOf[Alarm].isSet)
+
+    // There must be the property with all the IDs of the alarms that are SET
+    val props = scalaCompWithPriority.get.output.props
+    assert(props.nonEmpty)
+    assert(props.get.keys.exists(_==MultiplicityTF.inputAlarmsSetPropName))
+    val valOfProp = props.get.get(MultiplicityTF.inputAlarmsSetPropName)
+    assert(valOfProp.isDefined)
+    val activeIDs= valOfProp.get.split(",")
+    inputsMPs.map(_.id.id).forall(activeIDs.contains(_))
+
+    // Clear the output and check that the property is not defined
+    val clearedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.CLEARED)).updateProdTStamp(System.currentTimeMillis()).toIASValue())
+    scalaCompWithPriority.get.update(clearedMPs)
+    assert(!scalaCompWithPriority.get.output.value.get.asInstanceOf[Alarm].isSet)
+    assert(scalaCompWithPriority.get.output.props.isEmpty)
+
+    // Activate only few alarms
+    val act3=activate(3)
+    scalaCompWithPriority.get.update(act3)
+    assert(scalaCompWithPriority.get.output.value.get.asInstanceOf[Alarm].isSet)
+    val fewPprops = scalaCompWithPriority.get.output.props
+    assert(fewPprops.nonEmpty)
+    assert(fewPprops.get.keys.exists(_==MultiplicityTF.inputAlarmsSetPropName))
+    val valOfFewProp = fewPprops.get.get(MultiplicityTF.inputAlarmsSetPropName)
+    assert(valOfFewProp.isDefined)
+    val activeFewIDs= valOfFewProp.get.split(",")
+    assert(activeFewIDs.size==3)
+  }
+
+  it must "propagate the properties of the SET inputs to the output" in {
+    // Merge is not tested here!
+
+    // Change all inputs do  trigger the TF
+    val changedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getSetDefault)).updateProdTStamp(System.currentTimeMillis()).toIASValue())
+    scalaCompWithPriority.get.update(changedMPs)
+    assert(scalaCompWithPriority.get.output.value.isDefined)
+    assert(scalaCompWithPriority.get.output.value.get.asInstanceOf[Alarm].isSet)
+
+    // The inputs have no property so the ouput only contains MultiplicityTF.inputAlarmsSetPropName
+    assert(scalaCompWithPriority.get.output.props.nonEmpty)
+    assert(scalaCompWithPriority.get.output.props.get.keys.size==1)
+    assert(scalaCompWithPriority.get.output.props.get.keys.exists(_==MultiplicityTF.inputAlarmsSetPropName))
+
+    // NOw CLEAR the alarm assigning properties to the inputs
+    // In this case the properties of the inputs must not be propagated to the output
+    val clearedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.CLEARED)).updateProdTStamp(System.currentTimeMillis()).toIASValue())
+    val cleareddWithProps = clearedMPs.map(iasValue => {
+      // Add a random property
+      val prop = Map(iasValue.id->System.currentTimeMillis().toString)
+      JavaConverters.mapAsJavaMap(prop)
+      iasValue.updateProperties(JavaConverters.mapAsJavaMap(prop))
+    })
+    scalaCompWithPriority.get.update(cleareddWithProps)
+    assert(!scalaCompWithPriority.get.output.value.get.asInstanceOf[Alarm].isSet)
+    assert(scalaCompWithPriority.get.output.props.isEmpty)
+
+    // Now activate only 3 alarms to set the output and check that only the properties
+    // of the inputs that are set are propagated to the output
+    val act3=activate(3)
+    // Add props to SEt iasValues
+    val act3WithProps = act3.map( iasValue => {
+      val props = if (iasValue.value.asInstanceOf[Alarm].isSet) Map(iasValue.id -> "SET")
+      else Map(iasValue.id -> "CLEARED")
+      iasValue.updateProperties(JavaConverters.mapAsJavaMap(props))
+    })
+    scalaCompWithPriority.get.update(act3WithProps)
+    assert(scalaCompWithPriority.get.output.value.get.asInstanceOf[Alarm].isSet)
+    assert(scalaCompWithPriority.get.output.props.isDefined)
+    val propsOfOutput = scalaCompWithPriority.get.output.props.get
+    // There must be one property for each active input (3) plus MultiplicityTF.inputAlarmsSetPropName
+    assert(propsOfOutput.keys.size==4)
+    // Finally check that all the property but MultiplicityTF.inputAlarmsSetPropName have a value of SET
+    val validProps = propsOfOutput.keys.filter(_!=MultiplicityTF.inputAlarmsSetPropName)
+    assert(validProps.forall(propsOfOutput(_)=="SET"),"Unexpected property found")
+  }
+
+  it must "merge the properties of the SET inputs to the output" in {
+    val act3=activate(3)
+    // Add the a prop with the same key and different value to SET iasValues
+    val act3WithProps = act3.map( iasValue => {
+      val props = if (iasValue.value.asInstanceOf[Alarm].isSet) Map("TestKey" -> "SET", iasValue.id->System.currentTimeMillis().toString)
+      else Map("TestKey" -> "CLEARED", iasValue.id->System.currentTimeMillis().toString)
+      iasValue.updateProperties(JavaConverters.mapAsJavaMap(props))
+    })
+    scalaCompWithPriority.get.update(act3WithProps)
+    assert(scalaCompWithPriority.get.output.value.get.asInstanceOf[Alarm].isSet)
+    assert(scalaCompWithPriority.get.output.props.isDefined)
+    val propsOfOutput = scalaCompWithPriority.get.output.props.get
+    val mergedProps = propsOfOutput.get("TestKey")
+    assert(mergedProps.isDefined)
+    val valuesOfprop = mergedProps.get.split(",")
+    assert(valuesOfprop.size==3)
+    assert(valuesOfprop.forall(_=="SET"))
   }
 
   behavior of "The scala MultiplicityTF executor with NO given priority"
