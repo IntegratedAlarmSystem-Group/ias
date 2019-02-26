@@ -19,8 +19,12 @@ import scala.util.control.NonFatal
   * from the properties.
   *
   * The priority of the alarm produced by this TF is the highest of the priorities
-  * of the alarms in input unelss a priority is passed by setting the alarm priority property
-  * in the CDB
+  * of the alarms in input uneless a priority is passed by setting the alarm priority property
+  * in the CDB.
+  *
+  * Since #153, the multiplicity TF propagates the properties of the inputs to the output:
+  * - only the properties of the inputs that are SET are propagated in the output
+  * - it the same property is present in more inputs, their values will be merged in the output
   *
   * @param asceId: the ID of the ASCE
   * @param asceRunningId: the runningID of the ASCE
@@ -86,10 +90,40 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
    */
   def shutdown() {}
 
+  /**
+    * The mode of the ouptut depends on the modes of the inputs:
+    * it is UNKNOW if the modes of the inputs differ, otherwise it is
+    * the common operational mode of the inputs.
+    *
+    * @param modes the operational modes of the inputs
+    * @return the mode to assign to the output
+    */
   def getOutputMode(modes: Iterable[OperationalMode]): OperationalMode = {
     val setOfModes = modes.toSet
     if (setOfModes.size==1) setOfModes.head
     else OperationalMode.UNKNOWN
+  }
+
+  /**
+    * Get and return the properties of the output by the properties of the  inputs
+    *
+    * @param props the properties of the inputs that are set
+    * @return th eproperties to assign to the ouput
+    */
+  def getPropsOfOutput(props: Iterable[Map[String,String]]): Map[String, String] = {
+
+    // convert maps to seq, to keep duplicate keys and concat
+    // If props is Seq(Map(k1 -> A, k2 -> B), Map(k2 -> C, k3 -> D))
+    // then merged is  List((k1,A), (k2,B), (k2,C), (k3,D))
+    val merged: Seq[(String, String)] = props.foldLeft(Seq.empty[(String,String)]) { (z, prop) => z++prop.toSeq }
+
+    // group by key
+    // grouped is  Map(k2 -> List((k2,B), (k2,C)), k1 -> List((k1,A)), k3 -> List((k3,D)))
+    val grouped = merged.groupBy(_._1)
+
+    // Final cleanup
+    // returns  Map(k2 -> B,C, k1 -> A, k3 -> D)
+    grouped.mapValues(_.map(_._2).toList.mkString(","))
   }
   
   /**
