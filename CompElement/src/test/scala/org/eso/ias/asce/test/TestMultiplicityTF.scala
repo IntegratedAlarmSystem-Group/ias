@@ -131,7 +131,7 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   def activate(n: Integer): Set[IASValue[_]] = {
     require(n>0)
     val inputsMPsList = inputsMPs.toList
-    val list = for (i <- 0 to inputsMPsList.size-1) yield {
+    val list = for (i <- 0 until inputsMPsList.size) yield {
       if (i<=n-1) inputsMPsList(i).updateValue(Some(Alarm.SET_HIGH)).updateProdTStamp(System.currentTimeMillis()).toIASValue()
       else inputsMPsList(i).updateValue(Some(Alarm.CLEARED)).updateProdTStamp(System.currentTimeMillis()).toIASValue()
     }
