@@ -194,6 +194,41 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
     assert(checkAlarmActivation(scalaCompWithPriority.get,Alarm.CLEARED))
   }
 
+  it must "set the IDs of active inputs in a property" in {
+    // Change all inputs do  trigger the TF
+    val changedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getSetDefault)).updateProdTStamp(System.currentTimeMillis()).toIASValue())
+    scalaCompWithPriority.get.update(changedMPs)
+    assert(scalaCompWithPriority.get.output.value.isDefined)
+    assert(scalaCompWithPriority.get.output.value.get.asInstanceOf[Alarm].isSet)
+
+    // There must be the property with all the IDs of the alarms that are SET
+    val props = scalaCompWithPriority.get.output.props
+    assert(props.nonEmpty)
+    assert(props.get.keys.exists(_==MultiplicityTF.inputAlarmsSetPropName))
+    val valOfProp = props.get.get(MultiplicityTF.inputAlarmsSetPropName)
+    assert(valOfProp.isDefined)
+    val activeIDs= valOfProp.get.split(",")
+    inputsMPs.map((_.id.id)).forall(activeIDs.contains(_))
+
+    // Clear the output and check that the property is not defined
+    val clearedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.CLEARED)).updateProdTStamp(System.currentTimeMillis()).toIASValue())
+    scalaCompWithPriority.get.update(clearedMPs)
+    assert(!scalaCompWithPriority.get.output.value.get.asInstanceOf[Alarm].isSet)
+    assert(scalaCompWithPriority.get.output.props.isEmpty)
+
+    // Activate only few alarms
+    val act3=activate(3)
+    scalaCompWithPriority.get.update(act3)
+    assert(scalaCompWithPriority.get.output.value.get.asInstanceOf[Alarm].isSet)
+    val fewPprops = scalaCompWithPriority.get.output.props
+    assert(fewPprops.nonEmpty)
+    assert(fewPprops.get.keys.exists(_==MultiplicityTF.inputAlarmsSetPropName))
+    val valOfFewProp = fewPprops.get.get(MultiplicityTF.inputAlarmsSetPropName)
+    assert(valOfFewProp.isDefined)
+    val activeFewIDs= valOfFewProp.get.split(",")
+    assert(activeFewIDs.size==3)
+  }
+
   behavior of "The scala MultiplicityTF executor with NO given priority"
 
   it must "run the multiplicity TF" in {
