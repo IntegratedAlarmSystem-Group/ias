@@ -133,7 +133,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
   def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
 
     // Get the active alarms in input
-    val activeAlarms= compInputs.values.filter(input =>{
+    val activeAlarms: Iterable[IasIO[Alarm]] = compInputs.values.filter(input =>{
       input.value.isDefined && input.value.get.asInstanceOf[Alarm].isSet
     }).map(_.asInstanceOf[IasIO[Alarm]])
 
@@ -151,7 +151,13 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
       Map.empty[String,String]
     }
 
-    actualOutput.updateValue(newAlarm).updateMode(getOutputMode(compInputs.values.map(_.mode))).updateProps(props)
+    val mode = if (newAlarm.isSet) {
+      getOutputMode(activeAlarms.map(_.mode))
+    } else {
+      getOutputMode(compInputs.values.map(_.mode))
+    }
+
+    actualOutput.updateValue(newAlarm).updateMode(mode).updateProps(props)
   }
 }
 
