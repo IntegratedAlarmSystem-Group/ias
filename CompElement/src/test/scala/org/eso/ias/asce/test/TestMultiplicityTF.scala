@@ -19,7 +19,7 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   
   val props = new Properties()
   props.put(MultiplicityTF.ThresholdPropName,"3")
-  props.put(MultiplicityTF.alarmPriorityPropName,Alarm.SET_LOW.toString())
+  props.put(MultiplicityTF.alarmPriorityPropName,Alarm.SET_LOW.toString)
   
   val threadFactory = new TestThreadFactory()
   
@@ -42,7 +42,7 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   val inputsMPs: Set[InOut[_]]  = {
     val v = for (i <- 1 to 5) yield {
     InOut.asInput(
-        new Identifier(("INPUT-HIO-ID#"+i), IdentifierType.IASIO,compID),
+        new Identifier("INPUT-HIO-ID#"+i, IdentifierType.IASIO,compID),
         IASTypes.ALARM)  
     }
     v.toSet
@@ -131,7 +131,7 @@ class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
   def activate(n: Integer): Set[IASValue[_]] = {
     require(n>0)
     val inputsMPsList = inputsMPs.toList
-    val list = for (i <- 0 until inputsMPsList.size) yield {
+    val list = for (i <- inputsMPsList.indices) yield {
       if (i<=n-1) inputsMPsList(i).updateValue(Some(Alarm.SET_HIGH)).updateProdTStamp(System.currentTimeMillis()).toIASValue()
       else inputsMPsList(i).updateValue(Some(Alarm.CLEARED)).updateProdTStamp(System.currentTimeMillis()).toIASValue()
     }
