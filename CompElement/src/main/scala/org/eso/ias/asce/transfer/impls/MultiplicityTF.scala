@@ -27,8 +27,8 @@ import scala.util.control.NonFatal
   * - only the properties of the inputs that are SET are propagated in the output
   * - it the same property is present in more inputs, their values will be merged in the output
   *
-  * @param asceId: the ID of the ASCE
-  * @param asceRunningId: the runningID of the ASCE
+  * @param cEleId: the ID of the ASCE
+  * @param cEleRunningId: the runningID of the ASCE
   * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
   * @param props: the user defined properties
   * @author acaproni
@@ -44,15 +44,15 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
    */
   lazy val threshold: Int = {
     val propStr = Option[String](props.getProperty(MultiplicityTF.ThresholdPropName))
-    if (!propStr.isDefined) {
+    if (propStr.isEmpty) {
       throw new PropNotFoundException(MultiplicityTF.ThresholdPropName)
-    } else if (propStr.get.isEmpty()) {
+    } else if (propStr.get.isEmpty) {
         throw new WrongPropValue(MultiplicityTF.ThresholdPropName)
     } else {
       try {
         val theThreshold=propStr.get.toInt
         if (theThreshold<1) {
-           throw new WrongPropValue(MultiplicityTF.ThresholdPropName,theThreshold.toString())
+           throw new WrongPropValue(MultiplicityTF.ThresholdPropName,theThreshold.toString)
         } else {
           theThreshold
         }
