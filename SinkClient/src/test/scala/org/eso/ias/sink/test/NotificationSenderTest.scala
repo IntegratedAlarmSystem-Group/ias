@@ -1,7 +1,6 @@
 package org.eso.ias.sink.test
 
 import java.nio.file.FileSystems
-import java.time.temporal.TemporalUnit
 import java.time.{Duration, ZoneOffset, ZonedDateTime}
 import java.util.concurrent.{CountDownLatch, TimeUnit}
 
@@ -11,15 +10,14 @@ import org.eso.ias.cdb.pojos.{IasDao, IasioDao}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.sink.ValueListener
 import org.eso.ias.sink.email.{AlarmState, AlarmStateTracker, NotificationsSender, Sender}
-import org.eso.ias.types.IasValidity.UNRELIABLE
 import org.eso.ias.types._
 import org.scalatest.FlatSpec
 
-import scala.collection.{JavaConverters, mutable}
 import scala.collection.mutable.ListBuffer
+import scala.collection.{JavaConverters, mutable}
 
 // The following import is required by the usage of the fixture
-import language.reflectiveCalls
+import scala.language.reflectiveCalls
 
 /** Sender mockup */
 class SenderTest extends Sender {
@@ -149,7 +147,6 @@ class NotificationSenderTest extends FlatSpec {
       tStamp+5,
       tStamp+10,
       tStamp+15,
-      tStamp+20,
       null,
       null,
       null,
@@ -297,7 +294,7 @@ class NotificationSenderTest extends FlatSpec {
     f.valueListener.tearDown()
   }
 
-  it must "send notificatiomns to all the recipients" in {
+  it must "send notifications to all the recipients" in {
     val f = fixture
     f.valueListener.setUp(f.iasDao,f.iasioDaosMap)
 

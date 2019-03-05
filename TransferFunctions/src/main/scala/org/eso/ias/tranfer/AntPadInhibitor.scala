@@ -5,26 +5,27 @@ import java.util.Properties
 import com.typesafe.scalalogging.Logger
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types.{Alarm, IASTypes, IASValue, OperationalMode}
+import org.eso.ias.types.{Alarm, IASTypes, OperationalMode}
 
 import scala.util.matching.Regex
 
 /**
   * The AntPadInhibitor transfer functions gets 2 inputs:
-  * - the association of antennas to pads
+  * - the association of antennas to pads (string)
   * - an ALARM
   * It inhibits the alarm if there are no antennas in the pads
-  * whose name matches with the given pattern.
+  * whose names match with the given pattern.
   * It is also possible to add a filter by antenna type by setting
   * antTypePropName to one of the possible antenna types: the
-  * alarm is propagated if there is antennas in the pads AND at least
-  * one antenna of the passed type.
+  * alarm in output is set if the alarm in input is set AND
+  * there are antennas in the pads AND
+  * at least one antenna of the passed type.
   *
-  * No check is done on the ID of the input but it must be an ALARM.
+  * No check is done on the ID of the alarm in input.
   * The TF produces an alarm that is always CLEAR if there
-  * are no antennas in the pads or the input is CLEAR.
+  * are no antennas in the pads or the alarm in input is CLEAR.
   * If the input is SET and there are antennas in the PAD, the output
-  * is set and with same priority of the input.
+  * is set with the same priority of the alarm in input.
   *
   * The association of antennas to pad is a monitor point that contains
   * all the antennas and the names of the relative pads where they seat.
@@ -40,7 +41,7 @@ class AntPadInhibitor(asceId: String, asceRunningId: String, validityTimeFrame:L
   /**
     * Names of pads must match with this regular expression
     */
-  val antPadRegExp = {
+  val antPadRegExp: Regex = {
     val propVal = Option(props.getProperty(AntPadInhibitor.PadNameMatcherName))
       require(propVal.isDefined,AntPadInhibitor.PadNameMatcherName+" property not defined")
     new Regex(propVal.get)
@@ -74,7 +75,7 @@ class AntPadInhibitor(asceId: String, asceRunningId: String, validityTimeFrame:L
     require(inputsInfo.size==2,"Expected inputs are the alarm and the anttenna to pad monitor points")
 
     val antsPadsIasioInfo = inputsInfo.filter(_.iasioId==AntPadInhibitor.AntennasToPadsID)
-    require(!antsPadsIasioInfo.isEmpty,AntPadInhibitor.AntennasToPadsID+" is not in input")
+    require(antsPadsIasioInfo.nonEmpty,AntPadInhibitor.AntennasToPadsID+" is not in input")
     require (antsPadsIasioInfo.head.iasioType==IASTypes.STRING,AntPadInhibitor.AntennasToPadsID+" is not a STRING")
 
     val otherIasios =  inputsInfo--antsPadsIasioInfo
@@ -90,29 +91,28 @@ class AntPadInhibitor(asceId: String, asceRunningId: String, validityTimeFrame:L
   override def shutdown() {}
 
   /**
-    * Check if there is at least one antenna in one of the pads whose name matches with
+    * Build the comma separated list of names of affected antennas, i.e.
+    * the names of the antennas whose names match with
     * the regular expression passed in the java properties
     *
-    * It takes into account also the type of teh antennas, if requested (i.e. if antType
-    * is defined)
-    *
     * @param antsPadsMP: the natennas to pads string received in input
-    * @return true if there is at least one antennas in the pads;
-    *         false otherwise
+    * @return the comma separated list of names of affected antennas
     */
-  def isAntennaInPad(antsPadsMP: String): Boolean = {
-
-    // Return false if the input is empty as I imagine that
-    // it could happen in operation that the association is
-    // not available during short periods of time
+  def affectedAntennas(antsPadsMP: String): String = {
+    // Association of antennas to pad: one entry for each antenna like DV02:A507
     val antsPads = antsPadsMP.split(",")
-    antsPads.exists(antPad => {
-      val couple = antPad.split(":")
+
+    // Select only the antennas that are in the proper pads
+    val antennasInPads= antsPads.filter(antPad => {
       assert(antPad.isEmpty || antPad.count(_==':')==1,"Antenna/Pad mismatch: \""+antPad+"\" should be name:pad")
-      !antPad.isEmpty &&
+      val couple = antPad.split(":")
+      antPad.nonEmpty &&
         antPadRegExp.pattern.matcher(couple(1)).matches() &&
-        antType.map(aType => couple(0).toUpperCase().startsWith(aType)).getOrElse(true)
+        antType.forall(aType => couple(0).toUpperCase().startsWith(aType))
     })
+
+    // Extracts only the names of the antennas
+    antennasInPads.map(ap => ap.split(":")(0)).mkString(",")
   }
 
   /**
@@ -125,10 +125,11 @@ class AntPadInhibitor(asceId: String, asceRunningId: String, validityTimeFrame:L
     assert(antPadMp.isDefined,AntPadInhibitor.AntennasToPadsID+" inputs not defined!")
 
     val antPadMPValue = antPadMp.get.value.get.asInstanceOf[String]
-    val foundAntennaInPad = isAntennaInPad(antPadMPValue)
+
+    val antennasInPads = affectedAntennas(antPadMPValue)
+    val foundAntennaInPad = antennasInPads.nonEmpty
 
     val alarmInput = compInputs.values.filter(_.iasType==IASTypes.ALARM).head
-
 
     val alarmOut = if (foundAntennaInPad) {
       actualOutput.updateValue(alarmInput.value.get)
@@ -145,7 +146,11 @@ class AntPadInhibitor(asceId: String, asceRunningId: String, validityTimeFrame:L
       OperationalMode.UNKNOWN
     }
 
-    alarmOut.updateMode(mode).updateProps(alarmInput.props)
+    val outputWiithUpdatedMode=alarmOut.updateMode(mode)
+    if (foundAntennaInPad && alarmOut.value.get.isSet)
+      outputWiithUpdatedMode.updateProps(alarmInput.props++Map(AntPadInhibitor.AffectedAntennaAlarmPropName -> antennasInPads))
+    else
+      outputWiithUpdatedMode.updateProps(alarmInput.props)
 
   }
 
@@ -167,4 +172,7 @@ object AntPadInhibitor {
 
   /** The possible antenna type to be set in the AntTypePropName property */
   val AntennaTypes = List("DV","DA","CM","PM")
+
+  /** The property set in the alarm in output ith the list of affected antennas */
+  val AffectedAntennaAlarmPropName = "affectedAntennas"
 }

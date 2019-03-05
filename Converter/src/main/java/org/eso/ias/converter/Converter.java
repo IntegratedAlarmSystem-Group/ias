@@ -13,6 +13,7 @@ import org.eso.ias.converter.config.IasioConfigurationDAO;
 import org.eso.ias.converter.config.IasioConfigurationDaoImpl;
 import org.eso.ias.heartbeat.HbEngine;
 import org.eso.ias.heartbeat.HbProducer;
+import org.eso.ias.heartbeat.HeartbeatProducerType;
 import org.eso.ias.heartbeat.HeartbeatStatus;
 import org.eso.ias.logging.IASLogger;
 import org.eso.ias.types.IasValueJsonSerializer;
@@ -141,8 +142,9 @@ public class Converter {
 		}
 		
 		Objects.requireNonNull(hbProducer,"The producer to publish HBs can't be null");
-		hbEngine = new HbEngine(
-				converterId, 
+		hbEngine = HbEngine.getInstance(
+				converterId,
+				HeartbeatProducerType.CONVERTER,
 				hbFrequency, 
 				hbProducer);
 		

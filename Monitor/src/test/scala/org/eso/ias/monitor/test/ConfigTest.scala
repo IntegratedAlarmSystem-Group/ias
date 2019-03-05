@@ -118,6 +118,23 @@ class ConfigTest extends FlatSpec {
     assert(fromJSonString.getKafkaSinkConnectors.contains(kConnectorC));
   }
 
+  it must "read/write the core tools ids" in {
+    val config = new IasMonitorConfig
+    config.setThreshold(30.toLong)
+
+    val ids = Set("CoreT1-id","CoreT2-id","CoreT3-id","CoreT4-id")
+    config.setCoreToolsIds(JavaConverters.setAsJavaSet(ids))
+
+    val jsonStr = config.toJsonString
+    val fromJSonString = IasMonitorConfig.valueOf(jsonStr)
+
+    assert(fromJSonString.getCoreToolsIds.size()==4)
+    assert(fromJSonString.getCoreToolsIds.contains("CoreT1-id"));
+    assert(fromJSonString.getCoreToolsIds.contains("CoreT2-id"));
+    assert(fromJSonString.getCoreToolsIds.contains("CoreT3-id"));
+    assert(fromJSonString.getCoreToolsIds.contains("CoreT4-id"));
+  }
+
   it must "read the configuration from a file" in {
     val f = new File("./config.json")
 

@@ -89,13 +89,13 @@ extends ScalaTransferExecutor[T](cEleId,cEleRunningId,validityTimeFrame,props) {
         actualOutput.
           updateValue(out.value.get).
           updateMode(out.mode).
-          updateProps(out.props).
+          updateProps(out.props++Map(RelocationSelector.SeletedInputPropName->out.id)).
           setValidityConstraint(Some(Set(out.id)))
       case ( None, None ) =>
         val firstInput = compInputs.values.head
         actualOutput.
           updateValue(firstInput.value.get).
-          updateProps(firstInput.props)
+          updateProps(firstInput.props++Map(RelocationSelector.SeletedInputPropName->firstInput.id))
       case ( _, _ ) => actualOutput
     }
 
@@ -107,4 +107,10 @@ object RelocationSelector {
     * The logger
     */
   val logger: Logger = IASLogger.getLogger(RelocationSelector.getClass)
+
+  /**
+    * The key of the property to be added to the properties of the output and reporting which
+    * of the inputs has been selected to generate the output
+    */
+  val SeletedInputPropName: String = "selectedByRelocationInput"
 }

@@ -6,13 +6,16 @@ Created on Sep 26, 2016
 '''
 
 import argparse
-import cmd
 import os
-import sys
-from IASTools.CommonDefs import CommonDefs
+import socket
 from subprocess import call
-from IASTools.FileSupport import FileSupport
+
+import sys
+
 from IASLogging.logConf import Log
+from IASTools.CommonDefs import CommonDefs
+from IASTools.FileSupport import FileSupport
+
 
 def setProps(propsDict,className,logFileNameId):
     """
@@ -30,6 +33,9 @@ def setProps(propsDict,className,logFileNameId):
     propsDict["ias.root.folder"]=os.environ["IAS_ROOT"]
     propsDict["ias.logs.folder"]=os.environ["IAS_LOGS_FOLDER"]
     propsDict["ias.tmp.folder"]=os.environ["IAS_TMP_FOLDER"]
+
+    # The name of the host where the tool runs
+    propsDict["ias.hostname"]=socket.gethostname()
 
     # get the name of the class without dots
     # i.e. if className = "org.eso.ias.supervisor.Supervisor" we want

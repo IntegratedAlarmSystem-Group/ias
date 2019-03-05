@@ -5,8 +5,8 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
 import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
 
 import com.typesafe.scalalogging.Logger
-import org.eso.ias.heartbeat.HeartbeatStatus
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
+import org.eso.ias.heartbeat.{Heartbeat, HeartbeatStatus}
 import org.eso.ias.kafkautils.KafkaStringsConsumer.StringsConsumer
 import org.eso.ias.kafkautils.{KafkaHelper, KafkaStringsConsumer}
 import org.eso.ias.logging.IASLogger
@@ -22,23 +22,20 @@ trait  HbListener {
   /**
     * An heartbeat has been read from the HB topic
     *
-    * @param tStamp The timestamp of the event
-    * @param id the ID of the producer
-    * @param state the state of the producer
-    * @param props The properties
+    * @param hbMsg The HB meassage
     */
   def hbReceived(hbMsg: HbMsg)
 }
 
 /** The message read from the kafka topic */
-case class HbMsg(id: String, status: HeartbeatStatus, props: Map[String, String], timestamp: Long) {
-  require(Option(id).isDefined && id.nonEmpty, "Invalid identifier")
+case class HbMsg(hb: Heartbeat, status: HeartbeatStatus, props: Map[String, String], timestamp: Long) {
+  require(Option(hb).isDefined, "Invalid empty HB")
   require(Option(status).isDefined,"Invalid empty status")
   require(Option(props).isDefined,"Invalid empty props")
 
   override def toString: String = {
     val s = new StringBuilder("HB message [id=")
-    s.append(id)
+    s.append(hb.stringRepr)
     s.append(", status=")
     s.append(status)
     s.append(", at ")
@@ -146,11 +143,11 @@ class HbKafkaConsumer(brokers: String, consumerId: String)
   def stringsReceived(strings: util.Collection[String]) {
     strings.forEach(str =>  {
       val hbMessage = deserializer.deserializeFromString(str)
-      val id = hbMessage._1
+      val hb = hbMessage._1
       val status: HeartbeatStatus = hbMessage._2
       val props: Map[String, String] = hbMessage._3
       val tStamp = hbMessage._4
-      buffer.offer(HbMsg(id,status,props,tStamp))
+      buffer.offer(HbMsg(hb,status,props,tStamp))
     })
   }
 
