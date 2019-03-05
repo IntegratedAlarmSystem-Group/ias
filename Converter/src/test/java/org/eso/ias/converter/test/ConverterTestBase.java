@@ -1,22 +1,18 @@
 package org.eso.ias.converter.test;
 
-import java.util.*;
-
 import org.eso.ias.converter.config.ConfigurationException;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
 import org.eso.ias.converter.config.MonitorPointConfiguration;
-import org.eso.ias.types.Alarm;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.Filter.EnrichedSample;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.MonitorPointData;
-import org.eso.ias.types.IASTypes;
-import org.eso.ias.types.IASValue;
-import org.eso.ias.types.IasValidity;
-import org.eso.ias.types.IasValueJsonSerializer;
-import org.eso.ias.types.IasValueStringSerializer;
-import org.eso.ias.types.OperationalMode;
+import org.eso.ias.types.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 /**
  * A base class providing common utility methods used
@@ -55,6 +51,14 @@ public class ConverterTestBase {
 			this.pluginProductionTSamp = pluginProductionTSamp;
 			this.pluginSentTSamp=pluginSentTSamp;
 			this.iasType = iasType;
+
+			logger.debug("MPDH {} of type {} and value={} built with pluginProdTSTamp={} and sentTStamp={}",
+					id,
+					iasType,
+					value,
+					org.eso.ias.utils.ISO8601Helper.getTimestamp(pluginProductionTSamp),
+					org.eso.ias.utils.ISO8601Helper.getTimestamp(pluginSentTSamp));
+
 		}
 		
 		/**
@@ -162,8 +166,13 @@ public class ConverterTestBase {
 		public boolean isClosed() {
 			return closed;
 		}
-		
+
 	}
+
+	/**
+	 * The logger
+	 */
+	private static final Logger logger = LoggerFactory.getLogger(ConverterTestBase.class);
 	
 	/**
 	 * The identifier of the converter

@@ -15,10 +15,7 @@ import org.eso.ias.cdb.json.JsonReader;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.LogLevelDao;
 import org.eso.ias.cdb.rdb.RdbReader;
-import org.eso.ias.heartbeat.HbEngine;
-import org.eso.ias.heartbeat.HbMsgSerializer;
-import org.eso.ias.heartbeat.HbProducer;
-import org.eso.ias.heartbeat.HeartbeatStatus;
+import org.eso.ias.heartbeat.*;
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.FilteredKafkaIasiosConsumer;
@@ -27,7 +24,10 @@ import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition;
 import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener;
 import org.eso.ias.logging.IASLogger;
-import org.eso.ias.types.*;
+import org.eso.ias.types.IASTypes;
+import org.eso.ias.types.IASValue;
+import org.eso.ias.types.IasValueJsonSerializer;
+import org.eso.ias.types.IasValueSerializerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -258,8 +258,7 @@ public class WebServerSender implements IasioListener {
 		}
 
 		Objects.requireNonNull(hbProducer);
-		Identifier id = new Identifier(senderID,IdentifierType.SINK);
-		hbEngine = HbEngine.apply(id.fullRunningID(), hbFrequency, hbProducer);
+		hbEngine = HbEngine.apply(senderID, HeartbeatProducerType.SINK, hbFrequency, hbProducer);
 	}
 
 

@@ -3,10 +3,10 @@ package org.eso.ias.monitor
 import java.util.concurrent.{Executors, ScheduledExecutorService, ThreadFactory, TimeUnit}
 
 import com.typesafe.scalalogging.Logger
+import org.eso.ias.heartbeat.HeartbeatProducerType._
 import org.eso.ias.heartbeat.consumer.{HbKafkaConsumer, HbListener, HbMsg}
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types.IdentifierType._
-import org.eso.ias.types.{Alarm, Identifier}
+import org.eso.ias.types.Alarm
 
 import scala.collection.mutable.{Map => MutableMap}
 
@@ -45,6 +45,7 @@ import scala.collection.mutable.{Map => MutableMap}
   *              Kafka sink connectors does not publish HBs and must be monitored elsewhere;
   *              however the IAs has sink conenctors like the email sender that publishes HBs
   * @param supervisorIds The IDs of the supervisors whose IDs must be monitored
+  * @param coreToolIds The IDs of the IAS core tools whose IDs must be monitored
   * @param threshold An alarm is emitted if the HB has not been received before the threshold elapses
   *                  (in seconds)
   * @param pluginsAlarmPriority the priority of the alarm for faulty plugins
@@ -60,12 +61,14 @@ class HbMonitor(
                  val clientIds: Set[String],
                  val sinkIds: Set[String],
                  val supervisorIds: Set[String],
+                 val coreToolIds: Set[String],
                  val threshold: Long,
                  val pluginsAlarmPriority: Alarm=Alarm.getSetDefault,
                  val convertersAlarmPriority: Alarm=Alarm.getSetDefault,
                  val clientsAlarmPriority: Alarm=Alarm.getSetDefault,
                  val sinksAlarmPriority: Alarm=Alarm.getSetDefault,
-                 val supervisorsAlarmPriority: Alarm=Alarm.getSetDefault) extends HbListener with Runnable {
+                 val supervisorsAlarmPriority: Alarm=Alarm.getSetDefault,
+                 val coreToolAlarmPriority: Alarm = Alarm.getSetDefault) extends HbListener with Runnable {
   require(Option(hbConsumer).isDefined)
   require(threshold>0,"Invalid negative threshold")
   require(Option(pluginIds).isDefined)
@@ -73,6 +76,7 @@ class HbMonitor(
   require(Option(clientIds).isDefined)
   require(Option(sinkIds).isDefined)
   require(Option(supervisorIds).isDefined)
+  require(Option(coreToolIds).isDefined)
 
   /** The map to store the last HB of plugins */
   private val pluginsHbMsgs: MutableMap[String, Boolean] = MutableMap.empty
@@ -94,13 +98,18 @@ class HbMonitor(
   sinkIds.foreach(sinksHbMsgs.put(_,false))
   HbMonitor.logger.debug("{} sink clients to monitor: {}",sinksHbMsgs.keySet.size,sinksHbMsgs.keySet.mkString(","))
 
-  /** The map to store the last HB of supervisor */
+  /** The map to store the last HB of supervisors */
   private val supervisorsHbMsgs: MutableMap[String, Boolean] = MutableMap.empty
   supervisorIds.foreach(supervisorsHbMsgs.put(_,false))
   HbMonitor.logger.debug("{} supervisors to monitor: {}",supervisorsHbMsgs.keySet.size,supervisorsHbMsgs.keySet.mkString(","))
 
+  /** The map to store the last HB of IAS core tools */
+  private val coreToolsHbMsgs: MutableMap[String, Boolean] = MutableMap.empty
+  coreToolIds.foreach(coreToolsHbMsgs.put(_,false))
+  HbMonitor.logger.debug("{} IAS core tools to monitor: {}",coreToolsHbMsgs.keySet.size,coreToolsHbMsgs.keySet.mkString(","))
+
   /** A list with all the maps of HB */
-  private val hbMaps= List(pluginsHbMsgs,convertersHbMsgs,sinksHbMsgs,clientsHbMsgs,supervisorsHbMsgs)
+  private val hbMaps= List(pluginsHbMsgs,convertersHbMsgs,sinksHbMsgs,clientsHbMsgs,supervisorsHbMsgs,coreToolsHbMsgs)
 
   /** The factory to generate the periodic thread */
   private val factory: ThreadFactory = new ThreadFactory {
@@ -138,21 +147,15 @@ class HbMonitor(
     * @param hbMsg The HB consumed from the HB topic
     */
   override def hbReceived(hbMsg: HbMsg): Unit = synchronized {
-    HbMonitor.logger.debug("HB received from {}",hbMsg.id)
-    if (!Identifier.checkFullRunningIdFormat(hbMsg.id)) {
-      // The converter due to a bug sends its ID instead of
-      // its fullRunningId
-      // @see #145
-      convertersHbMsgs.put(hbMsg.id,true)
-    } else {
-      val identifier = Identifier(hbMsg.id)
-      identifier.idType match {
-        case PLUGIN => pluginsHbMsgs.put(identifier.id,true)
-        case SUPERVISOR => supervisorsHbMsgs.put(identifier.id,true)
-        case SINK => sinksHbMsgs.put(identifier.id,true)
-        case CLIENT => clientsHbMsgs.put(identifier.id,true)
-        case idType => HbMonitor.logger.warn("Unknown HB type to monitor: {} from fullRunningId {}",idType,hbMsg.id)
-      }
+    HbMonitor.logger.debug("HB received: {} of type {}",hbMsg.hb.stringRepr,hbMsg.hb.hbType)
+    hbMsg.hb.hbType match {
+      case PLUGIN => pluginsHbMsgs.put(hbMsg.hb.name,true)
+      case SUPERVISOR => supervisorsHbMsgs.put(hbMsg.hb.name,true)
+      case SINK => sinksHbMsgs.put(hbMsg.hb.name,true)
+      case CONVERTER => convertersHbMsgs.put(hbMsg.hb.name,true)
+      case CLIENT => clientsHbMsgs.put(hbMsg.hb.name,true)
+      case CORETOOL => coreToolsHbMsgs.put(hbMsg.hb.name,true)
+      case idType => HbMonitor.logger.warn("Unknown HB type to monitor: {} from fullRunningId {}",idType,hbMsg.hb)
     }
   }
 
@@ -165,15 +168,21 @@ class HbMonitor(
     def faultyIds(m: MutableMap[String, Boolean]): List[String] = m.filterKeys(k => !m(k)).keys.toList
 
     // Update the passed alarm
-    def updateAlarm(alarm: MonitorAlarm, faultyIds: List[String], priority: Alarm=Alarm.getSetDefault): Unit =
-      if (faultyIds.isEmpty) alarm.set(Alarm.cleared(),faultyIds.mkString(","))
-      else alarm.set(priority,faultyIds.mkString(","))
+    def updateAlarm(alarm: MonitorAlarm, faultyIds: List[String], priority: Alarm=Alarm.getSetDefault): Unit = {
+      HbMonitor.logger.debug("Updating alarm {} with faulty ids {} and priority {}",
+        alarm.id,
+        faultyIds.mkString(","),
+        priority)
+      if (faultyIds.isEmpty) alarm.set(Alarm.cleared(), faultyIds.mkString(","))
+      else alarm.set(priority, faultyIds.mkString(","))
+    }
 
     updateAlarm(MonitorAlarm.PLUGIN_DEAD,faultyIds(pluginsHbMsgs),pluginsAlarmPriority)
     updateAlarm(MonitorAlarm.SUPERVISOR_DEAD,faultyIds(supervisorsHbMsgs),supervisorsAlarmPriority)
     updateAlarm(MonitorAlarm.CONVERTER_DEAD,faultyIds(convertersHbMsgs),convertersAlarmPriority)
     updateAlarm(MonitorAlarm.SINK_DEAD,faultyIds(sinksHbMsgs),sinksAlarmPriority)
     updateAlarm(MonitorAlarm.CLIENT_DEAD,faultyIds(clientsHbMsgs),clientsAlarmPriority)
+    updateAlarm(MonitorAlarm.CORETOOL_DEAD,faultyIds(coreToolsHbMsgs),coreToolAlarmPriority)
 
     // reset the maps to be ready for the next iteration
     hbMaps.foreach(m => m.keySet.foreach(k => m(k)=false))

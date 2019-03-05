@@ -12,7 +12,6 @@ import org.eso.ias.cdb.rdb.RdbReader
 import org.eso.ias.heartbeat.consumer.HbKafkaConsumer
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.monitor.alarmpublisher.{BsdbAlarmPublisherImpl, MonitorAlarmPublisher}
-import org.eso.ias.types.{Identifier, IdentifierType}
 
 import scala.collection.JavaConverters
 import scala.util.{Failure, Success, Try}
@@ -20,9 +19,10 @@ import scala.util.{Failure, Success, Try}
 /**
   * Monitor the stat of the IAS and sends alarms
   *
-  * In this version, alarms are pushed in the core topic and willl  be read
+  * In this version, alarms are pushed in the core topic and will  be read
   * from there by the web server.
-  * TODO: send alarms (al least some of them) to the web server even wehn
+  *
+  * TODO: send alarms (al least some of them) to the web server even when
   *       kafka is down
   *
   * @param kafkaBrokes Kafka brokers
@@ -33,34 +33,44 @@ import scala.util.{Failure, Success, Try}
   * @param sinkIds The IDs of the sink clients to monitor
   * @param supervisorIds The IDs of the supervisors to monitor
   * @param kafkaConenctorConfigs The IDs of the kafka sink connectors to monitor
+  * @param coreToolsIds The IDs of the core tools to monitor
   * @param threshold The threshold to decide when a HB is too late
   * @param refreshRate the refresh rate (seconds) to send alarms produced by the monitor
   */
 class IasMonitor(
                 val kafkaBrokers: String,
-                val identifier: Identifier,
+                val identifier: String,
                 pluginIds: Set[String],
                 converterIds: Set[String],
                 clientIds: Set[String],
                 sinkIds: Set[String],
                 supervisorIds: Set[String],
                 kafkaConenctorConfigs: Set[KafkaSinkConnectorConfig],
+                coreToolsIds: Set[String],
                 threshold: Long,
                 val refreshRate: Long) {
   require(refreshRate>0,"Invalid negative or zero refresh rate")
   require(threshold>0,"Invalid negative or zero threshold")
 
   // The consumer of HBs
-  val hbConsumer: HbKafkaConsumer = new HbKafkaConsumer(kafkaBrokers,identifier.id)
+  val hbConsumer: HbKafkaConsumer = new HbKafkaConsumer(kafkaBrokers,identifier)
 
   /** The object to monitor HBs */
-  val hbMonitor: HbMonitor = new HbMonitor(hbConsumer,pluginIds,converterIds,clientIds,sinkIds,supervisorIds,threshold)
+  val hbMonitor: HbMonitor = new HbMonitor(
+    hbConsumer,
+    pluginIds,
+    converterIds,
+    clientIds,
+    sinkIds,
+    supervisorIds,
+    coreToolsIds,
+    threshold)
 
   /** The object that publishes the alarms */
-  val alarmsPublisher: MonitorAlarmPublisher = new BsdbAlarmPublisherImpl(kafkaBrokers,identifier.id)
+  val alarmsPublisher: MonitorAlarmPublisher = new BsdbAlarmPublisherImpl(kafkaBrokers,identifier)
 
   /** The object that periodically sends the alarms */
-  val alarmsProducer: MonitorAlarmsProducer = new MonitorAlarmsProducer(alarmsPublisher,refreshRate)
+  val alarmsProducer: MonitorAlarmsProducer = new MonitorAlarmsProducer(alarmsPublisher,refreshRate,identifier)
 
   /** Start the monitoring */
   def start(): Unit = {
@@ -250,24 +260,23 @@ object IasMonitor {
       kafkaConenctorConfigs.size,
       kafkaConenctorConfigs.mkString(","))
 
+    val coreToolsIds: Set[String] = JavaConverters.asScalaSet(config.getCoreToolsIds).toSet
+    IasMonitor.logger.info("{} IAS core tools to monitor: {}",coreToolsIds.size,coreToolsIds.mkString(","))
+
     val threshold = config.getThreshold
 
     reader.shutdown()
 
-     // The identifier of the monitor
-    val identifier = new Identifier(monitorId, IdentifierType.CLIENT, None)
-
-
-
     val monitor = new IasMonitor(
       kafkaBrokers,
-      identifier,
+      monitorId,
       pluginIds,
       converterIds,
       clientIds,
       sinkIds,
       supervisorIds,
       kafkaConenctorConfigs,
+      coreToolsIds,
       threshold,
       refreshRate)
 

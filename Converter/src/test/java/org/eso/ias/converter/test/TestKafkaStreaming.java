@@ -52,7 +52,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * <P>
  * The translation to/from json strings published by
  * plugins and those generated for the core is already
- * tested by {@link MapperTester}: this test checks
+ * tested by {@link MapperTest}: this test checks
  * the reading and publishing of strings in the
  * kafka topics as they are produced by the converter.
  * <P>

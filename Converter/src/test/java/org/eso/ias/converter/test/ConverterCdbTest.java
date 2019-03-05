@@ -1,19 +1,8 @@
 package org.eso.ias.converter.test;
 
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
-import org.eso.ias.cdb.json.CdbFiles;
-import org.eso.ias.cdb.json.CdbFolders;
-import org.eso.ias.cdb.json.CdbJsonFiles;
-import org.eso.ias.cdb.json.JsonReader;
-import org.eso.ias.cdb.json.JsonWriter;
+import org.eso.ias.cdb.json.*;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.TemplateDao;
@@ -26,6 +15,13 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -35,12 +31,12 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author acaproni
  *
  */
-class ConverterCdbTester {
+public class ConverterCdbTest {
 
     /**
      * The logger
      */
-    private static final Logger logger = LoggerFactory.getLogger(ConverterCdbTester.class);
+    private static final Logger logger = LoggerFactory.getLogger(ConverterCdbTest.class);
 	
 	/**
 	 * The parent folder of the CDB is the actual folder

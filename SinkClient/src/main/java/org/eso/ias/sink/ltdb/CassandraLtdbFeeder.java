@@ -1,8 +1,6 @@
 package org.eso.ias.sink.ltdb;
 
-import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Session;
 import org.eso.ias.types.IASValue;
 import org.eso.ias.types.IasValueJsonSerializer;
 import org.eso.ias.utils.ISO8601Helper;
@@ -125,12 +123,10 @@ public class CassandraLtdbFeeder {
         Objects.requireNonNull(iasValue);
 
         Long prodTime;
-        if (iasValue.dasuProductionTStamp.isPresent()) {
-            prodTime=iasValue.dasuProductionTStamp.get();
-        } else if (iasValue.pluginProductionTStamp.isPresent()) {
-            prodTime=iasValue.pluginProductionTStamp.get();
+        if (iasValue.productionTStamp.isPresent()) {
+            prodTime=iasValue.productionTStamp.get();
         } else {
-            CassandraLtdbFeeder.logger.error("No DASU prod timestamp neither plugin prod timestamp defined for {}: value will NOT be stored in theLTDB",iasValue.id);
+            CassandraLtdbFeeder.logger.error("No prod. timestamp defined for {}: value will NOT be stored in theLTDB",iasValue.id);
             numOfErrors.incrementAndGet();
             return;
         }

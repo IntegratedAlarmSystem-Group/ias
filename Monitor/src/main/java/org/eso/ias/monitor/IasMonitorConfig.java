@@ -39,30 +39,6 @@ public class IasMonitorConfig {
     public Set<String> pluginIds = new HashSet<>();
 
     /**
-     * Empty constructor
-     */
-    public IasMonitorConfig() {}
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        IasMonitorConfig that = (IasMonitorConfig) o;
-        return threshold.equals(that.threshold) &&
-                Objects.equals(excludedSupervisorIds, that.excludedSupervisorIds) &&
-                Objects.equals(pluginIds, that.pluginIds) &&
-                Objects.equals(converterIds, that.converterIds) &&
-                Objects.equals(clientIds, that.clientIds) &&
-                Objects.equals(sinkIds, that.sinkIds) &&
-                Objects.equals(kafkaSinkConnectors, that.kafkaSinkConnectors);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(threshold, excludedSupervisorIds, pluginIds, converterIds, clientIds, sinkIds, kafkaSinkConnectors);
-    }
-
-    /**
      * The IDs of the converters to monitor
      */
     @Basic(optional=true)
@@ -84,6 +60,43 @@ public class IasMonitorConfig {
     @Basic(optional=true)
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public Set<String> sinkIds = new HashSet<>();
+
+    @Basic(optional=true)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public Set<String> coreToolsIds = new HashSet<>();
+
+    /**
+     * Empty constructor
+     */
+    public IasMonitorConfig() {}
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        IasMonitorConfig that = (IasMonitorConfig) o;
+        return threshold.equals(that.threshold) &&
+                Objects.equals(excludedSupervisorIds, that.excludedSupervisorIds) &&
+                Objects.equals(pluginIds, that.pluginIds) &&
+                Objects.equals(converterIds, that.converterIds) &&
+                Objects.equals(clientIds, that.clientIds) &&
+                Objects.equals(sinkIds, that.sinkIds) &&
+                Objects.equals(kafkaSinkConnectors, that.kafkaSinkConnectors) &&
+                Objects.equals(coreToolsIds,that.coreToolsIds);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                threshold,
+                excludedSupervisorIds,
+                pluginIds,
+                converterIds,
+                clientIds,
+                sinkIds,
+                kafkaSinkConnectors,
+                coreToolsIds);
+    }
 
     /**
      * The KAFKA Sink connectors to monitor
@@ -147,6 +160,10 @@ public class IasMonitorConfig {
     public void setKafkaSinkConnectors(Set<KafkaSinkConnectorConfig> kafkaSinkConnectors) {
         this.kafkaSinkConnectors = kafkaSinkConnectors;
     }
+
+    public Set<String> getCoreToolsIds() { return coreToolsIds; }
+
+    public void setCoreToolsIds(Set<String> coreToolsIds) { this.coreToolsIds = coreToolsIds; }
 
     /**
      * Serialize this configuration into a JSON string

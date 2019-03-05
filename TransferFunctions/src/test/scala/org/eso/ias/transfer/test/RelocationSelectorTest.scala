@@ -71,7 +71,7 @@ class RelocationSelectorTest extends FlatSpec with BeforeAndAfterEach {
 
     val inout: InOut[Double] =
       InOut.asInput(id,IASTypes.DOUBLE)
-        .updateDasuProdTStamp(tStamp)
+        .updateProdTStamp(tStamp)
         .updateValueValidity(Some(value),Some(Validity(validity)))
     new IasIO(inout).updateMode(mode)
   }

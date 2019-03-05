@@ -93,14 +93,14 @@ extends ScalaTransferExecutor[T](asceId,asceRunningId,validityTimeFrame,props) {
             selectedInput.value.get,
             selectedInput.mode,
             selectedInput.props,
-            Some(Set(inputId)))
+            Some(Set(inputId))).updateProps(Map(BackupSelector.SeletedInputPropName->inputId))
       case None =>
         val fallBackInput = compInputs(prioritizedIDs.head)
         updateOutput(
             fallBackInput.value.get,
             fallBackInput.mode,
             fallBackInput.props,
-            None)
+            None).updateProps(Map(BackupSelector.SeletedInputPropName->fallBackInput.id))
     }
 
   }
@@ -150,5 +150,11 @@ object BackupSelector {
   val logger: Logger = IASLogger.getLogger(BackupSelector.getClass)
       
   /** The property to get the prioritized list of IDs  */
-  val PrioritizedIdsPropName = "org.eso.ias.tf.selector.prioritizedids"
+  val PrioritizedIdsPropName: String = "org.eso.ias.tf.selector.prioritizedids"
+
+  /**
+    * The key of the property to be added to the properties of the output and reporting which
+    * of the inputs has been selected to generate the output
+    */
+  val SeletedInputPropName: String = "selectedInput"
 }
