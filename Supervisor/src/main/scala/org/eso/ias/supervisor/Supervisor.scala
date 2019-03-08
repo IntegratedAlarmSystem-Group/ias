@@ -503,9 +503,13 @@ object Supervisor {
       DasuImpl(dd,i,op,id,refreshRate,validityThreshold)
 
     val hbProducer: HbProducer = {
-      val kafkaServers = System.getProperties.getProperty(KafkaHelper.BROKERS_PROPNAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
 
-      new HbKafkaProducer(supervisorId+"HBSender",kafkaServers,new HbJsonSerializer())
+      val kafkaServers = Option(System.getProperties.getProperty(KafkaHelper.BROKERS_PROPNAME))
+
+      new HbKafkaProducer(
+        supervisorId+"HBSender",
+        kafkaServers.orElse(kafkaBrokers).getOrElse(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS),
+        new HbJsonSerializer())
     }
 
     // Build the supervisor

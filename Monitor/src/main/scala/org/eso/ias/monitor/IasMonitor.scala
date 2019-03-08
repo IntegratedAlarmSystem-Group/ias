@@ -9,7 +9,11 @@ import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbFiles, CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.LogLevelDao
 import org.eso.ias.cdb.rdb.RdbReader
+import org.eso.ias.heartbeat._
 import org.eso.ias.heartbeat.consumer.HbKafkaConsumer
+import org.eso.ias.heartbeat.publisher.HbKafkaProducer
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer
+import org.eso.ias.kafkautils.KafkaHelper
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.monitor.alarmpublisher.{BsdbAlarmPublisherImpl, MonitorAlarmPublisher}
 
@@ -48,12 +52,19 @@ class IasMonitor(
                 kafkaConenctorConfigs: Set[KafkaSinkConnectorConfig],
                 coreToolsIds: Set[String],
                 threshold: Long,
-                val refreshRate: Long) {
+                val refreshRate: Long,
+                val hbFrequency: Long) {
   require(refreshRate>0,"Invalid negative or zero refresh rate")
   require(threshold>0,"Invalid negative or zero threshold")
 
-  // The consumer of HBs
+  /** The consumer of HBs */
   val hbConsumer: HbKafkaConsumer = new HbKafkaConsumer(kafkaBrokers,identifier)
+
+  /** The Kafka producer */
+  val hbProducer: HbKafkaProducer = new HbKafkaProducer(identifier+"HbSender",kafkaBrokers, new HbJsonSerializer)
+
+  /** The sender of the HBs */
+  val hbEngine: HbEngine = HbEngine(identifier,HeartbeatProducerType.CORETOOL,hbFrequency,hbProducer)
 
   /** The object to monitor HBs */
   val hbMonitor: HbMonitor = new HbMonitor(
@@ -72,21 +83,28 @@ class IasMonitor(
   /** The object that periodically sends the alarms */
   val alarmsProducer: MonitorAlarmsProducer = new MonitorAlarmsProducer(alarmsPublisher,refreshRate,identifier)
 
+  IasMonitor.logger.debug("{} processor built",hbEngine.hb.stringRepr)
+
   /** Start the monitoring */
   def start(): Unit = {
+    // Start the HB
+    hbEngine.start(HeartbeatStatus.STARTING_UP)
     IasMonitor.logger.debug("Starting up the monitor of HBs")
     hbMonitor.start()
     IasMonitor.logger.debug("Starting up the sender of alarms")
     alarmsProducer.start()
     IasMonitor.logger.info("Started")
+    hbEngine.updateHbState(HeartbeatStatus.RUNNING)
   }
 
   /** Stop monitoring and free resources */
   def shutdown(): Unit = {
+    hbEngine.updateHbState(HeartbeatStatus.EXITING)
     IasMonitor.logger.debug("Shutting down the alarm sender")
     alarmsProducer.shutdown()
     IasMonitor.logger.debug("Shutting down the monitor of HBs")
     hbMonitor.shutdown()
+    hbEngine.shutdown()
     IasMonitor.logger.info("Shut down")
   }
 }
@@ -198,8 +216,9 @@ object IasMonitor {
       val refRate: Int = iasDaoOpt.get().getRefreshRate
       val hbRate: Int = iasDaoOpt.get().getHbFrequency
       val logLvl: LogLevelDao = iasDaoOpt.get.getLogLevel
-      val brokers: String = iasDaoOpt.get.getBsdbUrl
 
+      val brokers = Option(System.getProperties.getProperty(KafkaHelper.BROKERS_PROPNAME)).
+        orElse( Option(iasDaoOpt.get.getBsdbUrl)).getOrElse(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
 
       (refRate, hbRate, logLvl, brokers)
     }
@@ -278,7 +297,8 @@ object IasMonitor {
       kafkaConenctorConfigs,
       coreToolsIds,
       threshold,
-      refreshRate)
+      refreshRate,
+      hbFrequency)
 
     logger.debug("Starting the monitoring")
     monitor.start()
