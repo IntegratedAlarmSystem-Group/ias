@@ -13,6 +13,7 @@ import org.eso.ias.heartbeat._
 import org.eso.ias.heartbeat.consumer.HbKafkaConsumer
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
+import org.eso.ias.kafkautils.KafkaHelper
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.monitor.alarmpublisher.{BsdbAlarmPublisherImpl, MonitorAlarmPublisher}
 
@@ -215,8 +216,9 @@ object IasMonitor {
       val refRate: Int = iasDaoOpt.get().getRefreshRate
       val hbRate: Int = iasDaoOpt.get().getHbFrequency
       val logLvl: LogLevelDao = iasDaoOpt.get.getLogLevel
-      val brokers: String = iasDaoOpt.get.getBsdbUrl
 
+      val brokers = Option(System.getProperties.getProperty(KafkaHelper.BROKERS_PROPNAME)).
+        orElse( Option(iasDaoOpt.get.getBsdbUrl)).getOrElse(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
 
       (refRate, hbRate, logLvl, brokers)
     }
