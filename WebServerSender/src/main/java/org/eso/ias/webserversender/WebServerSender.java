@@ -229,7 +229,12 @@ public class WebServerSender implements IasioListener {
 		this.props=props;
 		this.props.put("group.id", this.senderID + ".kafka.group");
  		sendersInputKTopicName = props.getProperty(IASCORE_TOPIC_NAME_PROP_NAME, KafkaHelper.IASIOs_TOPIC_NAME);
-		webserverUri = props.getProperty(WEBSERVER_URI_PROP_NAME, DEFAULT_WEBSERVER_URI);
+		String wsUri = props.getProperty(WEBSERVER_URI_PROP_NAME, DEFAULT_WEBSERVER_URI);
+		String wsPassword = System.getenv("WS_CONNECTION_PASS");
+		if (wsPassword != null) {
+			wsUri += "?password=" + wsPassword;
+		}
+		webserverUri = wsUri;
 		uri = new URI(webserverUri);
 		logger.debug("Websocket connection URI: "+ webserverUri);
 		logger.debug("Kafka server: "+ kafkaServers);
