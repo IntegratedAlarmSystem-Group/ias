@@ -32,9 +32,11 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
     map(java.lang.Boolean.valueOf(_).booleanValue()).
     getOrElse(BoolToAlarm.DefaultLogicPropValue.booleanValue())
 
+  /** The alarm to set in the output */
   val priority: Alarm = Option(props.getProperty(BoolToAlarm.PriorityPropName)).
       map(Alarm.valueOf).
       getOrElse(BoolToAlarm.DefaultPriority)
+  require(priority!=Alarm.CLEARED)
 
   /**
     * Initialize the TF: check that the input is a boolean
