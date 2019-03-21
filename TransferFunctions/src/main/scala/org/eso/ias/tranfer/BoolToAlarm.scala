@@ -27,12 +27,12 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
     *
     * By default it is false because of the definition of java.lang.Boolean.getBoolean
     */
-  val invert = Option(props.getProperty(BoolToAlarm.InvertLogicPropName)).
+  val invert: Boolean = Option(props.getProperty(BoolToAlarm.InvertLogicPropName)).
     map(java.lang.Boolean.valueOf(_).booleanValue()).
     getOrElse(BoolToAlarm.DefaultLogicPropValue.booleanValue())
 
-  val priority = Option(props.getProperty(BoolToAlarm.PriorityPropName)).
-      map(Alarm.valueOf(_)).
+  val priority: Alarm = Option(props.getProperty(BoolToAlarm.PriorityPropName)).
+      map(Alarm.valueOf).
       getOrElse(BoolToAlarm.DefaultPriority)
 
   /**
