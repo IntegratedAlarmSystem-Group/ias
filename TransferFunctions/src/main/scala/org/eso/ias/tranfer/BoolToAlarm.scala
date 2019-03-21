@@ -104,5 +104,5 @@ object BoolToAlarm {
   val PriorityPropName: String = "org.eso.ias.tf.booltoalarm.priority"
 
   /** Defaul tpriority level of the output */
-  val DefaultPriority = Alarm.SET_MEDIUM
+  val DefaultPriority = Alarm.getSetDefault
 }
