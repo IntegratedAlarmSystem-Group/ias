@@ -1,15 +1,14 @@
 package org.eso.ias.tranfer
 
-import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 
 import com.typesafe.scalalogging.Logger
-import org.eso.ias.types.Alarm
+import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import org.eso.ias.logging.IASLogger
+import org.eso.ias.types.{Alarm, IASTypes}
 
 import scala.util.Try
-import org.eso.ias.types.IASTypes
 
 /**
  * The exception thrown by this TF in case of 
@@ -78,7 +77,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
     * Initialize the TF
     *
     * @param inputsInfo The IDs and types of the inputs
-    * @param outputInfo The Id and type of thr output
+    * @param outputInfo The Id and type of the output
     **/
   override def initialize(inputsInfo: Set[IasioInfo], outputInfo: IasioInfo): Unit = {
     DelayedAlarm.logger.debug("Initializing TF of [{}]", cEleId)
@@ -135,7 +134,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
     }
 	  
 	  if (lastInputValue.isEmpty) {
-	    // Initialization: ff the output was never activated then 
+	    // Initialization: if the output was never activated then
 	    // return a CLEARED alarm because the delay did not elapsed
 	    lastStateChangeTime=System.currentTimeMillis()
 	    lastInputValue=Some(iasio.value.get.asInstanceOf[Alarm])
