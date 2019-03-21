@@ -8,4 +8,6 @@ iasRun -l s  org.scalatest.run  org.eso.ias.transfer.test.utilitymodule.FireAlar
 iasRun -l s  org.scalatest.run  org.eso.ias.transfer.test.utilitymodule.AlarmByBitTest
 iasRun -l s  org.scalatest.run  org.eso.ias.transfer.test.VisualInspectionTest
 iasRun -l s org.scalatest.run org.eso.ias.transfer.test.RelocationSelectorTest
+iasRun -l s org.scalatest.run org.eso.ias.transfer.test.BoolToAlarmTest
+iasRun -l s org.scalatest.run org.eso.ias.transfer.test.RegExpToAlarmTest
 
