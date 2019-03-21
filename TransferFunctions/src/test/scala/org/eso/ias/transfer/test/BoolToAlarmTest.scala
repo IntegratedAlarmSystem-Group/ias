@@ -64,4 +64,68 @@ class BoolToAlarmTest extends FlatSpec {
     assert(tf2.invert==true)
   }
 
+  it must "produce the expected output with normal logic" in {
+    val props = new Properties()
+
+    val tf = new BoolToAlarm(compID.id, compID.fullRunningID, validityTimeFrame, props)
+
+    val i: InOut[_] = inputInOut.updateValue(Some(true))
+    val inputMap: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i))
+    val ret = tf.eval(inputMap,out)
+    assert(ret.value.isDefined)
+    assert(ret.value.get==BoolToAlarm.DefaultPriority)
+
+    val i2 = i.updateValue(Some(false))
+    val inputMap2: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i2))
+    val ret2 = tf.eval(inputMap2,out)
+    assert(ret2.value.isDefined)
+    assert(ret2.value.get==Alarm.CLEARED)
+
+    val i3 = i2.updateValue(Some(true))
+    val inputMap3: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i3))
+    val ret3 = tf.eval(inputMap3,out)
+    assert(ret3.value.isDefined)
+    assert(ret3.value.get==BoolToAlarm.DefaultPriority)
+  }
+
+  it must "produce the expected output with inverted logic" in {
+    val props = new Properties()
+    props.put(BoolToAlarm.InvertLogicPropName,"True")
+
+    val tf = new BoolToAlarm(compID.id, compID.fullRunningID, validityTimeFrame, props)
+
+    val i: InOut[_] = inputInOut.updateValue(Some(true))
+    val inputMap: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i))
+    val ret = tf.eval(inputMap,out)
+    assert(ret.value.isDefined)
+    assert(ret.value.get==Alarm.CLEARED)
+
+    val i2 = i.updateValue(Some(false))
+    val inputMap2: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i2))
+    val ret2 = tf.eval(inputMap2,out)
+    assert(ret2.value.isDefined)
+    assert(ret2.value.get==BoolToAlarm.DefaultPriority)
+
+    val i3 = i2.updateValue(Some(true))
+    val inputMap3: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i3))
+    val ret3 = tf.eval(inputMap3,out)
+    assert(ret3.value.isDefined)
+    assert(ret3.value.get==Alarm.CLEARED)
+  }
+
+  it must "Forward mode and properties of the input" in {
+    val props = new Properties()
+
+    val additionalProps: Map[String, String] = Map("Prop1"-> "Value1", "Prop12"-> "Value2")
+
+    val tf = new BoolToAlarm(compID.id, compID.fullRunningID, validityTimeFrame, props)
+    val i: InOut[_] = inputInOut.updateValue(Some(true)).updateMode(OperationalMode.MALFUNCTIONING).updateProps(additionalProps)
+    val inputMap: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i))
+    val ret = tf.eval(inputMap,out)
+    assert(ret.value.isDefined)
+    assert(ret.value.get==BoolToAlarm.DefaultPriority)
+    assert(ret.mode==OperationalMode.MALFUNCTIONING)
+    assert(ret.props==additionalProps)
+  }
+
 }
