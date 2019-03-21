@@ -3,6 +3,7 @@ package org.eso.ias.tranfer
 import java.util.Properties
 
 import com.typesafe.scalalogging.Logger
+import org.eso.ias.asce.exceptions.{TypeMismatchException, UnexpectedNumberOfInputsException}
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.{Alarm, IASTypes}
@@ -46,11 +47,11 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
 
     // This TF expects one and only one input
     if (inputsInfo.size != 1) {
-      throw new DelayedAlarmException("Expected only 1 input but got " + inputsInfo.size)
+      throw new UnexpectedNumberOfInputsException(1,inputsInfo.size)
     }
     // Is the input a boolean?
     if (inputsInfo.head.iasioType != IASTypes.BOOLEAN) {
-      throw new DelayedAlarmException("Input type is not boolean: " + inputsInfo.head.iasioType)
+      throw new TypeMismatchException("Input type is not boolean: " + inputsInfo.head.iasioType)
     }
 
     if (invert) BoolToAlarm.logger.info("The logic of this TF is inverted")
