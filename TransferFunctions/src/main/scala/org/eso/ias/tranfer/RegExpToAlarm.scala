@@ -8,6 +8,8 @@ import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.{Alarm, IASTypes}
 
+import scala.util.matching.Regex
+
 /**
   * A TF to generate alarms if the value of the input (STRING) matches
   * with the passed regular expression
@@ -21,11 +23,11 @@ import org.eso.ias.types.{Alarm, IASTypes}
 class RegExpToAlarm (cEleId: String, cEleRunningId: String, validityTimeFrame: Long, props: Properties)
   extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,props) {
 
-  val regExString = props.getProperty(RegExpToAlarm.RegExpPropName)
+  val regExString: String = props.getProperty(RegExpToAlarm.RegExpPropName)
   require(Option(regExString).isDefined, "Property " + RegExpToAlarm.RegExpPropName + " not defined")
 
   /** Th eregular expression used for matching */
-  val regExp = regExString.r
+  val regExp: Regex = regExString.r
 
   /** The alarm to set in the output */
   val priority: Alarm = Option(props.getProperty(BoolToAlarm.PriorityPropName)).
