@@ -41,7 +41,15 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * The WebServerSender gets IASValues from the copre kafka topic and forwards
+ * them to the web server through websockets.
+ *
+ * Received IASValues are cached before being sent at regular time intervals
+ * by a dedicated thread.
+ */
 @WebSocket(maxTextMessageSize = 64 * 1024)
 public class WebServerSender implements IasioListener {
 
@@ -60,6 +68,22 @@ public class WebServerSender implements IasioListener {
 	 * monitor point values and alarms
 	 */
 	private final String sendersInputKTopicName;
+
+	/**
+	 * Default time interval (msecs) to send IASValues to the web server
+	 */
+	private static final long DEFAULT_TIME_INTERVAL = 250;
+
+	/**
+	 * The property to customize the time interval to send IASValues
+	 * to the web server
+	 */
+	private static final String SEND_THREAD_TIME_INTERVAL_PROP_NAME = "org.eso.ias.websenderserver.time.interval";
+
+	/**
+	 * The time interval (msecs) to send IASValues to the web server
+	 */
+	private static final long TIME_INTERVAL = Long.getLong(SEND_THREAD_TIME_INTERVAL_PROP_NAME,DEFAULT_TIME_INTERVAL);
 
 	/**
 	 * The name of the java property to get the name of the
@@ -117,6 +141,13 @@ public class WebServerSender implements IasioListener {
 	 * Web socket client
 	 */
 	private WebSocketClient client;
+
+	/**
+	 * The cache to buffer IASValues read from the kafka topic
+	 * The key is the ID of the Monitor point
+	 * The value is the IASValue read from kafka topic
+	 */
+	private AtomicReference<Map<String,IASValue<?>>> cache = new AtomicReference<>(new HashMap<>());
 
 	/**
 	 * Time in seconds to wait before attempt to reconnect
@@ -315,31 +346,63 @@ public class WebServerSender implements IasioListener {
 	@Override
 	public synchronized void iasiosReceived(Collection<IASValue<?>> events) {
 	    iasiosReceived.addAndGet(events.size());
-        if (!socketConnected.get()) {
-			logger.debug("The WebSocket is not connected: discard the event");
-            return;
-        }
 
-        events.forEach( event -> {
-            final String value;
-            try {
-                value = serializer.iasValueToString(event);
-            } catch (IasValueSerializerException avse){
-                logger.error("Error converting the event into a string", avse);
-                return;
-            }
-
-            sessionOpt.ifPresent( session -> {
-                session.getRemote().sendStringByFuture(value);
-                logger.debug("Value sent: " + value);
-                this.notifyListener(value);
-                iasiosSentToWebServer.incrementAndGet();
-            });
-        });
+        events.forEach( event -> cache.get().put(event.id,event));
     }
+
+	/**
+	 * Send the IASValues in the cache to the web server through websockets
+	 */
+	private void sendIasios() {
+
+		Map<String,IASValue<?>> receivedIasios = cache.getAndSet(new HashMap<>());
+
+		if (!socketConnected.get()) {
+			logger.warn("The WebSocket is not connected: discard the events");
+			return;
+		}
+		if (receivedIasios.isEmpty()) {
+			return;
+		}
+
+
+		int numOfValuesToSend=receivedIasios.size();
+
+		StringBuilder ret = new StringBuilder("[");
+		boolean first = true;
+		receivedIasios.values().forEach( iasValue -> {
+			try {
+				String jsonStr =  serializer.iasValueToString(iasValue);
+				if (!first) ret. append(", ");
+				ret.append(jsonStr);
+			} catch (IasValueSerializerException avse){
+				logger.error("Error converting the event into a string", avse);
+
+			}
+		});
+		ret.append("]");
+
+		sessionOpt.ifPresent( session -> {
+			String strToSend=ret.toString();
+			session.getRemote().sendStringByFuture(strToSend);
+			logger.debug("{} IasValues sent" + numOfValuesToSend);
+			this.notifyListener(strToSend);
+			iasiosSentToWebServer.addAndGet(numOfValuesToSend);
+		});
+	}
 
 	public void setUp() {
 		hbEngine.start();
+
+		// Start the thread to send values though the websocket
+		logger.info("Will send values to websockets every {} msecs",TIME_INTERVAL);
+		Runnable senderRunnable = new Runnable() {
+			@Override
+			public void run() {
+				sendIasios();
+			}
+		};
+		scheduler.scheduleAtFixedRate(senderRunnable,TIME_INTERVAL,TIME_INTERVAL,TimeUnit.MILLISECONDS);
 
 		if (statsTimeInterval>0) {
 		    logger.info("Will publish stats every {} minutes",statsTimeInterval);
