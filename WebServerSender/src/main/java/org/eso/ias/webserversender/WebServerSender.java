@@ -41,14 +41,25 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * The WebServerSender gets IASValues from the copre kafka topic and forwards
  * them to the web server through websockets.
  *
  * Received IASValues are cached before being sent at regular time intervals
- * by a dedicated thread.
+ * by a dedicated thread or when the max numer of logs to send has been reached,
+ * whatever happens first.
+ *
+ * The limit of the max number of values is not strict. As logs are received in bounces,
+ * they are all aded to the cache and the size of the cache checked later. So the promise
+ * is to send the values as soon as the zize of the cache is equal or freater than the
+ * maximum allowed number of values.
+ *
+ * Sending values when the max number of items in cache has been reached does not affect
+ * the periodic thread that continues running at his schedule.
+ * Afetr sending by max number of items, it can happen that the periodic task
+ * is executed shortly after.
+ *
  */
 @WebSocket(maxTextMessageSize = 64 * 1024)
 public class WebServerSender implements IasioListener {
@@ -68,6 +79,22 @@ public class WebServerSender implements IasioListener {
 	 * monitor point values and alarms
 	 */
 	private final String sendersInputKTopicName;
+
+	/**
+	 * Default max number of  IASValues to the web server in one single send
+	 */
+	private static final int DEFAULT_MAX_VALUES_TO_SEND = 10000;
+
+	/**
+	 * The property to customize the time interval to send IASValues
+	 * to the web server
+	 */
+	private static final String MAX_VALUES_TO_SEND_PROP_NAME = "org.eso.ias.websenderserver.maxvaluestosend";
+
+	/**
+	 * The time interval (msecs) to send IASValues to the web server
+	 */
+	private static final int MAX_NUM_OF_VALUES_TO_SEND = Integer.getInteger(MAX_VALUES_TO_SEND_PROP_NAME, DEFAULT_MAX_VALUES_TO_SEND);
 
 	/**
 	 * Default time interval (msecs) to send IASValues to the web server
@@ -147,7 +174,13 @@ public class WebServerSender implements IasioListener {
 	 * The key is the ID of the Monitor point
 	 * The value is the IASValue read from kafka topic
 	 */
-	private AtomicReference<Map<String,IASValue<?>>> cache = new AtomicReference<>(new HashMap<>());
+	private Map<String,IASValue<?>> cache = new HashMap<>();
+
+	/**
+	 * Signal that a sending to websockets is running to avoid overlaps between
+	 * sending by time and sending by max number of items in cache
+	 */
+	private final AtomicBoolean alreadySendingThroughWebsockets = new AtomicBoolean(false);
 
 	/**
 	 * Time in seconds to wait before attempt to reconnect
@@ -195,6 +228,8 @@ public class WebServerSender implements IasioListener {
      * The scheduler to publish statistics
      */
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+
+
 
 	/**
 	 * The interface of the listener to be notified of Strings received
@@ -344,10 +379,16 @@ public class WebServerSender implements IasioListener {
 	 * @see {@link IasioListener#iasiosReceived(Collection)}
 	 */
 	@Override
-	public synchronized void iasiosReceived(Collection<IASValue<?>> events) {
+	public void iasiosReceived(Collection<IASValue<?>> events) {
 	    iasiosReceived.addAndGet(events.size());
 
-        events.forEach( event -> cache.get().put(event.id,event));
+        synchronized(this) {
+        	events.forEach( event -> cache.put(event.id,event));
+		}
+
+        if (cache.size()>MAX_NUM_OF_VALUES_TO_SEND) {
+        	sendIasios();
+		}
     }
 
 	/**
@@ -355,40 +396,61 @@ public class WebServerSender implements IasioListener {
 	 */
 	private void sendIasios() {
 
-		Map<String,IASValue<?>> receivedIasios = cache.getAndSet(new HashMap<>());
+		if (alreadySendingThroughWebsockets.getAndSet(true)) {
+			// Currently sending do nothing
+
+			return;
+		}
+
+		Map<String,IASValue<?>> receivedIasios;
+		synchronized(this) {
+			receivedIasios = cache;
+			cache = new HashMap<>();
+		}
 
 		if (!socketConnected.get()) {
 			logger.warn("The WebSocket is not connected: discard the events");
+			alreadySendingThroughWebsockets.getAndSet(false);
 			return;
 		}
 		if (receivedIasios.isEmpty()) {
+			alreadySendingThroughWebsockets.getAndSet(false);
 			return;
 		}
 
-
-		int numOfValuesToSend=receivedIasios.size();
+		int numOfValuesSent=0;
 
 		StringBuilder ret = new StringBuilder("[");
 		boolean first = true;
-		receivedIasios.values().forEach( iasValue -> {
+		Iterator<IASValue<?>> iterator = receivedIasios.values().iterator();
+		while (iterator.hasNext()) {
+			IASValue<?> iasValue = iterator.next();
 			try {
 				String jsonStr =  serializer.iasValueToString(iasValue);
-				if (!first) ret. append(", ");
+				if (first) {
+					first = false;
+				} else {
+					ret. append(", ");
+				}
 				ret.append(jsonStr);
+				numOfValuesSent++;
 			} catch (IasValueSerializerException avse){
 				logger.error("Error converting the event into a string", avse);
-
 			}
-		});
+		};
 		ret.append("]");
+		receivedIasios.clear();
 
+		final int recordMessagesSent = numOfValuesSent;
 		sessionOpt.ifPresent( session -> {
 			String strToSend=ret.toString();
 			session.getRemote().sendStringByFuture(strToSend);
-			logger.debug("{} IasValues sent" + numOfValuesToSend);
+			logger.debug("{} IasValues sent" + recordMessagesSent);
 			this.notifyListener(strToSend);
-			iasiosSentToWebServer.addAndGet(numOfValuesToSend);
+			iasiosSentToWebServer.addAndGet(recordMessagesSent);
 		});
+
+		alreadySendingThroughWebsockets.getAndSet(false);
 	}
 
 	public void setUp() {
@@ -417,7 +479,7 @@ public class WebServerSender implements IasioListener {
                         msgLost=0;
                     }
 
-                    logger.info("Stats: {} IASIOs consumed from BSDB; {} messages sent to the web server; {} messages lost",
+                    logger.info("Stats: {} IASIOs consumed from BSDB; {} messages sent to though web sockets; {} messages lost",
                             msgConsumed, msgSent,msgLost);
                 }
             };
