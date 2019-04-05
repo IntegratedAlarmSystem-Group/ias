@@ -64,7 +64,7 @@ public class WebServerSenderTest {
 	/**
 	 * Number of messages to be used in the test
 	 */
-	private final int messagesNumber=6;
+	private final int messagesNumber=25000;
 
 	/**
 	* Collection of Iasios to be used in the test
