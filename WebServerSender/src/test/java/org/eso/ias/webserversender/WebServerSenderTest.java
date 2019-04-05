@@ -288,6 +288,8 @@ public class WebServerSenderTest {
 			}
 		}
 
+		logger.info("Sent {} IASValues to kafka", iasValuesDeliveredToKafka);
+
 		boolean timeout =this.numOfIasValuesToReceive.await(10, TimeUnit.SECONDS);
 		if (!timeout) {
 			for (IASValue<?> value: this.iasValuesToSend) {
