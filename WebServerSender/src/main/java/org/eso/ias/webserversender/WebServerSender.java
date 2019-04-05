@@ -61,8 +61,19 @@ import java.util.concurrent.atomic.AtomicLong;
  * is executed shortly after.
  *
  */
-@WebSocket(maxTextMessageSize = 64 * 1024)
+@WebSocket(maxTextMessageSize = 64*1024)
 public class WebServerSender implements IasioListener {
+
+    /**
+     *
+     * Max size of messages through websockets: while sending
+     * messages (IASValues) through websockets they are partitioned in several
+     * messages whose max lengthe does not exceeex maxTextMessageSize otherwise
+     * websocket disconnects
+     *
+     * Must match with maxTextMessageSize in @WebSocket
+     */
+    private static final long maxTextMessageSize = 64*1024;
 
 	/**
 	 * The identifier of the sender
@@ -366,6 +377,10 @@ public class WebServerSender implements IasioListener {
 	   this.connectionReady.countDown();
 	   socketConnected.set(true);
 	   logger.info("WebSocket got connect. remoteAdress: " + session.getRemoteAddress());
+		session.getPolicy().setMaxTextMessageBufferSize(1400000);
+		session.getPolicy().setMaxTextMessageSize(1500000);
+		session.getPolicy().setMaxBinaryMessageBufferSize(1600000);
+		session.getPolicy().setMaxBinaryMessageSize(1700000);
    }
 
 	@OnWebSocketMessage
@@ -389,6 +404,24 @@ public class WebServerSender implements IasioListener {
         if (cache.size()>MAX_NUM_OF_VALUES_TO_SEND) {
         	sendIasios();
 		}
+    }
+
+    /**
+     * Send the passed string of IASValues though the websocket
+     *
+     * @param str The JSON string to send formatted as a JSON list of IASValues
+     * @param iasValuesInString th enuimber of IASValues in the list
+     */
+    private void sendJsonStringToWebsocket(String str, final int iasValuesInString) {
+
+        sessionOpt.ifPresent( session -> {
+            String strToSend=str;
+            session.getRemote().sendStringByFuture(strToSend);
+            logger.debug("{} IasValues sent" + iasValuesInString);
+            this.notifyListener(strToSend);
+            iasiosSentToWebServer.addAndGet(iasValuesInString);
+        });
+
     }
 
 	/**
@@ -418,22 +451,39 @@ public class WebServerSender implements IasioListener {
 			return;
 		}
 
-		int numOfValuesSent=0;
-
-		StringBuilder ret = new StringBuilder("[");
+        int iasValuesInString=0;
+        StringBuilder ret = new StringBuilder("[");
 		boolean first = true;
 		Iterator<IASValue<?>> iterator = receivedIasios.values().iterator();
 		while (iterator.hasNext()) {
+
 			IASValue<?> iasValue = iterator.next();
 			try {
 				String jsonStr =  serializer.iasValueToString(iasValue);
-				if (first) {
-					first = false;
-				} else {
-					ret. append(", ");
-				}
-				ret.append(jsonStr);
-				numOfValuesSent++;
+
+
+				if (ret.length()+jsonStr.length()+1>=maxTextMessageSize) {
+				    // Adding the current  jsonStr is not possible without exceeding the size:
+                    // close the JSON string and send what is in the buffer (ret) and delay sending
+                    // this jsonStr later
+                    ret.append(']');
+                    sendJsonStringToWebsocket(ret.toString(),iasValuesInString);
+                    // Get ready for next sending
+                    ret.delete(0,ret.length());
+                    ret.append('[');
+                    iasValuesInString=0;
+                    first=true;
+
+                }
+
+                if (first) {
+                    first = false;
+                } else {
+                    ret. append(", ");
+                }
+                iasValuesInString=iasValuesInString+1;
+                ret.append(jsonStr);
+
 			} catch (IasValueSerializerException avse){
 				logger.error("Error converting the event into a string", avse);
 			}
@@ -441,14 +491,9 @@ public class WebServerSender implements IasioListener {
 		ret.append("]");
 		receivedIasios.clear();
 
-		final int recordMessagesSent = numOfValuesSent;
-		sessionOpt.ifPresent( session -> {
-			String strToSend=ret.toString();
-			session.getRemote().sendStringByFuture(strToSend);
-			logger.debug("{} IasValues sent" + recordMessagesSent);
-			this.notifyListener(strToSend);
-			iasiosSentToWebServer.addAndGet(recordMessagesSent);
-		});
+		if (iasValuesInString>0) {
+		    sendJsonStringToWebsocket(ret.toString(),iasValuesInString);
+        }
 
 		alreadySendingThroughWebsockets.getAndSet(false);
 	}
@@ -509,6 +554,12 @@ public class WebServerSender implements IasioListener {
 			sessionOpt = Optional.empty();
 			this.connectionReady = new CountDownLatch(1);
 			client = new WebSocketClient();
+			client.getPolicy().setMaxTextMessageBufferSize(1000000);
+			client.getPolicy().setMaxTextMessageSize(1100000);
+			client.getPolicy().setMaxBinaryMessageBufferSize(1200000);
+			client.getPolicy().setMaxBinaryMessageSize(1300000);
+			client.setMaxTextMessageBufferSize(1400000);
+			client.setMaxBinaryMessageBufferSize(1500000);
 			client.start();
 			client.connect(this, this.uri, new ClientUpgradeRequest());
 
