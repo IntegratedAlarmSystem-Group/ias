@@ -2,10 +2,7 @@ package org.eso.ias.webserversender;
 
 import org.apache.commons.cli.*;
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
-import org.eclipse.jetty.websocket.api.annotations.WebSocket;
+import org.eclipse.jetty.websocket.api.annotations.*;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.eso.ias.cdb.CdbReader;
@@ -32,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -42,8 +40,38 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
-@WebSocket(maxTextMessageSize = 64 * 1024)
+/**
+ * The WebServerSender gets IASValues from the copre kafka topic and forwards
+ * them to the web server through websockets.
+ *
+ * Received IASValues are cached before being sent at regular time intervals
+ * by a dedicated thread or when the max numer of logs to send has been reached,
+ * whatever happens first.
+ *
+ * The limit of the max number of values is not strict. As logs are received in bounces,
+ * they are all aded to the cache and the size of the cache checked later. So the promise
+ * is to send the values as soon as the zize of the cache is equal or freater than the
+ * maximum allowed number of values.
+ *
+ * Sending values when the max number of items in cache has been reached does not affect
+ * the periodic thread that continues running at his schedule.
+ * Afetr sending by max number of items, it can happen that the periodic task
+ * is executed shortly after.
+ *
+ */
+@WebSocket(maxTextMessageSize = 2000000) // About 1000 IASValues
 public class WebServerSender implements IasioListener {
+
+    /**
+     *
+     * Max size of messages through websockets: while sending
+     * messages (IASValues) through websockets they are partitioned in several
+     * messages whose max lengthe does not exceeex maxTextMessageSize otherwise
+     * websocket disconnects
+     *
+     * Must match with maxTextMessageSize in @WebSocket
+     */
+    private static final int maxTextMessageSize = 2000000;
 
 	/**
 	 * The identifier of the sender
@@ -60,6 +88,38 @@ public class WebServerSender implements IasioListener {
 	 * monitor point values and alarms
 	 */
 	private final String sendersInputKTopicName;
+
+	/**
+	 * Default max number of  IASValues to the web server in one single send
+	 */
+	private static final int DEFAULT_MAX_VALUES_TO_SEND = 10000;
+
+	/**
+	 * The property to customize the time interval to send IASValues
+	 * to the web server
+	 */
+	private static final String MAX_VALUES_TO_SEND_PROP_NAME = "org.eso.ias.websenderserver.maxvaluestosend";
+
+	/**
+	 * The time interval (msecs) to send IASValues to the web server
+	 */
+	private static final int MAX_NUM_OF_VALUES_TO_SEND = Integer.getInteger(MAX_VALUES_TO_SEND_PROP_NAME, DEFAULT_MAX_VALUES_TO_SEND);
+
+	/**
+	 * Default time interval (msecs) to send IASValues to the web server
+	 */
+	private static final long DEFAULT_TIME_INTERVAL = 250;
+
+	/**
+	 * The property to customize the time interval to send IASValues
+	 * to the web server
+	 */
+	private static final String SEND_THREAD_TIME_INTERVAL_PROP_NAME = "org.eso.ias.websenderserver.time.interval";
+
+	/**
+	 * The time interval (msecs) to send IASValues to the web server
+	 */
+	private static final long TIME_INTERVAL = Long.getLong(SEND_THREAD_TIME_INTERVAL_PROP_NAME,DEFAULT_TIME_INTERVAL);
 
 	/**
 	 * The name of the java property to get the name of the
@@ -119,6 +179,19 @@ public class WebServerSender implements IasioListener {
 	private WebSocketClient client;
 
 	/**
+	 * The cache to buffer IASValues read from the kafka topic
+	 * The key is the ID of the Monitor point
+	 * The value is the IASValue read from kafka topic
+	 */
+	private Map<String,IASValue<?>> cache = new HashMap<>();
+
+	/**
+	 * Signal that a sending to websockets is running to avoid overlaps between
+	 * sending by time and sending by max number of items in cache
+	 */
+	private final AtomicBoolean alreadySendingThroughWebsockets = new AtomicBoolean(false);
+
+	/**
 	 * Time in seconds to wait before attempt to reconnect
 	 */
 	private int reconnectionInterval = 2;
@@ -165,6 +238,11 @@ public class WebServerSender implements IasioListener {
      */
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
+    /** Signal that the WebServerSender has been shut down */
+    private final AtomicBoolean isClosed = new AtomicBoolean(false);
+
+
+
 	/**
 	 * The interface of the listener to be notified of Strings received
 	 * by the WebServer sender.
@@ -196,7 +274,7 @@ public class WebServerSender implements IasioListener {
 	 * @param senderID Identifier of the WebServerSender
 	 * @param kafkaServers Kafka servers URL
 	 * @param props the properties to get kafka servers, topic names and webserver uri
-	 * @param listener The listenr of the messages sent to the websocket server
+	 * @param listener The listenr of the messages sent to the websocket server i.e. the web server
 	 * @param hbFrequency the frequency of the heartbeat (seconds)
 	 * @param hbProducer the sender of HBs
 	 * @param acceptedIds The IDs of the IASIOs to consume
@@ -302,7 +380,14 @@ public class WebServerSender implements IasioListener {
 	   logger.info("WebSocket got connect. remoteAdress: " + session.getRemoteAddress());
    }
 
-	@OnWebSocketMessage
+	/**
+	 * Normally the WebServerSender does not send masseges.
+	 * The test, {@link WebServerSenderTest} sends a message to this WebSocket to confirm the connection:
+	 * if this method is removed, the tests fails.
+	 *
+	 * @param message The message received
+	 */
+	@OnWebSocketMessage()
     public void onMessage(String message) {
 		notifyListener(message);
     }
@@ -313,33 +398,134 @@ public class WebServerSender implements IasioListener {
 	 * @see {@link IasioListener#iasiosReceived(Collection)}
 	 */
 	@Override
-	public synchronized void iasiosReceived(Collection<IASValue<?>> events) {
+	public void iasiosReceived(Collection<IASValue<?>> events) {
 	    iasiosReceived.addAndGet(events.size());
-        if (!socketConnected.get()) {
-			logger.debug("The WebSocket is not connected: discard the event");
-            return;
+
+        synchronized(this) {
+        	events.forEach( event -> cache.put(event.id,event));
+		}
+
+        if (cache.size()>MAX_NUM_OF_VALUES_TO_SEND) {
+        	sendIasios();
+		}
+    }
+
+    /**
+     * Send the passed string of IASValues though the websocket
+     *
+     * @param str The JSON string to send formatted as a JSON list of IASValues
+     * @param iasValuesInString th enuimber of IASValues in the list
+     */
+    private void sendJsonStringToWebsocket(String str, final int iasValuesInString) {
+
+        sessionOpt.ifPresent( session -> {
+            String strToSend=str;
+            try {
+            	session.getRemote().sendString(strToSend);
+				logger.debug("{} IasValues sent" + iasValuesInString);
+			} catch (IOException ioe) {
+            	logger.error("Error sending {}{ IASValues through websockets",iasValuesInString,ioe);
+			}
+            this.notifyListener(strToSend);
+            iasiosSentToWebServer.addAndGet(iasValuesInString);
+
+        });
+
+    }
+
+    @OnWebSocketError
+	public void onError(Throwable cause) {
+    	if (!isClosed.get()) {
+    		logger.error("Error from websocket",cause);
+		}
+	}
+
+	/**
+	 * Send the IASValues in the cache to the web server through websockets
+	 */
+	private void sendIasios() {
+
+		if (alreadySendingThroughWebsockets.getAndSet(true)) {
+			// Currently sending do nothing
+
+			return;
+		}
+
+		Map<String,IASValue<?>> receivedIasios;
+		synchronized(this) {
+			receivedIasios = cache;
+			cache = new HashMap<>();
+		}
+
+		if (!socketConnected.get()) {
+			logger.warn("The WebSocket is not connected: discard the events");
+			alreadySendingThroughWebsockets.getAndSet(false);
+			return;
+		}
+		if (receivedIasios.isEmpty()) {
+			alreadySendingThroughWebsockets.getAndSet(false);
+			return;
+		}
+
+        int iasValuesInString=0;
+        StringBuilder ret = new StringBuilder("[");
+		boolean first = true;
+		Iterator<IASValue<?>> iterator = receivedIasios.values().iterator();
+		while (iterator.hasNext()) {
+
+			IASValue<?> iasValue = iterator.next();
+			try {
+				String jsonStr =  serializer.iasValueToString(iasValue);
+
+
+				if (ret.length()+jsonStr.length()+1>=maxTextMessageSize) {
+				    // Adding the current  jsonStr is not possible without exceeding the size:
+                    // close the JSON string and send what is in the buffer (ret) and delay sending
+                    // this jsonStr later
+                    ret.append(']');
+                    sendJsonStringToWebsocket(ret.toString(),iasValuesInString);
+                    // Get ready for next sending
+                    ret.delete(0,ret.length());
+                    ret.append('[');
+                    iasValuesInString=0;
+                    first=true;
+
+                }
+
+                if (first) {
+                    first = false;
+                } else {
+                    ret. append(", ");
+                }
+                iasValuesInString=iasValuesInString+1;
+                ret.append(jsonStr);
+
+			} catch (IasValueSerializerException avse){
+				logger.error("Error converting the event into a string", avse);
+			}
+		};
+		ret.append("]");
+		receivedIasios.clear();
+
+		if (iasValuesInString>0) {
+		    sendJsonStringToWebsocket(ret.toString(),iasValuesInString);
         }
 
-        events.forEach( event -> {
-            final String value;
-            try {
-                value = serializer.iasValueToString(event);
-            } catch (IasValueSerializerException avse){
-                logger.error("Error converting the event into a string", avse);
-                return;
-            }
-
-            sessionOpt.ifPresent( session -> {
-                session.getRemote().sendStringByFuture(value);
-                logger.debug("Value sent: " + value);
-                this.notifyListener(value);
-                iasiosSentToWebServer.incrementAndGet();
-            });
-        });
-    }
+		alreadySendingThroughWebsockets.getAndSet(false);
+	}
 
 	public void setUp() {
 		hbEngine.start();
+
+		// Start the thread to send values though the websocket
+		logger.info("Will send values to websockets every {} msecs",TIME_INTERVAL);
+		Runnable senderRunnable = new Runnable() {
+			@Override
+			public void run() {
+				sendIasios();
+			}
+		};
+		scheduler.scheduleAtFixedRate(senderRunnable,TIME_INTERVAL,TIME_INTERVAL,TimeUnit.MILLISECONDS);
 
 		if (statsTimeInterval>0) {
 		    logger.info("Will publish stats every {} minutes",statsTimeInterval);
@@ -354,7 +540,7 @@ public class WebServerSender implements IasioListener {
                         msgLost=0;
                     }
 
-                    logger.info("Stats: {} IASIOs consumed from BSDB; {} messages sent to the web server; {} messages lost",
+                    logger.info("Stats: {} IASIOs consumed from BSDB; {} messages sent to though web sockets; {} messages lost",
                             msgConsumed, msgSent,msgLost);
                 }
             };
@@ -380,10 +566,15 @@ public class WebServerSender implements IasioListener {
 	 * Initializes the WebSocket connection
 	 */
 	public void connect() {
+		if (isClosed.get()) {
+			return;
+		}
 		try {
 			sessionOpt = Optional.empty();
 			this.connectionReady = new CountDownLatch(1);
 			client = new WebSocketClient();
+			client.getPolicy().setMaxTextMessageSize(maxTextMessageSize);
+			client.setMaxTextMessageBufferSize​(maxTextMessageSize);
 			client.start();
 			client.connect(this, this.uri, new ClientUpgradeRequest());
 
@@ -404,6 +595,10 @@ public class WebServerSender implements IasioListener {
 	 * Shutdown the WebSocket client and Kafka consumer
 	 */
 	public void shutdown() {
+		if (isClosed.getAndSet(true)) {
+			logger.warn("Already shut down");
+			return;
+		}
 		hbEngine.updateHbState(HeartbeatStatus.EXITING);
 		scheduler.shutdown();
 		kafkaConsumer.tearDown();

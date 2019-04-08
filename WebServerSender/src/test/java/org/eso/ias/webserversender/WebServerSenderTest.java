@@ -1,21 +1,6 @@
 package org.eso.ias.webserversender;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.*;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.websocket.server.WebSocketHandler;
 import org.eso.ias.heartbeat.HbMsgSerializer;
@@ -24,13 +9,7 @@ import org.eso.ias.heartbeat.publisher.HbLogProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaIasiosProducer;
-import org.eso.ias.types.IASTypes;
-import org.eso.ias.types.IASValue;
-import org.eso.ias.types.IasValidity;
-import org.eso.ias.types.IasValueJsonSerializer;
-import org.eso.ias.types.IasValueStringSerializer;
-import org.eso.ias.types.Identifier;
-import org.eso.ias.types.OperationalMode;
+import org.eso.ias.types.*;
 import org.eso.ias.webserversender.WebServerSender.WebServerSenderListener;
 import org.eso.ias.webserversender.WebSocketServerHandler.WebSocketServerListener;
 import org.junit.jupiter.api.AfterEach;
@@ -38,6 +17,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Test that, when messages are published to the Kafka queue,
@@ -77,12 +64,12 @@ public class WebServerSenderTest {
 	/**
 	 * Number of messages to be used in the test
 	 */
-	private int messagesNumber;
+	private final int messagesNumber=25000;
 
 	/**
 	* Collection of Iasios to be used in the test
 	*/
-	private Collection<IASValue<?>> iasios;
+	private Collection<IASValue<?>> iasValuesToSend;
 
 	/**
 	 * The WebServerSender we are testing
@@ -102,12 +89,12 @@ public class WebServerSenderTest {
 	/**
 	 * Countdown of the messages sent by the WebServerSender
 	 */
-	private CountDownLatch numOfMessagesToSend;
+	private CountDownLatch messagesSentByWSS;
 
 	/**
 	 * Countdown of the messages received by the Mock Server
 	 */
-	private CountDownLatch numOfMessagesToReceive;
+	private CountDownLatch numOfIasValuesToReceive;
 
 	/**
 	 * Countdown to initialize the test when the server is ready
@@ -119,20 +106,25 @@ public class WebServerSenderTest {
 	 * <P>
 	 * It contains only the strings that this test produced
 	 */
-	private final List<String> sentMessages = Collections.synchronizedList(new ArrayList<>());
+	private final List<String> listsOfIasValuesSentByWSS = Collections.synchronizedList(new ArrayList<>());
 
 	/**
 	 * The list of strings received by the server.
 	 * <P>
 	 * It contains only the strings that this test produced
 	 */
-	private final List<String> receivedMessages = Collections.synchronizedList(new ArrayList<>());
+	private final List<IasValueJsonPojo> receivedIasValues = Collections.synchronizedList(new ArrayList<>());
 
 	/**
 	 * The serializer/deserializer to convert the string
 	 * received by the BSDB in a IASValue
 	 */
 	private final IasValueStringSerializer serializer = new IasValueJsonSerializer();
+
+	/**
+	 * The jackson 2 mapper
+	 */
+	private final ObjectMapper jsonMapper = new ObjectMapper();
 
 
 	/**
@@ -143,8 +135,22 @@ public class WebServerSenderTest {
         WebSocketHandler wsHandler = new WebSocketServerHandler();
         WebSocketServerListener listener = new WebSocketServerListener(){
         	public void stringEventSent(String event) {
-        		receivedMessages.add(event);
-        		numOfMessagesToReceive.countDown();
+
+				IasValueJsonPojo[] iasValues=null;
+        		try{
+        			iasValues = jsonMapper.readValue(event, IasValueJsonPojo[].class);
+				} catch (Exception e) {
+        			logger.error("Exception unmarshalling {}",event);
+        			e.printStackTrace();
+        			return;
+				}
+
+
+				for (int t=0; t<iasValues.length; t++) {
+					receivedIasValues.add(iasValues[t]);
+					numOfIasValuesToReceive.countDown();
+				}
+
         	};
         };
         WebSocketServerHandler.setListener(listener);
@@ -172,8 +178,8 @@ public class WebServerSenderTest {
         			serverReady.countDown();
         		}
         		else {
-	        		sentMessages.add(event);
-	        		numOfMessagesToSend.countDown();
+	        		listsOfIasValuesSentByWSS.add(event);
+	        		messagesSentByWSS.countDown();
 	        	}
         	};
         };
@@ -239,13 +245,12 @@ public class WebServerSenderTest {
 	public void setUp() throws Exception {
 		logger.info("Starting Test Initialization");
 
-		this.messagesNumber = 6;
 		List<String> idsOfLongs = new LinkedList<>();
 		for (int i=0; i<this.messagesNumber; i++) idsOfLongs.add("ID-TypeLong-"+i);
-		this.iasios = buildValues(idsOfLongs, 10L, IASTypes.LONG);
+		this.iasValuesToSend = buildValues(idsOfLongs, 10L, IASTypes.LONG);
 
-		this.numOfMessagesToReceive = new CountDownLatch(messagesNumber);
-		this.numOfMessagesToSend = new CountDownLatch(messagesNumber);
+		this.numOfIasValuesToReceive = new CountDownLatch(messagesNumber);
+		this.messagesSentByWSS = new CountDownLatch(messagesNumber);
 		this.serverReady = new CountDownLatch(1);
 
 		this.producer = new KafkaIasiosProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, kafkaTopic, "ProducerTest", this.serializer);
@@ -269,47 +274,41 @@ public class WebServerSenderTest {
 	public void testWebServerSender() throws Exception {
 		// Arrange
 		logger.info("Starting Test Execution");
-		int messagesDelivered = 0;
+		int iasValuesDeliveredToKafka = 0;
 
 		// Act:
-		for (IASValue<?> value: this.iasios) {
+		for (IASValue<?> value: this.iasValuesToSend) {
 			try {
 				this.producer.push(value);
 				this.producer.flush();
-				messagesDelivered += 1;
+				iasValuesDeliveredToKafka += 1;
 			}
 			catch (Exception e) {
 				logger.error("Message was not published to the Kafka Queue by Mock Producer");
 			}
 		}
 
-		logger.info("{} messages delivered", messagesDelivered);
+		logger.info("Sent {} IASValues to kafka", iasValuesDeliveredToKafka);
 
-		if (!this.numOfMessagesToSend.await(10, TimeUnit.SECONDS)) {
-			for (IASValue<?> value: this.iasios) {
-				if (!this.sentMessages.contains(serializer.iasValueToString(value))) {
-					logger.error("[{}] never sent by the sender",serializer.iasValueToString(value));
-				}
-			}
-		}
-
-		if (!this.numOfMessagesToReceive.await(10, TimeUnit.SECONDS)) {
-			for (IASValue<?> value: this.iasios) {
-				if (!this.receivedMessages.contains(serializer.iasValueToString(value))) {
+		boolean timeout =this.numOfIasValuesToReceive.await(10, TimeUnit.SECONDS);
+		if (!timeout) {
+			for (IASValue<?> value: this.iasValuesToSend) {
+				if (!this.receivedIasValues.contains(serializer.iasValueToString(value))) {
 					logger.error("[{}] never received by the server",serializer.iasValueToString(value));
 				}
 			}
 		}
+		assertTrue(timeout,"Timeout receiving masseges");
 
 		// Assert:
 		logger.info("Test Execution Completed");
 		logger.info("Summary:");
-		logger.info("- [{}] messages were published in the Kafka queue",messagesDelivered);
-		logger.info("- [{}] messages were sent by the WebServerSender",this.sentMessages.size());
-		logger.info("- [{}] messages were received by the Mock Server",this.receivedMessages.size());
-		assertEquals(messagesNumber, messagesDelivered,"Some messages were not published in the Kafka Queue by Mock Producer");
-		assertEquals(messagesNumber, this.sentMessages.size(),"Some messages were not sent by the WebServerSender");
-		assertEquals(messagesNumber, this.receivedMessages.size(),"Some messages were not received by the Mock Server");
+		logger.info("- [{}] IasValues were published in the Kafka topic",iasValuesDeliveredToKafka);
+		logger.info("- [{}] messages were sent by the WebServerSender",this.listsOfIasValuesSentByWSS.size());
+		logger.info("- [{}] IasValues were received by the Mock Server",this.receivedIasValues.size());
+		assertEquals(messagesNumber, iasValuesDeliveredToKafka,"Some messages were not published in the Kafka Queue by Mock Producer");
+		assertEquals(iasValuesDeliveredToKafka,receivedIasValues.size(), "Some IasValues were not sent by the WebServerSender");
+		assertEquals(messagesNumber, this.receivedIasValues.size(),"Some messages were not received by the Mock Server");
 	}
 
 	/**
@@ -319,34 +318,34 @@ public class WebServerSenderTest {
 	@Test
 	public void testReconnection() throws Exception {
 		// Arrange
-		this.numOfMessagesToReceive = new CountDownLatch(messagesNumber/2);
-		this.numOfMessagesToSend = new CountDownLatch(messagesNumber/2);
+		this.numOfIasValuesToReceive = new CountDownLatch(messagesNumber/2);
+		this.messagesSentByWSS = new CountDownLatch(messagesNumber/2);
 		logger.info("Starting Test Execution");
-		int messagesDelivered = 0;
+		int iasValuesDeliveredToKafka = 0;
 
 		// Act:
 		// Send half of the messages:
-		Iterator<IASValue<?>> iterator = iasios.iterator();
+		Iterator<IASValue<?>> iterator = iasValuesToSend.iterator();
 		while(iterator.hasNext()) {
 			try {
 				IASValue<?> value = iterator.next();
 				this.producer.push(value);
 				this.producer.flush();
-				messagesDelivered += 1;
+				iasValuesDeliveredToKafka += 1;
 			}
 			catch (Exception e) {
 				logger.error("Message was not published to the Kafka Queue by Mock Producer");
 			}
-			if (messagesDelivered >= messagesNumber / 2) {
+			if (iasValuesDeliveredToKafka >= messagesNumber / 2) {
 				break;
 			}
 		}
 
 		// Stop and restart the Server:
-		this.numOfMessagesToSend.await(5, TimeUnit.SECONDS);
+		this.messagesSentByWSS.await(5, TimeUnit.SECONDS);
 		this.restartServer();
-		this.numOfMessagesToReceive = new CountDownLatch(messagesNumber/2);
-		this.numOfMessagesToSend = new CountDownLatch(messagesNumber/2);
+		this.numOfIasValuesToReceive = new CountDownLatch(messagesNumber/2);
+		this.messagesSentByWSS = new CountDownLatch(messagesNumber/2);
 
 		Boolean status = this.serverReady.await(10, TimeUnit.SECONDS);
 		assertTrue(status,"Sender did not reconnect to Server");
@@ -357,26 +356,18 @@ public class WebServerSenderTest {
 				IASValue<?> value = iterator.next();
 				this.producer.push(value);
 				this.producer.flush();
-				messagesDelivered += 1;
+				iasValuesDeliveredToKafka += 1;
 			}
 			catch (Exception e) {
 				logger.error("Message was not published to the Kafka Queue by Mock Producer");
 			}
 		}
 
-		logger.info("{} messages delivered", messagesDelivered);
+		logger.info("{} messages delivered", iasValuesDeliveredToKafka);
 
-		if (!this.numOfMessagesToSend.await(5, TimeUnit.SECONDS)) {
-			for (IASValue<?> value: this.iasios) {
-				if (!this.sentMessages.contains(serializer.iasValueToString(value))) {
-					logger.error("[{}] never sent by the sender",serializer.iasValueToString(value));
-				}
-			}
-		}
-
-		if (!this.numOfMessagesToReceive.await(5, TimeUnit.SECONDS)) {
-			for (IASValue<?> value: this.iasios) {
-				if (!this.receivedMessages.contains(serializer.iasValueToString(value))) {
+		if (!this.numOfIasValuesToReceive.await(5, TimeUnit.SECONDS)) {
+			for (IASValue<?> value: this.iasValuesToSend) {
+				if (!this.receivedIasValues.contains(serializer.iasValueToString(value))) {
 					logger.error("[{}] never received by the server",serializer.iasValueToString(value));
 				}
 			}
@@ -385,12 +376,11 @@ public class WebServerSenderTest {
 		// Assert:
 		logger.info("Test Reconnection Execution Completed");
 		logger.info("Summary:");
-		logger.info("- [{}] messages were published in the Kafka queue",messagesDelivered);
-		logger.info("- [{}] messages were sent by the WebServerSender",this.sentMessages.size());
-		logger.info("- [{}] messages were received by the Mock Server",this.receivedMessages.size());
-		assertEquals(messagesNumber, messagesDelivered,"Some messages were not published in the Kafka Queue by Mock Producer");
-		assertEquals(messagesNumber, this.sentMessages.size(),"Some messages were not sent by the WebServerSender");
-		assertEquals(messagesNumber, this.receivedMessages.size(),"Some messages were not received by the Mock Server");
+		logger.info("- [{}] messages were published in the Kafka queue",iasValuesDeliveredToKafka);
+		logger.info("- [{}] IasValues were sent by the WebServerSender",this.listsOfIasValuesSentByWSS.size());
+		logger.info("- [{}] IasValues were received by the Mock Server",this.receivedIasValues.size());
+		assertEquals(messagesNumber, iasValuesDeliveredToKafka,"Some messages were not published in the Kafka Queue by Mock Producer");
+		assertEquals(iasValuesDeliveredToKafka, this.receivedIasValues.size(),"Some messages were not received by the Mock Server");
 	}
 
 	/**

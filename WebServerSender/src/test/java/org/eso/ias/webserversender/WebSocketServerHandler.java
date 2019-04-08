@@ -1,27 +1,29 @@
 package org.eso.ias.webserversender;
 
 
-import java.io.IOException;
-
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketError;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
-import org.eclipse.jetty.websocket.api.annotations.WebSocket;
+import org.eclipse.jetty.websocket.api.annotations.*;
 import org.eclipse.jetty.websocket.server.WebSocketHandler;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
-import org.eso.ias.webserversender.WebServerSender.WebServerSenderListener;
+
+import java.io.IOException;
 
 @WebSocket
 public class WebSocketServerHandler extends WebSocketHandler {
+
+
 	
 	public interface WebSocketServerListener {
 		public void stringEventSent(String event);
 	}
 	
 	public static WebSocketServerListener listener;
+
+	public WebSocketServerHandler() {
+	    super();
+
+    }
 	
 	public static void setListener(WebSocketServerListener newListener) {
 		listener = newListener;
@@ -29,7 +31,8 @@ public class WebSocketServerHandler extends WebSocketHandler {
 	
 	@Override
 	public void configure(WebSocketServletFactory factory) {
-		factory.register(WebSocketServerHandler.class);
+	    factory.register(WebSocketServerHandler.class);
+	    factory.getPolicy().setMaxTextMessageSize(2100000);
 	}
 
 	@OnWebSocketClose
