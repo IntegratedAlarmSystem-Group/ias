@@ -61,7 +61,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * is executed shortly after.
  *
  */
-@WebSocket(maxTextMessageSize = 65536) // About 1000 IASValues
+@WebSocket(maxTextMessageSize = 65535) // About 1000 IASValues
 public class WebServerSender implements IasioListener {
 
     /**
@@ -73,7 +73,7 @@ public class WebServerSender implements IasioListener {
      *
      * Must match with maxTextMessageSize in @WebSocket
      */
-    private static final long maxTextMessageSize = 65535; // About 1000 IASValues
+    private static final long maxTextMessageSize = 65535; //65535;
 
 	/**
 	 * The identifier of the sender
@@ -377,10 +377,6 @@ public class WebServerSender implements IasioListener {
 	   this.connectionReady.countDown();
 	   socketConnected.set(true);
 	   logger.info("WebSocket got connect. remoteAdress: " + session.getRemoteAddress());
-		session.getPolicy().setMaxTextMessageBufferSize(1400000);
-		session.getPolicy().setMaxTextMessageSize(1500000);
-		session.getPolicy().setMaxBinaryMessageBufferSize(1600000);
-		session.getPolicy().setMaxBinaryMessageSize(1700000);
    }
 
 	@OnWebSocketMessage
@@ -555,12 +551,8 @@ public class WebServerSender implements IasioListener {
 			sessionOpt = Optional.empty();
 			this.connectionReady = new CountDownLatch(1);
 			client = new WebSocketClient();
-			client.getPolicy().setMaxTextMessageBufferSize(1000000);
-			client.getPolicy().setMaxTextMessageSize(1100000);
-			client.getPolicy().setMaxBinaryMessageBufferSize(1200000);
-			client.getPolicy().setMaxBinaryMessageSize(1300000);
-			client.setMaxTextMessageBufferSize(1400000);
-			client.setMaxBinaryMessageBufferSize(1500000);
+			client.setMaxBinaryMessageBufferSize(1400000);
+			client.setMaxTextMessageBufferSize​(1500000);
 			client.start();
 			client.connect(this, this.uri, new ClientUpgradeRequest());
 
