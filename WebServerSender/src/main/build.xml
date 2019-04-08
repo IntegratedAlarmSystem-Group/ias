@@ -15,9 +15,8 @@
 	<!-- 
 		Dependencies
 	-->
-	<property name="jetty-jars" value="jetty-client-9.4.7.v20170914.jar,jetty-http-9.4.7.v20170914.jar,jetty-io-9.4.7.v20170914.jar,jetty-util-9.4.7.v20170914.jar"/>
-	<property name="websocket-jars" value="websocket-api-9.4.7.v20170914.jar,websocket-common-9.4.7.v20170914.jar,websocket-client-9.4.7.v20170914.jar"/>
-	<property name="exttools" value="${jetty-jars},${websocket-jars}" />
+
+	<property name="exttools" value="websocket-api-9.4.15.v20190215.jar,websocket-client-9.4.15.v20190215.jar,websocket-common-9.4.15.v20190215.jar,jetty-util-9.4.15.v20190215.jar,jetty-http-9.4.15.v20190215.jar,jetty-io-9.4.15.v20190215.jar,jetty-client-9.4.15.v20190215.jar" />
 		
 
 	<!-- ####################### TARGETS ####################### -->
