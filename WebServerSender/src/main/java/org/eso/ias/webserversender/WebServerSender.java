@@ -59,7 +59,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * is executed shortly after.
  *
  */
-@WebSocket(maxTextMessageSize = 65535) // About 1000 IASValues
+@WebSocket(maxTextMessageSize = 2000000) // About 1000 IASValues
 public class WebServerSender implements IasioListener {
 
     /**
@@ -71,7 +71,7 @@ public class WebServerSender implements IasioListener {
      *
      * Must match with maxTextMessageSize in @WebSocket
      */
-    private static final int maxTextMessageSize = 65535;
+    private static final int maxTextMessageSize = 2000000;
 
 	/**
 	 * The identifier of the sender
