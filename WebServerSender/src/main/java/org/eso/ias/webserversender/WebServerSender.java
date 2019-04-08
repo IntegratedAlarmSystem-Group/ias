@@ -2,10 +2,7 @@ package org.eso.ias.webserversender;
 
 import org.apache.commons.cli.*;
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
-import org.eclipse.jetty.websocket.api.annotations.WebSocket;
+import org.eclipse.jetty.websocket.api.annotations.*;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.eso.ias.cdb.CdbReader;
@@ -32,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -73,7 +71,7 @@ public class WebServerSender implements IasioListener {
      *
      * Must match with maxTextMessageSize in @WebSocket
      */
-    private static final long maxTextMessageSize = 65535; //65535;
+    private static final int maxTextMessageSize = 65535;
 
 	/**
 	 * The identifier of the sender
@@ -240,6 +238,9 @@ public class WebServerSender implements IasioListener {
      */
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 
+    /** Signal that the WebServerSender has been shut down */
+    private final AtomicBoolean isClosed = new AtomicBoolean(false);
+
 
 
 	/**
@@ -273,7 +274,7 @@ public class WebServerSender implements IasioListener {
 	 * @param senderID Identifier of the WebServerSender
 	 * @param kafkaServers Kafka servers URL
 	 * @param props the properties to get kafka servers, topic names and webserver uri
-	 * @param listener The listenr of the messages sent to the websocket server
+	 * @param listener The listenr of the messages sent to the websocket server i.e. the web server
 	 * @param hbFrequency the frequency of the heartbeat (seconds)
 	 * @param hbProducer the sender of HBs
 	 * @param acceptedIds The IDs of the IASIOs to consume
@@ -379,7 +380,14 @@ public class WebServerSender implements IasioListener {
 	   logger.info("WebSocket got connect. remoteAdress: " + session.getRemoteAddress());
    }
 
-	@OnWebSocketMessage
+	/**
+	 * Normally the WebServerSender does not send masseges.
+	 * The test, {@link WebServerSenderTest} sends a message to this WebSocket to confirm the connection:
+	 * if this method is removed, the tests fails.
+	 *
+	 * @param message The message received
+	 */
+	@OnWebSocketMessage()
     public void onMessage(String message) {
 		notifyListener(message);
     }
@@ -412,14 +420,25 @@ public class WebServerSender implements IasioListener {
 
         sessionOpt.ifPresent( session -> {
             String strToSend=str;
-            session.getRemote().sendStringByFuture(strToSend);
-            logger.debug("{} IasValues sent" + iasValuesInString);
+            try {
+            	session.getRemote().sendString(strToSend);
+				logger.debug("{} IasValues sent" + iasValuesInString);
+			} catch (IOException ioe) {
+            	logger.error("Error sending {}{ IASValues through websockets",iasValuesInString,ioe);
+			}
             this.notifyListener(strToSend);
             iasiosSentToWebServer.addAndGet(iasValuesInString);
 
         });
 
     }
+
+    @OnWebSocketError
+	public void onError(Throwable cause) {
+    	if (!isClosed.get()) {
+    		logger.error("Error from websocket",cause);
+		}
+	}
 
 	/**
 	 * Send the IASValues in the cache to the web server through websockets
@@ -547,12 +566,15 @@ public class WebServerSender implements IasioListener {
 	 * Initializes the WebSocket connection
 	 */
 	public void connect() {
+		if (isClosed.get()) {
+			return;
+		}
 		try {
 			sessionOpt = Optional.empty();
 			this.connectionReady = new CountDownLatch(1);
 			client = new WebSocketClient();
-			client.setMaxBinaryMessageBufferSize(1400000);
-			client.setMaxTextMessageBufferSize​(1500000);
+			client.getPolicy().setMaxTextMessageSize(maxTextMessageSize);
+			client.setMaxTextMessageBufferSize​(maxTextMessageSize);
 			client.start();
 			client.connect(this, this.uri, new ClientUpgradeRequest());
 
@@ -573,6 +595,10 @@ public class WebServerSender implements IasioListener {
 	 * Shutdown the WebSocket client and Kafka consumer
 	 */
 	public void shutdown() {
+		if (isClosed.getAndSet(true)) {
+			logger.warn("Already shut down");
+			return;
+		}
 		hbEngine.updateHbState(HeartbeatStatus.EXITING);
 		scheduler.shutdown();
 		kafkaConsumer.tearDown();
