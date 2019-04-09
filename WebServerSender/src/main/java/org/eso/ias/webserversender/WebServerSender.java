@@ -574,7 +574,7 @@ public class WebServerSender implements IasioListener {
 			this.connectionReady = new CountDownLatch(1);
 			client = new WebSocketClient();
 			client.getPolicy().setMaxTextMessageSize(maxTextMessageSize);
-			client.setMaxTextMessageBufferSize​(maxTextMessageSize);
+			client.setMaxTextMessageBufferSize(maxTextMessageSize);
 			client.start();
 			client.connect(this, this.uri, new ClientUpgradeRequest());
 
