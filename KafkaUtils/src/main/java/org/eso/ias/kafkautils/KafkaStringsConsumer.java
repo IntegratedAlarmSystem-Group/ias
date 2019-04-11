@@ -163,6 +163,12 @@ public class KafkaStringsConsumer implements Runnable {
     private final CountDownLatch polling = new CountDownLatch(1);
 
     /**
+     * Signal that a partition has been assigned: seeking is done onlyt if a partition
+     * is assigned
+     */
+    private final AtomicBoolean isPartitionAssigned = new AtomicBoolean(false);
+
+    /**
      * @return the number of records processed
      */
     public long getNumOfProcessedRecords() {
@@ -332,7 +338,7 @@ public class KafkaStringsConsumer implements Runnable {
      */
     public synchronized void tearDown() {
         if (isClosed.get()) {
-            KafkaStringsConsumer.logger.debug("Consumer [{}] already closed",consumerID);
+            KafkaStringsConsumer.logger.warn("Consumer [{}] already closed",consumerID);
             return;
         }
         KafkaStringsConsumer.logger.debug("Closing consumer [{}]...",consumerID);
@@ -378,12 +384,14 @@ public class KafkaStringsConsumer implements Runnable {
 
                 @Override
                 public void onPartitionsRevoked(Collection<TopicPartition> parts) {
+                    isPartitionAssigned.set(false);
                     KafkaStringsConsumer.logger.info("Partition(s) of consumer [{}] revoked: {}",consumerID, formatPartitionsStr(parts));
 
                 }
 
                 @Override
                 public void onPartitionsAssigned(Collection<TopicPartition> parts) {
+                    isPartitionAssigned.set(false);
                     KafkaStringsConsumer.logger.info("Consumer [{}] assigned to {} partition(s): {}",
                             consumerID,
                             parts.size(),
@@ -447,4 +455,26 @@ public class KafkaStringsConsumer implements Runnable {
         }
     }
 
+    /**
+     * Seek the consumer to the passed postion.
+     * Kafka allows to seek only if a partition is assigned
+     * otherwise the seek is ignored.
+     *
+     * @param pos The position to seek the consumer
+     * @return true is the seek has been done with an asigned partiton;
+     *         false otherwise
+     */
+    public boolean seekTo(StartPosition pos) {
+        Objects.requireNonNull(pos,"Invalid position given");
+        if (!isClosed.get() || !isPartitionAssigned.get()) {
+            if (pos==StartPosition.BEGINNING) {
+                consumer.seekToBeginning(new ArrayList<>());
+            } else {
+                consumer.seekToEnd(new ArrayList<>());
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
