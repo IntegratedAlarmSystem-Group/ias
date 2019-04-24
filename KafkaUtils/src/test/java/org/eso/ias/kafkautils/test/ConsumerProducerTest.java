@@ -1,7 +1,7 @@
 package org.eso.ias.kafkautils.test;
 
 import org.eso.ias.kafkautils.KafkaHelper;
-import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition;
+import org.eso.ias.kafkautils.KafkaStringsConsumer.StreamPosition;
 import org.eso.ias.kafkautils.SimpleStringConsumer;
 import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener;
 import org.eso.ias.kafkautils.SimpleStringProducer;
@@ -130,7 +130,7 @@ public class ConsumerProducerTest implements KafkaConsumerListener {
 		producer = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, topicName, "Consumer-ID");
 		producer.setUp();
 		
-		consumer.startGettingEvents(StartPosition.END,this);
+		consumer.startGettingEvents(StreamPosition.END,this);
 		logger.info("Initialized.");
 	}
 	

@@ -18,7 +18,7 @@ import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.FilteredKafkaIasiosConsumer;
 import org.eso.ias.kafkautils.FilteredKafkaIasiosConsumer.FilterIasValue;
 import org.eso.ias.kafkautils.KafkaHelper;
-import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition;
+import org.eso.ias.kafkautils.KafkaStringsConsumer.StreamPosition;
 import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener;
 import org.eso.ias.logging.IASLogger;
 import org.eso.ias.types.IASTypes;
@@ -552,7 +552,7 @@ public class WebServerSender implements IasioListener {
 		connect();
 		try {
 			kafkaConsumer.setUp(this.props);
-			kafkaConsumer.startGettingEvents(StartPosition.END, this);
+			kafkaConsumer.startGettingEvents(StreamPosition.END, this);
 			logger.info("Kafka consumer starts getting events");
  	    }
  	    catch (Throwable t) {
