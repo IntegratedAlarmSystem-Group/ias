@@ -9,7 +9,7 @@ import org.eso.ias.cdb.pojos.DasuDao
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.dasu.publisher.KafkaPublisher
 import org.eso.ias.dasu.subscriber.KafkaSubscriber
-import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition
+import org.eso.ias.kafkautils.KafkaStringsConsumer.StreamPosition
 import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener
 import org.eso.ias.kafkautils.{KafkaHelper, SimpleStringConsumer, SimpleStringProducer}
 import org.eso.ias.logging.IASLogger
@@ -81,7 +81,7 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener {
   val props = new Properties()
   props.setProperty("group.id", "DasuTest-groupID")
   eventsListener.setUp(props)
-  eventsListener.startGettingEvents(StartPosition.END,this)
+  eventsListener.startGettingEvents(StreamPosition.END,this)
   
   val stringPublisher = new SimpleStringProducer(
       KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
