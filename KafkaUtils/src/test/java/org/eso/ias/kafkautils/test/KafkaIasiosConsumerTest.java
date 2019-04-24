@@ -2,9 +2,9 @@ package org.eso.ias.kafkautils.test;
 
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer;
-import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener;
 import org.eso.ias.kafkautils.KafkaIasiosProducer;
-import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition;
+import org.eso.ias.kafkautils.KafkaStringsConsumer.StreamPosition;
+import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener;
 import org.eso.ias.types.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -216,7 +216,7 @@ public class KafkaIasiosConsumerTest implements IasioListener {
 		for (int i=1; i<50; i++) idsOfIasios.add("ID-"+i);
 		
 		numOfEventsToReceive = new CountDownLatch(idsOfIasios.size());
-		consumer.startGettingEvents(StartPosition.END,this);
+		consumer.startGettingEvents(StreamPosition.END,this);
 
 		publishIasValues(idsOfIasios);
 		logger.info("Waiting for events");
@@ -249,7 +249,7 @@ public class KafkaIasiosConsumerTest implements IasioListener {
 		// We should have a timeout since we expect to receive less values then those submitted
 		numOfEventsToReceive = new CountDownLatch(idsToSubmit.size());
 		
-		consumer.startGettingEvents(StartPosition.END,this);
+		consumer.startGettingEvents(StreamPosition.END,this);
 
 		publishIasValues(idsToSubmit);
 		logger.info("Waiting for events (timeout expected)....");
@@ -309,7 +309,7 @@ public class KafkaIasiosConsumerTest implements IasioListener {
 		numOfEventsToReceive = new CountDownLatch(valuesToSubmit.size());
 		
 		// Start getting events
-		consumer.startGettingEvents(StartPosition.END,this);
+		consumer.startGettingEvents(StreamPosition.END,this);
 		
 		// Push the values
 		logger.info("Going to submit {} IASValues and expect to be notified of {}",valuesToSubmit.size(),expected);
@@ -392,7 +392,7 @@ public class KafkaIasiosConsumerTest implements IasioListener {
 		numOfEventsToReceive = new CountDownLatch(valuesToSubmit.size());
 		
 		// Start getting events
-		consumer.startGettingEvents(StartPosition.END,this);
+		consumer.startGettingEvents(StreamPosition.END,this);
 		
 		// Push the values
 		logger.info("Going to submit {} IASValues and expect to be notified of {}",valuesToSubmit.size(),expected);

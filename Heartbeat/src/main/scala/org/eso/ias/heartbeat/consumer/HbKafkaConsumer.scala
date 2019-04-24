@@ -162,7 +162,7 @@ class HbKafkaConsumer(brokers: String, consumerId: String)
     HbKafkaConsumer.logger.debug("Initializing the string consumer")
     stringConsumer.setUp()
     HbKafkaConsumer.logger.debug("Starting the string consumer")
-    stringConsumer.startGettingEvents(this,KafkaStringsConsumer.StartPosition.END)
+    stringConsumer.startGettingEvents(this,KafkaStringsConsumer.StreamPosition.END)
     HbKafkaConsumer.logger.info("Initialized")
   }
 

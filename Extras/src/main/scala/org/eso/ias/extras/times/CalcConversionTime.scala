@@ -109,7 +109,7 @@ class CalcConversionTime(servers: String)
     this.setUp()
 
     CalcConversionTime.logger.info("Start processing events from the core topic")
-    this.startGettingEvents(KafkaStringsConsumer.StartPosition.END,this)
+    this.startGettingEvents(KafkaStringsConsumer.StreamPosition.END,this)
     CalcConversionTime.logger.info("Initialization done")
   }
 

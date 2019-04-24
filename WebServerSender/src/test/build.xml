@@ -15,9 +15,6 @@
 	<!--
 		Dependencies
 	-->
-	<property name="jetty-test-jars" value="jetty-server-9.4.7.v20170914.jar,jetty-servlet-9.4.7.v20170914.jar"/>
-	<property name="websocket-test-jars" value="javax.servlet-api-4.0.0.jar,websocket-server-9.4.7.v20170914.jar,websocket-servlet-9.4.7.v20170914.jar"/>
-	<property name="exttools" value="${jetty-test-jars},${websocket-test-jars}" />
 
 	<!-- ####################### TARGETS ####################### -->
 
