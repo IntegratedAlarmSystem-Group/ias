@@ -15,7 +15,7 @@ import org.eso.ias.heartbeat.publisher.HbLogProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer;
-import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition;
+import org.eso.ias.kafkautils.KafkaStringsConsumer.StreamPosition;
 import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener;
 import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.eso.ias.plugin.publisher.MonitorPointData;
@@ -248,7 +248,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
         mPointsConsumer.setUp(props);
 
         // Start getting events
-        mPointsConsumer.startGettingEvents(StartPosition.END,eventsConsumer);
+        mPointsConsumer.startGettingEvents(StreamPosition.END,eventsConsumer);
 
         // Build the producer that pushes monitor point
         // in the kafka topic

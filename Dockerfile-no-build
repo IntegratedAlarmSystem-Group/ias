@@ -14,7 +14,7 @@ ENV JRE_HOME $JAVA_HOME/jre
 RUN yum install wget unzip -y
 
 # Install ant
-RUN wget https://www-eu.apache.org/dist//ant/binaries/apache-ant-1.9.13-bin.zip && \
+RUN wget https://archive.apache.org/dist//ant/binaries/apache-ant-1.9.13-bin.zip && \
   unzip apache-ant-1.9.13-bin.zip && \
   mv apache-ant-1.9.13 /opt/
 ENV ANT_HOME /opt/apache-ant-1.9.13
@@ -32,7 +32,7 @@ RUN  wget https://sourceforge.net/projects/ant-contrib/files/ant-contrib/1.0b3/a
 
 # Install Kafka
 WORKDIR /
-RUN wget http://www-us.apache.org/dist/kafka/2.0.0/kafka_2.12-2.0.0.tgz && \
+RUN wget http://archive.apache.org/dist/kafka/2.0.0/kafka_2.12-2.0.0.tgz && \
   tar -zxvf kafka_2.12-2.0.0.tgz && \
   mv kafka_2.12-2.0.0 /opt/
 
