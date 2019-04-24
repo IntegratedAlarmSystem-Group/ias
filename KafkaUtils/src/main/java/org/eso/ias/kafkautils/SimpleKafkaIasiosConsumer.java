@@ -63,14 +63,14 @@ public class SimpleKafkaIasiosConsumer implements KafkaStringsConsumer.StringsCo
      * The property to set the number of milliseconds between the actual time and the time of
      * the records and seek to the end of the topic
      */
-    private static final String SeekIfOlderThanProName="org.eso.ias.kafkautils.iasioconsumer.seekifolderthan";
+    public static final String SeekIfOlderThanProName="org.eso.ias.kafkautils.iasioconsumer.seekifolderthan";
 
     /**
      * The default number of milliseconds between the actual time and the time when records have been
      * sent to the kafka topic to seek to the end of the topic
      * It is disabled by default.
      *
-     * @see #SeekIfOlderThan
+     * @see #seekIfOlderThan
      */
     private static final long SeekIfOlderThanDefault = Long.MAX_VALUE;
 
@@ -79,9 +79,7 @@ public class SimpleKafkaIasiosConsumer implements KafkaStringsConsumer.StringsCo
      * and the actual time is greater than seekIfOlderThan, then the consumer seek
      * to the end of topic
      */
-    private static final long SeekIfOlderThan=Long.getLong(
-            SimpleKafkaIasiosConsumer.SeekIfOlderThanProName,
-            SimpleKafkaIasiosConsumer.SeekIfOlderThanDefault);
+    public final long seekIfOlderThan;
 
     /**
      * Build a FilteredStringConsumer with no filters (i.e. all the
@@ -92,6 +90,10 @@ public class SimpleKafkaIasiosConsumer implements KafkaStringsConsumer.StringsCo
      * @param consumerID the ID of the consumer
      */
     public SimpleKafkaIasiosConsumer(String servers, String topicName, String consumerID) {
+        seekIfOlderThan=Long.getLong(
+                SimpleKafkaIasiosConsumer.SeekIfOlderThanProName,
+                SimpleKafkaIasiosConsumer.SeekIfOlderThanDefault);
+
         stringsConsumer = new SimpleStringConsumer(servers, topicName, consumerID);
     }
 
@@ -149,7 +151,7 @@ public class SimpleKafkaIasiosConsumer implements KafkaStringsConsumer.StringsCo
 
         // Check if the porcessed records are too old and publishes only if they are enough recent
         // If they are too old than the consumer is too slow processing events and seek to the end
-        if (maxTimeDifference<=SimpleKafkaIasiosConsumer.SeekIfOlderThan) {
+        if (maxTimeDifference<=seekIfOlderThan) {
             try {
                 logger.debug("Notifying {} IASIOs to the listener listener", ret.size());
                 if (!ret.isEmpty()) {
