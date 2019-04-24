@@ -36,10 +36,10 @@ import java.util.concurrent.atomic.AtomicReference;
  * <EM>Life cycle</em>: {@link #setUp()} or {@link #setUp(Properties)}
  *                         must be called to initialize the object;
  *                         {@link #tearDown()} must be called when finished using the object;
- *                         {@link #startGettingEvents(StringsConsumer, StartPosition)} must be called to start
+ *                         {@link #startGettingEvents(StringsConsumer, StreamPosition)} must be called to start
  *                         polling events from the kafka topic
  *
- * {@link #startGettingEvents(StringsConsumer, StartPosition)} returns when the consumer has been assigned to
+ * {@link #startGettingEvents(StringsConsumer, StreamPosition)} returns when the consumer has been assigned to
  * at least one partition. There are situations when the partitions assigned to the consumer
  * can be revoked and reassigned like for example when another consumer subscribe or disconnect
  * as the assignment of consumers to partitions is left to kafka in this version.
@@ -66,11 +66,11 @@ public class KafkaStringsConsumer implements Runnable {
      *
      * @author acaproni
      */
-    public enum StartPosition {
+    public enum StreamPosition {
         // The default position, usually set in kafka configurations
         DEFAULT,
         // Get events from the beginning of the partition
-        BEGINNING,
+        BEGIN,
         // Get events from the end of the partition
         END
     }
@@ -148,7 +148,7 @@ public class KafkaStringsConsumer implements Runnable {
     /**
      * The position to start reading from
      */
-    private StartPosition startReadingPos = StartPosition.DEFAULT;
+    private StreamPosition startReadingPos = StreamPosition.DEFAULT;
 
     /**
      * Max time to wait for the assignement of partitions before polling
@@ -240,7 +240,7 @@ public class KafkaStringsConsumer implements Runnable {
      */
     public synchronized void startGettingEvents(
             StringsConsumer listener,
-            StartPosition startReadingFrom)
+            StreamPosition startReadingFrom)
             throws KafkaUtilsException {
         Objects.requireNonNull(startReadingFrom);
         Objects.requireNonNull(listener);
@@ -359,7 +359,7 @@ public class KafkaStringsConsumer implements Runnable {
     public void run() {
         KafkaStringsConsumer.logger.info("Thread of consumer [{}] to get events from the topic {} started",consumerID,topicName);
 
-        if (startReadingPos==StartPosition.DEFAULT) {
+        if (startReadingPos== StreamPosition.DEFAULT) {
             consumer.subscribe(Arrays.asList(topicName));
         } else {
             consumer.subscribe(Arrays.asList(topicName), new ConsumerRebalanceListener() {
@@ -396,7 +396,7 @@ public class KafkaStringsConsumer implements Runnable {
                             consumerID,
                             parts.size(),
                             formatPartitionsStr(parts));
-                    if (startReadingPos==StartPosition.BEGINNING) {
+                    if (startReadingPos== StreamPosition.BEGIN) {
                         consumer.seekToBeginning(new ArrayList<>());
                     } else {
                         consumer.seekToEnd(new ArrayList<>());
@@ -464,10 +464,10 @@ public class KafkaStringsConsumer implements Runnable {
      * @return true is the seek has been done with an asigned partiton;
      *         false otherwise
      */
-    public boolean seekTo(StartPosition pos) {
+    public boolean seekTo(StreamPosition pos) {
         Objects.requireNonNull(pos,"Invalid position given");
         if (!isClosed.get() || !isPartitionAssigned.get()) {
-            if (pos==StartPosition.BEGINNING) {
+            if (pos== StreamPosition.BEGIN) {
                 consumer.seekToBeginning(new ArrayList<>());
             } else {
                 consumer.seekToEnd(new ArrayList<>());

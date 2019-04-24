@@ -59,7 +59,7 @@ public class SimpleStringConsumer extends  KafkaStringsConsumer implements Kafka
 	/**
 	 * The position to start reading from
 	 */
-	private StartPosition startReadingPos = StartPosition.DEFAULT;
+	private StreamPosition startReadingPos = StreamPosition.DEFAULT;
 
 	/**
 	 * Max time to wait for the assignement of partitions before polling
@@ -96,7 +96,7 @@ public class SimpleStringConsumer extends  KafkaStringsConsumer implements Kafka
 	 * @param listener The listener of events published in the topic
 	 * @throws KafkaUtilsException in case of timeout subscribing to the kafkatopic
 	 */
-	public synchronized void startGettingEvents(StartPosition startReadingFrom, KafkaConsumerListener listener)
+	public synchronized void startGettingEvents(StreamPosition startReadingFrom, KafkaConsumerListener listener)
 	throws KafkaUtilsException {
 	    Objects.requireNonNull(listener);
 	    super.startGettingEvents(this,startReadingFrom);

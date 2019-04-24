@@ -1,6 +1,5 @@
 package org.eso.ias.kafkautils;
 
-import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
 import org.eso.ias.types.IasValueJsonSerializer;
 import org.eso.ias.types.IasValueStringSerializer;
@@ -12,6 +11,13 @@ import java.util.*;
 /**
  * KafkaIasiosConsumer gets the strings from the passed IASIO kafka topic
  * from the {@link KafkaStringsConsumer} and forwards the IASIOs to the listener.
+ *
+ * The SimpleKafkaIasiosConsumer checks the timestaps of the received IASIOs against a threshold.
+ * If the timestamp is too old it means that the reciver is slow processing events: old IASIOs are discarded,
+ * a log is emitted and the consumers seeks to the end of the topic.
+ *
+ * To decide what old means, the user must set the {@link #SeekIfOlderThanProName} to the number
+ * of desired milliseconds otherwise {@link #SeekIfOlderThanDefault} is used
  */
 public class SimpleKafkaIasiosConsumer implements KafkaStringsConsumer.StringsConsumer {
     /**
@@ -54,6 +60,30 @@ public class SimpleKafkaIasiosConsumer implements KafkaStringsConsumer.StringsCo
     private final KafkaStringsConsumer stringsConsumer;
 
     /**
+     * The property to set the number of milliseconds between the actual time and the time of
+     * the records and seek to the end of the topic
+     */
+    private static final String SeekIfOlderThanProName="org.eso.ias.kafkautils.iasioconsumer.seekifolderthan";
+
+    /**
+     * The default number of milliseconds between the actual time and the time when records have been
+     * sent to the kafka topic to seek to the end of the topic
+     * It is disabled by default.
+     *
+     * @see #SeekIfOlderThan
+     */
+    private static final long SeekIfOlderThanDefault = Long.MAX_VALUE;
+
+    /**
+     * If the difference (millisecs) between the timestamp of the records read from kafka topic
+     * and the actual time is greater than seekIfOlderThan, then the consumer seek
+     * to the end of topic
+     */
+    private static final long SeekIfOlderThan=Long.getLong(
+            SimpleKafkaIasiosConsumer.SeekIfOlderThanProName,
+            SimpleKafkaIasiosConsumer.SeekIfOlderThanDefault);
+
+    /**
      * Build a FilteredStringConsumer with no filters (i.e. all the
      * strings read from the kafka topic are forwarded to the listener)
      *
@@ -76,7 +106,7 @@ public class SimpleKafkaIasiosConsumer implements KafkaStringsConsumer.StringsCo
      * @param listener The listener of events published in the topic
      * @throws KafkaUtilsException in case of timeout subscribing to the kafkatopic
      */
-    public void startGettingEvents(KafkaStringsConsumer.StartPosition startReadingFrom, KafkaIasiosConsumer.IasioListener listener)
+    public void startGettingEvents(KafkaStringsConsumer.StreamPosition startReadingFrom, KafkaIasiosConsumer.IasioListener listener)
             throws KafkaUtilsException {
         Objects.requireNonNull(listener);
         this.iasioListener=listener;
@@ -93,27 +123,47 @@ public class SimpleKafkaIasiosConsumer implements KafkaStringsConsumer.StringsCo
     public void stringsReceived(Collection<String> strings) {
         assert(strings!=null && !strings.isEmpty());
 
+        // Store the max difference between the actual timestamp
+        // and the time when the passed IASValuehave been sent to the
+        // kafka the topic
+        long maxTimeDifference=0;
         Collection<IASValue<?>> ret = new ArrayList<>();
-        strings.forEach( str -> {
+
+        Iterator<String> iterator = strings.iterator();
+        while (iterator.hasNext()) {
+            String str = iterator.next();
             IASValue<?> iasio;
             try {
                 iasio = serializer.valueOf(str);
             } catch (Exception e) {
                 logger.error("Error building the IASValue from string [{}]: value lost",str,e);
-                return;
+                continue;
             }
+            if (iasio.sentToBsdbTStamp.isPresent()) {
+                maxTimeDifference = Long.max(maxTimeDifference,System.currentTimeMillis()-iasio.sentToBsdbTStamp.get());
+            };
             if (accept(iasio)) {
                 ret.add(iasio.updateReadFromBsdbTime(System.currentTimeMillis()));
             }
-        });
+        }
 
-        try {
-            logger.debug("Notifying {} IASIOs to the listener listener",ret.size());
-            if (!ret.isEmpty()) {
-                iasioListener.iasiosReceived(ret);
+        // Check if the porcessed records are too old and publishes only if they are enough recent
+        // If they are too old than the consumer is too slow processing events and seek to the end
+        if (maxTimeDifference<=SimpleKafkaIasiosConsumer.SeekIfOlderThan) {
+            try {
+                logger.debug("Notifying {} IASIOs to the listener listener", ret.size());
+                if (!ret.isEmpty()) {
+                    iasioListener.iasiosReceived(ret);
+                }
+            } catch (Exception e) {
+                logger.error("Error notifying IASValues to the listener: {} values potentially lost", ret.size(), e);
             }
-        } catch (Exception e) {
-            logger.error("Error notifying IASValues to the listener: {} values potentially lost",ret.size(),e);
+        } else {
+            logger.warn("Consumer too slow processing events: seeking to the end of the topic ({} ISOIOs discarded)",ret.size());
+            boolean seekOk=stringsConsumer.seekTo(KafkaStringsConsumer.StreamPosition.END);
+            if (!seekOk) {
+                logger.error("Cannot seek to end of stream");
+            }
         }
     }
 

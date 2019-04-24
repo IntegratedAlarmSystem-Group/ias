@@ -14,7 +14,7 @@ import org.eso.ias.dasu.publisher.{KafkaPublisher, OutputPublisher}
 import org.eso.ias.dasu.subscriber.{InputSubscriber, KafkaSubscriber}
 import org.eso.ias.heartbeat.publisher.HbLogProducer
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
-import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition
+import org.eso.ias.kafkautils.KafkaStringsConsumer.StreamPosition
 import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener
 import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosProducer, SimpleKafkaIasiosConsumer}
 import org.eso.ias.logging.IASLogger
@@ -167,7 +167,7 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
       }
     }
 
-    iasiosConsumer.startGettingEvents(StartPosition.END, iasioListener)
+    iasiosConsumer.startGettingEvents(StreamPosition.END, iasioListener)
     
     assert(supervisor.start().isSuccess)
     

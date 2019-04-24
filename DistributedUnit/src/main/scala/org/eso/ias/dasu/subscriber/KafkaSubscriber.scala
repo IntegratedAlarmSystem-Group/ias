@@ -3,9 +3,9 @@ package org.eso.ias.dasu.subscriber
 import java.util
 import java.util.{Collection, Properties}
 
-import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosConsumer}
+import org.eso.ias.kafkautils.KafkaStringsConsumer.StreamPosition
 import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener
-import org.eso.ias.kafkautils.KafkaStringsConsumer.StartPosition
+import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosConsumer}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.{IASTypes, IASValue}
 
@@ -110,7 +110,7 @@ extends IasioListener with InputSubscriber {
     this.listener = newListener
 
     Try {
-      kafkaConsumer.startGettingEvents(StartPosition.END, this)
+      kafkaConsumer.startGettingEvents(StreamPosition.END, this)
       KafkaSubscriber.logger.info("The subscriber of [{}] is polling events from kafka",dasuId)
     }
   }
