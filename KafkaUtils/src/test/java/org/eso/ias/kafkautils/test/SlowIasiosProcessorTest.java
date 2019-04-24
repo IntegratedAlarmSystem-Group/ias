@@ -1,12 +1,7 @@
 package org.eso.ias.kafkautils.test;
 
-import org.eso.ias.kafkautils.KafkaHelper;
-import org.eso.ias.kafkautils.KafkaIasiosConsumer;
-import org.eso.ias.kafkautils.KafkaIasiosProducer;
-import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer;
-import org.eso.ias.types.IASValue;
-import org.eso.ias.types.IasValueJsonSerializer;
-import org.eso.ias.types.IasValueStringSerializer;
+import org.eso.ias.kafkautils.*;
+import org.eso.ias.types.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,19 +9,20 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
+
 /**
  * Test the SimpleKafkaIasiosConsumer when the processor is too slow consuming events.
  *
  * The test checks that the old IASIOs read from the topic are never forwarded to the listener
+ *
+ * The tests are based on the fact that the {@link SimpleKafkaIasiosConsumer} checks the SentToBsdb timestamp.
  */
-public class SlowIasiosProcessorTest {
+public class SlowIasiosProcessorTest implements SimpleKafkaIasiosConsumer.IasioListener {
 
     /**
      * IASIOs whose timestam is older than oldThreshold will be discarded
@@ -53,6 +49,13 @@ public class SlowIasiosProcessorTest {
 	 */
 	private final List<IASValue<?>> receivedIasios = Collections.synchronizedList(new ArrayList<>());
 
+	/**
+	 * IASIOs whose timestamp is too old are saved here
+     * We actually expect this list to be empty as {@link SimpleKafkaIasiosConsumer} should discard
+     * those IASIOs
+	 */
+	private final List<IASValue<?>> oldReceivedIasios = Collections.synchronizedList(new ArrayList<>());
+
     /**
 	 * The logger
 	 */
@@ -69,6 +72,69 @@ public class SlowIasiosProcessorTest {
 	 * received by the BSDB in a IASValue
 	*/
 	private final IasValueStringSerializer serializer = new IasValueJsonSerializer();
+
+    /**
+     * Build the full running ID from the passed id
+     *
+     * @param id The Id of the IASIO
+     * @return he full running ID
+     */
+    private String buildFullRunningID(String id) {
+        return Identifier.coupleGroupPrefix()+id+Identifier.coupleSeparator()+"IASIO"+Identifier.coupleGroupSuffix();
+    }
+
+    /**
+     * Build and return the IASValues to publish from their IDs
+     * and assigning a different type to each value
+     *
+     * @param ids The Ids of the IASValues to build
+     * @return The IASValues to publish
+     */
+    public Collection<IASValue<?>> buildValues(List<String> ids) {
+        Objects.requireNonNull(ids);
+        return ids.stream().map(id ->
+                IASValue.build(
+                        10L,
+                        OperationalMode.OPERATIONAL,
+                        IasValidity.RELIABLE,
+                        buildFullRunningID(id),
+                        IASTypes.LONG)
+        ).collect(Collectors.toList());
+    }
+
+    @Override
+    public void iasiosReceived(Collection<IASValue<?>> events) {
+        assertNotNull(events);
+        events.forEach( value -> {
+            processedMessages.incrementAndGet();
+            receivedIasios.add(value);
+            value.sentToBsdbTStamp.ifPresent( tStamp -> {
+                if (System.currentTimeMillis()-tStamp>oldThreshold) {
+                    oldReceivedIasios.add(value);
+                }
+            });
+        });
+        try {
+            Thread.sleep(oldThreshold+100);
+        }catch (InterruptedException ie) {
+            logger.warn("Interrupted");
+        }
+
+    }
+
+    /**
+	 * Publishes in the kafka topic, the IASValues with the passed IDs.
+	 * This method creates the IASValues then publishes them: for this test
+	 * to pass what is important are only the IDs of the IASValue but not
+	 * their value, type and so on.
+	 *
+	 * @param ids The Ids of the IASValues to publish
+	 */
+	private void publishIasValues(List<String> ids) throws Exception {
+		Objects.requireNonNull(ids);
+		Collection<IASValue<?>> values = buildValues(ids);
+		producer.push(values);
+	}
 
     @BeforeAll
     public static void beforeAll() throws Exception {
@@ -115,5 +181,28 @@ public class SlowIasiosProcessorTest {
     @Test
     public void testPropValue() throws Exception {
         assertEquals(consumer.seekIfOlderThan,oldThreshold);
+    }
+
+    /**
+     * Check that old IASIOs are discarded
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testRemovalOfOldIasios() throws Exception {
+        int itemsToSend = 50000;
+        List<String> idsOfIasios = new ArrayList<String>();
+        for (int i=1; i<itemsToSend; i++) idsOfIasios.add("ID-"+i);
+
+        consumer.startGettingEvents(KafkaStringsConsumer.StreamPosition.END,this);
+        publishIasValues(idsOfIasios);
+        logger.info("Publishing events and giving some time for reception...");
+        Thread.sleep(15000);
+        logger.info("Sent {} IASIOs, received {} of which {} are too old (should be 0)",
+                itemsToSend,
+                receivedIasios.size(),
+                oldReceivedIasios.size());
+        assertEquals(0,oldReceivedIasios.size(),"Received soe IASIOs that are old and should have bene discarded");
+        assertTrue(receivedIasios.size()<itemsToSend,"No IASIOs have been discarded");
     }
 }
