@@ -536,6 +536,11 @@ public class IASValue<T> {
 		ret.append(valueType);
 		ret.append(", value=");
 		ret.append(value);
+		if (valueType==IASTypes.TIMESTAMP) {
+			ret.append(" (timestamp=");
+			ret.append(ISO8601Helper.getTimestamp(Long.valueOf(value.toString())));
+			ret.append(')');
+		}
 		
 		dependentsFullRuningIds.ifPresent( ids -> {
 			ret.append(", fullRunningIds of dependents=[");
@@ -773,6 +778,21 @@ public class IASValue<T> {
 					theProps);
 			case ALARM: return new IASValue<Alarm>(
 					(Alarm)value, 
+					mode,
+					iasValidity,
+					fullRunningId,
+					valueType,
+                    Optional.ofNullable(readFromMonSysTStamp),
+					Optional.ofNullable(productionTStamp),
+					Optional.ofNullable(sentToConverterTStamp),
+					Optional.ofNullable(receivedFromPluginTStamp),
+					Optional.ofNullable(convertedProductionTStamp),
+					Optional.ofNullable(sentToBsdbTStamp),
+					Optional.ofNullable(readFromBsdbTStamp),
+					depIds,
+					theProps);
+			case TIMESTAMP: return new IASValue<Long>(
+					(Long)value,
 					mode,
 					iasValidity,
 					fullRunningId,

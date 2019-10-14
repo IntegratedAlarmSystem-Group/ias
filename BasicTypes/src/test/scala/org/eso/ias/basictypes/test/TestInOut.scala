@@ -138,10 +138,11 @@ class TestInOut extends FlatSpec {
     val hioBool: InOut[Boolean] = InOut.asInput(id, IASTypes.BOOLEAN)
     val hioChar: InOut[Char] = InOut.asInput(id, IASTypes.CHAR)
     val hioString: InOut[String] = InOut.asInput(id, IASTypes.STRING)
+    val hioTStamp: InOut[Long] = InOut.asInput(id, IASTypes.TIMESTAMP)
     val hioAlarm: InOut[Alarm] = InOut.asInput(id, IASTypes.ALARM)
 
     // Check if all the types has been instantiated
-    val listOfHIOs = List(hioLong, hioShort, hioInt, hioByte, hioDouble, hioFloat, hioBool, hioChar, hioString, hioAlarm)
+    val listOfHIOs = List(hioLong, hioShort, hioInt, hioByte, hioDouble, hioFloat, hioBool, hioChar, hioString, hioAlarm, hioTStamp)
     assert(listOfHIOs.size == IASTypes.values().length)
 
     hioLong.updateValue(Some(-1L))
