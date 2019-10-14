@@ -128,12 +128,18 @@ public class IasValueJsonPojo {
 	 */
 	public IasValueJsonPojo(IASValue<?> iasValue) {
 		Objects.requireNonNull(iasValue);
-		
-		value=iasValue.value.toString();
 		mode=iasValue.mode;
 		fullRunningId=iasValue.fullRunningId;
 		valueType=iasValue.valueType;
 		iasValidity=iasValue.iasValidity;
+
+		// Convert the timestamp in a human readable ISO 8601 string
+		if (valueType==IASTypes.TIMESTAMP) {
+			String temp = iasValue.value.toString();
+			value=ISO8601Helper.getTimestamp(Long.valueOf(temp));
+		} else {
+			value=iasValue.value.toString();
+		}
 
 		this.readFromMonSysTStamp=convertTStampToIso8601(iasValue.readFromMonSysTStamp);
 		this.productionTStamp=convertTStampToIso8601(iasValue.productionTStamp);
@@ -252,6 +258,7 @@ public class IasValueJsonPojo {
 		Object theValue;
 		switch (valueType) {
 			case LONG: theValue=Long.valueOf(value); break;
+			case TIMESTAMP: theValue=Long.valueOf(ISO8601Helper.timestampToMillis(value)); break;
 	 		case INT: theValue=Integer.valueOf(value); break;
 			case SHORT: theValue=Short.valueOf(value); break;
 			case BYTE: theValue=Byte.valueOf(value); break;
@@ -263,7 +270,7 @@ public class IasValueJsonPojo {
 			case ALARM: theValue=Alarm.valueOf(value); break;
 			default: throw new UnsupportedOperationException("Unsupported type "+valueType);
 		}
-		
+
 		return new IASValue(
 				theValue, 
 				mode, 

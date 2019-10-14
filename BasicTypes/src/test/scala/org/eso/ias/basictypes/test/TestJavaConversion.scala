@@ -23,6 +23,7 @@ class TestJavaConversion  extends FlatSpec {
       
       val doubleHioId = new Identifier("DoubleID",IdentifierType.IASIO,Option[Identifier](asceId))
       val alarmHioId = new Identifier("AlarmID",IdentifierType.IASIO,Option[Identifier](asceId))
+      val tStampHioId = new Identifier("TStampID",IdentifierType.IASIO,Option[Identifier](asceId))
       // Modes
       val doubleMode = OperationalMode.MAINTENANCE
       val alarmMode = OperationalMode.STARTUP
@@ -132,9 +133,20 @@ class TestJavaConversion  extends FlatSpec {
         None,
         IASTypes.FLOAT,
         Some(0L),Some(1L),Some(2L),Some(3L),Some(4L),Some(5L),Some(6L),None,None)
+
+      val now = Option(System.currentTimeMillis())
+      val tStampHIO = new InOut[Long]( // Input
+        now,
+        tStampHioId,
+        mode,
+        validity,
+        None,
+        None,
+        IASTypes.LONG,
+        Some(0L),Some(1L),Some(2L),Some(3L),Some(4L),Some(5L),Some(6L),None,None)
       
       // Ensure we are testing all possible types
-      val hios = List (longHIO,intHIO,shortHIO,byteHIO,charHIO,stringHIO,boolHIO,alarmHIO,doubleHIO,floatHIO)
+      val hios = List (longHIO,intHIO,shortHIO,byteHIO,charHIO,stringHIO,boolHIO,alarmHIO,doubleHIO,floatHIO,tStampHIO)
       assert(hios.size==IASTypes.values().size)
     }
   }

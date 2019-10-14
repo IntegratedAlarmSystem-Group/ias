@@ -117,7 +117,20 @@ public class IasValueJsonSerializerTest {
 		IASValue<?> floatFromSerializer = jsonSerializer.valueOf(jsonStr);
 		assertNotNull(floatFromSerializer);
 		assertEquals(floatIasType,floatFromSerializer);
-		
+
+		String tStampId = "TimestampType-ID";
+		IASValue<?> tStampIasType = IASValue.build(
+			Long.valueOf(System.currentTimeMillis()),
+			OperationalMode.OPERATIONAL,
+			IasValidity.RELIABLE,
+			new Identifier(tStampId, IdentifierType.IASIO, asceIdentifier).fullRunningID(),
+			IASTypes.TIMESTAMP);
+		jsonStr = jsonSerializer.iasValueToString(tStampIasType);
+
+		IASValue<?> tStampFromSerializer = jsonSerializer.valueOf(jsonStr);
+		assertNotNull(tStampFromSerializer);
+		assertEquals(tStampIasType,tStampFromSerializer);
+
 		String alarmId = "AlarmType-ID";
 		IASValue<?> alarm = IASValue.build(
 			Alarm.SET_MEDIUM,
