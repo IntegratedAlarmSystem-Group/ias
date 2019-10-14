@@ -8,6 +8,8 @@
 **/bin/
 .cache-*
 pom.xml
+ias.iml
+.idea/
 
 ## Project specific files:
 IntegratedAlarmSystemRoot
