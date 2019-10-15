@@ -2,6 +2,7 @@ package org.eso.ias.converter.test;
 
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
+import org.eso.ias.cdb.json.CdbFolders;
 import org.eso.ias.cdb.json.CdbJsonFiles;
 import org.eso.ias.cdb.json.JsonReader;
 import org.eso.ias.cdb.json.JsonWriter;
@@ -313,6 +314,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
     public void tearDown() throws Exception {
         logger.info("Shutting down the converter");
         converter.tearDown();
+        CdbFolders.ROOT.delete(cdbParentPath);
     }
 
     /**
