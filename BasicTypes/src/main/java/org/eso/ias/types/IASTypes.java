@@ -30,7 +30,7 @@ public enum IASTypes {
 	// The timestamp is a long in the core but transparently converted to a string when serialized
 	// to enhance readability.
 	// For timestamps conversions see {@link org.eso.ias.utils.ISO8601Helper}
-	TIMESTAMP(java.lang.Integer.class,"Timestamp"),
+	TIMESTAMP(java.lang.Long.class,"Timestamp"),
 	// The alarm is an enumerated
     ALARM(Alarm.class,"AlarmType");
 	
