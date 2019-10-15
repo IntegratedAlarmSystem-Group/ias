@@ -293,12 +293,22 @@ public class ConverterTestBase {
 			1900L,
 			1950L,
 			IASTypes.ALARM);
+
+	/**
+	 * A holder for type Timestamp
+	 */
+	private final MonitorPointDataHolder mpTimestamp = new MonitorPointDataHolder(
+			"TStampId",
+			Long.valueOf(System.currentTimeMillis()),
+			2000L,
+			2050L,
+			IASTypes.TIMESTAMP);
 	
 	/**
 	 * The holders: one for each type
 	 */
 	protected final MonitorPointDataHolder mpdHolders[] = 
-		{ mpLong, mpInt, mpShort, mpByte, mpDouble, mpFloat, mpBool, mpChar, mpString, mpAlarm };
+		{ mpLong, mpInt, mpShort, mpByte, mpDouble, mpFloat, mpBool, mpChar, mpString, mpTimestamp, mpAlarm };
 	
 	
 	
