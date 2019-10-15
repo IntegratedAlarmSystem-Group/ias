@@ -30,7 +30,7 @@ public enum IASTypes {
 	// The timestamp is a long in the core but transparently converted to a string when serialized
 	// to enhance readability.
 	// For timestamps conversions see {@link org.eso.ias.utils.ISO8601Helper}
-	TIMESTAMP(java.lang.Long.class,"Timestamp"),
+	TIMESTAMP(java.lang.Long.class,"TimestampType"),
 	// The alarm is an enumerated
     ALARM(Alarm.class,"AlarmType");
 	
@@ -53,7 +53,7 @@ public enum IASTypes {
     	else if (this==BOOLEAN) return IasTypeDao.BOOLEAN;
     	else if (this==CHAR) return IasTypeDao.CHAR;
     	else if (this==STRING) return IasTypeDao.STRING;
-    	else if (this==TIMESTAMP) return IasTypeDao.LONG;
+    	else if (this==TIMESTAMP) return IasTypeDao.TIMESTAMP;
     	else if (this==ALARM) return IasTypeDao.ALARM;
     	else throw new UnsupportedOperationException("Unsupported IAS type "+this.typeName);
     }
@@ -67,8 +67,8 @@ public enum IASTypes {
     public static IASTypes fromIasioDaoType(IasTypeDao typeDao) {
     	Objects.requireNonNull(typeDao);
     	switch (typeDao) {
-    	case LONG:
-    	case TIMESTAMP: return LONG;
+    	case LONG: return LONG;
+    	case TIMESTAMP: return TIMESTAMP;
     	case INT: return INT;
     	case SHORT: return SHORT;
     	case BYTE: return BYTE;
