@@ -132,7 +132,8 @@ public class ValueMapper implements Function<String, String> {
 		Object convertedValue=null;
 		try {
             switch (type) {
-                case LONG: {
+                case LONG:
+				case TIMESTAMP: {
                     convertedValue=Long.parseLong(remoteSystemData.getValue());
                     break;
                 }
