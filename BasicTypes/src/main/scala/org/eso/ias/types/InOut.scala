@@ -438,7 +438,7 @@ object InOut {
   def checkType[T](value: T, iasType: IASTypes): Boolean = {
     if (value==None) true
     else iasType match {
-      case IASTypes.LONG => value.isInstanceOf[Long]
+      case IASTypes.LONG | IASTypes.TIMESTAMP => value.isInstanceOf[Long]
       case IASTypes.INT => value.isInstanceOf[Int]
       case IASTypes.SHORT => value.isInstanceOf[Short]
       case IASTypes.BYTE => value.isInstanceOf[Byte]
