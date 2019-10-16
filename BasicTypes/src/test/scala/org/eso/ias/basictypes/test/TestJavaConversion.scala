@@ -142,7 +142,7 @@ class TestJavaConversion  extends FlatSpec {
         validity,
         None,
         None,
-        IASTypes.LONG,
+        IASTypes.TIMESTAMP,
         Some(0L),Some(1L),Some(2L),Some(3L),Some(4L),Some(5L),Some(6L),None,None)
       
       // Ensure we are testing all possible types
