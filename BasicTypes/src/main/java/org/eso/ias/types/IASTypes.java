@@ -31,6 +31,10 @@ public enum IASTypes {
 	// to enhance readability.
 	// For timestamps conversions see {@link org.eso.ias.utils.ISO8601Helper}
 	TIMESTAMP(java.lang.Long.class,"TimestampType"),
+	// The Array of doubles data type is implemented by a {@link NumericArray}
+	ARRAYOFDOUBLES(NumericArray.class,"ArrayOfDoublesType"),
+	// The Array of longs data type is implemented by a {@link NumericArray}
+	ARRAYOFLONGS(NumericArray.class,"ArrayOfLongsType"),
 	// The alarm is an enumerated
     ALARM(Alarm.class,"AlarmType");
 	
@@ -54,6 +58,8 @@ public enum IASTypes {
     	else if (this==CHAR) return IasTypeDao.CHAR;
     	else if (this==STRING) return IasTypeDao.STRING;
     	else if (this==TIMESTAMP) return IasTypeDao.TIMESTAMP;
+		else if (this==ARRAYOFLONGS) return IasTypeDao.ARRAYOFLONGS;
+		else if (this==ARRAYOFDOUBLES) return IasTypeDao.ARRAYOFDOUBLES;
     	else if (this==ALARM) return IasTypeDao.ALARM;
     	else throw new UnsupportedOperationException("Unsupported IAS type "+this.typeName);
     }
@@ -77,6 +83,8 @@ public enum IASTypes {
     	case BOOLEAN: return BOOLEAN;
     	case CHAR: return CHAR;
     	case STRING: return STRING;
+		case ARRAYOFLONGS: return ARRAYOFLONGS;
+		case ARRAYOFDOUBLES: return ARRAYOFDOUBLES;
     	case ALARM: return ALARM;
     	default: throw new UnsupportedOperationException("Unsupported DAO type "+typeDao);
     	}
@@ -103,6 +111,8 @@ public enum IASTypes {
     	case CHAR: return value.charAt(0);
     	case STRING: return value;
 		case TIMESTAMP: return ISO8601Helper.timestampToMillis(value);
+		case ARRAYOFDOUBLES: return NumericArray.valueOf(NumericArray.NumericArrayType.DOUBLE,value);
+		case ARRAYOFLONGS: return NumericArray.valueOf(NumericArray.NumericArrayType.LONG,value);
     	case ALARM: return Alarm.valueOf(value);
     	default: throw new UnsupportedOperationException("Unsupported type "+this);
 	}
