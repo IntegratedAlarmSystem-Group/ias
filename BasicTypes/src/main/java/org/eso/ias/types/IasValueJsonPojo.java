@@ -267,6 +267,8 @@ public class IasValueJsonPojo {
 			case BOOLEAN: theValue=Boolean.valueOf(value); break;
 			case CHAR: theValue=Character.valueOf(value.charAt(0)); break;
 			case STRING: theValue=value; break;
+			case ARRAYOFDOUBLES: theValue=NumericArray.valueOf(NumericArray.NumericArrayType.DOUBLE,value); break;
+			case ARRAYOFLONGS: theValue=NumericArray.valueOf(NumericArray.NumericArrayType.LONG,value); break;
 			case ALARM: theValue=Alarm.valueOf(value); break;
 			default: throw new UnsupportedOperationException("Unsupported type "+valueType);
 		}
