@@ -79,16 +79,16 @@ public class NumericArray {
                 ArrayList<Double> temp = new ArrayList<Double>();
                 Iterator iter = elements.iterator();
                 while (iter.hasNext()) {
-                    Double valueToAdd = (Double)iter.next();
-                    temp.add(valueToAdd);
+                    Number valueToAdd = (Number)iter.next();
+                    temp.add(valueToAdd.doubleValue());
                 }
                 array = Collections.unmodifiableList(temp);
             } else if (numericArrayType==NumericArrayType.LONG){
                 ArrayList<Long> temp = new ArrayList<Long>();
                 Iterator iter = elements.iterator();
                 while (iter.hasNext()) {
-                    Long valueToAdd = (Long)iter.next();
-                    temp.add(valueToAdd);
+                    Number valueToAdd = (Number)iter.next();
+                    temp.add(valueToAdd.longValue());
                 }
                 array = Collections.unmodifiableList(temp);
             } else {
