@@ -260,8 +260,8 @@ public class NumericArray {
         if (strValue==null || strValue.isEmpty()) {
             throw new IllegalArgumentException("The string of elements of the array can't be null nor empty");
         }
-
-        String[] elements = strValue.split(",");
+        String cleanedStr=strValue.replace("[","").replace("]","").replace(" ","");
+        String[] elements = cleanedStr.split(",");
 
         if (type==NumericArrayType.LONG) {
             List<Long> values = new ArrayList<>();
@@ -284,9 +284,8 @@ public class NumericArray {
     public String toString() {
         StringBuilder ret = new StringBuilder("Array of type ");
         ret.append(numericArrayType);
-        ret.append(" [");
+        ret.append(' ');
         ret.append(codeToString());
-        ret.append(']');
         return ret.toString();
     }
 
@@ -297,6 +296,7 @@ public class NumericArray {
      */
     public String codeToString() {
         StringBuilder ret = new StringBuilder();
+        ret.append('[');
         Number[] elements = toArray();
         for (int t=0; t<elements.length; t++) {
             if (t>0) {
@@ -304,6 +304,7 @@ public class NumericArray {
             }
             ret.append(elements[t]);
         }
+        ret.append(']');
         return ret.toString();
     }
 
