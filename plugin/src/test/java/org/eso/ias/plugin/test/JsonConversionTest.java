@@ -53,19 +53,63 @@ public class JsonConversionTest {
 		
 		MonitorPointData mpdFromJsonStr = MonitorPointData.fromJsonString(jsonRepresentation);
 		assertEquals(mpd,mpdFromJsonStr);
-	
-		// Even if not implemented yet... Check an array of integers
-		int[] array = new int[] { 0,1,2,3,4};
-		fv = new FilteredValue(array, samples, System.currentTimeMillis());
-		vts = new ValueToSend("IASIO-INT_ARRAY-ID", fv,OperationalMode.UNKNOWN, IasValidity.RELIABLE);
-		mpd = new MonitorPointData(pluginID, monSysID, vts);
-		jsonRepresentation=mpd.toJsonString();
-		mpdFromJsonStr = MonitorPointData.fromJsonString(jsonRepresentation);
+	}
+
+	@Test
+	public void testTimestampTypeConversion() throws Exception {
+
+		List<EnrichedSample> samples = new Vector<>();
+		Long now = System.currentTimeMillis();
+		Sample s = new Sample(now);
+		EnrichedSample vs = new EnrichedSample(s, true);
+		samples.add(vs);
+
+		// Check the conversion to/from Timestamp
+		Long tStampSample = 1024L;
+		FilteredValue fv = new FilteredValue(tStampSample, samples, System.currentTimeMillis());
+		ValueToSend vts = new ValueToSend("IASIO-TSTAMP-ID", fv,OperationalMode.UNKNOWN, IasValidity.RELIABLE);
+
+		MonitorPointData mpd = new MonitorPointData(pluginID, monSysID, vts);
+		String jsonRepresentation=mpd.toJsonString();
+
+		MonitorPointData mpdFromJsonStr = MonitorPointData.fromJsonString(jsonRepresentation);
 		assertEquals(mpd,mpdFromJsonStr);
-		
-		System.out.println("Int array type:");
-		System.out.println(mpd);
-		System.out.println(mpdFromJsonStr);
+	}
+
+	@Test
+	public void testArrayOfLongTypeConversion() throws Exception {
+
+		List<EnrichedSample> samples = new Vector<>();
+		Long[] array = new Long[] { 0L,1L,2L,3L,4L};
+		Sample s = new Sample(array);
+		EnrichedSample vs = new EnrichedSample(s, true);
+		samples.add(vs);
+		FilteredValue fv = new FilteredValue(array, samples, System.currentTimeMillis());
+		ValueToSend vts = new ValueToSend("IASIO-LONGARRAY-ID", fv,OperationalMode.UNKNOWN, IasValidity.RELIABLE);
+		MonitorPointData mpd = new MonitorPointData(pluginID, monSysID, vts);
+		String jsonRepresentation=mpd.toJsonString();
+		System.out.println("===>>> "+jsonRepresentation);
+		MonitorPointData mpdFromJsonStr = MonitorPointData.fromJsonString(jsonRepresentation);
+		assertEquals(mpd,mpdFromJsonStr);
+
+	}
+
+	@Test
+	public void testArrayOfDoublesTypeConversion() throws Exception {
+
+		List<EnrichedSample> samples = new Vector<>();
+		Double[] array = new Double[] { 0D,1.345D,-0.546D,-3D,4.000976D};
+		Sample s = new Sample(array);
+		EnrichedSample vs = new EnrichedSample(s, true);
+		samples.add(vs);
+		FilteredValue fv = new FilteredValue(array, samples, System.currentTimeMillis());
+		ValueToSend vts = new ValueToSend("IASIO-DOUBLEARRAY-ID", fv,OperationalMode.UNKNOWN, IasValidity.RELIABLE);
+		MonitorPointData mpd = new MonitorPointData(pluginID, monSysID, vts);
+		String jsonRepresentation=mpd.toJsonString();
+		System.out.println("===>>> "+jsonRepresentation);
+		MonitorPointData mpdFromJsonStr = MonitorPointData.fromJsonString(jsonRepresentation);
+		assertEquals(mpd,mpdFromJsonStr);
+
 	}
 
 }
