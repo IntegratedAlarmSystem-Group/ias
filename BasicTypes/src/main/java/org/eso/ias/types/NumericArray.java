@@ -229,13 +229,24 @@ public class NumericArray {
         if (strValue==null || strValue.isEmpty()) {
             throw new IllegalArgumentException("The string of elements of the array can't be null nor empty");
         }
-        NumericArray ret = new NumericArray(type);
+
         String[] elements = strValue.split(",");
-        for (String element: elements) {
-            if (type==NumericArrayType.LONG) ret.add(Long.valueOf(element));
-            else ret.add(Double.valueOf(element));
+
+        if (type==NumericArrayType.LONG) {
+            List<Long> values = new ArrayList<>();
+            for (String element: elements) {
+                values.add(Long.valueOf(element));
+            }
+            return new NumericArray(type,values);
+        } else if (type==NumericArrayType.DOUBLE) {
+            List<Double> values = new ArrayList<>();
+            for (String element: elements) {
+                values.add(Double.valueOf(element));
+            }
+            return new NumericArray(type,values);
+        } else {
+            throw new UnsupportedOperationException("Unsupported array type "+type);
         }
-        return ret;
     }
 
     @Override
