@@ -264,4 +264,18 @@ public class NumericArray {
         }
         return ret.toString();
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        NumericArray that = (NumericArray) o;
+        return numericArrayType == that.numericArrayType &&
+                array.equals(that.array);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(numericArrayType, array);
+    }
 }
