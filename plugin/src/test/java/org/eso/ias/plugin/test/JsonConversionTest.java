@@ -88,7 +88,6 @@ public class JsonConversionTest {
 		ValueToSend vts = new ValueToSend("IASIO-LONGARRAY-ID", fv,OperationalMode.UNKNOWN, IasValidity.RELIABLE);
 		MonitorPointData mpd = new MonitorPointData(pluginID, monSysID, vts);
 		String jsonRepresentation=mpd.toJsonString();
-		System.out.println("===>>> "+jsonRepresentation);
 		MonitorPointData mpdFromJsonStr = MonitorPointData.fromJsonString(jsonRepresentation);
 		assertEquals(mpd,mpdFromJsonStr);
 
@@ -106,7 +105,6 @@ public class JsonConversionTest {
 		ValueToSend vts = new ValueToSend("IASIO-DOUBLEARRAY-ID", fv,OperationalMode.UNKNOWN, IasValidity.RELIABLE);
 		MonitorPointData mpd = new MonitorPointData(pluginID, monSysID, vts);
 		String jsonRepresentation=mpd.toJsonString();
-		System.out.println("===>>> "+jsonRepresentation);
 		MonitorPointData mpdFromJsonStr = MonitorPointData.fromJsonString(jsonRepresentation);
 		assertEquals(mpd,mpdFromJsonStr);
 
