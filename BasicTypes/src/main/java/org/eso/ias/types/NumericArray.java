@@ -198,6 +198,37 @@ public class NumericArray {
     }
 
     /**
+     * Return the arrays as an array of Long
+     *
+     * Note that depending on the type of the array (DOUBLE for instance) the
+     * numbers of the returned array differ from the original (rounded)
+     *
+     * @return the array of Long
+     */
+    public Long[] toArrayOfLong() {
+        Number[] nums = toArray();
+        Long ret[] = new Long[nums.length];
+        for (int i=0; i<nums.length; i++) {
+            ret[i]=nums[i].longValue();
+        }
+        return ret;
+    }
+
+    /**
+     * Return the arrays as an array of Double
+     *
+     * @return the array sof Double
+     */
+    public Double[] toArrayOfDouble() {
+        Number[] nums = toArray();
+        Double ret[] = new Double[nums.length];
+        for (int i=0; i<nums.length; i++) {
+            ret[i]=nums[i].doubleValue();
+        }
+        return ret;
+    }
+
+    /**
      *
      * @return the number of element sin the arrays
      * @see ArrayList#size()
