@@ -6,6 +6,7 @@ import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.types.Alarm;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
+import org.eso.ias.types.NumericArray;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -94,10 +95,14 @@ public class MapperTest extends ConverterTestBase {
 			
 			IASValue<?> iasValue =  iasValueSerializer.valueOf(iasValueStr);
 			logger.debug("Mapped IASValue {} ",iasValue);
-			
+
 			assertEquals(mpdh.iasType, iasValue.valueType);
 			assertTrue(iasValue.productionTStamp.isPresent());
-			assertEquals(iasValue.value.toString(),mpd.getValue());
+			if (iasValue.valueType!=IASTypes.ARRAYOFDOUBLES && iasValue.valueType!=IASTypes.ARRAYOFLONGS) {
+				assertEquals(iasValue.value.toString(),mpd.getValue());
+			} else {
+				assertEquals(((NumericArray)iasValue.value).codeToString(),mpd.getValue().replace(" ",""));
+			}
 			assertEquals(
 					mpd.getProducedByPluginTime(),
 					org.eso.ias.utils.ISO8601Helper.getTimestamp(iasValue.productionTStamp.get()));
@@ -108,8 +113,13 @@ public class MapperTest extends ConverterTestBase {
 			long now = System.currentTimeMillis();
 			assertTrue(iasValue.sentToConverterTStamp.get()<=now && iasValue.sentToConverterTStamp.get()>now-1000);
 			
-			assertEquals(mpdh.id, iasValue.id);
-			assertEquals(mpdh.value,iasValue.value);
+			assertEquals(mpdh.id, iasValue.id,"Identifier differs");
+
+			if (iasValue.valueType!=IASTypes.ARRAYOFDOUBLES && iasValue.valueType!=IASTypes.ARRAYOFLONGS) {
+				assertEquals(mpdh.value,iasValue.value,"Values differ");
+			} else {
+				assertEquals(((NumericArray)iasValue.value).codeToString(),mpd.getValue().replace(" ",""));
+			}
 		}
 	}
 
