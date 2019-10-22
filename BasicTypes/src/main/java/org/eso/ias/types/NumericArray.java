@@ -1,5 +1,8 @@
 package org.eso.ias.types;
 
+import scala.AnyVal;
+import scala.collection.Iterator;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -56,6 +59,42 @@ public class NumericArray {
             array = Collections.unmodifiableList(new ArrayList<>());
         } else {
             array = Collections.unmodifiableList(elements);
+        }
+    }
+
+    /**
+     * Constructor with a scala list of elements in the array
+     *
+     * @param elements the elements in the array (can be null)
+     * @param numericArrayType The type of the items of the arrays
+     */
+    public NumericArray(scala.collection.immutable.List<? extends AnyVal> elements, NumericArrayType numericArrayType) {
+        Objects.requireNonNull(numericArrayType,"Invalid null numeric array type");
+        this.numericArrayType = numericArrayType;
+        if (elements==null) {
+            array = Collections.unmodifiableList(new ArrayList<>());
+        } else {
+
+            if (numericArrayType==NumericArrayType.DOUBLE) {
+                ArrayList<Double> temp = new ArrayList<Double>();
+                Iterator iter = elements.iterator();
+                while (iter.hasNext()) {
+                    Double valueToAdd = (Double)iter.next();
+                    temp.add(valueToAdd);
+                }
+                array = Collections.unmodifiableList(temp);
+            } else if (numericArrayType==NumericArrayType.LONG){
+                ArrayList<Long> temp = new ArrayList<Long>();
+                Iterator iter = elements.iterator();
+                while (iter.hasNext()) {
+                    Long valueToAdd = (Long)iter.next();
+                    temp.add(valueToAdd);
+                }
+                array = Collections.unmodifiableList(temp);
+            } else {
+                throw new UnsupportedOperationException("Unsupported array type "+numericArrayType);
+            }
+
         }
     }
 

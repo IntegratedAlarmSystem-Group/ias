@@ -289,6 +289,7 @@ class TestInOut extends FlatSpec {
     val hioArrayLongs: InOut[Long] = InOut.asInput(id, IASTypes.ARRAYOFLONGS)
     val hioArrayDoubles: InOut[Long] = InOut.asInput(id, IASTypes.ARRAYOFDOUBLES)
 
+    // Test the array of Long with java List in the constructor
     import scala.collection.JavaConverters._
     val longVals: java.util.List[Long] = List(1L.toLong,2,3,4,5).asJava
     val arrayL = new NumericArray(NumericArray.NumericArrayType.LONG,longVals.asInstanceOf[java.util.List[java.lang.Long]])
@@ -300,6 +301,7 @@ class TestInOut extends FlatSpec {
     val elementsL = newArrayL.value.get.asInstanceOf[NumericArray].toArray
     for (i <- 0 until 5) assert(elementsL(i)==longVals.get(i))
 
+    // Test the array of Double with java List in the constructor
     val doubleVals = List(3.1,4.2,5.3)
     val arrayD = new NumericArray(NumericArray.NumericArrayType.DOUBLE,doubleVals.toList.map(Double.box).asJava)
     val newArrayD = hioArrayDoubles.updateValue(Some(arrayD))
@@ -309,6 +311,28 @@ class TestInOut extends FlatSpec {
     assert(newArrayD.value.get.asInstanceOf[NumericArray].size()==3)
     val elementsD = newArrayD.value.get.asInstanceOf[NumericArray].toArray
     for (i <- 0 until 3) assert(elementsD(i)==doubleVals(i).toDouble)
+
+    // Test the array of Long with scala List in the constructor
+    val scalaLongVals: List[Long] = List(1,2,3,4,5)
+    val arrayLS = new NumericArray(scalaLongVals,NumericArray.NumericArrayType.LONG)
+    val newArrayLS = hioArrayLongs.updateValue(Some(arrayLS))
+    assert(newArrayLS.value.isDefined)
+    assert(newArrayLS.value.get.isInstanceOf[NumericArray])
+    assert(newArrayLS.value.get.asInstanceOf[NumericArray].numericArrayType==NumericArray.NumericArrayType.LONG)
+    assert(newArrayLS.value.get.asInstanceOf[NumericArray].size()==5)
+    val elementsLS = newArrayLS.value.get.asInstanceOf[NumericArray].toArray
+    for (i <- 0 until 5) assert(elementsLS(i)==scalaLongVals(i))
+
+    // Test the array of Double with java List in the constructor
+    val scalaDoubleVals: List[Double] = List(3.1,4.2,5.3)
+    val arrayDS = new NumericArray(scalaDoubleVals,NumericArray.NumericArrayType.DOUBLE)
+    val newArrayDS = hioArrayDoubles.updateValue(Some(arrayDS))
+    assert(newArrayDS.value.isDefined)
+    assert(newArrayDS.value.get.isInstanceOf[NumericArray])
+    assert(newArrayDS.value.get.asInstanceOf[NumericArray].numericArrayType==NumericArray.NumericArrayType.DOUBLE)
+    assert(newArrayDS.value.get.asInstanceOf[NumericArray].size()==3)
+    val elementsDS = newArrayDS.value.get.asInstanceOf[NumericArray].toArray
+    for (i <- 0 until 3) assert(elementsDS(i)==scalaDoubleVals(i))
   }
 
 }
