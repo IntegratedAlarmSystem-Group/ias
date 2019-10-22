@@ -640,6 +640,7 @@ public class IASValue<T> {
 		
 		
 		switch (valueType) {
+			case TIMESTAMP:
 			case LONG: return new IASValue<Long>(
 					(Long)value, 
 					mode,
@@ -791,8 +792,9 @@ public class IASValue<T> {
 					Optional.ofNullable(readFromBsdbTStamp),
 					depIds,
 					theProps);
-			case TIMESTAMP: return new IASValue<Long>(
-					(Long)value,
+			case ARRAYOFLONGS:
+			case ARRAYOFDOUBLES: return new IASValue<NumericArray>(
+					(NumericArray)value,
 					mode,
 					iasValidity,
 					fullRunningId,
