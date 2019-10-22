@@ -137,6 +137,8 @@ public class IasValueJsonPojo {
 		if (valueType==IASTypes.TIMESTAMP) {
 			String temp = iasValue.value.toString();
 			value=ISO8601Helper.getTimestamp(Long.valueOf(temp));
+		} else if (valueType==IASTypes.ARRAYOFDOUBLES || valueType==IASTypes.ARRAYOFLONGS) {
+			value = ((NumericArray)iasValue.value).codeToString();
 		} else {
 			value=iasValue.value.toString();
 		}
