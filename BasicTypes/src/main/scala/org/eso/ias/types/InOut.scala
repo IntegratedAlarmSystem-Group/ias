@@ -452,7 +452,7 @@ object InOut {
         value.asInstanceOf[NumericArray].numericArrayType==NumericArray.NumericArrayType.DOUBLE
       case IASTypes.ARRAYOFLONGS =>
         value.isInstanceOf[NumericArray] &&
-          value.asInstanceOf[NumericArray].numericArrayType==NumericArray.NumericArrayType.LONG
+        value.asInstanceOf[NumericArray].numericArrayType==NumericArray.NumericArrayType.LONG
       case IASTypes.ALARM =>value.isInstanceOf[Alarm]
       case _ => false
     }
