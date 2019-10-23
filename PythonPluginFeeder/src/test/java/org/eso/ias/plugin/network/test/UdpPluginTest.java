@@ -1,16 +1,5 @@
 package org.eso.ias.plugin.network.test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
 import org.eso.ias.heartbeat.HbProducer;
 import org.eso.ias.heartbeat.publisher.HbLogProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
@@ -31,6 +20,14 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.jupiter.api.Assertions.*;
+
 /**
  * test the {@link UdpPlugin} closing the loop from
  * python to the monitor point published
@@ -38,13 +35,13 @@ import org.slf4j.LoggerFactory;
  * UdpPlugin.py -> UdpPlugin.java -> Plugin.java -> BSDB
  * 
  * The test setup up the java plugin {@link #udpPlugin},
- * the run the python plugin (MockUdpPlugin.py) that sends some monitor points and alarms.
+ * then run the python plugin (MockUdpPlugin.py) that sends some monitor points and alarms.
  *  
- *  The test check if the monitor points sent by MockUdpPlugin.py
+ *  The test checks if the monitor points sent by MockUdpPlugin.py
  *  are finally published by Plugin.java 
  *  (i.e. received in {@link #dataReceived(MonitorPointData)}).
  *  
- *  To avoid the java plugin to continuosly send the same monitor points (auto-send), 
+ *  To avoid the java plugin to repeatedly send the same monitor points (auto-send),
  *  the  autoSendTimeInterval in pyConfig.json is set to 120 seconds
  *  while this test lasts much less
  * 
@@ -142,7 +139,7 @@ public class UdpPluginTest implements PublisherEventsListener {
 		assertFalse(proc.isAlive(),"Python plugin still running");
 		assertEquals(0,proc.exitValue(),"Python plugin terminated with error "+proc.exitValue());
 		
-		assertEquals(6, publishedMPoints.size());
+		assertEquals(8, publishedMPoints.size());
 		
 		MonitorPointData mpdDouble = publishedMPoints.get("ID-Double");
 		assertEquals(OperationalMode.INITIALIZATION.toString(),mpdDouble.getOperationalMode());
@@ -168,6 +165,17 @@ public class UdpPluginTest implements PublisherEventsListener {
 		MonitorPointData mpdAlarm = publishedMPoints.get("ID-Alarm");
 		assertEquals(OperationalMode.UNKNOWN.toString(),mpdAlarm.getOperationalMode());
 		assertEquals(Alarm.SET_HIGH.toString(), mpdAlarm.getValue());
+
+		MonitorPointData mpdArrayLong = publishedMPoints.get("ID-ArrayLong");
+		assertEquals(OperationalMode.UNKNOWN.toString(),mpdArrayLong.getOperationalMode());
+		System.out.println("===>>> "+mpdArrayLong.getValue());
+
+		MonitorPointData mpdArrayDouble = publishedMPoints.get("ID-ArrayDouble");
+		assertEquals(OperationalMode.UNKNOWN.toString(),mpdArrayDouble.getOperationalMode());
+		System.out.println("\n===>>> VALUE  "+mpdArrayDouble.getValue());
+		System.out.println("===>>> STRING "+mpdArrayDouble.toString());
+		System.out.println("===>>> JSON   "+mpdArrayDouble.toJsonString());
+		//assertEquals(Alarm.SET_HIGH.toString(), mpdArrayDouble.getValue());
 	}
 
 	@Override
