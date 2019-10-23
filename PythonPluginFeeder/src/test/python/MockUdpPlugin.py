@@ -11,10 +11,11 @@ Created on May 10, 2018
 @author: acaproni
 '''
 import time
-from IasPlugin3.UdpPlugin import UdpPlugin
+
+from IasBasicTypes.Alarm import Alarm
 from IasBasicTypes.IasType import IASType
 from IasBasicTypes.OperationalMode import OperationalMode
-from IasBasicTypes.Alarm import Alarm
+from IasPlugin3.UdpPlugin import UdpPlugin
 
 if __name__ == '__main__':
     udpPlugin = UdpPlugin("localhost",10101)
@@ -26,6 +27,8 @@ if __name__ == '__main__':
     udpPlugin.submit("ID-Char", 'X', IASType.CHAR, operationalMode=OperationalMode.DEGRADED)
     udpPlugin.submit("ID-String", 'Testing for test', IASType.STRING, operationalMode=OperationalMode.CLOSING)
     udpPlugin.submit("ID-Alarm", Alarm.SET_HIGH, IASType.ALARM)
+    udpPlugin.submit("ID-ArrayLong", [-1,5,10,0], IASType.ARRAYOFLONGS)
+    udpPlugin.submit("ID-ArrayDouble", [-123,0.654,7], IASType.ARRAYOFDOUBLES)
     
     time.sleep(.5)
     udpPlugin.shutdown()
