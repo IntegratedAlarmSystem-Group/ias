@@ -4,7 +4,10 @@ Created on May 10, 2018
 @author: acaproni
 '''
 from enum import Enum
+
 from IasBasicTypes.Alarm import Alarm
+
+
 class IASType(Enum):
     '''
     The supported data types 
@@ -18,8 +21,35 @@ class IASType(Enum):
     FLOAT = 6
     BOOLEAN = 7 
     CHAR = 8
-    STRING = 9 
-    ALARM = 10
+    STRING = 9
+    TIMESTAMP = 10
+    ARRAYOFDOUBLES = 11
+    ARRAYOFLONGS = 12
+    ALARM = 13
+
+    def parseStringOfArray(self,value):
+        '''
+        Parse the passed string of array and return a list of integers or doubles
+
+        The string is formatted like [0.123,-99.05,2,3,5,7]
+
+        :param self:
+        :param value: The value to convert: it is string representing an array
+        :return: the list with integer or doubles in the string
+        '''
+        print("Parsing",value,"of type",self)
+        ret = []
+        value = value.replace('[',"").replace(']',"").strip()
+        values = value.split(',')
+        for num in values:
+            if self==IASType.ARRAYOFLONGS:
+                ret.append(int(num))
+            elif self==IASType.ARRAYOFDOUBLES:
+                ret.append(float(num))
+            else:
+                raise NotImplementedError("Not supported conversion of array for IAS data type: "+self)
+        print("Returning",ret)
+        return ret
     
     def convertStrToValue(self,value):
         '''
@@ -49,9 +79,16 @@ class IASType(Enum):
             return value
         elif self==IASType.ALARM:
             return Alarm.fromString(value)
+        elif self==IASType.TIMESTAMP:
+            pass
+        elif self==IASType.ARRAYOFLONGS or \
+            self==IASType.ARRAYOFDOUBLES:
+            return self.parseStringOfArray(value)
         else:
             raise NotImplementedError("Not supported conversion for IAS data type: "+self)
-    
+
+
+
     @staticmethod
     def fromString(alarmString):
         '''
@@ -69,5 +106,5 @@ class IASType(Enum):
             if str(valueType)==temp:
                 return valueType
         # No enumerated matches with alarmString
-        raise NotImplementedError("Not supported/find IAS data type")
+        raise NotImplementedError("Not supported/find IAS data type"+alarmString)
     
