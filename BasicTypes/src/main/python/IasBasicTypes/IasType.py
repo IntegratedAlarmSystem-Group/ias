@@ -37,7 +37,6 @@ class IASType(Enum):
         :param value: The value to convert: it is string representing an array
         :return: the list with integer or doubles in the string
         '''
-        print("Parsing",value,"of type",self)
         ret = []
         value = value.replace('[',"").replace(']',"").strip()
         values = value.split(',')
@@ -48,7 +47,6 @@ class IASType(Enum):
                 ret.append(float(num))
             else:
                 raise NotImplementedError("Not supported conversion of array for IAS data type: "+self)
-        print("Returning",ret)
         return ret
     
     def convertStrToValue(self,value):
