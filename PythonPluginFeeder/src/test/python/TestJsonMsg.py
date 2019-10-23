@@ -107,10 +107,21 @@ class TestJsonMessage(unittest.TestCase):
     def testTypeConversionsArrayLongs(self):
         msg = JsonMsg("MPoint-ARRAY-LONGS", [1,2,3,4,5,-1], IASType.ARRAYOFLONGS,operationalMode=OperationalMode.OPERATIONAL)
         jStr = msg.dumps()
+        print(jStr)
         fromJString = JsonMsg.parse(jStr)
         self.assertEqual(fromJString.mPointID, "MPoint-ARRAY-LONGS")
         self.assertEqual(fromJString.value, [1,2,3,4,5,-1])
         self.assertEqual(fromJString.valueType,IASType.ARRAYOFLONGS)
+        self.assertEqual(fromJString.operationalMode, OperationalMode.OPERATIONAL)
+
+    def testTypeConversionsArrayDoubles(self):
+        msg = JsonMsg("MPoint-ARRAY-DOUBLES", [0,0.123,-987.321,-1], IASType.ARRAYOFDOUBLES,operationalMode=OperationalMode.OPERATIONAL)
+        jStr = msg.dumps()
+        print(jStr)
+        fromJString = JsonMsg.parse(jStr)
+        self.assertEqual(fromJString.mPointID, "MPoint-ARRAY-DOUBLES")
+        self.assertEqual(fromJString.value, [0,0.123,-987.321,-1])
+        self.assertEqual(fromJString.valueType,IASType.ARRAYOFDOUBLES)
         self.assertEqual(fromJString.operationalMode, OperationalMode.OPERATIONAL)
 
 if __name__ == '__main__':
