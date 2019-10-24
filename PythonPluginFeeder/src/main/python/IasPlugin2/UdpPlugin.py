@@ -4,11 +4,13 @@ Created on May 9, 2018
 @author: acaproni
 '''
 
-import socket, os
-from datetime import datetime
-from IasPlugin2.JsonMsg import JsonMsg
 import logging
+import socket
+from datetime import datetime
 from threading import Timer, RLock
+
+from IasPlugin2.JsonMsg import JsonMsg
+
 
 class UdpPlugin(object):
     '''
@@ -70,7 +72,10 @@ class UdpPlugin(object):
                  'BOOLEAN',
                  'CHAR',
                  'STRING',
-                 'ALARM']
+                 'ALARM',
+                 'ARRAYOFLONGS',
+                 'ARRAYOFDOUBLES',
+                 'TIMESTAMP']
     
     def __init__(self, hostname, port):
         '''
