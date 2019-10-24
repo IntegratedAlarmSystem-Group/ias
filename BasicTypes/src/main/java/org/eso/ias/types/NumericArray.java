@@ -33,7 +33,7 @@ public class NumericArray {
     /**
      * The not null immutable array of items
      */
-    private final List<? extends Number> array;
+    public final List<? extends Number> array;
 
     /**
      * Constructor with no elements in the array
@@ -295,17 +295,8 @@ public class NumericArray {
      *
      */
     public String codeToString() {
-        StringBuilder ret = new StringBuilder();
-        ret.append('[');
-        Number[] elements = toArray();
-        for (int t=0; t<elements.length; t++) {
-            if (t>0) {
-                ret.append(',');
-            }
-            ret.append(elements[t]);
-        }
-        ret.append(']');
-        return ret.toString();
+
+       return array.toString();
     }
 
     @Override
