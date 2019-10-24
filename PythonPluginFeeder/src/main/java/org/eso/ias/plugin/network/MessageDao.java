@@ -13,7 +13,7 @@ public class MessageDao {
 	 * ISO 8601 time stamp
 	 */
 	private String timestamp;
-	
+
 	/**
 	 * The value (sample) to be sent to the BSDB by the plugin library
 	 */
@@ -146,6 +146,15 @@ public class MessageDao {
 	public void setOperMode(String operMode) {
 		this.operMode = operMode;
 	}
-	
-	
+
+	@Override
+	public String toString() {
+		return "MessageDao{" +
+				"timestamp='" + timestamp + '\'' +
+				", value='" + value + '\'' +
+				", valueType='" + valueType + '\'' +
+				", monitorPointId='" + monitorPointId + '\'' +
+				", operMode='" + operMode + '\'' +
+				'}';
+	}
 }

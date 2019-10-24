@@ -7,12 +7,14 @@ Created on May 10, 2018
 
 @author: acaproni
 '''
-import unittest
 import datetime
-from IasPlugin3.JsonMsg import JsonMsg
+import unittest
+
+from IasBasicTypes.Alarm import Alarm
 from IasBasicTypes.IasType import IASType
 from IasBasicTypes.OperationalMode import OperationalMode
-from IasBasicTypes.Alarm import Alarm
+from IasPlugin3.JsonMsg import JsonMsg
+
 
 class TestJsonMessage(unittest.TestCase):
     
@@ -101,6 +103,26 @@ class TestJsonMessage(unittest.TestCase):
         self.assertEqual(fromJString.value, Alarm.SET_MEDIUM)
         self.assertEqual(fromJString.valueType,IASType.ALARM)
         self.assertEqual(fromJString.operationalMode, OperationalMode.SHUTTEDDOWN)
+
+    def testTypeConversionsArrayLongs(self):
+        msg = JsonMsg("MPoint-ARRAY-LONGS", [1,2,3,4,5,-1], IASType.ARRAYOFLONGS,operationalMode=OperationalMode.OPERATIONAL)
+        jStr = msg.dumps()
+        print(jStr)
+        fromJString = JsonMsg.parse(jStr)
+        self.assertEqual(fromJString.mPointID, "MPoint-ARRAY-LONGS")
+        self.assertEqual(fromJString.value, [1,2,3,4,5,-1])
+        self.assertEqual(fromJString.valueType,IASType.ARRAYOFLONGS)
+        self.assertEqual(fromJString.operationalMode, OperationalMode.OPERATIONAL)
+
+    def testTypeConversionsArrayDoubles(self):
+        msg = JsonMsg("MPoint-ARRAY-DOUBLES", [0,0.123,-987.321,-1], IASType.ARRAYOFDOUBLES,operationalMode=OperationalMode.OPERATIONAL)
+        jStr = msg.dumps()
+        print(jStr)
+        fromJString = JsonMsg.parse(jStr)
+        self.assertEqual(fromJString.mPointID, "MPoint-ARRAY-DOUBLES")
+        self.assertEqual(fromJString.value, [0,0.123,-987.321,-1])
+        self.assertEqual(fromJString.valueType,IASType.ARRAYOFDOUBLES)
+        self.assertEqual(fromJString.operationalMode, OperationalMode.OPERATIONAL)
 
 if __name__ == '__main__':
     unittest.main()
