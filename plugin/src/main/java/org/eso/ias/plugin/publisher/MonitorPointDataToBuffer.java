@@ -1,13 +1,13 @@
 package org.eso.ias.plugin.publisher;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.TimeZone;
-
 import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.NoneFilter;
 import org.eso.ias.types.IasValidity;
 import org.eso.ias.types.OperationalMode;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.TimeZone;
 
 /**
  * A java POJO representing a monitor point or alarm
@@ -88,7 +88,11 @@ public class MonitorPointDataToBuffer {
 		iso8601dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
 		iso8601dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 		setId(value.id);
+
+		// Note the string returned by List.toString (List is used by ARRAYOFLONGS and ARRAYOFDOUBLES)
+		// is formatted as needed i.e. like [1, 3, 5]
 		setValue(value.value.toString());
+
 		synchronized (iso8601dateFormat) {
 			setSampleTime(iso8601dateFormat.format(new Date(value.producedTimestamp)));
 			setFilteredTime(iso8601dateFormat.format(new Date(value.filteredTimestamp)));

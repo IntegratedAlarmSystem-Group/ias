@@ -169,6 +169,18 @@ public class ValueMapper implements Function<String, String> {
                     convertedValue=remoteSystemData.getValue();
                     break;
                 }
+				case ARRAYOFLONGS: {
+					convertedValue = NumericArray.valueOf(
+							NumericArray.NumericArrayType.LONG,
+							remoteSystemData.getValue().toString());
+					break;
+				}
+				case ARRAYOFDOUBLES: {
+					convertedValue = NumericArray.valueOf(
+							NumericArray.NumericArrayType.DOUBLE,
+							remoteSystemData.getValue().toString());
+					break;
+				}
                 case ALARM: {
                     convertedValue=Alarm.valueOf(remoteSystemData.getValue());
                     break;
@@ -176,7 +188,7 @@ public class ValueMapper implements Function<String, String> {
                 default: logger.error("Error translating {}",remoteSystemData.getId());
             }
         } catch (Exception e) {
-		    logger.error("Error converting moitor point [{}] with value {} of type {}",
+		    logger.error("Error converting monitor point [{}] with value {} of type {}",
 					remoteSystemData.getId(),
 					remoteSystemData.getValue(),
                     type);
@@ -289,7 +301,7 @@ public class ValueMapper implements Function<String, String> {
                 mpd.getPluginID(),
                 mpd.getMonitoredSystemID(),
                 mpd.getId());
-		
+
 		// Get the configuration from the CDB
         // taking templates into account
 		String mpId;

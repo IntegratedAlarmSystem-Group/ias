@@ -17,5 +17,7 @@ public enum IasTypeDao {
     CHAR, 
     STRING,
     TIMESTAMP,
+    ARRAYOFDOUBLES,
+    ARRAYOFLONGS,
     ALARM
 }

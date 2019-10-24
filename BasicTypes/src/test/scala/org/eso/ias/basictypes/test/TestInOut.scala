@@ -4,6 +4,8 @@ import org.eso.ias.types.IasValidity._
 import org.eso.ias.types._
 import org.scalatest.FlatSpec
 
+import scala.collection.JavaConverters
+
 /**
  * Test the LongMP
  *
@@ -139,10 +141,25 @@ class TestInOut extends FlatSpec {
     val hioChar: InOut[Char] = InOut.asInput(id, IASTypes.CHAR)
     val hioString: InOut[String] = InOut.asInput(id, IASTypes.STRING)
     val hioTStamp: InOut[Long] = InOut.asInput(id, IASTypes.TIMESTAMP)
+    val hioArrayLongs: InOut[Long] = InOut.asInput(id, IASTypes.ARRAYOFLONGS)
+    val hioArrayDoubles: InOut[Long] = InOut.asInput(id, IASTypes.ARRAYOFDOUBLES)
     val hioAlarm: InOut[Alarm] = InOut.asInput(id, IASTypes.ALARM)
 
     // Check if all the types has been instantiated
-    val listOfHIOs = List(hioLong, hioShort, hioInt, hioByte, hioDouble, hioFloat, hioBool, hioChar, hioString, hioAlarm, hioTStamp)
+    val listOfHIOs = List(
+      hioLong,
+      hioShort,
+      hioInt,
+      hioByte,
+      hioDouble,
+      hioFloat,
+      hioBool,
+      hioChar,
+      hioString,
+      hioAlarm,
+      hioTStamp,
+      hioArrayDoubles,
+      hioArrayLongs)
     assert(listOfHIOs.size == IASTypes.values().length)
 
     hioLong.updateValue(Some(-1L))
@@ -154,7 +171,9 @@ class TestInOut extends FlatSpec {
     hioBool.updateValue(Some(false))
     hioChar.updateValue(Some('C'))
     hioString.updateValue(Some("Test"))
+    hioTStamp.updateValue(Some(System.currentTimeMillis()))
     hioAlarm.updateValue(Some(Alarm.SET_MEDIUM))
+
   }
 
   it must "build and update from a passed IASValue" in {
@@ -264,6 +283,56 @@ class TestInOut extends FlatSpec {
     assertThrows[IllegalArgumentException] {
       inOut.getValidityOfInputByTime(1000)
     }
+  }
+
+  it must "support arrays of numbers" in {
+    val hioArrayLongs: InOut[Long] = InOut.asInput(id, IASTypes.ARRAYOFLONGS)
+    val hioArrayDoubles: InOut[Long] = InOut.asInput(id, IASTypes.ARRAYOFDOUBLES)
+
+    // Test the array of Long with java List in the constructor
+    import scala.collection.JavaConverters._
+    val longVals: java.util.List[Long] = List(1L.toLong,2,3,4,5).asJava
+    val arrayL = new NumericArray(NumericArray.NumericArrayType.LONG,longVals.asInstanceOf[java.util.List[java.lang.Long]])
+    val newArrayL = hioArrayLongs.updateValue(Some(arrayL))
+    assert(newArrayL.value.isDefined)
+    assert(newArrayL.value.get.isInstanceOf[NumericArray])
+    assert(newArrayL.value.get.asInstanceOf[NumericArray].numericArrayType==NumericArray.NumericArrayType.LONG)
+    assert(newArrayL.value.get.asInstanceOf[NumericArray].size()==5)
+    val elementsL = newArrayL.value.get.asInstanceOf[NumericArray].toArray
+    for (i <- 0 until 5) assert(elementsL(i)==longVals.get(i))
+
+    // Test the array of Double with java List in the constructor
+    val doubleVals = List(3.1,4.2,5.3)
+    val arrayD = new NumericArray(NumericArray.NumericArrayType.DOUBLE,doubleVals.toList.map(Double.box).asJava)
+    val newArrayD = hioArrayDoubles.updateValue(Some(arrayD))
+    assert(newArrayD.value.isDefined)
+    assert(newArrayD.value.get.isInstanceOf[NumericArray])
+    assert(newArrayD.value.get.asInstanceOf[NumericArray].numericArrayType==NumericArray.NumericArrayType.DOUBLE)
+    assert(newArrayD.value.get.asInstanceOf[NumericArray].size()==3)
+    val elementsD = newArrayD.value.get.asInstanceOf[NumericArray].toArray
+    for (i <- 0 until 3) assert(elementsD(i)==doubleVals(i).toDouble)
+
+    // Test the array of Long with scala List in the constructor
+    val scalaLongVals: List[Long] = List(1,2,3,4,5)
+    val arrayLS = new NumericArray(scalaLongVals,NumericArray.NumericArrayType.LONG)
+    val newArrayLS = hioArrayLongs.updateValue(Some(arrayLS))
+    assert(newArrayLS.value.isDefined)
+    assert(newArrayLS.value.get.isInstanceOf[NumericArray])
+    assert(newArrayLS.value.get.asInstanceOf[NumericArray].numericArrayType==NumericArray.NumericArrayType.LONG)
+    assert(newArrayLS.value.get.asInstanceOf[NumericArray].size()==5)
+    val elementsLS = newArrayLS.value.get.asInstanceOf[NumericArray].toArray
+    for (i <- 0 until 5) assert(elementsLS(i)==scalaLongVals(i))
+
+    // Test the array of Double with java List in the constructor
+    val scalaDoubleVals: List[Double] = List(3.1,4.2,5.3)
+    val arrayDS = new NumericArray(scalaDoubleVals,NumericArray.NumericArrayType.DOUBLE)
+    val newArrayDS = hioArrayDoubles.updateValue(Some(arrayDS))
+    assert(newArrayDS.value.isDefined)
+    assert(newArrayDS.value.get.isInstanceOf[NumericArray])
+    assert(newArrayDS.value.get.asInstanceOf[NumericArray].numericArrayType==NumericArray.NumericArrayType.DOUBLE)
+    assert(newArrayDS.value.get.asInstanceOf[NumericArray].size()==3)
+    val elementsDS = newArrayDS.value.get.asInstanceOf[NumericArray].toArray
+    for (i <- 0 until 3) assert(elementsDS(i)==scalaDoubleVals(i))
   }
 
 }
