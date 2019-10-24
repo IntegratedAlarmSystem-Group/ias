@@ -134,7 +134,7 @@ public class UdpPluginTest implements PublisherEventsListener {
 		logger.debug("Leaving the plugin time to run");
 		udpPluginLatch.await(30, TimeUnit.SECONDS);
 		logger.debug("test terminated");
-		
+
 		// Check if the python process terminated without errors
 		assertFalse(proc.isAlive(),"Python plugin still running");
 		assertEquals(0,proc.exitValue(),"Python plugin terminated with error "+proc.exitValue());
@@ -168,14 +168,11 @@ public class UdpPluginTest implements PublisherEventsListener {
 
 		MonitorPointData mpdArrayLong = publishedMPoints.get("ID-ArrayLong");
 		assertEquals(OperationalMode.UNKNOWN.toString(),mpdArrayLong.getOperationalMode());
-		System.out.println("===>>> "+mpdArrayLong.getValue());
+		assertEquals("[-1, 5, 10, 0]",mpdArrayLong.getValue().toString());
 
 		MonitorPointData mpdArrayDouble = publishedMPoints.get("ID-ArrayDouble");
 		assertEquals(OperationalMode.UNKNOWN.toString(),mpdArrayDouble.getOperationalMode());
-		System.out.println("\n===>>> VALUE  "+mpdArrayDouble.getValue());
-		System.out.println("===>>> STRING "+mpdArrayDouble.toString());
-		System.out.println("===>>> JSON   "+mpdArrayDouble.toJsonString());
-		//assertEquals(Alarm.SET_HIGH.toString(), mpdArrayDouble.getValue());
+		assertEquals("[-123.0, 0.654, 7.0]",mpdArrayDouble.getValue());
 	}
 
 	@Override
@@ -192,7 +189,7 @@ public class UdpPluginTest implements PublisherEventsListener {
 	public void dataReceived(MonitorPointData mpData) {
 		publishedMPoints.put(mpData.getId(), mpData);
 		try {
-			logger.info("Data published {}",mpData.toJsonString());
+			logger.info("Data received {}",mpData.toJsonString());
 		} catch (PublisherException pe) {
 			logger.error("Error translating the MonitorPointData into a JSON string",pe);
 		}
@@ -201,6 +198,7 @@ public class UdpPluginTest implements PublisherEventsListener {
 	private void launchPythonPlugin() throws Exception {
 		logger.debug("Starting the python plugin");
 		ProcessBuilder builder = new ProcessBuilder("MockUdpPlugin");
+		builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
 		proc = builder.start();
 		logger.debug("Python plugin running");
 	}
