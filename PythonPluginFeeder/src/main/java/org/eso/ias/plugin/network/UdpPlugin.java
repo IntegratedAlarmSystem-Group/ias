@@ -1,5 +1,25 @@
 package org.eso.ias.plugin.network;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.cli.*;
+import org.eso.ias.heartbeat.HbProducer;
+import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
+import org.eso.ias.plugin.Plugin;
+import org.eso.ias.plugin.PluginException;
+import org.eso.ias.plugin.Sample;
+import org.eso.ias.plugin.config.PluginConfig;
+import org.eso.ias.plugin.config.PluginConfigFileReader;
+import org.eso.ias.plugin.publisher.MonitorPointSender;
+import org.eso.ias.plugin.publisher.PublisherException;
+import org.eso.ias.plugin.publisher.impl.KafkaPublisher;
+import org.eso.ias.types.IASTypes;
+import org.eso.ias.types.NumericArray;
+import org.eso.ias.types.OperationalMode;
+import org.eso.ias.utils.ISO8601Helper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.net.DatagramPacket;
@@ -11,32 +31,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.eso.ias.heartbeat.HbProducer;
-import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
-import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
-import org.eso.ias.plugin.Plugin;
-import org.eso.ias.plugin.PluginException;
-import org.eso.ias.plugin.Sample;
-import org.eso.ias.plugin.config.PluginConfig;
-import org.eso.ias.plugin.config.PluginConfigException;
-import org.eso.ias.plugin.config.PluginConfigFileReader;
-import org.eso.ias.plugin.publisher.MonitorPointSender;
-import org.eso.ias.plugin.publisher.PublisherException;
-import org.eso.ias.plugin.publisher.impl.KafkaPublisher;
-import org.eso.ias.types.IASTypes;
-import org.eso.ias.types.OperationalMode;
-import org.eso.ias.utils.ISO8601Helper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * A plugin that gets monitor points and alarms 
@@ -290,6 +284,7 @@ public class UdpPlugin implements Runnable {
 		MessageDao message;
 		try { 
 			message = MAPPER.readValue(str, MessageDao.class);
+			logger.debug("JSON translation [{}]",message.toString());
 		} catch (Exception e) {
 			logger.error("Exception parsing JSON string [{}]: value lost",str,e);
 			return;
@@ -304,7 +299,6 @@ public class UdpPlugin implements Runnable {
 					pe);
 			return;
 		}
-		
 		if (!Objects.isNull(message.getOperMode()) && !message.getOperMode().isEmpty()) {
 			try {
 				OperationalMode mode = OperationalMode.valueOf(message.getOperMode());
@@ -330,7 +324,12 @@ public class UdpPlugin implements Runnable {
 			timestamp=System.currentTimeMillis();
 		}
 		
-		Sample sample = new Sample(value,timestamp);
+		Sample sample;
+		if (value instanceof NumericArray) {
+			sample = new Sample(((NumericArray)value).array,timestamp);
+		} else {
+			sample = new Sample(value,timestamp);
+		}
 		try {
 			plugin.updateMonitorPointValue(message.getMonitorPointId(), sample);
 		} catch (Exception e) {
