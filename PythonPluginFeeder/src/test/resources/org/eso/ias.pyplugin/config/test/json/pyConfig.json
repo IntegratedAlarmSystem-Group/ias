@@ -30,6 +30,14 @@
 		{"id":"ID-Alarm",
 		"refreshTime":"5000",
 		"filter":"org.eso.ias.plugin.filter.NoneFilter",
+		"filterOptions":""},
+		{"id":"ID-ArrayLong",
+		"refreshTime":"5000",
+		"filter":"org.eso.ias.plugin.filter.NoneFilter",
+		"filterOptions":""},
+		{"id":"ID-ArrayDouble",
+		"refreshTime":"5000",
+		"filter":"org.eso.ias.plugin.filter.NoneFilter",
 		"filterOptions":""}]
 }
 
