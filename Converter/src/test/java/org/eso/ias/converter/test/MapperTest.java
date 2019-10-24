@@ -98,10 +98,12 @@ public class MapperTest extends ConverterTestBase {
 
 			assertEquals(mpdh.iasType, iasValue.valueType);
 			assertTrue(iasValue.productionTStamp.isPresent());
-			if (iasValue.valueType!=IASTypes.ARRAYOFDOUBLES && iasValue.valueType!=IASTypes.ARRAYOFLONGS) {
-				assertEquals(iasValue.value.toString(),mpd.getValue());
+			if (iasValue.valueType==IASTypes.ARRAYOFDOUBLES || iasValue.valueType==IASTypes.ARRAYOFLONGS) {
+				String strFromIasValue = ((NumericArray)iasValue.value).codeToString();
+				String strFromMPD = mpd.getValue();
+				assertEquals(strFromIasValue,strFromMPD);
 			} else {
-				assertEquals(((NumericArray)iasValue.value).codeToString(),mpd.getValue().replace(" ",""));
+				assertEquals(iasValue.value.toString(),mpd.getValue());
 			}
 			assertEquals(
 					mpd.getProducedByPluginTime(),
@@ -115,11 +117,6 @@ public class MapperTest extends ConverterTestBase {
 			
 			assertEquals(mpdh.id, iasValue.id,"Identifier differs");
 
-			if (iasValue.valueType!=IASTypes.ARRAYOFDOUBLES && iasValue.valueType!=IASTypes.ARRAYOFLONGS) {
-				assertEquals(mpdh.value,iasValue.value,"Values differ");
-			} else {
-				assertEquals(((NumericArray)iasValue.value).codeToString(),mpd.getValue().replace(" ",""));
-			}
 		}
 	}
 
