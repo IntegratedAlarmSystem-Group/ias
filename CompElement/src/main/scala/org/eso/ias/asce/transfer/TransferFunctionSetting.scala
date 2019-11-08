@@ -3,18 +3,16 @@ package org.eso.ias.asce.transfer
 import java.util.Properties
 import java.util.concurrent.{ThreadFactory, TimeUnit}
 
-import scala.util.Try
 import org.eso.ias.logging.IASLogger
 
 import scala.sys.SystemProperties
-import scala.util.Success
-import scala.util.Failure
+import scala.util.{Failure, Success, Try}
 
 /**
  * Implemented types of transfer functions
  */
 object TransferFunctionLanguage extends Enumeration {
-  val java, scala = Value
+  val java, scala, python = Value
 }
 
 /**
@@ -26,17 +24,19 @@ object TransferFunctionLanguage extends Enumeration {
  * to run the transfer function independently from the 
  * supported programming language (@see TransferFunctionLanguage).
  * 
- * At the present there 2 possible implementations
- * of the transfer function in scala or java.
- * Other possibilities is to write the TF in python with jithon
- * that ultimately compiles the script into a java class, or use a DSL
- * for which scala offers some advantages compared to java.
- * 
+ * At the present there 3 possible implementations
+ * of the transfer function in scala, java or python.
+ *
  * Java implementation requires to provide a java-style interface to 
  * developers for which we need to convert scala data structure to/from
  * java. Scala implementations of the TF are therefore more performant (in principle).
+ *
+ * For python TFs, we use jep (https://github.com/ninia/jep) that provides
+ * interoperability between java and python.
+ * For the python TFs, a java class is always loaded, PythonExecutorTF, that delegates
+ * to the python class whose name is in the className property
  * 
- * @param className: The name of the java/scala class to run
+ * @param className: The name of the java/scala/python class to run
  * @param language: the programming language used to implement the TF
  * @param templateInstance: the instance of the template if defined;
  *                          if empty the ASCE is not generated out of a template
@@ -62,6 +62,13 @@ class TransferFunctionSetting(
    * isShutDown is true when the object has been shutdown
    */
   @volatile var isShutDown = false
+
+  /**
+   * For java and scala the class to load is in className but for python
+   * the name of the java class to load is fixed and className contains the name
+   * of the python class to run the TF
+   */
+  val javaTFClassForPython = "org.eso.ias.asce.transfer.PythonExecutorTF"
   
   /**
    * The java or scala transfer executor i.e. the java or scala 
@@ -119,10 +126,17 @@ class TransferFunctionSetting(
     require(Option(props).isDefined)
     assert(!initialized)
     
-    logger.info("Initializing the TF {}",className)
+    logger.info("Initializing the TF {} with language",className,language)
     
     // Load the class
-    val tfExecutorClass: Try[Class[_]] = Try(this.getClass.getClassLoader.loadClass(className))
+    val tfExecutorClass: Try[Class[_]] =
+      if (language==TransferFunctionLanguage.python) {
+        logger.debug("Loading the java class to run python TF {}",className)
+        Try(this.getClass.getClassLoader.loadClass(javaTFClassForPython))
+      } else {
+        logger.debug("Loading java class {}",className)
+        Try(this.getClass.getClassLoader.loadClass(className))
+      }
     transferExecutor = tfExecutorClass match {
       case Failure(e) => logger.error("Error loading {}",className,e); None
       case Success(tec) => this.synchronized {
@@ -200,9 +214,10 @@ class TransferFunctionSetting(
       }))
     }
 
+    val name = if (language==TransferFunctionLanguage.python) javaTFClassForPython else className
     instance match {
-      case Success(te) => logger.info("Instance of {} built",className); te
-      case Failure(x) => logger.error("Error building the transfer function {}", className,x); None
+      case Success(te) => logger.info("Instance of {} built",name); te
+      case Failure(x) => logger.error("Error building the transfer function {}", name,x); None
     }
   }
 }
