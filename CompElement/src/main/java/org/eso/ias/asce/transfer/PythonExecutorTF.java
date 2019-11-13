@@ -70,9 +70,9 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
             pythonInterpreter.exec("props = {}");
             Map<String, String> props = compInputs.get(key).getProps();
             if (props != null && !props.isEmpty()) {
-                for (String key : props.keySet()) {
-                    pythonInterpreter.set("key", key);
-                    pythonInterpreter.set("value", props.get(key));
+                for (String k : props.keySet()) {
+                    pythonInterpreter.set("key", k);
+                    pythonInterpreter.set("value", props.get(k));
                     pythonInterpreter.exec("props[key]=value");
                 }
             }
