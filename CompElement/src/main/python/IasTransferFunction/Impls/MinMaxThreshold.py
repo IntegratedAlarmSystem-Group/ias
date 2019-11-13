@@ -43,25 +43,22 @@ class MinMaxThreshold(TransferFunction):
         '''
         logging.debug("Initializing MinMaxThreshold python TF of %s",self.asceRunningId)
 
-        assert(len(inputsInfo)==1,"Wrong number of inputs of MinMaxThreshold of ASCE %s: %d instead of 1",
-               self.asceRunningId,
-               len(inputsInfo))
+        assert len(inputsInfo)==1, \
+            'Wrong number of inputs of MinMaxThreshold of ASCE %: % instead of 1' % (self.asceRunningId,len(inputsInfo))
+
         inputType = inputsInfo[0].iasType
         self.idOfInput = inputsInfo[0].id
         logging.info('Input of MinMaxThreshold of ASCE %s: %s',self.asceRunningId,self.idOfInput)
-        assert ( inputType==IASType.DOUBLE or
-                 inputType==IASType.FLOAT or
-                 inputType==IASType.BYTE or
-                 inputType==IASType.INT or
-                 inputType==IASType.LONG or
-                 inputType==IASType.SHORT,
-                 "Not numeric type of MinMaxThreshold of ASCE %s: %s",
-                 self.asceRunningId,
-                 inputType)
+        assert  inputType==IASType.DOUBLE or \
+                 inputType==IASType.FLOAT or \
+                 inputType==IASType.BYTE or \
+                 inputType==IASType.INT or \
+                 inputType==IASType.LONG or \
+                 inputType==IASType.SHORT, \
+                 "Not numeric type of MinMaxThreshold of ASCE %: %" % (self.asceRunningId,inputType)
 
-        assert(outputInfo.iasType==IASType.ALARM,"Output type of is MinMaxThreshold of ASCE %s is %s instead of ALARM",
-               self.asceRunningId,
-               outputInfo.iasType)
+        assert outputInfo.iasType==IASType.ALARM, \
+            "Output type of is MinMaxThreshold of ASCE % is % instead of ALARM" % (self.asceRunningId,outputInfo.iasType)
 
         #For testing only
         self.highOn = 10
