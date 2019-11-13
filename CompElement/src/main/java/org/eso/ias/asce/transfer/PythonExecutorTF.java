@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 
@@ -51,6 +52,60 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
 
     @Override
     public IasIOJ<T> eval(Map<String, IasIOJ<?>> compInputs, IasIOJ<T> actualOutput) throws Exception {
+        Objects.requireNonNull(pythonInterpreter,"eval invoked by the python interpreter is null");
+        logger.debug("Setting up params for python TF for ASCE {}",compElementRunningId);
+
+        pythonInterpreter.exec("inputs = {}}");
+        for (String key: compInputs.keySet()) {
+            logger.debug("Converting input {}", key);
+
+            pythonInterpreter.set("id", compInputs.get(key).getId());
+            pythonInterpreter.set("runningId", compInputs.get(key).getFullrunningId());
+            pythonInterpreter.set("mode", compInputs.get(key).getMode());
+            pythonInterpreter.set("iasType", compInputs.get(key).getType());
+            pythonInterpreter.set("validity", compInputs.get(key).getValidity());
+            pythonInterpreter.set("value", compInputs.get(key).getValue());
+            pythonInterpreter.set("prodTStamp", compInputs.get(key).productionTStamp());
+
+            pythonInterpreter.exec("props = {}");
+            Map<String, String> props = compInputs.get(key).getProps();
+            if (props != null && !props.isEmpty()) {
+                for (String key : props.keySet()) {
+                    pythonInterpreter.set("key", key);
+                    pythonInterpreter.set("value", props.get(key));
+                    pythonInterpreter.exec("props[key]=value");
+                }
+            }
+
+            pythonInterpreter.exec("input = IASIO(id,runningId,mode,iasType,validity,value,prodTStamp,props");
+            pythonInterpreter.exec("inputs[id]=input");
+        }
+
+
+        logger.debug("Converting output {}",actualOutput.getId());
+        pythonInterpreter.set("id", actualOutput.getId());
+        pythonInterpreter.set("runningId", actualOutput.getFullrunningId());
+        pythonInterpreter.set("mode", actualOutput.getMode());
+        pythonInterpreter.set("iasType", actualOutput.getType());
+        pythonInterpreter.set("validity", actualOutput.getValidity());
+        pythonInterpreter.set("value", actualOutput.getValue());
+        pythonInterpreter.set("prodTStamp", actualOutput.productionTStamp());
+
+        pythonInterpreter.exec("props = {}");
+        Map<String,String> props = actualOutput.getProps();
+        if (props!=null && !props.isEmpty()) {
+            for (String key: props.keySet()) {
+                pythonInterpreter.set("key", key);
+                pythonInterpreter.set("value", props.get(key));
+                pythonInterpreter.exec("props[key]=value");
+            }
+        }
+
+        pythonInterpreter.exec("actualOutput = IASIO(id,runningId,mode,iasType,validity,value,prodTStamp,props");
+
+        logger.debug("Invoking the python TF of ASCE {}",compElementRunningId);
+
+
         return null;
     }
 
@@ -75,6 +130,7 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
         }
 
         pythonInterpreter.exec("from IasTransferFunction.IasioInfo import IasioInfo");
+        pythonInterpreter.exec("from IasTransferFunction.IASIO import IASIO");
         pythonInterpreter.exec("from IasBasicTypes.IasType import IASType");
         pythonInterpreter.exec("inputs = []");
         logger.debug("Building python input infos for ASCE {}",compElementRunningId);
