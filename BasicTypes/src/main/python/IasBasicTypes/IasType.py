@@ -88,21 +88,21 @@ class IASType(Enum):
 
 
     @staticmethod
-    def fromString(alarmString):
+    def fromString(typeString):
         '''
-        @param alarmString: the string representation of IasType like
+        @param typeString: the string representation of IasType like
                       IASType.DOUBLE or DOUBLE 
         @return the type represented by the passed a string
         '''
         if not str:
             raise ValueError("Invalid string representation of a type")
         
-        temp = str(alarmString)
+        temp = str(typeString)
         if "." not in temp:
             temp="IASType."+temp
         for valueType in IASType:
             if str(valueType)==temp:
                 return valueType
-        # No enumerated matches with alarmString
-        raise NotImplementedError("Not supported/find IAS data type"+alarmString)
+        # No enumerated matches with typeString
+        raise NotImplementedError("Not supported/find IAS data type: " + typeString)
     
