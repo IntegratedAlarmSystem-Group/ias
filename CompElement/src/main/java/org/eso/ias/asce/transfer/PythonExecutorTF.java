@@ -79,20 +79,27 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
         pythonInterpreter.exec("inputs = []");
         logger.debug("Building python input infos for ASCE {}",compElementRunningId);
         for (IasioInfo inputInfo: inputsInfo) {
+            logger.debug("Processing input:  [name={}, type={}] for ASCE {}",
+                    inputInfo.iasioId(),inputInfo.iasioType(),compElementRunningId);
+
             Object typeName=null;
-            pythonInterpreter.set("typeName", inputInfo.iasioType().typeName);
+            pythonInterpreter.set("typeName", inputInfo.iasioType().toString());
+            pythonInterpreter.set("typeId", inputInfo.iasioId());
             pythonInterpreter.exec("iasioType = IASType.fromString(typeName)");
-            pythonInterpreter.exec("ci = IasioInfo("+inputInfo.iasioId()+",iasioType)");
-            pythonInterpreter.exec("inputs.add(ci)");
+            pythonInterpreter.exec("ci = IasioInfo(typeId,iasioType)");
+            pythonInterpreter.exec("inputs.append(ci)");
         }
+        logger.debug("Inputs processed for ASCE {}",compElementRunningId);
         logger.debug("Building python output info for ASCE {}",compElementRunningId);
         Object typeName=null;
-        pythonInterpreter.set("typeName", outputInfo.iasioType().typeName);
+        logger.debug("Processing output:  name={}, type={}",outputInfo.iasioId(),outputInfo.iasioType());
+        pythonInterpreter.set("typeName", outputInfo.iasioType().toString());
+        pythonInterpreter.set("typeId", outputInfo.iasioId());
         pythonInterpreter.exec("iasioType = IASType.fromString(typeName)");
-        pythonInterpreter.exec("out = IasioInfo("+outputInfo.iasioId()+",iasioType)");
+        pythonInterpreter.exec("out = IasioInfo(typeId,iasioType)");
 
-        logger.debug("Initililizing python TF implementation of ASCE {}",compElementRunningId);
-        pythonInterpreter.exec("pyTF.initialize(inputs,out");
+        logger.debug("Initializing python TF implementation of ASCE {}",compElementRunningId);
+        pythonInterpreter.exec("pyTF.initialize(inputs,out)");
 
         logger.info("Python TF for {} initialized",compElementRunningId);
     }
