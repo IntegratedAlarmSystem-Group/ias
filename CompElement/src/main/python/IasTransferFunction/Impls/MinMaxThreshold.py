@@ -71,7 +71,7 @@ class MinMaxThreshold(TransferFunction):
         '''
         Run the TF
 
-        :param compInputs: The inputs (IASIOs)
+        :param compInputs: The inputs (Map of IASIOs with their IDs as keys)
         :param actualOutput: the actual output (IASIO)
         :return: the new output of the ASCE (IASIO)
         '''
@@ -83,13 +83,15 @@ class MinMaxThreshold(TransferFunction):
 
         wasActivated = actualOutput.value is not None and actualOutput.value.isSet
 
-        condition =  inputValue >= self.highOn or inputValue <= self.lowOn or wasActivated and (inputValue>=self.highOff or inputValue<=self.lowOff);
+        condition =  inputValue.value >= self.highOn or \
+                     inputValue.value <= self.lowOn or \
+                     wasActivated and (inputValue.value>=self.highOff or inputValue.value<=self.lowOff)
 
         newValue = None
         if condition:
             newValue = self.alarmSet
         else:
-            newValue = Alarm.cleared()
+            newValue = Alarm.CLEARED
 
         return actualOutput.updateProps(props).updateValue(newValue)
 
