@@ -64,9 +64,16 @@ class TestPythonTransferFunction extends FlatSpec {
 
   behavior of "The python TransferFunctionSettings"
 
-  it must "Load and initialize the python object" in {
+  it must "load and initialize the python object" in {
     logger.info("Testing initialize")
     val ret = javaComp.initialize()
+    logger.info("Initialize tested")
+  }
 
+  it must "run the python TF" in {
+    logger.info("Testing transfer function execution")
+    val inputs = Map(inputID -> mp)
+    javaComp.transfer(inputs,compID,output)
+    logger.info("TF execution tested")
   }
 }
