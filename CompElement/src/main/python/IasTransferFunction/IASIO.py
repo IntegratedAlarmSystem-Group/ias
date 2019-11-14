@@ -58,6 +58,7 @@ class IASIO(object):
                       self.iasType,
                       self.validity,
                       self.value,
+                      self.productionTStamp,
                       self.props)
 
     def updateValue(self, newValue):
@@ -72,6 +73,7 @@ class IASIO(object):
                      self.iasType,
                      self.validity,
                      newValue,
+                     self.productionTStamp,
                      self.props)
 
     def updateProps(self, newProps):
@@ -88,4 +90,5 @@ class IASIO(object):
                      self.iasType,
                      self.validity,
                      self.value,
+                     self.productionTStamp,
                      newProps)
