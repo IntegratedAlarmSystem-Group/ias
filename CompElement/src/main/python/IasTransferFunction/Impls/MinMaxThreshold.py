@@ -79,7 +79,8 @@ class MinMaxThreshold(TransferFunction):
 
         inputValue = compInputs[self.idOfInput]
 
-        props = actualOutput.props["actualValue"]=inputValue
+        props = actualOutput.props
+        props["actualValue"]=inputValue.value
 
         wasActivated = actualOutput.value is not None and actualOutput.value.isSet
 
