@@ -38,7 +38,7 @@ class MinMaxThreshold(TransferFunction):
 
         # the name of the property to set the priority of the Alarm set when
         # the value of the input passes the given thresholds
-        self.priorityPropName = 'MEDIUM'
+        self.priorityPropName = 'Priority'
 
         # Get thresholds from props is defined
         if props is None:
