@@ -14,7 +14,7 @@ import scala.collection.mutable.{Map => MutableMap}
  * Test the python transfer class: build a PythonExecutorTF that, in turn,
  * delegates method execution to python code
  */
-class TestPythonTransferFunction extends FlatSpec {
+class TestMinMaxPyTF extends FlatSpec {
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
 
