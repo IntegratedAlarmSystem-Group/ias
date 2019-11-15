@@ -120,6 +120,7 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
      */
     private IasIOJ<T> evalPythonTask(Map<String, IasIOJ<?>> compInputs, IasIOJ<T> actualOutput) throws Exception {
         logger.debug("Setting up params to send to python object for ASCE {}",compElementRunningId);
+        actualOutput.getValue().ifPresent(v -> logger.debug("Actual output value {}",v));
         pythonInterpreter.exec("inputs = {}");
         for (String key: compInputs.keySet()) {
             logger.debug("Converting input {}", key);
@@ -158,9 +159,10 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
         pythonInterpreter.set("iasType", actualOutput.getType());
         pythonInterpreter.set("validity", actualOutput.getValidity());
         if (actualOutput.getValue().isPresent()) {
-            pythonInterpreter.set("value", actualOutput.getValue().get());
+            pythonInterpreter.set("outputValue", actualOutput.getValue().get());
+            pythonInterpreter.exec("print('*** ----> ',outputValue)");
         } else {
-            pythonInterpreter.exec("value = None");
+            pythonInterpreter.exec("outputValue = None");
         }
         if (actualOutput.productionTStamp().isPresent()) {
             pythonInterpreter.set("prodTStamp", actualOutput.productionTStamp().get());
@@ -177,9 +179,12 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
                 pythonInterpreter.exec("props[key]=value");
             }
         }
-        logger.debug("Output ready to be sent to python TF");
+        logger.debug("Output ready to be sent to python TF with value {}, mode {} type {}",
+                pythonInterpreter.getValue("outputValue"),
+                pythonInterpreter.getValue("mode"),
+                pythonInterpreter.getValue("iasType"));
 
-        pythonInterpreter.exec("actualOutput = IASIO(id,runningId,mode,iasType,validity,value,prodTStamp,props)");
+        pythonInterpreter.exec("actualOutput = IASIO(id,runningId,mode,iasType,validity,outputValue,prodTStamp,props)");
         logger.debug("Invoking eval on the python TF for ASCE {}",compElementRunningId);
         pythonInterpreter.exec("out = pyTF.eval(inputs,actualOutput)");
 
@@ -284,9 +289,13 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
         pythonInterpreter.set("asceRunningId",this.compElementRunningId);
         pythonInterpreter.set("validityTimeFrame",this.validityTimeFrame);
         pythonInterpreter.exec("userProps = {}");
-        propertiesOpt.ifPresent( props -> {
-            props.keySet().forEach( k -> {});
-        });
+
+        if (propertiesOpt.isPresent()) {
+            for (String k: props.stringPropertyNames()) {
+                pythonInterpreter.exec("userProps['"+k+"']='"+props.get(k)+"'");
+            }
+        }
+
         pythonInterpreter.exec("pyTF = MinMaxThreshold(asceId,asceRunningId,validityTimeFrame,userProps)");
         pythonImpl = pythonInterpreter.getValue("pyTF");
         if (pythonImpl==null) {
