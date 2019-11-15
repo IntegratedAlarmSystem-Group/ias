@@ -9,6 +9,7 @@ import org.eso.ias.types._
 import org.scalatest.FlatSpec
 
 import scala.collection.mutable.{Map => MutableMap}
+import scala.util.Try
 
 /**
  * Test the python transfer class: build a PythonExecutorTF that, in turn,
@@ -54,13 +55,21 @@ class TestMinMaxPyTF extends FlatSpec {
       None,
       threadFactory)
 
+  val props = new Properties();
+  props.setProperty("HighOn","50")
+  props.setProperty("HighOff","40")
+  props.setProperty("LowOn","-20")
+  props.setProperty("LowOff","-10")
+  props.setProperty("LowOff","-10")
+  props.setProperty("Priority", "SET_CRITICAL")
+
   val javaComp: ComputingElement[Alarm] = new ComputingElement[Alarm](
     compID,
     output,
     inputsMPs.values.toSet,
     pythonTFSetting,
     validityThresholdInSecs,
-    new Properties()) with JavaTransfer[Alarm]
+    props) with JavaTransfer[Alarm]
 
   behavior of "The python TransferFunctionSettings"
 
@@ -73,7 +82,22 @@ class TestMinMaxPyTF extends FlatSpec {
   it must "run the python TF" in {
     logger.info("Testing transfer function execution")
     val inputs = Map(inputID -> mp)
-    javaComp.transfer(inputs,compID,output)
+    val newOut: Try[InOut[Alarm]] = javaComp.transfer(inputs,compID,output)
     logger.info("TF execution tested")
+    assert(newOut.isSuccess,"Exception got from the TF")
+
+    val out = newOut.get
+    assert (out.iasType==IASTypes.ALARM,"The TF produced a value of the worng type "+out.iasType )
+    assert(out.value.isDefined)
+    assert(out.value.get==Alarm.CLEARED)
+
+    assert(out.props.isDefined)
+    val props = out.props.get
+    assert(props.size==1,"The TF should have set one and only one property")
+    val propValue = props.get("actualValue")
+    assert(propValue.isDefined,"Property actualValue NOT set")
+    assert(propValue.get=="1")
+
+    assert(out.mode==OperationalMode.UNKNOWN)
   }
 }
