@@ -3,6 +3,7 @@ import sys
 
 from IasBasicTypes.Alarm import Alarm
 from IasBasicTypes.IasType import IASType
+from IasBasicTypes.OperationalMode import OperationalMode
 from IasTransferFunction.TransferFunction import TransferFunction
 
 
@@ -112,9 +113,11 @@ class MinMaxThreshold(TransferFunction):
         logging.debug("Running python MinMaxThreshold TF of ASCE %s",self.asceRunningId)
 
         inputValue = compInputs[self.idOfInput]
+        inputMode = OperationalMode.fromString(inputValue.mode)
+        print("***** type",type(inputMode),"value",str(inputMode))
 
         props = actualOutput.props
-        props["actualValue"]=inputValue.value
+        props["actualValue"]=str(inputValue.value)
 
         wasActivated = actualOutput.value is not None and actualOutput.value.isSet
 
@@ -128,9 +131,4 @@ class MinMaxThreshold(TransferFunction):
         else:
             newValue = Alarm.CLEARED
 
-        return actualOutput.updateProps(props).updateValue(newValue)
-
-
-
-
-
+        return actualOutput.updateProps(props).updateMode(inputMode).updateValue(newValue)
