@@ -60,7 +60,6 @@ class TestMinMaxPyTF extends FlatSpec {
   props.setProperty("HighOff","40")
   props.setProperty("LowOn","-20")
   props.setProperty("LowOff","-10")
-  props.setProperty("LowOff","-10")
   props.setProperty("Priority", "SET_CRITICAL")
 
   val javaComp: ComputingElement[Alarm] = new ComputingElement[Alarm](
@@ -86,10 +85,13 @@ class TestMinMaxPyTF extends FlatSpec {
     logger.info("TF execution tested")
     assert(newOut.isSuccess,"Exception got from the TF")
 
-    val out = newOut.get
+    val out: InOut[Alarm] = newOut.get
     assert (out.iasType==IASTypes.ALARM,"The TF produced a value of the worng type "+out.iasType )
     assert(out.value.isDefined)
     assert(out.value.get==Alarm.CLEARED)
+
+    assert (out.id.id==outId.id,"Unexpected output ID")
+    assert(out.id.fullRunningID==outId.fullRunningID,"Unexpected output full running ID")
 
     assert(out.props.isDefined)
     val props = out.props.get
@@ -109,5 +111,23 @@ class TestMinMaxPyTF extends FlatSpec {
     val out = newOut.get
     assert(out.value.isDefined)
     assert(out.mode==OperationalMode.OPERATIONAL)
+  }
+
+  it must "activate the output depending on the value of the input" in {
+    logger.info("Testing the functioning of the pyton TF")
+    val inputs = Map(inputID -> mp.updateValue(Some(3L)))
+    val newOut: Try[InOut[Alarm]] = javaComp.transfer(inputs,compID,output)
+    assert(newOut.isSuccess,"Exception got from the TF")
+    val out: InOut[Alarm] = newOut.get
+    assert(out.value.isDefined)
+    assert(out.value.get==Alarm.CLEARED)
+
+    // Activation by too high
+    val inputsHigh = Map(inputID -> mp.updateValue(Some(55L)))
+    val newOutHigh: Try[InOut[Alarm]] = javaComp.transfer(inputsHigh,compID,out)
+    assert(newOutHigh.isSuccess,"Exception got from the TF")
+    val outHigh = newOutHigh.get
+    assert(outHigh.value.isDefined)
+    assert(outHigh.value.get==Alarm.SET_CRITICAL)
   }
 }
