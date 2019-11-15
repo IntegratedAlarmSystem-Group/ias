@@ -100,4 +100,14 @@ class TestMinMaxPyTF extends FlatSpec {
 
     assert(out.mode==OperationalMode.UNKNOWN)
   }
+
+  it must "set the mode of the input in the output" in {
+    logger.info("Testing the setting of the Operational mode")
+    val inputs = Map(inputID -> mp.updateMode(OperationalMode.OPERATIONAL))
+    val newOut: Try[InOut[Alarm]] = javaComp.transfer(inputs,compID,output)
+    assert(newOut.isSuccess,"Exception got from the TF")
+    val out = newOut.get
+    assert(out.value.isDefined)
+    assert(out.mode==OperationalMode.OPERATIONAL)
+  }
 }
