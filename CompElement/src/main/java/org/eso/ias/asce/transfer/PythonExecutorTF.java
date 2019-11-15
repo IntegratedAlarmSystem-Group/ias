@@ -308,6 +308,7 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
     public void shutdown() throws Exception {
         logger.debug("Shutting down python TF for {}",compElementRunningId);
         executor.shutdownNow();
+        pythonInterpreter.close();
         logger.info("Java executor of python TF for {} is shut down",compElementRunningId);
     }
 }
