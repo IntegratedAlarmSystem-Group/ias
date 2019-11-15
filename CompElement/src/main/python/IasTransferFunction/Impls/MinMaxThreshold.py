@@ -29,9 +29,50 @@ class MinMaxThreshold(TransferFunction):
         # The ID of the input
         self.idOfInput = None
 
-        self.highOn=self.highOff=sys.maxsize
-        self.lowOn=self.lowOff=-sys.maxsize
-        self.alarmSet = Alarm.SET_MEDIUM
+        # The names of the properties to set the threshold to activate the output
+        # including histeresys
+        self.highOnPropName = 'HighOn'
+        self.highOffPropName = 'HighOff'
+        self.lowOnPropName = 'LowOn'
+        self.lowOffPropName = 'LowOff'
+
+        # the name of the property to set the priority of the Alarm set when
+        # the value of the input passes the given thresholds
+        self.priorityPropName = 'MEDIUM'
+
+        # Get thresholds from props is defined
+        if props is None:
+            props = {}
+        highOnFromProps=props.get(self.highOnPropName)
+        highOffFromProps=props.get(self.highOffPropName)
+        lowOnFromProps=props.get(self.lowOnPropName)
+        lowOffFromProps=props.get(self.lowOffPropName)
+
+        if highOnFromProps is not None:
+            self.highOn = float(highOnFromProps)
+        else:
+            self.highOn=sys.maxsize
+
+        if highOffFromProps is not None:
+            self.highOff = float(highOffFromProps)
+        else:
+            self.highOff=sys.maxsize
+
+        if lowOnFromProps is not None:
+            self.lowOn = float(lowOnFromProps)
+        else:
+            self.lowOn=-sys.maxsize
+
+        if lowOffFromProps  is not None:
+            self.lowOff = float(lowOffFromProps)
+        else:
+            self.lowOff=-sys.maxsize
+
+        priorityStr = props.get(self.priorityPropName)
+        if priorityStr is not None:
+            self.alarmSet = Alarm.fromString(priorityStr)
+        else:
+            self.alarmSet = Alarm.SET_MEDIUM
 
     def initialize(self, inputsInfo, outputInfo):
         '''
@@ -59,13 +100,6 @@ class MinMaxThreshold(TransferFunction):
 
         assert outputInfo.iasType==IASType.ALARM, \
             "Output type of is MinMaxThreshold of ASCE % is % instead of ALARM" % (self.asceRunningId,outputInfo.iasType)
-
-        #For testing only
-        self.highOn = 10
-        self.highOff = 8
-        self.lowOn = -10
-        self.lowOff = -8
-        self.alarmSet = Alarm.SET_HIGH
 
     def eval(self,compInputs, actualOutput):
         '''
