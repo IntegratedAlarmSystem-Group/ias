@@ -1,5 +1,4 @@
-from IasBasicTypes import OperationalMode
-
+from IasBasicTypes.OperationalMode import OperationalMode
 
 class IASIO(object):
     '''
@@ -84,6 +83,7 @@ class IASIO(object):
         '''
         if newProps is None:
             newProps = {}
+        assert isinstance(newProps,dict)
         return IASIO(self.id,
                      self.runningId,
                      self.mode,
