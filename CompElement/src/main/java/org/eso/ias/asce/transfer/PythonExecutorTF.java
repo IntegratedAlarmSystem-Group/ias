@@ -48,6 +48,11 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
     private final ExecutorService executor;
 
     /**
+     * The properties
+     */
+    private final Optional<Properties> propertiesOpt;
+
+    /**
      * Constructor
      *
      * @param cEleId            : The id of the ASCE
@@ -58,6 +63,8 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
     public PythonExecutorTF(String cEleId, String cEleRunningId, long validityTimeFrame, Properties props) {
         super(cEleId, cEleRunningId, validityTimeFrame, props);
         logger.debug("Python TF executor built for ASCE {}",compElementRunningId);
+
+        propertiesOpt=Optional.ofNullable(props);
 
         executor = Executors.newSingleThreadExecutor(new CompEleThreadFactory("Python code executor thread for ASCE "+cEleId));
     }
@@ -267,7 +274,11 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
         pythonInterpreter.set("asceId",this.compElementId);
         pythonInterpreter.set("asceRunningId",this.compElementRunningId);
         pythonInterpreter.set("validityTimeFrame",this.validityTimeFrame);
-        pythonInterpreter.exec("pyTF = MinMaxThreshold(asceId,asceRunningId,validityTimeFrame,None)");
+        pythonInterpreter.exec("userProps = {}");
+        propertiesOpt.ifPresent( props -> {
+            props.keySet().forEach( k -> {});
+        });
+        pythonInterpreter.exec("pyTF = MinMaxThreshold(asceId,asceRunningId,validityTimeFrame,userProps)");
         pythonImpl = pythonInterpreter.getValue("pyTF");
         if (pythonImpl==null) {
             throw new Exception("Error building the python object for ASCE "+compElementRunningId);
