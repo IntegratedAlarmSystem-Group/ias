@@ -70,7 +70,7 @@ class TestMinMaxPyTF extends FlatSpec {
     validityThresholdInSecs,
     props) with JavaTransfer[Alarm]
 
-  behavior of "The python TransferFunctionSettings"
+  behavior of "The python MinMaxThreshold TF"
 
   it must "load and initialize the python object" in {
     logger.info("Testing initialize")
