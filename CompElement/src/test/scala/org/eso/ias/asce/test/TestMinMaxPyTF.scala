@@ -122,12 +122,70 @@ class TestMinMaxPyTF extends FlatSpec {
     assert(out.value.isDefined)
     assert(out.value.get==Alarm.CLEARED)
 
+    // Do not activate between HOff and HOn
+    // Remain active between hOFF and hON
+    val inputs2 = Map(inputID -> mp.updateValue(Some(45L)))
+    val newOut2: Try[InOut[Alarm]] = javaComp.transfer(inputs2,compID,out)
+    assert(newOut2.isSuccess,"Exception got from the TF")
+    val out2 = newOut2.get
+    assert(out2.value.isDefined)
+    assert(out2.value.get==Alarm.CLEARED)
+
     // Activation by too high
-    val inputsHigh = Map(inputID -> mp.updateValue(Some(55L)))
-    val newOutHigh: Try[InOut[Alarm]] = javaComp.transfer(inputsHigh,compID,out)
-    assert(newOutHigh.isSuccess,"Exception got from the TF")
-    val outHigh = newOutHigh.get
-    assert(outHigh.value.isDefined)
-    assert(outHigh.value.get==Alarm.SET_CRITICAL)
+    val inputs3 = Map(inputID -> mp.updateValue(Some(55L)))
+    val newOut3: Try[InOut[Alarm]] = javaComp.transfer(inputs3,compID,out2)
+    assert(newOut3.isSuccess,"Exception got from the TF")
+    val out3: InOut[Alarm] = newOut3.get
+    assert(out3.value.isDefined)
+    assert(out3.value.get==Alarm.SET_CRITICAL)
+
+    // Remain active between hOFF and hON
+    val inputs4 = Map(inputID -> mp.updateValue(Some(45L)))
+    val newOut4: Try[InOut[Alarm]] = javaComp.transfer(inputs4,compID,out3)
+    assert(newOut4.isSuccess,"Exception got from the TF")
+    val out4 = newOut4.get
+    assert(out4.value.isDefined)
+    assert(out4.value.get==Alarm.SET_CRITICAL)
+
+    // Deactivate below hOn
+    val inputs5 = Map(inputID -> mp.updateValue(Some(35L)))
+    val newOut5: Try[InOut[Alarm]] = javaComp.transfer(inputs5,compID,out4)
+    assert(newOut5.isSuccess,"Exception got from the TF")
+    val out5 = newOut5.get
+    assert(out5.value.isDefined)
+    assert(out5.value.get==Alarm.CLEARED)
+
+    // Do not activate between lOn and lOff
+    val inputs6 = Map(inputID -> mp.updateValue(Some(-15L)))
+    val newOut6: Try[InOut[Alarm]] = javaComp.transfer(inputs6,compID,out5)
+    assert(newOut6.isSuccess,"Exception got from the TF")
+    val out6 = newOut6.get
+    assert(out6.value.isDefined)
+    assert(out6.value.get==Alarm.CLEARED)
+
+    // Activate between lOn and lOff
+    val inputs7 = Map(inputID -> mp.updateValue(Some(-25L)))
+    val newOut7: Try[InOut[Alarm]] = javaComp.transfer(inputs7,compID,out6)
+    assert(newOut7.isSuccess,"Exception got from the TF")
+    val out7 = newOut7.get
+    assert(out7.value.isDefined)
+    assert(out7.value.get==Alarm.SET_CRITICAL)
+
+    // Do not activate between lOn and lOff
+    val inputs8 = Map(inputID -> mp.updateValue(Some(-15L)))
+    val newOut8: Try[InOut[Alarm]] = javaComp.transfer(inputs8,compID,out7)
+    assert(newOut8.isSuccess,"Exception got from the TF")
+    val out8 = newOut8.get
+    assert(out8.value.isDefined)
+    assert(out8.value.get==Alarm.SET_CRITICAL)
+
+    // Deactivate when greater than lOff
+    val inputs9 = Map(inputID -> mp.updateValue(Some(0L)))
+    val newOut9: Try[InOut[Alarm]] = javaComp.transfer(inputs9,compID,out8)
+    assert(newOut9.isSuccess,"Exception got from the TF")
+    val out9 = newOut9.get
+    assert(out9.value.isDefined)
+    assert(out9.value.get==Alarm.CLEARED)
   }
+
 }
