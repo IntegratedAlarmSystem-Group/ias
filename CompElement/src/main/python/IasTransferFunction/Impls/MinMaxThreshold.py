@@ -127,9 +127,9 @@ class MinMaxThreshold(TransferFunction):
         if actualOutput.value is not None and isinstance(actualOutput.value,str):
             print("***** actualOutput",actualOutput.value)
             actualOutput.value = IASType.ALARM.convertStrToValue(actualOutput.value)
-        wasActivated = actualOutput.value is not None and actualOutput.value.isSet
+        wasActivated = actualOutput.value is not None and actualOutput.value.isSet()
 
-        print("**** hON",self.highOn,"hOFF",self.highOff,"lON",self.lowOn,"lOFF",self.lowOff)
+        print("***** hON",self.highOn,"hOFF",self.highOff,"lON",self.lowOn,"lOFF",self.lowOff,"Was activated",wasActivated)
 
         condition =  inputValue.value >= self.highOn or \
                      inputValue.value <= self.lowOn or \
