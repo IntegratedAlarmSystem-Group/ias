@@ -19,8 +19,8 @@ import java.util.concurrent.*;
  * PythonExecutorTF delegates method execution to the python code through jep.
  *
  * That means that when python language for the TF is set in the configuration,
- * this class is always loaded by the ASCE. This class then build the python object
- * to which all the calls from ASCE are ultimately delegated.
+ * this class is always loaded by the ASCE.
+ * Objects of this class then build the python object to which all the calls from ASCE are ultimately delegated.
  */
 public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
 
@@ -53,16 +53,43 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
     private final Optional<Properties> propertiesOpt;
 
     /**
-     * Constructor
+     * The name of the python class to which this java TF delegates as received in the
+     * constructor
+     *
+     * The name can or cannot have a dot ('.') and will be used by jep to import the class:
+     * - pythonClassName=X translates to from X import X
+     * - pythonClassName=Z.Y.X translates to from Z.Y.X import X
+     */
+    private final String pythonFullClassName;
+
+    /**
+     * Constructor.
+     *
+     * This constructor differs from the other TFs because it needs to know the name of the python
+     * class to load.
      *
      * @param cEleId            : The id of the ASCE
      * @param cEleRunningId     : the running ID of the ASCE
      * @param validityTimeFrame : The time frame (msec) to invalidate monitor points
      * @param props             : The properties for the executor
+     * @param pythonClassName   : The name of the python class to which to delegate
      */
-    public PythonExecutorTF(String cEleId, String cEleRunningId, long validityTimeFrame, Properties props) {
+    public PythonExecutorTF(
+            String cEleId,
+            String cEleRunningId,
+            long validityTimeFrame,
+            Properties props,
+            String pythonClassName) throws Exception  {
         super(cEleId, cEleRunningId, validityTimeFrame, props);
-        logger.debug("Python TF executor built for ASCE {}",compElementRunningId);
+
+        if (pythonClassName==null || pythonClassName.isEmpty()) {
+            throw new Exception("Missing python class name");
+        }
+        this.pythonFullClassName =pythonClassName;
+
+        logger.debug("Python TF executor built for ASCE {}: will delegate to python TF {}",
+                compElementRunningId,
+                pythonClassName);
 
         propertiesOpt=Optional.ofNullable(props);
 
@@ -273,6 +300,21 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
     }
 
     /**
+     * Build the statement to import the python class name as described in {@link PythonExecutorTF#pythonFullClassName}
+     *
+     * @return the python statement to import the python class
+     */
+    private String buildImportPythonClassNameStatement() {
+        String[] parts=null;
+        if (pythonFullClassName.contains(".")) {
+            parts = pythonFullClassName.split("\\.");
+        } else {
+            parts = new String[]{pythonFullClassName};
+        }
+        return String.format("from %s import %s", pythonFullClassName,parts[parts.length-1]);
+    }
+
+    /**
      * Runs the initialize in the python code
      *
      * This method must be run with the executor because jep requires that
@@ -282,7 +324,9 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
         pythonInterpreter = new SharedInterpreter();
 
         logger.debug("Python interpreter built for {}",compElementRunningId);
-        pythonInterpreter.exec("from IasTransferFunction.Impls.MinMaxThreshold import MinMaxThreshold");
+        String importOfPythonClass = buildImportPythonClassNameStatement();
+        logger.debug("Load python class with python statement '{}'",importOfPythonClass);
+        pythonInterpreter.exec(importOfPythonClass);
 
         // Build the python object that implements the TF
         pythonInterpreter.set("asceId",this.compElementId);
@@ -296,7 +340,14 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
             }
         }
 
-        pythonInterpreter.exec("pyTF = MinMaxThreshold(asceId,asceRunningId,validityTimeFrame,userProps)");
+        // Get the name of the python class from importOfPythonClass
+        // whose format is "from X.Y.Z import C"
+        String[] parts = importOfPythonClass.split(" ");
+        String pyClassName = parts[parts.length-1];
+
+        // Build the python class
+        logger.debug("Building python class {}",pyClassName);
+        pythonInterpreter.exec("pyTF = "+pyClassName+"(asceId,asceRunningId,validityTimeFrame,userProps)");
         pythonImpl = pythonInterpreter.getValue("pyTF");
         if (pythonImpl==null) {
             throw new Exception("Error building the python object for ASCE "+compElementRunningId);
