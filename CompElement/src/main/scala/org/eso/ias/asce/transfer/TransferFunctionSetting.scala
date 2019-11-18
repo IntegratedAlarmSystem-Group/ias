@@ -45,48 +45,48 @@ object TransferFunctionLanguage extends Enumeration {
  * @see ComputingElement
  */
 class TransferFunctionSetting(
-    val className: String, 
+    val className: String,
     val language: TransferFunctionLanguage.Value,
     templateInstance: Option[Int],
     private[this] val threadFactory: ThreadFactory) {
   require(Option[String](className).isDefined && !className.isEmpty)
   require(Option[TransferFunctionLanguage.Value](language).isDefined)
-      
+
+  /**
+   * The name of the java/scala class to load
+   *
+   * This is needed because the name of the java class for running python TF is not passed in the constructor
+   * but is needed at least for meaningful log messages
+   */
+  val nameOfClassToLoad =
+    if (language==TransferFunctionLanguage.python) classOf[PythonExecutorTF[_]].getName
+    else className
+
   /**
    * Initialized is true when the object to run the TF has been
    * loaded and initialized
    */
   @volatile var initialized = false
-  
+
   /**
    * isShutDown is true when the object has been shutdown
    */
   @volatile var isShutDown = false
 
   /**
-   * For java and scala the class to load is in className but for python
-   * the name of the java class to load is fixed and className contains the name
-   * of the python class to run the TF
-   */
-  val javaTFClassForPython = "org.eso.ias.asce.transfer.PythonExecutorTF"
-  
-  /**
-   * The java or scala transfer executor i.e. the java or scala 
+   * The java or scala transfer executor i.e. the java or scala
    * object that implements the transfer function
    */
   var transferExecutor: Option[TransferExecutor] = None
-  
-  /** The logger */
-  private val logger = IASLogger.getLogger(this.getClass)
-  
+
   override def toString: String = {
     "Transfer function implemented in "+language+" by "+className
   }
-  
+
   /** Shuts the TF down */
   def shutdown() {
     assert(!isShutDown)
-    // Init the executor if it has been correctly instantiated 
+    // Init the executor if it has been correctly instantiated
     if (transferExecutor.isDefined) {
       val shutdownThread = threadFactory.newThread(new Runnable() {
         override def run() {
@@ -97,18 +97,18 @@ class TransferFunctionSetting(
       // Wait for the termination
       shutdownThread.join(10000)
       if (shutdownThread.isAlive) {
-        logger.warn("User provided shutdown did not terminate in 10 secs.") 
+        TransferFunctionSetting.logger.warn("User provided shutdown did not terminate in 10 secs.")
       }
     }
     isShutDown=true
   }
-  
+
   /**
    * Load and build the executor of the  transfer function.
-   * 
+   *
    * This can be slow and access remote resources
    *  so it must be run in a worker thread
-   * 
+   *
    * @param asceId: the ID of the ASCE
    * @param asceRunningId: the runningID of the ASCE
    * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
@@ -125,37 +125,40 @@ class TransferFunctionSetting(
     require(Option(asceRunningId).isDefined,"Invalid ASCE running id")
     require(Option(props).isDefined)
     assert(!initialized)
-    
-    logger.info("Initializing the TF {} with language",className,language)
-    
+
+    TransferFunctionSetting.logger.info("Initializing the TF {} with language {}",nameOfClassToLoad,language)
+
     // Load the class
     val tfExecutorClass: Try[Class[_]] =
       if (language==TransferFunctionLanguage.python) {
-        logger.debug("Loading the java class to run python TF {}",className)
-        Try(this.getClass.getClassLoader.loadClass(javaTFClassForPython))
+        TransferFunctionSetting.logger.debug("Loading the java class to run python TF {}",nameOfClassToLoad)
+        // In case of python the java class implementing the TF is known
+        // so we do not load the class with a forName because in this way
+        // the compiler wil actually ensure that this class exists
+        Try(classOf[PythonExecutorTF[_]])
       } else {
-        logger.debug("Loading java class {}",className)
+        TransferFunctionSetting.logger.debug("Loading java class {}",nameOfClassToLoad)
         Try(this.getClass.getClassLoader.loadClass(className))
       }
     transferExecutor = tfExecutorClass match {
-      case Failure(e) => logger.error("Error loading {}",className,e); None
+      case Failure(e) => TransferFunctionSetting.logger.error("Error loading {}", nameOfClassToLoad,e); None
       case Success(tec) => this.synchronized {
-        logger.info("Class {} loaded",className)
+        TransferFunctionSetting.logger.info("Class {} loaded", nameOfClassToLoad)
         instantiateExecutor(tec, asceId, asceRunningId, validityTimeFrame, props)
       }
     }
-    
+
     if (transferExecutor.isEmpty) {
-      logger.error("Error instantiating the TF {}",className)
+      TransferFunctionSetting.logger.error("Error instantiating the TF {}",nameOfClassToLoad)
     }
 
     transferExecutor.isDefined
-    
+
   }
 
   /**
    * Shutdown the passed executor
-   * 
+   *
    * @param executor: The executor to shutdown
    */
   private[this] def shutdownExecutor(executor: Option[TransferExecutor]) {
@@ -163,13 +166,17 @@ class TransferFunctionSetting(
     try {
       executor.get.shutdown()
     } catch {
-        case e: Exception => 
-          logger.warn("Exception caught shutting down {}",className,e)
+        case e: Exception =>
+          TransferFunctionSetting.logger.warn("Exception caught shutting down {}",nameOfClassToLoad,e)
       }
   }
 
   /**
-   * Instantiate the executor of the passed class
+   * Instantiate the executor of the passed class.
+   *
+   * This method needs to distinguish between python and th eother languages
+   * because the java class that delegates to python has one String parameter more to tell
+   * which python class to load
    *
    * @param executorClass: the class of the executor to instantiate
    * @param asceId: the ID of the ASCE
@@ -192,32 +199,46 @@ class TransferFunctionSetting(
     require(Option(props).isDefined)
 
     // Get the constructor with 3 parameters
-    val ctors = executorClass.getConstructors.filter(c => c.getParameterTypes.length == 4)
-    logger.debug("Found {} constructors with 4 parameters for class {}",ctors.length.toString,className)
-    
+    val ctors =
+      if (language==TransferFunctionLanguage.python) executorClass.getConstructors.filter(c => c.getParameterTypes.length == 5)
+      else executorClass.getConstructors.filter(c => c.getParameterTypes.length == 4)
+    TransferFunctionSetting.logger.debug("Found {} constructors with proper number of args for class {}",ctors.length.toString,nameOfClassToLoad)
+
+
     // Get the constructor
-    val ctor = ctors.find(c =>
-      c.getParameterTypes()(0) == asceId.getClass &&
-      c.getParameterTypes()(1) == asceRunningId.getClass &&
-      c.getParameterTypes()(2) == validityTimeFrame.getClass &&
-      c.getParameterTypes()(3) == props.getClass)
-    
+    val ctor = if (language==TransferFunctionLanguage.python) {
+      ctors.find(c =>
+        c.getParameterTypes()(0) == asceId.getClass &&
+          c.getParameterTypes()(1) == asceRunningId.getClass &&
+          c.getParameterTypes()(2) == validityTimeFrame.getClass &&
+          c.getParameterTypes()(3) == props.getClass &&
+          c.getParameterTypes()(4)==classOf[String])
+    } else {
+      ctors.find(c =>
+        c.getParameterTypes()(0) == asceId.getClass &&
+          c.getParameterTypes()(1) == asceRunningId.getClass &&
+          c.getParameterTypes()(2) == validityTimeFrame.getClass &&
+          c.getParameterTypes()(3) == props.getClass)
+    }
+
     val instance = if (ctor.isEmpty) {
-      Failure(new Exception("Constructor for "+className+" NOT found"))
-    } else { 
+      Failure(new Exception("Constructor for "+nameOfClassToLoad+" NOT found"))
+    } else {
       Try(ctor.map(c => {
-        logger.debug("Constructor found for {}",className)
+        TransferFunctionSetting.logger.debug("Constructor found for {}",nameOfClassToLoad)
         // The arguments to pass to the constructor
-        val args = Array[AnyRef](asceId, asceRunningId, new java.lang.Long(validityTimeFrame),props)
+        val args =
+          if (language==TransferFunctionLanguage.python)
+            Array[AnyRef](asceId, asceRunningId, new java.lang.Long(validityTimeFrame),props,className)
+        else Array[AnyRef](asceId, asceRunningId, new java.lang.Long(validityTimeFrame),props)
         // Invoke the constructor to build the TransferExecutor
         c.newInstance(args: _*).asInstanceOf[TransferExecutor]
       }))
     }
 
-    val name = if (language==TransferFunctionLanguage.python) javaTFClassForPython else className
     instance match {
-      case Success(te) => logger.info("Instance of {} built",name); te
-      case Failure(x) => logger.error("Error building the transfer function {}", name,x); None
+      case Success(te) => TransferFunctionSetting.logger.info("Instance of {} built",nameOfClassToLoad); te
+      case Failure(x) => TransferFunctionSetting.logger.error("Error building the transfer function {}", nameOfClassToLoad,x); None
     }
   }
 }
@@ -252,5 +273,8 @@ object TransferFunctionSetting {
 
   /** The MaxAcceptableSlowDuration in milliseconds */
   lazy val MaxAcceptableSlowDurationMillis:Long = TimeUnit.MILLISECONDS.convert(MaxAcceptableSlowDuration, TimeUnit.SECONDS)
+
+  /** The logger */
+  private val logger = IASLogger.getLogger(this.getClass)
 
 }
