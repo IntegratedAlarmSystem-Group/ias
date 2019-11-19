@@ -88,3 +88,29 @@ class TransferFunction(object):
         :return: the new output of the ASCE (IASIO)
         '''
         raise NotImplementedError('Python TF implementation missing')
+
+    def getValue(self, inputs, id, instance):
+        '''
+        Get a value from its ID taking into account templates
+
+        It is the same method present in the JavaTransferExecutor and in ScalaTransferExecutor
+
+        :param inputs: the map of inputs as received in the eval method
+        :param id: the id (string) of the input (without template)
+        :param instance: the instance (int) or None if not templated
+        :return: the value or None if not found
+        '''
+        if (inputs is None or id is None):
+            raise ValueError("Maps of input and id can't be None")
+        assert isinstance(input,dict), "Map of inputs expected"
+        assert isinstance(id,str), "The ID must be a string"
+
+        if instance is not None:
+            assert isinstance(instance,int), "The instance must be an integer (instead of "+instance+")"
+            postFix= "[!#"+str(instance)+"!]"
+        else:
+            postFix = ""
+
+        idToSearch = id + postFix
+
+        return inputs.get(idToSearch)
