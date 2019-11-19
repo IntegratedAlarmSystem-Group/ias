@@ -7,7 +7,7 @@ import org.eso.ias.types.IASTypes
   * of the transfer function
   *
   * @param iasioId the ID of the IASIO
-  * @param iasioType Th etype of the IASIO
+  * @param iasioType The type of the IASIO
   */
 class IasioInfo(val iasioId: String, val iasioType: IASTypes) {
   require(Option(iasioId).isDefined,"Invalid undefined id")

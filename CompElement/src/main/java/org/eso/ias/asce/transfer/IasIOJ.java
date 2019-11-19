@@ -145,7 +145,11 @@ public class IasIOJ<T> {
      * @return The point in time when this monitor point has been produced by the DASU
      */
     public Optional<Long> productionTStamp() {
-    	return Optional.ofNullable(inOut.productionTStamp().getOrElse(null));
+		if (inOut.productionTStamp().isEmpty()) {
+			return Optional.empty();
+		} else {
+			return Optional.of((Long)inOut.productionTStamp().get());
+		}
     }
     
     /**
