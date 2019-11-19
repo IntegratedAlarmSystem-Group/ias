@@ -45,10 +45,7 @@ class MinMaxThreshold(TransferFunction):
         # Get thresholds from props is defined
         if props is None:
             props = {}
-            print("*** props is None")
-        else:
-            for k,v in props.items():
-                print("*** props k",k,"v",v)
+
         highOnFromProps=props.get(self.highOnPropName)
         highOffFromProps=props.get(self.highOffPropName)
         lowOnFromProps=props.get(self.lowOnPropName)
@@ -118,18 +115,15 @@ class MinMaxThreshold(TransferFunction):
         logging.debug("Running python MinMaxThreshold TF of ASCE %s",self.asceRunningId)
 
         inputValue = compInputs[self.idOfInput]
-        print("***** inputValue",inputValue.value)
         inputMode = OperationalMode.fromString(inputValue.mode)
 
         props = actualOutput.props
         props["actualValue"]=str(inputValue.value)
 
         if actualOutput.value is not None and isinstance(actualOutput.value,str):
-            print("***** actualOutput",actualOutput.value)
             actualOutput.value = IASType.ALARM.convertStrToValue(actualOutput.value)
         wasActivated = actualOutput.value is not None and actualOutput.value.isSet()
 
-        print("***** hON",self.highOn,"hOFF",self.highOff,"lON",self.lowOn,"lOFF",self.lowOff,"Was activated",wasActivated)
 
         condition =  inputValue.value >= self.highOn or \
                      inputValue.value <= self.lowOn or \
