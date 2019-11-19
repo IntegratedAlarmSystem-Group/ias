@@ -9,7 +9,7 @@ class TransferFunction(object):
 
     It is the python equivalent of the JavaTransferExecutor class
     '''
-    def __init__(self, asceId, asceRunningId, validityTimeFrame, props):
+    def __init__(self, asceId, asceRunningId, validityTimeFrame, props, instance):
         '''
         Constructor
 
@@ -31,6 +31,11 @@ class TransferFunction(object):
             assert isinstance(props,dict)
             self.props=props
         self.instance = None
+
+        if instance is not None:
+            assert isinstance(instance,int), "The instance must be an integer"
+        self.instance = instance
+
         logging.info("Python TF of %s successfully built",self.asceRunningId)
 
     def setTemplateInstance(self, instance):
