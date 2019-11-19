@@ -48,11 +48,6 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
     private final ExecutorService executor;
 
     /**
-     * The properties
-     */
-    private final Optional<Properties> propertiesOpt;
-
-    /**
      * The name of the python class to which this java TF delegates as received in the
      * constructor
      *
@@ -61,6 +56,11 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
      * - pythonClassName=Z.Y.X translates to from Z.Y.X import X
      */
     private final String pythonFullClassName;
+
+    /**
+     * The type of the output produced by this TF
+     */
+    private IASTypes outputType=null;
 
     /**
      * Constructor.
@@ -90,8 +90,6 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
         logger.debug("Python TF executor built for ASCE {}: will delegate to python TF {}",
                 compElementRunningId,
                 pythonClassName);
-
-        propertiesOpt=Optional.ofNullable(props);
 
         executor = Executors.newSingleThreadExecutor(new CompEleThreadFactory("Python code executor thread for ASCE "+cEleId));
     }
@@ -167,10 +165,11 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
             Map<String, String> props = compInputs.get(key).getProps();
             if (props != null && !props.isEmpty()) {
                 for (String k : props.keySet()) {
-                    pythonInterpreter.set("key", k);
-                    pythonInterpreter.set("value", props.get(k));
-                    pythonInterpreter.exec("props[key]=value");
+                    pythonInterpreter.exec("props['"+k+"']='"+props.get(k)+"'");
+                    logger.debug("Setting input property {}={}",k,props.get(k));
                 }
+            } else {
+                logger.debug("No properties set in input {}",compInputs.get(key).getId());
             }
 
             pythonInterpreter.exec("input = IASIO(id,runningId,mode,iasType,validity,value,prodTStamp,props)");
@@ -244,27 +243,94 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
         Object str = pythonInterpreter.getValue("out");
         logger.debug("Props {} of class {}",str,str.getClass().getName());
 
-        // jep return values as String so we have to convert them
-        // to the proper Java type before updating the value of the output
-        Object value=null;
-        switch (newType) {
-            case ALARM:
-                String temp = (String)pythonInterpreter.getValue("out.value");
+        T value=convertPyOutputValueToJava(pythonInterpreter.getValue("out.value"));
 
-                int idx = temp.lastIndexOf('.');
-                logger.debug("Temp = {}, index={}",temp,idx);
-                if (idx>=0) {
-                    temp =temp.substring(idx+1);
+        return actualOutput.updateProps(newProps).updateMode(newMode).updateValue(value);
+    }
+
+    /**
+     * Converts a python object representing the value of an IASIO to java.
+     *
+     * Depending on how the user writes the code, a python object returned
+     * by jep is a string or a java object.
+     * This method checks the type of the object to return the java object of the proper type.
+     *
+     * @param pyObj The python object usually retrieved with a jep getValue()
+     * @return the java object
+     */
+    private T convertPyOutputValueToJava(Object pyObj) throws Exception {
+        Objects.requireNonNull(outputType,"Unknown output type");
+        Objects.requireNonNull(pyObj,"Can't convert a null value");
+
+        // The object returned by jep is a String that must be converted to the proper
+        // java object
+        switch (outputType) {
+            case LONG:
+            case TIMESTAMP:
+                if (pyObj instanceof String) {
+                    return (T)Long.valueOf((String) pyObj);
+                } else {
+                    return (T)pyObj;
                 }
-                logger.debug("New temp = {}, index={}",temp,idx);
-                value = Alarm.valueOf((String)temp);
-                break;
+            case INT:
+                if (pyObj instanceof String) {
+                    return (T)Integer.valueOf((String) pyObj);
+                } else {
+                    return (T)Integer.valueOf(((Long)pyObj).intValue());
+                }
+            case SHORT:
+                if (pyObj instanceof String) {
+                    return (T)Short.valueOf((String) pyObj);
+                } else {
+                    return (T)Short.valueOf(((Long)pyObj).shortValue());
+                }
+            case BYTE:
+                if (pyObj instanceof String) {
+                    return (T)Byte.valueOf((String) pyObj);
+                } else {
+                    return (T)Byte.valueOf(((Long)pyObj).byteValue());
+                }
+            case DOUBLE:
+                if (pyObj instanceof String) {
+                    return (T)Double.valueOf((String) pyObj);
+                } else {
+                    return (T)pyObj;
+                }
+            case FLOAT:
+                if (pyObj instanceof String) {
+                    return (T)Float.valueOf((String) pyObj);
+                } else {
+                    return (T) Float.valueOf(((Double)pyObj).floatValue());
+                }
+            case BOOLEAN:
+                if (pyObj instanceof String) {
+                    return (T)Boolean.valueOf((String) pyObj);
+                } else {
+                    return (T)pyObj;
+                }
+            case CHAR: return (T) Character.valueOf(((String) pyObj).charAt(0));
+            case STRING: return (T)(String)pyObj;
+            case ARRAYOFDOUBLES:
+                return (T)pyObj;
+            case ARRAYOFLONGS:
+                return (T)pyObj;
+            case ALARM:
+                if (pyObj instanceof String) {
+                    String temp = (String) pyObj;
+                    int idx = temp.lastIndexOf('.');
+                    logger.debug("Temp = {}, index={}", temp, idx);
+                    if (idx >= 0) {
+                        temp = temp.substring(idx + 1);
+                    }
+                    logger.debug("New temp = {}, index={}", temp, idx);
+                    return (T) Alarm.valueOf((String) temp);
+                } else {
+                    return (T)pyObj;
+                }
             default:
-                throw new UnsupportedOperationException("Unsupported type "+newType);
+                throw new UnsupportedOperationException("Unsupported type "+outputType);
         }
 
-
-        return actualOutput.updateProps(newProps).updateMode(newMode).updateValue((T)value);
     }
 
     @Override
@@ -295,6 +361,8 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
                     "Exception caught while waiting for the initialization of the python TF of ASCE "+compElementRunningId,
                     e);
         }
+
+        outputType = outputInfo.iasioType();
 
         logger.info("Python TF for {} initialized",compElementRunningId);
     }
@@ -334,9 +402,12 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
         pythonInterpreter.set("validityTimeFrame",this.validityTimeFrame);
         pythonInterpreter.exec("userProps = {}");
 
-        if (propertiesOpt.isPresent()) {
+        if (props.isEmpty()) {
+            logger.debug("No properties have been set for ASCE {}",compElementRunningId);
+        } else {
             for (String k: props.stringPropertyNames()) {
                 pythonInterpreter.exec("userProps['"+k+"']='"+props.get(k)+"'");
+                logger.debug("Set property {}={}",k,props.get(k));
             }
         }
 
