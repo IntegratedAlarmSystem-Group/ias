@@ -542,4 +542,34 @@ class TestPyTF extends FlatSpec {
 
     logger.info("Input type ALARM tested")
   }
+
+  it can "run many times the TF (Stress test)" in {
+    logger.info("Performing a stress test with an input type LONG")
+    val inputsMPs: Map[String, InOut[_]] = Map(mpIdLong.id -> mpLong.updateValue(Some(25L)))
+
+    val javaComp: ComputingElement[java.lang.Long] = new ComputingElement[java.lang.Long](
+      compID,
+      outputLong,
+      inputsMPs.values.toSet,
+      pythonTFSetting,
+      validityThresholdInSecs,
+      new Properties()) with JavaTransfer[java.lang.Long]
+
+    val ret = javaComp.initialize()
+
+    // Run many times the TF
+    var output: InOut[java.lang.Long] = InOut.asOutput(outId, IASTypes.LONG)
+    for (l <- 0L until 15000) {
+      val inputsMPs: Map[String, InOut[_]] = Map(mpIdLong.id -> mpLong.updateValue(Some(l)))
+      val newOut: Try[InOut[java.lang.Long]] = javaComp.transfer(inputsMPs,compID,output)
+      assert(newOut.isSuccess,"Exception got from the TF")
+      output= newOut.get
+      assert (output.iasType==IASTypes.LONG,"The TF produced a value of the worng type "+output.iasType )
+      assert(output.value.isDefined)
+      assert(output.value.get==l)
+    }
+
+    logger.info("Stress test done")
+  }
+
 }

@@ -60,8 +60,6 @@ class TestTransferFunction(TransferFunction):
         inputValue = inputIASIO.value
         inputMode = OperationalMode.fromString(inputIASIO.mode)
 
-        print("**** value",inputValue,"**** mode",inputMode,"type",self.inputType)
-
         if type(inputValue)==str:
             inputValue =self.inputType.convertStrToValue(inputValue)
 
