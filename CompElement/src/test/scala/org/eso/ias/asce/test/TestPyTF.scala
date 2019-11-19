@@ -517,28 +517,29 @@ class TestPyTF extends FlatSpec {
     logger.info("Input type ARRAYOFLONGS tested")
   }
 
-  it must "support input of type ALARM" in {}
-  logger.info("Testing support of input type ALARM")
-  val inputsMPs: Map[String, InOut[_]] = Map(mpIdAlarm.id -> mpAlarm.updateValue(Some(Alarm.SET_HIGH)))
+  it must "support input of type ALARM" in {
+    logger.info("Testing support of input type ALARM")
+    val inputsMPs: Map[String, InOut[_]] = Map(mpIdAlarm.id -> mpAlarm.updateValue(Some(Alarm.SET_HIGH)))
 
-  val javaComp: ComputingElement[Alarm] = new ComputingElement[Alarm](
-    compID,
-    outputAlarm,
-    inputsMPs.values.toSet,
-    pythonTFSetting,
-    validityThresholdInSecs,
-    new Properties()) with JavaTransfer[Alarm]
+    val javaComp: ComputingElement[Alarm] = new ComputingElement[Alarm](
+      compID,
+      outputAlarm,
+      inputsMPs.values.toSet,
+      pythonTFSetting,
+      validityThresholdInSecs,
+      new Properties()) with JavaTransfer[Alarm]
 
-  val ret = javaComp.initialize()
+    val ret = javaComp.initialize()
 
-  val newOut: Try[InOut[Alarm]] = javaComp.transfer(inputsMPs,compID,outputAlarm)
+    val newOut: Try[InOut[Alarm]] = javaComp.transfer(inputsMPs, compID, outputAlarm)
 
-  assert(newOut.isSuccess,"Exception got from the TF")
+    assert(newOut.isSuccess, "Exception got from the TF")
 
-  val out: InOut[Alarm] = newOut.get
-  assert (out.iasType==IASTypes.ALARM,"The TF produced a value of the worng type "+out.iasType )
-  assert(out.value.isDefined)
-  assert(out.value.get==Alarm.SET_HIGH)
+    val out: InOut[Alarm] = newOut.get
+    assert(out.iasType == IASTypes.ALARM, "The TF produced a value of the worng type " + out.iasType)
+    assert(out.value.isDefined)
+    assert(out.value.get == Alarm.SET_HIGH)
 
-  logger.info("Input type ALARM tested")
+    logger.info("Input type ALARM tested")
+  }
 }
