@@ -3,10 +3,7 @@ package org.eso.ias.asce.transfer;
 import jep.Interpreter;
 import jep.SharedInterpreter;
 import org.eso.ias.asce.CompEleThreadFactory;
-import org.eso.ias.types.Alarm;
-import org.eso.ias.types.IASTypes;
-import org.eso.ias.types.IasValidity;
-import org.eso.ias.types.OperationalMode;
+import org.eso.ias.types.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -156,7 +153,73 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
             pythonInterpreter.set("iasType", compInputs.get(key).getType());
             pythonInterpreter.set("validity", compInputs.get(key).getValidity());
             assert compInputs.get(key).getValue().isPresent() : "Input value shall not be empty";
-            pythonInterpreter.set("value", compInputs.get(key).getValue().get());
+
+            // Translate the value of the input to a proper (possibly native) python type
+            switch (compInputs.get(key).getType()) {
+                case LONG:
+                case INT:
+                case SHORT:
+                case BYTE:
+                case TIMESTAMP:
+                    pythonInterpreter.exec("iasValue=int("+compInputs.get(key).getValue().get()+")");
+                    break;
+                case DOUBLE:
+                case FLOAT:
+                    pythonInterpreter.exec("iasValue=float("+compInputs.get(key).getValue().get()+")");
+                    break;
+                case BOOLEAN:
+                    if (compInputs.get(key).getValue().get()==Boolean.TRUE) {
+                        pythonInterpreter.exec("iasValue=True");
+                    } else {
+                        pythonInterpreter.exec("iasValue=False");
+                    }
+                    break;
+                case CHAR:
+                    pythonInterpreter.exec("iasValue='"+((Character)(compInputs.get(key).getValue().get())).charValue()+"'");
+                    break;
+                case STRING:
+                    pythonInterpreter.exec("iasValue='"+compInputs.get(key).getValue().get().toString()+"'");
+                    break;
+                case ARRAYOFDOUBLES:
+                    NumericArray nad = (NumericArray)compInputs.get(key).getValue().get();
+                    Double[] doubles=nad.toArrayOfDouble();
+                    pythonInterpreter.exec("iasValue=[]");
+                    for (Double num: doubles) {
+                        pythonInterpreter.exec("iasValue.append(float("+num+"))");
+                    }
+                    break;
+                case ARRAYOFLONGS:
+                    NumericArray nal = (NumericArray)compInputs.get(key).getValue().get();
+                    Double[] longs=nal.toArrayOfDouble();
+                    pythonInterpreter.exec("iasValue=[]");
+                    for (Double num: longs) {
+                        pythonInterpreter.exec("iasValue.append(int("+num+"))");
+                    }
+                    break;
+                case ALARM:
+                    Alarm alarm = (Alarm)compInputs.get(key).getValue().get();
+                    pythonInterpreter.exec("from IasBasicTypes.Alarm import Alarm");
+                    switch (alarm) {
+                        case CLEARED:
+                            pythonInterpreter.exec("iasValue=Alarm.CLEARED");
+                            break;
+                        case SET_LOW:
+                            pythonInterpreter.exec("iasValue=Alarm.SET_LOW");
+                            break;
+                        case SET_MEDIUM:
+                            pythonInterpreter.exec("iasValue=Alarm.SET_MEDIUM");
+                            break;
+                        case SET_HIGH:
+                            pythonInterpreter.exec("iasValue=Alarm.SET_HIGH");
+                            break;
+                        case SET_CRITICAL:
+                            pythonInterpreter.exec("iasValue=Alarm.SET_CRITICAL");
+                            break;
+                    }
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported input type "+compInputs.get(key));
+            }
             assert compInputs.get(key).productionTStamp().isPresent() : "Input production timestamp shall not be empty";
             pythonInterpreter.set("prodTStamp", compInputs.get(key).productionTStamp().get());
 
@@ -172,7 +235,7 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
                 logger.debug("No properties set in input {}",compInputs.get(key).getId());
             }
 
-            pythonInterpreter.exec("input = IASIO(id,runningId,mode,iasType,validity,value,prodTStamp,props)");
+            pythonInterpreter.exec("input = IASIO(id,runningId,mode,iasType,validity,iasValue,prodTStamp,props)");
             pythonInterpreter.exec("inputs[id]=input");
         }
         logger.debug("Inputs ready to be sent to python TF");
@@ -251,8 +314,9 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
     /**
      * Converts a python object representing the value of an IASIO to java.
      *
-     * Depending on how the user writes the code, a python object returned
-     * by jep is a string or a java object.
+     * jep defines a mapping between java and python but objects whose mapping does not
+     * exist are mapped into strings: to be in the safe side, this code checks if the object is a string even for
+     * the cases when the jep mapping is defined.
      * This method checks the type of the object to return the java object of the proper type.
      *
      * @param pyObj The python object usually retrieved with a jep getValue()
@@ -311,9 +375,11 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
             case CHAR: return (T) Character.valueOf(((String) pyObj).charAt(0));
             case STRING: return (T)(String)pyObj;
             case ARRAYOFDOUBLES:
-                return (T)pyObj;
+                ArrayList<Double> doubles = (ArrayList<Double>)pyObj;
+                return (T)(new NumericArray(NumericArray.NumericArrayType.DOUBLE,doubles));
             case ARRAYOFLONGS:
-                return (T)pyObj;
+                ArrayList<Long> longs = (ArrayList<Long>)pyObj;
+                return (T)(new NumericArray(NumericArray.NumericArrayType.LONG,longs));
             case ALARM:
                 if (pyObj instanceof String) {
                     String temp = (String) pyObj;
