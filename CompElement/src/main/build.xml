@@ -4,6 +4,8 @@
 	<property environment="env" />
 	<property name="iasRoot" value="${env.IAS_ROOT}" />
 	<include file="${iasRoot}/config/CommonAnt.xml" as="ias" />
+
+	<property name="exttools" value="jep-3.9.0.jar"/>
 	
 	<property name="jarName" value="ias-asce.jar"/>
 	
