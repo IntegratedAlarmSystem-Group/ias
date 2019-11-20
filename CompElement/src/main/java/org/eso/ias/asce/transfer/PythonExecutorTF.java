@@ -449,7 +449,11 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
 
         // Build the python class
         logger.debug("Building python class {}",pyClassName);
-        pythonInterpreter.exec("pyTF = "+pyClassName+"(asceId,asceRunningId,validityTimeFrame,userProps)");
+        String instanceStr = "None";
+        if (getTemplateInstance().isPresent()) {
+            instanceStr = getTemplateInstance().get().toString();
+        }
+        pythonInterpreter.exec("pyTF = "+pyClassName+"(asceId,asceRunningId,validityTimeFrame,userProps,"+instanceStr+")");
         pythonImpl = pythonInterpreter.getValue("pyTF");
         if (pythonImpl==null) {
             throw new Exception("Error building the python object for ASCE "+compElementRunningId);

@@ -16,7 +16,7 @@ class TestTransferFunction(TransferFunction):
     output
     """
 
-    def __init__(self, asceId, asceRunningId, validityTimeFrame, props):
+    def __init__(self, asceId, asceRunningId, validityTimeFrame, props, instance):
         '''
         Constructor
 
@@ -25,7 +25,7 @@ class TestTransferFunction(TransferFunction):
         :param validityTimeFrame:
         :param props:
         '''
-        super().__init__(asceId, asceRunningId,validityTimeFrame, props)
+        super().__init__(asceId, asceRunningId,validityTimeFrame, props,instance)
         logging.info("TestTransferFunction built for ASCE %s",self.asceRunningId)
 
         if props is not None:
