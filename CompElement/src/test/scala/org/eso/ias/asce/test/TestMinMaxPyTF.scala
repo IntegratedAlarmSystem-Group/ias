@@ -3,7 +3,7 @@ package org.eso.ias.asce.test
 import java.util.Properties
 
 import org.eso.ias.asce.transfer.{JavaTransfer, TransferFunctionLanguage, TransferFunctionSetting}
-import org.eso.ias.asce.{CompEleThreadFactory, ComputingElement}
+import org.eso.ias.asce.{AsceStates, CompEleThreadFactory, ComputingElement}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types._
 import org.scalatest.FlatSpec
@@ -75,6 +75,7 @@ class TestMinMaxPyTF extends FlatSpec {
   it must "load and initialize the python object" in {
     logger.info("Testing initialize")
     val ret = javaComp.initialize()
+    assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
     logger.info("Initialize tested")
   }
 

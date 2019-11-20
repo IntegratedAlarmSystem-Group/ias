@@ -15,7 +15,7 @@ class MinMaxThreshold(TransferFunction):
     In operation the scala version should be preferred because is more performant
     '''
 
-    def __init__(self, asceId, asceRunningId, validityTimeFrame, props):
+    def __init__(self, asceId, asceRunningId, validityTimeFrame, props,instance):
         '''
         Constructor
 
@@ -24,7 +24,7 @@ class MinMaxThreshold(TransferFunction):
         :param validityTimeFrame:
         :param props:
         '''
-        super().__init__(asceId, asceRunningId,validityTimeFrame, props)
+        super().__init__(asceId, asceRunningId,validityTimeFrame, props,instance)
         logging.info("MinMaxThreshold built for ASCE %s",self.asceRunningId)
 
         # The ID of the input
