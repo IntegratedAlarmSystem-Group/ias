@@ -135,6 +135,7 @@ class TestPyTF extends FlatSpec {
 
 
     val ret = javaComp.initialize()
+    assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
     logger.info("Initialize tested")
   }
 
@@ -151,6 +152,7 @@ class TestPyTF extends FlatSpec {
       new Properties()) with JavaTransfer[Alarm]
 
     val ret = javaComp.initialize()
+    assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
     logger.info("Python eval(...) tested")
     assert(ret==AsceStates.InputsUndefined)
 
@@ -187,6 +189,7 @@ class TestPyTF extends FlatSpec {
       new Properties()) with JavaTransfer[Alarm]
 
     val ret = javaComp.initialize()
+    assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
 
     val newOut: Try[InOut[Alarm]] = javaComp.transfer(inputsMPs,compID,outputAlarm)
     assert(newOut.isSuccess,"Exception got from the TF")
@@ -217,6 +220,7 @@ class TestPyTF extends FlatSpec {
       new Properties()) with JavaTransfer[java.lang.Long]
 
     val ret = javaComp.initialize()
+    assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
 
     val newOut: Try[InOut[java.lang.Long]] = javaComp.transfer(inputsMPs,compID,outputLong)
 
@@ -243,6 +247,7 @@ class TestPyTF extends FlatSpec {
       new Properties()) with JavaTransfer[java.lang.Integer]
 
     val ret = javaComp.initialize()
+    assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
 
     val newOut: Try[InOut[java.lang.Integer]] = javaComp.transfer(inputsMPs,compID,outputInt)
 
@@ -268,6 +273,7 @@ class TestPyTF extends FlatSpec {
       new Properties()) with JavaTransfer[java.lang.Short]
 
     val ret = javaComp.initialize()
+    assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
 
     val newOut: Try[InOut[java.lang.Short]] = javaComp.transfer(inputsMPs,compID,outputShort)
 
@@ -294,6 +300,7 @@ class TestPyTF extends FlatSpec {
       new Properties()) with JavaTransfer[java.lang.Byte]
 
     val ret = javaComp.initialize()
+    assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
 
     val newOut: Try[InOut[java.lang.Byte]] = javaComp.transfer(inputsMPs,compID,outputByte)
 
@@ -320,6 +327,7 @@ class TestPyTF extends FlatSpec {
       new Properties()) with JavaTransfer[java.lang.Double]
 
     val ret = javaComp.initialize()
+    assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
 
     val newOut: Try[InOut[java.lang.Double]] = javaComp.transfer(inputsMPs,compID,outputDouble)
 
@@ -346,6 +354,7 @@ class TestPyTF extends FlatSpec {
       new Properties()) with JavaTransfer[java.lang.Float]
 
     val ret = javaComp.initialize()
+    assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
 
     val newOut: Try[InOut[java.lang.Float]] = javaComp.transfer(inputsMPs,compID,outputFloat)
 
@@ -372,6 +381,7 @@ class TestPyTF extends FlatSpec {
       new Properties()) with JavaTransfer[java.lang.Boolean]
 
     val ret = javaComp.initialize()
+    assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
 
     val newOut: Try[InOut[java.lang.Boolean]] = javaComp.transfer(inputsMPs,compID,outputBool)
 
@@ -398,6 +408,7 @@ class TestPyTF extends FlatSpec {
       new Properties()) with JavaTransfer[java.lang.Character]
 
     val ret = javaComp.initialize()
+    assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
 
     val newOut: Try[InOut[java.lang.Character]] = javaComp.transfer(inputsMPs,compID,outputChar)
 
@@ -424,6 +435,7 @@ class TestPyTF extends FlatSpec {
       new Properties()) with JavaTransfer[java.lang.String]
 
     val ret = javaComp.initialize()
+    assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
 
     val newOut: Try[InOut[java.lang.String]] = javaComp.transfer(inputsMPs,compID,outputString)
 
@@ -450,6 +462,7 @@ class TestPyTF extends FlatSpec {
       new Properties()) with JavaTransfer[java.lang.Long]
 
     val ret = javaComp.initialize()
+    assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
 
     val newOut: Try[InOut[java.lang.Long]] = javaComp.transfer(inputsMPs,compID,outputTStamp)
 
@@ -477,6 +490,7 @@ class TestPyTF extends FlatSpec {
       new Properties()) with JavaTransfer[NumericArray]
 
     val ret = javaComp.initialize()
+    assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
 
     val newOut: Try[InOut[NumericArray]] = javaComp.transfer(inputsMPs,compID,outputArrayDoubles)
 
@@ -504,6 +518,7 @@ class TestPyTF extends FlatSpec {
       new Properties()) with JavaTransfer[NumericArray]
 
     val ret = javaComp.initialize()
+    assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
 
     val newOut: Try[InOut[NumericArray]] = javaComp.transfer(inputsMPs,compID,outputArrayLongs)
 
@@ -530,6 +545,7 @@ class TestPyTF extends FlatSpec {
       new Properties()) with JavaTransfer[Alarm]
 
     val ret = javaComp.initialize()
+    assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
 
     val newOut: Try[InOut[Alarm]] = javaComp.transfer(inputsMPs, compID, outputAlarm)
 
@@ -556,6 +572,7 @@ class TestPyTF extends FlatSpec {
       new Properties()) with JavaTransfer[java.lang.Long]
 
     val ret = javaComp.initialize()
+    assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
 
     // Run many times the TF
     var output: InOut[java.lang.Long] = InOut.asOutput(outId, IASTypes.LONG)
