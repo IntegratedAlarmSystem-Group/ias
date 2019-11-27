@@ -43,6 +43,7 @@ import scala.util.{Failure, Success, Try}
   * @param inputsSubscriber The subscriber to get events from the BDSB
   * @param iasDao The configuration of the IAS read from the CDB
   * @param iasioDaos The configuration of the IASIOs read from the CDB
+  * @param templateDaos The configuration of templates read from CDB
   *
  */
 class IasValueProcessor(
