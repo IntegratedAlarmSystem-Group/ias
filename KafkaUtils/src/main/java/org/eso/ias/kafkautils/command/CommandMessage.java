@@ -116,4 +116,17 @@ public class CommandMessage {
     public int hashCode() {
         return Objects.hash(senderFullRunningId, destId, command, id, params, timestamp, properties);
     }
+
+    @Override
+    public String toString() {
+        return "CommandMessage{" +
+                "senderFullRunningId='" + senderFullRunningId + '\'' +
+                ", destId='" + destId + '\'' +
+                ", command=" + command +
+                ", id=" + id +
+                ", params=" + params +
+                ", timestamp=" + timestamp +
+                ", properties=" + properties +
+                '}';
+    }
 }
