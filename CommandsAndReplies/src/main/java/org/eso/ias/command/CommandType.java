@@ -1,4 +1,4 @@
-package org.eso.ias.kafkautils.command;
+package org.eso.ias.command;
 
 /**
  * The commands supported by the core

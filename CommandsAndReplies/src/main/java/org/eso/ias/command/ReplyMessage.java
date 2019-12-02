@@ -1,4 +1,4 @@
-package org.eso.ias.kafkautils.command;
+package org.eso.ias.command;
 
 import java.util.Map;
 import java.util.Objects;

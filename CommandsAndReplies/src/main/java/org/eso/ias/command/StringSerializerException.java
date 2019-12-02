@@ -1,4 +1,4 @@
-package org.eso.ias.kafkautils.command;
+package org.eso.ias.command;
 
 /**
  * Th eexception generated when marshalling or unmarshalling commands

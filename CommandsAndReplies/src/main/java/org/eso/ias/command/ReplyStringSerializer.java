@@ -1,4 +1,4 @@
-package org.eso.ias.kafkautils.command;
+package org.eso.ias.command;
 
 /**
  * Interface to serialize/deserializer the {@link ReplyMessage} to/from strings
