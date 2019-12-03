@@ -254,7 +254,7 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
      */
     @Override
     public void run() {
-        logger.debug("Commands processro thread started");
+        logger.debug("Commands processor thread started");
         CommandMessage cmd;
         ReplyMessage reply;
         while (!closed) {
