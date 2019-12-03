@@ -12,10 +12,16 @@ import java.util.Objects;
  */
 public class CommandMessage {
 
+    /** The address to send a message to all the IAS tools */
+    public static final String BROADCAST_ADDRESS = "*";
+
     /** The full running ID of the sender of the command */
     private String senderFullRunningId;
 
-    /** The identifier of the receiver  (destination) of the command  */
+    /**
+     * The identifier of the receiver  (destination) of the command
+     * or the {@link #BROADCAST_ADDRESS} is the command is for all the IAS processes
+     */
     private String destId;
 
     /** The command to execute  */
