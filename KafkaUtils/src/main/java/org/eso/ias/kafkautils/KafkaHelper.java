@@ -49,6 +49,17 @@ public class KafkaHelper {
 	public static final String HEARTBEAT_TOPIC_NAME = "HeartbeatTopic";
 
 	/**
+	 * The name of the kafka topic for commands
+	 */
+	public static final String CMD_TOPIC_NAME = "CmdTopic";
+
+	/**
+	 * The name of the kafka topic for replies
+	 */
+	public static final String REPLY_TOPIC_NAME = "ReplyTopic";
+
+
+	/**
 	 * Get the value of a property from the system properties
 	 *
 	 * @param propName the name of the property whose value must be get from the system properties
