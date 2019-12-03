@@ -1,5 +1,7 @@
 package org.eso.ias.command;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.util.Map;
 import java.util.Objects;
 
@@ -47,6 +49,7 @@ public class ReplyMessage {
     private long processedTStamp;
 
     /** Additional properties, if any  */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Map<String,String> properties;
 
     /** Empty constructor */
