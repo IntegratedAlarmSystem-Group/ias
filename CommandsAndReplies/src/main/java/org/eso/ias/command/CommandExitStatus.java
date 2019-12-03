@@ -6,5 +6,6 @@ package org.eso.ias.command;
 public enum  CommandExitStatus {
     OK,
     REJECTED,
-    ERROR
+    ERROR,
+    UNKNOWN // A command did not terminate
 }

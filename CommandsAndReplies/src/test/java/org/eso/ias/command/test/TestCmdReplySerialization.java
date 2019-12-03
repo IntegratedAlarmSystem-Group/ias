@@ -79,7 +79,7 @@ public class TestCmdReplySerialization {
 
         ReplyMessage replyFromJson = serializer.valueOf(jsonCmd);
         logger.info("Reply from JSON [{}] is {}",jsonCmd,replyFromJson.toString());
-        assertEquals(reply,replyFromJson,"Repliess differ");
+        assertEquals(reply,replyFromJson,"Replies differ");
 
     }
 }
