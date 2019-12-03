@@ -8,6 +8,8 @@ import java.util.Objects;
  *
  * This POJO is serialized into a JSON string to be published in the
  * kafka topic
+ *
+ * @author acaproni
  */
 public class ReplyMessage {
 
@@ -49,6 +51,37 @@ public class ReplyMessage {
 
     /** Empty constructor */
     public ReplyMessage() {}
+
+    /**
+     * Constructor
+     *
+     * @param senderFullRunningId The full running ID of the sender of the reply
+     * @param destFullRunningId The full running ID of the receiver of the command
+     * @param id The unique identifier (in the context of the sender) of the command
+     * @param command The command just executed
+     * @param exitStatus  The exit status of the command
+     * @param receptionTStamp The point in time when the command has been received from the kafka topic
+     * @param processedTStamp The point in time when the execution of the command terminated
+     * @param properties Additional properties, if any
+     */
+    public ReplyMessage(
+            String senderFullRunningId,
+            String destFullRunningId,
+            long id,
+            CommandType command,
+            CommandExitStatus exitStatus,
+            long receptionTStamp,
+            long processedTStamp,
+            Map<String, String> properties) {
+        this.senderFullRunningId = senderFullRunningId;
+        this.destFullRunningId = destFullRunningId;
+        this.id = id;
+        this.command = command;
+        this.exitStatus = exitStatus;
+        this.receptionTStamp = receptionTStamp;
+        this.processedTStamp = processedTStamp;
+        this.properties = properties;
+    }
 
     public String getSenderFullRunningId() {
         return senderFullRunningId;
