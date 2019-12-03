@@ -120,18 +120,14 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
     }
 
     /** Start getting events from the command topic */
-    public void start(CommandListener commandListener) {
+    public void start(CommandListener commandListener) throws KafkaUtilsException {
         Objects.requireNonNull(commandListener,"The listener of commands can't be null");
         this.cmdListener = commandListener;
-        try {
-            cmdsConsumer.startGettingEvents(KafkaStringsConsumer.StreamPosition.END,this);
-            logger.info("Started to get events from the command topic");
-        } catch (KafkaUtilsException e) {
-            logger.error("Error getting ready to receive commands: will shutdown",e);
-            close();
-        }
+        initialize();
         cmdThread.start();
         logger.info("Commands processor thread started");
+        cmdsConsumer.startGettingEvents(KafkaStringsConsumer.StreamPosition.END,this);
+        logger.info("Started to get events from the command topic");
     }
 
     /**
