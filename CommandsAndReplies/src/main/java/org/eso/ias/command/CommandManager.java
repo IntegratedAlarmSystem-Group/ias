@@ -227,7 +227,7 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
             return;
         }
         // Check if the command is for this procees by comparing the IDs
-        if (cmd.getDestId()!=id) {
+        if (!cmd.getDestId().equals(id) && !cmd.getDestId().equals(CommandMessage.BROADCAST_ADDRESS)) {
             logger.debug("Recipient of command {} is {}: command discarded",
                     cmd.getCommand().toString(),
                     cmd.getDestId());
