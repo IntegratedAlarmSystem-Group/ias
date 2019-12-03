@@ -6,10 +6,7 @@ import org.eso.ias.kafkautils.KafkaStringsConsumer;
 import org.eso.ias.kafkautils.SimpleStringConsumer;
 import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.junit.Assert;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,6 +112,13 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
         logger.info("CommandManager to test built");
     }
 
+    @AfterEach
+    public void tearDown() throws Exception {
+        logger.debug("Closing the CommandManager");
+        manager.close();
+        logger.info("CommandManager closed");
+    }
+
     @Override
     public ReplyMessage newCommand(CommandMessage cmd) {
         return null;
@@ -126,13 +130,17 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
      * @throws Exception
      */
     @Test
-    public void testInitAndClose() throws Exception {
+    public void testStart() throws Exception {
 
 
         logger.info("Starting the CommandManager");
         manager.start(this);
-        logger.info("Closing the CommandManager");
-        manager.close();
+
+    }
+
+    public void testSendingCommand() throws Exception {
+        manager.start(this);
+
     }
 
 
@@ -153,6 +161,8 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
             reply = replySerializer.valueOf(event);
         } catch (Exception e) {
             logger.error("Error.parsing the JSON string {} into a reply",event,e);
+            return;
         }
+        logger.info("reply received: {}",reply.toString());
     }
 }
