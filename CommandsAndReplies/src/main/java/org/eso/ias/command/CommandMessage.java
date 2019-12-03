@@ -1,5 +1,7 @@
 package org.eso.ias.command;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -36,12 +38,14 @@ public class CommandMessage {
     private long id;
 
     /** The parameters of the command, if any */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<String> params;
 
     /** The timestamp when the command has been published */
     private long timestamp;
 
     /** Additional properties, if any  */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private Map<String,String> properties;
 
     /** Empty constructor */
