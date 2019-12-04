@@ -156,8 +156,11 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
      * @return the state of the execution of the command
      */
     @Override
-    public CmdExecutionResult newCommand(CommandMessage cmd) {
+    public CmdExecutionResult newCommand(CommandMessage cmd) throws Exception {
         logger.debug("Processing command {}",cmd);
+        if (cmd.getCommand()==CommandType.RESTART) {
+            throw new Exception("Simulated exception");
+        }
         return new CmdExecutionResult(CommandExitStatus.OK,null);
     }
 
@@ -215,6 +218,33 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
         assertEquals(reply.getExitStatus(),CommandExitStatus.OK);
 
         logger.info("Done testBroadcastCommandReply");
+    }
+
+    @Test
+    public void testErrorFromListener() throws Exception {
+        logger.info("Test that the status of a reply is ERROR when the listener thorws an exception");
+        numOfRepliesToGet=1;
+        lock.set(new CountDownLatch(numOfRepliesToGet));
+        CommandMessage cmd = new CommandMessage(
+                commandSenderFullRunningId,
+                commandManagerId,
+                CommandType.RESTART,
+                3,
+                null,
+                System.currentTimeMillis(),
+                null);
+
+        String jSonStr =cmdSerializer.iasCmdToString(cmd);
+        logger.debug("Command {} will be sent as json string [{}]",cmd.toString(),jSonStr);
+        cmdProducer.push(jSonStr,null,commandManagerId);
+        logger.info("Command sent. Waiting for the reply...");
+        assertTrue(lock.get().await(5, TimeUnit.SECONDS),"Reply not received");
+
+        ReplyMessage reply = repliesReceived .get(0);
+        assertEquals(reply.getId(),3);
+        assertEquals(reply.getCommand(),CommandType.RESTART);
+        assertEquals(reply.getExitStatus(),CommandExitStatus.ERROR);
+        logger.info("Done testErrorFromListener");
     }
 
 
