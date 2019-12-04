@@ -45,6 +45,7 @@ public interface CommandListener {
      *
      * @param cmd The command received from the command topic
      * @return  The not null reply produced executing the passed command
+     * @throws Exception in case of error running the command
      */
-    public CmdExecutionResult newCommand(CommandMessage cmd);
+    public CmdExecutionResult newCommand(CommandMessage cmd) throws Exception;
 }
