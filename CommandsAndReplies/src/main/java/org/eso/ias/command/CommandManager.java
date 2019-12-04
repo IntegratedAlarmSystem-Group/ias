@@ -207,13 +207,15 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
             return;
         }
         if (event==null) {
-            logger.warn("A NULL set stringshas been received from the command topic");
+            logger.warn("A NULL set strings has been received from the command topic");
             return;
         }
         if (event.isEmpty()) {
-            logger.debug("An empty command string has been received from the command topic");
+            logger.warn("An empty command string has been received from the command topic");
             return;
         }
+
+        logger.debug("Command json string [{}] received",event);
 
         CommandMessage cmd;
         try {
@@ -224,12 +226,13 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
         }
         // Check if the command is for this procees by comparing the IDs
         if (!cmd.getDestId().equals(id) && !cmd.getDestId().equals(CommandMessage.BROADCAST_ADDRESS)) {
-            logger.debug("Recipient of command {} is {}: command discarded",
+            logger.debug("Recipient of command {} is {}: command discarded because is not for us",
                     cmd.getCommand().toString(),
                     cmd.getDestId());
             return;
         }
         // Push the command in the queue of commands to process
+        logger.debug("Pushing the command {} in the queue for execution",cmd.toString());
         if (!cmdsToProcess.offer(cmd)) {
             logger.error("Queue of command full: command {} with ID {} from {} rejected",
                     cmd.getCommand().toString(),
@@ -252,17 +255,25 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
     public void run() {
         logger.debug("Commands processor thread started");
         CommandMessage cmd;
-        ReplyMessage reply;
+        ReplyMessage reply=null;
         while (!closed) {
              try {
                  cmd = cmdsToProcess.poll(500, TimeUnit.MILLISECONDS);
              } catch (InterruptedException ie) {
                  continue;
              }
+             if (cmd==null) {
+                 // Timeout
+                 continue;
+             }
+             logger.debug("Command {} received from the queue",cmd);
              try {
+                 logger.debug("Sending the command for execution");
                  reply = cmdListener.newCommand(cmd);
+                 logger.debug("Command executed");
              } catch (Exception e) {
-                 // Exception executing the comamnd: send the reply
+                 logger.error("Exception [{}] got executing the command: will reply with ERROR",e.getMessage(),e);
+                 // Exception executing the command: send the reply
                  sendReply(
                          CommandExitStatus.ERROR,
                          cmd.getSenderFullRunningId(),
@@ -271,6 +282,8 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
                          System.currentTimeMillis(),
                          null);
              }
+             sendReply(reply);
         }
+        logger.info("Commands processor thread terminated");
     }
 }
