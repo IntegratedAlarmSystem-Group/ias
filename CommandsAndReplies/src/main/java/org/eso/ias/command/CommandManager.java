@@ -22,6 +22,25 @@ import java.util.concurrent.TimeUnit;
 public class CommandManager implements SimpleStringConsumer.KafkaConsumerListener, Runnable {
 
     /**
+     * Objects of this class are pushed in the queue when a new message arrives: the purpose
+     * is to save the reception timestamp that will be part of the reply
+     *
+     */
+    private static final class TimestampedCommand {
+
+        /** The point in time when the command has been received */
+        public final long receptionTStamp;
+
+        /** The command to execute */
+        public final CommandMessage command;
+
+        public TimestampedCommand(long receptionTStamp,CommandMessage command) {
+            this.receptionTStamp=receptionTStamp;
+            this.command=command;
+        }
+    }
+
+    /**
      * Max number of commands in the queue waiting to be processed.
      *
      * Commands arriving when the queue is full are rejected
@@ -36,6 +55,9 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
 
     /** Signal if the CommandManager has been initialized */
     private volatile boolean initialized = false;
+
+    /** Signal if the CommandManager has been started i.e. receiving commands from the topic */
+    private volatile boolean started = false;
 
     /** Signal if the CommandManager has been closed */
     private volatile boolean closed = false;
@@ -66,7 +88,7 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
     /**
      * The list of commands to process
      */
-    private final LinkedBlockingQueue<CommandMessage> cmdsToProcess = new LinkedBlockingQueue<>(LENGTH_OF_CMD_QUEUE);
+    private final LinkedBlockingQueue<TimestampedCommand> cmdsToProcess = new LinkedBlockingQueue<>(LENGTH_OF_CMD_QUEUE);
 
     /**
      * The listener of commands that executes them
@@ -108,6 +130,8 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
         if (initialized) {
             logger.warn("Already initialized: initialization skipped");
             return;
+        } else {
+            initialized=true;
         }
         logger.debug("Initializing");
         // Connect to the CMD topic
@@ -121,6 +145,12 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
 
     /** Start getting events from the command topic */
     public void start(CommandListener commandListener) throws KafkaUtilsException {
+        if (started) {
+            logger.warn("Already started: skipped");
+            return;
+        } else {
+            started=true;
+        }
         Objects.requireNonNull(commandListener,"The listener of commands can't be null");
         this.cmdListener = commandListener;
         initialize();
@@ -151,7 +181,7 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
     /**
      * Push a reply in the reply topic
      *
-     * @param reply
+     * @param reply the reply to push in the reply topic
      */
     private void sendReply(ReplyMessage reply) {
         reply.setProcessedTStamp(System.currentTimeMillis());
@@ -200,6 +230,16 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
         sendReply(reply);
     }
 
+    /**
+     * Get the JSON strings representing commands.
+     *
+     * The string is converted into a {@link CommandMessage} and pushed in the {@link #cmdsToProcess}
+     * queue only if the destination of the command has the same ID of the manager.
+     * Another thread, ({@link #run()}, is in charge of poling commands from the queue and
+     * send them to the lister for execution.
+     *
+     * @param event The string received in the topic
+     */
     @Override
     public void stringEventReceived(String event) {
         // Discard commands when closed
@@ -216,6 +256,7 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
         }
 
         logger.debug("Command json string [{}] received",event);
+        long receptionTStamp = System.currentTimeMillis();
 
         CommandMessage cmd;
         try {
@@ -233,7 +274,7 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
         }
         // Push the command in the queue of commands to process
         logger.debug("Pushing the command {} in the queue for execution",cmd.toString());
-        if (!cmdsToProcess.offer(cmd)) {
+        if (!cmdsToProcess.offer(new TimestampedCommand(receptionTStamp, cmd))) {
             logger.error("Queue of command full: command {} with ID {} from {} rejected",
                     cmd.getCommand().toString(),
                     cmd.getId(),
@@ -254,35 +295,58 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
     @Override
     public void run() {
         logger.debug("Commands processor thread started");
-        CommandMessage cmd;
-        ReplyMessage reply=null;
+        TimestampedCommand tStampedCmd;
+        CommandListener.CmdExecutionResult cmdResult = null;
         while (!closed) {
              try {
-                 cmd = cmdsToProcess.poll(500, TimeUnit.MILLISECONDS);
+                 tStampedCmd = cmdsToProcess.poll(500, TimeUnit.MILLISECONDS);
              } catch (InterruptedException ie) {
                  continue;
              }
-             if (cmd==null) {
+             if (tStampedCmd==null) {
                  // Timeout
                  continue;
              }
-             logger.debug("Command {} received from the queue",cmd);
+             logger.debug("Command {} received from the queue",tStampedCmd.command);
              try {
                  logger.debug("Sending the command for execution");
-                 reply = cmdListener.newCommand(cmd);
+                 cmdResult = cmdListener.newCommand(tStampedCmd.command);
                  logger.debug("Command executed");
              } catch (Exception e) {
                  logger.error("Exception [{}] got executing the command: will reply with ERROR",e.getMessage(),e);
                  // Exception executing the command: send the reply
+
                  sendReply(
                          CommandExitStatus.ERROR,
-                         cmd.getSenderFullRunningId(),
-                         cmd.getId(),
-                         cmd.getCommand(),
-                         System.currentTimeMillis(),
+                         tStampedCmd.command.getSenderFullRunningId(),
+                         tStampedCmd.command.getId(),
+                         tStampedCmd.command.getCommand(),
+                         tStampedCmd.receptionTStamp,
                          null);
              }
-             sendReply(reply);
+
+             if (cmdResult==null) {
+                 logger.error("The executor of the command returned null");
+                 sendReply(
+                         CommandExitStatus.ERROR,
+                         tStampedCmd.command.getSenderFullRunningId(),
+                         tStampedCmd.command.getId(),
+                         tStampedCmd.command.getCommand(),
+                         tStampedCmd.receptionTStamp,
+                         null);
+             } else {
+                 Map<String, String> props = null;
+                 if (cmdResult.properties.isPresent()) {
+                     props = cmdResult.properties.get();
+                 }
+                 sendReply(cmdResult.status,
+                         tStampedCmd.command.getSenderFullRunningId(),
+                         tStampedCmd.command.getId(),
+                         tStampedCmd.command.getCommand(),
+                         tStampedCmd.receptionTStamp,
+                         props);
+             }
+
         }
         logger.info("Commands processor thread terminated");
     }
