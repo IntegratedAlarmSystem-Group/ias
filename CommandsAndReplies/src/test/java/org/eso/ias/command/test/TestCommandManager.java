@@ -5,7 +5,6 @@ import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaStringsConsumer;
 import org.eso.ias.kafkautils.SimpleStringConsumer;
 import org.eso.ias.kafkautils.SimpleStringProducer;
-import org.junit.Assert;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +13,9 @@ import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -52,7 +53,7 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
      * The id of the receiver of commands and sender of replies
      * i.e. the CommandManager
      */
-    public final String commandManagerId ="cmdManagerId";
+    public static final String commandManagerId ="cmdManagerId";
 
     /**
      * The producer of command: the test sends through this producer the command to be processed
@@ -73,12 +74,12 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
     private static final CommandStringSerializer cmdSerializer = new CommandJsonSerializer();
 
     /**
-     * Signal that the getting of  replies has been activated
+     * Signal that the first test will be executed soon
      */
-    private static volatile boolean gettingEventsFromReply = false;
+    private static volatile boolean beforeFirstTest = false;
 
     /** The {@link CommandManager} to test */
-    private CommandManager manager;
+    private static CommandManager manager;
 
     /** The number of replies to wait for in a test */
     private int numOfRepliesToGet;
@@ -86,13 +87,13 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
     /**
      * The replies received are saved in this list
      */
-    private final List<ReplyMessage> repliesReceived = new Vector<>();
+    private static final List<ReplyMessage> repliesReceived = new Vector<>();
 
     /**
      * The lock set when the desired number of replies
      * have been received
      */
-    private CountDownLatch lock;
+    private static final  AtomicReference<CountDownLatch> lock = new AtomicReference<>();
 
     @BeforeAll
     public static void setUpAll() throws Exception {
@@ -108,6 +109,11 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
         replyConsumer.setUp();
         cmdProducer.setUp();
         logger.info("Static producer and consumer built and set up");
+        manager = new CommandManager(
+                commandManagerFullRunningId,
+                commandManagerId,
+                KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS);
+        logger.info("CommandManager to test built");
     }
 
     @AfterAll
@@ -118,64 +124,49 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
         if (cmdProducer!=null) {
             cmdProducer.tearDown();
         }
+        if (manager!=null) {
+            manager.close();
+        }
     }
 
     @BeforeEach
     public void setUp() throws Exception {
         logger.debug("Setting up for a new test");
-        repliesReceived.clear();
-        lock = new CountDownLatch(1);
-        if (!gettingEventsFromReply) {
+
+        if (!beforeFirstTest) {
             replyConsumer.startGettingEvents(KafkaStringsConsumer.StreamPosition.END, this);
-            gettingEventsFromReply=true;
+            beforeFirstTest =true;
             logger.info("Processing of replies published by the CommandManager activated");
+            manager.start(this);
+            logger.info("CommandManager to test started");
         }
-        manager = new CommandManager(
-                commandManagerFullRunningId,
-                commandManagerId,
-                KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS);
-        Assert.assertNotNull(manager);
-        logger.info("CommandManager to test built");
+        logger.debug("Ready to run a new test");
     }
 
     @AfterEach
     public void tearDown() throws Exception {
-        logger.debug("Closing the CommandManager");
-        manager.close();
-        logger.info("CommandManager closed");
-    }
-
-    @Override
-    public ReplyMessage newCommand(CommandMessage cmd) {
-        logger.debug("Processing command {}",cmd);
-        return new ReplyMessage(
-                commandManagerFullRunningId,
-                cmd.getSenderFullRunningId(),
-                cmd.getId(),
-                cmd.getCommand(),
-                CommandExitStatus.OK,
-                System.currentTimeMillis(),
-                System.currentTimeMillis(),
-                null);
+        repliesReceived.clear();
     }
 
     /**
-     * Invokes the int and close method of the {@link CommandManager}
+     * Simulate the execution of the command: it is the listener of commands
+     * of the {@link CommandManager}
      *
-     * @throws Exception
+     * @param cmd The command received from the command topic
+     * @return the state of the execution of the command
      */
-    @Test
-    public void testStart() throws Exception {
-        logger.info("Starting the CommandManager");
-        manager.start(this);
-
+    @Override
+    public CmdExecutionResult newCommand(CommandMessage cmd) {
+        logger.debug("Processing command {}",cmd);
+        return new CmdExecutionResult(CommandExitStatus.OK,null);
     }
+
 
     @Test
     public void testCommandReply() throws Exception {
         logger.info("Test the sending of a command and reception of the reply");
-        manager.start(this);
         numOfRepliesToGet=1;
+        lock.set(new CountDownLatch(numOfRepliesToGet));
         CommandMessage cmd = new CommandMessage(
                 commandSenderFullRunningId,
                 commandManagerId,
@@ -186,11 +177,44 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
                 null);
 
         String jSonStr =cmdSerializer.iasCmdToString(cmd);
-        logger.debug("Command {} will be sent a json string [{}]",cmd.toString(),jSonStr);
+        logger.debug("Command {} will be sent as json string [{}]",cmd.toString(),jSonStr);
         cmdProducer.push(jSonStr,null,commandManagerId);
-        logger.info("Command sent. Waiting for the reply");
-        assertTrue(lock.await(5, TimeUnit.SECONDS),"Reply not received");
-        logger.info("Done");
+        logger.info("Command sent. Waiting for the reply...");
+        assertTrue(lock.get().await(5, TimeUnit.SECONDS),"Reply not received");
+
+        ReplyMessage reply = repliesReceived .get(0);
+        assertEquals(reply.getId(),1);
+        assertEquals(reply.getCommand(),CommandType.PING);
+        assertEquals(reply.getExitStatus(),CommandExitStatus.OK);
+        logger.info("Done testCommandReply");
+    }
+
+    @Test
+    public void testBroadcastCommandReply() throws Exception {
+        logger.info("Test the sending of a broadcast command and reception of the reply");
+        numOfRepliesToGet=1;
+        lock.set(new CountDownLatch(numOfRepliesToGet));
+        CommandMessage cmd = new CommandMessage(
+                commandSenderFullRunningId,
+                CommandMessage.BROADCAST_ADDRESS,
+                CommandType.SHUTDOWN,
+                2,
+                null,
+                System.currentTimeMillis(),
+                null);
+
+        String jSonStr =cmdSerializer.iasCmdToString(cmd);
+        logger.debug("Broadcast command {} will be sent as json string [{}]",cmd.toString(),jSonStr);
+        cmdProducer.push(jSonStr,null,commandManagerId);
+        logger.info("Command sent. Waiting for the reply...");
+        assertTrue(lock.get().await(5, TimeUnit.SECONDS),"Reply not received");
+
+        ReplyMessage reply = repliesReceived .get(0);
+        assertEquals(reply.getId(),2);
+        assertEquals(reply.getCommand(),CommandType.SHUTDOWN);
+        assertEquals(reply.getExitStatus(),CommandExitStatus.OK);
+
+        logger.info("Done testBroadcastCommandReply");
     }
 
 
@@ -217,9 +241,12 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
         logger.info("Reply received: {}",reply.toString());
         if (repliesReceived.size()==numOfRepliesToGet) {
             logger.debug("All expected replies have been received");
-            lock.countDown();
+            lock.get().countDown();
         } else {
-            logger.debug("{} ,missing replies",numOfRepliesToGet-repliesReceived.size());
+            logger.debug("Replies to get {}, replies received {}: {} missing replies",
+                    numOfRepliesToGet,
+                    repliesReceived.size(),
+                    numOfRepliesToGet-repliesReceived.size());
         }
     }
 }
