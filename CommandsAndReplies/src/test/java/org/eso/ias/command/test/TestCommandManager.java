@@ -10,6 +10,13 @@ import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+import java.util.Vector;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /**
  * Test the {@link org.eso.ias.command.CommandManager}.
  *
@@ -62,6 +69,9 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
     /** The serializer of replies */
     private static final ReplyStringSerializer replySerializer = new ReplyJsonSerializer();
 
+    /** The serializer of commands */
+    private static final CommandStringSerializer cmdSerializer = new CommandJsonSerializer();
+
     /**
      * Signal that the getting of  replies has been activated
      */
@@ -69,6 +79,20 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
 
     /** The {@link CommandManager} to test */
     private CommandManager manager;
+
+    /** The number of replies to wait for in a test */
+    private int numOfRepliesToGet;
+
+    /**
+     * The replies received are saved in this list
+     */
+    private final List<ReplyMessage> repliesReceived = new Vector<>();
+
+    /**
+     * The lock set when the desired number of replies
+     * have been received
+     */
+    private CountDownLatch lock;
 
     @BeforeAll
     public static void setUpAll() throws Exception {
@@ -99,6 +123,8 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
     @BeforeEach
     public void setUp() throws Exception {
         logger.debug("Setting up for a new test");
+        repliesReceived.clear();
+        lock = new CountDownLatch(1);
         if (!gettingEventsFromReply) {
             replyConsumer.startGettingEvents(KafkaStringsConsumer.StreamPosition.END, this);
             gettingEventsFromReply=true;
@@ -121,7 +147,16 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
 
     @Override
     public ReplyMessage newCommand(CommandMessage cmd) {
-        return null;
+        logger.debug("Processing command {}",cmd);
+        return new ReplyMessage(
+                commandManagerFullRunningId,
+                cmd.getSenderFullRunningId(),
+                cmd.getId(),
+                cmd.getCommand(),
+                CommandExitStatus.OK,
+                System.currentTimeMillis(),
+                System.currentTimeMillis(),
+                null);
     }
 
     /**
@@ -131,16 +166,31 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
      */
     @Test
     public void testStart() throws Exception {
-
-
         logger.info("Starting the CommandManager");
         manager.start(this);
 
     }
 
-    public void testSendingCommand() throws Exception {
+    @Test
+    public void testCommandReply() throws Exception {
+        logger.info("Test the sending of a command and reception of the reply");
         manager.start(this);
+        numOfRepliesToGet=1;
+        CommandMessage cmd = new CommandMessage(
+                commandSenderFullRunningId,
+                commandManagerId,
+                CommandType.PING,
+                1,
+                null,
+                System.currentTimeMillis(),
+                null);
 
+        String jSonStr =cmdSerializer.iasCmdToString(cmd);
+        logger.debug("Command {} will be sent a json string [{}]",cmd.toString(),jSonStr);
+        cmdProducer.push(jSonStr,null,commandManagerId);
+        logger.info("Command sent. Waiting for the reply");
+        assertTrue(lock.await(5, TimeUnit.SECONDS),"Reply not received");
+        logger.info("Done");
     }
 
 
@@ -163,6 +213,13 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
             logger.error("Error.parsing the JSON string {} into a reply",event,e);
             return;
         }
-        logger.info("reply received: {}",reply.toString());
+        repliesReceived.add(reply);
+        logger.info("Reply received: {}",reply.toString());
+        if (repliesReceived.size()==numOfRepliesToGet) {
+            logger.debug("All expected replies have been received");
+            lock.countDown();
+        } else {
+            logger.debug("{} ,missing replies",numOfRepliesToGet-repliesReceived.size());
+        }
     }
 }
