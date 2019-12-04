@@ -51,6 +51,33 @@ public class CommandMessage {
     /** Empty constructor */
     public CommandMessage() {}
 
+    /**
+     * Constructor
+     *
+     * @param senderFullRunningId The full running ID of the sender of the command
+     * @param destId The identifier of the receiver
+     * @param command The command to execute
+     * @param id The unique identifier (in the context of the sender) of the command
+     * @param params The parameters of the command, if any
+     * @param timestamp he timestamp when the command has been published
+     * @param properties Additional properties, if any
+     */
+    public CommandMessage(
+            String senderFullRunningId,
+            String destId,
+            CommandType command,
+            long id,
+            List<String> params,
+            long timestamp,
+            Map<String, String> properties) {
+        this.senderFullRunningId = senderFullRunningId;
+        this.destId = destId;
+        this.command = command;
+        this.id = id;
+        this.params = params;
+        this.timestamp = timestamp;
+        this.properties = properties;
+    }
 
     public String getSenderFullRunningId() {
         return senderFullRunningId;
