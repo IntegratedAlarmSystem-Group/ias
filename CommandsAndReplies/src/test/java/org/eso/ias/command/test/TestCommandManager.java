@@ -9,10 +9,7 @@ import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -83,12 +80,12 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
     private static CommandManager manager;
 
     /** The number of replies to wait for in a test */
-    private int numOfRepliesToGet;
+    private static int numOfRepliesToGet;
 
     /**
      * The replies received are saved in this list
      */
-    private static final List<ReplyMessage> repliesReceived = new Vector<>();
+    private static final List<ReplyMessage> repliesReceived = Collections.synchronizedList(new Vector<>());
 
     /**
      * The lock set when the desired number of replies
@@ -187,7 +184,7 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
     public void testCommandReply() throws Exception {
         logger.info("Test the sending of a command and reception of the reply");
         numOfRepliesToGet=1;
-        lock.set(new CountDownLatch(numOfRepliesToGet));
+        lock.set(new CountDownLatch(1));
         CommandMessage cmd = new CommandMessage(
                 commandSenderFullRunningId,
                 commandManagerId,
@@ -204,9 +201,9 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
         assertTrue(lock.get().await(5, TimeUnit.SECONDS),"Reply not received");
 
         ReplyMessage reply = repliesReceived .get(0);
-        assertEquals(reply.getId(),1);
-        assertEquals(reply.getCommand(),CommandType.PING);
-        assertEquals(reply.getExitStatus(),CommandExitStatus.OK);
+        assertEquals(1,reply.getId());
+        assertEquals(CommandType.PING,reply.getCommand());
+        assertEquals(CommandExitStatus.OK, reply.getExitStatus());
         logger.info("Done testCommandReply");
     }
 
@@ -214,7 +211,7 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
     public void testBroadcastCommandReply() throws Exception {
         logger.info("Test the sending of a broadcast command and reception of the reply");
         numOfRepliesToGet=1;
-        lock.set(new CountDownLatch(numOfRepliesToGet));
+        lock.set(new CountDownLatch(1));
         CommandMessage cmd = new CommandMessage(
                 commandSenderFullRunningId,
                 CommandMessage.BROADCAST_ADDRESS,
@@ -231,18 +228,65 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
         assertTrue(lock.get().await(5, TimeUnit.SECONDS),"Reply not received");
 
         ReplyMessage reply = repliesReceived .get(0);
-        assertEquals(reply.getId(),2);
-        assertEquals(reply.getCommand(),CommandType.SHUTDOWN);
-        assertEquals(reply.getExitStatus(),CommandExitStatus.OK);
+        assertEquals(2,reply.getId());
+        assertEquals(CommandType.SHUTDOWN,reply.getCommand());
+        assertEquals(CommandExitStatus.OK,reply.getExitStatus());
 
         logger.info("Done testBroadcastCommandReply");
+    }
+
+    /**
+     * This test sends many commands and waits for the replies.
+     *
+     * The test checks the reception of the replies to ensure that each command has been
+     * received and processed. Some of the replies may contain errors or being rejected: that's fine for this
+     * test because it means that they have been received and processed by the manager.
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testMultipleCommands() throws Exception {
+        logger.info("Test the sending of many commands and the recetion of the replies");
+        numOfRepliesToGet=128;
+        lock.set(new CountDownLatch(1));
+
+        logger.info("Sending {} commands",numOfRepliesToGet);
+        for (int i =0; i<numOfRepliesToGet; i++) {
+
+            CommandMessage cmd = new CommandMessage(
+                    commandSenderFullRunningId,
+                    CommandMessage.BROADCAST_ADDRESS,
+                    CommandType.PING,
+                    1000+i,
+                    null,
+                    System.currentTimeMillis(),
+                    null);
+
+            String jSonStr =cmdSerializer.iasCmdToString(cmd);
+            cmdProducer.push(jSonStr,null,commandManagerId);
+            logger.info("Command {} sent",i);
+
+        }
+        logger.info("{} commands sent. Waiting for the replies...",numOfRepliesToGet);
+
+
+
+        assertTrue(lock.get().await(1, TimeUnit.MINUTES),"Replies not received");
+
+        assertEquals(numOfRepliesToGet,repliesReceived.size());
+        for (int c=0; c<repliesReceived.size(); c++) {
+            ReplyMessage r = repliesReceived.get(c);
+            assertTrue(r.getId()>=1000 && r.getId()<1000+numOfRepliesToGet);
+        }
+
+        logger.info("Done testMultipleCommands");
     }
 
     @Test
     public void testErrorFromListener() throws Exception {
         logger.info("Test that the status of a reply is ERROR when the listener thorws an exception");
         numOfRepliesToGet=1;
-        lock.set(new CountDownLatch(numOfRepliesToGet));
+        lock.set(new CountDownLatch(1));
         CommandMessage cmd = new CommandMessage(
                 commandSenderFullRunningId,
                 commandManagerId,
@@ -259,9 +303,9 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
         assertTrue(lock.get().await(5, TimeUnit.SECONDS),"Reply not received");
 
         ReplyMessage reply = repliesReceived .get(0);
-        assertEquals(reply.getId(),3);
-        assertEquals(reply.getCommand(),CommandType.RESTART);
-        assertEquals(reply.getExitStatus(),CommandExitStatus.ERROR);
+        assertEquals(3,reply.getId());
+        assertEquals(CommandType.RESTART,reply.getCommand());
+        assertEquals(CommandExitStatus.ERROR, reply.getExitStatus());
         logger.info("Done testErrorFromListener");
     }
 
@@ -274,7 +318,7 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
     public void testParamsAndProperties() throws Exception {
         logger.info("Test presence of properties in the reply");
         numOfRepliesToGet=1;
-        lock.set(new CountDownLatch(numOfRepliesToGet));
+        lock.set(new CountDownLatch(1));
 
         Map<String,String> props = new HashMap<>();
         props.put("v1","2");
@@ -321,7 +365,7 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
     @Override
     public void stringEventReceived(String event) {
         if (event==null || event.isEmpty()) {
-            logger.warn("Gor an empty reply");
+            logger.warn("Got an empty reply");
             return;
         }
         logger.info("Processing JSON reply [{}]",event);
@@ -334,8 +378,10 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
         }
         repliesReceived.add(reply);
         logger.info("Reply received: {}",reply.toString());
+
+        System.out.println("*** ==> received reply with id="+reply.getId());
         if (repliesReceived.size()==numOfRepliesToGet) {
-            logger.debug("All expected replies have been received");
+            logger.debug("All expected replies {} have been received (in queue {} items)",numOfRepliesToGet,repliesReceived.size());
             lock.get().countDown();
         } else {
             logger.debug("Replies to get {}, replies received {}: {} missing replies",
