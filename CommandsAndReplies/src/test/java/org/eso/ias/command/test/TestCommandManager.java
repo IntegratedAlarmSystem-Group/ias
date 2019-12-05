@@ -17,8 +17,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test the {@link org.eso.ias.command.CommandManager}.
@@ -165,9 +164,18 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
             case RESTART:
                 throw new Exception("Simulated exception");
             case SET_LOG_LEVEL:
+                List<String> params = cmd.getParams();
+                int p1 = Integer.valueOf(params.get(0));
+                int p2 = Integer.valueOf(params.get(1));
+                Map<String,String> cmdProps = cmd.getProperties();
+                int cp1 = Integer.valueOf(cmdProps.get("v1"));
+                int cp2 = Integer.valueOf(cmdProps.get("v2"));
+                int res = p1*p2*cp1*cp2;
+
                 Map<String, String> props = new HashMap<>();
                 props.put("FirstKey", "A property");
                 props.put("SecondKey", "Another property");
+                props.put("FromParams",""+res);
                 return new CmdExecutionResult(CommandExitStatus.UNKNOWN, props);
             default:
                 return new CmdExecutionResult(CommandExitStatus.OK);
@@ -263,18 +271,27 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
      * @throws Exception
      */
     @Test
-    public void testSettingOfProperties() throws Exception {
+    public void testParamsAndProperties() throws Exception {
         logger.info("Test presence of properties in the reply");
         numOfRepliesToGet=1;
         lock.set(new CountDownLatch(numOfRepliesToGet));
+
+        Map<String,String> props = new HashMap<>();
+        props.put("v1","2");
+        props.put("v2","3");
+
+        List<String> params = new Vector<>();
+        params.add("4");
+        params.add("5");
+
         CommandMessage cmd = new CommandMessage(
                 commandSenderFullRunningId,
                 commandManagerId,
                 CommandType.SET_LOG_LEVEL,
                 4,
-                null,
+                params,
                 System.currentTimeMillis(),
-                null);
+                props);
 
         String jSonStr =cmdSerializer.iasCmdToString(cmd);
         logger.debug("Sending command {}",cmd.toString());
@@ -283,14 +300,15 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
         assertTrue(lock.get().await(5, TimeUnit.SECONDS),"Reply not received");
 
         ReplyMessage reply = repliesReceived .get(0);
-        assertEquals(reply.getId(),4);
-        assertEquals(reply.getCommand(),CommandType.SET_LOG_LEVEL);
-        assertEquals(reply.getExitStatus(),CommandExitStatus.UNKNOWN);
-        assertTrue(reply.getProperties()!=null);
-        assertTrue(reply.getProperties().size()==2);
-        assertTrue(reply.getProperties().get("FirstKey").equals("A property"));
-        assertTrue(reply.getProperties().get("SecondKey").equals("Another property"));
-        logger.info("Done testSettingOfProperties");
+        assertEquals(4,reply.getId());
+        assertEquals(CommandType.SET_LOG_LEVEL, reply.getCommand());
+        assertEquals(CommandExitStatus.UNKNOWN, reply.getExitStatus());
+        assertNotNull(reply.getProperties());
+        assertEquals(3, reply.getProperties().size());
+        assertEquals("A property",reply.getProperties().get("FirstKey"));
+        assertEquals("Another property",reply.getProperties().get("SecondKey"));
+        assertEquals("120", reply.getProperties().get("FromParams"));
+        logger.info("Done testParamsAndProperties");
 
     }
 
