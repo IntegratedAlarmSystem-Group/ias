@@ -9,7 +9,9 @@ import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -158,10 +160,18 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
     @Override
     public CmdExecutionResult newCommand(CommandMessage cmd) throws Exception {
         logger.debug("Processing command {}",cmd);
-        if (cmd.getCommand()==CommandType.RESTART) {
-            throw new Exception("Simulated exception");
+
+        switch (cmd.getCommand()) {
+            case RESTART:
+                throw new Exception("Simulated exception");
+            case SET_LOG_LEVEL:
+                Map<String, String> props = new HashMap<>();
+                props.put("FirstKey", "A property");
+                props.put("SecondKey", "Another property");
+                return new CmdExecutionResult(CommandExitStatus.UNKNOWN, props);
+            default:
+                return new CmdExecutionResult(CommandExitStatus.OK);
         }
-        return new CmdExecutionResult(CommandExitStatus.OK,null);
     }
 
 
@@ -247,6 +257,43 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
         logger.info("Done testErrorFromListener");
     }
 
+    /**
+     * Test if the properties set by the listener are part of the reply
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testSettingOfProperties() throws Exception {
+        logger.info("Test presence of properties in the reply");
+        numOfRepliesToGet=1;
+        lock.set(new CountDownLatch(numOfRepliesToGet));
+        CommandMessage cmd = new CommandMessage(
+                commandSenderFullRunningId,
+                commandManagerId,
+                CommandType.SET_LOG_LEVEL,
+                4,
+                null,
+                System.currentTimeMillis(),
+                null);
+
+        String jSonStr =cmdSerializer.iasCmdToString(cmd);
+        logger.debug("Sending command {}",cmd.toString());
+        cmdProducer.push(jSonStr,null,commandManagerId);
+        logger.info("Command sent. Waiting for the reply...");
+        assertTrue(lock.get().await(5, TimeUnit.SECONDS),"Reply not received");
+
+        ReplyMessage reply = repliesReceived .get(0);
+        assertEquals(reply.getId(),4);
+        assertEquals(reply.getCommand(),CommandType.SET_LOG_LEVEL);
+        assertEquals(reply.getExitStatus(),CommandExitStatus.UNKNOWN);
+        assertTrue(reply.getProperties()!=null);
+        assertTrue(reply.getProperties().size()==2);
+        assertTrue(reply.getProperties().get("FirstKey").equals("A property"));
+        assertTrue(reply.getProperties().get("SecondKey").equals("Another property"));
+        logger.info("Done testSettingOfProperties");
+
+    }
+
 
     /**
      * The listener that gets the replies
@@ -279,4 +326,5 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
                     numOfRepliesToGet-repliesReceived.size());
         }
     }
+
 }
