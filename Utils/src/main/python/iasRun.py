@@ -65,7 +65,7 @@ def setProps(propsDict,className,logFileNameId):
         logger.info("No log4j config file (%s) found: using defaults",logbackConfigFileName)
 
     # JVM always uses UTC
-    propsDict["-Duser.timezone"]="UTC"
+    propsDict["user.timezone"]="UTC"
 
     # Add environment variables
 
