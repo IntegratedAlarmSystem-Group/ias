@@ -2,6 +2,7 @@ package org.eso.ias.monitor
 
 import java.io.File
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicBoolean
 
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
@@ -57,6 +58,9 @@ class IasMonitor(
   require(refreshRate>0,"Invalid negative or zero refresh rate")
   require(threshold>0,"Invalid negative or zero threshold")
 
+  /** True if the monitor has been closed */
+  val closed = new AtomicBoolean(false);
+
   /** The consumer of HBs */
   val hbConsumer: HbKafkaConsumer = new HbKafkaConsumer(kafkaBrokers,identifier)
 
@@ -99,6 +103,10 @@ class IasMonitor(
 
   /** Stop monitoring and free resources */
   def shutdown(): Unit = {
+    if (closed.getAndSet(true)) {
+      IasMonitor.logger.warn("Already closed");
+      return;
+    }
     hbEngine.updateHbState(HeartbeatStatus.EXITING)
     IasMonitor.logger.debug("Shutting down the alarm sender")
     alarmsProducer.shutdown()
