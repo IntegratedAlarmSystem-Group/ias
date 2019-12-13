@@ -559,6 +559,15 @@ public class WebServerSender implements IasioListener {
  	        logger.error("Kafka consumer initialization fails", t);
  	        System.exit(-1);
  	    }
+
+		// Adds the shutdown hook
+		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+			@Override
+			public void run() {
+				shutdown();
+			}
+		}, "Plugin shutdown hook"));
+
  	    hbEngine.updateHbState(HeartbeatStatus.RUNNING);
 	}
 
