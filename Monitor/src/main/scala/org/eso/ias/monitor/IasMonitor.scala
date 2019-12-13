@@ -29,7 +29,7 @@ import scala.util.{Failure, Success, Try}
   * TODO: send alarms (al least some of them) to the web server even when
   *       kafka is down
   *
-  * @param kafkaBrokes Kafka brokers
+  * @param kafkaBrokers Kafka brokers
   * @param identifier The identifier of the monitor tool
   * @param pluginIds The IDs of the plugins to monitor
   * @param converterIds The IDs of the converters to monitor
