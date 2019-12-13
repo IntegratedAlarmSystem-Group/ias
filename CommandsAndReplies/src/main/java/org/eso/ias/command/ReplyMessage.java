@@ -1,6 +1,8 @@
 package org.eso.ias.command;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import org.eso.ias.utils.ISO8601Helper;
 
 import java.util.Map;
 import java.util.Objects;
@@ -42,11 +44,19 @@ public class ReplyMessage {
     /** The exit status of the command */
     private CommandExitStatus exitStatus;
 
-    /** The point in time when the command has been received from the kafka topic */
-    private long receptionTStamp;
+    /** The point in time when the command has been received from the kafka topic (ISO 8601)*/
+    private String receptionTStamp;
 
-    /** The point in time when the execution of the command terminated */
-    private long processedTStamp;
+    /** The point in time when the command has been received from the kafka topic (milliseconds) */
+    @JsonIgnore
+    private long receptionTStampMillis;
+
+    /** The point in time when the execution of the command terminated (ISO 8601) */
+    private String processedTStamp;
+
+    /** The point in time when the execution of the command terminated (milliseconds) */
+    @JsonIgnore
+    private long processedTStampMillis;
 
     /** Additional properties, if any  */
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -76,13 +86,14 @@ public class ReplyMessage {
             long receptionTStamp,
             long processedTStamp,
             Map<String, String> properties) {
+        assert receptionTStamp<=processedTStamp : "Unordered timestamps";
         this.senderFullRunningId = senderFullRunningId;
         this.destFullRunningId = destFullRunningId;
         this.id = id;
         this.command = command;
         this.exitStatus = exitStatus;
-        this.receptionTStamp = receptionTStamp;
-        this.processedTStamp = processedTStamp;
+        setReceptionTStampMillis(receptionTStamp);
+        setProcessedTStampMillis(processedTStamp);
         this.properties = properties;
     }
 
@@ -126,20 +137,42 @@ public class ReplyMessage {
         this.exitStatus = exitStatus;
     }
 
-    public long getReceptionTStamp() {
+    public String getReceptionTStamp() {
         return receptionTStamp;
     }
 
-    public void setReceptionTStamp(long receptionTStamp) {
-        this.receptionTStamp = receptionTStamp;
+    public long getReceptionTStampMillis() {
+        return receptionTStampMillis;
     }
 
-    public long getProcessedTStamp() {
+    public void setReceptionTStamp(String receptionTStamp) {
+        this.receptionTStamp = receptionTStamp;
+        this.receptionTStampMillis=ISO8601Helper.timestampToMillis(receptionTStamp);
+    }
+
+    public void setReceptionTStampMillis(long receptionTStamp) {
+        this.receptionTStampMillis = receptionTStamp;
+        this.receptionTStamp=ISO8601Helper.getTimestamp(receptionTStamp);
+    }
+
+    public String getProcessedTStamp() {
+
         return processedTStamp;
     }
 
-    public void setProcessedTStamp(long processedTStamp) {
-        this.processedTStamp = processedTStamp;
+    public long getProcessedTStampMillis() {
+        return processedTStampMillis;
+    }
+
+    public void setProcessedTStamp(String processedTStamp) {
+        this.processedTStamp=processedTStamp;
+        this.processedTStampMillis=ISO8601Helper.timestampToMillis(processedTStamp);
+    }
+
+    public void setProcessedTStampMillis(long processedTStamp) {
+
+        this.processedTStampMillis = processedTStamp;
+        this.processedTStamp = ISO8601Helper.getTimestamp(processedTStamp);
     }
 
     public Map<String, String> getProperties() {
@@ -158,8 +191,8 @@ public class ReplyMessage {
                 ", id=" + id +
                 ", command=" + command +
                 ", exitStatus=" + exitStatus +
-                ", receptionTStamp=" + receptionTStamp +
-                ", processedTStamp=" + processedTStamp +
+                ", receptionTStamp=" + receptionTStamp + " ("+receptionTStampMillis+ ")" +
+                ", processedTStamp=" + processedTStamp + " ("+processedTStampMillis+ ")" +
                 ", properties=" + properties +
                 '}';
     }
@@ -170,8 +203,8 @@ public class ReplyMessage {
         if (o == null || getClass() != o.getClass()) return false;
         ReplyMessage that = (ReplyMessage) o;
         return id == that.id &&
-                receptionTStamp == that.receptionTStamp &&
-                processedTStamp == that.processedTStamp &&
+                receptionTStamp.equals(that.receptionTStamp) &&
+                processedTStamp.equals(that.processedTStamp) &&
                 senderFullRunningId.equals(that.senderFullRunningId) &&
                 destFullRunningId.equals(that.destFullRunningId) &&
                 command == that.command &&
