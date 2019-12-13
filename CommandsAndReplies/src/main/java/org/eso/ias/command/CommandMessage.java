@@ -1,6 +1,8 @@
 package org.eso.ias.command;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import org.eso.ias.utils.ISO8601Helper;
 
 import java.util.List;
 import java.util.Map;
@@ -41,8 +43,12 @@ public class CommandMessage {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<String> params;
 
-    /** The timestamp when the command has been published */
-    private long timestamp;
+    /** The timestamp when the command has been published (in ISO 8601 format) */
+    private String timestamp;
+
+    /** The timestamp in milliseconds that corresponds to {@link #timestamp} */
+    @JsonIgnore
+    private long timestampMillis;
 
     /** Additional properties, if any  */
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -75,7 +81,7 @@ public class CommandMessage {
         this.command = command;
         this.id = id;
         this.params = params;
-        this.timestamp = timestamp;
+        setTimestampMillis(timestamp);
         this.properties = properties;
     }
 
@@ -119,12 +125,25 @@ public class CommandMessage {
         this.params = params;
     }
 
-    public long getTimestamp() {
+    public String getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
+    public long getTimestampMillis() {
+        return timestampMillis;
+    }
+
+    public void setTimestampMillis(long timestamp) {
+        String tStamp = ISO8601Helper.getTimestamp(timestamp);
+        this.timestampMillis = timestamp;
+        this.timestamp = tStamp;
+    }
+
+    /** Set the timestamp to the passed ISO 8601 timestamp */
+    public void setTimestamp(String isoTStamp) {
+        long tStamp = ISO8601Helper.timestampToMillis(isoTStamp);
+        this.timestampMillis = tStamp;
+        this.timestamp = isoTStamp;
     }
 
     public Map<String, String> getProperties() {
@@ -141,7 +160,7 @@ public class CommandMessage {
         if (o == null || getClass() != o.getClass()) return false;
         CommandMessage that = (CommandMessage) o;
         return id == that.id &&
-                timestamp == that.timestamp &&
+                timestamp.equals(that.timestamp) &&
                 senderFullRunningId.equals(that.senderFullRunningId) &&
                 destId.equals(that.destId) &&
                 command == that.command &&
@@ -162,7 +181,7 @@ public class CommandMessage {
                 ", command=" + command +
                 ", id=" + id +
                 ", params=" + params +
-                ", timestamp=" + timestamp +
+                ", timestamp=" + timestamp + " ("+timestampMillis+")" +
                 ", properties=" + properties +
                 '}';
     }
