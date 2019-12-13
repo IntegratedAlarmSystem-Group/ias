@@ -37,7 +37,7 @@ public class TestCmdReplySerialization {
         param.add("ThirdParam");
         cmd.setParams(param);
         long now = System.currentTimeMillis();
-        cmd.setTimestamp(now);
+        cmd.setTimestampMillis(now);
 
         Map<String,String> props = new HashMap<>();
         props.put("Key1","Value1");
@@ -65,8 +65,8 @@ public class TestCmdReplySerialization {
         reply.setExitStatus(CommandExitStatus.REJECTED);
 
         long now = System.currentTimeMillis();
-        reply.setReceptionTStamp(now-100);
-        reply.setProcessedTStamp(now);
+        reply.setReceptionTStampMillis(now-100);
+        reply.setProcessedTStampMillis(now);
 
         Map<String,String> props = new HashMap<>();
         props.put("Key1","Value1");
