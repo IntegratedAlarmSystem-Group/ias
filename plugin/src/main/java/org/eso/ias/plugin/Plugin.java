@@ -516,7 +516,7 @@ public class Plugin implements ChangeValueListener {
 			}
 		}, "Plugin shutdown hook"));
 		
-		logger.debug("Initiailizing {} monitor points", monitorPoints.values().size());
+		logger.debug("Initializing {} monitor points", monitorPoints.values().size());
 		monitorPoints.values().forEach(mp -> mp.start());
 		
 		hbEngine.updateHbState(HeartbeatStatus.RUNNING);
