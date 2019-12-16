@@ -6,6 +6,10 @@ Created on Dec 16, 2019
 
 import json
 
+from IasCmdReply.IasCmdExitStatus import IasCmdExitStatus
+from IasCmdReply.IasCommandType import IasCommandType
+
+
 class IasReply(object):
     '''
     The python data structure for a Reply to be published in the kafka reply topic.
@@ -48,13 +52,22 @@ class IasReply(object):
         self.destFullRunningId = dest
         if not cmd:
             raise ValueError("Invalid command")
-        self.command = cmd
+        if isinstance(cmd,IasCommandType):
+            self.command = cmd.name
+        else:
+            self.command = cmd
+
         if not id:
             raise ValueError("Invalid id of the command")
         self.id = str(id)
+
         if not exitStatus:
             raise ValueError("Invalid result of command")
-        self.exitStatus = exitStatus
+        if isinstance(exitStatus,IasCmdExitStatus):
+            self.exitStatus = exitStatus.name
+        else:
+            self.exitStatus = exitStatus
+
         if not recvTStamp:
             raise ValueError("Invalid time of reception")
         self.receptionTStamp = recvTStamp
