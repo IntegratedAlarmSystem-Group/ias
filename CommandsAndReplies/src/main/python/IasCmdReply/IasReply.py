@@ -76,8 +76,8 @@ class IasReply(object):
         temp["exitStatus"] = self.exitStatus
         temp["receptionTStamp"] = self.receptionTStamp
         temp["processedTStamp"] = self.processedTStamp
-        if self.props is not None and len(self.props)>0:
-            temp["properties"] = self.props
+        if self.properties is not None and len(self.properties)>0:
+            temp["properties"] = self.properties
 
         return json.dumps(temp)
 
