@@ -4,8 +4,11 @@ import org.eso.ias.kafkautils.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.management.ManagementFactory;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Vector;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
@@ -13,8 +16,11 @@ import java.util.concurrent.TimeUnit;
 /**
  * The CommandManager subscribes as a consumer of the command topic and a producer of the reply topic.
  * Its task is to receive the commands for the process where it runs, discarding the commands targeted to
- * other processes. Each command is forwarded to the listener for execution and the replies published
- * in the reply topic.
+ * other processes.
+ *
+ * Normally commands are forwarded to the listener for execution and the replies published
+ * in the reply topic. SHUTDOWN and RESTART must be executed by the {@link CommandManager} because a
+ * reply must be sent before shutting down.
  *
  * Commands are executed in a dedicated thread in FIFO order.
  * Received commands are queued and discarded when the queue is full as we do not expect many commands.
@@ -143,15 +149,21 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
         logger.info("Initialized");
     }
 
-    /** Start getting events from the command topic */
+    /**
+     * Start getting events from the command topic and send them to the passed listener.
+     * The listener is usually an instance of {@link DefaultCommandExecutor} or an object
+     * extending {@link DefaultCommandExecutor} to customize the commands
+     *
+     * @param  commandListener The listener of commands that execute all the commands
+     */
     public void start(CommandListener commandListener) throws KafkaUtilsException {
         if (started) {
             logger.warn("Already started: skipped");
             return;
-        } else {
-            started=true;
         }
+
         Objects.requireNonNull(commandListener,"The listener of commands can't be null");
+        started=true;
         this.cmdListener = commandListener;
         initialize();
         cmdThread.start();
@@ -184,7 +196,7 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
      * @param reply the reply to push in the reply topic
      */
     private void sendReply(ReplyMessage reply) {
-        reply.setProcessedTStamp(System.currentTimeMillis());
+        reply.setProcessedTStampMillis(System.currentTimeMillis());
         String jsonStr;
         try {
             jsonStr = replySerializer.iasReplyToString(reply);
@@ -290,7 +302,80 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
     }
 
     /**
+     * Restart the process i.e. run the RESTART command
      *
+     * @throws Exception
+     */
+    private final void restartProcess() throws Exception {
+        logger.debug("Restarting...");
+        for (String jvmArg : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
+            System.out.println("jvmArgs "+jvmArg);
+        }
+        String classPath = ManagementFactory.getRuntimeMXBean().getClassPath();
+        System.out.println("\nclassPath "+classPath);
+
+        String sunJavaCmd = System.getProperty("sun.java.command");
+        System.out.println("\nsun.java.command "+sunJavaCmd);
+        String pidAndHost =  ManagementFactory.getRuntimeMXBean().getName();
+        System.out.println("\npid@host "+pidAndHost);
+
+        // Build the command line
+        List<String> cmdToRun = new Vector<>();
+        cmdToRun.add("java");
+
+        for (String jvmArg : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
+            logger.debug("Adding JVM arg {}",jvmArg);
+            cmdToRun.add(jvmArg.trim());
+        }
+
+        // Adds the classpath
+        String cleanedClassPath = classPath.replace("\"","").trim();
+        if (!cleanedClassPath.isEmpty()) {
+            logger.debug("Adding classpath [{}]",cleanedClassPath);
+            cmdToRun.add("-cp");
+            cmdToRun.add(cleanedClassPath);
+        }
+
+        logger.debug("Adding command [{}]",sunJavaCmd);
+        String[] sunCommandParts = sunJavaCmd.split(" ");
+        for (String part: sunCommandParts) {
+            String cleaned = part.trim();
+            if (!cleaned.isEmpty()) {
+                logger.debug("Adding part {} of command",cleaned);
+                cmdToRun.add(cleaned);
+            }
+        }
+
+        if (logger.isDebugEnabled()) {
+            StringBuilder str = new StringBuilder();
+            for (String s:  cmdToRun) {
+                str.append(s);
+                str.append(' ');
+            }
+            logger.debug("Going to run [{}]",str.toString());
+        }
+
+        ProcessBuilder procBuilder = new ProcessBuilder(cmdToRun);
+        procBuilder.inheritIO();
+        Process p = procBuilder.start();
+        logger.info("New process launched. Exiting");
+        logger.debug("Process is alive {}",p.isAlive());
+        System.exit(0);
+
+    }
+
+    /**
+     * Fetch commands from the queue and sends them to the lister for execution.
+     *
+     * The return code and properties provided by the listener are packed into the reply before being
+     * sent to the reply topic.
+     *
+     * This method catches the case fo an error from the lister implementation of the command and
+     * pushes a reply with an ERROR return code in the reply topic.
+     *
+     * <B>Note</B>: the only commands that are directly executed by this method are SHUTDOWN
+     *              and RESTART because in these cases the reply must be sent <EM>before</EM>
+     *              before shutting down the process.
      */
     @Override
     public void run() {
@@ -298,56 +383,78 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
         TimestampedCommand tStampedCmd;
         CommandListener.CmdExecutionResult cmdResult = null;
         while (!closed) {
-             try {
-                 tStampedCmd = cmdsToProcess.poll(500, TimeUnit.MILLISECONDS);
-             } catch (InterruptedException ie) {
-                 continue;
-             }
-             if (tStampedCmd==null) {
-                 // Timeout
-                 continue;
-             }
-             logger.debug("Command {} received from the queue",tStampedCmd.command);
-             try {
-                 logger.debug("Sending the command for execution");
-                 cmdResult = cmdListener.newCommand(tStampedCmd.command);
-                 logger.debug("Command executed");
-             } catch (Exception e) {
-                 logger.error("Exception [{}] got executing the command: will reply with ERROR",e.getMessage(),e);
-                 // Exception executing the command: send the reply
+            try {
+                tStampedCmd = cmdsToProcess.poll(500, TimeUnit.MILLISECONDS);
+            } catch (InterruptedException ie) {
+                continue;
+            }
+            if (tStampedCmd == null) {
+                // Timeout
+                continue;
+            }
+            logger.debug("Command {} received from the queue", tStampedCmd.command);
+            try {
+                logger.debug("Sending the command for execution");
+                switch (tStampedCmd.command.getCommand()) {
+                    case SHUTDOWN:
+                    case RESTART: {
+                        // Will be executedd ater sending the reply
+                        cmdResult = new CommandListener.CmdExecutionResult(CommandExitStatus.OK);
+                        break;
+                    }
+                    default: {
+                        cmdResult = cmdListener.newCommand(tStampedCmd.command);
+                        logger.debug("Command executed");
+                    }
+                }
+            } catch (Exception e) {
+                logger.error("Exception [{}] got executing the command: will reply with ERROR", e.getMessage(), e);
+                // Exception executing the command: send the reply
 
-                 sendReply(
-                         CommandExitStatus.ERROR,
-                         tStampedCmd.command.getSenderFullRunningId(),
-                         tStampedCmd.command.getId(),
-                         tStampedCmd.command.getCommand(),
-                         tStampedCmd.receptionTStamp,
-                         null);
-             }
+                sendReply(
+                        CommandExitStatus.ERROR,
+                        tStampedCmd.command.getSenderFullRunningId(),
+                        tStampedCmd.command.getId(),
+                        tStampedCmd.command.getCommand(),
+                        tStampedCmd.receptionTStamp,
+                        null);
+            }
 
-             if (cmdResult==null) {
-                 logger.error("The executor of the command returned null");
-                 sendReply(
-                         CommandExitStatus.ERROR,
-                         tStampedCmd.command.getSenderFullRunningId(),
-                         tStampedCmd.command.getId(),
-                         tStampedCmd.command.getCommand(),
-                         tStampedCmd.receptionTStamp,
-                         null);
-             } else {
-                 Map<String, String> props = null;
-                 if (cmdResult.properties.isPresent()) {
-                     props = cmdResult.properties.get();
-                 }
-                 sendReply(cmdResult.status,
-                         tStampedCmd.command.getSenderFullRunningId(),
-                         tStampedCmd.command.getId(),
-                         tStampedCmd.command.getCommand(),
-                         tStampedCmd.receptionTStamp,
-                         props);
-             }
+            if (cmdResult == null) {
+                logger.error("The executor of the command returned null");
+                sendReply(
+                        CommandExitStatus.ERROR,
+                        tStampedCmd.command.getSenderFullRunningId(),
+                        tStampedCmd.command.getId(),
+                        tStampedCmd.command.getCommand(),
+                        tStampedCmd.receptionTStamp,
+                        null);
+            } else {
+                Map<String, String> props = null;
+                if (cmdResult.properties.isPresent()) {
+                    props = cmdResult.properties.get();
+                }
+                sendReply(cmdResult.status,
+                        tStampedCmd.command.getSenderFullRunningId(),
+                        tStampedCmd.command.getId(),
+                        tStampedCmd.command.getCommand(),
+                        tStampedCmd.receptionTStamp,
+                        props);
 
+                // If the command was a SHUTDOWN, exit the JVM
+                if (tStampedCmd.command.getCommand() == CommandType.SHUTDOWN) {
+                    logger.info("Exit due to a SHUTDOWN command requested by {}", tStampedCmd.command.getSenderFullRunningId());
+                    close();
+                    System.exit(0);
+                } else if (tStampedCmd.command.getCommand() == CommandType.RESTART) {
+                    logger.info("Restarting process as requested by {}", tStampedCmd.command.getSenderFullRunningId());
+                    try {
+                        restartProcess();
+                    } catch (Exception e) {
+                    }
+                }
+            }
+            logger.info("Commands processor thread terminated");
         }
-        logger.info("Commands processor thread terminated");
     }
 }
