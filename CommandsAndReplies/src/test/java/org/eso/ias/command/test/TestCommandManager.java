@@ -158,7 +158,7 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
         logger.debug("Processing command {}",cmd);
 
         switch (cmd.getCommand()) {
-            case RESTART:
+            case ACK:
                 throw new Exception("Simulated exception");
             case SET_LOG_LEVEL:
                 List<String> params = cmd.getParams();
@@ -215,7 +215,7 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
         CommandMessage cmd = new CommandMessage(
                 commandSenderFullRunningId,
                 CommandMessage.BROADCAST_ADDRESS,
-                CommandType.SHUTDOWN,
+                CommandType.TF_CHANGED,
                 2,
                 null,
                 System.currentTimeMillis(),
@@ -229,7 +229,7 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
 
         ReplyMessage reply = repliesReceived .get(0);
         assertEquals(2,reply.getId());
-        assertEquals(CommandType.SHUTDOWN,reply.getCommand());
+        assertEquals(CommandType.TF_CHANGED,reply.getCommand());
         assertEquals(CommandExitStatus.OK,reply.getExitStatus());
 
         logger.info("Done testBroadcastCommandReply");
@@ -246,11 +246,12 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
      */
     @Test
     public void testMultipleCommands() throws Exception {
-        logger.info("Test the sending of many commands and the recetion of the replies");
+        logger.info("Test the sending of many commands and the reception of the replies");
         numOfRepliesToGet=128;
         lock.set(new CountDownLatch(1));
 
         logger.info("Sending {} commands",numOfRepliesToGet);
+        List<Long> idsSent = new Vector<>();
         for (int i =0; i<numOfRepliesToGet; i++) {
 
             CommandMessage cmd = new CommandMessage(
@@ -264,19 +265,21 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
 
             String jSonStr =cmdSerializer.iasCmdToString(cmd);
             cmdProducer.push(jSonStr,null,commandManagerId);
+            idsSent.add(cmd.getId());
             logger.info("Command {} sent",i);
 
         }
-        logger.info("{} commands sent. Waiting for the replies...",numOfRepliesToGet);
-
-
+        logger.info("{} commands sent. Waiting for the replies...",idsSent.size());
 
         assertTrue(lock.get().await(1, TimeUnit.MINUTES),"Replies not received");
+        logger.info("All replies received");
 
         assertEquals(numOfRepliesToGet,repliesReceived.size());
         for (int c=0; c<repliesReceived.size(); c++) {
             ReplyMessage r = repliesReceived.get(c);
-            assertTrue(r.getId()>=1000 && r.getId()<1000+numOfRepliesToGet);
+            Long id = r.getId();
+            assertTrue(idsSent.contains(id));
+            assertTrue(idsSent.remove(id));
         }
 
         logger.info("Done testMultipleCommands");
@@ -290,7 +293,7 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
         CommandMessage cmd = new CommandMessage(
                 commandSenderFullRunningId,
                 commandManagerId,
-                CommandType.RESTART,
+                CommandType.ACK,
                 3,
                 null,
                 System.currentTimeMillis(),
@@ -304,7 +307,7 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
 
         ReplyMessage reply = repliesReceived .get(0);
         assertEquals(3,reply.getId());
-        assertEquals(CommandType.RESTART,reply.getCommand());
+        assertEquals(CommandType.ACK,reply.getCommand());
         assertEquals(CommandExitStatus.ERROR, reply.getExitStatus());
         logger.info("Done testErrorFromListener");
     }
