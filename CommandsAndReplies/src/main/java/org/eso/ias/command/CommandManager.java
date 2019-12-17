@@ -1,6 +1,7 @@
 package org.eso.ias.command;
 
 import org.eso.ias.kafkautils.*;
+import org.eso.ias.types.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -130,6 +131,18 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
     }
 
     /**
+     * Constructor
+     *
+     * Commodity constructor with the Identifier
+     *
+     * @param identifier The identifier of the tool where the CommandManager runs
+     * @param servers The address of the servers to connect to
+     */
+    public CommandManager(Identifier identifier, String servers) {
+        this(identifier.fullRunningID(), identifier.id(),servers);
+    }
+
+                          /**
      * Initialize producer and consumer but do not start getting events
      */
     private void initialize() {
