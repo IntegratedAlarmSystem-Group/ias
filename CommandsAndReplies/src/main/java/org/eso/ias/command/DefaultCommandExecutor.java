@@ -5,7 +5,6 @@ import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.management.ManagementFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -131,19 +130,5 @@ public class DefaultCommandExecutor implements CommandListener {
         return new CmdExecutionResult(CommandExitStatus.OK, props);
     }
 
-    public static void main(String[] args) {
-        logger.info("Process started");
-        DefaultCommandExecutor cmdExe = new DefaultCommandExecutor();
 
-        String pidAndHost =  ManagementFactory.getRuntimeMXBean().getName();
-        logger.info("Started with PID {}",pidAndHost.split("@")[0]);
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException ie) {
-            logger.warn("Interrupted");
-            System.exit(0);
-        }
-
-        CommandMessage cmd = new CommandMessage();
-    }
 }
