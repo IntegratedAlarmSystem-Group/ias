@@ -36,7 +36,7 @@ def on_send_error(excp):
 
 if __name__ == '__main__':
 
-    logger = Log.initLogging(__file__)
+    logger = Log.getLogger(__file__)
 
     userName = getpass.getuser()
     hostName = socket.gethostname()
@@ -119,6 +119,15 @@ if __name__ == '__main__':
     else:
         params = args.params
 
+    # Check if the command line contains all and only the requested parameters
+    if commandType.num_of_params is 0 and params is not None:
+        logger.error("Command %s rejected: it takes no parameters but got %s",args.command,str(params))
+        sys.exit(-1)
+    else:
+        if params is None or commandType.num_of_params!=len(params):
+            logger.error("Command %s rejected: it takes %d parameters but got %s",args.command,commandType.num_of_params,str(params))
+            sys.exit(-1)
+
     cmdToSend = IasCommand(
         args.dest,
         senderFullRunningId,
@@ -129,7 +138,6 @@ if __name__ == '__main__':
     )
     cmdJsonStr = cmdToSend.toJSonString()
     logger.info("JSON string of the cmd = [%s]",cmdJsonStr)
-
 
     kafkaBroker = "%s:%d" % (args.broker,args.port)
     logger.info("Connecting to broker %s, producer id %s and topic %s...",kafkaBroker,args.sender,kafkaTopicName)
