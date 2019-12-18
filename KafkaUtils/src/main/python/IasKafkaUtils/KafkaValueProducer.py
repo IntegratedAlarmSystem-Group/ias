@@ -3,10 +3,11 @@ Created on Jun 14, 2018
 
 @author: acaproni
 '''
-import logging
 from kafka import KafkaProducer
 
-logger = logging.getLogger(__file__)
+from IASLogging.logConf import Log
+
+logger = logger=Log.initLogging(__file__)
 
 class KafkaValueProducer(object):
     '''
