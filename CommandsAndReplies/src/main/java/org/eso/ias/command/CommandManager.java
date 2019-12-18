@@ -133,7 +133,7 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
             throw new IllegalArgumentException("Invalid null/empty kafka servers");
         }
         cmdsConsumer = new SimpleStringConsumer(servers, KafkaHelper.CMD_TOPIC_NAME,id);
-        repliesProducer = new SimpleStringProducer(servers, KafkaHelper.REPLY_TOPIC_NAME,id+"-CMD");
+        repliesProducer = new SimpleStringProducer(servers, KafkaHelper.REPLY_TOPIC_NAME,id+"-REPLY");
     }
 
     /**
