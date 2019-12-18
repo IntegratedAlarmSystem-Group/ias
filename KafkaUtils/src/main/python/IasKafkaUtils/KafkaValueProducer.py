@@ -7,7 +7,7 @@ from kafka import KafkaProducer
 
 from IASLogging.logConf import Log
 
-logger = logger=Log.initLogging(__file__)
+logger = logger=Log.getLogger(__file__)
 
 class KafkaValueProducer(object):
     '''

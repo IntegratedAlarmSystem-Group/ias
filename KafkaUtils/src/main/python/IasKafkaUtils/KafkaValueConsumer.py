@@ -14,7 +14,7 @@ from IASLogging.logConf import Log
 from IasBasicTypes.IasValue import IasValue
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
 
-logger=Log.initLogging(__file__)
+logger=Log.getLogger(__file__)
 
 class IasValueListener(object):
     """
