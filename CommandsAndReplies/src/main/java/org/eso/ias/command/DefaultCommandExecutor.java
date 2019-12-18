@@ -13,9 +13,14 @@ import java.util.Map;
  * The {@link DefaultCommandExecutor} provides a default implementation
  * of the commands defined in {@link CommandType}.
  *
- * An object of this class as usually passed as parameter of {@link CommandManager#start(CommandListener)}
+ * An object of this class as usually passed as parameter of {@link CommandManager#start(CommandListener, AutoCloseable)}
  * if the default behavior is acceptable.
- * Otherwise it is possible to pass an objct that extends this one overloading just the behavior to customize.
+ * Otherwise it is possible to pass an object that extends this one overloading just the behavior to customize.
+ *
+ * If RESTART or SHUTDOWN are invoked, the implementations of those commands can execute
+ * a pice of code before the process is effectively restarted or shutdown.
+ * The restart and shutdwon of the process must be executed by the {@link CommandManager} that is in charge
+ * to send the reply to the caller and free the resources before shutting down the current process.
  *
  */
 public class DefaultCommandExecutor implements CommandListener {
@@ -38,8 +43,10 @@ public class DefaultCommandExecutor implements CommandListener {
             case PING: return ping(cmd);
             case SET_LOG_LEVEL: return setLogLevel(cmd);
             case ACK: return alarmAcknowledged(cmd);
-            case RESTART:
-            case TF_CHANGED:
+            case RESTART: return restart(cmd);
+            case SHUTDOWN: return shutdown(cmd);
+            case TF_CHANGED: return tfChanged(cmd);
+
             default:
                 throw new Exception("Unknown command "+cmd.getCommand());
         }
@@ -127,8 +134,38 @@ public class DefaultCommandExecutor implements CommandListener {
         logger.info("Log level set to {}", level.toString());
         Map<String, String> props = new HashMap<>();
         props.put("LogLevel", level.toString());
-        return new CmdExecutionResult(CommandExitStatus.OK, props);
+        return new CmdExecutionResult(CommandExitStatus.OK, props,false,false);
     }
 
+    /**
+     * The method called when a RESTART command has been executed.
+     *
+     * The implementation of this method must not effectively restart the process but ask
+     * for the restarting in the returned {@link org.eso.ias.command.CommandListener.CmdExecutionResult
+     * }
+     * The implementation can add here additional code to be executed before the process is shutdown
+     *
+     * @param cmd The RESTART command received from the command topic
+     * @return The result of the execution of the command
+     * @throws Exception
+     */
+    public CmdExecutionResult restart(CommandMessage cmd) throws Exception {
+        return new CmdExecutionResult(CommandExitStatus.OK, null,false,true);
+    }
 
+    /**
+     * The method called when a SHUTDOWN command has been executed.
+     *
+     * The implementation of this method must not effectively restart the process but ask
+     * for the restarting in the returned {@link org.eso.ias.command.CommandListener.CmdExecutionResult
+     * }.
+     * The implementation can add here additional code to be executed before the process is shutdown
+     *
+     * @param cmd The RESTART command received from the command topic
+     * @return The result of the execution of the command
+     * @throws Exception
+     */
+    public CmdExecutionResult shutdown(CommandMessage cmd) throws Exception {
+        return new CmdExecutionResult(CommandExitStatus.OK, null,true,false);
+    }
 }
