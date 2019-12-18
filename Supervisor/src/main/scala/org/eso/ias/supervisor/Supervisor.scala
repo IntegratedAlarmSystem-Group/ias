@@ -11,6 +11,7 @@ import org.eso.ias.cdb.json.{CdbFiles, CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos._
 import org.eso.ias.cdb.rdb.RdbReader
 import org.eso.ias.cdb.topology.TemplateHelper
+import org.eso.ias.command.CommandManager
 import org.eso.ias.dasu.publisher.{KafkaPublisher, OutputPublisher}
 import org.eso.ias.dasu.subscriber.{InputSubscriber, InputsListener, KafkaSubscriber}
 import org.eso.ias.dasu.{Dasu, DasuImpl}
@@ -66,10 +67,11 @@ class Supervisor(
     private val outputPublisher: OutputPublisher,
     private val inputSubscriber: InputSubscriber,
     private val hbProducer: HbProducer,
+    private val commandManager: CommandManager,
     cdbReader: CdbReader,
     dasuFactory: (DasuDao, Identifier, OutputPublisher, InputSubscriber) => Dasu,
     logLevelFromCommandLine: Option[LogLevelDao])
-    extends InputsListener with InputSubscriber with  OutputPublisher {
+    extends InputsListener with InputSubscriber with  OutputPublisher with AutoCloseable {
   require(Option(supervisorIdentifier).isDefined,"Invalid Supervisor identifier")
   require(Option(outputPublisher).isDefined,"Invalid output publisher")
   require(Option(inputSubscriber).isDefined,"Invalid input subscriber")
@@ -177,7 +179,10 @@ class Supervisor(
   val started = new AtomicBoolean(false)
 
   val statsLogger: SupervisorStatistics = new SupervisorStatistics(id,dasuIds)
-  
+
+  /** The command executor that executes the commands received from the cmd topic */
+  val cmdExecutor: SupervisorCmdExecutor = new SupervisorCmdExecutor()
+
   Supervisor.logger.info("Supervisor [{}] built",id)
   
   /**
@@ -221,6 +226,7 @@ class Supervisor(
       hbEngine.start()
       dasus.values.foreach(dasu => dasu.enableAutoRefreshOfOutput(true))
       val inputsOfSupervisor = dasus.values.foldLeft(Set.empty[String])( (s, dasu) => s ++ dasu.getInputIds())
+      commandManager.start(cmdExecutor,this)
       inputSubscriber.startSubscriber(this, inputsOfSupervisor).flatMap(s => {
         Try{
           Supervisor.logger.debug("Supervisor [{}] started",id)
@@ -234,7 +240,7 @@ class Supervisor(
   /**
    * Release all the resources
    */
-  def cleanUp(): Unit = synchronized {
+  def close(): Unit = synchronized {
 
     val alreadyCleaned = cleanedUp.getAndSet(true)
     if (!alreadyCleaned) {
@@ -252,12 +258,13 @@ class Supervisor(
       Supervisor.logger.info("Supervisor [{}]: cleaned up", id)
     }
   }
-  
+
     /** Adds a shutdown hook to cleanup resources before exiting */
   private def addsShutDownHook(): Thread = {
     val t = new Thread() {
         override def run(): Unit = {
-          cleanUp()
+          Supervisor.logger.info("Shutdown hook is closing the Supervisor {}",supervisorIdentifier.id)
+          close()
         }
     }
     Runtime.getRuntime.addShutdownHook(t)
@@ -512,8 +519,19 @@ object Supervisor {
         new HbJsonSerializer())
     }
 
+    // The command manager to get and execute commands
+    val cmdManager = new CommandManager(identifier,kafkaBrokers.get);
+
     // Build the supervisor
-    val supervisor = new Supervisor(identifier,outputPublisher,inputsProvider,hbProducer,reader,factory,parsedArgs._3)
+    val supervisor = new Supervisor(
+      identifier,
+      outputPublisher,
+      inputsProvider,
+      hbProducer,
+      cmdManager,
+      reader,
+      factory,
+      parsedArgs._3)
 
     val started = supervisor.start()
 
