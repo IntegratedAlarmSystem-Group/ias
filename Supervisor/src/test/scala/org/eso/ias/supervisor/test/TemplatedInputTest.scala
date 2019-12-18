@@ -212,7 +212,7 @@ class TemplatedInputTest extends FlatSpec {
     val valueOfOutput = f.outputEventsreceived.head.value.asInstanceOf[Long]
     assert(valueOfOutput==14L)
     
-    f.supervisor.cleanUp()
+    f.supervisor.close()
   }
   
   
