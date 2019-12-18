@@ -120,11 +120,11 @@ if __name__ == '__main__':
         params = args.params
 
     # Check if the command line contains all and only the requested parameters
-    if commandType.num_of_params is 0 and params is not None:
+    print(commandType.num_of_params,params)
+    if commandType.num_of_params==0 and params is not None:
         logger.error("Command %s rejected: it takes no parameters but got %s",args.command,str(params))
         sys.exit(-1)
-    else:
-        if params is None or commandType.num_of_params!=len(params):
+    elif commandType.num_of_params>0  and (params is None or commandType.num_of_params!=len(params)):
             logger.error("Command %s rejected: it takes %d parameters but got %s",args.command,commandType.num_of_params,str(params))
             sys.exit(-1)
 
