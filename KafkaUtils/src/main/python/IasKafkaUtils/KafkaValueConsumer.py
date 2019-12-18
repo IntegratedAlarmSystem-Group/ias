@@ -99,7 +99,7 @@ class KafkaValueConsumer(Thread):
         The thread to get IasValues from the BSDB
         """
         logger.info('Thread to poll for IasValues started')
-        
+
         partitionsIds=None
         n = 1 
         if not self.terminateThread:
@@ -145,5 +145,6 @@ class KafkaValueConsumer(Thread):
         '''
         Shuts down the thread
         '''
+        self.consumer.close()
         self.terminateThread = True
         
