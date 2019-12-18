@@ -31,7 +31,10 @@ import static org.junit.jupiter.api.Assertions.*;
  * commands
  *
  */
-public class TestCommandManager implements CommandListener, SimpleStringConsumer.KafkaConsumerListener {
+public class TestCommandManager implements
+        CommandListener,
+        SimpleStringConsumer.KafkaConsumerListener,
+        AutoCloseable {
 
     /** The logger */
     private static final Logger logger = LoggerFactory.getLogger(TestCommandManager.class);
@@ -93,6 +96,12 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
      */
     private static final  AtomicReference<CountDownLatch> lock = new AtomicReference<>();
 
+    /**
+     * @see {@link AutoCloseable#close()}
+     */
+    @Override
+    public void close() throws Exception { }
+
     @BeforeAll
     public static void setUpAll() throws Exception {
         logger.debug("Setting up static producer and consumer");
@@ -135,7 +144,7 @@ public class TestCommandManager implements CommandListener, SimpleStringConsumer
             replyConsumer.startGettingEvents(KafkaStringsConsumer.StreamPosition.END, this);
             beforeFirstTest =true;
             logger.info("Processing of replies published by the CommandManager activated");
-            manager.start(this);
+            manager.start(this,this);
             logger.info("CommandManager to test started");
         }
         logger.debug("Ready to run a new test");
