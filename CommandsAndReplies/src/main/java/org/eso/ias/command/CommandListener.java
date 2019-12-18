@@ -10,6 +10,9 @@ import java.util.Optional;
  */
 public interface CommandListener {
 
+    /**
+     * The data structure that the listener returns to the {@link CommandManager}
+     */
     public class CmdExecutionResult {
 
         /** The execution status of the command */
@@ -19,24 +22,51 @@ public interface CommandListener {
         public final Optional<Map<String, String>> properties;
 
         /**
-         * Constructor
+         * Set if the the manager must restart the process
          *
-         * @param status The exit status of the ocmmand
-         * @param props The map of propertis, if any
+         * Only one between mustRestart and mustShutdown can be set at the same time
          */
-        public CmdExecutionResult(CommandExitStatus status, Map<String, String> props) {
+        public final boolean mustRestart;
+
+        /**
+         * Set if the the manager must shut the process down
+         *
+         * Only one between mustRestart and mustShutdown can be set at the same time
+         */
+        public final boolean mustShutdown;
+
+        /**
+         * Constructor.
+         *
+         * Only one between mustRestart and mustShutdown can be set at the same time
+         *
+         * @param status The exit status of the command
+         * @param props The map of propertis, if any
+         * @param mustRestart Set if the the manager must restart the process
+         * @param mustShutdown Set if the the manager must shut the process down
+         */
+        public CmdExecutionResult(
+                CommandExitStatus status,
+                Map<String, String> props,
+                boolean mustShutdown,
+                boolean mustRestart) {
             Objects.requireNonNull(status);
+            if (mustRestart && mustShutdown) {
+                throw new IllegalArgumentException("Only one between mustRestart and mustShutdown can be set at the same time");
+            }
             this.status=status;
             properties = Optional.ofNullable(props);
+            this.mustRestart = mustRestart;
+            this.mustShutdown = mustShutdown;
         }
 
         /**
-         * Constructor with no properties
+         * Constructor with no properties when no stratup and no shutdown is required
          *
          * @param status The exit status of the command
          */
         public CmdExecutionResult(CommandExitStatus status) {
-            this(status,null);
+            this(status,null,false,false);
         }
     }
 

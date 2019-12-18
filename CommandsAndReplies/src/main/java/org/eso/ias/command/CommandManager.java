@@ -382,8 +382,6 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
         Process p = procBuilder.start();
         logger.info("New process launched. Exiting");
         logger.debug("Process is alive {}",p.isAlive());
-        System.exit(0);
-
     }
 
     /**
@@ -416,19 +414,9 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
             }
             logger.debug("Command {} received from the queue", tStampedCmd.command);
             try {
-                switch (tStampedCmd.command.getCommand()) {
-                    case SHUTDOWN:
-                    case RESTART: {
-                        // Will be executedd ater sending the reply
-                        cmdResult = new CommandListener.CmdExecutionResult(CommandExitStatus.OK);
-                        break;
-                    }
-                    default: {
-                        logger.debug("Sending the command {} to the listener for execution",tStampedCmd.command.getCommand());
-                        cmdResult = cmdListener.newCommand(tStampedCmd.command);
-                        logger.debug("Command executed");
-                    }
-                }
+                logger.debug("Sending the command {} to the listener for execution",tStampedCmd.command.getCommand());
+                cmdResult = cmdListener.newCommand(tStampedCmd.command);
+                logger.debug("Command executed");
             } catch (Exception e) {
                 logger.error("Exception [{}] got executing the command: will reply with ERROR", e.getMessage(), e);
                 // Exception executing the command: send the reply
@@ -440,6 +428,7 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
                         tStampedCmd.command.getCommand(),
                         tStampedCmd.receptionTStamp,
                         null);
+                continue;
             }
 
             if (cmdResult == null) {
@@ -451,38 +440,52 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
                         tStampedCmd.command.getCommand(),
                         tStampedCmd.receptionTStamp,
                         null);
-            } else {
-                Map<String, String> props = null;
-                if (cmdResult.properties.isPresent()) {
-                    props = cmdResult.properties.get();
-                }
-                sendReply(cmdResult.status,
-                        tStampedCmd.command.getSenderFullRunningId(),
-                        tStampedCmd.command.getId(),
-                        tStampedCmd.command.getCommand(),
-                        tStampedCmd.receptionTStamp,
-                        props);
+                continue;
+            }
 
-                // If the command was a SHUTDOWN, exit the JVM
-                if (tStampedCmd.command.getCommand() == CommandType.SHUTDOWN) {
-                    logger.info("Exit due to a SHUTDOWN command requested by {}", tStampedCmd.command.getSenderFullRunningId());
-                    close();
-                    if (!Objects.isNull(closeable)) {
-                        logger.debug("Freeing the resources...");
-                        try {
-                            closeable.close();
-                        } catch (Exception e) {
-                            logger.error("Error caught while freeing the resources",e);
-                        }
-                    }
-                    System.exit(0);
-                } else if (tStampedCmd.command.getCommand() == CommandType.RESTART) {
-                    logger.info("Restarting process as requested by {}", tStampedCmd.command.getSenderFullRunningId());
+            Map<String, String> props = null;
+            if (cmdResult.properties.isPresent()) {
+                props = cmdResult.properties.get();
+            }
+            sendReply(cmdResult.status,
+                    tStampedCmd.command.getSenderFullRunningId(),
+                    tStampedCmd.command.getId(),
+                    tStampedCmd.command.getCommand(),
+                    tStampedCmd.receptionTStamp,
+                    props);
+
+            // If the command was a SHUTDOWN, exit the JVM
+            if (cmdResult.mustShutdown) {
+                logger.info("Exit due to a SHUTDOWN command requested by {}", tStampedCmd.command.getSenderFullRunningId());
+                close();
+                if (!Objects.isNull(closeable)) {
+                    logger.debug("Freeing the resources...");
                     try {
-                        restartProcess();
+                        closeable.close();
                     } catch (Exception e) {
+                        logger.error("Error caught while freeing the resources",e);
                     }
                 }
+                System.exit(0);
+            }
+
+            // If the command was RESTART, restart the process and exit
+            if (cmdResult.mustRestart) {
+                logger.info("Restarting process as requested by {}", tStampedCmd.command.getSenderFullRunningId());
+                close();
+                if (!Objects.isNull(closeable)) {
+                    logger.debug("Freeing the resources...");
+                    try {
+                        closeable.close();
+                    } catch (Exception e) {
+                        logger.error("Error caught while freeing the resources",e);
+                    }
+                }
+                try {
+                    restartProcess();
+                } catch (Exception e) { }
+                System.exit(0);
+
             }
             logger.info("Commands processor thread terminated");
         }
