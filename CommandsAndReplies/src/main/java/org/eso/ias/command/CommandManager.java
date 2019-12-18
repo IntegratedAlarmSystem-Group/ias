@@ -108,6 +108,12 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
     private static final Logger logger = LoggerFactory.getLogger(CommandManager.class);
 
     /**
+     * The closeable class that loffers a close(0 method to free the
+     * resources before shutdown
+     */
+    private AutoCloseable closeable;
+
+    /**
      * Constructor
      *
      * @param fullRunningId the full running Id of the process
@@ -127,7 +133,7 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
             throw new IllegalArgumentException("Invalid null/empty kafka servers");
         }
         cmdsConsumer = new SimpleStringConsumer(servers, KafkaHelper.CMD_TOPIC_NAME,id);
-        repliesProducer = new SimpleStringProducer(servers, KafkaHelper.REPLY_TOPIC_NAME,id);
+        repliesProducer = new SimpleStringProducer(servers, KafkaHelper.REPLY_TOPIC_NAME,id+"-CMD");
     }
 
     /**
@@ -168,16 +174,19 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
      * extending {@link DefaultCommandExecutor} to customize the commands
      *
      * @param  commandListener The listener of commands that execute all the commands
+     * @param closeable The closeable class to free the resources while exiting/restating
      */
-    public void start(CommandListener commandListener) throws KafkaUtilsException {
+    public void start(CommandListener commandListener, AutoCloseable closeable) throws KafkaUtilsException {
         if (started) {
             logger.warn("Already started: skipped");
             return;
         }
 
         Objects.requireNonNull(commandListener,"The listener of commands can't be null");
+        Objects.requireNonNull(closeable,"The method to release the resources can't be null");
         started=true;
         this.cmdListener = commandListener;
+        this.closeable=closeable;
         initialize();
         cmdThread.start();
         logger.info("Commands processor thread started");
@@ -194,13 +203,13 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
             return;
         }
         closed=true;
-        cmdThread.interrupt();
         logger.debug("Shutting down");
         cmdsConsumer.tearDown();
         logger.info("Command consumer shut down");
         repliesProducer.tearDown();
         logger.info("Reply producer shut down");
-        logger.info("Shut down");
+        cmdThread.interrupt();
+        logger.info("Is shut down");
     }
 
     /**
@@ -407,7 +416,6 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
             }
             logger.debug("Command {} received from the queue", tStampedCmd.command);
             try {
-                logger.debug("Sending the command for execution");
                 switch (tStampedCmd.command.getCommand()) {
                     case SHUTDOWN:
                     case RESTART: {
@@ -416,6 +424,7 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
                         break;
                     }
                     default: {
+                        logger.debug("Sending the command {} to the listener for execution",tStampedCmd.command.getCommand());
                         cmdResult = cmdListener.newCommand(tStampedCmd.command);
                         logger.debug("Command executed");
                     }
@@ -458,6 +467,14 @@ public class CommandManager implements SimpleStringConsumer.KafkaConsumerListene
                 if (tStampedCmd.command.getCommand() == CommandType.SHUTDOWN) {
                     logger.info("Exit due to a SHUTDOWN command requested by {}", tStampedCmd.command.getSenderFullRunningId());
                     close();
+                    if (!Objects.isNull(closeable)) {
+                        logger.debug("Freeing the resources...");
+                        try {
+                            closeable.close();
+                        } catch (Exception e) {
+                            logger.error("Error caught while freeing the resources",e);
+                        }
+                    }
                     System.exit(0);
                 } else if (tStampedCmd.command.getCommand() == CommandType.RESTART) {
                     logger.info("Restarting process as requested by {}", tStampedCmd.command.getSenderFullRunningId());
