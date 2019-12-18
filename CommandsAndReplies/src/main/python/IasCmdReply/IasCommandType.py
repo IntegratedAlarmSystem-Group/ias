@@ -18,6 +18,17 @@ class IasCommandType(Enum):
     ACK = 4 # ACK an alarm
     TF_CHANGED = 5 # A TF has been changed
 
+    @property
+    def num_of_params(self):
+        if self is IasCommandType.PING or self is IasCommandType.SHUTDOWN or self is IasCommandType.RESTART:
+            return 0
+        elif self is IasCommandType.SET_LOG_LEVEL or self is IasCommandType.TF_CHANGED:
+            return 1
+        elif self is IasCommandType.ACK:
+            return 2
+        else:
+            raise ValueError("Unknown command type "+str(self))
+
     @staticmethod
     def fromString(cmdTypeStr):
         '''
