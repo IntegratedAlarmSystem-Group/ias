@@ -1,7 +1,7 @@
 package org.eso.ias.heartbeat
 
-import java.util.concurrent.{Executors, ScheduledFuture, TimeUnit}
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
+import java.util.concurrent.{Executors, ScheduledFuture, TimeUnit}
 
 import org.eso.ias.logging.IASLogger
 
@@ -151,7 +151,7 @@ class HbEngine private[heartbeat] (
    * Add a property to attach to the HB message
    * 
    * @param key the key of the property
-   * @param tvalue he value of the property
+   * @param value he value of the property
    * @return the previous value of the key; 
    *         empty if a value with the given key does not exist 
    */
