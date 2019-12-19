@@ -116,7 +116,7 @@ public class TestCommandManager implements
         replyConsumer.setUp();
         cmdProducer.setUp();
         logger.info("Static producer and consumer built and set up");
-        manager = new CommandManager(
+        manager = new CommandManagerKafkaImpl(
                 commandManagerFullRunningId,
                 commandManagerId,
                 KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS);
@@ -182,7 +182,7 @@ public class TestCommandManager implements
                 props.put("FirstKey", "A property");
                 props.put("SecondKey", "Another property");
                 props.put("FromParams",""+res);
-                return new CmdExecutionResult(CommandExitStatus.UNKNOWN, props);
+                return new CmdExecutionResult(CommandExitStatus.UNKNOWN, props,false,false);
             default:
                 return new CmdExecutionResult(CommandExitStatus.OK);
         }
