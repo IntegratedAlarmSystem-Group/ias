@@ -199,7 +199,7 @@ if __name__ == '__main__':
     #Start the logger with param define by the user.
     stdoutLevel=args.levelStdOut
     consoleLevel=args.levelConsole
-    logger = Log.initLogging(__file__,stdoutLevel,consoleLevel)
+    logger = Log.getLogger(__file__,stdoutLevel,consoleLevel)
 
     logger.info("Start IASRun")
     verbose = args.verbose

@@ -6,9 +6,9 @@ Created on Aug 18, 2016
 '''
 
 import argparse
-from IASTools.ModuleSupport import ModuleSupport
+
 from IASLogging.logConf import Log
-import os
+from IASTools.ModuleSupport import ModuleSupport
 
 if __name__ == '__main__':
 
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     stdoutLevel=args.levelStdOut
     consoleLevel=args.levelConsole
-    logger=Log.initLogging(__file__,stdoutLevel,consoleLevel)
+    logger=Log.getLogger(__file__,stdoutLevel,consoleLevel)
     if args.erase:
         try:
             ModuleSupport.removeExistingModule(args.moduleName)

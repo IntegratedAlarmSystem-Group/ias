@@ -5,9 +5,10 @@ Created on Sep 21, 2016
 @author: acaproni
 '''
 import argparse
-from IASTools.FileSupport import FileSupport
+
 from IASLogging.logConf import Log
-import os
+from IASTools.FileSupport import FileSupport
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Search for a file in the hierarchy of IAS folders.')
@@ -40,7 +41,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     stdoutLevel=args.levelStdOut
     consoleLevel=args.levelConsole
-    logger = Log.initLogging(__file__,stdoutLevel,consoleLevel)
+    logger = Log.getLogger(__file__,stdoutLevel,consoleLevel)
     fileName=args.fileName
     try:
         if not args.fileType is None:
