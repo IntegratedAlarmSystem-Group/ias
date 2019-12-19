@@ -76,8 +76,16 @@ public class CommandMessage {
             List<String> params,
             long timestamp,
             Map<String, String> properties) {
+
+        if (senderFullRunningId==null || senderFullRunningId.isEmpty()) {
+            throw new IllegalArgumentException(("The sender full running Id can't be null nor empty"));
+        }
         this.senderFullRunningId = senderFullRunningId;
+        if (destId==null || destId.isEmpty()) {
+            throw new IllegalArgumentException(("The ID to the destination can't be null nor empty"));
+        }
         this.destId = destId;
+        Objects.requireNonNull(command, "The command can't be null");
         this.command = command;
         this.id = id;
         this.params = params;
