@@ -11,7 +11,7 @@ import org.eso.ias.cdb.json.{CdbFiles, CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos._
 import org.eso.ias.cdb.rdb.RdbReader
 import org.eso.ias.cdb.topology.TemplateHelper
-import org.eso.ias.command.CommandManager
+import org.eso.ias.command.{CommandManager, CommandManagerKafkaImpl}
 import org.eso.ias.dasu.publisher.{KafkaPublisher, OutputPublisher}
 import org.eso.ias.dasu.subscriber.{InputSubscriber, InputsListener, KafkaSubscriber}
 import org.eso.ias.dasu.{Dasu, DasuImpl}
@@ -181,7 +181,7 @@ class Supervisor(
   val statsLogger: SupervisorStatistics = new SupervisorStatistics(id,dasuIds)
 
   /** The command executor that executes the commands received from the cmd topic */
-  val cmdExecutor: SupervisorCmdExecutor = new SupervisorCmdExecutor()
+  val cmdExecutor: SupervisorCmdExecutor = new SupervisorCmdExecutor(dasuDaos);
 
   Supervisor.logger.info("Supervisor [{}] built",id)
   
@@ -520,7 +520,7 @@ object Supervisor {
     }
 
     // The command manager to get and execute commands
-    val cmdManager = new CommandManager(identifier,kafkaBrokers.get);
+    val cmdManager = new CommandManagerKafkaImpl(identifier,kafkaBrokers.get);
 
     // Build the supervisor
     val supervisor = new Supervisor(

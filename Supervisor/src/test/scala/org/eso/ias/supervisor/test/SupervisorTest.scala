@@ -72,6 +72,7 @@ class SupervisorTest extends FlatSpec {
         outputPublisher,
         inputsProvider,
         new HbLogProducer(new HbJsonSerializer),
+        new CommandManagerMock(supervIdentifier),
         cdbReader,
         DasuMock.apply,None)
 

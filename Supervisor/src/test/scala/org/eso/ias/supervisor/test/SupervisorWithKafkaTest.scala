@@ -126,6 +126,7 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
       outputPublisher, 
       inputConsumer, 
       new HbLogProducer(new HbJsonSerializer),
+    new CommandManagerMock(supervisorId),
       cdbReader,
       factory,
     None)
