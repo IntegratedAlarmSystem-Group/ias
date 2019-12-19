@@ -90,6 +90,6 @@ class TestCmdReply(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    logger=Log.initLogging(__file__)
+    logger=Log.getLogger(__file__)
     logger.info("Start main")
     unittest.main()

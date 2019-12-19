@@ -6,14 +6,14 @@ Created on Jul 7, 2017
 @author: acaproni
 '''
 
-import sys
 from argparse import ArgumentParser
-from IASApiDocs.ScaladocBuilder import ScaladocBuilder
+from os.path import join
+
 from IASApiDocs.JavadocBuilder import JavadocBuilder
 from IASApiDocs.PydocBuilder import PydocBuilder
-from os.path import join
+from IASApiDocs.ScaladocBuilder import ScaladocBuilder
 from IASLogging.logConf import Log
-import os
+
 if __name__ == '__main__':
 
     # Parse the command line
@@ -53,7 +53,7 @@ if __name__ == '__main__':
     
     stdoutLevel=args.levelStdOut
     consoleLevel=args.levelConsole
-    logger=Log.initLogging(__file__,stdoutLevel,consoleLevel)
+    logger=Log.getLogger(__file__,stdoutLevel,consoleLevel)
     logger.info("Reading sources from %s",args.srcFolder)
 
     # Build scala documentation
