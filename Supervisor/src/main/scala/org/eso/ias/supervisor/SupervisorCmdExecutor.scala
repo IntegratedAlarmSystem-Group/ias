@@ -20,11 +20,11 @@ class SupervisorCmdExecutor(
 
 
   /** The ids of the TFs used by the ASCEs deployed in the Supervisor */
-  lazy val usedTfs: List[String] = {
-    dasus.foldLeft(List[String]())( (l,d) => {
-      val ascesOfDasu = JavaConverters.asScalaSet(d.getAsces).toList;
-      val tfsOfAsces: List[String] = ascesOfDasu.map( _.getTransferFunction.getClassName)
-      l:::tfsOfAsces
+  lazy val usedTfs: Set[String] = {
+    dasus.foldLeft(Set[String]())( (s, d) => {
+      val ascesOfDasu = JavaConverters.asScalaSet(d.getAsces).toSet;
+      val tfsOfAsces: Set[String] = ascesOfDasu.map( _.getTransferFunction.getClassName)
+      s++tfsOfAsces
     })
   }
 
