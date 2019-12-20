@@ -187,6 +187,7 @@ public class CommandManagerKafkaImpl
     /**
      * Close the producer and the consumer and release all the allocated resources.
      */
+    @Override
     public void close() {
         if (closed) {
             logger.warn("Already closed");
@@ -318,7 +319,7 @@ public class CommandManagerKafkaImpl
      *
      * @throws Exception
      */
-    private final void restartProcess() throws Exception {
+    private void restartProcess() throws Exception {
         logger.debug("Restarting...");
         for (String jvmArg : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
             System.out.println("jvmArgs "+jvmArg);
@@ -391,7 +392,7 @@ public class CommandManagerKafkaImpl
     public void run() {
         logger.debug("Commands processor thread started");
         TimestampedCommand tStampedCmd;
-        CommandListener.CmdExecutionResult cmdResult = null;
+        CommandListener.CmdExecutionResult cmdResult;
         while (!closed) {
             try {
                 tStampedCmd = cmdsToProcess.poll(500, TimeUnit.MILLISECONDS);
@@ -473,12 +474,13 @@ public class CommandManagerKafkaImpl
                 }
                 try {
                     restartProcess();
-                } catch (Exception e) { }
+                } catch (Exception e) {
+                    logger.error("Exception restarting the process",e);
+                }
                 System.exit(0);
-
             }
-            logger.info("Commands processor thread terminated");
         }
+        logger.info("Commands processor thread terminated");
     }
 
 
