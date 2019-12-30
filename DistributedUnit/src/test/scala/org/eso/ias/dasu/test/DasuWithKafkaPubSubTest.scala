@@ -81,7 +81,7 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener {
   val props = new Properties()
   props.setProperty("group.id", "DasuTest-groupID")
   eventsListener.setUp(props)
-  eventsListener.startGettingEvents(StreamPosition.END,this)
+  eventsListener.startGettingStrings(StreamPosition.END,this)
   
   val stringPublisher = new SimpleStringProducer(
       KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
