@@ -98,9 +98,9 @@ public class SimpleStringConsumer extends  KafkaStringsConsumer implements Kafka
 	 */
 	public synchronized void startGettingEvents(StreamPosition startReadingFrom, KafkaConsumerListener listener)
 	throws KafkaUtilsException {
-	    Objects.requireNonNull(listener);
+	    Objects.requireNonNull(listener,"The listener of strings can't be null");
+		stringListener=listener;
 	    super.startGettingEvents(this,startReadingFrom);
-        stringListener=listener;
 	}
 
     /**
