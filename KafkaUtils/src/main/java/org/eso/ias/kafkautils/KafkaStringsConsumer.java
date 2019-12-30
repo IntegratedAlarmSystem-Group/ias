@@ -83,7 +83,7 @@ public class KafkaStringsConsumer implements Runnable {
     /**
      * The name of the topic to get events from
      */
-    private final String topicName;
+    protected final String topicName;
 
     /**
      * The ID of the consumer
