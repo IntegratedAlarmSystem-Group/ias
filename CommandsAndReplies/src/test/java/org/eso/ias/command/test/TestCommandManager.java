@@ -1,6 +1,7 @@
 package org.eso.ias.command.test;
 
 import org.eso.ias.command.*;
+import org.eso.ias.command.kafka.CommandManagerKafkaImpl;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaStringsConsumer;
 import org.eso.ias.kafkautils.SimpleStringConsumer;
@@ -100,7 +101,7 @@ public class TestCommandManager implements
      * @see {@link AutoCloseable#close()}
      */
     @Override
-    public void close() throws Exception { }
+    public void close() throws InterruptedException { }
 
     @BeforeAll
     public static void setUpAll() throws Exception {
