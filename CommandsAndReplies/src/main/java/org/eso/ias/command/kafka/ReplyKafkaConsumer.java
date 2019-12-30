@@ -81,7 +81,7 @@ implements SimpleStringConsumer.KafkaConsumerListener {
 	throws KafkaUtilsException {
         System.out.println("\n\n===> reply listener startGettingEvents for topic "+topicName);
         replyListener=listener;
-	    super.startGettingEvents(startReadingFrom,this);
+	    super.startGettingStrings(startReadingFrom,this);
 	}
 }
 
