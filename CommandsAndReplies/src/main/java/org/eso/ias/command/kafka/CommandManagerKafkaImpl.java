@@ -1,18 +1,17 @@
-package org.eso.ias.command;
+package org.eso.ias.command.kafka;
 
+import org.eso.ias.command.*;
 import org.eso.ias.kafkautils.*;
 import org.eso.ias.types.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.management.ManagementFactory;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * The {@link CommandManagerKafkaImpl is the command executors that subscribes as a consumer of the kafka command topic
@@ -21,7 +20,7 @@ import java.util.concurrent.TimeUnit;
  * other processes.
  *
  * Commands are forwarded to the listener for execution and the replies published
- * in the reply topic. SHUTDOWN and RESTART must be executed by the {@link CommandManager} because a
+ * in the reply topic. SHUTDOWN and RESTART must be executed by the {@link CommandManager } because a
  * reply must be sent before shutting down however the lister is invoked to run customized code.
  *
  * Commands are executed in a dedicated thread in FIFO order.
@@ -64,13 +63,13 @@ public class CommandManagerKafkaImpl
     private SimpleStringProducer repliesProducer;
 
     /** Signal if the CommandManager has been initialized */
-    private volatile boolean initialized = false;
+    private volatile AtomicBoolean initialized = new AtomicBoolean(false);
 
     /** Signal if the CommandManager has been started i.e. receiving commands from the topic */
-    private volatile boolean started = false;
+    private volatile AtomicBoolean started = new AtomicBoolean(false);
 
     /** Signal if the CommandManager has been closed */
-    private volatile boolean closed = false;
+    private volatile AtomicBoolean closed = new AtomicBoolean(false);
 
     /** Thread factory */
     private final ThreadFactory threadFactory = new CmdReplyThreadFactory();
@@ -82,7 +81,7 @@ public class CommandManagerKafkaImpl
     private final ReplyStringSerializer replySerializer = new ReplyJsonSerializer();
 
     /**
-     * The thread that gets comamnds from the queue {@link #cmdsToProcess} and sends them to the listener
+     * The thread that gets commands from the queue {@link #cmdsToProcess} and sends them to the listener
      * that will execute them
      *
      * @see #run()
@@ -142,20 +141,22 @@ public class CommandManagerKafkaImpl
      * Initialize producer and consumer but do not start getting events
      */
     private void initialize() {
-        if (initialized) {
+        boolean alreadyInited = initialized.getAndSet(true);
+        if (alreadyInited) {
             logger.warn("Already initialized: initialization skipped");
             return;
-        } else {
-            initialized=true;
         }
-        logger.debug("Initializing");
+        logger.debug("Initializing the cmd producer and the reply consumer");
         // Connect to the CMD topic
-        logger.debug("Connecting consumer to the command topic");
-        cmdsConsumer.setUp();
+        logger.debug("Connecting the consumer to the command topic");
+
+        Properties props = new Properties();
+        props.setProperty("group.id","GroupID-"+System.currentTimeMillis());
+        cmdsConsumer.setUp(props);
         logger.info("Command consumer connected");
         logger.debug("Connecting the producer to the reply topic");
         repliesProducer.setUp();
-        logger.info("Initialized");
+        logger.info("Reply producer connected");
     }
 
     /**
@@ -167,19 +168,20 @@ public class CommandManagerKafkaImpl
      * @param closeable The closeable class to free the resources while exiting/restating
      */
     public void start(CommandListener commandListener, AutoCloseable closeable) throws KafkaUtilsException {
-        if (started) {
+        boolean alreadyStarted = started.getAndSet(true);
+        if (alreadyStarted) {
             logger.warn("Already started: skipped");
             return;
         }
 
         Objects.requireNonNull(commandListener,"The listener of commands can't be null");
         Objects.requireNonNull(closeable,"The method to release the resources can't be null");
-        started=true;
         this.cmdListener = commandListener;
         this.closeable=closeable;
         initialize();
+        logger.debug("Starting the command processor thread...");
         cmdThread.start();
-        logger.info("Commands processor thread started");
+        logger.debug("Start getting commands from the topic");
         cmdsConsumer.startGettingEvents(KafkaStringsConsumer.StreamPosition.END,this);
         logger.info("Started to get events from the command topic");
     }
@@ -189,14 +191,15 @@ public class CommandManagerKafkaImpl
      */
     @Override
     public void close() {
-        if (closed) {
+        boolean alreadyClosed = closed.getAndSet(true);
+        if (alreadyClosed) {
             logger.warn("Already closed");
             return;
         }
-        closed=true;
         logger.debug("Shutting down");
         cmdsConsumer.tearDown();
         logger.info("Command consumer shut down");
+        repliesProducer.flush();
         repliesProducer.tearDown();
         logger.info("Reply producer shut down");
         cmdThread.interrupt();
@@ -221,7 +224,14 @@ public class CommandManagerKafkaImpl
             repliesProducer.push(jsonStr,null,reply.getCommand().toString());
         } catch (KafkaUtilsException e) {
             logger.error("Error pushing the reply [{}] in the topic the reply {}: reply lost!",jsonStr,e);
+            return;
         }
+        repliesProducer.flush();
+        logger.debug("Reply {} of command {} sent to {} with id {}",
+                reply.getExitStatus(),
+                reply.getCommand(),
+                reply.getDestFullRunningId(),
+                reply.getId());
     }
 
     /**
@@ -267,16 +277,16 @@ public class CommandManagerKafkaImpl
      */
     @Override
     public void stringEventReceived(String event) {
-        // Discard commands when closed
-        if (closed) {
-            return;
-        }
         if (event==null) {
             logger.warn("A NULL set strings has been received from the command topic");
             return;
         }
         if (event.isEmpty()) {
             logger.warn("An empty command string has been received from the command topic");
+            return;
+        }
+        if (closed.get()) {
+            logger.debug("Command manager closed: string [{}] rejected",event);
             return;
         }
 
@@ -298,7 +308,7 @@ public class CommandManagerKafkaImpl
             return;
         }
         // Push the command in the queue of commands to process
-        logger.debug("Pushing the command {} in the queue for execution",cmd.toString());
+        logger.debug("Pushing the command {} with id {} in the queue for execution",cmd.getCommand(), cmd.getId());
         if (!cmdsToProcess.offer(new TimestampedCommand(receptionTStamp, cmd))) {
             logger.error("Queue of command full: command {} with ID {} from {} rejected",
                     cmd.getCommand().toString(),
@@ -393,7 +403,7 @@ public class CommandManagerKafkaImpl
         logger.debug("Commands processor thread started");
         TimestampedCommand tStampedCmd;
         CommandListener.CmdExecutionResult cmdResult;
-        while (!closed) {
+        while (!closed.get()) {
             try {
                 tStampedCmd = cmdsToProcess.poll(500, TimeUnit.MILLISECONDS);
             } catch (InterruptedException ie) {
@@ -403,9 +413,11 @@ public class CommandManagerKafkaImpl
                 // Timeout
                 continue;
             }
-            logger.debug("Command {} received from the queue", tStampedCmd.command);
+            logger.debug("Command {} with id {} retrieved from the queue",
+                    tStampedCmd.command.getCommand(),
+                    tStampedCmd.command.getId());
             try {
-                logger.debug("Sending the command {} to the listener for execution",tStampedCmd.command.getCommand());
+                logger.debug("Sending the command {} to the listener for execution...",tStampedCmd.command.getCommand());
                 cmdResult = cmdListener.newCommand(tStampedCmd.command);
                 logger.debug("Command executed");
             } catch (Exception e) {
@@ -434,6 +446,11 @@ public class CommandManagerKafkaImpl
                 continue;
             }
 
+            logger.debug("Sending reply {} to {} with ID {}",
+                    cmdResult.status,
+                    tStampedCmd.command.getSenderFullRunningId(),
+                    tStampedCmd.command.getId());
+
             Map<String, String> props = null;
             if (cmdResult.properties.isPresent()) {
                 props = cmdResult.properties.get();
@@ -448,7 +465,6 @@ public class CommandManagerKafkaImpl
             // If the command was a SHUTDOWN, exit the JVM
             if (cmdResult.mustShutdown) {
                 logger.info("Exit due to a SHUTDOWN command requested by {}", tStampedCmd.command.getSenderFullRunningId());
-                close();
                 if (!Objects.isNull(closeable)) {
                     logger.debug("Freeing the resources...");
                     try {
@@ -457,13 +473,13 @@ public class CommandManagerKafkaImpl
                         logger.error("Error caught while freeing the resources",e);
                     }
                 }
+                close();
                 System.exit(0);
             }
 
             // If the command was RESTART, restart the process and exit
             if (cmdResult.mustRestart) {
                 logger.info("Restarting process as requested by {}", tStampedCmd.command.getSenderFullRunningId());
-                close();
                 if (!Objects.isNull(closeable)) {
                     logger.debug("Freeing the resources...");
                     try {
@@ -472,6 +488,10 @@ public class CommandManagerKafkaImpl
                         logger.error("Error caught while freeing the resources",e);
                     }
                 }
+
+                // Close producer and consumer before restarting
+                close();
+
                 try {
                     restartProcess();
                 } catch (Exception e) {
