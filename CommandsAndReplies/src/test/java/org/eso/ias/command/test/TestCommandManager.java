@@ -142,7 +142,7 @@ public class TestCommandManager implements
         logger.debug("Setting up for a new test");
 
         if (!beforeFirstTest) {
-            replyConsumer.startGettingEvents(KafkaStringsConsumer.StreamPosition.END, this);
+            replyConsumer.startGettingStrings(KafkaStringsConsumer.StreamPosition.END, this);
             beforeFirstTest =true;
             logger.info("Processing of replies published by the CommandManager activated");
             manager.start(this,this);

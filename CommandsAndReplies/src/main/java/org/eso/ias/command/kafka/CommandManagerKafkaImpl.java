@@ -182,7 +182,7 @@ public class CommandManagerKafkaImpl
         logger.debug("Starting the command processor thread...");
         cmdThread.start();
         logger.debug("Start getting commands from the topic");
-        cmdsConsumer.startGettingEvents(KafkaStringsConsumer.StreamPosition.END,this);
+        cmdsConsumer.startGettingStrings(KafkaStringsConsumer.StreamPosition.END,this);
         logger.info("Started to get events from the command topic");
     }
 
