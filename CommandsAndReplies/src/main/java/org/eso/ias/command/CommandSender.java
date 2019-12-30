@@ -1,8 +1,8 @@
 package org.eso.ias.command;
 
+import org.eso.ias.command.kafka.ReplyKafkaConsumer;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaStringsConsumer;
-import org.eso.ias.kafkautils.SimpleStringConsumer;
 import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.eso.ias.types.Identifier;
 import org.slf4j.Logger;
@@ -10,7 +10,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -18,10 +17,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Objects of this class sends command and optionally wait for the reply through the kafka topics.
+ * Objects of this class send commands and optionally wait for the reply through the kafka topics.
  *
  */
-public class CommandSender implements SimpleStringConsumer.KafkaConsumerListener {
+public class CommandSender implements ReplyListener {
 
     /** The logger */
     private static final Logger logger = LoggerFactory.getLogger(CommandSender.class);
@@ -45,16 +44,13 @@ public class CommandSender implements SimpleStringConsumer.KafkaConsumerListener
      * The producer of command: the test sends through this producer the command to be processed
      * by the {@link org.eso.ias.command.CommandManager}
      */
-    private SimpleStringProducer cmdProducer;
+    private final SimpleStringProducer cmdProducer;
 
     /**
      * The consumer of replies: the test get from this consumer the replies
      * produced by the {@link org.eso.ias.command.CommandManager}
      */
-    private SimpleStringConsumer replyConsumer;
-
-    /** The serializer of replies */
-    private static final ReplyStringSerializer replySerializer = new ReplyJsonSerializer();
+    private final ReplyKafkaConsumer replyConsumer;
 
     /** The serializer of commands */
     private static final CommandStringSerializer cmdSerializer = new CommandJsonSerializer();
@@ -102,9 +98,6 @@ public class CommandSender implements SimpleStringConsumer.KafkaConsumerListener
      * @param brokers URL of kafka brokers
      */
     public CommandSender(String senderFullRuningId, String senderId, String brokers) {
-        Objects.requireNonNull(senderFullRuningId);
-        Objects.requireNonNull(brokers);
-
         if (senderFullRuningId==null || senderFullRuningId.isEmpty()) {
             throw new IllegalArgumentException("Invalid null/empty full running ID of the sender");
         }
@@ -117,6 +110,14 @@ public class CommandSender implements SimpleStringConsumer.KafkaConsumerListener
             throw new IllegalArgumentException("Invalid null/empty broker");
         }
         this.brokersURL = brokers;
+
+        logger.debug("Setting up cmd producer");
+        replyConsumer = new ReplyKafkaConsumer(brokersURL,senderId);
+        logger.debug("Setting up replies consumer");
+        cmdProducer = new SimpleStringProducer(
+                brokersURL,
+                KafkaHelper.CMD_TOPIC_NAME,
+                senderId);
     }
 
     /**
@@ -139,24 +140,14 @@ public class CommandSender implements SimpleStringConsumer.KafkaConsumerListener
             logger.warn("Already initialized: skipping initialization");
             return;
         }
-        logger.debug("Setting up cmd producer");
-        replyConsumer = new SimpleStringConsumer(
-                KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
-                KafkaHelper.REPLY_TOPIC_NAME,
-                senderId);
-        logger.debug("Setting up replies consumer");
-        cmdProducer = new SimpleStringProducer(
-                KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
-                KafkaHelper.CMD_TOPIC_NAME,
-                senderId+"-CMD");
 
         logger.debug("Initializing the consumer of replies...");
         replyConsumer.setUp();
         logger.debug("Initialize the producer of commands...");
         cmdProducer.setUp();
-        logger.info("Static producer and consumer built and set up");
+        logger.info("Producer and consumer built and set up");
         logger.debug("Activating the reception of replies...");
-        replyConsumer.startGettingEvents(KafkaStringsConsumer.StreamPosition.END, this);
+        replyConsumer.startGettingReplies(KafkaStringsConsumer.StreamPosition.END, this);
         logger.info("Initialized");
     }
 
@@ -184,32 +175,27 @@ public class CommandSender implements SimpleStringConsumer.KafkaConsumerListener
     }
 
     /**
-     * The listener that gets the replies
+     * Invoked when a new reply has been produced
      *
-     * @param event The string received in the topic
+     * @param reply The not-null reply read from the topic
      */
-    @Override
-    public void stringEventReceived(String event) {
-        if (event==null || event.isEmpty()) {
-            logger.warn("Got an empty reply");
-            return;
-        }
-        logger.debug("Processing JSON reply [{}]",event);
-        ReplyMessage reply;
-        try {
-            reply = replySerializer.valueOf(event);
-        } catch (Exception e) {
-            logger.error("Error.parsing the JSON string {} into a reply",event,e);
-            return;
-        }
-        if (!requestReplyInProgress.get() || reply.getDestFullRunningId().equals(senderFullRunningId)) {
+    public void  newReply(ReplyMessage reply) {
+        if (!requestReplyInProgress.get() || reply.getSenderFullRunningId().equals(senderFullRunningId)) {
             // This process is not the sender of this command
+            if (logger.isDebugEnabled()) {
+                if (!requestReplyInProgress.get()) {
+                    logger.debug("No sync send in progress");
+                } else {
+                    logger.debug("Reply not for us: dest {} expected {}",senderId,reply.getSenderFullRunningId());
+                }
+
+            }
             return;
         }
 
         // A request/reply is in progress
         if (reply.getId()==idToWait.get()) {
-            logger.debug("Reply of command {} received from {}",reply.getId(),reply.getSenderFullRunningId());
+            logger.debug("/ {} received from {}",reply.getId(),reply.getSenderFullRunningId());
             requestReplyInProgress.set(false);
             requestReplyLock.get().countDown();
         } else {
@@ -242,8 +228,9 @@ public class CommandSender implements SimpleStringConsumer.KafkaConsumerListener
             long timeout,
             TimeUnit timeUnit) throws Exception {
         if (destId.equals(CommandMessage.BROADCAST_ADDRESS)) {
-            throw new IllegalArgumentException("BROADCAT cannot be used for send-reply");
+            throw new IllegalArgumentException("BROADCAST cannot be used for send-reply");
         }
+        logger.debug("Sending command {} to {}",command,destId);
 
         long id = cmdId.incrementAndGet();
         CommandMessage cmd = new CommandMessage(
@@ -255,18 +242,22 @@ public class CommandSender implements SimpleStringConsumer.KafkaConsumerListener
                 System.currentTimeMillis(),
                 properties
         );
+        logger.debug("Id {} assigned to command {} to {}",id,command,destId);
         idToWait.set(id);
         requestReplyLock.set(new CountDownLatch(1));
-        requestReplyInProgress.set(true);
+        boolean isThereACmdInProgress=requestReplyInProgress.getAndSet(true);
+        logger.debug("Is there a sync. command in progress? {}",isThereACmdInProgress);
 
         if (!closed.get()) {
             cmdProducer.push(cmdSerializer.iasCmdToString(cmd), null, destId);
-            logger.info("Command {} sent to {} with id {}. Waiting for the reply...", command,destId,id);
+            cmdProducer.flush();
+            logger.info("Command {} sent to {} with id {}", command,destId,id);
         } else {
+            logger.warn("Command sender closed: command {} to {} discarded",cmd.getCommand(),cmd.getDestId());
             return false;
         }
 
-
+        logger.debug("Waiting for reply with id {} from {}...",idToWait.get(),cmd.getDestId());
         boolean replyReceived;
         try {
            replyReceived = requestReplyLock.get().await(timeout,timeUnit);
@@ -299,9 +290,7 @@ public class CommandSender implements SimpleStringConsumer.KafkaConsumerListener
             String destId,
             CommandType command,
             List<String> params,
-            Map<String, String> properties,
-            long timeout,
-            TimeUnit timeUnit) throws Exception {
+            Map<String, String> properties) throws Exception {
 
 
         CommandMessage cmd = new CommandMessage(
