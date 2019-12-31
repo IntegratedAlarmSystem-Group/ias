@@ -1,6 +1,5 @@
 package org.eso.ias.supervisor
 
-import org.eso.ias.cdb.pojos.DasuDao
 import org.eso.ias.command.CommandListener.CmdExecutionResult
 import org.eso.ias.command.{CommandExitStatus, CommandListener, CommandMessage, DefaultCommandExecutor}
 
@@ -12,37 +11,15 @@ import scala.collection.JavaConverters
  * The SupervisorCmdExecutor extends the DefaultCommandExecutor to customize the
  * TF_CHANGED command.
  *
- * @param dasus The DASUs deployed in the Supervisor
+ * @param tfIDs The list of the TFs running in the ASCEs of the Supervisor
  */
 class SupervisorCmdExecutor(
-                           dasus: Set[DasuDao]
+                             tfIDs: List[String]
                            ) extends DefaultCommandExecutor {
-
-
-  /** The ids of the TFs used by the ASCEs deployed in the Supervisor */
-  lazy val usedTfs: Set[String] = {
-    dasus.foldLeft(Set[String]())( (s, d) => {
-      val ascesOfDasu = JavaConverters.asScalaSet(d.getAsces).toSet;
-      val tfsOfAsces: Set[String] = ascesOfDasu.map( _.getTransferFunction.getClassName)
-      s++tfsOfAsces
-    })
-  }
-
-  /**
-   * The outputs of the DASUs deployed in the Supervisor
-   *
-   * The key is the ID of the output and the value is the DASU that produces it
-   */
-  lazy val outputOfDasus = {
-    dasus.foldLeft(Map[String, String]())( (m,d) => {
-      m.+(d.getOutput.getId -> d.getId)
-    })
-  }
-
   /**
    * A TF has been changed.
    *
-   * The Supervisor must restart if the changed TF is used by one of its ASCEs so that the new
+   * The Supervisor must restart if the changed TF is used by at least one of its ASCEs so that the new
    * TF is reloaded.
    *
    * @param cmd The TF_CHANGED command received from the command topic
@@ -55,7 +32,7 @@ class SupervisorCmdExecutor(
       "Invalid parameters of RESTART")
     val idOfTF = cmd.getParams.get(0)
 
-    if (usedTfs.contains(idOfTF)) {
+    if (tfIDs.contains(idOfTF)) {
       // One ASCE is using the TF => request a restart
       new CmdExecutionResult(CommandExitStatus.OK,null,false,true)
     } else {
