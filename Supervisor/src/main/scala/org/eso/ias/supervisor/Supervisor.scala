@@ -11,7 +11,8 @@ import org.eso.ias.cdb.json.{CdbFiles, CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos._
 import org.eso.ias.cdb.rdb.RdbReader
 import org.eso.ias.cdb.topology.TemplateHelper
-import org.eso.ias.command.{CommandManager, CommandManagerKafkaImpl}
+import org.eso.ias.command.CommandManager
+import org.eso.ias.command.kafka.CommandManagerKafkaImpl
 import org.eso.ias.dasu.publisher.{KafkaPublisher, OutputPublisher}
 import org.eso.ias.dasu.subscriber.{InputSubscriber, InputsListener, KafkaSubscriber}
 import org.eso.ias.dasu.{Dasu, DasuImpl}
@@ -150,7 +151,14 @@ class Supervisor(
   // the helper transform the templated DASUS into normal ones
   val dasuDaos: Set[DasuDao] = TemplateHelper.normalizeDasusToDeploy(dasusToDeploy)
   assert(dasuDaos.size==dasusToDeploy.size)
-  
+
+  // Get the IDs of the TFs running in the Supervisor: upon receiving a TF_CHANGED command and if such TF is used
+  // by at least one ASCE, the Supervisor needs to restart
+  lazy val tfIDs: List[String] =
+    dasuDaos.foldLeft(Set.empty[String]) ( (asces, dasu) =>
+      asces ++ JavaConverters.asScalaSet(dasu.getAsces).map(_.getTransferFunction.getClassName)
+    ).toList
+
   dasuDaos.foreach(d => Supervisor.logger.info("Supervisor [{}]: building DASU from DasuDao {}",id,d.toString))
   
   // Build all the DASUs
@@ -181,7 +189,7 @@ class Supervisor(
   val statsLogger: SupervisorStatistics = new SupervisorStatistics(id,dasuIds)
 
   /** The command executor that executes the commands received from the cmd topic */
-  val cmdExecutor: SupervisorCmdExecutor = new SupervisorCmdExecutor(dasuDaos);
+  val cmdExecutor: SupervisorCmdExecutor = new SupervisorCmdExecutor(tfIDs)
 
   Supervisor.logger.info("Supervisor [{}] built",id)
   
