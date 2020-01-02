@@ -10,6 +10,8 @@ import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbFiles, CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.LogLevelDao
 import org.eso.ias.cdb.rdb.RdbReader
+import org.eso.ias.command.kafka.CommandManagerKafkaImpl
+import org.eso.ias.command.{CommandManager, DefaultCommandExecutor}
 import org.eso.ias.heartbeat._
 import org.eso.ias.heartbeat.consumer.HbKafkaConsumer
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer
@@ -22,7 +24,7 @@ import scala.collection.JavaConverters
 import scala.util.{Failure, Success, Try}
 
 /**
-  * Monitor the stat of the IAS and sends alarms
+  * Monitor the state of the IAS and sends alarms
   *
   * In this version, alarms are pushed in the core topic and will  be read
   * from there by the web server.
@@ -54,7 +56,7 @@ class IasMonitor(
                 coreToolsIds: Set[String],
                 threshold: Long,
                 val refreshRate: Long,
-                val hbFrequency: Long) {
+                val hbFrequency: Long) extends AutoCloseable {
   require(refreshRate>0,"Invalid negative or zero refresh rate")
   require(threshold>0,"Invalid negative or zero threshold")
 
@@ -87,12 +89,17 @@ class IasMonitor(
   /** The object that periodically sends the alarms */
   val alarmsProducer: MonitorAlarmsProducer = new MonitorAlarmsProducer(alarmsPublisher,refreshRate,identifier)
 
+  /** The object that gets and executes commands */
+  val commandManager: CommandManager = new CommandManagerKafkaImpl(identifier,kafkaBrokers)
+
   IasMonitor.logger.debug("{} processor built",hbEngine.hb.stringRepr)
 
   /** Start the monitoring */
   def start(): Unit = {
     // Start the HB
     hbEngine.start(HeartbeatStatus.STARTING_UP)
+    IasMonitor.logger.debug("Starting up the executor of commands")
+    commandManager.start(new DefaultCommandExecutor(),this);
     IasMonitor.logger.debug("Starting up the monitor of HBs")
     hbMonitor.start()
     IasMonitor.logger.debug("Starting up the sender of alarms")
@@ -102,12 +109,14 @@ class IasMonitor(
   }
 
   /** Stop monitoring and free resources */
-  def shutdown(): Unit = {
+  override def close(): Unit = {
     if (closed.getAndSet(true)) {
       IasMonitor.logger.warn("Already closed");
       return;
     }
     hbEngine.updateHbState(HeartbeatStatus.EXITING)
+    IasMonitor.logger.debug("Shutting down the executor of commands")
+    commandManager.close()
     IasMonitor.logger.debug("Shutting down the alarm sender")
     alarmsProducer.shutdown()
     IasMonitor.logger.debug("Shutting down the monitor of HBs")
@@ -317,7 +326,7 @@ object IasMonitor {
     val shutdownHookThread = {
       val r = new Runnable{
         override def run(): Unit = {
-          monitor.shutdown()
+          monitor.close()
           latch.countDown()
         }
       }
