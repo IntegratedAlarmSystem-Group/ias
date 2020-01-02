@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
 import com.typesafe.scalalogging.Logger
 import org.eso.ias.cdb.pojos.{IasDao, IasioDao, TemplateDao}
+import org.eso.ias.command.{CommandManager, DefaultCommandExecutor}
 import org.eso.ias.dasu.subscriber.{InputSubscriber, InputsListener}
 import org.eso.ias.heartbeat.{HbEngine, HbProducer, HeartbeatProducerType, HeartbeatStatus}
 import org.eso.ias.logging.IASLogger
@@ -40,6 +41,7 @@ import scala.util.{Failure, Success, Try}
   * @param processorIdentifier the identifier of the value processor
   * @param listeners the processors of the IasValues read from the BSDB
   * @param hbProducer The HB generator
+  * @param commandManager the receiver and executor of commands
   * @param inputsSubscriber The subscriber to get events from the BDSB
   * @param iasDao The configuration of the IAS read from the CDB
   * @param iasioDaos The configuration of the IASIOs read from the CDB
@@ -50,13 +52,17 @@ class IasValueProcessor(
                          val processorIdentifier: String,
                          val listeners: List[ValueListener],
                          private val hbProducer: HbProducer,
+                         private val commandManager: CommandManager,
                          private val inputsSubscriber: InputSubscriber,
                          val iasDao: IasDao,
                          val iasioDaos: List[IasioDao],
-                         val templateDaos: List[TemplateDao]) extends InputsListener {
+                         val templateDaos: List[TemplateDao])
+  extends InputsListener
+with AutoCloseable {
   require(Option(listeners).isDefined && listeners.nonEmpty,"Mo listeners defined")
   require(listeners.map(_.id).toSet.size==listeners.size,"Duplicated IDs of listeners")
   require(Option(hbProducer).isDefined,"Invalid HB producer")
+  require(Option(commandManager).isDefined,"Invalid executor of commands")
   require(Option(inputsSubscriber).isDefined,"Invalid inputs subscriber")
   require(Option(iasDao).isDefined,"Invalid IAS configuration")
   require(Option(iasioDaos).isDefined && iasioDaos.nonEmpty,"Invalid configuration of IASIOs from CDB")
@@ -202,6 +208,8 @@ class IasValueProcessor(
         IasValueProcessor.logger.debug("Processor {} initializing",hbEngine.hb.stringRepr)
         // Start the HB
         hbEngine.start(HeartbeatStatus.STARTING_UP)
+        // Start the executor of comamands
+        commandManager.start(new DefaultCommandExecutor(),this)
         // Init the kafka consumer
         IasValueProcessor.logger.debug("Initializing the BSDB consumer")
         inputsSubscriber.initializeSubscriber() match {
@@ -231,7 +239,7 @@ class IasValueProcessor(
   }
 
   /** Closes the processor */
-  def close(): Unit = {
+  override def close(): Unit = {
     val wasClosed = closed.getAndSet(true)
     if (initialized.get()) {
       Runtime.getRuntime.removeShutdownHook(shutdownHookThread)
@@ -241,6 +249,8 @@ class IasValueProcessor(
     } else {
       IasValueProcessor.logger.debug("Processor {} closing",hbEngine.hb.stringRepr)
       hbEngine.updateHbState(HeartbeatStatus.EXITING)
+      // Closes the executor of comamnds
+      commandManager.close()
       // Closes the Kafka consumer
       inputsSubscriber.cleanUpSubscriber()
       // Shut down the listeners
