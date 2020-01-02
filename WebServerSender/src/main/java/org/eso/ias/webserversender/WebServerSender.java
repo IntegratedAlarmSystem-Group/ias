@@ -532,6 +532,8 @@ public class WebServerSender implements IasioListener, AutoCloseable {
 	public void setUp() throws Exception {
 		hbEngine.start();
 
+		commandManager.start(new DefaultCommandExecutor(),this);
+
 		// Start the thread to send values though the websocket
 		logger.info("Will send values to websockets every {} msecs",TIME_INTERVAL);
 		Runnable senderRunnable = new Runnable() {
@@ -574,8 +576,6 @@ public class WebServerSender implements IasioListener, AutoCloseable {
  	        logger.error("Kafka consumer initialization fails", t);
  	        System.exit(-1);
  	    }
-
-		commandManager.start(new DefaultCommandExecutor(),this);
 
 		// Adds the shutdown hook
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
