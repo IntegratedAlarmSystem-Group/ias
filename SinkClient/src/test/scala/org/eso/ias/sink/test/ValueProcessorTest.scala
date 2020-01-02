@@ -6,6 +6,7 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.{IasTypeDao, IasioDao, TemplateDao}
+import org.eso.ias.command.{CommandListener, CommandManager}
 import org.eso.ias.dasu.publisher.DirectInputSubscriber
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
 import org.eso.ias.heartbeat.{HbMsgSerializer, HbProducer}
@@ -22,7 +23,7 @@ import scala.collection.mutable.ListBuffer
 import scala.language.reflectiveCalls
 
 /**
-  * The listner for testing
+  * The listener for testing
   *
   * @param id The identifier to distinguish between many listeners int he same processor
   *           Mainly used for logging messages
@@ -78,6 +79,14 @@ class ListenerForTest(
       logger.info("Listener {} received {} values to process", id, iasValues.length)
     }
   }
+}
+
+class CommandManagerTest(id: String) extends CommandManager(id) {
+
+  override def close(): Unit = {}
+
+  override def start(commandListener: CommandListener, closeable: AutoCloseable): Unit = {}
+
 }
 
 class HbProducerTest(s: HbMsgSerializer) extends HbProducer(s) {
@@ -149,6 +158,7 @@ class ValueProcessorTest extends FlatSpec {
         processorIdentifier,
         listeners,
         new HbProducerTest(new HbJsonSerializer()),
+        new CommandManagerTest(processorIdentifier),
         inputsProvider,
         iasDao,
         iasiosDaos,
@@ -171,6 +181,7 @@ class ValueProcessorTest extends FlatSpec {
         processorIdentifierWF,
         listenersWithFailure,
         new HbProducerTest(new HbJsonSerializer()),
+        new CommandManagerTest(processorIdentifierWF),
         inputsProviderWithFailures,
         iasDao,
         iasiosDaos,
@@ -194,6 +205,7 @@ class ValueProcessorTest extends FlatSpec {
         processorIdentifierTO,
         listenersWithTO,
         new HbProducerTest(new HbJsonSerializer()),
+        new CommandManagerTest(processorIdentifierTO),
         inputsProviderWithTO,
         iasDao,
         iasiosDaos,
