@@ -12,6 +12,9 @@ import org.eso.ias.cdb.json.JsonReader;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.LogLevelDao;
 import org.eso.ias.cdb.rdb.RdbReader;
+import org.eso.ias.command.CommandManager;
+import org.eso.ias.command.DefaultCommandExecutor;
+import org.eso.ias.command.kafka.CommandManagerKafkaImpl;
 import org.eso.ias.heartbeat.*;
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
@@ -60,7 +63,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  */
 @WebSocket(maxTextMessageSize = 2000000) // About 1000 IASValues
-public class WebServerSender implements IasioListener {
+public class WebServerSender implements IasioListener, AutoCloseable {
 
     /**
      *
@@ -200,6 +203,11 @@ public class WebServerSender implements IasioListener {
 	 * The sender of heartbeats
 	 */
 	private final HbEngine hbEngine;
+
+	/**
+	 * The receiver and executor of commands
+	 */
+	private final CommandManager commandManager;
 
 	/**
 	 * A flag set to <code>true</code> if the socket is connected
@@ -342,6 +350,8 @@ public class WebServerSender implements IasioListener {
 
 		Objects.requireNonNull(hbProducer);
 		hbEngine = HbEngine.apply(senderID, HeartbeatProducerType.SINK, hbFrequency, hbProducer);
+
+		commandManager = new CommandManagerKafkaImpl(senderID,kafkaServers);
 	}
 
 
@@ -363,7 +373,7 @@ public class WebServerSender implements IasioListener {
 			 hbEngine.updateHbState(HeartbeatStatus.RUNNING);
 		 } else {
 			 logger.info("The Server is going away");
-			 this.shutdown();
+			 this.close();
 		 }
 	}
 
@@ -382,7 +392,7 @@ public class WebServerSender implements IasioListener {
 
 	/**
 	 * Normally the WebServerSender does not send masseges.
-	 * The test, {@link WebServerSenderTest} sends a message to this WebSocket to confirm the connection:
+	 * The test, WebServerSenderTest sends a message to this WebSocket to confirm the connection:
 	 * if this method is removed, the tests fails.
 	 *
 	 * @param message The message received
@@ -514,7 +524,12 @@ public class WebServerSender implements IasioListener {
 		alreadySendingThroughWebsockets.getAndSet(false);
 	}
 
-	public void setUp() {
+	/**
+	 * Initialize the WSS
+	 *
+	 * @throws Exception in case of error initializing
+	 */
+	public void setUp() throws Exception {
 		hbEngine.start();
 
 		// Start the thread to send values though the websocket
@@ -560,11 +575,13 @@ public class WebServerSender implements IasioListener {
  	        System.exit(-1);
  	    }
 
+		commandManager.start(new DefaultCommandExecutor(),this);
+
 		// Adds the shutdown hook
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 			@Override
 			public void run() {
-				shutdown();
+				close();
 			}
 		}, "Plugin shutdown hook"));
 
@@ -603,7 +620,8 @@ public class WebServerSender implements IasioListener {
 	/**
 	 * Shutdown the WebSocket client and Kafka consumer
 	 */
-	public void shutdown() {
+	@Override
+	public void close() {
 		if (isClosed.getAndSet(true)) {
 			logger.warn("Already shut down");
 			return;
