@@ -1,6 +1,5 @@
 package org.eso.ias.command;
 
-import org.eso.ias.types.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,9 +17,6 @@ import org.slf4j.LoggerFactory;
  */
 abstract public class CommandManager {
 
-    /** The full running ID of the process where the object of this class runs */
-    public final String fullRunningId;
-
     /** The ID of the process where the object of this class runs */
     public final String id;
 
@@ -32,30 +28,13 @@ abstract public class CommandManager {
     /**
      * Constructor
      *
-     * @param fullRunningId the full running Id of the process
      * @param id the id of the process
      */
-    public CommandManager(String fullRunningId, String id) {
-        if (fullRunningId==null || fullRunningId.isEmpty()) {
-            throw new IllegalArgumentException("Invalid null/empty full running ID");
-        }
-        this.fullRunningId=fullRunningId;
+    public CommandManager(String id) {
         if (id==null || id.isEmpty()) {
             throw new IllegalArgumentException("Invalid null/empty ID");
         }
         this.id=id;
-    }
-
-    /**
-     * Constructor
-     *
-     * Commodity constructor with the Identifier
-     *
-     * @param identifier The identifier of the tool where the CommandManager runs
-     * @param servers The address of the servers to connect to
-     */
-    public CommandManager(Identifier identifier, String servers) {
-        this(identifier.fullRunningID(), identifier.id());
     }
 
     /**

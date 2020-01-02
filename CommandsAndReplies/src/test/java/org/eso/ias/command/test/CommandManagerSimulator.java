@@ -7,11 +7,8 @@ import org.eso.ias.heartbeat.*;
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.KafkaHelper;
-import org.eso.ias.types.Identifier;
-import org.eso.ias.types.IdentifierType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import scala.Option;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -30,9 +27,6 @@ public class CommandManagerSimulator implements AutoCloseable {
 
     /** The id of the tool */
     public static final String id = "CommandManagerSimulator";
-
-    /** The identifier of this tool */
-    private final Identifier identifier = new Identifier(id,IdentifierType.CLIENT, Option.empty());
 
     /** The logger */
     private static final Logger logger = LoggerFactory.getLogger(CommandManagerSimulator.class);
@@ -56,7 +50,7 @@ public class CommandManagerSimulator implements AutoCloseable {
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
     public CommandManagerSimulator() {
-        cmdMgr = new CommandManagerKafkaImpl(identifier, KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS);
+        cmdMgr = new CommandManagerKafkaImpl(id, KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS);
     }
 
     /** Start the command manager */

@@ -2,7 +2,6 @@ package org.eso.ias.command.kafka;
 
 import org.eso.ias.command.*;
 import org.eso.ias.kafkautils.*;
-import org.eso.ias.types.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -112,29 +111,16 @@ public class CommandManagerKafkaImpl
     /**
      * Constructor
      *
-     * @param fullRunningId the full running Id of the process
      * @param id the id of the process
      * @param servers The servers to connect to
      */
-    public CommandManagerKafkaImpl(String fullRunningId, String id, String servers) {
-        super(fullRunningId,id);
+    public CommandManagerKafkaImpl(String id, String servers) {
+        super(id);
         if (servers==null || servers.isEmpty()) {
             throw new IllegalArgumentException("Invalid null/empty kafka servers");
         }
         cmdsConsumer = new SimpleStringConsumer(servers, KafkaHelper.CMD_TOPIC_NAME,id);
         repliesProducer = new SimpleStringProducer(servers, KafkaHelper.REPLY_TOPIC_NAME,id+"-REPLY");
-    }
-
-    /**
-     * Constructor
-     *
-     * Commodity constructor with the Identifier
-     *
-     * @param identifier The identifier of the tool where the CommandManager runs
-     * @param servers The address of the servers to connect to
-     */
-    public CommandManagerKafkaImpl(Identifier identifier, String servers) {
-        this(identifier.fullRunningID(), identifier.id(),servers);
     }
 
     /**
@@ -240,23 +226,23 @@ public class CommandManagerKafkaImpl
      * Build the reply and delegate to {@link #sendReply(ReplyMessage)}
      *
      * @param exitStatus The exit status of the command
-     * @param destFullRunningId The full running ID of the receiver of the command
-     * @param id The unique identifier (in the context of the sender) of the command
+     * @param destId The ID of the receiver of the command
+     * @param cmdUID The unique identifier (in the context of the sender) of the command
      * @param cmd The command just executed
      * @param receptionTStamp The point in time when the command has been received from the kafka topic
      * @param props Additional properties, if any
      */
     private void sendReply(
             CommandExitStatus exitStatus,
-            String destFullRunningId,
-            long id,
+            String destId,
+            long cmdUID,
             CommandType cmd,
             long receptionTStamp,
             Map<String,String> props) {
         ReplyMessage reply = new ReplyMessage(
-                fullRunningId,
-                destFullRunningId,
-                id,
+                this.id,
+                destId,
+                cmdUID,
                 cmd,
                 exitStatus,
                 receptionTStamp,

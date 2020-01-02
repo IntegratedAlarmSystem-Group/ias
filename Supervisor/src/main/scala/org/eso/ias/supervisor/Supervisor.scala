@@ -528,7 +528,7 @@ object Supervisor {
     }
 
     // The command manager to get and execute commands
-    val cmdManager = new CommandManagerKafkaImpl(identifier,kafkaBrokers.get);
+    val cmdManager = new CommandManagerKafkaImpl(identifier.id,kafkaBrokers.get);
 
     // Build the supervisor
     val supervisor = new Supervisor(
