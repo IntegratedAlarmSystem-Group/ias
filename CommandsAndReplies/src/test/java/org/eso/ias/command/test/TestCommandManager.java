@@ -40,9 +40,6 @@ public class TestCommandManager implements
     /** The logger */
     private static final Logger logger = LoggerFactory.getLogger(TestCommandManager.class);
 
-    /** The full running ID of the command executor i.e {@link CommandManager} to test */
-    public static final String commandManagerFullRunningId = "commandManagerFullRunningId";
-
     /** The full running ID of the sender of commands i.e. this test */
     public static final String commandSenderFullRunningId = "commandSenderFullRunningId";
 
@@ -118,7 +115,6 @@ public class TestCommandManager implements
         cmdProducer.setUp();
         logger.info("Static producer and consumer built and set up");
         manager = new CommandManagerKafkaImpl(
-                commandManagerFullRunningId,
                 commandManagerId,
                 KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS);
         logger.info("CommandManager to test built");

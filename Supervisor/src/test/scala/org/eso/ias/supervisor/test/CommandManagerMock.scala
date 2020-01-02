@@ -5,7 +5,7 @@ import org.eso.ias.command.{CommandListener, CommandManager}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.Identifier
 
-class CommandManagerMock(fullRunningId: String, id: String) extends CommandManager(fullRunningId,id) {
+class CommandManagerMock(id: String) extends CommandManager(id) {
 
   /**
    * Secondary constructor
@@ -13,7 +13,7 @@ class CommandManagerMock(fullRunningId: String, id: String) extends CommandManag
    * @param identifier The identifier
    */
   def this(identifier: Identifier) {
-    this(identifier.fullRunningID, identifier.id)
+    this(identifier.id)
   }
 
   /**
