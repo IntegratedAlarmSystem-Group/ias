@@ -637,6 +637,7 @@ public class WebServerSender implements IasioListener, AutoCloseable {
 		catch( Exception e) {
 			logger.error("Error on Websocket stop",e);
 		}
+		commandManager.close();
 		hbEngine.shutdown();
 	}
 
