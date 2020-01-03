@@ -126,6 +126,7 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
       outputPublisher, 
       inputConsumer, 
       new HbLogProducer(new HbJsonSerializer),
+    new CommandManagerMock(supervisorId),
       cdbReader,
       factory,
     None)
@@ -180,7 +181,7 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
     logger.info("AfterAll...")
     iasiosProducer.tearDown()
     iasiosConsumer.tearDown()
-    supervisor.cleanUp()
+    supervisor.close()
     logger.info("AfterAll done")
   }
 

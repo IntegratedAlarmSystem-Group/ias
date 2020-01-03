@@ -96,11 +96,11 @@ public class SimpleStringConsumer extends  KafkaStringsConsumer implements Kafka
 	 * @param listener The listener of events published in the topic
 	 * @throws KafkaUtilsException in case of timeout subscribing to the kafkatopic
 	 */
-	public synchronized void startGettingEvents(StreamPosition startReadingFrom, KafkaConsumerListener listener)
+	public synchronized void startGettingStrings(StreamPosition startReadingFrom, KafkaConsumerListener listener)
 	throws KafkaUtilsException {
-	    Objects.requireNonNull(listener);
+	    Objects.requireNonNull(listener,"The listener of strings can't be null");
+		stringListener=listener;
 	    super.startGettingEvents(this,startReadingFrom);
-        stringListener=listener;
 	}
 
     /**

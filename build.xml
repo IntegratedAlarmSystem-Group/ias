@@ -37,6 +37,7 @@
         <string>BasicTypes</string>
         <string>CdbChecker</string>
         <string>KafkaUtils</string>
+	<string>CommandsAndReplies</string>
         <string>Heartbeat</string>
         <string>plugin</string>
         <string>PythonPluginFeeder</string>

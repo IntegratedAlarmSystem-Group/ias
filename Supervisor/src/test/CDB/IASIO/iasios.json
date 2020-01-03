@@ -251,6 +251,9 @@
 	{ "id":"TemplatedId", "shortDesc":"Templated", "iasType":"LONG", "templateId":"temp-ID2" },
 	{ "id":"NonTemplatedId", "shortDesc":"NON Templated", "iasType":"LONG" },
 	{ "id":"TemplatedOutId", "shortDesc":"Templated output", "iasType":"LONG", "templateId":"temp-ID2" },
-	{ "id":"TemplatedInput", "shortDesc":"Templated input", "iasType":"ALARM", "templateId":"TemplateIDForTemplatedInputs" }
+	{ "id":"TemplatedInput", "shortDesc":"Templated input", "iasType":"ALARM", "templateId":"TemplateIDForTemplatedInputs" },
+	
+	 { "id":"OutputOfSupervToRestart", "shortDesc":"Output", "iasType":"ALARM" },
+	 { "id":"InputOfSupervToRestart", "shortDesc":"Output", "iasType":"DOUBLE" }
 	
 ]

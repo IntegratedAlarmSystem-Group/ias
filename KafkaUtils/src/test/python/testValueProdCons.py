@@ -7,11 +7,15 @@ Created on Jun 14, 2018
 
 @author: acaproni
 '''
-import unittest, time
+import time
+import unittest
+
+from IASLogging.logConf import Log
+from IasBasicTypes.IasValue import IasValue
 from IasKafkaUtils.KafkaValueConsumer import IasValueListener, KafkaValueConsumer
 from IasKafkaUtils.KafkaValueProducer import KafkaValueProducer
-from IasBasicTypes.IasValue import IasValue
-from IASLogging.logConf import Log
+
+logger=Log.getLogger(__file__)
 
 class TestListener(IasValueListener):
     '''
@@ -68,6 +72,9 @@ class TestValueProdCons(unittest.TestCase):
 
 
     def testName(self):
+
+        logger.info('Building the producer')
+        producer = KafkaValueProducer(self.kafkabrokers,self.topic,'PyProducerTest-ID')
         
         logger.info('Building the consumer')
         consumer = KafkaValueConsumer(
@@ -79,16 +86,10 @@ class TestValueProdCons(unittest.TestCase):
         logger.info('Starting the consumer')
         consumer.start()
         
-        logger.info('Building the producer')
-        producer = KafkaValueProducer(self.kafkabrokers,self.topic,'PyProducerTest-ID')
+
         
-        n=1
-        while not consumer.isGettingEvents:
-            if n %10 == 0:
-                logger.info("Waiting for the consumer to connect")
-            n = n + 1
-            time.sleep(100)
-        
+        n=100
+
         # Wait one second to be sure the consumer is ready
         # Setting up partitions and assign consumers to group, rebalancing etc.
         # can slow down the process even iof the consumer is ready and waiting 
@@ -116,6 +117,5 @@ class TestValueProdCons(unittest.TestCase):
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
-    logger=Log.initLogging(__file__)
     logger.info("Start main")
     unittest.main()

@@ -130,7 +130,7 @@ public class ConsumerProducerTest implements KafkaConsumerListener {
 		producer = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, topicName, "Consumer-ID");
 		producer.setUp();
 		
-		consumer.startGettingEvents(StreamPosition.END,this);
+		consumer.startGettingStrings(StreamPosition.END,this);
 		logger.info("Initialized.");
 	}
 	

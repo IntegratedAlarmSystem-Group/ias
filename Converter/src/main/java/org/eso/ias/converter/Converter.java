@@ -8,6 +8,8 @@ import org.eso.ias.cdb.json.CdbJsonFiles;
 import org.eso.ias.cdb.json.JsonReader;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.LogLevelDao;
+import org.eso.ias.command.CommandManager;
+import org.eso.ias.command.DefaultCommandExecutor;
 import org.eso.ias.converter.config.ConfigurationException;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
 import org.eso.ias.converter.config.IasioConfigurationDaoImpl;
@@ -48,7 +50,7 @@ import java.util.function.Function;
  * @author acaproni
  *
  */
-public class Converter {
+public class Converter implements AutoCloseable {
 
 	/**
 	 * The identifier of the converter
@@ -93,12 +95,17 @@ public class Converter {
 	private final HbEngine hbEngine;
 
 	/**
+	 * The receiver and executor of commands
+	 */
+	private final CommandManager commandManager;
+
+	/**
 	 * The shutdown thread for a clean exit
 	 */
 	private Thread shutDownThread=new Thread("Converter shutdown thread") {
 		@Override
 		public void run() {
-			Converter.this.tearDown();
+			Converter.this.close();
 		}
 	};
 
@@ -111,12 +118,14 @@ public class Converter {
 	 * @param cdbReader The DAO of the configuration database
 	 * @param converterStream The stream to convert monitor point data into IAS values
 	 * @param hbProducer the sender of HB messages
+	 * @param cmdManager The command manager
 	 */
 	public Converter(
 			String id,
 			CdbReader cdbReader,
 			ConverterStream converterStream,
-			HbProducer hbProducer) throws ConfigurationException {
+			HbProducer hbProducer,
+			CommandManager cmdManager) throws ConfigurationException {
 		Objects.requireNonNull(id);
 		if (id.trim().isEmpty()) {
 			throw new InvalidParameterException("The ID of the converter can't be empty");
@@ -147,6 +156,9 @@ public class Converter {
 				HeartbeatProducerType.CONVERTER,
 				hbFrequency, 
 				hbProducer);
+
+		Objects.requireNonNull(cmdManager,"The command executor can't be null");
+		this.commandManager=cmdManager;
 		
 		this.configDao= new IasioConfigurationDaoImpl(cdbReader);
 		try {
@@ -187,6 +199,12 @@ public class Converter {
 		} catch (Exception e) {
 			throw new ConfigurationException("Error activating the stream",e);
 		}
+
+		try {
+			commandManager.start(new DefaultCommandExecutor(),this);
+		} catch (Exception e) {
+			throw new ConfigurationException("Error activating the command executor",e);
+		}
 		
 		hbEngine.updateHbState(HeartbeatStatus.RUNNING);
 		logger.info("Converter {} initialized", converterId);
@@ -195,7 +213,7 @@ public class Converter {
 	/**
 	 * Shut down the loop and free the resources.
 	 */
-	public void tearDown() {
+	public void close() {
 		if (closed.getAndSet(true)) {
 			logger.info("Converter {} already closed", converterId);
 			return;
@@ -211,6 +229,8 @@ public class Converter {
 		}  catch (Exception e) {
 			logger.error("Converter {}: exception got while terminating the streaming", converterId,e);
 		}
+
+		commandManager.close();
 		
 		hbEngine.shutdown();
 		logger.info("Converter {} shutted down.", converterId);
@@ -365,11 +385,13 @@ public class Converter {
 		
 		HbProducer hbProducer = context.getBean(HbProducer.class,id,kafkaBrokersFromCdb,System.getProperties());
 
+		CommandManager commandManager = context.getBean(CommandManager.class,id,kafkaBrokersFromCdb, System.getProperties());
+
 		logger.info("Building the {} Converter",id);
 
 		Converter converter = null;
 		try { 
-			converter=new Converter(id,cdbReader,converterStream,hbProducer);
+			converter=new Converter(id,cdbReader,converterStream,hbProducer,commandManager);
 		} catch (Exception e) {
 			logger.error("Exception building the converter {}",id,e);
 			System.exit(-1);

@@ -10,6 +10,8 @@ import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.LogLevelDao;
+import org.eso.ias.command.CommandManager;
+import org.eso.ias.command.kafka.CommandManagerKafkaImpl;
 import org.eso.ias.converter.Converter;
 import org.eso.ias.converter.ConverterKafkaStream;
 import org.eso.ias.heartbeat.publisher.HbLogProducer;
@@ -296,12 +298,15 @@ public class TestKafkaStreaming extends ConverterTestBase {
         // The reader to pass to the converter
         CdbReader cdbReader = new JsonReader(cdbFiles);
 
+        CommandManager cmdManager = new CommandManagerKafkaImpl(converterID,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS);
+
         // Finally builds the converter
         converter = new Converter(
                 converterID,
                 cdbReader,
                 new ConverterKafkaStream(converterID, Optional.empty(),new Properties()),
-                new HbLogProducer(new HbJsonSerializer()));
+                new HbLogProducer(new HbJsonSerializer()),
+                cmdManager);
 
         converter.setUp();
 
@@ -313,7 +318,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
     @AfterEach
     public void tearDown() throws Exception {
         logger.info("Shutting down the converter");
-        converter.tearDown();
+        converter.close();
         CdbFolders.ROOT.delete(cdbParentPath);
     }
 
