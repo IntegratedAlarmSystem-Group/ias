@@ -10,13 +10,30 @@ import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * SimpleStringProducer pushes strings on a Kafka topic.
- * <P>
- * Kafka properties are fully customizable by calling {@link #setUp(Properties)}:
- * defaults values are used for the missing properties.
+ *
+ *     The producer delegates to a {@link org.apache.kafka.clients.producer.KafkaProducer} and allows
+ *     to push data to different topics so that only one instance of this publisher can be used
+ *     instead of many {@link SimpleStringProducer} or equivalent.
+ *     According to the documentation, the {@link org.apache.kafka.clients.producer.KafkaProducer} is,
+ *     in fact thought to be used for this purpose: it is thread safe and generally more efficient than having
+ *     multiple producers in the same process.
+ *
+ *     From a performance point of view, there is a saturation point for th eproducer after which the preformances degrade.
+ *     When the saturation point has been reached, the only way to increase performances is to add new producers.
+ *
+ *     USAGE: normally only one SimpleStringProducer is used for pushing strings in all the topics.
+ *     If there are performance problems then instantiate more SimpleStringProducers.
+ *
+ * 	Kafka properties are fully customizable by calling {@link #setUp(Properties)}:
+ * 	defaults values are used for the missing properties.
+ *
+ *
+ *
  * 
  * @author acaproni
  *
@@ -34,11 +51,6 @@ public class SimpleStringProducer {
 	private final String bootstrapServers;
 	
 	/**
-	 * The topic to send strings to
-	 */
-	private final String topic;
-	
-	/**
 	 * The kafka producer
 	 */
 	private KafkaProducer<String, String> producer;
@@ -46,10 +58,15 @@ public class SimpleStringProducer {
 	/**
 	 * Set if the producer has been closed
 	 */
-	private volatile boolean closed=false;
+	private final AtomicBoolean closed=new AtomicBoolean(false);
+
+	/**
+	 * Set if the producer has been initialized
+	 */
+	private final AtomicBoolean initialized=new AtomicBoolean(false);
 	
 	/**
-	 * The unique identifier of this producer
+	 * The unique identifier of this producer mapped to kafka client.id property
 	 */
 	private final String clientID;
 	
@@ -62,22 +79,14 @@ public class SimpleStringProducer {
 	 * Constructor 
 	 * 
 	 * @param servers The list of kafka servers to connect to
-	 * @param topic The topic to send strings to
-	 * @param clientID The unique identifier of this producer
+	 * @param clientID The unique identifier of this producer (mapped to kafka client.id)
 	 */
-	public SimpleStringProducer(String servers, String topic, String clientID) {
-		Objects.requireNonNull(servers);
-		if (servers.trim().isEmpty()) {
+	public SimpleStringProducer(String servers, String clientID) {
+		if (servers==null || servers.trim().isEmpty()) {
 			throw new IllegalArgumentException("Invalid servers list: expected serve1:port1, server2:port2...");
 		}
 		this.bootstrapServers=servers.trim();
-		Objects.requireNonNull(topic);
-		if (topic.trim().isEmpty()) {
-			throw new IllegalArgumentException("Invalid empty topic name");
-		}
-		this.topic=topic.trim();
-		Objects.requireNonNull(clientID);
-		if (clientID.trim().isEmpty()) {
+		if (clientID==null || clientID.trim().isEmpty()) {
 			throw new IllegalArgumentException("Invalid producer ID");
 		}
 		this.clientID=clientID.trim();
@@ -93,6 +102,11 @@ public class SimpleStringProducer {
 		
 		Properties defaultProps = getDefaultProps();
 		defaultProps.keySet().forEach( k -> props.putIfAbsent(k, defaultProps.get(k)));
+
+		String newClientId=props.getProperty("client.id");
+        if (newClientId!=null) {
+            logger.warn("client.id redifined to {}",newClientId);
+        }
 	}
 	
 	/**
@@ -124,23 +138,28 @@ public class SimpleStringProducer {
 	 * @param props user defined properties
 	 */
 	public void setUp(Properties props) {
-		logger.info("Producer [{}] is building the kafka producer",clientID);
-		Objects.requireNonNull(props);
-		mergeDefaultProps(props);
-		producer = new KafkaProducer<>(props);
-		logger.info("Kafka producer [{}] built",clientID);
+		boolean alreadyInitialized = initialized.getAndSet(true);
+		if (!alreadyInitialized) {
+			logger.info("Producer [{}] is building the kafka producer", clientID);
+			Objects.requireNonNull(props);
+			mergeDefaultProps(props);
+			producer = new KafkaProducer<>(props);
+			logger.info("Kafka producer [{}] built", clientID);
+		} else {
+			logger.warn("Already initialized");
+		}
 	}
 	
 	/**
 	 * Closes the producer
 	 */
 	public void tearDown() {
-		if (closed) {
+		boolean alreadyClosed=closed.getAndSet(true);
+		if (alreadyClosed) {
 			logger.warn("Producer already closed");
 			return;
 		}
-		closed=true;
-		logger.info("Closing kafka producer [{}]",clientID);
+		logger.debug("Closing kafka producer [{}]",clientID);
 		producer.close();
 		logger.info("Kafka producer [{}] closed",clientID);
 	}
@@ -149,18 +168,20 @@ public class SimpleStringProducer {
 	 * Asynchronously pushes a string in a kafka topic.
 	 * 
 	 * @param value The not <code>null</code> nor empty string to publish in the topic
+	 * @param topic The not <code>null</code> nor empty topic to push the string into
 	 * @param partition The partition
 	 * @param key The key
 	 * @throws KafkaUtilsException in case of error sending the value
 	 */
-	public void push(String value,	Integer partition,	String key) throws KafkaUtilsException {
-		push(value,partition,key,false,0,null);
+	public void push(String value,	String topic, Integer partition,	String key) throws KafkaUtilsException {
+		push(value,topic,partition,key,false,0,null);
 	}
 	
 	/**
 	 * Synchronously pushes the passed string in the topic
 	 * 
 	 * @param value The not <code>null</code> nor empty string to publish in the topic
+	 * @param topic The not <code>null</code> nor empty topic to push the string into
 	 * @param partition The partition
 	 * @param key The key
 	 * @param timeout the time to wait if sync is set
@@ -168,12 +189,13 @@ public class SimpleStringProducer {
 	 * @throws KafkaUtilsException in case of error or timeout sending the value
 	 */
 	public void push(
-			String value, 
+			String value,
+			String topic,
 			Integer partition, 
 			String key, 
 			int timeout,
 			TimeUnit unit) throws KafkaUtilsException {
-		push(value,partition,key,true,timeout,unit);
+		push(value,topic,partition,key,true,timeout,unit);
 	}
 	
 	/**
@@ -185,6 +207,7 @@ public class SimpleStringProducer {
 	 * send waits for the effective sending  
 	 * 
 	 * @param value The not <code>null</code> nor empty string to publish in the topic
+	 * @param topic The not <code>null</code> nor empty topic to push the string into
 	 * @param partition The partition
 	 * @param key The key
 	 * @param sync If true the methods return
@@ -193,22 +216,25 @@ public class SimpleStringProducer {
 	 * @throws KafkaUtilsException in case of error or timeout sending the value 
 	 */
 	protected void push(
-			String value, 
+			String value,
+			String topic,
 			Integer partition, 
 			String key, 
 			boolean sync,
 			int timeout,
 			TimeUnit unit) throws KafkaUtilsException {
-		Objects.requireNonNull(value);
-		if (value.isEmpty()) {
+		if (value==null || value.isEmpty()) {
 			throw new KafkaUtilsException("Cannot send empty strings");
+		}
+		if (topic==null || topic.isEmpty()) {
+			throw new KafkaUtilsException("Undefined topic");
 		}
 		if (sync && (timeout<=0 || unit==null)) {
 				throw new IllegalArgumentException("Invalid timeout/unit args. for sync sending");
 		}
 		
-		if (closed) {
-			logger.info("Producer [{}] close: [{}] not sent",clientID,value);
+		if (closed.get()) {
+			logger.info("Producer [{}] closed: value [{}] discarded",clientID,value);
 			return;
 		}
 		
