@@ -173,7 +173,7 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
     require(Option(alarmId).isDefined && !alarmId.isEmpty)
     require(Option(state).isDefined)
     val recipients = iasValuesDaos(Identifier.getBaseId(alarmId)).getEmails.split(",")
-    NotificationsSender.msLogger.debug("Sending tonitifcation of alarm {} status change to {}", alarmId, recipients.mkString(","))
+    NotificationsSender.msLogger.debug("Sending notifcation of alarm {} status change to {}", alarmId, recipients.mkString(","))
     val sendOp = Try(sender.notify(recipients.map(_.trim).toList, alarmId, state))
     if (sendOp.isFailure) NotificationsSender.msLogger.error("Error sending alarm state notification notification to {}", recipients.mkString(","), sendOp.asInstanceOf[Failure[_]].exception)
   }
@@ -186,9 +186,16 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
     */
   override protected def process(iasValues: List[IASValue[_]]): Unit = synchronized {
     NotificationsSender.msLogger.debug("Processing {} values read from BSDB",iasValues.length)
-    // Iterates over alarm IASIOs
-    val valuesToUpdate: Unit = iasValues.filter(v => v.valueType==IASTypes.ALARM && alarmsToTrack.contains(Identifier.getBaseId(v.id)))
-      .foreach(value => {
+
+    // The criteria to filter out the IAS values that are not interesting for the notifications
+    def accept(iasValue: IASValue[_]): Boolean = {
+      iasValue.valueType==IASTypes.ALARM &&
+        iasValue.mode!=OperationalMode.MAINTENANCE &&
+        alarmsToTrack.contains(Identifier.getBaseId(iasValue.id))
+    }
+
+    // Iterates over accepted alarms
+    iasValues.filter(accept).foreach(value => {
 
         val id = value.id
 
