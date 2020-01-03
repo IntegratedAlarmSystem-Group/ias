@@ -1,15 +1,5 @@
 package org.eso.ias.test.simpleloop.plugin;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.eso.ias.heartbeat.HbMsgSerializer;
 import org.eso.ias.heartbeat.HbProducer;
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
@@ -24,6 +14,11 @@ import org.eso.ias.plugin.publisher.impl.KafkaPublisher;
 import org.eso.ias.types.OperationalMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * The simple loop plugin that generates the 
@@ -215,7 +210,7 @@ public class SimpleLoopPlugin extends Plugin implements Runnable {
 			logger.error("Intterrupted!",e);
 		}
 		
-		plugin.shutdown();
+		plugin.close();
 		logger.info("Done.");
 		
 	}
@@ -239,12 +234,12 @@ public class SimpleLoopPlugin extends Plugin implements Runnable {
 	 * to generate the sample
 	 */
 	@Override
-	public void shutdown() {
+	public void close() {
 		ScheduledFuture<?> f = future.getAndSet(null);
 		if (f!=null) {
 			f.cancel(false);
 		}
-		super.shutdown();
+		super.close();
 	}
 
 }

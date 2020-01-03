@@ -390,7 +390,7 @@ public class WebServerSenderTest {
 	public void tearDown() throws Exception {
 		logger.info("Starting Test Finalization");
 		this.producer.tearDown();
-		this.webServerSender.shutdown();
+		this.webServerSender.close();
 		this.server.stop();
 		logger.info("Test Finalization Completed");
 	}

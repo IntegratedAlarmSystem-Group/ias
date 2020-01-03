@@ -72,6 +72,7 @@ class SupervisorTest extends FlatSpec {
         outputPublisher,
         inputsProvider,
         new HbLogProducer(new HbJsonSerializer),
+        new CommandManagerMock(supervIdentifier),
         cdbReader,
         DasuMock.apply,None)
 
@@ -108,14 +109,14 @@ class SupervisorTest extends FlatSpec {
     val dasus = f.supervisor.dasus.values
     dasus.foreach(d => assert(d.asInstanceOf[DasuMock].numOfStarts.get() == 1))
 
-    f.supervisor.cleanUp()
+    f.supervisor.close()
   }
 
   it must "clean up each DASU" in {
     val f = fixture
     assert(f.supervisor.start().isSuccess)
 
-    f.supervisor.cleanUp()
+    f.supervisor.close()
 
     val dasus = f.supervisor.dasus.values
     dasus.foreach(d => assert(d.asInstanceOf[DasuMock].numOfCleanUps.get() == 1))
@@ -128,7 +129,7 @@ class SupervisorTest extends FlatSpec {
     val dasus = f.supervisor.dasus.values
     dasus.foreach(d => assert(d.asInstanceOf[DasuMock].numOfEnableAutorefresh.get() == 1))
 
-    f.supervisor.cleanUp()
+    f.supervisor.close()
   }
 
   it must "properly forward IASIOs do DASUs" in {

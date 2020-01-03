@@ -10,6 +10,8 @@ import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbFiles, CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos._
 import org.eso.ias.cdb.rdb.RdbReader
+import org.eso.ias.command.CommandManager
+import org.eso.ias.command.kafka.CommandManagerKafkaImpl
 import org.eso.ias.dasu.subscriber.{InputSubscriber, KafkaSubscriber}
 import org.eso.ias.heartbeat.HbProducer
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer
@@ -411,19 +413,21 @@ object NotificationsSender {
       else temp
     }
 
-    val hbProducer: HbProducer = {
-      val kafkaServers = System.getProperties.getProperty(KafkaHelper.BROKERS_PROPNAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
-      new HbKafkaProducer(emailSenderId + "HBSender",kafkaServers,new HbJsonSerializer())
-    }
+    val kafkaServers = System.getProperties.getProperty(KafkaHelper.BROKERS_PROPNAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
+
+    val hbProducer: HbProducer = new HbKafkaProducer(emailSenderId + "HBSender",kafkaServers,new HbJsonSerializer())
     msLogger.debug("HB producer instantiated")
 
     val inputsProvider: InputSubscriber = KafkaSubscriber(emailSenderId,None,kafkaBrokers,System.getProperties)
     msLogger.debug("IAS values consumer instantiated")
 
+    val commandManager: CommandManager = new CommandManagerKafkaImpl(emailSenderId,kafkaServers)
+
     val valuesProcessor: IasValueProcessor = new IasValueProcessor(
       emailSenderId,
       List(valueListener),
       hbProducer,
+      commandManager,
       inputsProvider,
       iasDao,
       iasioDaos,

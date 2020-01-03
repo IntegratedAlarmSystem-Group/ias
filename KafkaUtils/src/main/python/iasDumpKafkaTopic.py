@@ -6,8 +6,11 @@ by delegating to kafka native commands.
 No further computation is done on the received strings.
 '''
 
-import argparse, os, sys
+import argparse
+import os
+import sys
 from subprocess import call
+
 
 def check_kafka(kafkaCommand):
     '''
@@ -56,7 +59,7 @@ if __name__ == '__main__':
         '--topic',
         help='The IAS topic to get strings from',
         action='store',
-        choices=['core', 'hb', 'plugin'],
+        choices=['core', 'hb', 'plugin', 'cmd', 'reply'],
         default = 'core',
         required=False)
     parser.add_argument(
@@ -73,7 +76,12 @@ if __name__ == '__main__':
     if not check_kafka(kafkaCommand):
         sys.exit(-1)
 
-    topics = { 'core':"BsdbCoreKTopic", 'hb':"HeartbeatTopic", 'plugin':"PluginsKTopic" }
+    topics = {
+        'core':"BsdbCoreKTopic",
+        'hb':"HeartbeatTopic",
+        'plugin':"PluginsKTopic",
+        'cmd':"CmdTopic",
+        'reply':"ReplyTopic"}
 
     cmd = [ os.environ["KAFKA_HOME"]+kafkaCommand ,"--bootstrap-server" ]
     cmd.append(args.broker+":"+str(+args.port))

@@ -1,11 +1,9 @@
 package org.eso.ias.converter;
 
-import java.util.Optional;
-import java.util.Properties;
-
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.rdb.RdbReader;
-import org.eso.ias.heartbeat.HbMsgSerializer;
+import org.eso.ias.command.CommandManager;
+import org.eso.ias.command.kafka.CommandManagerKafkaImpl;
 import org.eso.ias.heartbeat.HbProducer;
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
@@ -13,6 +11,9 @@ import org.eso.ias.kafkautils.KafkaHelper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+
+import java.util.Optional;
+import java.util.Properties;
 
 /**
  * {@link Converter} configuration with spring annotations.
@@ -60,5 +61,11 @@ public class ConverterConfig {
 		return new HbKafkaProducer(
 				cID+"HBSender", getKafkaServer(kafkaBrokers, props),
 				new HbJsonSerializer()); 
+	}
+
+	@Bean
+	@Lazy(value = true)
+	public CommandManager commandManager(String cID, Optional<String> kafkaBrokers, Properties props) {
+		return new CommandManagerKafkaImpl(cID,getKafkaServer(kafkaBrokers, props));
 	}
 }

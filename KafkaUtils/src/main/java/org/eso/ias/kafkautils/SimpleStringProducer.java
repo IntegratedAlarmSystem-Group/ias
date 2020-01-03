@@ -1,16 +1,16 @@
 package org.eso.ias.kafkautils;
 
-import java.util.Objects;
-import java.util.Properties;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Objects;
+import java.util.Properties;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * SimpleStringProducer pushes strings on a Kafka topic.
@@ -135,8 +135,12 @@ public class SimpleStringProducer {
 	 * Closes the producer
 	 */
 	public void tearDown() {
-		logger.info("Closing kafka producer [{}]",clientID);
+		if (closed) {
+			logger.warn("Producer already closed");
+			return;
+		}
 		closed=true;
+		logger.info("Closing kafka producer [{}]",clientID);
 		producer.close();
 		logger.info("Kafka producer [{}] closed",clientID);
 	}

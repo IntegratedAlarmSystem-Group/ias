@@ -1,5 +1,7 @@
 package org.eso.ias.plugin;
 
+import org.eso.ias.command.CommandManager;
+import org.eso.ias.command.DefaultCommandExecutor;
 import org.eso.ias.heartbeat.HbEngine;
 import org.eso.ias.heartbeat.HbProducer;
 import org.eso.ias.heartbeat.HeartbeatProducerType;
@@ -82,7 +84,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *  
  * @author acaproni
  */
-public class Plugin implements ChangeValueListener {
+public class Plugin implements ChangeValueListener, AutoCloseable {
 	
 	/**
 	 * The map of monitor points and alarms produced by the 
@@ -240,6 +242,14 @@ public class Plugin implements ChangeValueListener {
 	 * ThE engine to send heartbeats
 	 */
 	private final HbEngine hbEngine;
+
+	/**
+	 * The command manager to receive and execute commands
+	 *
+	 * It can be empty if command management is not desired
+	 * and to ensure backward compatibility of existing plugins
+	 */
+	private final Optional<CommandManager> commandManager;
 	
 	/**
 	 * Build a non templated plugin with the passed parameters.
@@ -283,6 +293,51 @@ public class Plugin implements ChangeValueListener {
 
 	/**
 	 * Build a plugin with the passed parameters.
+	 *
+	 * @param id The Identifier of the plugin
+	 * @param monitoredSystemId: the identifier of the monitored system
+	 * @param values the monitor point values
+	 * @param props The user defined properties
+	 * @param sender The publisher of monitor point values to the IAS core
+	 * @param defaultFilter the default filter (can be <code>null</code>) to apply
+	 *                      if there is not filter set in the value
+	 * @param defaultFilterOptions the options for the default filter
+	 *                             (can be <code>null</code>)
+	 * @param refreshRate The auto-send time interval in seconds
+	 * @param hbFrequency the frequency of the heartbeat in seconds
+	 * @param instanceNumber the number of the instance if the plugin is replicated,
+	 *                       <code>null</code> if not replicated
+	 * @param hbFrequency the frequency (seconds) to periodically publish HBs
+	 * @param hbProducer the publisher of HBs
+	 */
+	public Plugin(
+			String id,
+			String monitoredSystemId,
+			Collection<Value> values,
+			Properties props,
+			MonitorPointSender sender,
+			String defaultFilter,
+			String defaultFilterOptions,
+			int refreshRate,
+			Integer instanceNumber,
+			int hbFrequency,
+			HbProducer hbProducer) {
+		this(
+				id,
+				monitoredSystemId,
+				values,props,
+				sender,
+				defaultFilter,
+				defaultFilterOptions,
+				refreshRate,
+				instanceNumber,
+				hbFrequency,
+				hbProducer,
+				null);
+	}
+
+	/**
+	 * Build a plugin with the passed parameters.
 	 * 
 	 * @param id The Identifier of the plugin
 	 * @param monitoredSystemId: the identifier of the monitored system
@@ -299,6 +354,8 @@ public class Plugin implements ChangeValueListener {
 	 *                       <code>null</code> if not replicated
 	 * @param hbFrequency the frequency (seconds) to periodically publish HBs
 	 * @param hbProducer the publisher of HBs
+	 * @param cmdManager The command manager to handle command
+	 *                   (can be <code>null</code> if command managemrent not desired)
 	 */
 	public Plugin(
 			String id, 
@@ -311,7 +368,8 @@ public class Plugin implements ChangeValueListener {
 			int refreshRate,
 			Integer instanceNumber,
 			int hbFrequency,
-			HbProducer hbProducer) {
+			HbProducer hbProducer,
+			CommandManager cmdManager) {
 		
 		// Immediately checks if the plugin is replicated
 		Optional<Integer> instanceNumberOpt = Optional.ofNullable(instanceNumber);
@@ -368,6 +426,11 @@ public class Plugin implements ChangeValueListener {
 		
 		Objects.requireNonNull(hbProducer);
 		this.hbEngine=HbEngine.apply(pluginId, HeartbeatProducerType.PLUGIN, hbFrequency, hbProducer);
+
+		this.commandManager=Optional.ofNullable(cmdManager);
+		if (!this.commandManager.isPresent()) {
+			logger.warn("Command management disabled");
+		}
 		
 		this.mpPublisher=sender;
 		
@@ -446,6 +509,38 @@ public class Plugin implements ChangeValueListener {
 		this(config,sender,null,hbProducer);
 		
 	}
+
+	/**
+	 * Build a replicated plugin from the passed configuration.
+	 *
+	 * @param config The plugin coinfiguration
+	 * @param sender The publisher of monitor point values to the IAS core
+	 * @param instanceNumber the number of the instance if the plugin is replicated,
+	 *                       <code>null</code> if not replicated
+	 * @param hbProducer the publisher of HBs
+	 * @param cmdManager The command manager to handle command
+	 *                  (can be <code>null</code> if command managemrent not desired)
+	 */
+	public Plugin(
+			PluginConfig config,
+			MonitorPointSender sender,
+			Integer instanceNumber,
+			HbProducer hbProducer,
+			CommandManager cmdManager) {
+		this(
+				config.getId(),
+				config.getMonitoredSystemId(),
+				config.getValuesAsCollection(),
+				config.getProps(),
+				sender,
+				config.getDefaultFilter(),
+				config.getDefaultFilterOptions(),
+				config.getAutoSendTimeInterval(),
+				instanceNumber,
+				config.getHbFrequency(),
+				hbProducer,
+				cmdManager);
+	}
 	
 	/**
 	 * Build a replicated plugin from the passed configuration.
@@ -474,12 +569,12 @@ public class Plugin implements ChangeValueListener {
 				config.getHbFrequency(),
 				hbProducer);
 	}
-	
+
 	/**
 	 * This method must be called at the beginning
 	 * to acquire the needed resources.
 	 * 
-	 * @throws PublisherException In case of error initializing the publisher
+	 * @throws PublisherException In case of error initializing the publisher or the command manager
 	 */
 	public void start() throws PublisherException {
 		logger.debug("Initializing");
@@ -489,7 +584,16 @@ public class Plugin implements ChangeValueListener {
 		
 		mpPublisher.setUp();
 		logger.info("Publisher initialized.");
-		
+
+		if (commandManager.isPresent()) {
+			try {
+				commandManager.get().start(new DefaultCommandExecutor(), this);
+				logger.info("Command executor activated");
+			} catch (Exception e) {
+				throw new 	PublisherException(e);
+			}
+		}
+
 		if (STATS_TIME_INTERVAL>0) {
 			// Start the logger of statistics
 			Runnable r = new Runnable() {
@@ -512,11 +616,11 @@ public class Plugin implements ChangeValueListener {
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 			@Override
 			public void run() {
-				shutdown();
+				close();
 			}
 		}, "Plugin shutdown hook"));
 		
-		logger.debug("Initiailizing {} monitor points", monitorPoints.values().size());
+		logger.debug("Initializing {} monitor points", monitorPoints.values().size());
 		monitorPoints.values().forEach(mp -> mp.start());
 		
 		hbEngine.updateHbState(HeartbeatStatus.RUNNING);
@@ -528,10 +632,13 @@ public class Plugin implements ChangeValueListener {
 	 * This method must be called when finished using the object 
 	 * to free the allocated resources. 
 	 */
-	public void shutdown() {
+	@Override
+	public void close() {
 		boolean alreadyClosed=closed.getAndSet(true);
-		hbEngine.updateHbState(HeartbeatStatus.EXITING);
 		if (!alreadyClosed) {
+			hbEngine.updateHbState(HeartbeatStatus.EXITING);
+			logger.debug("Shutting down the command manager");
+			commandManager.ifPresent( cmdM -> cmdM.close());
 			shutdownExecutorSvc();
 			logger.info("Stopping the sending of monitor point values to the core of the IAS");
 			mpPublisher.stopSending();
@@ -550,6 +657,8 @@ public class Plugin implements ChangeValueListener {
 			hbEngine.shutdown();
 			
 			logger.info("Plugin {} is shut down",pluginId);
+		} else {
+			logger.warn("Already closed");
 		}
 	}
 	

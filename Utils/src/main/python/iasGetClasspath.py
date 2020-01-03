@@ -5,9 +5,10 @@ Writes the classpath in the stdout
 @author: acaproni
 '''
 import argparse
-from IASTools.CommonDefs import CommonDefs
-from IASLogging.logConf import Log
 import os
+
+from IASLogging.logConf import Log
+from IASTools.CommonDefs import CommonDefs
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Get the classpath.')
@@ -30,5 +31,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
     stdoutLevel=args.levelStdOut
     consoleLevel=args.levelConsole
-    logger=Log.initLogging(os.path.basename(__file__),stdoutLevel,consoleLevel)
+    logger=Log.getLogger(os.path.basename(__file__),stdoutLevel,consoleLevel)
     logger.info(CommonDefs.buildClasspath())
