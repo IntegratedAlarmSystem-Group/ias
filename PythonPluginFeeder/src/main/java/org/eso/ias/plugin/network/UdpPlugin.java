@@ -458,7 +458,7 @@ public class UdpPlugin implements Runnable {
 			logger.warn("Interrupetd while waiting for thread termination",e);
 		}
 		logger.debug("Shutting down the plugin");
-		plugin.shutdown();
+		plugin.close();
 		logger.info("Cleaned up.");
 	}
 
