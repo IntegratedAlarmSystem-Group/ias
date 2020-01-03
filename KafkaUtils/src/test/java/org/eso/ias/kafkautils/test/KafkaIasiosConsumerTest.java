@@ -5,6 +5,7 @@ import org.eso.ias.kafkautils.KafkaIasiosConsumer;
 import org.eso.ias.kafkautils.KafkaIasiosProducer;
 import org.eso.ias.kafkautils.KafkaStringsConsumer.StreamPosition;
 import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener;
+import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.eso.ias.types.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -75,6 +76,10 @@ public class KafkaIasiosConsumerTest implements IasioListener {
 	 * The number of events to wait for
 	 */
 	private CountDownLatch numOfEventsToReceive;
+
+	private final SimpleStringProducer stringProducer = new SimpleStringProducer(
+			KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
+			"KafkaIasiosConsumerTest");
 	
 	/**
 	 * Initialize
@@ -84,12 +89,12 @@ public class KafkaIasiosConsumerTest implements IasioListener {
 		logger.info("Initializing...");
 		consumer = new KafkaIasiosConsumer(
 				KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
-				topicName, "FilteredConsumser-Test",
+				topicName, "FilteredConsumer-Test",
 				new HashSet<>(),
 				new HashSet<>());
 		consumer.setUp();
 		receivedIasios.clear();
-		producer = new KafkaIasiosProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, topicName, "Consumer-ID",serializer);
+		producer = new KafkaIasiosProducer(stringProducer, topicName, serializer);
 		producer.setUp();
 		
 		logger.info("Initialized.");
