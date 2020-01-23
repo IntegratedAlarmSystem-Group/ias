@@ -113,14 +113,16 @@ public class CommandManagerKafkaImpl
      *
      * @param id the id of the process
      * @param servers The servers to connect to
+     * @param repliesProducer The producer of replies in the rpely topic
      */
-    public CommandManagerKafkaImpl(String id, String servers) {
+    public CommandManagerKafkaImpl(String id, String servers, SimpleStringProducer repliesProducer) {
         super(id);
         if (servers==null || servers.isEmpty()) {
             throw new IllegalArgumentException("Invalid null/empty kafka servers");
         }
         cmdsConsumer = new SimpleStringConsumer(servers, KafkaHelper.CMD_TOPIC_NAME,id);
-        repliesProducer = new SimpleStringProducer(servers, KafkaHelper.REPLY_TOPIC_NAME,id+"-REPLY");
+        Objects.requireNonNull(repliesProducer,"The producer of replies can't be null");
+        this.repliesProducer = repliesProducer;
     }
 
     /**
@@ -207,7 +209,7 @@ public class CommandManagerKafkaImpl
             return;
         }
         try {
-            repliesProducer.push(jsonStr,null,reply.getCommand().toString());
+            repliesProducer.push(jsonStr,KafkaHelper.REPLY_TOPIC_NAME,null,reply.getCommand().toString());
         } catch (KafkaUtilsException e) {
             logger.error("Error pushing the reply [{}] in the topic the reply {}: reply lost!",jsonStr,e);
             return;

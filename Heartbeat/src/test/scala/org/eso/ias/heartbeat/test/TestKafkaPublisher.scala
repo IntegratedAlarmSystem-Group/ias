@@ -4,9 +4,9 @@ import org.eso.ias.heartbeat.consumer.{HbKafkaConsumer, HbListener, HbMsg}
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
 import org.eso.ias.heartbeat.{Heartbeat, HeartbeatProducerType, HeartbeatStatus}
-import org.eso.ias.kafkautils.KafkaHelper
+import org.eso.ias.kafkautils.{KafkaHelper, SimpleStringProducer}
 import org.eso.ias.logging.IASLogger
-import org.scalatest.{BeforeAndAfter, FlatSpec}
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec}
 
 import scala.collection.mutable.ListBuffer
 import scala.util.Try
@@ -14,7 +14,7 @@ import scala.util.Try
 /**
  * Test the HB kafka publisher and consumer
  */
-class TestKafkaPublisher extends FlatSpec with HbListener with BeforeAndAfter {
+class TestKafkaPublisher extends FlatSpec with HbListener with BeforeAndAfterEach with BeforeAndAfterAll {
   
   /** The logger */
   val logger = IASLogger.getLogger(classOf[TestKafkaPublisher])
@@ -36,16 +36,28 @@ class TestKafkaPublisher extends FlatSpec with HbListener with BeforeAndAfter {
 
   private val buffer: ListBuffer[HbMsg] = new ListBuffer[HbMsg]
 
+  /** The stirng producer used by the  HbKafkaProducer */
+  var stringProducer: SimpleStringProducer = _
+
+  /** The kafka producer to test */
+  var kProd: HbKafkaProducer = _
+
   def hbReceived(hbMsg: HbMsg): Unit = {
     require(Option(hbMsg).isDefined)
     buffer.append(hbMsg)
     logger.info("HB received: {}",hbMsg.toString)
   }
 
-  /** The kafka producer to test */
-  var kProd: HbKafkaProducer = _
+  override def beforeAll() = {
+    stringProducer = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,"HbConsumer")
+    stringProducer.setUp()
+  }
 
-  before {
+  override def afterAll(): Unit = {
+    stringProducer.tearDown()
+  }
+
+  override def beforeEach() {
     logger.info("Initializing string consumer")
     buffer.clear()
     hbKafkaConsumer = new HbKafkaConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,"HbConsumer")
@@ -54,17 +66,14 @@ class TestKafkaPublisher extends FlatSpec with HbListener with BeforeAndAfter {
     hbKafkaConsumer.start()
 
     logger.info("Building HB kafka producer")
-    kProd = new HbKafkaProducer(
-      id,
-      KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
-      serializer)
+    kProd = new HbKafkaProducer(stringProducer, id, serializer)
     logger.info("Initializing HB kafka producer")
     kProd.init()
     
     logger.info("Initialized")
   }
   
-  after {
+  override def afterEach() {
     logger.info("Shutting down the HB consumer")
     Option(hbKafkaConsumer).foreach(_.shutdown())
 
