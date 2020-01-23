@@ -48,7 +48,7 @@ public class SimpleStringProducer {
 	/**
 	 * A list of comma separated servers:port to connect to
 	 */
-	private final String bootstrapServers;
+	public final String bootstrapServers;
 	
 	/**
 	 * The kafka producer
