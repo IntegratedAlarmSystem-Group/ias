@@ -1,14 +1,5 @@
 package org.eso.ias.plugin;
 
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Properties;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-
 import org.eso.ias.plugin.filter.Filter;
 import org.eso.ias.plugin.filter.Filter.EnrichedSample;
 import org.eso.ias.plugin.filter.FilterException;
@@ -18,6 +9,14 @@ import org.eso.ias.types.IasValidity;
 import org.eso.ias.types.OperationalMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * A MonitoredValue is a monitor point value or alarm read from the 
@@ -70,7 +69,7 @@ public class MonitoredValue implements Runnable {
 	
 	/**
 	 * The {@link #refreshRate} of the monitored can be dynamically changed
-	 * but can never be less then the allowed minimum. 
+	 * but can never be less than the allowed minimum.
 	 */
 	public final static long minAllowedSendRate=50;
 	
@@ -82,15 +81,13 @@ public class MonitoredValue implements Runnable {
 	/**
 	 * The delta time error in msec, to take into account chacking 
 	 * if a value is valid.
-	 * 
-	 * @see #calcValidity()
 	 */
 	public static final long validityDelta = Long.getLong(validityDeltaPropName, 500);
 	
 	/**
 	 * The actual refresh rate (msec) of this monitored value:
 	 * the value depends on the time when the device provides a new value
-	 * ansd is used to evaluate the validity
+	 * and it is used to evaluate the validity
 	 */
 	public long refreshRate;
 	
