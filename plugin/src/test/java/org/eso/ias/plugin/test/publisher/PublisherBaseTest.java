@@ -1,23 +1,9 @@
 package org.eso.ias.plugin.test.publisher;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.Filter.EnrichedSample;
 import org.eso.ias.plugin.filter.FilteredValue;
-import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.plugin.publisher.PublisherBase;
@@ -28,6 +14,15 @@ import org.eso.ias.types.OperationalMode;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test the {@link PublisherBase}.
@@ -50,8 +45,6 @@ public class PublisherBaseTest extends PublisherTestCommon {
 	public void testBasicData() {
 		assertNotNull(unbufferedPublisher);
 		assertEquals(pluginId,unbufferedPublisher.pluginId,"Plugin-IDs differ");
-		assertEquals(pluginServerName,unbufferedPublisher.serverName,"Servers differ");
-		assertEquals(pluginServerPort,unbufferedPublisher.serverPort,"Servers ports");
 		assertEquals(BufferedPublisherBase.defaultBufferSize,BufferedPublisherBase.maxBufferSize,"Default buffer size");
 		assertEquals(BufferedPublisherBase.defaultThrottlingTime,BufferedPublisherBase.throttlingTime,"Default throttling time");
 	}
@@ -113,7 +106,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 	}
 	
 	/**
-	 * Check if {@link ListenerPublisher#publish(BufferedMonitoredSystemData)} is invoked to 
+	 * Check if {@link ListenerPublisher#publish(MonitorPointData)}
 	 * publish just one {@link FilteredValue}.
 	 * <P> 
 	 * It also checks if the offered and the received values match.
@@ -145,7 +138,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 	}
 	
 	/**
-	 * Check if {@link ListenerPublisher#publish(BufferedMonitoredSystemData)} is invoked only once
+	 * Check if {@link ListenerPublisher#publish(MonitorPointData)} is invoked only once
 	 * to one {@link FilteredValue} (i.e. it checks for repeated publications of the same value)
 	 * 
 	 * @throws PublisherException
@@ -171,7 +164,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 	}
 	
 	/**
-	 * Check if {@link ListenerPublisher#publish(BufferedMonitoredSystemData)} is invoked to 
+	 * Check if {@link ListenerPublisher#publish(MonitorPointData)} is invoked to
 	 * publish all the {@link FilteredValue}.
 	 * <P> 
 	 * It also checks if the offered and the received values match.
@@ -217,7 +210,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 	}
 	
 	/**
-	 * Check if {@link ListenerPublisher#publish(BufferedMonitoredSystemData)} is invoked to 
+	 * Check if {@link ListenerPublisher#publish(MonitorPointData)} is invoked to
 	 * publish just the last sent {@link FilteredValue}.
 	 * <P> 
 	 * It also checks if the offered and the received values match.
@@ -280,7 +273,7 @@ public class PublisherBaseTest extends PublisherTestCommon {
 	
 	/**
 	 * Check if starting/stopping the publisher, effectively 
-	 * trigger the invocation or not invocation of {@link ListenerPublisher#publish(BufferedMonitoredSystemData)}
+	 * trigger the invocation or not invocation of {@link ListenerPublisher#publish(MonitorPointData)}
 	 * 
 	 * @throws PublisherException
 	 */

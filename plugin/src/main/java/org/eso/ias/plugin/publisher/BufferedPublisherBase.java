@@ -1,12 +1,12 @@
 package org.eso.ias.plugin.publisher;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.concurrent.ScheduledExecutorService;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Extends {@link PublisherBase} for publishing data to the IAS core with buffering. 
@@ -37,17 +37,13 @@ public abstract class BufferedPublisherBase extends PublisherBase implements Mon
 	 * 
 	 * @param pluginId The identifier of the plugin
 	 * @param monitoredSystemId The identifier of the system monitored by the plugin
-	 * @param serverName The name of the server
-	 * @param port The port of the server
 	 * @param executorSvc The executor service
 	 */
 	public BufferedPublisherBase(
 			String pluginId,
 			String monitoredSystemId,
-			String serverName, 
-			int port,
 			ScheduledExecutorService executorSvc) {
-		super(pluginId,monitoredSystemId,serverName,port,executorSvc);
+		super(pluginId,monitoredSystemId,executorSvc);
 	}
 	
 	/**

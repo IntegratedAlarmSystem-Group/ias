@@ -1,19 +1,6 @@
 package org.eso.ias.plugin.test.publisher;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
+import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.Filter.EnrichedSample;
@@ -24,11 +11,17 @@ import org.eso.ias.plugin.test.publisher.SimpleKafkaConsumer.KafkaConsumerListen
 import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.eso.ias.types.IasValidity;
 import org.eso.ias.types.OperationalMode;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test the sneding of {@link MonitorPointData} by the {@link KafkaPublisher}.
@@ -66,17 +59,22 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 	/**
 	 * The name of the server where kafka runs
 	 */
-	private final String serverName="localhost";
+	private static final String serverName="localhost";
 	
 	/**
 	 * The port 
 	 */
-	private final int port = 9092;
+	private static final int port = 9092;
 		
 	/**
 	 * The executor service
 	 */
 	private ScheduledExecutorService schedExecutorSvc;
+
+	/**
+	 * The shared kafka producer
+	 */
+	private static SimpleStringProducer stringProducer;
 	
 	/**
 	 * The consumer to get events from the topic
@@ -92,6 +90,17 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 	 * The {@link MonitorPointData} received by the consumer
 	 */
 	private final Map<String, MonitorPointData> receivedMonitorPoints = Collections.synchronizedMap(new HashMap<>());
+
+	@BeforeAll
+	private static  void beforeAll() {
+		stringProducer = new SimpleStringProducer(serverName+":"+port,"ProducerId");
+		stringProducer.setUp();
+	}
+
+	@AfterAll
+	private static void afterAll() {
+		stringProducer.tearDown();
+	}
 	
 	/**
 	 * Initialization
@@ -102,7 +111,7 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 		logger.info("Initializing...");
 		int poolSize = Runtime.getRuntime().availableProcessors()/2;
 		schedExecutorSvc= Executors.newScheduledThreadPool(poolSize, new PluginThreadFactory());
-		kPub = new KafkaPublisher(pluginId, monitoredSystemId, serverName, port, schedExecutorSvc);
+		kPub = new KafkaPublisher(pluginId, monitoredSystemId, stringProducer, schedExecutorSvc);
 		logger.info("Kafka producer initialized");
 		
 		consumer = new SimpleKafkaConsumer(KafkaPublisher.defaultTopicName, serverName, port,this);
