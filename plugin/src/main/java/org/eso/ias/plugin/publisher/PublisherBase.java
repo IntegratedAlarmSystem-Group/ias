@@ -1,23 +1,17 @@
 package org.eso.ias.plugin.publisher;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Properties;
-import java.util.Set;
-import java.util.TimeZone;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-
 import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Base class for publishing data to the core of the IAS: 
@@ -89,17 +83,7 @@ public abstract class PublisherBase implements MonitorPointSender {
 	 * The logger
 	 */
 	private final Logger logger = LoggerFactory.getLogger(PublisherBase.class);
-	
-	/**
-	 * The name of the server to send monitor points to
-	 */
-	public final String serverName; 
-	
-	/**
-	 * The port of the server to send monitor points to
-	 */
-	public final int serverPort;
-	
+
 	/**
 	 * The ID of the plugin.
 	 */
@@ -187,15 +171,11 @@ public abstract class PublisherBase implements MonitorPointSender {
 	 * 
 	 * @param pluginId The identifier of the plugin
 	 * @param monitoredSystemId The identifier of the system monitored by the plugin
-	 * @param serverName The name of the server
-	 * @param port The port of the server
 	 * @param executorSvc The executor service
 	 */
 	public PublisherBase(
 			String pluginId,
 			String monitoredSystemId,
-			String serverName, 
-			int port,
 			ScheduledExecutorService executorSvc) {
 		if (pluginId==null || pluginId.isEmpty()) {
 			throw new IllegalArgumentException("The ID can't be null nor empty");
@@ -205,21 +185,13 @@ public abstract class PublisherBase implements MonitorPointSender {
 			throw new IllegalArgumentException("The ID of the monitored system can't be null nor empty");
 		}
 		this.monitoredSystemId=monitoredSystemId;
-		if (serverName==null || serverName.isEmpty()) {
-			throw new IllegalArgumentException("The sink server name can't be null nor empty");
-		}
-		this.serverName=serverName;
-		if (port<0) {
-			throw new IllegalArgumentException("Invalid port number: "+port);
-		}
-		this.serverPort=port;
 		if (executorSvc==null) {
 			throw new IllegalArgumentException("The executor service can't be null");
 		}
 		this.executorService=executorSvc;
 		iso8601dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
 		iso8601dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-		logger.info("Plugin {} sends monitor points to {}:{} at a rate of {} msec",pluginId,serverName,serverPort,throttlingTime);
+		logger.info("Plugin {} sends monitor points at a rate of {} msec",pluginId,throttlingTime);
 	}
 	
 	/**
