@@ -8,8 +8,10 @@ import org.eso.ias.cdb.json.CdbJsonFiles;
 import org.eso.ias.cdb.json.JsonReader;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.LogLevelDao;
+import org.eso.ias.cdb.rdb.RdbReader;
 import org.eso.ias.command.CommandManager;
 import org.eso.ias.command.DefaultCommandExecutor;
+import org.eso.ias.command.kafka.CommandManagerKafkaImpl;
 import org.eso.ias.converter.config.ConfigurationException;
 import org.eso.ias.converter.config.IasioConfigurationDAO;
 import org.eso.ias.converter.config.IasioConfigurationDaoImpl;
@@ -17,12 +19,15 @@ import org.eso.ias.heartbeat.HbEngine;
 import org.eso.ias.heartbeat.HbProducer;
 import org.eso.ias.heartbeat.HeartbeatProducerType;
 import org.eso.ias.heartbeat.HeartbeatStatus;
+import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
+import org.eso.ias.kafkautils.KafkaHelper;
+import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.eso.ias.logging.IASLogger;
 import org.eso.ias.types.IasValueJsonSerializer;
 import org.eso.ias.types.IasValueStringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import java.io.File;
 import java.security.InvalidParameterException;
@@ -109,33 +114,24 @@ public class Converter implements AutoCloseable {
 		}
 	};
 
-	/**
-	 * Constructor.
-	 * <P>
-	 * Dependency injection with spring take place here.
-	 *
-	 * @param id The not <code>null</code> nor empty ID of the converter
-	 * @param cdbReader The DAO of the configuration database
-	 * @param converterStream The stream to convert monitor point data into IAS values
-	 * @param hbProducer the sender of HB messages
-	 * @param cmdManager The command manager
-	 */
+    /**
+     * Constructior
+     *
+     * @param id The identifier of the converter
+     * @param cdbReader The CDB reader to get the configuration and IASIOs
+     * @throws ConfigurationException In case of error in the configuration
+     */
 	public Converter(
 			String id,
-			CdbReader cdbReader,
-			ConverterStream converterStream,
-			HbProducer hbProducer,
-			CommandManager cmdManager) throws ConfigurationException {
-		Objects.requireNonNull(id);
-		if (id.trim().isEmpty()) {
+			CdbReader cdbReader) throws ConfigurationException {
+		if (Objects.isNull(id) || id.trim().isEmpty()) {
 			throw new InvalidParameterException("The ID of the converter can't be empty");
 		}
 		converterId = id.trim();
-		
+
 		Objects.requireNonNull(cdbReader);
-		
+
 		Optional<IasDao> iasDao = null;
-		
 		try {
 			iasDao=cdbReader.getIas();
 		} catch (IasCdbException cdbExcp) {
@@ -144,22 +140,28 @@ public class Converter implements AutoCloseable {
 		if (!iasDao.isPresent()) {
 			throw new ConfigurationException("Got and empty IAS configuration from the CDB reader");
 		}
-		
+
 		int hbFrequency = iasDao.get().getHbFrequency();
 		if (hbFrequency<=0) {
 			throw new ConfigurationException("Invalid HB frequency: "+hbFrequency);
 		}
-		
-		Objects.requireNonNull(hbProducer,"The producer to publish HBs can't be null");
+
+		Optional<String> kafkaBrokersFromCdb = Optional.ofNullable(iasDao.get().getBsdbUrl());
+		String kServers = getKafkaServer(kafkaBrokersFromCdb,System.getProperties());
+
+		converterStream = new ConverterKafkaStream(id, Optional.of(kServers), System.getProperties());
+
+		SimpleStringProducer kStrProd = new SimpleStringProducer(kServers,id);
+
+		HbProducer hbProducer = new HbKafkaProducer(kStrProd,id,new HbJsonSerializer());
 		hbEngine = HbEngine.getInstance(
-				converterId,
+				id,
 				HeartbeatProducerType.CONVERTER,
-				hbFrequency, 
+				hbFrequency,
 				hbProducer);
 
-		Objects.requireNonNull(cmdManager,"The command executor can't be null");
-		this.commandManager=cmdManager;
-		
+		commandManager = new CommandManagerKafkaImpl(id,kServers,kStrProd);
+
 		this.configDao= new IasioConfigurationDaoImpl(cdbReader);
 		try {
 			cdbReader.shutdown();
@@ -171,8 +173,27 @@ public class Converter implements AutoCloseable {
 
 		mapper = new ValueMapper(this.configDao, this.iasValueStrSerializer,id);
 
-		Objects.requireNonNull(converterStream);
-		this.converterStream=converterStream;
+	}
+
+	/**
+	 * Get the kafka servers from a java property or the CDB.
+	 * If not defined in the property neither in the CDB, return the default in {@link KafkaHelper}
+	 *
+	 * @param kafkaBrokers The kafka broker from the CDB
+	 * @param props the properties
+	 * @return the string to connect to kafka brokers
+	 */
+	private static  String getKafkaServer(Optional<String> kafkaBrokers, Properties props) {
+		String kafkaServers;
+		Optional<String> brokersFromProperties = Optional.ofNullable(props.getProperty(ConverterKafkaStream.KAFKA_SERVERS_PROP_NAME));
+		if (brokersFromProperties.isPresent()) {
+			kafkaServers = brokersFromProperties.get();
+		} else if (kafkaBrokers.isPresent()) {
+			kafkaServers = kafkaBrokers.get();
+		} else {
+			kafkaServers = KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS;
+		}
+		return kafkaServers;
 	}
 
 	/**
@@ -331,10 +352,7 @@ public class Converter implements AutoCloseable {
 
 		CdbReader cdbReader = null;
 
-		/**
-		 * Spring stuff
-		 */
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ConverterConfig.class);
+
 
 		 Optional<?> jcdbOpt = params.get("jcdb");
 		 if (jcdbOpt.isPresent()) {
@@ -354,8 +372,7 @@ public class Converter implements AutoCloseable {
              }
              cdbReader = new JsonReader(cdbFiles);
          } else {
-		     // Get from dependency injection
-			cdbReader = context.getBean("cdbReader",CdbReader.class);
+			cdbReader = new RdbReader();
          }
 
 		IasDao iasDao = null;
@@ -379,19 +396,11 @@ public class Converter implements AutoCloseable {
              logLevelFromIasOpt.map(l -> l.toLoggerLogLevel()).orElse(null),
              null);
 
-		Optional<String> kafkaBrokersFromCdb = Optional.ofNullable(iasDao.getBsdbUrl());
-
-		ConverterStream converterStream = context.getBean(ConverterStream.class,id, kafkaBrokersFromCdb, System.getProperties());
-		
-		HbProducer hbProducer = context.getBean(HbProducer.class,id,kafkaBrokersFromCdb,System.getProperties());
-
-		CommandManager commandManager = context.getBean(CommandManager.class,id,kafkaBrokersFromCdb, System.getProperties());
-
 		logger.info("Building the {} Converter",id);
 
 		Converter converter = null;
 		try { 
-			converter=new Converter(id,cdbReader,converterStream,hbProducer,commandManager);
+			converter=new Converter(id,cdbReader);
 		} catch (Exception e) {
 			logger.error("Exception building the converter {}",id,e);
 			System.exit(-1);

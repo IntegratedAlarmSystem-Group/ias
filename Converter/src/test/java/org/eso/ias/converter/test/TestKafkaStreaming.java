@@ -10,12 +10,7 @@ import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.LogLevelDao;
-import org.eso.ias.command.CommandManager;
-import org.eso.ias.command.kafka.CommandManagerKafkaImpl;
 import org.eso.ias.converter.Converter;
-import org.eso.ias.converter.ConverterKafkaStream;
-import org.eso.ias.heartbeat.publisher.HbLogProducer;
-import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaIasiosConsumer;
 import org.eso.ias.kafkautils.KafkaStringsConsumer.StreamPosition;
@@ -257,7 +252,6 @@ public class TestKafkaStreaming extends ConverterTestBase {
         // in the kafka topic
         mPointsProducer = new SimpleStringProducer(
                 defaultKafkaBootstrapServers,
-                KafkaHelper.PLUGINS_TOPIC_NAME,
                 "TestKafkaStreamProducer");
         mPointsProducer.setUp();
     }
@@ -298,15 +292,10 @@ public class TestKafkaStreaming extends ConverterTestBase {
         // The reader to pass to the converter
         CdbReader cdbReader = new JsonReader(cdbFiles);
 
-        CommandManager cmdManager = new CommandManagerKafkaImpl(converterID,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS);
-
         // Finally builds the converter
         converter = new Converter(
                 converterID,
-                cdbReader,
-                new ConverterKafkaStream(converterID, Optional.empty(),new Properties()),
-                new HbLogProducer(new HbJsonSerializer()),
-                cmdManager);
+                cdbReader);
 
         converter.setUp();
 
@@ -343,7 +332,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
             }
 
             String mpdString = mpd.toJsonString();
-            mPointsProducer.push(mpdString, null, mpdh.id);
+            mPointsProducer.push(mpdString, KafkaHelper.PLUGINS_TOPIC_NAME, null, mpdh.id);
             logger.debug("MPD{} sent",mpd.getId());
         }
         mPointsProducer.flush();
@@ -381,7 +370,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
             mpd.setPublishTime(iso8601dateFormat.format(new Date(System.currentTimeMillis())));
         }
         String mpdString = mpd.toJsonString();
-        mPointsProducer.push(mpdString, null, unknown1.id);
+        mPointsProducer.push(mpdString, KafkaHelper.PLUGINS_TOPIC_NAME, null, unknown1.id);
 
         MonitorPointDataHolder unknown2 = new MonitorPointDataHolder(
                 "UNKNOWN-ID2",
@@ -394,7 +383,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
             mpd.setPublishTime(iso8601dateFormat.format(new Date(System.currentTimeMillis())));
         }
         mpdString = mpd.toJsonString();
-        mPointsProducer.push(mpdString, null, unknown2.id);
+        mPointsProducer.push(mpdString, KafkaHelper.PLUGINS_TOPIC_NAME, null, unknown2.id);
 
         logger.info("Waiting for unkonwn monitor point that should never arrive");
         assertFalse(latch.await(1, TimeUnit.MINUTES),"Should not have received any value!");
@@ -410,7 +399,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
                 mpd.setPublishTime(iso8601dateFormat.format(new Date(System.currentTimeMillis())));
             }
             mpdString = mpd.toJsonString();
-            mPointsProducer.push(mpdString, null, mpdh.id);
+            mPointsProducer.push(mpdString, KafkaHelper.PLUGINS_TOPIC_NAME, null, mpdh.id);
             logger.debug("MPD{} sent",mpd.getId());
         }
         mPointsProducer.flush();
