@@ -1,6 +1,6 @@
 package org.eso.ias.dasu.test
 
-import java.nio.file.FileSystems
+import java.nio.file.{FileSystems, Path}
 import java.util.Properties
 
 import org.eso.ias.cdb.CdbReader
@@ -33,10 +33,10 @@ import scala.util.Try
  */
 class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener with BeforeAndAfterAll {
   /** The logger */
-  private val logger = IASLogger.getLogger(this.getClass);
+  private val logger = IASLogger.getLogger(this.getClass)
   
   // Build the CDB reader
-  val cdbParentPath =  FileSystems.getDefault().getPath(".");
+  val cdbParentPath: Path =  FileSystems.getDefault.getPath(".")
   val cdbFiles = new CdbJsonFiles(cdbParentPath)
   val cdbReader: CdbReader = new JsonReader(cdbFiles)
   
@@ -45,9 +45,9 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener with B
   val stringPublisher = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,dasuId)
 
   /** The kafka publisher used by the DASU to send the output */
-  val outputPublisher = KafkaPublisher(dasuId, Option.empty,stringPublisher, Option.empty)
+  val outputPublisher: KafkaPublisher = KafkaPublisher(dasuId, Option.empty,stringPublisher, Option.empty)
   
-  val inputsProvider = KafkaSubscriber(dasuId, None, None, new Properties())
+  val inputsProvider: KafkaSubscriber = KafkaSubscriber(dasuId, None, None, new Properties())
   
   // Build the Identifier
   val supervId = new Identifier("SupervId",IdentifierType.SUPERVISOR,None)
@@ -55,7 +55,7 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener with B
   
   val dasuDao: DasuDao = {
     val dasuDaoOpt = cdbReader.getDasu(dasuId)
-    assert(dasuDaoOpt.isPresent())
+    assert(dasuDaoOpt.isPresent)
     dasuDaoOpt.get()
   }
   
@@ -127,7 +127,7 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener with B
 			  null)
   }
   
-  def stringEventReceived(event: String) = {
+  def stringEventReceived(event: String) {
     logger.info("String received", event)
     val iasValue = jsonSerializer.valueOf(event)
     iasValuesReceived+=iasValue
