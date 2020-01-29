@@ -15,7 +15,7 @@ import org.eso.ias.kafkautils.{KafkaHelper, SimpleStringConsumer, SimpleStringPr
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IasValidity._
 import org.eso.ias.types._
-import org.scalatest.FlatSpec
+import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 
 import scala.collection.mutable.ListBuffer
 import scala.util.Try
@@ -26,13 +26,12 @@ import scala.util.Try
  * in the same queue.
  * 
  * The test re-use the simple dasu with only one ASCE.
- * The DASU has a kafka publisher to get events and a kafka subscriber
- * to ppublish the generated output.
- * To check if it works, the test instantiates one kafka publisher to submit
- * inputs to the DASU and one subscriber to catch if the output
- * produced by the DASU has been pushed in the kafka queue 
+ *
+ * The DASU has a kafka consumer to get events and a kafka producer to publish the generated output.
+ * To check if it works, the test instantiates one kafka producer to submit
+ * inputs to the DASU and one consumer to catch if the output produced by the DASU has been pushed in the kafka queue
  */
-class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener {
+class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener with BeforeAndAfterAll {
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass);
   
@@ -42,9 +41,11 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener {
   val cdbReader: CdbReader = new JsonReader(cdbFiles)
   
   val dasuId = "DasuWithOneASCE"
-  
+
+  val stringPublisher = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,dasuId)
+
   /** The kafka publisher used by the DASU to send the output */
-  val outputPublisher = KafkaPublisher(dasuId, None, None, new Properties())
+  val outputPublisher = KafkaPublisher(dasuId, Option.empty,stringPublisher, Option.empty)
   
   val inputsProvider = KafkaSubscriber(dasuId, None, None, new Properties())
   
@@ -77,19 +78,7 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener {
       KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
       KafkaHelper.IASIOs_TOPIC_NAME,
       "DasuWithKafka-TestSub")
-  logger.debug("initializing the event listener")
-  val props = new Properties()
-  props.setProperty("group.id", "DasuTest-groupID")
-  eventsListener.setUp(props)
-  eventsListener.startGettingStrings(StreamPosition.END,this)
-  
-  val stringPublisher = new SimpleStringProducer(
-      KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
-      KafkaHelper.IASIOs_TOPIC_NAME,
-      "KafkaDasuTestID-Producer")
-  logger.debug("initializing the IASIO publisher")
-  stringPublisher.setUp()
-  
+
   val jsonSerializer = new IasValueJsonSerializer()
   
   /** The list with the events received */ 
@@ -99,6 +88,25 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener {
   Try(Thread.sleep(5000))
   
   logger.info("Ready to start the test...")
+
+  override def beforeAll(): Unit = {
+    super.beforeAll()
+    logger.debug("initializing the event listener")
+    val props = new Properties()
+    props.setProperty("group.id", "DasuTest-groupID")
+    eventsListener.setUp(props)
+    eventsListener.startGettingStrings(StreamPosition.END,this)
+    logger.debug("Initializing the IASIO publisher")
+    stringPublisher.setUp()
+  }
+
+  override def afterAll(): Unit = {
+    logger.info("Cleaning up the event listener")
+    eventsListener.tearDown()
+    logger.debug("Closing the IASIO publisher")
+    stringPublisher.tearDown()
+    super.afterAll()
+  }
   
   def buildValue(d: Double): IASValue[_] = {
     val t0 = System.currentTimeMillis()-100
@@ -134,7 +142,7 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener {
     // Send the input to the kafka queue
     val input = buildValue(0)
     val jSonStr = jsonSerializer.iasValueToString(input)
-    stringPublisher.push(jSonStr, null, input.id)
+    stringPublisher.push(jSonStr, KafkaHelper.IASIOs_TOPIC_NAME,null, input.id)
     
     // Give some time...
     Try(Thread.sleep(5000))
@@ -143,11 +151,7 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener {
     // - the one we sent
     // the one produced by the DASU
     assert(iasValuesReceived.size==2)
-    
-    logger.info("Cleaning up the event listener")
-    eventsListener.tearDown()
-    logger.info("Cleaning up the IASIO publisher")
-    stringPublisher.tearDown()
+
     logger.info("Done")
   } 
 }
