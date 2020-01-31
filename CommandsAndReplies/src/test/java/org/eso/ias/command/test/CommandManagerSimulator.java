@@ -37,20 +37,21 @@ public class CommandManagerSimulator implements AutoCloseable {
 
     private final CountDownLatch latch = new CountDownLatch(1);
 
+    private final SimpleStringProducer stringProducer =
+            new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,id);
+
     /** The HB produced by the simulator */
     private final Heartbeat hb = new Heartbeat(HeartbeatProducerType.CLIENT,id);
 
     /** Serializer of HBs */
     private final HbMsgSerializer hbSerializer = new HbJsonSerializer();
 
-    private final HbProducer hbProducer = new HbKafkaProducer(id+"-SimHbProd", KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,hbSerializer);
+    private final HbProducer hbProducer = new HbKafkaProducer(stringProducer,id,hbSerializer);
 
     private HbEngine hbSender = new HbEngine(hb,1,hbProducer);
 
     /** true if the process has been closed */
     private final AtomicBoolean closed = new AtomicBoolean(false);
-
-    private final SimpleStringProducer stringProducer = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,id);
 
     public CommandManagerSimulator() {
         cmdMgr = new CommandManagerKafkaImpl(id, KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,stringProducer);
