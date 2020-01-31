@@ -16,7 +16,7 @@ import org.eso.ias.heartbeat._
 import org.eso.ias.heartbeat.consumer.HbKafkaConsumer
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
-import org.eso.ias.kafkautils.KafkaHelper
+import org.eso.ias.kafkautils.{KafkaHelper, SimpleStringProducer}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.monitor.alarmpublisher.{BsdbAlarmPublisherImpl, MonitorAlarmPublisher}
 
@@ -67,10 +67,13 @@ class IasMonitor(
   val hbConsumer: HbKafkaConsumer = new HbKafkaConsumer(kafkaBrokers,identifier)
 
   /** The Kafka producer */
-  val hbProducer: HbKafkaProducer = new HbKafkaProducer(identifier+"HbSender",kafkaBrokers, new HbJsonSerializer)
+  val stringProducer = new SimpleStringProducer(kafkaBrokers,identifier)
 
   /** The sender of the HBs */
-  val hbEngine: HbEngine = HbEngine(identifier,HeartbeatProducerType.CORETOOL,hbFrequency,hbProducer)
+  val hbEngine: HbEngine = {
+    val hbProducer: HbKafkaProducer = new HbKafkaProducer(stringProducer, identifier, new HbJsonSerializer)
+    HbEngine(identifier,HeartbeatProducerType.CORETOOL,hbFrequency,hbProducer)
+  }
 
   /** The object to monitor HBs */
   val hbMonitor: HbMonitor = new HbMonitor(
@@ -84,18 +87,19 @@ class IasMonitor(
     threshold)
 
   /** The object that publishes the alarms */
-  val alarmsPublisher: MonitorAlarmPublisher = new BsdbAlarmPublisherImpl(kafkaBrokers,identifier)
+  val alarmsPublisher: MonitorAlarmPublisher = new BsdbAlarmPublisherImpl(stringProducer)
 
   /** The object that periodically sends the alarms */
   val alarmsProducer: MonitorAlarmsProducer = new MonitorAlarmsProducer(alarmsPublisher,refreshRate,identifier)
 
   /** The object that gets and executes commands */
-  val commandManager: CommandManager = new CommandManagerKafkaImpl(identifier,kafkaBrokers)
+  val commandManager: CommandManager = new CommandManagerKafkaImpl(identifier,kafkaBrokers,stringProducer)
 
   IasMonitor.logger.debug("{} processor built",hbEngine.hb.stringRepr)
 
   /** Start the monitoring */
   def start(): Unit = {
+    stringProducer.setUp()
     // Start the HB
     hbEngine.start(HeartbeatStatus.STARTING_UP)
     IasMonitor.logger.debug("Starting up the executor of commands")
@@ -122,6 +126,7 @@ class IasMonitor(
     IasMonitor.logger.debug("Shutting down the monitor of HBs")
     hbMonitor.shutdown()
     hbEngine.shutdown()
+    stringProducer.tearDown()
     IasMonitor.logger.info("Shut down")
   }
 }
