@@ -6,6 +6,7 @@ import org.eso.ias.heartbeat.consumer.HbKafkaConsumer;
 import org.eso.ias.heartbeat.consumer.HbListener;
 import org.eso.ias.heartbeat.consumer.HbMsg;
 import org.eso.ias.kafkautils.KafkaHelper;
+import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.eso.ias.types.Identifier;
 import org.eso.ias.types.IdentifierType;
 import org.junit.jupiter.api.*;
@@ -39,9 +40,15 @@ public class TestCommandSender implements HbListener {
     public static final Identifier identifier = new Identifier(id, IdentifierType.CLIENT, Option.empty());
 
     /**
+     * The shared kafka string producer
+     */
+    public static final SimpleStringProducer stringProducer =
+            new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,identifier.id());
+
+    /**
      * The {@link CommandSender} to test
      */
-    public static final CommandSender cmdSender = new CommandSender(identifier, KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS);
+    public static final CommandSender cmdSender = new CommandSender(identifier, stringProducer, KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS);
 
     /** The id of the simulator */
     private static final String destId = CommandManagerSimulator.id;

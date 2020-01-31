@@ -109,14 +109,14 @@ public class TestCommandManager implements
                 "repCons");
         cmdProducer = new SimpleStringProducer(
             KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
-            KafkaHelper.CMD_TOPIC_NAME,
             "CmdProd");
         replyConsumer.setUp();
         cmdProducer.setUp();
         logger.info("Static producer and consumer built and set up");
         manager = new CommandManagerKafkaImpl(
                 commandManagerId,
-                KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS);
+                KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
+                cmdProducer);
         logger.info("CommandManager to test built");
     }
 
@@ -202,7 +202,7 @@ public class TestCommandManager implements
 
         String jSonStr =cmdSerializer.iasCmdToString(cmd);
         logger.debug("Command {} will be sent as json string [{}]",cmd.toString(),jSonStr);
-        cmdProducer.push(jSonStr,null,commandManagerId);
+        cmdProducer.push(jSonStr,KafkaHelper.CMD_TOPIC_NAME,null,commandManagerId);
         logger.info("Command sent. Waiting for the reply...");
         assertTrue(lock.get().await(5, TimeUnit.SECONDS),"Reply not received");
 
@@ -229,7 +229,7 @@ public class TestCommandManager implements
 
         String jSonStr =cmdSerializer.iasCmdToString(cmd);
         logger.debug("Broadcast command {} will be sent as json string [{}]",cmd.toString(),jSonStr);
-        cmdProducer.push(jSonStr,null,commandManagerId);
+        cmdProducer.push(jSonStr,KafkaHelper.CMD_TOPIC_NAME,null,commandManagerId);
         logger.info("Command sent. Waiting for the reply...");
         assertTrue(lock.get().await(5, TimeUnit.SECONDS),"Reply not received");
 
@@ -270,7 +270,7 @@ public class TestCommandManager implements
                     null);
 
             String jSonStr =cmdSerializer.iasCmdToString(cmd);
-            cmdProducer.push(jSonStr,null,commandManagerId);
+            cmdProducer.push(jSonStr,KafkaHelper.CMD_TOPIC_NAME,null,commandManagerId);
             idsSent.add(cmd.getId());
             logger.info("Command {} sent",i);
 
@@ -307,7 +307,7 @@ public class TestCommandManager implements
 
         String jSonStr =cmdSerializer.iasCmdToString(cmd);
         logger.debug("Command {} will be sent as json string [{}]",cmd.toString(),jSonStr);
-        cmdProducer.push(jSonStr,null,commandManagerId);
+        cmdProducer.push(jSonStr,KafkaHelper.CMD_TOPIC_NAME,null,commandManagerId);
         logger.info("Command sent. Waiting for the reply...");
         assertTrue(lock.get().await(5, TimeUnit.SECONDS),"Reply not received");
 
@@ -348,7 +348,7 @@ public class TestCommandManager implements
 
         String jSonStr =cmdSerializer.iasCmdToString(cmd);
         logger.debug("Sending command {}",cmd.toString());
-        cmdProducer.push(jSonStr,null,commandManagerId);
+        cmdProducer.push(jSonStr,KafkaHelper.CMD_TOPIC_NAME,null,commandManagerId);
         logger.info("Command sent. Waiting for the reply...");
         assertTrue(lock.get().await(5, TimeUnit.SECONDS),"Reply not received");
 
