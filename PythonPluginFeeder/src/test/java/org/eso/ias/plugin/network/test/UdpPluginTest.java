@@ -34,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * by the java plugin:
  * UdpPlugin.py -> UdpPlugin.java -> Plugin.java -> BSDB
  * 
- * The test setup up the java plugin {@link #udpPlugin},
+ * The test sets up the java plugin {@link #udpPlugin},
  * then run the python plugin (MockUdpPlugin.py) that sends some monitor points and alarms.
  *  
  *  The test checks if the monitor points sent by MockUdpPlugin.py
@@ -103,9 +103,7 @@ public class UdpPluginTest implements PublisherEventsListener {
 		mpSender = new ListenerPublisher(
 				config.getId(), 
 				config.getMonitoredSystemId(), 
-				"localhost",  // Unused
-				10000, // Unused 
-				Plugin.getScheduledExecutorService(), 
+				Plugin.getScheduledExecutorService(),
 				this);
 		
 		// Not interested in HBs here so loggin is enough

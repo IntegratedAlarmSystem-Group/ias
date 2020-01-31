@@ -1,23 +1,27 @@
 package org.eso.ias.kafkautils;
 
+import org.eso.ias.types.IASValue;
+import org.eso.ias.types.IasValueSerializerException;
+import org.eso.ias.types.IasValueStringSerializer;
+
 import java.util.Collection;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import org.eso.ias.types.IASValue;
-import org.eso.ias.types.IasValueSerializerException;
-import org.eso.ias.types.IasValueStringSerializer;
-
 /**
- * KafkaIasioProducer writes {@link IASValue} in the kafka topic.
+ * KafkaIasioProducer writes {@link IASValue} in the kafka topic by delegating to {@link SimpleStringProducer}
  * <P>
  * The producer converts the IASValues to string with the serializer.
  * <P>
  * KafkaIasioProducer delegates the publishing to {@link SimpleStringProducer}.
+ * Normally the {@link SimpleStringProducer} is only one in a process unless there are performance issues:
+ * in that case it might help to instantiate a new SimpleStringProducer.
+ *
  * For methods that do not specify partition and key, the partition is
  * set to the ID of the IASValue and no partition is used.
- * 
+ *
+ * @see SimpleStringProducer
  * @author acaproni
  */
 public class KafkaIasiosProducer {
@@ -34,15 +38,29 @@ public class KafkaIasiosProducer {
 	private final IasValueStringSerializer serializer;
 
 	/**
-	 * Build a KafkaIasioProducer
+	 * The topic to push IASIOs into.
+	 *
+	 * Normally it is {@link KafkaHelper#IASIOs_TOPIC_NAME}
+	 */
+	private final String topic;
+
+	/**
+	 * Build a KafkaIasioProducer.
+	 *
+	 * Normally the {@link SimpleStringProducer} is only one in a process unless there are performance issues:
+	 * in that case it might help to instantiate a new SimpleStringProducer.
 	 * 
-	 * @param servers The list of kafka servers to connect to
+	 * @param stringProducer The {@link SimpleStringProducer} to push strings in the topic
 	 * @param topic The topic to send strings to
-	 * @param clientID The unique identifier of this producer
 	 * @param serializer The serializer to convert AISValues to strings
 	 */
-	public KafkaIasiosProducer(String servers, String topic, String clientID, IasValueStringSerializer serializer) {
-		this.stringProducer = new SimpleStringProducer(servers, topic, clientID);
+	public KafkaIasiosProducer(SimpleStringProducer stringProducer, String topic, IasValueStringSerializer serializer) {
+		Objects.requireNonNull(stringProducer,"The SimpleStringProducer can't be null");
+		this.stringProducer = stringProducer;
+		if (topic==null || topic.trim().isEmpty()) {
+			throw new IllegalArgumentException("Invaluid null/empty topic");
+		}
+		this.topic=topic.trim();
 		Objects.requireNonNull(serializer);
 		this.serializer=serializer;
 	}
@@ -70,7 +88,7 @@ public class KafkaIasiosProducer {
 		} catch (IasValueSerializerException e) {
 			throw new KafkaUtilsException("Error serializing "+value.toString(),e);
 		}
-		stringProducer.push(str,partition,key,timeout,unit);
+		stringProducer.push(str,topic,partition,key,timeout,unit);
 	}
 	
 	/**
@@ -92,7 +110,7 @@ public class KafkaIasiosProducer {
 		} catch (IasValueSerializerException e) {
 			throw new KafkaUtilsException("Error serializing "+value.toString(),e);
 		}
-		stringProducer.push(str,null,value.id,timeout,unit);
+		stringProducer.push(str,topic,null,value.id,timeout,unit);
 	}
 
 	/**
@@ -111,7 +129,7 @@ public class KafkaIasiosProducer {
 		} catch (IasValueSerializerException e) {
 			throw new KafkaUtilsException("Error serializing "+value.toString(),e);
 		}
-		stringProducer.push(str,partition,key);
+		stringProducer.push(str,topic,partition,key);
 	}
 	
 	/**
@@ -128,7 +146,7 @@ public class KafkaIasiosProducer {
 		} catch (IasValueSerializerException e) {
 			throw new KafkaUtilsException("Error serializing "+value.toString(),e);
 		}
-		stringProducer.push(str,null,value.id);
+		stringProducer.push(str,topic,null,value.id);
 	}
 	
 	/**

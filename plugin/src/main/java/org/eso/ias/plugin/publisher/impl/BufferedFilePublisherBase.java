@@ -1,15 +1,15 @@
 package org.eso.ias.plugin.publisher.impl;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.util.Objects;
-import java.util.concurrent.ScheduledExecutorService;
-
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.util.Objects;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * Base class for the publishers that write strings (with different format)
@@ -35,19 +35,15 @@ public abstract class BufferedFilePublisherBase extends BufferedPublisherBase {
 	 * 
 	 * @param pluginId The identifier of the plugin
 	 * @param monitoredSystemId The identifier of the system monitored by the plugin
-	 * @param serverName The name of the server
-	 * @param port The port of the server
 	 * @param executorSvc The executor service
 	 * @param outWriter The output writer
 	 */
 	public BufferedFilePublisherBase(
 			String pluginId,
 			String monitoredSystemId,
-			String serverName, 
-			int port, 
-			ScheduledExecutorService executorSvc, 
+			ScheduledExecutorService executorSvc,
 			BufferedWriter outWriter) {
-		super(pluginId, monitoredSystemId, serverName, port, executorSvc);
+		super(pluginId, monitoredSystemId, executorSvc);
 		Objects.requireNonNull(outWriter,"The output stream can't be null");
 		this.outWriter=outWriter;
 	}

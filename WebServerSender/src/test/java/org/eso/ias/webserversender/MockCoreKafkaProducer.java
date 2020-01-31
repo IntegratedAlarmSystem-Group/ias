@@ -1,15 +1,10 @@
 package org.eso.ias.webserversender;
 
+import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaIasiosProducer;
 import org.eso.ias.kafkautils.KafkaUtilsException;
-import org.eso.ias.kafkautils.KafkaHelper;
-import org.eso.ias.types.Alarm;
-import org.eso.ias.types.IASTypes;
-import org.eso.ias.types.IASValue;
-import org.eso.ias.types.IasValidity;
-import org.eso.ias.types.IasValueJsonSerializer;
-import org.eso.ias.types.IasValueStringSerializer;
-import org.eso.ias.types.OperationalMode;
+import org.eso.ias.kafkautils.SimpleStringProducer;
+import org.eso.ias.types.*;
 
 public class MockCoreKafkaProducer {
 
@@ -18,7 +13,9 @@ public class MockCoreKafkaProducer {
 
 		IasValueStringSerializer serializer = new IasValueJsonSerializer();
 
-		KafkaIasiosProducer producer = new KafkaIasiosProducer("localhost:9092", KafkaHelper.IASIOs_TOPIC_NAME, "PID1", serializer);
+		SimpleStringProducer stringProducer = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,"PID1");
+
+		KafkaIasiosProducer producer = new KafkaIasiosProducer(stringProducer,KafkaHelper.IASIOs_TOPIC_NAME, serializer);
 		producer.setUp();
 
 		IASValue<?> msg;

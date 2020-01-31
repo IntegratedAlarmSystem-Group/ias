@@ -9,6 +9,7 @@ import org.eso.ias.heartbeat.publisher.HbLogProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaIasiosProducer;
+import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.eso.ias.types.*;
 import org.eso.ias.webserversender.WebServerSender.WebServerSenderListener;
 import org.eso.ias.webserversender.WebSocketServerHandler.WebSocketServerListener;
@@ -201,7 +202,6 @@ public class WebServerSenderTest {
 				props,
 				listener,
 				1,
-				hProd,
 				idsOfIDsToAccept,
 				idsOfTypesToAccept);
 		this.webServerSender.setUp();
@@ -253,7 +253,8 @@ public class WebServerSenderTest {
 		this.messagesSentByWSS = new CountDownLatch(messagesNumber);
 		this.serverReady = new CountDownLatch(1);
 
-		this.producer = new KafkaIasiosProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, kafkaTopic, "ProducerTest", this.serializer);
+		SimpleStringProducer stringProd = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,"ProducerTest");
+		this.producer = new KafkaIasiosProducer(stringProd, kafkaTopic, this.serializer);
 		this.producer.setUp();
 
 		this.runServer();

@@ -1,34 +1,9 @@
 package org.eso.ias.plugin.test.publisher;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.TimeZone;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.Filter.EnrichedSample;
-import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
-import org.eso.ias.plugin.publisher.BufferedPublisherBase;
-import org.eso.ias.plugin.publisher.MonitorPointData;
-import org.eso.ias.plugin.publisher.MonitorPointDataToBuffer;
-import org.eso.ias.plugin.publisher.MonitorPointSender;
-import org.eso.ias.plugin.publisher.PublisherException;
+import org.eso.ias.plugin.publisher.*;
 import org.eso.ias.plugin.publisher.impl.BufferedListenerPublisher;
 import org.eso.ias.plugin.publisher.impl.BufferedListenerPublisher.PublisherEventsListener;
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
@@ -39,6 +14,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.text.SimpleDateFormat;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Base class for testing the publisher.
@@ -144,20 +126,20 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 	protected final Map<String, ValueToSend> publishedValues = Collections.synchronizedMap(new HashMap<>());
 	
 	/**
-	 * The FileterdValues {@link ListenerPublisher#publish(BufferedMonitoredSystemData)}
-	 * to be sent to the core from the buffered publisher {@link bufferedPublisher}
+	 * The FileterdValues {@link ListenerPublisher#publish(MonitorPointData)}
+	 * to be sent to the core from the buffered publisher
 	 */
 	protected final Map<String, MonitorPointDataToBuffer> receivedValuesFromBufferedPub = Collections.synchronizedMap(new HashMap<>());
 	
 	/**
-	 * The FileterdValues {@link ListenerPublisher#publish(BufferedMonitoredSystemData)}
+	 * The FileterdValues {@link ListenerPublisher#publish(MonitorPointData)}
 	 * to be sent to the core from the buffered publisher {@link #unbufferedPublisher}
 	 */
 	protected final Map<String, MonitorPointData> receivedValuesFromUnbufferedPub = Collections.synchronizedMap(new HashMap<>());
 	
 	/**
 	 * The latch to wait for the expected number of values
-	 * to be sent to {@link ListenerPublisher#publish(BufferedMonitoredSystemData)}.
+	 * to be sent to {@link ListenerPublisher#publish(MonitorPointData)}.
 	 * <P>
 	 * This is not the number of messages, but the number of {@link ValueToSend}
 	 * objects as the {@link BufferedPublisherBase} could group more values into the same
@@ -271,7 +253,7 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 	}
 	
 	/**
-	 * @see org.eso.ias.plugin.test.publisher.PublisherEventsListener#initialized()
+	 * @see org.eso.ias.plugin.publisher.impl.ListenerPublisher.PublisherEventsListener#initialized()
 	 */
 	@Override
 	public void initialized() {
@@ -280,7 +262,7 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 	}
 
 	/**
-	 * @see org.eso.ias.plugin.test.publisher.PublisherEventsListener#closed()
+	 * @see org.eso.ias.plugin.publisher.impl.ListenerPublisher.PublisherEventsListener#closed()
 	 */
 	@Override
 	public void closed() {
@@ -289,9 +271,9 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 	}
 
 	/**
-	 * Data received from the {@link bufferedPublisher} buffered receiver
+	 * Data received from the bufferedPublisher buffered receiver
 	 * 
-	 * @see org.eso.ias.plugin.test.publisher.PublisherEventsListener#dataReceived(org.eso.ias.plugin.publisher.BufferedMonitoredSystemData)
+	 * @see PublisherEventsListener#dataReceived(org.eso.ias.plugin.publisher.BufferedMonitoredSystemData)
 	 */
 	@Override
 	public void dataReceived(BufferedMonitoredSystemData data) {
@@ -332,8 +314,8 @@ public class PublisherTestCommon implements PublisherEventsListener, org.eso.ias
 	@BeforeEach
 	public void setUp() {
 		// Build the publisher
-		bufferedPublisher = new BufferedListenerPublisher(pluginId, monitoredSystemId, pluginServerName, pluginServerPort, schedExecutorSvc,this);
-		unbufferedPublisher = new ListenerPublisher(pluginId, monitoredSystemId,pluginServerName, pluginServerPort, schedExecutorSvc,this);
+		bufferedPublisher = new BufferedListenerPublisher(pluginId, monitoredSystemId, schedExecutorSvc,this);
+		unbufferedPublisher = new ListenerPublisher(pluginId, monitoredSystemId, schedExecutorSvc,this);
 		logger.debug("Set up");
 	}
 	

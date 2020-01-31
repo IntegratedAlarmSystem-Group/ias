@@ -3,8 +3,6 @@ package org.eso.ias.plugin.network;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.cli.*;
 import org.eso.ias.heartbeat.HbProducer;
-import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
-import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.plugin.Plugin;
 import org.eso.ias.plugin.PluginException;
 import org.eso.ias.plugin.Sample;
@@ -12,7 +10,6 @@ import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.config.PluginConfigFileReader;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.PublisherException;
-import org.eso.ias.plugin.publisher.impl.KafkaPublisher;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.NumericArray;
 import org.eso.ias.types.OperationalMode;
@@ -102,10 +99,11 @@ public class UdpPlugin implements Runnable {
 	 * The buffer of strings received from the socket
 	 */
 	private final LinkedBlockingDeque<String> receivedStringQueue = new LinkedBlockingDeque<>(receivedStringBufferSize);
-	
+
 	/**
-	 * Constructor
-	 * 
+	 * Constructor with customized monitor point sender and HbProducer
+	 * mostly used for testing.
+	 *
 	 * @param config the configuration of the plugin
 	 * @param sender the publisher of monitor points to the BSDB
 	 * @param hbProducer the sender of heartbeats
@@ -120,7 +118,26 @@ public class UdpPlugin implements Runnable {
 		Objects.requireNonNull(config);
 		Objects.requireNonNull(sender);
 		Objects.requireNonNull(hbProducer);
-		plugin = new Plugin(config,sender,hbProducer);
+		plugin = new Plugin(config,sender,null,hbProducer,null);
+
+		if (udpPort<1024) {
+			throw new IllegalArgumentException("Invalid UDP port: "+udpPort);
+		}
+		this.udpPort = udpPort;
+	}
+	
+	/**
+	 * Constructor
+	 * 
+	 * @param config the configuration of the plugin
+	 * @param udpPort the UDP port
+	 * @throws SocketException in case of error creating the UDP socket
+	 */
+	public UdpPlugin(
+			PluginConfig config,
+			int udpPort) throws SocketException {
+		Objects.requireNonNull(config);
+		plugin = new Plugin(config);
 		
 		if (udpPort<1024) {
 			throw new IllegalArgumentException("Invalid UDP port: "+udpPort);
@@ -195,18 +212,11 @@ public class UdpPlugin implements Runnable {
 		String kafkaBroker = pluginConfig.getSinkServer()+":"+pluginConfig.getSinkPort();
 		
 		logger.info("Kafka broker {}", kafkaBroker);
-		MonitorPointSender mpSender = new KafkaPublisher(
-				pluginConfig.getId(), 
-				pluginConfig.getMonitoredSystemId(), 
-				pluginConfig.getSinkServer(), 
-				pluginConfig.getSinkPort(), 
-				Plugin.getScheduledExecutorService());
-		
-		HbProducer hbProducer = new HbKafkaProducer(pluginConfig.getId()+"HBSender", kafkaBroker, new HbJsonSerializer());
+
 		
 		UdpPlugin udpPlugin = null; 
 		try {
-			udpPlugin = new UdpPlugin(pluginConfig, mpSender, hbProducer, udpPort);
+			udpPlugin = new UdpPlugin(pluginConfig, udpPort);
 		} catch (Exception e) {
 			UdpPlugin.logger.error("The UdpPlugin failed to build",e);
 			System.exit(-6);

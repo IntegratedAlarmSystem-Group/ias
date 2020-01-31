@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -34,11 +35,6 @@ public class CommandSender implements ReplyListener {
      * The id of the sender
      */
     public final String senderId;
-
-    /**
-     * The URL to connect to the server
-     */
-    public final String brokersURL;
 
     /**
      * The producer of command: the test sends through this producer the command to be processed
@@ -89,45 +85,43 @@ public class CommandSender implements ReplyListener {
      */
     private final AtomicLong idToWait = new AtomicLong();
 
-
     /**
      * Constructor
      *
      * @param senderFullRuningId The full runing id of the sender
+     * @param stringProducer The string producer to publish commands
      * @param senderId The id of the sender
      * @param brokers URL of kafka brokers
      */
-    public CommandSender(String senderFullRuningId, String senderId, String brokers) {
+    public CommandSender(
+            String senderFullRuningId,
+            SimpleStringProducer stringProducer,
+            String senderId,
+            String brokers) {
         if (senderFullRuningId==null || senderFullRuningId.isEmpty()) {
             throw new IllegalArgumentException("Invalid null/empty full running ID of the sender");
         }
         this.senderFullRunningId=senderFullRuningId;
+        Objects.requireNonNull(stringProducer==null,"The producer can't be null");
+        this.cmdProducer=stringProducer;
         if (senderId==null || senderId.isEmpty()) {
             throw new IllegalArgumentException("Invalid null/empty ID of the sender");
         }
         this.senderId=senderId;
-        if (brokers==null || brokers.isEmpty()) {
-            throw new IllegalArgumentException("Invalid null/empty broker");
-        }
-        this.brokersURL = brokers;
 
-        logger.debug("Setting up cmd producer");
-        replyConsumer = new ReplyKafkaConsumer(brokersURL,senderId);
-        logger.debug("Setting up replies consumer");
-        cmdProducer = new SimpleStringProducer(
-                brokersURL,
-                KafkaHelper.CMD_TOPIC_NAME,
-                senderId);
+        logger.debug("Setting up the consumer of replies");
+        replyConsumer = new ReplyKafkaConsumer(brokers,senderId);
     }
 
     /**
      * Constructor
      *
      * @param identifier The identifier of the sender
+     * @param stringProducer The string producer to publish commands
      * @param brokers URL of kafka brokers
      */
-    public CommandSender(Identifier identifier, String brokers) {
-        this(identifier.fullRunningID(),identifier.id(),brokers);
+    public CommandSender(Identifier identifier, SimpleStringProducer stringProducer, String brokers) {
+        this(identifier.fullRunningID(),stringProducer,identifier.id(),brokers);
     }
 
     /**
@@ -249,7 +243,7 @@ public class CommandSender implements ReplyListener {
         logger.debug("Is there a sync. command in progress? {}",isThereACmdInProgress);
 
         if (!closed.get()) {
-            cmdProducer.push(cmdSerializer.iasCmdToString(cmd), null, destId);
+            cmdProducer.push(cmdSerializer.iasCmdToString(cmd), KafkaHelper.CMD_TOPIC_NAME,null, destId);
             cmdProducer.flush();
             logger.info("Command {} sent to {} with id {}", command,destId,id);
         } else {
@@ -304,7 +298,7 @@ public class CommandSender implements ReplyListener {
         );
 
         if (!closed.get()) {
-            cmdProducer.push(cmdSerializer.iasCmdToString(cmd), null, destId);
+            cmdProducer.push(cmdSerializer.iasCmdToString(cmd), KafkaHelper.CMD_TOPIC_NAME,null, destId);
             logger.info("Command {} sent to {}", command,destId);
         }
 
