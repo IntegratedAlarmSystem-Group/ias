@@ -6,7 +6,7 @@ import org.eso.ias.heartbeat.consumer.HbKafkaConsumer
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
 import org.eso.ias.heartbeat.{Heartbeat, HeartbeatProducerType, HeartbeatStatus}
-import org.eso.ias.kafkautils.KafkaHelper
+import org.eso.ias.kafkautils.{KafkaHelper, SimpleStringProducer}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.monitor.{HbMonitor, MonitorAlarm}
 import org.eso.ias.types.Alarm
@@ -79,6 +79,11 @@ class HbAlarmGenerationTest extends FlatSpec with BeforeAndAfterAll with BeforeA
   /** Threshold to send alarms if the HB has net been received */
   val threshold: Long = 5
 
+  val id = "HBProducer-Test"
+
+  /** The kafka string producer  */
+  val simpleStringProd = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,id)
+
   /**
     * Sends the passed HBs
     *
@@ -93,13 +98,16 @@ class HbAlarmGenerationTest extends FlatSpec with BeforeAndAfterAll with BeforeA
   }
 
   override def beforeAll(): Unit = {
-    hbProducer = new HbKafkaProducer("HBProducer-Test",KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,hbSerializer)
+
+    simpleStringProd.setUp()
+    hbProducer = new HbKafkaProducer(simpleStringProd,id,hbSerializer)
     hbProducer.init()
 
   }
 
   override def afterAll(): Unit = {
     hbProducer.shutdown()
+    simpleStringProd.tearDown()
   }
 
   override def beforeEach() = {

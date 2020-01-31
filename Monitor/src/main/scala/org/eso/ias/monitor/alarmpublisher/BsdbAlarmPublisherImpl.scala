@@ -1,5 +1,5 @@
 package org.eso.ias.monitor.alarmpublisher
-import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosProducer}
+import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosProducer, SimpleStringProducer}
 import org.eso.ias.types.{IASValue, IasValueJsonSerializer}
 
 import scala.collection.JavaConverters
@@ -7,15 +7,13 @@ import scala.collection.JavaConverters
 /**
   * Sends alarms to the BSDB by delegating to the [[KafkaIasiosProducer]]
   *
-  * @param brokers Kafka broker for the producer
-  * @param id The id of the consumer
+  * @param stringProducer The shared kafka string producer
   */
-class BsdbAlarmPublisherImpl(val brokers: String, val id: String) extends  MonitorAlarmPublisher {
+class BsdbAlarmPublisherImpl(val stringProducer: SimpleStringProducer) extends  MonitorAlarmPublisher {
   /** The producer of alarms */
   private val producer: KafkaIasiosProducer = new KafkaIasiosProducer(
-    brokers,
+    stringProducer,
     KafkaHelper.IASIOs_TOPIC_NAME,
-    id,
     new IasValueJsonSerializer
   )
 
