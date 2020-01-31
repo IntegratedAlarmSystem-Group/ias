@@ -9,7 +9,7 @@ import java.util.{Collection, Collections}
 import org.eso.ias.command.{CommandMessage, CommandSender, CommandType}
 import org.eso.ias.kafkautils.KafkaStringsConsumer.StreamPosition
 import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener
-import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosConsumer, KafkaIasiosProducer}
+import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosConsumer, KafkaIasiosProducer, SimpleStringProducer}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types._
 import org.scalactic.source.Position
@@ -20,7 +20,7 @@ import scala.collection.JavaConverters
 /**
  * Test the functioning of the Supervisor when the TF changed and the TF_CHANGED command arrives.
  *
- * This test implicitly checks the restartig of the Supervisor.
+ * This test implicitly checks the restarting of the Supervisor.
  *
  * This test sends command to the Supervisor using the CommandSender, listens to IASIOs produced by the Supervisor
  * and sends inputs (IASIOs) to the Supervisor.
@@ -35,7 +35,7 @@ import scala.collection.JavaConverters
  * - terminate the Supervisor with a SHUTDOWN command
  *
  * To check if the restarted Supervisor is using the new TF, this test sends a set of inputs and check if the
- * output produced by the Supervisor repect the algorithm of the used TF.
+ * output produced by the Supervisor respect the algorithm of the used TF.
  */
 class TestSupervisorTfChanged
   extends FlatSpec
@@ -51,6 +51,9 @@ class TestSupervisorTfChanged
 
   /** The identifier of this IAS client */
   val commandSenderIdentifier = new Identifier("TestSupervRestartId",IdentifierType.CLIENT,None)
+
+  /** The shared kafka string producer  */
+  val stringProducer = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,commandSenderIdentifier.id)
 
   /**
    * The command sender to send commands to the Suprvisor */
@@ -97,14 +100,13 @@ class TestSupervisorTfChanged
     val p = procBuilder.start();
 
     // Initialize the command sender
-    commandSender = new CommandSender(commandSenderIdentifier,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
+    commandSender = new CommandSender(commandSenderIdentifier,stringProducer,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
     commandSender.setUp()
 
     // Initilaize the producer of IASIOs
     iasiosProducer = new KafkaIasiosProducer(
-      KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
+      stringProducer,
       KafkaHelper.IASIOs_TOPIC_NAME,
-      commandSenderIdentifier.id,
       iasValueSerializer)
     iasiosProducer.setUp()
 

@@ -1,14 +1,5 @@
 package org.eso.ias.plugin.test.publisher;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
@@ -22,6 +13,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class PublisherMaxBufferSizeTest implements PublisherEventsListener {
 	
@@ -59,9 +59,9 @@ public class PublisherMaxBufferSizeTest implements PublisherEventsListener {
 	
 	/**
 	 * The latch to wait for the expected number of values
-	 * to be sent to {@link ListenerPublisher#publish(BufferedMonitoredSystemData)}.
+	 * to be sent to {@link ListenerPublisher#publish(org.eso.ias.plugin.publisher.MonitorPointData)}.
 	 * <P>
-	 * This is not the number of messages, but the number of {@link FilteredValue}
+	 * This is not the number of messages, but the number of {@link org.eso.ias.plugin.filter.FilteredValue}
 	 * objects as the {@link BufferedPublisherBase} could group more values into the same
 	 * {@link BufferedMonitoredSystemData}.
 	 * <P>
@@ -100,7 +100,7 @@ public class PublisherMaxBufferSizeTest implements PublisherEventsListener {
 		int poolSize = Runtime.getRuntime().availableProcessors()/2;
 		ScheduledExecutorService schedExecutorSvc= Executors.newScheduledThreadPool(poolSize, new PluginThreadFactory());
 		assertEquals(10L, BufferedPublisherBase.maxBufferSize);
-		publisher = new BufferedListenerPublisher(pluginId, monitoredSysId,pluginServerName, pluginServerPort, schedExecutorSvc,this);
+		publisher = new BufferedListenerPublisher(pluginId, monitoredSysId, schedExecutorSvc,this);
 		logger.debug("Set up");
 		publisher.setUp();
 		publisher.startSending();

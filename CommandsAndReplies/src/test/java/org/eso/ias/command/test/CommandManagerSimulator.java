@@ -7,6 +7,7 @@ import org.eso.ias.heartbeat.*;
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.KafkaHelper;
+import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,12 +50,15 @@ public class CommandManagerSimulator implements AutoCloseable {
     /** true if the process has been closed */
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
+    private final SimpleStringProducer stringProducer = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,id);
+
     public CommandManagerSimulator() {
-        cmdMgr = new CommandManagerKafkaImpl(id, KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS);
+        cmdMgr = new CommandManagerKafkaImpl(id, KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,stringProducer);
     }
 
     /** Start the command manager */
     public CountDownLatch start() throws Exception {
+        stringProducer.setUp();
         hbSender.start();
         cmdMgr.start(new DefaultCommandExecutor(),this);
         hbSender.updateHbState(HeartbeatStatus.RUNNING);
@@ -73,6 +77,7 @@ public class CommandManagerSimulator implements AutoCloseable {
         logger.info("Closing the manager");
         hbSender.updateHbState(HeartbeatStatus.EXITING);
         hbSender.shutdown();
+        stringProducer.tearDown();
         latch.countDown();
         logger.info("Closed");
     }

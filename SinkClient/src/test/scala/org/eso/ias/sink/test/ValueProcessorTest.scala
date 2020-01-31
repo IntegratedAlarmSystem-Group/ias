@@ -157,9 +157,10 @@ class ValueProcessorTest extends FlatSpec {
       val processor: IasValueProcessor  = new IasValueProcessor(
         processorIdentifier,
         listeners,
-        new HbProducerTest(new HbJsonSerializer()),
-        new CommandManagerTest(processorIdentifier),
-        inputsProvider,
+        None,
+        Option(new HbProducerTest(new HbJsonSerializer())),
+        Option(new CommandManagerTest(processorIdentifier)),
+        Option(inputsProvider),
         iasDao,
         iasiosDaos,
         List(templateDao))
@@ -180,9 +181,10 @@ class ValueProcessorTest extends FlatSpec {
       val processorWithFailures: IasValueProcessor  = new IasValueProcessor(
         processorIdentifierWF,
         listenersWithFailure,
-        new HbProducerTest(new HbJsonSerializer()),
-        new CommandManagerTest(processorIdentifierWF),
-        inputsProviderWithFailures,
+        None,
+        Option(new HbProducerTest(new HbJsonSerializer())),
+        Option(new CommandManagerTest(processorIdentifierWF)),
+        Option(inputsProviderWithFailures),
         iasDao,
         iasiosDaos,
         List.empty[TemplateDao])
@@ -204,9 +206,10 @@ class ValueProcessorTest extends FlatSpec {
       val processorWithTO: IasValueProcessor  = new IasValueProcessor(
         processorIdentifierTO,
         listenersWithTO,
-        new HbProducerTest(new HbJsonSerializer()),
-        new CommandManagerTest(processorIdentifierTO),
-        inputsProviderWithTO,
+        None,
+        Option(new HbProducerTest(new HbJsonSerializer())),
+        Option(new CommandManagerTest(processorIdentifierTO)),
+        Option(inputsProviderWithTO),
         iasDao,
         iasiosDaos,
         List.empty[TemplateDao])
