@@ -15,7 +15,10 @@ import org.eso.ias.cdb.rdb.RdbReader;
 import org.eso.ias.command.CommandManager;
 import org.eso.ias.command.DefaultCommandExecutor;
 import org.eso.ias.command.kafka.CommandManagerKafkaImpl;
-import org.eso.ias.heartbeat.*;
+import org.eso.ias.heartbeat.HbEngine;
+import org.eso.ias.heartbeat.HbProducer;
+import org.eso.ias.heartbeat.HeartbeatProducerType;
+import org.eso.ias.heartbeat.HeartbeatStatus;
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.FilteredKafkaIasiosConsumer;
@@ -23,6 +26,7 @@ import org.eso.ias.kafkautils.FilteredKafkaIasiosConsumer.FilterIasValue;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaStringsConsumer.StreamPosition;
 import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener;
+import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.eso.ias.logging.IASLogger;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
@@ -249,6 +253,9 @@ public class WebServerSender implements IasioListener, AutoCloseable {
     /** Signal that the WebServerSender has been shut down */
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
+    /** The shared kafka producer */
+    private final SimpleStringProducer stringProducer;
+
 
 
 	/**
@@ -284,7 +291,6 @@ public class WebServerSender implements IasioListener, AutoCloseable {
 	 * @param props the properties to get kafka servers, topic names and webserver uri
 	 * @param listener The listenr of the messages sent to the websocket server i.e. the web server
 	 * @param hbFrequency the frequency of the heartbeat (seconds)
-	 * @param hbProducer the sender of HBs
 	 * @param acceptedIds The IDs of the IASIOs to consume
 	 * @param acceptedTypes The IASTypes to consume
 	 * @throws URISyntaxException
@@ -295,7 +301,6 @@ public class WebServerSender implements IasioListener, AutoCloseable {
 			Properties props,
 			WebServerSenderListener listener,
 			int hbFrequency,
-			HbProducer hbProducer,
 			Set<String> acceptedIds,
 			Set<IASTypes> acceptedTypes) throws URISyntaxException {
 		Objects.requireNonNull(senderID);
@@ -303,7 +308,6 @@ public class WebServerSender implements IasioListener, AutoCloseable {
 			throw new IllegalArgumentException("Invalid empty converter ID");
 		}
 		this.senderID=senderID.trim();
-
 
 		Objects.requireNonNull(kafkaServers);
 		if (kafkaServers.trim().isEmpty()) {
@@ -344,6 +348,9 @@ public class WebServerSender implements IasioListener, AutoCloseable {
 		};
 		kafkaConsumer = new FilteredKafkaIasiosConsumer(kafkaServers, sendersInputKTopicName, this.senderID, filter);
 
+		stringProducer = new SimpleStringProducer(kafkaServers,senderID);
+
+		HbProducer hbProducer = new HbKafkaProducer(stringProducer, kafkaServers, new HbJsonSerializer());
 		if (hbFrequency<=0) {
 			throw new IllegalArgumentException("Invalid frequency "+hbFrequency);
 		}
@@ -351,7 +358,7 @@ public class WebServerSender implements IasioListener, AutoCloseable {
 		Objects.requireNonNull(hbProducer);
 		hbEngine = HbEngine.apply(senderID, HeartbeatProducerType.SINK, hbFrequency, hbProducer);
 
-		commandManager = new CommandManagerKafkaImpl(senderID,kafkaServers);
+		commandManager = new CommandManagerKafkaImpl(senderID,kafkaServers,stringProducer);
 	}
 
 
@@ -530,6 +537,7 @@ public class WebServerSender implements IasioListener, AutoCloseable {
 	 * @throws Exception in case of error initializing
 	 */
 	public void setUp() throws Exception {
+		stringProducer.setUp();
 		hbEngine.start();
 
 		commandManager.start(new DefaultCommandExecutor(),this);
@@ -639,6 +647,7 @@ public class WebServerSender implements IasioListener, AutoCloseable {
 		}
 		commandManager.close();
 		hbEngine.shutdown();
+		stringProducer.tearDown();
 	}
 
 	/**
@@ -801,9 +810,6 @@ public class WebServerSender implements IasioListener, AutoCloseable {
 		// Set HB frequency
 		int frequency = optIasdao.get().getHbFrequency();
 
-		// Set serializer of HB messages
-		HbMsgSerializer hbSerializer = new HbJsonSerializer();
-
 		// Set kafka server from properties or default
 		String kServers=System.getProperty(KAFKA_SERVERS_PROP_NAME);
 		if (kServers==null || kServers.isEmpty()) {
@@ -813,18 +819,14 @@ public class WebServerSender implements IasioListener, AutoCloseable {
 			kServers=KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS;
 		}
 
-		String id = senderId.get();
-		HbProducer hbProd = new HbKafkaProducer(id, kServers, hbSerializer);
-
 		WebServerSender ws=null;
 		try {
 			ws = new WebServerSender(
-				id,
+				senderId.get(),
 				kServers,
 				System.getProperties(),
 				null,
 				frequency,
-				hbProd,
 				acceptedIds,
 				acceptedTypes);
 		} catch (URISyntaxException e) {
