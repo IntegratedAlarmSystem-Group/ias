@@ -1,14 +1,11 @@
 package org.eso.ias.test.simpleloop.plugin;
 
-import org.eso.ias.heartbeat.HbProducer;
-import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
-import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
+import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.eso.ias.plugin.Plugin;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.config.PluginConfigException;
 import org.eso.ias.plugin.config.PluginConfigFileReader;
-import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.KafkaPublisher;
 import org.eso.ias.types.OperationalMode;
@@ -112,14 +109,9 @@ public class SimpleLoopPlugin extends Plugin implements Runnable {
 	 * Constructor
 	 * 
 	 * @param config The plugin coinfiguration
-	 * @param sender The publisher of monitor point values to the IAS core
-	 * @param hbProducer the publisher of HBs
 	 */
-	public SimpleLoopPlugin(
-			PluginConfig config, 
-			MonitorPointSender sender,
-			HbProducer hbProducer) {
-		super(config,sender,hbProducer);
+	public SimpleLoopPlugin(PluginConfig config) {
+		super(config);
 	}
 	
 	/**
@@ -177,12 +169,13 @@ public class SimpleLoopPlugin extends Plugin implements Runnable {
 			System.exit(-1);
 		}
 		logger.info("Configuration successfully read");
+
+		SimpleStringProducer stringProducer = new SimpleStringProducer(serverName+":"+port,pluginId);
 		
 		KafkaPublisher publisher = new KafkaPublisher(
 				pluginId, 
 				monSysId, 
-				serverName, 
-				port,
+				stringProducer,
 				Plugin.getScheduledExecutorService());
 		
 		logger.info("kafka publisher created");
@@ -190,10 +183,7 @@ public class SimpleLoopPlugin extends Plugin implements Runnable {
 		/**
 		 * Instantiate the plugin
 		 */
-		SimpleLoopPlugin plugin = new SimpleLoopPlugin(
-				config, 
-				publisher,
-				new HbKafkaProducer(pluginId, new HbJsonSerializer()));
+		SimpleLoopPlugin plugin = new SimpleLoopPlugin(config);
 		logger.info("Plugin built");
 		
 		try {
