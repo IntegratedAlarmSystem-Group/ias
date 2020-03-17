@@ -45,7 +45,7 @@ public class CdbReaderFactory {
     /**
      * The parameter to set in the command line to build a CdbReader from a custom java class
      */
-    public static final String cdbClassCmdLineParam="cdbClass";
+    public static final String cdbClassCmdLineParam="-cdbClass";
 
     /**
      * The parameter to set in the command line to build a JSON CdbReader
