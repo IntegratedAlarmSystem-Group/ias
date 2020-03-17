@@ -7,6 +7,7 @@ import org.eso.ias.cdb.rdb.RdbReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -49,7 +50,7 @@ public class CdbReaderFactory {
     /**
      * The parameter to set in the command line to build a JSON CdbReader
      */
-    public static final String jsonCdbCmdLineParam="jCdb";
+    public static final String jsonCdbCmdLineParam="-jCdb";
 
     /**
      * get the value of the passed parameter from the eray of strings.
@@ -89,8 +90,30 @@ public class CdbReaderFactory {
      * @param cls The class implementing the CdbReader
      * @return the user defined CdbReader
      */
-    private static final CdbReader loadUserDefinedReader(String cls) {
-        return null;
+    private static final CdbReader loadUserDefinedReader(String cls) throws IasCdbException {
+        if (cls==null || cls.isEmpty()) {
+            throw new IllegalArgumentException("Invalid null/empty class");
+        }
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        Class<?> theClass=null;
+        try {
+            theClass=classLoader.loadClass(cls);
+        } catch (Exception e) {
+            throw new IasCdbException("Error loading the external class "+cls,e);
+        }
+        Constructor constructor = null;
+        try {
+            constructor=theClass.getConstructor(null);
+        } catch (Exception e) {
+            throw new IasCdbException("Error getting the default (empty) constructor of the external class "+cls,e);
+        }
+        Object obj=null;
+        try {
+            obj=constructor.newInstance(null);
+        } catch (Exception e) {
+            throw new IasCdbException("Error building an object of the external class "+cls,e);
+        }
+        return (CdbReader)obj;
     }
 
     /**
@@ -101,7 +124,7 @@ public class CdbReaderFactory {
      * @return the CdbReader to read th CDB
      * @throws Exception in case of error building the CdbReader
      */
-    public static CdbReader getReaderFactory(String[] cmdLine) throws Exception {
+    public static CdbReader getCdbReader(String[] cmdLine) throws Exception {
         Objects.requireNonNull(cmdLine,"Invalid null command line");
         Optional<String> userCdbReader = getValueOfParam(cdbClassCmdLineParam,cmdLine);
         if (userCdbReader.isPresent()) {
