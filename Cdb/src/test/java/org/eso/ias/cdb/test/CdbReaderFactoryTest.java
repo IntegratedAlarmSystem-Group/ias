@@ -23,9 +23,9 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * The test checks the instantiation of the external CDB reader whose jar is in the
  * folder pointed by the IAS_EXTERNAL_JARS environment variable.
- * The Mock implementation is provided by {@link org.eso.ias.cdb.test.extreader.ExtCdbReader} whose jar must be
- * in the IAS_EXTERNAL_JARS folder before running this test as the jar must be in the classpath.
- * The external CDB reader must be instantiated when the -cdb parameter is in the command line.
+ * The Mock implementation is provided by org.eso.ias.cdb.test.extreader.ExtCdbReader whose jar
+ * is in the IAS_EXTERNAL_JARS.
+ * The external CDB reader must be instantiated when the -cdbClass parameter is in the command line.
  *
  * The test checks if the JSON CDB implementation is instantiated when the -jCdb parameter is
  * in the command line.
