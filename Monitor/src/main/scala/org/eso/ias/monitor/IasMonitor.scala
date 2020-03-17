@@ -5,7 +5,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 
 import com.typesafe.scalalogging.Logger
-import org.apache.commons.cli._
+import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbFiles, CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.LogLevelDao
