@@ -43,7 +43,7 @@ class CommonDefs(object):
         # Get the folder with external jars from the environment variable, if exists
         externalJarsPath=None
         try:
-           externalJarsPath=environ['IAS-EXTERNAL-JARS']
+           externalJarsPath=environ['IAS_EXTERNAL_JARS']
         except:
             pass
 
