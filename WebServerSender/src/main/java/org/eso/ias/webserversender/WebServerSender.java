@@ -684,6 +684,7 @@ public class WebServerSender implements IasioListener, AutoCloseable {
 		Options options = new Options();
         options.addOption("h", "help", false, "Print help and exit");
         options.addOption("j", "jcdb", true, "Use the JSON Cdb at the passed path");
+		options.addOption("c", "cdbClass", true, "Use an external CDB reader with the passed class");
 		options.addOption(Option.builder("t").longOpt("filter-types").desc("Space separated list of types to send (LONG, INT, SHORT, BYTE, DOUBLE, FLOAT, BOOLEAN, CHAR, STRING, ALARM)").hasArgs().argName("TYPES").build());
 		options.addOption(Option.builder("i").longOpt("filter-ids").desc("Space separated list of ids to send").hasArgs().argName("IASIOS-IDS").build());
         options.addOption("x", "logLevel", true, "Set the log level (TRACE, DEBUG, INFO, WARN, ERROR)");

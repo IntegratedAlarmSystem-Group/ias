@@ -5,7 +5,7 @@ import java.util
 import java.util.concurrent.{Executors, ScheduledExecutorService, TimeUnit}
 
 import com.typesafe.scalalogging.Logger
-import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
+import org.apache.commons.cli._
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbFiles, CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos._
@@ -252,6 +252,7 @@ object NotificationsSender {
     val options: Options = new Options
     options.addOption("h", "help",false,"Print help and exit")
     options.addOption("j", "jcdb", true, "Use the JSON Cdb at the passed path")
+    options.addOption("c", "cdbClass", true, "Use an external CDB reader with the passed class")
     options.addOption("x", "logLevel", true, "Set the log level (TRACE, DEBUG, INFO, WARN, ERROR)")
 
     val parser: CommandLineParser = new DefaultParser
