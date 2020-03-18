@@ -73,6 +73,10 @@ public class SlowIasiosProcessorTest implements SimpleKafkaIasiosConsumer.IasioL
 	*/
 	private final IasValueStringSerializer serializer = new IasValueJsonSerializer();
 
+    private final SimpleStringProducer stringProducer = new SimpleStringProducer(
+            KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
+            "SlowIasiosProcessorTest");
+
     /**
      * Build the full running ID from the passed id
      *
@@ -154,7 +158,7 @@ public class SlowIasiosProcessorTest implements SimpleKafkaIasiosConsumer.IasioL
                 new HashSet<>());
         consumer.setUp();
         receivedIasios.clear();
-        producer = new KafkaIasiosProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, topicName, "Consumer-ID",serializer);
+        producer = new KafkaIasiosProducer(stringProducer, topicName, serializer);
         producer.setUp();
 
         logger.info("Initialized.");

@@ -6,14 +6,8 @@ import java.util.concurrent.{Executors, ScheduledExecutorService, TimeUnit}
 
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
-import org.eso.ias.cdb.CdbReader
-import org.eso.ias.cdb.json.{CdbFiles, CdbJsonFiles, JsonReader}
+import org.eso.ias.cdb.{CdbReader, CdbReaderFactory}
 import org.eso.ias.cdb.pojos._
-import org.eso.ias.cdb.rdb.RdbReader
-import org.eso.ias.dasu.subscriber.{InputSubscriber, KafkaSubscriber}
-import org.eso.ias.heartbeat.HbProducer
-import org.eso.ias.heartbeat.publisher.HbKafkaProducer
-import org.eso.ias.heartbeat.serializer.HbJsonSerializer
 import org.eso.ias.kafkautils.KafkaHelper
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.sink.{IasValueProcessor, ValueListener}
@@ -171,7 +165,7 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
     require(Option(alarmId).isDefined && !alarmId.isEmpty)
     require(Option(state).isDefined)
     val recipients = iasValuesDaos(Identifier.getBaseId(alarmId)).getEmails.split(",")
-    NotificationsSender.msLogger.debug("Sending tonitifcation of alarm {} status change to {}", alarmId, recipients.mkString(","))
+    NotificationsSender.msLogger.debug("Sending notifcation of alarm {} status change to {}", alarmId, recipients.mkString(","))
     val sendOp = Try(sender.notify(recipients.map(_.trim).toList, alarmId, state))
     if (sendOp.isFailure) NotificationsSender.msLogger.error("Error sending alarm state notification notification to {}", recipients.mkString(","), sendOp.asInstanceOf[Failure[_]].exception)
   }
@@ -184,9 +178,16 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
     */
   override protected def process(iasValues: List[IASValue[_]]): Unit = synchronized {
     NotificationsSender.msLogger.debug("Processing {} values read from BSDB",iasValues.length)
-    // Iterates over alarm IASIOs
-    val valuesToUpdate: Unit = iasValues.filter(v => v.valueType==IASTypes.ALARM && alarmsToTrack.contains(Identifier.getBaseId(v.id)))
-      .foreach(value => {
+
+    // The criteria to filter out the IAS values that are not interesting for the notifications
+    def accept(iasValue: IASValue[_]): Boolean = {
+      iasValue.valueType==IASTypes.ALARM &&
+        iasValue.mode!=OperationalMode.MAINTENANCE &&
+        alarmsToTrack.contains(Identifier.getBaseId(iasValue.id))
+    }
+
+    // Iterates over accepted alarms
+    iasValues.filter(accept).foreach(value => {
 
         val id = value.id
 
@@ -249,6 +250,7 @@ object NotificationsSender {
     val options: Options = new Options
     options.addOption("h", "help",false,"Print help and exit")
     options.addOption("j", "jcdb", true, "Use the JSON Cdb at the passed path")
+    options.addOption("c", "cdbClass", true, "Use an external CDB reader with the passed class")
     options.addOption("x", "logLevel", true, "Set the log level (TRACE, DEBUG, INFO, WARN, ERROR)")
 
     val parser: CommandLineParser = new DefaultParser
@@ -308,16 +310,7 @@ object NotificationsSender {
     val emailSenderId = parsedArgs._1.get
 
     // Get the CDB
-    val cdbReader: CdbReader = {
-      if (parsedArgs._2.isDefined) {
-        val jsonCdbPath = parsedArgs._2.get
-        msLogger.info("Using JSON CDB @ {}",jsonCdbPath)
-        val cdbFiles: CdbFiles = new CdbJsonFiles(jsonCdbPath)
-        new JsonReader(cdbFiles)
-      } else {
-        new RdbReader()
-      }
-    }
+    val cdbReader: CdbReader = CdbReaderFactory.getCdbReader(args)
 
     logger.debug("Getting the IAS frm the CDB")
     val iasDao: IasDao = {
@@ -411,20 +404,16 @@ object NotificationsSender {
       else temp
     }
 
-    val hbProducer: HbProducer = {
-      val kafkaServers = System.getProperties.getProperty(KafkaHelper.BROKERS_PROPNAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
-      new HbKafkaProducer(emailSenderId + "HBSender",kafkaServers,new HbJsonSerializer())
-    }
-    msLogger.debug("HB producer instantiated")
+    val kafkaServers = System.getProperties.getProperty(KafkaHelper.BROKERS_PROPNAME,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
 
-    val inputsProvider: InputSubscriber = KafkaSubscriber(emailSenderId,None,kafkaBrokers,System.getProperties)
+
+
     msLogger.debug("IAS values consumer instantiated")
 
     val valuesProcessor: IasValueProcessor = new IasValueProcessor(
       emailSenderId,
       List(valueListener),
-      hbProducer,
-      inputsProvider,
+      kafkaBrokers.get,
       iasDao,
       iasioDaos,
       templateDaos)

@@ -5,18 +5,15 @@ Created on Feb 9, 2018
 @author: acaproni
 '''
 
-import argparse
-import cmd
-import os
-import sys
 import unittest
 from os import environ, access, R_OK
 from os.path import exists, isfile, join, isdir
-from IASTools.FileSupport import FileSupport
-from IASTools.ModuleSupport import ModuleSupport
 from shutil import rmtree
 
 from IASLogging.logConf import Log
+from IASTools.FileSupport import FileSupport
+from IASTools.ModuleSupport import ModuleSupport
+
 
 class TestCreateModule(unittest.TestCase):
     
@@ -65,6 +62,6 @@ class TestCreateModule(unittest.TestCase):
         self.assertFalse(exists(TestCreateModule.modulePath), "Module not deleted")
 
 if __name__ == '__main__':
-    logger=Log.initLogging(__file__)
+    logger=Log.getLogger(__file__)
     logger.info("Start main")
     unittest.main()

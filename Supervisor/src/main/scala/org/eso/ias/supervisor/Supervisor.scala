@@ -6,18 +6,18 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
 import ch.qos.logback.classic.Level
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
-import org.eso.ias.cdb.CdbReader
-import org.eso.ias.cdb.json.{CdbFiles, CdbJsonFiles, JsonReader}
+import org.eso.ias.cdb.{CdbReader, CdbReaderFactory}
 import org.eso.ias.cdb.pojos._
-import org.eso.ias.cdb.rdb.RdbReader
 import org.eso.ias.cdb.topology.TemplateHelper
+import org.eso.ias.command.CommandManager
+import org.eso.ias.command.kafka.CommandManagerKafkaImpl
 import org.eso.ias.dasu.publisher.{KafkaPublisher, OutputPublisher}
 import org.eso.ias.dasu.subscriber.{InputSubscriber, InputsListener, KafkaSubscriber}
 import org.eso.ias.dasu.{Dasu, DasuImpl}
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
 import org.eso.ias.heartbeat.{HbEngine, HbProducer, HeartbeatProducerType, HeartbeatStatus}
-import org.eso.ias.kafkautils.KafkaHelper
+import org.eso.ias.kafkautils.{KafkaHelper, SimpleStringProducer}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.{IASValue, Identifier, IdentifierType}
 import org.eso.ias.utils.ISO8601Helper
@@ -50,10 +50,18 @@ import scala.util.{Failure, Success, Try}
   * DASUs are built by invoking the dasufactory passed in the constructor:
   * test can let the Supervisor run with their mockup implementation of a DASU.
   *
+  * If not defined, the constructor builds the HB producer, the output publisher and the command manager
+  * using the passed SimpleStringProducer. All those producers are those used in operatons i.e. sending data
+  * to the kafka servers.
+  * The constructor allows to override this implementation passing special producers, a feature useful for testing
+  *
   * @param supervisorIdentifier the identifier of the Supervisor
-  * @param outputPublisher the publisher to send the output
-  * @param inputSubscriber the subscriber getting events to be processed
-  * @param hbProducer the subscriber to send heartbeats
+  * @param kafkaBrokers the string with kafka brokers
+  * @param stringProducerOpt the string producer to push in kafka
+  * @param outputPublisherOpt the publisher to send the output
+  * @param inputSubscriber the subscriber to get events to be processed
+  * @param hbProducerOpt the subscriber to send heartbeats
+  * @param commandManagerOpt the command manager
   * @param cdbReader the CDB reader to get the configuration of the DASU from the CDB
   * @param dasuFactory: factory to build DASU
   * @param logLevelFromCommandLine The log level from the command line;
@@ -61,20 +69,33 @@ import scala.util.{Failure, Success, Try}
   * @author acaproni
   */
 
-class Supervisor(
-    val supervisorIdentifier: Identifier,
-    private val outputPublisher: OutputPublisher,
-    private val inputSubscriber: InputSubscriber,
-    private val hbProducer: HbProducer,
-    cdbReader: CdbReader,
-    dasuFactory: (DasuDao, Identifier, OutputPublisher, InputSubscriber) => Dasu,
-    logLevelFromCommandLine: Option[LogLevelDao])
-    extends InputsListener with InputSubscriber with  OutputPublisher {
+class Supervisor private (
+                  supervisorIdentifier: Identifier,
+                  kafkaBrokers: String,
+                  private val stringProducerOpt: Option[SimpleStringProducer],
+                  outputPublisherOpt: Option[OutputPublisher],
+                  inputSubscriber: InputSubscriber,
+                  hbProducerOpt: Option[HbProducer],
+                  commandManagerOpt: Option[CommandManager],
+                  cdbReader: CdbReader,
+                  dasuFactory: (DasuDao, Identifier, OutputPublisher, InputSubscriber) => Dasu,
+                  logLevelFromCommandLine: Option[LogLevelDao])
+  extends InputsListener with InputSubscriber with  OutputPublisher with AutoCloseable {
+
   require(Option(supervisorIdentifier).isDefined,"Invalid Supervisor identifier")
-  require(Option(outputPublisher).isDefined,"Invalid output publisher")
+  require(Option(kafkaBrokers).isDefined && !kafkaBrokers.isEmpty, "Invalid null/epty string of kafka brokers")
+  require(Option(stringProducerOpt).isDefined,"Invalid null string producer")
+  require(Option(outputPublisherOpt).isDefined,"Invalid null output publisher")
   require(Option(inputSubscriber).isDefined,"Invalid input subscriber")
+  require(Option(hbProducerOpt).isDefined,"Invalid null HB producer")
+  require(Option(commandManagerOpt).isDefined,"Invalid null command manager")
   require(Option(cdbReader).isDefined,"Invalid CDB reader")
   require(Option(logLevelFromCommandLine).isDefined,"Invalid log level")
+
+  if (stringProducerOpt.isEmpty &&
+    (outputPublisherOpt.isEmpty || hbProducerOpt.isEmpty || commandManagerOpt.isEmpty)) {
+    throw new IllegalArgumentException("Cannot build hb producer, command manager and IASIOs producer if the simple stirng is empty")
+  }
   
   /** The ID of the Supervisor */
   val id: String = supervisorIdentifier.id
@@ -88,6 +109,8 @@ class Supervisor(
     }
   
   /** The heartbeat Engine */
+  val hbProducer: HbProducer =
+    hbProducerOpt.getOrElse(new HbKafkaProducer(stringProducerOpt.get,supervisorIdentifier.id,new HbJsonSerializer()))
   val hbEngine: HbEngine = HbEngine(supervisorIdentifier.id,HeartbeatProducerType.SUPERVISOR,iasDao.getHbFrequency,hbProducer)
 
   /**
@@ -128,27 +151,22 @@ class Supervisor(
     dasusToDeploy.size.toString,
     dasusToDeploy.map(d => d.getDasu.getId).mkString(", "))
   
-  // Initialize the consumer and exit in case of error 
-  val inputSubscriberInitialized = inputSubscriber.initializeSubscriber()
-  inputSubscriberInitialized match {
-    case Failure(f) => Supervisor.logger.error("Supervisor [{}] failed to initialize the consumer", id,f)
-                       System.exit(-1)
-    case Success(s) => Supervisor.logger.info("Supervisor [{}] subscriber successfully initialized",id)
-  }
-
-  // Initialize the producer and exit in case of error 
-  val outputProducerInitialized: Try[Unit] = outputPublisher.initializePublisher()
-  outputProducerInitialized match {
-    case Failure(f) => Supervisor.logger.error("Supervisor [{}] failed to initialize the producer", id,f)
-                       System.exit(-2)
-    case Success(s) => Supervisor.logger.info("Supervisor [{}] producer successfully initialized",id)
-  }
+  // Build the kafka producer of IASIOs
+  val outputPublisher: OutputPublisher =
+    outputPublisherOpt.getOrElse(KafkaPublisher(supervisorIdentifier.id,None,stringProducerOpt.get,None))
 
   // Get the DasuDaos from the set of DASUs to deploy:
   // the helper transform the templated DASUS into normal ones
   val dasuDaos: Set[DasuDao] = TemplateHelper.normalizeDasusToDeploy(dasusToDeploy)
   assert(dasuDaos.size==dasusToDeploy.size)
-  
+
+  // Get the IDs of the TFs running in the Supervisor: upon receiving a TF_CHANGED command and if such TF is used
+  // by at least one ASCE, the Supervisor needs to restart
+  lazy val tfIDs: List[String] =
+    dasuDaos.foldLeft(Set.empty[String]) ( (asces, dasu) =>
+      asces ++ JavaConverters.asScalaSet(dasu.getAsces).map(_.getTransferFunction.getClassName)
+    ).toList
+
   dasuDaos.foreach(d => Supervisor.logger.info("Supervisor [{}]: building DASU from DasuDao {}",id,d.toString))
   
   // Build all the DASUs
@@ -177,9 +195,91 @@ class Supervisor(
   val started = new AtomicBoolean(false)
 
   val statsLogger: SupervisorStatistics = new SupervisorStatistics(id,dasuIds)
-  
+
+  /** The command manager to get and execute commands */
+  val commandManager: CommandManager =
+    commandManagerOpt.getOrElse(new CommandManagerKafkaImpl(supervisorIdentifier.id,kafkaBrokers,stringProducerOpt.get))
+
+  /** The command executor that executes the commands received from the cmd topic */
+  val cmdExecutor: SupervisorCmdExecutor = new SupervisorCmdExecutor(tfIDs)
+
   Supervisor.logger.info("Supervisor [{}] built",id)
-  
+
+  /**
+   * Constructor that allows to override standard kafka producer with the
+   * passed in the parameters.
+   *
+   * This constructor is intended for testing purposes.
+   *
+   * @param supervisorIdentifier the identifier of the Supervisor
+   * @param outputPublisher the publisher to send the output
+   * @param inputSubscriber the subscriber getting events to be processed
+   * @param hbProducer the subscriber to send heartbeats
+   * @param cdbReader the CDB reader to get the configuration of the DASU from the CDB
+   * @param dasuFactory: factory to build DASU
+   * @param logLevelFromCommandLine The log level from the command line;
+   *                                None if the parameter was not set in the command line
+   * @return  a new Supervisor
+   */
+  def this(
+             supervisorIdentifier: Identifier,
+             outputPublisher: OutputPublisher,
+             inputSubscriber: InputSubscriber,
+             hbProducer: HbProducer,
+             commandManager: CommandManager,
+             cdbReader: CdbReader,
+             dasuFactory: (DasuDao, Identifier, OutputPublisher, InputSubscriber) => Dasu,
+             logLevelFromCommandLine: Option[LogLevelDao]) {
+    this(
+      supervisorIdentifier,
+      KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
+      None,
+      Option(outputPublisher),
+      inputSubscriber,
+      Option(hbProducer),
+      Option(commandManager),
+      cdbReader,
+      dasuFactory,
+      logLevelFromCommandLine
+    )
+  }
+
+  /**
+   * Factory method to build a Supervisor with kafka producers and consumers
+   *
+   * This methods builds the Supervisor used in operation and connected with Kafka server.
+   *
+   * @param supervisorIdentifier the identifier of the Supervisor
+   * @param kafkaBrokers the string with kafka brokers
+   * @param inputSubscriber the subscriber to get events to be processed
+   * @param cdbReader the CDB reader to get the configuration of the DASU from the CDB
+   * @param dasuFactory: factory to build DASU
+   * @param logLevelFromCommandLine The log level from the command line;
+   *                                None if the parameter was not set in the command line
+   * @return a new Supervisor
+   */
+  def this(
+             supervisorIdentifier: Identifier,
+             kafkaBrokers: String,
+             inputSubscriber: InputSubscriber,
+             cdbReader: CdbReader,
+             dasuFactory: (DasuDao, Identifier, OutputPublisher, InputSubscriber) => Dasu,
+             logLevelFromCommandLine: Option[LogLevelDao]) {
+    this(
+      supervisorIdentifier,
+      kafkaBrokers,
+      Option(new SimpleStringProducer(kafkaBrokers,supervisorIdentifier.id)),
+      None,
+      inputSubscriber,
+      None,
+      None,
+      cdbReader,
+      dasuFactory,
+      logLevelFromCommandLine
+    )
+  }
+
+
   /**
    * Start each DASU and gets the list of inputs it needs to forward to the ASCEs
    * 
@@ -218,9 +318,16 @@ class Supervisor(
     if (!alreadyStarted) {
       Supervisor.logger.debug("Starting Supervisor [{}]",id)
       statsLogger.start()
+      stringProducerOpt.foreach(_.setUp())
+      // Initialize the consumer of IASIOs
+      inputSubscriber.initializeSubscriber()
+      // Initialize the output producer
+      outputPublisher.initializePublisher()
+
       hbEngine.start()
       dasus.values.foreach(dasu => dasu.enableAutoRefreshOfOutput(true))
       val inputsOfSupervisor = dasus.values.foldLeft(Set.empty[String])( (s, dasu) => s ++ dasu.getInputIds())
+      commandManager.start(cmdExecutor,this)
       inputSubscriber.startSubscriber(this, inputsOfSupervisor).flatMap(s => {
         Try{
           Supervisor.logger.debug("Supervisor [{}] started",id)
@@ -234,7 +341,7 @@ class Supervisor(
   /**
    * Release all the resources
    */
-  def cleanUp(): Unit = synchronized {
+  def close(): Unit = synchronized {
 
     val alreadyCleaned = cleanedUp.getAndSet(true)
     if (!alreadyCleaned) {
@@ -249,15 +356,18 @@ class Supervisor(
       Supervisor.logger.debug("Supervisor [{}]: releasing the publisher", id)
       Try(outputPublisher.cleanUpPublisher())
       hbEngine.shutdown()
+      Supervisor.logger.debug("Supervisor [{}]: closing the kafka string producer", id)
+      stringProducerOpt.foreach(_.tearDown())
       Supervisor.logger.info("Supervisor [{}]: cleaned up", id)
     }
   }
-  
+
     /** Adds a shutdown hook to cleanup resources before exiting */
   private def addsShutDownHook(): Thread = {
     val t = new Thread() {
         override def run(): Unit = {
-          cleanUp()
+          Supervisor.logger.info("Shutdown hook is closing the Supervisor {}",supervisorIdentifier.id)
+          close()
         }
     }
     Runtime.getRuntime.addShutdownHook(t)
@@ -393,6 +503,7 @@ object Supervisor {
     val options: Options = new Options
     options.addOption("h", "help",false,"Print help and exit")
     options.addOption("j", "jcdb", true, "Use the JSON Cdb at the passed path")
+    options.addOption("c", "cdbClass", true, "Use an external CDB reader with the passed class")
     options.addOption("x", "logLevel", true, "Set the log level (TRACE, DEBUG, INFO, WARN, ERROR)")
 
     val parser: CommandLineParser = new DefaultParser
@@ -440,7 +551,6 @@ object Supervisor {
       ret._3.getOrElse("Undefined"),
       ret._1.getOrElse("Undefined"))
     ret
-
   }
 
   /**
@@ -455,17 +565,8 @@ object Supervisor {
 
     val supervisorId = parsedArgs._1.get
 
-    val reader: CdbReader = {
-      if (parsedArgs._2.isDefined) {
-        val jsonCdbPath = parsedArgs._2.get
-        Supervisor.logger.info("Using JSON CDB @ {}",jsonCdbPath)
-        val cdbFiles: CdbFiles = new CdbJsonFiles(jsonCdbPath)
-        new JsonReader(cdbFiles)
-      } else {
-        new RdbReader()
-      }
-    }
-    
+    val reader: CdbReader = CdbReaderFactory.getCdbReader(args)
+
     /** 
      *  Refresh rate and validityThreshold: it uses the first defined ones:
      *  1 java properties,
@@ -473,8 +574,6 @@ object Supervisor {
      *  3 default
      */
     val (refreshRate, validityThreshold,kafkaBrokers) = {
-      val RefreshTimeIntervalSeconds = Integer.getInteger(AutoSendPropName,AutoSendTimeIntervalDefault)
-      val ValidityThresholdSeconds = Integer.getInteger(ValidityThresholdPropName,ValidityThresholdDefault)
 
       val iasDaoOpt = reader.getIas
 
@@ -493,7 +592,6 @@ object Supervisor {
       fromCdb._3)
     }
 
-    val outputPublisher: OutputPublisher = KafkaPublisher(supervisorId,None,kafkaBrokers,System.getProperties)
     val inputsProvider: InputSubscriber = KafkaSubscriber(supervisorId,None,kafkaBrokers,System.getProperties)
 
     // The identifier of the supervisor
@@ -502,18 +600,14 @@ object Supervisor {
     val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) =>
       DasuImpl(dd,i,op,id,refreshRate,validityThreshold)
 
-    val hbProducer: HbProducer = {
-
-      val kafkaServers = Option(System.getProperties.getProperty(KafkaHelper.BROKERS_PROPNAME))
-
-      new HbKafkaProducer(
-        supervisorId+"HBSender",
-        kafkaServers.orElse(kafkaBrokers).getOrElse(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS),
-        new HbJsonSerializer())
-    }
-
     // Build the supervisor
-    val supervisor = new Supervisor(identifier,outputPublisher,inputsProvider,hbProducer,reader,factory,parsedArgs._3)
+    val supervisor = new Supervisor(
+      identifier,
+      kafkaBrokers.get,
+      inputsProvider,
+      reader,
+      factory,
+      parsedArgs._3)
 
     val started = supervisor.start()
 

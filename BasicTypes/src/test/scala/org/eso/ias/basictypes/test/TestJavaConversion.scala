@@ -23,6 +23,9 @@ class TestJavaConversion  extends FlatSpec {
       
       val doubleHioId = new Identifier("DoubleID",IdentifierType.IASIO,Option[Identifier](asceId))
       val alarmHioId = new Identifier("AlarmID",IdentifierType.IASIO,Option[Identifier](asceId))
+      val tStampHioId = new Identifier("TStampID",IdentifierType.IASIO,Option[Identifier](asceId))
+      val arrayLongHioId = new Identifier("ArrayLongID",IdentifierType.IASIO,Option[Identifier](asceId))
+      val arrayDoubleHioId = new Identifier("ArrayDoubleID",IdentifierType.IASIO,Option[Identifier](asceId))
       // Modes
       val doubleMode = OperationalMode.MAINTENANCE
       val alarmMode = OperationalMode.STARTUP
@@ -38,6 +41,12 @@ class TestJavaConversion  extends FlatSpec {
       val charValue = Some('X')
       val stringValue = Some("Test")
       val boolValue = Some(false)
+      val tStampValue = Some(System.currentTimeMillis)
+
+      // The type of the array of Long is NumericArray
+      val arrayLongValue: Some[NumericArray] = Some(new NumericArray(List(2,6,8,0),NumericArray.NumericArrayType.LONG))
+      // The type of the array of Double is NumericArray
+      val arrayDoubleValue: Some[NumericArray] = Some(new NumericArray(List(3.2,4.6,7.8,9),NumericArray.NumericArrayType.DOUBLE))
       
       // Validity
       val validity = Some(Validity(RELIABLE))
@@ -132,9 +141,47 @@ class TestJavaConversion  extends FlatSpec {
         None,
         IASTypes.FLOAT,
         Some(0L),Some(1L),Some(2L),Some(3L),Some(4L),Some(5L),Some(6L),None,None)
+
+
+      val tStampHIO = new InOut[Long]( // Input
+        tStampValue,
+        tStampHioId,
+        mode,
+        validity,
+        None,
+        None,
+        IASTypes.TIMESTAMP,
+        Some(0L),Some(1L),Some(2L),Some(3L),Some(4L),Some(5L),Some(6L),None,None)
+
+     val arrayLongHIO = new InOut[NumericArray]( // Input
+        arrayLongValue,
+        arrayLongHioId,
+        mode,
+        validity,
+        None,
+        None,
+        IASTypes.ARRAYOFLONGS,
+        Some(0L),Some(1L),Some(2L),Some(3L),Some(4L),Some(5L),Some(6L),None,None)
+
+      val arrayDoubleHIO = new InOut[NumericArray]( // Input
+        arrayDoubleValue,
+        arrayDoubleHioId,
+        mode,
+        validity,
+        None,
+        None,
+        IASTypes.ARRAYOFDOUBLES,
+        Some(0L),Some(1L),Some(2L),Some(3L),Some(4L),Some(5L),Some(6L),None,None)
       
       // Ensure we are testing all possible types
-      val hios = List (longHIO,intHIO,shortHIO,byteHIO,charHIO,stringHIO,boolHIO,alarmHIO,doubleHIO,floatHIO)
+      val hios = List (
+        longHIO,intHIO,shortHIO,byteHIO,
+        charHIO,stringHIO,
+        boolHIO,
+        alarmHIO,
+        doubleHIO,floatHIO,
+        tStampHIO,
+        arrayLongHIO,arrayDoubleHIO)
       assert(hios.size==IASTypes.values().size)
     }
   }
@@ -224,6 +271,54 @@ class TestJavaConversion  extends FlatSpec {
     assert(alarmHio.fromIasValueValidity.isEmpty)
     assert(alarmHio.fromInputsValidity.isDefined)
     assert(alarmHio.fromInputsValidity.get.iasValidity==IasValidity.RELIABLE)
+  }
+
+  it must "Update a IASIO of type TIMESTAMP with the values from a IASValue" in {
+    val f = fixture
+
+    val tStampIasVal = f.tStampHIO.toIASValue()
+    assert(tStampIasVal.value==f.tStampValue.get)
+    val now = System.currentTimeMillis()
+    val newTimestampVal = IASValue.build(now, OperationalMode.OPERATIONAL, UNRELIABLE, tStampIasVal.fullRunningId, IASTypes.TIMESTAMP)
+
+    val iasio = f.tStampHIO.update(newTimestampVal)
+
+    assert(newTimestampVal.valueType==iasio.iasType)
+    assert(newTimestampVal.mode==iasio.mode)
+    assert(newTimestampVal.id==iasio.id.id)
+    assert(newTimestampVal.fullRunningId==iasio.id.fullRunningID)
+    assert(newTimestampVal.value==iasio.value.get)
+  }
+
+  it must "Update IASIOs of type ARRAY with the values from IASValues" in {
+    val f = fixture
+
+    val arrayLongIasVal = f.arrayLongHIO.toIASValue()
+    assert(arrayLongIasVal.value==f.arrayLongValue.get)
+
+    val arrayLongValue: NumericArray = new NumericArray(List(3,4,5,6,7),NumericArray.NumericArrayType.LONG)
+    val newArrayLongVal = IASValue.build(arrayLongValue, OperationalMode.OPERATIONAL, UNRELIABLE, arrayLongIasVal.fullRunningId, IASTypes.ARRAYOFLONGS)
+    val iasioL = f.arrayLongHIO.update(newArrayLongVal)
+
+    assert(newArrayLongVal.valueType==iasioL.iasType)
+    assert(newArrayLongVal.mode==iasioL.mode)
+    assert(newArrayLongVal.id==iasioL.id.id)
+    assert(newArrayLongVal.fullRunningId==iasioL.id.fullRunningID)
+    assert(newArrayLongVal.value==iasioL.value.get)
+
+    val arrayDoubleIasVal = f.arrayDoubleHIO.toIASValue()
+    assert(arrayDoubleIasVal.value==f.arrayDoubleValue.get)
+
+    val arrayDoubleValue: NumericArray = new NumericArray(List(1.7,-12,3.125,-5.5,789.2345),NumericArray.NumericArrayType.DOUBLE)
+    val newArrayDoubleVal = IASValue.build(arrayDoubleValue, OperationalMode.OPERATIONAL, UNRELIABLE, arrayDoubleIasVal.fullRunningId, IASTypes.ARRAYOFDOUBLES)
+    val iasioD = f.arrayDoubleHIO.update(newArrayDoubleVal)
+
+    assert(newArrayDoubleVal.valueType==iasioD.iasType)
+    assert(newArrayDoubleVal.mode==iasioD.mode)
+    assert(newArrayDoubleVal.id==iasioD.id.id)
+    assert(newArrayDoubleVal.fullRunningId==iasioD.id.fullRunningID)
+    assert(newArrayDoubleVal.value==iasioD.value.get)
+
   }
   
   it must "Update a IASIO with the ids of dependents of a IASValue" in { 

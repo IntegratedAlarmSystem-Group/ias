@@ -5,8 +5,13 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 
 import com.typesafe.scalalogging.Logger
 import org.eso.ias.cdb.pojos.{IasDao, IasioDao, TemplateDao}
-import org.eso.ias.dasu.subscriber.{InputSubscriber, InputsListener}
+import org.eso.ias.command.kafka.CommandManagerKafkaImpl
+import org.eso.ias.command.{CommandManager, DefaultCommandExecutor}
+import org.eso.ias.dasu.subscriber.{InputSubscriber, InputsListener, KafkaSubscriber}
+import org.eso.ias.heartbeat.publisher.HbKafkaProducer
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer
 import org.eso.ias.heartbeat.{HbEngine, HbProducer, HeartbeatProducerType, HeartbeatStatus}
+import org.eso.ias.kafkautils.SimpleStringProducer
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.{IASValue, Identifier}
 
@@ -36,33 +41,50 @@ import scala.util.{Failure, Success, Try}
   * and kill threads that do not terminate in killThreadAfter seconds.
   * To kill a thread, its close method is invoked and it will be removed
   * from the active listener.
-  *
-  * @param processorIdentifier the identifier of the value processor
-  * @param listeners the processors of the IasValues read from the BSDB
-  * @param hbProducer The HB generator
-  * @param inputsSubscriber The subscriber to get events from the BDSB
-  * @param iasDao The configuration of the IAS read from the CDB
-  * @param iasioDaos The configuration of the IASIOs read from the CDB
-  *
+ *
+ * The constructor builds the HB producer, the input subscriber and the command manager
+ * unless they are passed as optional parameters. This is useful for customization or for testing
+ * but normally, in operation they are expected to be empty.
+ *
+ * @param processorIdentifier the identifier of the value processor
+ * @param listeners the processors of the IasValues read from the BSDB
+ * @param kafkaServersOpt The optional string with the kafka servers (if empty the default
+ *                        from KafkaHelper will be used
+ * @param hbProducerOpt the optional HbProducer
+ * @param cmdManagerOpt Th eoptional command manager
+ * @param inputSubscriberOpt The optional input subscriber
+ * @param iasDao The configuration of the IAS read from the CDB
+ * @param iasioDaos The configuration of the IASIOs read from the CDB
+ * @param templateDaos The configuration of templates read from CDB
+ *
  */
 class IasValueProcessor(
-                         val processorIdentifier: String,
-                         val listeners: List[ValueListener],
-                         private val hbProducer: HbProducer,
-                         private val inputsSubscriber: InputSubscriber,
-                         val iasDao: IasDao,
-                         val iasioDaos: List[IasioDao],
-                         val templateDaos: List[TemplateDao]) extends InputsListener {
+                       val processorIdentifier: String,
+                       val listeners: List[ValueListener],
+                       val kafkaServersOpt: Option[String],
+                       hbProducerOpt: Option[HbProducer],
+                       cmdManagerOpt: Option[CommandManager],
+                       inputSubscriberOpt: Option[InputSubscriber],
+                       val iasDao: IasDao,
+                       val iasioDaos: List[IasioDao],
+                       val templateDaos: List[TemplateDao])
+  extends InputsListener
+with AutoCloseable {
   require(Option(listeners).isDefined && listeners.nonEmpty,"Mo listeners defined")
   require(listeners.map(_.id).toSet.size==listeners.size,"Duplicated IDs of listeners")
-  require(Option(hbProducer).isDefined,"Invalid HB producer")
-  require(Option(inputsSubscriber).isDefined,"Invalid inputs subscriber")
+  require(Option(kafkaServersOpt).isDefined,"Invalid null string of kafka servers")
   require(Option(iasDao).isDefined,"Invalid IAS configuration")
   require(Option(iasioDaos).isDefined && iasioDaos.nonEmpty,"Invalid configuration of IASIOs from CDB")
   require(Option(templateDaos).isDefined,"Invalid configuration of templates from CDB")
   require(Option(processorIdentifier).isDefined && processorIdentifier.nonEmpty,"Invalid empty identifier")
 
   IasValueProcessor.logger.info("{} processors will work on IAsValues read from the BSDB",listeners.length)
+
+  if (
+    (kafkaServersOpt.isEmpty || kafkaServersOpt.get.isEmpty) &&
+      (hbProducerOpt.isEmpty || hbProducerOpt.isEmpty || cmdManagerOpt.isEmpty)) {
+    throw new IllegalArgumentException("Missing kafka server string")
+  }
 
   /** The thread factory for the executors */
   val threadFactory = new ProcessorThreadFactory(processorIdentifier)
@@ -83,8 +105,26 @@ class IasValueProcessor(
   /** The map of IasioDao by ID to pass to the listeners */
   val iasioDaosMap: Map[String,IasioDao] = iasioDaos.foldLeft(Map[String,IasioDao]()){ (z, dao) => z+(dao.getId -> dao)}
 
+  /** The kafka string producer is defined only if needed */
+  val stringProducerOpt =
+    if (hbProducerOpt.isEmpty || cmdManagerOpt.isEmpty || inputSubscriberOpt.isEmpty) {
+      Option(new SimpleStringProducer(kafkaServersOpt.get,processorIdentifier))
+    } else {
+      None
+    }
   /** The heartbeat Engine */
-  val hbEngine: HbEngine = HbEngine(processorIdentifier,HeartbeatProducerType.SINK,iasDao.getHbFrequency,hbProducer)
+  val hbEngine: HbEngine = {
+    val hbProd = hbProducerOpt.getOrElse(new HbKafkaProducer(stringProducerOpt.get,processorIdentifier,new HbJsonSerializer))
+    HbEngine(processorIdentifier,HeartbeatProducerType.SINK,iasDao.getHbFrequency,hbProd)
+  }
+
+  /** The command manager */
+  val commandManager: CommandManager =
+    cmdManagerOpt.getOrElse(new CommandManagerKafkaImpl(processorIdentifier,kafkaServersOpt.get,stringProducerOpt.get))
+
+  /** The consumer of IASIOs from the kafka tiopic */
+  val inputsProvider: InputSubscriber =
+    inputSubscriberOpt.getOrElse(KafkaSubscriber(processorIdentifier,None,Option(kafkaServersOpt.get),System.getProperties))
 
   /** Signal if the processor has been closed */
   val closed = new AtomicBoolean(false)
@@ -171,6 +211,36 @@ class IasValueProcessor(
   IasValueProcessor.logger.debug("{} processor built",hbEngine.hb.stringRepr)
 
   /**
+   * Constructor that build data structor to connect to kafka using the passed server list
+   *
+   * This constructor is supposed to be used in operation
+   *
+   * @param processorIdentifier the identifier of the value processor
+   * @param listeners the processors of the IasValues read from the BSDB
+   * @param kafkaServers The string with the kafka servers
+   * @param iasDao The configuration of the IAS read from the CDB
+   * @param iasioDaos The configuration of the IASIOs read from the CDB
+   * @param templateDaos The configuration of templates read from CDB
+   */
+  def this(
+          processorIdentifier: String,
+          listeners: List[ValueListener],
+          kafkaServers: String,
+          iasDao: IasDao,
+          iasioDaos: List[IasioDao],
+          templateDaos: List[TemplateDao]) {
+    this(
+      processorIdentifier,
+      listeners,
+      Option(kafkaServers),
+      None,
+      None,
+      None,
+      iasDao,
+      iasioDaos,templateDaos)
+  }
+
+  /**
     * The active listeners are those that are actively processing events.
     * When a listeners throws an exception, it is marked as broken and will stop
     * processing events
@@ -199,11 +269,15 @@ class IasValueProcessor(
         IasValueProcessor.logger.warn("Processor {} already initialized",hbEngine.hb.stringRepr)
       } else {
         IasValueProcessor.logger.debug("Processor {} initializing",hbEngine.hb.stringRepr)
+        // Initialize the string consumer
+        stringProducerOpt.foreach(_.setUp())
         // Start the HB
         hbEngine.start(HeartbeatStatus.STARTING_UP)
+        // Start the executor of comamands
+        commandManager.start(new DefaultCommandExecutor(),this)
         // Init the kafka consumer
         IasValueProcessor.logger.debug("Initializing the BSDB consumer")
-        inputsSubscriber.initializeSubscriber() match {
+        inputsProvider.initializeSubscriber() match {
           case Failure(e) => throw new Exception("Error initilizing the subscriber",e)
           case Success(_) =>
         }
@@ -215,7 +289,7 @@ class IasValueProcessor(
         }
         // Start getting events from the BSDB
         IasValueProcessor.logger.debug("Start getting events...")
-        inputsSubscriber.startSubscriber(this,Set.empty)
+        inputsProvider.startSubscriber(this,Set.empty)
         initialized.set(true)
         hbEngine.updateHbState(HeartbeatStatus.RUNNING)
         // Start the periodic processing
@@ -230,7 +304,7 @@ class IasValueProcessor(
   }
 
   /** Closes the processor */
-  def close(): Unit = {
+  override def close(): Unit = {
     val wasClosed = closed.getAndSet(true)
     if (initialized.get()) {
       Runtime.getRuntime.removeShutdownHook(shutdownHookThread)
@@ -240,8 +314,10 @@ class IasValueProcessor(
     } else {
       IasValueProcessor.logger.debug("Processor {} closing",hbEngine.hb.stringRepr)
       hbEngine.updateHbState(HeartbeatStatus.EXITING)
+      // Closes the executor of comamnds
+      commandManager.close()
       // Closes the Kafka consumer
-      inputsSubscriber.cleanUpSubscriber()
+      inputsProvider.cleanUpSubscriber()
       // Shut down the listeners
       closeListeners()
       // Stops the periodic processing
@@ -251,6 +327,8 @@ class IasValueProcessor(
       }
       // Stop the HB
       hbEngine.shutdown()
+      // Close the string consumer
+      stringProducerOpt.foreach(_.tearDown())
     }
 
   }

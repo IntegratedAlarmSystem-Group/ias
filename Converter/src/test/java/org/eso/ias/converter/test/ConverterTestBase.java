@@ -13,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A base class providing common utility methods used
@@ -293,12 +295,53 @@ public class ConverterTestBase {
 			1900L,
 			1950L,
 			IASTypes.ALARM);
-	
+
+	/**
+	 * A holder for type Timestamp
+	 */
+	private final MonitorPointDataHolder mpTimestamp = new MonitorPointDataHolder(
+			"TStampId",
+			Long.valueOf(System.currentTimeMillis()),
+			2000L,
+			2050L,
+			IASTypes.TIMESTAMP);
+
+	/**
+	 * A holder for type Arrray of long
+	 */
+	List<Long> longVals = Stream.of(1L,2L,3L).collect(Collectors.toList());
+	NumericArray longNumVals = new NumericArray(NumericArray.NumericArrayType.LONG,longVals);
+	private final MonitorPointDataHolder mpArrayOfLongs = new MonitorPointDataHolder(
+			"LongArrayId",
+			longVals,
+			2100L,
+			2150L,
+			IASTypes.ARRAYOFLONGS);
+
+	/**
+	 * A holder for type Arrray of doubles
+	 */
+	List<Double	> doubleVals = Stream.of(0.3D,-0.15,13245.789).collect(Collectors.toList());
+	NumericArray doubleNumVals = new NumericArray(NumericArray.NumericArrayType.DOUBLE,doubleVals);
+	private final MonitorPointDataHolder mpArrayOfDoubles = new MonitorPointDataHolder(
+			"DoubleArrayId",
+			doubleVals,
+			2200L,
+			2250L,
+			IASTypes.ARRAYOFDOUBLES);
+
 	/**
 	 * The holders: one for each type
 	 */
 	protected final MonitorPointDataHolder mpdHolders[] = 
-		{ mpLong, mpInt, mpShort, mpByte, mpDouble, mpFloat, mpBool, mpChar, mpString, mpAlarm };
+		{
+				mpLong, mpInt, mpShort, mpByte,
+				mpDouble, mpFloat,
+				mpBool,
+				mpChar, mpString,
+				mpTimestamp,
+				mpArrayOfLongs, mpArrayOfDoubles,
+				mpAlarm };
 	
 	
 	

@@ -95,9 +95,9 @@ public class ConverterCdbTest {
 		if (numOfIasios<=0) {
 			throw new IllegalArgumentException("Invalid number of IASIOs to write in the CDB");
 		}
-		logger.info("Populating JSON CDB in {}",cdbParentPath.toAbsolutePath().toString());
+		logger.info("Populating JSON CDB in {} with {} IASIOS",cdbParentPath.toAbsolutePath().toString(),numOfIasios);
 		CdbWriter cdbWriter = new JsonWriter(cdbFiles);
-		createTmplate(cdbWriter);
+		createTemplate(cdbWriter);
 		populateCDB(numOfIasios, cdbWriter);
 		logger.info("CDB created");
 	}
@@ -114,15 +114,14 @@ public class ConverterCdbTest {
 		if (numOfIasios<=0) {
 			throw new IllegalArgumentException("Invalid number of IASIOs to write in the CDB");
 		}
-		logger.info("Adding {} IasioDao to the CDB",numOfIasios);
 		Set<IasioDao> iasios = buildIasios(numOfIasios);
 		// Adds one templated IASIO
-        IasTypeDao iasType = buildIasType(2);;
+        IasTypeDao iasType = buildIasType(2);
         IasioDao iasio = new IasioDao(idOfTemplatedIasio, "IASIO description", iasType,"http://www.eso.org/almm/alarms");
         iasio.setTemplateId(templateId);
         iasios.add(iasio);
 
-        iasios.forEach( i -> logger.debug("IASIO to write {}",i.getId()));
+        iasios.forEach( i -> logger.debug("IASIO to write {} of type {}",i.getId(),iasio.getIasType()));
 
 		cdbWriter.writeIasios(iasios, false);
 	}
@@ -152,7 +151,7 @@ public class ConverterCdbTest {
      * @param cdbWriter the CDB writer
      * @throws Exception
      */
-    private void createTmplate(CdbWriter cdbWriter) throws Exception {
+    private void createTemplate(CdbWriter cdbWriter) throws Exception {
 	    logger.info("Adding template");
         TemplateDao tDao = new TemplateDao(templateId, 5,15);
         cdbWriter.writeTemplate(tDao);
@@ -200,20 +199,26 @@ public class ConverterCdbTest {
 	 */
 	@Test
 	public void testIasiosDataIntegrity() throws Exception {
+		logger.info("testIasiosDataIntegrity started");
 		int mpPointsToCreate=2000;
 		populateCDB(mpPointsToCreate,cdbFiles);
 		configDao.initialize();
 		
 		for (int t=0; t<mpPointsToCreate; t++) {
 			IasTypeDao iasType = buildIasType(t);
-			Optional<MonitorPointConfiguration> mpConf=configDao.getConfiguration(buildIasId(t));
-			assertTrue(mpConf.isPresent());
-			assertEquals(IASTypes.valueOf(iasType.toString()), mpConf.get().mpType);
+			String id = buildIasId(t);
+			Optional<MonitorPointConfiguration> mpConf=configDao.getConfiguration(id);
+			assertTrue(mpConf.isPresent(),id+" NOT found");
+			assertEquals(IASTypes.valueOf(iasType.toString()),
+					mpConf.get().mpType,
+					"Type of "+id+" mismatch");
 		}
+		logger.info("testIasiosDataIntegrity done");
 	}
 
 	@Test
     public void testTemplatesIasio() throws  Exception {
+		logger.info("testTemplatesIasio started");
        int mpPointsToCreate=5;
        populateCDB(mpPointsToCreate,cdbFiles);
        populateCDB(mpPointsToCreate,cdbFiles);
@@ -224,6 +229,7 @@ public class ConverterCdbTest {
        assertTrue(mpConf.get().maxTemplateIndex.isPresent());
        assertTrue(5==mpConf.get().minTemplateIndex.get());
        assertTrue(15==mpConf.get().maxTemplateIndex.get());
+		logger.info("testTemplatesIasio done");
     }
 }
 

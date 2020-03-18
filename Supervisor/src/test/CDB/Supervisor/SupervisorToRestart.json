@@ -1,0 +1,8 @@
+{
+	"logLevel":"INFO",
+	"id":"SupervisorToRestart",
+	"hostName":"almaias.eso.org",
+	"dasusToDeploy":[
+		{"dasuId":"DasuOfSupervToRestart", "templateId":null, "instance":null}
+	]
+}

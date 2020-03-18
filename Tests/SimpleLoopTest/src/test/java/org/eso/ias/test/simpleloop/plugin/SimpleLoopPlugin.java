@@ -1,29 +1,21 @@
 package org.eso.ias.test.simpleloop.plugin;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.eso.ias.heartbeat.HbMsgSerializer;
-import org.eso.ias.heartbeat.HbProducer;
-import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
-import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
+import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.eso.ias.plugin.Plugin;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.config.PluginConfigException;
 import org.eso.ias.plugin.config.PluginConfigFileReader;
-import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.KafkaPublisher;
 import org.eso.ias.types.OperationalMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * The simple loop plugin that generates the 
@@ -117,14 +109,9 @@ public class SimpleLoopPlugin extends Plugin implements Runnable {
 	 * Constructor
 	 * 
 	 * @param config The plugin coinfiguration
-	 * @param sender The publisher of monitor point values to the IAS core
-	 * @param hbProducer the publisher of HBs
 	 */
-	public SimpleLoopPlugin(
-			PluginConfig config, 
-			MonitorPointSender sender,
-			HbProducer hbProducer) {
-		super(config,sender,hbProducer);
+	public SimpleLoopPlugin(PluginConfig config) {
+		super(config);
 	}
 	
 	/**
@@ -182,12 +169,13 @@ public class SimpleLoopPlugin extends Plugin implements Runnable {
 			System.exit(-1);
 		}
 		logger.info("Configuration successfully read");
+
+		SimpleStringProducer stringProducer = new SimpleStringProducer(serverName+":"+port,pluginId);
 		
 		KafkaPublisher publisher = new KafkaPublisher(
 				pluginId, 
 				monSysId, 
-				serverName, 
-				port,
+				stringProducer,
 				Plugin.getScheduledExecutorService());
 		
 		logger.info("kafka publisher created");
@@ -195,10 +183,7 @@ public class SimpleLoopPlugin extends Plugin implements Runnable {
 		/**
 		 * Instantiate the plugin
 		 */
-		SimpleLoopPlugin plugin = new SimpleLoopPlugin(
-				config, 
-				publisher,
-				new HbKafkaProducer(pluginId, new HbJsonSerializer()));
+		SimpleLoopPlugin plugin = new SimpleLoopPlugin(config);
 		logger.info("Plugin built");
 		
 		try {
@@ -215,7 +200,7 @@ public class SimpleLoopPlugin extends Plugin implements Runnable {
 			logger.error("Intterrupted!",e);
 		}
 		
-		plugin.shutdown();
+		plugin.close();
 		logger.info("Done.");
 		
 	}
@@ -239,12 +224,12 @@ public class SimpleLoopPlugin extends Plugin implements Runnable {
 	 * to generate the sample
 	 */
 	@Override
-	public void shutdown() {
+	public void close() {
 		ScheduledFuture<?> f = future.getAndSet(null);
 		if (f!=null) {
 			f.cancel(false);
 		}
-		super.shutdown();
+		super.close();
 	}
 
 }

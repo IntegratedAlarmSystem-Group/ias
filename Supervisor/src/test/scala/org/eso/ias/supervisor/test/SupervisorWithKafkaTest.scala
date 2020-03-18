@@ -10,13 +10,11 @@ import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.DasuDao
 import org.eso.ias.dasu.DasuImpl
-import org.eso.ias.dasu.publisher.{KafkaPublisher, OutputPublisher}
+import org.eso.ias.dasu.publisher.OutputPublisher
 import org.eso.ias.dasu.subscriber.{InputSubscriber, KafkaSubscriber}
-import org.eso.ias.heartbeat.publisher.HbLogProducer
-import org.eso.ias.heartbeat.serializer.HbJsonSerializer
 import org.eso.ias.kafkautils.KafkaStringsConsumer.StreamPosition
 import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener
-import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosProducer, SimpleKafkaIasiosConsumer}
+import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosProducer, SimpleKafkaIasiosConsumer, SimpleStringProducer}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.supervisor.Supervisor
 import org.eso.ias.types._
@@ -78,14 +76,18 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
   val serializer: IasValueStringSerializer = new IasValueJsonSerializer()
 
   /**
+   * The kafka producer used by the test (the supervisor builds its own shared consumer
+   */
+  val stringProducer = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,"SupervisorWithKafka-Producer")
+
+  /**
    *  The IASIOs producer submits IASIOs to the kafka topic i.e. to the BSDB:
    *  these IASIOs will be received and processed by the DASU running in the Supervisor
    *
    */
   val iasiosProducer = new KafkaIasiosProducer(
-    KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
+    stringProducer,
     KafkaHelper.IASIOs_TOPIC_NAME,
-    "SupervisorWithKafka-Producer",
     serializer)
   iasiosProducer.setUp()
   logger.info("Testing producer started")
@@ -110,9 +112,6 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
   iasiosConsumer.setUp()
   logger.info("Testing consumer started")
 
-  /** The kafka publisher used by the supervisor to send the output of the DASUs to the BSDB*/
-  val outputPublisher: OutputPublisher = KafkaPublisher(supervisorId.id, None, None, new Properties())
-
   /** The kafka consumer gets AISValues from the BSDB */
   val inputConsumer: InputSubscriber = KafkaSubscriber(supervisorId.id, None, None, new Properties())
   
@@ -122,12 +121,11 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
 
   /** The supervisor to test */
   val supervisor = new Supervisor(
-      supervisorId, 
-      outputPublisher, 
-      inputConsumer, 
-      new HbLogProducer(new HbJsonSerializer),
-      cdbReader,
-      factory,
+    supervisorId,
+    KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
+    inputConsumer,
+    cdbReader,
+    factory,
     None)
   
   val latchRef: AtomicReference[CountDownLatch] = new AtomicReference
@@ -180,7 +178,7 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
     logger.info("AfterAll...")
     iasiosProducer.tearDown()
     iasiosConsumer.tearDown()
-    supervisor.cleanUp()
+    supervisor.close()
     logger.info("AfterAll done")
   }
 

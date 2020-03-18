@@ -43,7 +43,6 @@ public class IasValueJsonSerializer implements IasValueStringSerializer {
 	@Override
 	public IASValue<?> valueOf(String str)  throws IasValueSerializerException {
 		try {
-			
 			IasValueJsonPojo jsonPojo = jsonMapper.readValue(str, IasValueJsonPojo.class);
 			return jsonPojo.toIasValue();
 		} catch (Exception e) {

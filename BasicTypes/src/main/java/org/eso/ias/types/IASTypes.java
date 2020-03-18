@@ -3,15 +3,16 @@ package org.eso.ias.types;
 import java.util.Objects;
 
 import org.eso.ias.cdb.pojos.IasTypeDao;
+import org.eso.ias.utils.ISO8601Helper;
 
 /**
  * Java representation of the IAS types.
  * 
  * In this case it is better to have java enumerations instead 
- * of scala because the twos differ too much up to the point 
- * that scala Eumeration are not usable within java sources.
+ * of scala because the two differ too much up to the point
+ * that scala Enumeration are not usable within java sources.
  *
- * TODO: avoid duplication with org.eso.ias.cdb.pojos.IasType
+ * TODO: avoid duplication with org.eso.ias.cdb.pojos.IasTypeDao
  * @see org.eso.ias.cdb.pojos.IasTypeDao
  * @author acaproni
  *
@@ -25,7 +26,16 @@ public enum IASTypes {
     FLOAT(java.lang.Float.class,"FloatType"), 
     BOOLEAN(java.lang.Boolean.class,"BooleanType"), 
     CHAR(java.lang.Character.class,"CharType"), 
-    STRING(java.lang.String.class,"StringType"), 
+    STRING(java.lang.String.class,"StringType"),
+	// The timestamp is a long in the core but transparently converted to a string when serialized
+	// to enhance readability.
+	// For timestamps conversions see {@link org.eso.ias.utils.ISO8601Helper}
+	TIMESTAMP(java.lang.Long.class,"TimestampType"),
+	// The Array of doubles data type is implemented by a {@link NumericArray}
+	ARRAYOFDOUBLES(NumericArray.class,"ArrayOfDoublesType"),
+	// The Array of longs data type is implemented by a {@link NumericArray}
+	ARRAYOFLONGS(NumericArray.class,"ArrayOfLongsType"),
+	// The alarm is an enumerated
     ALARM(Alarm.class,"AlarmType");
 	
 	public final Class<?> typeClass; 
@@ -47,6 +57,9 @@ public enum IASTypes {
     	else if (this==BOOLEAN) return IasTypeDao.BOOLEAN;
     	else if (this==CHAR) return IasTypeDao.CHAR;
     	else if (this==STRING) return IasTypeDao.STRING;
+    	else if (this==TIMESTAMP) return IasTypeDao.TIMESTAMP;
+		else if (this==ARRAYOFLONGS) return IasTypeDao.ARRAYOFLONGS;
+		else if (this==ARRAYOFDOUBLES) return IasTypeDao.ARRAYOFDOUBLES;
     	else if (this==ALARM) return IasTypeDao.ALARM;
     	else throw new UnsupportedOperationException("Unsupported IAS type "+this.typeName);
     }
@@ -61,6 +74,7 @@ public enum IASTypes {
     	Objects.requireNonNull(typeDao);
     	switch (typeDao) {
     	case LONG: return LONG;
+    	case TIMESTAMP: return TIMESTAMP;
     	case INT: return INT;
     	case SHORT: return SHORT;
     	case BYTE: return BYTE;
@@ -69,6 +83,8 @@ public enum IASTypes {
     	case BOOLEAN: return BOOLEAN;
     	case CHAR: return CHAR;
     	case STRING: return STRING;
+		case ARRAYOFLONGS: return ARRAYOFLONGS;
+		case ARRAYOFDOUBLES: return ARRAYOFDOUBLES;
     	case ALARM: return ALARM;
     	default: throw new UnsupportedOperationException("Unsupported DAO type "+typeDao);
     	}
@@ -94,6 +110,9 @@ public enum IASTypes {
     	case BOOLEAN: return Boolean.parseBoolean(value);
     	case CHAR: return value.charAt(0);
     	case STRING: return value;
+		case TIMESTAMP: return ISO8601Helper.timestampToMillis(value);
+		case ARRAYOFDOUBLES: return NumericArray.valueOf(NumericArray.NumericArrayType.DOUBLE,value);
+		case ARRAYOFLONGS: return NumericArray.valueOf(NumericArray.NumericArrayType.LONG,value);
     	case ALARM: return Alarm.valueOf(value);
     	default: throw new UnsupportedOperationException("Unsupported type "+this);
 	}

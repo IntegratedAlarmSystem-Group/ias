@@ -1,16 +1,5 @@
 package org.eso.ias.plugin.test.example;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import org.eso.ias.heartbeat.HbEngine;
 import org.eso.ias.heartbeat.HbMsgSerializer;
 import org.eso.ias.heartbeat.HbProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
@@ -29,6 +18,12 @@ import org.eso.ias.types.Identifier;
 import org.eso.ias.types.IdentifierType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.concurrent.*;
 
 public class DumbWeatherStationPlugin extends Plugin {
 
@@ -52,10 +47,10 @@ public class DumbWeatherStationPlugin extends Plugin {
 	 * Constructor
 	 * @param config The configuration of the plugin
 	 * @param sender The sender
-	 * @param hbProucer the publisher of HBs
+	 * @param hbProd the publisher of HBs
 	 */
 	public DumbWeatherStationPlugin(PluginConfig config, MonitorPointSender sender, HbProducer hbProd) {
-		super(config, sender,hbProd);
+		super(config, sender,null,hbProd,null);
 	}
 	
 	/**
@@ -220,9 +215,7 @@ public class DumbWeatherStationPlugin extends Plugin {
 		JsonFilePublisher jsonPublisher = new JsonFilePublisher(
 				config.getId(), 
 				config.getMonitoredSystemId(),
-				config.getSinkServer(), 
-				config.getSinkPort(), 
-				Plugin.getScheduledExecutorService(), 
+				Plugin.getScheduledExecutorService(),
 				jsonWriter);
 		
 		
