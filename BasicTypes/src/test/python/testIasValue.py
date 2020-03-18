@@ -5,12 +5,14 @@ Created on Jun 8, 2018
 @author: acaproni
 '''
 import unittest
+
 from IASLogging.logConf import Log
+from IasBasicTypes.IasType import IASType
 from IasBasicTypes.IasValue import IasValue
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
-from IasBasicTypes.Validity import Validity
 from IasBasicTypes.OperationalMode import OperationalMode
-from IasBasicTypes.IasType import IASType
+from IasBasicTypes.Validity import Validity
+
 
 class TestIasValue(unittest.TestCase):
 
@@ -33,6 +35,33 @@ class TestIasValue(unittest.TestCase):
             "mode":"DEGRADED","iasValidity":"RELIABLE",
             "fullRunningId":"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(AlarmType-ID:IASIO)",
             "valueType":"ALARM"}"""
+
+    jSonStrTimestamp = """{"value":"2018-05-09T16:15:05","pluginProductionTStamp":"1970-01-01T00:00:00.1",
+            "sentToConverterTStamp":"1970-01-01T00:00:00.2", "receivedFromPluginTStamp":"1970-01-01T00:00:00.3",
+            "convertedProductionTStamp":"1970-01-01T00:00:00.4","sentToBsdbTStamp":"1970-01-01T00:00:00.5",
+            "readFromBsdbTStamp":"1970-01-01T00:00:00.6","dasuProductionTStamp":"1970-01-01T00:00:00.7",
+            "depsFullRunningIds":["(SupervId1:SUPERVISOR)@(dasuVID1:DASU)@(asceVID1:ASCE)@(AlarmID1:IASIO)"],
+            "mode":"OPERATIONAL","iasValidity":"RELIABLE",
+            "fullRunningId":"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(Timestamp-ID:IASIO)",
+            "valueType":"TIMESTAMP"}"""
+
+    jSonStrArrayOfLongs = """{"value":"[1, 2, 3, 4]","pluginProductionTStamp":"1970-01-01T00:00:00.1",
+            "sentToConverterTStamp":"1970-01-01T00:00:00.2", "receivedFromPluginTStamp":"1970-01-01T00:00:00.3",
+            "convertedProductionTStamp":"1970-01-01T00:00:00.4","sentToBsdbTStamp":"1970-01-01T00:00:00.5",
+            "readFromBsdbTStamp":"1970-01-01T00:00:00.6","dasuProductionTStamp":"1970-01-01T00:00:00.7",
+            "depsFullRunningIds":["(SupervId1:SUPERVISOR)@(dasuVID1:DASU)@(asceVID1:ASCE)@(AlarmID1:IASIO)"],
+            "mode":"OPERATIONAL","iasValidity":"RELIABLE",
+            "fullRunningId":"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(Timestamp-ID:IASIO)",
+            "valueType":"ARRAYOFLONGS"}"""
+
+    jSonStrArrayOfDoubles = """{"value":"[0.123,-99.05,2,3,5,7]","pluginProductionTStamp":"1970-01-01T00:00:00.1",
+            "sentToConverterTStamp":"1970-01-01T00:00:00.2", "receivedFromPluginTStamp":"1970-01-01T00:00:00.3",
+            "convertedProductionTStamp":"1970-01-01T00:00:00.4","sentToBsdbTStamp":"1970-01-01T00:00:00.5",
+            "readFromBsdbTStamp":"1970-01-01T00:00:00.6","dasuProductionTStamp":"1970-01-01T00:00:00.7",
+            "depsFullRunningIds":["(SupervId1:SUPERVISOR)@(dasuVID1:DASU)@(asceVID1:ASCE)@(AlarmID1:IASIO)"],
+            "mode":"OPERATIONAL","iasValidity":"RELIABLE",
+            "fullRunningId":"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(Timestamp-ID:IASIO)",
+            "valueType":"ARRAYOFDOUBLES"}"""
 
     def testName(self):
         iasValue = IasValue.fromJSon(self.jSonStr)
@@ -168,8 +197,38 @@ class TestIasValue(unittest.TestCase):
         self.assertEqual(iasValue2.readFromBsdbTStamp,iasFomJson2.readFromBsdbTStamp)
         self.assertEqual(iasValue2.dasuProductionTStampStr,iasFomJson2.dasuProductionTStampStr)
         self.assertEqual(iasValue2.dasuProductionTStamp,iasFomJson2.dasuProductionTStamp)
+
+    def testTimestamp(self):
+        '''
+        Test the TIMESTAMP type
+        '''
+        iasValue = IasValue.fromJSon(self.jSonStrTimestamp)
+
+        iasValueJson = iasValue.toJSonString()
+        iasFomJson = IasValue.fromJSon(iasValueJson)
+        self.assertEqual(iasValue.value,iasFomJson.value)
+
+    def testArrayOfLongs(self):
+        '''
+        Test the ARRAYOFLONGS type
+        '''
+        iasValue = IasValue.fromJSon(self.jSonStrArrayOfLongs)
+
+        iasValueJson = iasValue.toJSonString()
+        iasFomJson = IasValue.fromJSon(iasValueJson)
+        self.assertEqual(iasValue.value,iasFomJson.value)
+
+    def testArrayOfDoubles(self):
+        '''
+        Test the ARRAYOFDOUBLES type
+        '''
+        iasValue = IasValue.fromJSon(self.jSonStrArrayOfDoubles)
+
+        iasValueJson = iasValue.toJSonString()
+        iasFomJson = IasValue.fromJSon(iasValueJson)
+        self.assertEqual(iasValue.value,iasFomJson.value)
         
 if __name__ == "__main__":
-    logger=Log.initLogging(__file__)
+    logger=Log.getLogger(__file__)
     logger.info("Start main")
     unittest.main()

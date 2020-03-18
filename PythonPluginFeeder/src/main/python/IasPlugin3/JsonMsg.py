@@ -6,9 +6,12 @@ Created on May 9, 2018
 
 import json
 from datetime import datetime
+
 import dateutil.parser
-from IasBasicTypes.OperationalMode import OperationalMode
+
 from IasBasicTypes.IasType import IASType
+from IasBasicTypes.OperationalMode import OperationalMode
+
 
 class JsonMsg(object):
     '''
@@ -122,6 +125,8 @@ class JsonMsg(object):
         
         if self.valueType==IASType.ALARM:
             value = str(self.value).split(".")[1]
+        elif self.valueType==IASType.ARRAYOFLONGS or self.valueType==IASType.ARRAYOFDOUBLES:
+            value = str(self.value)
         else:
             value = str(self.value)
         

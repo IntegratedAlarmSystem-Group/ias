@@ -3,17 +3,18 @@ Created on Jun 12, 2018
 
 @author: acaproni
 '''
-import logging
-import time
 from datetime import datetime
 from threading import Thread
 
-from IasBasicTypes.IasValue import IasValue
-from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
+import time
 from kafka import KafkaConsumer
 from kafka.structs import TopicPartition
 
-logger = logging.getLogger(__file__)
+from IASLogging.logConf import Log
+from IasBasicTypes.IasValue import IasValue
+from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
+
+logger=Log.getLogger(__file__)
 
 class IasValueListener(object):
     """
@@ -98,7 +99,7 @@ class KafkaValueConsumer(Thread):
         The thread to get IasValues from the BSDB
         """
         logger.info('Thread to poll for IasValues started')
-        
+
         partitionsIds=None
         n = 1 
         if not self.terminateThread:
@@ -144,5 +145,6 @@ class KafkaValueConsumer(Thread):
         '''
         Shuts down the thread
         '''
+        self.consumer.close()
         self.terminateThread = True
         

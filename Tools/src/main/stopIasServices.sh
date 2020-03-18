@@ -1,6 +1,6 @@
 #!/bin/bash 
 
-cd /opt/kafka_2.12-2.0.0
+cd /opt/kafka_2.12-2.4.0
 echo  "Stopping zookeeper..."
 bin/zookeeper-server-stop.sh config/zookeeper.properties
 echo  "Stopping kafka..." 

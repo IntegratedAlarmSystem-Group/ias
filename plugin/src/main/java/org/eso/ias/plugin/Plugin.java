@@ -1,9 +1,15 @@
 package org.eso.ias.plugin;
 
+import org.eso.ias.command.CommandManager;
+import org.eso.ias.command.DefaultCommandExecutor;
+import org.eso.ias.command.kafka.CommandManagerKafkaImpl;
 import org.eso.ias.heartbeat.HbEngine;
 import org.eso.ias.heartbeat.HbProducer;
 import org.eso.ias.heartbeat.HeartbeatProducerType;
 import org.eso.ias.heartbeat.HeartbeatStatus;
+import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
+import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
+import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.config.Value;
 import org.eso.ias.plugin.filter.Filter;
@@ -11,6 +17,7 @@ import org.eso.ias.plugin.filter.FilterFactory;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.MonitorPointSender.SenderStats;
 import org.eso.ias.plugin.publisher.PublisherException;
+import org.eso.ias.plugin.publisher.impl.KafkaPublisher;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.eso.ias.types.Identifier;
 import org.eso.ias.types.IdentifierType;
@@ -82,7 +89,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *  
  * @author acaproni
  */
-public class Plugin implements ChangeValueListener {
+public class Plugin implements ChangeValueListener, AutoCloseable {
 	
 	/**
 	 * The map of monitor points and alarms produced by the 
@@ -215,6 +222,14 @@ public class Plugin implements ChangeValueListener {
 	 * errors in the implementation of the filtering. 
 	 */
 	private final Set<String> disabledMonitorPoints = new TreeSet<>();
+
+	/**
+	 * The shared kafka string producer used to publish data on kafka topics.
+	 *
+	 * It is empty if the user passes its own MonitorPointData and HbProducer that might not
+	 * publish values in the kafka topics. A feature used for testing
+	 */
+	private final Optional<SimpleStringProducer> kafkaStringProducer;
 	
 	/**
 	 * The object that sends monitor points to the core of the IAS.
@@ -240,25 +255,33 @@ public class Plugin implements ChangeValueListener {
 	 * ThE engine to send heartbeats
 	 */
 	private final HbEngine hbEngine;
-	
+
+	/**
+	 * The command manager to receive and execute commands
+	 *
+	 * It can be empty if command management is not desired
+	 * and to ensure backward compatibility of existing plugins
+	 */
+	private final Optional<CommandManager> commandManager;
+
 	/**
 	 * Build a non templated plugin with the passed parameters.
-	 * 
+	 *
 	 * @param id The Identifier of the plugin
 	 * @param monitoredSystemId: the identifier of the monitored system
 	 * @param values the monitor point values
-	 * @param props The user defined properties 
+	 * @param props The user defined properties
 	 * @param sender The publisher of monitor point values to the IAS core
 	 * @param defaultFilter the default filter (can be <code>null</code>) to apply
 	 *                      if there is not filter set in the value
 	 * @param defaultFilterOptions the options for the default filter
-	 *                             (can be <code>null</code>)                      
+	 *                             (can be <code>null</code>)
 	 * @param refreshRate The auto-send time interval in seconds
 	 * @param hbFrequency the frequency (seconds) to periodically publish HBs
 	 * @param hbProducer the publisher of HBs
 	 */
 	public Plugin(
-			String id, 
+			String id,
 			String monitoredSystemId,
 			Collection<Value> values,
 			Properties props,
@@ -283,6 +306,54 @@ public class Plugin implements ChangeValueListener {
 
 	/**
 	 * Build a plugin with the passed parameters.
+	 *
+	 * @param id The Identifier of the plugin
+	 * @param monitoredSystemId: the identifier of the monitored system
+	 * @param values the monitor point values
+	 * @param props The user defined properties
+	 * @param sender The publisher of monitor point values to the IAS core
+	 * @param defaultFilter the default filter (can be <code>null</code>) to apply
+	 *                      if there is not filter set in the value
+	 * @param defaultFilterOptions the options for the default filter
+	 *                             (can be <code>null</code>)
+	 * @param refreshRate The auto-send time interval in seconds
+	 * @param hbFrequency the frequency of the heartbeat in seconds
+	 * @param instanceNumber the number of the instance if the plugin is replicated,
+	 *                       <code>null</code> if not replicated
+	 * @param hbFrequency the frequency (seconds) to periodically publish HBs
+	 * @param hbProducer the publisher of HBs
+	 */
+	public Plugin(
+			String id,
+			String monitoredSystemId,
+			Collection<Value> values,
+			Properties props,
+			MonitorPointSender sender,
+			String defaultFilter,
+			String defaultFilterOptions,
+			int refreshRate,
+			Integer instanceNumber,
+			int hbFrequency,
+			HbProducer hbProducer) {
+		this(
+				id,
+				monitoredSystemId,
+				values,props,
+				sender,
+				defaultFilter,
+				defaultFilterOptions,
+				refreshRate,
+				instanceNumber,
+				hbFrequency,
+				hbProducer,
+				null);
+	}
+
+	/**
+	 * Build a plugin with the passed parameters.
+	 *
+	 * This constructor allows to use the passed monitor point sender and HB producer
+	 * that might or might not publish data to kafka topics. A feature useful for testing.
 	 * 
 	 * @param id The Identifier of the plugin
 	 * @param monitoredSystemId: the identifier of the monitored system
@@ -299,6 +370,8 @@ public class Plugin implements ChangeValueListener {
 	 *                       <code>null</code> if not replicated
 	 * @param hbFrequency the frequency (seconds) to periodically publish HBs
 	 * @param hbProducer the publisher of HBs
+	 * @param cmdManager The command manager to handle command
+	 *                   (can be <code>null</code> if command management not desired)
 	 */
 	public Plugin(
 			String id, 
@@ -311,7 +384,11 @@ public class Plugin implements ChangeValueListener {
 			int refreshRate,
 			Integer instanceNumber,
 			int hbFrequency,
-			HbProducer hbProducer) {
+			HbProducer hbProducer,
+			CommandManager cmdManager) {
+
+		// The user passed its own MonitorPointSender, HbProducer and CommandManager
+		kafkaStringProducer=Optional.empty();
 		
 		// Immediately checks if the plugin is replicated
 		Optional<Integer> instanceNumberOpt = Optional.ofNullable(instanceNumber);
@@ -368,6 +445,11 @@ public class Plugin implements ChangeValueListener {
 		
 		Objects.requireNonNull(hbProducer);
 		this.hbEngine=HbEngine.apply(pluginId, HeartbeatProducerType.PLUGIN, hbFrequency, hbProducer);
+
+		this.commandManager=Optional.ofNullable(cmdManager);
+		if (!this.commandManager.isPresent()) {
+			logger.warn("Command management disabled");
+		}
 		
 		this.mpPublisher=sender;
 		
@@ -407,6 +489,161 @@ public class Plugin implements ChangeValueListener {
 		} });
 		logger.info("Plugin [{}] built",pluginId);
 	}
+
+	/**
+	 * Build the plugins with the configuration read from the passed configuration.
+	 *
+	 * Kafka publishers and consumers are built built by the constructor and connects
+	 * to the kafka servers whose URL is in the configuration file
+	 *
+	 * @param config The configuration of the plugin
+	 */
+	public Plugin(PluginConfig config) {
+		this(
+		config.getId(),
+		config.getMonitoredSystemId(),
+		config.getValuesAsCollection(),
+		config.getProps(),
+		config.getSinkServer()+":"+config.getSinkPort(),
+		config.getDefaultFilter(),
+		config.getDefaultFilterOptions(),
+		config.getAutoSendTimeInterval(),
+		null,
+		config.getHbFrequency());
+	}
+
+	/**
+	 * Build a plugin with the passed parameters.
+	 * It connects to the kafka servers for sending monitor points, HBs and get commands.
+	 *
+	 * @param id The Identifier of the plugin
+	 * @param monitoredSystemId: the identifier of the monitored system
+	 * @param values the monitor point values
+	 * @param props The user defined properties
+	 * @param servers The url of kafka servers ( SERVER:PORT, server2:port2...)
+	 * @param defaultFilter the default filter (can be <code>null</code>) to apply
+	 *                      if there is not filter set in the value
+	 * @param defaultFilterOptions the options for the default filter
+	 *                             (can be <code>null</code>)
+	 * @param refreshRate The auto-send time interval in seconds
+	 * @param hbFrequency the frequency of the heartbeat in seconds
+	 * @param instanceNumber the number of the instance if the plugin is replicated,
+	 *                       <code>null</code> if not replicated
+	 * @param hbFrequency the frequency (seconds) to periodically publish HBs
+	 */
+	public Plugin(
+			String id,
+			String monitoredSystemId,
+			Collection<Value> values,
+			Properties props,
+			String servers,
+			String defaultFilter,
+			String defaultFilterOptions,
+			int refreshRate,
+			Integer instanceNumber,
+			int hbFrequency) {
+
+		// Immediately checks if the plugin is replicated
+		Optional<Integer> instanceNumberOpt = Optional.ofNullable(instanceNumber);
+		instanceNumberOpt.ifPresent( instance -> {
+			if (instance<0) {
+				throw new IllegalArgumentException("Invalid negative instance number "+instance);
+			}
+			logger.debug("This plugin is the replicated instance number {}",instance);
+		});
+		idsMapper = instanceNumberOpt.map( num -> new ReplicatedIdsMapper(num));
+
+		if (id==null || id.trim().isEmpty()) {
+			throw new IllegalArgumentException("The ID can't be null nor empty");
+		}
+
+		Identifier monSystemIdentifier = new Identifier(monitoredSystemId, IdentifierType.MONITORED_SOFTWARE_SYSTEM);
+		pluginIdentifier = new Identifier(id, IdentifierType.PLUGIN,monSystemIdentifier);
+
+		this.pluginId=idsMapper.map( mapper -> mapper.toRealId(id.trim()))
+				.orElse(id.trim());
+
+		if (idsMapper.isPresent()) {
+			logger.info("New iID of the replicated plugin is [{}]",this.pluginId);
+		}
+
+		if (monitoredSystemId==null || monitoredSystemId.trim().isEmpty()) {
+			throw new IllegalArgumentException("The ID of th emonitored system can't be null nor empty");
+		}
+		this.monitoredSystemId= monitoredSystemId.trim();
+
+		if (values==null || values.isEmpty()) {
+			throw new IllegalArgumentException("No monitor points definition found");
+		}
+
+		if (servers==null || servers.isEmpty()) {
+			throw new IllegalArgumentException("Invalid null/empty string of kafka servers");
+		}
+		kafkaStringProducer = Optional.of(new SimpleStringProducer(servers,id));
+		Objects.requireNonNull(kafkaStringProducer,"The simple string producer can't be NULL");
+		mpPublisher = new KafkaPublisher(
+				id,
+				monitoredSystemId,
+				kafkaStringProducer.get(),
+				Plugin.getScheduledExecutorService());
+
+		Integer refreshRateFromProp = Integer.getInteger(AUTO_SEND_TI_PROPNAME);
+		if (refreshRateFromProp!=null) {
+			this.autoSendRefreshRate = refreshRateFromProp;
+		} else {
+			this.autoSendRefreshRate = refreshRate;
+		}
+		if (this.autoSendRefreshRate<=0) {
+			throw new IllegalArgumentException("The auto-send time interval must be greater then 0 instead of "+refreshRate);
+		}
+
+		if (hbFrequency<=0) {
+			throw new IllegalArgumentException("The HB frequency must be >0");
+		}
+
+		flushProperties(props);
+
+		HbProducer hbProducer = new HbKafkaProducer(kafkaStringProducer.get(), id, new HbJsonSerializer());
+		this.hbEngine=HbEngine.apply(pluginId, HeartbeatProducerType.PLUGIN, hbFrequency, hbProducer);
+
+		this.commandManager = Optional.of(new CommandManagerKafkaImpl(id, servers, kafkaStringProducer.get()));
+
+		/** check if the monitor point has the filter or if take global*/
+		values.forEach(v -> {
+			try {
+				MonitoredValue mv = null;
+
+				if (
+						(v.getFilter()==null || v.getFilter().isEmpty()) &&
+								(defaultFilter==null || defaultFilter.isEmpty())) {
+					logger.info("No filter, neither default filter set for {}",v.getId());
+					mv = new MonitoredValue(
+							v.getId(),
+							v.getRefreshTime(),
+							schedExecutorSvc,
+							this,autoSendRefreshRate);
+				} else {
+
+					String filterName = (v.getFilter()!=null)?v.getFilter():defaultFilter;
+					String filterOptions = (v.getFilterOptions()!=null)?v.getFilterOptions():defaultFilterOptions;
+
+					logger.debug("Instantiating filter {} for monitor point {}",filterName,v.getId());
+					Filter filter = FilterFactory.getFilter(filterName, filterOptions);
+
+					mv = new MonitoredValue(
+							v.getId(),
+							v.getRefreshTime(),
+							filter,
+							schedExecutorSvc,
+							this,autoSendRefreshRate);
+				}
+
+				putMonitoredPoint(mv);
+			}catch (Exception e){
+				logger.error("Error adding monitor point "+v.getId(),e);
+			} });
+		logger.info("Plugin [{}] built",pluginId);
+	}
 	
 	/**
 	 * Flushes the user defined properties in the System properties.
@@ -432,35 +669,25 @@ public class Plugin implements ChangeValueListener {
 		}
 	}
 	
-	/**
-	 * Build a non replicated plugin from the passed configuration.
-	 * 
-	 * @param config The plugin coinfiguration
-	 * @param sender The publisher of monitor point values to the IAS core
-	 * @param hbProducer the publisher of HBs
-	 */
-	public Plugin(
-			PluginConfig config,
-			MonitorPointSender sender,
-			HbProducer hbProducer) {
-		this(config,sender,null,hbProducer);
-		
-	}
-	
+
+
 	/**
 	 * Build a replicated plugin from the passed configuration.
-	 * 
+	 *
 	 * @param config The plugin coinfiguration
 	 * @param sender The publisher of monitor point values to the IAS core
 	 * @param instanceNumber the number of the instance if the plugin is replicated,
 	 *                       <code>null</code> if not replicated
 	 * @param hbProducer the publisher of HBs
+	 * @param cmdManager The command manager to handle command
+	 *                  (can be <code>null</code> if command managemrent not desired)
 	 */
 	public Plugin(
 			PluginConfig config,
 			MonitorPointSender sender,
 			Integer instanceNumber,
-			HbProducer hbProducer) {
+			HbProducer hbProducer,
+			CommandManager cmdManager) {
 		this(
 				config.getId(),
 				config.getMonitoredSystemId(),
@@ -472,24 +699,36 @@ public class Plugin implements ChangeValueListener {
 				config.getAutoSendTimeInterval(),
 				instanceNumber,
 				config.getHbFrequency(),
-				hbProducer);
+				hbProducer,
+				cmdManager);
 	}
-	
+
 	/**
 	 * This method must be called at the beginning
 	 * to acquire the needed resources.
 	 * 
-	 * @throws PublisherException In case of error initializing the publisher
+	 * @throws PublisherException In case of error initializing the publisher or the command manager
 	 */
 	public void start() throws PublisherException {
 		logger.debug("Initializing");
+
+		kafkaStringProducer.ifPresent( prod -> prod.setUp());
 		
 		// Start sending the HB
 		hbEngine.start();
 		
 		mpPublisher.setUp();
 		logger.info("Publisher initialized.");
-		
+
+		if (commandManager.isPresent()) {
+			try {
+				commandManager.get().start(new DefaultCommandExecutor(), this);
+				logger.info("Command executor activated");
+			} catch (Exception e) {
+				throw new 	PublisherException(e);
+			}
+		}
+
 		if (STATS_TIME_INTERVAL>0) {
 			// Start the logger of statistics
 			Runnable r = new Runnable() {
@@ -512,11 +751,11 @@ public class Plugin implements ChangeValueListener {
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 			@Override
 			public void run() {
-				shutdown();
+				close();
 			}
 		}, "Plugin shutdown hook"));
 		
-		logger.debug("Initiailizing {} monitor points", monitorPoints.values().size());
+		logger.debug("Initializing {} monitor points", monitorPoints.values().size());
 		monitorPoints.values().forEach(mp -> mp.start());
 		
 		hbEngine.updateHbState(HeartbeatStatus.RUNNING);
@@ -528,10 +767,13 @@ public class Plugin implements ChangeValueListener {
 	 * This method must be called when finished using the object 
 	 * to free the allocated resources. 
 	 */
-	public void shutdown() {
+	@Override
+	public void close() {
 		boolean alreadyClosed=closed.getAndSet(true);
-		hbEngine.updateHbState(HeartbeatStatus.EXITING);
 		if (!alreadyClosed) {
+			hbEngine.updateHbState(HeartbeatStatus.EXITING);
+			logger.debug("Shutting down the command manager");
+			commandManager.ifPresent( cmdM -> cmdM.close());
 			shutdownExecutorSvc();
 			logger.info("Stopping the sending of monitor point values to the core of the IAS");
 			mpPublisher.stopSending();
@@ -548,8 +790,12 @@ public class Plugin implements ChangeValueListener {
 			monitorPoints.values().forEach(mp -> mp.shutdown());
 			
 			hbEngine.shutdown();
+
+			kafkaStringProducer.ifPresent( prod -> prod.tearDown());
 			
 			logger.info("Plugin {} is shut down",pluginId);
+		} else {
+			logger.warn("Already closed");
 		}
 	}
 	
@@ -683,7 +929,6 @@ public class Plugin implements ChangeValueListener {
 	 * Change the refresh rate of the monitor point with the passed ID.
 	 * <P>
 	 * The new refresh rate is bounded by a minimum ({@link MonitoredValue#minAllowedSendRate})
-	 * and a maximum ({@link MonitoredValue#maxAllowedRefreshRate}) values.
 	 * 
 	 * @param mPointId The not <code>null</code> nor empty ID of a monitored point
 	 * @param newRefreshRate the requested new refresh rate

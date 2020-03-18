@@ -1,14 +1,14 @@
 package org.eso.ias.plugin.publisher.impl;
 
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
+import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * <code>ListenerPublisher</code> is an implementation of {@link MonitorPointSender}
@@ -83,8 +83,6 @@ public class BufferedListenerPublisher extends BufferedPublisherBase {
 	 *
 	 * @param pluginId The identifier of the plugin
 	 * @param monitoredSystemId The identifier of the system monitored by the plugin
-	 * @param serverName The name of the server
-	 * @param port The port of the server
 	 * @param executorSvc The executor service
 	 * @param listener The listener of events
 	 * 
@@ -93,11 +91,9 @@ public class BufferedListenerPublisher extends BufferedPublisherBase {
 	public BufferedListenerPublisher(
 			String pluginId, 
 			String monitoredSystemId,
-			String serverName, 
-			int port, 
 			ScheduledExecutorService executorSvc,
 			PublisherEventsListener listener) {
-		super(pluginId, monitoredSystemId,serverName, port, executorSvc);
+		super(pluginId, monitoredSystemId, executorSvc);
 		this.listener=listener;
 		logger.info("Created");
 	}

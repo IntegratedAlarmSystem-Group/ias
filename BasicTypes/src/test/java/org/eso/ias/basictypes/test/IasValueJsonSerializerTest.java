@@ -1,9 +1,12 @@
 package org.eso.ias.basictypes.test;
 
+import org.apache.lucene.search.Collector;
 import org.eso.ias.types.*;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -117,7 +120,20 @@ public class IasValueJsonSerializerTest {
 		IASValue<?> floatFromSerializer = jsonSerializer.valueOf(jsonStr);
 		assertNotNull(floatFromSerializer);
 		assertEquals(floatIasType,floatFromSerializer);
-		
+
+		String tStampId = "TimestampType-ID";
+		IASValue<?> tStampIasType = IASValue.build(
+			Long.valueOf(System.currentTimeMillis()),
+			OperationalMode.OPERATIONAL,
+			IasValidity.RELIABLE,
+			new Identifier(tStampId, IdentifierType.IASIO, asceIdentifier).fullRunningID(),
+			IASTypes.TIMESTAMP);
+		jsonStr = jsonSerializer.iasValueToString(tStampIasType);
+
+		IASValue<?> tStampFromSerializer = jsonSerializer.valueOf(jsonStr);
+		assertNotNull(tStampFromSerializer);
+		assertEquals(tStampIasType,tStampFromSerializer);
+
 		String alarmId = "AlarmType-ID";
 		IASValue<?> alarm = IASValue.build(
 			Alarm.SET_MEDIUM,
@@ -186,6 +202,51 @@ public class IasValueJsonSerializerTest {
 		IASValue<?> longFromSerializer = jsonSerializer.valueOf(jsonStr);
 		assertNotNull(longFromSerializer);
 		assertEquals(longIasType,longFromSerializer);
+	}
+
+	/**
+	 * Test the conversion of arrays of doubles and longs
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	public void testConversionsOfArraysToJString() throws Exception {
+
+		String longArrayId = "LongArray-ID";
+
+		List<Long> longs = Arrays.asList(new Long[]{9L,8L,7L,6L,5L,4L,3L,2L,-1L,0L});
+		NumericArray arrayOfLongs = new NumericArray(NumericArray.NumericArrayType.LONG,longs);
+
+		IASValue<?> arrayLongIasType = IASValue.build(
+				arrayOfLongs,
+				OperationalMode.CLOSING,
+				IasValidity.RELIABLE,
+				new Identifier(longArrayId, IdentifierType.IASIO, asceIdentifier).fullRunningID(),
+				IASTypes.ARRAYOFLONGS);
+
+		String jsonStr = jsonSerializer.iasValueToString(arrayLongIasType);
+
+		IASValue<?> fromSerializer = jsonSerializer.valueOf(jsonStr);
+		assertNotNull(fromSerializer, "Got a null de-serializing [" + jsonStr + "]");
+		assertEquals(arrayLongIasType, fromSerializer);
+
+		String doubleArrayId = "DoubleArray-ID";
+
+		List<Double> doubles = Arrays.asList(new Double[]{9.2,8.3,7D,6.4,-5.6,-4D,3.657,2.1324,-1D,0D});
+		NumericArray arrayOfDoubles = new NumericArray(NumericArray.NumericArrayType.DOUBLE,doubles);
+
+		IASValue<?> arrayDoubelIasType = IASValue.build(
+				arrayOfDoubles,
+				OperationalMode.CLOSING,
+				IasValidity.RELIABLE,
+				new Identifier(longArrayId, IdentifierType.IASIO, asceIdentifier).fullRunningID(),
+				IASTypes.ARRAYOFDOUBLES);
+
+		jsonStr = jsonSerializer.iasValueToString(arrayDoubelIasType);
+
+		fromSerializer = jsonSerializer.valueOf(jsonStr);
+		assertNotNull(fromSerializer, "Got a null de-serializing [" + jsonStr + "]");
+		assertEquals(arrayDoubelIasType, fromSerializer);
 	}
 	
 	/**

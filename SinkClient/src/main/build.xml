@@ -66,7 +66,7 @@
     </target>
 	
 	<property name="jarName" value="iasValueProcessor.jar"/>
-	<property name="exttools" value="javax.mail.jar,connect-api-2.0.0.jar,netty-all-4.1.31.Final.jar,${cassandra-ext-tools}" />
+	<property name="exttools" value="javax.mail.jar,connect-api-2.4.0.jar,netty-all-4.1.31.Final.jar,${cassandra-ext-tools}" />
 	
 	<target name="clean" depends="ias.clean">
         <delete dir="${exttools.dir}/${cassandra-java-driver}"/>
@@ -74,7 +74,7 @@
             <fileset dir="${exttools.dir}">
                 <include name="**/*.jar"/>
                 <exclude name="javax.mail.jar"/>
-                <exclude name="connect-api-2.0.0.jar"/>
+                <exclude name="connect-api-2.4.0.jar"/>
                 <exclude name="netty-all-4.1.31.Final.jar"/>
 
             </fileset>

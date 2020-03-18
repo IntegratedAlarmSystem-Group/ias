@@ -65,9 +65,11 @@ def setProps(propsDict,className,logFileNameId):
         logger.info("No log4j config file (%s) found: using defaults",logbackConfigFileName)
 
     # JVM always uses UTC
-    propsDict["-Duser.timezone"]="UTC"
+    propsDict["user.timezone"]="UTC"
 
-    # Add environment variables
+    # Add environment variables is not needed as environment variables
+    # can be retrieved with System.getEnv
+
 
 def addUserProps(propsDict,userProps):
     """
@@ -199,7 +201,7 @@ if __name__ == '__main__':
     #Start the logger with param define by the user.
     stdoutLevel=args.levelStdOut
     consoleLevel=args.levelConsole
-    logger = Log.initLogging(__file__,stdoutLevel,consoleLevel)
+    logger = Log.getLogger(__file__,stdoutLevel,consoleLevel)
 
     logger.info("Start IASRun")
     verbose = args.verbose

@@ -127,10 +127,10 @@ public class ConsumerProducerTest implements KafkaConsumerListener {
 		logger.info("Initializing...");
 		consumer = new SimpleStringConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, topicName, "PubSub-Test");
 		consumer.setUp();
-		producer = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, topicName, "Consumer-ID");
+		producer = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, "Consumer-ID");
 		producer.setUp();
 		
-		consumer.startGettingEvents(StreamPosition.END,this);
+		consumer.startGettingStrings(StreamPosition.END,this);
 		logger.info("Initialized.");
 	}
 	
@@ -158,7 +158,7 @@ public class ConsumerProducerTest implements KafkaConsumerListener {
 		for (String str: strsToSend) {
 			// Sends the string synchronously to get
 			// an exception in case of error
-			producer.push(str, null, str);
+			producer.push(str, topicName,null, str);
 			sentStrings.add(str);
 		}
 		producer.flush();

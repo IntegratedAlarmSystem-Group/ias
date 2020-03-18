@@ -6,13 +6,16 @@ import org.eclipse.jetty.websocket.api.annotations.*;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.eso.ias.cdb.CdbReader;
-import org.eso.ias.cdb.json.CdbFiles;
-import org.eso.ias.cdb.json.CdbJsonFiles;
-import org.eso.ias.cdb.json.JsonReader;
+import org.eso.ias.cdb.CdbReaderFactory;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.LogLevelDao;
-import org.eso.ias.cdb.rdb.RdbReader;
-import org.eso.ias.heartbeat.*;
+import org.eso.ias.command.CommandManager;
+import org.eso.ias.command.DefaultCommandExecutor;
+import org.eso.ias.command.kafka.CommandManagerKafkaImpl;
+import org.eso.ias.heartbeat.HbEngine;
+import org.eso.ias.heartbeat.HbProducer;
+import org.eso.ias.heartbeat.HeartbeatProducerType;
+import org.eso.ias.heartbeat.HeartbeatStatus;
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.FilteredKafkaIasiosConsumer;
@@ -20,6 +23,7 @@ import org.eso.ias.kafkautils.FilteredKafkaIasiosConsumer.FilterIasValue;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaStringsConsumer.StreamPosition;
 import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener;
+import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.eso.ias.logging.IASLogger;
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
@@ -28,7 +32,6 @@ import org.eso.ias.types.IasValueSerializerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -60,7 +63,7 @@ import java.util.concurrent.atomic.AtomicLong;
  *
  */
 @WebSocket(maxTextMessageSize = 2000000) // About 1000 IASValues
-public class WebServerSender implements IasioListener {
+public class WebServerSender implements IasioListener, AutoCloseable {
 
     /**
      *
@@ -202,6 +205,11 @@ public class WebServerSender implements IasioListener {
 	private final HbEngine hbEngine;
 
 	/**
+	 * The receiver and executor of commands
+	 */
+	private final CommandManager commandManager;
+
+	/**
 	 * A flag set to <code>true</code> if the socket is connected
 	 */
 	public final AtomicBoolean socketConnected = new AtomicBoolean(false);
@@ -241,6 +249,9 @@ public class WebServerSender implements IasioListener {
     /** Signal that the WebServerSender has been shut down */
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
+    /** The shared kafka producer */
+    private final SimpleStringProducer stringProducer;
+
 
 
 	/**
@@ -276,7 +287,6 @@ public class WebServerSender implements IasioListener {
 	 * @param props the properties to get kafka servers, topic names and webserver uri
 	 * @param listener The listenr of the messages sent to the websocket server i.e. the web server
 	 * @param hbFrequency the frequency of the heartbeat (seconds)
-	 * @param hbProducer the sender of HBs
 	 * @param acceptedIds The IDs of the IASIOs to consume
 	 * @param acceptedTypes The IASTypes to consume
 	 * @throws URISyntaxException
@@ -287,7 +297,6 @@ public class WebServerSender implements IasioListener {
 			Properties props,
 			WebServerSenderListener listener,
 			int hbFrequency,
-			HbProducer hbProducer,
 			Set<String> acceptedIds,
 			Set<IASTypes> acceptedTypes) throws URISyntaxException {
 		Objects.requireNonNull(senderID);
@@ -295,7 +304,6 @@ public class WebServerSender implements IasioListener {
 			throw new IllegalArgumentException("Invalid empty converter ID");
 		}
 		this.senderID=senderID.trim();
-
 
 		Objects.requireNonNull(kafkaServers);
 		if (kafkaServers.trim().isEmpty()) {
@@ -336,12 +344,17 @@ public class WebServerSender implements IasioListener {
 		};
 		kafkaConsumer = new FilteredKafkaIasiosConsumer(kafkaServers, sendersInputKTopicName, this.senderID, filter);
 
+		stringProducer = new SimpleStringProducer(kafkaServers,senderID);
+
+		HbProducer hbProducer = new HbKafkaProducer(stringProducer, kafkaServers, new HbJsonSerializer());
 		if (hbFrequency<=0) {
 			throw new IllegalArgumentException("Invalid frequency "+hbFrequency);
 		}
 
 		Objects.requireNonNull(hbProducer);
 		hbEngine = HbEngine.apply(senderID, HeartbeatProducerType.SINK, hbFrequency, hbProducer);
+
+		commandManager = new CommandManagerKafkaImpl(senderID,kafkaServers,stringProducer);
 	}
 
 
@@ -363,7 +376,7 @@ public class WebServerSender implements IasioListener {
 			 hbEngine.updateHbState(HeartbeatStatus.RUNNING);
 		 } else {
 			 logger.info("The Server is going away");
-			 this.shutdown();
+			 this.close();
 		 }
 	}
 
@@ -382,7 +395,7 @@ public class WebServerSender implements IasioListener {
 
 	/**
 	 * Normally the WebServerSender does not send masseges.
-	 * The test, {@link WebServerSenderTest} sends a message to this WebSocket to confirm the connection:
+	 * The test, WebServerSenderTest sends a message to this WebSocket to confirm the connection:
 	 * if this method is removed, the tests fails.
 	 *
 	 * @param message The message received
@@ -514,8 +527,16 @@ public class WebServerSender implements IasioListener {
 		alreadySendingThroughWebsockets.getAndSet(false);
 	}
 
-	public void setUp() {
+	/**
+	 * Initialize the WSS
+	 *
+	 * @throws Exception in case of error initializing
+	 */
+	public void setUp() throws Exception {
+		stringProducer.setUp();
 		hbEngine.start();
+
+		commandManager.start(new DefaultCommandExecutor(),this);
 
 		// Start the thread to send values though the websocket
 		logger.info("Will send values to websockets every {} msecs",TIME_INTERVAL);
@@ -559,6 +580,15 @@ public class WebServerSender implements IasioListener {
  	        logger.error("Kafka consumer initialization fails", t);
  	        System.exit(-1);
  	    }
+
+		// Adds the shutdown hook
+		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+			@Override
+			public void run() {
+				close();
+			}
+		}, "Plugin shutdown hook"));
+
  	    hbEngine.updateHbState(HeartbeatStatus.RUNNING);
 	}
 
@@ -594,7 +624,8 @@ public class WebServerSender implements IasioListener {
 	/**
 	 * Shutdown the WebSocket client and Kafka consumer
 	 */
-	public void shutdown() {
+	@Override
+	public void close() {
 		if (isClosed.getAndSet(true)) {
 			logger.warn("Already shut down");
 			return;
@@ -610,7 +641,9 @@ public class WebServerSender implements IasioListener {
 		catch( Exception e) {
 			logger.error("Error on Websocket stop",e);
 		}
+		commandManager.close();
 		hbEngine.shutdown();
+		stringProducer.tearDown();
 	}
 
 	/**
@@ -647,6 +680,7 @@ public class WebServerSender implements IasioListener {
 		Options options = new Options();
         options.addOption("h", "help", false, "Print help and exit");
         options.addOption("j", "jcdb", true, "Use the JSON Cdb at the passed path");
+		options.addOption("c", "cdbClass", true, "Use an external CDB reader with the passed class");
 		options.addOption(Option.builder("t").longOpt("filter-types").desc("Space separated list of types to send (LONG, INT, SHORT, BYTE, DOUBLE, FLOAT, BOOLEAN, CHAR, STRING, ALARM)").hasArgs().argName("TYPES").build());
 		options.addOption(Option.builder("i").longOpt("filter-ids").desc("Space separated list of ids to send").hasArgs().argName("IASIOS-IDS").build());
         options.addOption("x", "logLevel", true, "Set the log level (TRACE, DEBUG, INFO, WARN, ERROR)");
@@ -725,26 +759,8 @@ public class WebServerSender implements IasioListener {
 		}
 
 		// Get Optional CDB filepath
-		CdbReader cdbReader = null;
-		if (cmdLine.hasOption("j")) {
-			String cdbPath = cmdLine.getOptionValue('j').trim();
-            File f = new File(cdbPath);
-            if (!f.isDirectory() || !f.canRead()) {
-                System.err.println("Invalid file path "+cdbPath);
-                System.exit(-3);
-            }
+		CdbReader cdbReader = CdbReaderFactory.getCdbReader(args);
 
-            CdbFiles cdbFiles=null;
-            try {
-                cdbFiles= new CdbJsonFiles(f);
-            } catch (Exception e) {
-                System.err.println("Error initializing JSON CDB "+e.getMessage());
-                System.exit(-4);
-            }
-            cdbReader = new JsonReader(cdbFiles);
-        } else {
-			cdbReader = new RdbReader();
-        }
 
 		// Read ias configuration from CDB
 		Optional<IasDao> optIasdao = cdbReader.getIas();
@@ -773,9 +789,6 @@ public class WebServerSender implements IasioListener {
 		// Set HB frequency
 		int frequency = optIasdao.get().getHbFrequency();
 
-		// Set serializer of HB messages
-		HbMsgSerializer hbSerializer = new HbJsonSerializer();
-
 		// Set kafka server from properties or default
 		String kServers=System.getProperty(KAFKA_SERVERS_PROP_NAME);
 		if (kServers==null || kServers.isEmpty()) {
@@ -785,18 +798,14 @@ public class WebServerSender implements IasioListener {
 			kServers=KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS;
 		}
 
-		String id = senderId.get();
-		HbProducer hbProd = new HbKafkaProducer(id, kServers, hbSerializer);
-
 		WebServerSender ws=null;
 		try {
 			ws = new WebServerSender(
-				id,
+				senderId.get(),
 				kServers,
 				System.getProperties(),
 				null,
 				frequency,
-				hbProd,
 				acceptedIds,
 				acceptedTypes);
 		} catch (URISyntaxException e) {

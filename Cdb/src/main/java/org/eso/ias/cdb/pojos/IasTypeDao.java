@@ -15,6 +15,9 @@ public enum IasTypeDao {
     FLOAT, 
     BOOLEAN, 
     CHAR, 
-    STRING, 
+    STRING,
+    TIMESTAMP,
+    ARRAYOFDOUBLES,
+    ARRAYOFLONGS,
     ALARM
 }

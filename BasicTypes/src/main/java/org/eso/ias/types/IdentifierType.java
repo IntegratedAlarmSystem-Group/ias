@@ -60,6 +60,13 @@ public enum IdentifierType {
 	 * A CORE tool that can generate alarms.
 	 */
 	CORETOOL(),
+
+	/**
+	 * A IAS client that does not generate alarms
+	 *
+	 * GIUs could be an example of CLIENT; a tool to send commands is another example.
+	 */
+	CLIENT(),
 	
 	/**
 	 * The type of IASIO identifier.

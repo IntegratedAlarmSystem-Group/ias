@@ -1,8 +1,8 @@
 package org.eso.ias.plugin.filter;
 
-import java.util.Optional;
-
 import org.eso.ias.plugin.Sample;
+
+import java.util.Optional;
 
 /**
  * The interface defining filter to apply to a monitored value 
@@ -24,7 +24,7 @@ public interface Filter {
 		
 		/**
 		 * The generatedInTime flag records if the
-		 * sample has been provided before teh refreshRate 
+		 * sample has been provided before the refreshRate
 		 * elapsed.
 		 */
 		public final boolean  generatedInTime;
@@ -33,7 +33,8 @@ public interface Filter {
 		 * Constructor
 		 * 
 		 * @param s The sample
-		 * @param validity The validity
+		 * @param generatedInTime true if the sample has been provided before the refreshRate
+		 *                        elapsed; false otherwise
 		 */
 		public EnrichedSample(Sample s, boolean generatedInTime) {
 			super(s.value, s.timestamp);
