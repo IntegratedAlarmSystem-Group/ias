@@ -2,13 +2,10 @@ package org.eso.ias.converter;
 
 import org.apache.commons.cli.*;
 import org.eso.ias.cdb.CdbReader;
+import org.eso.ias.cdb.CdbReaderFactory;
 import org.eso.ias.cdb.IasCdbException;
-import org.eso.ias.cdb.json.CdbFiles;
-import org.eso.ias.cdb.json.CdbJsonFiles;
-import org.eso.ias.cdb.json.JsonReader;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.LogLevelDao;
-import org.eso.ias.cdb.rdb.RdbReader;
 import org.eso.ias.command.CommandManager;
 import org.eso.ias.command.DefaultCommandExecutor;
 import org.eso.ias.command.kafka.CommandManagerKafkaImpl;
@@ -29,7 +26,6 @@ import org.eso.ias.types.IasValueStringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.security.InvalidParameterException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -353,28 +349,12 @@ public class Converter implements AutoCloseable {
 
 		CdbReader cdbReader = null;
 
-
-
-		 Optional<?> jcdbOpt = params.get("jcdb");
-		 if (jcdbOpt.isPresent()) {
-		     String cdbPath = (String)jcdbOpt.get();
-             File f = new File(cdbPath);
-             if (!f.isDirectory() || !f.canRead()) {
-                 System.err.println("Invalid file path "+cdbPath);
-                 System.exit(-3);
-             }
-
-             CdbFiles cdbFiles=null;
-             try {
-                 cdbFiles= new CdbJsonFiles(f);
-             } catch (Exception e) {
-                 System.err.println("Error initializing JSON CDB "+e.getMessage());
-                 System.exit(-4);
-             }
-             cdbReader = new JsonReader(cdbFiles);
-         } else {
-			cdbReader = new RdbReader();
-         }
+		try {
+			cdbReader=CdbReaderFactory.getCdbReader(args);
+		} catch (Exception e) {
+			System.err.println("Error getting the CDB "+e.getMessage());
+			System.exit(-1);
+		}
 
 		IasDao iasDao = null;
 		try { 
