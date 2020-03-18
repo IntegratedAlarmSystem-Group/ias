@@ -6,10 +6,8 @@ import java.util.concurrent.{Executors, ScheduledExecutorService, TimeUnit}
 
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
-import org.eso.ias.cdb.CdbReader
-import org.eso.ias.cdb.json.{CdbFiles, CdbJsonFiles, JsonReader}
+import org.eso.ias.cdb.{CdbReader, CdbReaderFactory}
 import org.eso.ias.cdb.pojos._
-import org.eso.ias.cdb.rdb.RdbReader
 import org.eso.ias.kafkautils.KafkaHelper
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.sink.{IasValueProcessor, ValueListener}
@@ -312,16 +310,7 @@ object NotificationsSender {
     val emailSenderId = parsedArgs._1.get
 
     // Get the CDB
-    val cdbReader: CdbReader = {
-      if (parsedArgs._2.isDefined) {
-        val jsonCdbPath = parsedArgs._2.get
-        msLogger.info("Using JSON CDB @ {}",jsonCdbPath)
-        val cdbFiles: CdbFiles = new CdbJsonFiles(jsonCdbPath)
-        new JsonReader(cdbFiles)
-      } else {
-        new RdbReader()
-      }
-    }
+    val cdbReader: CdbReader = CdbReaderFactory.getCdbReader(args)
 
     logger.debug("Getting the IAS frm the CDB")
     val iasDao: IasDao = {

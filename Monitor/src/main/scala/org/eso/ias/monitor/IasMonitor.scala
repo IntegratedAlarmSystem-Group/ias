@@ -6,10 +6,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
-import org.eso.ias.cdb.CdbReader
-import org.eso.ias.cdb.json.{CdbFiles, CdbJsonFiles, JsonReader}
+import org.eso.ias.cdb.{CdbReader, CdbReaderFactory}
 import org.eso.ias.cdb.pojos.LogLevelDao
-import org.eso.ias.cdb.rdb.RdbReader
 import org.eso.ias.command.kafka.CommandManagerKafkaImpl
 import org.eso.ias.command.{CommandManager, DefaultCommandExecutor}
 import org.eso.ias.heartbeat._
@@ -217,16 +215,7 @@ object IasMonitor {
 
     val monitorId = parsedArgs._1.get
 
-    val reader: CdbReader = {
-      if (parsedArgs._2.isDefined) {
-        val jsonCdbPath = parsedArgs._2.get
-        logger.info("Using JSON CDB @ {}",jsonCdbPath)
-        val cdbFiles: CdbFiles = new CdbJsonFiles(jsonCdbPath)
-        new JsonReader(cdbFiles)
-      } else {
-        new RdbReader()
-      }
-    }
+    val reader: CdbReader = CdbReaderFactory.getCdbReader(args)
 
     /**
       *  Get the configuration of the IAS from the CDB
