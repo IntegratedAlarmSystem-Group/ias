@@ -7,9 +7,7 @@ import ch.qos.logback.classic.Level
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
 import org.eso.ias.cdb.{CdbReader, CdbReaderFactory}
-import org.eso.ias.cdb.json.{CdbFiles, CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos._
-import org.eso.ias.cdb.rdb.RdbReader
 import org.eso.ias.cdb.topology.TemplateHelper
 import org.eso.ias.command.CommandManager
 import org.eso.ias.command.kafka.CommandManagerKafkaImpl
@@ -111,7 +109,7 @@ class Supervisor private (
     }
   
   /** The heartbeat Engine */
-  val hbProducer =
+  val hbProducer: HbProducer =
     hbProducerOpt.getOrElse(new HbKafkaProducer(stringProducerOpt.get,supervisorIdentifier.id,new HbJsonSerializer()))
   val hbEngine: HbEngine = HbEngine(supervisorIdentifier.id,HeartbeatProducerType.SUPERVISOR,iasDao.getHbFrequency,hbProducer)
 
@@ -199,7 +197,7 @@ class Supervisor private (
   val statsLogger: SupervisorStatistics = new SupervisorStatistics(id,dasuIds)
 
   /** The command manager to get and execute commands */
-  val commandManager =
+  val commandManager: CommandManager =
     commandManagerOpt.getOrElse(new CommandManagerKafkaImpl(supervisorIdentifier.id,kafkaBrokers,stringProducerOpt.get))
 
   /** The command executor that executes the commands received from the cmd topic */
