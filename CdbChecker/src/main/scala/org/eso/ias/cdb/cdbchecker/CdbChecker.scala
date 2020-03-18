@@ -4,7 +4,7 @@ import java.util.Optional
 
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
-import org.eso.ias.cdb.CdbReader
+import org.eso.ias.cdb.{CdbReader, CdbReaderFactory}
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos._
 import org.eso.ias.cdb.rdb.RdbReader
@@ -24,21 +24,13 @@ import scala.util.{Failure, Success, Try}
   * While the RDB is more robust against such problems, the JSON implementation is more weak
   * and this tool could help.
   *
-  * @param jsonCdbPath The path of the JSON CDB, if empty checks the structure of the RDB
+  * @param args the arguments in the command line to open the right CDB
   */
-class CdbChecker(val jsonCdbPath: Option[String]) {
-  Option(jsonCdbPath).orElse(throw new IllegalArgumentException("Invalid null jsonCdbPath"))
+class CdbChecker(args: Array[String]) {
+  require(Option(args).isDefined,"Invalid empty command line arguments")
 
   /** The reader of the JSON of RDB CDB */
-  val reader: CdbReader = {
-    jsonCdbPath match {
-      case None => new RdbReader
-      case Some(path) =>
-        if (path.isEmpty) new IllegalArgumentException("Invalid empy CDB PATH")
-        val cdbJSonFiles = new CdbJsonFiles(path)
-        new JsonReader(cdbJSonFiles)
-    }
-  }
+  val reader: CdbReader = CdbReaderFactory.getCdbReader(args)
 
   // Are there errors in the IAS?
   val iasDaoOpt: Option[IasDao] = {
@@ -670,6 +662,6 @@ object CdbChecker {
     parsedArgs._2.foreach( level => IASLogger.setRootLogLevel(level.toLoggerLogLevel))
 
     // Invoke the cdb checker
-    new CdbChecker(parsedArgs._1)
+    new CdbChecker(args)
   }
 }
