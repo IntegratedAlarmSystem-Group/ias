@@ -6,12 +6,9 @@ import org.eclipse.jetty.websocket.api.annotations.*;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.eso.ias.cdb.CdbReader;
-import org.eso.ias.cdb.json.CdbFiles;
-import org.eso.ias.cdb.json.CdbJsonFiles;
-import org.eso.ias.cdb.json.JsonReader;
+import org.eso.ias.cdb.CdbReaderFactory;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.LogLevelDao;
-import org.eso.ias.cdb.rdb.RdbReader;
 import org.eso.ias.command.CommandManager;
 import org.eso.ias.command.DefaultCommandExecutor;
 import org.eso.ias.command.kafka.CommandManagerKafkaImpl;
@@ -35,7 +32,6 @@ import org.eso.ias.types.IasValueSerializerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -763,26 +759,8 @@ public class WebServerSender implements IasioListener, AutoCloseable {
 		}
 
 		// Get Optional CDB filepath
-		CdbReader cdbReader = null;
-		if (cmdLine.hasOption("j")) {
-			String cdbPath = cmdLine.getOptionValue('j').trim();
-            File f = new File(cdbPath);
-            if (!f.isDirectory() || !f.canRead()) {
-                System.err.println("Invalid file path "+cdbPath);
-                System.exit(-3);
-            }
+		CdbReader cdbReader = CdbReaderFactory.getCdbReader(args);
 
-            CdbFiles cdbFiles=null;
-            try {
-                cdbFiles= new CdbJsonFiles(f);
-            } catch (Exception e) {
-                System.err.println("Error initializing JSON CDB "+e.getMessage());
-                System.exit(-4);
-            }
-            cdbReader = new JsonReader(cdbFiles);
-        } else {
-			cdbReader = new RdbReader();
-        }
 
 		// Read ias configuration from CDB
 		Optional<IasDao> optIasdao = cdbReader.getIas();
