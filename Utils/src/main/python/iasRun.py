@@ -67,7 +67,9 @@ def setProps(propsDict,className,logFileNameId):
     # JVM always uses UTC
     propsDict["user.timezone"]="UTC"
 
-    # Add environment variables
+    # Add environment variables is not needed as environment variables
+    # can be retrieved with System.getEnv
+
 
 def addUserProps(propsDict,userProps):
     """
