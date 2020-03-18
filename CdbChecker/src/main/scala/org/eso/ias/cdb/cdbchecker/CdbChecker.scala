@@ -1,13 +1,11 @@
-package org.eso.ias.extras.cdbchecker
+package org.eso.ias.cdb.cdbchecker
 
 import java.util.Optional
 
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
 import org.eso.ias.cdb.{CdbReader, CdbReaderFactory}
-import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos._
-import org.eso.ias.cdb.rdb.RdbReader
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.Identifier
 
@@ -266,7 +264,7 @@ class CdbChecker(args: Array[String]) {
   } else {
     CdbChecker.logger.info("NO cycles found in the DASUs")
   }
-  val dasuTodeployWithCycles = cyclesChecker.getDasusToDeployWithCycles()
+  val dasuTodeployWithCycles: Iterable[String] = cyclesChecker.getDasusToDeployWithCycles()
   if (dasuTodeployWithCycles.nonEmpty) {
     CdbChecker.logger.error("Found DASUs to deploy with cycles: {}",dasuTodeployWithCycles.mkString(","))
   } else {
