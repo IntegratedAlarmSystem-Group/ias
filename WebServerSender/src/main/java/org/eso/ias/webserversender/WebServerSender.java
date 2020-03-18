@@ -6,12 +6,9 @@ import org.eclipse.jetty.websocket.api.annotations.*;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 import org.eso.ias.cdb.CdbReader;
-import org.eso.ias.cdb.json.CdbFiles;
-import org.eso.ias.cdb.json.CdbJsonFiles;
-import org.eso.ias.cdb.json.JsonReader;
+import org.eso.ias.cdb.CdbReaderFactory;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.LogLevelDao;
-import org.eso.ias.cdb.rdb.RdbReader;
 import org.eso.ias.command.CommandManager;
 import org.eso.ias.command.DefaultCommandExecutor;
 import org.eso.ias.command.kafka.CommandManagerKafkaImpl;
@@ -35,7 +32,6 @@ import org.eso.ias.types.IasValueSerializerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -684,6 +680,7 @@ public class WebServerSender implements IasioListener, AutoCloseable {
 		Options options = new Options();
         options.addOption("h", "help", false, "Print help and exit");
         options.addOption("j", "jcdb", true, "Use the JSON Cdb at the passed path");
+		options.addOption("c", "cdbClass", true, "Use an external CDB reader with the passed class");
 		options.addOption(Option.builder("t").longOpt("filter-types").desc("Space separated list of types to send (LONG, INT, SHORT, BYTE, DOUBLE, FLOAT, BOOLEAN, CHAR, STRING, ALARM)").hasArgs().argName("TYPES").build());
 		options.addOption(Option.builder("i").longOpt("filter-ids").desc("Space separated list of ids to send").hasArgs().argName("IASIOS-IDS").build());
         options.addOption("x", "logLevel", true, "Set the log level (TRACE, DEBUG, INFO, WARN, ERROR)");
@@ -762,26 +759,8 @@ public class WebServerSender implements IasioListener, AutoCloseable {
 		}
 
 		// Get Optional CDB filepath
-		CdbReader cdbReader = null;
-		if (cmdLine.hasOption("j")) {
-			String cdbPath = cmdLine.getOptionValue('j').trim();
-            File f = new File(cdbPath);
-            if (!f.isDirectory() || !f.canRead()) {
-                System.err.println("Invalid file path "+cdbPath);
-                System.exit(-3);
-            }
+		CdbReader cdbReader = CdbReaderFactory.getCdbReader(args);
 
-            CdbFiles cdbFiles=null;
-            try {
-                cdbFiles= new CdbJsonFiles(f);
-            } catch (Exception e) {
-                System.err.println("Error initializing JSON CDB "+e.getMessage());
-                System.exit(-4);
-            }
-            cdbReader = new JsonReader(cdbFiles);
-        } else {
-			cdbReader = new RdbReader();
-        }
 
 		// Read ias configuration from CDB
 		Optional<IasDao> optIasdao = cdbReader.getIas();

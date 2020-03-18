@@ -6,10 +6,8 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
 import ch.qos.logback.classic.Level
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
-import org.eso.ias.cdb.CdbReader
-import org.eso.ias.cdb.json.{CdbFiles, CdbJsonFiles, JsonReader}
+import org.eso.ias.cdb.{CdbReader, CdbReaderFactory}
 import org.eso.ias.cdb.pojos._
-import org.eso.ias.cdb.rdb.RdbReader
 import org.eso.ias.cdb.topology.TemplateHelper
 import org.eso.ias.command.CommandManager
 import org.eso.ias.command.kafka.CommandManagerKafkaImpl
@@ -111,7 +109,7 @@ class Supervisor private (
     }
   
   /** The heartbeat Engine */
-  val hbProducer =
+  val hbProducer: HbProducer =
     hbProducerOpt.getOrElse(new HbKafkaProducer(stringProducerOpt.get,supervisorIdentifier.id,new HbJsonSerializer()))
   val hbEngine: HbEngine = HbEngine(supervisorIdentifier.id,HeartbeatProducerType.SUPERVISOR,iasDao.getHbFrequency,hbProducer)
 
@@ -199,7 +197,7 @@ class Supervisor private (
   val statsLogger: SupervisorStatistics = new SupervisorStatistics(id,dasuIds)
 
   /** The command manager to get and execute commands */
-  val commandManager =
+  val commandManager: CommandManager =
     commandManagerOpt.getOrElse(new CommandManagerKafkaImpl(supervisorIdentifier.id,kafkaBrokers,stringProducerOpt.get))
 
   /** The command executor that executes the commands received from the cmd topic */
@@ -505,6 +503,7 @@ object Supervisor {
     val options: Options = new Options
     options.addOption("h", "help",false,"Print help and exit")
     options.addOption("j", "jcdb", true, "Use the JSON Cdb at the passed path")
+    options.addOption("c", "cdbClass", true, "Use an external CDB reader with the passed class")
     options.addOption("x", "logLevel", true, "Set the log level (TRACE, DEBUG, INFO, WARN, ERROR)")
 
     val parser: CommandLineParser = new DefaultParser
@@ -566,16 +565,7 @@ object Supervisor {
 
     val supervisorId = parsedArgs._1.get
 
-    val reader: CdbReader = {
-      if (parsedArgs._2.isDefined) {
-        val jsonCdbPath = parsedArgs._2.get
-        Supervisor.logger.info("Using JSON CDB @ {}",jsonCdbPath)
-        val cdbFiles: CdbFiles = new CdbJsonFiles(jsonCdbPath)
-        new JsonReader(cdbFiles)
-      } else {
-        new RdbReader()
-      }
-    }
+    val reader: CdbReader = CdbReaderFactory.getCdbReader(args)
 
     /** 
      *  Refresh rate and validityThreshold: it uses the first defined ones:

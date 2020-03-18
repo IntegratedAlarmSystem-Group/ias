@@ -17,3 +17,4 @@ IntegratedAlarmSystemRoot
 
 #### For exceptions stop ignoring using '!<file_to_stop_ignoring>'. E.g:
 #### !Cdb/extTools/antlr-2.7.7.jar
+/nohup.out

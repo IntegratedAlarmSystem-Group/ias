@@ -1,4 +1,4 @@
-package org.eso.ias.extras.cdbchecker
+package org.eso.ias.cdb.cdbchecker
 
 import com.typesafe.scalalogging.Logger
 import org.eso.ias.cdb.pojos.{DasuDao, DasuToDeployDao, TemplateInstanceIasioDao}
