@@ -4,7 +4,7 @@ import org.eso.ias.heartbeat.HbProducer;
 import org.eso.ias.heartbeat.publisher.HbLogProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.plugin.Plugin;
-import org.eso.ias.plugin.config.PluginConfig;
+import org.eso.ias.plugin.config.PluginConfigDao;
 import org.eso.ias.plugin.config.PluginConfigFileReader;
 import org.eso.ias.plugin.network.UdpPlugin;
 import org.eso.ias.plugin.publisher.MonitorPointData;
@@ -95,9 +95,9 @@ public class UdpPluginTest implements PublisherEventsListener {
 	public void setUp() throws Exception {
 		PluginConfigFileReader jsonFileReader = new PluginConfigFileReader(resourcePath+"pyConfig.json");
 		assertNotNull(jsonFileReader);
-		Future<PluginConfig> futurePluginConfig = jsonFileReader.getPluginConfig();
+		Future<PluginConfigDao> futurePluginConfig = jsonFileReader.getPluginConfig();
 		assertNotNull(futurePluginConfig);
-		PluginConfig config = futurePluginConfig.get(1, TimeUnit.MINUTES);
+		PluginConfigDao config = futurePluginConfig.get(1, TimeUnit.MINUTES);
 		assertNotNull(config);
 		
 		mpSender = new ListenerPublisher(
