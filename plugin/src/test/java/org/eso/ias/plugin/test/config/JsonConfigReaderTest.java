@@ -13,7 +13,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.eso.ias.plugin.config.PluginConfig;
+import org.eso.ias.plugin.config.PluginConfigDao;
 import org.eso.ias.plugin.config.PluginConfigException;
 import org.eso.ias.plugin.config.PluginConfigFileReader;
 import org.eso.ias.plugin.config.Property;
@@ -44,9 +44,9 @@ public class JsonConfigReaderTest {
 		
 		PluginConfigFileReader jsonFileReader = new PluginConfigFileReader(resourcePath+"configOkGlobalFilter.json");
 		assertNotNull(jsonFileReader);
-		Future<PluginConfig> futurePluginConfig = jsonFileReader.getPluginConfig();
+		Future<PluginConfigDao> futurePluginConfig = jsonFileReader.getPluginConfig();
 		assertNotNull(futurePluginConfig);
-		PluginConfig config = futurePluginConfig.get(1, TimeUnit.MINUTES);
+		PluginConfigDao config = futurePluginConfig.get(1, TimeUnit.MINUTES);
 		assertNotNull(config);
 		
 		assertTrue(config.isValid(),"The passed configuration is valid");
@@ -106,39 +106,39 @@ public class JsonConfigReaderTest {
 	public void testInvalidConf() throws PluginConfigException, InterruptedException, ExecutionException, TimeoutException {
 		
 		PluginConfigFileReader jsonFileReader = new PluginConfigFileReader(resourcePath+"configInvalidValues.json");
-		PluginConfig config = jsonFileReader.getPluginConfig().get(1,TimeUnit.MINUTES);
+		PluginConfigDao config = jsonFileReader.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config.isValid());
 		
 		PluginConfigFileReader jsonFileReader2 = new PluginConfigFileReader(resourcePath+"configInvalidValues2.json");
-		PluginConfig config2 = jsonFileReader2.getPluginConfig().get(1,TimeUnit.MINUTES);
+		PluginConfigDao config2 = jsonFileReader2.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config2.isValid());
 		
 		PluginConfigFileReader jsonFileReader3 = new PluginConfigFileReader(resourcePath+"configInvalidValues3.json");
-		PluginConfig config3 = jsonFileReader3.getPluginConfig().get(1,TimeUnit.MINUTES);
+		PluginConfigDao config3 = jsonFileReader3.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config3.isValid());
 		
 		PluginConfigFileReader jsonFileReader4 = new PluginConfigFileReader(resourcePath+"configInvalidValues4.json");
-		PluginConfig config4 = jsonFileReader4.getPluginConfig().get(1,TimeUnit.MINUTES);
+		PluginConfigDao config4 = jsonFileReader4.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config4.isValid());
 		
 		PluginConfigFileReader jsonFileReader5 = new PluginConfigFileReader(resourcePath+"configInvalidValues5.json");
-		PluginConfig config5 = jsonFileReader5.getPluginConfig().get(1,TimeUnit.MINUTES);
+		PluginConfigDao config5 = jsonFileReader5.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config5.isValid());
 		
 		PluginConfigFileReader jsonFileReader6 = new PluginConfigFileReader(resourcePath+"configInvalidValues6.json");
-		PluginConfig config6 = jsonFileReader6.getPluginConfig().get(1,TimeUnit.MINUTES);
+		PluginConfigDao config6 = jsonFileReader6.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config6.isValid());
 		
 		PluginConfigFileReader jsonFileReader7 = new PluginConfigFileReader(resourcePath+"configInvalidValues7.json");
-		PluginConfig config7 = jsonFileReader7.getPluginConfig().get(1,TimeUnit.MINUTES);
+		PluginConfigDao config7 = jsonFileReader7.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config7.isValid());
 		
 		PluginConfigFileReader jsonFileReader8 = new PluginConfigFileReader(resourcePath+"configInvalidValues8.json");
-		PluginConfig config8 = jsonFileReader8.getPluginConfig().get(1,TimeUnit.MINUTES);
+		PluginConfigDao config8 = jsonFileReader8.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config8.isValid());
 		
 		PluginConfigFileReader jsonFileReader9 = new PluginConfigFileReader(resourcePath+"configInvalidValues9.json");
-		PluginConfig config9 = jsonFileReader9.getPluginConfig().get(1,TimeUnit.MINUTES);
+		PluginConfigDao config9 = jsonFileReader9.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertFalse(config9.isValid());
 		
 	}
@@ -151,11 +151,11 @@ public class JsonConfigReaderTest {
 	@Test
 	public void testValidConf() throws PluginConfigException, InterruptedException, ExecutionException, TimeoutException {
 	PluginConfigFileReader jsonFileReader9 = new PluginConfigFileReader(resourcePath+"configOk.json");
-		PluginConfig config9 = jsonFileReader9.getPluginConfig().get(1,TimeUnit.MINUTES);
+		PluginConfigDao config9 = jsonFileReader9.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertTrue(config9.isValid());
 
 		PluginConfigFileReader jsonFileReader10 = new PluginConfigFileReader(resourcePath+"configOkGlobalFilter.json");
-		PluginConfig config10 = jsonFileReader10.getPluginConfig().get(1,TimeUnit.MINUTES);
+		PluginConfigDao config10 = jsonFileReader10.getPluginConfig().get(1,TimeUnit.MINUTES);
 		assertTrue(config10.isValid());
 }
 

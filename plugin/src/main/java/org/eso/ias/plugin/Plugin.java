@@ -10,7 +10,7 @@ import org.eso.ias.heartbeat.HeartbeatStatus;
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.SimpleStringProducer;
-import org.eso.ias.plugin.config.PluginConfig;
+import org.eso.ias.plugin.config.PluginConfigDao;
 import org.eso.ias.plugin.config.Value;
 import org.eso.ias.plugin.filter.Filter;
 import org.eso.ias.plugin.filter.FilterFactory;
@@ -498,7 +498,7 @@ public class Plugin implements ChangeValueListener, AutoCloseable {
 	 *
 	 * @param config The configuration of the plugin
 	 */
-	public Plugin(PluginConfig config) {
+	public Plugin(PluginConfigDao config) {
 		this(
 		config.getId(),
 		config.getMonitoredSystemId(),
@@ -683,7 +683,7 @@ public class Plugin implements ChangeValueListener, AutoCloseable {
 	 *                  (can be <code>null</code> if command managemrent not desired)
 	 */
 	public Plugin(
-			PluginConfig config,
+			PluginConfigDao config,
 			MonitorPointSender sender,
 			Integer instanceNumber,
 			HbProducer hbProducer,

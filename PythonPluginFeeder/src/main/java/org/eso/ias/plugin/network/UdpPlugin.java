@@ -6,7 +6,7 @@ import org.eso.ias.heartbeat.HbProducer;
 import org.eso.ias.plugin.Plugin;
 import org.eso.ias.plugin.PluginException;
 import org.eso.ias.plugin.Sample;
-import org.eso.ias.plugin.config.PluginConfig;
+import org.eso.ias.plugin.config.PluginConfigDao;
 import org.eso.ias.plugin.config.PluginConfigFileReader;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.PublisherException;
@@ -111,7 +111,7 @@ public class UdpPlugin implements Runnable {
 	 * @throws SocketException in case of error creating the UDP socket
 	 */
 	public UdpPlugin(
-			PluginConfig config,
+			PluginConfigDao config,
 			MonitorPointSender sender,
 			HbProducer hbProducer,
 			int udpPort) throws SocketException {
@@ -134,7 +134,7 @@ public class UdpPlugin implements Runnable {
 	 * @throws SocketException in case of error creating the UDP socket
 	 */
 	public UdpPlugin(
-			PluginConfig config,
+			PluginConfigDao config,
 			int udpPort) throws SocketException {
 		Objects.requireNonNull(config);
 		plugin = new Plugin(config);
@@ -197,26 +197,26 @@ public class UdpPlugin implements Runnable {
 		String fileName = cmd.getOptionValue("c");
 		logger.info("Configuration file name {}",fileName);
 		
-		PluginConfig pluginConfig = null;
+		PluginConfigDao pluginConfigDao = null;
 		try  { 
 			BufferedReader reader = new BufferedReader(new FileReader(fileName));
 			PluginConfigFileReader configFileReader= new PluginConfigFileReader(reader,fileName);
-			Future<PluginConfig> pluginConfigFuture = configFileReader.getPluginConfig();
-			pluginConfig = pluginConfigFuture.get(1, TimeUnit.MINUTES);
+			Future<PluginConfigDao> pluginConfigFuture = configFileReader.getPluginConfig();
+			pluginConfigDao = pluginConfigFuture.get(1, TimeUnit.MINUTES);
 		} catch (Exception e) {
 			logger.error("Error reading configuration file {}",fileName,e);
 			printUsage(options);
 			System.exit(-5);
 		}
 
-		String kafkaBroker = pluginConfig.getSinkServer()+":"+pluginConfig.getSinkPort();
+		String kafkaBroker = pluginConfigDao.getSinkServer()+":"+ pluginConfigDao.getSinkPort();
 		
 		logger.info("Kafka broker {}", kafkaBroker);
 
 		
 		UdpPlugin udpPlugin = null; 
 		try {
-			udpPlugin = new UdpPlugin(pluginConfig, udpPort);
+			udpPlugin = new UdpPlugin(pluginConfigDao, udpPort);
 		} catch (Exception e) {
 			UdpPlugin.logger.error("The UdpPlugin failed to build",e);
 			System.exit(-6);
