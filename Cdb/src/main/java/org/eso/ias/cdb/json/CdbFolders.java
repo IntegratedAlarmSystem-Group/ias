@@ -55,6 +55,7 @@ public enum CdbFolders {
 	IASIO("IASIO"),
 	TF("TF"),
 	TEMPLATE("TEMPLATE"),
+	PLUGIN("PLUGIN"),
 	CLIENT("CLIENT");
 	
 	/**
