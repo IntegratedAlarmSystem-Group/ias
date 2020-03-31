@@ -12,6 +12,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 
+import org.eso.ias.cdb.pojos.PluginConfigDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,13 +1,6 @@
-package org.eso.ias.plugin.config;
+package org.eso.ias.cdb.pojos;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -74,16 +67,16 @@ public class PluginConfigDao {
 	/**
 	 * Additional user defined properties
 	 *
-	 * @see Property
+	 * @see PropertyDao
 	 */
-	private Property[] properties;
+	private PropertyDao[] properties;
 
 	/**
 	 * The values red from the monitored system
 	 *
-	 * @see Value
+	 * @see ValueDao
 	 */
-	private Value[] values;
+	private ValueDao[] values;
 
 	/**
 	 *	The global default filter and filterOptions
@@ -143,7 +136,7 @@ public class PluginConfigDao {
 	/**
 	 * @return the values
 	 */
-	public Value[] getValues() {
+	public ValueDao[] getValues() {
 
 		return values;
 	}
@@ -151,7 +144,7 @@ public class PluginConfigDao {
 	/**
 	 * @param values the values to set
 	 */
-	public void setValues(Value[] values) {
+	public void setValues(ValueDao[] values) {
 		this.values = values;
 	}
 
@@ -159,9 +152,9 @@ public class PluginConfigDao {
 	/**
 	 * @return The values as a {@link Collection}
 	 */
-	public Collection<Value> getValuesAsCollection() {
-		Collection<Value> ret = new HashSet<>();
-		for (Value v: values) {
+	public Collection<ValueDao> getValuesAsCollection() {
+		Collection<ValueDao> ret = new HashSet<>();
+		for (ValueDao v: values) {
 			ret.add(v);
 		}
 		return ret;
@@ -171,9 +164,9 @@ public class PluginConfigDao {
 	 * @return A map of values whose key is
 	 *         the ID of the value
 	 */
-	public Map<String,Value> getMapOfValues() {
-		Map<String,Value> ret = new HashMap<>();
-		for (Value v: values) {
+	public Map<String,ValueDao> getMapOfValues() {
+		Map<String,ValueDao> ret = new HashMap<>();
+		for (ValueDao v: values) {
 			ret.put(v.getId(),v);
 		}
 		return ret;
@@ -187,7 +180,7 @@ public class PluginConfigDao {
 	 *         empty if the array does not contain
 	 *         a value with the passed identifier
 	 */
-	public Optional<Value> getValue(String id) {
+	public Optional<ValueDao> getValue(String id) {
 		if (id==null || id.isEmpty()) {
 			throw new IllegalArgumentException("Invalid null or empty identifier");
 		}
@@ -261,9 +254,9 @@ public class PluginConfigDao {
 					invalidProps++;
 				}
 				for (int j=t+1; j<properties.length; j++) {
-					if (properties[t].getKey().equals(properties[j].getKey())) {
+					if (properties[t].getName().equals(properties[j].getName())) {
 						duplicatedKeys=true;
-						logger.error("Invalid properties: key {} is defined more then once",properties[t].getKey());
+						logger.error("Invalid properties: key {} is defined more then once",properties[t].getName());
 					}
 				}
 			}
@@ -284,26 +277,26 @@ public class PluginConfigDao {
 	 * @return The value of the property with the given key
 	 *         or empty if a property with the given key does not exist
 	 */
-	public Optional<Property> getProperty(String key) {
+	public Optional<PropertyDao> getProperty(String key) {
 		if (key==null || key.isEmpty()) {
 			throw new IllegalArgumentException("Invalid null or empty identifier");
 		}
 		if (properties==null) {
 			return Optional.empty();
 		}
-		List<Property> props = Arrays.asList(properties);
-		return Optional.ofNullable(props.stream().filter( prop -> prop.getKey().equals(key)).findAny().orElse(null));
+		List<PropertyDao> props = Arrays.asList(properties);
+		return Optional.ofNullable(props.stream().filter( prop -> prop.getName().equals(key)).findAny().orElse(null));
 	}
 
 	/**
 	 * @return the array of properties
 	 */
-	public Property[] getProperties() {
+	public PropertyDao[] getProperties() {
 		return properties;
 	}
 
 	/**
-	 * Flushes and return the array of {@link Property} in a {@link Properties} object.
+	 * Flushes and return the array of {@link PropertyDao} in a {@link Properties} object.
 	 * <P>
 	 * If the a property with the same key appears more the once, it is discarded
 	 * and a message logged.
@@ -313,8 +306,8 @@ public class PluginConfigDao {
 	public Properties getProps() {
 		Properties props = new Properties();
 		if (properties!=null) {
-			for (Property prop: properties) {
-				props.setProperty(prop.getKey(), prop.getValue());
+			for (PropertyDao prop: properties) {
+				props.setProperty(prop.getName(), prop.getValue());
 			}
 		}
 		return props;
@@ -325,7 +318,7 @@ public class PluginConfigDao {
 	/**
 	 * @param properties the properties to set
 	 */
-	public void setProperties(Property[] properties) {
+	public void setProperties(PropertyDao[] properties) {
 		this.properties = properties;
 	}
 

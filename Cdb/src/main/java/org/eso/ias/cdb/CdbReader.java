@@ -170,7 +170,7 @@ public interface CdbReader {
 	public Collection<TemplateInstanceIasioDao> getTemplateInstancesIasiosForAsce(String id) throws IasCdbException;
 
 	/**
-	 * Get the configuraton of the client with the passed identifier.
+	 * Get the configuration of the client with the passed identifier.
 	 *
 	 * The configuration is passed as a string whose format depends
 	 * on the client implementation.
@@ -180,6 +180,20 @@ public interface CdbReader {
 	 * @throws IasCdbException In case of error getting the configuration of the client
 	 */
 	public Optional<ClientConfigDao> getClientConfig(String id) throws IasCdbException;
+
+	/**
+	 * Get the configuration of the plugin with the passed identifier.
+	 *
+	 * The configuration of the plugin can be read from a file or from the CDB.
+	 * In both cases, the configuration is returned as #PluginConfigDao.
+	 * This m,ethod returns the configuration from the CDB; reading from file is
+	 * not implemented here.
+	 *
+	 * @param id The not null nor empty ID of the IAS plugin
+	 * @return The configuration of the plugin
+	 * @throws IasCdbException In case of error getting the configuration of the plugin
+	 */
+	public Optional<PluginConfigDao> getPluginConfig(String id) throws IasCdbException;
 
 	/**
 	 * Initialize the CDB

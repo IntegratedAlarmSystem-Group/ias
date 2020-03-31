@@ -1,4 +1,4 @@
-package org.eso.ias.plugin.config;
+package org.eso.ias.cdb.pojos;
 
 import java.util.Objects;
 
@@ -6,18 +6,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The value of a monitor point or alarm
+ * The value of a monitor point or alarm of plugin
  * read from the monitored system.
  *
  * @author acaproni
  *
  */
-public class Value {
-
-	/**
-	 * The logger
-	 */
-	private static final Logger logger = LoggerFactory.getLogger(Value.class);
+public class ValueDao {
 
 	/**
 	 * The unique ID of the value
@@ -119,14 +114,11 @@ public class Value {
 	 */
 	public boolean isValid() {
 		if (id==null || id.isEmpty()) {
-			logger.error("Invalid null or empty value ID");
 			return false;
 		}
 		if (refreshTime<=0) {
-			logger.error("Invalid refreshTime {}",refreshTime);
 			return false;
 		}
-		logger.debug("Value {} configuration is valid",id);
 		return true;
 	}
 
