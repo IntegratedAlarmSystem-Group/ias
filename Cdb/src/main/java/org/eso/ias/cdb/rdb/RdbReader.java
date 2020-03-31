@@ -414,6 +414,23 @@ public class RdbReader implements CdbReader {
 	}
 
 	/**
+	 * Get the configuration of the plugin with the passed identifier.
+	 * <p>
+	 * The configuration of the plugin can be read from a file or from the CDB.
+	 * In both cases, the configuration is returned as #PluginConfigDao.
+	 * This m,ethod returns the configuration from the CDB; reading from file is
+	 * not implemented here.
+	 *
+	 * @param id The not null nor empty ID of the IAS plugin
+	 * @return The configuration of the plugin
+	 * @throws IasCdbException In case of error getting the configuration of the plugin
+	 */
+	@Override
+	public Optional<PluginConfigDao> getPluginConfig(String id) throws IasCdbException {
+		return Optional.empty();
+	}
+
+	/**
 	 * Initialize the CDB
 	 */
 	@Override

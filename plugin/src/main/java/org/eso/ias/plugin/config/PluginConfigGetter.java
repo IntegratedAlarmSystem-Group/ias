@@ -1,5 +1,7 @@
 package org.eso.ias.plugin.config;
 
+import org.eso.ias.cdb.pojos.PluginConfigDao;
+
 import java.util.concurrent.Future;
 
 /**

@@ -1,5 +1,7 @@
 package org.eso.ias.plugin;
 
+import org.eso.ias.cdb.pojos.PluginConfigDao;
+import org.eso.ias.cdb.pojos.ValueDao;
 import org.eso.ias.command.CommandManager;
 import org.eso.ias.command.DefaultCommandExecutor;
 import org.eso.ias.command.kafka.CommandManagerKafkaImpl;
@@ -10,8 +12,6 @@ import org.eso.ias.heartbeat.HeartbeatStatus;
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.SimpleStringProducer;
-import org.eso.ias.plugin.config.PluginConfigDao;
-import org.eso.ias.plugin.config.Value;
 import org.eso.ias.plugin.filter.Filter;
 import org.eso.ias.plugin.filter.FilterFactory;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
@@ -283,7 +283,7 @@ public class Plugin implements ChangeValueListener, AutoCloseable {
 	public Plugin(
 			String id,
 			String monitoredSystemId,
-			Collection<Value> values,
+			Collection<ValueDao> values,
 			Properties props,
 			MonitorPointSender sender,
 			String defaultFilter,
@@ -326,7 +326,7 @@ public class Plugin implements ChangeValueListener, AutoCloseable {
 	public Plugin(
 			String id,
 			String monitoredSystemId,
-			Collection<Value> values,
+			Collection<ValueDao> values,
 			Properties props,
 			MonitorPointSender sender,
 			String defaultFilter,
@@ -338,7 +338,8 @@ public class Plugin implements ChangeValueListener, AutoCloseable {
 		this(
 				id,
 				monitoredSystemId,
-				values,props,
+				values,
+				props,
 				sender,
 				defaultFilter,
 				defaultFilterOptions,
@@ -376,7 +377,7 @@ public class Plugin implements ChangeValueListener, AutoCloseable {
 	public Plugin(
 			String id, 
 			String monitoredSystemId,
-			Collection<Value> values,
+			Collection<ValueDao> values,
 			Properties props,
 			MonitorPointSender sender,
 			String defaultFilter,
@@ -534,7 +535,7 @@ public class Plugin implements ChangeValueListener, AutoCloseable {
 	public Plugin(
 			String id,
 			String monitoredSystemId,
-			Collection<Value> values,
+			Collection<ValueDao> values,
 			Properties props,
 			String servers,
 			String defaultFilter,

@@ -83,6 +83,16 @@ public class PropertyDao {
 	 public int hashCode() {
 		 return Objects.hash(getName(),getValue());
 	 }
+
+	public boolean isValid() {
+		if (name==null || name.isEmpty()) {
+			return false;
+		}
+		if (value==null || value.isEmpty()) {
+			return false;
+		}
+		return true;
+	}
 	
 	@Override
 	public String toString() {
