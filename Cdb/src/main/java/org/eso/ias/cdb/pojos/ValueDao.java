@@ -112,7 +112,7 @@ public class ValueDao {
 	 * @return <code>true</code> if the data contained in this object
 	 * 			are correct
 	 */
-	public boolean isValid() {
+	public boolean valid() {
 		if (id==null || id.isEmpty()) {
 			return false;
 		}

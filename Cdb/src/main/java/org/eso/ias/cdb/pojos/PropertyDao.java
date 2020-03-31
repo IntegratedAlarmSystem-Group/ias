@@ -84,7 +84,11 @@ public class PropertyDao {
 		 return Objects.hash(getName(),getValue());
 	 }
 
-	public boolean isValid() {
+	/**
+	 * Check the correctness of the value
+	 * @return true if valid and false otherwise
+	 */
+	public boolean valid() {
 		if (name==null || name.isEmpty()) {
 			return false;
 		}
@@ -93,7 +97,7 @@ public class PropertyDao {
 		}
 		return true;
 	}
-	
+
 	@Override
 	public String toString() {
 		StringBuilder ret = new StringBuilder("Property=[");
