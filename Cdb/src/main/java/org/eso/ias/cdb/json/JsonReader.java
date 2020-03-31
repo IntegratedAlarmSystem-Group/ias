@@ -870,7 +870,29 @@ public class JsonReader implements CdbReader {
 	 */
 	@Override
 	public Optional<PluginConfigDao> getPluginConfig(String id) throws IasCdbException {
-		return Optional.empty();
+		Objects.requireNonNull(id,"The identifier  of the plugin can't be an null");
+		String cleanedID = id.trim();
+		if (cleanedID.isEmpty()) {
+			throw new IllegalArgumentException("The identifier of the plugin can't be an empty string");
+		}
+
+		try {
+			Path pluginFilePath = cdbFileNames.getPluginFilePath(id);
+			if (!canReadFromFile(pluginFilePath.toFile())) {
+				return Optional.empty();
+			} else {
+				// Parse the file in a JSON pojo
+				ObjectMapper mapper = new ObjectMapper();
+				try {
+					PluginConfigDao plConfig = mapper.readValue(pluginFilePath.toFile(), PluginConfigDao.class);
+					return Optional.of(plConfig);
+				} catch (Exception e) {
+					throw new IasCdbException("Error reading plugin plugin from file " + pluginFilePath.toAbsolutePath(), e);
+				}
+			}
+		} catch (Exception e) {
+					throw new IasCdbException("Error reading config of plugin with id " + id, e);
+		}
 	}
 
 	/**

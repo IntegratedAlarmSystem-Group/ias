@@ -834,10 +834,29 @@ public class TestJsonCdb {
 		assertTrue(iDao.get().isCanShelve());
 	}
 
+	public void testGetPlugin() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./testCdb");
+		cdbFiles = new CdbJsonFiles(path);
+		cdbReader = new JsonReader(cdbFiles);
 
-	 /** Test the writing and reading of the configuration of clients
-	 *
-			 * @throws Exception
+		String pluginId = "PluginIDForTesting";
+
+		Optional<PluginConfigDao> pCOnfDao = cdbReader.getPluginConfig(pluginId);
+		assertTrue(pCOnfDao.isPresent());
+		PluginConfigDao pConf = pCOnfDao.get();
+		assertEquals("ACS",pConf.getMonitoredSystemId());
+		assertEquals("iasdevel.hq.eso.org",pConf.getSinkServer());
+		assertEquals(8192,pConf.getSinkPort());
+		assertEquals(3,pConf.getAutoSendTimeInterval());
+		assertEquals(10, pConf.getHbFrequency());
+		assertEquals(2,pConf.getProperties().length);
+		assertEquals(2,pConf.getValues().length);
+	}
+
+
+	 /**
+	 * Test the writing and reading of the configuration of clients
+	 * @throws Exception
 	 */
 	@Test
 	public void testClientConfig() throws Exception {
@@ -869,6 +888,15 @@ public class TestJsonCdb {
 		Optional<ClientConfigDao> c3 = cdbReader.getClientConfig("LongConfigId");
 		assertTrue(c3.isPresent());
 		assertEquals(longConfig,c3.get());
+	}
+
+	/**
+	 * Test reading and writing of plugin configurations
+	 *
+	 * @throws Exception
+	 */
+	public void testPluginConfig() throws Exception {
+
 	}
 
 }

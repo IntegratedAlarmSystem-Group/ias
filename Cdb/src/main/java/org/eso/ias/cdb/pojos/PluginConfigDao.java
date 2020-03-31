@@ -240,7 +240,7 @@ public class PluginConfigDao {
 			return false;
 		}
 		// Finally, check the validity of all the values
-		long invalidValues=getValuesAsCollection().stream().filter(v -> !v.isValid()).count();
+		long invalidValues=getValuesAsCollection().stream().filter(v -> !v.valid()).count();
 		if (invalidValues!=0) {
 			logger.error("Found {} invalid values",invalidValues);
 			return false;
@@ -250,7 +250,7 @@ public class PluginConfigDao {
 		boolean duplicatedKeys=false;
 		if (properties!=null && properties.length>0) {
 			for (int t=0; t<properties.length; t++) {
-				if (!properties[t].isValid()) {
+				if (!properties[t].valid()) {
 					invalidProps++;
 				}
 				for (int j=t+1; j<properties.length; j++) {
