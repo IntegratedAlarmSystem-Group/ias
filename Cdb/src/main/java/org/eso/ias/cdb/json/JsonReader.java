@@ -6,6 +6,8 @@ import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.IasCdbException;
 import org.eso.ias.cdb.json.pojos.*;
 import org.eso.ias.cdb.pojos.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -29,6 +31,11 @@ import java.util.*;
  * @author acaproni
  */
 public class JsonReader implements CdbReader {
+
+	 /**
+     * The logger
+     */
+    private static final Logger logger = LoggerFactory.getLogger(JsonReader.class);
 	
 	/**
 	 * A holder to rebuild the objects from their IDs.
@@ -875,10 +882,13 @@ public class JsonReader implements CdbReader {
 		if (cleanedID.isEmpty()) {
 			throw new IllegalArgumentException("The identifier of the plugin can't be an empty string");
 		}
+		logger.debug("Getting plugin config {}",cleanedID);
 
 		try {
 			Path pluginFilePath = cdbFileNames.getPluginFilePath(id);
+			logger.debug("Getting plugin config from {}",pluginFilePath.toFile().getAbsolutePath());
 			if (!canReadFromFile(pluginFilePath.toFile())) {
+				logger.error("{} is unreadable",pluginFilePath.toFile().getAbsolutePath());
 				return Optional.empty();
 			} else {
 				// Parse the file in a JSON pojo
@@ -887,11 +897,11 @@ public class JsonReader implements CdbReader {
 					PluginConfigDao plConfig = mapper.readValue(pluginFilePath.toFile(), PluginConfigDao.class);
 					return Optional.of(plConfig);
 				} catch (Exception e) {
-					throw new IasCdbException("Error reading plugin plugin from file " + pluginFilePath.toAbsolutePath(), e);
+					throw new IasCdbException("Error reading parsing plugin configuration from file " + pluginFilePath.toAbsolutePath(), e);
 				}
 			}
 		} catch (Exception e) {
-					throw new IasCdbException("Error reading config of plugin with id " + id, e);
+			throw new IasCdbException("Error reading config of plugin " + id, e);
 		}
 	}
 
