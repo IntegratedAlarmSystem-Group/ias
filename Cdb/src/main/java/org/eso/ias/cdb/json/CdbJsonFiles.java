@@ -206,6 +206,6 @@ public class CdbJsonFiles implements CdbFiles {
 		if (clientID==null || clientID.isEmpty()) {
 			throw new IllegalArgumentException("Invalid null or empty DASU ID");
 		}
-		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.PLUGIN, true).resolve(clientID+confFileExtension);
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.PLUGIN, true).resolve(clientID+jsonFileExtension);
 	}
 }
