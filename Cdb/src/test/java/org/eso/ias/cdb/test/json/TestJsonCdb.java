@@ -4,6 +4,7 @@ import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
 import org.eso.ias.cdb.json.*;
 import org.eso.ias.cdb.pojos.*;
+import org.eso.ias.plugin.Plugin;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -839,7 +840,7 @@ public class TestJsonCdb {
 	 * @throws Exception
 	 */
 	@Test
-	public void testGetPluginFromFile() throws Exception {
+	public void testGetPlugin() throws Exception {
 		Path path = FileSystems.getDefault().getPath("./testCdb");
 		cdbFiles = new CdbJsonFiles(path);
 		cdbReader = new JsonReader(cdbFiles);
@@ -924,8 +925,44 @@ public class TestJsonCdb {
 	 *
 	 * @throws Exception
 	 */
-	public void testPluginConfig() throws Exception {
+	@Test
+	public void testPWriteluginConfig() throws Exception {
+		PluginConfigDao pConf = new PluginConfigDao();
+		pConf.setId("GeneratedPluginConfig");
+		pConf.setAutoSendTimeInterval(12);
+		pConf.setDefaultFilter("Mean");
+		pConf.setDefaultFilterOptions("100");
+		pConf.setHbFrequency(9);
+		pConf.setMonitoredSystemId("MSys");
+		pConf.setSinkPort(9100);
+		pConf.setSinkServer("a.b.c.org");
 
+		PropertyDao prop = new PropertyDao();
+		prop.setName("pName");
+		prop.setValue("pVal");
+		PropertyDao[] arrayProps = { prop };
+		pConf.setProperties(arrayProps);
+
+		ValueDao v1 = new ValueDao();
+		v1.setId("V1");
+		v1.setRefreshTime(1250);
+
+		ValueDao v2 = new ValueDao();
+		v2.setId("Value-2");
+		v2.setRefreshTime(750);
+		v2.setFilter("Avg");
+		v2.setFilterOptions("10");
+		ValueDao[] values = { v1, v2 };
+		pConf.setValues(values);
+
+		cdbWriter.writePluginConfig(pConf);
+		assertTrue(cdbFiles.getPluginFilePath(pConf.getId()).toFile().exists(),"Plugin "+pConf.getId()+" configuration file does NOT exist");
+
+
+		Optional<PluginConfigDao> pConfFromCdb = cdbReader.getPluginConfig(pConf.getId());
+		assertTrue(pConfFromCdb.isPresent());
+
+		assertEquals(pConf,pConfFromCdb.get());
 	}
 
 }
