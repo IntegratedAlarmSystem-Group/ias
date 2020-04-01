@@ -2,6 +2,7 @@ package org.eso.ias.cdb.pojos;
 
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,8 +99,14 @@ public class ValueDao {
 	}
 
 	@Override
-	public boolean equals(Object that) {
-		return Objects.equals(this, that);
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		ValueDao valueDao = (ValueDao) o;
+		return refreshTime == valueDao.refreshTime &&
+				id.equals(valueDao.id) &&
+				Objects.equals(filter, valueDao.filter) &&
+				Objects.equals(filterOptions, valueDao.filterOptions);
 	}
 
 	/**
@@ -112,6 +119,7 @@ public class ValueDao {
 	 * @return <code>true</code> if the data contained in this object
 	 * 			are correct
 	 */
+	@JsonIgnore
 	public boolean valid() {
 		if (id==null || id.isEmpty()) {
 			return false;
@@ -122,6 +130,22 @@ public class ValueDao {
 		return true;
 	}
 
-
+	@Override
+	public String toString() {
+		StringBuilder ret = new StringBuilder("ValueDao[id=");
+		ret.append(id);
+		ret.append(", refreshTime=");
+		ret.append(refreshTime);
+		if (filter!=null && !filter.isEmpty()) {
+			ret.append(", filter=");
+			ret.append(filter);
+		}
+		if (filterOptions!=null && !filterOptions.isEmpty()) {
+			ret.append(", filterOptions=");
+			ret.append(filterOptions);
+		}
+		ret.append(']');
+		return ret.toString();
+	}
 }
 

@@ -2,6 +2,7 @@ package org.eso.ias.cdb.pojos;
 
 import java.util.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -152,7 +153,7 @@ public class PluginConfigDao {
 	/**
 	 * @return The values as a {@link Collection}
 	 */
-	public Collection<ValueDao> getValuesAsCollection() {
+	public Collection<ValueDao> valuesAsCollection() {
 		Collection<ValueDao> ret = new HashSet<>();
 		for (ValueDao v: values) {
 			ret.add(v);
@@ -164,7 +165,7 @@ public class PluginConfigDao {
 	 * @return A map of values whose key is
 	 *         the ID of the value
 	 */
-	public Map<String,ValueDao> getMapOfValues() {
+	public Map<String,ValueDao> valuesAsMap() {
 		Map<String,ValueDao> ret = new HashMap<>();
 		for (ValueDao v: values) {
 			ret.put(v.getId(),v);
@@ -184,7 +185,7 @@ public class PluginConfigDao {
 		if (id==null || id.isEmpty()) {
 			throw new IllegalArgumentException("Invalid null or empty identifier");
 		}
-		return Optional.ofNullable(getMapOfValues().get(id));
+		return Optional.ofNullable(valuesAsMap().get(id));
 	}
 
 	/**
@@ -201,6 +202,7 @@ public class PluginConfigDao {
 	 * @return <code>true</code> if the data contained in this object
 	 * 			are correct
 	 */
+	@JsonIgnore
 	public boolean isValid() {
 		if (id==null || id.isEmpty()) {
 			logger.error("Invalid null or empty plugin ID");
@@ -235,12 +237,12 @@ public class PluginConfigDao {
 		}
 		
 		// Ensure that all the IDs of the values differ
-		if (getMapOfValues().keySet().size()!=values.length) {
+		if (valuesAsMap().keySet().size()!=values.length) {
 			logger.error("Some values share the same ID");
 			return false;
 		}
 		// Finally, check the validity of all the values
-		long invalidValues=getValuesAsCollection().stream().filter(v -> !v.valid()).count();
+		long invalidValues=valuesAsCollection().stream().filter(v -> !v.valid()).count();
 		if (invalidValues!=0) {
 			logger.error("Found {} invalid values",invalidValues);
 			return false;
@@ -303,6 +305,7 @@ public class PluginConfigDao {
 	 *
 	 * @return The properties as {@link Properties}
 	 */
+	@JsonIgnore
 	public Properties getProps() {
 		Properties props = new Properties();
 		if (properties!=null) {
@@ -391,5 +394,26 @@ public class PluginConfigDao {
 		this.hbFrequency = hbFrequency;
 	}
 
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		PluginConfigDao that = (PluginConfigDao) o;
+		return autoSendTimeInterval == that.autoSendTimeInterval &&
+				hbFrequency == that.hbFrequency &&
+				sinkPort == that.sinkPort &&
+				id.equals(that.id) &&
+				monitoredSystemId.equals(that.monitoredSystemId) &&
+				sinkServer.equals(that.sinkServer) &&
+				Arrays.equals(properties, that.properties) &&
+				Arrays.equals(values, that.values) &&
+				Objects.equals(defaultFilter, that.defaultFilter) &&
+				Objects.equals(defaultFilterOptions, that.defaultFilterOptions);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(id);
+	}
 }
 
