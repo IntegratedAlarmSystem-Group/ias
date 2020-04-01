@@ -834,23 +834,52 @@ public class TestJsonCdb {
 		assertTrue(iDao.get().isCanShelve());
 	}
 
-	public void testGetPlugin() throws Exception {
+	/**
+	 * Test getting the PluginConfig from a JSON file
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetPluginFromFile() throws Exception {
 		Path path = FileSystems.getDefault().getPath("./testCdb");
 		cdbFiles = new CdbJsonFiles(path);
 		cdbReader = new JsonReader(cdbFiles);
+		cdbReader.init();
 
 		String pluginId = "PluginIDForTesting";
 
 		Optional<PluginConfigDao> pCOnfDao = cdbReader.getPluginConfig(pluginId);
 		assertTrue(pCOnfDao.isPresent());
 		PluginConfigDao pConf = pCOnfDao.get();
+		System.out.println("PluginConfig:\n"+pConf.toString());
 		assertEquals("ACS",pConf.getMonitoredSystemId());
 		assertEquals("iasdevel.hq.eso.org",pConf.getSinkServer());
 		assertEquals(8192,pConf.getSinkPort());
 		assertEquals(3,pConf.getAutoSendTimeInterval());
 		assertEquals(10, pConf.getHbFrequency());
-		assertEquals(2,pConf.getProperties().length);
-		assertEquals(2,pConf.getValues().length);
+
+		Map<String,String> props = new HashMap();
+		for (PropertyDao p: pConf.getProperties()) {
+			props.put(p.getName(),p.getValue());
+		}
+		assertEquals(2,props.size());
+		assertEquals("itsValue",props.get("a-key"));
+		assertEquals("AnotherValue",props.get("Anotherkey"));
+
+		Map<String,ValueDao> values = new HashMap<>();
+		for (ValueDao v:pConf.getValues() ) {
+			values.put(v.getId(),v);
+
+		}
+		assertEquals(2, values.size());
+		ValueDao v1 = values.get("AlarmID");
+		assertNotNull(v1);
+		assertEquals(500,v1.getRefreshTime());
+		assertEquals("TheFilter",v1.getFilter());
+		assertEquals("Options",v1.getFilterOptions());
+		ValueDao v2 = values.get("TempID");
+		assertEquals(1500,v2.getRefreshTime());
+		assertEquals("Average",v2.getFilter());
+		assertEquals("1, 150, 5",v2.getFilterOptions());
 	}
 
 
