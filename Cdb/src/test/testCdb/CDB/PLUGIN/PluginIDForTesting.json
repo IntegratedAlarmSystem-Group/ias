@@ -1,7 +1,7 @@
 { 
 	"id":"PluginIDForTesting",
 	"monitoredSystemId":"ACS",
-	"properties": [
+	"props": [
 		{"name":"a-key",
 		"value":"itsValue"},
 		{"name":"Anotherkey",
