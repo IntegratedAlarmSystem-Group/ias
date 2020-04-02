@@ -405,7 +405,7 @@ public class TestRdbCdb {
 
 	/**
 	 * Test reading and writing of ASCE
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -810,5 +810,46 @@ public class TestRdbCdb {
 		assertEquals(longConfig,c3.get());
 
 		logger.info("testClientConfig done");
+	}
+
+	/**
+	 * Test reading and writing of plugin configurations
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	public void testPluginConfig() throws Exception {
+		PluginConfigDao pConf = new PluginConfigDao();
+		pConf.setId("GeneratedPluginConfig");
+		pConf.setDefaultFilter("Mean");
+		pConf.setDefaultFilterOptions("100");
+		pConf.setMonitoredSystemId("MSys");
+
+		PropertyDao prop = new PropertyDao();
+		prop.setName("pName");
+		prop.setValue("pVal");
+		Set<PropertyDao> arrayProps = pConf.getProps();
+		arrayProps.add(prop);
+
+		ValueDao v1 = new ValueDao();
+		v1.setId("V1");
+		v1.setRefreshTime(1250);
+
+		ValueDao v2 = new ValueDao();
+		v2.setId("Value-2");
+		v2.setRefreshTime(750);
+		v2.setFilter("Avg");
+		v2.setFilterOptions("10");
+		Set<ValueDao> values = new HashSet<>();
+		values.add(v1);
+		values.add(v2);
+		pConf.setValues(values);
+
+		cdbWriter.writePluginConfig(pConf);
+
+		Optional<PluginConfigDao> pConfFromCdb = cdbReader.getPluginConfig(pConf.getId());
+		assertTrue(pConfFromCdb.isPresent());
+
+		assertEquals(pConf,pConfFromCdb.get());
 	}
 }
