@@ -31,39 +31,7 @@ public class PluginConfigDao {
 	 */
 	private String monitoredSystemId;
 
-	/**
-	 * The name of the server to send monitor point values
-	 * and alarms to
-	 */
-	private String sinkServer;
-	
-	/**
-	 * The default time interval to automatically resend monitor point 
-	 * if their values did not change
-	 */
-	public static final int autoSendTimeIntervalDefault = 5;
-	
-	/**
-	 * The time interval (seconds) to automatically resend the monitor
-	 * points even if their values did not change.
-	 */
-	private int autoSendTimeInterval = autoSendTimeIntervalDefault;
-	
-	/**
-	 * The default value of the frequency of the heartbeat
-	 */
-	public static final int hbFrequencyDefault = 5;
-	
-	/**
-	 * The frequency of the heartbeat in seconds
-	 */
-	private int hbFrequency = hbFrequencyDefault;
 
-	/**
-	 * The port of the server to send monitor point values
-	 * and alarms to
-	 */
-	private int sinkPort;
 
 	/**
 	 * Additional user defined properties
@@ -106,33 +74,6 @@ public class PluginConfigDao {
 		this.id = id;
 	}
 
-	/**
-	 * @return the sinkServer
-	 */
-	public String getSinkServer() {
-		return sinkServer;
-	}
-
-	/**
-	 * @param sinkServer the sinkServer to set
-	 */
-	public void setSinkServer(String sinkServer) {
-		this.sinkServer = sinkServer;
-	}
-
-	/**
-	 * @return the sinkPort
-	 */
-	public int getSinkPort() {
-		return sinkPort;
-	}
-
-	/**
-	 * @param sinkPort the sinkPort to set
-	 */
-	public void setSinkPort(int sinkPort) {
-		this.sinkPort = sinkPort;
-	}
 
 	/**
 	 * @return the values
@@ -212,27 +153,11 @@ public class PluginConfigDao {
 			logger.error("Invalid null or empty monitored system ID");
 			return false;
 		}
-		if (sinkServer==null || sinkServer.isEmpty()) {
-			logger.error("Invalid null or empty sink server name");
-			return false;
-		}
-		if (sinkPort<=0) {
-			logger.error("Invalid sink server port number {}",sinkPort);
-			return false;
-		}
+
+
 		// There must be at least one value!
 		if (values==null || values.length<=0) {
 			logger.error("No values found");
-			return false;
-		}
-		
-		if (autoSendTimeInterval<=0) {
-			logger.error("Auto send time interval must be greater then 0");
-			return false;
-		}
-		
-		if (hbFrequency<=0) {
-			logger.error("The frequency must be greater then 0");
 			return false;
 		}
 		
@@ -378,20 +303,9 @@ public class PluginConfigDao {
 		this.defaultFilterOptions = defaultFilterOptions;
 	}
 
-	public int getAutoSendTimeInterval() {
-		return autoSendTimeInterval;
-	}
-
-	public void setAutoSendTimeInterval(int autoSendTimeINterval) {
-		this.autoSendTimeInterval = autoSendTimeINterval;
-}
-
-	public int getHbFrequency() {
-		return hbFrequency;
-	}
-
-	public void setHbFrequency(int hbFrequency) {
-		this.hbFrequency = hbFrequency;
+	@Override
+	public int hashCode() {
+		return Objects.hash(id);
 	}
 
 	@Override
@@ -399,21 +313,12 @@ public class PluginConfigDao {
 		if (this == o) return true;
 		if (o == null || getClass() != o.getClass()) return false;
 		PluginConfigDao that = (PluginConfigDao) o;
-		return autoSendTimeInterval == that.autoSendTimeInterval &&
-				hbFrequency == that.hbFrequency &&
-				sinkPort == that.sinkPort &&
-				id.equals(that.id) &&
+		return id.equals(that.id) &&
 				monitoredSystemId.equals(that.monitoredSystemId) &&
-				sinkServer.equals(that.sinkServer) &&
 				Arrays.equals(properties, that.properties) &&
 				Arrays.equals(values, that.values) &&
 				Objects.equals(defaultFilter, that.defaultFilter) &&
 				Objects.equals(defaultFilterOptions, that.defaultFilterOptions);
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(id);
 	}
 }
 
