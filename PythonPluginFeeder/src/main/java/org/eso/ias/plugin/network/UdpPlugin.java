@@ -6,8 +6,8 @@ import org.eso.ias.heartbeat.HbProducer;
 import org.eso.ias.plugin.Plugin;
 import org.eso.ias.plugin.PluginException;
 import org.eso.ias.plugin.Sample;
-import org.eso.ias.plugin.config.PluginConfigDao;
 import org.eso.ias.plugin.config.PluginConfigFileReader;
+import org.eso.ias.plugin.config.PluginFileConfig;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.types.IASTypes;
@@ -111,7 +111,7 @@ public class UdpPlugin implements Runnable {
 	 * @throws SocketException in case of error creating the UDP socket
 	 */
 	public UdpPlugin(
-			PluginConfigDao config,
+			PluginFileConfig config,
 			MonitorPointSender sender,
 			HbProducer hbProducer,
 			int udpPort) throws SocketException {
@@ -134,7 +134,7 @@ public class UdpPlugin implements Runnable {
 	 * @throws SocketException in case of error creating the UDP socket
 	 */
 	public UdpPlugin(
-			PluginConfigDao config,
+			PluginFileConfig config,
 			int udpPort) throws SocketException {
 		Objects.requireNonNull(config);
 		plugin = new Plugin(config);
@@ -197,11 +197,11 @@ public class UdpPlugin implements Runnable {
 		String fileName = cmd.getOptionValue("c");
 		logger.info("Configuration file name {}",fileName);
 		
-		PluginConfigDao pluginConfigDao = null;
+		PluginFileConfig pluginConfigDao = null;
 		try  { 
 			BufferedReader reader = new BufferedReader(new FileReader(fileName));
 			PluginConfigFileReader configFileReader= new PluginConfigFileReader(reader,fileName);
-			Future<PluginConfigDao> pluginConfigFuture = configFileReader.getPluginConfig();
+			Future<PluginFileConfig> pluginConfigFuture = configFileReader.getPluginConfig();
 			pluginConfigDao = pluginConfigFuture.get(1, TimeUnit.MINUTES);
 		} catch (Exception e) {
 			logger.error("Error reading configuration file {}",fileName,e);

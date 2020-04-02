@@ -1,7 +1,5 @@
 package org.eso.ias.plugin.config;
 
-import org.eso.ias.cdb.pojos.PluginConfigDao;
-
 import java.util.concurrent.Future;
 
 /**
@@ -23,5 +21,5 @@ public interface PluginConfigGetter {
 	 * @return the java pojo with the configuration of the plugin
 	 * @throws PluginConfigException in case of error getting the configuration
 	 */
-	Future<PluginConfigDao> getPluginConfig() throws PluginConfigException;
+	Future<PluginFileConfig> getPluginConfig() throws PluginConfigException;
 }

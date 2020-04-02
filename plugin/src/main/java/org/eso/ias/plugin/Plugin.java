@@ -1,6 +1,6 @@
 package org.eso.ias.plugin;
 
-import org.eso.ias.cdb.pojos.PluginConfigDao;
+
 import org.eso.ias.cdb.pojos.ValueDao;
 import org.eso.ias.command.CommandManager;
 import org.eso.ias.command.DefaultCommandExecutor;
@@ -12,6 +12,7 @@ import org.eso.ias.heartbeat.HeartbeatStatus;
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.SimpleStringProducer;
+import org.eso.ias.plugin.config.PluginFileConfig;
 import org.eso.ias.plugin.filter.Filter;
 import org.eso.ias.plugin.filter.FilterFactory;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
@@ -499,12 +500,12 @@ public class Plugin implements ChangeValueListener, AutoCloseable {
 	 *
 	 * @param config The configuration of the plugin
 	 */
-	public Plugin(PluginConfigDao config) {
+	public Plugin(PluginFileConfig config) {
 		this(
 		config.getId(),
 		config.getMonitoredSystemId(),
-		config.getValuesAsCollection(),
-		config.getProps(),
+		config.getValues(),
+		config.getProperties(),
 		config.getSinkServer()+":"+config.getSinkPort(),
 		config.getDefaultFilter(),
 		config.getDefaultFilterOptions(),
@@ -684,7 +685,7 @@ public class Plugin implements ChangeValueListener, AutoCloseable {
 	 *                  (can be <code>null</code> if command managemrent not desired)
 	 */
 	public Plugin(
-			PluginConfigDao config,
+			PluginFileConfig config,
 			MonitorPointSender sender,
 			Integer instanceNumber,
 			HbProducer hbProducer,
@@ -692,8 +693,8 @@ public class Plugin implements ChangeValueListener, AutoCloseable {
 		this(
 				config.getId(),
 				config.getMonitoredSystemId(),
-				config.getValuesAsCollection(),
-				config.getProps(),
+				config.getValues(),
+				config.getProperties(),
 				sender,
 				config.getDefaultFilter(),
 				config.getDefaultFilterOptions(),
