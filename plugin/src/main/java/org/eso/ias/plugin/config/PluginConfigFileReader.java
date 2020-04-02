@@ -12,7 +12,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 
-import org.eso.ias.cdb.pojos.PluginConfigDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +33,7 @@ public class PluginConfigFileReader implements PluginConfigGetter {
 	 * @author acaproni
 	 *
 	 */
-	private class ConfigCallable implements Callable<PluginConfigDao> {
+	private class ConfigCallable implements Callable<PluginFileConfig> {
 		
 		/**
 		 * The reader to read the JSON from.
@@ -57,10 +56,10 @@ public class PluginConfigFileReader implements PluginConfigGetter {
 		 * the plugin configuration
 		 */
 		@Override
-		public PluginConfigDao call() throws Exception {
+		public PluginFileConfig call() throws Exception {
 			try {
 				ObjectMapper jackson2Mapper = new ObjectMapper();
-				PluginConfigDao config = jackson2Mapper.readValue(reader, PluginConfigDao.class);
+				PluginFileConfig config = jackson2Mapper.readValue(reader, PluginFileConfig.class);
 				logger.info("JSON Plugin configuration successfully read from {}",srcName);
 				return config;
 			} finally {
@@ -146,7 +145,7 @@ public class PluginConfigFileReader implements PluginConfigGetter {
 	 * @see PluginConfigGetter
 	 */
 	@Override
-	public Future<PluginConfigDao> getPluginConfig() throws PluginConfigException {
+	public Future<PluginFileConfig> getPluginConfig() throws PluginConfigException {
 		logger.debug("Starting the async. reading of the JSON configuration");
 		ConfigCallable callable = new ConfigCallable(reader);
 		return exService.submit(callable);
