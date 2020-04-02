@@ -24,6 +24,7 @@ public class PluginConfigDao {
 	/**
 	 * The logger
 	 */
+	@Transient
 	private final Logger logger = LoggerFactory.getLogger(PluginConfigDao.class);
 
 	/**
@@ -36,6 +37,7 @@ public class PluginConfigDao {
 	/**
 	 * The ID of the system monitored by the plugin
 	 */
+	@Basic(optional=false)
 	private String monitoredSystemId;
 
 
@@ -45,6 +47,10 @@ public class PluginConfigDao {
 	 *
 	 * @see PropertyDao
 	 */
+	@OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+	@JoinTable(name= "PROPS_PLUGIN",
+			joinColumns = @JoinColumn(name="plugin_id"),
+			inverseJoinColumns = @JoinColumn(name = "props_id"))
 	private Set<PropertyDao> props = new HashSet<>();
 
 	/**
@@ -52,6 +58,11 @@ public class PluginConfigDao {
 	 *
 	 * @see ValueDao
 	 */
+	@Basic(optional=false)
+	@ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+	@JoinTable(name= "PLUGIN_VALUE",
+			joinColumns = @JoinColumn(name="plugin_id"),
+			inverseJoinColumns = @JoinColumn(name = "value_id"))
 	private Set<ValueDao> values = new HashSet<>();
 
 	/**

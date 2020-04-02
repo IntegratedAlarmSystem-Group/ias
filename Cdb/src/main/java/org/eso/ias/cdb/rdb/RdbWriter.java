@@ -138,7 +138,15 @@ public class RdbWriter implements CdbWriter {
 	 */
 	@Override
 	public void writePluginConfig(PluginConfigDao pluginConfigDao) throws IasCdbException {
-		throw new NotImplementedException();
+		Objects.requireNonNull(pluginConfigDao, "The plugin DAO object to persist can't be null");
+		Session s=rdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		for (ValueDao v: pluginConfigDao.getValues()) {
+			s.merge(v);
+		}
+		s.merge(pluginConfigDao);
+		t.commit();
+		s.flush();
 	}
 
 	/**

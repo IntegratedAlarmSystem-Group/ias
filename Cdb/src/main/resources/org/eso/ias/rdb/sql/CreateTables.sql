@@ -60,7 +60,7 @@ CREATE SEQUENCE IAS_SEQ_GENERATOR
   NOCYCLE
   CACHE 20
   ORDER;
-  
+
 CREATE TABLE IAS_PROPERTY (
   Ias_id NUMBER(15) NOT NULL,
   props_id NUMBER(15) NOT NULL,
@@ -108,7 +108,7 @@ CREATE TABLE TRANSFER_FUNC (
 /*
   The table for a ASCE
 */
-CREATE TABLE ASCE ( 
+CREATE TABLE ASCE (
   asce_id VARCHAR(64) NOT NULL,
   transf_fun_id VARCHAR2(96) NOT NULL,
   output_id VARCHAR2(64) NOT NULL,
@@ -119,7 +119,7 @@ CREATE TABLE ASCE (
   CONSTRAINT ASCE_output_FK FOREIGN KEY (output_id) REFERENCES IASIO(io_id),
   CONSTRAINT ASCE_DASU_FK FOREIGN KEY (dasu_id) REFERENCES DASU(dasu_id),
   CONSTRAINT ASCE_TRANSFUN_FK FOREIGN KEY(transf_fun_id) REFERENCES TRANSFER_FUNC(className_id));
-  
+
 /*
   One ASCE can have zero to many properties.
   This is the link table between ASCE and properties
@@ -181,16 +181,16 @@ CREATE TABLE ASCE_TEMPL_IASIO (
 
 
 
-  
+
   /*
-    The Supervisor 
+    The Supervisor
    */
 CREATE TABLE SUPERVISOR (
   supervisor_id VARCHAR2(64) NOT NULL,
   hostName VARCHAR2(64) NOT NULL,
   logLevel VARCHAR2(10),
   CONSTRAINT SUPERVISOR_PK PRIMARY KEY(supervisor_id));
-  
+
 /*
   The SEQUENCE to generate DASUS_TO+DEPLOY IDs
 */
@@ -222,3 +222,35 @@ CREATE TABLE CLIENT_CONFIG (
     client_id VARCHAR2(64) NOT NULL,
     config CLOB,
     CONSTRAINT CLIENTCONF PRIMARY KEY(client_id));
+
+CREATE TABLE VALUE (
+  value_id VARCHAR(64) NOT NULL,
+  filter VARCHAR(64) NULL,
+  filterOptions VARCHAR(64) NULL,
+  refreshTime NUMBER(8) NOT NULL,
+  CONSTRAINT PLUGIN_VALUE_PK PRIMARY KEY ( value_id ),
+  CONSTRAINT refreshTimeGreaterThanZero CHECK (refreshTime>0));
+
+CREATE TABLE PLUGIN (
+  plugin_id VARCHAR(64) NOT NULL,
+  monitoredSystemId VARCHAR(64) NOT NULL,
+  defaultFilter VARCHAR(64) NULL,
+  defaultFilterOptions VARCHAR(64) NULL,
+  CONSTRAINT PLUGIN_PK PRIMARY KEY ( plugin_id ));
+
+CREATE TABLE PROPS_PLUGIN (
+  plugin_id VARCHAR(64) NOT NULL,
+  props_id NUMBER(15) NOT NULL,
+  CONSTRAINT PLUGIN_PROP_props_UQ UNIQUE(props_id),
+  CONSTRAINT PLUGIN_PROP_Prop_FK FOREIGN KEY(props_id) REFERENCES PROPERTY(id),
+  CONSTRAINT PLUGIN_PROP_Plugin_FK FOREIGN KEY(plugin_id) REFERENCES PLUGIN(plugin_id),
+  CONSTRAINT PLUGINPROPS_PK PRIMARY KEY (plugin_id, props_id));
+
+/*
+  This table link the PLUGIN to its many values
+*/
+CREATE TABLE PLUGIN_VALUE (
+  plugin_id VARCHAR(64) NOT NULL,
+  value_id  VARCHAR(64) NOT NULL,
+  CONSTRAINT PL_VALUE_PLUGIN_FK FOREIGN KEY(plugin_id) REFERENCES PLUGIN(plugin_id),
+  CONSTRAINT PL_VALUE_VALUE_FK FOREIGN KEY(value_id) REFERENCES VALUE(value_id));

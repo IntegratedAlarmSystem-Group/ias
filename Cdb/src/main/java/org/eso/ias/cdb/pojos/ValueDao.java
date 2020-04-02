@@ -6,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.persistence.*;
+
 /**
  * The value of a monitor point or alarm of plugin
  * read from the monitored system.
@@ -13,28 +15,35 @@ import org.slf4j.LoggerFactory;
  * @author acaproni
  *
  */
+@Entity
+@Table(name = "VALUE")
 public class ValueDao {
 
 	/**
 	 * The unique ID of the value
 	 */
+	@Id
+	@Column(name = "value_id")
 	private String id;
 
 	/**
 	 * The time interval (msec) to send the value to the
 	 * server if it does not change
 	 */
+	@Basic(optional=false)
 	private int refreshTime;
 
 	/**
 	 * The optional filter to apply to the value
 	 */
+	@Basic(optional=true)
 	private String filter;
 
 	/**
 	 * A optional comma separated list of options to pass
 	 * to the filter
 	 */
+	@Basic(optional=true)
 	private String filterOptions;
 
 	/**
