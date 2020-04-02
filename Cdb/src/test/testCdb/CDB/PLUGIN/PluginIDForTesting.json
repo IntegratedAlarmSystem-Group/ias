@@ -1,10 +1,6 @@
 { 
 	"id":"PluginIDForTesting",
 	"monitoredSystemId":"ACS",
-	"sinkServer":"iasdevel.hq.eso.org",
-	"sinkPort":"8192",
-	"autoSendTimeInterval":"3",
-	"hbFrequency":"10",
 	"properties": [
 		{"name":"a-key",
 		"value":"itsValue"},

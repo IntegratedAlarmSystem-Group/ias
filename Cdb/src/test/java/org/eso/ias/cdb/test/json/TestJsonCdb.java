@@ -853,10 +853,6 @@ public class TestJsonCdb {
 		PluginConfigDao pConf = pCOnfDao.get();
 		System.out.println("PluginConfig:\n"+pConf.toString());
 		assertEquals("ACS",pConf.getMonitoredSystemId());
-		assertEquals("iasdevel.hq.eso.org",pConf.getSinkServer());
-		assertEquals(8192,pConf.getSinkPort());
-		assertEquals(3,pConf.getAutoSendTimeInterval());
-		assertEquals(10, pConf.getHbFrequency());
 
 		Map<String,String> props = new HashMap();
 		for (PropertyDao p: pConf.getProperties()) {
@@ -929,13 +925,9 @@ public class TestJsonCdb {
 	public void testPWriteluginConfig() throws Exception {
 		PluginConfigDao pConf = new PluginConfigDao();
 		pConf.setId("GeneratedPluginConfig");
-		pConf.setAutoSendTimeInterval(12);
 		pConf.setDefaultFilter("Mean");
 		pConf.setDefaultFilterOptions("100");
-		pConf.setHbFrequency(9);
 		pConf.setMonitoredSystemId("MSys");
-		pConf.setSinkPort(9100);
-		pConf.setSinkServer("a.b.c.org");
 
 		PropertyDao prop = new PropertyDao();
 		prop.setName("pName");
