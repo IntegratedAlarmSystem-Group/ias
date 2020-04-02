@@ -855,7 +855,7 @@ public class TestJsonCdb {
 		assertEquals("ACS",pConf.getMonitoredSystemId());
 
 		Map<String,String> props = new HashMap();
-		for (PropertyDao p: pConf.getProperties()) {
+		for (PropertyDao p: pConf.getProps()) {
 			props.put(p.getName(),p.getValue());
 		}
 		assertEquals(2,props.size());
@@ -932,8 +932,8 @@ public class TestJsonCdb {
 		PropertyDao prop = new PropertyDao();
 		prop.setName("pName");
 		prop.setValue("pVal");
-		PropertyDao[] arrayProps = { prop };
-		pConf.setProperties(arrayProps);
+		Set<PropertyDao> arrayProps = pConf.getProps();
+		arrayProps.add(prop);
 
 		ValueDao v1 = new ValueDao();
 		v1.setId("V1");
@@ -944,7 +944,9 @@ public class TestJsonCdb {
 		v2.setRefreshTime(750);
 		v2.setFilter("Avg");
 		v2.setFilterOptions("10");
-		ValueDao[] values = { v1, v2 };
+		Set<ValueDao> values = new HashSet<>();
+		values.add(v1);
+		values.add(v2);
 		pConf.setValues(values);
 
 		cdbWriter.writePluginConfig(pConf);

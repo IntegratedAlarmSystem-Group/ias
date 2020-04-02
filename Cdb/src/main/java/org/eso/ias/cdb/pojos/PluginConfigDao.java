@@ -3,8 +3,11 @@ package org.eso.ias.cdb.pojos;
 import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.persistence.*;
 
 /**
  * The java pojo with the plugin configuration.
@@ -14,6 +17,8 @@ import org.slf4j.LoggerFactory;
  * @author acaproni
  *
  */
+@Entity
+@Table(name = "PLUGIN")
 public class PluginConfigDao {
 
 	/**
@@ -24,6 +29,8 @@ public class PluginConfigDao {
 	/**
 	 * The ID of the plugin
 	 */
+	@Id
+	@Column(name = "plugin_id")
 	private String id;
 
 	/**
@@ -38,24 +45,28 @@ public class PluginConfigDao {
 	 *
 	 * @see PropertyDao
 	 */
-	private PropertyDao[] properties;
+	private Set<PropertyDao> props = new HashSet<>();
 
 	/**
 	 * The values red from the monitored system
 	 *
 	 * @see ValueDao
 	 */
-	private ValueDao[] values;
+	private Set<ValueDao> values = new HashSet<>();
 
 	/**
 	 *	The global default filter and filterOptions
 	 */
-	private String defaultFilter;
+	@Basic(optional=true)
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	private String defaultFilter=null;
 
 	/**
 	 *	The global default filterOptions
 	 */
-	private String defaultFilterOptions;
+	@Basic(optional=true)
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	private String defaultFilterOptions=null;
 
 
 	/**
@@ -78,7 +89,7 @@ public class PluginConfigDao {
 	/**
 	 * @return the values
 	 */
-	public ValueDao[] getValues() {
+	public Set<ValueDao> getValues() {
 
 		return values;
 	}
@@ -86,8 +97,12 @@ public class PluginConfigDao {
 	/**
 	 * @param values the values to set
 	 */
-	public void setValues(ValueDao[] values) {
-		this.values = values;
+	public void setValues(Set<ValueDao> values) {
+		if (values==null) {
+			this.values = new HashSet<>();
+		} else {
+			this.values = values;
+		}
 	}
 
 
@@ -150,43 +165,42 @@ public class PluginConfigDao {
 			return false;
 		}
 		if (monitoredSystemId==null || monitoredSystemId.isEmpty()) {
-			logger.error("Invalid null or empty monitored system ID");
+			logger.error("Invalid null or empty monitored system ID of plugin {}",id);
 			return false;
 		}
 
 
 		// There must be at least one value!
-		if (values==null || values.length<=0) {
-			logger.error("No values found");
+		if (values==null || values.isEmpty()) {
+			logger.error("No values defined for plugin {}",id);
 			return false;
 		}
 		
 		// Ensure that all the IDs of the values differ
-		if (valuesAsMap().keySet().size()!=values.length) {
-			logger.error("Some values share the same ID");
+		if (valuesAsMap().keySet().size()!=values.size()) {
+			logger.error("Some of the values of the plugin {} have the same ID",id);
 			return false;
 		}
 		// Finally, check the validity of all the values
 		long invalidValues=valuesAsCollection().stream().filter(v -> !v.valid()).count();
 		if (invalidValues!=0) {
-			logger.error("Found {} invalid values",invalidValues);
+			logger.error("Found {} invalid values for plugin {}",invalidValues,id);
 			return false;
 		}
-		// Check if a property with the same key appears more then once
+
+		// Check if all the properties are valid
 		long invalidProps=0;
-		boolean duplicatedKeys=false;
-		if (properties!=null && properties.length>0) {
-			for (int t=0; t<properties.length; t++) {
-				if (!properties[t].valid()) {
-					invalidProps++;
-				}
-				for (int j=t+1; j<properties.length; j++) {
-					if (properties[t].getName().equals(properties[j].getName())) {
-						duplicatedKeys=true;
-						logger.error("Invalid properties: key {} is defined more then once",properties[t].getName());
-					}
-				}
+		for (PropertyDao p: props) {
+			if (!p.valid()) {
+				invalidProps++;
+				logger.error("Invalid property {} of plugin {}",p.toString(),id);
 			}
+		}
+
+		// Check if a property with the same key appears more then once
+		boolean duplicatedKeys=props.size()!=getProps().size();
+		if (duplicatedKeys) {
+			logger.error("Plugin {} properties contain duplicates (names must be unique)",id);
 		}
 		if (invalidProps>0 || duplicatedKeys) {
 			return false;
@@ -208,18 +222,17 @@ public class PluginConfigDao {
 		if (key==null || key.isEmpty()) {
 			throw new IllegalArgumentException("Invalid null or empty identifier");
 		}
-		if (properties==null) {
+		if (props==null || props.isEmpty()) {
 			return Optional.empty();
 		}
-		List<PropertyDao> props = Arrays.asList(properties);
 		return Optional.ofNullable(props.stream().filter( prop -> prop.getName().equals(key)).findAny().orElse(null));
 	}
 
 	/**
 	 * @return the array of properties
 	 */
-	public PropertyDao[] getProperties() {
-		return properties;
+	public Set<PropertyDao> getProps() {
+		return props;
 	}
 
 	/**
@@ -231,30 +244,18 @@ public class PluginConfigDao {
 	 * @return The properties as {@link Properties}
 	 */
 	@JsonIgnore
-	public Properties getProps() {
-		Properties props = new Properties();
-		if (properties!=null) {
-			for (PropertyDao prop: properties) {
-				props.setProperty(prop.getName(), prop.getValue());
+	public Properties getProperties() {
+		Properties properties = new Properties();
+		if (props!=null) {
+			for (PropertyDao prop: props) {
+				properties.setProperty(prop.getName(), prop.getValue());
 			}
 		}
-		return props;
+		return properties;
 	}
 
-
-
 	/**
-	 * @param properties the properties to set
-	 */
-	public void setProperties(PropertyDao[] properties) {
-		this.properties = properties;
-	}
-
-
-	/**
-	 * Getteris
-
-
+	 * Getter
 	 *
 	 * @return The ID of the system monitored by the plugin
 	 */
@@ -315,8 +316,8 @@ public class PluginConfigDao {
 		PluginConfigDao that = (PluginConfigDao) o;
 		return id.equals(that.id) &&
 				monitoredSystemId.equals(that.monitoredSystemId) &&
-				Arrays.equals(properties, that.properties) &&
-				Arrays.equals(values, that.values) &&
+				Objects.equals(props, that.props) &&
+				Objects.equals(values, that.values) &&
 				Objects.equals(defaultFilter, that.defaultFilter) &&
 				Objects.equals(defaultFilterOptions, that.defaultFilterOptions);
 	}
