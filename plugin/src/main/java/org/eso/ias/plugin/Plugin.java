@@ -1,6 +1,8 @@
 package org.eso.ias.plugin;
 
 
+import org.eso.ias.cdb.pojos.IasDao;
+import org.eso.ias.cdb.pojos.PluginConfigDao;
 import org.eso.ias.cdb.pojos.ValueDao;
 import org.eso.ias.command.CommandManager;
 import org.eso.ias.command.DefaultCommandExecutor;
@@ -512,6 +514,26 @@ public class Plugin implements ChangeValueListener, AutoCloseable {
 		config.getAutoSendTimeInterval(),
 		null,
 		config.getHbFrequency());
+	}
+
+	/**
+	 * Constructor with the IAS and Plugin cofiguration read from the IAS CDB
+	 *
+	 * @param iasConfig The global configuration of the IAS
+	 * @param pluginConfig The configuration of the plugin
+	 */
+	public Plugin(IasDao iasConfig, PluginConfigDao pluginConfig) {
+		this(
+				pluginConfig.getId(),
+				pluginConfig.getMonitoredSystemId(),
+				pluginConfig.getValues(),
+				pluginConfig.getProperties(),
+				iasConfig.getBsdbUrl(),
+				pluginConfig.getDefaultFilter(),
+				pluginConfig.getDefaultFilterOptions(),
+				iasConfig.getRefreshRate(),
+				null,
+				iasConfig.getHbFrequency());
 	}
 
 	/**
