@@ -159,11 +159,6 @@ public class Converter implements AutoCloseable {
 		commandManager = new CommandManagerKafkaImpl(id,kServers,kStrProd);
 
 		this.configDao= new IasioConfigurationDaoImpl(cdbReader);
-		try {
-			cdbReader.shutdown();
-		} catch (IasCdbException e) {
-			logger.warn("Exception got closing the CDB",e);
-		}
 
 		this.iasValueStrSerializer=	new IasValueJsonSerializer();
 
@@ -393,6 +388,11 @@ public class Converter implements AutoCloseable {
 		} catch (Exception e) {
 			logger.error("Error initializing the converter {}",id,e);
 
+		}
+		try {
+			cdbReader.shutdown();
+		} catch (IasCdbException e) {
+			logger.warn("Exception got closing the CDB",e);
 		}
 	}
 }
