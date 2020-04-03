@@ -209,7 +209,7 @@ public class PluginConfigDao {
 		}
 
 		// Check if a property with the same key appears more then once
-		boolean duplicatedKeys=props.size()!=getProps().size();
+		boolean duplicatedKeys=props.size()!=getProperties().size();
 		if (duplicatedKeys) {
 			logger.error("Plugin {} properties contain duplicates (names must be unique)",id);
 		}
