@@ -149,4 +149,14 @@ public class PluginFileConfig extends PluginConfigDao {
     public int hashCode() {
         return Objects.hash(super.hashCode(), sinkServer, autoSendTimeInterval, hbFrequency, sinkPort);
     }
+
+    @Override
+    public String toString() {
+        return "PluginFileConfig{" +
+                "sinkServer='" + sinkServer + '\'' +
+                ", autoSendTimeInterval=" + autoSendTimeInterval +
+                ", hbFrequency=" + hbFrequency +
+                ", sinkPort=" + sinkPort +
+                '}';
+    }
 }
