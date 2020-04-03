@@ -7,7 +7,16 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Interface to build CDB pojos from the configuration database.
+ * Interface to read data from the configuration database.
+ *
+ * All get methods return an {@link Optional} that is empty if the data to read was not found in the CDB.
+ * They throw an exception in case of error.
+ *
+ * Life cycle:
+ * <UL>
+ *     <LI>{@link #init()} must be called before reading data from the CDB, to get the resources</LI>
+ *     <LI>{@link #shutdown()} must be invoked when te CDB reader is not needed anymore, to free the allocated resources</LI>
+ * </UL>
  * 
  * @author acaproni
  */
