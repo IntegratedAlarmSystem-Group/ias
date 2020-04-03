@@ -5,7 +5,7 @@
 	"sinkPort":"9092",
 	"autoSendTimeInterval":"3",
 	"hbFrequency":"10",
-	"properties": [],
+	"props": [],
 	"values":[
 		{"id":"MonitorPoint",
 		"refreshTime":"5000",

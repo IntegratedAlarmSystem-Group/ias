@@ -13,7 +13,7 @@ import java.util.concurrent.Future;
  * @author acaproni
  *
  */
-public interface PluginConfigDao {
+public interface PluginConfigGetter {
 
 	/**
 	 * Get and return the java pojo with the configuration of the plugin.
@@ -21,5 +21,5 @@ public interface PluginConfigDao {
 	 * @return the java pojo with the configuration of the plugin
 	 * @throws PluginConfigException in case of error getting the configuration
 	 */
-	Future<PluginConfig> getPluginConfig() throws PluginConfigException;
+	Future<PluginFileConfig> getPluginConfig() throws PluginConfigException;
 }

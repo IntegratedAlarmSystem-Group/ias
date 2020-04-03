@@ -1,5 +1,9 @@
 package org.eso.ias.plugin;
 
+
+import org.eso.ias.cdb.pojos.IasDao;
+import org.eso.ias.cdb.pojos.PluginConfigDao;
+import org.eso.ias.cdb.pojos.ValueDao;
 import org.eso.ias.command.CommandManager;
 import org.eso.ias.command.DefaultCommandExecutor;
 import org.eso.ias.command.kafka.CommandManagerKafkaImpl;
@@ -10,8 +14,7 @@ import org.eso.ias.heartbeat.HeartbeatStatus;
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.SimpleStringProducer;
-import org.eso.ias.plugin.config.PluginConfig;
-import org.eso.ias.plugin.config.Value;
+import org.eso.ias.plugin.config.PluginFileConfig;
 import org.eso.ias.plugin.filter.Filter;
 import org.eso.ias.plugin.filter.FilterFactory;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
@@ -283,7 +286,7 @@ public class Plugin implements ChangeValueListener, AutoCloseable {
 	public Plugin(
 			String id,
 			String monitoredSystemId,
-			Collection<Value> values,
+			Collection<ValueDao> values,
 			Properties props,
 			MonitorPointSender sender,
 			String defaultFilter,
@@ -326,7 +329,7 @@ public class Plugin implements ChangeValueListener, AutoCloseable {
 	public Plugin(
 			String id,
 			String monitoredSystemId,
-			Collection<Value> values,
+			Collection<ValueDao> values,
 			Properties props,
 			MonitorPointSender sender,
 			String defaultFilter,
@@ -338,7 +341,8 @@ public class Plugin implements ChangeValueListener, AutoCloseable {
 		this(
 				id,
 				monitoredSystemId,
-				values,props,
+				values,
+				props,
 				sender,
 				defaultFilter,
 				defaultFilterOptions,
@@ -376,7 +380,7 @@ public class Plugin implements ChangeValueListener, AutoCloseable {
 	public Plugin(
 			String id, 
 			String monitoredSystemId,
-			Collection<Value> values,
+			Collection<ValueDao> values,
 			Properties props,
 			MonitorPointSender sender,
 			String defaultFilter,
@@ -498,18 +502,38 @@ public class Plugin implements ChangeValueListener, AutoCloseable {
 	 *
 	 * @param config The configuration of the plugin
 	 */
-	public Plugin(PluginConfig config) {
+	public Plugin(PluginFileConfig config) {
 		this(
 		config.getId(),
 		config.getMonitoredSystemId(),
-		config.getValuesAsCollection(),
-		config.getProps(),
+		config.getValues(),
+		config.getProperties(),
 		config.getSinkServer()+":"+config.getSinkPort(),
 		config.getDefaultFilter(),
 		config.getDefaultFilterOptions(),
 		config.getAutoSendTimeInterval(),
 		null,
 		config.getHbFrequency());
+	}
+
+	/**
+	 * Constructor with the IAS and Plugin cofiguration read from the IAS CDB
+	 *
+	 * @param iasConfig The global configuration of the IAS
+	 * @param pluginConfig The configuration of the plugin
+	 */
+	public Plugin(IasDao iasConfig, PluginConfigDao pluginConfig) {
+		this(
+				pluginConfig.getId(),
+				pluginConfig.getMonitoredSystemId(),
+				pluginConfig.getValues(),
+				pluginConfig.getProperties(),
+				iasConfig.getBsdbUrl(),
+				pluginConfig.getDefaultFilter(),
+				pluginConfig.getDefaultFilterOptions(),
+				iasConfig.getRefreshRate(),
+				null,
+				iasConfig.getHbFrequency());
 	}
 
 	/**
@@ -534,7 +558,7 @@ public class Plugin implements ChangeValueListener, AutoCloseable {
 	public Plugin(
 			String id,
 			String monitoredSystemId,
-			Collection<Value> values,
+			Collection<ValueDao> values,
 			Properties props,
 			String servers,
 			String defaultFilter,
@@ -683,7 +707,7 @@ public class Plugin implements ChangeValueListener, AutoCloseable {
 	 *                  (can be <code>null</code> if command managemrent not desired)
 	 */
 	public Plugin(
-			PluginConfig config,
+			PluginFileConfig config,
 			MonitorPointSender sender,
 			Integer instanceNumber,
 			HbProducer hbProducer,
@@ -691,8 +715,8 @@ public class Plugin implements ChangeValueListener, AutoCloseable {
 		this(
 				config.getId(),
 				config.getMonitoredSystemId(),
-				config.getValuesAsCollection(),
-				config.getProps(),
+				config.getValues(),
+				config.getProperties(),
 				sender,
 				config.getDefaultFilter(),
 				config.getDefaultFilterOptions(),

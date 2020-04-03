@@ -403,7 +403,7 @@ public class RdbReader implements CdbReader {
 	@Override
 	public Optional<ClientConfigDao> getClientConfig(String id) throws IasCdbException {
 		if (id==null || id.isEmpty()) {
-			throw new IllegalArgumentException("Invalid empty or null ID");
+			throw new IllegalArgumentException("Invalid empty or null ID of config");
 		}
 		Session s=rdbUtils.getSession();
 		Transaction t =s.beginTransaction();
@@ -411,6 +411,30 @@ public class RdbReader implements CdbReader {
 		t.commit();
 
 		return Optional.ofNullable(clientConf);
+	}
+
+	/**
+	 * Get the configuration of the plugin with the passed identifier.
+	 * <p>
+	 * The configuration of the plugin can be read from a file or from the CDB.
+	 * In both cases, the configuration is returned as #PluginConfigDao.
+	 * This m,ethod returns the configuration from the CDB; reading from file is
+	 * not implemented here.
+	 *
+	 * @param id The not null nor empty ID of the IAS plugin
+	 * @return The configuration of the plugin
+	 * @throws IasCdbException In case of error getting the configuration of the plugin
+	 */
+	@Override
+	public Optional<PluginConfigDao> getPluginConfig(String id) throws IasCdbException {
+		if (id==null || id.isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty or null ID of plugin");
+		}
+		Session s=rdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		PluginConfigDao pluginConf = s.get(PluginConfigDao.class,id);
+		t.commit();
+		return Optional.ofNullable(pluginConf);
 	}
 
 	/**

@@ -40,5 +40,7 @@
 		<mapping class="org.eso.ias.cdb.pojos.DasuToDeployDao"></mapping>
         <mapping class="org.eso.ias.cdb.pojos.TemplateInstanceIasioDao"></mapping>
         <mapping class="org.eso.ias.cdb.pojos.ClientConfigDao"></mapping>
+        <mapping class="org.eso.ias.cdb.pojos.PluginConfigDao"></mapping>
+        <mapping class="org.eso.ias.cdb.pojos.ValueDao"></mapping>
     </session-factory>
 </hibernate-configuration>

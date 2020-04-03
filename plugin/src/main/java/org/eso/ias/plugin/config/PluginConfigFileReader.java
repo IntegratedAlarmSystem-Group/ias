@@ -25,7 +25,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author acaproni
  *
  */
-public class PluginConfigFileReader implements PluginConfigDao {
+public class PluginConfigFileReader implements PluginConfigGetter {
 	
 	/**
 	 * The callable that concurrently gets the configuration.
@@ -33,7 +33,7 @@ public class PluginConfigFileReader implements PluginConfigDao {
 	 * @author acaproni
 	 *
 	 */
-	private class ConfigCallable implements Callable<PluginConfig> {
+	private class ConfigCallable implements Callable<PluginFileConfig> {
 		
 		/**
 		 * The reader to read the JSON from.
@@ -56,10 +56,10 @@ public class PluginConfigFileReader implements PluginConfigDao {
 		 * the plugin configuration
 		 */
 		@Override
-		public PluginConfig call() throws Exception {
+		public PluginFileConfig call() throws Exception {
 			try {
 				ObjectMapper jackson2Mapper = new ObjectMapper();
-				PluginConfig config = jackson2Mapper.readValue(reader, PluginConfig.class);
+				PluginFileConfig config = jackson2Mapper.readValue(reader, PluginFileConfig.class);
 				logger.info("JSON Plugin configuration successfully read from {}",srcName);
 				return config;
 			} finally {
@@ -142,10 +142,10 @@ public class PluginConfigFileReader implements PluginConfigDao {
 	 * Submit the callable to read the JSON file asynchronously.
 	 * 
 	 * @return the Future to get the configuration produced by the thread
-	 * @see PluginConfigDao
+	 * @see PluginConfigGetter
 	 */
 	@Override
-	public Future<PluginConfig> getPluginConfig() throws PluginConfigException {
+	public Future<PluginFileConfig> getPluginConfig() throws PluginConfigException {
 		logger.debug("Starting the async. reading of the JSON configuration");
 		ConfigCallable callable = new ConfigCallable(reader);
 		return exService.submit(callable);
