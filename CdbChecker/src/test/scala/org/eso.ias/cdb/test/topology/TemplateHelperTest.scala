@@ -33,17 +33,18 @@ class TemplateHelperTest extends FlatSpec {
     val supervisorId = "SupervisorWithTemplates"
     
     // Build the CDB reader
-      val cdbParentPath = FileSystems.getDefault().getPath(".");
-      val cdbFiles = new CdbJsonFiles(cdbParentPath)
-      val cdbReader: CdbReader = new JsonReader(cdbFiles)
-      
-      val superv = {
-        val supervOpt=cdbReader.getSupervisor(supervisorId)
-        assert(supervOpt.isPresent())
-        supervOpt.get
-      }
-      
-      val dasusToDeploy: Set[DasuToDeployDao] = JavaConverters.asScalaSet(superv.getDasusToDeploy).toSet
+    val cdbParentPath = FileSystems.getDefault().getPath(".");
+    val cdbFiles = new CdbJsonFiles(cdbParentPath)
+    val cdbReader: CdbReader = new JsonReader(cdbFiles)
+    cdbReader.init()
+
+    val superv = {
+      val supervOpt=cdbReader.getSupervisor(supervisorId)
+      assert(supervOpt.isPresent())
+      supervOpt.get
+    }
+
+    val dasusToDeploy: Set[DasuToDeployDao] = JavaConverters.asScalaSet(superv.getDasusToDeploy).toSet
       
   }
   
