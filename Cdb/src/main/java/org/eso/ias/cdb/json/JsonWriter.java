@@ -290,7 +290,32 @@ public class JsonWriter implements CdbWriter {
 			tempF.renameTo(f);
 		}
 	}
-	
+
+	/**
+	 * Write the configuration of the passed plugin
+	 *
+	 * @param pluginConfigDao the configuraton of the plugin
+	 * @throws IasCdbException In case of error writing the configuration
+	 */
+	@Override
+	public void writePluginConfig(PluginConfigDao pluginConfigDao) throws IasCdbException {
+		Objects.requireNonNull(pluginConfigDao);
+		File f;
+		try {
+			f = cdbFileNames.getPluginFilePath(pluginConfigDao.getId()).toFile();
+		} catch (IOException ioe) {
+			throw new IasCdbException("Error getting plugin file "+pluginConfigDao.getId(),ioe);
+		}
+
+		ObjectMapper mapper = new ObjectMapper();
+		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
+		try {
+			mapper.writerWithDefaultPrettyPrinter().writeValue(f, pluginConfigDao);
+		} catch (Throwable t) {
+			throw new IasCdbException("Error writing JSON plugin configuration",t);
+		}
+	}
+
 	/**
 	 * Serialize the TFs in the JSON file.
 	 * 

@@ -5,7 +5,7 @@
 	"sinkPort":"8192",
 	"autoSendTimeInterval":"120",
 	"hbFrequency":"5",
-	"properties": [],
+	"props": [],
 	"values":[
 		{"id":"ID-Double",
 		"refreshTime":"5000",

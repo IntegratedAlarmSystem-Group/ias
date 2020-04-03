@@ -4,6 +4,7 @@ import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
 import org.eso.ias.cdb.json.*;
 import org.eso.ias.cdb.pojos.*;
+import org.eso.ias.plugin.Plugin;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -834,10 +835,54 @@ public class TestJsonCdb {
 		assertTrue(iDao.get().isCanShelve());
 	}
 
+	/**
+	 * Test getting the PluginConfig from a JSON file
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetPlugin() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./testCdb");
+		cdbFiles = new CdbJsonFiles(path);
+		cdbReader = new JsonReader(cdbFiles);
+		cdbReader.init();
 
-	 /** Test the writing and reading of the configuration of clients
-	 *
-			 * @throws Exception
+		String pluginId = "PluginIDForTesting";
+
+		Optional<PluginConfigDao> pCOnfDao = cdbReader.getPluginConfig(pluginId);
+		assertTrue(pCOnfDao.isPresent());
+		PluginConfigDao pConf = pCOnfDao.get();
+		System.out.println("PluginConfig:\n"+pConf.toString());
+		assertEquals("ACS",pConf.getMonitoredSystemId());
+
+		Map<String,String> props = new HashMap();
+		for (PropertyDao p: pConf.getProps()) {
+			props.put(p.getName(),p.getValue());
+		}
+		assertEquals(2,props.size());
+		assertEquals("itsValue",props.get("a-key"));
+		assertEquals("AnotherValue",props.get("Anotherkey"));
+
+		Map<String,ValueDao> values = new HashMap<>();
+		for (ValueDao v:pConf.getValues() ) {
+			values.put(v.getId(),v);
+
+		}
+		assertEquals(2, values.size());
+		ValueDao v1 = values.get("AlarmID");
+		assertNotNull(v1);
+		assertEquals(500,v1.getRefreshTime());
+		assertEquals("TheFilter",v1.getFilter());
+		assertEquals("Options",v1.getFilterOptions());
+		ValueDao v2 = values.get("TempID");
+		assertEquals(1500,v2.getRefreshTime());
+		assertEquals("Average",v2.getFilter());
+		assertEquals("1, 150, 5",v2.getFilterOptions());
+	}
+
+
+	 /**
+	 * Test the writing and reading of the configuration of clients
+	 * @throws Exception
 	 */
 	@Test
 	public void testClientConfig() throws Exception {
@@ -869,6 +914,49 @@ public class TestJsonCdb {
 		Optional<ClientConfigDao> c3 = cdbReader.getClientConfig("LongConfigId");
 		assertTrue(c3.isPresent());
 		assertEquals(longConfig,c3.get());
+	}
+
+	/**
+	 * Test reading and writing of plugin configurations
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	public void testPWriteluginConfig() throws Exception {
+		PluginConfigDao pConf = new PluginConfigDao();
+		pConf.setId("GeneratedPluginConfig");
+		pConf.setDefaultFilter("Mean");
+		pConf.setDefaultFilterOptions("100");
+		pConf.setMonitoredSystemId("MSys");
+
+		PropertyDao prop = new PropertyDao();
+		prop.setName("pName");
+		prop.setValue("pVal");
+		Set<PropertyDao> arrayProps = pConf.getProps();
+		arrayProps.add(prop);
+
+		ValueDao v1 = new ValueDao();
+		v1.setId("V1");
+		v1.setRefreshTime(1250);
+
+		ValueDao v2 = new ValueDao();
+		v2.setId("Value-2");
+		v2.setRefreshTime(750);
+		v2.setFilter("Avg");
+		v2.setFilterOptions("10");
+		Set<ValueDao> values = new HashSet<>();
+		values.add(v1);
+		values.add(v2);
+		pConf.setValues(values);
+
+		cdbWriter.writePluginConfig(pConf);
+		assertTrue(cdbFiles.getPluginFilePath(pConf.getId()).toFile().exists(),"Plugin "+pConf.getId()+" configuration file does NOT exist");
+
+
+		Optional<PluginConfigDao> pConfFromCdb = cdbReader.getPluginConfig(pConf.getId());
+		assertTrue(pConfFromCdb.isPresent());
+
+		assertEquals(pConf,pConfFromCdb.get());
 	}
 
 }

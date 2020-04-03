@@ -11,6 +11,7 @@ import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.eso.ias.cdb.pojos.ValueDao;
 import org.eso.ias.heartbeat.HbEngine;
 import org.eso.ias.heartbeat.HbMsgSerializer;
 import org.eso.ias.heartbeat.HbProducer;
@@ -18,7 +19,6 @@ import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.plugin.Plugin;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
-import org.eso.ias.plugin.config.Value;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.filter.Filter.EnrichedSample;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
@@ -122,13 +122,13 @@ public class ReplicatedPluginTest {
 	private final String pluginId = "ReplicatedPluginId";
 	private Identifier pluginIdentifier = new Identifier(pluginId, IdentifierType.PLUGIN,monSysIdentifier);
 	
-	private final Value v1 = new Value();
+	private final ValueDao v1 = new ValueDao();
 	
 	
-	private final Value v2 = new Value();
+	private final ValueDao v2 = new ValueDao();
 	
 	
-	private final Value v3 = new Value();
+	private final ValueDao v3 = new ValueDao();
 	
 	/**
 	 * The logger
@@ -145,7 +145,7 @@ public class ReplicatedPluginTest {
 		v2.setRefreshTime(2000);
 		v3.setId("Value-ID3");
 		v3.setRefreshTime(3000);
-		Collection<Value> values = new ArrayList<Value>();
+		Collection<ValueDao> values = new ArrayList<ValueDao>();
 		values.add(v1);
 		values.add(v2);
 		values.add(v3);

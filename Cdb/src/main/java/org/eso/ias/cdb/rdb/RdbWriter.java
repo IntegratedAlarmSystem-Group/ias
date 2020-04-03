@@ -8,6 +8,7 @@ import org.eso.ias.cdb.IasCdbException;
 import org.eso.ias.cdb.pojos.*;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -125,6 +126,25 @@ public class RdbWriter implements CdbWriter {
 		Session s=rdbUtils.getSession();
 		Transaction t =s.beginTransaction();
 		iasios.stream().forEach(io -> s.merge(io));
+		t.commit();
+		s.flush();
+	}
+
+	/**
+	 * Write the configuration of the passed plugin
+	 *
+	 * @param pluginConfigDao the configuraton of the plugin
+	 * @throws IasCdbException In case of error writing the configuration
+	 */
+	@Override
+	public void writePluginConfig(PluginConfigDao pluginConfigDao) throws IasCdbException {
+		Objects.requireNonNull(pluginConfigDao, "The plugin DAO object to persist can't be null");
+		Session s=rdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		for (ValueDao v: pluginConfigDao.getValues()) {
+			s.merge(v);
+		}
+		s.merge(pluginConfigDao);
 		t.commit();
 		s.flush();
 	}

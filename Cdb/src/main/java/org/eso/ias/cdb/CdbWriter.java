@@ -80,13 +80,21 @@ public interface CdbWriter {
 	public void writeIasios(Set<IasioDao> iasios, boolean append) throws IasCdbException;
 
 	/**
-	 * Write the configuration of the client with the passed identifier
+	 * Write the configuration of the passed plugin
+	 *
+	 * @param pluginConfigDao the configuraton of the plugin
+	 * @throws IasCdbException In case of error writing the configuration
+	 */
+	public void writePluginConfig(PluginConfigDao pluginConfigDao) throws IasCdbException;
+
+	/**
+	 * Write the configuration of the passed client
 	 *
 	 * @param clientConfigDao the configuraton of the client
 	 * @throws IasCdbException In case of error writing the configuration
 	 */
 	public void writeClientConfig(ClientConfigDao clientConfigDao) throws IasCdbException;
-	
+
 	/**
 	 * Initialize the CDB
 	 */
