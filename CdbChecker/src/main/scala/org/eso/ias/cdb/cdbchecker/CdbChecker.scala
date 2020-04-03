@@ -29,6 +29,7 @@ class CdbChecker(args: Array[String]) {
 
   /** The reader of the JSON of RDB CDB */
   val reader: CdbReader = CdbReaderFactory.getCdbReader(args)
+  reader.init()
 
   // Are there errors in the IAS?
   val iasDaoOpt: Option[IasDao] = {
@@ -270,6 +271,7 @@ class CdbChecker(args: Array[String]) {
   } else {
     CdbChecker.logger.info("NO cycles found in the DASUs")
   }
+  reader.shutdown()
 
   /**
     * Build the map of the ASCEs to run in each DASU
