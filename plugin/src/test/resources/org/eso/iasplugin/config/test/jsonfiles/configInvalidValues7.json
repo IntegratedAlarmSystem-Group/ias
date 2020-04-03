@@ -3,12 +3,12 @@
 	"monitoredSystemId":"ACS",
 	"sinkServer":"iasdevel.hq.eso.org",
 	"sinkPort":"8192",
-	"properties": [
-		{"key":"a-key",
+	"props": [
+		{"name":"a-key",
 		"value":"itsValue"},
-		{"key":"Anotherkey",
+		{"name":"Anotherkey",
 		"value":"AnotherValue"},
-		{"key":"a-key",
+		{"name":"a-key",
 		"value":"REDEFINED"}],
 	"values":[
 		{"id":"AlarmID",

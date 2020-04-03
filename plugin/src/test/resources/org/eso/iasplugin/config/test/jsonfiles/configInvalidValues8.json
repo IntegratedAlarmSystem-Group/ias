@@ -3,10 +3,10 @@
 	"monitoredSystemId":"",
 	"sinkServer":"iasdevel.hq.eso.org",
 	"sinkPort":"8192",
-	"properties": [
-		{"key":"a-key",
+	"props": [
+		{"name":"a-key",
 		"value":"itsValue"},
-		{"key":"Anotherkey",
+		{"name":"Anotherkey",
 		"value":"AnotherValue"}],
 	"values":[
 		{"id":"AlarmID",

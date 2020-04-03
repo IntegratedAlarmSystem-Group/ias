@@ -5,10 +5,10 @@
 	"sinkPort":"8192",
 	"autoSendTimeInterval":"3",
 	"hbFrequency":"9",
-	"properties": [
-		{"key":"a-key",
+	"props": [
+		{"name":"a-key",
 		"value":"itsValue"},
-		{"key":"Anotherkey",
+		{"name":"Anotherkey",
 		"value":"AnotherValue"}],
 	"defaultFilter":"Average",
 	"defaultFilterOptions":"5,10,15",
