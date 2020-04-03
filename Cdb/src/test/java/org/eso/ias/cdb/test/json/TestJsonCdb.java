@@ -62,6 +62,7 @@ public class TestJsonCdb {
 		assertNotNull(cdbReader);
 		
 		cdbReader.init();
+		cdbWriter.init();
 	}
 
 	@AfterEach
@@ -70,6 +71,7 @@ public class TestJsonCdb {
 		assertFalse(CdbFolders.ROOT.exists(cdbParentPath));
 		
 		cdbReader.shutdown();
+		cdbWriter.shutdown();
 	}
 
 	@Test
@@ -934,7 +936,7 @@ public class TestJsonCdb {
 	 * @throws Exception
 	 */
 	@Test
-	public void testPWriteluginConfig() throws Exception {
+	public void testWritePluginConfig() throws Exception {
 		PluginConfigDao pConf = new PluginConfigDao();
 		pConf.setId("GeneratedPluginConfig");
 		pConf.setDefaultFilter("Mean");
