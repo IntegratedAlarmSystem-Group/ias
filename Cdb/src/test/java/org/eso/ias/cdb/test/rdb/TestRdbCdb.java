@@ -79,6 +79,9 @@ public class TestRdbCdb {
 
 		// The create empty tables
 		rdbUtils.createTables();
+
+		cdbReader.init();
+		cdbWriter.init();
 	}
 
 	/**
@@ -86,6 +89,8 @@ public class TestRdbCdb {
 	 */
 	@AfterEach
 	public void tearDown() throws Exception {
+		cdbReader.shutdown();
+		cdbReader.shutdown();
 	}
 
 	@AfterAll

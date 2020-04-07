@@ -29,6 +29,7 @@ class CdbChecker(args: Array[String]) {
 
   /** The reader of the JSON of RDB CDB */
   val reader: CdbReader = CdbReaderFactory.getCdbReader(args)
+  reader.init()
 
   // Are there errors in the IAS?
   val iasDaoOpt: Option[IasDao] = {
@@ -270,6 +271,7 @@ class CdbChecker(args: Array[String]) {
   } else {
     CdbChecker.logger.info("NO cycles found in the DASUs")
   }
+  reader.shutdown()
 
   /**
     * Build the map of the ASCEs to run in each DASU
@@ -595,7 +597,7 @@ class CdbChecker(args: Array[String]) {
 object CdbChecker {
 
   /** Build the usage message */
-  val cmdLineSyntax: String = "cdbChecker [-h|--help] [-j|-jcdb JSON-CDB-PATH] [-x|--logLevel log level]"
+  val cmdLineSyntax: String = "cdbChecker [-h|--help] [-j|-jCdb JSON-CDB-PATH] [-x|--logLevel log level]"
 
   /**
     * Parse the command line.
@@ -608,7 +610,7 @@ object CdbChecker {
   def parseCommandLine(args: Array[String]): (Option[String], Option[LogLevelDao]) = {
     val options: Options = new Options
     options.addOption("h", "help",false,"Print help and exit")
-    options.addOption("j", "jcdb", true, "Use the JSON Cdb at the passed path instead of the RDB")
+    options.addOption("j", "jCdb", true, "Use the JSON Cdb at the passed path instead of the RDB")
     options.addOption("c", "cdbClass", true, "Use an external CDB reader with the passed class")
     options.addOption("x", "logLevel", true, "Set the log level (TRACE, DEBUG, INFO, WARN, ERROR)")
 

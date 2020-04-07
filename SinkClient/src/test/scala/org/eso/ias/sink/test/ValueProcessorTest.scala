@@ -138,6 +138,7 @@ class ValueProcessorTest extends FlatSpec {
       val cdbParentPath = FileSystems.getDefault().getPath(".");
       val cdbFiles = new CdbJsonFiles(cdbParentPath)
       val cdbReader: CdbReader = new JsonReader(cdbFiles)
+      cdbReader.init()
 
       val iasDao = {
         val iasDaoJOpt = cdbReader.getIas
@@ -150,6 +151,7 @@ class ValueProcessorTest extends FlatSpec {
         assert(iasiosDaoJOpt.isPresent, "Error getting the IASIOs from the CDB")
         JavaConverters.asScalaSet(iasiosDaoJOpt.get()).toList
       }
+      cdbReader.shutdown()
 
       val templateDao = new TemplateDao("TemplToTestInputs",1,25)
 

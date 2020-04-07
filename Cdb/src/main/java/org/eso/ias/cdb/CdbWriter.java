@@ -7,6 +7,12 @@ import java.util.Set;
 /**
  * Interface to flush the content of the CDB pojos
  * in the configuration database
+ *
+ * Life cycle:
+ * <UL>
+ *     <LI>{@link #init()} must be called to acquire the resources before invoking methods of this ineterface</LI>
+ *     <LI>{@link #shutdown()} must be invoked to free the allocated resource when done using this interface</LI>
+ * </UL>
  * 
  * @author acaproni
  */

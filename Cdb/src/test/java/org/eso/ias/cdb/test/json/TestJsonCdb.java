@@ -62,6 +62,7 @@ public class TestJsonCdb {
 		assertNotNull(cdbReader);
 		
 		cdbReader.init();
+		cdbWriter.init();
 	}
 
 	@AfterEach
@@ -70,6 +71,7 @@ public class TestJsonCdb {
 		assertFalse(CdbFolders.ROOT.exists(cdbParentPath));
 		
 		cdbReader.shutdown();
+		cdbWriter.shutdown();
 	}
 
 	@Test
@@ -124,6 +126,7 @@ public class TestJsonCdb {
 		Path path = FileSystems.getDefault().getPath("./testCdb");
 		cdbFiles = new CdbJsonFiles(path);
 		cdbReader = new JsonReader(cdbFiles);
+		cdbReader.init();
 
 		Optional<IasDao> iasOpt = cdbReader.getIas();
 		assertTrue(iasOpt.isPresent());
@@ -524,6 +527,7 @@ public class TestJsonCdb {
 		Path path = FileSystems.getDefault().getPath("./testCdb");
 		cdbFiles = new CdbJsonFiles(path);
 		cdbReader = new JsonReader(cdbFiles);
+		cdbReader.init();
 		// Get the DASUs of a Supervisor that has none
 		Set<DasuToDeployDao> dasus = cdbReader.getDasusToDeployInSupervisor("Supervisor-ID2");
 		assertTrue(dasus.isEmpty());
@@ -553,6 +557,7 @@ public class TestJsonCdb {
 		Path path = FileSystems.getDefault().getPath("./testCdb");
 		cdbFiles = new CdbJsonFiles(path);
 		cdbReader = new JsonReader(cdbFiles);
+		cdbReader.init();
 
 		// Get the ASCE of DasuID1 that has no ASCE
 		Set<AsceDao> asces = cdbReader.getAscesForDasu("DasuID1");
@@ -600,6 +605,7 @@ public class TestJsonCdb {
 		Path path = FileSystems.getDefault().getPath("./testCdb");
 		cdbFiles = new CdbJsonFiles(path);
 		cdbReader = new JsonReader(cdbFiles);
+		cdbReader.init();
 
 		// Get the IASIOs of ASCE-ID4 that has 3 inputs
 		Collection<IasioDao> iasios = cdbReader.getIasiosForAsce("ASCE-ID4");
@@ -626,6 +632,7 @@ public class TestJsonCdb {
 		Path path = FileSystems.getDefault().getPath("./testCdb");
 		cdbFiles = new CdbJsonFiles(path);
 		cdbReader = new JsonReader(cdbFiles);
+		cdbReader.init();
 
 		Optional<SupervisorDao> superv4 = cdbReader.getSupervisor("Supervisor-ID4");
 		assert(superv4.isPresent());
@@ -677,6 +684,7 @@ public class TestJsonCdb {
 		Path cdbPath =  FileSystems.getDefault().getPath("testCdb");
 		CdbFiles cdbFiles = new CdbJsonFiles(cdbPath);
 		CdbReader jcdbReader = new JsonReader(cdbFiles);
+		jcdbReader.init();
 
 		Optional<TemplateDao> template2 = jcdbReader.getTemplate("template2-ID");
 		assertTrue(template2.isPresent());
@@ -719,6 +727,7 @@ public class TestJsonCdb {
         Path path = FileSystems.getDefault().getPath("./testCdb");
         cdbFiles = new CdbJsonFiles(path);
         cdbReader = new JsonReader(cdbFiles);
+        cdbReader.init();
 
         Optional<Set<String>> idsOpt= cdbReader.getSupervisorIds();
         assertTrue(idsOpt.isPresent());
@@ -737,6 +746,7 @@ public class TestJsonCdb {
         Path path = FileSystems.getDefault().getPath("./testCdb");
         cdbFiles = new CdbJsonFiles(path);
         cdbReader = new JsonReader(cdbFiles);
+        cdbReader.init();
 
         Optional<Set<String>> idsOpt= cdbReader.getDasuIds();
         assertTrue(idsOpt.isPresent());
@@ -754,6 +764,7 @@ public class TestJsonCdb {
         Path path = FileSystems.getDefault().getPath("./testCdb");
         cdbFiles = new CdbJsonFiles(path);
         cdbReader = new JsonReader(cdbFiles);
+        cdbReader.init();
 
         Optional<Set<String>> idsOpt= cdbReader.getAsceIds();
         assertTrue(idsOpt.isPresent());
@@ -777,6 +788,7 @@ public class TestJsonCdb {
         Path path = FileSystems.getDefault().getPath("./testCdb");
         cdbFiles = new CdbJsonFiles(path);
         cdbReader = new JsonReader(cdbFiles);
+        cdbReader.init();
 
         // Get on ASCE without templated inputs
         Optional<AsceDao> asce = cdbReader.getAsce("ASCE-ID4");
@@ -807,6 +819,7 @@ public class TestJsonCdb {
 		Path path = FileSystems.getDefault().getPath("./testCdb");
 		cdbFiles = new CdbJsonFiles(path);
 		cdbReader = new JsonReader(cdbFiles);
+		cdbReader.init();
 
 		Optional<AsceDao> asceWithTemplatedInputs = cdbReader.getAsce("ASCE-WITH-TEMPLATED-INPUTS");
 		assertTrue(asceWithTemplatedInputs.isPresent());
@@ -828,6 +841,7 @@ public class TestJsonCdb {
 		Path path = FileSystems.getDefault().getPath("./testCdb");
 		cdbFiles = new CdbJsonFiles(path);
 		cdbReader = new JsonReader(cdbFiles);
+		cdbReader.init();
 
 		Optional<IasioDao> iDao=cdbReader.getIasio("SoundInput");
 		assertTrue(iDao.isPresent());
@@ -922,7 +936,7 @@ public class TestJsonCdb {
 	 * @throws Exception
 	 */
 	@Test
-	public void testPWriteluginConfig() throws Exception {
+	public void testWritePluginConfig() throws Exception {
 		PluginConfigDao pConf = new PluginConfigDao();
 		pConf.setId("GeneratedPluginConfig");
 		pConf.setDefaultFilter("Mean");

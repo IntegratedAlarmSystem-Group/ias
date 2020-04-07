@@ -12,6 +12,8 @@ import org.eso.ias.cdb.json.pojos.JsonAsceDao;
 import org.eso.ias.cdb.json.pojos.JsonDasuDao;
 import org.eso.ias.cdb.json.pojos.JsonSupervisorDao;
 import org.eso.ias.cdb.pojos.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -22,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -40,6 +43,21 @@ import java.util.stream.Collectors;
  * @author acaproni
  */
 public class JsonWriter implements CdbWriter {
+
+	/**
+     * The logger
+     */
+    private static final Logger logger = LoggerFactory.getLogger(JsonWriter.class);
+
+	/**
+	 * Signal if the reader has been initialized
+	 */
+	private final AtomicBoolean initialized = new AtomicBoolean(false);
+
+	/**
+	 * Signal if the reader has been closed
+	 */
+	private final AtomicBoolean closed = new AtomicBoolean(false);
 	
 	/**
 	 * cdbFileNames return the names of the files to read
@@ -63,6 +81,14 @@ public class JsonWriter implements CdbWriter {
 	 */
 	@Override
 	public void writeIas(IasDao ias) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The writer is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The writer is not initialized");
+		}
+
+		Objects.requireNonNull(ias);
 		File f;
 		try {
 			f= cdbFileNames.getIasFilePath().toFile();
@@ -85,6 +111,14 @@ public class JsonWriter implements CdbWriter {
 	 */
 	@Override
 	public void writeSupervisor(SupervisorDao superv) throws IasCdbException  {
+		if (closed.get()) {
+			throw new IasCdbException("The writer is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The writer is not initialized");
+		}
+
+		Objects.requireNonNull(superv);
 		File f;
 		try {
 			f = cdbFileNames.getSuperivisorFilePath(superv.getId()).toFile();
@@ -109,6 +143,13 @@ public class JsonWriter implements CdbWriter {
 	 */
 	@Override
 	public void writeDasu(DasuDao dasu) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The writer is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The writer is not initialized");
+		}
+
 		Objects.requireNonNull(dasu);
 		File f;
 		try { 
@@ -133,6 +174,14 @@ public class JsonWriter implements CdbWriter {
 	 */
 	@Override
 	public void writeAsce(AsceDao asce) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The writer is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The writer is not initialized");
+		}
+		Objects.requireNonNull(asce);
+
 		File f;
 		try {
 			f = cdbFileNames.getAsceFilePath(asce.getId()).toFile();
@@ -160,6 +209,13 @@ public class JsonWriter implements CdbWriter {
 	 */
 	@Override
 	public void writeIasio(IasioDao iasio, boolean append) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The writer is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The writer is not initialized");
+		}
+
 		Set<IasioDao> iasios = new HashSet<>();
 		iasios.add(iasio);
 
@@ -182,6 +238,12 @@ public class JsonWriter implements CdbWriter {
 	 */
 	@Override
 	public void writeIasios(Set<IasioDao> iasios, boolean append) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The writer is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The writer is not initialized");
+		}
 	    Objects.requireNonNull(iasios);
 
 		File f;
@@ -299,6 +361,13 @@ public class JsonWriter implements CdbWriter {
 	 */
 	@Override
 	public void writePluginConfig(PluginConfigDao pluginConfigDao) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The writer is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The writer is not initialized");
+		}
+
 		Objects.requireNonNull(pluginConfigDao);
 		File f;
 		try {
@@ -746,6 +815,12 @@ public class JsonWriter implements CdbWriter {
 	 */
 	@Override
 	public void writeTransferFunction(TransferFunctionDao transferFunction) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The writer is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The writer is not initialized");
+		}
 		Objects.requireNonNull(transferFunction);
 		Set<TransferFunctionDao> tfs = new HashSet<>();
 		tfs.add(transferFunction);
@@ -760,6 +835,13 @@ public class JsonWriter implements CdbWriter {
 	 */
 	@Override
 	public void writeTemplate(TemplateDao templateDao) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The writer is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The writer is not initialized");
+		}
+
 		Objects.requireNonNull(templateDao);
 		Set<TemplateDao> templates = new HashSet<>();
 		templates.add(templateDao);
@@ -777,6 +859,13 @@ public class JsonWriter implements CdbWriter {
 	 */
 	@Override
 	public void writeClientConfig(ClientConfigDao clientConfigDao) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The writer is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The writer is not initialized");
+		}
+
 		Objects.requireNonNull(clientConfigDao);
 		Path f;
 		try {
@@ -795,17 +884,38 @@ public class JsonWriter implements CdbWriter {
 
 
 	}
-	
+
 	/**
 	 * Initialize the CDB
 	 */
 	@Override
-	public void init() throws IasCdbException {}
-	
+	public void init() throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("Cannot initialize: already closed");
+		}
+		if(!initialized.get()) {
+			logger.debug("Initialized");
+			initialized.set(true);
+		} else {
+			logger.warn("Already initialized: skipping initialization");
+		}
+	}
+
 	/**
 	 * Close the CDB and release the associated resources
 	 * @throws IasCdbException
 	 */
 	@Override
-	public void shutdown() throws IasCdbException {	}
+	public void shutdown() throws IasCdbException {
+		if (!initialized.get()) {
+			throw new IasCdbException("Cannot shutdown a reader that has not been initialized");
+		}
+		if (!closed.get()) {
+			logger.debug("Closed");
+			closed.set(true);
+		} else {
+			logger.warn("Already closed!");
+		}
+	}
+
 }
