@@ -679,7 +679,7 @@ public class WebServerSender implements IasioListener, AutoCloseable {
 		// Use apache CLI for command line parsing
 		Options options = new Options();
         options.addOption("h", "help", false, "Print help and exit");
-        options.addOption("j", "jcdb", true, "Use the JSON Cdb at the passed path");
+        options.addOption("j", "jCdb", true, "Use the JSON Cdb at the passed path");
 		options.addOption("c", "cdbClass", true, "Use an external CDB reader with the passed class");
 		options.addOption(Option.builder("t").longOpt("filter-types").desc("Space separated list of types to send (LONG, INT, SHORT, BYTE, DOUBLE, FLOAT, BOOLEAN, CHAR, STRING, ALARM)").hasArgs().argName("TYPES").build());
 		options.addOption(Option.builder("i").longOpt("filter-ids").desc("Space separated list of ids to send").hasArgs().argName("IASIOS-IDS").build());
@@ -760,7 +760,7 @@ public class WebServerSender implements IasioListener, AutoCloseable {
 
 		// Get Optional CDB filepath
 		CdbReader cdbReader = CdbReaderFactory.getCdbReader(args);
-
+		cdbReader.init();
 
 		// Read ias configuration from CDB
 		Optional<IasDao> optIasdao = cdbReader.getIas();
