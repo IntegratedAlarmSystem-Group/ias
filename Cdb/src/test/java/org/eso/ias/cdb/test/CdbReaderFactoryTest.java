@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Optional;
 
 import static org.eso.ias.cdb.CdbReaderFactory.cdbClassCmdLineParam;
-import static org.eso.ias.cdb.CdbReaderFactory.jsonCdbCmdLineParam;
+import static org.eso.ias.cdb.CdbReaderFactory.jsonCdbCmdLineParamShort;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -63,7 +63,7 @@ public class CdbReaderFactoryTest {
     @Test
     void testJsonInstantiation() throws Exception {
         logger.info("Checking if the JSON implementation is correctly built");
-        String[] args = {"first", "second", jsonCdbCmdLineParam, "./testCdb"};
+        String[] args = {"first", "second", jsonCdbCmdLineParamShort, "./testCdb"};
         CdbReader cdbReader = CdbReaderFactory.getCdbReader(args);
         JsonReader jReader=(JsonReader)cdbReader;
         cdbReader.init();
