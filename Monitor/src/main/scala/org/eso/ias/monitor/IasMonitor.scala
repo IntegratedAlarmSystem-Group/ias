@@ -216,6 +216,7 @@ object IasMonitor {
     val monitorId = parsedArgs._1.get
 
     val reader: CdbReader = CdbReaderFactory.getCdbReader(args)
+    reader.init()
 
     /**
       *  Get the configuration of the IAS from the CDB
