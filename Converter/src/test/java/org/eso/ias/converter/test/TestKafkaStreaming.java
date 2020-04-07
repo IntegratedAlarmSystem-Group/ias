@@ -274,6 +274,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
         // Builds the JSON CDB
         cdbFiles = new CdbJsonFiles(cdbParentPath);
         CdbWriter cdbWriter = new JsonWriter(cdbFiles);
+        cdbWriter.init();
         Set<IasioDao> iasios = new HashSet<>();
         for (MonitorPointDataHolder mpdh: mpdToSend) {
             IasTypeDao iasTypeDao = IasTypeDao.valueOf(mpdh.iasType.toString());
@@ -288,9 +289,11 @@ public class TestKafkaStreaming extends ConverterTestBase {
         iasDao.setRefreshRate(5);
         iasDao.setValidityThreshold(1);
         cdbWriter.writeIas(iasDao);
+        cdbWriter.shutdown();
 
         // The reader to pass to the converter
         CdbReader cdbReader = new JsonReader(cdbFiles);
+        cdbReader.init();
 
         // Finally builds the converter
         converter = new Converter(
@@ -298,7 +301,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
                 cdbReader);
 
         converter.setUp();
-
+        cdbReader.shutdown();
     }
 
     /**
