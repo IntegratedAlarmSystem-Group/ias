@@ -85,6 +85,7 @@ class NotificationSenderTest extends FlatSpec {
       val cdbParentPath = FileSystems.getDefault().getPath(".");
       val cdbFiles = new CdbJsonFiles(cdbParentPath)
       val cdbReader: CdbReader = new JsonReader(cdbFiles)
+      cdbReader.init()
 
       val iasiosDaos: Set[IasioDao] = {
         val iasiosDaoJOpt = cdbReader.getIasios()
@@ -97,6 +98,7 @@ class NotificationSenderTest extends FlatSpec {
         assert(iasDaoJOpt.isPresent,"IAS config not found in CDB")
         iasDaoJOpt.get()
       }
+      cdbReader.shutdown()
 
       val iasioDaosMap: Map[String, IasioDao] = {
         val mutableMap: mutable.Map[String, IasioDao] = mutable.Map.empty
