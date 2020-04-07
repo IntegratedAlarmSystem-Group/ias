@@ -502,7 +502,7 @@ object Supervisor {
   def parseCommandLine(args: Array[String]): (Option[String],  Option[String], Option[LogLevelDao]) = {
     val options: Options = new Options
     options.addOption("h", "help",false,"Print help and exit")
-    options.addOption("j", "jcdb", true, "Use the JSON Cdb at the passed path")
+    options.addOption("j", "jCdb", true, "Use the JSON Cdb at the passed path")
     options.addOption("c", "cdbClass", true, "Use an external CDB reader with the passed class")
     options.addOption("x", "logLevel", true, "Set the log level (TRACE, DEBUG, INFO, WARN, ERROR)")
 
@@ -546,7 +546,7 @@ object Supervisor {
     }
 
     val ret = (supervId, jcdb, logLvl)
-    Supervisor.logger.info("Params from command line: jcdb={}, logLevel={} supervisor ID={}",
+    Supervisor.logger.info("Params from command line: jCdb={}, logLevel={} supervisor ID={}",
       ret._2.getOrElse("Undefined"),
       ret._3.getOrElse("Undefined"),
       ret._1.getOrElse("Undefined"))
@@ -565,7 +565,10 @@ object Supervisor {
 
     val supervisorId = parsedArgs._1.get
 
+    args.foreach(a => println("===>>> "+a))
+
     val reader: CdbReader = CdbReaderFactory.getCdbReader(args)
+    reader.init()
 
     /** 
      *  Refresh rate and validityThreshold: it uses the first defined ones:
