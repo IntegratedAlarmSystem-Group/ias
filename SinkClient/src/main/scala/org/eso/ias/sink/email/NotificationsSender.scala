@@ -311,6 +311,7 @@ object NotificationsSender {
 
     // Get the CDB
     val cdbReader: CdbReader = CdbReaderFactory.getCdbReader(args)
+    cdbReader.init()
 
     logger.debug("Getting the IAS frm the CDB")
     val iasDao: IasDao = {
