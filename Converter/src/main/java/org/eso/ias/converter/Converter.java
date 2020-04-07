@@ -265,7 +265,7 @@ public class Converter implements AutoCloseable {
 	public static void parseCommandLine(String[] args, Map<String, Optional<?>> params) {
         Options options = new Options();
         options.addOption("h", "help", false, "Print help and exit");
-        options.addOption("j", "jcdb", true, "Use the JSON Cdb at the passed path");
+        options.addOption("j", "jCdb", true, "Use the JSON Cdb at the passed path");
 		options.addOption("c", "cdbClass", true, "Use an external CDB reader with the passed class");
         options.addOption("x", "logLevel", true, "Set the log level (TRACE, DEBUG, INFO, WARN, ERROR)");
 
