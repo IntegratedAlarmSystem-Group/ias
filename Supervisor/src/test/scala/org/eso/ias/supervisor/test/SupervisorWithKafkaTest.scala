@@ -71,6 +71,7 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
   val cdbParentPath: Path = FileSystems.getDefault.getPath(".")
   val cdbFiles = new CdbJsonFiles(cdbParentPath)
   val cdbReader: CdbReader = new JsonReader(cdbFiles)
+  cdbReader.init()
 
   /** The serializer to JSON strings */
   val serializer: IasValueStringSerializer = new IasValueJsonSerializer()
@@ -127,6 +128,8 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
     cdbReader,
     factory,
     None)
+
+  cdbReader.shutdown()
   
   val latchRef: AtomicReference[CountDownLatch] = new AtomicReference
   
