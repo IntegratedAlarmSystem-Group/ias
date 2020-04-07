@@ -63,6 +63,7 @@ class SupervisorWithTemplatesTest extends FlatSpec {
       val cdbParentPath: Path = FileSystems.getDefault.getPath(".")
       val cdbFiles = new CdbJsonFiles(cdbParentPath)
       val cdbReader: CdbReader = new JsonReader(cdbFiles)
+      cdbReader.init()
 
       val supervIdentifier = new Identifier("SupervisorWithTemplates", IdentifierType.SUPERVISOR, None)
 
@@ -77,6 +78,7 @@ class SupervisorWithTemplatesTest extends FlatSpec {
         DasuMock.apply,
         None)
 
+      cdbReader.shutdown()
     }
 
   behavior of "The Supervisor with templates"

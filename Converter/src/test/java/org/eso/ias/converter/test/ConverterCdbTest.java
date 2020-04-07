@@ -97,9 +97,11 @@ public class ConverterCdbTest {
 		}
 		logger.info("Populating JSON CDB in {} with {} IASIOS",cdbParentPath.toAbsolutePath().toString(),numOfIasios);
 		CdbWriter cdbWriter = new JsonWriter(cdbFiles);
+		cdbWriter.init();
 		createTemplate(cdbWriter);
 		populateCDB(numOfIasios, cdbWriter);
 		logger.info("CDB created");
+		cdbWriter.shutdown();
 	}
 	
 	/**
@@ -164,6 +166,7 @@ public class ConverterCdbTest {
         assertFalse(CdbFolders.ROOT.exists(cdbParentPath));
         cdbFiles = new CdbJsonFiles(cdbParentPath);
         CdbReader cdbReader = new JsonReader(cdbFiles);
+        cdbReader.init();
         configDao = new IasioConfigurationDaoImpl(cdbReader);
 
     }
