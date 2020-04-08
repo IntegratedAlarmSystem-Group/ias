@@ -6,6 +6,7 @@ package org.eso.ias.cdb.rdb;
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.IasCdbException;
 import org.eso.ias.cdb.pojos.*;
+import org.eso.ias.plugin.Plugin;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
@@ -594,7 +595,22 @@ public class RdbReader implements CdbReader {
 	 */
 	@Override
 	public Optional<Set<String>> getPluginIds() throws IasCdbException {
-		return Optional.empty();
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
+		Session s=rdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		List plugins = s.createCriteria(PluginConfigDao.class).list();
+		Set<String> ret = new HashSet<>();
+		for (Iterator iterator = plugins.iterator(); iterator.hasNext();) {
+			ret.add(((PluginConfigDao)iterator.next()).getId());
+		}
+		t.commit();
+		return Optional.of(ret);
 	}
 
 	/**
@@ -603,7 +619,22 @@ public class RdbReader implements CdbReader {
 	 */
 	@Override
 	public Optional<Set<String>> getClientIds() throws IasCdbException {
-		return Optional.empty();
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
+		Session s=rdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		List clients = s.createCriteria(ClientConfigDao.class).list();
+		Set<String> ret = new HashSet<>();
+		for (Iterator iterator = clients.iterator(); iterator.hasNext();) {
+			ret.add(((ClientConfigDao)iterator.next()).getId());
+		}
+		t.commit();
+		return Optional.of(ret);
 	}
 
 	/**
