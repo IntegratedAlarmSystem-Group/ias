@@ -107,7 +107,7 @@ class CdbChecker(args: Array[String]) {
             z
           }
         case Failure(f) =>
-          CdbChecker.logger.error("Error getting Supervisor [{}] from CDB",id,f)
+          CdbChecker.logger.error("Error getting Supervisor [{}] from CDB:",id,f)
           z
       }
     })
@@ -133,7 +133,7 @@ class CdbChecker(args: Array[String]) {
             z
           }
         case Failure(f) =>
-          CdbChecker.logger.error("Error getting DASU [{}] from CDB",id,f)
+          CdbChecker.logger.error("Error getting DASU [{}] from CDB:",id,f)
           z
       }
     })
@@ -158,7 +158,7 @@ class CdbChecker(args: Array[String]) {
             z
           }
         case Failure(f) =>
-          CdbChecker.logger.error("Error getting ASCE [{}] from CDB",id,f)
+          CdbChecker.logger.error("Error getting ASCE [{}] from CDB:",id,f)
           z
       }
     })
@@ -183,7 +183,7 @@ class CdbChecker(args: Array[String]) {
           // templates into concrete values
           z+(id -> setOfDtd)
         case Failure(f) =>
-          CdbChecker.logger.error("Error getting DASUs of Supervisor [{}]",id,f)
+          CdbChecker.logger.error("Error getting DASUs of Supervisor [{}]:",id,f)
           z
       }
     })
@@ -258,20 +258,27 @@ class CdbChecker(args: Array[String]) {
   } checkAsce(asce.get)
 
   // Check for cycles
-  val cyclesChecker: CdbCyclesChecker = new CdbCyclesChecker(mapOfDasus,mapOfDasusToDeploy)
-  val dasuWithCycles: Iterable[String] = cyclesChecker.getDasusWithCycles()
-  if (dasuWithCycles.nonEmpty) {
-    CdbChecker.logger.error("Found DASUs with cycles: {}",dasuWithCycles.mkString(","))
-  } else {
-    CdbChecker.logger.info("NO cycles found in the DASUs")
+  val cyclesChecker= new CdbCyclesChecker(mapOfDasus,mapOfDasusToDeploy)
+  val tryDasuWithCycles: Try[Iterable[String]] = Try(cyclesChecker.getDasusWithCycles())
+  tryDasuWithCycles match {
+    case Success(dasuWithCycles) =>
+      if (dasuWithCycles.nonEmpty) {
+        CdbChecker.logger.error("Found DASUs with cycles: {}",dasuWithCycles.mkString(","))
+      } else {
+        CdbChecker.logger.info("NO cycles found in the DASUs")
+      }
+      val dasuTodeployWithCycles: Iterable[String] = cyclesChecker.getDasusToDeployWithCycles()
+      if (dasuTodeployWithCycles.nonEmpty) {
+        CdbChecker.logger.error("Found DASUs to deploy with cycles: {}",dasuTodeployWithCycles.mkString(","))
+      } else {
+        CdbChecker.logger.info("NO cycles found in the DASUs")
+      }
+    case Failure(exception) =>
+      CdbChecker.logger.error("Error getting the DASU for checking cycles (fix to check for cycles):",exception)
   }
-  val dasuTodeployWithCycles: Iterable[String] = cyclesChecker.getDasusToDeployWithCycles()
-  if (dasuTodeployWithCycles.nonEmpty) {
-    CdbChecker.logger.error("Found DASUs to deploy with cycles: {}",dasuTodeployWithCycles.mkString(","))
-  } else {
-    CdbChecker.logger.info("NO cycles found in the DASUs")
-  }
+  CdbChecker.logger.debug("Shutting down the CDB reader")
   reader.shutdown()
+  CdbChecker.logger.info("Done")
 
   /**
     * Build the map of the ASCEs to run in each DASU
@@ -645,7 +652,7 @@ object CdbChecker {
     }
 
     val ret = (jcdb, logLvl)
-    CdbChecker.logger.info("Params from command line: jcdb={}, logLevel={}",
+    CdbChecker.logger.info("Params from command line: jCdb={}, logLevel={}",
       ret._1.getOrElse("Undefined"),
       ret._2.getOrElse("Undefined"))
     ret
