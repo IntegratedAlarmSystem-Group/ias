@@ -972,5 +972,40 @@ public class TestJsonCdb {
 		assertEquals(pConf,pConfFromCdb.get());
 	}
 
+	/**
+	 * Test {@link JsonReader#getPluginIds()}
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetPluginIds() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./testCdb");
+		cdbFiles = new CdbJsonFiles(path);
+		cdbReader = new JsonReader(cdbFiles);
+		cdbReader.init();
+		Optional<Set<String>> idsOpt = cdbReader.getPluginIds();
+		assertTrue(idsOpt.isPresent());
+		assertEquals(2,idsOpt.get().size());
+		assertTrue(idsOpt.get().contains("PluginIDForTesting"));
+		assertTrue(idsOpt.get().contains("PluginID2"));
+		cdbReader.shutdown();
+	}
+
+	/**
+	 * Test {@link JsonReader#getPluginIds()}
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetClientIds() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./testCdb");
+		cdbFiles = new CdbJsonFiles(path);
+		cdbReader = new JsonReader(cdbFiles);
+		cdbReader.init();
+		Optional<Set<String>> idsOpt = cdbReader.getClientIds();
+		assertTrue(idsOpt.isPresent());
+		assertEquals(1,idsOpt.get().size());
+		assertTrue(idsOpt.get().contains("test"));
+		cdbReader.shutdown();
+	}
+
 }
 

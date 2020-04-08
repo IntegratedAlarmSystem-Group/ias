@@ -589,6 +589,24 @@ public class RdbReader implements CdbReader {
 	}
 
 	/**
+	 * @return The IDs of all the plugins in the CDB
+	 * @throws IasCdbException In case of error getting the IDs of the plugins
+	 */
+	@Override
+	public Optional<Set<String>> getPluginIds() throws IasCdbException {
+		return Optional.empty();
+	}
+
+	/**
+	 * @return The IDs of all the plugins in the CDB
+	 * @throws IasCdbException In case of error getting the IDs of the clients
+	 */
+	@Override
+	public Optional<Set<String>> getClientIds() throws IasCdbException {
+		return Optional.empty();
+	}
+
+	/**
 	 * Initialize the CDB
 	 */
 	@Override
