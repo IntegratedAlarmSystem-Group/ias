@@ -145,7 +145,7 @@ public class CdbReaderFactory {
             throw new Exception("JSON CDB path defined twice: check "+jsonCdbCmdLineParamShort+"and "+jsonCdbCmdLineParamLong+" params in cmd line");
         }
         if (jsonCdbReaderL.isPresent() || jsonCdbReaderS.isPresent()) {
-            String cdbPath = jsonCdbReaderL.orElse(jsonCdbReaderS.get());
+            String cdbPath = jsonCdbReaderL.orElseGet(() -> jsonCdbReaderS.get());
             logger.info("Loading JSON CdbReader with folder {}",cdbPath);
             CdbFiles cdbfiles = new CdbJsonFiles(cdbPath);
             return new JsonReader(cdbfiles);
