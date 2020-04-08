@@ -205,6 +205,18 @@ public interface CdbReader {
 	public Optional<PluginConfigDao> getPlugin(String id) throws IasCdbException;
 
 	/**
+	 * @return The IDs of all the plugins in the CDB
+	 * @throws IasCdbException In case of error getting the IDs of the plugins
+	 */
+	public Optional<Set<String>> getPluginIds() throws IasCdbException;
+
+	/**
+	 * @return The IDs of all the plugins in the CDB
+	 * @throws IasCdbException In case of error getting the IDs of the clients
+	 */
+	public Optional<Set<String>> getClientIds() throws IasCdbException;
+
+	/**
 	 * Initialize the CDB
 	 */
 	public void init() throws IasCdbException;

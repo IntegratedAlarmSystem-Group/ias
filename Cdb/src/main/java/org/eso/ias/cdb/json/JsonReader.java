@@ -1034,6 +1034,9 @@ public class JsonReader implements CdbReader {
 			throw new IllegalArgumentException("The identifier of the plugin can't be an empty string");
 		}
 		logger.debug("Getting plugin config {}",cleanedID);
+		if (!cleanedID.equals(id)) {
+			logger.warn("CThe passed plugin ID contains blank chars: searching for [{}] instead of [{}]",cleanedID,id);
+		}
 
 		try {
 			Path pluginFilePath = cdbFileNames.getPluginFilePath(id);
@@ -1046,6 +1049,9 @@ public class JsonReader implements CdbReader {
 				ObjectMapper mapper = new ObjectMapper();
 				try {
 					PluginConfigDao plConfig = mapper.readValue(pluginFilePath.toFile(), PluginConfigDao.class);
+					if (!plConfig.getId().equals(cleanedID)) {
+						throw new IasCdbException("CDB ID vs File name misconfiguration for PLUGIN with ID=["+id+"]");
+					}
 					return Optional.of(plConfig);
 				} catch (Exception e) {
 					throw new IasCdbException("Error reading parsing plugin configuration from file " + pluginFilePath.toAbsolutePath(), e);
@@ -1054,6 +1060,57 @@ public class JsonReader implements CdbReader {
 		} catch (Exception e) {
 			throw new IasCdbException("Error reading config of plugin " + id, e);
 		}
+	}
+
+	/**
+	 * @return The IDs of all the plugins in the CDB
+	 * @throws IasCdbException In case of error getting the IDs of the plugins
+	 */
+	@Override
+	public Optional<Set<String>> getPluginIds() throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+		System.out.println("Getting IDS of plugins");
+
+		// We do not care if this plugin exists or not as we need the
+		// to scan the folder for the names of all the files if contains
+		File pluginFile;
+		try {
+			pluginFile = cdbFileNames.getPluginFilePath("PlaceHolder").toFile();
+		} catch (IOException ioe) {
+			throw new IasCdbException("Error getting path",ioe);
+		}
+
+		return Optional.of(getIdsInFolder(pluginFile));
+	}
+
+	/**
+	 * @return The IDs of all the plugins in the CDB
+	 * @throws IasCdbException In case of error getting the IDs of the clients
+	 */
+	@Override
+	public Optional<Set<String>> getClientIds() throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
+		// We do not care if this plugin exists or not as we need the
+		// to scan the folder for the names of all the files if contains
+		File clientFile;
+		try {
+			clientFile = cdbFileNames.getClientFilePath("PlaceHolder").toFile();
+		} catch (IOException ioe) {
+			throw new IasCdbException("Error getting path",ioe);
+		}
+
+		return Optional.of(getIdsInFolder(clientFile));
 	}
 
 	/**
