@@ -852,7 +852,7 @@ public class TestRdbCdb {
 
 		cdbWriter.writePluginConfig(pConf);
 
-		Optional<PluginConfigDao> pConfFromCdb = cdbReader.getPluginConfig(pConf.getId());
+		Optional<PluginConfigDao> pConfFromCdb = cdbReader.getPlugin(pConf.getId());
 		assertTrue(pConfFromCdb.isPresent());
 
 		assertEquals(pConf,pConfFromCdb.get());
