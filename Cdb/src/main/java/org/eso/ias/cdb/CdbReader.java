@@ -202,7 +202,7 @@ public interface CdbReader {
 	 * @return The configuration of the plugin
 	 * @throws IasCdbException In case of error getting the configuration of the plugin
 	 */
-	public Optional<PluginConfigDao> getPluginConfig(String id) throws IasCdbException;
+	public Optional<PluginConfigDao> getPlugin(String id) throws IasCdbException;
 
 	/**
 	 * Initialize the CDB

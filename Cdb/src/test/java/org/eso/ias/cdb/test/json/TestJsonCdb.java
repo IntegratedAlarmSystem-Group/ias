@@ -4,7 +4,6 @@ import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
 import org.eso.ias.cdb.json.*;
 import org.eso.ias.cdb.pojos.*;
-import org.eso.ias.plugin.Plugin;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -862,7 +861,7 @@ public class TestJsonCdb {
 
 		String pluginId = "PluginIDForTesting";
 
-		Optional<PluginConfigDao> pCOnfDao = cdbReader.getPluginConfig(pluginId);
+		Optional<PluginConfigDao> pCOnfDao = cdbReader.getPlugin(pluginId);
 		assertTrue(pCOnfDao.isPresent());
 		PluginConfigDao pConf = pCOnfDao.get();
 		System.out.println("PluginConfig:\n"+pConf.toString());
@@ -967,7 +966,7 @@ public class TestJsonCdb {
 		assertTrue(cdbFiles.getPluginFilePath(pConf.getId()).toFile().exists(),"Plugin "+pConf.getId()+" configuration file does NOT exist");
 
 
-		Optional<PluginConfigDao> pConfFromCdb = cdbReader.getPluginConfig(pConf.getId());
+		Optional<PluginConfigDao> pConfFromCdb = cdbReader.getPlugin(pConf.getId());
 		assertTrue(pConfFromCdb.isPresent());
 
 		assertEquals(pConf,pConfFromCdb.get());

@@ -1020,7 +1020,7 @@ public class JsonReader implements CdbReader {
 	 * @throws IasCdbException In case of error getting the configuration of the plugin
 	 */
 	@Override
-	public Optional<PluginConfigDao> getPluginConfig(String id) throws IasCdbException {
+	public Optional<PluginConfigDao> getPlugin(String id) throws IasCdbException {
 		if (closed.get()) {
 			throw new IasCdbException("The reader is shut down");
 		}
