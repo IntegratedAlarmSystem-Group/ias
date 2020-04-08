@@ -4,7 +4,6 @@ import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
 import org.eso.ias.cdb.json.*;
 import org.eso.ias.cdb.pojos.*;
-import org.eso.ias.plugin.Plugin;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -862,7 +861,7 @@ public class TestJsonCdb {
 
 		String pluginId = "PluginIDForTesting";
 
-		Optional<PluginConfigDao> pCOnfDao = cdbReader.getPluginConfig(pluginId);
+		Optional<PluginConfigDao> pCOnfDao = cdbReader.getPlugin(pluginId);
 		assertTrue(pCOnfDao.isPresent());
 		PluginConfigDao pConf = pCOnfDao.get();
 		System.out.println("PluginConfig:\n"+pConf.toString());
@@ -967,10 +966,45 @@ public class TestJsonCdb {
 		assertTrue(cdbFiles.getPluginFilePath(pConf.getId()).toFile().exists(),"Plugin "+pConf.getId()+" configuration file does NOT exist");
 
 
-		Optional<PluginConfigDao> pConfFromCdb = cdbReader.getPluginConfig(pConf.getId());
+		Optional<PluginConfigDao> pConfFromCdb = cdbReader.getPlugin(pConf.getId());
 		assertTrue(pConfFromCdb.isPresent());
 
 		assertEquals(pConf,pConfFromCdb.get());
+	}
+
+	/**
+	 * Test {@link JsonReader#getPluginIds()}
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetPluginIds() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./testCdb");
+		cdbFiles = new CdbJsonFiles(path);
+		cdbReader = new JsonReader(cdbFiles);
+		cdbReader.init();
+		Optional<Set<String>> idsOpt = cdbReader.getPluginIds();
+		assertTrue(idsOpt.isPresent());
+		assertEquals(2,idsOpt.get().size());
+		assertTrue(idsOpt.get().contains("PluginIDForTesting"));
+		assertTrue(idsOpt.get().contains("PluginID2"));
+		cdbReader.shutdown();
+	}
+
+	/**
+	 * Test {@link JsonReader#getPluginIds()}
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetClientIds() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./testCdb");
+		cdbFiles = new CdbJsonFiles(path);
+		cdbReader = new JsonReader(cdbFiles);
+		cdbReader.init();
+		Optional<Set<String>> idsOpt = cdbReader.getClientIds();
+		assertTrue(idsOpt.isPresent());
+		assertEquals(1,idsOpt.get().size());
+		assertTrue(idsOpt.get().contains("test"));
+		cdbReader.shutdown();
 	}
 
 }
