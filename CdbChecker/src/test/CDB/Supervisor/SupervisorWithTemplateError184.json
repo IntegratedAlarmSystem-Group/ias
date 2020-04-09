@@ -1,0 +1,8 @@
+{
+	"logLevel":"INFO",
+	"id":"SupervisorWithTemplateError184",
+	"hostName":"almaias.eso.org",
+	"dasusToDeploy":[
+		{"dasuId":"DasuTemplate184" ,"templateId":"temp-ID1","instance":"3"}
+	]
+}

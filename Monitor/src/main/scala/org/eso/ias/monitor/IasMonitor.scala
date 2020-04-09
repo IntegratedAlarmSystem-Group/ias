@@ -148,7 +148,7 @@ object IasMonitor {
   def parseCommandLine(args: Array[String]): (Option[String],  Option[String], Option[LogLevelDao], Option[String]) = {
     val options: Options = new Options
     options.addOption("h", "help",false,"Print help and exit")
-    options.addOption("j", "jcdb", true, "Use the JSON Cdb at the passed path")
+    options.addOption("j", "jCdb", true, "Use the JSON Cdb at the passed path")
     options.addOption("c", "cdbClass", true, "Use an external CDB reader with the passed class")
     options.addOption("x", "logLevel", true, "Set the log level (TRACE, DEBUG, INFO, WARN, ERROR)")
     options.addOption("f", "configFile", true, "Config file")
@@ -216,6 +216,7 @@ object IasMonitor {
     val monitorId = parsedArgs._1.get
 
     val reader: CdbReader = CdbReaderFactory.getCdbReader(args)
+    reader.init()
 
     /**
       *  Get the configuration of the IAS from the CDB

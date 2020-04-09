@@ -194,4 +194,18 @@ public class CdbJsonFiles implements CdbFiles {
 		}
 		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.CLIENT, true).resolve(clientID+confFileExtension);
 	}
+
+	/**
+	 * @param clientID The identifier of the plugin
+	 * @return The path for the configuration of the plugin
+	 * with the passed ID
+	 * @throws IOException In case of IO error getting the path
+	 */
+	@Override
+	public Path getPluginFilePath(String clientID) throws IOException {
+		if (clientID==null || clientID.isEmpty()) {
+			throw new IllegalArgumentException("Invalid null or empty DASU ID");
+		}
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.PLUGIN, true).resolve(clientID+jsonFileExtension);
+	}
 }

@@ -1,44 +1,49 @@
-package org.eso.ias.plugin.config;
+package org.eso.ias.cdb.pojos;
 
 import java.util.Objects;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.persistence.*;
+
 /**
- * The value of a monitor point or alarm
+ * The value of a monitor point or alarm of plugin
  * read from the monitored system.
  *
  * @author acaproni
  *
  */
-public class Value {
-
-	/**
-	 * The logger
-	 */
-	private static final Logger logger = LoggerFactory.getLogger(Value.class);
+@Entity
+@Table(name = "VALUE")
+public class ValueDao {
 
 	/**
 	 * The unique ID of the value
 	 */
+	@Id
+	@Column(name = "value_id")
 	private String id;
 
 	/**
 	 * The time interval (msec) to send the value to the
 	 * server if it does not change
 	 */
+	@Basic(optional=false)
 	private int refreshTime;
 
 	/**
 	 * The optional filter to apply to the value
 	 */
+	@Basic(optional=true)
 	private String filter;
 
 	/**
 	 * A optional comma separated list of options to pass
 	 * to the filter
 	 */
+	@Basic(optional=true)
 	private String filterOptions;
 
 	/**
@@ -103,8 +108,14 @@ public class Value {
 	}
 
 	@Override
-	public boolean equals(Object that) {
-		return Objects.equals(this, that);
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		ValueDao valueDao = (ValueDao) o;
+		return refreshTime == valueDao.refreshTime &&
+				id.equals(valueDao.id) &&
+				Objects.equals(filter, valueDao.filter) &&
+				Objects.equals(filterOptions, valueDao.filterOptions);
 	}
 
 	/**
@@ -117,19 +128,33 @@ public class Value {
 	 * @return <code>true</code> if the data contained in this object
 	 * 			are correct
 	 */
-	public boolean isValid() {
+	@JsonIgnore
+	public boolean valid() {
 		if (id==null || id.isEmpty()) {
-			logger.error("Invalid null or empty value ID");
 			return false;
 		}
 		if (refreshTime<=0) {
-			logger.error("Invalid refreshTime {}",refreshTime);
 			return false;
 		}
-		logger.debug("Value {} configuration is valid",id);
 		return true;
 	}
 
-
+	@Override
+	public String toString() {
+		StringBuilder ret = new StringBuilder("ValueDao[id=");
+		ret.append(id);
+		ret.append(", refreshTime=");
+		ret.append(refreshTime);
+		if (filter!=null && !filter.isEmpty()) {
+			ret.append(", filter=");
+			ret.append(filter);
+		}
+		if (filterOptions!=null && !filterOptions.isEmpty()) {
+			ret.append(", filterOptions=");
+			ret.append(filterOptions);
+		}
+		ret.append(']');
+		return ret.toString();
+	}
 }
 

@@ -32,7 +32,7 @@ fi
 
 TEMP=( $OTHER_PARAMS )
 ID=${TEMP_PARMS_ARRAY[0]}
-echo "Supervisor ID=$ID"
+echo "Convert ID=$ID"
 
 CMD="iasRun -l j $JAVA_PROPS $LOGID_PARAM org.eso.ias.converter.Converter $OTHER_PARAMS"
 

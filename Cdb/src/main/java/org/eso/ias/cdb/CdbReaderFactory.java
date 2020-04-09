@@ -48,9 +48,14 @@ public class CdbReaderFactory {
     public static final String cdbClassCmdLineParam="-cdbClass";
 
     /**
-     * The parameter to set in the command line to build a JSON CdbReader
+     * The long parameter to set in the command line to build a JSON CdbReader
      */
-    public static final String jsonCdbCmdLineParam="-jCdb";
+    public static final String jsonCdbCmdLineParamLong ="-jCdb";
+
+    /**
+     * The short parameter to set in the command line to build a JSON CdbReader
+     */
+    public static final String jsonCdbCmdLineParamShort ="-j";
 
     /**
      * get the value of the passed parameter from the eray of strings.
@@ -134,10 +139,15 @@ public class CdbReaderFactory {
             logger.debug("No external CdbReader found");
         }
 
-        Optional<String> jsonCdbReader = getValueOfParam(jsonCdbCmdLineParam,cmdLine);
-        if (jsonCdbReader.isPresent()) {
-            logger.info("Loading JSON CdbReader with folder {}",jsonCdbReader.get());
-            CdbFiles cdbfiles = new CdbJsonFiles(jsonCdbReader.get());
+        Optional<String> jsonCdbReaderS = getValueOfParam(jsonCdbCmdLineParamShort,cmdLine);
+        Optional<String> jsonCdbReaderL = getValueOfParam(jsonCdbCmdLineParamLong,cmdLine);
+        if (jsonCdbReaderS.isPresent() && jsonCdbReaderL.isPresent()) {
+            throw new Exception("JSON CDB path defined twice: check "+jsonCdbCmdLineParamShort+"and "+jsonCdbCmdLineParamLong+" params in cmd line");
+        }
+        if (jsonCdbReaderL.isPresent() || jsonCdbReaderS.isPresent()) {
+            String cdbPath = jsonCdbReaderL.orElseGet(() -> jsonCdbReaderS.get());
+            logger.info("Loading JSON CdbReader with folder {}",cdbPath);
+            CdbFiles cdbfiles = new CdbJsonFiles(cdbPath);
             return new JsonReader(cdbfiles);
         } else {
             logger.debug("NO JSON CdbReader requested");

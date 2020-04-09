@@ -6,9 +6,9 @@ import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.plugin.Plugin;
 import org.eso.ias.plugin.PluginException;
 import org.eso.ias.plugin.Sample;
-import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.config.PluginConfigException;
 import org.eso.ias.plugin.config.PluginConfigFileReader;
+import org.eso.ias.plugin.config.PluginFileConfig;
 import org.eso.ias.plugin.publisher.MonitorPointSender;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.JsonFilePublisher;
@@ -49,7 +49,7 @@ public class DumbWeatherStationPlugin extends Plugin {
 	 * @param sender The sender
 	 * @param hbProd the publisher of HBs
 	 */
-	public DumbWeatherStationPlugin(PluginConfig config, MonitorPointSender sender, HbProducer hbProd) {
+	public DumbWeatherStationPlugin(PluginFileConfig config, MonitorPointSender sender, HbProducer hbProd) {
 		super(config, sender,null,hbProd,null);
 	}
 	
@@ -179,10 +179,10 @@ public class DumbWeatherStationPlugin extends Plugin {
 	
 	public static void main(String[] args) {
 		logger.info("Started...");
-		PluginConfig config=null;
+		PluginFileConfig config=null;
 		try {
 			PluginConfigFileReader jsonFileReader = new PluginConfigFileReader(resourcePath+"WeatherStationPlugin.json");
-			Future<PluginConfig> futurePluginConfig = jsonFileReader.getPluginConfig();
+			Future<PluginFileConfig> futurePluginConfig = jsonFileReader.getPluginConfig();
 			config = futurePluginConfig.get(1, TimeUnit.MINUTES);
 		} catch (PluginConfigException pce) {
 			logger.error("Excetion reading configuratiopn",pce);

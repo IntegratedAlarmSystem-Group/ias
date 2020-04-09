@@ -162,6 +162,8 @@ public class RdbUtils {
 			sources.addAnnotatedClass(DasuToDeployDao.class);
 			sources.addAnnotatedClass(TemplateInstanceIasioDao.class);
 			sources.addAnnotatedClass(ClientConfigDao.class);
+			sources.addAnnotatedClass(ValueDao.class);
+			sources.addAnnotatedClass(PluginConfigDao.class);
 			Metadata data = sources.buildMetadata();
 			logger.debug("Building the SessionFactory");
 			sessionFactory = data.buildSessionFactory();

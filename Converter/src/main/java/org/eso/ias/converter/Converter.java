@@ -159,11 +159,6 @@ public class Converter implements AutoCloseable {
 		commandManager = new CommandManagerKafkaImpl(id,kServers,kStrProd);
 
 		this.configDao= new IasioConfigurationDaoImpl(cdbReader);
-		try {
-			cdbReader.shutdown();
-		} catch (IasCdbException e) {
-			logger.warn("Exception got closing the CDB",e);
-		}
 
 		this.iasValueStrSerializer=	new IasValueJsonSerializer();
 
@@ -270,7 +265,7 @@ public class Converter implements AutoCloseable {
 	public static void parseCommandLine(String[] args, Map<String, Optional<?>> params) {
         Options options = new Options();
         options.addOption("h", "help", false, "Print help and exit");
-        options.addOption("j", "jcdb", true, "Use the JSON Cdb at the passed path");
+        options.addOption("j", "jCdb", true, "Use the JSON Cdb at the passed path");
 		options.addOption("c", "cdbClass", true, "Use an external CDB reader with the passed class");
         options.addOption("x", "logLevel", true, "Set the log level (TRACE, DEBUG, INFO, WARN, ERROR)");
 
@@ -348,11 +343,16 @@ public class Converter implements AutoCloseable {
         String id= (String)supervIdOpt.get();
 
 		CdbReader cdbReader = null;
-
 		try {
 			cdbReader=CdbReaderFactory.getCdbReader(args);
 		} catch (Exception e) {
 			System.err.println("Error getting the CDB "+e.getMessage());
+			System.exit(-1);
+		}
+		try {
+			cdbReader.init();
+		} catch (IasCdbException e) {
+			logger.error("Error initializing the CDB reader",e);
 			System.exit(-1);
 		}
 
@@ -361,7 +361,7 @@ public class Converter implements AutoCloseable {
 			Optional<IasDao> iasDaoOpt = cdbReader.getIas();
 			if (!iasDaoOpt.isPresent()) {
 			   logger.error("IAS config not found in the CDB");
-			   System.exit(-1);
+			   System.exit(-2);
             }
 			iasDao=iasDaoOpt.get();
 		} catch (IasCdbException cdbEx) {
@@ -393,6 +393,11 @@ public class Converter implements AutoCloseable {
 		} catch (Exception e) {
 			logger.error("Error initializing the converter {}",id,e);
 
+		}
+		try {
+			cdbReader.shutdown();
+		} catch (IasCdbException e) {
+			logger.warn("Exception got closing the CDB",e);
 		}
 	}
 }

@@ -29,6 +29,7 @@ class CdbChecker(args: Array[String]) {
 
   /** The reader of the JSON of RDB CDB */
   val reader: CdbReader = CdbReaderFactory.getCdbReader(args)
+  reader.init()
 
   // Are there errors in the IAS?
   val iasDaoOpt: Option[IasDao] = {
@@ -106,7 +107,7 @@ class CdbChecker(args: Array[String]) {
             z
           }
         case Failure(f) =>
-          CdbChecker.logger.error("Error getting Supervisor [{}] from CDB",id,f)
+          CdbChecker.logger.error("Error getting Supervisor [{}] from CDB:",id,f)
           z
       }
     })
@@ -132,7 +133,7 @@ class CdbChecker(args: Array[String]) {
             z
           }
         case Failure(f) =>
-          CdbChecker.logger.error("Error getting DASU [{}] from CDB",id,f)
+          CdbChecker.logger.error("Error getting DASU [{}] from CDB:",id,f)
           z
       }
     })
@@ -157,7 +158,7 @@ class CdbChecker(args: Array[String]) {
             z
           }
         case Failure(f) =>
-          CdbChecker.logger.error("Error getting ASCE [{}] from CDB",id,f)
+          CdbChecker.logger.error("Error getting ASCE [{}] from CDB:",id,f)
           z
       }
     })
@@ -182,7 +183,7 @@ class CdbChecker(args: Array[String]) {
           // templates into concrete values
           z+(id -> setOfDtd)
         case Failure(f) =>
-          CdbChecker.logger.error("Error getting DASUs of Supervisor [{}]",id,f)
+          CdbChecker.logger.error("Error getting DASUs of Supervisor [{}]:",id,f)
           z
       }
     })
@@ -257,19 +258,71 @@ class CdbChecker(args: Array[String]) {
   } checkAsce(asce.get)
 
   // Check for cycles
-  val cyclesChecker: CdbCyclesChecker = new CdbCyclesChecker(mapOfDasus,mapOfDasusToDeploy)
-  val dasuWithCycles: Iterable[String] = cyclesChecker.getDasusWithCycles()
-  if (dasuWithCycles.nonEmpty) {
-    CdbChecker.logger.error("Found DASUs with cycles: {}",dasuWithCycles.mkString(","))
-  } else {
-    CdbChecker.logger.info("NO cycles found in the DASUs")
+  val cyclesChecker= new CdbCyclesChecker(mapOfDasus,mapOfDasusToDeploy)
+  val tryDasuWithCycles: Try[Iterable[String]] = Try(cyclesChecker.getDasusWithCycles())
+  tryDasuWithCycles match {
+    case Success(dasuWithCycles) =>
+      if (dasuWithCycles.nonEmpty) {
+        CdbChecker.logger.error("Found DASUs with cycles: {}",dasuWithCycles.mkString(","))
+      } else {
+        CdbChecker.logger.info("NO cycles found in the DASUs")
+      }
+      val dasuTodeployWithCycles: Iterable[String] = cyclesChecker.getDasusToDeployWithCycles()
+      if (dasuTodeployWithCycles.nonEmpty) {
+        CdbChecker.logger.error("Found DASUs to deploy with cycles: {}",dasuTodeployWithCycles.mkString(","))
+      } else {
+        CdbChecker.logger.info("NO cycles found in the DASUs")
+      }
+    case Failure(exception) =>
+      CdbChecker.logger.error("Error getting the DASUs with cycles (fix to check for cycles):",exception)
   }
-  val dasuTodeployWithCycles: Iterable[String] = cyclesChecker.getDasusToDeployWithCycles()
-  if (dasuTodeployWithCycles.nonEmpty) {
-    CdbChecker.logger.error("Found DASUs to deploy with cycles: {}",dasuTodeployWithCycles.mkString(","))
-  } else {
-    CdbChecker.logger.info("NO cycles found in the DASUs")
+
+  CdbChecker.logger.debug("Checking for duplicated IDs of tools (Supervisors, clients, plugins)...")
+  // Check for duplicated IDs of tools
+  val idsOfPlugins: List[String] = {
+    val idsOptional = reader.getPluginIds
+    if (idsOptional.isPresent) JavaConverters.asScalaSet(idsOptional.get()).toList
+    else List.empty[String]
   }
+  CdbChecker.logger.debug("Ids of plugins: {}",idsOfPlugins.mkString(","))
+  val idsOfClients: List[String] = {
+    val idsOptional = reader.getClientIds
+    if (idsOptional.isPresent) JavaConverters.asScalaSet(idsOptional.get()).toList
+    else List.empty[String]
+  }
+  CdbChecker.logger.debug("Ids of clients: {}",idsOfClients.mkString(","))
+  val duplicatedIdsOfTools: Option[List[String]] = {
+    val listOfIds: List[String] = idsOfPlugins:::idsOfClients:::idsOfSupervisors.toList
+    listOfIds.groupBy(x => listOfIds.count(_==x)>1).get(true)
+  }
+  if (duplicatedIdsOfTools.isEmpty) {
+    CdbChecker.logger.info("No duplication of IDs between Supervisors, Clients and Plugins")
+  } else {
+    // Removes dupliated in the list
+    val dupIds = duplicatedIdsOfTools.get.toSet
+
+    def formatMsg(tp: String, ids: List[String]) = tp+ " ["+ids.mkString(",")+"]"
+
+    dupIds.foreach(duplicatedId => {
+      val supervContainDupMsg =
+        if (idsOfSupervisors.contains(duplicatedId)) formatMsg("Supervisors",idsOfSupervisors.toList)
+        else ""
+      val pluginContainDupMsg =
+        if (idsOfPlugins.contains(duplicatedId)) formatMsg("Plugins",idsOfPlugins)
+        else ""
+      val clientContainDupMsg =
+        if (idsOfClients.contains(duplicatedId)) formatMsg("Clients",idsOfClients)
+        else ""
+      CdbChecker.logger.error("Duplicated id [{}] found: check {} {} {} ",
+        duplicatedId,supervContainDupMsg,pluginContainDupMsg,clientContainDupMsg)
+    })
+
+  }
+
+
+  CdbChecker.logger.debug("Shutting down the CDB reader")
+  reader.shutdown()
+  CdbChecker.logger.info("Done")
 
   /**
     * Build the map of the ASCEs to run in each DASU
@@ -595,7 +648,7 @@ class CdbChecker(args: Array[String]) {
 object CdbChecker {
 
   /** Build the usage message */
-  val cmdLineSyntax: String = "cdbChecker [-h|--help] [-j|-jcdb JSON-CDB-PATH] [-x|--logLevel log level]"
+  val cmdLineSyntax: String = "cdbChecker [-h|--help] [-j|-jCdb JSON-CDB-PATH] [-x|--logLevel log level]"
 
   /**
     * Parse the command line.
@@ -608,7 +661,7 @@ object CdbChecker {
   def parseCommandLine(args: Array[String]): (Option[String], Option[LogLevelDao]) = {
     val options: Options = new Options
     options.addOption("h", "help",false,"Print help and exit")
-    options.addOption("j", "jcdb", true, "Use the JSON Cdb at the passed path instead of the RDB")
+    options.addOption("j", "jCdb", true, "Use the JSON Cdb at the passed path instead of the RDB")
     options.addOption("c", "cdbClass", true, "Use an external CDB reader with the passed class")
     options.addOption("x", "logLevel", true, "Set the log level (TRACE, DEBUG, INFO, WARN, ERROR)")
 
@@ -643,7 +696,7 @@ object CdbChecker {
     }
 
     val ret = (jcdb, logLvl)
-    CdbChecker.logger.info("Params from command line: jcdb={}, logLevel={}",
+    CdbChecker.logger.info("Params from command line: jCdb={}, logLevel={}",
       ret._1.getOrElse("Undefined"),
       ret._2.getOrElse("Undefined"))
     ret

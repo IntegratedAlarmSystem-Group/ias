@@ -6,6 +6,8 @@ import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.IasCdbException;
 import org.eso.ias.cdb.json.pojos.*;
 import org.eso.ias.cdb.pojos.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -13,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Read CDB configuration from JSON files.
@@ -29,6 +32,21 @@ import java.util.*;
  * @author acaproni
  */
 public class JsonReader implements CdbReader {
+
+	 /**
+     * The logger
+     */
+    private static final Logger logger = LoggerFactory.getLogger(JsonReader.class);
+
+	/**
+	 * Signal if the reader has been initialized
+	 */
+	private final AtomicBoolean initialized = new AtomicBoolean(false);
+
+	/**
+	 * Signal if the reader has been closed
+	 */
+	private final AtomicBoolean closed = new AtomicBoolean(false);
 	
 	/**
 	 * A holder to rebuild the objects from their IDs.
@@ -67,6 +85,13 @@ public class JsonReader implements CdbReader {
 	 */
 	@Override
 	public Optional<IasDao> getIas() throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		File f;
 		try {
 			f= cdbFileNames.getIasFilePath().toFile();
@@ -96,6 +121,13 @@ public class JsonReader implements CdbReader {
 	 */
 	@Override
 	public Optional<Set<IasioDao>> getIasios() throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		File f;
 		try {
 			// The ID is not used for JSON: we pass a whatever sting
@@ -127,6 +159,13 @@ public class JsonReader implements CdbReader {
 	 */
 	@Override
 	public Optional<Set<TransferFunctionDao>> getTransferFunctions() throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		File f;
 		try {
 			// The ID is not used for JSON: we pass a whatever sting
@@ -158,6 +197,13 @@ public class JsonReader implements CdbReader {
 	 */
 	@Override
 	public Optional<Set<TemplateDao>> getTemplates() throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		File f;
 		try {
 			// The ID is not used for JSON: we pass a whatever sting
@@ -197,6 +243,13 @@ public class JsonReader implements CdbReader {
 	 */
 	@Override
 	public Optional<IasioDao> getIasio(String id) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		Objects.requireNonNull(id, "The IASIO identifier cannot be null");
 		String cleanedID = id.trim();
 		if (cleanedID.isEmpty()) {
@@ -223,6 +276,13 @@ public class JsonReader implements CdbReader {
 	 */
 	@Override
 	public Optional<TemplateDao> getTemplate(String template_id) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		if (template_id==null || template_id.isEmpty()) {
 			throw new IllegalArgumentException("The ID of the template cannot be null nor empty");
 		}
@@ -251,6 +311,13 @@ public class JsonReader implements CdbReader {
 	 */
 	@Override
 	public Optional<AsceDao> getAsce(String id) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		Objects.requireNonNull(id, "The ASCE identifier cannot be null");
 		String cleanedID = id.trim();
 		if (cleanedID.isEmpty()) {
@@ -287,6 +354,13 @@ public class JsonReader implements CdbReader {
 	 */
 	@Override
 	public Optional<DasuDao> getDasu(String id) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		Objects.requireNonNull(id, "The DASU identifier cannot be null");
 		String cleanedID = id.trim();
 		if (cleanedID.isEmpty()) {
@@ -316,14 +390,15 @@ public class JsonReader implements CdbReader {
 		if (ret.isPresent()) {
 			Set<AsceDao> asces = ret.get().getAsces();
 			String templateOfDasu = ret.get().getTemplateId(); 
-			if (templateOfDasu==null) {
+			if (templateOfDasu==null || templateOfDasu.isEmpty()) {
 				// No template in the DASU: ASCEs must have no template
-				if (!asces.stream().allMatch(asce -> asce.getTemplateId()==null)) {
+				if (!asces.stream().allMatch(asce -> asce.getTemplateId()==null || asce.getTemplateId().isEmpty()) ) {
 					throw new IasCdbException("Template mismatch between DASU ["+cleanedID+"] and its ASCEs");
 				}
 			} else {
-				if (!asces.stream().allMatch(asce -> asce.getTemplateId().equals(templateOfDasu))) {
-					throw new IasCdbException("Template mismatch between DASU ["+cleanedID+"] and its ASCEs");
+				if (!asces.stream().allMatch(asce -> asce.getTemplateId()!=null && asce.getTemplateId().equals(templateOfDasu))) {
+					String asceIds = Arrays.toString(asces.stream().map(a -> a.getId()).toArray());
+					throw new IasCdbException("Template mismatch between DASU ["+cleanedID+"] and its ASCEs "+asceIds);
 				}
 			}
 		}
@@ -347,6 +422,13 @@ public class JsonReader implements CdbReader {
 	 */
 	@Override
 	public Optional<SupervisorDao> getSupervisor(String id) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		Objects.requireNonNull(id, "The supervisor identifier cannot be null");
 		String cleanedID = id.trim();
 		if (cleanedID.isEmpty()) {
@@ -628,6 +710,13 @@ public class JsonReader implements CdbReader {
 	 *                         supervisor with the give identifier does not exist
 	 */
 	public Set<DasuToDeployDao> getDasusToDeployInSupervisor(String id) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		Objects.requireNonNull(id, "The ID cant't be null");
 		if (id.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty ID");
@@ -646,6 +735,13 @@ public class JsonReader implements CdbReader {
 	 *                         DASU with the give identifier does not exist
 	 */
 	public Set<AsceDao> getAscesForDasu(String id) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		Objects.requireNonNull(id, "The ID cant't be null");
 		if (id.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty ID");
@@ -665,6 +761,13 @@ public class JsonReader implements CdbReader {
 	 */
 	@Override
 	public Collection<IasioDao> getIasiosForAsce(String id) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		if (id ==null || id.isEmpty()) {
 			throw new IllegalArgumentException("Invalid null or empty ID");
 		}
@@ -688,6 +791,13 @@ public class JsonReader implements CdbReader {
 	@Override
 	public Collection<TemplateInstanceIasioDao> getTemplateInstancesIasiosForAsce(String id)
             throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
         if (id ==null || id.isEmpty()) {
             throw new IllegalArgumentException("Invalid null or empty ID");
         }
@@ -699,6 +809,13 @@ public class JsonReader implements CdbReader {
 
 	@Override
 	public Optional<TransferFunctionDao> getTransferFunction(String tf_id) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		Objects.requireNonNull(tf_id);
 		String cleanedID = tf_id.trim();
 		if (cleanedID.isEmpty()) {
@@ -728,6 +845,13 @@ public class JsonReader implements CdbReader {
      * @return
      */
 	private Set<String> getIdsInFolder(File placeHolderFilename) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
         String fName = placeHolderFilename.toString();
         int pos = fName.lastIndexOf(File.separatorChar);
         if (pos <=0) throw new IasCdbException("Invalid file name!");
@@ -768,6 +892,13 @@ public class JsonReader implements CdbReader {
 	 */
 	@Override
 	public Optional<Set<String>> getSupervisorIds() throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 	    // We do not care if this supervisor exists or not as we need the
         // to scan the folder for the names of all the files if contains
         File supervFile;
@@ -788,6 +919,13 @@ public class JsonReader implements CdbReader {
 	 */
 	@Override
 	public Optional<Set<String>> getDasuIds() throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
         // We do not care if this DASU exists or not as we need the
         // to scan the folder for the names of all the files if contains
         File dasuFile;
@@ -808,6 +946,12 @@ public class JsonReader implements CdbReader {
 	 */
 	@Override
 	public Optional<Set<String>> getAsceIds() throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
 	   // We do not care if this ASCE exists or not as we need the
         // to scan the folder for the names of all the files if contains
         File asceFile;
@@ -832,6 +976,13 @@ public class JsonReader implements CdbReader {
 	 */
 	@Override
 	public Optional<ClientConfigDao> getClientConfig(String id) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 	    Objects.requireNonNull(id,"The identifier can't be an null");
         String cleanedID = id.trim();
         if (cleanedID.isEmpty()) {
@@ -855,17 +1006,143 @@ public class JsonReader implements CdbReader {
         }
 
 	}
-	
+
+	/**
+	 * Get the configuration of the plugin with the passed identifier.
+	 * <p>
+	 * The configuration of the plugin can be read from a file or from the CDB.
+	 * In both cases, the configuration is returned as #PluginConfigDao.
+	 * This m,ethod returns the configuration from the CDB; reading from file is
+	 * not implemented here.
+	 *
+	 * @param id The not null nor empty ID of the IAS plugin
+	 * @return The configuration of the plugin
+	 * @throws IasCdbException In case of error getting the configuration of the plugin
+	 */
+	@Override
+	public Optional<PluginConfigDao> getPlugin(String id) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
+		Objects.requireNonNull(id,"The identifier  of the plugin can't be an null");
+		String cleanedID = id.trim();
+		if (cleanedID.isEmpty()) {
+			throw new IllegalArgumentException("The identifier of the plugin can't be an empty string");
+		}
+		logger.debug("Getting plugin config {}",cleanedID);
+		if (!cleanedID.equals(id)) {
+			logger.warn("CThe passed plugin ID contains blank chars: searching for [{}] instead of [{}]",cleanedID,id);
+		}
+
+		try {
+			Path pluginFilePath = cdbFileNames.getPluginFilePath(id);
+			logger.debug("Getting plugin config from {}",pluginFilePath.toFile().getAbsolutePath());
+			if (!canReadFromFile(pluginFilePath.toFile())) {
+				logger.error("{} is unreadable",pluginFilePath.toFile().getAbsolutePath());
+				return Optional.empty();
+			} else {
+				// Parse the file in a JSON pojo
+				ObjectMapper mapper = new ObjectMapper();
+				try {
+					PluginConfigDao plConfig = mapper.readValue(pluginFilePath.toFile(), PluginConfigDao.class);
+					if (!plConfig.getId().equals(cleanedID)) {
+						throw new IasCdbException("CDB ID vs File name misconfiguration for PLUGIN with ID=["+id+"]");
+					}
+					return Optional.of(plConfig);
+				} catch (Exception e) {
+					throw new IasCdbException("Error reading parsing plugin configuration from file " + pluginFilePath.toAbsolutePath(), e);
+				}
+			}
+		} catch (Exception e) {
+			throw new IasCdbException("Error reading config of plugin " + id, e);
+		}
+	}
+
+	/**
+	 * @return The IDs of all the plugins in the CDB
+	 * @throws IasCdbException In case of error getting the IDs of the plugins
+	 */
+	@Override
+	public Optional<Set<String>> getPluginIds() throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+		System.out.println("Getting IDS of plugins");
+
+		// We do not care if this plugin exists or not as we need the
+		// to scan the folder for the names of all the files if contains
+		File pluginFile;
+		try {
+			pluginFile = cdbFileNames.getPluginFilePath("PlaceHolder").toFile();
+		} catch (IOException ioe) {
+			throw new IasCdbException("Error getting path",ioe);
+		}
+
+		return Optional.of(getIdsInFolder(pluginFile));
+	}
+
+	/**
+	 * @return The IDs of all the plugins in the CDB
+	 * @throws IasCdbException In case of error getting the IDs of the clients
+	 */
+	@Override
+	public Optional<Set<String>> getClientIds() throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
+		// We do not care if this plugin exists or not as we need the
+		// to scan the folder for the names of all the files if contains
+		File clientFile;
+		try {
+			clientFile = cdbFileNames.getClientFilePath("PlaceHolder").toFile();
+		} catch (IOException ioe) {
+			throw new IasCdbException("Error getting path",ioe);
+		}
+
+		return Optional.of(getIdsInFolder(clientFile));
+	}
+
 	/**
 	 * Initialize the CDB
 	 */
 	@Override
-	public void init() throws IasCdbException {}
+	public void init() throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("Cannot initialize: already closed");
+		}
+		if(!initialized.get()) {
+			logger.debug("Initialized");
+			initialized.set(true);
+		} else {
+			logger.warn("Already initialized: skipping initialization");
+		}
+	}
 	
 	/**
 	 * Close the CDB and release the associated resources
 	 * @throws IasCdbException
 	 */
 	@Override
-	public void shutdown() throws IasCdbException {}
+	public void shutdown() throws IasCdbException {
+		if (!initialized.get()) {
+			throw new IasCdbException("Cannot shutdown a reader that has not been initialized");
+		}
+		if (!closed.get()) {
+			logger.debug("Closed");
+			closed.set(true);
+		} else {
+			logger.warn("Already closed!");
+		}
+	}
 }
