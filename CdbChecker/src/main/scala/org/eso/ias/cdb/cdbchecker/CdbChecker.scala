@@ -274,8 +274,52 @@ class CdbChecker(args: Array[String]) {
         CdbChecker.logger.info("NO cycles found in the DASUs")
       }
     case Failure(exception) =>
-      CdbChecker.logger.error("Error getting the DASU for checking cycles (fix to check for cycles):",exception)
+      CdbChecker.logger.error("Error getting the DASUs with cycles (fix to check for cycles):",exception)
   }
+
+  CdbChecker.logger.debug("Checking for duplicated IDs of tools (Supervisors, clients, plugins)...")
+  // Check for duplicated IDs of tools
+  val idsOfPlugins: List[String] = {
+    val idsOptional = reader.getPluginIds
+    if (idsOptional.isPresent) JavaConverters.asScalaSet(idsOptional.get()).toList
+    else List.empty[String]
+  }
+  CdbChecker.logger.debug("Ids of plugins: {}",idsOfPlugins.mkString(","))
+  val idsOfClients: List[String] = {
+    val idsOptional = reader.getClientIds
+    if (idsOptional.isPresent) JavaConverters.asScalaSet(idsOptional.get()).toList
+    else List.empty[String]
+  }
+  CdbChecker.logger.debug("Ids of clients: {}",idsOfClients.mkString(","))
+  val duplicatedIdsOfTools: Option[List[String]] = {
+    val listOfIds: List[String] = idsOfPlugins:::idsOfClients:::idsOfSupervisors.toList
+    listOfIds.groupBy(x => listOfIds.count(_==x)>1).get(true)
+  }
+  if (duplicatedIdsOfTools.isEmpty) {
+    CdbChecker.logger.info("No duplication of IDs between Supervisors, Clients and Plugins")
+  } else {
+    // Removes dupliated in the list
+    val dupIds = duplicatedIdsOfTools.get.toSet
+
+    def formatMsg(tp: String, ids: List[String]) = tp+ " ["+ids.mkString(",")+"]"
+
+    dupIds.foreach(duplicatedId => {
+      val supervContainDupMsg =
+        if (idsOfSupervisors.contains(duplicatedId)) formatMsg("Supervisors",idsOfSupervisors.toList)
+        else ""
+      val pluginContainDupMsg =
+        if (idsOfPlugins.contains(duplicatedId)) formatMsg("Plugins",idsOfPlugins)
+        else ""
+      val clientContainDupMsg =
+        if (idsOfClients.contains(duplicatedId)) formatMsg("Clients",idsOfClients)
+        else ""
+      CdbChecker.logger.error("Duplicated id [{}] found: check {} {} {} ",
+        duplicatedId,supervContainDupMsg,pluginContainDupMsg,clientContainDupMsg)
+    })
+
+  }
+
+
   CdbChecker.logger.debug("Shutting down the CDB reader")
   reader.shutdown()
   CdbChecker.logger.info("Done")
