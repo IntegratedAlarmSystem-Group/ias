@@ -101,6 +101,7 @@ class TemplatedInputTest extends FlatSpec {
       val cdbParentPath = FileSystems.getDefault().getPath(".");
       val cdbFiles = new CdbJsonFiles(cdbParentPath)
       val cdbReader: CdbReader = new JsonReader(cdbFiles)
+      cdbReader.init()
 
       val supervIdentifier = new Identifier("SupervisorToTestInputs", IdentifierType.SUPERVISOR, None)
 
@@ -114,7 +115,9 @@ class TemplatedInputTest extends FlatSpec {
         cdbReader,
         factory,
         None)
-      
+
+      cdbReader.shutdown()
+
       supervisor.start()
       supervisor.enableAutoRefreshOfOutput(false)
       

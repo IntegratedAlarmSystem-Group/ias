@@ -87,4 +87,13 @@ public interface CdbFiles {
 	 */
 	public Path getClientFilePath(String clientID) throws IOException;
 
+	/**
+	 *
+	 * @param clientID The identifier of the plugin
+	 * @return The path for the configuration of the plugin
+	 *         with the passed ID
+	 * @throws IOException In case of IO error getting the path
+	 */
+	public Path getPluginFilePath(String clientID) throws IOException;
+
 }

@@ -3,7 +3,7 @@
 	"monitoredSystemId":"WeatherStationSystem",
 	"sinkServer":"localhost",
 	"sinkPort":"9092",
-	"properties": [],
+	"props": [],
 	"values":[
 		{"id":"Temperature",
 		"refreshTime":"60000",

@@ -3,9 +3,9 @@ package org.eso.ias.test.simpleloop.plugin;
 import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.eso.ias.plugin.Plugin;
 import org.eso.ias.plugin.Sample;
-import org.eso.ias.plugin.config.PluginConfig;
 import org.eso.ias.plugin.config.PluginConfigException;
 import org.eso.ias.plugin.config.PluginConfigFileReader;
+import org.eso.ias.plugin.config.PluginFileConfig;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.KafkaPublisher;
 import org.eso.ias.types.OperationalMode;
@@ -110,7 +110,7 @@ public class SimpleLoopPlugin extends Plugin implements Runnable {
 	 * 
 	 * @param config The plugin coinfiguration
 	 */
-	public SimpleLoopPlugin(PluginConfig config) {
+	public SimpleLoopPlugin(PluginFileConfig config) {
 		super(config);
 	}
 	
@@ -147,11 +147,11 @@ public class SimpleLoopPlugin extends Plugin implements Runnable {
 		
 		String configFileName = args[0];
 		logger.info("Reading {} config file",configFileName);
-		
-		PluginConfig config=null;
+
+		PluginFileConfig config=null;
 		try {
 			PluginConfigFileReader jsonFileReader = new PluginConfigFileReader(new File(configFileName));
-			Future<PluginConfig> futurePluginConfig = jsonFileReader.getPluginConfig();
+			Future<PluginFileConfig> futurePluginConfig = jsonFileReader.getPluginConfig();
 			config = futurePluginConfig.get(1, TimeUnit.MINUTES);
 		} catch (FileNotFoundException fnfe) {
 			throw new IllegalArgumentException("Cannot read config file "+fnfe);

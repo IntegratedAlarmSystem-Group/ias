@@ -63,6 +63,7 @@ class SupervisorTest extends FlatSpec {
       val cdbParentPath = FileSystems.getDefault().getPath(".");
       val cdbFiles = new CdbJsonFiles(cdbParentPath)
       val cdbReader: CdbReader = new JsonReader(cdbFiles)
+      cdbReader.init()
 
       val supervIdentifier = new Identifier("SupervisorID", IdentifierType.SUPERVISOR, None)
       
@@ -76,6 +77,7 @@ class SupervisorTest extends FlatSpec {
         cdbReader,
         DasuMock.apply,None)
 
+      cdbReader.shutdown()
     }
 
   behavior of "The Supervisor"

@@ -79,6 +79,9 @@ public class TestRdbCdb {
 
 		// The create empty tables
 		rdbUtils.createTables();
+
+		cdbReader.init();
+		cdbWriter.init();
 	}
 
 	/**
@@ -86,6 +89,8 @@ public class TestRdbCdb {
 	 */
 	@AfterEach
 	public void tearDown() throws Exception {
+		cdbReader.shutdown();
+		cdbReader.shutdown();
 	}
 
 	@AfterAll
@@ -405,7 +410,7 @@ public class TestRdbCdb {
 
 	/**
 	 * Test reading and writing of ASCE
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
@@ -810,5 +815,134 @@ public class TestRdbCdb {
 		assertEquals(longConfig,c3.get());
 
 		logger.info("testClientConfig done");
+	}
+
+	/**
+	 * Test reading and writing of plugin configurations
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	public void testPluginConfig() throws Exception {
+		PluginConfigDao pConf = new PluginConfigDao();
+		pConf.setId("GeneratedPluginConfig");
+		pConf.setDefaultFilter("Mean");
+		pConf.setDefaultFilterOptions("100");
+		pConf.setMonitoredSystemId("MSys");
+
+		PropertyDao prop = new PropertyDao();
+		prop.setName("pName");
+		prop.setValue("pVal");
+		Set<PropertyDao> arrayProps = pConf.getProps();
+		arrayProps.add(prop);
+
+		ValueDao v1 = new ValueDao();
+		v1.setId("V1");
+		v1.setRefreshTime(1250);
+
+		ValueDao v2 = new ValueDao();
+		v2.setId("Value-2");
+		v2.setRefreshTime(750);
+		v2.setFilter("Avg");
+		v2.setFilterOptions("10");
+		Set<ValueDao> values = new HashSet<>();
+		values.add(v1);
+		values.add(v2);
+		pConf.setValues(values);
+
+		cdbWriter.writePluginConfig(pConf);
+
+		Optional<PluginConfigDao> pConfFromCdb = cdbReader.getPlugin(pConf.getId());
+		assertTrue(pConfFromCdb.isPresent());
+
+		assertEquals(pConf,pConfFromCdb.get());
+	}
+
+	/**
+	 * Test {@link RdbReader#getPluginIds()}
+	 * @throws Exception
+	 */
+	@Test
+	public void testPluginIds() throws Exception {
+		PluginConfigDao pConf = new PluginConfigDao();
+		pConf.setId("GeneratedPluginConfig");
+		pConf.setDefaultFilter("Mean");
+		pConf.setDefaultFilterOptions("100");
+		pConf.setMonitoredSystemId("MSys");
+
+		PropertyDao prop = new PropertyDao();
+		prop.setName("pName");
+		prop.setValue("pVal");
+		Set<PropertyDao> arrayProps = pConf.getProps();
+		arrayProps.add(prop);
+
+		ValueDao v1 = new ValueDao();
+		v1.setId("V1");
+		v1.setRefreshTime(1250);
+
+		ValueDao v2 = new ValueDao();
+		v2.setId("Value-2");
+		v2.setRefreshTime(750);
+		v2.setFilter("Avg");
+		v2.setFilterOptions("10");
+		Set<ValueDao> values = new HashSet<>();
+		values.add(v1);
+		values.add(v2);
+		pConf.setValues(values);
+
+		cdbWriter.writePluginConfig(pConf);
+
+		PluginConfigDao pConf2 = new PluginConfigDao();
+		pConf2.setId("GeneratedPluginConfig2");
+		pConf2.setDefaultFilter("Mean");
+		pConf2.setDefaultFilterOptions("100");
+		pConf2.setMonitoredSystemId("MSys");
+
+		PropertyDao prop2 = new PropertyDao();
+		prop2.setName("pName");
+		prop2.setValue("pVal");
+		Set<PropertyDao> arrayProps2 = pConf2.getProps();
+		arrayProps.add(prop2);
+
+		ValueDao v21 = new ValueDao();
+		v21.setId("V1");
+		v21.setRefreshTime(1250);
+
+		ValueDao v22 = new ValueDao();
+		v22.setId("Value-2");
+		v22.setRefreshTime(750);
+		v22.setFilter("Avg");
+		v22.setFilterOptions("10");
+		Set<ValueDao> values2 = new HashSet<>();
+		values.add(v21);
+		values.add(v21);
+		pConf2.setValues(values2);
+
+		cdbWriter.writePluginConfig(pConf2);
+
+		Optional<Set<String>> idsOPt = cdbReader.getPluginIds();
+		assertTrue(idsOPt.isPresent());
+		assertEquals(2,idsOPt.get().size());
+		assertTrue(idsOPt.get().contains("GeneratedPluginConfig2"));
+		assertTrue(idsOPt.get().contains("GeneratedPluginConfig"));
+	}
+
+	/**
+	 * Test {@link RdbReader#getClientIds()}
+	 * @throws Exception
+	 */
+	@Test
+	public void testClientIds() throws Exception {
+		ClientConfigDao configDao1 = new ClientConfigDao("ID1", "Configuration 1");
+		ClientConfigDao configDao2 = new ClientConfigDao("ID2", "Configuration 2");
+
+		cdbWriter.writeClientConfig(configDao1);
+		cdbWriter.writeClientConfig(configDao2);
+
+		Optional<Set<String>> idsOPt = cdbReader.getClientIds();
+		assertTrue(idsOPt.isPresent());
+		assertEquals(2,idsOPt.get().size());
+		assertTrue(idsOPt.get().contains("ID1"));
+		assertTrue(idsOPt.get().contains("ID2"));
 	}
 }

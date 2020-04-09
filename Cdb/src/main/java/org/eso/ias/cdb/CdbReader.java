@@ -7,7 +7,16 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * Interface to build CDB pojos from the configuration database.
+ * Interface to read data from the configuration database.
+ *
+ * All get methods return an {@link Optional} that is empty if the data to read was not found in the CDB.
+ * They throw an exception in case of error.
+ *
+ * Life cycle:
+ * <UL>
+ *     <LI>{@link #init()} must be called before reading data from the CDB, to get the resources</LI>
+ *     <LI>{@link #shutdown()} must be invoked when te CDB reader is not needed anymore, to free the allocated resources</LI>
+ * </UL>
  * 
  * @author acaproni
  */
@@ -170,7 +179,7 @@ public interface CdbReader {
 	public Collection<TemplateInstanceIasioDao> getTemplateInstancesIasiosForAsce(String id) throws IasCdbException;
 
 	/**
-	 * Get the configuraton of the client with the passed identifier.
+	 * Get the configuration of the client with the passed identifier.
 	 *
 	 * The configuration is passed as a string whose format depends
 	 * on the client implementation.
@@ -180,6 +189,32 @@ public interface CdbReader {
 	 * @throws IasCdbException In case of error getting the configuration of the client
 	 */
 	public Optional<ClientConfigDao> getClientConfig(String id) throws IasCdbException;
+
+	/**
+	 * Get the configuration of the plugin with the passed identifier.
+	 *
+	 * The configuration of the plugin can be read from a file or from the CDB.
+	 * In both cases, the configuration is returned as #PluginConfigDao.
+	 * This m,ethod returns the configuration from the CDB; reading from file is
+	 * not implemented here.
+	 *
+	 * @param id The not null nor empty ID of the IAS plugin
+	 * @return The configuration of the plugin
+	 * @throws IasCdbException In case of error getting the configuration of the plugin
+	 */
+	public Optional<PluginConfigDao> getPlugin(String id) throws IasCdbException;
+
+	/**
+	 * @return The IDs of all the plugins in the CDB
+	 * @throws IasCdbException In case of error getting the IDs of the plugins
+	 */
+	public Optional<Set<String>> getPluginIds() throws IasCdbException;
+
+	/**
+	 * @return The IDs of all the plugins in the CDB
+	 * @throws IasCdbException In case of error getting the IDs of the clients
+	 */
+	public Optional<Set<String>> getClientIds() throws IasCdbException;
 
 	/**
 	 * Initialize the CDB

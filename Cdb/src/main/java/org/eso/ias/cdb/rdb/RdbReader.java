@@ -8,8 +8,11 @@ import org.eso.ias.cdb.IasCdbException;
 import org.eso.ias.cdb.pojos.*;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Read CDB configuration from RDB.
@@ -19,11 +22,26 @@ import java.util.*;
  *
  */
 public class RdbReader implements CdbReader {
+
+	/**
+	 * The logger
+	 */
+	private static final Logger logger = LoggerFactory.getLogger(RdbReader.class);
 	
 	/**
 	 * Helper object to read and write the RDB
 	 */
 	private final RdbUtils rdbUtils = RdbUtils.getRdbUtils();
+
+	/**
+	 * Signal if the reader has been initialized
+	 */
+	private final AtomicBoolean initialized = new AtomicBoolean(false);
+
+	/**
+	 * Signal if the reader has been closed
+	 */
+	private final AtomicBoolean closed = new AtomicBoolean(false);
 
 	/**
 	 * Get the Ias configuration from a file.
@@ -39,6 +57,13 @@ public class RdbReader implements CdbReader {
 	 */
 	@Override
 	public Optional<IasDao> getIas() throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		Session s=rdbUtils.getSession();
 		Transaction t =s.beginTransaction();
 		
@@ -65,6 +90,13 @@ public class RdbReader implements CdbReader {
 	 */
 	@Override
 	public Optional<Set<IasioDao>> getIasios() throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		Session s=rdbUtils.getSession();
 		Transaction t =s.beginTransaction();
 		List iasios= s.createCriteria(IasioDao.class).list();
@@ -84,6 +116,13 @@ public class RdbReader implements CdbReader {
 	 */
 	@Override
 	public Optional<Set<TemplateDao>> getTemplates() throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		Session s=rdbUtils.getSession();
 		Transaction t =s.beginTransaction();
 		List templates = s.createCriteria(TemplateDao.class).list();
@@ -103,6 +142,13 @@ public class RdbReader implements CdbReader {
      */
     @Override
     public Optional<Set<TransferFunctionDao>> getTransferFunctions() throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
         Session s=rdbUtils.getSession();
         Transaction t =s.beginTransaction();
         List tfs = s.createCriteria(TransferFunctionDao.class).list();
@@ -123,6 +169,13 @@ public class RdbReader implements CdbReader {
 	 */
 	@Override
 	public Optional<IasioDao> getIasio(String id) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		Objects.requireNonNull(id, "The ID cant't be null");
 		if (id.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty ID");
@@ -143,6 +196,13 @@ public class RdbReader implements CdbReader {
 	 */
 	@Override
 	public Optional<SupervisorDao> getSupervisor(String id) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		Objects.requireNonNull(id, "The ID cant't be null");
 		if (id.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty ID");
@@ -162,6 +222,13 @@ public class RdbReader implements CdbReader {
 	 */
 	@Override
 	public Optional<AsceDao> getAsce(String id) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		Objects.requireNonNull(id, "The ID cant't be null");
 		if (id.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty ID");
@@ -182,6 +249,13 @@ public class RdbReader implements CdbReader {
 	 */
 	@Override
 	public Optional<TransferFunctionDao> getTransferFunction(String tf_id) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		Objects.requireNonNull(tf_id, "The ID of the TF cant't be null");
 		if (tf_id.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty TF ID");
@@ -202,6 +276,13 @@ public class RdbReader implements CdbReader {
 	 */
 	@Override
 	public Optional<TemplateDao> getTemplate(String template_id) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		if (template_id==null || template_id.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty or null template ID");
 		}
@@ -220,6 +301,13 @@ public class RdbReader implements CdbReader {
 	 */
 	@Override
 	public Optional<DasuDao> getDasu(String id) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		Objects.requireNonNull(id, "The ID cant't be null");
 		if (id.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty ID");
@@ -261,6 +349,13 @@ public class RdbReader implements CdbReader {
 	 */
 	@Override
 	public Set<DasuToDeployDao> getDasusToDeployInSupervisor(String id) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		Objects.requireNonNull(id, "The ID cant't be null");
 		if (id.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty ID");
@@ -280,6 +375,13 @@ public class RdbReader implements CdbReader {
 	 */
 	@Override
 	public Set<AsceDao> getAscesForDasu(String id) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		Objects.requireNonNull(id, "The ID cant't be null");
 		if (id.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty ID");
@@ -299,6 +401,13 @@ public class RdbReader implements CdbReader {
 	 */
 	@Override
 	public Collection<IasioDao> getIasiosForAsce(String id) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		if (id==null || id.isEmpty()) {
 			throw new IllegalArgumentException("Invalid null or empty ID");
 		}
@@ -317,6 +426,13 @@ public class RdbReader implements CdbReader {
      */
     @Override
     public Optional<Set<String>> getSupervisorIds() throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		Session s=rdbUtils.getSession();
 		Transaction t =s.beginTransaction();
 		List supervisors = s.createCriteria(SupervisorDao.class).list();
@@ -336,6 +452,13 @@ public class RdbReader implements CdbReader {
      */
     @Override
     public Optional<Set<String>> getDasuIds() throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
         Session s=rdbUtils.getSession();
         Transaction t =s.beginTransaction();
         List supervisors = s.createCriteria(DasuDao.class).list();
@@ -355,6 +478,13 @@ public class RdbReader implements CdbReader {
      */
     @Override
     public Optional<Set<String>> getAsceIds() throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
         Session s=rdbUtils.getSession();
         Transaction t =s.beginTransaction();
         List supervisors = s.createCriteria(AsceDao.class).list();
@@ -381,6 +511,13 @@ public class RdbReader implements CdbReader {
 	 */
 	@Override
 	public Collection<TemplateInstanceIasioDao> getTemplateInstancesIasiosForAsce(String id) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		Objects.requireNonNull(id,"Invalid null identifier");
 		if (id==null || id.isEmpty()) {
 			throw new IllegalArgumentException("Invalid null orempty ID");
@@ -402,8 +539,15 @@ public class RdbReader implements CdbReader {
 	 */
 	@Override
 	public Optional<ClientConfigDao> getClientConfig(String id) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
 		if (id==null || id.isEmpty()) {
-			throw new IllegalArgumentException("Invalid empty or null ID");
+			throw new IllegalArgumentException("Invalid empty or null ID of config");
 		}
 		Session s=rdbUtils.getSession();
 		Transaction t =s.beginTransaction();
@@ -414,10 +558,99 @@ public class RdbReader implements CdbReader {
 	}
 
 	/**
+	 * Get the configuration of the plugin with the passed identifier.
+	 * <p>
+	 * The configuration of the plugin can be read from a file or from the CDB.
+	 * In both cases, the configuration is returned as #PluginConfigDao.
+	 * This m,ethod returns the configuration from the CDB; reading from file is
+	 * not implemented here.
+	 *
+	 * @param id The not null nor empty ID of the IAS plugin
+	 * @return The configuration of the plugin
+	 * @throws IasCdbException In case of error getting the configuration of the plugin
+	 */
+	@Override
+	public Optional<PluginConfigDao> getPlugin(String id) throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
+		if (id==null || id.isEmpty()) {
+			throw new IllegalArgumentException("Invalid empty or null ID of plugin");
+		}
+		Session s=rdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		PluginConfigDao pluginConf = s.get(PluginConfigDao.class,id);
+		t.commit();
+		return Optional.ofNullable(pluginConf);
+	}
+
+	/**
+	 * @return The IDs of all the plugins in the CDB
+	 * @throws IasCdbException In case of error getting the IDs of the plugins
+	 */
+	@Override
+	public Optional<Set<String>> getPluginIds() throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
+		Session s=rdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		List plugins = s.createCriteria(PluginConfigDao.class).list();
+		Set<String> ret = new HashSet<>();
+		for (Iterator iterator = plugins.iterator(); iterator.hasNext();) {
+			ret.add(((PluginConfigDao)iterator.next()).getId());
+		}
+		t.commit();
+		return Optional.of(ret);
+	}
+
+	/**
+	 * @return The IDs of all the plugins in the CDB
+	 * @throws IasCdbException In case of error getting the IDs of the clients
+	 */
+	@Override
+	public Optional<Set<String>> getClientIds() throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("The reader is shut down");
+		}
+		if (!initialized.get()) {
+			throw new IasCdbException("The reader is not initialized");
+		}
+
+		Session s=rdbUtils.getSession();
+		Transaction t =s.beginTransaction();
+		List clients = s.createCriteria(ClientConfigDao.class).list();
+		Set<String> ret = new HashSet<>();
+		for (Iterator iterator = clients.iterator(); iterator.hasNext();) {
+			ret.add(((ClientConfigDao)iterator.next()).getId());
+		}
+		t.commit();
+		return Optional.of(ret);
+	}
+
+	/**
 	 * Initialize the CDB
 	 */
 	@Override
-	public void init() throws IasCdbException {}
+	public void init() throws IasCdbException {
+		if (closed.get()) {
+			throw new IasCdbException("Cannot initialize: already closed");
+		}
+		if(!initialized.get()) {
+			logger.debug("Initialized");
+			initialized.set(true);
+		} else {
+			logger.warn("Already initialized: skipping initialization");
+		}
+	}
 	
 	/**
 	 * Close the CDB and release the associated resources
@@ -425,6 +658,16 @@ public class RdbReader implements CdbReader {
 	 */
 	@Override
 	public void shutdown() throws IasCdbException {
-		rdbUtils.close();
+		if (!initialized.get()) {
+			throw new IasCdbException("Cannot shutdown a reader that has not been initialized");
+		}
+		if (!closed.get()) {
+			rdbUtils.close();
+			logger.debug("Closed");
+			closed.set(true);
+		} else {
+			logger.warn("Already closed!");
+		}
+
 	}
 }

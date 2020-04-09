@@ -1,5 +1,7 @@
 package org.eso.ias.cdb.pojos;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.Objects;
 
 import javax.persistence.Column;
@@ -83,7 +85,22 @@ public class PropertyDao {
 	 public int hashCode() {
 		 return Objects.hash(getName(),getValue());
 	 }
-	
+
+	/**
+	 * Check the correctness of the value
+	 * @return true if valid and false otherwise
+	 */
+	@JsonIgnore
+	public boolean valid() {
+		if (name==null || name.isEmpty()) {
+			return false;
+		}
+		if (value==null || value.isEmpty()) {
+			return false;
+		}
+		return true;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder ret = new StringBuilder("Property=[");
