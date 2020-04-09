@@ -6,7 +6,6 @@ package org.eso.ias.cdb.rdb;
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.IasCdbException;
 import org.eso.ias.cdb.pojos.*;
-import org.eso.ias.plugin.Plugin;
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
