@@ -396,6 +396,7 @@ public class TestJsonCdb {
 				"IASIO description",
 				IasTypeDao.ALARM,
 				"http://www.eso.org");
+
 		cdbWriter.writeIasio(iasioDefaultShelve, false);
 		Optional<IasioDao> optIasioDefShelve = cdbReader.getIasio(iasioDefaultShelve.getId());
 		assertTrue(optIasioDefShelve.isPresent(),"Got an empty IASIO!");
@@ -406,16 +407,20 @@ public class TestJsonCdb {
 				"ioID",
 				"IASIO description",
 				IasTypeDao.ALARM,"http://wiki.alma.cl/ioID",
-				false,
+				true,
 				"templateID",
 				SoundTypeDao.TYPE2,
 				"addr1@eso.org; addr@alma.cl");
 		cdbWriter.writeIasio(iasio, false);
 
+		System.out.println(iasio.toString());
+		System.out.println(iasio.isCanShelve());
+
 		assertTrue(cdbFiles.getIasioFilePath(iasio.getId()).toFile().exists());
 
 		Optional<IasioDao> optIasio = cdbReader.getIasio(iasio.getId());
 		assertTrue( optIasio.isPresent(),"Got an empty IASIO!");
+		assertTrue(optIasio.get().isCanShelve(),"Should be possible to shelve");
 		assertEquals(iasio, optIasio.get(),"The IASIOs differ!");
 
 		// Check if there is one and only one IASIO in the CDB
@@ -439,10 +444,16 @@ public class TestJsonCdb {
 
 		// Check if updating a IASIO replaces the old one
 		iasio.setShortDesc("A new Descripton");
+		System.out.println("===+++===> "+iasio);
 		cdbWriter.writeIasio(iasio, true);
 		// There must be still 2 IASIOs in the CDB
 		optSet = cdbReader.getIasios();
 		assertTrue( optSet.isPresent(),"Got an empty set of IASIOs!");
+
+		for (IasioDao i: optSet.get()) {
+			System.out.println("==> "+i);
+		}
+
 		assertEquals(2,optSet.get().size(),"Size of set mismatch");
 		// Check if the IASIO in the CDB has been updated
 		optIasio = cdbReader.getIasio(iasio.getId());
