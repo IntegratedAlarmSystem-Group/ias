@@ -655,6 +655,9 @@ public class JsonWriter implements CdbWriter {
 		if (iasio.getSound()!=null) {
 			jg.writeStringField("sound",iasio.getSound().toString());
 		}
+		if (iasio.isCanShelve()!=iasio.canSheveDefault) {
+			jg.writeStringField("canShelve", Boolean.valueOf(iasio.isCanShelve()).toString());
+		}
 		jg.writeEndObject();
 	}
 	
