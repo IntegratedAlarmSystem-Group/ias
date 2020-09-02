@@ -6,6 +6,7 @@ The output dir must be passed in env.OUT_PATH
 
 import os
 from pathlib import Path
+from tempfile import mkdtemp
 from waflib.Task import Task
 
 
@@ -31,7 +32,8 @@ class getJarsFromZip(Task):
         outDir = self.outputs[0].abspath()[:self.outputs[0].abspath().rfind('/')+1]
         print("Output folder:",outDir)
 
-        tempFolder = outDir+"temp"
+        tempFolder = mkdtemp(prefix="getJarsFromZip.", suffix=".temp")
+        print("Using temporary folder", tempFolder)
 
         print("Unzipping",self.inputs[0].abspath())
         self.exec_command("unzip -qq -d "+tempFolder+" "+self.inputs[0].abspath())
