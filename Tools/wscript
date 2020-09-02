@@ -7,7 +7,7 @@ def options(conf):
     pass
 
 def configure(conf):
-    pass
+    conf.find_program('tar')
 
 def clean():
     pass
@@ -71,6 +71,19 @@ def build(bld):
     copyFilesTask.set_outputs(destJars)
     copyFilesTask.color='BLUE'
     bld.add_to_group(copyFilesTask)
+
+    #
+    # Get jar from tar
+    #
+    tarFileName="commons-cli-1.4-bin.tar.gz"
+    tarFileNode = srcExtTools.find_node(tarFileName)
+
+    from IasWafBuildTools.JarTasks import getJarsFromTar
+    getJarsFromTarTask = getJarsFromTar(env=bld.env)
+    getJarsFromTarTask.set_inputs(tarFileNode)
+    getJarsFromTarTask.set_outputs(dstExtTools.find_or_declare("commons-cli-1.4.jar"))
+    getJarsFromTarTask.color='PINK'
+    bld.add_to_group(getJarsFromTarTask)
 
     print("Building of",bld.path.abspath(),"done.")
 
