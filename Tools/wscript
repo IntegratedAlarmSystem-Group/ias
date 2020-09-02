@@ -1,0 +1,52 @@
+top = '.'
+out = 'build'
+
+def options(conf):
+    pass
+
+def configure(conf):
+    pass
+
+def build(bld):
+    print("Building",bld.path.abspath())
+
+    print(bld.path.abspath())
+    print(bld.root.abspath())
+    print("bld.path contents %r" % bld.path.children)
+    print("bld.path parent   %r" % bld.path.parent.abspath())
+    print("bld.root parent   %r" % bld.root.parent)
+
+    srcExtTools=bld.path.find_node('extTools')
+    print("srcExtTools",srcExtTools.abspath())
+
+    dstExtTools=bld.bldnode.make_node('extTools')
+    print("dstExtTools",dstExtTools.abspath())
+
+    #
+    # get jars from ZIP
+    #
+    spring_release = "4.3.9"
+    zipFileName="spring-framework-{}.RELEASE-dist.zip".format(spring_release)
+
+    jarsInZip = [
+        dstExtTools.find_or_declare("spring-core-{}.RELEASE.jar".format(spring_release)),
+        dstExtTools.find_or_declare("spring-context-{}.RELEASE.jar".format(spring_release)),
+        dstExtTools.find_or_declare("spring-beans-{}.RELEASE.jar".format(spring_release)),
+        dstExtTools.find_or_declare("spring-aop-{}.RELEASE.jar".format(spring_release)),
+        dstExtTools.find_or_declare("spring-expression-{}.RELEASE.jar".format(spring_release))
+    ]
+
+    print("jars to get from ZIP",jarsInZip)
+
+    bld.load('IasWafBuildTools', tooldir='WafBuildTools/src/main/python/')
+    from IasWafBuildTools.JarTasks import getJarsFromZip
+
+    jarsFromZipTask = getJarsFromZip(env=bld.env)
+    jarsFromZipTask.color='YELLOW'
+    jarsFromZipTask.set_inputs(srcExtTools.find_node(zipFileName))
+    jarsFromZipTask.set_outputs(jarsInZip)
+
+    bld.add_to_group(jarsFromZipTask)
+
+    print("Building of",bld.path.abspath(),"done.")
+
