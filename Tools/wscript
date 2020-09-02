@@ -7,14 +7,19 @@ def options(conf):
 def configure(conf):
     pass
 
+def clean():
+    pass
+
 def build(bld):
     print("Building",bld.path.abspath())
 
-    print(bld.path.abspath())
-    print(bld.root.abspath())
+    print("Root abspath",bld.root.abspath())
     print("bld.path contents %r" % bld.path.children)
     print("bld.path parent   %r" % bld.path.parent.abspath())
     print("bld.root parent   %r" % bld.root.parent)
+    print("Build node",bld.bldnode)
+
+    bld.bldnode=bld.path.make_node('build')
 
     srcExtTools=bld.path.find_node('extTools')
     print("srcExtTools",srcExtTools.abspath())
