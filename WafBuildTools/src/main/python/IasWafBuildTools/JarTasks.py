@@ -5,6 +5,7 @@ The output dir must be passed in env.OUT_PATH
 """
 
 import os
+import errno
 from pathlib import Path
 from tempfile import mkdtemp
 from waflib.Task import Task
@@ -22,15 +23,15 @@ class getJarsFromZip(Task):
         print("ZIP file to scan:", self.inputs)
         print("JARS to get from zip file:", self.outputs)
 
-        # The dictionary associates the names of the jar to their destination paths
-        cleanedJarNames = {}
+        # The dictionary associates the names of the files to their destination paths
+        cleanedFileNames = {} # For example {f.out -> /a/b/c/f.out}
         for j in self.outputs:
             p = Path(j.abspath())
-            cleanedJarNames[p.name]=j.abspath()
+            cleanedFileNames[p.name]=j.abspath()
 
-        # get the output folder from one of the jars
+        # get the output folder from one of the files
         outDir = self.outputs[0].abspath()[:self.outputs[0].abspath().rfind('/')+1]
-        print("Output folder:",outDir)
+        print("Output folder:", outDir)
 
         tempFolder = mkdtemp(prefix="getJarsFromZip.", suffix=".temp")
         print("Using temporary folder", tempFolder)
@@ -39,10 +40,18 @@ class getJarsFromZip(Task):
         self.exec_command("unzip -qq -d "+tempFolder+" "+self.inputs[0].abspath())
 
         print("Extracting jars")
-        for path in Path(tempFolder).rglob('*.jar'):
-            if path.name in cleanedJarNames:
-                print('Found', path.name, "in", self.inputs[0].abspath())
-                self.exec_command("cp "+os.fspath(path.resolve())+" "+cleanedJarNames[path.name])
+        for fileName in cleanedFileNames.keys():
+            files = sorted(Path(tempFolder).rglob(fileName))
+
+            print("+++ ",fileName,"===>>>",files)
+            if not files:
+                raise FileNotFoundError( errno.ENOENT, os.strerror(errno.ENOENT), fileName)
+            elif len(files)>1:
+                raise Exception("The archive contains "+len(files)+" occurrences of "+fileName+": "+files)
+            else:
+                # File found
+                print('File', files[0].name, " will be copied in", cleanedFileNames[fileName])
+                self.exec_command("cp "+os.fspath(files[0].resolve())+" "+cleanedFileNames[fileName])
 
         # Remove the temp folder
         print("Removing temporary folder",tempFolder)
@@ -90,10 +99,12 @@ class getJarsFromTar(Task):
 
 class copyFiles(Task):
     """
-    Get external JARS from extTools folder
+    Copy input files in output files
 
     This task copies the input nodes in the output nodes.
-    Each input is copied in the output i.e. self.inputs[0] is copied in self.outputs[0] (this allows for renaming)
+    Each input is copied in the output i.e. self.inputs[0] is copied in self.outputs[0] (this allows for renaming):
+    it means that the order of the inputs and outputs list is important.
+
     The number of inputs must be equal to the number of outputs.
 
     - self.input: the Node of the ZIP file must be passed as the first item of the inputs list
