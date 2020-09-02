@@ -15,7 +15,7 @@ class getJarsFromZip(Task):
 
         - input: the Node of the ZIP file must be passed as the first item of the inputs list
         - output: the jars to be taken from the zip file must be passed as Node in the outputs list
-          (note that the output nodes also contains the path where the jar must be put)
+                  (note that the output nodes also contains the path where the jar must be copied)
     """
     def run(self):
         print("ZIP file to scan:", self.inputs)
@@ -27,16 +27,36 @@ class getJarsFromZip(Task):
             p = Path(j.abspath())
             cleanedJarNames[p.name]=j.abspath()
 
-        tempFolder = "temp"
+        # get the output folder from one of the jars
+        outDir = self.outputs[0].abspath()[:self.outputs[0].abspath().rfind('/')+1]
+        print("Output folder:",outDir)
 
+        tempFolder = outDir+"temp"
+
+        print("Unzipping",self.inputs[0].abspath())
         self.exec_command("unzip -qq -d "+tempFolder+" "+self.inputs[0].abspath())
-        print("self.env.OUT_PATH", self.env.OUT_PATH)
-        #self.exec_command('find '+tempFolder+' -name "*.jar" >'+tempFolder+'/listOfJars.out')
 
-        for path in Path(self.env.OUT_PATH+"/"+tempFolder).rglob('*.jar'):
+        print("Extracting jars")
+        for path in Path(tempFolder).rglob('*.jar'):
             if path.name in cleanedJarNames:
                 print('Found', path.name, "in", self.inputs[0].abspath())
                 self.exec_command("cp "+os.fspath(path.resolve())+" "+cleanedJarNames[path.name])
 
         # Remove the temp folder
+        print("Removing temporary folder",tempFolder)
         self.exec_command("rm -rf "+tempFolder)
+
+
+class getExternalJars(Task):
+    """
+    Get external JARS from extTools folder
+
+    - input: the Node of the ZIP file must be passed as the first item of the inputs list
+    - output: the jars to be taken from the zip file must be passed as Node in the outputs list
+      (note that the output nodes also contains the path where the jar must be put)
+
+    :return:
+    """
+
+    def run(self):
+        pass
