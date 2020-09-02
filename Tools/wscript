@@ -1,6 +1,8 @@
 top = '.'
 out = 'build'
 
+from pathlib import Path
+
 def options(conf):
     pass
 
@@ -50,8 +52,25 @@ def build(bld):
     jarsFromZipTask.color='YELLOW'
     jarsFromZipTask.set_inputs(srcExtTools.find_node(zipFileName))
     jarsFromZipTask.set_outputs(jarsInZip)
-
     bld.add_to_group(jarsFromZipTask)
+
+    #
+    # get Jars from extTools
+    #
+    jarsInExtTools = srcExtTools.ant_glob("**/*.jar")
+    destJars = []
+    for jar in jarsInExtTools:
+        p = Path(jar.abspath())
+        destJars.append(dstExtTools.find_or_declare(p.name))
+    print("Input jars ",jarsInExtTools,len(jarsInExtTools))
+    print("Output jars",destJars,len(destJars))
+
+    from IasWafBuildTools.JarTasks import copyFiles
+    copyFilesTask = copyFiles(env=bld.env)
+    copyFilesTask.set_inputs(jarsInExtTools)
+    copyFilesTask.set_outputs(destJars)
+    copyFilesTask.color='BLUE'
+    bld.add_to_group(copyFilesTask)
 
     print("Building of",bld.path.abspath(),"done.")
 
