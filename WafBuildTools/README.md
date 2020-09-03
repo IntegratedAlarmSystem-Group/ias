@@ -27,7 +27,7 @@ The scripts to customize the build are called `wscript`.
 The IAS provide a build system, composed of python classes in the `ias/WafBuildTools` module.
 Waf accesses the python sources in this module using an absolute path by executing `conf.load` 
 like for example 
-```
+```python
 conf.load('IasWafBuildTools', tooldir='WafBuildTools/src/main/python/')
 ``` 
 
