@@ -7,12 +7,17 @@ def options(conf):
     pass
 
 def configure(conf):
-    conf.find_program('tar')
+    pass
 
 def clean():
     pass
 
 def build(bld):
+    bld.load('IasWafBuildTools', tooldir='WafBuildTools/src/main/python/')
+    from IasWafBuildTools.Utils import set_env
+    bld.bldnode=bld.path.make_node('build')
+    set_env(bld.env,bld.path,bld.bldnode)
+
     print("Building",bld.path.abspath())
 
     print("Root abspath",bld.root.abspath())
@@ -21,7 +26,7 @@ def build(bld):
     print("bld.root parent   %r" % bld.root.parent)
     print("Build node",bld.bldnode)
 
-    bld.bldnode=bld.path.make_node('build')
+
 
     srcExtTools=bld.path.find_node('extTools')
     print("srcExtTools",srcExtTools.abspath())
@@ -45,7 +50,7 @@ def build(bld):
 
     print("jars to get from ZIP",jarsInZip)
 
-    bld.load('IasWafBuildTools', tooldir='WafBuildTools/src/main/python/')
+
     from IasWafBuildTools.JarTasks import getJarsFromZip
 
     jarsFromZipTask = getJarsFromZip(env=bld.env)
@@ -84,6 +89,12 @@ def build(bld):
     getJarsFromTarTask.set_outputs(dstExtTools.find_or_declare("commons-cli-1.4.jar"))
     getJarsFromTarTask.color='PINK'
     bld.add_to_group(getJarsFromTarTask)
+
+    from IasWafBuildTools.PythonBuilder import BuildPythonScripts
+    bldPyScripts = BuildPythonScripts(env=bld.env)
+    bldPyScripts.getPySources()
+    bldPyScripts.color='GREY'
+    bld.add_to_group(bldPyScripts)
 
     print("Building of",bld.path.abspath(),"done.")
 
