@@ -2,12 +2,11 @@ top = '.'
 out = 'build'
 
 import os
+
 '''
-    Check if the IasRoot exists.
-    If does not exists, build the folder
-    
-    @param folderPath the path of IAS_ROOT
-    @return True if the folder exists; False if it does not exists and cannot be created  
+    Since release 12, the IAS is built using the Waf build tool.
+
+    The description of the build procedure is in WafBuildTools/README.md
 '''
 
 def build(bld):
