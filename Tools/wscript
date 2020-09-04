@@ -90,11 +90,19 @@ def build(bld):
     getJarsFromTarTask.color='PINK'
     bld.add_to_group(getJarsFromTarTask)
 
-    from IasWafBuildTools.PythonBuilder import BuildPythonScripts
-    bldPyScripts = BuildPythonScripts(env=bld.env)
-    bldPyScripts.getPySources()
+    from IasWafBuildTools.ExecScripts import BuildExecScripts
+    bldPyScripts = BuildExecScripts(bld.env,"*.py",bld.env.PYSRCFOLDER,bld.env.BLDBINFOLDER,True,True)
     bldPyScripts.color='GREY'
     bld.add_to_group(bldPyScripts)
+
+    from IasWafBuildTools.PythonBuilder import BuildPythonModules
+    bldPyMods = BuildPythonModules(bld.env)
+    bldPyMods.color='RED'
+    bld.add_to_group(bldPyMods)
+
+    bldShScripts = BuildExecScripts(bld.env,"*.sh",bld.env.SRCMAINFOLDER,bld.env.BLDBINFOLDER,True,True)
+    bldShScripts.color='YELLOW'
+    bld.add_to_group(bldShScripts)
 
     print("Building of",bld.path.abspath(),"done.")
 

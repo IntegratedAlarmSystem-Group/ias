@@ -39,17 +39,20 @@ def set_env(env, sourceNode, buildNode):
     print("env.SRCEXTTOOLSFOLDER",env.SRCEXTTOOLSFOLDER.abspath())
     print("env.BLDEXTTOOLSFOLDER",env.BLDEXTTOOLSFOLDER.abspath())
 
+    env.SRCMAINFOLDER = sourceNode.make_node('src/main')
+    print("env.SRCMAINFOLDER", env.SRCMAINFOLDER)
+
     env.BLDBINFOLDER = buildNode.make_node('bin')
     env.BLDLIBFOLDER = buildNode.make_node('lib')
-    print("env.BLDBINFOLDER",env.BLDBINFOLDER.abspath())
-    print("env.BLDLIBFOLDER",env.BLDLIBFOLDER.abspath())
+    print("env.BLDBINFOLDER", env.BLDBINFOLDER.abspath())
+    print("env.BLDLIBFOLDER", env.BLDLIBFOLDER.abspath())
 
     env.PYSRCFOLDER = sourceNode.make_node('src/main/python')
 
     py_version=getPythonVersion()
     env.PYMODDSTFOLDER = env.BLDLIBFOLDER.make_node('python{}.{}/site-packages'.format(py_version[0],py_version[1]))
-    print("env.PYSRCFOLDER",env.PYSRCFOLDER.abspath())
-    print("env.PYMODDSTFOLDER",env.PYMODDSTFOLDER.abspath())
+    print("env.PYSRCFOLDER", env.PYSRCFOLDER.abspath())
+    print("env.PYMODDSTFOLDER", env.PYMODDSTFOLDER.abspath())
 
 
     env.JAVASRCFOLDER = sourceNode.make_node('src/main/java')
