@@ -2,6 +2,19 @@
 A collection of utilities for Waf build system of the IAS
 '''
 
+def getPythonVersion():
+    '''
+    Get the version of the installed python executable
+
+    :return: The version of python as list of strings ['major', 'minor', 'patch']
+    '''
+    import subprocess
+    out=subprocess.Popen(['python', '--version'],
+                     stdout=subprocess.PIPE,
+                     stderr=subprocess.STDOUT)
+    stdout,stderr = out.communicate()
+
+    return stdout.decode("utf-8").strip().split(" ")[1].split(".")
 
 def set_env(env, sourceNode, buildNode):
     '''
@@ -32,7 +45,9 @@ def set_env(env, sourceNode, buildNode):
     print("env.BLDLIBFOLDER",env.BLDLIBFOLDER.abspath())
 
     env.PYSRCFOLDER = sourceNode.make_node('src/main/python')
-    env.PYMODDSTFOLDER = env.BLDLIBFOLDER.make_node('python')
+
+    py_version=getPythonVersion()
+    env.PYMODDSTFOLDER = env.BLDLIBFOLDER.make_node('python{}.{}/site-packages'.format(py_version[0],py_version[1]))
     print("env.PYSRCFOLDER",env.PYSRCFOLDER.abspath())
     print("env.PYMODDSTFOLDER",env.PYMODDSTFOLDER.abspath())
 
