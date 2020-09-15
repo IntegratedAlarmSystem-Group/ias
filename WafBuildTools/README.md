@@ -32,11 +32,7 @@ conf.load('IasWafBuildTools', tooldir='WafBuildTools/src/main/python/')
 ``` 
 
 The top level `wscript` delegates the build of each module (by means of waf recurse).
-The build of each module puts all the produced files in the build folder of the module itself.
+The build of each module puts all the produced files in the build folder of the module itself with the same structure of the IAS_ROOT.
 So for example jar files produced by compiling scala/java sources will all be saved in `build/lib`
 like `ias/BasicTypes/build`.
 
-
-
-
-  
