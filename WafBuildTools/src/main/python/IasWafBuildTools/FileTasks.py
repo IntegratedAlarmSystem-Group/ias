@@ -111,7 +111,7 @@ class CopyTask(Task):
         print("Files to copy", self.filesToCopy)
 
         for s,d in self.filesToCopy.items():
-            print("Copying", s, "==>", d)
+            print("FileTask, copying", s, "==>", d)
             self.exec_command("cp "+s+" "+d)
             if self.makeExec:
                 self.exec_command("chmod u+x "+d)
