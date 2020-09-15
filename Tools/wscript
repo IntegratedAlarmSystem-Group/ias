@@ -54,20 +54,10 @@ def build(bld):
     #
     # get Jars from extTools
     #
-    jarsInExtTools = bld.env.SRCEXTTOOLSFOLDER.ant_glob("**/*.jar")
-    destJars = []
-    for jar in jarsInExtTools:
-        p = Path(jar.abspath())
-        destJars.append(bld.env.SRCEXTTOOLSFOLDER.find_or_declare(p.name))
-    print("Input jars ",jarsInExtTools,len(jarsInExtTools))
-    print("Output jars",destJars,len(destJars))
-
-    from IasWafBuildTools.JarTasks import copyFiles
-    copyFilesTask = copyFiles(env=bld.env)
-    copyFilesTask.set_inputs(jarsInExtTools)
-    copyFilesTask.set_outputs(destJars)
-    copyFilesTask.color='BLUE'
-    bld.add_to_group(copyFilesTask)
+    from IasWafBuildTools.FileTasks import CopyTask
+    copyExtJarTask = CopyTask(bld.env, bld.env.SRCEXTTOOLSFOLDER, file_extension=".jar")
+    copyExtJarTask.color= 'CYAN'
+    bld.add_to_group(copyExtJarTask)
 
     #
     # Get jar from tar
@@ -93,7 +83,6 @@ def build(bld):
     #
     # Config files
     #
-    from IasWafBuildTools.FileTasks import CopyTask
     copyConfigFiles = CopyTask(bld.env, bld.env.CONFIGSRCFOLDER)
     copyConfigFiles.color= 'CYAN'
     bld.add_to_group(copyConfigFiles)
