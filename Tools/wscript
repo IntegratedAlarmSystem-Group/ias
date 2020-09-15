@@ -13,7 +13,7 @@ def clean():
     pass
 
 def build(bld):
-    bld.load('IasWafBuildTools', tooldir='WafBuildTools/src/main/python/')
+    bld.load('IasWafBuildTools', tooldir='../WafBuildTools/src/main/python/')
     from IasWafBuildTools.Utils import set_env
     bld.bldnode=bld.path.make_node('build')
     set_env(bld.env,bld.path,bld.bldnode)
@@ -26,14 +26,6 @@ def build(bld):
     print("bld.root parent   %r" % bld.root.parent)
     print("Build node",bld.bldnode)
 
-
-
-    srcExtTools=bld.path.find_node('extTools')
-    print("srcExtTools",srcExtTools.abspath())
-
-    dstExtTools=bld.bldnode.make_node('extTools')
-    print("dstExtTools",dstExtTools.abspath())
-
     #
     # get jars from ZIP
     #
@@ -41,11 +33,11 @@ def build(bld):
     zipFileName="spring-framework-{}.RELEASE-dist.zip".format(spring_release)
 
     jarsInZip = [
-        dstExtTools.find_or_declare("spring-core-{}.RELEASE.jar".format(spring_release)),
-        dstExtTools.find_or_declare("spring-context-{}.RELEASE.jar".format(spring_release)),
-        dstExtTools.find_or_declare("spring-beans-{}.RELEASE.jar".format(spring_release)),
-        dstExtTools.find_or_declare("spring-aop-{}.RELEASE.jar".format(spring_release)),
-        dstExtTools.find_or_declare("spring-expression-{}.RELEASE.jar".format(spring_release))
+        bld.env.BLDEXTTOOLSFOLDER.find_or_declare("spring-core-{}.RELEASE.jar".format(spring_release)),
+        bld.env.BLDEXTTOOLSFOLDER.find_or_declare("spring-context-{}.RELEASE.jar".format(spring_release)),
+        bld.env.BLDEXTTOOLSFOLDER.find_or_declare("spring-beans-{}.RELEASE.jar".format(spring_release)),
+        bld.env.BLDEXTTOOLSFOLDER.find_or_declare("spring-aop-{}.RELEASE.jar".format(spring_release)),
+        bld.env.BLDEXTTOOLSFOLDER.find_or_declare("spring-expression-{}.RELEASE.jar".format(spring_release))
     ]
 
     print("jars to get from ZIP",jarsInZip)
@@ -55,18 +47,18 @@ def build(bld):
 
     jarsFromZipTask = getJarsFromZip(env=bld.env)
     jarsFromZipTask.color='YELLOW'
-    jarsFromZipTask.set_inputs(srcExtTools.find_node(zipFileName))
+    jarsFromZipTask.set_inputs(bld.env.SRCEXTTOOLSFOLDER.find_node(zipFileName))
     jarsFromZipTask.set_outputs(jarsInZip)
     bld.add_to_group(jarsFromZipTask)
 
     #
     # get Jars from extTools
     #
-    jarsInExtTools = srcExtTools.ant_glob("**/*.jar")
+    jarsInExtTools = bld.env.SRCEXTTOOLSFOLDER.ant_glob("**/*.jar")
     destJars = []
     for jar in jarsInExtTools:
         p = Path(jar.abspath())
-        destJars.append(dstExtTools.find_or_declare(p.name))
+        destJars.append(bld.env.SRCEXTTOOLSFOLDER.find_or_declare(p.name))
     print("Input jars ",jarsInExtTools,len(jarsInExtTools))
     print("Output jars",destJars,len(destJars))
 
@@ -81,28 +73,58 @@ def build(bld):
     # Get jar from tar
     #
     tarFileName="commons-cli-1.4-bin.tar.gz"
-    tarFileNode = srcExtTools.find_node(tarFileName)
+    tarFileNode = bld.env.SRCEXTTOOLSFOLDER.find_node(tarFileName)
 
     from IasWafBuildTools.JarTasks import getJarsFromTar
     getJarsFromTarTask = getJarsFromTar(env=bld.env)
     getJarsFromTarTask.set_inputs(tarFileNode)
-    getJarsFromTarTask.set_outputs(dstExtTools.find_or_declare("commons-cli-1.4.jar"))
+    getJarsFromTarTask.set_outputs(bld.env.BLDEXTTOOLSFOLDER.find_or_declare("commons-cli-1.4.jar"))
     getJarsFromTarTask.color='PINK'
     bld.add_to_group(getJarsFromTarTask)
 
-    from IasWafBuildTools.ExecScripts import BuildExecScripts
-    bldPyScripts = BuildExecScripts(bld.env,"*.py",bld.env.PYSRCFOLDER,bld.env.BLDBINFOLDER,True,True)
-    bldPyScripts.color='GREY'
-    bld.add_to_group(bldPyScripts)
-
+    #
+    # Python modules
+    #
     from IasWafBuildTools.PythonBuilder import BuildPythonModules
     bldPyMods = BuildPythonModules(bld.env)
     bldPyMods.color='RED'
     bld.add_to_group(bldPyMods)
 
-    bldShScripts = BuildExecScripts(bld.env,"*.sh",bld.env.SRCMAINFOLDER,bld.env.BLDBINFOLDER,True,True)
+    #
+    # Config files
+    #
+    from IasWafBuildTools.FileTasks import CopyTask
+    copyConfigFiles = CopyTask(bld.env, bld.env.CONFIGSRCFOLDER)
+    copyConfigFiles.color= 'CYAN'
+    bld.add_to_group(copyConfigFiles)
+
+    #
+    # Shell scripts
+    #
+    bldShScripts = CopyTask(
+        bld.env,
+        bld.env.SRCMAINFOLDER,
+        bld.env.BLDBINFOLDER,
+        remove_etension=True,
+        make_executable=True,
+        file_extension=".sh"
+    )
     bldShScripts.color='YELLOW'
     bld.add_to_group(bldShScripts)
 
-    print("Building of",bld.path.abspath(),"done.")
+    #
+    # Python scripts
+    #
+    #from IasWafBuildTools.ExecScripts import BuildExecScripts
+    bldPyScripts = CopyTask(
+        bld.env,
+        bld.env.PYSRCFOLDER,
+        bld.env.BLDBINFOLDER,
+        remove_etension=True,
+        make_executable=True,
+        file_extension=".py"
+    )
+    bldPyScripts.color='GREY'
+    bld.add_to_group(bldPyScripts)
 
+    print("Building of", bld.path.abspath(), "done.")
