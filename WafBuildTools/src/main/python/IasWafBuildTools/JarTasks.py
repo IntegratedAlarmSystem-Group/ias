@@ -123,9 +123,9 @@ class copyFiles(Task):
 
     The number of inputs must be equal to the number of outputs.
 
-    - self.input: the Node of the ZIP file must be passed as the first item of the inputs list
-    - self.outputs: the jars to be taken from the zip file must be passed as Node in the outputs list
-      (note that the output nodes also contains the path where the jar must be put)
+    - self.input: the Nodes of the files to copy must be passed as the first item of the inputs list
+    - self.outputs: the Nodes of the destination files
+      (note that the output nodes also contains the path where the files must be put)
 
     :return:
     """
