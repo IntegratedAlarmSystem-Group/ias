@@ -51,5 +51,5 @@ class BuildPythonModules(Task):
         print("ENV=",self.env)
 
         for s,d in self.filesToCopy.items():
-            print('PY SRC',s.abspath(),'=>',d.abspath())
+            print('BuildPythonModules copying', s.abspath(), '=>', d.abspath())
             self.exec_command("cp "+s.abspath()+" "+d.abspath())
