@@ -34,6 +34,11 @@ def set_env(env, sourceNode, buildNode):
     if not buildNode:
         raise ValueError("Invalid None build node")
 
+    env.SRCNODE = sourceNode
+    env.DSTNODE = buildNode
+    print("env.SRCNODE", env.SRCNODE)
+    print("env.DSTNODE", env.DSTNODE)
+
     env.SRCEXTTOOLSFOLDER = sourceNode.make_node('extTools')
     env.BLDEXTTOOLSFOLDER = buildNode.make_node('extTools')
     print("env.SRCEXTTOOLSFOLDER",env.SRCEXTTOOLSFOLDER.abspath())
@@ -54,6 +59,10 @@ def set_env(env, sourceNode, buildNode):
     print("env.PYSRCFOLDER", env.PYSRCFOLDER.abspath())
     print("env.PYMODDSTFOLDER", env.PYMODDSTFOLDER.abspath())
 
+    env.CONFIGSRCFOLDER = sourceNode.make_node('config')
+    env.CONFIGDSTNODE =  buildNode.make_node('config')
+    print("env.CONFIGSRCFOLDER", env.CONFIGSRCFOLDER.abspath())
+    print("env.CONFIGDSTNODE", env.CONFIGDSTNODE.abspath())
 
     env.JAVASRCFOLDER = sourceNode.make_node('src/main/java')
     print("env.JAVASRCFOLDER",env.JAVASRCFOLDER.abspath())
@@ -67,8 +76,6 @@ def set_env(env, sourceNode, buildNode):
 def buildDstFileNode(inputNode, dstFolderNode, dstFileName=None, removeExtension=False):
     '''
     Build the destination node of the file in input.
-
-
 
     The destination goes in the dstFolderNode with the dstFileName name
     :param inputNode: the waf node of the file in input
