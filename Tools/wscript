@@ -115,7 +115,6 @@ def build(bld):
     #
     # Python scripts
     #
-    #from IasWafBuildTools.ExecScripts import BuildExecScripts
     bldPyScripts = CopyTask(
         bld.env,
         bld.env.PYSRCFOLDER,
