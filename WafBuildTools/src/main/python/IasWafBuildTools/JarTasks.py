@@ -111,37 +111,3 @@ class getJarsFromTar(getFilesFromArchive):
         # Delegates to getFilesFromArchive.run()
         self.set_command("tar xf "+self.inputs[0].abspath()+" --directory {}")
         super(getJarsFromTar, self).run()
-
-
-class copyFiles(Task):
-    """
-    Copy input files in output files
-
-    This task copies the input nodes in the output nodes.
-    Each input is copied in the output i.e. self.inputs[0] is copied in self.outputs[0] (this allows for renaming):
-    it means that the order of the inputs and outputs list is important.
-
-    The number of inputs must be equal to the number of outputs.
-
-    - self.input: the Nodes of the files to copy must be passed as the first item of the inputs list
-    - self.outputs: the Nodes of the destination files
-      (note that the output nodes also contains the path where the files must be put)
-
-    :return:
-    """
-
-    def run(self):
-        print("copyFiles")
-        ins = list(map(lambda x: x.abspath(), self.inputs))
-        outs= list(map(lambda x: x.abspath(), self.outputs))
-
-        print(ins)
-        print(outs)
-
-        if len(ins)!=len(outs):
-            print("Number of inputs and outputs differ")
-            return
-
-        for i in range(len(ins)):
-            print("cp",ins[i],"=>",outs[i])
-            self.exec_command("cp "+ins[i]+" "+outs[i])
