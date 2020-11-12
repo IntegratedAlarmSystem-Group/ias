@@ -34,7 +34,7 @@ class CopyTask(Task):
         :param environ: the environment
         :param srcFolder: The Node of the source folder
         :para dst_folder_node: The destination folder to copy the files into
-                               If Note the files are copied in the same folder into build
+                               If None the files are copied in the same folder into build
                                otherwise they are copied in the passed folder
         :param file_extension: if not None copy only the files with the given pattern
                                (for example passing *.py copy only the files with .py extension)
@@ -49,6 +49,10 @@ class CopyTask(Task):
         super(CopyTask, self).__init__(env=environ)
         self.srcFolderNode=src_folder_node
         self.dstFolderNode = dst_folder_node
+        if self.dstFolderNode is None:
+            folderInSource = self.srcFolderNode.abspath().replace(self.env.SRCNODE.abspath(),"")
+            self.dstFolderNode = newDstFolder = self.env.DSTNODE.make_node(folderInSource)
+
         if file_extension is None:
             self.extension = ""
         else:
@@ -87,23 +91,13 @@ class CopyTask(Task):
 
         filesToCopy = {}
         for s in sources:
-            if self.dstFolderNode is None:
-                filesToCopy[s.get_src().abspath()] = s.get_bld().abspath()
-
-                if self.removeExt:
-                    filesToCopy[s.get_src().abspath()] = self.__removeExtension(s.get_bld().abspath())
-                    self.set_outputs(self.env.DSTNODE.find_or_declare(self.__removeExtension(s.get_bld().abspath()).split(self.env.DSTNODE.abspath()+"/")[1]))
-                else:
-                    filesToCopy[s.get_src().abspath()] =s.get_bld().abspath()
-                    self.set_outputs(self.env.DSTNODE.find_or_declare(s.get_bld().abspath().split(self.env.DSTNODE.abspath()+"/")[1]))
+            if self.removeExt:
+                absFileName = self.__removeExtension(s.get_src().abspath().split(self.srcFolderNode.abspath()+"/")[1])
             else:
-                if self.removeExt:
-                    absFileName = self.__removeExtension(s.get_src().abspath().split(self.srcFolderNode.abspath()+"/")[1])
-                else:
-                    absFileName = s.get_src().abspath().split(self.srcFolderNode.abspath()+"/")[1]
-                dstFileName = self.dstFolderNode.abspath()+"/"+absFileName
-                filesToCopy[s.get_src().abspath()] = dstFileName
-                self.set_outputs(self.dstFolderNode.find_or_declare(absFileName))
+                absFileName = s.get_src().abspath().split(self.srcFolderNode.abspath()+"/")[1]
+            dstFileName = self.dstFolderNode.abspath()+"/"+absFileName
+            filesToCopy[s.get_src().abspath()] = dstFileName
+            self.set_outputs(self.dstFolderNode.find_or_declare(absFileName))
 
         return filesToCopy
 
