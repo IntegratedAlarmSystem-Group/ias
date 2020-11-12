@@ -11,7 +11,7 @@ import os
 
 def build(bld):
     print("Building IAS in",bld.path.abspath())
-    bld.recurse('Tools')
+    bld.recurse('Tools Utils')
 
 def options(conf):
     pass
