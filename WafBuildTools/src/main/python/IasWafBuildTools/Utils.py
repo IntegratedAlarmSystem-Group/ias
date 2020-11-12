@@ -70,8 +70,8 @@ def set_env(env, sourceNode, buildNode):
     env.SCALASRCFOLDER = sourceNode.make_node('src/main/scala')
     print("env.SCALASRCFOLDER",env.SCALASRCFOLDER.abspath())
 
-    env.JARDSTFOLDER = sourceNode.make_node('src/scala')
-    print("env.JARDSTFOLDER",env.JARDSTFOLDER.abspath())
+    env.JVMDSTFOLDER = buildNode.make_node('classes') # For .class files
+    print("env.JVMDSTFOLDER",env.JVMDSTFOLDER.abspath())
 
 def buildDstFileNode(inputNode, dstFolderNode, dstFileName=None, removeExtension=False):
     '''
