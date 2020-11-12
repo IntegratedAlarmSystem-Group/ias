@@ -1,0 +1,67 @@
+top = '.'
+out = 'build'
+
+from pathlib import Path
+
+def options(conf):
+    pass
+
+def configure(conf):
+    pass
+
+def clean():
+    pass
+
+def build(bld):
+    bld.load('IasWafBuildTools', tooldir='../WafBuildTools/src/main/python/')
+    from IasWafBuildTools.Utils import set_env
+    bld.bldnode=bld.path.make_node('build')
+    set_env(bld.env,bld.path,bld.bldnode)
+
+    print("Building",bld.path.abspath())
+
+    print("Root abspath",bld.root.abspath())
+    print("bld.path contents %r" % bld.path.children)
+    print("bld.path parent   %r" % bld.path.parent.abspath())
+    print("bld.root parent   %r" % bld.root.parent)
+    print("Build node",bld.bldnode)
+
+    #
+    # get Jars from extTools
+    #
+    from IasWafBuildTools.FileTasks import CopyTask
+    copyExtJarTask = CopyTask(bld.env, bld.env.SRCEXTTOOLSFOLDER, file_extension=".jar")
+    copyExtJarTask.color= 'CYAN'
+    bld.add_to_group(copyExtJarTask)
+
+    #
+    # Get jar from tar
+    #
+    tarFileName="logback-1.2.3.tar.gz"
+    tarFileNode = bld.env.SRCEXTTOOLSFOLDER.find_node(tarFileName)
+
+    from IasWafBuildTools.JarTasks import getJarsFromTar
+    getJarsFromTarTask = getJarsFromTar(env=bld.env)
+    getJarsFromTarTask.set_inputs(tarFileNode)
+    getJarsFromTarTask.set_outputs(bld.env.BLDEXTTOOLSFOLDER.find_or_declare("logback-core-1.2.3.jar"))
+    getJarsFromTarTask.set_outputs(bld.env.BLDEXTTOOLSFOLDER.find_or_declare("logback-classic-1.2.3.jar"))
+    getJarsFromTarTask.color='PINK'
+    getJarsFromTarTask.set_run_after(copyExtJarTask)
+    bld.add_to_group(getJarsFromTarTask)
+
+    #
+    # Python modules
+    #
+    from IasWafBuildTools.PythonBuilder import BuildPythonModules
+    bldPyMods = BuildPythonModules(bld.env)
+    bldPyMods.color='RED'
+    bld.add_to_group(bldPyMods)
+
+    #
+    # Scala sources
+    #
+    from IasWafBuildTools.ScalaBuilder import ScalaBuilder
+    scalaBuilder = ScalaBuilder(bld.env)
+    scalaBuilder.color='CYAN'
+    scalaBuilder.set_run_after(copyExtJarTask)
+    bld.add_to_group(scalaBuilder)
