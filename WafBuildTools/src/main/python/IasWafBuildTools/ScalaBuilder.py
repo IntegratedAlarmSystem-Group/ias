@@ -65,6 +65,6 @@ class ScalaBuilder(Task):
 
         classPath = self.buildClasspath()
 
-        cmd = "scalac -d "+self.env.JVMDSTFOLDER.abspath()+" "+classPath+" "+sourceFiles
-        print (">>> Executing ",cmd)
+        cmd = self.env.SCALAC[0]+" -d "+self.env.JVMDSTFOLDER.abspath()+" "+classPath+" "+sourceFiles
+        print (">>> Executing SCALAC: ",cmd)
         self.exec_command(cmd)
