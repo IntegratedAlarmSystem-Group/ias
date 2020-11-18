@@ -111,3 +111,49 @@ class getJarsFromTar(getFilesFromArchive):
         # Delegates to getFilesFromArchive.run()
         self.set_command("tar xf "+self.inputs[0].abspath()+" --directory {}")
         super(getJarsFromTar, self).run()
+
+class CreateJar(Task):
+    '''
+    Build a jar file with all he .class files found in the source folder
+    '''
+
+    def __init__(self, environ, destFolderNode, jarName, mainClass=None):
+        '''
+        Constructor
+
+        :param destFolderNode: The folder node to write the jar file into
+        :param jarName: The name of the jar to create
+        :param mainClass: The optional main class of the jar (to be added to the Manifest)
+        '''
+        super(CreateJar, self).__init__(env=environ)
+        self.destFolderNode = destFolderNode
+        self.jarName = jarName
+        self.mainClass = mainClass
+
+        self.jarNode = self.destFolderNode.find_or_declare(jarName)
+        self.getJarSources()
+
+    def getJarSources(self):
+        '''
+        Build the inputs and the outputs of this task
+
+        The inputs are all the .class files in the self.classesSrcNode folder
+        The output is the jar file to be written in the self.destFolderNode
+        '''
+        classSources = self.env.JVMDSTFOLDER.ant_glob("**/*.class")
+        for classSrc in classSources:
+            self.set_inputs(classSrc)
+
+    def run(self):
+        '''
+        The task to build the jar
+        :return:
+        '''
+        cmd = "jar cf "+self.jarNode.abspath()
+        if self.mainClass is not None:
+            cmd = cmd + ' --main-class='+self.mainClass
+        cmd = cmd + ' -C '+self.env.JVMDSTFOLDER.abspath()+' .'
+
+        print (">>> Executing JAR:",cmd)
+        self.exec_command(cmd)
+
