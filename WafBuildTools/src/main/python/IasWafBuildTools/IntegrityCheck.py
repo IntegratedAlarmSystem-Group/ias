@@ -38,7 +38,7 @@ def checkTools(conf):
     """
     conf.find_program('tar', var='TAR')
     conf.find_program('unzip', var='UNZIP')
-
+    conf.find_program('scalac', var='SCALAC', mandatory=True)
 
 def checkIntegrity(conf):
     """
