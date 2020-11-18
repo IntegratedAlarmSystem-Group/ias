@@ -63,5 +63,14 @@ def build(bld):
     from IasWafBuildTools.ScalaBuilder import ScalaBuilder
     scalaBuilder = ScalaBuilder(bld.env)
     scalaBuilder.color='CYAN'
-    scalaBuilder.set_run_after(copyExtJarTask)
+    scalaBuilder.set_run_after(getJarsFromTarTask)
     bld.add_to_group(scalaBuilder)
+
+    #
+    # Build the jar
+    #
+    from IasWafBuildTools.JarTasks import CreateJar
+    jarBuilder = CreateJar(bld.env,bld.env.BLDLIBFOLDER,"iasUtils.jar")
+    jarBuilder.color = 'BLUE'
+    jarBuilder.set_run_after(scalaBuilder)
+    bld.add_to_group(jarBuilder)
