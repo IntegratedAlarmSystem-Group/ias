@@ -9,9 +9,6 @@ def options(conf):
 def configure(conf):
     pass
 
-def clean():
-    pass
-
 def build(bld):
     bld.load('IasWafBuildTools', tooldir='../WafBuildTools/src/main/python/')
     from IasWafBuildTools.Utils import set_env
@@ -25,6 +22,7 @@ def build(bld):
     print("bld.path parent   %r" % bld.path.parent.abspath())
     print("bld.root parent   %r" % bld.root.parent)
     print("Build node",bld.bldnode)
+    print('=====>>> Utils build command',bld.cmd)
 
     #
     # get Jars from extTools
@@ -74,3 +72,12 @@ def build(bld):
     jarBuilder.color = 'BLUE'
     jarBuilder.set_run_after(scalaBuilder)
     bld.add_to_group(jarBuilder)
+
+    if bld.cmd is 'install' or bld.cmd is ('build' and str(bld.top_dir) != str(bld.path.abspath())):
+        print("=====>>> Tools requesting install: ",bld.cmd,bld.top_dir,bld.path.abspath())
+        bld.add_group() # Run this task when all the others have been executed
+        from IasWafBuildTools.Installer import Installer
+        installer = Installer(bld.env)
+        installer.color = 'RED'
+        bld.add_to_group(installer)
+

@@ -1,6 +1,9 @@
 top = '.'
 out = 'build'
 
+# IAS modules to build
+IasModules = 'Tools Utils'
+
 import os
 
 '''
@@ -9,12 +12,19 @@ import os
     The description of the build procedure is in WafBuildTools/README.md
 '''
 
-def build(bld):
-    print("Building IAS in",bld.path.abspath())
-    bld.recurse('Tools Utils')
-
-def options(conf):
+def options(ctx):
     pass
+    # installDir = os.environ['IAS_ROOT']
+    # print("\n>>>>>>>>> Setting PREFIX to",installDir,"/n")
+    # ctx.add_option('--prefix', action='store', default=installDir, dest=ctx.PREFIX, help='Silly test')
+
+def build(bld):
+    bld.env.PREFIX = os.environ['IAS_ROOT']
+    print("Building IAS in",bld.path.abspath())
+    print('=====>>> ROOT is_install',bld.is_install)
+    print('=====>>> build command',bld.cmd)
+    print('=====>>> PREFIX', bld.env.PREFIX)
+    bld.recurse(IasModules)
 
 def configure(conf):
     print ("IAS configure in ",conf.path.abspath())
@@ -25,9 +35,5 @@ def configure(conf):
     # Build java source with the waf java tool
     conf.load("java")
 
-    conf.recurse('Tools')
+    conf.recurse(IasModules)
 
-
-    conf.load('IasWafBuildTools', tooldir='WafBuildTools/src/main/python/')
-    from IasWafBuildTools.BuildTest import test
-    test()
