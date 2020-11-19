@@ -6,6 +6,9 @@
 **/lib/
 **/classes/
 **/bin/
+**/build/
+.lock-waf*
+**/c4che
 .cache-*
 pom.xml
 ias.iml
