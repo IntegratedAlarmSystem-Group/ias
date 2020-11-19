@@ -9,22 +9,26 @@ def options(conf):
 def configure(conf):
     pass
 
-def clean():
-    pass
 
 def build(bld):
     bld.load('IasWafBuildTools', tooldir='../WafBuildTools/src/main/python/')
+    print('=====>>> Tools is_install',bld.is_install)
+    print('=====>>> Tools build command',bld.cmd)
+
     from IasWafBuildTools.Utils import set_env
     bld.bldnode=bld.path.make_node('build')
     set_env(bld.env,bld.path,bld.bldnode)
 
     print("Building",bld.path.abspath())
 
-    print("Root abspath",bld.root.abspath())
-    print("bld.path contents %r" % bld.path.children)
-    print("bld.path parent   %r" % bld.path.parent.abspath())
-    print("bld.root parent   %r" % bld.root.parent)
-    print("Build node",bld.bldnode)
+    print("Tools Root abspath",bld.root.abspath())
+    print("Tools bld.path contents %r" % bld.path.children)
+    print("Tools bld.path parent   %r" % bld.path.parent.abspath())
+    print("Tools bld.root parent   %r" % bld.root.parent)
+    print("Tools bld.top_dir   %r" % bld.top_dir)
+    print("Tools Build node",bld.bldnode)
+
+    print("\n",bld)
 
     #
     # get jars from ZIP
@@ -114,5 +118,13 @@ def build(bld):
     )
     bldPyScripts.color='GREY'
     bld.add_to_group(bldPyScripts)
+
+    if bld.cmd is 'install' or str(bld.top_dir) != str(bld.path.abspath()):
+        print("=====>>> Tools requesting install: ",bld.cmd,bld.top_dir,bld.path.abspath())
+        bld.add_group() # Run this task when all the others have been executed
+        from IasWafBuildTools.Installer import Installer
+        installer = Installer(bld.env)
+        installer.color = 'RED'
+        bld.add_to_group(installer)
 
     print("Building of", bld.path.abspath(), "done.")
