@@ -50,7 +50,7 @@ class Installer(object):
 
             if len(files)>0:
                 print("============>>>>>>>>>>>>>> files", files)
-                self.ctx.install_files(dest, startDir.ant_glob('**/*'), cwd=startDir)
+                self.ctx.install_files(dest, startDir.ant_glob('**/*'), cwd=startDir, relative_trick=True)
             else:
                 print("============>>>>>>>>>>>>>>> nothing to be installed from", dirToInstall)
 
