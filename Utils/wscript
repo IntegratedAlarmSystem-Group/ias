@@ -1,7 +1,7 @@
 top = '.'
 out = 'build'
 
-from pathlib import Path
+import os
 
 def options(conf):
     pass
@@ -9,7 +9,15 @@ def options(conf):
 def configure(conf):
     pass
 
-def build(bld):
+def makeInstall(ctx):
+    from IasWafBuildTools.Utils import set_env
+    ctx.bldnode=ctx.path.make_node('build')
+    set_env(ctx.env,ctx.path,ctx.bldnode)
+    from IasWafBuildTools.Installer import Installer
+    installer = Installer(ctx, ctx.env.DSTNODE, ctx.env.PREFIX)
+    installer.install()
+
+def makeBuild(bld):
     bld.load('IasWafBuildTools', tooldir='../WafBuildTools/src/main/python/')
     from IasWafBuildTools.Utils import set_env
     bld.bldnode=bld.path.make_node('build')
@@ -73,11 +81,25 @@ def build(bld):
     jarBuilder.set_run_after(scalaBuilder)
     bld.add_to_group(jarBuilder)
 
-    if bld.cmd is 'install' or bld.cmd is ('build' and str(bld.top_dir) != str(bld.path.abspath())):
-        print("=====>>> Tools requesting install: ",bld.cmd,bld.top_dir,bld.path.abspath())
-        bld.add_group() # Run this task when all the others have been executed
-        from IasWafBuildTools.Installer import Installer
-        installer = Installer(bld.env)
-        installer.color = 'RED'
-        bld.add_to_group(installer)
+def build(bld):
+    bld.load('IasWafBuildTools', tooldir='../WafBuildTools/src/main/python/')
+    print('=====>>> Utils is_install',bld.is_install)
+    print('=====>>> Utils build command',bld.cmd)
+
+    bld.env.PREFIX = os.environ['IAS_ROOT']
+
+    if bld.cmd == 'build':
+        print('=====>>> Utils build...',bld.cmd)
+        makeBuild(bld)
+    elif bld.cmd == 'install':
+        print('=====>>> Utils install...',bld.cmd)
+        makeInstall(bld)
+
+
+
+
+    print("Building of", bld.path.abspath(), "done.")
+
+
+
 

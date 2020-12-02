@@ -1,7 +1,7 @@
 top = '.'
 out = 'build'
 
-from pathlib import Path
+import os
 
 def options(conf):
     pass
@@ -9,12 +9,15 @@ def options(conf):
 def configure(conf):
     pass
 
+def makeInstall(ctx):
+    from IasWafBuildTools.Utils import set_env
+    ctx.bldnode=ctx.path.make_node('build')
+    set_env(ctx.env,ctx.path,ctx.bldnode)
+    from IasWafBuildTools.Installer import Installer
+    installer = Installer(ctx, ctx.env.DSTNODE, ctx.env.PREFIX)
+    installer.install()
 
-def build(bld):
-    bld.load('IasWafBuildTools', tooldir='../WafBuildTools/src/main/python/')
-    print('=====>>> Tools is_install',bld.is_install)
-    print('=====>>> Tools build command',bld.cmd)
-
+def makeBuild(bld):
     from IasWafBuildTools.Utils import set_env
     bld.bldnode=bld.path.make_node('build')
     set_env(bld.env,bld.path,bld.bldnode)
@@ -119,12 +122,25 @@ def build(bld):
     bldPyScripts.color='GREY'
     bld.add_to_group(bldPyScripts)
 
-    if bld.cmd is 'install' or str(bld.top_dir) != str(bld.path.abspath()):
+    if str(bld.top_dir) != str(bld.path.abspath()):
         print("=====>>> Tools requesting install: ",bld.cmd,bld.top_dir,bld.path.abspath())
-        bld.add_group() # Run this task when all the others have been executed
-        from IasWafBuildTools.Installer import Installer
-        installer = Installer(bld.env)
-        installer.color = 'RED'
-        bld.add_to_group(installer)
+        makeInstall(bld)
+
+def build(bld):
+    bld.load('IasWafBuildTools', tooldir='../WafBuildTools/src/main/python/')
+    print('=====>>> Tools is_install',bld.is_install)
+    print('=====>>> Tools build command',bld.cmd)
+
+    bld.env.PREFIX = os.environ['IAS_ROOT']
+
+    if bld.cmd == 'build':
+        print('=====>>> Tools build...',bld.cmd)
+        makeBuild(bld)
+    elif bld.cmd == 'install':
+        print('=====>>> Tools install...',bld.cmd)
+        makeInstall(bld)
+
+
+
 
     print("Building of", bld.path.abspath(), "done.")
