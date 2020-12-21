@@ -7,9 +7,10 @@ def options(conf):
     pass
 
 def configure(conf):
-    pass
+    print("Configuring Tools...")
 
 def makeInstall(ctx):
+    print ('============ Tools MAKE INSTALL ============')
     from IasWafBuildTools.Utils import set_env
     ctx.bldnode=ctx.path.make_node('build')
     set_env(ctx.env,ctx.path,ctx.bldnode)
@@ -18,6 +19,7 @@ def makeInstall(ctx):
     installer.install()
 
 def makeBuild(bld):
+    print ('============ Tools MAKE BUILD ============')
     from IasWafBuildTools.Utils import set_env
     bld.bldnode=bld.path.make_node('build')
     set_env(bld.env,bld.path,bld.bldnode)
@@ -50,9 +52,9 @@ def makeBuild(bld):
     print("jars to get from ZIP",jarsInZip)
 
 
-    from IasWafBuildTools.JarTasks import getJarsFromZip
+    from IasWafBuildTools.JarTasks import GetJarsFromZip
 
-    jarsFromZipTask = getJarsFromZip(env=bld.env)
+    jarsFromZipTask = GetJarsFromZip(env=bld.env)
     jarsFromZipTask.color='YELLOW'
     jarsFromZipTask.set_inputs(bld.env.SRCEXTTOOLSFOLDER.find_node(zipFileName))
     jarsFromZipTask.set_outputs(jarsInZip)
@@ -72,8 +74,8 @@ def makeBuild(bld):
     tarFileName="commons-cli-1.4-bin.tar.gz"
     tarFileNode = bld.env.SRCEXTTOOLSFOLDER.find_node(tarFileName)
 
-    from IasWafBuildTools.JarTasks import getJarsFromTar
-    getJarsFromTarTask = getJarsFromTar(env=bld.env)
+    from IasWafBuildTools.JarTasks import GetJarsFromTar
+    getJarsFromTarTask = GetJarsFromTar(env=bld.env)
     getJarsFromTarTask.set_inputs(tarFileNode)
     getJarsFromTarTask.set_outputs(bld.env.BLDEXTTOOLSFOLDER.find_or_declare("commons-cli-1.4.jar"))
     getJarsFromTarTask.color='PINK'
@@ -122,9 +124,9 @@ def makeBuild(bld):
     bldPyScripts.color='GREY'
     bld.add_to_group(bldPyScripts)
 
-    if str(bld.top_dir) != str(bld.path.abspath()):
-        print("=====>>> Tools requesting install: ",bld.cmd,bld.top_dir,bld.path.abspath())
-        makeInstall(bld)
+    # if str(bld.top_dir) != str(bld.path.abspath()):
+    #     print("=====>>> Tools requesting install: ",bld.cmd,bld.top_dir,bld.path.abspath())
+    #     makeInstall(bld)
 
 def build(bld):
     bld.load('IasWafBuildTools', tooldir='../WafBuildTools/src/main/python/')

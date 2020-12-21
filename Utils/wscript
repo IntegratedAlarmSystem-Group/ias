@@ -7,7 +7,7 @@ def options(conf):
     pass
 
 def configure(conf):
-    pass
+    print("Configuring Utils...")
 
 def makeInstall(ctx):
     from IasWafBuildTools.Utils import set_env
@@ -46,8 +46,8 @@ def makeBuild(bld):
     tarFileName="logback-1.2.3.tar.gz"
     tarFileNode = bld.env.SRCEXTTOOLSFOLDER.find_node(tarFileName)
 
-    from IasWafBuildTools.JarTasks import getJarsFromTar
-    getJarsFromTarTask = getJarsFromTar(env=bld.env)
+    from IasWafBuildTools.JarTasks import GetJarsFromTar
+    getJarsFromTarTask = GetJarsFromTar(env=bld.env)
     getJarsFromTarTask.set_inputs(tarFileNode)
     getJarsFromTarTask.set_outputs(bld.env.BLDEXTTOOLSFOLDER.find_or_declare("logback-core-1.2.3.jar"))
     getJarsFromTarTask.set_outputs(bld.env.BLDEXTTOOLSFOLDER.find_or_declare("logback-classic-1.2.3.jar"))
