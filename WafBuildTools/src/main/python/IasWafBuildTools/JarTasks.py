@@ -85,7 +85,7 @@ class getFilesFromArchive(Task):
         self.exec_command("rm -rf "+tempFolder)
 
 
-class getJarsFromZip(getFilesFromArchive):
+class GetJarsFromZip(getFilesFromArchive):
     """
         Get the jars from the ZIP file in input.
 
@@ -94,12 +94,33 @@ class getJarsFromZip(getFilesFromArchive):
                   (note that the output nodes also contains the path where the jar must be copied)
     """
     def run(self):
-        # Delegates to getFilesFromArchive.run()
+        # Delegates to GetFilesFromArchive.run()
         self.set_command("unzip -qq -d {} "+self.inputs[0].abspath())
-        super(getJarsFromZip, self).run()
+        super(GetJarsFromZip, self).run()
 
+def jarsFromTar(tarFileName, jars, env):
+    '''
+    Helper function to instantiate a getJarsFromTar Task to get
+    a list of jars from a tar (can be compressed)
 
-class getJarsFromTar(getFilesFromArchive):
+    :param: tarFileName The name of the tar archive with the jars
+    :param: jars The list of jars to get from the archive
+    :param: runAfterTask runAfterTask
+    :param: env The environment (usually bld.env)
+
+    :return: the Task to get the jars from the tar file
+    '''
+    tarFileNode = env.SRCEXTTOOLSFOLDER.find_node(tarFileName)
+
+    from IasWafBuildTools.JarTasks import GetJarsFromTar
+    getJarsFromTarTask = GetJarsFromTar(env=env)
+    getJarsFromTarTask.set_inputs(tarFileNode)
+    for jar in jars:
+        getJarsFromTarTask.set_outputs(env.BLDEXTTOOLSFOLDER.find_or_declare(jar))
+    getJarsFromTarTask.color='PINK'
+    return getJarsFromTarTask
+
+class GetJarsFromTar(getFilesFromArchive):
     """
         Get the jars from the TAR file in input
 
@@ -108,9 +129,9 @@ class getJarsFromTar(getFilesFromArchive):
                   (note that the output nodes also contains the path where the jar must be copied)
     """
     def run(self):
-        # Delegates to getFilesFromArchive.run()
+        # Delegates to GetFilesFromArchive.run()
         self.set_command("tar xf "+self.inputs[0].abspath()+" --directory {}")
-        super(getJarsFromTar, self).run()
+        super(GetJarsFromTar, self).run()
 
 class CreateJar(Task):
     '''
