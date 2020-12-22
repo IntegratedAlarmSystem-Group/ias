@@ -8,7 +8,7 @@ def options(conf):
     pass
 
 def configure(conf):
-    Logs.info("Configuring Cdb...")
+    Logs.info("Cdb: Configuring...")
 
 def makeInstall(ctx):
     from IasWafBuildTools.Installer import Installer
@@ -29,21 +29,16 @@ def makeBuild(bld):
     # get jars from ZIP c3p0
     #
     zipFileName="c3p0-0.9.5.2.bin.zip"
-
     jarsInZip = [
-        bld.env.BLDEXTTOOLSFOLDER.find_or_declare("c3p0-0.9.5.2.jar"),
-        bld.env.BLDEXTTOOLSFOLDER.find_or_declare("c3p0-oracle-thin-extras-0.9.5.2.jar"),
-        bld.env.BLDEXTTOOLSFOLDER.find_or_declare("mchange-commons-java-0.2.11.jar")
+        "c3p0-0.9.5.2.jar",
+        "c3p0-oracle-thin-extras-0.9.5.2.jar",
+        "mchange-commons-java-0.2.11.jar"
     ]
 
-    Logs.info("jars to get from ZIP",jarsInZip)
+    Logs.info("Cdb: jars to get from ZIP: %s" ', '.join(jarsInZip))
 
-    from IasWafBuildTools.JarTasks import GetJarsFromZip
-
-    jarsFromZipTask = GetJarsFromZip(env=bld.env)
-    jarsFromZipTask.color='YELLOW'
-    jarsFromZipTask.set_inputs(bld.env.SRCEXTTOOLSFOLDER.find_node(zipFileName))
-    jarsFromZipTask.set_outputs(jarsInZip)
+    from IasWafBuildTools.JarTasks import jarsFromZip
+    jarsFromZipTask = jarsFromZip(zipFileName, jarsInZip, bld.env)
     bld.add_to_group(jarsFromZipTask)
 
     #
@@ -65,19 +60,19 @@ def makeBuild(bld):
 
     from IasWafBuildTools.JarTasks import jarsFromTar
     getJarsFromTarTask = jarsFromTar(tarFileName,jars, bld.env)
-    getJarsFromTarTask.set_run_after(copyExtJarTask)
     bld.add_to_group(getJarsFromTarTask)
 
 def build(bld):
     bld.load('IasWafBuildTools', tooldir='../WafBuildTools/src/main/python/')
     bld.bldnode=bld.path.make_node('build')
+    bld.add_group("Cdb")
     from IasWafBuildTools.Utils import set_env
     set_env(bld.env,bld.path,bld.bldnode)
     bld.env.PREFIX = os.environ['IAS_ROOT']
     
     if bld.cmd == 'build':
-        Logs.info('=====>>> Cdb build...', bld.cmd)
+        Logs.info('Cdb: build command %s', bld.cmd)
         makeBuild(bld)
     elif bld.cmd == 'install':
-        Logs.info('=====>>> Cdb install...',bld.cmd)
+        Logs.info('Cdb: install %s', bld.cmd)
         makeInstall(bld)
