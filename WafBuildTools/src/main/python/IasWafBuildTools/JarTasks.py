@@ -9,6 +9,7 @@ import errno
 from pathlib import Path
 from tempfile import mkdtemp
 from waflib.Task import Task
+from waflib import Logs
 
 
 class getFilesFromArchive(Task):
@@ -47,9 +48,10 @@ class getFilesFromArchive(Task):
         if not self.cmdToExtractFiles:
             raise Exception('Command to extract not set: call setCommand() before running this task')
 
-        print("Archive file:", self.inputs)
-        print("Files to get from archive:", self.outputs)
-        print('Command to unpack archive',self.cmdToExtractFiles)
+        Logs.info("JarTasks: Archive file: %s", self.inputs[0].abspath())
+
+        Logs.info("JarTasks: Files to get from archive: %s", ', '.join(map(lambda x: x.abspath(), self.outputs)))
+        Logs.debug('JarTasks: Command to unpack archive: %s',self.cmdToExtractFiles)
 
         # The dictionary associates the names of the files to their destination paths
         cleanedFileNames = {} # For example {f.out -> /a/b/c/f.out}
@@ -59,15 +61,15 @@ class getFilesFromArchive(Task):
 
         # get the output folder from one of the files
         outDir = self.outputs[0].abspath()[:self.outputs[0].abspath().rfind('/')+1]
-        print("Output folder:", outDir)
+        Logs.debug("JarTasks: Output folder: %s", outDir)
 
         tempFolder = mkdtemp(prefix="getFilesFromArchive.", suffix=".temp")
-        print("Using temporary folder", tempFolder)
+        Logs.debug("JarTasks: Using temporary folder: %s", tempFolder)
 
-        print("Unzipping", self.inputs[0].abspath())
+        Logs.debug("JarTasks: Unzipping", self.inputs[0].abspath())
         self.exec_command(self.cmdToExtractFiles.format(tempFolder))
 
-        print("Extracting files")
+        Logs.debug("JarTasks: Extracting files")
         for fileName in cleanedFileNames.keys():
             files = sorted(Path(tempFolder).rglob(fileName))
 
@@ -77,13 +79,28 @@ class getFilesFromArchive(Task):
                 raise Exception("The archive contains "+len(files)+" occurrences of "+fileName+": "+files)
             else:
                 # File found
-                print('File', files[0].name, " will be copied in ==>", cleanedFileNames[fileName])
+                Logs.debug('JarTasks: File %s will be copied in %s', files[0].name, cleanedFileNames[fileName])
                 self.exec_command("cp "+os.fspath(files[0].resolve())+" "+cleanedFileNames[fileName])
 
         # Remove the temp folder
-        print("Removing temporary folder",tempFolder)
+        Logs.debug("JarTasks: Removing temporary folder %s",tempFolder)
         self.exec_command("rm -rf "+tempFolder)
 
+def jarsFromZip(zipFileName, jars, env):
+    '''
+    Helper function to build a GetJarsFromZip task
+
+    :param: zipFileName the ZIP archive to get jars from
+    :param: jars The list of jar files to get
+    :param: env The waf environment (usually bld.env)
+    :return: The Waf Task to get the jars from the ZIP archive
+    '''
+    jarsFromZipTask = GetJarsFromZip(env=env)
+    jarsFromZipTask.color='YELLOW'
+    jarsFromZipTask.set_inputs(env.SRCEXTTOOLSFOLDER.find_node(zipFileName))
+    for jar in jars:
+        jarsFromZipTask.set_outputs(env.BLDEXTTOOLSFOLDER.find_or_declare(jar))
+    return jarsFromZipTask
 
 class GetJarsFromZip(getFilesFromArchive):
     """
@@ -106,7 +123,7 @@ def jarsFromTar(tarFileName, jars, env):
     :param: tarFileName The name of the tar archive with the jars
     :param: jars The list of jars to get from the archive
     :param: runAfterTask runAfterTask
-    :param: env The environment (usually bld.env)
+    :param: env The Waf environment (usually bld.env)
 
     :return: the Task to get the jars from the tar file
     '''
