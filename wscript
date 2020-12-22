@@ -1,8 +1,10 @@
+from waflib import Logs
+
 top = '.'
 out = 'build'
 
 # IAS modules to build
-IasModules = 'Tools Utils'
+IasModules = 'Tools Utils Cdb'
 
 import os
 
@@ -14,20 +16,17 @@ import os
 
 def options(ctx):
     pass
-    # installDir = os.environ['IAS_ROOT']
-    # print("\n>>>>>>>>> Setting PREFIX to",installDir,"/n")
-    # ctx.add_option('--prefix', action='store', default=installDir, dest=ctx.PREFIX, help='Silly test')
 
 def build(bld):
     bld.env.PREFIX = os.environ['IAS_ROOT']
-    print("Building IAS in",bld.path.abspath())
-    print('=====>>> ROOT is_install',bld.is_install)
-    print('=====>>> build command',bld.cmd)
-    print('=====>>> PREFIX', bld.env.PREFIX)
+    Logs.info("IAS: Building in %s",bld.path.abspath())
+    Logs.info('IAS: build command %s',bld.cmd)
+    Logs.info('IAS: IAS PREFIX %s', bld.env.PREFIX)
     bld.recurse(IasModules)
 
+
 def configure(conf):
-    print ("IAS configure in ",conf.path.abspath())
+    Logs.info ("IAS: configure in %s",conf.path.abspath())
     conf.load('IasWafBuildTools', tooldir='WafBuildTools/src/main/python/')
     from IasWafBuildTools.IntegrityCheck import checkIntegrity
     checkIntegrity(conf)
