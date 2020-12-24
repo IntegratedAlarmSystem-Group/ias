@@ -1,7 +1,7 @@
 """
 Integrity checks for building the IAS
 """
-
+from waflib import Logs
 
 def checkIasRoot(conf):
     """
@@ -9,7 +9,7 @@ def checkIasRoot(conf):
     :param conf: WAF configuration
     :return: False in case of Error, True otherwise
     """
-    print("Checking $IAS_ROOT")
+    Logs.debug("IntegrityCheck: Checking $IAS_ROOT")
     conf.add_os_flags('IAS_ROOT')
     if conf.env.IAS_ROOT is None or not conf.env.IAS_ROOT:
         conf.fatal('IAS_ROOT not defined')
@@ -17,10 +17,9 @@ def checkIasRoot(conf):
     folder = conf.env.IAS_ROOT[0]
     if folder:
         import os.path
-        print("IAS_ROOT=", folder)
         # Check if the path pointed by IAS_ROOT exists and is a folder
         if not os.path.exists(folder):
-            print(folder, "does not exists. Creating...")
+            Logs.info("IntegrityCheck: %s does not exists. Creating...", folder)
             os.mkdir(folder)
 
         if not os.path.isdir(folder):
