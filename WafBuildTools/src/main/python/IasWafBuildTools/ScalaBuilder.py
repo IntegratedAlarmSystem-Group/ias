@@ -5,6 +5,17 @@
 from waflib.Task import Task
 from IasWafBuildTools.Utils import buildDstFileNode
 
+def buildScala(ctx):
+    '''
+    Helper function to create the Waf task to build scala sources
+
+    :param ctx: The Waf build context
+    :return: The Waf rask to build scala
+    '''
+    scalaBuilder = ScalaBuilder(ctx.env)
+    scalaBuilder.color='CYAN'
+    return scalaBuilder
+
 class ScalaBuilder(Task):
     '''
     Build scala sources in .class files to be packed into jar files.

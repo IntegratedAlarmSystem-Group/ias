@@ -161,6 +161,18 @@ class GetJarsFromTar(getFilesFromArchive):
         self.set_command("tar xf "+self.inputs[0].abspath()+" --directory {}")
         super(GetJarsFromTar, self).run()
 
+def buildJar(ctx):
+    '''
+    Helper function to create the Waf task to build the jar of scala and java sources
+
+    :param ctx: The Waf build context
+    :return: Te Waf taks
+    '''
+    assert ctx
+    jarBuilder = CreateJar(ctx.env,ctx.env.BLDLIBFOLDER,"iasUtils.jar")
+    jarBuilder.color = 'BLUE'
+    return jarBuilder
+
 class CreateJar(Task):
     '''
     Build a jar file with all he .class files found in the source folder
