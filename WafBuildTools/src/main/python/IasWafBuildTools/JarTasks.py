@@ -11,6 +11,17 @@ from tempfile import mkdtemp
 from waflib.Task import Task
 from waflib import Logs
 
+def getJarsFromExtTools(ctx):
+    '''
+    Helper method that creates a task to get the jars from extTools
+
+    :param ctx Waf build context
+    '''
+    assert ctx
+    from IasWafBuildTools.FileTasks import CopyTask
+    copyExtJarTask = CopyTask(ctx.env, ctx.env.SRCEXTTOOLSFOLDER, file_extension=".jar")
+    copyExtJarTask.color= 'CYAN'
+    return copyExtJarTask
 
 class getFilesFromArchive(Task):
     """
