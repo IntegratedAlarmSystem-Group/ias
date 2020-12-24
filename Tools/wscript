@@ -1,29 +1,21 @@
-top = '.'
+top = '..'
 out = 'build'
 
 import os
+from waflib import Logs
 
 def options(conf):
     pass
 
 def configure(conf):
-    print("Configuring Tools...")
+    Logs.info("Tools: Configuring...")
 
 def makeInstall(ctx):
-    print ('============ Tools MAKE INSTALL ============')
-    from IasWafBuildTools.Utils import set_env
-    ctx.bldnode=ctx.path.make_node('build')
-    set_env(ctx.env,ctx.path,ctx.bldnode)
     from IasWafBuildTools.Installer import Installer
-    installer = Installer(ctx, ctx.env.DSTNODE, ctx.env.PREFIX)
+    installer = Installer(ctx.env.DSTNODE.abspath(), ctx.env.PREFIX)
     installer.install()
 
 def makeBuild(bld):
-    print ('============ Tools MAKE BUILD ============')
-    from IasWafBuildTools.Utils import set_env
-    bld.bldnode=bld.path.make_node('build')
-    set_env(bld.env,bld.path,bld.bldnode)
-
     print("Building",bld.path.abspath())
 
     print("Tools Root abspath",bld.root.abspath())
@@ -38,60 +30,48 @@ def makeBuild(bld):
     #
     # get jars from ZIP
     #
-    spring_release = "4.3.9"
-    zipFileName="spring-framework-{}.RELEASE-dist.zip".format(spring_release)
+    zipFileName="spring-framework-4.3.9.RELEASE-dist.zip"
 
     jarsInZip = [
-        bld.env.BLDEXTTOOLSFOLDER.find_or_declare("spring-core-{}.RELEASE.jar".format(spring_release)),
-        bld.env.BLDEXTTOOLSFOLDER.find_or_declare("spring-context-{}.RELEASE.jar".format(spring_release)),
-        bld.env.BLDEXTTOOLSFOLDER.find_or_declare("spring-beans-{}.RELEASE.jar".format(spring_release)),
-        bld.env.BLDEXTTOOLSFOLDER.find_or_declare("spring-aop-{}.RELEASE.jar".format(spring_release)),
-        bld.env.BLDEXTTOOLSFOLDER.find_or_declare("spring-expression-{}.RELEASE.jar".format(spring_release))
+        "spring-core-4.3.9.RELEASE.jar",
+        "spring-context-4.3.9.RELEASE.jar",
+        "spring-beans-4.3.9.RELEASE.jar",
+        "spring-aop-4.3.9.RELEASE.jar",
+        "spring-expression-4.3.9.RELEASE.jar"
     ]
 
-    print("jars to get from ZIP",jarsInZip)
+    from IasWafBuildTools.JarTasks import jarsFromZip
 
-
-    from IasWafBuildTools.JarTasks import GetJarsFromZip
-
-    jarsFromZipTask = GetJarsFromZip(env=bld.env)
-    jarsFromZipTask.color='YELLOW'
-    jarsFromZipTask.set_inputs(bld.env.SRCEXTTOOLSFOLDER.find_node(zipFileName))
-    jarsFromZipTask.set_outputs(jarsInZip)
+    jarsFromZipTask = jarsFromZip(zipFileName, jarsInZip, bld.env)
     bld.add_to_group(jarsFromZipTask)
 
     #
     # get Jars from extTools
     #
-    from IasWafBuildTools.FileTasks import CopyTask
-    copyExtJarTask = CopyTask(bld.env, bld.env.SRCEXTTOOLSFOLDER, file_extension=".jar")
-    copyExtJarTask.color= 'CYAN'
+    from IasWafBuildTools.JarTasks import getJarsFromExtTools
+    copyExtJarTask = getJarsFromExtTools(bld)
     bld.add_to_group(copyExtJarTask)
 
     #
     # Get jar from tar
     #
     tarFileName="commons-cli-1.4-bin.tar.gz"
-    tarFileNode = bld.env.SRCEXTTOOLSFOLDER.find_node(tarFileName)
-
-    from IasWafBuildTools.JarTasks import GetJarsFromTar
-    getJarsFromTarTask = GetJarsFromTar(env=bld.env)
-    getJarsFromTarTask.set_inputs(tarFileNode)
-    getJarsFromTarTask.set_outputs(bld.env.BLDEXTTOOLSFOLDER.find_or_declare("commons-cli-1.4.jar"))
-    getJarsFromTarTask.color='PINK'
+    jars = [ "commons-cli-1.4.jar" ]
+    from IasWafBuildTools.JarTasks import jarsFromTar
+    getJarsFromTarTask = jarsFromTar(tarFileName,jars, bld.env)
     bld.add_to_group(getJarsFromTarTask)
 
     #
     # Python modules
     #
-    from IasWafBuildTools.PythonBuilder import BuildPythonModules
-    bldPyMods = BuildPythonModules(bld.env)
-    bldPyMods.color='RED'
+    from IasWafBuildTools.PythonBuilder import buildPythonModules
+    bldPyMods = buildPythonModules(bld)
     bld.add_to_group(bldPyMods)
 
     #
     # Config files
     #
+    from IasWafBuildTools.FileTasks import CopyTask
     copyConfigFiles = CopyTask(bld.env, bld.env.CONFIGSRCFOLDER)
     copyConfigFiles.color= 'CYAN'
     bld.add_to_group(copyConfigFiles)
@@ -130,19 +110,14 @@ def makeBuild(bld):
 
 def build(bld):
     bld.load('IasWafBuildTools', tooldir='../WafBuildTools/src/main/python/')
-    print('=====>>> Tools is_install',bld.is_install)
-    print('=====>>> Tools build command',bld.cmd)
-
+    bld.bldnode=bld.path.make_node('build')
+    bld.add_group("Tools")
+    from IasWafBuildTools.Utils import set_env
+    set_env(bld.env,bld.path,bld.bldnode)
     bld.env.PREFIX = os.environ['IAS_ROOT']
 
     if bld.cmd == 'build':
-        print('=====>>> Tools build...',bld.cmd)
         makeBuild(bld)
+        bld.add_post_fun(makeInstall)
     elif bld.cmd == 'install':
-        print('=====>>> Tools install...',bld.cmd)
         makeInstall(bld)
-
-
-
-
-    print("Building of", bld.path.abspath(), "done.")

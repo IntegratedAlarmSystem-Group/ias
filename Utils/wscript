@@ -1,29 +1,23 @@
-top = '.'
+top = '..'
 out = 'build'
 
 import os
+from waflib import Logs
 
 def options(conf):
     pass
 
 def configure(conf):
-    print("Configuring Utils...")
+    Logs.info("Utils: Configuring...")
 
 def makeInstall(ctx):
-    from IasWafBuildTools.Utils import set_env
-    ctx.bldnode=ctx.path.make_node('build')
-    set_env(ctx.env,ctx.path,ctx.bldnode)
     from IasWafBuildTools.Installer import Installer
-    installer = Installer(ctx, ctx.env.DSTNODE, ctx.env.PREFIX)
+    installer = Installer(ctx.env.DSTNODE.abspath(), ctx.env.PREFIX)
     installer.install()
 
 def makeBuild(bld):
-    bld.load('IasWafBuildTools', tooldir='../WafBuildTools/src/main/python/')
-    from IasWafBuildTools.Utils import set_env
-    bld.bldnode=bld.path.make_node('build')
-    set_env(bld.env,bld.path,bld.bldnode)
 
-    print("Building",bld.path.abspath())
+    Logs.info("Building %s",bld.path.abspath())
 
     print("Root abspath",bld.root.abspath())
     print("bld.path contents %r" % bld.path.children)
@@ -35,71 +29,53 @@ def makeBuild(bld):
     #
     # get Jars from extTools
     #
-    from IasWafBuildTools.FileTasks import CopyTask
-    copyExtJarTask = CopyTask(bld.env, bld.env.SRCEXTTOOLSFOLDER, file_extension=".jar")
-    copyExtJarTask.color= 'CYAN'
+    from IasWafBuildTools.JarTasks import getJarsFromExtTools
+    copyExtJarTask = getJarsFromExtTools(bld)
     bld.add_to_group(copyExtJarTask)
 
     #
     # Get jar from tar
     #
     tarFileName="logback-1.2.3.tar.gz"
-    tarFileNode = bld.env.SRCEXTTOOLSFOLDER.find_node(tarFileName)
-
-    from IasWafBuildTools.JarTasks import GetJarsFromTar
-    getJarsFromTarTask = GetJarsFromTar(env=bld.env)
-    getJarsFromTarTask.set_inputs(tarFileNode)
-    getJarsFromTarTask.set_outputs(bld.env.BLDEXTTOOLSFOLDER.find_or_declare("logback-core-1.2.3.jar"))
-    getJarsFromTarTask.set_outputs(bld.env.BLDEXTTOOLSFOLDER.find_or_declare("logback-classic-1.2.3.jar"))
-    getJarsFromTarTask.color='PINK'
+    jars = ["logback-core-1.2.3.jar", "logback-classic-1.2.3.jar"]
+    from IasWafBuildTools.JarTasks import jarsFromTar
+    getJarsFromTarTask = jarsFromTar(tarFileName,jars, bld.env)
     getJarsFromTarTask.set_run_after(copyExtJarTask)
     bld.add_to_group(getJarsFromTarTask)
 
     #
     # Python modules
     #
-    from IasWafBuildTools.PythonBuilder import BuildPythonModules
-    bldPyMods = BuildPythonModules(bld.env)
-    bldPyMods.color='RED'
+    from IasWafBuildTools.PythonBuilder import buildPythonModules
+    bldPyMods = buildPythonModules(bld)
     bld.add_to_group(bldPyMods)
 
     #
     # Scala sources
     #
-    from IasWafBuildTools.ScalaBuilder import ScalaBuilder
-    scalaBuilder = ScalaBuilder(bld.env)
-    scalaBuilder.color='CYAN'
+    from IasWafBuildTools.ScalaBuilder import buildScala
+    scalaBuilder = buildScala(bld)
     scalaBuilder.set_run_after(getJarsFromTarTask)
     bld.add_to_group(scalaBuilder)
 
     #
     # Build the jar
     #
-    from IasWafBuildTools.JarTasks import CreateJar
-    jarBuilder = CreateJar(bld.env,bld.env.BLDLIBFOLDER,"iasUtils.jar")
-    jarBuilder.color = 'BLUE'
+    from IasWafBuildTools.JarTasks import buildJar
+    jarBuilder = buildJar(bld)
     jarBuilder.set_run_after(scalaBuilder)
     bld.add_to_group(jarBuilder)
 
 def build(bld):
     bld.load('IasWafBuildTools', tooldir='../WafBuildTools/src/main/python/')
-    print('=====>>> Utils is_install',bld.is_install)
-    print('=====>>> Utils build command',bld.cmd)
-
+    bld.bldnode=bld.path.make_node('build')
+    bld.add_group("Utils")
+    from IasWafBuildTools.Utils import set_env
+    set_env(bld.env,bld.path,bld.bldnode)
     bld.env.PREFIX = os.environ['IAS_ROOT']
 
     if bld.cmd == 'build':
-        print('=====>>> Utils build...',bld.cmd)
         makeBuild(bld)
+        bld.add_post_fun(makeInstall)
     elif bld.cmd == 'install':
-        print('=====>>> Utils install...',bld.cmd)
         makeInstall(bld)
-
-
-
-
-    print("Building of", bld.path.abspath(), "done.")
-
-
-
-
