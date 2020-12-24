@@ -1,7 +1,7 @@
 import os
 from waflib import Logs
 
-top = '.'
+top = '..'
 out = 'build'
 
 def options(conf):
@@ -12,7 +12,7 @@ def configure(conf):
 
 def makeInstall(ctx):
     from IasWafBuildTools.Installer import Installer
-    installer = Installer(ctx, ctx.env.DSTNODE, ctx.env.PREFIX)
+    installer = Installer(ctx.env.DSTNODE.abspath(), ctx.env.PREFIX)
     installer.install()
 
 
@@ -20,9 +20,8 @@ def makeBuild(bld):
     #
     # get Jars from extTools
     #
-    from IasWafBuildTools.FileTasks import CopyTask
-    copyExtJarTask = CopyTask(bld.env, bld.env.SRCEXTTOOLSFOLDER, file_extension=".jar")
-    copyExtJarTask.color= 'CYAN'
+    from IasWafBuildTools.JarTasks import getJarsFromExtTools
+    copyExtJarTask = getJarsFromExtTools(bld)
     bld.add_to_group(copyExtJarTask)
 
     #
@@ -34,8 +33,6 @@ def makeBuild(bld):
         "c3p0-oracle-thin-extras-0.9.5.2.jar",
         "mchange-commons-java-0.2.11.jar"
     ]
-
-    Logs.info("Cdb: jars to get from ZIP: %s" ', '.join(jarsInZip))
 
     from IasWafBuildTools.JarTasks import jarsFromZip
     jarsFromZipTask = jarsFromZip(zipFileName, jarsInZip, bld.env)
@@ -71,8 +68,7 @@ def build(bld):
     bld.env.PREFIX = os.environ['IAS_ROOT']
     
     if bld.cmd == 'build':
-        Logs.info('Cdb: build command %s', bld.cmd)
         makeBuild(bld)
+        bld.add_post_fun(makeInstall)
     elif bld.cmd == 'install':
-        Logs.info('Cdb: install %s', bld.cmd)
         makeInstall(bld)
