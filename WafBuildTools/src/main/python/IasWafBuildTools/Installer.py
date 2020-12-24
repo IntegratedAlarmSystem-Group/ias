@@ -62,7 +62,7 @@ class Installer(object):
                 destPath = Path(destName).parent
                 destPath.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(fileToCopy,destName)
-                Logs.info("Installer %s --> %s",fileToCopy ,destName)
+                Logs.info("Installer: %s --> %s",fileToCopy ,destName)
 
         Logs.info("Installer: Installation from %s done", self.srcFolder)
 
