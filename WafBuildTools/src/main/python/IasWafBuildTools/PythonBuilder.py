@@ -5,6 +5,17 @@ Python classes to support building of python scripts and modules
 from waflib.Task import Task
 from IasWafBuildTools.Utils import buildDstFileNode
 
+def buildPythonModules(ctx):
+    '''
+    Helper function to build python sources
+
+    :param ctx: Waf build context
+    :return: the Waf task to build python modules
+    '''
+    assert ctx
+    bldPyMods = BuildPythonModules(ctx.env)
+    bldPyMods.color='RED'
+    return bldPyMods
 
 class BuildPythonModules(Task):
     '''
