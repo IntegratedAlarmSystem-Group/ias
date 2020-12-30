@@ -26,7 +26,7 @@ class CopyTask(Task):
             dst_folder_node=None,
             file_extension=None,
             recurse=False,
-            remove_etension=False,
+            remove_extension=False,
             make_executable=False):
         '''
         Build
@@ -40,7 +40,7 @@ class CopyTask(Task):
                                (for example passing *.py copy only the files with .py extension)
         :param recurse: if True the files are copied recursively otherwise on
                         the files in the main folder are copied
-        :param remove_etension: if True removes the extension from the destination file name
+        :param remove_extension: if True removes the extension from the destination file name
                                 i.e. myCmd.sh becomes myCmd
                                 Note that the extension is whatever comes after the last dot of the file name
         :param make_executable: if True the destination file is made executable
@@ -58,7 +58,7 @@ class CopyTask(Task):
         else:
             self.extension = file_extension
         self.recurse=recurse
-        self.removeExt = remove_etension
+        self.removeExt = remove_extension
         self.makeExec = make_executable
         self.filesToCopy = self.__buildNodes()
 
