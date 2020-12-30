@@ -12,9 +12,8 @@ def configure(conf):
 
 def makeInstall(ctx):
     from IasWafBuildTools.Installer import Installer
-    installer = Installer(ctx.env.DSTNODE.abspath(), ctx.env.PREFIX)
-    installer.install()
-
+    installer = Installer(ctx.env.DSTNODE.abspath(), ctx.env.PREFIX, ctx)
+    ctx.add_to_group(installer)
 
 def makeBuild(bld):
     #
@@ -69,6 +68,7 @@ def build(bld):
     
     if bld.cmd == 'build':
         makeBuild(bld)
-        bld.add_post_fun(makeInstall)
+        bld.add_group("CdbInstall")
+        makeInstall(bld)
     elif bld.cmd == 'install':
         makeInstall(bld)

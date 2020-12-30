@@ -12,11 +12,11 @@ def configure(conf):
 
 def makeInstall(ctx):
     from IasWafBuildTools.Installer import Installer
-    installer = Installer(ctx.env.DSTNODE.abspath(), ctx.env.PREFIX)
-    installer.install()
+    installer = Installer(ctx.env.DSTNODE.abspath(), ctx.env.PREFIX, ctx)
+    ctx.add_to_group(installer)
 
 def makeBuild(bld):
-    print("Building",bld.path.abspath())
+    print("Building", bld.path.abspath())
 
     print("Tools Root abspath",bld.root.abspath())
     print("Tools bld.path contents %r" % bld.path.children)
@@ -25,7 +25,7 @@ def makeBuild(bld):
     print("Tools bld.top_dir   %r" % bld.top_dir)
     print("Tools Build node",bld.bldnode)
 
-    print("\n",bld)
+    print("\n", bld)
 
     #
     # get jars from ZIP
@@ -83,7 +83,7 @@ def makeBuild(bld):
         bld.env,
         bld.env.SRCMAINFOLDER,
         bld.env.BLDBINFOLDER,
-        remove_etension=True,
+        remove_extension=True,
         make_executable=True,
         file_extension=".sh"
     )
@@ -97,7 +97,7 @@ def makeBuild(bld):
         bld.env,
         bld.env.PYSRCFOLDER,
         bld.env.BLDBINFOLDER,
-        remove_etension=True,
+        remove_extension=True,
         make_executable=True,
         file_extension=".py"
     )
@@ -118,6 +118,7 @@ def build(bld):
 
     if bld.cmd == 'build':
         makeBuild(bld)
-        bld.add_post_fun(makeInstall)
+        bld.add_group("ToolsInstall")
+        makeInstall(bld)
     elif bld.cmd == 'install':
         makeInstall(bld)
