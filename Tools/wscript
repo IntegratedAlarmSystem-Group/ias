@@ -12,7 +12,7 @@ def configure(conf):
 
 def makeInstall(ctx):
     from IasWafBuildTools.Installer import Installer
-    installer = Installer(ctx.env.DSTNODE.abspath(), ctx.env.PREFIX, ctx)
+    installer = Installer(ctx)
     ctx.add_to_group(installer)
 
 def makeBuild(bld):

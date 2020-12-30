@@ -16,22 +16,26 @@ class Installer(Task):
     using python commands i.e. it does not instantiate Waf tasks
     '''
 
-    def __init__(self, srcFolder, destFolder, ctx):
+    def __init__(self, ctx, srcNode=None, destFolder=None):
         '''
         Build the Installer.
 
-        :param srcNode: Source node folder
-        :param destFolder: Destination folder
         :param ctx: the build context
+        :param srcNode: Source node folder; if None then env.DSTNODE (module/build) is used
+        :param destFolder: Destination folder; if None then PREFIX is used
         '''
         super(Installer, self).__init__(env=ctx.env)
-        assert srcFolder
-        assert destFolder
-        self.srcFolder = srcFolder
+        self.srcNode = srcNode
+        if self.srcNode is None:
+            self.srcNode = ctx.env.DSTNODE
         self.destFolder = destFolder
+        if not self.destFolder:
+            self.destFolder = ctx.env.PREFIX
         self.color = 'BLUE'
-        Logs.info("Installer: will install from %s ---to---> %s " % (self.srcFolder, self.destFolder))
+        Logs.info("Installer: will install from %s ---to---> %s " % (self.srcNode.abspath(), self.destFolder))
         self.foldersToInstall = [ 'bin', 'lib', 'extTools', 'config']
+
+
 
     def run(self):
         '''
@@ -40,14 +44,14 @@ class Installer(Task):
         :param srcDirs The list of folders containing files to be installed
         :return:
         '''
-        Logs.info("Installer: Installing files from %s to %s",  self.srcFolder, self.destFolder)
+        Logs.info("Installer: Installing files from %s to %s", self.srcNode, self.destFolder)
         for dirToInstall in self.foldersToInstall:
             dest = "%s/%s" % (self.destFolder,dirToInstall)
             Path(dest).mkdir(parents=True, exist_ok=True)
 
             Logs.info("Installer:  %s --to--> %s " % (dirToInstall,dest))
 
-            startDir = "%s/%s" % (self.srcFolder, dirToInstall)
+            startDir = "%s/%s" % (self.srcNode, dirToInstall)
 
             if not os.path.exists(startDir):
                 Logs.info("Installer: No folder %s found", startDir)
@@ -56,7 +60,7 @@ class Installer(Task):
             filesToCopy = iglob(startDir + '**/*', recursive=True)
 
             for fileToCopy in filesToCopy:
-                base = fileToCopy.split(self.srcFolder)
+                base = fileToCopy.split(self.srcNode.abspath())
                 destName = self.destFolder+base[1]
 
                 # Create folders in the destination if it does not already exist
@@ -66,4 +70,4 @@ class Installer(Task):
                     shutil.copy2(fileToCopy,destName)
                     Logs.info("Installer: %s --> %s",fileToCopy ,destName)
 
-        Logs.info("Installer: Installation from %s done", self.srcFolder)
+        Logs.info("Installer: Installation from %s done", self.srcNode)
