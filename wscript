@@ -4,7 +4,10 @@ top = '.'
 out = 'build'
 
 # IAS modules to build
-IasModules = 'Tools Utils Cdb'
+IasModules = [
+    'Tools',
+    'Utils',
+    'Cdb']
 
 import os
 
@@ -22,8 +25,16 @@ def build(bld):
     Logs.info("IAS: Building in %s",bld.path.abspath())
     Logs.info('IAS: build command %s',bld.cmd)
     Logs.info('IAS: IAS PREFIX %s', bld.env.PREFIX)
-    bld.recurse(IasModules)
 
+    if bld.cmd == 'install':
+        from IasWafBuildTools.Utils import set_env
+        set_env(bld.env, bld.path, bld.bldnode)
+        from IasWafBuildTools.IasWafBuilder import install
+        install(bld)
+
+
+    else:
+        bld.recurse(IasModules)
 
 def configure(conf):
     Logs.info ("IAS: configure in %s",conf.path.abspath())

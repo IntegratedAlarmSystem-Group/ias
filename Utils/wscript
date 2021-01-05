@@ -1,5 +1,9 @@
-top = '..'
-out = 'build'
+top = '.'
+try:
+    out
+except NameError:
+    # out not defined
+    out = 'build'
 
 import os
 from waflib import Logs
@@ -68,7 +72,6 @@ def makeBuild(bld):
 
 def build(bld):
     bld.load('IasWafBuildTools', tooldir='../WafBuildTools/src/main/python/')
-    bld.bldnode=bld.path.make_node('build')
     bld.add_group("Utils")
     from IasWafBuildTools.Utils import set_env
     set_env(bld.env,bld.path,bld.bldnode)
@@ -76,7 +79,8 @@ def build(bld):
 
     if bld.cmd == 'build':
         makeBuild(bld)
-        bld.add_group("UtilsInstall")
-        makeInstall(bld)
     elif bld.cmd == 'install':
         makeInstall(bld)
+    elif bld.cmd == 'clean':
+        Logs.info("Cleaning %s",bld.bldnode.abspath())
+        bld(rule='ls', always=True)
