@@ -62,6 +62,21 @@ def makeBuild(bld):
     getJarsFromTarTask = jarsFromTar(tarFileName,jars, bld.env)
     bld.add_to_group(getJarsFromTarTask)
 
+    #
+    # Python modules
+    #
+    from IasWafBuildTools.PythonBuilder import buildPythonModules
+    bldPyMods = buildPythonModules(bld)
+    bld.add_to_group(bldPyMods)
+
+    #
+    # Java sources
+    #
+    from IasWafBuildTools.JavaBuilder import buildJava
+    javaBuilder = buildJava(bld)
+    javaBuilder.set_run_after(getJarsFromTarTask)
+    bld.add_to_group(javaBuilder)
+
 def build(bld):
     bld.load('IasWafBuildTools', tooldir='../WafBuildTools/src/main/python/')
     bld.add_group("Cdb")
