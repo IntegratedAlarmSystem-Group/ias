@@ -1,7 +1,7 @@
 # Install the artifacts to the destination folder
 #
 # Object of the Installer class do not use methods like Build.install_files
-# because such methods have no effectduring the build (they work only during waf install)
+# because such methods have no effect during the build (they work only during waf install)
 
 import os.path, shutil
 from pathlib import Path
@@ -24,7 +24,9 @@ class Installer(Task):
         :param srcNode: Source node folder; if None then env.DSTNODE (module/build) is used
         :param destFolder: Destination folder; if None then PREFIX is used
         '''
+        assert ctx
         super(Installer, self).__init__(env=ctx.env)
+        self.ctx = ctx
         self.srcNode = srcNode
         if self.srcNode is None:
             self.srcNode = ctx.env.DSTNODE
@@ -32,42 +34,49 @@ class Installer(Task):
         if not self.destFolder:
             self.destFolder = ctx.env.PREFIX
         self.color = 'BLUE'
-        Logs.info("Installer: will install from %s ---to---> %s " % (self.srcNode.abspath(), self.destFolder))
+        print (",..,.,.,.,.,.,.,.,.,", self.srcNode)
+        Logs.info("Installer: src node %s", self.srcNode.abspath())
+        Logs.info("Installer: dst folder %s", self.destFolder)
+        Logs.info("Installer: will install from %s ---to---> %s ", self.srcNode.abspath(), self.destFolder)
         self.foldersToInstall = [ 'bin', 'lib', 'extTools', 'config']
-
-
 
     def run(self):
         '''
-        Build the dictionary of files to install
+        Install the files in the destination folder
 
         :param srcDirs The list of folders containing files to be installed
         :return:
         '''
-        Logs.info("Installer: Installing files from %s to %s", self.srcNode, self.destFolder)
-        for dirToInstall in self.foldersToInstall:
-            dest = "%s/%s" % (self.destFolder,dirToInstall)
-            Path(dest).mkdir(parents=True, exist_ok=True)
+        Logs.info("Installer: Installing files from %s ---to---> %s", self.srcNode, self.destFolder)
 
-            Logs.info("Installer:  %s --to--> %s " % (dirToInstall,dest))
+        for folder in self.foldersToInstall:
+            Logs.info("installing files from %s", folder)
 
-            startDir = "%s/%s" % (self.srcNode, dirToInstall)
+            folderNode = self.srcNode.find_node(folder)
+            prefix = "%s/%s" % (self.ctx.env.PREFIX, folder)
 
-            if not os.path.exists(startDir):
-                Logs.info("Installer: No folder %s found", startDir)
+            if not folderNode:
+                Logs.info("Installer: node %s/%s not found: nothing to install", self.srcNode.abspath(), folder)
                 continue
+            else:
+                Logs.info("Installer: processing files in %s --to--> %s ", folderNode, prefix)
 
-            filesToCopy = iglob(startDir + '**/*', recursive=True)
+            if not os.path.exists(prefix):
+                os.mkdir(prefix)
 
-            for fileToCopy in filesToCopy:
-                base = fileToCopy.split(self.srcNode.abspath())
-                destName = self.destFolder+base[1]
+            nodeFilesToInstall = folderNode.ant_glob("**/*")
+            print("nodeFilesToInstall", nodeFilesToInstall)
+            self.set_inputs(nodeFilesToInstall)
 
-                # Create folders in the destination if it does not already exist
-                destPath = Path(destName).parent
-                destPath.mkdir(parents=True, exist_ok=True)
-                if not os.path.isdir(fileToCopy): # Sskip creation of directories
-                    shutil.copy2(fileToCopy,destName)
-                    Logs.info("Installer: %s --> %s",fileToCopy ,destName)
+            nodesCleaned = list(map(lambda n: n.abspath().split(folderNode.abspath()+'/')[1], nodeFilesToInstall))
+            print("nodesCleaned", nodesCleaned)
 
-        Logs.info("Installer: Installation from %s done", self.srcNode)
+            self.ctx.install_files(
+                prefix,
+                folderNode.ant_glob("**/*"),
+                relative_trick=True,
+                cwd=folderNode)
+
+
+
+
