@@ -1,9 +1,10 @@
 '''
     Build scala sources
 '''
-
+import os.path
 from waflib.Task import Task
 from IasWafBuildTools.Utils import buildDstFileNode
+from IasWafBuildTools.JavaScalaCommBuilder import JavaScalaCommBuilder
 
 def buildScala(ctx):
     '''
@@ -52,20 +53,6 @@ class ScalaBuilder(Task):
             self.set_outputs(dst)
             self.filesToBuild[scalaSrc]=dst
 
-    def buildClasspath(self):
-        '''
-        Build the classfor the compiler
-
-        :return: The string with the jars in the classpath: "-cp jar1:jar2:..."
-        '''
-        jarOfModule = self.env.BLDEXTTOOLSFOLDER.ant_glob("**/*.jar")
-        cp= ""
-        if len(jarOfModule)>0:
-            cp = "-cp "
-            for jar in jarOfModule:
-                cp = cp + jar.abspath()+":"
-        return cp
-
     def run(self):
         print("Running ScalaBuilder with ENV=",self.env)
 
@@ -74,8 +61,8 @@ class ScalaBuilder(Task):
         sourceFiles = " ".join(sourceFiles)
         print("Building", sourceFiles)
 
-        classPath = self.buildClasspath()
+        classPath = JavaScalaCommBuilder.buildClasspath(self.env.DSTNODE.abspath(), self.env.PREFIX)
 
         cmd = self.env.SCALAC[0]+" -d "+self.env.JVMDSTFOLDER.abspath()+" "+classPath+" "+sourceFiles
-        print (">>> Executing SCALAC: ",cmd)
+        print(">>> Executing SCALAC: ", cmd)
         self.exec_command(cmd)
