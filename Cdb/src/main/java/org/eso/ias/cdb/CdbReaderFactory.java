@@ -108,13 +108,13 @@ public class CdbReaderFactory {
         }
         Constructor constructor = null;
         try {
-            constructor=theClass.getConstructor(null);
+            constructor=theClass.getConstructor((Class<?>)null);
         } catch (Exception e) {
             throw new IasCdbException("Error getting the default (empty) constructor of the external class "+cls,e);
         }
         Object obj=null;
         try {
-            obj=constructor.newInstance(null);
+            obj=constructor.newInstance((Object[])null);
         } catch (Exception e) {
             throw new IasCdbException("Error building an object of the external class "+cls,e);
         }
