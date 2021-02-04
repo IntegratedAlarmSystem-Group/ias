@@ -1,9 +1,12 @@
 '''
-    Build scala sources.
+    Build java sources.
 
     There is a waf tool to build java source but I prefer to have the process under control
     while mixing java and scala.
 '''
+
+# JAVAC options
+JAVAC_OPTS = "-Xpkginfo:always"
 
 from waflib.Task import Task
 from IasWafBuildTools.Utils import buildDstFileNode
@@ -66,6 +69,6 @@ class JavaBuilder(Task):
 
         classPath = JavaScalaCommBuilder.buildClasspath(self.env.DSTNODE.abspath(), self.env.PREFIX)
 
-        cmd = self.env.JAVAC[0]+" -d "+self.env.JVMDSTFOLDER.abspath()+" "+classPath+" "+sourceFiles
+        cmd = self.env.JAVAC[0]+" "+JAVAC_OPTS +" -d "+self.env.JVMDSTFOLDER.abspath()+" "+classPath+" "+sourceFiles
         print ("|>>> Executing JAVAC: ", cmd)
         self.exec_command(cmd)
