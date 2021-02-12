@@ -77,13 +77,23 @@ def makeBuild(bld):
     javaBuilder.set_run_after(getJarsFromTarTask)
     bld.add_to_group(javaBuilder)
 
+    #
+    # Build the jar
+    #
+    print("+++++ BUILDING iasCdb.jar")
+    from IasWafBuildTools.JarTasks import buildJar
+    jar_builder = buildJar(bld, "iasCdb.jar")
+    jar_builder.set_run_after(javaBuilder)
+    bld.add_to_group(jar_builder)
+    print("===++++++>>>> ENV: env %s path %s bldnode %s",bld.env, bld.path, bld.bldnode)
+
 def build(bld):
     bld.load('IasWafBuildTools', tooldir='../WafBuildTools/src/main/python/')
     bld.add_group("Cdb")
     from IasWafBuildTools.Utils import set_env
-    set_env(bld.env,bld.path,bld.bldnode)
+    set_env(bld.env, bld.path, bld.bldnode)
     bld.env.PREFIX = os.environ['IAS_ROOT']
-    
+
     if bld.cmd == 'build':
         makeBuild(bld)
     elif bld.cmd == 'install':
