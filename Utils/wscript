@@ -27,8 +27,8 @@ def makeBuild(bld):
     print("bld.path contents %r" % bld.path.children)
     print("bld.path parent   %r" % bld.path.parent.abspath())
     print("bld.root parent   %r" % bld.root.parent)
-    print("Build node",bld.bldnode)
-    print('=====>>> Utils build command',bld.cmd)
+    print("Build node", bld.bldnode)
+    print('=====>>> Utils build command', bld.cmd)
 
     #
     # get Jars from extTools
@@ -55,6 +55,21 @@ def makeBuild(bld):
     bld.add_to_group(bldPyMods)
 
     #
+    # Python scripts
+    #
+    from IasWafBuildTools.FileTasks import CopyTask
+    bldPyScripts = CopyTask(
+        bld.env,
+        bld.env.PYSRCFOLDER,
+        bld.env.BLDBINFOLDER,
+        remove_extension=True,
+        make_executable=True,
+        file_extension=".py"
+    )
+    bldPyScripts.color='GREY'
+    bld.add_to_group(bldPyScripts)
+
+    #
     # Scala sources
     #
     from IasWafBuildTools.ScalaBuilder import buildScala
@@ -66,7 +81,7 @@ def makeBuild(bld):
     # Build the jar
     #
     from IasWafBuildTools.JarTasks import buildJar
-    jarBuilder = buildJar(bld)
+    jarBuilder = buildJar(bld, "iasUtils.jar")
     jarBuilder.set_run_after(scalaBuilder)
     bld.add_to_group(jarBuilder)
 
