@@ -19,7 +19,7 @@ def getJarsFromExtTools(ctx):
     '''
     assert ctx
     from IasWafBuildTools.FileTasks import CopyTask
-    copyExtJarTask = CopyTask(ctx.env, ctx.env.SRCEXTTOOLSFOLDER, file_extension=".jar")
+    copyExtJarTask = CopyTask(ctx.env, ctx.env.SRCEXTTOOLSFOLDER, ctx.env.BLDEXTTOOLSFOLDER, file_extension=".jar")
     copyExtJarTask.color= 'CYAN'
     return copyExtJarTask
 
@@ -161,15 +161,17 @@ class GetJarsFromTar(getFilesFromArchive):
         self.set_command("tar xf "+self.inputs[0].abspath()+" --directory {}")
         super(GetJarsFromTar, self).run()
 
-def buildJar(ctx):
+def buildJar(ctx, jarName):
     '''
     Helper function to create the Waf task to build the jar of scala and java sources
 
     :param ctx: The Waf build context
-    :return: Te Waf taks
+    :param jarName: the name of the jar to build
+    :return: The Waf task
     '''
     assert ctx
-    jarBuilder = CreateJar(ctx.env,ctx.env.BLDLIBFOLDER,"iasUtils.jar")
+    assert jarName
+    jarBuilder = CreateJar(ctx.env, ctx.env.BLDLIBFOLDER, jarName)
     jarBuilder.color = 'BLUE'
     return jarBuilder
 
@@ -191,8 +193,10 @@ class CreateJar(Task):
         self.jarName = jarName
         self.mainClass = mainClass
 
-        self.jarNode = self.destFolderNode.find_or_declare(jarName)
         self.getJarSources()
+        self.jarNode = self.destFolderNode.find_or_declare(jarName)
+        self.set_outputs(self.jarNode)
+
 
     def getJarSources(self):
         '''
