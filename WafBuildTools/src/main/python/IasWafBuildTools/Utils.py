@@ -35,14 +35,17 @@ def set_env(env, sourceNode, buildNode):
         raise ValueError("Invalid None build node")
 
     env.SRCNODE = sourceNode
-    env.DSTNODE = buildNode
+    parts = env.SRCNODE.abspath().split('/')
+    env.MODULENAME = parts[len(parts)-1]
+    env.DSTNODE = buildNode.make_node(env.MODULENAME)
     print("env.SRCNODE", env.SRCNODE)
     print("env.DSTNODE", env.DSTNODE)
+    print("env.MODULENAME", env.MODULENAME)
 
     env.SRCEXTTOOLSFOLDER = sourceNode.make_node('extTools')
     env.BLDEXTTOOLSFOLDER = buildNode.make_node('extTools')
-    print("env.SRCEXTTOOLSFOLDER",env.SRCEXTTOOLSFOLDER.abspath())
-    print("env.BLDEXTTOOLSFOLDER",env.BLDEXTTOOLSFOLDER.abspath())
+    print("env.SRCEXTTOOLSFOLDER", env.SRCEXTTOOLSFOLDER.abspath())
+    print("env.BLDEXTTOOLSFOLDER", env.BLDEXTTOOLSFOLDER.abspath())
 
     env.SRCMAINFOLDER = sourceNode.make_node('src/main')
     print("env.SRCMAINFOLDER", env.SRCMAINFOLDER)
@@ -54,7 +57,7 @@ def set_env(env, sourceNode, buildNode):
 
     env.PYSRCFOLDER = sourceNode.make_node('src/main/python')
 
-    py_version=getPythonVersion()
+    py_version = getPythonVersion()
     env.PYMODDSTFOLDER = env.BLDLIBFOLDER.make_node('python{}.{}/site-packages'.format(py_version[0],py_version[1]))
     print("env.PYSRCFOLDER", env.PYSRCFOLDER.abspath())
     print("env.PYMODDSTFOLDER", env.PYMODDSTFOLDER.abspath())
@@ -65,12 +68,12 @@ def set_env(env, sourceNode, buildNode):
     print("env.CONFIGDSTNODE", env.CONFIGDSTNODE.abspath())
 
     env.JAVASRCFOLDER = sourceNode.make_node('src/main/java')
-    print("env.JAVASRCFOLDER",env.JAVASRCFOLDER.abspath())
+    print("env.JAVASRCFOLDER", env.JAVASRCFOLDER.abspath())
 
     env.SCALASRCFOLDER = sourceNode.make_node('src/main/scala')
-    print("env.SCALASRCFOLDER",env.SCALASRCFOLDER.abspath())
+    print("env.SCALASRCFOLDER", env.SCALASRCFOLDER.abspath())
 
-    env.JVMDSTFOLDER = buildNode.make_node('classes') # For .class files
+    env.JVMDSTFOLDER = env.DSTNODE.make_node('classes') # For .class files
     print("env.JVMDSTFOLDER",env.JVMDSTFOLDER.abspath())
 
 def buildDstFileNode(inputNode, dstFolderNode, dstFileName=None, removeExtension=False):
