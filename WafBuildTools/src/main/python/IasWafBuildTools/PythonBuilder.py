@@ -5,16 +5,16 @@ Python classes to support building of python scripts and modules
 from waflib.Task import Task
 from IasWafBuildTools.Utils import buildDstFileNode
 
-def buildPythonModules(ctx):
+def buildPythonModules(env):
     '''
     Helper function to build python sources
 
     :param ctx: Waf build context
     :return: the Waf task to build python modules
     '''
-    assert ctx
-    bldPyMods = BuildPythonModules(ctx.env)
-    bldPyMods.color='RED'
+    assert env
+    bldPyMods = BuildPythonModules(env)
+    bldPyMods.color = 'YELLOW'
     return bldPyMods
 
 class BuildPythonModules(Task):
@@ -41,7 +41,6 @@ class BuildPythonModules(Task):
         pySources = self.env.PYSRCFOLDER.ant_glob("*.py")
         # All python sources
         pyModSources = self.env.PYSRCFOLDER.ant_glob("**/*.py")
-        print('>>> pyModSources', pyModSources)
 
         # A dictionary to associate each input file to the destination
         self.filesToCopy = {}
@@ -59,8 +58,5 @@ class BuildPythonModules(Task):
                 self.filesToCopy[pySrc]=dst
 
     def run(self):
-        print("ENV=",self.env)
-
         for s,d in self.filesToCopy.items():
-            print('BuildPythonModules copying', s.abspath(), '=>', d.abspath())
             self.exec_command("cp "+s.abspath()+" "+d.abspath())

@@ -19,12 +19,21 @@ def makeInstall(ctx):
     installer = Installer(ctx)
     ctx.add_to_group(installer)
 
-def makeBuild(bld):
+def makeBuild(bld, env):
+    '''
+    Make the build
+
+    :param bld: The waf buyild context
+    :param env: The Waf environment
+    :return:
+    '''
+    Logs.info("Building %s", bld.path.abspath())
+
     #
     # get Jars from extTools
     #
     from IasWafBuildTools.JarTasks import getJarsFromExtTools
-    copyExtJarTask = getJarsFromExtTools(bld)
+    copyExtJarTask = getJarsFromExtTools(env)
     bld.add_to_group(copyExtJarTask)
 
     #
@@ -38,7 +47,7 @@ def makeBuild(bld):
     ]
 
     from IasWafBuildTools.JarTasks import jarsFromZip
-    jarsFromZipTask = jarsFromZip(zipFileName, jarsInZip, bld.env)
+    jarsFromZipTask = jarsFromZip(zipFileName, jarsInZip, env)
     bld.add_to_group(jarsFromZipTask)
 
     #
@@ -59,45 +68,44 @@ def makeBuild(bld):
     ]
 
     from IasWafBuildTools.JarTasks import jarsFromTar
-    getJarsFromTarTask = jarsFromTar(tarFileName,jars, bld.env)
+    getJarsFromTarTask = jarsFromTar(tarFileName, jars, env)
     bld.add_to_group(getJarsFromTarTask)
 
     #
     # Python modules
     #
     from IasWafBuildTools.PythonBuilder import buildPythonModules
-    bldPyMods = buildPythonModules(bld)
+    bldPyMods = buildPythonModules(env)
     bld.add_to_group(bldPyMods)
 
     #
     # Java sources
     #
     from IasWafBuildTools.JavaBuilder import buildJava
-    javaBuilder = buildJava(bld)
+    javaBuilder = buildJava(env)
     javaBuilder.set_run_after(getJarsFromTarTask)
     bld.add_to_group(javaBuilder)
 
     #
     # Build the jar
     #
-    print("+++++ BUILDING iasCdb.jar")
     from IasWafBuildTools.JarTasks import buildJar
-    jar_builder = buildJar(bld, "iasCdb.jar")
+    jar_builder = buildJar(env, "iasCdb.jar")
     jar_builder.set_run_after(javaBuilder)
     bld.add_to_group(jar_builder)
-    print("===++++++>>>> ENV: env %s path %s bldnode %s",bld.env, bld.path, bld.bldnode)
 
 def build(bld):
     bld.load('IasWafBuildTools', tooldir='../WafBuildTools/src/main/python/')
     bld.add_group("Cdb")
     from IasWafBuildTools.Utils import set_env
-    set_env(bld.env, bld.path, bld.bldnode)
-    bld.env.PREFIX = os.environ['IAS_ROOT']
+    env = bld.env.derive()
+    set_env(env, bld.path, bld.bldnode)
+    env.PREFIX = os.environ['IAS_ROOT']
 
     if bld.cmd == 'build':
-        makeBuild(bld)
+        makeBuild(bld, env)
     elif bld.cmd == 'install':
         makeInstall(bld)
     elif bld.cmd == 'clean':
-        Logs.info("Cleaning %s/extTools",bld.bldnode.abspath())
+        Logs.info("Cleaning %s/extTools", bld.bldnode.abspath())
         bld(rule='rm -rf build/*', always=True)

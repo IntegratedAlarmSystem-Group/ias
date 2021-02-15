@@ -34,47 +34,49 @@ def set_env(env, sourceNode, buildNode):
     if not buildNode:
         raise ValueError("Invalid None build node")
 
+    env.BLDNODE = buildNode
     env.SRCNODE = sourceNode
     parts = env.SRCNODE.abspath().split('/')
     env.MODULENAME = parts[len(parts)-1]
     env.DSTNODE = buildNode.make_node(env.MODULENAME)
-    print("env.SRCNODE", env.SRCNODE)
-    print("env.DSTNODE", env.DSTNODE)
-    print("env.MODULENAME", env.MODULENAME)
+    # print("env.SRCNODE", env.SRCNODE)
+    # print("env.BLDNODE", env.BLDNODE)
+    # print("env.DSTNODE", env.DSTNODE)
+    # print("env.MODULENAME", env.MODULENAME)
 
     env.SRCEXTTOOLSFOLDER = sourceNode.make_node('extTools')
     env.BLDEXTTOOLSFOLDER = buildNode.make_node('extTools')
-    print("env.SRCEXTTOOLSFOLDER", env.SRCEXTTOOLSFOLDER.abspath())
-    print("env.BLDEXTTOOLSFOLDER", env.BLDEXTTOOLSFOLDER.abspath())
+    # print("env.SRCEXTTOOLSFOLDER", env.SRCEXTTOOLSFOLDER.abspath())
+    # print("env.BLDEXTTOOLSFOLDER", env.BLDEXTTOOLSFOLDER.abspath())
 
     env.SRCMAINFOLDER = sourceNode.make_node('src/main')
-    print("env.SRCMAINFOLDER", env.SRCMAINFOLDER)
+    # print("env.SRCMAINFOLDER", env.SRCMAINFOLDER)
 
     env.BLDBINFOLDER = buildNode.make_node('bin')
     env.BLDLIBFOLDER = buildNode.make_node('lib')
-    print("env.BLDBINFOLDER", env.BLDBINFOLDER.abspath())
-    print("env.BLDLIBFOLDER", env.BLDLIBFOLDER.abspath())
+    # print("env.BLDBINFOLDER", env.BLDBINFOLDER.abspath())
+    # print("env.BLDLIBFOLDER", env.BLDLIBFOLDER.abspath())
 
     env.PYSRCFOLDER = sourceNode.make_node('src/main/python')
 
     py_version = getPythonVersion()
     env.PYMODDSTFOLDER = env.BLDLIBFOLDER.make_node('python{}.{}/site-packages'.format(py_version[0],py_version[1]))
-    print("env.PYSRCFOLDER", env.PYSRCFOLDER.abspath())
-    print("env.PYMODDSTFOLDER", env.PYMODDSTFOLDER.abspath())
+    # print("env.PYSRCFOLDER", env.PYSRCFOLDER.abspath())
+    # print("env.PYMODDSTFOLDER", env.PYMODDSTFOLDER.abspath())
 
     env.CONFIGSRCFOLDER = sourceNode.make_node('config')
     env.CONFIGDSTFOLDER =  buildNode.make_node('config')
-    print("env.CONFIGSRCFOLDER", env.CONFIGSRCFOLDER.abspath())
-    print("env.CONFIGDSTFOLDER", env.CONFIGDSTFOLDER.abspath())
+    # print("env.CONFIGSRCFOLDER", env.CONFIGSRCFOLDER.abspath())
+    # print("env.CONFIGDSTFOLDER", env.CONFIGDSTFOLDER.abspath())
 
     env.JAVASRCFOLDER = sourceNode.make_node('src/main/java')
-    print("env.JAVASRCFOLDER", env.JAVASRCFOLDER.abspath())
+    # print("env.JAVASRCFOLDER", env.JAVASRCFOLDER.abspath())
 
     env.SCALASRCFOLDER = sourceNode.make_node('src/main/scala')
-    print("env.SCALASRCFOLDER", env.SCALASRCFOLDER.abspath())
+    # print("env.SCALASRCFOLDER", env.SCALASRCFOLDER.abspath())
 
     env.JVMDSTFOLDER = env.DSTNODE.make_node('classes') # For .class files
-    print("env.JVMDSTFOLDER",env.JVMDSTFOLDER.abspath())
+    # print("env.JVMDSTFOLDER", env.JVMDSTFOLDER.abspath())
 
 def buildDstFileNode(inputNode, dstFolderNode, dstFileName=None, removeExtension=False):
     '''

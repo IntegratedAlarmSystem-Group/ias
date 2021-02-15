@@ -11,16 +11,16 @@ from tempfile import mkdtemp
 from waflib.Task import Task
 from waflib import Logs
 
-def getJarsFromExtTools(ctx):
+def getJarsFromExtTools(env):
     '''
     Helper method that creates a task to get the jars from extTools
 
-    :param ctx Waf build context
+    :param env Waf environment
     '''
-    assert ctx
+    assert env
     from IasWafBuildTools.FileTasks import CopyTask
-    copyExtJarTask = CopyTask(ctx.env, ctx.env.SRCEXTTOOLSFOLDER, ctx.env.BLDEXTTOOLSFOLDER, file_extension=".jar")
-    copyExtJarTask.color= 'CYAN'
+    copyExtJarTask = CopyTask(env, env.SRCEXTTOOLSFOLDER, env.BLDEXTTOOLSFOLDER, file_extension=".jar")
+    copyExtJarTask.color = 'CYAN'
     return copyExtJarTask
 
 class getFilesFromArchive(Task):
@@ -161,17 +161,17 @@ class GetJarsFromTar(getFilesFromArchive):
         self.set_command("tar xf "+self.inputs[0].abspath()+" --directory {}")
         super(GetJarsFromTar, self).run()
 
-def buildJar(ctx, jarName):
+def buildJar(env, jarName):
     '''
     Helper function to create the Waf task to build the jar of scala and java sources
 
-    :param ctx: The Waf build context
+    :param env: The Waf build context
     :param jarName: the name of the jar to build
     :return: The Waf task
     '''
-    assert ctx
+    assert env
     assert jarName
-    jarBuilder = CreateJar(ctx.env, ctx.env.BLDLIBFOLDER, jarName)
+    jarBuilder = CreateJar(env, env.BLDLIBFOLDER, jarName)
     jarBuilder.color = 'BLUE'
     return jarBuilder
 
@@ -219,6 +219,5 @@ class CreateJar(Task):
             cmd = cmd + ' --main-class='+self.mainClass
         cmd = cmd + ' -C '+self.env.JVMDSTFOLDER.abspath()+' .'
 
-        print (">>> Executing JAR:",cmd)
         self.exec_command(cmd)
 

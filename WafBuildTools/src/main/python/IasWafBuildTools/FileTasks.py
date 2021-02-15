@@ -47,23 +47,23 @@ class CopyTask(Task):
         :return:
         '''
         super(CopyTask, self).__init__(env=environ)
-        self.srcFolderNode=src_folder_node
+        self.srcFolderNode = src_folder_node
         self.dstFolderNode = dst_folder_node
         if self.dstFolderNode is None:
-            folderInSource = self.srcFolderNode.abspath().replace(self.env.SRCNODE.abspath(),"")
-            self.dstFolderNode = newDstFolder = self.env.DSTNODE.make_node(folderInSource)
+            folder_in_source = self.srcFolderNode.abspath().replace(self.env.SRCNODE.abspath(), "")
+            self.dstFolderNode = self.env.DSTNODE.make_node(folder_in_source)
 
         if file_extension is None:
             self.extension = ""
         else:
             self.extension = file_extension
-        self.recurse=recurse
+        self.recurse = recurse
         self.removeExt = remove_extension
         self.makeExec = make_executable
         self.filesToCopy = self.__buildNodes()
 
 
-    def __removeExtension(self,fileName):
+    def __removeExtension(self, fileName):
         """
         Remove the extension for the passed name i.e. if the input is fff.xyz, it return fff
 
@@ -102,10 +102,7 @@ class CopyTask(Task):
         return filesToCopy
 
     def run(self):
-        print("Files to copy", self.filesToCopy)
-
         for s,d in self.filesToCopy.items():
-            print("FileTask, copying", s, "==>", d)
             self.exec_command("cp "+s+" "+d)
             if self.makeExec:
                 self.exec_command("chmod u+x "+d)

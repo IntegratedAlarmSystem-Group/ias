@@ -12,15 +12,16 @@ from waflib.Task import Task
 from IasWafBuildTools.Utils import buildDstFileNode
 from IasWafBuildTools.JavaScalaCommBuilder import JavaScalaCommBuilder
 
-def buildJava(ctx):
+def buildJava(env):
     '''
-    Helper function to create the Waf task to build scala sources
+    Helper function to create the Waf task to build java sources
 
-    :param ctx: The Waf build context
+    :param env: The Waf environment
     :return: The Waf rask to build scala
     '''
-    javaBuilder = JavaBuilder(ctx.env)
-    javaBuilder.color='GREEN'
+    assert env
+    javaBuilder = JavaBuilder(env)
+    javaBuilder.color = 'GREEN'
     return javaBuilder
 
 class JavaBuilder(Task):
@@ -31,12 +32,11 @@ class JavaBuilder(Task):
     .class files will be saved in build/scala
     '''
 
-    def __init__(self,environ):
+    def __init__(self, environ):
         super(JavaBuilder, self).__init__(env=environ)
         # A dictionary to associate each scala source file to the destination (.class)
         self.filesToBuild = {}
         self.getJavaSources()
-        print(">>>> filesToBuild",self.filesToBuild)
 
     def getJavaSources(self):
         '''
@@ -45,30 +45,25 @@ class JavaBuilder(Task):
         '''
         # All java sources
         javaSources = self.env.JAVASRCFOLDER.ant_glob("**/*.java")
-        print('>>> javaSources', javaSources)
 
         for JavaSrc in javaSources:
             # The dest file must take into account subfolders
-            destDir = JavaSrc.abspath().replace(self.env.JAVASRCFOLDER.abspath(),"",1) # Still contains the name of the file
+            destDir = JavaSrc.abspath().replace(self.env.JAVASRCFOLDER.abspath(), "", 1) # Still contains the name of the file
             pos = destDir.rfind('/')
             fName=destDir[pos+1:]
             destDir = destDir[1:pos]
             destNode = self.env.JVMDSTFOLDER.find_or_declare(destDir)
             self.set_inputs(JavaSrc)
-            dst = buildDstFileNode(JavaSrc, destNode, dstFileName=fName.replace(".java",".class"))
+            dst = buildDstFileNode(JavaSrc, destNode, dstFileName=fName.replace(".java", ".class"))
             self.set_outputs(dst)
             self.filesToBuild[JavaSrc] = dst
 
     def run(self):
-        print("Running JavaBuilder with ENV=", self.env)
-
         sourceNodes = self.filesToBuild.keys()
         sourceFiles = map(lambda x: x.abspath(), sourceNodes)
         sourceFiles = " ".join(sourceFiles)
-        print("Building", sourceFiles)
 
-        classPath = JavaScalaCommBuilder.buildClasspath(self.env.DSTNODE.abspath(), self.env.PREFIX)
+        classPath = JavaScalaCommBuilder.buildClasspath(self.env.BLDNODE.abspath(), self.env.PREFIX)
 
         cmd = self.env.JAVAC[0]+" "+JAVAC_OPTS +" -d "+self.env.JVMDSTFOLDER.abspath()+" "+classPath+" "+sourceFiles
-        print ("|>>> Executing JAVAC: ", cmd)
         self.exec_command(cmd)
