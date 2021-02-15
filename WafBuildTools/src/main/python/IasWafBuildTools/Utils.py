@@ -63,9 +63,9 @@ def set_env(env, sourceNode, buildNode):
     print("env.PYMODDSTFOLDER", env.PYMODDSTFOLDER.abspath())
 
     env.CONFIGSRCFOLDER = sourceNode.make_node('config')
-    env.CONFIGDSTNODE =  buildNode.make_node('config')
+    env.CONFIGDSTFOLDER =  buildNode.make_node('config')
     print("env.CONFIGSRCFOLDER", env.CONFIGSRCFOLDER.abspath())
-    print("env.CONFIGDSTNODE", env.CONFIGDSTNODE.abspath())
+    print("env.CONFIGDSTFOLDER", env.CONFIGDSTFOLDER.abspath())
 
     env.JAVASRCFOLDER = sourceNode.make_node('src/main/java')
     print("env.JAVASRCFOLDER", env.JAVASRCFOLDER.abspath())
