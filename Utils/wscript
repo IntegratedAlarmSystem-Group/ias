@@ -19,22 +19,22 @@ def makeInstall(ctx):
     installer = Installer(ctx)
     ctx.add_to_group(installer)
 
-def makeBuild(bld):
+def makeBuild(bld, env):
+    '''
+    Make the build
 
-    Logs.info("Building %s",bld.path.abspath())
+    :param bld: The build context
+    :param env: The environment
+    :return:
+    '''
 
-    print("Root abspath",bld.root.abspath())
-    print("bld.path contents %r" % bld.path.children)
-    print("bld.path parent   %r" % bld.path.parent.abspath())
-    print("bld.root parent   %r" % bld.root.parent)
-    print("Build node", bld.bldnode)
-    print('=====>>> Utils build command', bld.cmd)
+    Logs.info("Building %s", bld.path.abspath())
 
     #
     # get Jars from extTools
     #
     from IasWafBuildTools.JarTasks import getJarsFromExtTools
-    copyExtJarTask = getJarsFromExtTools(bld)
+    copyExtJarTask = getJarsFromExtTools(env)
     bld.add_to_group(copyExtJarTask)
 
     #
@@ -43,7 +43,7 @@ def makeBuild(bld):
     tarFileName="logback-1.2.3.tar.gz"
     jars = ["logback-core-1.2.3.jar", "logback-classic-1.2.3.jar"]
     from IasWafBuildTools.JarTasks import jarsFromTar
-    getJarsFromTarTask = jarsFromTar(tarFileName,jars, bld.env)
+    getJarsFromTarTask = jarsFromTar(tarFileName, jars, env)
     getJarsFromTarTask.set_run_after(copyExtJarTask)
     bld.add_to_group(getJarsFromTarTask)
 
@@ -51,7 +51,7 @@ def makeBuild(bld):
     # Python modules
     #
     from IasWafBuildTools.PythonBuilder import buildPythonModules
-    bldPyMods = buildPythonModules(bld)
+    bldPyMods = buildPythonModules(env)
     bld.add_to_group(bldPyMods)
 
     #
@@ -59,21 +59,21 @@ def makeBuild(bld):
     #
     from IasWafBuildTools.FileTasks import CopyTask
     bldPyScripts = CopyTask(
-        bld.env,
-        bld.env.PYSRCFOLDER,
-        bld.env.BLDBINFOLDER,
+        env,
+        env.PYSRCFOLDER,
+        env.BLDBINFOLDER,
         remove_extension=True,
         make_executable=True,
         file_extension=".py"
     )
-    bldPyScripts.color='GREY'
+    bldPyScripts.color = 'GREY'
     bld.add_to_group(bldPyScripts)
 
     #
     # Scala sources
     #
     from IasWafBuildTools.ScalaBuilder import buildScala
-    scalaBuilder = buildScala(bld)
+    scalaBuilder = buildScala(env)
     scalaBuilder.set_run_after(getJarsFromTarTask)
     bld.add_to_group(scalaBuilder)
 
@@ -81,7 +81,7 @@ def makeBuild(bld):
     # Build the jar
     #
     from IasWafBuildTools.JarTasks import buildJar
-    jarBuilder = buildJar(bld, "iasUtils.jar")
+    jarBuilder = buildJar(env, "iasUtils.jar")
     jarBuilder.set_run_after(scalaBuilder)
     bld.add_to_group(jarBuilder)
 
@@ -89,13 +89,14 @@ def build(bld):
     bld.load('IasWafBuildTools', tooldir='../WafBuildTools/src/main/python/')
     bld.add_group("Utils")
     from IasWafBuildTools.Utils import set_env
-    set_env(bld.env,bld.path,bld.bldnode)
-    bld.env.PREFIX = os.environ['IAS_ROOT']
+    env = bld.env.derive()
+    set_env(env, bld.path, bld.bldnode)
+    env.PREFIX = os.environ['IAS_ROOT']
 
     if bld.cmd == 'build':
-        makeBuild(bld)
+        makeBuild(bld, env)
     elif bld.cmd == 'install':
         makeInstall(bld)
     elif bld.cmd == 'clean':
-        Logs.info("Cleaning %s",bld.bldnode.abspath())
-        bld(rule='ls', always=True)
+        Logs.info("Cleaning %s", bld.bldnode.abspath())
+        bld(rule='rm -rf build/*', always=True)

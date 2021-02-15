@@ -19,17 +19,15 @@ def makeInstall(ctx):
     installer = Installer(ctx)
     ctx.add_to_group(installer)
 
-def makeBuild(bld):
-    print("Building", bld.path.abspath())
+def makeBuild(bld, env):
+    '''
+    Make the build
 
-    print("Tools Root abspath",bld.root.abspath())
-    print("Tools bld.path contents %r" % bld.path.children)
-    print("Tools bld.path parent   %r" % bld.path.parent.abspath())
-    print("Tools bld.root parent   %r" % bld.root.parent)
-    print("Tools bld.top_dir   %r" % bld.top_dir)
-    print("Tools Build node",bld.bldnode)
-
-    print("\n", bld)
+    :param bld: Waf build context
+    :param env: Waf environment
+    :return:
+    '''
+    Logs.info("Building %s", bld.path.abspath())
 
     #
     # get jars from ZIP
@@ -45,15 +43,14 @@ def makeBuild(bld):
     ]
 
     from IasWafBuildTools.JarTasks import jarsFromZip
-
-    jarsFromZipTask = jarsFromZip(zipFileName, jarsInZip, bld.env)
+    jarsFromZipTask = jarsFromZip(zipFileName, jarsInZip, env)
     bld.add_to_group(jarsFromZipTask)
 
     #
     # get Jars from extTools
     #
     from IasWafBuildTools.JarTasks import getJarsFromExtTools
-    copyExtJarTask = getJarsFromExtTools(bld)
+    copyExtJarTask = getJarsFromExtTools(env)
     bld.add_to_group(copyExtJarTask)
 
     #
@@ -62,31 +59,31 @@ def makeBuild(bld):
     tarFileName="commons-cli-1.4-bin.tar.gz"
     jars = [ "commons-cli-1.4.jar" ]
     from IasWafBuildTools.JarTasks import jarsFromTar
-    getJarsFromTarTask = jarsFromTar(tarFileName,jars, bld.env)
+    getJarsFromTarTask = jarsFromTar(tarFileName, jars, env)
     bld.add_to_group(getJarsFromTarTask)
 
     #
     # Python modules
     #
     from IasWafBuildTools.PythonBuilder import buildPythonModules
-    bldPyMods = buildPythonModules(bld)
+    bldPyMods = buildPythonModules(env)
     bld.add_to_group(bldPyMods)
 
     #
     # Config files
     #
     from IasWafBuildTools.FileTasks import CopyTask
-    copyConfigFiles = CopyTask(bld.env, bld.env.CONFIGSRCFOLDER, bld.env.CONFIGDSTFOLDER)
-    copyConfigFiles.color= 'CYAN'
+    copyConfigFiles = CopyTask(env, env.CONFIGSRCFOLDER, env.CONFIGDSTFOLDER)
+    copyConfigFiles.color = 'CYAN'
     bld.add_to_group(copyConfigFiles)
 
     #
     # Shell scripts
     #
     bldShScripts = CopyTask(
-        bld.env,
-        bld.env.SRCMAINFOLDER,
-        bld.env.BLDBINFOLDER,
+        env,
+        env.SRCMAINFOLDER,
+        env.BLDBINFOLDER,
         remove_extension=True,
         make_executable=True,
         file_extension=".sh"
@@ -98,27 +95,28 @@ def makeBuild(bld):
     # Python scripts
     #
     bldPyScripts = CopyTask(
-        bld.env,
-        bld.env.PYSRCFOLDER,
-        bld.env.BLDBINFOLDER,
+        env,
+        env.PYSRCFOLDER,
+        env.BLDBINFOLDER,
         remove_extension=True,
         make_executable=True,
         file_extension=".py"
     )
-    bldPyScripts.color='GREY'
+    bldPyScripts.color = 'GREY'
     bld.add_to_group(bldPyScripts)
 
 def build(bld):
     bld.load('IasWafBuildTools', tooldir='../WafBuildTools/src/main/python/')
     bld.add_group("Tools")
     from IasWafBuildTools.Utils import set_env
-    set_env(bld.env,bld.path,bld.bldnode)
-    bld.env.PREFIX = os.environ['IAS_ROOT']
+    env = bld.env.derive()
+    set_env(env, bld.path, bld.bldnode)
+    env.PREFIX = os.environ['IAS_ROOT']
 
     if bld.cmd == 'build':
-        makeBuild(bld)
+        makeBuild(bld, env)
     elif bld.cmd == 'install':
         makeInstall(bld)
     elif bld.cmd == 'clean':
-        Logs.info("Cleaning %s",bld.bldnode.abspath())
+        Logs.info("Cleaning %s", bld.bldnode.abspath())
         bld(rule='rm -rf build/*', always=True)
