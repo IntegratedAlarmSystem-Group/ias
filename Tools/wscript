@@ -76,7 +76,7 @@ def makeBuild(bld):
     # Config files
     #
     from IasWafBuildTools.FileTasks import CopyTask
-    copyConfigFiles = CopyTask(bld.env, bld.env.CONFIGSRCFOLDER)
+    copyConfigFiles = CopyTask(bld.env, bld.env.CONFIGSRCFOLDER, bld.env.CONFIGDSTFOLDER)
     copyConfigFiles.color= 'CYAN'
     bld.add_to_group(copyConfigFiles)
 
