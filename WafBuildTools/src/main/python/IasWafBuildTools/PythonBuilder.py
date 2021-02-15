@@ -34,7 +34,7 @@ class BuildPythonModules(Task):
 
     def getPyModules(self):
         '''
-        Scan the python source folder and preprae the list of inputs and outputs to be used by the build.
+        Scan the python source folder and prepare the list of inputs and outputs to be used by the build.
         :return:
         '''
         # python sources in the main folder (to be discarded)
@@ -48,7 +48,7 @@ class BuildPythonModules(Task):
         for pySrc in pyModSources:
             if pySrc not in pySources:
                 # The dest file must take into account subfolders
-                destDir = pySrc.abspath().replace(self.env.PYSRCFOLDER.abspath(),"",1) # Still contains the name of the file
+                destDir = pySrc.abspath().replace(self.env.PYSRCFOLDER.abspath(), "", 1) # Still contains the name of the file
                 pos = destDir.rfind('/')
                 destDir = destDir[1:pos]
                 destNode = self.env.PYMODDSTFOLDER.find_or_declare(destDir)
