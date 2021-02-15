@@ -3,7 +3,7 @@ from waflib import Logs
 def install(bld):
     assert bld
     foldersToInstall = [ 'bin', 'lib', 'extTools', 'config']
-    src = bld.env.DSTNODE
+    src = bld.env.BLDNODE
     dst = bld.env.PREFIX
 
     Logs.info("Installer: Installing files from %s ---to---> %s", src, dst)
