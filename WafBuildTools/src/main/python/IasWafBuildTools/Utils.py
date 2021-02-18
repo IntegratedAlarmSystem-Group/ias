@@ -77,6 +77,8 @@ def set_env(env, sourceNode, buildNode):
 
     env.JVMDSTFOLDER = env.DSTNODE.make_node('classes') # For .class files
     # print("env.JVMDSTFOLDER", env.JVMDSTFOLDER.abspath())
+    env.RESOURCESFOLDER = sourceNode.make_node('src/main/resources')
+    # print("env.RESOURCESFOLDER", env.RESOURCESFOLDER.abspath())
 
 def buildDstFileNode(inputNode, dstFolderNode, dstFileName=None, removeExtension=False):
     '''
