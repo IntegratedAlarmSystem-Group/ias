@@ -177,7 +177,9 @@ def buildJar(env, jarName):
 
 class CreateJar(Task):
     '''
-    Build a jar file with all he .class files found in the source folder
+    Build a jar file with
+    - all the .class files found in the classes folder
+    - the files in the resources folder
     '''
 
     def __init__(self, environ, destFolderNode, jarName, mainClass=None):
@@ -192,6 +194,7 @@ class CreateJar(Task):
         self.destFolderNode = destFolderNode
         self.jarName = jarName
         self.mainClass = mainClass
+        self.resources = []
 
         self.getJarSources()
         self.jarNode = self.destFolderNode.find_or_declare(jarName)
@@ -208,16 +211,26 @@ class CreateJar(Task):
         classSources = self.env.JVMDSTFOLDER.ant_glob("**/*.class")
         for classSrc in classSources:
             self.set_inputs(classSrc)
+        if os.path.exists(self.env.RESOURCESFOLDER.abspath()):
+            self.resources = self.env.RESOURCESFOLDER.ant_glob("**/*")
+            for res in self.resources:
+                self.set_inputs(res)
 
     def run(self):
         '''
         The task to build the jar
         :return:
         '''
-        cmd = "jar cf "+self.jarNode.abspath()
+        cmd = "%s cf %s" % (self.env.JAR[0], self.jarNode.abspath())
         if self.mainClass is not None:
             cmd = cmd + ' --main-class='+self.mainClass
         cmd = cmd + ' -C '+self.env.JVMDSTFOLDER.abspath()+' .'
-
         self.exec_command(cmd)
+
+        if len(self.resources) > 0:
+            cmd = "%s uf %s" % (self.env.JAR[0], self.jarNode.abspath())
+            cmd = cmd + ' -C '+self.env.RESOURCESFOLDER.abspath() + ' .'
+            self.exec_command(cmd)
+
+
 
