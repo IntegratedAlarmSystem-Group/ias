@@ -39,6 +39,7 @@ def checkTools(conf):
     conf.find_program('unzip', var='UNZIP')
     conf.find_program('scalac', var='SCALAC', mandatory=True)
     conf.find_program('javac', var='JAVAC', mandatory=True)
+    conf.find_program('jar', var='JAR', mandatory=True)
 
 def checkIntegrity(conf):
     """
