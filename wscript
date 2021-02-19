@@ -7,7 +7,8 @@ out = 'build'
 IasModules = [
     'Tools',
     'Utils',
-    'Cdb']
+    'Cdb',
+    'BasicTypes']
 
 import os
 
