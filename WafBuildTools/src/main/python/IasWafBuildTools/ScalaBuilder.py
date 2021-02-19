@@ -30,15 +30,19 @@ class ScalaBuilder(Task):
         super(ScalaBuilder, self).__init__(env=environ)
         # A dictionary to associate each scala source file to the destination (.class)
         self.filesToBuild = {}
+        self.javaSources = []
         self.getScalaSources()
 
     def getScalaSources(self):
         '''
-        Scan the scala folder to add to the inputs all the *.scala sources
+        Scan the scala folder to add to the inputs all the *.scala and *.java sources
         :return:
         '''
-        # All python sources
+        # All scala sources
         scalaSources = self.env.SCALASRCFOLDER.ant_glob("**/*.scala")
+        # All java sources
+        if (os.path.exists(self.env.JAVASRCFOLDER.abspath())):
+            self.javaSources = self.env.JAVASRCFOLDER.ant_glob("**/*.java")
 
         for scalaSrc in scalaSources:
             # The dest file must take into account subfolders
@@ -52,10 +56,18 @@ class ScalaBuilder(Task):
             self.set_outputs(dst)
             self.filesToBuild[scalaSrc] = dst
 
+        # Include java sources: scalac scans those files but does not produce .class
+        # This is needed for interoperability between java and scala
+        for javaSrc in self.javaSources:
+            self.set_inputs(javaSrc)
+
     def run(self):
         sourceNodes = self.filesToBuild.keys()
         sourceFiles =  map(lambda x: x.abspath(), sourceNodes)
         sourceFiles = " ".join(sourceFiles)
+
+        javasrcs = list(map(lambda x: x.abspath(), self.javaSources))
+        sourceFiles = sourceFiles + (' ' + " ".join(javasrcs))
 
         classPath = JavaScalaCommBuilder.buildClasspath(self.env.BLDNODE.abspath(), self.env.PREFIX)
 
