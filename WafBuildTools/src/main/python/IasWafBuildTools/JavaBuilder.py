@@ -63,7 +63,8 @@ class JavaBuilder(Task):
         sourceFiles = map(lambda x: x.abspath(), sourceNodes)
         sourceFiles = " ".join(sourceFiles)
 
-        classPath = JavaScalaCommBuilder.buildClasspath(self.env.BLDNODE.abspath(), self.env.PREFIX)
+        # Java classpath needs also the classes built by scala in the same module and contained in JVMDSTFOLDER
+        classPath = "%s:%s" % (JavaScalaCommBuilder.buildClasspath(self.env.BLDNODE.abspath(), self.env.PREFIX), self.env.JVMDSTFOLDER.abspath())
 
         cmd = self.env.JAVAC[0]+" "+JAVAC_OPTS +" -d "+self.env.JVMDSTFOLDER.abspath()+" "+classPath+" "+sourceFiles
         self.exec_command(cmd)
