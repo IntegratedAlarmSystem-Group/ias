@@ -1,6 +1,7 @@
 '''
 A collection of utilities for Waf build system of the IAS
 '''
+import os
 
 def getPythonVersion():
     '''
@@ -79,6 +80,12 @@ def set_env(env, sourceNode, buildNode):
     # print("env.JVMDSTFOLDER", env.JVMDSTFOLDER.abspath())
     env.RESOURCESFOLDER = sourceNode.make_node('src/main/resources')
     # print("env.RESOURCESFOLDER", env.RESOURCESFOLDER.abspath())
+
+    #
+    # Environment variables
+    #
+    env.SCALA_HOME = os.environ['SCALA_HOME']
+    env.JAVA_HOME = os.environ['JAVA_HOME']
 
 def buildDstFileNode(inputNode, dstFolderNode, dstFileName=None, removeExtension=False):
     '''
