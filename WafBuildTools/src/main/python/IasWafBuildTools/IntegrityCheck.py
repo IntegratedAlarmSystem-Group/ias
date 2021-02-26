@@ -1,6 +1,7 @@
 """
 Integrity checks for building the IAS
 """
+import os
 from waflib import Logs
 
 def checkIasRoot(conf):
@@ -13,6 +14,12 @@ def checkIasRoot(conf):
     conf.add_os_flags('IAS_ROOT')
     if conf.env.IAS_ROOT is None or not conf.env.IAS_ROOT:
         conf.fatal('IAS_ROOT not defined')
+    conf.add_os_flags('SCALA_HOME')
+    if conf.env.SCALA_HOME is None or not conf.env.SCALA_HOME:
+        conf.fatal('SCALA_HOME not defined')
+    conf.add_os_flags('JAVA_HOME')
+    if conf.env.JAVA_HOME is None or not conf.env.JAVA_HOME:
+        conf.fatal('JAVA_HOME not defined')
 
     folder = conf.env.IAS_ROOT[0]
     if folder:
