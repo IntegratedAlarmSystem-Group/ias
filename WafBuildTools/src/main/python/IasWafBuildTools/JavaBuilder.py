@@ -8,6 +8,7 @@
 # JAVAC options
 JAVAC_OPTS = "-Xpkginfo:always"
 
+import glob
 from waflib.Task import Task
 from IasWafBuildTools.Utils import buildDstFileNode
 from IasWafBuildTools.JavaScalaCommBuilder import JavaScalaCommBuilder
@@ -58,13 +59,33 @@ class JavaBuilder(Task):
             self.set_outputs(dst)
             self.filesToBuild[JavaSrc] = dst
 
+    def addScalaToClasspath(self):
+        '''
+        Add scala jars to the classpath
+
+        :return: the string to add to the classpath with the jars of scala
+        '''
+        scala_jars = glob.glob(self.env.SCALA_HOME+"/lib/*.jar", recursive=True)
+        ret = ""
+        first = True
+        for jar in scala_jars:
+            if first:
+                ret = ret + jar
+                first = False
+            else:
+                ret = ret + ':' + jar
+        return ret
+
     def run(self):
         sourceNodes = self.filesToBuild.keys()
         sourceFiles = map(lambda x: x.abspath(), sourceNodes)
         sourceFiles = " ".join(sourceFiles)
 
         # Java classpath needs also the classes built by scala in the same module and contained in JVMDSTFOLDER
-        classPath = "%s:%s" % (JavaScalaCommBuilder.buildClasspath(self.env.BLDNODE.abspath(), self.env.PREFIX), self.env.JVMDSTFOLDER.abspath())
+        classPath = "%s:%s:%s" % (
+            JavaScalaCommBuilder.buildClasspath(self.env.BLDNODE.abspath(), self.env.PREFIX),
+            self.env.JVMDSTFOLDER.abspath(),
+            self.addScalaToClasspath())
 
         cmd = self.env.JAVAC[0]+" "+JAVAC_OPTS +" -d "+self.env.JVMDSTFOLDER.abspath()+" "+classPath+" "+sourceFiles
         self.exec_command(cmd)
