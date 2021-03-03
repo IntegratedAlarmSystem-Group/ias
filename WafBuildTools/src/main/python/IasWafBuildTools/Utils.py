@@ -10,7 +10,12 @@ def getPythonVersion():
     :return: The version of python as list of strings ['major', 'minor', 'patch']
     '''
     import subprocess
-    out=subprocess.Popen(['python', '--version'],
+    try:
+        out=subprocess.Popen(['python', '--version'],
+                     stdout=subprocess.PIPE,
+                     stderr=subprocess.STDOUT)
+    except:
+        out=subprocess.Popen(['python3', '--version'],
                      stdout=subprocess.PIPE,
                      stderr=subprocess.STDOUT)
     stdout,stderr = out.communicate()
