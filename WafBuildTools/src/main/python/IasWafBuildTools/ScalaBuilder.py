@@ -71,5 +71,5 @@ class ScalaBuilder(Task):
 
         classPath = JavaScalaCommBuilder.buildClasspath(self.env.BLDNODE.abspath(), self.env.PREFIX)
 
-        cmd = self.env.SCALAC[0]+" -d "+self.env.JVMDSTFOLDER.abspath()+" "+classPath+" "+sourceFiles
+        cmd = self.env.SCALAC[0]+" -deprecation -d "+self.env.JVMDSTFOLDER.abspath()+" "+classPath+" "+sourceFiles
         self.exec_command(cmd)
