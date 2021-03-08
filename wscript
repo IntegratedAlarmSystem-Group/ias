@@ -13,7 +13,8 @@ IasModules = [
     'KafkaUtils',
     'CommandsAndReplies',
     'Heartbeat',
-    'Plugin']
+    'Plugin',
+    'PythonPluginFeeder']
 
 import os
 
