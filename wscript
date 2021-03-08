@@ -8,7 +8,8 @@ IasModules = [
     'Tools',
     'Utils',
     'Cdb',
-    'BasicTypes']
+    'BasicTypes',
+    'CdbChecker']
 
 import os
 
