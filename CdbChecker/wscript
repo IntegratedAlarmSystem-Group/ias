@@ -40,7 +40,7 @@ def makeBuild(bld, env):
     # Build the jar
     #
     from IasWafBuildTools.JarTasks import buildJar
-    jar_builder = buildJar(env, "iasBasicTypes.jar")
+    jar_builder = buildJar(env, "iasCdbChecker.jar")
     jar_builder.set_run_after(scalaBuilder)
     bld.add_to_group(jar_builder)
 
