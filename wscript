@@ -10,7 +10,8 @@ IasModules = [
     'Cdb',
     'BasicTypes',
     'CdbChecker',
-    'KafkaUtils']
+    'KafkaUtils',
+    'CommandsAndReplies']
 
 import os
 
