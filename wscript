@@ -14,7 +14,8 @@ IasModules = [
     'CommandsAndReplies',
     'Heartbeat',
     'Plugin',
-    'PythonPluginFeeder']
+    'PythonPluginFeeder',
+    'Converter']
 
 import os
 
