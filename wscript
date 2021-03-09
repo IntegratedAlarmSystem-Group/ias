@@ -20,7 +20,8 @@ IasModules = [
     'DistributedUnit',
     'Supervisor',
     'WebServerSender',
-    'TransferFunctions']
+    'TransferFunctions',
+    'SinkClient']
 
 import os
 
