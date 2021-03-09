@@ -63,7 +63,7 @@ def makeBuild(bld, env):
     # Build the jar
     #
     from IasWafBuildTools.JarTasks import buildJar
-    jar_builder = buildJar(env, "iasCompElem.jar")
+    jar_builder = buildJar(env, "iasAsce.jar")
     jar_builder.set_run_after(javaBuilder)
     bld.add_to_group(jar_builder)
 
