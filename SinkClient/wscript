@@ -1,0 +1,112 @@
+import os
+from waflib import Logs
+
+top = '.'
+try:
+    out
+except NameError:
+    # out not defined
+    out = 'build'
+
+def options(conf):
+    pass
+
+def configure(conf):
+    Logs.info("SinkClient: Configuring...")
+
+def makeInstall(ctx):
+    from IasWafBuildTools.Installer import Installer
+    installer = Installer(ctx)
+    ctx.add_to_group(installer)
+
+def makeBuild(bld, env):
+    '''
+    Make the build
+
+    :param bld: The waf build context
+    :param env: The Waf environment
+    :return:
+    '''
+    Logs.info("Building %s", bld.path.abspath())
+
+    #
+    # Get jar from tar
+    #
+    tarFileName="cassandra-java-driver-3.6.0.tar.gz"
+    jars = [
+        'cassandra-driver-core-3.6.0.jar',
+        'asm-5.0.3.jar',
+        'asm-analysis-5.0.3.jar',
+        'asm-commons-5.0.3.jar',
+        'asm-tree-5.0.3.jar',
+        'asm-util-5.0.3.jar',
+        'guava-19.0.jar',
+        'HdrHistogram-2.1.10.jar',
+        'jffi-1.2.16.jar',
+        'jffi-1.2.16-native.jar',
+        'jnr-constants-0.9.9.jar',
+        'jnr-ffi-2.1.7.jar',
+        'jnr-posix-3.0.44.jar',
+        'jnr-x86asm-1.0.2.jar',
+        'lz4-java-1.4.1.jar',
+        'metrics-core-3.2.2.jar',
+        'snappy-java-1.1.2.6.jar'
+     ]
+    from IasWafBuildTools.JarTasks import jarsFromTar
+    getJarsFromTarTask = jarsFromTar(tarFileName, jars, env)
+    bld.add_to_group(getJarsFromTarTask)
+
+    #
+    # Config files
+    #
+    from IasWafBuildTools.FileTasks import CopyTask
+    copyConfigFiles = CopyTask(env, env.CONFIGSRCFOLDER, env.CONFIGDSTFOLDER)
+    copyConfigFiles.color = 'CYAN'
+    bld.add_to_group(copyConfigFiles)
+
+    #
+    # get Jars from extTools
+    #
+    from IasWafBuildTools.JarTasks import getJarsFromExtTools
+    copyExtJarTask = getJarsFromExtTools(env)
+    copyExtJarTask.set_run_after(getJarsFromTarTask)
+    bld.add_to_group(copyExtJarTask)
+
+    #
+    # Scala sources
+    #
+    from IasWafBuildTools.ScalaBuilder import buildScala
+    scalaBuilder = buildScala(env)
+    scalaBuilder.set_run_after(copyExtJarTask)
+    bld.add_to_group(scalaBuilder)
+
+    #
+    # Java sources
+    #
+    from IasWafBuildTools.JavaBuilder import buildJava
+    javaBuilder = buildJava(env)
+    javaBuilder.set_run_after(scalaBuilder)
+    bld.add_to_group(javaBuilder)
+
+    #
+    # Build the jar
+    #
+    from IasWafBuildTools.JarTasks import buildJar
+    jar_builder = buildJar(env, "iasSinkClients.jar")
+    jar_builder.set_run_after(javaBuilder)
+    bld.add_to_group(jar_builder)
+
+def build(bld):
+    bld.load('IasWafBuildTools', tooldir='../WafBuildTools/src/main/python/')
+    bld.add_group("SinkClient")
+    from IasWafBuildTools.Utils import set_env
+    env = bld.env.derive()
+    set_env(env, bld.path, bld.bldnode)
+    env.PREFIX = os.environ['IAS_ROOT']
+
+    if bld.cmd == 'build':
+        makeBuild(bld, env)
+    elif bld.cmd == 'install':
+        makeInstall(bld)
+    elif bld.cmd == 'clean':
+        bld(rule='rm -rf build/*', always=True)
