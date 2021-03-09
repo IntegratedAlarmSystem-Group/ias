@@ -6,7 +6,7 @@
 '''
 
 # JAVAC options
-JAVAC_OPTS = "-Xpkginfo:always"
+JAVAC_OPTS = "-Xpkginfo:always -Xlint:deprecation"
 
 import glob
 from waflib.Task import Task
