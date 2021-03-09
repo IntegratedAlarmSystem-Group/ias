@@ -22,7 +22,8 @@ IasModules = [
     'WebServerSender',
     'TransferFunctions',
     'SinkClient',
-    'Extras']
+    'Extras',
+    'Monitor']
 
 import os
 
