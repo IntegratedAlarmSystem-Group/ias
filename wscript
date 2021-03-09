@@ -19,7 +19,8 @@ IasModules = [
     'CompElement',
     'DistributedUnit',
     'Supervisor',
-    'WebServerSender']
+    'WebServerSender',
+    'TransferFunctions']
 
 import os
 
