@@ -16,7 +16,8 @@ IasModules = [
     'Plugin',
     'PythonPluginFeeder',
     'Converter',
-    'CompElement']
+    'CompElement',
+    'DistributedUnit']
 
 import os
 
