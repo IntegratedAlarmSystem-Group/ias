@@ -360,7 +360,7 @@ with AutoCloseable {
             suppressedWarningMessages.getAndSet(0),
             logThrottlingTime)
         } else {
-          suppressedWarningMessages incrementAndGet()
+          suppressedWarningMessages.incrementAndGet()
         }
       }
 
