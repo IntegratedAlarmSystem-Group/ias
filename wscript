@@ -15,7 +15,8 @@ IasModules = [
     'Heartbeat',
     'Plugin',
     'PythonPluginFeeder',
-    'Converter']
+    'Converter',
+    'CompElement']
 
 import os
 
