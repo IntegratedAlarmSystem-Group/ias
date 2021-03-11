@@ -31,23 +31,6 @@ def makeBuild(bld, env):
     Logs.info("Building %s", bld.path.abspath())
 
     #
-    # get Jars from extTools
-    #
-    from IasWafBuildTools.JarTasks import getJarsFromExtTools
-    copyExtJarTask = getJarsFromExtTools(env)
-    bld.add_to_group(copyExtJarTask)
-
-    #
-    # Get jar from tar
-    #
-    tarFileName="logback-1.2.3.tar.gz"
-    jars = ["logback-core-1.2.3.jar", "logback-classic-1.2.3.jar"]
-    from IasWafBuildTools.JarTasks import jarsFromTar
-    getJarsFromTarTask = jarsFromTar(tarFileName, jars, env)
-    getJarsFromTarTask.set_run_after(copyExtJarTask)
-    bld.add_to_group(getJarsFromTarTask)
-
-    #
     # Python modules
     #
     from IasWafBuildTools.PythonBuilder import buildPythonModules
@@ -74,7 +57,6 @@ def makeBuild(bld, env):
     #
     from IasWafBuildTools.ScalaBuilder import buildScala
     scalaBuilder = buildScala(env)
-    scalaBuilder.set_run_after(getJarsFromTarTask)
     bld.add_to_group(scalaBuilder)
 
     #

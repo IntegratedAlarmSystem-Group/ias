@@ -54,13 +54,23 @@ def makeBuild(bld, env):
     bld.add_to_group(copyExtJarTask)
 
     #
-    # Get jar from tar
+    # Get jars from tar
     #
     tarFileName="commons-cli-1.4-bin.tar.gz"
     jars = [ "commons-cli-1.4.jar" ]
     from IasWafBuildTools.JarTasks import jarsFromTar
     getJarsFromTarTask = jarsFromTar(tarFileName, jars, env)
     bld.add_to_group(getJarsFromTarTask)
+
+    #
+    # Again get jar from tar
+    #
+    tarFileName2="logback-1.2.3.tar.gz"
+    jars = ["logback-core-1.2.3.jar", "logback-classic-1.2.3.jar"]
+    from IasWafBuildTools.JarTasks import jarsFromTar
+    getJarsFromTarTask2 = jarsFromTar(tarFileName2, jars, env)
+    getJarsFromTarTask2.set_run_after(getJarsFromTarTask)
+    bld.add_to_group(getJarsFromTarTask2)
 
     #
     # Python modules
