@@ -6,7 +6,6 @@ out = 'build'
 # IAS modules to build
 IasModules = [
     'Tools',
-    'Utils',
     'Cdb',
     'BasicTypes',
     'CdbChecker',
