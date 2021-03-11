@@ -73,6 +73,22 @@ def makeBuild(bld, env):
     bld.add_to_group(getJarsFromTarTask2)
 
     #
+    # Scala sources
+    #
+    from IasWafBuildTools.ScalaBuilder import buildScala
+    scalaBuilder = buildScala(env)
+    scalaBuilder.set_run_after(tarFileName2)
+    bld.add_to_group(scalaBuilder)
+
+    #
+    # Build the jar
+    #
+    from IasWafBuildTools.JarTasks import buildJar
+    jarBuilder = buildJar(env, "iasTools.jar")
+    jarBuilder.set_run_after(scalaBuilder)
+    bld.add_to_group(jarBuilder)
+
+    #
     # Python modules
     #
     from IasWafBuildTools.PythonBuilder import buildPythonModules
