@@ -52,12 +52,7 @@ def makeBuild(bld, env):
     bldPyScripts.color = 'GREY'
     bld.add_to_group(bldPyScripts)
 
-    #
-    # Scala sources
-    #
-    from IasWafBuildTools.ScalaBuilder import buildScala
-    scalaBuilder = buildScala(env)
-    bld.add_to_group(scalaBuilder)
+
 
     #
     # Build the jar
