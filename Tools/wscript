@@ -77,7 +77,7 @@ def makeBuild(bld, env):
     #
     from IasWafBuildTools.ScalaBuilder import buildScala
     scalaBuilder = buildScala(env)
-    scalaBuilder.set_run_after(tarFileName2)
+    scalaBuilder.set_run_after(getJarsFromTarTask2)
     bld.add_to_group(scalaBuilder)
 
     #
