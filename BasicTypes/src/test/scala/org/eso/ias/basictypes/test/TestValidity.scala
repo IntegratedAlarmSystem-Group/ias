@@ -1,6 +1,6 @@
 package org.eso.ias.basictypes.test
 
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import org.eso.ias.types.Validity
 import org.eso.ias.types.IasValidity
 import org.eso.ias.types.IasValidity._
@@ -11,7 +11,7 @@ import org.eso.ias.types.IasValidity._
  * 
  * @author acaproni
  */
-class TestValidity extends FlatSpec {
+class TestValidity extends AnyFlatSpec {
   
   "Only Reliable" must "be valid" in {
     val values = IasValidity.values

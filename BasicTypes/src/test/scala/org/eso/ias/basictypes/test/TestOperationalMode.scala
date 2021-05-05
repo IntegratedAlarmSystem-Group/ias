@@ -1,14 +1,14 @@
 package org.eso.ias.basictypes.test
 
 import org.eso.ias.types.OperationalMode
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.JavaConverters
 
 /**
   * Test the operational modes
   */
-class TestOperationalMode extends FlatSpec {
+class TestOperationalMode extends AnyFlatSpec {
   behavior of "The operational mode"
 
   it must "throw an exception if the inputs is empty" in {

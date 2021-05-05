@@ -6,7 +6,7 @@ import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.{DasuToDeployDao, IasioDao}
 import org.eso.ias.cdb.topology.TemplateHelper
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.JavaConverters
 
@@ -22,7 +22,7 @@ import scala.language.reflectiveCalls
  * The test uses the CDB in test/CDB and the DasusToDeploy defined in 
  * the SupervisorWithTemplates Supervisor.
  */
-class TemplateHelperTest extends FlatSpec {
+class TemplateHelperTest extends AnyFlatSpec {
   
    /** Fixture to build same type of objects for the tests */
   def fixture = new {

@@ -2,7 +2,7 @@ package org.eso.ias.basictypes.test
 
 import org.eso.ias.types.IasValidity._
 import org.eso.ias.types._
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 // The following import is required by the usage of the fixture
 import scala.language.reflectiveCalls
@@ -10,7 +10,7 @@ import scala.language.reflectiveCalls
 /**
  * Test the conversion from IASIO to IASValue and vice-versa
  */
-class TestJavaConversion  extends FlatSpec {
+class TestJavaConversion  extends AnyFlatSpec {
   
   behavior of "The Scala<->Java converter"
   

@@ -2,7 +2,7 @@ package org.eso.ias.basictypes.test
 
 import org.eso.ias.types.IasValidity._
 import org.eso.ias.types._
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.JavaConverters
 
@@ -11,7 +11,7 @@ import scala.collection.JavaConverters
  *
  * @author acaproni
  */
-class TestInOut extends FlatSpec {
+class TestInOut extends AnyFlatSpec {
   val supervId = new Identifier("SupervId", IdentifierType.SUPERVISOR, None)
   val dasuId = new Identifier("DasuId", IdentifierType.DASU, supervId)
   val asceId = new Identifier("AsceId", IdentifierType.ASCE, Some(dasuId))

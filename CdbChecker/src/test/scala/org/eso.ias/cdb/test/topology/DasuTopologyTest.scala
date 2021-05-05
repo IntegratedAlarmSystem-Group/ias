@@ -1,10 +1,10 @@
 package org.eso.ias.cdb.test.topology
 
 import org.eso.ias.cdb.topology.{AsceTopology, DasuTopology}
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /** Test the Topology */
-class DasuTopologyTest extends FlatSpec {
+class DasuTopologyTest extends AnyFlatSpec {
   
   // Builds the ASCEs for the topology to test
   val asce1: AsceTopology = new AsceTopology("ASCE1-ID",Set("IN1","IN2","IN3"),                        "ASCE-OUT1")

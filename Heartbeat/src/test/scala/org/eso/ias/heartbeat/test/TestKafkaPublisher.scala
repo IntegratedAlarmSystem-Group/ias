@@ -6,15 +6,15 @@ import org.eso.ias.heartbeat.serializer.HbJsonSerializer
 import org.eso.ias.heartbeat.{Heartbeat, HeartbeatProducerType, HeartbeatStatus}
 import org.eso.ias.kafkautils.{KafkaHelper, SimpleStringProducer}
 import org.eso.ias.logging.IASLogger
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec}
-
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatest.flatspec.AnyFlatSpec
 import scala.collection.mutable.ListBuffer
 import scala.util.Try
 
 /**
  * Test the HB kafka publisher and consumer
  */
-class TestKafkaPublisher extends FlatSpec with HbListener with BeforeAndAfterEach with BeforeAndAfterAll {
+class TestKafkaPublisher extends AnyFlatSpec with HbListener with BeforeAndAfterEach with BeforeAndAfterAll {
   
   /** The logger */
   val logger = IASLogger.getLogger(classOf[TestKafkaPublisher])
