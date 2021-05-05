@@ -8,7 +8,7 @@ import scala.collection.mutable.ArrayBuffer
 import org.eso.ias.heartbeat.{HbEngine, HbMsgSerializer, HeartbeatStatus}
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
 import org.eso.ias.logging.IASLogger
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.language.reflectiveCalls
 import scala.util.Try
@@ -57,7 +57,7 @@ class MockProducer(serializer: HbMsgSerializer) extends HbProducer(serializer) {
   
 }
 
-class TestEngine extends FlatSpec {
+class TestEngine extends AnyFlatSpec {
   
   /** Fixture to build the HB engine to tests */
   def fixture =

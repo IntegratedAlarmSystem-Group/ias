@@ -1,7 +1,7 @@
 package org.eso.ias.utils.test
 
 import org.eso.ias.utils.ISO8601Helper
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import java.util.TimeZone
 import java.util.Date
@@ -12,7 +12,7 @@ import java.text.SimpleDateFormat
  *  and vice-versa
  *  
  */
-class ISO8601Test extends FlatSpec {
+class ISO8601Test extends AnyFlatSpec {
   
   def getHour(timestamp: String): Int = {
     val parts = timestamp.split("T")(1).split(":")(0)
