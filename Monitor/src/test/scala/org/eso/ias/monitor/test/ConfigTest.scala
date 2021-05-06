@@ -4,14 +4,14 @@ import java.io.File
 
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.monitor.{IasMonitorConfig, KafkaSinkConnectorConfig}
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.JavaConverters
 
 /** Test the [[org.eso.ias.monitor.IasMonitorConfig]]
   *
   */
-class ConfigTest extends FlatSpec {
+class ConfigTest extends AnyFlatSpec {
 
   behavior of "The IasMonitorConfig"
 

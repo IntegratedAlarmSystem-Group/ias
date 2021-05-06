@@ -7,14 +7,14 @@ import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.{IasTypeDao, IasioDao, TemplateDao}
 import org.eso.ias.command.{CommandListener, CommandManager}
-import org.eso.ias.dasu.publisher.DirectInputSubscriber
+import org.eso.ias.dasu.subscriber.DirectInputSubscriber
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
 import org.eso.ias.heartbeat.{HbMsgSerializer, HbProducer}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.sink.{IasValueProcessor, ValueListener}
 import org.eso.ias.types.IasValidity.UNRELIABLE
 import org.eso.ias.types._
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.JavaConverters
 import scala.collection.mutable.ListBuffer
@@ -113,7 +113,7 @@ class HbProducerTest(s: HbMsgSerializer) extends HbProducer(s) {
 }
 
 /** Test the IasValueProcessor */
-class ValueProcessorTest extends FlatSpec {
+class ValueProcessorTest extends AnyFlatSpec {
   /** The logger */
   private val logger = IASLogger.getLogger(classOf[ValueProcessorTest])
 

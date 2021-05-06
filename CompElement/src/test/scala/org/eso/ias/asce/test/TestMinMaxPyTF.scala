@@ -6,7 +6,7 @@ import org.eso.ias.asce.transfer.{JavaTransfer, TransferFunctionLanguage, Transf
 import org.eso.ias.asce.{AsceStates, CompEleThreadFactory, ComputingElement}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types._
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.mutable.{Map => MutableMap}
 import scala.util.Try
@@ -15,7 +15,7 @@ import scala.util.Try
  * Test the python transfer class: build a PythonExecutorTF that, in turn,
  * delegates method execution to python code
  */
-class TestMinMaxPyTF extends FlatSpec {
+class TestMinMaxPyTF extends AnyFlatSpec {
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
 

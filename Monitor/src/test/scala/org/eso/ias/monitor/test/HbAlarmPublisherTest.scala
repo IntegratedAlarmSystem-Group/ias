@@ -8,7 +8,8 @@ import com.typesafe.scalalogging.Logger
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.monitor.{MonitorAlarm, MonitorAlarmsProducer}
 import org.eso.ias.types.{Alarm, IASValue}
-import org.scalatest.{BeforeAndAfterEach, FlatSpec}
+import org.scalatest.{BeforeAndAfterEach}
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.JavaConverters
 
@@ -19,7 +20,7 @@ import scala.collection.JavaConverters
   * a [[AlarmPublisherListener]] listener
   *
   */
-class HbAlarmPublisherTest extends FlatSpec with AlarmPublisherListener with BeforeAndAfterEach {
+class HbAlarmPublisherTest extends AnyFlatSpec with AlarmPublisherListener with BeforeAndAfterEach {
 
   /** Th e identifier */
   val identifier = "IasmoitorToolId"

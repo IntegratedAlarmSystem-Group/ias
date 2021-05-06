@@ -6,11 +6,12 @@ import java.util.concurrent.atomic.AtomicInteger
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.dasu.DasuImpl
-import org.eso.ias.dasu.publisher.{DirectInputSubscriber, ListenerOutputPublisherImpl, OutputListener, OutputPublisher}
+import org.eso.ias.dasu.publisher.{ListenerOutputPublisherImpl, OutputListener, OutputPublisher}
+import org.eso.ias.dasu.subscriber.DirectInputSubscriber
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IasValidity._
 import org.eso.ias.types._
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.mutable.ListBuffer
 
@@ -45,7 +46,7 @@ import scala.language.reflectiveCalls
  * The configurations of DASU, ASCE, TF and IASIOs are all stored 
  * in the CDB folder.
  */
-class Dasu7ASCEsTest extends FlatSpec {
+class Dasu7ASCEsTest extends AnyFlatSpec {
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass);

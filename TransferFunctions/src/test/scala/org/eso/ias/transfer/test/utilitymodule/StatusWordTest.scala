@@ -1,10 +1,10 @@
 package org.eso.ias.transfer.test.utilitymodule
 
 import org.eso.ias.tranfer.utlitymodule.StatusWord
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /** Test the StatusWord */
-class StatusWordTest extends FlatSpec {
+class StatusWordTest extends AnyFlatSpec {
 
   val statusString00="AC-POWER:0,AT-ZENITH:0,HVAC:0,FIRE:0,UPS-POWER:0,STOW-PIN:0,RX-CAB-TEMP:0,DRIVE-CAB-TEMP:0,ANTENNA-POS:0,E-STOP:0"
   val statusString10="AC-POWER:1,AT-ZENITH:0,HVAC:1,FIRE:0,UPS-POWER:1,STOW-PIN:0,RX-CAB-TEMP:1,DRIVE-CAB-TEMP:0,ANTENNA-POS:1,E-STOP:0"

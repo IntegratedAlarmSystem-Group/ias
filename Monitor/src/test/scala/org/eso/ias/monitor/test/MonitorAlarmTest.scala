@@ -3,13 +3,13 @@ package org.eso.ias.monitor.test
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.monitor.MonitorAlarm
 import org.eso.ias.types.Alarm
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
   * Test the [[org.eso.ias.monitor.MonitorAlarm]], in particular the GLOBAL
   * multiplicity
   */
-class MonitorAlarmTest extends FlatSpec {
+class MonitorAlarmTest extends AnyFlatSpec {
 
   /** The logger */
   val logger = IASLogger.getLogger(classOf[MonitorAlarmTest])

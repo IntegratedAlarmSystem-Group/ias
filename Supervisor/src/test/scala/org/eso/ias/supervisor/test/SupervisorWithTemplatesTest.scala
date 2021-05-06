@@ -4,11 +4,12 @@ import java.nio.file.{FileSystems, Path}
 
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
-import org.eso.ias.dasu.publisher.{DirectInputSubscriber, ListenerOutputPublisherImpl, OutputListener, OutputPublisher}
+import org.eso.ias.dasu.publisher.{ListenerOutputPublisherImpl, OutputListener, OutputPublisher}
+import org.eso.ias.dasu.subscriber.DirectInputSubscriber
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.supervisor.Supervisor
 import org.eso.ias.types._
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -18,7 +19,7 @@ import org.eso.ias.heartbeat.serializer.HbJsonSerializer
 
 import scala.language.reflectiveCalls
 
-class SupervisorWithTemplatesTest extends FlatSpec {
+class SupervisorWithTemplatesTest extends AnyFlatSpec {
 
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)

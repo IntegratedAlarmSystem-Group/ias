@@ -7,12 +7,13 @@ import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.DasuDao
 import org.eso.ias.dasu.DasuImpl
-import org.eso.ias.dasu.publisher.{DirectInputSubscriber, JsonWriterPublisher}
+import org.eso.ias.dasu.publisher.JsonWriterPublisher
+import org.eso.ias.dasu.subscriber.DirectInputSubscriber
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IasValidity._
 import org.eso.ias.types._
 import org.eso.ias.types.OperationalMode._
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.io.Source
 
@@ -20,7 +21,7 @@ import scala.io.Source
  *  Test the writing of the output of the DASU
  *  in a JSON file. 
  */
-class JsonPublisherTest extends FlatSpec {
+class JsonPublisherTest extends AnyFlatSpec {
 /** The logger */
   private val logger = IASLogger.getLogger(this.getClass);
   
