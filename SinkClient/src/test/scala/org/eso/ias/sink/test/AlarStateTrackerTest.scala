@@ -3,12 +3,12 @@ package org.eso.ias.sink.test
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.sink.email.AlarmStateTracker
 import org.eso.ias.types.{Alarm, IasValidity, Validity}
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
   * Test the AlarmStateTracker
   */
-class AlarmStateTrackerTest extends FlatSpec {
+class AlarmStateTrackerTest extends AnyFlatSpec {
 
   /** The logger */
   private val logger = IASLogger.getLogger(classOf[AlarmStateTrackerTest])

@@ -7,14 +7,15 @@ import org.eso.ias.asce.transfer.{ScalaTransfer, TransferFunctionLanguage, Trans
 import org.eso.ias.asce.{AsceStates, ComputingElement}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types._
-import org.scalatest.{BeforeAndAfterEach, FlatSpec}
+import org.scalatest.{BeforeAndAfterEach}
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.JavaConverters
 
 /**
  * Test the multiplicity transfer function
  */
-class TestMultiplicityTF extends FlatSpec with BeforeAndAfterEach {
+class TestMultiplicityTF extends AnyFlatSpec with BeforeAndAfterEach {
 
   /** The logger */
   private val logger = IASLogger.getLogger(MultiplicityTF.getClass)

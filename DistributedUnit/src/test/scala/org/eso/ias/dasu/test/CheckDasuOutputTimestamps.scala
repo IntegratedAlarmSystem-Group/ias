@@ -2,7 +2,8 @@ package org.eso.ias.dasu.test
 
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IASValue
-import org.scalatest.{BeforeAndAfter, FlatSpec}
+import org.scalatest.{BeforeAndAfter}
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
  * Checks the timestamps of the output produced by a DASU
@@ -14,7 +15,7 @@ import org.scalatest.{BeforeAndAfter, FlatSpec}
  * 
  * @see  [[https://github.com/IntegratedAlarmSystem-Group/ias/issues/52 Issue #52 on github]]
  */
-class CheckDasuOutputTimestamps extends FlatSpec with BeforeAndAfter {
+class CheckDasuOutputTimestamps extends AnyFlatSpec with BeforeAndAfter {
   
   /** The logger */
   val logger = IASLogger.getLogger(this.getClass);

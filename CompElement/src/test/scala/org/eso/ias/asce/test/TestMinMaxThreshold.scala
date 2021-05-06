@@ -6,9 +6,9 @@ import org.eso.ias.asce.ComputingElement
 import org.eso.ias.asce.transfer.{JavaTransfer, ScalaTransfer, TransferFunctionLanguage, TransferFunctionSetting}
 import org.eso.ias.asce.transfer.impls.{MinMaxThresholdTF, MinMaxThresholdTFJava}
 import org.eso.ias.types.{Alarm, IASTypes, InOut}
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
-class TestMinMaxThreshold extends FlatSpec {
+class TestMinMaxThreshold extends AnyFlatSpec {
   
   // The threshold to assess the validity from the arrival time of the input
   val validityThresholdInSecs = 2

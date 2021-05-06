@@ -1,6 +1,6 @@
 package org.eso.ias.asce.test
 
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import java.util.concurrent.ThreadFactory
 import org.eso.ias.asce.transfer.TransferFunctionSetting
 import org.eso.ias.asce.transfer.TransferFunctionLanguage
@@ -11,7 +11,7 @@ import java.util.Properties
  * 
  * @see TransferFunctionSetting
  */
-class TestTransferFunctionSetting extends FlatSpec {
+class TestTransferFunctionSetting extends AnyFlatSpec {
   
   
   

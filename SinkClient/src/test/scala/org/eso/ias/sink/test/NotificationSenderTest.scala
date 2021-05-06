@@ -11,7 +11,7 @@ import org.eso.ias.logging.IASLogger
 import org.eso.ias.sink.ValueListener
 import org.eso.ias.sink.email.{AlarmState, AlarmStateTracker, NotificationsSender, Sender}
 import org.eso.ias.types._
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.mutable.ListBuffer
 import scala.collection.{JavaConverters, mutable}
@@ -74,7 +74,7 @@ class SenderTest extends Sender {
 /**
   * Test the NotificationSender
   */
-class NotificationSenderTest extends FlatSpec {
+class NotificationSenderTest extends AnyFlatSpec {
   /** The logger */
   private val logger = IASLogger.getLogger(classOf[NotificationSenderTest])
 

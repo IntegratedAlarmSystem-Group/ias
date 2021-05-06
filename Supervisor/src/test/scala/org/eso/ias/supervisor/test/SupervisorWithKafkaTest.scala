@@ -18,7 +18,8 @@ import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosProducer, SimpleKafkaIasi
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.supervisor.Supervisor
 import org.eso.ias.types._
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FlatSpec}
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.JavaConverters
 import scala.collection.mutable.ListBuffer
@@ -49,7 +50,7 @@ import scala.collection.mutable.ListBuffer
  *
  * The test submit some IASIOs and checks what is published in the BSDB.
  */
-class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with BeforeAndAfter {
+class SupervisorWithKafkaTest extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfter {
 
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)

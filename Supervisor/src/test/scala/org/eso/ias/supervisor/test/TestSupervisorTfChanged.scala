@@ -13,7 +13,8 @@ import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosConsumer, KafkaIasiosProd
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types._
 import org.scalactic.source.Position
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FlatSpec}
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.JavaConverters
 
@@ -38,7 +39,7 @@ import scala.collection.JavaConverters
  * output produced by the Supervisor respect the algorithm of the used TF.
  */
 class TestSupervisorTfChanged
-  extends FlatSpec
+  extends AnyFlatSpec
     with BeforeAndAfterAll
     with BeforeAndAfter
     with IasioListener

@@ -6,12 +6,13 @@ import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.DasuDao
 import org.eso.ias.dasu.DasuImpl
-import org.eso.ias.dasu.publisher.{DirectInputSubscriber, ListenerOutputPublisherImpl, OutputListener, OutputPublisher}
+import org.eso.ias.dasu.publisher.{ListenerOutputPublisherImpl, OutputListener, OutputPublisher}
+import org.eso.ias.dasu.subscriber.DirectInputSubscriber
 import org.eso.ias.dasu.subscriber.InputSubscriber
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.supervisor.Supervisor
 import org.eso.ias.types._
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -52,7 +53,7 @@ import scala.language.reflectiveCalls
  *   Non Templated: NonTemplatedId (Long)
  * Output: TemplatedOutId (Long)
  */
-class TemplatedInputTest extends FlatSpec {
+class TemplatedInputTest extends AnyFlatSpec {
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass);

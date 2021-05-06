@@ -1,7 +1,8 @@
 package org.eso.ias.dasu.test
 
 import org.eso.ias.types.IASValue
-import org.scalatest.{BeforeAndAfter, FlatSpec}
+import org.scalatest.{BeforeAndAfter}
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
  * Test the DASU with one ASCE and the MinMaxThreshold TF.
@@ -11,7 +12,7 @@ import org.scalatest.{BeforeAndAfter, FlatSpec}
  * The configurations of DASU, ASCE, TF and IASIOs are all stored 
  * in the CDB folder.
  */
-class DasuOneASCETest extends FlatSpec  with BeforeAndAfter {
+class DasuOneASCETest extends AnyFlatSpec  with BeforeAndAfter {
   
   val f = new DasuOneAsceCommon(3,4)
   

@@ -6,9 +6,10 @@ import org.eso.ias.asce.transfer.{ScalaTransfer, TransferFunctionLanguage, Trans
 import org.eso.ias.asce.{AsceStates, ComputingElement}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types._
-import org.scalatest.{BeforeAndAfterEach, FlatSpec}
+import org.scalatest.{BeforeAndAfterEach}
+import org.scalatest.flatspec.AnyFlatSpec
 
-class TestSlowTF  extends FlatSpec with BeforeAndAfterEach {
+class TestSlowTF  extends AnyFlatSpec with BeforeAndAfterEach {
 
   /** Empty properties */
   val props = new Properties()

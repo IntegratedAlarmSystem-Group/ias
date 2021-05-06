@@ -6,7 +6,8 @@ import org.eso.ias.asce.transfer.{IasIO, IasioInfo}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.tranfer.AntPadInhibitor
 import org.eso.ias.types._
-import org.scalatest.{BeforeAndAfterEach, FlatSpec}
+import org.scalatest.{BeforeAndAfterEach}
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
   * Test the AntPadInhibitor
@@ -14,7 +15,7 @@ import org.scalatest.{BeforeAndAfterEach, FlatSpec}
   * The TF takes 2 inputs and produces one output.
   * One of the inputs is always the antenna/pad association while the other one is an alarm.
   */
-class AntPadInhibitorTest extends FlatSpec with BeforeAndAfterEach {
+class AntPadInhibitorTest extends AnyFlatSpec with BeforeAndAfterEach {
 
   /** The logger */
   val logger = IASLogger.getLogger(this.getClass)

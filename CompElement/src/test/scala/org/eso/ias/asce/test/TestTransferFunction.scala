@@ -8,11 +8,11 @@ import org.eso.ias.asce.transfer.{JavaTransfer, ScalaTransfer, TransferFunctionL
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IasValidity._
 import org.eso.ias.types._
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.mutable.{Map => MutableMap}
 
-class TestTransferFunction extends FlatSpec {
+class TestTransferFunction extends AnyFlatSpec {
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)

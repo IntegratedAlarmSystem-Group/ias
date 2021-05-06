@@ -15,7 +15,8 @@ import org.eso.ias.kafkautils.{KafkaHelper, SimpleStringConsumer, SimpleStringPr
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IasValidity._
 import org.eso.ias.types._
-import org.scalatest.{BeforeAndAfterAll, FlatSpec}
+import org.scalatest.{BeforeAndAfterAll}
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.mutable.ListBuffer
 import scala.util.Try
@@ -31,7 +32,7 @@ import scala.util.Try
  * To check if it works, the test instantiates one kafka producer to submit
  * inputs to the DASU and one consumer to catch if the output produced by the DASU has been pushed in the kafka queue
  */
-class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener with BeforeAndAfterAll {
+class DasuWithKafkaPubSubTest extends AnyFlatSpec with KafkaConsumerListener with BeforeAndAfterAll {
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
   

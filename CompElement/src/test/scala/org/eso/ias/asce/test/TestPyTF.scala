@@ -6,7 +6,7 @@ import org.eso.ias.asce.transfer.{JavaTransfer, TransferFunctionLanguage, Transf
 import org.eso.ias.asce.{AsceStates, CompEleThreadFactory, ComputingElement}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types._
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.mutable.{Map => MutableMap}
 import scala.util.Try
@@ -21,7 +21,7 @@ import scala.util.Try
  *
  * The test is repeated for each possible IASIO type
  */
-class TestPyTF extends FlatSpec {
+class TestPyTF extends AnyFlatSpec {
 
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)

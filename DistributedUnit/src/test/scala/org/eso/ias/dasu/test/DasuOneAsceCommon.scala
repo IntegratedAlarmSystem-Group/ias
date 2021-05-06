@@ -6,7 +6,8 @@ import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.DasuDao
 import org.eso.ias.dasu.DasuImpl
-import org.eso.ias.dasu.publisher.{DirectInputSubscriber, ListenerOutputPublisherImpl, OutputListener, OutputPublisher}
+import org.eso.ias.dasu.publisher.{ListenerOutputPublisherImpl, OutputListener, OutputPublisher}
+import org.eso.ias.dasu.subscriber.DirectInputSubscriber
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IasValidity._
 import org.eso.ias.types._
