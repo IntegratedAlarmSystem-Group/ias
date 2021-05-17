@@ -1,5 +1,8 @@
+import java.io.File
+
 plugins {
     id("scala")
+    id("org.eso.ias.build.plugin")
 }
 
 dependencies {
@@ -16,7 +19,5 @@ dependencies {
 base.archivesBaseName = "iasTools"
 
 repositories {
-   mavenCentral()
+    mavenCentral()
 }
-
-
