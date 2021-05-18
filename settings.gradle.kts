@@ -27,3 +27,22 @@ include(
 		"SinkClient",
 		"Extras",
 		"Monitor")
+
+println("||| Settings")
+val process = ProcessBuilder("python3", "-V").start()
+process.inputStream.reader(Charsets.UTF_8).use {
+
+	val pyVersionStr = it.readText()
+	println("out ===> $pyVersionStr")
+	val pyFullVersion = pyVersionStr.drop(pyVersionStr.lastIndexOf(' ')+1)
+	val pyVersion = pyFullVersion.dropLast(pyFullVersion.lastIndexOf('.'))
+	if (gradle is ExtensionAware) {
+		val extension = gradle as ExtensionAware
+		extension.extra["PythonVersion"] = pyVersion
+		val temp = extension.extra["PythonVersion"]
+		println("temp ===> $temp")
+	}
+}
+process.waitFor(10, TimeUnit.SECONDS)
+
+println("||| Settings done")
