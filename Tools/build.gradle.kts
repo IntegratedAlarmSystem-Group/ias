@@ -17,6 +17,20 @@ dependencies {
 }
 
 base.archivesBaseName = "iasTools"
+base.libsDirName ="lib"
+
+java {
+    toolchain {
+        val g = project.gradle
+        val jdkVersion = if (g is ExtensionAware) {
+            val extension = g as ExtensionAware
+            extension.extra["JdkVersion"].toString().toInt()
+        } else {
+            throw GradleException("Cannot determine the version of Jdk")
+        }
+        languageVersion.set(JavaLanguageVersion.of(jdkVersion))
+    }
+}
 
 repositories {
     mavenCentral()
