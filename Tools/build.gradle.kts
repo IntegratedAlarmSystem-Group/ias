@@ -1,5 +1,6 @@
 plugins {
     id("scala")
+    `java-library-distribution`
     id("org.eso.ias.build.plugin")
 }
 
@@ -28,6 +29,8 @@ java {
         }
         languageVersion.set(JavaLanguageVersion.of(jdkVersion))
     }
+
+
 }
 
 repositories {
