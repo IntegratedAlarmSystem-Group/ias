@@ -1,5 +1,3 @@
-import java.io.File
-
 plugins {
     id("scala")
     id("org.eso.ias.build.plugin")
