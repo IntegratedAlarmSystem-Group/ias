@@ -4,15 +4,11 @@ import org.gradle.api.GradleException
 import org.gradle.api.tasks.Copy
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.file.FileTree
 import org.gradle.api.plugins.ExtensionAware
-import org.gradle.api.tasks.Exec
 import org.gradle.api.tasks.TaskProvider
+import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.register
-import java.io.ByteArrayOutputStream
-import java.util.Scanner
-import java.util.concurrent.TimeUnit
 
 open class IasBuild : Plugin<Project> {
 
@@ -115,9 +111,6 @@ open class IasBuild : Plugin<Project> {
 
             val srcFolder = "src/main/python"
 
-
-
-
             from(project.layout.projectDirectory.dir(srcFolder))
             include("**/*.py")
             exclude("*.py")
@@ -131,9 +124,25 @@ open class IasBuild : Plugin<Project> {
             }
         }
 
+        // Build the jar with the test classes
+        // The name of the jar is built by appending "Test"to the name of the jar built by java/scala
+        val buildTestJar: TaskProvider<Jar> = project.tasks.register<Jar>("buildJarOfTestClasses") {
+            from(project.layout.buildDirectory.dir("classes/scala/test"))
+            from(project.layout.buildDirectory.dir("java/scala/test"))
+            destinationDirectory.set(project.layout.buildDirectory.dir("lib"))
+            archiveFileName.set(archiveBaseName.get()+"Test.jar")
+            doFirst {
+                println("buildJarOfTestClasses doFirst")
+            }
+            doLast {
+                println("buildJarOfTestClasses doLast")
+            }
+        }
+
         project.tasks.getByPath(":${project.name}:build").finalizedBy(conf)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(pyScripts)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(shScripts)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(pyModules)
+        project.tasks.getByPath(":${project.name}:build").finalizedBy(buildTestJar)
     }
 }
