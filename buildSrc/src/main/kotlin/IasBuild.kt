@@ -23,10 +23,9 @@ open class IasBuild : Plugin<Project> {
         val g = project.gradle
         val pythonVersion = if (g is ExtensionAware) {
             val extension = g as ExtensionAware
-            println("python version "+extension.extra["PythonVersion"])
             extension.extra["PythonVersion"]
         } else {
-            "X.Y"
+            throw GradleException("Cannot determine the version of python3")
         }
         println("Using python version $pythonVersion")
 
