@@ -28,21 +28,22 @@ include(
 		"Extras",
 		"Monitor")
 
-println("||| Settings")
+// Gets the version of python 3 installed in this server
+// and stores it in an extra property named PythonVersion
 val process = ProcessBuilder("python3", "-V").start()
 process.inputStream.reader(Charsets.UTF_8).use {
-
 	val pyVersionStr = it.readText()
-	println("out ===> $pyVersionStr")
 	val pyFullVersion = pyVersionStr.drop(pyVersionStr.lastIndexOf(' ')+1)
 	val pyVersion = pyFullVersion.dropLast(pyFullVersion.lastIndexOf('.'))
 	if (gradle is ExtensionAware) {
 		val extension = gradle as ExtensionAware
 		extension.extra["PythonVersion"] = pyVersion
-		val temp = extension.extra["PythonVersion"]
-		println("temp ===> $temp")
 	}
 }
 process.waitFor(10, TimeUnit.SECONDS)
 
-println("||| Settings done")
+// Sets the version of java in the JdkVersion extra property
+if (gradle is ExtensionAware) {
+	val extension = gradle as ExtensionAware
+	extension.extra["JdkVersion"] = 11
+}
