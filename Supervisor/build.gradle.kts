@@ -1,5 +1,6 @@
 plugins {
     id("scala")
+    id("org.eso.ias.build.plugin")
 }
 
 dependencies {
@@ -23,7 +24,8 @@ dependencies {
     testImplementation(project(":CompElement"))
 }
 
-base.archivesBaseName = "iasSupervisor"
+base.archivesBaseName = "ias"+project.name
+base.libsDirName ="lib"
 
 repositories {
    mavenCentral()

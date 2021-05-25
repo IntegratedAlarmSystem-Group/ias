@@ -2,6 +2,7 @@ plugins {
     `scala`
     `java`
     `java-library-distribution`
+    id("org.eso.ias.build.plugin")
 }
 
 dependencies {
@@ -31,7 +32,8 @@ dependencies {
     testRuntimeOnly("org.scalactic:scalactic_2.13:3.2.7")
 }
 
-base.archivesBaseName = "iasMonitor"
+base.archivesBaseName = "ias"+project.name
+base.libsDirName ="lib"
 
 repositories {
     mavenCentral()

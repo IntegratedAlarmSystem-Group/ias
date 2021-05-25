@@ -139,6 +139,81 @@ open class IasBuild : Plugin<Project> {
             }
         }
 
+        val installBin: TaskProvider<Copy> = project.tasks.register<Copy>("InstallBin") {
+            var envVar: String? = System.getenv("IAS_ROOT")
+
+            dependsOn(":${project.name}:CopyPyScripts")
+            dependsOn(":${project.name}:CopyShScripts")
+
+            from(project.layout.buildDirectory.dir("bin"))
+            include("**/*")
+            val destFolder = "${envVar}/bin"
+            into(destFolder)
+
+            doFirst {
+                println("Installing bins of ${project.name}")
+            }
+            doLast {
+                println("Installed bins of ${project.name}")
+            }
+        }
+
+        val installConfig: TaskProvider<Copy> = project.tasks.register<Copy>("InstallConfig") {
+            var envVar: String? = System.getenv("IAS_ROOT")
+
+            dependsOn(":${project.name}:CopyConfigFiles")
+
+            from(project.layout.buildDirectory.dir("config"))
+            include("**/*")
+            val destFolder = "${envVar}/config"
+            into(destFolder)
+
+            doFirst {
+                println("Installing configs of ${project.name}")
+            }
+            doLast {
+                println("Installed configs of ${project.name}")
+            }
+        }
+
+        val installLib: TaskProvider<Copy> = project.tasks.register<Copy>("InstallLib") {
+            var envVar: String? = System.getenv("IAS_ROOT")
+
+            dependsOn(":${project.name}:build")
+            dependsOn(":${project.name}:CopyPyMods")
+
+            from(project.layout.buildDirectory.dir("lib"))
+            include("**/*")
+            exclude("*Test.jar")
+            val destFolder = "${envVar}/lib"
+            into(destFolder)
+
+            doFirst {
+                println("Installing libs of ${project.name}")
+            }
+            doLast {
+                println("Installed libs of ${project.name}")
+            }
+        }
+
+    project.tasks.register("install") {
+        dependsOn(":${project.name}:InstallConfig")
+        dependsOn(":${project.name}:InstallBin")
+        dependsOn(":${project.name}:InstallLib")
+
+        var envVar: String? = System.getenv("IAS_ROOT")
+        if (envVar==null) {
+            throw GradleException("IAS_ROOT undefined")
+        }
+
+        doFirst {
+            println("Installing ${project.name}")
+        }
+        doLast {
+            println("Installed ${project.name}")
+        }
+}
+
         project.tasks.getByPath(":${project.name}:build").finalizedBy(conf)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(pyScripts)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(shScripts)

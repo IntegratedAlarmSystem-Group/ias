@@ -2,6 +2,7 @@ plugins {
     `scala`
     `java`
     `java-library-distribution`
+    id("org.eso.ias.build.plugin")
 }
 
 dependencies {
@@ -28,7 +29,8 @@ dependencies {
     testImplementation("org.scalatest:scalatest_2.13:3.2.5")
 }
 
-base.archivesBaseName = "iasSinkClient"
+base.archivesBaseName = "ias"+project.name
+base.libsDirName ="lib"
 
 repositories {
     mavenCentral()

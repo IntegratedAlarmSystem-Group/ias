@@ -2,6 +2,7 @@ plugins {
     `scala`
     `java`
     `java-library-distribution`
+    id("org.eso.ias.build.plugin")
 }
 
 dependencies {
@@ -23,21 +24,8 @@ dependencies {
 //    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0")
 }
 
-base.archivesBaseName = "iasHeartbeat"
-
-//tasks.withType<ScalaCompile>{
-//    // Groovy only needs the declared dependencies
-//    // (and not longer the output of compileJava)
-//    classpath = sourceSets.main.get().compileClasspath
-//}
-
-//tasks.withType<JavaCompile> {
-//    this.dependsOn(tasks.compileScala)
-//    val compilerArgs = options.compilerArgs
-//    compilerArgs.add("-Xdoclint:all,-missing")
-//    compilerArgs.add("-Xlint:all")
-//    classpath += files(sourceSets.main.get().withConvention(ScalaSourceSet::class) { scala }.classesDirectory)
-//}
+base.archivesBaseName = "ias"+project.name
+base.libsDirName ="lib"
 
 repositories {
     mavenCentral()

@@ -1,5 +1,6 @@
 plugins {
     id("scala")
+    id("org.eso.ias.build.plugin")
 }
 
 dependencies {
@@ -15,7 +16,8 @@ dependencies {
 
 }
 
-base.archivesBaseName = "iasTransferFuntions"
+base.archivesBaseName = "ias"+project.name
+base.libsDirName ="lib"
 
 repositories {
    mavenCentral()

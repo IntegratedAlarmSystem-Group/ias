@@ -1,5 +1,6 @@
 plugins {
     id("scala")
+    id("org.eso.ias.build.plugin")
 }
 
 dependencies {
@@ -17,7 +18,8 @@ dependencies {
     testImplementation("org.scalatest:scalatest_2.13:3.2.5")
 }
 
-base.archivesBaseName = "iasDasu"
+base.archivesBaseName = "ias"+project.name
+base.libsDirName ="lib"
 
 repositories {
    mavenCentral()

@@ -26,13 +26,13 @@ tasks.register("build") {
 //    }
 //}
 
-tasks.register("install") {
-    dependsOn("build")
-
-    doLast {
-        println("install!")
-    }
-}
+//tasks.register("install") {
+//    dependsOn("build")
+//
+//    doLast {
+//        println("install!")
+//    }
+//}
 
 
 tasks.named("build") {

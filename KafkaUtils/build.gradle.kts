@@ -1,6 +1,7 @@
 plugins {
     `java`
     `java-library-distribution`
+    id("org.eso.ias.build.plugin")
 }
 
 dependencies {
@@ -14,7 +15,8 @@ dependencies {
 
 }
 
-base.archivesBaseName = "iasKafkaUtils"
+base.archivesBaseName = "ias"+project.name
+base.libsDirName ="lib"
 
 repositories {
     mavenCentral()

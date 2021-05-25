@@ -2,6 +2,7 @@ plugins {
     `scala`
     `java`
     `java-library-distribution`
+    id("org.eso.ias.build.plugin")
 }
 
 dependencies {
@@ -23,7 +24,8 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0")
 }
 
-base.archivesBaseName = "iasBasicTypes"
+base.archivesBaseName = "ias"+project.name
+base.libsDirName ="lib"
 
 repositories {
     mavenCentral()

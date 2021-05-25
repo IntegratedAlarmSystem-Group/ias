@@ -1,6 +1,7 @@
 plugins {
     `java`
     `java-library-distribution`
+    id("org.eso.ias.build.plugin")
 }
 
 dependencies {
@@ -18,7 +19,8 @@ dependencies {
 
 }
 
-base.archivesBaseName = "iasCmdReply"
+base.archivesBaseName = "ias"+project.name
+base.libsDirName ="lib"
 
 repositories {
     mavenCentral()
