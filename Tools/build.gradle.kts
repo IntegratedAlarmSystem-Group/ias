@@ -15,7 +15,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.2.3")
 }
 
-base.archivesBaseName = "iasTools"
+base.archivesBaseName = "ias"+project.name
 base.libsDirName ="lib"
 
 java {

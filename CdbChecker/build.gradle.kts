@@ -1,6 +1,7 @@
 plugins {
     `scala`
     `java-library-distribution`
+    id("org.eso.ias.build.plugin")
 }
 
 dependencies {
@@ -17,7 +18,8 @@ dependencies {
     implementation(project(":BasicTypes"))
 }
 
-base.archivesBaseName = "iasCdbChecker"
+base.archivesBaseName = "ias"+project.name
+base.libsDirName ="lib"
 
 repositories {
     mavenCentral()

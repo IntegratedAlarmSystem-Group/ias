@@ -1,6 +1,7 @@
 plugins {
     `java`
     `java-library-distribution`
+    id("org.eso.ias.build.plugin")
 }
 
 dependencies {
@@ -21,7 +22,8 @@ dependencies {
     testImplementation("org.apache.kafka:kafka-clients:2.8.0")
 }
 
-base.archivesBaseName = "iasPlugin"
+base.archivesBaseName = "ias"+project.name
+base.libsDirName ="lib"
 
 sourceSets {
     main {
