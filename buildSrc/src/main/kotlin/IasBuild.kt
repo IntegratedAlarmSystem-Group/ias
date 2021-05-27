@@ -178,7 +178,7 @@ open class IasBuild : Plugin<Project> {
         val installLib = project.tasks.register<Copy>("InstallLib") {
             var envVar: String? = System.getenv("IAS_ROOT")
 
-            dependsOn(":${project.name}:build")
+            dependsOn(":${project.name}:CopyExtLib")
             dependsOn(":${project.name}:CopyPyMods")
 
             from(project.layout.buildDirectory.dir("lib"))
@@ -215,6 +215,7 @@ open class IasBuild : Plugin<Project> {
 
         // Untar the archive in build/distribution
         val untar = project.tasks.register<Copy>("Untar") {
+            dependsOn(":${project.name}:distTar")
             val folder = project.layout.buildDirectory.dir("distributions")
             val tarFileName = folder.get().asFile.path+"/${project.name}.tar"
             println("Configuring ${project.name}:untar for $tarFileName")
@@ -228,11 +229,25 @@ open class IasBuild : Plugin<Project> {
             }
         }
 
+        val copyExtLibs = project.tasks.register<Copy>("CopyExtLib") {
+            dependsOn(untar)
+            println("Configuring ${project.name}:CopyExtLib")
+            from(project.layout.buildDirectory.dir("distributions/${project.name}/lib"))
+            into(project.layout.buildDirectory.dir("lib/ExtLibs"))
+            exclude("ias*.jar")
+            doFirst {
+                println("CopyExtLib of ${project.name} begin ")
+            }
+            doLast {
+                println("CopyExtLib of ${project.name} done")
+            }
+        }
+
         project.tasks.getByPath(":${project.name}:build").finalizedBy(conf)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(pyScripts)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(shScripts)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(pyModules)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(buildTestJar)
-        project.tasks.getByPath(":${project.name}:build").finalizedBy(untar)
+        project.tasks.getByPath(":${project.name}:build").finalizedBy(copyExtLibs)
     }
 }
