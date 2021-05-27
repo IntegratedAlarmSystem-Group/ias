@@ -1,5 +1,6 @@
 plugins {
-    id("scala")
+    `scala`
+    `java-library-distribution`
     id("org.eso.ias.build.plugin")
 }
 
