@@ -5,10 +5,9 @@ import org.gradle.api.tasks.Copy
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
-import org.gradle.api.tasks.TaskProvider
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.extra
-import org.gradle.kotlin.dsl.register
+import org.gradle.kotlin.dsl.*
 
 open class IasBuild : Plugin<Project> {
 
@@ -26,7 +25,7 @@ open class IasBuild : Plugin<Project> {
         println("Using python version $pythonVersion")
 
         // Configurations
-        val conf: TaskProvider<Copy> = project.tasks.register<Copy>("CopyConfigFiles") {
+        val conf = project.tasks.register<Copy>("CopyConfigFiles") {
             doFirst {
                 println("CopyConfigs doFirst")
             }
@@ -46,7 +45,7 @@ open class IasBuild : Plugin<Project> {
         }
 
         // Python Scripts
-        val pyScripts: TaskProvider<Copy> = project.tasks.register<Copy>("CopyPyScripts") {
+        val pyScripts = project.tasks.register<Copy>("CopyPyScripts") {
 
             doFirst {
                 println("CopyPyScripts doFirst")
@@ -73,7 +72,7 @@ open class IasBuild : Plugin<Project> {
         }
 
         // Shell scripts
-        val shScripts: TaskProvider<Copy> = project.tasks.register<Copy>("CopyShScripts") {
+        val shScripts = project.tasks.register<Copy>("CopyShScripts") {
             doFirst {
                 println("CopyShellScripts doFirst")
             }
@@ -99,7 +98,7 @@ open class IasBuild : Plugin<Project> {
 
         // Spawn one copy task task for each python modules
         // i.e. each folder in src/main/python
-        val pyModules: TaskProvider<Copy> = project.tasks.register<Copy>("CopyPyMods") {
+        val pyModules = project.tasks.register<Copy>("CopyPyMods") {
 
             doFirst {
 
@@ -126,7 +125,7 @@ open class IasBuild : Plugin<Project> {
 
         // Build the jar with the test classes
         // The name of the jar is built by appending "Test"to the name of the jar built by java/scala
-        val buildTestJar: TaskProvider<Jar> = project.tasks.register<Jar>("buildJarOfTestClasses") {
+        val buildTestJar = project.tasks.register<Jar>("buildJarOfTestClasses") {
             from(project.layout.buildDirectory.dir("classes/scala/test"))
             from(project.layout.buildDirectory.dir("java/scala/test"))
             destinationDirectory.set(project.layout.buildDirectory.dir("lib"))
@@ -139,7 +138,7 @@ open class IasBuild : Plugin<Project> {
             }
         }
 
-        val installBin: TaskProvider<Copy> = project.tasks.register<Copy>("InstallBin") {
+        val installBin = project.tasks.register<Copy>("InstallBin") {
             var envVar: String? = System.getenv("IAS_ROOT")
 
             dependsOn(":${project.name}:CopyPyScripts")
@@ -158,7 +157,7 @@ open class IasBuild : Plugin<Project> {
             }
         }
 
-        val installConfig: TaskProvider<Copy> = project.tasks.register<Copy>("InstallConfig") {
+        val installConfig = project.tasks.register<Copy>("InstallConfig") {
             var envVar: String? = System.getenv("IAS_ROOT")
 
             dependsOn(":${project.name}:CopyConfigFiles")
@@ -176,7 +175,7 @@ open class IasBuild : Plugin<Project> {
             }
         }
 
-        val installLib: TaskProvider<Copy> = project.tasks.register<Copy>("InstallLib") {
+        val installLib = project.tasks.register<Copy>("InstallLib") {
             var envVar: String? = System.getenv("IAS_ROOT")
 
             dependsOn(":${project.name}:build")
@@ -196,28 +195,44 @@ open class IasBuild : Plugin<Project> {
             }
         }
 
-    project.tasks.register("install") {
-        dependsOn(":${project.name}:InstallConfig")
-        dependsOn(":${project.name}:InstallBin")
-        dependsOn(":${project.name}:InstallLib")
+        project.tasks.register("install") {
+            dependsOn(installConfig)
+            dependsOn(installBin)
+            dependsOn(installLib)
 
-        var envVar: String? = System.getenv("IAS_ROOT")
-        if (envVar==null) {
-            throw GradleException("IAS_ROOT undefined")
+            var envVar: String? = System.getenv("IAS_ROOT")
+            if (envVar==null) {
+                throw GradleException("IAS_ROOT undefined")
+            }
+
+            doFirst {
+                println("Installing ${project.name}")
+            }
+            doLast {
+                println("Installed ${project.name}")
+            }
         }
 
-        doFirst {
-            println("Installing ${project.name}")
+        // Untar the archive in build/distribution
+        val untar = project.tasks.register<Copy>("Untar") {
+            val folder = project.layout.buildDirectory.dir("distributions")
+            val tarFileName = folder.get().asFile.path+"/${project.name}.tar"
+            println("Configuring ${project.name}:untar for $tarFileName")
+            from(project.tarTree(tarFileName))
+            into(folder)
+            doFirst {
+                println("Untar ${project.name} begin ")
+            }
+            doLast {
+                println("Untar ${project.name} done")
+            }
         }
-        doLast {
-            println("Installed ${project.name}")
-        }
-}
 
         project.tasks.getByPath(":${project.name}:build").finalizedBy(conf)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(pyScripts)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(shScripts)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(pyModules)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(buildTestJar)
+        project.tasks.getByPath(":${project.name}:build").finalizedBy(untar)
     }
 }
