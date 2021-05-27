@@ -1,5 +1,6 @@
 plugins {
     `kotlin-dsl`
+//    kotlin("jvm") version "1.4.31"
 }
 
 repositories {
@@ -13,7 +14,8 @@ dependencies {
 
     /* Depend on the default Gradle API's since we want to build a custom plugin */
     compileOnly(gradleApi())
-//    implementation(localGroovy())
+    implementation(localGroovy())
+    implementation(kotlin("stdlib"))
 }
 
 gradlePlugin {
