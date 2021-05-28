@@ -34,11 +34,29 @@ class Installer(Task):
         if not self.destFolder:
             self.destFolder = ctx.env.PREFIX
         self.color = 'BLUE'
-        print (",..,.,.,.,.,.,.,.,.,", self.srcNode)
         Logs.info("Installer: src node %s", self.srcNode.abspath())
         Logs.info("Installer: dst folder %s", self.destFolder)
         Logs.info("Installer: will install from %s ---to---> %s ", self.srcNode.abspath(), self.destFolder)
         self.foldersToInstall = [ 'bin', 'lib', 'extTools', 'config']
+        self.buildInputs()
+
+    def buildInputs(self):
+        Logs.info("Installer: building inputs")
+        for folder in self.foldersToInstall:
+            Logs.info("Building input files from folder %s", folder)
+            prefix = "%s/%s" % (self.ctx.env.PREFIX, folder)
+            folderNode = self.srcNode.find_node(folder)
+            if not folderNode:
+                continue
+
+            if not os.path.exists(prefix):
+                os.mkdir(prefix)
+
+            nodeFilesToInstall = folderNode.ant_glob("**/*")
+            self.set_inputs(nodeFilesToInstall)
+
+            nodesCleaned = list(map(lambda n: n.abspath().split(folderNode.abspath()+'/')[1], nodeFilesToInstall))
+            print("nodesCleaned", nodesCleaned)
 
     def run(self):
         '''
@@ -50,32 +68,28 @@ class Installer(Task):
         Logs.info("Installer: Installing files from %s ---to---> %s", self.srcNode, self.destFolder)
 
         for folder in self.foldersToInstall:
-            Logs.info("installing files from %s", folder)
-
-            folderNode = self.srcNode.find_node(folder)
             prefix = "%s/%s" % (self.ctx.env.PREFIX, folder)
-
+            folderNode = self.srcNode.find_node(folder)
             if not folderNode:
                 Logs.info("Installer: node %s/%s not found: nothing to install", self.srcNode.abspath(), folder)
                 continue
-            else:
-                Logs.info("Installer: processing files in %s --to--> %s ", folderNode, prefix)
+            nodes = folderNode.ant_glob("**/*")
 
-            if not os.path.exists(prefix):
-                os.mkdir(prefix)
+            nodesCleaned = list(map(lambda n: n.abspath().split(folderNode.abspath()+'/')[1], nodes))
+            print("Folder:", folderNode.abspath(), "files:", nodesCleaned, "dest:",prefix,"is install:", self.ctx.is_install)
 
-            nodeFilesToInstall = folderNode.ant_glob("**/*")
-            print("nodeFilesToInstall", nodeFilesToInstall)
-            self.set_inputs(nodeFilesToInstall)
+            for node in nodes:
+                cmd = 'cp '+node.abspath()+' '+prefix
+                print(cmd)
+                self.ctx(rule=cmd, always=True)
 
-            nodesCleaned = list(map(lambda n: n.abspath().split(folderNode.abspath()+'/')[1], nodeFilesToInstall))
-            print("nodesCleaned", nodesCleaned)
-
-            self.ctx.install_files(
-                prefix,
-                folderNode.ant_glob("**/*"),
-                relative_trick=True,
-                cwd=folderNode)
+            if len(nodes)>0:
+                self.ctx.install_files(
+                    prefix,
+                    nodes,
+                    relative_trick=True,
+                    cwd=folderNode,
+                    postpone=True)
 
 
 
