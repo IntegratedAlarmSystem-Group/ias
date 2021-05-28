@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 '''
 Dump the strings published in the kafka topics
 by delegating to kafka native commands.
