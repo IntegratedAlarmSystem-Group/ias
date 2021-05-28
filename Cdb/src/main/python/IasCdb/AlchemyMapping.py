@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 from IasBasicTypes.IasType import IASType
 from IasCdb.LogLevel import LogLevel

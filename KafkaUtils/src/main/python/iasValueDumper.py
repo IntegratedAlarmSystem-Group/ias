@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 '''
 Dumps in the stdout the IasValue published in the
 BSDB
