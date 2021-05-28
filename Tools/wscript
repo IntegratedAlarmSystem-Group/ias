@@ -143,6 +143,3 @@ def build(bld):
         makeBuild(bld, env)
     elif bld.cmd == 'install':
         makeInstall(bld)
-    elif bld.cmd == 'clean':
-        Logs.info("Cleaning %s", bld.bldnode.abspath())
-        bld(rule='rm -rf build/*', always=True)

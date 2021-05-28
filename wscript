@@ -41,23 +41,25 @@ def build(bld):
     Logs.info('IAS: IAS PREFIX %s', bld.env.PREFIX)
 
     if bld.cmd == 'install':
-        from IasWafBuildTools.Utils import set_env
-        set_env(bld.env, bld.path, bld.bldnode)
-        from IasWafBuildTools.IasWafBuilder import install
-        install(bld)
-
-
+        from IasWafBuildTools.Installer import Installer
+        installer = Installer(bld, bld.bldnode, os.environ['IAS_ROOT'])
+        bld.add_to_group(installer)
     else:
         bld.recurse(IasModules)
+    #elif bld.cmd == 'clean':
+    #    Logs.info("IAS: cleaning")
+    #    bld.recurse(IasModules)
+    #    bld(rule='rm -rf build/*', always=True)
+    #    Logs.info("IAS: cleaned")
+    #else:
+    #    Logs.info("IAS: running command %s", bld.cmd)
+    #bld.recurse(IasModules)
 
 def configure(conf):
     Logs.info ("IAS: configure in %s",conf.path.abspath())
     conf.load('IasWafBuildTools', tooldir='WafBuildTools/src/main/python/')
     from IasWafBuildTools.IntegrityCheck import checkIntegrity
     checkIntegrity(conf)
-
-    # Build java source with the waf java tool
-    conf.load("java")
 
     conf.recurse(IasModules)
 
