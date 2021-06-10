@@ -10,10 +10,8 @@ dependencies {
     implementation("org.scala-lang:scala-library:2.13.5")
     
     implementation("com.typesafe.scala-logging:scala-logging_2.13:3.9.3")
-//    implementation("ch.qos.logback:logback-classic:1.2.3")
-//    implementation("com.fasterxml.jackson.core:jackson-core:2.9.4")
-    implementation("com.fasterxml.jackson.core:jackson-annotations:2.9.4")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.9.4")
+    implementation("com.fasterxml.jackson.core:jackson-annotations:2.10.5")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.10.5")
 //
 
     implementation("commons-cli:commons-cli:1.4")
