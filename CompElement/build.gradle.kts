@@ -13,8 +13,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.2.3")
     implementation("black.ninia:jep:3.9.0")
 
-    testImplementation("org.scalactic:scalactic_2.13:3.2.7")
-    testImplementation("org.scalatest:scalatest_2.13:3.2.7")
+    implementation("org.scalatest:scalatest_2.13:3.2.9")
 
     implementation(project(":Tools"))
     implementation(project(":BasicTypes"))
