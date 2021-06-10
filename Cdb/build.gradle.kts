@@ -6,11 +6,9 @@ plugins {
 
 dependencies {
     
-    //implementation("commons-cli:commons-cli:1.4")
-    //implementation("commons-logging:commons-logging:1.2")
-    implementation("com.fasterxml.jackson.core:jackson-core:2.9.4")
-    implementation("com.fasterxml.jackson.core:jackson-annotations:2.9.4")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.9.4")
+    implementation("com.fasterxml.jackson.core:jackson-core:2.10.5")
+    implementation("com.fasterxml.jackson.core:jackson-annotations:2.10.5")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.10.5")
     implementation("com.mchange:c3p0:0.9.5.2")
     implementation("ch.qos.logback:logback-core:1.2.3")
     implementation("ch.qos.logback:logback-classic:1.2.3")
