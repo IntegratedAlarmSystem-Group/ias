@@ -2,6 +2,7 @@ package org.eso.ias.build.plugin
 
 import org.gradle.api.GradleException
 import org.gradle.api.tasks.Copy
+import org.gradle.api.tasks.Exec
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
@@ -249,5 +250,14 @@ open class IasBuild : Plugin<Project> {
         project.tasks.getByPath(":${project.name}:build").finalizedBy(pyModules)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(buildTestJar)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(copyExtLibs)
+
+        val runIasTestsTask = project.tasks.register<Exec>("iasTest") {
+            dependsOn(":build")
+            commandLine("src/test/runTests.sh")
+        }
+        project.tasks.getByPath(":${project.name}:test").finalizedBy(runIasTestsTask)
     }
+
+
+
 }
