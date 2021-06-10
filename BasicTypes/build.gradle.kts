@@ -21,7 +21,9 @@ dependencies {
     implementation(project(":Tools"))
     implementation(project(":Cdb"))
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0")
+    implementation("org.junit.jupiter:junit-jupiter-api:5.7.2")
+    implementation("org.junit.jupiter:junit-jupiter-engine:5.7.2")
+    implementation("org.junit.platform:junit-platform-console:1.7.2")
 }
 
 base.archivesBaseName = "ias"+project.name
