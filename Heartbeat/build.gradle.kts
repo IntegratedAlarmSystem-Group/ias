@@ -15,8 +15,7 @@ dependencies {
 //    implementation("com.fasterxml.jackson.core:jackson-annotations:2.9.4")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.9.4")
 
-    testImplementation("org.scalactic:scalactic_2.13:3.2.7")
-    testImplementation("org.scalatest:scalatest_2.13:3.2.7")
+    implementation("org.scalatest:scalatest_2.13:3.2.9")
 
     implementation(project(":KafkaUtils"))
     implementation(project(":Tools"))

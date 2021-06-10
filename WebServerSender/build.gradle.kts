@@ -7,8 +7,6 @@ plugins {
 dependencies {
     // Scala
     implementation("org.scala-lang:scala-library:2.13.5")
-//    testImplementation("org.scalatest:scalatest_2.13:3.2.5")
-//    implementation("com.typesafe.scala-logging:scala-logging_2.13:3.9.3")
     implementation("org.eclipse.jetty.websocket:websocket-api:9.4.15.v20190215")
     implementation("org.eclipse.jetty.websocket:websocket-client:9.4.15.v20190215")
     implementation("org.slf4j:slf4j-api:1.7.30")

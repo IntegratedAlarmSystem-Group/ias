@@ -21,7 +21,7 @@ dependencies {
     implementation(project(":CdbChecker"))
     implementation(project(":KafkaUtils"))
 
-    testImplementation("org.scalatest:scalatest_2.13:3.2.5")
+    implementation("org.scalatest:scalatest_2.13:3.2.9")
     testImplementation(project(":CompElement"))
 }
 

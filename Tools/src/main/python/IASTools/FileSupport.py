@@ -3,7 +3,7 @@ Created on Sep 23, 2016
 
 @author: acaproni
 '''
-from os import environ,getcwd, walk, path, makedirs, access, W_OK, X_OK
+from os import environ, getcwd, walk, path, makedirs, access, W_OK, X_OK
 import logging
 
 
@@ -15,13 +15,13 @@ class FileSupport(object):
     #
     # iasFileType matches with the folder names of a module
     # to ensure a valid value is given here
-    iasFileType = ("lib", "bin","config","src")
+    iasFileType = ("lib", "bin", "config", "src")
     
     #IAS root from the environment
     __iasRoot=environ['IAS_ROOT']   
     
 
-    def __init__(self, fileName,fileType=None):
+    def __init__(self, fileName, fileType=None):
         '''
         Constructor
         
@@ -31,7 +31,7 @@ class FileSupport(object):
         self.fileName=fileName
         self.fileType=fileType
     
-    def recursivelyLookForFile(self,folder):
+    def recursivelyLookForFile(self, folder):
         """
         Search recursively for a file in the given folder
         
@@ -48,10 +48,8 @@ class FileSupport(object):
     def findFile(self):
         """
         Looks for a file named fileName in the hierarchy of IAS folders:
-        * current folder (only if it ends with src for example)
-        * module folders (lib for example)
-        * parent module folders (../lib for example)
-        * $IAS_ROOT folders
+        * - build module folders (build/lib or build/bin for example)
+        * - $IAS_ROOT folders
         
         @return: if the file is found The full path name of the file
                  otherwise throws a OSError exception
@@ -68,7 +66,7 @@ class FileSupport(object):
             folders = FileSupport.iasFileType
         
         for folder in folders:
-            # Search in the current folder if its terminates with folder
+            # Search in the current folder if it terminates with folder
             # i.e. search in lib if the name of the current folder terminates with lib
             currentFolder = getcwd()
             if currentFolder.endswith(folder):
@@ -76,8 +74,8 @@ class FileSupport(object):
                 if filePath is not None:
                     return filePath
                     
-            # Assume to be in the root of a folder 
-            ## i.e. search in ./lib
+            # Assume to be in the root folder of a module
+            # i.e. search in build/lib
             folderToSearch=path.join(currentFolder,folder)
             if path.exists(folderToSearch) and path.isdir(folderToSearch):
                 filePath = self.recursivelyLookForFile(folderToSearch)
@@ -111,18 +109,16 @@ class FileSupport(object):
         '''
         Return the hierarchy of IAS folders.
         At the present it only contains the current module
-        (the parent of the current folder i.e. assumes that
-        the script runs in src that is the typical case
-        for development) and IAS root; 
-        in future can be expanded with one or more integration
-        folders.
+        (the current folder i.e. assumes that
+        the script runs in the main folder of a modulec that is the
+        typical case for development) and IAS root.
         
         The tuple returned is ordered by priority.
         
          @return A ordered tuple with the hierarchy of IAS folders
                  (at the present the current module and IAS_ROOT)
         '''
-        return (path.join(getcwd(),"../.."),cls.getIASRoot())
+        return (getcwd(), cls.getIASRoot())
     
     @classmethod
     def getIASSearchFolders(cls, fileType):

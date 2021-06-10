@@ -15,8 +15,6 @@ dependencies {
     implementation("com.fasterxml.jackson.core:jackson-annotations:2.9.4")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.9.4")
 //
-//    testImplementation("org.scalactic:scalactic_2.13:3.2.7")
-//    testImplementation("org.scalatest:scalatest_2.13:3.2.7")
 
     implementation("commons-cli:commons-cli:1.4")
     implementation("org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final")
@@ -28,8 +26,7 @@ dependencies {
     implementation(project(":CommandsAndReplies"))
     implementation(project(":Heartbeat"))
 
-    testImplementation("org.scalatest:scalatest_2.13:3.2.5")
-    testRuntimeOnly("org.scalactic:scalactic_2.13:3.2.7")
+    implementation("org.scalatest:scalatest_2.13:3.2.9")
 }
 
 base.archivesBaseName = "ias"+project.name

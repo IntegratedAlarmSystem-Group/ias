@@ -26,7 +26,7 @@ dependencies {
     implementation(project(":DistributedUnit"))
     implementation(project(":Supervisor"))
 
-    testImplementation("org.scalatest:scalatest_2.13:3.2.5")
+    implementation("org.scalatest:scalatest_2.13:3.2.9")
 }
 
 base.archivesBaseName = "ias"+project.name
