@@ -11,15 +11,18 @@ class FileSupport(object):
     '''
     Support method for IAS files and folders
     '''
-    # Possible types of files recognized by this tool
-    #
-    # iasFileType matches with the folder names of a module
-    # to ensure a valid value is given here
-    iasFileType = ("lib", "bin", "config", "src")
+    # Possible types of files recognized by this tool and
+    # the folder that contains files of that type based on the
+    # root of the module that is the typical case for development
+    iasFileType = {
+        "lib": "build/lib",
+        "bin": "build/bin",
+        "config": "build/config",
+        "src": "src"}
+
     
     #IAS root from the environment
-    __iasRoot=environ['IAS_ROOT']   
-    
+    __iasRoot = environ['IAS_ROOT']
 
     def __init__(self, fileName, fileType=None):
         '''
@@ -28,8 +31,23 @@ class FileSupport(object):
         @param filename: The mae of the file
         @param fileType: The type of the file (one in iasFileType) or None
         '''
-        self.fileName=fileName
-        self.fileType=fileType
+        self.fileName = fileName
+        self.fileType = fileType
+
+    @classmethod
+    def isValidType(cls, fileType):
+        '''
+        Check if the passed file type is supported.
+        None is an accepted type
+
+        :param fileType: the type to check (can be None)
+        :return: True if the type has been recognized, False otherwise
+        '''
+        if fileType is None:
+            return True
+        fileType = fileType.lower()
+        types = list(cls.iasFileType.keys())
+        return fileType in types
     
     def recursivelyLookForFile(self, folder):
         """
@@ -110,7 +128,7 @@ class FileSupport(object):
         Return the hierarchy of IAS folders.
         At the present it only contains the current module
         (the current folder i.e. assumes that
-        the script runs in the main folder of a modulec that is the
+        the script runs in the main folder of a module that is the
         typical case for development) and IAS root.
         
         The tuple returned is ordered by priority.
@@ -130,17 +148,18 @@ class FileSupport(object):
         """
         if fileType:
             fileType = fileType.lower()
-            if not fileType in cls.iasFileType:
-                logging.error("Invalid fileType %s not in %s", fileType,str(cls.iasFileType))
+            if not cls.isValidType(fileType):
+                logging.error("Invalid fileType %s not in %s", fileType, str(cls.iasFileType.keys()))
                 raise ValueError("Invalid fileType '"+fileType+"' not in "+str(cls.iasFileType))
         else:
-            # No folder passed: search in all the folders
+            # No file type passed!
             logging.error("Invalid fileType %s", fileType)
             raise ValueError("Invalid fileType "+fileType)
         
         folders = []
         for folder in cls.getIASFolders():
-            folders.append(path.join(folder,fileType.lower()))
+            folders.append(path.join(folder, cls.iasFileType[fileType.lower()]))
+
         return folders
     
     @classmethod
