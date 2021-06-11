@@ -11,17 +11,24 @@ class FileSupport(object):
     '''
     Support method for IAS files and folders
     '''
-    # Possible types of files recognized by this tool and
-    # the folder that contains files of that type based on the
-    # root of the module that is the typical case for development
-    iasFileType = {
+    # The map of types of files recognized by this tool and
+    # the folder that contains the files of that type based on the
+    # root of the module (typical case for development)
+    iasModFileType = {
         "lib": "build/lib",
         "bin": "build/bin",
         "config": "build/config",
         "src": "src"}
+    # The map of types of files recognized by this tool and
+    # the folder that contains the files of that type based on the
+    # IAS_ROOT (typical case for operation)
+    iasRootFileType = {
+        "lib": "lib",
+        "bin": "bin",
+        "config": "config",
+        "src": None }
 
-    
-    #IAS root from the environment
+    # IAS root from the environment
     __iasRoot = environ['IAS_ROOT']
 
     def __init__(self, fileName, fileType=None):
@@ -46,7 +53,7 @@ class FileSupport(object):
         if fileType is None:
             return True
         fileType = fileType.lower()
-        types = list(cls.iasFileType.keys())
+        types = list(cls.iasModFileType.keys())
         return fileType in types
     
     def recursivelyLookForFile(self, folder):
@@ -75,13 +82,13 @@ class FileSupport(object):
         iasRoot=FileSupport.getIASRoot()
         if self.fileType:
             fileType = self.fileType.lower()
-            if not fileType in FileSupport.iasFileType:
-                logging.error("Unrecognized fileType %s not in %s",fileType,str(FileSupport.iasFileType))
-                raise ValueError("Unrecognized fileType '"+fileType+"' not in "+str(FileSupport.iasFileType))
+            if not fileType in FileSupport.iasModFileType:
+                logging.error("Unrecognized fileType %s not in %s", fileType, str(FileSupport.iasModFileType))
+                raise ValueError("Unrecognized fileType '" + fileType +"' not in " + str(FileSupport.iasModFileType))
             folders = (fileType,)
         else:
             # No folder passed: search in all the folders
-            folders = FileSupport.iasFileType
+            folders = FileSupport.iasModFileType
         
         for folder in folders:
             # Search in the current folder if it terminates with folder
@@ -123,45 +130,27 @@ class FileSupport(object):
         return cls.__iasRoot
     
     @classmethod
-    def getIASFolders(cls):
+    def getIASFolders(cls, fileType=None):
         '''
         Return the hierarchy of IAS folders.
-        At the present it only contains the current module
-        (the current folder i.e. assumes that
-        the script runs in the main folder of a module that is the
-        typical case for development) and IAS root.
+        At the present it only contains
+        - the current module (the current folder i.e. assumes that
+          the script runs in the main folder of a module that is the
+          typical case for development)
+        - IAS root.
         
         The tuple returned is ordered by priority.
         
          @return A ordered tuple with the hierarchy of IAS folders
                  (at the present the current module and IAS_ROOT)
         '''
-        return (getcwd(), cls.getIASRoot())
-    
-    @classmethod
-    def getIASSearchFolders(cls, fileType):
-        """
-        Return the folders to search for a a given file type
-        
-        @param fileType: the type (iasFileType) of file to look for (example BINARY,LIB...)
-        @return a list with the order folders to search for a file of the given name
-        """
-        if fileType:
-            fileType = fileType.lower()
-            if not cls.isValidType(fileType):
-                logging.error("Invalid fileType %s not in %s", fileType, str(cls.iasFileType.keys()))
-                raise ValueError("Invalid fileType '"+fileType+"' not in "+str(cls.iasFileType))
+        if fileType is None:
+            return (getcwd(), cls.getIASRoot())
         else:
-            # No file type passed!
-            logging.error("Invalid fileType %s", fileType)
-            raise ValueError("Invalid fileType "+fileType)
-        
-        folders = []
-        for folder in cls.getIASFolders():
-            folders.append(path.join(folder, cls.iasFileType[fileType.lower()]))
+            rootFolder = "%s/%s" % (cls.getIASRoot(), cls.iasRootFileType[fileType])
+            modFolder = "%s/%s" % (getcwd(), cls.iasModFileType[fileType])
+            return (modFolder, rootFolder)
 
-        return folders
-    
     @classmethod
     def createTmpFolder(cls):
         """
