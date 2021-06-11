@@ -128,14 +128,14 @@ open class IasBuild : Plugin<Project> {
         // The name of the jar is built by appending "Test"to the name of the jar built by java/scala
         val buildTestJar = project.tasks.register<Jar>("buildJarOfTestClasses") {
             from(project.layout.buildDirectory.dir("classes/scala/test"))
-            from(project.layout.buildDirectory.dir("java/scala/test"))
+            from(project.layout.buildDirectory.dir("classes/java/test"))
             destinationDirectory.set(project.layout.buildDirectory.dir("lib"))
             archiveFileName.set(archiveBaseName.get()+"Test.jar")
             doFirst {
-                println("buildJarOfTestClasses doFirst")
+                println("${project.name}: buildJarOfTestClasses doFirst")
             }
             doLast {
-                println("buildJarOfTestClasses doLast")
+                println("${project.name}: buildJarOfTestClasses doLast")
             }
         }
 
@@ -255,7 +255,6 @@ open class IasBuild : Plugin<Project> {
             dependsOn(":build")
             commandLine("src/test/runTests.sh")
         }
-        project.tasks.getByPath(":${project.name}:test").finalizedBy(runIasTestsTask)
     }
 
 
