@@ -318,6 +318,7 @@ if __name__ == '__main__':
         for t in range(16):
             delimiter = delimiter + arrowDown
 
+        logger.info("Will run %s", cmd)
         logger.info("\n %s %s output %s",delimiter,args.className,delimiter)
 
     call(cmd)
