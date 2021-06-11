@@ -20,7 +20,7 @@ dependencies {
     implementation(project(":Cdb"))
     implementation(project(":Converter"))
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0")
+    implementation("org.junit.jupiter:junit-jupiter-api:5.7.2")
 }
 
 base.archivesBaseName = "ias"+project.name
@@ -46,7 +46,7 @@ sourceSets {
     test {
         withConvention(ScalaSourceSet::class) {
             scala {
-                setSrcDirs(listOf("src/test/scala")+listOf("src/test/java"))
+                setSrcDirs(listOf("src/test/scala")) // +listOf("src/test/java"))
             }
         }
     }

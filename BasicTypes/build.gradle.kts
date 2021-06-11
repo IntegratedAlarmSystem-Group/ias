@@ -52,7 +52,7 @@ sourceSets {
     test {
         withConvention(ScalaSourceSet::class) {
             scala {
-                setSrcDirs(listOf("src/test/scala")+listOf("src/test/java"))
+                setSrcDirs(listOf("src/test/scala")) // +listOf("src/test/java"))
             }
         }
     }

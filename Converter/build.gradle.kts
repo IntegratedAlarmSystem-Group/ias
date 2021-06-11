@@ -20,9 +20,9 @@ dependencies {
     implementation(project(":KafkaUtils"))
     implementation(project(":CommandsAndReplies"))
 
-    testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.1")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.1")
-    testImplementation("org.apache.kafka:kafka-clients:2.8.0")
+    implementation("org.junit.jupiter:junit-jupiter-api:5.7.2")
+    //testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.1")
+    implementation("org.apache.kafka:kafka-clients:2.8.0")
 }
 
 base.archivesBaseName = "ias"+project.name
