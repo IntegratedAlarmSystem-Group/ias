@@ -65,9 +65,8 @@ class CommonDefs(object):
         else:
             CommonDefs.logger.info("No folder for external JARs defined (i.e. no IAS-EXTERNAL-JARS env. variable set)")
 
-        # Add the jars from the IAS_ROOT lib folders
-        FileSupport.FileSupport.getIASFolders()
-        for folder in FileSupport.FileSupport.getIASSearchFolders('lib'):
+        # Add the jars from the current module and IAS_ROOT lib folders
+        for folder in FileSupport.FileSupport.getIASFolders('lib'):
             for root, subFolders, files in walk(folder):
                 for jarFileName in files:
                     if (jarFileName.lower().endswith('.jar') and jars.count(jarFileName)==0):
