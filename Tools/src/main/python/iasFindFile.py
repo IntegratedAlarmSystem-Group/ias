@@ -15,7 +15,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '-t',
         '--type',
-        help='The type of files to search for: '+str(FileSupport.iasFileType),
+        help='The type of files to search for: (lin, bin, config, src)',
         dest="fileType",
         action='store',
         default=None)
