@@ -2,7 +2,7 @@
 
 echo "Cleaning folders..."
 rm -rf /opt/kafkadata/* /opt/zookeeperdata/*
-cd /opt/kafka_2.12-2.4.0
+cd $KAFKA_HOME
 echo  "Starting zookeeper..."
 bin/zookeeper-server-start.sh -daemon config/zookeeper.properties
 sleep 2
