@@ -147,6 +147,7 @@ open class IasBuild : Plugin<Project> {
 
             from(project.layout.buildDirectory.dir("bin"))
             include("**/*")
+            exclude("**/test*")
             val destFolder = "${envVar}/bin"
             into(destFolder)
 
@@ -244,15 +245,43 @@ open class IasBuild : Plugin<Project> {
             }
         }
 
+        // Copy python test scripts in build/bin
+        val pyTestScripts = project.tasks.register<Copy>("CopyPyTestScripts") {
+
+            doFirst {
+                println("${project.name}: CopyPyTestScripts doFirst")
+            }
+
+            println("${project.name}: Configuring: Installing python test scripts in ${project.buildDir}")
+            val pyFolder = "src/test/python"
+            val destFolder = "bin"
+
+
+            from(project.layout.projectDirectory.dir(pyFolder))
+            include("*.py")
+            rename { filename: String ->
+                filename.substringBefore('.')
+            }
+            fileMode = 484 // 0744
+            into(project.layout.buildDirectory.dir(destFolder))
+            println("${project.name}: Configured: Installing test python scripts in ${project.buildDir}")
+
+            doLast {
+                println("${project.name}: CopyPyTestScripts doLast")
+            }
+
+        }
+
         project.tasks.getByPath(":${project.name}:build").finalizedBy(conf)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(pyScripts)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(shScripts)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(pyModules)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(buildTestJar)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(copyExtLibs)
+        project.tasks.getByPath(":${project.name}:build").finalizedBy(pyTestScripts)
 
         val runIasTestsTask = project.tasks.register<Exec>("iasTest") {
-            dependsOn(":build")
+            dependsOn(":build", pyTestScripts)
             commandLine("src/test/runTests.sh")
         }
     }
