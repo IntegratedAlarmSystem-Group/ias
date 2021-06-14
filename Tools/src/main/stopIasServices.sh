@@ -1,5 +1,9 @@
 #!/bin/bash 
-
+if [ -z $KAFKA_HOME ]
+then
+        echo "Set KAFKA_HOME before running this script"
+        exit 1
+fi
 cd $KAFKA_HOME
 echo  "Stopping zookeeper..."
 bin/zookeeper-server-stop.sh config/zookeeper.properties
