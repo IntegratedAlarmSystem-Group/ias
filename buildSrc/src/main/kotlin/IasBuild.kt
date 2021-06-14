@@ -144,6 +144,7 @@ open class IasBuild : Plugin<Project> {
 
             dependsOn(":${project.name}:CopyPyScripts")
             dependsOn(":${project.name}:CopyShScripts")
+            dependsOn(":${project.name}:CopyPyTestScripts")
 
             from(project.layout.buildDirectory.dir("bin"))
             include("**/*")
