@@ -11,8 +11,8 @@ dependencies {
       implementation(extension.extra["slf4j-api"].toString())
       implementation(extension.extra["junit-jupiter-api"].toString())
       implementation(extension.extra["junit-jupiter-engine"].toString())
+      implementation(extension.extra["kafka-clients"].toString())
     }
-    implementation("org.apache.kafka:kafka-clients:2.8.0")
 
     implementation(project(":BasicTypes"))
 
