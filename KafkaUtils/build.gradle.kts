@@ -5,13 +5,16 @@ plugins {
 }
 
 dependencies {
-    implementation("org.slf4j:slf4j-api:1.7.30")
+    val g = project.gradle
+    if (g is ExtensionAware) {
+      val extension = g as ExtensionAware
+      implementation(extension.extra["slf4j-api"].toString())
+      implementation(extension.extra["junit-jupiter-api"].toString())
+      implementation(extension.extra["junit-jupiter-engine"].toString())
+    }
     implementation("org.apache.kafka:kafka-clients:2.8.0")
 
     implementation(project(":BasicTypes"))
-
-    implementation("org.junit.jupiter:junit-jupiter-api:5.7.2")
-//    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.7.2")
 
 }
 
