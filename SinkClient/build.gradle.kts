@@ -6,16 +6,20 @@ plugins {
 }
 
 dependencies {
-    // Scala
-    implementation("org.scala-lang:scala-library:2.13.5")
+    val g = project.gradle
+    if (g is ExtensionAware) {
+      val extension = g as ExtensionAware
+      implementation(extension.extra["scala-library"].toString())
+      implementation(extension.extra["scalatest"].toString())
+      implementation(extension.extra["scala-logging"].toString())
+      implementation(extension.extra["logback-classic"].toString())
+      implementation(extension.extra["kafka-clients"].toString())
+      implementation(extension.extra["commons-cli"].toString())
+      implementation(extension.extra["kafka-connect-api"].toString())
+    }
     
-    implementation("com.typesafe.scala-logging:scala-logging_2.13:3.9.3")
-    implementation("ch.qos.logback:logback-classic:1.2.3")
-    implementation("org.apache.kafka:kafka-clients:2.8.0")
     implementation("com.datastax.cassandra:cassandra-driver-core:3.6.0")
-    implementation("org.apache.kafka:connect-api:2.8.0")
     implementation("javax.mail:mail:1.4.7")
-    implementation("commons-cli:commons-cli:1.4")
 
     implementation(project(":Tools"))
     implementation(project(":Cdb"))
@@ -25,8 +29,6 @@ dependencies {
     implementation(project(":CommandsAndReplies"))
     implementation(project(":DistributedUnit"))
     implementation(project(":Supervisor"))
-
-    implementation("org.scalatest:scalatest_2.13:3.2.9")
 }
 
 base.archivesBaseName = "ias"+project.name

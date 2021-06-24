@@ -60,5 +60,6 @@ if (gradle is ExtensionAware) {
 	extension.extra["commons-cli"] = "commons-cli:commons-cli:1.4"
 	extension.extra["kafka-clients"] = "org.apache.kafka:kafka-clients:2.8.0"
 	extension.extra["kafka-streams"] = "org.apache.kafka:kafka-streams:2.8.0"
+	extension.extra["kafka-connect-api"] = "org.apache.kafka:connect-api:2.8.0"
 }
 
