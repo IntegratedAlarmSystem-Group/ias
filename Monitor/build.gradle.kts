@@ -6,17 +6,19 @@ plugins {
 }
 
 dependencies {
-    // Scala
-    implementation("org.scala-lang:scala-library:2.13.5")
+    val g = project.gradle
+    if (g is ExtensionAware) {
+      val extension = g as ExtensionAware
+      implementation(extension.extra["scala-library"].toString())
+      implementation(extension.extra["scalatest"].toString())
+      implementation(extension.extra["scala-logging"].toString())
+      implementation(extension.extra["logback-classic"].toString())
+      implementation(extension.extra["jackson-databind"].toString())
+      implementation(extension.extra["commons-cli"].toString())
+    }
     
-    implementation("com.typesafe.scala-logging:scala-logging_2.13:3.9.3")
-    implementation("com.fasterxml.jackson.core:jackson-annotations:2.10.5")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.10.5")
-//
-
-    implementation("commons-cli:commons-cli:1.4")
     implementation("org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final")
-//
+
     implementation(project(":Tools"))
     implementation(project(":BasicTypes"))
     implementation(project(":Cdb"))
@@ -24,7 +26,6 @@ dependencies {
     implementation(project(":CommandsAndReplies"))
     implementation(project(":Heartbeat"))
 
-    implementation("org.scalatest:scalatest_2.13:3.2.9")
 }
 
 base.archivesBaseName = "ias"+project.name
