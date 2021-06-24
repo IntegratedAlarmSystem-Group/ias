@@ -5,7 +5,8 @@ pipeline {
 		stage('Checkout') {
 			steps {
 				checkout scm: [
-					$class: 'GitSCM'
+					$class: 'GitSCM',
+					branches: scm.branches
 				]
 			}
 		}
