@@ -1,3 +1,5 @@
+//apply(from="../dependencies.gradle")
+
 plugins {
     id("scala")
     `java-library-distribution`
@@ -6,13 +8,16 @@ plugins {
 
 dependencies {
     // Scala
-    implementation("org.scala-lang:scala-library:2.13.5")
-    implementation("org.scalatest:scalatest_2.13:3.2.9")
-
-    implementation("org.slf4j:slf4j-api:1.7.30")
-    implementation("com.typesafe.scala-logging:scala-logging_2.13:3.9.3")
-    implementation("ch.qos.logback:logback-core:1.2.3")
-    implementation("ch.qos.logback:logback-classic:1.2.3")
+    //implementation("org.scala-lang:scala-library:2.13.5")
+    val g = project.gradle
+    if (g is ExtensionAware) {
+      val extension = g as ExtensionAware
+      implementation(extension.extra["scala-library"].toString())
+      implementation(extension.extra["scalatest"].toString())
+      implementation(extension.extra["slf4j-api"].toString())
+      implementation(extension.extra["scala-logging"].toString())
+      implementation(extension.extra["logback-classic"].toString())
+    }
 }
 
 base.archivesBaseName = "ias"+project.name

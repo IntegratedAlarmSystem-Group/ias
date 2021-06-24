@@ -43,7 +43,16 @@ process.inputStream.reader(Charsets.UTF_8).use {
 process.waitFor(10, TimeUnit.SECONDS)
 
 // Sets the version of java in the JdkVersion extra property
+// and the comman dependencies
 if (gradle is ExtensionAware) {
 	val extension = gradle as ExtensionAware
 	extension.extra["JdkVersion"] = 11
+
+        // Common dependencies
+	extension.extra["scala-library"] = "org.scala-lang:scala-library:2.13.5"
+	extension.extra["scalatest"] = "org.scalatest:scalatest_2.13:3.2.9"
+	extension.extra["slf4j-api"] = "org.slf4j:slf4j-api:1.7.30"
+	extension.extra["scala-logging"] = "com.typesafe.scala-logging:scala-logging_2.13:3.9.3"
+	extension.extra["logback-classic"] = "ch.qos.logback:logback-classic:1.2.3"
 }
+
