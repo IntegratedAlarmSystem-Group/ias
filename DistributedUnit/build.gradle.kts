@@ -5,10 +5,14 @@ plugins {
 }
 
 dependencies {
-    // Scala
-    implementation("org.scala-lang:scala-library:2.13.5")
+    val g = project.gradle
+    if (g is ExtensionAware) {
+      val extension = g as ExtensionAware
+      implementation(extension.extra["scala-library"].toString())
+      implementation(extension.extra["scalatest"].toString())
+      implementation(extension.extra["scala-logging"].toString())
+    }
 
-    implementation("com.typesafe.scala-logging:scala-logging_2.13:3.9.3")
     implementation(project(":BasicTypes"))
     implementation(project(":Tools"))
     implementation(project(":CompElement"))
@@ -16,7 +20,6 @@ dependencies {
     implementation(project(":CdbChecker"))
     implementation(project(":KafkaUtils"))
 
-    implementation("org.scalatest:scalatest_2.13:3.2.9")
 }
 
 base.archivesBaseName = "ias"+project.name
