@@ -57,6 +57,7 @@ if (gradle is ExtensionAware) {
 	extension.extra["jackson-databind"] = "com.fasterxml.jackson.core:jackson-databind:2.10.5"
 	extension.extra["junit-jupiter-api"] = "org.junit.jupiter:junit-jupiter-api:5.7.2"
 	extension.extra["junit-jupiter-engine"] = "org.junit.jupiter:junit-jupiter-engine:5.7.2"
+	extension.extra["junit-platform-console-standalone"] = "org.junit.platform:junit-platform-console-standalone:1.7.2"
 	extension.extra["commons-cli"] = "commons-cli:commons-cli:1.4"
 	extension.extra["kafka-clients"] = "org.apache.kafka:kafka-clients:2.8.0"
 	extension.extra["kafka-streams"] = "org.apache.kafka:kafka-streams:2.8.0"
