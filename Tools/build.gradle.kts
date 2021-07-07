@@ -17,6 +17,7 @@ dependencies {
       implementation(extension.extra["slf4j-api"].toString())
       implementation(extension.extra["scala-logging"].toString())
       implementation(extension.extra["logback-classic"].toString())
+      implementation(extension.extra["junit-platform-console-standalone"].toString())
     }
 }
 
