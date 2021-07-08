@@ -10,7 +10,7 @@ class ScalaLoggerTest {
     *
     * @param alsoDebug if true emits DEBUG logs too
     */
-  def produceLogs(alsoDebug: Boolean) {
+  def produceLogs(alsoDebug: Boolean): Unit = {
     ScalaLoggerTest.logger.info("Generating logs")
     
     var iteration = 0L

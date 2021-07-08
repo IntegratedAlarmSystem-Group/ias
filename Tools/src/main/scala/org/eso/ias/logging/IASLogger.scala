@@ -43,7 +43,7 @@ object IASLogger {
    * print debug information even if there is no error by setting 
    * the debug attribute of the configuration tag to true 
    */
-  def printLoggerStatus() {
+  def printLoggerStatus(): Unit = {
     val iLoggerFactory: ILoggerFactory = LoggerFactory.getILoggerFactory()
     val lc: LoggerContext = iLoggerFactory match {
       case temp: LoggerContext => temp
