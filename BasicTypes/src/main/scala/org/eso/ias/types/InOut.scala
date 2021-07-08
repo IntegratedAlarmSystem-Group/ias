@@ -1,10 +1,11 @@
 package org.eso.ias.types
 
 import java.util.Optional
-
 import org.eso.ias.utils.ISO8601Helper
 
-import scala.collection.JavaConverters
+import java.util
+import scala.collection.{JavaConverters, mutable}
+import scala.jdk.javaapi.CollectionConverters
 
 /**
  * A  <code>InOut</code> holds the value of an input or output 
@@ -101,7 +102,7 @@ case class InOut[A](
   // Check that when validityConstraint is defined, also fromInputsValidity
   // is defined
   require(validityConstraint.forall( c => {
-    !c.isEmpty && isOutput
+    !c.isEmpty && isOutput()
   }), "Inconsistent validity constraint")
 
   value.foreach(v => assert(InOut.checkType(v,iasType),"Type mismatch: ["+v+"] is not "+iasType))
@@ -341,14 +342,16 @@ case class InOut[A](
     assert(InOut.checkType(iasValue.value,iasType))
     val validity = Some(Validity(iasValue.iasValidity))
     
-    val depIds = if (iasValue.dependentsFullRuningIds.isPresent() && !iasValue.dependentsFullRuningIds.get.isEmpty()) {
-      Some(Set.empty++JavaConverters.asScalaSet(iasValue.dependentsFullRuningIds.get).map(Identifier(_)))
+    val depIds: Option[Set[Identifier]] = if (iasValue.dependentsFullRuningIds.isPresent() && !iasValue.dependentsFullRuningIds.get.isEmpty()) {
+      val ids: util.Set[String] = iasValue.dependentsFullRuningIds.get()
+      val ids2: mutable.Set[String] = CollectionConverters.asScala(ids)
+      Some((Set.empty++ids2).map(Identifier(_)))
     } else {
       None
     }
     
     val addProps = if (iasValue.props.isPresent() && !iasValue.props.get.isEmpty()) {
-      Some(Map.empty++JavaConverters.mapAsScalaMap(iasValue.props.get))
+      Some(Map.empty++CollectionConverters.asScala(iasValue.props.get()))
     } else {
       None
     }
@@ -393,9 +396,9 @@ case class InOut[A](
    */
   def toIASValue(): IASValue[A] = {
 
-    val ids = idsOfDependants.map(i => JavaConverters.setAsJavaSet(i.map(_.fullRunningID)))
+    val ids: Option[util.Set[String]] = idsOfDependants.map(i => CollectionConverters.asJava(i.map(_.fullRunningID)))
 
-    val p = props.map(p => JavaConverters.mapAsJavaMap(p))
+    val p: Option[util.Map[String, String]] = props.map(p => CollectionConverters.asJava(p))
 
     val theValue = if (value.isDefined) {
       value.get.asInstanceOf[A]
