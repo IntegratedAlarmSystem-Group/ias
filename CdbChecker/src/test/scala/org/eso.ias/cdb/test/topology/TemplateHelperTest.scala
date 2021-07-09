@@ -1,14 +1,13 @@
 package org.eso.ias.cdb.test.topology
 
 import java.nio.file.FileSystems
-
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.{DasuToDeployDao, IasioDao}
 import org.eso.ias.cdb.topology.TemplateHelper
 import org.scalatest.flatspec.AnyFlatSpec
 
-import scala.collection.JavaConverters
+import scala.jdk.javaapi.CollectionConverters
 
 // The following import is required by the usage of the fixture
 import org.eso.ias.cdb.pojos.AsceDao
@@ -33,7 +32,7 @@ class TemplateHelperTest extends AnyFlatSpec {
     val supervisorId = "SupervisorWithTemplates"
     
     // Build the CDB reader
-    val cdbParentPath = FileSystems.getDefault().getPath(".");
+    val cdbParentPath = FileSystems.getDefault().getPath("src/test");
     val cdbFiles = new CdbJsonFiles(cdbParentPath)
     val cdbReader: CdbReader = new JsonReader(cdbFiles)
     cdbReader.init()
@@ -44,7 +43,7 @@ class TemplateHelperTest extends AnyFlatSpec {
       supervOpt.get
     }
 
-    val dasusToDeploy: Set[DasuToDeployDao] = JavaConverters.asScalaSet(superv.getDasusToDeploy).toSet
+    val dasusToDeploy: Set[DasuToDeployDao] = CollectionConverters.asScala(superv.getDasusToDeploy).toSet
       
   }
   
@@ -91,7 +90,7 @@ class TemplateHelperTest extends AnyFlatSpec {
     val f = fixture
     val dasus = TemplateHelper.normalizeDasusToDeploy(f.dasusToDeploy)
     val nonTemplatedDasus = dasus.filter(!_.getId.matches(Identifier.templatedIdRegExp.regex))
-    val nonTemplatedAsces: Set[AsceDao] = nonTemplatedDasus.foldLeft(Set.empty[AsceDao])( (s, d) => s++JavaConverters.collectionAsScalaIterable(d.getAsces))
+    val nonTemplatedAsces: Set[AsceDao] = nonTemplatedDasus.foldLeft(Set.empty[AsceDao])( (s, d) => s++CollectionConverters.asScala(d.getAsces))
     assert(nonTemplatedAsces.forall(!_.getId.matches(Identifier.templatedIdRegExp.regex)))
   }
   
@@ -99,7 +98,7 @@ class TemplateHelperTest extends AnyFlatSpec {
     val f = fixture
     val dasus = TemplateHelper.normalizeDasusToDeploy(f.dasusToDeploy)
     val templatedDasus = dasus.filter(_.getId.matches(Identifier.templatedIdRegExp.regex))
-    val templatedAsces: Set[AsceDao] = templatedDasus.foldLeft(Set.empty[AsceDao])( (s, d) => s++JavaConverters.collectionAsScalaIterable(d.getAsces))
+    val templatedAsces: Set[AsceDao] = templatedDasus.foldLeft(Set.empty[AsceDao])( (s, d) => s++CollectionConverters.asScala(d.getAsces))
     assert(templatedAsces.forall(_.getId.matches(Identifier.templatedIdRegExp.regex)))
   }
   
@@ -123,7 +122,7 @@ class TemplateHelperTest extends AnyFlatSpec {
     val f = fixture
     val dasus = TemplateHelper.normalizeDasusToDeploy(f.dasusToDeploy)
     val templatedDasus = dasus.filter(_.getId.matches(Identifier.templatedIdRegExp.regex))
-    val templatedAsces: Set[AsceDao] = templatedDasus.foldLeft(Set.empty[AsceDao])( (s, d) => s++JavaConverters.collectionAsScalaIterable(d.getAsces))
+    val templatedAsces: Set[AsceDao] = templatedDasus.foldLeft(Set.empty[AsceDao])( (s, d) => s++CollectionConverters.asScala(d.getAsces))
     assert(templatedAsces.forall(_.getOutput.getId.matches(Identifier.templatedIdRegExp.regex)))
   }
   
@@ -131,7 +130,7 @@ class TemplateHelperTest extends AnyFlatSpec {
     val f = fixture
     val dasus = TemplateHelper.normalizeDasusToDeploy(f.dasusToDeploy)
     val nonTemplatedDasus = dasus.filter(!_.getId.matches(Identifier.templatedIdRegExp.regex))
-    val nonTemplatedAsces: Set[AsceDao] = nonTemplatedDasus.foldLeft(Set.empty[AsceDao])( (s, d) => s++JavaConverters.collectionAsScalaIterable(d.getAsces))
+    val nonTemplatedAsces: Set[AsceDao] = nonTemplatedDasus.foldLeft(Set.empty[AsceDao])( (s, d) => s++CollectionConverters.asScala(d.getAsces))
     assert(!nonTemplatedAsces.forall(_.getOutput.getId.matches(Identifier.templatedIdRegExp.regex)))
   }
 
@@ -149,11 +148,11 @@ class TemplateHelperTest extends AnyFlatSpec {
     // ID and instance of the templated input instances
     val ascesWithTemplatedInstanceInputs: Map[AsceDao, Set[(String, Int)]] = {
       var map = Map.empty[AsceDao, Set[(String, Int)]]
-      val allAsces = allDasus.foldLeft(Set.empty[AsceDao]) ( (z,dasu) => z++JavaConverters.asScalaSet(dasu.getAsces).toSet)
+      val allAsces = allDasus.foldLeft(Set.empty[AsceDao]) ( (z,dasu) => z++CollectionConverters.asScala(dasu.getAsces).toSet)
       val ascesWithTemplatedInstanceInputs = allAsces.filter(!_.getTemplatedInstanceInputs.isEmpty)
 
       ascesWithTemplatedInstanceInputs.foreach( asce => {
-        val tempInstInputs = JavaConverters.asScalaSet(asce.getTemplatedInstanceInputs).toSet
+        val tempInstInputs = CollectionConverters.asScala(asce.getTemplatedInstanceInputs).toSet
         // We save the id before conversion and the instance number
         val dataToSave = tempInstInputs.map(tii => (tii.getIasio.getId, tii.getInstance()))
         if (!tempInstInputs.isEmpty) map=map+(asce -> dataToSave)
@@ -163,13 +162,13 @@ class TemplateHelperTest extends AnyFlatSpec {
     assert(ascesWithTemplatedInstanceInputs.nonEmpty, "No templated instance inputs found")
 
     val normalizedDasus = TemplateHelper.normalizeDasusToDeploy(f.dasusToDeploy)
-    val allAsces = normalizedDasus.foldLeft(Set.empty[AsceDao]) ( (z,dasu) => z++JavaConverters.asScalaSet(dasu.getAsces).toSet)
+    val allAsces = normalizedDasus.foldLeft(Set.empty[AsceDao]) ( (z,dasu) => z++CollectionConverters.asScala(dasu.getAsces).toSet)
     // After normalizing all the templated inputs must have been cleared
     assert(allAsces.filter(asce => !asce.getTemplatedInstanceInputs.isEmpty).isEmpty)
 
     ascesWithTemplatedInstanceInputs.keySet.forall( asce => {
       val templatedInstanceInputs: Set[(String, Int)] = ascesWithTemplatedInstanceInputs(asce)
-      val asceInputs: Set[IasioDao] = JavaConverters.collectionAsScalaIterable(asce.getInputs).toSet
+      val asceInputs: Set[IasioDao] = CollectionConverters.asScala(asce.getInputs).toSet
       val asceInputIds = asceInputs.map( i => i.getId)
 
       templatedInstanceInputs.forall( tii => {
