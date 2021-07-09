@@ -2,7 +2,7 @@ package org.eso.ias.cdb.topology
 
 import org.eso.ias.cdb.pojos.AsceDao
 
-import scala.collection.JavaConverters.collectionAsScalaIterable
+import scala.jdk.javaapi.CollectionConverters
 
 /** The view of an ASCE based on its IASIOs in input
  *  and the generated output.
@@ -34,7 +34,7 @@ class AsceTopology(
   def this(asceDao: AsceDao) = {
     this(
         asceDao.getId(),
-        collectionAsScalaIterable(asceDao.getInputs()).map(iasid => iasid.getId).toSet,
+      CollectionConverters.asScala(asceDao.getInputs()).map(iasid => iasid.getId).toSet,
         asceDao.getOutput().getId())
   }
 

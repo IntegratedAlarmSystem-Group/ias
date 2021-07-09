@@ -34,9 +34,9 @@ class DasuTopology(
                     asces: List[AsceTopology],
                     override val id: String,
                     override val outputId: String) extends OutputProducer {
-  require(Option(asces).isDefined && asces.nonEmpty,"Invalid null or empty list of ASCEs of DASU "+id)
+  require(Option(asces).isDefined && asces.nonEmpty,s"Invalid null or empty list of ASCEs of DASU ${id}")
   require(Option(id).isDefined && !id.isEmpty)
-  require(Option(outputId).isDefined && outputId.nonEmpty,"Invalid empty outputId of DASU "+id)
+  require(Option(outputId).isDefined && outputId.nonEmpty,s"Invalid empty outputId of DASU $id")
 
   /** The output produced by all ASCEs
    *
@@ -186,7 +186,7 @@ class DasuTopology(
   def this(
       dId: String,
       outId: String,
-      asceDaos: List[AsceDao]) {
+      asceDaos: List[AsceDao]) = {
     this(asceDaos.map(new AsceTopology(_)),dId,outId)
   }
 
