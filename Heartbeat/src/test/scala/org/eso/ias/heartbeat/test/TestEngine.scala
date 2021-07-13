@@ -35,19 +35,19 @@ class MockProducer(serializer: HbMsgSerializer) extends HbProducer(serializer) {
   var cleanedUp = false
   
   /** Initialize the producer */
-  override def init() {
+  override def init(): Unit = {
     initialzed=true
   }
   
   /** Shutdown the producer */
-  override def shutdown() {
+  override def shutdown(): Unit = {
     cleanedUp=true
   }
   
   /**
    * Push the string
    */
-  override def push(hbAsString: String) {
+  override def push(hbAsString: String): Unit = {
     val str = Option(hbAsString)
     str.filter(!_.isEmpty).foreach(s => {
       logger.info("HB received {}",s)

@@ -57,7 +57,7 @@ class TestKafkaPublisher extends AnyFlatSpec with HbListener with BeforeAndAfter
     stringProducer.tearDown()
   }
 
-  override def beforeEach() {
+  override def beforeEach(): Unit = {
     logger.info("Initializing string consumer")
     buffer.clear()
     hbKafkaConsumer = new HbKafkaConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,"HbConsumer")
@@ -73,7 +73,7 @@ class TestKafkaPublisher extends AnyFlatSpec with HbListener with BeforeAndAfter
     logger.info("Initialized")
   }
   
-  override def afterEach() {
+  override def afterEach(): Unit = {
     logger.info("Shutting down the HB consumer")
     Option(hbKafkaConsumer).foreach(_.shutdown())
 
