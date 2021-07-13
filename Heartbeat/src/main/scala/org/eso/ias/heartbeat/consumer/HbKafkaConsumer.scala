@@ -24,7 +24,7 @@ trait  HbListener {
     *
     * @param hbMsg The HB meassage
     */
-  def hbReceived(hbMsg: HbMsg)
+  def hbReceived(hbMsg: HbMsg): Unit
 }
 
 /** The message read from the kafka topic */
@@ -140,7 +140,7 @@ class HbKafkaConsumer(brokers: String, consumerId: String)
     *
     * @param strings The strings read from the kafka topic
     */
-  def stringsReceived(strings: util.Collection[String]) {
+  def stringsReceived(strings: util.Collection[String]): Unit = {
     strings.forEach(str =>  {
       val hbMessage = deserializer.deserializeFromString(str)
       val hb = hbMessage._1

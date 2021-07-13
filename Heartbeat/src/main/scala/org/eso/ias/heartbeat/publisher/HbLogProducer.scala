@@ -24,7 +24,7 @@ class HbLogProducer(serializer: HbMsgSerializer) extends HbProducer(serializer) 
   /**
    * Push the string
    */
-  override def push(hbAsString: String) {
+  override def push(hbAsString: String): Unit = {
     logger.info("HeartBeat [{}]",hbAsString)
   }
 }
