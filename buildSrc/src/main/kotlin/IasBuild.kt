@@ -273,6 +273,33 @@ open class IasBuild : Plugin<Project> {
 
         }
 
+        // Copy python test modules
+        // i.e. each folder in src/test/python
+        val pyTestModules = project.tasks.register<Copy>("CopyPyTestMods") {
+
+            doFirst {
+
+                println("CopyPyTestMods doFirst")
+
+            }
+
+            println("Configuring: Installing Python modules for testing")
+
+            val srcFolder = "src/test/python"
+
+            from(project.layout.projectDirectory.dir(srcFolder))
+            include("**/*.py")
+            exclude("*.py")
+            val destFolder = "lib/python${pythonVersion}/site-packages"
+            into(project.layout.buildDirectory.dir(destFolder))
+
+            println("Configured: Installing Python modules for testing")
+
+            doLast {
+                println("CopyPyTestMods doLast")
+            }
+        }
+
         project.tasks.getByPath(":${project.name}:build").finalizedBy(conf)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(pyScripts)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(shScripts)
@@ -280,6 +307,7 @@ open class IasBuild : Plugin<Project> {
         project.tasks.getByPath(":${project.name}:build").finalizedBy(buildTestJar)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(copyExtLibs)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(pyTestScripts)
+        project.tasks.getByPath(":${project.name}:build").finalizedBy(pyTestModules)
 
         val runIasTestsTask = project.tasks.register<Exec>("iasTest") {
             dependsOn(":build", pyTestScripts)
