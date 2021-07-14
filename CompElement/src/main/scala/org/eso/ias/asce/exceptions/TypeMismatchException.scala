@@ -1,8 +1,9 @@
 package org.eso.ias.asce.exceptions
 
 import org.eso.ias.types.IASTypes
+
 import java.util.Collection
-import scala.collection.JavaConverters
+import scala.jdk.javaapi.CollectionConverters
 
 /**
  * Exception thrown by the TF executor when the type
@@ -22,7 +23,7 @@ extends Exception(message) {
    * @param actualType: the type of the HIO
    * @param expectedType: the expected type of the HIO
    */
-  def this(hioId: String, actualType: IASTypes, expectedType: IASTypes) {
+  def this(hioId: String, actualType: IASTypes, expectedType: IASTypes) = {
     this("Type mismatch for HIO "+hioId+": expected was "+expectedType+" but "+actualType+" found")
   }
   
@@ -34,7 +35,7 @@ extends Exception(message) {
    * @param actualType: the type of the HIO
    * @param expectedTypes: the possible types of the HIO
    */
-  def this(hioId: String, actualType: IASTypes, expectedTypes: Iterable[IASTypes]) {
+  def this(hioId: String, actualType: IASTypes, expectedTypes: Iterable[IASTypes]) = {
     this("Type mismatch for HIO "+hioId+": its state, "+actualType+", not in ("+expectedTypes.mkString(",")+")")
   }
   
@@ -46,8 +47,8 @@ extends Exception(message) {
    * @param actualType: the type of the HIO
    * @param expectedType: the possible types of the HIO
    */
-  def this(hioId: String, actualType: IASTypes, expectedTypes: Collection[IASTypes]) {
-    this(hioId,actualType,JavaConverters.collectionAsScalaIterable[IASTypes](expectedTypes))
+  def this(hioId: String, actualType: IASTypes, expectedTypes: Collection[IASTypes]) = {
+    this(hioId,actualType,CollectionConverters.asScala(expectedTypes))
   }
   
 }

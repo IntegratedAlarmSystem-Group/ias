@@ -36,7 +36,7 @@ class TransferExample(
    * 
    * @see TransferExecutor
    */
-  override def shutdown() {
+  override def shutdown(): Unit = {
     println("Scala TransferExample shutting down")
   }
   

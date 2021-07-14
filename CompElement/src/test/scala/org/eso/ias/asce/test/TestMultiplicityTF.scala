@@ -1,16 +1,15 @@
 package org.eso.ias.asce.test
 
 import java.util.Properties
-
 import org.eso.ias.asce.transfer.impls.MultiplicityTF
 import org.eso.ias.asce.transfer.{ScalaTransfer, TransferFunctionLanguage, TransferFunctionSetting}
 import org.eso.ias.asce.{AsceStates, ComputingElement}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types._
-import org.scalatest.{BeforeAndAfterEach}
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec
 
-import scala.collection.JavaConverters
+import scala.jdk.javaapi.CollectionConverters
 
 /**
  * Test the multiplicity transfer function
@@ -60,7 +59,7 @@ class TestMultiplicityTF extends AnyFlatSpec with BeforeAndAfterEach {
   /** The ASCE running the multiplicity TF with no priority set in the property */
   var scalaCompWithNoPriority: Option[ComputingElement[Alarm]]= None
 
-  override def beforeEach() {
+  override def beforeEach(): Unit = {
     val scalaMultiplicityTFWithProperty = new TransferFunctionSetting(
       "org.eso.ias.asce.transfer.impls.MultiplicityTF",
         TransferFunctionLanguage.scala,
@@ -102,7 +101,7 @@ class TestMultiplicityTF extends AnyFlatSpec with BeforeAndAfterEach {
 
   }
 
-  override def afterEach() {
+  override def afterEach(): Unit =  {
     scalaCompWithPriority.get.shutdown()
     scalaCompWithNoPriority.get.shutdown()
   }
@@ -252,8 +251,8 @@ class TestMultiplicityTF extends AnyFlatSpec with BeforeAndAfterEach {
     val cleareddWithProps = clearedMPs.map(iasValue => {
       // Add a random property
       val prop = Map(iasValue.id->System.currentTimeMillis().toString)
-      JavaConverters.mapAsJavaMap(prop)
-      iasValue.updateProperties(JavaConverters.mapAsJavaMap(prop))
+      CollectionConverters.asJava(prop)
+      iasValue.updateProperties(CollectionConverters.asJava(prop))
     })
     scalaCompWithPriority.get.update(cleareddWithProps)
     assert(!scalaCompWithPriority.get.output.value.get.asInstanceOf[Alarm].isSet)
@@ -266,7 +265,7 @@ class TestMultiplicityTF extends AnyFlatSpec with BeforeAndAfterEach {
     val act3WithProps = act3.map( iasValue => {
       val props = if (iasValue.value.asInstanceOf[Alarm].isSet) Map(iasValue.id -> "SET")
       else Map(iasValue.id -> "CLEARED")
-      iasValue.updateProperties(JavaConverters.mapAsJavaMap(props))
+      iasValue.updateProperties(CollectionConverters.asJava(props))
     })
     scalaCompWithPriority.get.update(act3WithProps)
     assert(scalaCompWithPriority.get.output.value.get.asInstanceOf[Alarm].isSet)
@@ -285,7 +284,7 @@ class TestMultiplicityTF extends AnyFlatSpec with BeforeAndAfterEach {
     val act3WithProps = act3.map( iasValue => {
       val props = if (iasValue.value.asInstanceOf[Alarm].isSet) Map("TestKey" -> "SET", iasValue.id->System.currentTimeMillis().toString)
       else Map("TestKey" -> "CLEARED", iasValue.id->System.currentTimeMillis().toString)
-      iasValue.updateProperties(JavaConverters.mapAsJavaMap(props))
+      iasValue.updateProperties(CollectionConverters.asJava(props))
     })
     scalaCompWithPriority.get.update(act3WithProps)
     assert(scalaCompWithPriority.get.output.value.get.asInstanceOf[Alarm].isSet)
