@@ -41,7 +41,7 @@ class ConstraintValidityTF (
    * 
    * @see TransferExecutor
    */
-  override def shutdown() {
+  override def shutdown(): Unit = {
     logger.info("Shutting down")
   }
   

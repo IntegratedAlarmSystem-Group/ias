@@ -13,7 +13,7 @@ class TestMinMaxThreshold extends AnyFlatSpec {
   // The threshold to assess the validity from the arrival time of the input
   val validityThresholdInSecs = 2
   
-  def withScalaTransferSetting(testCode: TransferFunctionSetting => Any) {
+  def withScalaTransferSetting(testCode: TransferFunctionSetting => Any): Unit = {
     val threadFactory = new TestThreadFactory()
     
     // The TF executor to test
@@ -29,7 +29,7 @@ class TestMinMaxThreshold extends AnyFlatSpec {
     }
   }
   
-  def withJavaTransferSetting(testCode: TransferFunctionSetting => Any) {
+  def withJavaTransferSetting(testCode: TransferFunctionSetting => Any): Unit = {
     val threadFactory = new TestThreadFactory()
     
     // The TF executor to test
@@ -45,7 +45,7 @@ class TestMinMaxThreshold extends AnyFlatSpec {
     }
   }
   
-  def withScalaComp(testCode: (ComputingElement[Alarm], Set[InOut[_]]) => Any) {
+  def withScalaComp(testCode: (ComputingElement[Alarm], Set[InOut[_]]) => Any): Unit = {
     val commons = new CommonCompBuilder(
         "TestMinMAxThreshold-DASU-ID",
         "TestMinMAxThreshold-ASCE-ID",
@@ -83,7 +83,7 @@ class TestMinMaxThreshold extends AnyFlatSpec {
     }
   }
   
-  def withJavaComp(testCode: (ComputingElement[Alarm], Set[InOut[_]]) => Any) {
+  def withJavaComp(testCode: (ComputingElement[Alarm], Set[InOut[_]]) => Any): Unit = {
     val commons = new CommonCompBuilder(
         "TestMinMAxThreshold-DASU-ID",
         "TestMinMAxThreshold-ASCE-ID",

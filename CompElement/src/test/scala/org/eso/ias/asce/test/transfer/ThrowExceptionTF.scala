@@ -33,7 +33,7 @@ class ThrowExceptionTF(
    * 
    * @see TransferExecutor
    */
-  override def shutdown() {}
+  override def shutdown(): Unit = {}
   
   /**
    * This method does nothing but throwing an exception

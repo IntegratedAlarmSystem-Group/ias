@@ -3,7 +3,6 @@ package org.eso.ias.asce
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
-
 import org.eso.ias.asce.exceptions.ValidityConstraintsMismatchException
 import org.eso.ias.asce.transfer._
 import org.eso.ias.cdb.pojos.{AsceDao, IasioDao, TFLanguageDao}
@@ -13,6 +12,7 @@ import org.eso.ias.utils.ISO8601Helper
 
 import scala.collection.JavaConverters
 import scala.collection.mutable.{Map => MutableMap}
+import scala.jdk.javaapi.CollectionConverters
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -414,7 +414,7 @@ abstract class ComputingElement[T](
     require(Option(inputs).isDefined)
     
     // Inputs must all have fromIasValueValidity defined
-    assert(!inputs.exists(_.isOutput))
+    assert(!inputs.exists(_.isOutput()))
     
     // If there are constraints, discard the inputs whose ID 
     // is not contained in the constraints
@@ -539,7 +539,7 @@ object ComputingElement {
     val out: InOut[T] = InOut.asOutput(outputId, IASTypes.fromIasioDaoType(asceDao.getOutput.getIasType))
     logger.info("ComputingElement {} produces output {}",asceDao.getId,outputId.id)
         
-    val inputsIasioDaos: Set[IasioDao] = JavaConverters.collectionAsScalaIterable(asceDao.getInputs).toSet
+    val inputsIasioDaos: Set[IasioDao] = CollectionConverters.asScala(asceDao.getInputs).toSet
     val reqInputs: Set[String] = inputsIasioDaos.map(_.getId)
     logger.info("ComputingElement {} inputs are [{}]",asceDao.getId,reqInputs.mkString(", "))
     

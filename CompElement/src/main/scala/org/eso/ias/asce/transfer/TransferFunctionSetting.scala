@@ -84,12 +84,12 @@ class TransferFunctionSetting(
   }
 
   /** Shuts the TF down */
-  def shutdown() {
+  def shutdown(): Unit = {
     assert(!isShutDown)
     // Init the executor if it has been correctly instantiated
     if (transferExecutor.isDefined) {
       val shutdownThread = threadFactory.newThread(new Runnable() {
-        override def run() {
+        override def run(): Unit = {
           shutdownExecutor(transferExecutor)
        }
       })
@@ -161,7 +161,7 @@ class TransferFunctionSetting(
    *
    * @param executor: The executor to shutdown
    */
-  private[this] def shutdownExecutor(executor: Option[TransferExecutor]) {
+  private[this] def shutdownExecutor(executor: Option[TransferExecutor]): Unit = {
     require(executor.isDefined)
     try {
       executor.get.shutdown()
@@ -227,10 +227,10 @@ class TransferFunctionSetting(
       Try(ctor.map(c => {
         TransferFunctionSetting.logger.debug("Constructor found for {}",nameOfClassToLoad)
         // The arguments to pass to the constructor
-        val args =
+        val args: Array[Any] =
           if (language==TransferFunctionLanguage.python)
-            Array[AnyRef](asceId, asceRunningId, new java.lang.Long(validityTimeFrame),props,className)
-        else Array[AnyRef](asceId, asceRunningId, new java.lang.Long(validityTimeFrame),props)
+            Array(asceId, asceRunningId, validityTimeFrame.toLong, props, className)
+        else Array(asceId, asceRunningId, validityTimeFrame, props)
         // Invoke the constructor to build the TransferExecutor
         c.newInstance(args: _*).asInstanceOf[TransferExecutor]
       }))
