@@ -17,7 +17,7 @@ dependencies {
       implementation(extension.extra["junit-jupiter-engine"].toString())
     }
     
-    implementation("black.ninia:jep:3.9.0")
+    implementation("black.ninia:jep:3.9.1")
 
     implementation(project(":Tools"))
     implementation(project(":BasicTypes"))
