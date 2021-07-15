@@ -44,14 +44,14 @@ class SupervisorTest extends AnyFlatSpec {
         /**
          * @see OutputListener
          */
-        def outputStringifiedEvent(outputStr: String) {
+        def outputStringifiedEvent(outputStr: String): Unit = {
           stringEventsreceived.append(outputStr)
         }
 
         /**
          * @see OutputListener
          */
-        def outputEvent(output: IASValue[_]) {
+        def outputEvent(output: IASValue[_]): Unit = {
           outputEventsreceived.append(output)
         }
       }
@@ -61,7 +61,7 @@ class SupervisorTest extends AnyFlatSpec {
       val inputsProvider = new DirectInputSubscriber()
 
       // Build the CDB reader
-      val cdbParentPath = FileSystems.getDefault().getPath(".");
+      val cdbParentPath = FileSystems.getDefault().getPath("src/test");
       val cdbFiles = new CdbJsonFiles(cdbParentPath)
       val cdbReader: CdbReader = new JsonReader(cdbFiles)
       cdbReader.init()

@@ -3,7 +3,7 @@ package org.eso.ias.supervisor
 import org.eso.ias.command.CommandListener.CmdExecutionResult
 import org.eso.ias.command.{CommandExitStatus, CommandListener, CommandMessage, DefaultCommandExecutor}
 
-import scala.collection.JavaConverters
+import scala.jdk.javaapi.CollectionConverters
 
 /**
  * The executor of commands for the Supervisor.
@@ -37,7 +37,7 @@ class SupervisorCmdExecutor(
       new CmdExecutionResult(CommandExitStatus.OK,null,false,true)
     } else {
       // No ASCE is using the TF => reject the command
-      val props = JavaConverters.mapAsJavaMap(Map("Reason" -> ("Unused TF " + idOfTF)))
+      val props = CollectionConverters.asJava(Map("Reason" -> ("Unused TF " + idOfTF)))
       new CmdExecutionResult(CommandExitStatus.REJECTED, null, false, false)
     }
   }
