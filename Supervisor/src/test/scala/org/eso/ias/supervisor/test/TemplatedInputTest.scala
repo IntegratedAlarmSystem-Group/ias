@@ -78,7 +78,7 @@ class TemplatedInputTest extends AnyFlatSpec {
         /**
          * @see OutputListener
          */
-        def outputStringifiedEvent(outputStr: String) {
+        def outputStringifiedEvent(outputStr: String): Unit = {
           logger.info("Output received: {}", outputStr)
           stringEventsreceived.append(outputStr)
         }
@@ -86,7 +86,7 @@ class TemplatedInputTest extends AnyFlatSpec {
         /**
          * @see OutputListener
          */
-        def outputEvent(output: IASValue[_]) {
+        def outputEvent(output: IASValue[_]): Unit = {
           outputEventsreceived.append(output)
         }
       }
@@ -99,7 +99,7 @@ class TemplatedInputTest extends AnyFlatSpec {
       DasuImpl(dd,i,op,id,10,10)
 
       // Build the CDB reader
-      val cdbParentPath = FileSystems.getDefault().getPath(".");
+      val cdbParentPath = FileSystems.getDefault().getPath("src/test");
       val cdbFiles = new CdbJsonFiles(cdbParentPath)
       val cdbReader: CdbReader = new JsonReader(cdbFiles)
       cdbReader.init()

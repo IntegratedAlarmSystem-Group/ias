@@ -5,7 +5,6 @@ import java.util
 import java.util.Properties
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.{CountDownLatch, TimeUnit}
-
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.DasuDao
@@ -21,8 +20,8 @@ import org.eso.ias.types._
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatest.flatspec.AnyFlatSpec
 
-import scala.collection.JavaConverters
 import scala.collection.mutable.ListBuffer
+import scala.jdk.javaapi.CollectionConverters
 
 /**
  * Test the Supervisor connected to the kafka BSDB.
@@ -69,7 +68,7 @@ class SupervisorWithKafkaTest extends AnyFlatSpec with BeforeAndAfterAll with Be
   val supervisorId = new Identifier("SupervisorWithKafka", IdentifierType.SUPERVISOR, None)
 
   // The JSON CDB reader
-  val cdbParentPath: Path = FileSystems.getDefault.getPath(".")
+  val cdbParentPath: Path = FileSystems.getDefault.getPath("src/test")
   val cdbFiles = new CdbJsonFiles(cdbParentPath)
   val cdbReader: CdbReader = new JsonReader(cdbFiles)
   cdbReader.init()
@@ -140,7 +139,7 @@ class SupervisorWithKafkaTest extends AnyFlatSpec with BeforeAndAfterAll with Be
   
   after {}
 
-  override def beforeAll() {
+  override def beforeAll(): Unit = {
     logger.info("BeforeAll...")
     /**
      * The listener of IASValues published in the BSDB
@@ -153,7 +152,7 @@ class SupervisorWithKafkaTest extends AnyFlatSpec with BeforeAndAfterAll with Be
         * i.e. it has been received by iasiosConsumer
         */
       override def iasiosReceived(events: util.Collection[IASValue[_]]): Unit = {
-        val iasValuesReceived = JavaConverters.collectionAsScalaIterable(events)
+        val iasValuesReceived = CollectionConverters.asScala(events)
 
         logger.info("{} IASValues received", iasValuesReceived.size)
 
@@ -178,7 +177,7 @@ class SupervisorWithKafkaTest extends AnyFlatSpec with BeforeAndAfterAll with Be
     logger.info("BeforeAll done.")
   }
 
-  override def afterAll() {
+  override def afterAll(): Unit = {
     logger.info("AfterAll...")
     iasiosProducer.tearDown()
     iasiosConsumer.tearDown()

@@ -85,7 +85,7 @@ class SupervisorStatistics(id: String, val dasusIds: Set[String]) extends StatsC
     val usedHeapMemory = ManagementFactory.getMemoryMXBean.getHeapMemoryUsage.getUsed
     val totNumberOfThreads = ManagementFactory.getThreadMXBean.getThreadCount
 
-    val message= StringBuilder.newBuilder
+    val message= new StringBuilder()
     message.append("Stats: ")
     message.append(" used heap ")
     message.append(usedHeapMemory/1024)

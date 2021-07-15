@@ -5,7 +5,6 @@ import java.nio.file.Files
 import java.util
 import java.util.concurrent.TimeUnit
 import java.util.{Collection, Collections}
-
 import org.eso.ias.command.{CommandMessage, CommandSender, CommandType}
 import org.eso.ias.kafkautils.KafkaStringsConsumer.StreamPosition
 import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener
@@ -16,7 +15,7 @@ import org.scalactic.source.Position
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatest.flatspec.AnyFlatSpec
 
-import scala.collection.JavaConverters
+import scala.jdk.javaapi.CollectionConverters
 
 /**
  * Test the functioning of the Supervisor when the TF changed and the TF_CHANGED command arrives.
@@ -35,8 +34,8 @@ import scala.collection.JavaConverters
  *          => the Supervisor must restart and use the new TF
  * - terminate the Supervisor with a SHUTDOWN command
  *
- * To check if the restarted Supervisor is using the new TF, this test sends a set of inputs and check if the
- * output produced by the Supervisor respect the algorithm of the used TF.
+ * To check if the restarted Supervisor is using the new TF, this test sends a set of inputs and checks if the
+ * output produced by the Supervisor matches with the algorithm of the used TF.
  */
 class TestSupervisorTfChanged
   extends AnyFlatSpec
@@ -44,7 +43,7 @@ class TestSupervisorTfChanged
     with BeforeAndAfter
     with IasioListener
 {
-  /** The ID of th eSupervisor */
+  /** The ID of the Supervisor */
   val supervisorId = "SupervisorToRestart";
 
   /** The logger */
@@ -56,8 +55,7 @@ class TestSupervisorTfChanged
   /** The shared kafka string producer  */
   val stringProducer = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,commandSenderIdentifier.id)
 
-  /**
-   * The command sender to send commands to the Suprvisor */
+  /** The command sender to send commands to the Supervisor */
   var commandSender: CommandSender = _
 
   /** The producer to sends inputs to the Supervisor */
@@ -66,10 +64,10 @@ class TestSupervisorTfChanged
   /** The consumer to get the output of the Supervisor */
   var iasiosConsumer: KafkaIasiosConsumer = _
 
-  /** The JSON serialize of IASIOs */
+  /** The JSON serializer of IASIOs */
   val iasValueSerializer: IasValueStringSerializer = new IasValueJsonSerializer
 
-  /** The  IASIOs produced by the supervisor*/
+  /** The IASIOs produced by the supervisor*/
   val iasiosReceived = Collections.synchronizedList(new util.Vector[IASValue[_]]())
 
   /** The identifier of the input of the supervisor */
@@ -78,27 +76,28 @@ class TestSupervisorTfChanged
     val pluginId = new Identifier("SimulatedPluginID", IdentifierType.PLUGIN, monSysId)
     val converterId = new Identifier("ConverterID", IdentifierType.CONVERTER, pluginId)
 
-    /** The ID of the temeprature processed by a DASU of the Supervisor */
+    /** The ID of the temperature processed by a DASU of the Supervisor */
     new Identifier("InputOfSupervToRestart", IdentifierType.IASIO, converterId)
   }
+
+  /** The path of the CDB */
+  val cdbPath = "src/test"
 
   /**
    * Initialization of the tests:
    * - run the supervisor
    * - initialize the command sender
-   *
-   * @return
    */
-  override def beforeAll() {
-    logger.info("Running the Supervisor {}",supervisorId);
-    val cmdToRun: java.util.List[String] = new java.util.Vector[String]();
-    cmdToRun.add("iasSupervisor");
-    cmdToRun.add("SupervisorToRestart");
-    cmdToRun.add("-j");
-    cmdToRun.add(".");
-    val procBuilder = new ProcessBuilder(cmdToRun);
-    procBuilder.inheritIO();
-    val p = procBuilder.start();
+  override def beforeAll(): Unit = {
+    logger.info("Running the Supervisor {}",supervisorId)
+    val cmdToRun: java.util.List[String] = new java.util.Vector[String]()
+    cmdToRun.add("iasSupervisor")
+    cmdToRun.add("SupervisorToRestart")
+    cmdToRun.add("-j")
+    cmdToRun.add(cdbPath)
+    val procBuilder = new ProcessBuilder(cmdToRun)
+    procBuilder.inheritIO()
+    val p = procBuilder.start()
 
     // Initialize the command sender
     commandSender = new CommandSender(commandSenderIdentifier,stringProducer,KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
@@ -125,12 +124,12 @@ class TestSupervisorTfChanged
     iasiosConsumer.startGettingEvents(StreamPosition.END,this)
 
     // Give the supervisor time to start
-    logger.info("Give the supervisor time to be start...");
+    logger.info("Give the supervisor time to start...");
     Thread.sleep(10000);
     assert(p.isAlive());
     logger.info("Supervisor {} started",supervisorId);
 
-    copyFile("CDB/ASCE/ASCEOfSupervToRestart.orig","CDB/ASCE/ASCEOfSupervToRestart.json")
+    copyFile(s"$cdbPath/CDB/ASCE/ASCEOfSupervToRestart.orig",s"$cdbPath/CDB/ASCE/ASCEOfSupervToRestart.json")
   }
 
   override def afterAll(): Unit = {
@@ -144,7 +143,7 @@ class TestSupervisorTfChanged
     logger.debug("Closing the consumer of IASIOs")
     iasiosConsumer.tearDown()
 
-    copyFile("CDB/ASCE/ASCEOfSupervToRestart.orig","CDB/ASCE/ASCEOfSupervToRestart.json")
+    copyFile(s"$cdbPath/CDB/ASCE/ASCEOfSupervToRestart.orig",s"$cdbPath/CDB/ASCE/ASCEOfSupervToRestart.json")
 
     logger.info("Closed")
   }
@@ -155,9 +154,9 @@ class TestSupervisorTfChanged
   }
 
   /** Invoked when a new IASIOs has been read from the topic */
-  override def iasiosReceived(events: Collection[IASValue[_]])  {
+  override def iasiosReceived(events: Collection[IASValue[_]]): Unit = {
     logger.debug("{} IASIOs received",events.size().toString)
-    val iasios = JavaConverters.collectionAsScalaIterable(events)
+    val iasios = CollectionConverters.asScala(events)
     iasios.foreach(iasio => {
       iasiosReceived.add(iasio)
       logger.debug("Received {}",iasio.toString)
@@ -241,7 +240,7 @@ class TestSupervisorTfChanged
     // Set a new TF: in this case the same min/max TF with different limits
     // is obtained by changing the ASCE configuration file
     logger.info("Changing the TF in the CDB")
-    copyFile("CDB/ASCE/ASCEOfSupervToRestart.another","CDB/ASCE/ASCEOfSupervToRestart.json")
+    copyFile(s"$cdbPath/CDB/ASCE/ASCEOfSupervToRestart.another",s"$cdbPath/CDB/ASCE/ASCEOfSupervToRestart.json")
 
     logger.info("Sending TF_CHANGED command to the supervisors")
     val params: util.List[String] = new util.Vector[String]()
