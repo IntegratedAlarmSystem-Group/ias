@@ -2,14 +2,13 @@ package org.eso.ias.dasu.subscriber
 
 import java.util
 import java.util.{Collection, Properties}
-
 import org.eso.ias.kafkautils.KafkaStringsConsumer.StreamPosition
 import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener
 import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosConsumer}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.{IASTypes, IASValue}
 
-import scala.collection.JavaConverters
+import scala.jdk.javaapi.CollectionConverters
 import scala.util.{Failure, Try}
 
 /** 
@@ -52,7 +51,7 @@ extends IasioListener with InputSubscriber {
 	 */
 	override def iasiosReceived(iasValues: Collection[IASValue[_]]): Unit = {
     assert(Option(iasValues).isDefined)
-    val receivedIasios = JavaConverters.collectionAsScalaIterable(iasValues)
+    val receivedIasios = CollectionConverters.asScala(iasValues)
      KafkaSubscriber.logger.debug(("Subscriber of [{}] receeved {} events "),consumerId,receivedIasios.size)
     Try(listener.foreach( l => l.inputsReceived(receivedIasios))) match {
       case Failure(e) =>
@@ -98,10 +97,10 @@ extends IasioListener with InputSubscriber {
 
 
     if (acceptedInputs.nonEmpty) {
-      kafkaConsumer.addIdsToFilter(JavaConverters.setAsJavaSet(acceptedInputs))
+      kafkaConsumer.addIdsToFilter(CollectionConverters.asJava(acceptedInputs))
       KafkaSubscriber.logger.info("New accepted IDs added by [{}]: {}",consumerId,acceptedInputs.mkString)
 
-      val acceptedIDs =JavaConverters.asScalaSet(kafkaConsumer.getAcceptedIds)
+      val acceptedIDs =CollectionConverters.asScala(kafkaConsumer.getAcceptedIds)
       KafkaSubscriber.logger.info("Filter of IDs set in the subscriber of [{}]: {}",consumerId, acceptedIDs.mkString)
     } else {
       KafkaSubscriber.logger.info("New accepted IDs set by [{}]: ",consumerId)

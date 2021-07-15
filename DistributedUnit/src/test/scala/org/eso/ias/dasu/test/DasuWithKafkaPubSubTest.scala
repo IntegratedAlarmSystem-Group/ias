@@ -37,7 +37,7 @@ class DasuWithKafkaPubSubTest extends AnyFlatSpec with KafkaConsumerListener wit
   private val logger = IASLogger.getLogger(this.getClass)
   
   // Build the CDB reader
-  val cdbParentPath: Path =  FileSystems.getDefault.getPath(".")
+  val cdbParentPath: Path =  FileSystems.getDefault.getPath("src/test")
   val cdbFiles = new CdbJsonFiles(cdbParentPath)
   val cdbReader: CdbReader = new JsonReader(cdbFiles)
   
@@ -55,6 +55,7 @@ class DasuWithKafkaPubSubTest extends AnyFlatSpec with KafkaConsumerListener wit
   val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervId)
   
   val dasuDao: DasuDao = {
+    cdbReader.init()
     val dasuDaoOpt = cdbReader.getDasu(dasuId)
     assert(dasuDaoOpt.isPresent)
     dasuDaoOpt.get()
@@ -128,7 +129,7 @@ class DasuWithKafkaPubSubTest extends AnyFlatSpec with KafkaConsumerListener wit
 			  null)
   }
   
-  def stringEventReceived(event: String) {
+  def stringEventReceived(event: String): Unit = {
     logger.info("String received", event)
     val iasValue = jsonSerializer.valueOf(event)
     iasValuesReceived+=iasValue

@@ -25,7 +25,7 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, validityThreshold: Int
   private val logger = IASLogger.getLogger(this.getClass);
   
   // Build the CDB reader
-  val cdbParentPath =  FileSystems.getDefault().getPath(".");
+  val cdbParentPath =  FileSystems.getDefault().getPath("src/test");
   val cdbFiles = new CdbJsonFiles(cdbParentPath)
   val cdbReader: CdbReader = new JsonReader(cdbFiles)
   
@@ -56,7 +56,7 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, validityThreshold: Int
   val inputID = new Identifier("Temperature", IdentifierType.IASIO,converterId)
   
   /** Notifies about a new output produced by the DASU */
-  override def outputEvent(output: IASValue[_]) {
+  override def outputEvent(output: IASValue[_]): Unit = {
     logger.info("Output received [{}]", output.id)
     outputValuesReceived.append(output)
   }
@@ -80,6 +80,7 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, validityThreshold: Int
   }
   
   val dasuDao: DasuDao = {
+    cdbReader.init()
     val dasuDaoOpt = cdbReader.getDasu(dasuId)
     assert(dasuDaoOpt.isPresent())
     dasuDaoOpt.get()

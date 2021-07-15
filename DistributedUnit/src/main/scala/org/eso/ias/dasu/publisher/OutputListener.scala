@@ -8,10 +8,10 @@ import org.eso.ias.types.IASValue
 trait OutputListener {
   
   /** Notifies about a new output produced by the DASU */
-  def outputEvent(output: IASValue[_])
+  def outputEvent(output: IASValue[_]): Unit
   
   /** Notifies about a new output produced by the DASU 
    *  formatted as String
    */
-  def outputStringifiedEvent(outputStr: String)
+  def outputStringifiedEvent(outputStr: String): Unit
 }

@@ -26,7 +26,7 @@ class JsonPublisherTest extends AnyFlatSpec {
   private val logger = IASLogger.getLogger(this.getClass);
   
   // Build the CDB reader
-  val cdbParentPath =  FileSystems.getDefault().getPath(".");
+  val cdbParentPath =  FileSystems.getDefault().getPath("src/test");
   val cdbFiles = new CdbJsonFiles(cdbParentPath)
   val cdbReader: CdbReader = new JsonReader(cdbFiles)
   
@@ -43,6 +43,7 @@ class JsonPublisherTest extends AnyFlatSpec {
   val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervId)
   
   val dasuDao: DasuDao = {
+    cdbReader.init()
     val dasuDaoOpt = cdbReader.getDasu(dasuId)
     assert(dasuDaoOpt.isPresent())
     dasuDaoOpt.get()
