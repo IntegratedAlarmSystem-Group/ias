@@ -100,7 +100,7 @@ abstract class Dasu(
    * Most likely, the value of the output remains the same 
    * while the validity could change.
    */
-  def enableAutoRefreshOfOutput(enable: Boolean)
+  def enableAutoRefreshOfOutput(enable: Boolean): Unit
   
   /**
    * Updates the output with the inputs received
@@ -108,12 +108,12 @@ abstract class Dasu(
    * @param iasios the inputs received
    * @see InputsListener
    */
-  override def inputsReceived(iasios: Iterable[IASValue[_]])
+  override def inputsReceived(iasios: Iterable[IASValue[_]]): Unit
   
   /**
    * Release all the resources before exiting
    */
-  def cleanUp()
+  def cleanUp(): Unit
 }
 
 /** Companion object */

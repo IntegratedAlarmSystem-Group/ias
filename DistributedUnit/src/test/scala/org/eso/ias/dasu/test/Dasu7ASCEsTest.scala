@@ -54,7 +54,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
   /** Fixture to build same type of objects for the tests */
   def fixture = new {
     // Build the CDB reader
-    val cdbParentPath =  FileSystems.getDefault().getPath(".");
+    val cdbParentPath =  FileSystems.getDefault().getPath("src/test");
     val cdbFiles = new CdbJsonFiles(cdbParentPath)
     val cdbReader: CdbReader = new JsonReader(cdbFiles)
   
@@ -64,7 +64,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
   
   /** Notifies about a new output produced by the DASU */
   class TestListener extends OutputListener { 
-    override def outputEvent(output: IASValue[_]) {
+    override def outputEvent(output: IASValue[_]): Unit = {
       logger.info("Event received from DASU: [{}]",output.id)
       eventsReceived.incrementAndGet();
       iasValuesReceived.append(output)
@@ -88,6 +88,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
   val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervId)
   
   val dasuDao: DasuDao = {
+    cdbReader.init()
     val dasuDaoOpt = cdbReader.getDasu(dasuId)
     assert(dasuDaoOpt.isPresent())
     dasuDaoOpt.get()
