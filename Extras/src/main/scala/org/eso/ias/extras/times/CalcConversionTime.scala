@@ -3,13 +3,12 @@ package org.eso.ias.extras.times
 import java.util
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.{Executors, ScheduledExecutorService, TimeUnit}
-
 import com.typesafe.scalalogging.Logger
 import org.eso.ias.kafkautils.{KafkaHelper, KafkaStringsConsumer, SimpleKafkaIasiosConsumer}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.{IASValue, Identifier, IdentifierType}
 
-import scala.collection.JavaConverters
+import scala.jdk.javaapi.CollectionConverters
 import scala.util.Try
 
 /**
@@ -140,7 +139,7 @@ class CalcConversionTime(servers: String)
     * Process the IASIOs consumed from the core topic to extract times
     */
   override def iasiosReceived(events: util.Collection[IASValue[_]]): Unit = {
-    val iasios = JavaConverters.collectionAsScalaIterable(events)
+    val iasios: Iterable[IASValue[_]] = CollectionConverters.asScala(events)
 
     // Discard IASIOs produced by DASUs
    val iasiosFromPlugin = iasios.filter( iasValue =>
