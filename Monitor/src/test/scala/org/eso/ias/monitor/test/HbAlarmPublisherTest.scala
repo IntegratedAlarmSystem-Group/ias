@@ -3,15 +3,14 @@ package org.eso.ias.monitor.test
 import java.util
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicInteger
-
 import com.typesafe.scalalogging.Logger
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.monitor.{MonitorAlarm, MonitorAlarmsProducer}
 import org.eso.ias.types.{Alarm, IASValue}
-import org.scalatest.{BeforeAndAfterEach}
+import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec
 
-import scala.collection.JavaConverters
+import scala.jdk.javaapi.CollectionConverters
 
 /**
   * Check that the alarms are effectively sent to the producer
@@ -43,7 +42,7 @@ class HbAlarmPublisherTest extends AnyFlatSpec with AlarmPublisherListener with 
     * @param iasValues the alarms published
     */
   override def alarmsPublished(iasValues: Array[IASValue[_]]): Unit = {
-    alarmsReceived.addAll(JavaConverters.asJavaCollection(iasValues))
+    alarmsReceived.addAll(CollectionConverters.asJavaCollection(iasValues))
     iasValues.foreach(value => MonitorAlarmsProducer.logger.info("Alarm received [{}]",value.toString))
   }
 

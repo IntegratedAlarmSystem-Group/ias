@@ -165,7 +165,7 @@ class HbMonitor(
 
     // Return the IDs of the alarms in the map that have not been updated
     // These IDs are set as properties in the alarms
-    def faultyIds(m: MutableMap[String, Boolean]): List[String] = m.filterKeys(k => !m(k)).keys.toList
+    def faultyIds(m: MutableMap[String, Boolean]): List[String] = m.view.filterKeys(k => !m(k)).keys.toList
 
     // Update the passed alarm
     def updateAlarm(alarm: MonitorAlarm, faultyIds: List[String], priority: Alarm=Alarm.getSetDefault): Unit = {

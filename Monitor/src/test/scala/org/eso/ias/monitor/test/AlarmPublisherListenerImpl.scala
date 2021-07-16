@@ -11,22 +11,22 @@ trait AlarmPublisherListener {
     *
     * @param iasValues the alarms published
     */
-  def alarmsPublished(iasValues: Array[IASValue[_]])
+  def alarmsPublished(iasValues: Array[IASValue[_]]): Unit
 
   /**
     * setUp has been called in the producer
     */
-  def setUpInvoked()
+  def setUpInvoked(): Unit
 
   /**
     * flush has been called in the producer
     */
-  def flushUpInvoked()
+  def flushUpInvoked(): Unit
 
   /**
     * tearDown been called in the producer
     */
-  def tearDownInvoked()
+  def tearDownInvoked(): Unit
 }
 
 /**
