@@ -88,7 +88,7 @@ class AntPadInhibitor(asceId: String, asceRunningId: String, validityTimeFrame:L
   /**
     * @see TransferExecutor#shutdown()
     */
-  override def shutdown() {}
+  override def shutdown(): Unit = {}
 
   /**
     * Build the comma separated list of names of affected antennas, i.e.

@@ -27,7 +27,7 @@ class UMFireTF(asceId: String, asceRunningId: String, validityTimeFrame:Long, pr
   /**
     * @see TransferExecutor#shutdown()
     */
-  override def shutdown() {
+  override def shutdown(): Unit = {
     UMFireTF.logger.info("TF of ASCE [{}] closed", asceId)
   }
 

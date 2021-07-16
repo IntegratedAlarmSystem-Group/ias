@@ -80,7 +80,7 @@ class VisualInspectionAlarm(cEleId: String, cEleRunningId: String, validityTimeF
   /**
     * @see TransferExecutor#shutdown()
     */
-  override def shutdown() {
+  override def shutdown(): Unit = {
     VisualInspectionAlarm.logger.debug("TF of [{}] shut down", cEleId)
   }
 
