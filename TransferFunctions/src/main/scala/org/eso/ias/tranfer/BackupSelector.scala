@@ -130,7 +130,7 @@ extends ScalaTransferExecutor[T](asceId,asceRunningId,validityTimeFrame,props) {
   /**
    * @see TransferExecutor#shutdown()
    */
-  override def shutdown() {
+  override def shutdown(): Unit = {
     BackupSelector.logger.debug("TF of [{}] shut down", asceId)
   }
   

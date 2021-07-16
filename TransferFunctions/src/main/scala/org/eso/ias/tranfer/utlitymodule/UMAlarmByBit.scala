@@ -35,7 +35,7 @@ class UMAlarmByBit (asceId: String, asceRunningId: String, validityTimeFrame:Lon
   /**
     * @see TransferExecutor#shutdown()
     */
-  override def shutdown() {
+  override def shutdown(): Unit = {
     UMFireTF.logger.info("TF of ASCE [{}] closed", asceId)
   }
 

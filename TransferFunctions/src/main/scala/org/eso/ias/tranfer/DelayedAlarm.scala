@@ -109,7 +109,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
   /**
    * @see TransferExecutor#shutdown()
    */
-  override def shutdown() {
+  override def shutdown(): Unit = {
     DelayedAlarm.logger.debug("TF of [{}] shut down", cEleId)
   }
   
