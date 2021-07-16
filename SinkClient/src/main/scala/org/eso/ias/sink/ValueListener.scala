@@ -83,7 +83,7 @@ abstract class ValueListener(val id: String) {
   /**
     * Initialization
     */
-  protected def init()
+  protected def init(): Unit
 
   final def tearDown(): String = {
     val alreadyClosed = closed.getAndSet(true)
@@ -105,7 +105,7 @@ abstract class ValueListener(val id: String) {
   /**
     * Free all the allocated resources
     */
-  protected def close()
+  protected def close(): Unit
 
   /**
     * A new set of IasValues has been received from the BSDB and needs to be processed
@@ -131,7 +131,7 @@ abstract class ValueListener(val id: String) {
     *
     * @param iasValues the values read from the BSDB
     */
-  protected def process(iasValues: List[IASValue[_]])
+  protected def process(iasValues: List[IASValue[_]]): Unit
 }
 
 object ValueListener {

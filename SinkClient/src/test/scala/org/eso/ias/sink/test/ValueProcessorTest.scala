@@ -106,7 +106,7 @@ class HbProducerTest(s: HbMsgSerializer) extends HbProducer(s) {
   /**
    * Push the string
    */
-  override def push(hbAsString: String) {
+  override def push(hbAsString: String): Unit = {
     logger.info("HeartBeat [{}]",hbAsString)
     numOfHBs.incrementAndGet()
   }
@@ -135,7 +135,7 @@ class ValueProcessorTest extends AnyFlatSpec {
       val inputsProvider: DirectInputSubscriber = new DirectInputSubscriber()
 
       // Build the CDB reader
-      val cdbParentPath = FileSystems.getDefault().getPath(".");
+      val cdbParentPath = FileSystems.getDefault().getPath("src/test");
       val cdbFiles = new CdbJsonFiles(cdbParentPath)
       val cdbReader: CdbReader = new JsonReader(cdbFiles)
       cdbReader.init()

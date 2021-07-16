@@ -228,7 +228,7 @@ with AutoCloseable {
           kafkaServers: String,
           iasDao: IasDao,
           iasioDaos: List[IasioDao],
-          templateDaos: List[TemplateDao]) {
+          templateDaos: List[TemplateDao]) = {
     this(
       processorIdentifier,
       listeners,

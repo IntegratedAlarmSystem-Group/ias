@@ -3,7 +3,6 @@ package org.eso.ias.sink.test
 import java.nio.file.FileSystems
 import java.time.{Duration, ZoneOffset, ZonedDateTime}
 import java.util.concurrent.{CountDownLatch, TimeUnit}
-
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.{IasDao, IasioDao}
@@ -14,7 +13,8 @@ import org.eso.ias.types._
 import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.mutable.ListBuffer
-import scala.collection.{JavaConverters, mutable}
+import scala.collection.mutable
+import scala.jdk.javaapi.CollectionConverters
 
 // The following import is required by the usage of the fixture
 import scala.language.reflectiveCalls
@@ -82,7 +82,7 @@ class NotificationSenderTest extends AnyFlatSpec {
   def fixture =
     new {
       // Build the CDB reader
-      val cdbParentPath = FileSystems.getDefault().getPath(".");
+      val cdbParentPath = FileSystems.getDefault().getPath("src/test");
       val cdbFiles = new CdbJsonFiles(cdbParentPath)
       val cdbReader: CdbReader = new JsonReader(cdbFiles)
       cdbReader.init()
@@ -90,7 +90,7 @@ class NotificationSenderTest extends AnyFlatSpec {
       val iasiosDaos: Set[IasioDao] = {
         val iasiosDaoJOpt = cdbReader.getIasios()
         assert(iasiosDaoJOpt.isPresent, "Error getting the IASIOs from the CDB")
-        JavaConverters.asScalaSet(iasiosDaoJOpt.get()).toSet
+        CollectionConverters.asScala(iasiosDaoJOpt.get()).toSet
       }
 
       val iasDao: IasDao = {
