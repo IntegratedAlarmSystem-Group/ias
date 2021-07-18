@@ -2,7 +2,6 @@ package org.eso.ias.sink.test
 
 import java.nio.file.FileSystems
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
-
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.{IasTypeDao, IasioDao, TemplateDao}
@@ -16,8 +15,8 @@ import org.eso.ias.types.IasValidity.UNRELIABLE
 import org.eso.ias.types._
 import org.scalatest.flatspec.AnyFlatSpec
 
-import scala.collection.JavaConverters
 import scala.collection.mutable.ListBuffer
+import scala.jdk.javaapi.CollectionConverters
 
 // The following import is required by the usage of the fixture
 import scala.language.reflectiveCalls
@@ -149,7 +148,7 @@ class ValueProcessorTest extends AnyFlatSpec {
       val iasiosDaos: List[IasioDao] = {
         val iasiosDaoJOpt = cdbReader.getIasios()
         assert(iasiosDaoJOpt.isPresent, "Error getting the IASIOs from the CDB")
-        JavaConverters.asScalaSet(iasiosDaoJOpt.get()).toList
+        CollectionConverters.asScala(iasiosDaoJOpt.get()).toList
       }
       cdbReader.shutdown()
 
