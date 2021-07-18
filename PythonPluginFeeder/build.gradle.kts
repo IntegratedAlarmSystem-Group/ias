@@ -13,6 +13,7 @@ dependencies {
       implementation(extension.extra["slf4j-api"].toString())
       implementation(extension.extra["junit-jupiter-api"].toString())
       implementation(extension.extra["junit-jupiter-engine"].toString())
+      implementation(extension.extra["hibernate-jpa"].toString())
     }
     
     implementation(project(":Plugin"))

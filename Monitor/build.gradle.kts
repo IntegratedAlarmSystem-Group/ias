@@ -15,9 +15,9 @@ dependencies {
       implementation(extension.extra["logback-classic"].toString())
       implementation(extension.extra["jackson-databind"].toString())
       implementation(extension.extra["commons-cli"].toString())
+      implementation(extension.extra["hibernate-jpa"].toString())
     }
     
-    implementation("org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final")
 
     implementation(project(":Tools"))
     implementation(project(":BasicTypes"))

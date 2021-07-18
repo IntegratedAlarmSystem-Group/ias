@@ -14,6 +14,7 @@ dependencies {
       implementation(extension.extra["kafka-clients"].toString())
       implementation(extension.extra["junit-jupiter-api"].toString())
       implementation(extension.extra["junit-jupiter-engine"].toString())
+      implementation(extension.extra["hibernate-jpa"].toString())
     }
 
     implementation(project(":Cdb"))

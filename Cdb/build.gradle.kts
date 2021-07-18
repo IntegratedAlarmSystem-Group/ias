@@ -14,6 +14,7 @@ dependencies {
       implementation(extension.extra["logback-classic"].toString())
       implementation(extension.extra["junit-jupiter-api"].toString())
       implementation(extension.extra["junit-jupiter-engine"].toString())
+      implementation(extension.extra["hibernate-jpa"].toString())
     }
     
     implementation("com.mchange:c3p0:0.9.5.2")

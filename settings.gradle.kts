@@ -62,5 +62,6 @@ if (gradle is ExtensionAware) {
 	extension.extra["kafka-clients"] = "org.apache.kafka:kafka-clients:2.8.0"
 	extension.extra["kafka-streams"] = "org.apache.kafka:kafka-streams:2.8.0"
 	extension.extra["kafka-connect-api"] = "org.apache.kafka:connect-api:2.8.0"
+	extension.extra["hibernate-jpa"] = "org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final"
 }
 
