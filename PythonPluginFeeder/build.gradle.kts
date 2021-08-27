@@ -27,6 +27,14 @@ dependencies {
 base.archivesBaseName = "ias"+project.name
 base.libsDirName ="lib"
 
+sourceSets {
+    test {
+        resources {
+            setSrcDirs(listOf("src/test/resources"))
+        }
+    }
+}
+
 repositories {
     mavenCentral()
 }

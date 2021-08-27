@@ -1,14 +1,14 @@
 package org.eso.ias.build.plugin
 
 import org.gradle.api.GradleException
-import org.gradle.api.tasks.Copy
-import org.gradle.api.tasks.Exec
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
+import org.gradle.api.tasks.Copy
+import org.gradle.api.tasks.Exec
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.extra
-import org.gradle.kotlin.dsl.*
+import org.gradle.kotlin.dsl.register
 
 open class IasBuild : Plugin<Project> {
 
@@ -129,6 +129,7 @@ open class IasBuild : Plugin<Project> {
         val buildTestJar = project.tasks.register<Jar>("buildJarOfTestClasses") {
             from(project.layout.buildDirectory.dir("classes/scala/test"))
             from(project.layout.buildDirectory.dir("classes/java/test"))
+            from(project.layout.buildDirectory.dir("resources/test"))
             destinationDirectory.set(project.layout.buildDirectory.dir("lib"))
             archiveFileName.set(archiveBaseName.get()+"Test.jar")
             doFirst {
