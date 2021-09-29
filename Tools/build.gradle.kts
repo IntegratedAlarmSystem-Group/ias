@@ -1,5 +1,3 @@
-//apply(from="../dependencies.gradle")
-
 plugins {
     id("scala")
     `java-library-distribution`
@@ -8,7 +6,6 @@ plugins {
 
 dependencies {
     // Scala
-    //implementation("org.scala-lang:scala-library:2.13.5")
     val g = project.gradle
     if (g is ExtensionAware) {
       val extension = g as ExtensionAware
