@@ -6,9 +6,12 @@ import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Exec
+import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.api.tasks.scala.ScalaCompile
 import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.register
+import org.gradle.kotlin.dsl.withType
 
 open class IasBuild : Plugin<Project> {
 
@@ -314,6 +317,17 @@ open class IasBuild : Plugin<Project> {
         val runIasTestsTask = project.tasks.register<Exec>("iasTest") {
             dependsOn(":build", pyTestScripts)
             commandLine("src/test/runTests.sh")
+        }
+
+        project.tasks.withType<JavaCompile>().configureEach {
+            options.isDeprecation = true
+        }
+
+        project.tasks.withType<ScalaCompile>().configureEach {
+            scalaCompileOptions.forkOptions.apply {
+                memoryMaximumSize = "1g"
+                scalaCompileOptions.setAdditionalParameters(listOf("-Ytasty-reader"))
+            }
         }
     }
 
