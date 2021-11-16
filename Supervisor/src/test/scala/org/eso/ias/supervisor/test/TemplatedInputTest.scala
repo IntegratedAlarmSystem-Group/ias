@@ -1,19 +1,17 @@
 package org.eso.ias.supervisor.test
 
-import java.nio.file.FileSystems
-
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.DasuDao
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.dasu.publisher.{ListenerOutputPublisherImpl, OutputListener, OutputPublisher}
-import org.eso.ias.dasu.subscriber.DirectInputSubscriber
-import org.eso.ias.dasu.subscriber.InputSubscriber
+import org.eso.ias.dasu.subscriber.{DirectInputSubscriber, InputSubscriber}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.supervisor.Supervisor
-import org.eso.ias.types._
+import org.eso.ias.types.*
 import org.scalatest.flatspec.AnyFlatSpec
 
+import java.nio.file.FileSystems
 import scala.collection.mutable.ArrayBuffer
 
 // The following import is required by the usage of the fixture
@@ -59,126 +57,121 @@ class TemplatedInputTest extends AnyFlatSpec {
   private val logger = IASLogger.getLogger(this.getClass);
   
   /** Fixture to build same type of objects for the tests */
-  def fixture =
-    new {
+  trait Fixture {
 
-      val stringSerializer = Option(new IasValueJsonSerializer)
+    val stringSerializer = Option(new IasValueJsonSerializer)
 
+    /**
+     * Events i.e. outputs received
+     */
+    val outputEventsreceived = new ArrayBuffer[IASValue[_]]
+
+    /**
+     * Stringified outputs received
+     */
+    val stringEventsreceived = new ArrayBuffer[String]
+
+    val outputListener = new OutputListener {
       /**
-       * Events i.e. outputs received
+       * @see OutputListener
        */
-      val outputEventsreceived = new ArrayBuffer[IASValue[_]]
-
-      /**
-       * Stringified outputs received
-       */
-      val stringEventsreceived = new ArrayBuffer[String]
-
-      val outputListener = new OutputListener {
-        /**
-         * @see OutputListener
-         */
-        def outputStringifiedEvent(outputStr: String): Unit = {
-          logger.info("Output received: {}", outputStr)
-          stringEventsreceived.append(outputStr)
-        }
-
-        /**
-         * @see OutputListener
-         */
-        def outputEvent(output: IASValue[_]): Unit = {
-          outputEventsreceived.append(output)
-        }
+      def outputStringifiedEvent(outputStr: String): Unit = {
+        logger.info("Output received: {}", outputStr)
+        stringEventsreceived.append(outputStr)
       }
 
-      val outputPublisher: OutputPublisher = new ListenerOutputPublisherImpl(outputListener, stringSerializer)
-
-      val inputsProvider = new DirectInputSubscriber()
-      
-      val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) => 
-      DasuImpl(dd,i,op,id,10,10)
-
-      // Build the CDB reader
-      val cdbParentPath = FileSystems.getDefault().getPath("src/test");
-      val cdbFiles = new CdbJsonFiles(cdbParentPath)
-      val cdbReader: CdbReader = new JsonReader(cdbFiles)
-      cdbReader.init()
-
-      val supervIdentifier = new Identifier("SupervisorToTestInputs", IdentifierType.SUPERVISOR, None)
-
-      /** The supervisor to test */
-      val supervisor = new Supervisor(
-        supervIdentifier,
-        outputPublisher,
-        inputsProvider,
-        new HbLogProducer(new HbJsonSerializer),
-        new CommandManagerMock(supervIdentifier),
-        cdbReader,
-        factory,
-        None)
-
-      cdbReader.shutdown()
-
-      supervisor.start()
-      supervisor.enableAutoRefreshOfOutput(false)
-      
-      // The identifier to send the inputs
-      val Sup2Id = new Identifier("AnotherSupervID", IdentifierType.SUPERVISOR, None)
-      val DasuId = new Identifier("DASU-Id", IdentifierType.DASU, Sup2Id)
-      val AsceId = new Identifier("ASCE-Id", IdentifierType.ASCE, DasuId)
-      
-      val idTemplated = new Identifier(Identifier.buildIdFromTemplate("TemplatedId",4), IdentifierType.IASIO, AsceId)
-      val idNonTemplated = new Identifier("NonTemplatedId", IdentifierType.IASIO, AsceId)
-      val idTemplInstanceInput1 = new Identifier(Identifier.buildIdFromTemplate("TemplatedInput",3), IdentifierType.IASIO, AsceId)
-      val idTemplInstanceInput2 = new Identifier(Identifier.buildIdFromTemplate("TemplatedInput",4), IdentifierType.IASIO, AsceId)
-      
-      val outputId = "TemplatedOutId"
-
+      /**
+       * @see OutputListener
+       */
+      def outputEvent(output: IASValue[_]): Unit = {
+        outputEventsreceived.append(output)
+      }
     }
+
+    val outputPublisher: OutputPublisher = new ListenerOutputPublisherImpl(outputListener, stringSerializer)
+
+    val inputsProvider = new DirectInputSubscriber()
+
+    val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) =>
+    DasuImpl(dd,i,op,id,10,10)
+
+    // Build the CDB reader
+    val cdbParentPath = FileSystems.getDefault().getPath("src/test");
+    val cdbFiles = new CdbJsonFiles(cdbParentPath)
+    val cdbReader: CdbReader = new JsonReader(cdbFiles)
+    cdbReader.init()
+
+    val supervIdentifier = new Identifier("SupervisorToTestInputs", IdentifierType.SUPERVISOR, None)
+
+    /** The supervisor to test */
+    val supervisor = new Supervisor(
+      supervIdentifier,
+      outputPublisher,
+      inputsProvider,
+      new HbLogProducer(new HbJsonSerializer),
+      new CommandManagerMock(supervIdentifier),
+      cdbReader,
+      factory,
+      None)
+
+    cdbReader.shutdown()
+
+    supervisor.start()
+    supervisor.enableAutoRefreshOfOutput(false)
+
+    // The identifier to send the inputs
+    val Sup2Id = new Identifier("AnotherSupervID", IdentifierType.SUPERVISOR, None)
+    val DasuId = new Identifier("DASU-Id", IdentifierType.DASU, Sup2Id)
+    val AsceId = new Identifier("ASCE-Id", IdentifierType.ASCE, DasuId)
+
+    val idTemplated = new Identifier(Identifier.buildIdFromTemplate("TemplatedId",4), IdentifierType.IASIO, AsceId)
+    val idNonTemplated = new Identifier("NonTemplatedId", IdentifierType.IASIO, AsceId)
+    val idTemplInstanceInput1 = new Identifier(Identifier.buildIdFromTemplate("TemplatedInput",3), IdentifierType.IASIO, AsceId)
+    val idTemplInstanceInput2 = new Identifier(Identifier.buildIdFromTemplate("TemplatedInput",4), IdentifierType.IASIO, AsceId)
+
+    val outputId = "TemplatedOutId"
+
+  }
 
   behavior of "The TF with templates"
   
-  it must "get the IASValue by their IDs" in {
-    val f = fixture
-    
+  it must "get the IASValue by their IDs" in new Fixture {
     val t0 = System.currentTimeMillis()-100
     val templatedValue = IASValue.build(
       8L,
-		  OperationalMode.OPERATIONAL,
-		  IasValidity.RELIABLE,
-		  f.idTemplated.fullRunningID,
-		  IASTypes.LONG,
-		  t0,
+      OperationalMode.OPERATIONAL,
+      IasValidity.RELIABLE,
+      idTemplated.fullRunningID,
+      IASTypes.LONG,
+      t0,
       t0+1,
-		  t0+5,
-		  t0+10,
-		  t0+15,
-		  t0+20,
-		  null,
-		null,null)
-		
-		val t1 = System.currentTimeMillis()-50
+      t0+5,
+      t0+10,
+      t0+15,
+      t0+20,
+      null, null,null)
+
+    val t1 = System.currentTimeMillis()-50
     val nonTemplatedValue = IASValue.build(
       3L,
-		  OperationalMode.OPERATIONAL,
-		  IasValidity.RELIABLE,
-		  f.idNonTemplated.fullRunningID,
-		  IASTypes.LONG,
-		  t1,
+      OperationalMode.OPERATIONAL,
+      IasValidity.RELIABLE,
+      idNonTemplated.fullRunningID,
+      IASTypes.LONG,
+      t1,
       t1+1,
-		  t1+5,
-		  t1+10,
-		  t1+15,
-		  t1+20,
-		  null,
-		null,null)
+      t1+5,
+      t1+10,
+      t1+15,
+      t1+20,
+      null,null,null)
 
     val t2 = System.currentTimeMillis()-25
     val templInstValue1 = IASValue.build(
       Alarm.SET_MEDIUM,
       OperationalMode.OPERATIONAL,
       IasValidity.RELIABLE,
-      f.idTemplInstanceInput1.fullRunningID,
+      idTemplInstanceInput1.fullRunningID,
       IASTypes.ALARM,
       t2,
       t2+1,
@@ -194,7 +187,7 @@ class TemplatedInputTest extends AnyFlatSpec {
       Alarm.SET_CRITICAL,
       OperationalMode.OPERATIONAL,
       IasValidity.RELIABLE,
-      f.idTemplInstanceInput2.fullRunningID,
+      idTemplInstanceInput2.fullRunningID,
       IASTypes.ALARM,
       t3,
       t3+1,
@@ -208,17 +201,15 @@ class TemplatedInputTest extends AnyFlatSpec {
     val inputs:  Set[IASValue[_]] = Set(nonTemplatedValue,templatedValue,templInstValue1,templInstValue2)
     
     // Sends the input to the Supervisor and the DASU
-    f.inputsProvider.sendInputs(inputs)
+    inputsProvider.sendInputs(inputs)
     
     // Did the DASU produce the output?
-    assert(f.stringEventsreceived.size==1)
-    assert(f.outputEventsreceived.size==1)
+    assert(stringEventsreceived.size==1)
+    assert(outputEventsreceived.size==1)
     
-    val valueOfOutput = f.outputEventsreceived.head.value.asInstanceOf[Long]
+    val valueOfOutput = outputEventsreceived.head.value.asInstanceOf[Long]
     assert(valueOfOutput==14L)
     
-    f.supervisor.close()
+    supervisor.close()
   }
-  
-  
 }

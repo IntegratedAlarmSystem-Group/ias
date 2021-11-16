@@ -1,10 +1,5 @@
 package org.eso.ias.supervisor.test
 
-import java.nio.file.{FileSystems, Path}
-import java.util
-import java.util.Properties
-import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.{CountDownLatch, TimeUnit}
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.DasuDao
@@ -16,10 +11,15 @@ import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener
 import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosProducer, SimpleKafkaIasiosConsumer, SimpleStringProducer}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.supervisor.Supervisor
-import org.eso.ias.types._
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
+import org.eso.ias.types.*
 import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 
+import java.nio.file.{FileSystems, Path}
+import java.util
+import java.util.Properties
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.{CountDownLatch, TimeUnit}
 import scala.collection.mutable.ListBuffer
 import scala.jdk.javaapi.CollectionConverters
 
@@ -116,9 +116,8 @@ class SupervisorWithKafkaTest extends AnyFlatSpec with BeforeAndAfterAll with Be
   /** The kafka consumer gets AISValues from the BSDB */
   val inputConsumer: InputSubscriber = KafkaSubscriber(supervisorId.id, None, None, new Properties())
   
-  /** The test uses real DASu i.e. the factory instantiates a DasuImpl */
-  val factory: (DasuDao, Identifier, OutputPublisher, InputSubscriber) =>
-    DasuImpl = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) => DasuImpl(dd, i, op, id, 1,1)
+  /** The test uses real DASU i.e. the factory instantiates a DasuImpl */
+  val factory: (DasuDao, Identifier, OutputPublisher, InputSubscriber) => DasuImpl = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) => DasuImpl(dd, i, op, id, 1,1)
 
   /** The supervisor to test */
   val supervisor = new Supervisor(
@@ -192,18 +191,17 @@ class SupervisorWithKafkaTest extends AnyFlatSpec with BeforeAndAfterAll with Be
     val t0 = System.currentTimeMillis()-100
       IASValue.build(
         value,
-			  OperationalMode.OPERATIONAL,
-			  IasValidity.RELIABLE,
-			  identifier.fullRunningID,
-			  IASTypes.DOUBLE,
-			  t0,
+        OperationalMode.OPERATIONAL,
+        IasValidity.RELIABLE,
+        identifier.fullRunningID,
+        IASTypes.DOUBLE,
+        t0,
         t0+1,
-			  t0+5,
-			  t0+10,
-			  t0+15,
-			  t0+20,
-			null,
-			null,null)
+        t0+5,
+        t0+10,
+        t0+15,
+        t0+20,
+        null,null,null)
     
   }
 

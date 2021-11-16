@@ -1,14 +1,13 @@
 package org.eso.ias.asce.test
 
-import java.util.Properties
-
 import org.eso.ias.asce.transfer.{JavaTransfer, TransferFunctionLanguage, TransferFunctionSetting}
 import org.eso.ias.asce.{AsceStates, CompEleThreadFactory, ComputingElement}
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types._
+import org.eso.ias.types.*
 import org.scalatest.flatspec.AnyFlatSpec
 
-import scala.collection.mutable.{Map => MutableMap}
+import java.util.Properties
+import scala.collection.mutable.Map as MutableMap
 import scala.util.Try
 
 /**
@@ -423,7 +422,7 @@ class TestPyTF extends AnyFlatSpec {
   }
 
   it must "support input of type STRING" in {
-   logger.info("Testing support of input type STRING")
+    logger.info("Testing support of input type STRING")
     val inputsMPs: Map[String, InOut[_]] = Map(mpIdString.id -> mpString.updateValue(Some("Test")))
 
     val javaComp: ComputingElement[java.lang.String] = new ComputingElement[java.lang.String](

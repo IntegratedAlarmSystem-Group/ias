@@ -326,7 +326,6 @@ open class IasBuild : Plugin<Project> {
         project.tasks.withType<ScalaCompile>().configureEach {
             scalaCompileOptions.forkOptions.apply {
                 memoryMaximumSize = "1g"
-                scalaCompileOptions.setAdditionalParameters(listOf("-Ytasty-reader"))
             }
         }
     }

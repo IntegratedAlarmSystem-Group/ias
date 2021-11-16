@@ -1,14 +1,13 @@
 package org.eso.ias.monitor
 
-import java.util.concurrent.{Executors, ScheduledExecutorService, ThreadFactory, TimeUnit}
-
 import com.typesafe.scalalogging.Logger
-import org.eso.ias.heartbeat.HeartbeatProducerType._
+import org.eso.ias.heartbeat.HeartbeatProducerType.*
 import org.eso.ias.heartbeat.consumer.{HbKafkaConsumer, HbListener, HbMsg}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.Alarm
 
-import scala.collection.mutable.{Map => MutableMap}
+import java.util.concurrent.{Executors, ScheduledExecutorService, ThreadFactory, TimeUnit}
+import scala.collection.mutable.Map as MutableMap
 
 /**
   * Monitors the HBs of
@@ -155,7 +154,6 @@ class HbMonitor(
       case CONVERTER => convertersHbMsgs.put(hbMsg.hb.name,true)
       case CLIENT => clientsHbMsgs.put(hbMsg.hb.name,true)
       case CORETOOL => coreToolsHbMsgs.put(hbMsg.hb.name,true)
-      case idType => HbMonitor.logger.warn("Unknown HB type to monitor: {} from fullRunningId {}",idType,hbMsg.hb)
     }
   }
 

@@ -1,11 +1,10 @@
 package org.eso.ias.asce.test.transfer
 
-import java.util.Properties
-
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
-import org.eso.ias.types.OperationalMode
-import org.eso.ias.types.Alarm
 import org.eso.ias.logging.IASLogger
+import org.eso.ias.types.{Alarm, OperationalMode}
+
+import java.util.Properties
 
 /**
  * A scala TransferExecutor for testing purposes.
@@ -20,10 +19,10 @@ import org.eso.ias.logging.IASLogger
  * @see TransferExecutor
  */
 class CopyTF(
-    cEleId: String, 
-		cEleRunningId: String,
-		validityTimeFrame: Long,
-		props: Properties) extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,props) {
+    cEleId: String,
+    cEleRunningId: String,
+    validityTimeFrame: Long,
+    props: Properties) extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,props) {
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
@@ -49,7 +48,7 @@ class CopyTF(
   
   override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
     System.out.println("scala TransferExample: evaluating "+compInputs.size+" inputs");
-		System.out.println("scala TransferExample for comp. with ID="+compElementId+" and output "+actualOutput.toString());
+    System.out.println("scala TransferExample for comp. with ID="+compElementId+" and output "+actualOutput.toString());
     for (hio <- compInputs.values) println(hio.toString())
     
     val newAlarm = Alarm.getSetDefault

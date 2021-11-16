@@ -1,13 +1,13 @@
 package org.eso.ias.supervisor.test
 
-import java.util.concurrent.atomic.AtomicInteger
 import org.eso.ias.cdb.pojos.{AsceDao, DasuDao, IasioDao}
 import org.eso.ias.dasu.Dasu
 import org.eso.ias.dasu.publisher.OutputPublisher
 import org.eso.ias.dasu.subscriber.InputSubscriber
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types._
+import org.eso.ias.types.*
 
+import java.util.concurrent.atomic.AtomicInteger
 import scala.collection.mutable.ArrayBuffer
 import scala.jdk.javaapi.CollectionConverters
 import scala.util.{Success, Try}
@@ -21,10 +21,10 @@ import scala.util.{Success, Try}
  * @param inputSubscriber the subscriber getting events to be processed 
  */
 class DasuMock(
-	dasuIdentifier: Identifier,
-    dasuDao: DasuDao,
-    private val outputPublisher: OutputPublisher,
-    private val inputSubscriber: InputSubscriber)
+  dasuIdentifier: Identifier,
+  dasuDao: DasuDao,
+  private val outputPublisher: OutputPublisher,
+  private val inputSubscriber: InputSubscriber)
 extends Dasu(dasuIdentifier,5,6) {
   
   /** The logger */
@@ -77,19 +77,19 @@ extends Dasu(dasuIdentifier,5,6) {
     val outputId = new Identifier(dasuDao.getOutput.getId,IdentifierType.IASIO,asceId)
     IASValue.build(
       Alarm.SET_MEDIUM,
-			OperationalMode.OPERATIONAL,
-			IasValidity.RELIABLE,
-			outputId.fullRunningID,
-			IASTypes.ALARM,
+      OperationalMode.OPERATIONAL,
+      IasValidity.RELIABLE,
+      outputId.fullRunningID,
+      IASTypes.ALARM,
       null,
-			null,
-			null,
-			null,
-			null,
-			null,
-			System.currentTimeMillis(),
-			null,
-			null)
+      null,
+      null,
+      null,
+      null,
+      null,
+      System.currentTimeMillis(),
+      null,
+      null)
   }
   
   

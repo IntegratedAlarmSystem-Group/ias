@@ -230,7 +230,7 @@ class TransferFunctionSetting(
         val args: Array[Any] =
           if (language==TransferFunctionLanguage.python)
             Array(asceId, asceRunningId, validityTimeFrame.toLong, props, className)
-        else Array(asceId, asceRunningId, validityTimeFrame, props)
+          else Array(asceId, asceRunningId, validityTimeFrame, props)
         // Invoke the constructor to build the TransferExecutor
         c.newInstance(args: _*).asInstanceOf[TransferExecutor]
       }))

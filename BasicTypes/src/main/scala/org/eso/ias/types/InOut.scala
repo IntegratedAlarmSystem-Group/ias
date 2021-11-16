@@ -1,9 +1,9 @@
 package org.eso.ias.types
 
-import java.util.Optional
 import org.eso.ias.utils.ISO8601Helper
 
 import java.util
+import java.util.Optional
 import scala.collection.{JavaConverters, mutable}
 import scala.jdk.javaapi.CollectionConverters
 
@@ -82,13 +82,13 @@ case class InOut[A](
     iasType: IASTypes,
     readFromMonSysTStamp: Option[Long],
     productionTStamp: Option[Long],
-	  sentToConverterTStamp: Option[Long],
-	  receivedFromPluginTStamp: Option[Long],
-	  convertedProductionTStamp: Option[Long],
-	  sentToBsdbTStamp: Option[Long],
-	  readFromBsdbTStamp: Option[Long],
-	  idsOfDependants: Option[Set[Identifier]],
-	  props: Option[Map[String,String]]) {
+    sentToConverterTStamp: Option[Long],
+    receivedFromPluginTStamp: Option[Long],
+    convertedProductionTStamp: Option[Long],
+    sentToBsdbTStamp: Option[Long],
+    readFromBsdbTStamp: Option[Long],
+    idsOfDependants: Option[Set[Identifier]],
+    props: Option[Map[String,String]]) {
   require(Option[Identifier](id).isDefined,"The identifier must be defined")
   require(Option[IASTypes](iasType).isDefined,"The type must be defined")
   require(Option(idsOfDependants).isDefined,"Invalid list of dep. identifiers")
@@ -131,20 +131,20 @@ case class InOut[A](
 
     readFromMonSysTStamp.foreach(t => { ret.append(", readFromMonSysTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
     productionTStamp.foreach(t => { ret.append(", productionTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
-	  sentToConverterTStamp.foreach(t => { ret.append(", sentToConverterTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
-	  receivedFromPluginTStamp.foreach(t => { ret.append(", receivedFromPluginTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
-	  convertedProductionTStamp.foreach(t => { ret.append(", convertedProductionTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
-	  sentToBsdbTStamp.foreach(t => { ret.append(", sentToBsdbTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
-	  readFromBsdbTStamp.foreach(t => { ret.append(", readFromBsdbTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
+    sentToConverterTStamp.foreach(t => { ret.append(", sentToConverterTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
+    receivedFromPluginTStamp.foreach(t => { ret.append(", receivedFromPluginTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
+    convertedProductionTStamp.foreach(t => { ret.append(", convertedProductionTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
+    sentToBsdbTStamp.foreach(t => { ret.append(", sentToBsdbTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
+    readFromBsdbTStamp.foreach(t => { ret.append(", readFromBsdbTStamp="); ret.append(ISO8601Helper.getTimestamp(t)); })
 
-	  idsOfDependants.foreach( ids => {
+    idsOfDependants.foreach( ids => {
 	    ret.append(", Ids of dependants=[")
 	    val listOfIds = ids.map(_.id).toList.sorted
 	    ret.append(listOfIds.mkString(", "))
 	    ret.append(']')  
 	  })
 	  
-	  props.foreach( pMap => {
+    props.foreach( pMap => {
 	     ret.append(", properties=[")
 	     val keys = pMap.keys.toList.sorted
 	     keys.foreach(key => {
@@ -366,13 +366,13 @@ case class InOut[A](
         iasValue.valueType,
         if (iasValue.readFromMonSysTStamp.isPresent) Some(iasValue.readFromMonSysTStamp.get()) else None,
         if (iasValue.productionTStamp.isPresent()) Some(iasValue.productionTStamp.get()) else None,
-	      if (iasValue.sentToConverterTStamp.isPresent()) Some(iasValue.sentToConverterTStamp.get()) else None,
-	      if (iasValue.receivedFromPluginTStamp.isPresent()) Some(iasValue.receivedFromPluginTStamp.get()) else None,
-	      if (iasValue.convertedProductionTStamp.isPresent()) Some(iasValue.convertedProductionTStamp.get()) else None,
-	      if (iasValue.sentToBsdbTStamp.isPresent()) Some(iasValue.sentToBsdbTStamp.get()) else None,
-	      if (iasValue.readFromBsdbTStamp.isPresent()) Some(iasValue.readFromBsdbTStamp.get()) else None,
-	      depIds,
-	      addProps)
+        if (iasValue.sentToConverterTStamp.isPresent()) Some(iasValue.sentToConverterTStamp.get()) else None,
+        if (iasValue.receivedFromPluginTStamp.isPresent()) Some(iasValue.receivedFromPluginTStamp.get()) else None,
+        if (iasValue.convertedProductionTStamp.isPresent()) Some(iasValue.convertedProductionTStamp.get()) else None,
+        if (iasValue.sentToBsdbTStamp.isPresent()) Some(iasValue.sentToBsdbTStamp.get()) else None,
+        if (iasValue.readFromBsdbTStamp.isPresent()) Some(iasValue.readFromBsdbTStamp.get()) else None,
+        depIds,
+        addProps)
   }
   
   def updateSentToBsdbTStamp(timestamp: Long): InOut[A] = {
@@ -456,7 +456,6 @@ object InOut {
         value.isInstanceOf[NumericArray] &&
         value.asInstanceOf[NumericArray].numericArrayType==NumericArray.NumericArrayType.LONG
       case IASTypes.ALARM =>value.isInstanceOf[Alarm]
-      case _ => false
     }
   }
   
@@ -474,7 +473,7 @@ object InOut {
    */
   def asOutput[T](id: Identifier, iasType: IASTypes): InOut[T] = {
     new InOut[T](
-        None,
+        Option.empty,
         id,
         OperationalMode.UNKNOWN,
         None,
@@ -507,7 +506,7 @@ object InOut {
    */
   def asInput[T](id: Identifier, iasType: IASTypes): InOut[T] = {
     new InOut[T](
-        None,
+        Option.empty,
         id,
         OperationalMode.UNKNOWN,
         Some(Validity(IasValidity.UNRELIABLE)),

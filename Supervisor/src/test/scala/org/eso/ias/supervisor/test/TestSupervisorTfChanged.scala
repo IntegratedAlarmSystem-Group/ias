@@ -1,20 +1,20 @@
 package org.eso.ias.supervisor.test
 
-import java.io.{File, FileOutputStream}
-import java.nio.file.Files
-import java.util
-import java.util.concurrent.TimeUnit
-import java.util.{Collection, Collections}
 import org.eso.ias.command.{CommandMessage, CommandSender, CommandType}
 import org.eso.ias.kafkautils.KafkaStringsConsumer.StreamPosition
 import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener
 import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosConsumer, KafkaIasiosProducer, SimpleStringProducer}
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types._
+import org.eso.ias.types.*
 import org.scalactic.source.Position
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 
+import java.io.{File, FileOutputStream}
+import java.nio.file.Files
+import java.util
+import java.util.concurrent.TimeUnit
+import java.util.{Collection, Collections}
 import scala.jdk.javaapi.CollectionConverters
 
 /**
@@ -171,18 +171,17 @@ class TestSupervisorTfChanged
     val t0 = System.currentTimeMillis()-100
       IASValue.build(
         value,
-			  OperationalMode.OPERATIONAL,
-			  IasValidity.RELIABLE,
-			  identifier.fullRunningID,
-			  IASTypes.DOUBLE,
-			  t0,
+        OperationalMode.OPERATIONAL,
+        IasValidity.RELIABLE,
+        identifier.fullRunningID,
+        IASTypes.DOUBLE,
+        t0,
         t0+1,
-			  t0+5,
-			  t0+10,
-			  t0+15,
-			  t0+20,
-			null,
-			null,null)
+        t0+5,
+        t0+10,
+        t0+15,
+        t0+20,
+        null, null,null)
 
   }
 
@@ -269,7 +268,4 @@ class TestSupervisorTfChanged
     val lastIasio2 = iasiosReceived.get(iasiosReceived.size()-1)
     assert(lastIasio2.value.asInstanceOf[Alarm]==Alarm.CLEARED)
   }
-
 }
-
-

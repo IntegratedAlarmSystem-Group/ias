@@ -1,7 +1,7 @@
 package org.eso.ias.basictypes.test
 
-import org.eso.ias.types.IasValidity._
-import org.eso.ias.types._
+import org.eso.ias.types.*
+import org.eso.ias.types.IasValidity.*
 import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.JavaConverters
@@ -36,7 +36,7 @@ class TestInOut extends AnyFlatSpec {
 
   it must "Have the same ID after changing other props" in {
     val mp: InOut[Long] = new InOut(
-      None,
+      Option.empty,
       id,
       OperationalMode.OPERATIONAL,
       Some(RELIABLE),
