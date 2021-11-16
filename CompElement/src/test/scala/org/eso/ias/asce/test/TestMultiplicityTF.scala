@@ -1,14 +1,14 @@
 package org.eso.ias.asce.test
 
-import java.util.Properties
 import org.eso.ias.asce.transfer.impls.MultiplicityTF
 import org.eso.ias.asce.transfer.{ScalaTransfer, TransferFunctionLanguage, TransferFunctionSetting}
 import org.eso.ias.asce.{AsceStates, ComputingElement}
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types._
+import org.eso.ias.types.*
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec
 
+import java.util.Properties
 import scala.jdk.javaapi.CollectionConverters
 
 /**
@@ -137,7 +137,7 @@ class TestMultiplicityTF extends AnyFlatSpec with BeforeAndAfterEach {
       if (i<=n-1) inputsMPsList(i).updateValue(Some(Alarm.SET_HIGH)).updateProdTStamp(System.currentTimeMillis()).toIASValue()
       else inputsMPsList(i).updateValue(Some(Alarm.CLEARED)).updateProdTStamp(System.currentTimeMillis()).toIASValue()
     }
-    val ret = list.toSet
+    val ret: Set[IASValue[_]] = list.toSet
     assert(ret.size==inputsMPs.size)
     assert(ret.count(value => value.value==Alarm.SET_HIGH)==n)
     ret

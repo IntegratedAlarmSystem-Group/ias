@@ -45,15 +45,15 @@ class ISO8601Test extends AnyFlatSpec {
     val utcStr = ISO8601Helper.getTimestamp(now)
     val localStr = localsdf.format(new Date(now))
     
-   println("UTC date "+utcStr)
-   println("Local date "+localStr)
+    println("UTC date "+utcStr)
+    println("Local date "+localStr)
    
-   if (offset==0) {
-     assert(utcStr==localStr)
-   } else {
-     assert(utcStr!=localStr)
-     assert(getHour(utcStr)!=getHour(localStr))
-   }
+    if (offset==0) {
+      assert(utcStr==localStr)
+    } else {
+      assert(utcStr!=localStr)
+      assert(getHour(utcStr)!=getHour(localStr))
+    }
   }
   
 }

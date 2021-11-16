@@ -1,13 +1,13 @@
 package org.eso.ias.dasu.subscriber
 
-import java.util
-import java.util.{Collection, Properties}
 import org.eso.ias.kafkautils.KafkaStringsConsumer.StreamPosition
 import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener
 import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosConsumer}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.{IASTypes, IASValue}
 
+import java.util
+import java.util.{Collection, Properties}
 import scala.jdk.javaapi.CollectionConverters
 import scala.util.{Failure, Try}
 
@@ -49,7 +49,7 @@ extends IasioListener with InputSubscriber {
 	  * @param iasValues The values read from the BSDB
 	  * @see IasiosListener
 	 */
-	override def iasiosReceived(iasValues: Collection[IASValue[_]]): Unit = {
+  override def iasiosReceived(iasValues: Collection[IASValue[_]]): Unit = {
     assert(Option(iasValues).isDefined)
     val receivedIasios = CollectionConverters.asScala(iasValues)
      KafkaSubscriber.logger.debug(("Subscriber of [{}] receeved {} events "),consumerId,receivedIasios.size)
@@ -61,7 +61,7 @@ extends IasioListener with InputSubscriber {
           e)
       case _ =>
     }
-	}
+  }
 
   /** Initialize the subscriber */
   def initializeSubscriber(): Try[Unit] = {

@@ -1,13 +1,12 @@
 package org.eso.ias.tranfer
 
-import java.util.Properties
-import java.util.concurrent.TimeUnit
-
 import com.typesafe.scalalogging.Logger
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.{Alarm, IASTypes}
 
+import java.util.Properties
+import java.util.concurrent.TimeUnit
 import scala.util.Try
 
 /**
@@ -83,7 +82,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
     DelayedAlarm.logger.debug("Initializing TF of [{}]", cEleId)
 
     // This TF expects one and only one input
-	  if (inputsInfo.size!=1) {
+    if (inputsInfo.size!=1) {
 	    throw new DelayedAlarmException("Expected only 1 input but got "+inputsInfo.size)
 	  }
     // Is the input an alarm?
@@ -118,22 +117,21 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
 	 * 
 	 * @return the computed output of the ASCE
 	 */
-	override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
+  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
 	  // Here waitTimeToClear and waitTimeToSet must be defined because if they are not
 	  // an exception in thrown by initialize() and the execution of the TF never enabled
-	  assert(waitTimeToClear.isDefined && waitTimeToSet.isDefined)
+    assert(waitTimeToClear.isDefined && waitTimeToSet.isDefined)
 
-	  
-	  // Get the input
-	  val iasio = compInputs.values.head
+    // Get the input
+    val iasio = compInputs.values.head
     assert(iasio.value.isDefined)
 
 	  // Is the output an alarm?
     if (actualOutput.iasType!=IASTypes.ALARM) {
       throw new DelayedAlarmException("Output type is not alarm: "+actualOutput.iasType)
     }
-	  
-	  if (lastInputValue.isEmpty) {
+
+    if (lastInputValue.isEmpty) {
 	    // Initialization: if the output was never activated then
 	    // return a CLEARED alarm because the delay did not elapsed
 	    lastStateChangeTime=System.currentTimeMillis()
@@ -164,8 +162,8 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
           actualOutput.updateValue(iasio.value.get).updateProps(iasio.props)
         }
       }
-	  }
-	}
+    }
+  }
 }
 
 object DelayedAlarm {

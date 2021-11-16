@@ -1,7 +1,5 @@
 package org.eso.ias.dasu.test
 
-import java.nio.file.FileSystems
-
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.DasuDao
@@ -9,9 +7,10 @@ import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.dasu.publisher.{ListenerOutputPublisherImpl, OutputListener, OutputPublisher}
 import org.eso.ias.dasu.subscriber.DirectInputSubscriber
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types.IasValidity._
-import org.eso.ias.types._
+import org.eso.ias.types.*
+import org.eso.ias.types.IasValidity.*
 
+import java.nio.file.FileSystems
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -97,19 +96,19 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, validityThreshold: Int
     
     IASValue.build(
       d,
-			OperationalMode.OPERATIONAL,
-			UNRELIABLE,
-			inputID.fullRunningID,
-			IASTypes.DOUBLE,
+      OperationalMode.OPERATIONAL,
+      UNRELIABLE,
+      inputID.fullRunningID,
+      IASTypes.DOUBLE,
       t0,
-			t0+1,
-			t0+5,
-			t0+10,
-			t0+15,
-			null,
-			null,
-			null,
-			null)
+      t0+1,
+      t0+5,
+      t0+10,
+      t0+15,
+      null,
+      null,
+      null,
+      null)
   }
     
 }

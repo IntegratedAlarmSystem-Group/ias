@@ -1,6 +1,6 @@
 package org.eso.ias.types
 
-import org.eso.ias.types.IdentifierType._
+import org.eso.ias.types.IdentifierType.*
 
 /**
  * Companion object
@@ -297,7 +297,7 @@ class Identifier(
     val id: String,
     val idType: IdentifierType, 
     val parentID: Option[Identifier]) 
-extends {
+{
   require (Option(id).isDefined,"Invalid null ID")
   require(!id.isEmpty(),"Invalid empty identifier")
   require(id.indexOf(Identifier.separator) == -1,"Invalid character "+Identifier.separator+" in identifier "+id)

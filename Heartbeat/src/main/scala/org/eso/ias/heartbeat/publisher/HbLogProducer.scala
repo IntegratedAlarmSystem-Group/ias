@@ -13,7 +13,7 @@ import org.eso.ias.logging.IASLogger
 class HbLogProducer(serializer: HbMsgSerializer) extends HbProducer(serializer) {
 
 	/** The logger */
-	val logger = IASLogger.getLogger(classOf[HbLogProducer])
+  val logger = IASLogger.getLogger(classOf[HbLogProducer])
 	  
 	/** Initialize the producer */
   override def init() = {}

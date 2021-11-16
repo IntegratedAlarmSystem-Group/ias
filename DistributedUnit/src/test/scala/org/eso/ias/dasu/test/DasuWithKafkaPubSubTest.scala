@@ -1,8 +1,5 @@
 package org.eso.ias.dasu.test
 
-import java.nio.file.{FileSystems, Path}
-import java.util.Properties
-
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.DasuDao
@@ -13,11 +10,13 @@ import org.eso.ias.kafkautils.KafkaStringsConsumer.StreamPosition
 import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener
 import org.eso.ias.kafkautils.{KafkaHelper, SimpleStringConsumer, SimpleStringProducer}
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types.IasValidity._
-import org.eso.ias.types._
-import org.scalatest.{BeforeAndAfterAll}
+import org.eso.ias.types.*
+import org.eso.ias.types.IasValidity.*
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 
+import java.nio.file.{FileSystems, Path}
+import java.util.Properties
 import scala.collection.mutable.ListBuffer
 import scala.util.Try
 
@@ -114,19 +113,20 @@ class DasuWithKafkaPubSubTest extends AnyFlatSpec with KafkaConsumerListener wit
     val t0 = System.currentTimeMillis()-100
     IASValue.build(
         d,
-			  OperationalMode.OPERATIONAL,
-			  UNRELIABLE,
-			  inputID.fullRunningID,
-			  IASTypes.DOUBLE,
+        OperationalMode.OPERATIONAL,
+        UNRELIABLE,
+        inputID.fullRunningID,
+        IASTypes.DOUBLE,
         t0,
-			  t0+1,
-			  t0+5,
-			  t0+10,
-			  t0+15,
-			  t0+20,
-			  null,
-			  null,
-			  null)
+        t0+1,
+        t0+5,
+        t0+10,
+        t0+15,
+        t0+20,
+
+      null,
+      null,
+      null)
   }
   
   def stringEventReceived(event: String): Unit = {
