@@ -49,8 +49,8 @@ if (gradle is ExtensionAware) {
 	extension.extra["JdkVersion"] = 11
 
         // Common dependencies
-	extension.extra["scala-library"] = "org.scala-lang:scala3-library_3:3.0.2"
-		extension.extra["scalatest"] = "org.scalatest:scalatest_3:3.2.10"
+	extension.extra["scala-library"] = "org.scala-lang:scala3-library_3:3.1.0"
+	extension.extra["scalatest"] = "org.scalatest:scalatest_3:3.2.10"
 	extension.extra["slf4j-api"] = "org.slf4j:slf4j-api:1.7.32"
 	extension.extra["scala-logging"] = "com.typesafe.scala-logging:scala-logging_3:3.9.4"
 	extension.extra["logback-classic"] = "ch.qos.logback:logback-classic:1.2.5"
