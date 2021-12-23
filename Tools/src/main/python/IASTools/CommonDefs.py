@@ -17,10 +17,10 @@ class CommonDefs(object):
     """
     
     # Classpath separator for jars
-    __classPathSeparator=":"
+    __classPathSeparator = ":"
 
     # The logger
-    logger=logging.getLogger("CommonDefs")
+    logger = logging.getLogger("CommonDefs")
     
     @classmethod
     def buildClasspath(cls):
@@ -35,15 +35,15 @@ class CommonDefs(object):
         # jars list is used to avoid duplications of jars in the classpath
         # It contains all the jars without the path
         # i.e. lc.jar but not ../lib/lc.jar
-        jars=[]
+        jars = []
 
         # The classpath
-        classpath=""
+        classpath = ""
 
         # Get the folder with external jars from the environment variable, if exists
-        externalJarsPath=None
+        externalJarsPath = None
         try:
-           externalJarsPath=environ['IAS_EXTERNAL_JARS']
+           externalJarsPath = environ['IAS_EXTERNAL_JARS']
         except:
             pass
 
