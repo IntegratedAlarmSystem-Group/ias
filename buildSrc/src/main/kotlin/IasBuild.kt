@@ -16,7 +16,9 @@ import org.gradle.kotlin.dsl.withType
 open class IasBuild : Plugin<Project> {
 
     override fun apply(project: Project) {
-        println("IAS build plugin in ${project.buildDir}")
+
+        val logger = project.getLogger()
+        logger.info("IAS build plugin in {}", project.buildDir)
 
         // Get the python version from the property in settings.gradle.kts
         val g = project.gradle
@@ -26,25 +28,25 @@ open class IasBuild : Plugin<Project> {
         } else {
             throw GradleException("Cannot determine the version of python3")
         }
-        println("Using python version $pythonVersion")
+        logger.info("Using python version {}", pythonVersion)
 
         // Configurations
         val conf = project.tasks.register<Copy>("CopyConfigFiles") {
             doFirst {
-                println("CopyConfigs doFirst")
+                logger.info("CopyConfigs doFirst")
             }
 
             val confFolder = "config"
             val destFolder = "config"
 
-            println("Configuring: Installing configuration files in ${project.buildDir}")
+            logger.lifecycle("Configuring: Installing configuration files in {}", project.buildDir)
             from(project.layout.projectDirectory.dir(confFolder))
             include("*")
             into(project.layout.buildDirectory.dir(destFolder))
-            println("Configured: Installing configuration files in ${project.buildDir}")
+            logger.lifecycle("Configured: Installing configuration files in {}", project.buildDir)
 
             doLast {
-                println("CopyConfigs doLast")
+                logger.info("CopyConfigs doLast")
             }
         }
 
@@ -52,10 +54,10 @@ open class IasBuild : Plugin<Project> {
         val pyScripts = project.tasks.register<Copy>("CopyPyScripts") {
 
             doFirst {
-                println("CopyPyScripts doFirst")
+                logger.info("CopyPyScripts doFirst")
             }
 
-            println("Configuring: Installing python scripts in ${project.buildDir}")
+            logger.lifecycle("Configuring: Installing python scripts in {}", project.buildDir)
             val pyFolder = "src/main/python"
             val destFolder = "bin"
 
@@ -67,10 +69,10 @@ open class IasBuild : Plugin<Project> {
             }
             fileMode = 484 // 0744
             into(project.layout.buildDirectory.dir(destFolder))
-            println("Configured: Installing python scripts in ${project.buildDir}")
+            logger.lifecycle("Configured: Installing python scripts in {}", project.buildDir)
 
             doLast {
-                println("CopyPyScripts doLast")
+                logger.info("CopyPyScripts doLast")
             }
 
         }
@@ -78,10 +80,10 @@ open class IasBuild : Plugin<Project> {
         // Shell scripts
         val shScripts = project.tasks.register<Copy>("CopyShScripts") {
             doFirst {
-                println("CopyShellScripts doFirst")
+                logger.info("CopyShellScripts doFirst")
             }
 
-            println("Configuring: Installing shell scripts in ${project.buildDir}")
+            logger.lifecycle("Configuring: Installing shell scripts in {}", project.buildDir)
             val shFolder = "src/main"
             val destFolder = "bin"
 
@@ -92,10 +94,10 @@ open class IasBuild : Plugin<Project> {
             }
             fileMode = 484 // 0744
             into(project.layout.buildDirectory.dir(destFolder))
-            println("Configured: Installing shell scripts in ${project.buildDir}")
+            logger.lifecycle("Configured: Installing shell scripts in {}", project.buildDir)
 
             doLast {
-                println("CopyShellScripts doLast")
+                logger.info("CopyShellScripts doLast")
             }
         }
 
@@ -105,12 +107,10 @@ open class IasBuild : Plugin<Project> {
         val pyModules = project.tasks.register<Copy>("CopyPyMods") {
 
             doFirst {
-
-                println("CopyPyMods doFirst")
-
+                logger.info("CopyPyMods doFirst")
             }
 
-            println("Configuring: Installing Python modules")
+            logger.lifecycle("Configuring: Installing Python modules")
 
             val srcFolder = "src/main/python"
 
@@ -120,10 +120,10 @@ open class IasBuild : Plugin<Project> {
             val destFolder = "lib/python${pythonVersion}/site-packages"
             into(project.layout.buildDirectory.dir(destFolder))
 
-            println("Configured: Installing Python modules")
+            logger.lifecycle("Configured: Installing Python modules")
 
             doLast {
-                println("CopyPyMods doLast")
+                logger.info("CopyPyMods doLast")
             }
         }
 
@@ -136,10 +136,10 @@ open class IasBuild : Plugin<Project> {
             destinationDirectory.set(project.layout.buildDirectory.dir("lib"))
             archiveFileName.set(archiveBaseName.get()+"Test.jar")
             doFirst {
-                println("${project.name}: buildJarOfTestClasses doFirst")
+                logger.info("{}: buildJarOfTestClasses doFirst", project.name)
             }
             doLast {
-                println("${project.name}: buildJarOfTestClasses doLast")
+                logger.info("{}: buildJarOfTestClasses doLast", project.name)
             }
         }
 
@@ -157,10 +157,10 @@ open class IasBuild : Plugin<Project> {
             into(destFolder)
 
             doFirst {
-                println("Installing bins of ${project.name}")
+                logger.info("Installing bins of {}", project.name)
             }
             doLast {
-                println("Installed bins of ${project.name}")
+                logger.info("Installed bins of ", project.name)
             }
         }
 
@@ -175,10 +175,10 @@ open class IasBuild : Plugin<Project> {
             into(destFolder)
 
             doFirst {
-                println("Installing configs of ${project.name}")
+                logger.info("Installing configs of {}", project.name)
             }
             doLast {
-                println("Installed configs of ${project.name}")
+                logger.info("Installed configs of {}", project.name)
             }
         }
 
@@ -196,10 +196,10 @@ open class IasBuild : Plugin<Project> {
             into(destFolder)
 
             doFirst {
-                println("Installing libs of ${project.name}")
+                logger.info("Installing libs of {}", project.name)
             }
             doLast {
-                println("Installed libs of ${project.name}")
+                logger.info("Installed libs of {}", project.name)
             }
         }
 
@@ -214,10 +214,10 @@ open class IasBuild : Plugin<Project> {
             }
 
             doFirst {
-                println("Installing ${project.name}")
+                logger.info("Installing {}", project.name)
             }
             doLast {
-                println("Installed ${project.name}")
+                logger.info("Installed {}", project.name)
             }
         }
 
@@ -226,28 +226,28 @@ open class IasBuild : Plugin<Project> {
             dependsOn(":${project.name}:distTar")
             val folder = project.layout.buildDirectory.dir("distributions")
             val tarFileName = folder.get().asFile.path+"/${project.name}.tar"
-            println("Configuring ${project.name}:untar for $tarFileName")
+            logger.lifecycle("Configuring {}:untar for {}", project.name, tarFileName)
             from(project.tarTree(tarFileName))
             into(folder)
             doFirst {
-                println("Untar ${project.name} begin ")
+                logger.info("Untar {} begin ", project.name)
             }
             doLast {
-                println("Untar ${project.name} done")
+                logger.info("Untar {} done", project.name)
             }
         }
 
         val copyExtLibs = project.tasks.register<Copy>("CopyExtLib") {
             dependsOn(untar)
-            println("Configuring ${project.name}:CopyExtLib")
+            logger.lifecycle("Configuring {}:CopyExtLib", project.name)
             from(project.layout.buildDirectory.dir("distributions/${project.name}/lib"))
             into(project.layout.buildDirectory.dir("lib/ExtLibs"))
             exclude("ias*.jar")
             doFirst {
-                println("CopyExtLib of ${project.name} begin ")
+                logger.info("CopyExtLib of {} begin ", project.name)
             }
             doLast {
-                println("CopyExtLib of ${project.name} done")
+                logger.info("CopyExtLib of {} done", project.name)
             }
         }
 
@@ -255,10 +255,10 @@ open class IasBuild : Plugin<Project> {
         val pyTestScripts = project.tasks.register<Copy>("CopyPyTestScripts") {
 
             doFirst {
-                println("${project.name}: CopyPyTestScripts doFirst")
+                logger.info("{}: CopyPyTestScripts doFirst", project.name)
             }
 
-            println("${project.name}: Configuring: Installing python test scripts in ${project.buildDir}")
+            logger.lifecycle("{}: Configuring: Installing python test scripts in {}", project.buildDir, project.name)
             val pyFolder = "src/test/python"
             val destFolder = "bin"
 
@@ -270,10 +270,10 @@ open class IasBuild : Plugin<Project> {
             }
             fileMode = 484 // 0744
             into(project.layout.buildDirectory.dir(destFolder))
-            println("${project.name}: Configured: Installing test python scripts in ${project.buildDir}")
+            logger.lifecycle("{}: Configured: Installing test python scripts in {}", project.buildDir, project.name)
 
             doLast {
-                println("${project.name}: CopyPyTestScripts doLast")
+                logger.info("{}: CopyPyTestScripts doLast", project.name)
             }
 
         }
@@ -283,12 +283,10 @@ open class IasBuild : Plugin<Project> {
         val pyTestModules = project.tasks.register<Copy>("CopyPyTestMods") {
 
             doFirst {
-
-                println("CopyPyTestMods doFirst")
-
+                logger.info("CopyPyTestMods doFirst")
             }
 
-            println("Configuring: Installing Python modules for testing")
+            logger.lifecycle("Configuring: Installing Python modules for testing")
 
             val srcFolder = "src/test/python"
 
@@ -298,10 +296,10 @@ open class IasBuild : Plugin<Project> {
             val destFolder = "lib/python${pythonVersion}/site-packages"
             into(project.layout.buildDirectory.dir(destFolder))
 
-            println("Configured: Installing Python modules for testing")
+            logger.lifecycle("Configured: Installing Python modules for testing")
 
             doLast {
-                println("CopyPyTestMods doLast")
+                logger.info("CopyPyTestMods doLast")
             }
         }
 
@@ -329,7 +327,4 @@ open class IasBuild : Plugin<Project> {
             }
         }
     }
-
-
-
 }
