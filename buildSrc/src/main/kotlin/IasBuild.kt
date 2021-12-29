@@ -258,7 +258,7 @@ open class IasBuild : Plugin<Project> {
                 logger.info("{}: CopyPyTestScripts doFirst", project.name)
             }
 
-            logger.lifecycle("{}: Configuring: Installing python test scripts in {}", project.buildDir, project.name)
+            logger.lifecycle("{}: Configuring: Installing python test scripts in {}", project.name, project.buildDir)
             val pyFolder = "src/test/python"
             val destFolder = "bin"
 
@@ -270,7 +270,7 @@ open class IasBuild : Plugin<Project> {
             }
             fileMode = 484 // 0744
             into(project.layout.buildDirectory.dir(destFolder))
-            logger.lifecycle("{}: Configured: Installing test python scripts in {}", project.buildDir, project.name)
+            logger.lifecycle("{}: Configured: Installing test python scripts in {}", project.name, project.buildDir)
 
             doLast {
                 logger.info("{}: CopyPyTestScripts doLast", project.name)
