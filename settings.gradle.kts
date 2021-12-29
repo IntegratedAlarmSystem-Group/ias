@@ -8,14 +8,15 @@
  */
 
 rootProject.name = "ias"
+logger.lifecycle("Preparing global settings for {}", rootProject.name)
 include(
-        "Tools",
-        "Cdb",
-        "BasicTypes",
-        "CdbChecker",
-        "KafkaUtils",
-        "Heartbeat",
-        "CommandsAndReplies",
+	"Tools",
+	"Cdb",
+	"BasicTypes",
+	"CdbChecker",
+	"KafkaUtils",
+	"Heartbeat",
+	"CommandsAndReplies",
 	"Plugin",
 	"PythonPluginFeeder",
 	"Converter",
@@ -65,3 +66,4 @@ if (gradle is ExtensionAware) {
 	extension.extra["hibernate-jpa"] = "org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final"
 }
 
+logger.lifecycle("Global settings for {} ready", rootProject.name)
