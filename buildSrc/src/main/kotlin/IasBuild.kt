@@ -52,7 +52,6 @@ open class IasBuild : Plugin<Project> {
 
         // Python Scripts
         val pyScripts = project.tasks.register<Copy>("CopyPyScripts") {
-
             doFirst {
                 logger.info("CopyPyScripts doFirst")
             }
@@ -133,9 +132,10 @@ open class IasBuild : Plugin<Project> {
             from(project.layout.buildDirectory.dir("classes/scala/test"))
             from(project.layout.buildDirectory.dir("classes/java/test"))
             from(project.layout.buildDirectory.dir("resources/test"))
-            destinationDirectory.set(project.layout.buildDirectory.dir("lib"))
-            archiveFileName.set(archiveBaseName.get()+"Test.jar")
             doFirst {
+                // Overrides the name of the jar
+                // For non test jar name see the Jar task at the bottom
+                archiveFileName.set("ias"+archiveBaseName.get()+"Test.jar")
                 logger.info("{}: buildJarOfTestClasses doFirst", project.name)
             }
             doLast {
@@ -316,9 +316,15 @@ open class IasBuild : Plugin<Project> {
             dependsOn(":build", pyTestScripts)
             commandLine("src/test/runTests.sh")
         }
-
         project.tasks.withType<JavaCompile>().configureEach {
             options.isDeprecation = true
+        }
+
+        project.tasks.withType<Jar>().configureEach {
+            // Put the jars in lib
+            destinationDirectory.set(project.layout.buildDirectory.dir("lib"))
+            // Set the name of the jar file (overridded by the test jar task upon)
+            archiveFileName.set("ias"+archiveBaseName.get()+".jar")
         }
 
         project.tasks.withType<ScalaCompile>().configureEach {

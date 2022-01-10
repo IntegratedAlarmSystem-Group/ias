@@ -21,9 +21,6 @@ dependencies {
     implementation("org.hibernate:hibernate-c3p0:5.2.6.Final")
 }
 
-base.archivesBaseName = "ias"+project.name
-base.libsDirName ="lib"
-
 sourceSets {
     main {
         resources {

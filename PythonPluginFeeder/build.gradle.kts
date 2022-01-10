@@ -24,9 +24,6 @@ dependencies {
     implementation(project(":CommandsAndReplies"))
 }
 
-base.archivesBaseName = "ias"+project.name
-base.libsDirName ="lib"
-
 sourceSets {
     test {
         resources {

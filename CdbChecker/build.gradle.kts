@@ -21,11 +21,17 @@ dependencies {
     implementation(project(":BasicTypes"))
 }
 
-base.archivesBaseName = "ias"+project.name
-base.libsDirName ="lib"
+java {
+    targetCompatibility = org.gradle.api.JavaVersion.VERSION_11
+}
+
+distributions {
+    main {
+        // Set the name of the tar/zip files in build
+        distributionBaseName.set(project.name)
+    }
+}
 
 repositories {
     mavenCentral()
 }
-
-

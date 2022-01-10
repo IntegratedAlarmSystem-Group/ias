@@ -18,9 +18,6 @@ dependencies {
     }
 }
 
-base.archivesBaseName = "ias"+project.name
-base.libsDirName ="lib"
-
 java {
     toolchain {
         val g = project.gradle

@@ -27,9 +27,6 @@ dependencies {
     testImplementation(project(":CompElement"))
 }
 
-base.archivesBaseName = "ias"+project.name
-base.libsDirName ="lib"
-
 repositories {
    mavenCentral()
 }
