@@ -31,7 +31,3 @@ sourceSets {
         }
     }
 }
-
-repositories {
-    mavenCentral()
-}

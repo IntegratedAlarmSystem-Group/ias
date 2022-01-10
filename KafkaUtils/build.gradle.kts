@@ -17,9 +17,3 @@ dependencies {
     implementation(project(":BasicTypes"))
 
 }
-
-repositories {
-    mavenCentral()
-}
-
-

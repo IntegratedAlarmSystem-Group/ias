@@ -21,9 +21,3 @@ dependencies {
     implementation(project(":BasicTypes"))
     implementation(project(":Heartbeat"))
 }
-
-repositories {
-    mavenCentral()
-}
-
-

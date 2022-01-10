@@ -22,10 +22,6 @@ dependencies {
     implementation(project(":Cdb"))
 }
 
-repositories {
-    mavenCentral()
-}
-
 sourceSets {
     main {
         withConvention(ScalaSourceSet::class) {

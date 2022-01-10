@@ -66,4 +66,10 @@ if (gradle is ExtensionAware) {
 	extension.extra["hibernate-jpa"] = "org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final"
 }
 
+dependencyResolutionManagement {
+	repositories {
+		mavenCentral()
+	}
+}
+
 logger.lifecycle("Global settings for {} ready", rootProject.name)

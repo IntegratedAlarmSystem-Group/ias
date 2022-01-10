@@ -17,9 +17,3 @@ dependencies {
     implementation(project(":KafkaUtils"))
 
 }
-
-repositories {
-   mavenCentral()
-}
-
-

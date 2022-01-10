@@ -28,10 +28,6 @@ dependencies {
 
 }
 
-repositories {
-    mavenCentral()
-}
-
 sourceSets {
     main {
         withConvention(ScalaSourceSet::class) {

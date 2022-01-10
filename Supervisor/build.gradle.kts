@@ -26,9 +26,3 @@ dependencies {
 
     testImplementation(project(":CompElement"))
 }
-
-repositories {
-   mavenCentral()
-}
-
-
