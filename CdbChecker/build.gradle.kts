@@ -21,10 +21,6 @@ dependencies {
     implementation(project(":BasicTypes"))
 }
 
-java {
-    targetCompatibility = org.gradle.api.JavaVersion.VERSION_11
-}
-
 distributions {
     main {
         // Set the name of the tar/zip files in build
