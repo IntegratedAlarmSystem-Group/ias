@@ -15,7 +15,6 @@ import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.withType
 
 open class IasBuild : Plugin<Project> {
-
     override fun apply(project: Project) {
 
         val logger = project.getLogger()
@@ -322,6 +321,15 @@ open class IasBuild : Plugin<Project> {
         }
         project.tasks.withType<JavaCompile>().configureEach {
             options.isDeprecation = true
+
+            project.gradle
+            val jdkVersion = if (g is ExtensionAware) {
+                val extension = g as ExtensionAware
+                extension.extra["JdkVersion"].toString().toInt()
+            } else {
+                throw GradleException("Cannot determine the version of Jdk")
+            }
+            options.release.set(jdkVersion)
         }
 
         project.tasks.withType<Jar>().configureEach {
