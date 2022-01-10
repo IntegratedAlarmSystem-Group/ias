@@ -30,9 +30,6 @@ dependencies {
     testImplementation("org.eclipse.jetty.websocket:websocket-server:9.4.15.v20190215")
 }
 
-base.archivesBaseName = "ias"+project.name
-base.libsDirName ="lib"
-
 repositories {
     mavenCentral()
 }

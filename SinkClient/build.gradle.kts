@@ -31,9 +31,6 @@ dependencies {
     implementation(project(":Supervisor"))
 }
 
-base.archivesBaseName = "ias"+project.name
-base.libsDirName ="lib"
-
 repositories {
     mavenCentral()
 }
