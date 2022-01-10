@@ -17,9 +17,3 @@ dependencies {
     implementation(project(":Tools"))
     implementation(project(":CompElement"))
 }
-
-repositories {
-   mavenCentral()
-}
-
-

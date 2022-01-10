@@ -28,9 +28,3 @@ dependencies {
     implementation(project(":KafkaUtils"))
     implementation(project(":CommandsAndReplies"))
 }
-
-repositories {
-    mavenCentral()
-}
-
-

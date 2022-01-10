@@ -29,9 +29,3 @@ dependencies {
 
     testImplementation("org.eclipse.jetty.websocket:websocket-server:9.4.15.v20190215")
 }
-
-repositories {
-    mavenCentral()
-}
-
-

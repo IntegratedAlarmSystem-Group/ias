@@ -27,7 +27,3 @@ distributions {
         distributionBaseName.set(project.name)
     }
 }
-
-repositories {
-    mavenCentral()
-}

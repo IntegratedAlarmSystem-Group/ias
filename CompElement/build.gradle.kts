@@ -25,10 +25,6 @@ dependencies {
     implementation(project(":Converter"))
 }
 
-repositories {
-    mavenCentral()
-}
-
 sourceSets {
     main {
         withConvention(ScalaSourceSet::class) {
