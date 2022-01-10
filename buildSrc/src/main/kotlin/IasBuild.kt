@@ -6,6 +6,7 @@ import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Exec
+import org.gradle.api.tasks.bundling.Zip
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.scala.ScalaCompile
 import org.gradle.jvm.tasks.Jar
@@ -312,6 +313,9 @@ open class IasBuild : Plugin<Project> {
         project.tasks.getByPath(":${project.name}:build").finalizedBy(pyTestScripts)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(pyTestModules)
 
+//        project.tasks.getByPath(":${project.name}:test").dependsOn(project.tasks.getByPath(":${project.name}:build"))
+//        project.tasks.getByPath(":${project.name}:test").dependsOn(project.tasks.getByPath(":${project.name}:build"))
+
         val runIasTestsTask = project.tasks.register<Exec>("iasTest") {
             dependsOn(":build", pyTestScripts)
             commandLine("src/test/runTests.sh")
@@ -327,10 +331,16 @@ open class IasBuild : Plugin<Project> {
             archiveFileName.set("ias"+archiveBaseName.get()+".jar")
         }
 
+
         project.tasks.withType<ScalaCompile>().configureEach {
             scalaCompileOptions.forkOptions.apply {
                 memoryMaximumSize = "1g"
             }
         }
+
+        project.tasks.withType<Zip>().configureEach {
+            enabled = false
+        }
+
     }
 }
