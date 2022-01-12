@@ -6,7 +6,6 @@ import org.gradle.api.Project
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Exec
-import org.gradle.api.tasks.bundling.Zip
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.scala.ScalaCompile
 import org.gradle.jvm.tasks.Jar
@@ -322,13 +321,8 @@ open class IasBuild : Plugin<Project> {
         project.tasks.withType<JavaCompile>().configureEach {
             options.isDeprecation = true
 
-            project.gradle
-            val jdkVersion = if (g is ExtensionAware) {
-                val extension = g as ExtensionAware
-                extension.extra["JdkVersion"].toString().toInt()
-            } else {
-                throw GradleException("Cannot determine the version of Jdk")
-            }
+            val extension = g as ExtensionAware
+            val jdkVersion = extension.extra["JdkVersion"].toString().toInt()
             options.release.set(jdkVersion)
         }
 
@@ -337,17 +331,13 @@ open class IasBuild : Plugin<Project> {
             destinationDirectory.set(project.layout.buildDirectory.dir("lib"))
             // Set the name of the jar file (overridded by the test jar task upon)
             archiveFileName.set("ias"+archiveBaseName.get()+".jar")
+            logger.info("Will create JAR {} in {}", archiveFileName.get(), destinationDirectory.get().toString())
         }
-
 
         project.tasks.withType<ScalaCompile>().configureEach {
             scalaCompileOptions.forkOptions.apply {
                 memoryMaximumSize = "1g"
             }
-        }
-
-        project.tasks.withType<Zip>().configureEach {
-            enabled = false
         }
 
     }
