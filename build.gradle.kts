@@ -1,5 +1,3 @@
-import org.gradle.api.GradleException
-
 fun checkIntegrity(): Boolean {
     var envVar: String? = System.getenv("IAS_ROOT")
     if (envVar==null) {
@@ -7,7 +5,6 @@ fun checkIntegrity(): Boolean {
     }
     return true
 }
-
 
 tasks.register("build") {
     doFirst {
@@ -18,3 +15,5 @@ tasks.register("build") {
     }
 }
 
+subprojects {
+}
