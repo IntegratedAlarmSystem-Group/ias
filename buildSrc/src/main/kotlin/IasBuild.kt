@@ -34,17 +34,14 @@ open class IasBuild : Plugin<Project> {
             val confFolder = "config"
             val destFolder = "config"
 
-            logger.lifecycle("{} Configuring: Installing configuration files in {}", project.name, project.buildDir)
             from(project.layout.projectDirectory.dir(confFolder))
             include("*")
 
             into(project.layout.buildDirectory.dir(destFolder))
-            logger.lifecycle("{}: Configured: Installing configuration files in {}", project.name, project.buildDir)
         }
 
         // Python Scripts
         val pyScripts = project.tasks.register<Copy>("CopyPyScripts") {
-            logger.lifecycle("{} Configuring: Installing python scripts in {}", project.name, project.buildDir)
             val pyFolder = "src/main/python"
             val destFolder = "bin"
 
@@ -55,12 +52,10 @@ open class IasBuild : Plugin<Project> {
             }
             fileMode = 484 // 0744
             into(project.layout.buildDirectory.dir(destFolder))
-            logger.lifecycle("{} Configured: Installing python scripts in {}", project.name, project.buildDir)
         }
 
         // Shell scripts
         val shScripts = project.tasks.register<Copy>("CopyShScripts") {
-            logger.lifecycle("{} Configuring: Installing shell scripts in {}", project.name, project.buildDir)
             val shFolder = "src/main"
             val destFolder = "bin"
 
@@ -71,14 +66,12 @@ open class IasBuild : Plugin<Project> {
             }
             fileMode = 484 // 0744
             into(project.layout.buildDirectory.dir(destFolder))
-            logger.lifecycle("{} Configured: Installing shell scripts in {}", project.name, project.buildDir)
         }
 
 
         // Spawn one copy task task for each python modules
         // i.e. each folder in src/main/python
         val pyModules = project.tasks.register<Copy>("CopyPyMods") {
-            logger.lifecycle("{} Configuring: Installing Python modules", project.name)
 
             val srcFolder = "src/main/python"
 
@@ -87,8 +80,6 @@ open class IasBuild : Plugin<Project> {
             exclude("*.py")
             val destFolder = "lib/python${pythonVersion}/site-packages"
             into(project.layout.buildDirectory.dir(destFolder))
-
-            logger.lifecycle("{} Configured: Installing Python modules", project.name)
         }
 
         val installBin = project.tasks.register<Copy>("InstallBin") {
@@ -146,14 +137,12 @@ open class IasBuild : Plugin<Project> {
             dependsOn(":${project.name}:distTar")
             val folder = project.layout.buildDirectory.dir("distributions")
             val tarFileName = folder.get().asFile.path+"/${project.name}.tar"
-            logger.lifecycle("{} Configuring untar for file {}", project.name, tarFileName)
             from(project.tarTree(tarFileName))
             into(folder)
         }
 
         val copyExtLibs = project.tasks.register<Copy>("CopyExtLib") {
             dependsOn(untar)
-            logger.lifecycle("{} Configuring CopyExtLib", project.name)
             from(project.layout.buildDirectory.dir("distributions/${project.name}/lib"))
             into(project.layout.buildDirectory.dir("lib/ExtLibs"))
             exclude("ias*.jar")
@@ -161,7 +150,6 @@ open class IasBuild : Plugin<Project> {
 
         // Copy python test scripts in build/bin
         val pyTestScripts = project.tasks.register<Copy>("CopyPyTestScripts") {
-            logger.lifecycle("{}: Configuring: Installing python test scripts in {}", project.name, project.buildDir)
             val pyFolder = "src/test/python"
             val destFolder = "bin"
 
@@ -172,14 +160,11 @@ open class IasBuild : Plugin<Project> {
             }
             fileMode = 484 // 0744
             into(project.layout.buildDirectory.dir(destFolder))
-            logger.lifecycle("{}: Configured: Installing test python scripts in {}", project.name, project.buildDir)
         }
 
         // Copy python test modules
         // i.e. each folder in src/test/python
         val pyTestModules = project.tasks.register<Copy>("CopyPyTestMods") {
-            logger.lifecycle("{} Configuring: Installing Python modules for testing", project.name)
-
             val srcFolder = "src/test/python"
 
             from(project.layout.projectDirectory.dir(srcFolder))
@@ -187,8 +172,6 @@ open class IasBuild : Plugin<Project> {
             exclude("*.py")
             val destFolder = "lib/python${pythonVersion}/site-packages"
             into(project.layout.buildDirectory.dir(destFolder))
-
-            logger.lifecycle("{} Configured: Installing Python modules for testing", project.name)
         }
 
         project.tasks.getByPath(":${project.name}:build").finalizedBy(conf)
