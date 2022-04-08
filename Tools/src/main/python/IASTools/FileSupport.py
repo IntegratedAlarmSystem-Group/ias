@@ -3,8 +3,8 @@ Created on Sep 23, 2016
 
 @author: acaproni
 '''
-from os import environ, getcwd, walk, path, makedirs, access, W_OK, X_OK
 import logging
+from os import environ, getcwd, walk, path, makedirs, access, W_OK, X_OK
 
 
 class FileSupport(object):
@@ -16,6 +16,8 @@ class FileSupport(object):
     # root of the module (typical case for development)
     iasModFileType = {
         "lib": "build/lib",
+        "scalaTestClasses": "build/classes/scala/test/",
+        "javaTestClasses":  "build/classes/java/test/",
         "bin": "build/bin",
         "config": "build/config",
         "src": "src"}
@@ -133,13 +135,11 @@ class FileSupport(object):
     def getIASFolders(cls, fileType=None):
         '''
         Return the hierarchy of IAS folders.
-        At the present it only contains
-        - the current module (the current folder i.e. assumes that
-          the script runs in the main folder of a module that is the
-          typical case for development)
+        At the present it contains
+        - the ./build/lib (typical case for development)
         - IAS root.
         
-        The tuple returned is ordered by priority.
+        The tuple returned is ordered by priority i.e. current module first
         
          @return A ordered tuple with the hierarchy of IAS folders
                  (at the present the current module and IAS_ROOT)
@@ -150,6 +150,16 @@ class FileSupport(object):
             rootFolder = "%s/%s" % (cls.getIASRoot(), cls.iasRootFileType[fileType])
             modFolder = "%s/%s" % (getcwd(), cls.iasModFileType[fileType])
             return (modFolder, rootFolder)
+
+    @classmethod
+    def getClassFolders(cls):
+        """
+        Return the java and scala folders with test classes
+
+        Class files are only in the local build/test folder
+        :return:
+        """
+        return [cls.iasModFileType["scalaTestClasses"], cls.iasModFileType["javaTestClasses"]]
 
     @classmethod
     def createTmpFolder(cls):

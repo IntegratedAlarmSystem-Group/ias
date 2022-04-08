@@ -21,6 +21,18 @@ class CommonDefs(object):
 
     # The logger
     logger = logging.getLogger("CommonDefs")
+
+    @classmethod
+    def addsTestClasses(cls):
+        """
+        With gradle we do not put test classes into jar files but leave them in build/src/test
+        In this way the build is faster and there is no risk to install jars of test classes in IAS_ROOT
+
+        :return:
+        """
+        testClasses = FileSupport.FileSupport.getClassFiles()
+        for t in testClasses:
+            print ("\t==>\t", t)
     
     @classmethod
     def buildClasspath(cls):
@@ -49,7 +61,7 @@ class CommonDefs(object):
 
         # Adds the jar files in the external folder
         if externalJarsPath is not None:
-            CommonDefs.logger.info("Defined a folder for external jars: %s",externalJarsPath)
+            CommonDefs.logger.info("Defined a folder for external jars: %s", externalJarsPath)
             # Check if externalJarsPath is a directory and is readable
             if not path.isdir(externalJarsPath):
                 CommonDefs.logger.error("Unreadable folder of external jars: %s",externalJarsPath)
@@ -70,11 +82,17 @@ class CommonDefs(object):
             for root, subFolders, files in walk(folder):
                 for jarFileName in files:
                     if (jarFileName.lower().endswith('.jar') and jars.count(jarFileName)==0):
-                        filePath=path.join(root,jarFileName)
+                        filePath = path.join(root,jarFileName)
                         if classpath:
-                            classpath=classpath+cls.__classPathSeparator
-                        classpath=classpath+filePath
+                            classpath = classpath+cls.__classPathSeparator
+                        classpath = classpath+filePath
                         jars.append(jarFileName)
+
+        # Adds test classes, if any
+        testFolders = FileSupport.FileSupport.getClassFolders()
+        for folder in testFolders:
+            classpath = classpath+cls.__classPathSeparator+folder
+
         return classpath
                             
     @classmethod
@@ -95,21 +113,3 @@ class CommonDefs(object):
             return True
         except:
             return False
-    
-    @classmethod
-    def addScalaJarsToClassPath(cls,classpath):
-        """
-        Append scala jars to the passed classpath
-        
-        scala jars are needed by java programs that calls scala code
-        
-        @param classpath: the classpath to add scala jars to
-        """
-        scalaLibFolder=  path.join(environ["SCALA_HOME"],"lib")  
-        for root, subFolders, files in walk(scalaLibFolder):
-            for jarFileName in files:
-                if (jarFileName.lower().endswith('.jar')):
-                    filePath=path.join(root,jarFileName)
-                    classpath=classpath+cls.__classPathSeparator
-                    classpath=classpath+filePath
-        return classpath   

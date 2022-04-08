@@ -8,9 +8,8 @@ Created on Sep 26, 2016
 import argparse
 import os
 import socket
-from subprocess import call
-
 import sys
+from subprocess import call
 
 from IASLogging.logConf import Log
 from IASTools.CommonDefs import CommonDefs
@@ -142,13 +141,6 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Run a java or scala program.')
     parser.add_argument(
-                        '-l',
-                        '--language',
-                        help='The programming language: one between scala (or shortly s) and java (or j)',
-                        action='store',
-                        choices=['java', 'j', 'scala','s'],
-                        required=True)
-    parser.add_argument(
                         '-i',
                         '--logfileId',
                         help='The identifier to be appended to the name of the log file',
@@ -198,10 +190,17 @@ if __name__ == '__main__':
                     help='Command line parameters')
     args = parser.parse_args()
 
-    #Start the logger with param define by the user.
+    # Start the logger with param define by the user.
     stdoutLevel=args.levelStdOut
     consoleLevel=args.levelConsole
-    logger = Log.getLogger(__file__,stdoutLevel,consoleLevel)
+    logger = Log.getLogger(__file__, stdoutLevel, consoleLevel)
+
+    # Is the environment ok?
+    # Fail fast!
+    if not CommonDefs.checkEnvironment():
+        logger.info("Some setting missing in IAS environment.")
+        logger.info("Set the environment with ias-bash_profile before running IAS applications")
+        sys.exit(-1)
 
     logger.info("Start IASRun")
     verbose = args.verbose
@@ -211,17 +210,10 @@ if __name__ == '__main__':
     # Get java options from JAVA_OPTS environment variable
     javaOptions=javaOpts()
 
-    # Build the command line
-    if args.language=='s' or args.language=='scala':
-        cmd=['scala']
-        if verbose:
-            logger.info("Running a SCALA program.")
-    else:
-        cmd=['java']
-        if verbose:
-            logger.info("Running a JAVA program.")
+    # Build the command line in cmd
+    cmd=['java']
 
-    # Assertions are enabled differently in java (command line) and scala ($JAVA_OPTS)
+    # Enable/Disable assertions
     enableAssertions = args.assertions
     if enableAssertions:
         javaOptions.append("-ea")
@@ -231,31 +223,16 @@ if __name__ == '__main__':
         if verbose:
             logger.info("Assertions disabled.")
 
-
     # Actual environment to pass to the executable
     #
     # It is enriched by setting JAVA_OPTS for scala
     d = dict(os.environ)
 
-    # Add java options (in the command line for java executables and
-    # in JAVA_OPTS env. variable for scala)
-    if args.language=='s' or args.language=='scala':
-        s=" ".join(map(str, javaOptions))
+    # Add java options
+    for opt in javaOptions:
         if verbose:
-            logger.info("Options to pass to the java executable %s",s)
-            d['JAVA_OPTS']=s
-    else:
-        for opt in javaOptions:
-            if verbose:
-                logger.info("Adding %s java option",opt)
-            cmd.append(opt)
-
-    # Is the environment ok?
-    # Fail fast!
-    if not CommonDefs.checkEnvironment():
-        logger.info("Some setting missing in IAS environment.")
-        logger.info("Set the environment with ias-bash_profile before running IAS applications")
-        sys.exit(-1)
+            logger.info("Adding %s java option",opt)
+        cmd.append(opt)
 
     # Create tmp and logs folders if not exists already
     FileSupport.createLogsFolder()
@@ -264,12 +241,12 @@ if __name__ == '__main__':
     # Add the properties
     #
     # Default and user defined properties are in a dictionary:
-    # this way it is easy for the user to overrride default properties.
-    props={}
-    setProps(props, args.className,args.logfileId)
+    # this way it is easy for the user to override default properties.
+    props = {}
+    setProps(props, args.className, args.logfileId)
     if args.jProp is not None:
-        addUserProps(props,args.jProp)
-    if len(props)>0:
+        addUserProps(props, args.jProp)
+    if len(props) > 0:
         stingOfPros = formatProps(props)
         # Sort to enhance readability
         stingOfPros.sort()
@@ -277,16 +254,13 @@ if __name__ == '__main__':
         if verbose:
             logger.info("java properties:")
             for p in stingOfPros:
-                logger.info("\t %s",p[2:])
+                logger.info("\t %s", p[2:])
     else:
         if (verbose):
             logger.info("No java properties defined")
 
-
-    #add the classpath
-    theClasspath=CommonDefs.buildClasspath()
-    if (args.language=='j' or args.language=='java'):
-        theClasspath=CommonDefs.addScalaJarsToClassPath(theClasspath)
+    # Add the classpath
+    theClasspath = CommonDefs.buildClasspath()
     cmd.append("-cp")
     cmd.append(theClasspath)
     if verbose:
@@ -304,7 +278,6 @@ if __name__ == '__main__':
         cmd.extend(args.params)
 
     if verbose:
-
         if len(args.params)>0:
             logger.info("with params:")
             for arg in args.params:
@@ -319,7 +292,7 @@ if __name__ == '__main__':
             delimiter = delimiter + arrowDown
 
         logger.info("Will run %s", cmd)
-        logger.info("\n %s %s output %s",delimiter,args.className,delimiter)
+        logger.info("\n %s %s output %s",delimiter, args.className, delimiter)
 
     call(cmd)
 
@@ -328,4 +301,4 @@ if __name__ == '__main__':
         delimiter = ""
         for t in range(17):
             delimiter = delimiter + arrowUp
-        logger.info("%s %s done %s",delimiter,args.className,delimiter)
+        logger.info("%s %s done %s", delimiter, args.className, delimiter)
