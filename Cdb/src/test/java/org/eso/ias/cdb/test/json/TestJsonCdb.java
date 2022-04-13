@@ -122,7 +122,7 @@ public class TestJsonCdb {
 	 */
 	@Test
 	public void testGetIasFromFile() throws Exception {
-		Path path = FileSystems.getDefault().getPath("./testCdb");
+		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
 		cdbFiles = new CdbJsonFiles(path);
 		cdbReader = new JsonReader(cdbFiles);
 		cdbReader.init();
@@ -534,7 +534,7 @@ public class TestJsonCdb {
 	 */
 	@Test
 	public void testGetDasusOfSupervisor() throws Exception {
-		Path path = FileSystems.getDefault().getPath("./testCdb");
+		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
 		cdbFiles = new CdbJsonFiles(path);
 		cdbReader = new JsonReader(cdbFiles);
 		cdbReader.init();
@@ -564,7 +564,7 @@ public class TestJsonCdb {
 	 */
 	@Test
 	public void testGetAscesOfDasu() throws Exception {
-		Path path = FileSystems.getDefault().getPath("./testCdb");
+		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
 		cdbFiles = new CdbJsonFiles(path);
 		cdbReader = new JsonReader(cdbFiles);
 		cdbReader.init();
@@ -612,7 +612,7 @@ public class TestJsonCdb {
 	 */
 	@Test
 	public void testGetIasiosOfAsce() throws Exception {
-		Path path = FileSystems.getDefault().getPath("./testCdb");
+		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
 		cdbFiles = new CdbJsonFiles(path);
 		cdbReader = new JsonReader(cdbFiles);
 		cdbReader.init();
@@ -639,7 +639,7 @@ public class TestJsonCdb {
 	 */
 	@Test
 	public void testGetSupervWithTemplatedDASUs() throws Exception {
-		Path path = FileSystems.getDefault().getPath("./testCdb");
+		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
 		cdbFiles = new CdbJsonFiles(path);
 		cdbReader = new JsonReader(cdbFiles);
 		cdbReader.init();
@@ -691,7 +691,7 @@ public class TestJsonCdb {
 	@Test
 	public void testGetTemplates() throws Exception {
 		// Get templates from the CDB in testCdb
-		Path cdbPath =  FileSystems.getDefault().getPath("testCdb");
+		Path cdbPath =  FileSystems.getDefault().getPath("src/test/testCdb");
 		CdbFiles cdbFiles = new CdbJsonFiles(cdbPath);
 		CdbReader jcdbReader = new JsonReader(cdbFiles);
 		jcdbReader.init();
@@ -734,7 +734,7 @@ public class TestJsonCdb {
      */
     @Test
     public void testGetIdsOfSupervisor() throws Exception {
-        Path path = FileSystems.getDefault().getPath("./testCdb");
+        Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
         cdbFiles = new CdbJsonFiles(path);
         cdbReader = new JsonReader(cdbFiles);
         cdbReader.init();
@@ -753,7 +753,7 @@ public class TestJsonCdb {
      */
     @Test
     public void testGetIdsOfDasus() throws Exception {
-        Path path = FileSystems.getDefault().getPath("./testCdb");
+        Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
         cdbFiles = new CdbJsonFiles(path);
         cdbReader = new JsonReader(cdbFiles);
         cdbReader.init();
@@ -771,7 +771,7 @@ public class TestJsonCdb {
      */
     @Test
     public void testGetIdsOfAsces() throws Exception {
-        Path path = FileSystems.getDefault().getPath("./testCdb");
+        Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
         cdbFiles = new CdbJsonFiles(path);
         cdbReader = new JsonReader(cdbFiles);
         cdbReader.init();
@@ -795,7 +795,7 @@ public class TestJsonCdb {
      */
     @Test
     public void testTemplatedInputsOfAsce() throws Exception {
-        Path path = FileSystems.getDefault().getPath("./testCdb");
+        Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
         cdbFiles = new CdbJsonFiles(path);
         cdbReader = new JsonReader(cdbFiles);
         cdbReader.init();
@@ -826,7 +826,7 @@ public class TestJsonCdb {
      */
 	@Test
 	public void testGetAsceWithTemplatedInputs() throws Exception {
-		Path path = FileSystems.getDefault().getPath("./testCdb");
+		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
 		cdbFiles = new CdbJsonFiles(path);
 		cdbReader = new JsonReader(cdbFiles);
 		cdbReader.init();
@@ -848,7 +848,7 @@ public class TestJsonCdb {
      */
 	@Test
 	public void testGetIasio() throws Exception {
-		Path path = FileSystems.getDefault().getPath("./testCdb");
+		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
 		cdbFiles = new CdbJsonFiles(path);
 		cdbReader = new JsonReader(cdbFiles);
 		cdbReader.init();
@@ -865,7 +865,7 @@ public class TestJsonCdb {
 	 */
 	@Test
 	public void testGetPlugin() throws Exception {
-		Path path = FileSystems.getDefault().getPath("./testCdb");
+		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
 		cdbFiles = new CdbJsonFiles(path);
 		cdbReader = new JsonReader(cdbFiles);
 		cdbReader.init();
@@ -989,7 +989,7 @@ public class TestJsonCdb {
 	 */
 	@Test
 	public void testGetPluginIds() throws Exception {
-		Path path = FileSystems.getDefault().getPath("./testCdb");
+		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
 		cdbFiles = new CdbJsonFiles(path);
 		cdbReader = new JsonReader(cdbFiles);
 		cdbReader.init();
@@ -1007,7 +1007,7 @@ public class TestJsonCdb {
 	 */
 	@Test
 	public void testGetClientIds() throws Exception {
-		Path path = FileSystems.getDefault().getPath("./testCdb");
+		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
 		cdbFiles = new CdbJsonFiles(path);
 		cdbReader = new JsonReader(cdbFiles);
 		cdbReader.init();
