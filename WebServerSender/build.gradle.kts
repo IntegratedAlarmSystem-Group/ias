@@ -19,6 +19,7 @@ dependencies {
     }
     implementation("org.eclipse.jetty.websocket:websocket-api:9.4.15.v20190215")
     implementation("org.eclipse.jetty.websocket:websocket-client:9.4.15.v20190215")
+    implementation("org.eclipse.jetty.websocket:websocket-server:9.4.15.v20190215")
 
     implementation(project(":Cdb"))
     implementation(project(":Tools"))
