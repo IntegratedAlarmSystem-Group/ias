@@ -7,7 +7,6 @@ import org.eso.ias.cdb.rdb.RdbReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Constructor;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -106,18 +105,14 @@ public class CdbReaderFactory {
         } catch (Exception e) {
             throw new IasCdbException("Error loading the external class "+cls,e);
         }
-        Constructor constructor = null;
+
+        Object obj;
         try {
-            constructor=theClass.getConstructor((Class<?>)null);
-        } catch (Exception e) {
-            throw new IasCdbException("Error getting the default (empty) constructor of the external class "+cls,e);
-        }
-        Object obj=null;
-        try {
-            obj=constructor.newInstance((Object[])null);
+            obj=theClass.getDeclaredConstructor().newInstance();
         } catch (Exception e) {
             throw new IasCdbException("Error building an object of the external class "+cls,e);
         }
+
         return (CdbReader)obj;
     }
 
