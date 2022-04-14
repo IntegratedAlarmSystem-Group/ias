@@ -182,13 +182,11 @@ open class IasBuild : Plugin<Project> {
         project.tasks.getByPath(":${project.name}:build").finalizedBy(pyTestScripts)
         project.tasks.getByPath(":${project.name}:build").finalizedBy(pyTestModules)
 
-//        project.tasks.getByPath(":${project.name}:distTar").dependsOn(buildTestJar)
-//        project.tasks.getByPath(":${project.name}:distZip").dependsOn(buildTestJar)
-
         val runIasTestsTask = project.tasks.register<Exec>("iasTest") {
             dependsOn(":build", pyTestScripts)
             commandLine("src/test/runTests.sh")
         }
+
         project.tasks.withType<JavaCompile>().configureEach {
             options.isDeprecation = true
 
