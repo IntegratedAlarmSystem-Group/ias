@@ -5,7 +5,7 @@ Created on Sep 22, 2016
 '''
 
 import logging
-from os import environ, walk, path
+from os import environ, walk, path, listdir
 
 from . import FileSupport
 
@@ -92,6 +92,14 @@ class CommonDefs(object):
         testFolders = FileSupport.FileSupport.getClassFolders()
         for folder in testFolders:
             classpath = classpath+cls.__classPathSeparator+folder
+
+        # Adds the test resources folder to the classpath, if exists and not empty
+        resFolder = "src/test/resources"
+        if path.isdir(resFolder) and not listdir(resFolder):
+            print("Directory is empty")
+        else:
+            classpath = classpath+cls.__classPathSeparator+resFolder
+            print("Directory is not empty")
 
         return classpath
                             
