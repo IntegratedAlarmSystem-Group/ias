@@ -95,9 +95,7 @@ class CommonDefs(object):
 
         # Adds the test resources folder to the classpath, if exists and not empty
         resFolder = "src/test/resources"
-        if path.isdir(resFolder) and not listdir(resFolder):
-            print("Directory is empty")
-        else:
+        if path.isdir(resFolder) and listdir(resFolder):
             classpath = classpath+cls.__classPathSeparator+resFolder
             print("Directory is not empty")
 
