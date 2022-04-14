@@ -30,4 +30,17 @@ sourceSets {
             setSrcDirs(listOf("src/main/resources"))
         }
     }
+    test {
+        resources {
+            setSrcDirs(listOf("src/test/resources"))
+        }
+    }
+}
+
+distributions {
+    main {
+        contents {
+            from("src/main/resources")
+        }
+    }
 }

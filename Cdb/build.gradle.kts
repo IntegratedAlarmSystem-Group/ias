@@ -28,3 +28,11 @@ sourceSets {
         }
     }
 }
+
+distributions {
+    main {
+        contents {
+            from("src/main/resources")
+        }
+    }
+}
