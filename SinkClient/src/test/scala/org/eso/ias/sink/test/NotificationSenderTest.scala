@@ -112,6 +112,7 @@ class NotificationSenderTest extends AnyFlatSpec {
     val notificationsSender: NotificationsSender = new NotificationsSender(notificationSenderId,sender)
 
     val valueListener: ValueListener = notificationsSender
+
   }
 
   /**
@@ -304,7 +305,14 @@ class NotificationSenderTest extends AnyFlatSpec {
     valueListener.tearDown()
   }
 
-  it must "periodically send digests" in new Fixture {
+  it must "periodically send digests" in {
+
+    // We cannot use the Fixture in the name of the test message as in the other cases
+    // // because it is built before entering the body of the test so it is not possible to customize
+    // the time interval to send digests neither the starting time of the sender
+    //
+    // To avoid this problem, this test builds the fixture in the body of the test, after
+    // setting the properties
 
     val localNow: ZonedDateTime  = ZonedDateTime.now().withZoneSameInstant(ZoneOffset.UTC)
     val nextZone: ZonedDateTime = localNow.plus(Duration.ZERO.plusMinutes(2))
@@ -314,19 +322,31 @@ class NotificationSenderTest extends AnyFlatSpec {
     System.getProperties.put(NotificationsSender.StartTimeOfPeriodicNotificationsPropName,s"$hour:$minute")
     System.getProperties.put(NotificationsSender.SendEmailsTimeIntervalPropName,"1")
 
-    valueListener.setUp(iasDao,iasioDaosMap)
+    logger.info("Properties set by the test: {}={}, {}={}",
+      NotificationsSender.StartTimeOfPeriodicNotificationsPropName,
+      System.getProperties.get(NotificationsSender.StartTimeOfPeriodicNotificationsPropName),
+      NotificationsSender.SendEmailsTimeIntervalPropName,
+      System.getProperties.get(NotificationsSender.SendEmailsTimeIntervalPropName))
+
+    // Build the fixture after setting the properties
+    class TestFixture extends Fixture
+    val f = new TestFixture
+
+    assert(f.notificationsSender.timeIntervalToSendEmails==1,"Time mismatch")
+
+    f.valueListener.setUp(f.iasDao, f.iasioDaosMap)
 
     logger.info("Waiting for reception of 2 digests")
-    val ret = sender.countDownLatch.await(4,TimeUnit.MINUTES)
-    valueListener.tearDown()
+    val ret = f.sender.countDownLatch.await(4,TimeUnit.MINUTES)
+    f.valueListener.tearDown()
 
-    logger.debug("Digest sents to recipeients: {}", sender.digests.map(d => d.recipient).mkString(","))
+    logger.debug("Digest sents to recipeients: {}", f.sender.digests.map(d => d.recipient).mkString(","))
 
-    sender.digests.foreach(d => {
+    f.sender.digests.foreach(d => {
       logger.debug("Digest sent to {}, for alarms {}",d.recipient,d.alarmStates.map(_.id).mkString(","))
     })
 
-    assert(sender.digests.length>=2,s"Not all expected events has been received: ${sender.digests.length} out of 2")
+    assert(f.sender.digests.length>=2,s"Not all expected events has been received: ${f.sender.digests.length} out of 2")
 
   }
 }
