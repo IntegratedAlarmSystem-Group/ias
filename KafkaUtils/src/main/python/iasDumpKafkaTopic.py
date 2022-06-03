@@ -37,17 +37,9 @@ if __name__ == '__main__':
     parser.add_argument(
         '-b',
         '--broker',
-        help='The kafka broker to connect to (default localhost)',
+        help='The kafka broker to connect to (default localhost:9092)',
         action='store',
-        default="localhost",
-        required=False)
-    parser.add_argument(
-        '-p',
-        '--port',
-        help='The port of the kafka broker to connect to (default 9092)',
-        action='store',
-        default=9092,
-        type=int,
+        default="localhost:9092",
         required=False)
     parser.add_argument(
         '-a',
@@ -80,7 +72,7 @@ if __name__ == '__main__':
         sys.exit(-1)
 
     cmd = [ os.environ["KAFKA_HOME"]+kafkaCommand ,"--bootstrap-server" ]
-    cmd.append(args.broker+":"+str(+args.port))
+    cmd.append(args.broker)
     cmd.append("--topic")
     cmd.append(IaskafkaHelper.IasKafkaHelper.topics[args.topic])
 
