@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import org.eso.ias.heartbeat.{HbMsgSerializer, Heartbeat, HeartbeatStatus}
 import org.eso.ias.utils.ISO8601Helper
 
+import java.util
 import scala.collection.JavaConverters
+import scala.jdk.javaapi.CollectionConverters
 
 /**
  * Serialize/deserialize HB messages into JSON strings
@@ -32,7 +34,7 @@ class HbJsonSerializer extends HbMsgSerializer {
     require(Option(status).isDefined)
     require(Option(additionalProeprties).isDefined)
     
-    val javaProps = JavaConverters.mapAsJavaMap(additionalProeprties)
+    val javaProps: util.Map[String, String] = CollectionConverters.asJava(additionalProeprties)
     val pojo: HeartbeatMessagePojo = new HeartbeatMessagePojo(hb.stringRepr,status,javaProps,timestamp)
     
     
@@ -50,10 +52,10 @@ class HbJsonSerializer extends HbMsgSerializer {
     Tuple4[Heartbeat,HeartbeatStatus, Map[String,String], Long] = {
     val pojo: HeartbeatMessagePojo = mapper.readValue(hbStrMessage, classOf[HeartbeatMessagePojo])
     
-    val props: Map[String, String] = Option(pojo.getProps) match {
+    val props:  Map[String,String] = Option(pojo.getProps) match {
       case None => Map.empty
       case Some(p) => 
-        if (p.isEmpty()) Map.empty else JavaConverters.mapAsScalaMap(p).toMap
+        if (p.isEmpty()) Map.empty else CollectionConverters.asScala(p).toMap
     }
     
     val timeStamp = ISO8601Helper.timestampToMillis(pojo.getTimestamp)

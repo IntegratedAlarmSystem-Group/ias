@@ -98,7 +98,6 @@ class MonitorAlarmsProducer(val publisher: MonitorAlarmPublisher, val refreshRat
     * @return the IASValue to send to the BSDB
     */
   def buildIasValue(id: String, value: Alarm, prop: String): IASValue[_] = {
-
     val identifier = new Identifier(id,IdentifierType.IASIO,Some(monitorIdentifier))
 
     val now = System.currentTimeMillis()
@@ -106,11 +105,11 @@ class MonitorAlarmsProducer(val publisher: MonitorAlarmPublisher, val refreshRat
     val props =
       if (Option(prop).isEmpty || prop.isEmpty)
         emptyProps
-    else {
-      val p = new util.HashMap[String,String]()
-        p.put(MonitorAlarmsProducer.faultyIdsPropName,prop)
-        p
-    }
+      else {
+        val p = new util.HashMap[String,String]()
+          p.put(MonitorAlarmsProducer.faultyIdsPropName,prop)
+          p
+      }
 
     IASValue.build(
       value,

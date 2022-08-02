@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 '''
 Build API documentation for java, scal and python
 Created on Jul 7, 2017

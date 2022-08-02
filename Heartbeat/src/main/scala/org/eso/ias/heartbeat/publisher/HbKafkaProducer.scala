@@ -24,15 +24,15 @@ class HbKafkaProducer(
   val closed = new AtomicBoolean(false)
 
   /** Initialize: nothing to do in this implementation */
-  override def init() { initialized.set(true) }
+  override def init(): Unit = { initialized.set(true) }
 
   /** Shutdown: nothing to do in this implementation */
-  override def shutdown() { closed.set(true) }
+  override def shutdown(): Unit = { closed.set(true) }
 
   /**
    * Push the string
    */
-  override def push(hbAsString: String) {
+  override def push(hbAsString: String): Unit = {
     if (!closed.get) {
       kafkaProducer.push(hbAsString,KafkaHelper.HEARTBEAT_TOPIC_NAME,null,id)
     }

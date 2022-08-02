@@ -1,14 +1,13 @@
 package org.eso.ias.asce.test
 
-import java.util.Properties
-
 import org.eso.ias.asce.transfer.{JavaTransfer, TransferFunctionLanguage, TransferFunctionSetting}
 import org.eso.ias.asce.{AsceStates, CompEleThreadFactory, ComputingElement}
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types._
-import org.scalatest.FlatSpec
+import org.eso.ias.types.*
+import org.scalatest.flatspec.AnyFlatSpec
 
-import scala.collection.mutable.{Map => MutableMap}
+import java.util.Properties
+import scala.collection.mutable.Map as MutableMap
 import scala.util.Try
 
 /**
@@ -21,7 +20,7 @@ import scala.util.Try
  *
  * The test is repeated for each possible IASIO type
  */
-class TestPyTF extends FlatSpec {
+class TestPyTF extends AnyFlatSpec {
 
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
@@ -423,7 +422,7 @@ class TestPyTF extends FlatSpec {
   }
 
   it must "support input of type STRING" in {
-   logger.info("Testing support of input type STRING")
+    logger.info("Testing support of input type STRING")
     val inputsMPs: Map[String, InOut[_]] = Map(mpIdString.id -> mpString.updateValue(Some("Test")))
 
     val javaComp: ComputingElement[java.lang.String] = new ComputingElement[java.lang.String](

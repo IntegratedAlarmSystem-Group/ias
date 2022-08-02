@@ -3,7 +3,6 @@ package org.eso.ias.dasu
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong, AtomicReference}
 import java.util.concurrent.{ScheduledFuture, TimeUnit}
 import java.util.{HashMap, Properties}
-
 import org.eso.ias.asce.{AsceStates, ComputingElement}
 import org.eso.ias.cdb.pojos.{AsceDao, DasuDao}
 import org.eso.ias.cdb.topology.DasuTopology
@@ -13,7 +12,7 @@ import org.eso.ias.dasu.subscriber.InputSubscriber
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types._
 
-import scala.collection.JavaConverters
+import scala.jdk.javaapi.CollectionConverters
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -52,7 +51,7 @@ class DasuImpl (
   /**
    * The configuration of the ASCEs that run in the DASU
    */
-  val asceDaos: List[AsceDao] = JavaConverters.asScalaSet(dasuDao.getAsces).toList
+  val asceDaos: List[AsceDao] = CollectionConverters.asScala(dasuDao.getAsces).toList
   
   // Are there ASCEs assigned to this DASU?
   require(dasuDao.getAsces.size()>0,"No ASCE found for DASU "+id)
@@ -363,7 +362,7 @@ class DasuImpl (
    * 
    * @param actualValidity the validity
    */
-  private def publishOutput(actualValidity: Validity) {
+  private def publishOutput(actualValidity: Validity): Unit = {
     
     val currentOutput = asceThatProducesTheOutput.output
     
@@ -423,7 +422,7 @@ class DasuImpl (
     val startTime = System.currentTimeMillis()
     // Converts the inputs from the synchronized java map into a immutable scala Set
     val inputsFromMap: Set[IASValue[_]] = notYetProcessedInputs.synchronized {
-      val temp = JavaConverters.collectionAsScalaIterable(notYetProcessedInputs.values).toSet
+      val temp = CollectionConverters.asScala(notYetProcessedInputs.values).toSet
       notYetProcessedInputs.clear()
       temp
     }
@@ -531,7 +530,7 @@ class DasuImpl (
   /**
    * Release all the resources before exiting
    */
-  def cleanUp() {
+  def cleanUp(): Unit = {
     val alreadyClosed = closed.getAndSet(true)
     if (alreadyClosed) {
       DasuImpl.logger.warn("DASU [{}]: already cleaned up!", id)

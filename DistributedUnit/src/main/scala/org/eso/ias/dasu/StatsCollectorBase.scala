@@ -23,7 +23,7 @@ abstract class StatsCollectorBase(id: String, timeInterval: Long) {
   /**
     * The method to log statistics, called at regular time intervals
     */
-  def logStats()
+  def logStats(): Unit
 
   /** Start logging statistics */
   def start() = synchronized {

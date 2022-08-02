@@ -9,6 +9,7 @@ import scala.Some;
 import scala.Tuple2;
 import scala.collection.JavaConverters;
 import scala.collection.Seq;
+import scala.jdk.javaapi.CollectionConverters;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -109,9 +110,9 @@ public class IasIOJ<T> {
 				.map(e -> Tuple2.apply(e.getKey(), e.getValue()))
 				.collect(Collectors.toList());
 
-		Seq<Tuple2<String, String>> scalaSeq = JavaConverters.asScalaBuffer(tuples).toSeq();
+		Seq<Tuple2<String, String>> scalaSeq = CollectionConverters.asScala(tuples);
 
-		return new IasIOJ<T>(inOut.updateProps((scala.collection.immutable.Map<String, String>) scala.collection.immutable.Map$.MODULE$.apply(scalaSeq)));
+		return new IasIOJ<T>(inOut.updateProps((scala.collection.immutable.Map<String, String>) scala.collection.immutable.Map$.MODULE$.apply(scalaSeq.toSeq())));
     }
     
     /**

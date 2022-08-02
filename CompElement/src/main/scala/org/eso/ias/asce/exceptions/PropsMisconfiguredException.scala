@@ -1,7 +1,7 @@
 package org.eso.ias.asce.exceptions
 
-import scala.collection.JavaConverters.mapAsScalaMapConverter
 import java.util.Properties
+import scala.jdk.javaapi.CollectionConverters
 
 /**
  * Exception thrown when the properties expected by the 
@@ -33,7 +33,7 @@ extends Exception("Misconfigured properties: "+props.mkString(", "),cause) {
    * 
    * @param props: the misconfigured properties
    */
-  def this(props: Properties) = this(mapAsScalaMapConverter(props).asInstanceOf[Map[String,String]]) 
+  def this(props: Properties) = this(CollectionConverters.asScala(props).asInstanceOf[Map[String,String]])
   
   /**
    * Overloaded constructor
@@ -41,5 +41,5 @@ extends Exception("Misconfigured properties: "+props.mkString(", "),cause) {
    * @param props: the misconfigured java properties
    * @param cause: the cause
    */
-  def this(props: Properties, cause: Throwable) = this(mapAsScalaMapConverter(props).asInstanceOf[Map[String,String]],cause) 
+  def this(props: Properties, cause: Throwable) = this(CollectionConverters.asScala(props).asInstanceOf[Map[String,String]],cause)
 }

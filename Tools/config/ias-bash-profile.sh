@@ -54,9 +54,13 @@ if [ -z "$IAS_CONFIG_FOLDER" ]; then
     export IAS_CONFIG_FOLDER=$IAS_ROOT/config
 fi
 
-export PYTHONPATH="../../lib/python:$IAS_ROOT/lib/python:$PYTHONPATH"
+# Get python version from the output of 'python3 -V'
+PYTHON_VERSION=$(python3 -V|cut -d ' ' -f2|cut -d '.' -f1-2)
+PY_TEMP=lib/python$PYTHON_VERSION/site-packages
+export PYTHONPATH="build/$PY_TEMP:$IAS_ROOT/$PY_TEMP:$PYTHONPATH"
+unset PY_TEMP
 
-PATH="../../bin:$IAS_ROOT/bin:$JAVA_HOME/bin:$JRE_HOME/bin:$SCALA_HOME/bin:$PATH"
+PATH="build/bin:$IAS_ROOT/bin:$JAVA_HOME/bin:$JRE_HOME/bin:$SCALA_HOME/bin:$PATH"
 export PATH
 
 if [ "$ERRORS_FOUND" -eq "0" ]; then 

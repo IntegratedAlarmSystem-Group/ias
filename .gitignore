@@ -1,15 +1,13 @@
 .metadata
 
 **/.settings
-**/.gitignore
 **/*.RELEASE
-**/lib/
-**/classes/
-**/bin/
+**/build/
+**/c4che
 .cache-*
-pom.xml
 ias.iml
 .idea/
+.gradle
 
 ## Project specific files:
 IntegratedAlarmSystemRoot

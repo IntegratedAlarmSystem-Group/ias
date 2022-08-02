@@ -1,14 +1,13 @@
 package org.eso.ias.monitor
 
-import java.util.concurrent.{Executors, ScheduledExecutorService, ThreadFactory, TimeUnit}
-
 import com.typesafe.scalalogging.Logger
-import org.eso.ias.heartbeat.HeartbeatProducerType._
+import org.eso.ias.heartbeat.HeartbeatProducerType.*
 import org.eso.ias.heartbeat.consumer.{HbKafkaConsumer, HbListener, HbMsg}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.Alarm
 
-import scala.collection.mutable.{Map => MutableMap}
+import java.util.concurrent.{Executors, ScheduledExecutorService, ThreadFactory, TimeUnit}
+import scala.collection.mutable.Map as MutableMap
 
 /**
   * Monitors the HBs of
@@ -155,7 +154,6 @@ class HbMonitor(
       case CONVERTER => convertersHbMsgs.put(hbMsg.hb.name,true)
       case CLIENT => clientsHbMsgs.put(hbMsg.hb.name,true)
       case CORETOOL => coreToolsHbMsgs.put(hbMsg.hb.name,true)
-      case idType => HbMonitor.logger.warn("Unknown HB type to monitor: {} from fullRunningId {}",idType,hbMsg.hb)
     }
   }
 
@@ -165,7 +163,7 @@ class HbMonitor(
 
     // Return the IDs of the alarms in the map that have not been updated
     // These IDs are set as properties in the alarms
-    def faultyIds(m: MutableMap[String, Boolean]): List[String] = m.filterKeys(k => !m(k)).keys.toList
+    def faultyIds(m: MutableMap[String, Boolean]): List[String] = m.view.filterKeys(k => !m(k)).keys.toList
 
     // Update the passed alarm
     def updateAlarm(alarm: MonitorAlarm, faultyIds: List[String], priority: Alarm=Alarm.getSetDefault): Unit = {

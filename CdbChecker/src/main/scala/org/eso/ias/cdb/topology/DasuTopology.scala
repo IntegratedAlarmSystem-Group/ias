@@ -34,9 +34,9 @@ class DasuTopology(
                     asces: List[AsceTopology],
                     override val id: String,
                     override val outputId: String) extends OutputProducer {
-  require(Option(asces).isDefined && asces.nonEmpty,"Invalid null or empty list of ASCEs of DASU "+id)
+  require(Option(asces).isDefined && asces.nonEmpty,s"Invalid null or empty list of ASCEs of DASU ${id}")
   require(Option(id).isDefined && !id.isEmpty)
-  require(Option(outputId).isDefined && outputId.nonEmpty,"Invalid empty outputId of DASU "+id)
+  require(Option(outputId).isDefined && outputId.nonEmpty,s"Invalid empty outputId of DASU $id")
 
   /** The output produced by all ASCEs
    *
@@ -186,7 +186,7 @@ class DasuTopology(
   def this(
       dId: String,
       outId: String,
-      asceDaos: List[AsceDao]) {
+      asceDaos: List[AsceDao]) = {
     this(asceDaos.map(new AsceTopology(_)),dId,outId)
   }
 
@@ -257,15 +257,15 @@ class DasuTopology(
    *  In the cloned tree lastNode is not included but replaced by the replace
    *  node.
    *
-   *  For example, having a tree like A->B-C->D and calling this method with
+   *  For example, having a tree like A->B->C->D and calling this method with
    *  rootNode = A
    *  lastNode=C
    *  replace=X
-   *  returns A->->X
+   *  returns A->B->X
    *
    *  @param rootNode the root of the linearized tree to clone
    *  @param lastNode the last node (exclusive) to copy in the cloned tree
-   *  @param replace the node to replce lastNode in the cloned tree
+   *  @param replace the node to replace lastNode in the cloned tree
    *  @return a cloned tree of rootNode where lastNode is replaced
    *          by the replace node
    */
@@ -294,7 +294,7 @@ class DasuTopology(
    */
   def linearizeTree(root: Node, node: Node, trees: List[Node]): List[Node] = {
     (node.neighbors,node.nodeType) match {
-      case (Nil,_)    => List(root):::trees
+      case (Nil,_)    => List(root):::trees // New List with root in the header
       case (s::Nil,_) => linearizeTree(root,s,trees)
       case (s::rest,NodeType.IASIO) =>
         // New root
@@ -313,7 +313,7 @@ class DasuTopology(
         val newRestTree = cloneReplaceTree(root,newNodeRest,newNodeRest)
         val linearizedRest = linearizeTree(newRestTree,newRestTree,trees)
         linearizedNewNode:::linearizedRest:::trees
-      case (List(_,_),_) => Nil
+      //case (List(_,_),_) => Nil
     }
   }
 

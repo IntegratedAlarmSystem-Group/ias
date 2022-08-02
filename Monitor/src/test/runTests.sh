@@ -1,6 +1,6 @@
 #!/usr/bin/bash
-iasRun -l s org.scalatest.run org.eso.ias.monitor.test.ConfigTest
-iasRun -l s org.scalatest.run org.eso.ias.monitor.test.MonitorAlarmTest
-iasRun -l s org.scalatest.run org.eso.ias.monitor.test.HbAlarmGenerationTest
-iasRun -l s org.scalatest.run org.eso.ias.monitor.test.HbAlarmPublisherTest
+iasRun org.scalatest.run org.eso.ias.monitor.test.ConfigTest
+iasRun org.scalatest.run org.eso.ias.monitor.test.MonitorAlarmTest
+iasRun org.scalatest.run org.eso.ias.monitor.test.HbAlarmGenerationTest
+iasRun org.scalatest.run org.eso.ias.monitor.test.HbAlarmPublisherTest
 

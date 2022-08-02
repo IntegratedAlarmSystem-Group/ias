@@ -10,7 +10,8 @@ import org.eso.ias.kafkautils.{KafkaHelper, SimpleStringProducer}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.monitor.{HbMonitor, MonitorAlarm}
 import org.eso.ias.types.Alarm
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec}
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
   * Test the generation of alarms for missing HBs
@@ -20,7 +21,7 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec}
   * - produces the HBs
   * - check the generation of alarms
   */
-class HbAlarmGenerationTest extends FlatSpec with BeforeAndAfterAll with BeforeAndAfterEach {
+class HbAlarmGenerationTest extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach {
 
   /** The logger */
   val logger = IASLogger.getLogger(classOf[HbAlarmGenerationTest])

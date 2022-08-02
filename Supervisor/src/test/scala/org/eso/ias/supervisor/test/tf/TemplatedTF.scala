@@ -41,7 +41,7 @@ extends ScalaTransferExecutor[Long](cEleId,cEleRunningId,validityTimeFrame,props
     println("Initialized "+getTemplateInstance().orElse(null));
   }
   
-  override def shutdown() {
+  override def shutdown(): Unit = {
     println("Initialized")
   }
   

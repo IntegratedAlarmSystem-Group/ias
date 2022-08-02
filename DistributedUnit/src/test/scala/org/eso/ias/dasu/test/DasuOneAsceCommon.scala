@@ -1,16 +1,16 @@
 package org.eso.ias.dasu.test
 
-import java.nio.file.FileSystems
-
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.DasuDao
 import org.eso.ias.dasu.DasuImpl
-import org.eso.ias.dasu.publisher.{DirectInputSubscriber, ListenerOutputPublisherImpl, OutputListener, OutputPublisher}
+import org.eso.ias.dasu.publisher.{ListenerOutputPublisherImpl, OutputListener, OutputPublisher}
+import org.eso.ias.dasu.subscriber.DirectInputSubscriber
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types.IasValidity._
-import org.eso.ias.types._
+import org.eso.ias.types.*
+import org.eso.ias.types.IasValidity.*
 
+import java.nio.file.FileSystems
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -24,7 +24,7 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, validityThreshold: Int
   private val logger = IASLogger.getLogger(this.getClass);
   
   // Build the CDB reader
-  val cdbParentPath =  FileSystems.getDefault().getPath(".");
+  val cdbParentPath =  FileSystems.getDefault().getPath("src/test");
   val cdbFiles = new CdbJsonFiles(cdbParentPath)
   val cdbReader: CdbReader = new JsonReader(cdbFiles)
   
@@ -55,7 +55,7 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, validityThreshold: Int
   val inputID = new Identifier("Temperature", IdentifierType.IASIO,converterId)
   
   /** Notifies about a new output produced by the DASU */
-  override def outputEvent(output: IASValue[_]) {
+  override def outputEvent(output: IASValue[_]): Unit = {
     logger.info("Output received [{}]", output.id)
     outputValuesReceived.append(output)
   }
@@ -79,6 +79,7 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, validityThreshold: Int
   }
   
   val dasuDao: DasuDao = {
+    cdbReader.init()
     val dasuDaoOpt = cdbReader.getDasu(dasuId)
     assert(dasuDaoOpt.isPresent())
     dasuDaoOpt.get()
@@ -95,19 +96,19 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, validityThreshold: Int
     
     IASValue.build(
       d,
-			OperationalMode.OPERATIONAL,
-			UNRELIABLE,
-			inputID.fullRunningID,
-			IASTypes.DOUBLE,
+      OperationalMode.OPERATIONAL,
+      UNRELIABLE,
+      inputID.fullRunningID,
+      IASTypes.DOUBLE,
       t0,
-			t0+1,
-			t0+5,
-			t0+10,
-			t0+15,
-			null,
-			null,
-			null,
-			null)
+      t0+1,
+      t0+5,
+      t0+10,
+      t0+15,
+      null,
+      null,
+      null,
+      null)
   }
     
 }

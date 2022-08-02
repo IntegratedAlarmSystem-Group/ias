@@ -1,6 +1,6 @@
 package org.eso.ias.transfer.test
 
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import org.eso.ias.tranfer.DelayedAlarm
 import org.eso.ias.types.Identifier
 import org.eso.ias.types.IdentifierType
@@ -18,7 +18,7 @@ import org.eso.ias.asce.transfer.{IasIO, IasioInfo}
 /**
  * test the DelayedAlarm TF
  */
-class DelayedAlarmTest extends FlatSpec {
+class DelayedAlarmTest extends AnyFlatSpec {
   
   /**
    * The logger

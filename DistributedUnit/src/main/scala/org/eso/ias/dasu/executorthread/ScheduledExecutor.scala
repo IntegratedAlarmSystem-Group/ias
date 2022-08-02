@@ -18,7 +18,7 @@ extends ScheduledThreadPoolExecutor(coreSize, new DasuThreadFactory(dasuId)) {
   /**
    * Build a scheduled executor taking the core size from java properties or using the default
    */
-  def this(dasuId: String) {
+  def this(dasuId: String) = {
     this(dasuId,ScheduledExecutor.getCoreSize())
   }
 }

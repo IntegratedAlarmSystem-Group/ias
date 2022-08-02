@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 '''
 Dump the strings published in the kafka topics
 by delegating to kafka native commands.
@@ -10,6 +10,8 @@ import argparse
 import os
 import sys
 from subprocess import call
+
+from IasKafkaUtils import IaskafkaHelper
 
 
 def check_kafka(kafkaCommand):
@@ -35,17 +37,9 @@ if __name__ == '__main__':
     parser.add_argument(
         '-b',
         '--broker',
-        help='The kafka broker to connect to (default localhost)',
+        help='The kafka broker to connect to (default localhost:9092)',
         action='store',
-        default="localhost",
-        required=False)
-    parser.add_argument(
-        '-p',
-        '--port',
-        help='The port of the kafka broker to connect to (default 9092)',
-        action='store',
-        default=9092,
-        type=int,
+        default="localhost:9092",
         required=False)
     parser.add_argument(
         '-a',
@@ -73,20 +67,14 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     kafkaCommand = "/bin/kafka-console-consumer.sh"
-    if not check_kafka(kafkaCommand):
+    if not IaskafkaHelper.IasKafkaHelper.check_kafka_cmd(kafkaCommand):
+        print (f"ERROR: kafka command {kafkaCommand} NOT found")
         sys.exit(-1)
 
-    topics = {
-        'core':"BsdbCoreKTopic",
-        'hb':"HeartbeatTopic",
-        'plugin':"PluginsKTopic",
-        'cmd':"CmdTopic",
-        'reply':"ReplyTopic"}
-
     cmd = [ os.environ["KAFKA_HOME"]+kafkaCommand ,"--bootstrap-server" ]
-    cmd.append(args.broker+":"+str(+args.port))
+    cmd.append(args.broker)
     cmd.append("--topic")
-    cmd.append(topics[args.topic])
+    cmd.append(IaskafkaHelper.IasKafkaHelper.topics[args.topic])
 
     if args.allFromBeginning:
         cmd.append("--from-beginning")

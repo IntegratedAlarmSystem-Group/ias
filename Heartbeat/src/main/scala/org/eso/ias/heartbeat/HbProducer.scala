@@ -9,10 +9,10 @@ abstract class HbProducer(val serializer: HbMsgSerializer) {
   require(Option(serializer).isDefined,"Invalid empty HB serializer")
   
   /** Initialize the producer */
-  def init()
+  def init(): Unit
   
   /** Shutdown the producer */
-  def shutdown()
+  def shutdown(): Unit
   
   /**
    * Publish the HB message with the passed time stamp 
@@ -33,6 +33,6 @@ abstract class HbProducer(val serializer: HbMsgSerializer) {
   /**
    * Push the string
    */
-  def push(hbAsString: String)
+  def push(hbAsString: String): Unit
   
 }

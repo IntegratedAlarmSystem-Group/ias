@@ -1,12 +1,12 @@
 package org.eso.ias.basictypes.test
 
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import org.eso.ias.types.Alarm
 
 /**
  * Test the Alarm
  */
-class TestAlarm extends FlatSpec {
+class TestAlarm extends AnyFlatSpec {
   
   behavior of "An Alarm"
   

@@ -41,7 +41,7 @@ class SimulatedSlowTF(
    *
    * @see TransferExecutor
    */
-  override def shutdown() {
+  override def shutdown(): Unit = {
     SimulatedSlowTF.logger.info("Scala TF shut down")
   }
 
@@ -49,7 +49,7 @@ class SimulatedSlowTF(
     * Produces the output simulating a slowness.
     *
     * If the boolean input is truue the TF will take too long to
-    * produce th eoutput.
+    * produce the output.
     * If false, returns immediately
     *
     * @param compInputs: the inputs to the ASCE

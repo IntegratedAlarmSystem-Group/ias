@@ -58,7 +58,7 @@ class RegExpToAlarm (cEleId: String, cEleRunningId: String, validityTimeFrame: L
   /**
     * @see TransferExecutor#shutdown()
     */
-  override def shutdown() {
+  override def shutdown(): Unit = {
     RegExpToAlarm.logger.debug("TF of [{}] shut down", cEleId)
   }
 
