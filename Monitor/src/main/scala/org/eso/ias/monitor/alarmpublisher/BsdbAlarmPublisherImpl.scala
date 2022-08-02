@@ -2,7 +2,7 @@ package org.eso.ias.monitor.alarmpublisher
 import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosProducer, SimpleStringProducer}
 import org.eso.ias.types.{IASValue, IasValueJsonSerializer}
 
-import scala.collection.JavaConverters
+import scala.jdk.javaapi.CollectionConverters
 
 /**
   * Sends alarms to the BSDB by delegating to the [[KafkaIasiosProducer]]
@@ -27,7 +27,7 @@ class BsdbAlarmPublisherImpl(val stringProducer: SimpleStringProducer) extends  
   override def push(iasios: Array[IASValue[_]]): Unit = {
     require(Option(iasios).isDefined)
     if (iasios.nonEmpty) {
-      producer.push(JavaConverters.asJavaCollection(iasios))
+      producer.push(CollectionConverters.asJavaCollection(iasios))
     }
   }
 

@@ -106,8 +106,6 @@ public class TestCommandSender implements HbListener {
         logger.info("Running the simulator");
         List<String> cmdToRun = new Vector<>();
         cmdToRun.add("iasRun");
-        cmdToRun.add("-l");
-        cmdToRun.add("j");
         cmdToRun.add("org.eso.ias.command.test.CommandManagerSimulator");
         ProcessBuilder procBuilder = new ProcessBuilder(cmdToRun);
         procBuilder.inheritIO();

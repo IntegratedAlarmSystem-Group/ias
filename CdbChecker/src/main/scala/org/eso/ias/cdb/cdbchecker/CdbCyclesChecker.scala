@@ -6,7 +6,7 @@ import org.eso.ias.cdb.topology.{AsceTopology, DasuTopology}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.Identifier
 
-import scala.collection.JavaConverters
+import scala.jdk.javaapi.CollectionConverters
 
 /**
   * Check and report cycles in the IAS by delegating to
@@ -30,18 +30,18 @@ class CdbCyclesChecker(
     require(Option(dasu).isDefined)
     CdbCyclesChecker.logger.debug("Checking cyclicity of DASU [{}]",dasu.getId)
     // The ASCE to deploy in the DASU
-    val asces = JavaConverters.asScalaSet(dasu.getAsces).toList
+    val asces = CollectionConverters.asScala(dasu.getAsces).toList
     // The topology of the ASCEs to run in the DASU
     val ascesTopology = asces.map(asceDao => {
 
       // Does this ASCE have template inputs
-      val templatedInputs: Set[TemplateInstanceIasioDao] = JavaConverters.asScalaSet(asceDao.getTemplatedInstanceInputs).toSet
+      val templatedInputs: Set[TemplateInstanceIasioDao] = CollectionConverters.asScala(asceDao.getTemplatedInstanceInputs).toSet
       val templatedInputsIds = templatedInputs.map(ti =>
         Identifier.buildIdFromTemplate(ti.getIasio.getId, ti.getInstance()))
 
       new AsceTopology(
         asceDao.getId,
-        JavaConverters.asScalaSet(asceDao.getIasiosIDs).toSet++templatedInputsIds,
+        CollectionConverters.asScala(asceDao.getIasiosIDs).toSet++templatedInputsIds,
         asceDao.getOutput.getId)
     })
     new DasuTopology(ascesTopology,dasu.getId,dasu.getOutput.getId).isACyclic

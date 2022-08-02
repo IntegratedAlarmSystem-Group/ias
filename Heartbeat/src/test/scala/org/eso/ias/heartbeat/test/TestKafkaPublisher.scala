@@ -6,15 +6,15 @@ import org.eso.ias.heartbeat.serializer.HbJsonSerializer
 import org.eso.ias.heartbeat.{Heartbeat, HeartbeatProducerType, HeartbeatStatus}
 import org.eso.ias.kafkautils.{KafkaHelper, SimpleStringProducer}
 import org.eso.ias.logging.IASLogger
-import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach, FlatSpec}
-
+import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+import org.scalatest.flatspec.AnyFlatSpec
 import scala.collection.mutable.ListBuffer
 import scala.util.Try
 
 /**
  * Test the HB kafka publisher and consumer
  */
-class TestKafkaPublisher extends FlatSpec with HbListener with BeforeAndAfterEach with BeforeAndAfterAll {
+class TestKafkaPublisher extends AnyFlatSpec with HbListener with BeforeAndAfterEach with BeforeAndAfterAll {
   
   /** The logger */
   val logger = IASLogger.getLogger(classOf[TestKafkaPublisher])
@@ -57,7 +57,7 @@ class TestKafkaPublisher extends FlatSpec with HbListener with BeforeAndAfterEac
     stringProducer.tearDown()
   }
 
-  override def beforeEach() {
+  override def beforeEach(): Unit = {
     logger.info("Initializing string consumer")
     buffer.clear()
     hbKafkaConsumer = new HbKafkaConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,"HbConsumer")
@@ -73,7 +73,7 @@ class TestKafkaPublisher extends FlatSpec with HbListener with BeforeAndAfterEac
     logger.info("Initialized")
   }
   
-  override def afterEach() {
+  override def afterEach(): Unit = {
     logger.info("Shutting down the HB consumer")
     Option(hbKafkaConsumer).foreach(_.shutdown())
 

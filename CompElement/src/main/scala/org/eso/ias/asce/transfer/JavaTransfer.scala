@@ -3,11 +3,9 @@ package org.eso.ias.asce.transfer
 import org.eso.ias.types.Identifier
 import org.eso.ias.types.InOut
 import org.eso.ias.asce.ComputingElement
+
 import java.util.{Optional, Properties, HashMap => JavaHashMap, Map => JavaMap}
-
-import org.eso.ias.types.IASValue
-
-import scala.collection.JavaConverters
+import scala.jdk.javaapi.CollectionConverters
 import scala.util.Try
 
 /**
@@ -76,7 +74,7 @@ trait JavaTransfer[T] extends ComputingElement[T] {
     } else {
       tfSetting.transferExecutor.get.setTemplateInstance(Optional.empty());
     }
-    val javaInputIds = JavaConverters.setAsJavaSet(inputsInfo)
+    val javaInputIds = CollectionConverters.asJava(inputsInfo)
     Try(tfSetting.transferExecutor.get.asInstanceOf[JavaTransferExecutor[T]].
       initialize(javaInputIds, outputInfo))
   }

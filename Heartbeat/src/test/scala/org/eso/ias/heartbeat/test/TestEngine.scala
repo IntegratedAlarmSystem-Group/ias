@@ -5,10 +5,10 @@ import org.eso.ias.heartbeat.{HbProducer, Heartbeat, HeartbeatProducerType}
 import scala.collection.mutable.ArrayBuffer
 
 // The following import is required by the usage of the fixture
-import org.eso.ias.heartbeat.{HbEngine, HbMsgSerializer, HeartbeatStatus}
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
+import org.eso.ias.heartbeat.{HbEngine, HbMsgSerializer, HeartbeatStatus}
 import org.eso.ias.logging.IASLogger
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.language.reflectiveCalls
 import scala.util.Try
@@ -35,51 +35,47 @@ class MockProducer(serializer: HbMsgSerializer) extends HbProducer(serializer) {
   var cleanedUp = false
   
   /** Initialize the producer */
-  override def init() {
+  override def init(): Unit = {
     initialzed=true
   }
   
   /** Shutdown the producer */
-  override def shutdown() {
+  override def shutdown(): Unit = {
     cleanedUp=true
   }
   
   /**
    * Push the string
    */
-  override def push(hbAsString: String) {
+  override def push(hbAsString: String): Unit = {
     val str = Option(hbAsString)
     str.filter(!_.isEmpty).foreach(s => {
       logger.info("HB received {}",s)
       pushedStrings.append(s)
     })
   }
-  
 }
 
-class TestEngine extends FlatSpec {
+class TestEngine extends AnyFlatSpec {
   
   /** Fixture to build the HB engine to tests */
-  def fixture =
-    new {
+  trait Fixture {
+    /** The ID of th esupervisor */
+    val supervId = "SupervisorID"
 
-      /** The ID of th esupervisor */
-      val supervId = "SupervisorID"
+    /** The HB of the supervisor */
+    val supervHeartbeat = Heartbeat(HeartbeatProducerType.SUPERVISOR,supervId)
 
-      /** The HB of the supervisor */
-      val supervHeartbeat = Heartbeat(HeartbeatProducerType.SUPERVISOR,supervId)
-    
-      val frequency = 2
+    val frequency = 2
 
-      val serializer = new HbJsonSerializer
+    val serializer = new HbJsonSerializer
 
-      val producer = new MockProducer(serializer)
+    val producer = new MockProducer(serializer)
 
-      /**
-       * The engine to test
-       */
-      val engine = new HbEngine(supervHeartbeat,frequency,producer)
-    
+    /**
+     * The engine to test
+     */
+    val engine = new HbEngine(supervHeartbeat,frequency,producer)
   }
   
   /** The logger */
@@ -87,31 +83,27 @@ class TestEngine extends FlatSpec {
   
   behavior of "The HB engine" 
   
-  it must "init and shutdown the producer" in {
-    val f = fixture
+  it must "init and shutdown the producer" in new Fixture {
+    engine.start()
+    engine.shutdown()
     
-    f.engine.start()
-    f.engine.shutdown()
-    
-    assert(f.producer.initialzed)
-    assert(f.producer.cleanedUp)
+    assert(producer.initialzed)
+    assert(producer.cleanedUp)
   }
   
-  it must "not send HBs before initialization" in {
-    val f = fixture
-    
+  it must "not send HBs before initialization" in new Fixture {
+
     // Give time to send messages
     val op = Try(Thread.sleep(3000))
     assert(op.isSuccess)
         
-    assert(f.producer.pushedStrings.isEmpty)
+    assert(producer.pushedStrings.isEmpty)
   }
   
-  it must "send the default intial message" in {
-    val f = fixture
-    
+  it must "send the default intial message" in new Fixture {
+
     logger.info("Starting engine")
-    f.engine.start()
+    engine.start()
     
     // Give time to send one and only one message
     logger.info("Waiting...")
@@ -119,99 +111,91 @@ class TestEngine extends FlatSpec {
     assert(op.isSuccess)
     
     logger.info("shutting down")
-    f.engine.shutdown()
+    engine.shutdown()
     
-    assert(f.producer.pushedStrings.size==1)
-    val status=f.serializer.deserializeFromString(f.producer.pushedStrings(0))._2
-    assert(status==f.engine.initialStatusDefault)
+    assert(producer.pushedStrings.size==1)
+    val status=serializer.deserializeFromString(producer.pushedStrings(0))._2
+    assert(status==engine.initialStatusDefault)
   }
   
-  it must "send the intial message" in {
-    val f = fixture
-    
-    f.engine.start(HeartbeatStatus.RUNNING)
+  it must "send the intial message" in new Fixture {
+
+    engine.start(HeartbeatStatus.RUNNING)
     
     // Give time to send one and only one message
     val op = Try(Thread.sleep(3000))
     assert(op.isSuccess)
     
-    f.engine.shutdown()
+    engine.shutdown()
     
-    assert(f.producer.pushedStrings.size==1)
-    val status=f.serializer.deserializeFromString(f.producer.pushedStrings(0))._2
+    assert(producer.pushedStrings.size==1)
+    val status=serializer.deserializeFromString(producer.pushedStrings(0))._2
     assert(status==HeartbeatStatus.RUNNING)
   }
   
-  it must "update the state" in {
-    
-    val f = fixture
-    
-    f.engine.start(HeartbeatStatus.STARTING_UP)
+  it must "update the state" in new Fixture {
+    engine.start(HeartbeatStatus.STARTING_UP)
     
     // Give time to send one and only one message
     val op = Try(Thread.sleep(3000))
     assert(op.isSuccess)
     
-    f.engine.addProperty("key1", "prop1");
-    f.engine.addProperty("key2", "prop2");
-    f.engine.updateHbState(HeartbeatStatus.RUNNING)
+    engine.addProperty("key1", "prop1");
+    engine.addProperty("key2", "prop2");
+    engine.updateHbState(HeartbeatStatus.RUNNING)
     
     val op2 = Try(Thread.sleep(2000))
     assert(op2.isSuccess)
     
-    f.engine.shutdown()
+    engine.shutdown()
     
-    assert(f.producer.pushedStrings.size==2)
+    assert(producer.pushedStrings.size==2)
     
-    val deserialized1 = f.serializer.deserializeFromString(f.producer.pushedStrings(0))  
+    val deserialized1 = serializer.deserializeFromString(producer.pushedStrings(0))
     assert(deserialized1._2==HeartbeatStatus.STARTING_UP)
     assert(deserialized1._3.isEmpty)
     
-    val deserialized2 = f.serializer.deserializeFromString(f.producer.pushedStrings(1))
+    val deserialized2 = serializer.deserializeFromString(producer.pushedStrings(1))
     assert(deserialized2._2==HeartbeatStatus.RUNNING)
     assert(deserialized2._3.size==2)
   }
   
-  it must "not send HBs after shutdown" in {
-    val f = fixture
-    
-    f.engine.start()
+  it must "not send HBs after shutdown" in new Fixture {
+    engine.start()
     
     // Give time to send one and only one message
     val op = Try(Thread.sleep(3000))
     assert(op.isSuccess)
     
-    f.engine.updateHbState(HeartbeatStatus.RUNNING)
-    f.engine.addProperty("key1-t2", "prop1-t2")
+    engine.updateHbState(HeartbeatStatus.RUNNING)
+    engine.addProperty("key1-t2", "prop1-t2")
     
     val op2 = Try(Thread.sleep(2000))
     assert(op2.isSuccess)
     
-    f.engine.shutdown()
+    engine.shutdown()
     
-    assert(f.producer.pushedStrings.size==2)
+    assert(producer.pushedStrings.size==2)
     
     val op3 = Try(Thread.sleep(5000))
     assert(op3.isSuccess)
     
-    assert(f.producer.pushedStrings.size==2)
+    assert(producer.pushedStrings.size==2)
   }
   
-  it must "send periodically send the same msg if not changed" in {
-    val f = fixture
-    
-    f.engine.start(HeartbeatStatus.PARTIALLY_RUNNING)
+  it must "send periodically send the same msg if not changed" in new Fixture {
+    engine.start(HeartbeatStatus.PARTIALLY_RUNNING)
     
     // Give time to send 5 messages
-    val op = Try(Thread.sleep(f.frequency*5000+1000))
+    val op = Try(Thread.sleep(frequency*5000+1000))
     assert(op.isSuccess)
     
-    f.engine.shutdown()
+    engine.shutdown()
     
-    assert(f.producer.pushedStrings.size==5)
+    assert(producer.pushedStrings.size==5)
     
-    f.producer.pushedStrings.foreach( str => {
-      val msg=f.serializer.deserializeFromString(str)._2
+    producer.pushedStrings.foreach( str => {
+      val msg=serializer.deserializeFromString(str)._2
       assert(msg==HeartbeatStatus.PARTIALLY_RUNNING)
     })
   }

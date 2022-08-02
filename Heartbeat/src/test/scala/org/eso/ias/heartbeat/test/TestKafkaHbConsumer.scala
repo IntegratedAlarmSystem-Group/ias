@@ -2,7 +2,7 @@ package org.eso.ias.heartbeat.test
 
 import org.eso.ias.heartbeat.consumer.{HbListener, HbMsg}
 import org.eso.ias.logging.IASLogger
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.mutable.ListBuffer
 
@@ -15,7 +15,7 @@ import scala.collection.mutable.ListBuffer
   * - check if the events in the buffer matches with the events produced
   *
   */
-class TestKafkaHbConsumer extends FlatSpec with HbListener {
+class TestKafkaHbConsumer extends AnyFlatSpec with HbListener {
 
   /** The logger */
   private val logger = IASLogger.getLogger(classOf[TestKafkaHbConsumer])

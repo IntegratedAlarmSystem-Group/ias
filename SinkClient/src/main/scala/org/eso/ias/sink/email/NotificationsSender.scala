@@ -3,7 +3,6 @@ package org.eso.ias.sink.email
 import java.time._
 import java.util
 import java.util.concurrent.{Executors, ScheduledExecutorService, TimeUnit}
-
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
 import org.eso.ias.cdb.{CdbReader, CdbReaderFactory}
@@ -15,7 +14,8 @@ import org.eso.ias.supervisor.Supervisor._
 import org.eso.ias.types._
 
 import scala.collection.mutable.ListBuffer
-import scala.collection.{JavaConverters, mutable}
+import scala.collection.mutable
+import scala.jdk.javaapi.CollectionConverters
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -257,7 +257,7 @@ object NotificationsSender {
     val cmdLineParseAction = Try(parser.parse(options,args))
     if (cmdLineParseAction.isFailure) {
       val e = cmdLineParseAction.asInstanceOf[Failure[Exception]].exception
-      println(e + "\n")
+      println(s"$e\n")
       new HelpFormatter().printHelp(cmdLineSyntax, options)
       System.exit(-1)
     }
@@ -334,7 +334,7 @@ object NotificationsSender {
     logger.debug("Getting the IASIOs from the CDB")
     val iasioDaos: List[IasioDao] = {
       val temp: util.Set[IasioDao] = cdbReader.getIasios.orElseThrow(() => new IllegalArgumentException("IasDaos not found in CDB"))
-      JavaConverters.asScalaSet(temp).toList
+       CollectionConverters.asScala(temp).toList
     }
     logger.debug("Got {} IASIOs from the CDB",iasioDaos.length)
 
@@ -343,7 +343,7 @@ object NotificationsSender {
       val templatesFromCdb =  cdbReader.getTemplates
 
       if (!templatesFromCdb.isPresent) List.empty[TemplateDao]
-      else JavaConverters.asScalaSet(templatesFromCdb.get()).toList
+      else CollectionConverters.asScala(templatesFromCdb.get()).toList
     }
     logger.debug("Got {} templates from the CDB",templateDaos.length)
 

@@ -11,7 +11,7 @@ trait Sender {
     * @param recipient the recipient to notify
     * @param alarmStates the states of the alarms to notify
     */
-  def digestNotify(recipient: String, alarmStates: List[AlarmStateTracker])
+  def digestNotify(recipient: String, alarmStates: List[AlarmStateTracker]): Unit
 
   /**
     * Send the notification to notify that an alarm has been set or cleared
@@ -20,5 +20,5 @@ trait Sender {
     * @param alarmId the ID of the alarm
     * @param alarmState the state to notify
     */
-  def notify(recipients: List[String], alarmId: String, alarmState: AlarmState)
+  def notify(recipients: List[String], alarmId: String, alarmState: AlarmState): Unit
 }

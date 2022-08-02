@@ -1,17 +1,16 @@
 package org.eso.ias.monitor.test
 
 import java.io.File
-
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.monitor.{IasMonitorConfig, KafkaSinkConnectorConfig}
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
-import scala.collection.JavaConverters
+import scala.jdk.javaapi.CollectionConverters
 
 /** Test the [[org.eso.ias.monitor.IasMonitorConfig]]
   *
   */
-class ConfigTest extends FlatSpec {
+class ConfigTest extends AnyFlatSpec {
 
   behavior of "The IasMonitorConfig"
 
@@ -30,7 +29,7 @@ class ConfigTest extends FlatSpec {
     config.setThreshold(30.toLong)
 
     val ids = Set("PluginA-id","PluginB-id","PluginC-id","PluginD-id")
-    config.setPluginIds(JavaConverters.setAsJavaSet(ids))
+    config.setPluginIds(CollectionConverters.asJava(ids))
 
     val jsonStr = config.toJsonString
     val fromJSonString = IasMonitorConfig.valueOf(jsonStr)
@@ -47,7 +46,7 @@ class ConfigTest extends FlatSpec {
     config.setThreshold(30.toLong)
 
     val ids = Set("ConvA-id","ConvB-id","ConvC-id","ConvD-id")
-    config.setConverterIds(JavaConverters.setAsJavaSet(ids))
+    config.setConverterIds(CollectionConverters.asJava(ids))
 
     val jsonStr = config.toJsonString
     val fromJSonString = IasMonitorConfig.valueOf(jsonStr)
@@ -64,7 +63,7 @@ class ConfigTest extends FlatSpec {
     config.setThreshold(30.toLong)
 
     val ids = Set("ClientA-id","ClientB-id","ClientC-id","ClientD-id")
-    config.setClientIds(JavaConverters.setAsJavaSet(ids))
+    config.setClientIds(CollectionConverters.asJava(ids))
 
     val jsonStr = config.toJsonString
     val fromJSonString = IasMonitorConfig.valueOf(jsonStr)
@@ -81,7 +80,7 @@ class ConfigTest extends FlatSpec {
     config.setThreshold(30.toLong)
 
     val ids = Set("SinkA-id","SinkB-id","SinkC-id","SinkD-id")
-    config.setSinkIds(JavaConverters.setAsJavaSet(ids))
+    config.setSinkIds(CollectionConverters.asJava(ids))
 
     val jsonStr = config.toJsonString
     val fromJSonString = IasMonitorConfig.valueOf(jsonStr)
@@ -107,7 +106,7 @@ class ConfigTest extends FlatSpec {
     val kConnectorC = new KafkaSinkConnectorConfig("host.name.com",8194,"IdC")
 
 
-    config.setKafkaSinkConnectors(JavaConverters.setAsJavaSet(Set(kConnectorA,kConnectorB,kConnectorC)))
+    config.setKafkaSinkConnectors(CollectionConverters.asJava(Set(kConnectorA,kConnectorB,kConnectorC)))
 
     val jsonStr = config.toJsonString
     val fromJSonString = IasMonitorConfig.valueOf(jsonStr)
@@ -123,7 +122,7 @@ class ConfigTest extends FlatSpec {
     config.setThreshold(30.toLong)
 
     val ids = Set("CoreT1-id","CoreT2-id","CoreT3-id","CoreT4-id")
-    config.setCoreToolsIds(JavaConverters.setAsJavaSet(ids))
+    config.setCoreToolsIds(CollectionConverters.asJava(ids))
 
     val jsonStr = config.toJsonString
     val fromJSonString = IasMonitorConfig.valueOf(jsonStr)
@@ -136,7 +135,7 @@ class ConfigTest extends FlatSpec {
   }
 
   it must "read the configuration from a file" in {
-    val f = new File("./config.json")
+    val f = new File("src/test/config.json")
 
     val config = IasMonitorConfig.fromFile(f)
 

@@ -2,7 +2,6 @@ package org.eso.ias.supervisor
 
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.{CountDownLatch, TimeUnit}
-
 import ch.qos.logback.classic.Level
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
@@ -22,7 +21,7 @@ import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.{IASValue, Identifier, IdentifierType}
 import org.eso.ias.utils.ISO8601Helper
 
-import scala.collection.JavaConverters
+import scala.jdk.javaapi.CollectionConverters
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -144,7 +143,7 @@ class Supervisor private (
   /**
    * Gets the definitions of the DASUs to run in the Supervisor from the CDB
    */
-  val dasusToDeploy: Set[DasuToDeployDao] = JavaConverters.asScalaSet(cdbReader.getDasusToDeployInSupervisor(id)).toSet
+  val dasusToDeploy: Set[DasuToDeployDao] = CollectionConverters.asScala(cdbReader.getDasusToDeployInSupervisor(id)).toSet
   require(dasusToDeploy.nonEmpty,"No DASUs to run in Supervisor "+id)
   Supervisor.logger.info("Supervisor [{}], {} DASUs to run: {}",
       id,
@@ -164,7 +163,7 @@ class Supervisor private (
   // by at least one ASCE, the Supervisor needs to restart
   lazy val tfIDs: List[String] =
     dasuDaos.foldLeft(Set.empty[String]) ( (asces, dasu) =>
-      asces ++ JavaConverters.asScalaSet(dasu.getAsces).map(_.getTransferFunction.getClassName)
+      asces ++ CollectionConverters.asScala(dasu.getAsces).map(_.getTransferFunction.getClassName)
     ).toList
 
   dasuDaos.foreach(d => Supervisor.logger.info("Supervisor [{}]: building DASU from DasuDao {}",id,d.toString))
@@ -229,7 +228,7 @@ class Supervisor private (
              commandManager: CommandManager,
              cdbReader: CdbReader,
              dasuFactory: (DasuDao, Identifier, OutputPublisher, InputSubscriber) => Dasu,
-             logLevelFromCommandLine: Option[LogLevelDao]) {
+             logLevelFromCommandLine: Option[LogLevelDao]) = {
     this(
       supervisorIdentifier,
       KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
@@ -264,7 +263,7 @@ class Supervisor private (
              inputSubscriber: InputSubscriber,
              cdbReader: CdbReader,
              dasuFactory: (DasuDao, Identifier, OutputPublisher, InputSubscriber) => Dasu,
-             logLevelFromCommandLine: Option[LogLevelDao]) {
+             logLevelFromCommandLine: Option[LogLevelDao]) = {
     this(
       supervisorIdentifier,
       kafkaBrokers,
@@ -301,7 +300,7 @@ class Supervisor private (
    * 
    * @param enable if true enable the autorefresh, otherwise disable the autorefresh
    */
-  def enableAutoRefreshOfOutput(enable: Boolean) {
+  def enableAutoRefreshOfOutput(enable: Boolean): Unit = {
       dasus.values.foreach(dasu => dasu.enableAutoRefreshOfOutput(enable))
   }
   
@@ -379,7 +378,7 @@ class Supervisor private (
    *  
    *  @param iasios the inputs received
    */
-  override def inputsReceived(iasios: Iterable[IASValue[_]]) {
+  override def inputsReceived(iasios: Iterable[IASValue[_]]): Unit = {
     
     val receivedIds = iasios.map(i => i.id)
     statsLogger.numberOfInputsReceived(receivedIds.size)
@@ -510,7 +509,7 @@ object Supervisor {
     val cmdLineParseAction = Try(parser.parse(options,args))
     if (cmdLineParseAction.isFailure) {
       val e = cmdLineParseAction.asInstanceOf[Failure[Exception]].exception
-      println(e + "\n")
+      println(s"$e\n")
       new HelpFormatter().printHelp(cmdLineSyntax, options)
       System.exit(-1)
     }
