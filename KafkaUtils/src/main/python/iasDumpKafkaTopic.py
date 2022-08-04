@@ -63,6 +63,20 @@ if __name__ == '__main__':
         default = 'core',
         required=False)
     parser.add_argument(
+        '-m',
+        '--max-messages',
+        help = 'The max number of messages to get from the topic',
+        action='store',
+        type = int,
+        required = False)
+    parser.add_argument(
+        '-o',
+        '--timeout-ms',
+        help = 'The timeout (msec) while getting messages from the topic',
+        action = 'store',
+        type = int,
+        required = False)
+    parser.add_argument(
         '-v',
         '--verbose',
         help='Verbose mode (default no verbose)',
@@ -74,7 +88,7 @@ if __name__ == '__main__':
 
     kafkaCommand = "/bin/kafka-console-consumer.sh"
     if not check_kafka(kafkaCommand):
-        sys.exit(-1)
+        sys.exit(1)
 
     topics = {
         'core':"BsdbCoreKTopic",
@@ -87,6 +101,24 @@ if __name__ == '__main__':
     cmd.append(args.broker+":"+str(+args.port))
     cmd.append("--topic")
     cmd.append(topics[args.topic])
+
+    print("args",args)
+
+    if args.max_messages:
+        max_messages = args.max_messages
+        if max_messages <= 0:
+            print("Invalid max messages",max_messages)
+            sys.exit(1)
+        cmd.append("--max-messages")
+        cmd.append(str(max_messages))
+
+    if args.timeout_ms:
+        timeout = args.timeout_ms
+        if timeout <= 0:
+            print("Invalid timeout",timeout)
+            sys.exit(1)
+        cmd.append("--timeout-ms")
+        cmd.append(str(timeout))
 
     if args.allFromBeginning:
         cmd.append("--from-beginning")
