@@ -9,7 +9,7 @@ No further computation is done on the received strings.
 import argparse
 import os
 import sys
-from subprocess import call
+from subprocess import run, DEVNULL, STDOUT, CalledProcessError, TimeoutExpired
 
 
 def check_kafka(kafkaCommand):
@@ -65,17 +65,24 @@ if __name__ == '__main__':
     parser.add_argument(
         '-m',
         '--max-messages',
-        help = 'The max number of messages to get from the topic',
+        help = 'The max number of messages to get from the topic (>0)',
         action='store',
         type = int,
         required = False)
     parser.add_argument(
         '-o',
         '--timeout-ms',
-        help = 'The timeout (msec) while getting messages from the topic',
+        help = 'The timeout (msec>0) while getting messages from the topic',
         action = 'store',
         type = int,
         required = False)
+    parser.add_argument(
+        '-q',
+        '--quiet',
+        help='Quiet mode (to use with --max-message or --timeout-ms)',
+        action='store_true',
+        default=False,
+        required=False)
     parser.add_argument(
         '-v',
         '--verbose',
@@ -102,8 +109,6 @@ if __name__ == '__main__':
     cmd.append("--topic")
     cmd.append(topics[args.topic])
 
-    print("args",args)
-
     if args.max_messages:
         max_messages = args.max_messages
         if max_messages <= 0:
@@ -117,8 +122,15 @@ if __name__ == '__main__':
         if timeout <= 0:
             print("Invalid timeout",timeout)
             sys.exit(1)
-        cmd.append("--timeout-ms")
-        cmd.append(str(timeout))
+        #cmd.append("--timeout-ms")
+        #cmd.append(str(timeout))
+        to = timeout/1000
+    else:
+        to = None
+
+     # Quiet can be used only with at least one betwee
+     # --max-messages and --timeout-ms
+    applyQuiet = args.quiet and (args.timeout_ms or args.max_messages)
 
     if args.allFromBeginning:
         cmd.append("--from-beginning")
@@ -126,4 +138,17 @@ if __name__ == '__main__':
     if args.verbose:
         print("Running",cmd)
 
-    call(cmd)
+    try:
+        if applyQuiet:
+            ret = run(cmd, stdout=DEVNULL, stderr=STDOUT, timeout=to)
+        else:
+            ret = run(cmd, timeout=to)
+    except CalledProcessError:
+        if not applyQuiet:
+            sys.stderr.write('Exception\n')
+        exit(1)
+    except TimeoutExpired:
+        if not applyQuiet:
+            sys.stderr.write('TIMEOUT\n')
+        exit(1)
+
