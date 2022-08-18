@@ -1,0 +1,16 @@
+com.datastax.driver.core
+com.datastax.driver.core.exceptions
+com.datastax.driver.core.policies
+com.datastax.driver.core.querybuilder
+com.datastax.driver.core.schemabuilder
+com.datastax.driver.core.utils
+com.datastax.driver.extras.codecs
+com.datastax.driver.extras.codecs.arrays
+com.datastax.driver.extras.codecs.date
+com.datastax.driver.extras.codecs.enums
+com.datastax.driver.extras.codecs.guava
+com.datastax.driver.extras.codecs.jdk8
+com.datastax.driver.extras.codecs.joda
+com.datastax.driver.extras.codecs.json
+com.datastax.driver.mapping
+com.datastax.driver.mapping.annotations
