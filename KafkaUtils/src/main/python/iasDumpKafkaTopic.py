@@ -31,7 +31,7 @@ def check_kafka(kafkaCommand):
     return True
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Dumps string froma topic by delegating to kafka commands')
+    parser = argparse.ArgumentParser(description='Dumps string from a topic by delegating to kafka commands')
     parser.add_argument(
         '-b',
         '--broker',
