@@ -61,7 +61,10 @@ class HbsCollector(
     assert(ttl>0, "The timer task should not run if ttl<=0")
     val oldestTStamp = System.currentTimeMillis() - ttl
     val hbsToRemove: MutableMap[CompoundKey, HbMsg] = hbs.filter((key, value) => value.timestamp<oldestTStamp)
-    hbsToRemove.keys.foreach(k => hbs -= k)
+    hbsToRemove.keys.foreach(k => {
+      HbsCollector.logger.debug(s"Removing old HBs of a ${k.hbProducerType} with id ${k.id}")
+      hbs -= k
+    })
   }
 
   /**
@@ -87,32 +90,42 @@ class HbsCollector(
 
   /** Connect to the kafka brokers. */
   def setup(kafkaBrokers: String, consumerID: String): Unit = {
+    HbsCollector.logger.debug("Initializing...")
     hbConsumer.addListener(this)
     hbConsumer.start()
     if (ttl>0) {
+      HbsCollector.logger.debug("Starting the timer task")
       timer.scheduleAtFixedRate(this, ttlCheckTime, ttlCheckTime)
     }
     initialized.set(true)
+    HbsCollector.logger.debug("Initialized")
   }
 
   /** Disconnect the consumer */
   def shutdown(): Unit = {
+    HbsCollector.logger.debug("Shutting down...")
     if (ttl>0) {
+      HbsCollector.logger.debug("Terminating the timer task")
       timer.cancel()
     }
     hbConsumer.shutdown()
+    HbsCollector.logger.debug("Shutdown")
   }
 
   /** Starts collecting the HBs. */
   def startCollectingHbs(): Unit = {
     require(initialized.get(), "The collector must be initialized before getting HBs")
+    HbsCollector.logger.debug("Start getting HBs")
     collectingHbs.set(true)
   }
 
   /**
    * Stops collecting the HBs.
    */
-  def stopCollectingHbs(): Unit = collectingHbs.set(false)
+  def stopCollectingHbs(): Unit = {
+    collectingHbs.set(false)
+    HbsCollector.logger.debug("Stopped getting HBs")
+  }
 
   /**
    * Remove all the HBs collected so far
@@ -130,6 +143,7 @@ class HbsCollector(
     if (collectingHbs.get()) {
       val key = CompoundKey(hbMsg.hb.hbType, hbMsg.hb.id)
       hbs += (key -> hbMsg)
+      HbsCollector.logger.debug(s"HB received from a ${key.hbProducerType} with ID ${key.id}")
     }
   }
 }
