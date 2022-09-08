@@ -17,6 +17,8 @@ import scala.collection.mutable.{ArrayBuffer, Map as MutableMap}
  * so that dead processes will disappear after they stop sending HBs.
  * The reception time of the HB is checked against the TTL in a Timer task.
  *
+ * The removal of old HBs periodically done by the timer task can be paused/resumed
+ *
  * TODO: There is some overlap with the HbMonitor here:
  *       let HbMonitor re-use this class
  *
@@ -29,8 +31,8 @@ import scala.collection.mutable.{ArrayBuffer, Map as MutableMap}
  * @param ttlCheckTime the period (msec>0) to check for old HBs
  */
 class HbsCollector(
-                    brokers: String,
-                    consumerId: String,
+                    val brokers: String,
+                    val consumerId: String,
                     val ttl: Long = 0,
                     val ttlCheckTime: Long = 1000) extends TimerTask with HbListener {
   require(ttlCheckTime>0,"Invalid TTL period")
@@ -56,16 +58,52 @@ class HbsCollector(
    */
   val initialized = new AtomicBoolean(false)
 
+  /** The flag to pause/resume the timer (simulated) */
+  val paused = new AtomicBoolean(false)
+
+  /** Return true if the container is empty */
+  def isEmpty: Boolean = synchronized { hbs.isEmpty }
+
+  /** Return the number of items in the container */
+  def size: Int = synchronized { hbs.size }
+
+  /**
+   * Pause the timer.
+   *
+   * As the java timer cannot be paused, the pause/resume is simulated in the
+   * time task (run)
+   */
+  def pause(): Unit = {
+    paused.set(true)
+    HbsCollector.logger.debug("Paused")
+  }
+
+  /**
+   * Resume the timer.
+   *
+   * As the java timer cannot be paused, the pause/resume is simulated in the
+   * time task (run)
+   */
+  def resume(): Unit = {
+    paused.set(false)
+    HbsCollector.logger.debug("Resumed")
+  }
+
   /** The task run by the timer that removes the HBs older than the ttl */
   def run(): Unit = synchronized {
     assert(ttl>0, "The timer task should not run if ttl<=0")
-    val oldestTStamp = System.currentTimeMillis() - ttl
-    val hbsToRemove: MutableMap[CompoundKey, HbMsg] = hbs.filter((key, value) => value.timestamp<oldestTStamp)
-    hbsToRemove.keys.foreach(k => {
-      HbsCollector.logger.debug(s"Removing old HBs of a ${k.hbProducerType} with id ${k.id}")
-      hbs -= k
-    })
+    if (!paused.get()) {
+      val oldestTStamp = System.currentTimeMillis() - ttl
+      val hbsToRemove: MutableMap[CompoundKey, HbMsg] = hbs.filter((key, value) => value.timestamp<oldestTStamp)
+      hbsToRemove.keys.foreach(k => {
+        HbsCollector.logger.debug(s"Removing old HBs of a ${k.hbProducerType} with id ${k.id}")
+        hbs -= k
+      })
+    }
   }
+
+  /** Return all the HB messages in the container */
+  def getHbs(): List[HbMsg] = synchronized { hbs.values.toList }
 
   /**
    * Get and return the HBs in the map of the passed type
@@ -89,33 +127,40 @@ class HbsCollector(
   }
 
   /** Connect to the kafka brokers. */
-  def setup(kafkaBrokers: String, consumerID: String): Unit = {
-    HbsCollector.logger.debug("Initializing...")
-    hbConsumer.addListener(this)
-    hbConsumer.start()
-    if (ttl>0) {
-      HbsCollector.logger.debug("Starting the timer task")
-      timer.scheduleAtFixedRate(this, ttlCheckTime, ttlCheckTime)
+  def setup(): Unit = synchronized {
+    val alreadyInitialized = initialized.getAndSet(true)
+    if (!alreadyInitialized) {
+      HbsCollector.logger.debug("Initializing...")
+      hbConsumer.addListener(this)
+      hbConsumer.start()
+      if (ttl>0) {
+        HbsCollector.logger.debug("Starting the timer task")
+        timer.scheduleAtFixedRate(this, ttlCheckTime, ttlCheckTime)
+      }
+
+      HbsCollector.logger.debug("Initialized")
+    } else {
+      HbsCollector.logger.warn("Already initialized: skipping initialization")
     }
-    initialized.set(true)
-    HbsCollector.logger.debug("Initialized")
   }
 
   /** Disconnect the consumer */
-  def shutdown(): Unit = {
-    HbsCollector.logger.debug("Shutting down...")
+  def shutdown(): Unit = synchronized {
+    HbsCollector.logger.info("Shutting down...")
+    stopCollectingHbs()
     if (ttl>0) {
       HbsCollector.logger.debug("Terminating the timer task")
       timer.cancel()
     }
     hbConsumer.shutdown()
-    HbsCollector.logger.debug("Shutdown")
+    clear()
+    HbsCollector.logger.info("The collector is shutdown")
   }
 
   /** Starts collecting the HBs. */
   def startCollectingHbs(): Unit = {
     require(initialized.get(), "The collector must be initialized before getting HBs")
-    HbsCollector.logger.debug("Start getting HBs")
+    HbsCollector.logger.debug("Start collecting HBs")
     collectingHbs.set(true)
   }
 
@@ -124,7 +169,7 @@ class HbsCollector(
    */
   def stopCollectingHbs(): Unit = {
     collectingHbs.set(false)
-    HbsCollector.logger.debug("Stopped getting HBs")
+    HbsCollector.logger.debug("Stopped collecting HBs")
   }
 
   /**
@@ -144,6 +189,8 @@ class HbsCollector(
       val key = CompoundKey(hbMsg.hb.hbType, hbMsg.hb.id)
       hbs += (key -> hbMsg)
       HbsCollector.logger.debug(s"HB received from a ${key.hbProducerType} with ID ${key.id}")
+    } else {
+      HbsCollector.logger.debug("HB DISCARDED")
     }
   }
 }
