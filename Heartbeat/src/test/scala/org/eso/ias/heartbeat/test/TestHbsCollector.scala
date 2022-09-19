@@ -1,5 +1,6 @@
 package org.eso.ias.heartbeat.test
 
+import org.eso.ias.heartbeat.consumer.HbMsg
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer
 import org.eso.ias.heartbeat.report.HbsCollector
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
@@ -52,7 +53,16 @@ class TestHbsCollector extends AnyFlatSpec with BeforeAndAfterEach with BeforeAn
       id,
       ttl)
     hbsCollector.setup()
-    logger.info(s"Collector initialized with id=$id")
+    logger.info("Waiting until the HB collector is ready (connected to kafka)")
+    val timeout = 10000
+    val now = System.currentTimeMillis()
+    while (!hbsCollector.isConsumerReady && System.currentTimeMillis()<now+timeout) {
+      Thread.sleep(250)
+    }
+    if (!hbsCollector.isConsumerReady) {
+      throw new Exception("Timeout: HB Consumer did not get ready in time")
+    }
+    logger.info(s"Collector with id=$id initialized and connected to the kafka topic")
   }
 
   override def afterEach(): Unit = {
@@ -67,6 +77,7 @@ class TestHbsCollector extends AnyFlatSpec with BeforeAndAfterEach with BeforeAn
               status: HeartbeatStatus): Unit = {
     val hb = Heartbeat(hbProdType, id)
     hbProducer.send(hb, status, Map())
+    logger.info(s"HB ${id}:${hbProdType} with status ${status} pushed in the BSDB")
   }
 
   /**
@@ -84,9 +95,17 @@ class TestHbsCollector extends AnyFlatSpec with BeforeAndAfterEach with BeforeAn
     val exitTime = System.currentTimeMillis()+timeout
     while (hbsCollector.size<numOfItems && System.currentTimeMillis()<exitTime) {
       Thread.sleep(250)
-      logger.info(s"Items in collector: ${numOfItems} ")
+      logger.info(s"Items in collector: ${hbsCollector.size} (waiting until ${numOfItems} arrives)")
     }
     hbsCollector.size==numOfItems
+  }
+
+  /** Dump the content of the collector on the stdout */
+  def dumpCollectorContent(): Unit = {
+    val hbs: Seq[HbMsg] = hbsCollector.getHbs()
+    hbs.foreach(hbm => {
+      println(s"HB ${hbm.hb.id} ${hbm.status}")
+    })
   }
 
   behavior of "The HbsCollector container"
@@ -149,20 +168,23 @@ class TestHbsCollector extends AnyFlatSpec with BeforeAndAfterEach with BeforeAn
     logger.info("Check getting HB of requested type/id")
     hbsCollector.startCollectingHbs()
     hbsCollector.pause()
-    pushHb(HeartbeatProducerType.PLUGIN, "TestId", HeartbeatStatus.STARTING_UP)
-    pushHb(HeartbeatProducerType.SUPERVISOR, "TestId2", HeartbeatStatus.STARTING_UP)
-    pushHb(HeartbeatProducerType.PLUGIN, "TestId3", HeartbeatStatus.RUNNING)
-    pushHb(HeartbeatProducerType.CLIENT, "TestId4", HeartbeatStatus.PARTIALLY_RUNNING)
-    pushHb(HeartbeatProducerType.CORETOOL, "TestId5", HeartbeatStatus.PAUSED)
-    // Give the container time to get the HB
-    val ret=waitHbsReception(5,2500)
+    Thread.sleep(10000)
+    pushHb(HeartbeatProducerType.PLUGIN, "TestId-H", HeartbeatStatus.EXITING)
+    pushHb(HeartbeatProducerType.SUPERVISOR, "TestId2-H", HeartbeatStatus.STARTING_UP)
+    pushHb(HeartbeatProducerType.PLUGIN, "TestId3-H", HeartbeatStatus.RUNNING)
+    pushHb(HeartbeatProducerType.CLIENT, "TestId4-H", HeartbeatStatus.PARTIALLY_RUNNING)
+    pushHb(HeartbeatProducerType.CORETOOL, "TestId5-H", HeartbeatStatus.PAUSED)
+    // Wait until the HBs arrive
+    assert(hbsCollector.isCollecting)
+    val ret=waitHbsReception(5,15000)
     if (!ret) logger.error("Timeout waiting for items in the collector")
     assert(hbsCollector.getHbs().size==5)
-    val hbOpt = hbsCollector.getHbOf(HeartbeatProducerType.SUPERVISOR,"TestId2")
+    dumpCollectorContent()
+    val hbOpt = hbsCollector.getHbOf(HeartbeatProducerType.SUPERVISOR,"TestId2-H")
     assert(hbOpt.nonEmpty)
     val hb = hbOpt.get
     assert(hb.status==HeartbeatStatus.STARTING_UP)
-    assert(hb.hb.id=="TestId2")
+    assert(hb.hb.id=="TestId2-H:SUPERVISOR")
     assert(hb.hb.hbType==HeartbeatProducerType.SUPERVISOR)
   }
 }
