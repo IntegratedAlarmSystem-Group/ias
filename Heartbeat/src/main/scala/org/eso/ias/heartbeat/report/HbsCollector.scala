@@ -40,29 +40,32 @@ class HbsCollector(
   /** The consumer of HBs */
   val hbConsumer = new HbKafkaConsumer(brokers, consumerId)
 
-  /** The key for the map of HB is composed of the type and the id of the tool */
-  case class CompoundKey(hbProducerType: HeartbeatProducerType, id: String)
-
   /** The map of the received HBs */
-  val hbs: MutableMap[CompoundKey, HbMsg] = MutableMap[CompoundKey, HbMsg]()
+  val hbs: MutableMap[String, HbMsg] = MutableMap[String, HbMsg]()
 
   /** The timer to remove old HBs */
   val timer: Timer = new Timer("HbsCollectorTimer", true)
 
   /** Signal if the HbsCollector is collecting HBs */
-  val collectingHbs = new AtomicBoolean(false)
+  private val collectingHbs = new AtomicBoolean(false)
 
   /**
    * Set to true when the object has been initialized
    * i.e. connected to the HB Kafka topic and the time activated (if ttl>0)
    */
-  val initialized = new AtomicBoolean(false)
+  private val initialized = new AtomicBoolean(false)
 
   /** The flag to pause/resume the timer (simulated) */
-  val paused = new AtomicBoolean(false)
+  private val paused = new AtomicBoolean(false)
 
-  /** Return true if the container is empty */
+  /** @return true if the container is empty */
   def isEmpty: Boolean = synchronized { hbs.isEmpty }
+
+  /** @return true if the container is collecting HBs */
+  def isCollecting: Boolean = collectingHbs.get()
+
+  /** @return true if the thread to remove old HBs is paused */
+  def isPaused: Boolean = paused.get()
 
   /** Return the number of items in the container */
   def size: Int = synchronized { hbs.size }
@@ -94,9 +97,9 @@ class HbsCollector(
     assert(ttl>0, "The timer task should not run if ttl<=0")
     if (!paused.get()) {
       val oldestTStamp = System.currentTimeMillis() - ttl
-      val hbsToRemove: MutableMap[CompoundKey, HbMsg] = hbs.filter((key, value) => value.timestamp<oldestTStamp)
+      val hbsToRemove: MutableMap[String, HbMsg] = hbs.filter((key, value) => value.timestamp<oldestTStamp)
       hbsToRemove.keys.foreach(k => {
-        HbsCollector.logger.debug(s"Removing old HBs of a ${k.hbProducerType} with id ${k.id}")
+        HbsCollector.logger.debug(s"Removing old HBs with id ${k}")
         hbs -= k
       })
     }
@@ -111,7 +114,7 @@ class HbsCollector(
    * @param hbProdType the type of the producers
    */
   def getHbsOfType(hbProdType: HeartbeatProducerType): List[HbMsg] = synchronized {
-    val hbsToReturn: MutableMap[CompoundKey, HbMsg] = hbs.filter((key, value) => key.hbProducerType==hbProdType)
+    val hbsToReturn: MutableMap[String, HbMsg] = hbs.filter((key, value) => value.hb.hbType==hbProdType)
     hbsToReturn.values.toList
   }
 
@@ -123,7 +126,7 @@ class HbsCollector(
    */
   def getHbOf(hbProdType: HeartbeatProducerType, id: String): Option[HbMsg] = synchronized {
     require(id.nonEmpty, "The ID cannot be empty")
-    hbs.get(CompoundKey(hbProdType, id))
+    hbs.get(s"$id:$hbProdType")
   }
 
   /** Connect to the kafka brokers. */
@@ -160,7 +163,7 @@ class HbsCollector(
   /** Starts collecting the HBs. */
   def startCollectingHbs(): Unit = {
     require(initialized.get(), "The collector must be initialized before getting HBs")
-    HbsCollector.logger.debug("Start collecting HBs")
+    HbsCollector.logger.info("Start collecting HBs")
     collectingHbs.set(true)
   }
 
@@ -169,7 +172,7 @@ class HbsCollector(
    */
   def stopCollectingHbs(): Unit = {
     collectingHbs.set(false)
-    HbsCollector.logger.debug("Stopped collecting HBs")
+    HbsCollector.logger.info("Stopped collecting HBs")
   }
 
   /**
@@ -186,13 +189,16 @@ class HbsCollector(
    */
   def hbReceived(hbMsg: HbMsg): Unit = synchronized {
     if (collectingHbs.get()) {
-      val key = CompoundKey(hbMsg.hb.hbType, hbMsg.hb.id)
+      val key = hbMsg.hb.id
       hbs += (key -> hbMsg)
-      HbsCollector.logger.debug(s"HB received from a ${key.hbProducerType} with ID ${key.id}")
+      HbsCollector.logger.info(s"HB received with ID ${key}")
     } else {
-      HbsCollector.logger.debug("HB DISCARDED")
+      HbsCollector.logger.info("HB DISCARDED")
     }
   }
+
+  /** Return true if the consumer has been initialized and is ready to get HB from the BSDB */
+  def isConsumerReady: Boolean = { initialized.get() && hbConsumer.isReady }
 }
 
 /** Companion object */
