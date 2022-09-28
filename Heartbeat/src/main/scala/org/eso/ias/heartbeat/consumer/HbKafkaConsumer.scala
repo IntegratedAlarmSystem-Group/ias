@@ -68,7 +68,7 @@ case class HbMsg(hb: Heartbeat, status: HeartbeatStatus, props: Map[String, Stri
 class HbKafkaConsumer(brokers: String, val consumerId: String)
     extends StringsConsumer with Runnable {
 
-  val stringConsumer = new KafkaStringsConsumer(brokers, KafkaHelper.HEARTBEAT_TOPIC_NAME, consumerId)
+  val stringConsumer: KafkaStringsConsumer = new KafkaStringsConsumer(brokers, KafkaHelper.HEARTBEAT_TOPIC_NAME, consumerId)
 
   /** The buffer of events read from the kafka topic */
   private val buffer: LinkedBlockingQueue[HbMsg] = new LinkedBlockingQueue[HbMsg]()
@@ -107,7 +107,7 @@ class HbKafkaConsumer(brokers: String, val consumerId: String)
          val event = Option(msg)
          event.foreach(notifyListeners(_))
        } catch {
-        case e: InterruptedException => HbKafkaConsumer.logger.debug("Interrupted")
+        case e: InterruptedException => if (!closed.get()) HbKafkaConsumer.logger.warn("Interrupted")
         case t: Exception =>  HbKafkaConsumer.logger.warn("Error notifying listener",t)
        }
      }
@@ -122,12 +122,12 @@ class HbKafkaConsumer(brokers: String, val consumerId: String)
     */
   def notifyListeners(event: HbMsg): Unit = {
     require(Option(event).isDefined)
-    HbKafkaConsumer.logger.debug("Notifying conumers of event {}",event)
+    HbKafkaConsumer.logger.debug("Notifying consumers of event {}",event)
     listeners.synchronized {
       listeners.foreach(l => {
         Try(l.hbReceived(event)) match {
-          case Failure(exception) =>  HbKafkaConsumer.logger.error("Error notifying listener",exception)
-          case _ => HbKafkaConsumer.logger.debug("HB event successfully notified: ",event.toString)
+          case Failure(exception) =>  HbKafkaConsumer.logger.error(s"Error notifying listener: ${exception}")
+          case _ => HbKafkaConsumer.logger.debug(s"HB event successfully notified: ${event.toString}")
         }
       })
     }
@@ -161,7 +161,7 @@ class HbKafkaConsumer(brokers: String, val consumerId: String)
     HbKafkaConsumer.logger.debug("Thread started")
     HbKafkaConsumer.logger.debug("Initializing the string consumer")
     val props: Properties = new Properties();
-    props.setProperty("group.id",s"${consumerId}-HbGroupID-${System.currentTimeMillis()}");
+    props.setProperty("group.id",consumerId);
     stringConsumer.setUp(props)
     HbKafkaConsumer.logger.debug("Starting the string consumer")
     stringConsumer.startGettingEvents(this,KafkaStringsConsumer.StreamPosition.END)
@@ -182,6 +182,9 @@ class HbKafkaConsumer(brokers: String, val consumerId: String)
     }
 
   }
+
+  /** Return true if the kafka string consumer is ready to get logs */
+  def isReady: Boolean = stringConsumer.isReady()
 
 
 }
