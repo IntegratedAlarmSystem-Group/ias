@@ -1,5 +1,6 @@
 package org.eso.ias.heartbeat.test
 
+import ch.qos.logback.classic.Level
 import org.eso.ias.heartbeat.consumer.HbMsg
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer
 import org.eso.ias.heartbeat.report.HbsCollector
@@ -34,6 +35,7 @@ class TestHbsCollector extends AnyFlatSpec with BeforeAndAfterEach with BeforeAn
   var stringProducer: SimpleStringProducer = _
 
   override def beforeAll(): Unit = {
+    IASLogger.setRootLogLevel(Level.DEBUG)
     logger.info("Setting up the SimpleStringProducer")
     stringProducer = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,"HbConsumer")
     stringProducer.setUp()
@@ -151,6 +153,7 @@ class TestHbsCollector extends AnyFlatSpec with BeforeAndAfterEach with BeforeAn
     logger.info("Check getting HBs of requested type")
     hbsCollector.startCollectingHbs()
     hbsCollector.pause()
+    assert(hbsCollector.isCollecting)
     pushHb(HeartbeatProducerType.PLUGIN, "TestId", HeartbeatStatus.STARTING_UP)
     pushHb(HeartbeatProducerType.SUPERVISOR, "TestId2", HeartbeatStatus.STARTING_UP)
     pushHb(HeartbeatProducerType.PLUGIN, "TestId3", HeartbeatStatus.RUNNING)
@@ -168,14 +171,15 @@ class TestHbsCollector extends AnyFlatSpec with BeforeAndAfterEach with BeforeAn
     logger.info("Check getting HB of requested type/id")
     hbsCollector.startCollectingHbs()
     hbsCollector.pause()
-    Thread.sleep(10000)
+    assert(hbsCollector.isCollecting)
+    //Thread.sleep(10000)
     pushHb(HeartbeatProducerType.PLUGIN, "TestId-H", HeartbeatStatus.EXITING)
     pushHb(HeartbeatProducerType.SUPERVISOR, "TestId2-H", HeartbeatStatus.STARTING_UP)
     pushHb(HeartbeatProducerType.PLUGIN, "TestId3-H", HeartbeatStatus.RUNNING)
     pushHb(HeartbeatProducerType.CLIENT, "TestId4-H", HeartbeatStatus.PARTIALLY_RUNNING)
     pushHb(HeartbeatProducerType.CORETOOL, "TestId5-H", HeartbeatStatus.PAUSED)
     // Wait until the HBs arrive
-    assert(hbsCollector.isCollecting)
+
     val ret=waitHbsReception(5,15000)
     if (!ret) logger.error("Timeout waiting for items in the collector")
     assert(hbsCollector.getHbs().size==5)
