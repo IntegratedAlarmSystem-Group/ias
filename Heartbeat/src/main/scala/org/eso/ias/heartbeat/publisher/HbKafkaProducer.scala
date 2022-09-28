@@ -34,7 +34,8 @@ class HbKafkaProducer(
    */
   override def push(hbAsString: String): Unit = {
     if (!closed.get) {
-      kafkaProducer.push(hbAsString,KafkaHelper.HEARTBEAT_TOPIC_NAME,null,id)
+      //kafkaProducer.push(hbAsString,KafkaHelper.HEARTBEAT_TOPIC_NAME,null,id)
+      kafkaProducer.push(hbAsString,KafkaHelper.HEARTBEAT_TOPIC_NAME,0,null)
     }
   }
   
