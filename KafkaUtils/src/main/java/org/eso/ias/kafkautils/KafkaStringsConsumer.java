@@ -11,8 +11,6 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -47,7 +45,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @author acaproni
  */
-public class KafkaStringsConsumer implements Runnable {
+public class KafkaStringsConsumer implements Runnable, ConsumerRebalanceListener {
 
     /**
      * The interface fopr the listener of strings
@@ -131,6 +129,12 @@ public class KafkaStringsConsumer implements Runnable {
     private volatile AtomicBoolean isInitialized=new AtomicBoolean(false);
 
     /**
+     * The boolean set to <code>true</code> when the
+     * consumer is polling events
+     */
+    private volatile AtomicBoolean isGettingEvents=new AtomicBoolean(false);
+
+    /**
      * The thread getting data from the topic
      */
     private final AtomicReference<Thread> thread = new AtomicReference<>(null);
@@ -151,19 +155,7 @@ public class KafkaStringsConsumer implements Runnable {
     private StreamPosition startReadingPos = StreamPosition.DEFAULT;
 
     /**
-     * Max time to wait for the assignement of partitions before polling
-     * (in minutes)
-     */
-    private static final int WAIT_FOR_PARTITIONS_TIMEOUT = 3;
-
-    /**
-     * The latch to wait until the consumer has been initialized and
-     * is effectively polling for events
-     */
-    private final CountDownLatch polling = new CountDownLatch(1);
-
-    /**
-     * Signal that a partition has been assigned: seeking is done onlyt if a partition
+     * Signal that a partition has been assigned: seeking is done only if a partition
      * is assigned
      */
     private final AtomicBoolean isPartitionAssigned = new AtomicBoolean(false);
@@ -244,8 +236,13 @@ public class KafkaStringsConsumer implements Runnable {
             throws KafkaUtilsException {
         Objects.requireNonNull(startReadingFrom);
         Objects.requireNonNull(listener);
+        boolean alreadyGettingEvents = isGettingEvents.getAndSet(true);
+        if (alreadyGettingEvents) {
+            KafkaStringsConsumer.logger.warn("Consumer [{}] is already getting events from topic {}", consumerID, topicName);
+            return;
+        }
         this.stringsListener=listener;
-        KafkaStringsConsumer.logger.info("Preparing to consume strings");
+        KafkaStringsConsumer.logger.info("Consumer [{}] prepares to consume strings from topic {}", consumerID, topicName);
         if (!isInitialized.get()) {
             throw new IllegalStateException("Not initialized");
         }
@@ -253,24 +250,18 @@ public class KafkaStringsConsumer implements Runnable {
             KafkaStringsConsumer.logger.warn("Consumer [{}] cannot start receiving: already receiving events!",consumerID);
             return;
         }
+
+        // Subscribe the consumer to the topic
+        KafkaStringsConsumer.logger.debug("Consumer [{}]: subscribing to topic {}", consumerID, topicName);
+        consumer.subscribe(Arrays.asList(topicName), this);
+        KafkaStringsConsumer.logger.info("Consumer [{}]: subscribed to topic {}", consumerID, topicName);
+
+        // Start the thread to poll events from the topic
         startReadingPos = startReadingFrom;
         Thread getterThread = new Thread(this, KafkaStringsConsumer.class.getName() + "-Thread");
         getterThread.setDaemon(true);
         thread.set(getterThread);
         getterThread.start();
-
-        try {
-            KafkaStringsConsumer.logger.debug("Waiting for kafka partition assignment...");
-            if (!polling.await(WAIT_FOR_PARTITIONS_TIMEOUT, TimeUnit.MINUTES)) {
-                throw new KafkaUtilsException("Timed out while waiting for assignmnt to kafka partitions");
-            }
-            KafkaStringsConsumer.logger.debug("Kafka partition assigned");
-        } catch (InterruptedException e) {
-            KafkaStringsConsumer.logger.warn("Consumer [{}] Interrupted",consumerID);
-            Thread.currentThread().interrupt();
-            throw new KafkaUtilsException(consumerID+" interrupted while waiting for assignemnt to kafka partitions", e);
-        }
-        KafkaStringsConsumer.logger.info("Is consuming strings");
     }
 
     /**
@@ -351,81 +342,124 @@ public class KafkaStringsConsumer implements Runnable {
     }
 
     /**
-     * The thread to get data out of the topic
+     * Returns a string of topics and partitions contained in the
+     * passed collection
+     *
+     * @param parts The partitions to generate the string from
+     * @return a string of topic:partition
+     */
+    private String formatPartitionsStr(Collection<TopicPartition> parts) {
+        StringBuilder partitions = new StringBuilder();
+        for (TopicPartition topicPartition : parts) {
+            partitions.append(topicPartition.topic());
+            partitions.append(':');
+            partitions.append(topicPartition.partition());
+            partitions.append(' ');
+        }
+        return partitions.toString();
+    }
+
+    /**
+     * Called before the rebalancing starts and after the consumer stopped consuming events.
+     *
+     * @param parts The list of partitions that were assigned to the consumer and now need to be revoked (may not
+     *              include all currently assigned partitions, i.e. there may still be some partitions left)
+     */
+    @Override
+    public void onPartitionsRevoked(Collection<TopicPartition> parts) {
+        isPartitionAssigned.set(!consumer.assignment().isEmpty());
+        if (parts.isEmpty()) {
+            KafkaStringsConsumer.logger.info("Consumer [{}]: no partitions need to be revoked", consumerID);
+        } else {
+            KafkaStringsConsumer.logger.info("Consumer [{}]: {} partition(s) need to be revoked {}",
+                    consumerID,
+                    parts.size(),
+                    formatPartitionsStr(parts));
+        }
+    }
+
+    /**
+     * Called after partitions have been reassigned but before the consumer starts consuming messages
+     *
+     * @param parts The list of partitions that are now assigned to the consumer (previously owned partitions will
+     *              NOT be included, i.e. this list will only include newly added partitions)
+     */
+    @Override
+    public void onPartitionsAssigned(Collection<TopicPartition> parts) {
+        isPartitionAssigned.set(!consumer.assignment().isEmpty());
+        if (!parts.isEmpty()) {
+            KafkaStringsConsumer.logger.info("Consumer [{}]: {} new partitions assigned {}",
+                    consumerID,
+                    parts.size(),
+                    formatPartitionsStr(parts));
+            if (startReadingPos == StreamPosition.BEGIN) {
+                KafkaStringsConsumer.logger.debug("Consumer [{}]: seeking to the beginning", consumerID);
+                consumer.seekToBeginning(new ArrayList<>());
+            } else if (startReadingPos == StreamPosition.END) {
+                KafkaStringsConsumer.logger.debug("Consumer [{}]: seeking to the end", consumerID);
+                consumer.seekToEnd(new ArrayList<>());
+            }
+        } else {
+            KafkaStringsConsumer.logger.info("Consumer [{}]: no new partitions assigned", consumerID);
+        }
+    }
+
+    /**
+     * @param parts The list of partitions that were assigned to the consumer and now have been reassigned
+     *              to other consumers. With the current protocol this will always include all of the consumer's
+     *              previously assigned partitions, but this may change in future protocols (ie there would still
+     *              be some partitions left)
+     */
+    @Override
+    public void onPartitionsLost(Collection<TopicPartition> parts) {
+        KafkaStringsConsumer.logger.info("Consumer [{}] {} partitions reassigned to other consumers: {}",
+                consumerID,
+                parts.size(),
+                formatPartitionsStr(parts));
+        isPartitionAssigned.set(!consumer.assignment().isEmpty());
+    }
+
+    /**
+     * The thread to poll data from the topic
      *
      * @see java.lang.Runnable#run()
      */
     @Override
     public void run() {
-        KafkaStringsConsumer.logger.info("Thread of consumer [{}] to get events from the topic {} started",consumerID,topicName);
+        KafkaStringsConsumer.logger.debug("Consumer [{}]: thread to poll events from the topic {} started",consumerID,topicName);
 
-        if (startReadingPos== StreamPosition.DEFAULT) {
-            consumer.subscribe(Arrays.asList(topicName));
-        } else {
-            consumer.subscribe(Arrays.asList(topicName), new ConsumerRebalanceListener() {
-
-                /**
-                 * Returns a string of topics and partitions contained in the
-                 * passed collection
-                 *
-                 * @param parts The partitions to generate the string from
-                 * @return a string of topic:partition
-                 */
-                private String formatPartitionsStr(Collection<TopicPartition> parts) {
-                    StringBuilder partitions = new StringBuilder();
-                    for (TopicPartition topicPartition: parts ) {
-                        partitions.append(topicPartition.topic());
-                        partitions.append(':');
-                        partitions.append(topicPartition.partition());
-                        partitions.append(' ');
-                    }
-                    return partitions.toString();
-                }
-
-                @Override
-                public void onPartitionsRevoked(Collection<TopicPartition> parts) {
-                    isPartitionAssigned.set(false);
-                    KafkaStringsConsumer.logger.info("Partition(s) of consumer [{}] revoked: {}",consumerID, formatPartitionsStr(parts));
-
-                }
-
-                @Override
-                public void onPartitionsAssigned(Collection<TopicPartition> parts) {
-                    isPartitionAssigned.set(false);
-                    KafkaStringsConsumer.logger.info("Consumer [{}] assigned to {} partition(s): {}",
-                            consumerID,
-                            parts.size(),
-                            formatPartitionsStr(parts));
-                    if (startReadingPos== StreamPosition.BEGIN) {
-                        consumer.seekToBeginning(new ArrayList<>());
-                    } else {
-                        consumer.seekToEnd(new ArrayList<>());
-                    }
-                    polling.countDown();
-                }
-            });
-        }
-
-        KafkaStringsConsumer.logger.debug("Consumer [{}] : start polling loop",consumerID);
-        while (!isClosed.get()) {
+        KafkaStringsConsumer.logger.debug("Consumer [{}]: thread running the polling loop", consumerID);
+         while (!isClosed.get()) {
             ConsumerRecords<String, String> records;
             try {
                 records = consumer.poll(POLLING_TIMEOUT);
-                KafkaStringsConsumer.logger.debug("Consumer [{}] got an event read with {} records", consumerID, records.count());
+                KafkaStringsConsumer.logger.debug("Consumer [{}] got {} records from topic {}",
+                        consumerID,
+                        records.count(),
+                        topicName);
                 processedRecords.incrementAndGet();
             } catch (WakeupException we) {
-                KafkaStringsConsumer.logger.warn("Consumer [{}]: no values read from the topic {} in the past {} seconds",
+                if (!isClosed.get()) { // Ignore the exception when closing
+                        KafkaStringsConsumer.logger.warn("Consumer [{}]: no values read from the topic {} in the past {} seconds",
+                                consumerID,
+                                topicName,
+                                POLLING_TIMEOUT.getSeconds());
+                }
+                continue;
+            } catch (Throwable t) {
+                KafkaStringsConsumer.logger.error("Consumer [{}] got an exception while reading events on topic {}",
                         consumerID,
                         topicName,
-                        POLLING_TIMEOUT.getSeconds());
+                        t);
                 continue;
             }
 
             notifyListener(records);
         }
-        KafkaStringsConsumer.logger.debug("Closing the consumer [{}]",consumerID);
+        KafkaStringsConsumer.logger.debug("Consumer [{}]: closing the kafka consumer",consumerID);
         consumer.close();
-        KafkaStringsConsumer.logger.info("Thread of [{}] to get events from the topic terminated",consumerID);
+        KafkaStringsConsumer.logger.info("Consumer [{}]: thread to get events from the topic {} terminated",
+                consumerID, topicName);
     }
 
     /**
@@ -448,7 +482,7 @@ public class KafkaStringsConsumer implements Runnable {
                 KafkaStringsConsumer.logger.debug("Notify the consumer of {} records",ret.size());
                 stringsListener.stringsReceived(ret);
             } catch (Exception e) {
-                KafkaStringsConsumer.logger.error("Consumer [{}] got an exception got processing events: records lost!",consumerID,e);
+                KafkaStringsConsumer.logger.error("Consumer [{}] got an exception processing events: records lost!",consumerID,e);
             } finally {
                 ret.clear();
             }
@@ -461,12 +495,12 @@ public class KafkaStringsConsumer implements Runnable {
      * otherwise the seek is ignored.
      *
      * @param pos The position to seek the consumer
-     * @return true is the seek has been done with an asigned partiton;
+     * @return true is the seek has been done with an assigned partiton;
      *         false otherwise
      */
     public boolean seekTo(StreamPosition pos) {
         Objects.requireNonNull(pos,"Invalid position given");
-        if (!isClosed.get() || !isPartitionAssigned.get()) {
+        if (!isClosed.get() && isPartitionAssigned.get()) {
             if (pos== StreamPosition.BEGIN) {
                 consumer.seekToBeginning(new ArrayList<>());
             } else {
@@ -476,5 +510,18 @@ public class KafkaStringsConsumer implements Runnable {
         } else {
             return false;
         }
+    }
+
+    /**
+     * Return true if the consumer is ready.
+     *
+     * Kafka API does not provide a way to know if the consumer is ready.
+     * This method uses {@link KafkaConsumer#assignment()}} to understand if the
+     * consumer is ready: the consumer is ready if there are partitions assigned to it.
+     *
+     * @return true if the consumer is ready, false otherwise
+     */
+    public boolean isReady() {
+        return isInitialized.get() && isPartitionAssigned.get();
     }
 }
