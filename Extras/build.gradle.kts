@@ -10,6 +10,7 @@ dependencies {
       val extension = g as ExtensionAware
       implementation(extension.extra["scala-library"].toString())
       implementation(extension.extra["scala-logging"].toString())
+      implementation(extension.extra["kafka-clients"].toString())
     }
 
     implementation(project(":BasicTypes"))

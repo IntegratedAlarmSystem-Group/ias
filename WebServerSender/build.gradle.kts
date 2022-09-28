@@ -16,6 +16,7 @@ dependencies {
       implementation(extension.extra["junit-jupiter-api"].toString())
       implementation(extension.extra["junit-jupiter-engine"].toString())
       implementation(extension.extra["hibernate-jpa"].toString())
+      implementation(extension.extra["kafka-clients"].toString())
     }
     implementation("org.eclipse.jetty.websocket:websocket-api:9.4.15.v20190215")
     implementation("org.eclipse.jetty.websocket:websocket-client:9.4.15.v20190215")
