@@ -187,13 +187,13 @@ class HbsCollector(
    *
    * @param hbMsg The HB message
    */
-  def hbReceived(hbMsg: HbMsg): Unit = synchronized {
+  override def hbReceived(hbMsg: HbMsg): Unit = synchronized {
     if (collectingHbs.get()) {
       val key = hbMsg.hb.id
       hbs += (key -> hbMsg)
-      HbsCollector.logger.info(s"HB received with ID ${key}")
+      HbsCollector.logger.debug(s"HB received with ID ${key}")
     } else {
-      HbsCollector.logger.info("HB DISCARDED")
+      HbsCollector.logger.debug("HB DISCARDED")
     }
   }
 
