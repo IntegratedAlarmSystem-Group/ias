@@ -12,6 +12,8 @@ import org.eso.ias.logging.IASLogger
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
+import java.time.Duration
+
 /** Test the HbsCollector */
 class TestHbsCollector extends AnyFlatSpec with BeforeAndAfterEach with BeforeAndAfterAll {
   /** The logger */
@@ -172,7 +174,7 @@ class TestHbsCollector extends AnyFlatSpec with BeforeAndAfterEach with BeforeAn
     hbsCollector.startCollectingHbs()
     hbsCollector.pauseTtlCheck()
     assert(hbsCollector.isCollecting)
-    //Thread.sleep(10000)
+
     pushHb(HeartbeatProducerType.PLUGIN, "TestId-H", HeartbeatStatus.EXITING)
     pushHb(HeartbeatProducerType.SUPERVISOR, "TestId2-H", HeartbeatStatus.STARTING_UP)
     pushHb(HeartbeatProducerType.PLUGIN, "TestId3-H", HeartbeatStatus.RUNNING)
@@ -190,5 +192,39 @@ class TestHbsCollector extends AnyFlatSpec with BeforeAndAfterEach with BeforeAn
     assert(hb.status==HeartbeatStatus.STARTING_UP)
     assert(hb.hb.id=="TestId2-H:SUPERVISOR")
     assert(hb.hb.hbType==HeartbeatProducerType.SUPERVISOR)
+  }
+
+  it must "collect HBs for the poassed interval" in {
+    logger.info("Check getting HBs along a time interval")
+    hbsCollector.pauseTtlCheck()
+
+    // HBs produced before the time interval shall be discarded
+    hbsCollector.startCollectingHbs()
+    pushHb(HeartbeatProducerType.PLUGIN, "ToBeDiscardedHb-1", HeartbeatStatus.EXITING)
+    pushHb(HeartbeatProducerType.SUPERVISOR, "ToBeDiscardedHb-1", HeartbeatStatus.STARTING_UP)
+    Thread.sleep(500)
+    val d = Duration.ofSeconds(5)
+    logger.info(s"Start collecting HB for ${d.getSeconds}")
+
+    val t: Thread = new Thread(new Runnable {
+      override def run(): Unit = {
+        logger.info("Thread to collect HBs started")
+        hbsCollector.collectHbsFor(d)
+        logger.info("Thread to collect HBs terminated")
+      }
+    })
+    t.start()
+    Thread.sleep(500)
+    pushHb(HeartbeatProducerType.PLUGIN, "TestId-H", HeartbeatStatus.EXITING)
+    pushHb(HeartbeatProducerType.SUPERVISOR, "TestId2-H", HeartbeatStatus.STARTING_UP)
+    pushHb(HeartbeatProducerType.PLUGIN, "TestId3-H", HeartbeatStatus.RUNNING)
+    pushHb(HeartbeatProducerType.CLIENT, "TestId4-H", HeartbeatStatus.PARTIALLY_RUNNING)
+
+    logger.info("Waiting for thread termination...")
+    t.join(d.toMillis+1000)
+    assert(!t.isAlive)
+    assert(!hbsCollector.isCollecting)
+    val hbs = hbsCollector.getHbs
+    assert(hbs.size==4)
   }
 }
