@@ -1,6 +1,7 @@
 package org.eso.ias.heartbeat.test
 
 import ch.qos.logback.classic.Level
+import com.typesafe.scalalogging.Logger
 import org.eso.ias.heartbeat.consumer.HbMsg
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer
 import org.eso.ias.heartbeat.report.HbsCollector
@@ -14,7 +15,7 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 /** Test the HbsCollector */
 class TestHbsCollector extends AnyFlatSpec with BeforeAndAfterEach with BeforeAndAfterAll {
   /** The logger */
-  val logger = IASLogger.getLogger(classOf[TestHbsCollector])
+  val logger: Logger = IASLogger.getLogger(classOf[TestHbsCollector])
 
   /** The ID of the collector to test */
   val collectorID = "TestCollectorId"
@@ -87,7 +88,6 @@ class TestHbsCollector extends AnyFlatSpec with BeforeAndAfterEach with BeforeAn
    * the timeout elapses
    *
    * @param numOfItems The expected number of items in the collector
-   * @param timout (msecs) the timeout to get the items
    * @return true if the items have been received or false in case of timeout
    *
    */
@@ -104,7 +104,7 @@ class TestHbsCollector extends AnyFlatSpec with BeforeAndAfterEach with BeforeAn
 
   /** Dump the content of the collector on the stdout */
   def dumpCollectorContent(): Unit = {
-    val hbs: Seq[HbMsg] = hbsCollector.getHbs()
+    val hbs: Seq[HbMsg] = hbsCollector.getHbs
     hbs.foreach(hbm => {
       println(s"HB ${hbm.hb.id} ${hbm.status}")
     })
@@ -117,8 +117,8 @@ class TestHbsCollector extends AnyFlatSpec with BeforeAndAfterEach with BeforeAn
     hbsCollector.startCollectingHbs()
     pushHb(HeartbeatProducerType.PLUGIN, "TestId", HeartbeatStatus.STARTING_UP)
     // Give the container time to get the HB
-    Thread.sleep(1000);
-    val hbs = hbsCollector.getHbs()
+    Thread.sleep(1000)
+    val hbs = hbsCollector.getHbs
     assert(hbs.size==1)
   }
 
@@ -128,8 +128,8 @@ class TestHbsCollector extends AnyFlatSpec with BeforeAndAfterEach with BeforeAn
     pushHb(HeartbeatProducerType.PLUGIN, "TestId", HeartbeatStatus.STARTING_UP)
     pushHb(HeartbeatProducerType.SUPERVISOR, "TestId2", HeartbeatStatus.STARTING_UP)
     // Give the container time to get the HB
-    Thread.sleep(1000);
-    assert(hbsCollector.getHbs().size==2)
+    Thread.sleep(1000)
+    assert(hbsCollector.getHbs.size==2)
     logger.info("Waiting until TTL elapses")
     Thread.sleep(10000)
     assert(hbsCollector.isEmpty)
@@ -138,21 +138,21 @@ class TestHbsCollector extends AnyFlatSpec with BeforeAndAfterEach with BeforeAn
   it must "not delete old HBs after TTL expires when paused" in {
     logger.info("Check pause")
     hbsCollector.startCollectingHbs()
-    hbsCollector.pause()
+    hbsCollector.pauseTtlCheck()
     pushHb(HeartbeatProducerType.PLUGIN, "TestId", HeartbeatStatus.STARTING_UP)
     pushHb(HeartbeatProducerType.SUPERVISOR, "TestId2", HeartbeatStatus.STARTING_UP)
     // Give the container time to get the HB
     Thread.sleep(1000);
-    assert(hbsCollector.getHbs().size==2)
+    assert(hbsCollector.getHbs.size==2)
     logger.info("Waiting until TTL elapses")
     Thread.sleep(10000)
-    assert(hbsCollector.getHbs().size==2)
+    assert(hbsCollector.getHbs.size==2)
   }
 
   it must "return the HBs of the requested tool type" in {
     logger.info("Check getting HBs of requested type")
     hbsCollector.startCollectingHbs()
-    hbsCollector.pause()
+    hbsCollector.pauseTtlCheck()
     assert(hbsCollector.isCollecting)
     pushHb(HeartbeatProducerType.PLUGIN, "TestId", HeartbeatStatus.STARTING_UP)
     pushHb(HeartbeatProducerType.SUPERVISOR, "TestId2", HeartbeatStatus.STARTING_UP)
@@ -160,8 +160,8 @@ class TestHbsCollector extends AnyFlatSpec with BeforeAndAfterEach with BeforeAn
     pushHb(HeartbeatProducerType.CLIENT, "TestId4", HeartbeatStatus.PARTIALLY_RUNNING)
     pushHb(HeartbeatProducerType.CORETOOL, "TestId5", HeartbeatStatus.PAUSED)
     // Give the container time to get the HB
-    Thread.sleep(1000);
-    assert(hbsCollector.getHbs().size==5)
+    Thread.sleep(1000)
+    assert(hbsCollector.getHbs.size==5)
     val hbs = hbsCollector.getHbsOfType(HeartbeatProducerType.PLUGIN)
     hbs.foreach(hb => logger.info(s"Received Hb: ${hb.hb.id} ${hb.status}"))
     assert(hbs.size==2)
@@ -170,7 +170,7 @@ class TestHbsCollector extends AnyFlatSpec with BeforeAndAfterEach with BeforeAn
   it must "return the HB of the requested tool" in {
     logger.info("Check getting HB of requested type/id")
     hbsCollector.startCollectingHbs()
-    hbsCollector.pause()
+    hbsCollector.pauseTtlCheck()
     assert(hbsCollector.isCollecting)
     //Thread.sleep(10000)
     pushHb(HeartbeatProducerType.PLUGIN, "TestId-H", HeartbeatStatus.EXITING)
@@ -182,7 +182,7 @@ class TestHbsCollector extends AnyFlatSpec with BeforeAndAfterEach with BeforeAn
 
     val ret=waitHbsReception(5,15000)
     if (!ret) logger.error("Timeout waiting for items in the collector")
-    assert(hbsCollector.getHbs().size==5)
+    assert(hbsCollector.getHbs.size==5)
     dumpCollectorContent()
     val hbOpt = hbsCollector.getHbOf(HeartbeatProducerType.SUPERVISOR,"TestId2-H")
     assert(hbOpt.nonEmpty)

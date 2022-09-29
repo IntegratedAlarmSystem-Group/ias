@@ -74,9 +74,9 @@ class HbsCollector(
    * Pause the timer.
    *
    * As the java timer cannot be paused, the pause/resume is simulated in the
-   * time task (run)
+   * timer task (run)
    */
-  def pause(): Unit = {
+  def pauseTtlCheck(): Unit = {
     paused.set(true)
     HbsCollector.logger.debug("Paused")
   }
@@ -87,7 +87,7 @@ class HbsCollector(
    * As the java timer cannot be paused, the pause/resume is simulated in the
    * time task (run)
    */
-  def resume(): Unit = {
+  def resumeTtlCheck(): Unit = {
     paused.set(false)
     HbsCollector.logger.debug("Resumed")
   }
@@ -106,7 +106,7 @@ class HbsCollector(
   }
 
   /** Return all the HB messages in the container */
-  def getHbs(): List[HbMsg] = synchronized { hbs.values.toList }
+  def getHbs: List[HbMsg] = synchronized { hbs.values.toList }
 
   /**
    * Get and return the HBs in the map of the passed type
