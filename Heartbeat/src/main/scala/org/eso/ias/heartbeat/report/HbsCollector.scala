@@ -5,6 +5,8 @@ import org.eso.ias.heartbeat.consumer.{HbKafkaConsumer, HbListener, HbMsg}
 import org.eso.ias.heartbeat.{HeartbeatProducerType, HeartbeatStatus}
 import org.eso.ias.logging.IASLogger
 
+import java.time.Duration
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.{Timer, TimerTask}
 import scala.collection.mutable.{ArrayBuffer, Map as MutableMap}
@@ -26,7 +28,7 @@ import scala.collection.mutable.{ArrayBuffer, Map as MutableMap}
  * @param consumerId The id for the kafka consumer
  * @param ttl time to leave (msec>=0) disabled by default,
  *             if ttl>0, HBs older then ttl are automatically removed from the container
- *             if ttl<0, received HBs are never removed from the container
+ *             if ttl<=0, received HBs are never removed from the container
  *             It makes sense to link TTL to the HB period set in the CDB ("hbFrequency")
  * @param ttlCheckTime the period (msec>0) to check for old HBs
  */
@@ -55,6 +57,9 @@ class HbsCollector(
    */
   private val initialized = new AtomicBoolean(false)
 
+  /** The flag that says if the object has been shut down */
+  private val closed = new AtomicBoolean(false)
+
   /** The flag to pause/resume the timer (simulated) */
   private val paused = new AtomicBoolean(false)
 
@@ -65,7 +70,7 @@ class HbsCollector(
   def isCollecting: Boolean = collectingHbs.get()
 
   /** @return true if the thread to remove old HBs is paused */
-  def isPaused: Boolean = paused.get()
+  def isTtlRemovalPaused: Boolean = paused.get()
 
   /** Return the number of items in the container */
   def size: Int = synchronized { hbs.size }
@@ -149,19 +154,22 @@ class HbsCollector(
 
   /** Disconnect the consumer */
   def shutdown(): Unit = synchronized {
-    HbsCollector.logger.info("Shutting down...")
-    stopCollectingHbs()
-    if (ttl>0) {
-      HbsCollector.logger.debug("Terminating the timer task")
-      timer.cancel()
+    val alreadyClosed = closed.getAndSet(true)
+    if (!alreadyClosed) {
+      HbsCollector.logger.info("Shutting down...")
+      stopCollectingHbs()
+      if (ttl>0) {
+        HbsCollector.logger.debug("Terminating the timer task")
+        timer.cancel()
+      }
+      hbConsumer.shutdown()
+      clear()
+      HbsCollector.logger.info("The collector is shutdown")
     }
-    hbConsumer.shutdown()
-    clear()
-    HbsCollector.logger.info("The collector is shutdown")
   }
 
   /** Starts collecting the HBs. */
-  def startCollectingHbs(): Unit = {
+  def startCollectingHbs(): Unit = synchronized {
     require(initialized.get(), "The collector must be initialized before getting HBs")
     HbsCollector.logger.info("Start collecting HBs")
     collectingHbs.set(true)
@@ -170,9 +178,22 @@ class HbsCollector(
   /**
    * Stops collecting the HBs.
    */
-  def stopCollectingHbs(): Unit = {
+  def stopCollectingHbs(): Unit = synchronized {
     collectingHbs.set(false)
     HbsCollector.logger.info("Stopped collecting HBs")
+  }
+
+  /**
+   * Collect HBs for the passed time
+   *
+   * @param Duration
+   */
+  def collectHbsFor(time: Duration): Unit = {
+    stopCollectingHbs()
+    clear()
+    startCollectingHbs()
+    Thread.sleep(time.toMillis)
+    stopCollectingHbs()
   }
 
   /**
@@ -193,7 +214,7 @@ class HbsCollector(
       hbs += (key -> hbMsg)
       HbsCollector.logger.debug(s"HB received with ID ${key}")
     } else {
-      HbsCollector.logger.debug("HB DISCARDED")
+      HbsCollector.logger.debug(s"HB ${hbMsg.hb.id} DISCARDED")
     }
   }
 
