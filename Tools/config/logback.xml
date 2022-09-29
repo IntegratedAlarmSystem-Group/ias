@@ -9,6 +9,11 @@
   <timestamp key="tStamp" datePattern="yyyy-MM-dd'T'HH:mm:ss.SSS" timeReference="-3"/>
 
   <shutdownHook/>
+
+    <logger name="org.apache.kafka" level="INFO" />
+    <logger name="org.hibernate" level="WARN" />
+    <logger name="com.mchange" level="WARN" />
+    <logger name="ch.qos.logback" level="WARN" />
   
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <!-- encoders are assigned the type
@@ -18,10 +23,6 @@
     </encoder>
   </appender>
 
-  <logger name="org.apache.kafka" level="INFO" />
-  <logger name="org.hibernate" level="WARN" />
-  <logger name="com.mchange" level="WARN" />
-  
    <appender 
    	name="FILE" 
    	class="ch.qos.logback.core.rolling.RollingFileAppender">
