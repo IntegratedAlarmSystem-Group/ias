@@ -272,7 +272,7 @@ public class KafkaStringsConsumer implements Runnable, ConsumerRebalanceListener
      */
     private synchronized void stopGettingEvents() {
         if (thread.get()==null) {
-            KafkaStringsConsumer.logger.error("[{}] cannot stop receiving events as I am not receiving events!",consumerID);
+            KafkaStringsConsumer.logger.warn("[{}] cannot stop receiving events as I am not receiving events!",consumerID);
             return;
         }
         consumer.wakeup();
@@ -328,14 +328,15 @@ public class KafkaStringsConsumer implements Runnable, ConsumerRebalanceListener
      * Close and cleanup the consumer
      */
     public synchronized void tearDown() {
-        if (isClosed.get()) {
+        if (isClosed.getAndSet(true)) {
             KafkaStringsConsumer.logger.warn("Consumer [{}] already closed",consumerID);
             return;
         }
         KafkaStringsConsumer.logger.debug("Closing consumer [{}]...",consumerID);
-        isClosed.set(true);
         if (!isShuttingDown.get()) {
-            Runtime.getRuntime().removeShutdownHook(shutDownThread);
+            try {
+                Runtime.getRuntime().removeShutdownHook(shutDownThread);
+            } catch (IllegalStateException e) { }// Already shutting down
         }
         stopGettingEvents();
         KafkaStringsConsumer.logger.info("Consumer [{}] cleaned up",consumerID);
