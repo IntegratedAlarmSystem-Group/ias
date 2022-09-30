@@ -1074,7 +1074,6 @@ public class JsonReader implements CdbReader {
 		if (!initialized.get()) {
 			throw new IasCdbException("The reader is not initialized");
 		}
-		System.out.println("Getting IDS of plugins");
 
 		// We do not care if this plugin exists or not as we need the
 		// to scan the folder for the names of all the files if contains
