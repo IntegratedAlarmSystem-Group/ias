@@ -133,6 +133,9 @@ object RunningIasTools {
   /** Default timeut 10 secs */
   val DEFAULT_TIMEOUT = 10000L
 
+  /** The multiplier to apply to the HB frequency read from the CDB */
+  val CDB_HBTIME_MULTIPLIER = 2L
+
   /** Default kafka brokers */
   val DEFAULT_BROKERS: String = KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS
 
@@ -162,7 +165,7 @@ object RunningIasTools {
   def getCdbData(args: Array[String]): CdbDefinedTools = {
     RunningIasTools.logger.debug("Getting the CDB reader")
     val cdbReader: CdbReader = CdbReaderFactory.getCdbReader(args)
-    cdbReader.init();
+    cdbReader.init()
     val ret = CdbDefinedTools(cdbReader)
 
     // An exception shutting down the reader shall not invalidate the data read
@@ -196,13 +199,19 @@ object RunningIasTools {
     val help: Boolean = cmdLine.hasOption('h')
     val verbose: Boolean = cmdLine.hasOption('v')
     val brokers: String = Option(cmdLine.getOptionValue('b')).getOrElse(DEFAULT_BROKERS)
-    val timeout: Long =  Option(cmdLine.getOptionValue('t'))
-      .map(java.lang.Long.parseLong)
-      .getOrElse(DEFAULT_TIMEOUT)
     val missing: Boolean = cmdLine.hasOption('m')
 
-    // If the user wants to see what IAS tools are not running, then we need the CDB
-    val cdbToolsOpt = if (missing) Try {getCdbData(args)}.toOption else None
+    // Tries to access the CDB for showing the missing tools and gt the HB frequency
+    val cdbToolsOpt: Option[CdbDefinedTools] = Try {getCdbData(args)}.toOption
+
+    // Timeout is assigned from whatever is defined from the following ordered list
+    // 1) from the command line
+    // 2) (HB frequency read from IAS CDB)*2
+    // 3) default
+    val timeout: Long =
+      Option(cmdLine.getOptionValue('t'))
+      .map(java.lang.Long.parseLong)
+      .getOrElse(cdbToolsOpt.flatMap(_.hbFrequency.map(_*CDB_HBTIME_MULTIPLIER)).getOrElse(DEFAULT_TIMEOUT))
 
     if (missing && cdbToolsOpt.isEmpty) {
       RunningIasTools.logger.error("Cannot access the CDB and provide info on missing tools")
