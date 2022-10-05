@@ -11,6 +11,7 @@ dependencies {
       implementation(extension.extra["scala-library"].toString())
       implementation(extension.extra["scalatest"].toString())
       implementation(extension.extra["scala-logging"].toString())
+      implementation(extension.extra["kafka-clients"].toString())
     }
 
     implementation(project(":BasicTypes"))

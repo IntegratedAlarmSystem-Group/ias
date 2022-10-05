@@ -16,6 +16,7 @@ dependencies {
       implementation(extension.extra["jackson-databind"].toString())
       implementation(extension.extra["commons-cli"].toString())
       implementation(extension.extra["hibernate-jpa"].toString())
+      implementation(extension.extra["kafka-clients"].toString())
     }
     
 

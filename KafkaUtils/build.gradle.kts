@@ -12,8 +12,9 @@ dependencies {
       implementation(extension.extra["junit-jupiter-api"].toString())
       implementation(extension.extra["junit-jupiter-engine"].toString())
       implementation(extension.extra["kafka-clients"].toString())
+      implementation(extension.extra["logback-classic"].toString())
     }
 
     implementation(project(":BasicTypes"))
-
+    implementation(project(":Tools"))
 }

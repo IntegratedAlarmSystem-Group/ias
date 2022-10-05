@@ -1,20 +1,19 @@
 package org.eso.ias.kafkautils.test;
 
+import ch.qos.logback.classic.Level;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaStringsConsumer.StreamPosition;
 import org.eso.ias.kafkautils.SimpleStringConsumer;
 import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener;
 import org.eso.ias.kafkautils.SimpleStringProducer;
+import org.eso.ias.logging.IASLogger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -124,14 +123,29 @@ public class ConsumerProducerTest implements KafkaConsumerListener {
 	 */
 	@BeforeEach
 	public void setUp() throws Exception {
+		IASLogger.setRootLogLevel(Level.DEBUG);
 		logger.info("Initializing...");
 		consumer = new SimpleStringConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, topicName, "PubSub-Test");
-		consumer.setUp();
+		Properties props = new Properties();
+		props.setProperty("group.id","Group-"+System.currentTimeMillis());
+		consumer.setUp(props);
 		producer = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, "Consumer-ID");
+
 		producer.setUp();
 		
 		consumer.startGettingStrings(StreamPosition.END,this);
-		logger.info("Initialized.");
+
+		// Wait until the consumer is ready
+		long timeout = 10000;
+		long now = System.currentTimeMillis();
+		while (!consumer.isReady() && System.currentTimeMillis()<now+timeout) {
+			Thread.sleep(250);
+		}
+		if (consumer.isReady()) {
+			logger.info("Initialized.");
+		} else {
+			throw new Exception("Consumer did not get ready in time");
+		}
 	}
 	
 	/**
