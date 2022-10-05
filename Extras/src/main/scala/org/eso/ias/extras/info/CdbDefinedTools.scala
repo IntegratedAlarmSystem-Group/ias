@@ -27,12 +27,12 @@ class CdbDefinedTools(val cdbReader: CdbReader) {
   val pluginIds: List[String] = convertToScalaList(cdbReader.getPluginIds)
   val SupervisorIds: List[String] = convertToScalaList(cdbReader.getSupervisorIds)
   val getClientIds: List[String] = convertToScalaList(cdbReader.getClientIds)
-  val sinkIds =  List[String]()
-  val coreToolsIds = List[String]()
-  val converterIds = List[String]()
+  val sinkIds: List[String] =  List[String]()
+  val coreToolsIds : List[String]= List[String]()
+  val converterIds: List[String] = List[String]()
 
   /** The frequency to submit HBs in the IAS (msecs) */
-  val hbFrequency: Option[Int] =  OptionConverters.toScala(cdbReader.getIas.map(ias => ias.getHbFrequency*1000))
+  val hbFrequency: Option[Long] =  OptionConverters.toScala(cdbReader.getIas.map(ias => ias.getHbFrequency*1000L))
 
   /** Associate the HB type to the IDs of the tools */
   val idsByType: Map[HeartbeatProducerType, List[String]] = Map(
@@ -57,5 +57,5 @@ object CdbDefinedTools {
   val logger: Logger = IASLogger.getLogger(CdbDefinedTools.getClass)
 
   val hbType: Array[HeartbeatProducerType] = HeartbeatProducerType.values()
-  val types = (for tp <- hbType yield tp).sorted
+  val types: Array[HeartbeatProducerType] = (for tp <- hbType yield tp).sorted
 }
