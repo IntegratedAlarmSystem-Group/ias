@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Objects;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -66,13 +65,6 @@ public class SimpleStringConsumer extends  KafkaStringsConsumer implements Kafka
 	 * (in minutes)
 	 */
 	private static final int WAIT_FOR_PARTITIONS_TIMEOUT = 3;
-
-	/**
-	 * The latch to wait until the consumer has been initialized and
-	 * is effectively polling for events
-	 */
-	private final CountDownLatch polling = new CountDownLatch(1);
-
 
 	/**
 	 * Constructor

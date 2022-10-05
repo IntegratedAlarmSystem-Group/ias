@@ -1,11 +1,9 @@
 package org.eso.ias.logging;
 
-import com.typesafe.scalalogging.Logger
-import org.slf4j.LoggerFactory
-import org.slf4j.ILoggerFactory
-import ch.qos.logback.classic.{Level, LoggerContext}
+import ch.qos.logback.classic.{Level, LoggerContext, Logger as LogBackLogger}
 import ch.qos.logback.core.util.StatusPrinter
-import ch.qos.logback.classic.{Logger => LogBackLogger}
+import com.typesafe.scalalogging.Logger
+import org.slf4j.{ILoggerFactory, LoggerFactory}
 
 /**
  * IASLogger is the binding to the logging mechanism for the IAS.
@@ -58,13 +56,25 @@ object IASLogger {
     * This code is dependent of logback because slf4j does not
     * offer any API to set the log level.
     *
-    * @param level
+    * @param level the log level to set
     */
-  def setRootLogLevel(level: Level): Unit = {
-   require(Option(level).isDefined)
-   val loggerFactory =  LoggerFactory.getILoggerFactory
-   val rootLogger: LogBackLogger = loggerFactory.getLogger("org.eso.ias").asInstanceOf[LogBackLogger]
-   rootLogger.setLevel(level)
+  def setRootLogLevel(level: Level): Unit = setLogLevel("org.eso.ias", level)
+
+  /**
+    * Set the log level of the package to the passed level/
+    *
+    * This code is dependent of logback because slf4j does not
+    * offer any API to set the log level.
+    *
+   *  @param pkg the package to change the log level
+    * @param level the log level to set
+    */
+  def setLogLevel(pkg: String, level: Level): Unit = {
+    require(Option(level).isDefined)
+    require(Option(pkg).isDefined)
+    val loggerFactory =  LoggerFactory.getILoggerFactory
+    val rootLogger: LogBackLogger = loggerFactory.getLogger(pkg).asInstanceOf[LogBackLogger]
+    rootLogger.setLevel(level)
   }
 
   /**

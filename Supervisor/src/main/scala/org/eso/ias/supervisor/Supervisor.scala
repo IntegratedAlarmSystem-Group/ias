@@ -1,13 +1,11 @@
 package org.eso.ias.supervisor
 
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.{CountDownLatch, TimeUnit}
 import ch.qos.logback.classic.Level
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
-import org.eso.ias.cdb.{CdbReader, CdbReaderFactory}
-import org.eso.ias.cdb.pojos._
+import org.eso.ias.cdb.pojos.*
 import org.eso.ias.cdb.topology.TemplateHelper
+import org.eso.ias.cdb.{CdbReader, CdbReaderFactory}
 import org.eso.ias.command.CommandManager
 import org.eso.ias.command.kafka.CommandManagerKafkaImpl
 import org.eso.ias.dasu.publisher.{KafkaPublisher, OutputPublisher}
@@ -21,6 +19,8 @@ import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.{IASValue, Identifier, IdentifierType}
 import org.eso.ias.utils.ISO8601Helper
 
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.{CountDownLatch, TimeUnit}
 import scala.jdk.javaapi.CollectionConverters
 import scala.util.{Failure, Success, Try}
 
@@ -563,8 +563,6 @@ object Supervisor {
     require(parsedArgs._1.nonEmpty, "Missing identifier in command line")
 
     val supervisorId = parsedArgs._1.get
-
-    args.foreach(a => println("===>>> "+a))
 
     val reader: CdbReader = CdbReaderFactory.getCdbReader(args)
     reader.init()
