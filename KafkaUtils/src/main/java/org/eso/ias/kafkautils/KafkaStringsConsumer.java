@@ -107,6 +107,21 @@ public class KafkaStringsConsumer implements Runnable, ConsumerRebalanceListener
     private static final Duration POLLING_TIMEOUT = Duration.ofSeconds(15);
 
     /**
+     * The property to setup the waiting time until the consumer is ready (in msecs)
+     */
+    public static final String WAIT_CONSUMER_READY_TIMEOUT_PROP_NAME = "org.eso.ias.kafka.consumerready.timeout";
+
+    /**
+     * Default time to wait until the consumer is ready
+     */
+    public static final long DEFAULT_CONSUMER_READY_TIMEOUT = 15000;
+
+    /**
+     * Min allowed timeout to wait for the consumer ready
+     */
+    public static final long MIN_CONSUMER_READY_TIMEOUT = 5000;
+
+    /**
      * The consumer getting events from the kafka topic
      */
     private KafkaConsumer<String, String> consumer;
@@ -262,6 +277,8 @@ public class KafkaStringsConsumer implements Runnable, ConsumerRebalanceListener
         getterThread.setDaemon(true);
         thread.set(getterThread);
         getterThread.start();
+
+        waitUntilConsumerReady();
     }
 
     /**
@@ -524,5 +541,47 @@ public class KafkaStringsConsumer implements Runnable, ConsumerRebalanceListener
      */
     public boolean isReady() {
         return isInitialized.get() && isPartitionAssigned.get();
+    }
+
+    /**
+     * Waits until the consumer is ready or a timeout elapses.
+     *
+     * This methods waits until the consumer is ready (delegating to {@link #isReady()})or a timeout elapses.
+     * If at the end of the timeout the consumer is not yet ready, this method only logs a warning
+     * as we do not want to block the process in case the consumer becomes ready after for whatever reason.
+     * But still the situation is probably not normal and we want to log the event.
+     *
+     * The timeout can be set by setting {@link #WAIT_CONSUMER_READY_TIMEOUT_PROP_NAME} property
+     * otherwise the default ({@link #DEFAULT_CONSUMER_READY_TIMEOUT}) is used.
+     */
+    public void waitUntilConsumerReady() {
+        Properties props = System.getProperties();
+        String timeoutStr = props.getProperty(WAIT_CONSUMER_READY_TIMEOUT_PROP_NAME);
+        long timeout = DEFAULT_CONSUMER_READY_TIMEOUT;
+        if (timeoutStr!=null) {
+            timeout = Long.parseLong(timeoutStr);
+        }
+        if (timeout < MIN_CONSUMER_READY_TIMEOUT) {
+            logger.warn("Consumer [{}]: Timeout read from properties {} is too short: using {} instead",
+                    consumerID,
+                    timeout,
+                    MIN_CONSUMER_READY_TIMEOUT);
+            timeout = MIN_CONSUMER_READY_TIMEOUT;
+        }
+        // Wait until the consumer is ready
+        long now = System.currentTimeMillis();
+        while (!isReady() && System.currentTimeMillis()<now+timeout) {
+            try {
+                Thread.sleep(250);
+            } catch (InterruptedException ie) {
+                logger.warn("Interrupted");
+                break;
+            }
+        }
+        if (isReady()) {
+            logger.debug("The consumer [{}] is ready", consumerID);
+        } else {
+        logger.warn("The consumer [{}] if not yet ready at the end of the timeout.", consumerID);
+        }
     }
 }
