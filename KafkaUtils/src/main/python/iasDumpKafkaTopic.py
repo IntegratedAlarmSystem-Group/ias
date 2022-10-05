@@ -82,4 +82,7 @@ if __name__ == '__main__':
     if args.verbose:
         print("Running",cmd)
 
-    call(cmd)
+    try:
+        call(cmd)
+    except KeyboardInterrupt as exception:
+        pass
