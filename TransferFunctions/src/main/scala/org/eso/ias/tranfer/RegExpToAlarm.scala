@@ -4,6 +4,7 @@ import com.typesafe.scalalogging.Logger
 import org.eso.ias.asce.exceptions.{TypeMismatchException, UnexpectedNumberOfInputsException}
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import org.eso.ias.logging.IASLogger
+import org.eso.ias.tranfer.RegExpToAlarm.DefaultInvertedLogic
 import org.eso.ias.types.{Alarm, IASTypes}
 
 import java.util.Properties
@@ -33,6 +34,11 @@ class RegExpToAlarm (cEleId: String, cEleRunningId: String, validityTimeFrame: L
     map(Alarm.valueOf).
     getOrElse(RegExpToAlarm.DefaultPriority)
   require(priority != Alarm.CLEARED)
+
+  val invertedLogic: Boolean =
+    Option(props.getProperty(RegExpToAlarm.InvertedPropName))
+      .map(java.lang.Boolean.parseBoolean)
+      .getOrElse(DefaultInvertedLogic)
 
   /**
     * Initialize the TF: check that the input is a boolean
@@ -71,7 +77,9 @@ class RegExpToAlarm (cEleId: String, cEleRunningId: String, validityTimeFrame: L
 
     val value = input.value.get.asInstanceOf[String]
 
-    val outputAlarm = if (regExp.matches(value)) priority else Alarm.CLEARED
+    val generateAlarm = if (!invertedLogic) regExp.matches(value) else !regExp.matches(value)
+
+    val outputAlarm = if (generateAlarm) priority else Alarm.CLEARED
 
     actualOutput.updateValue(outputAlarm).updateProps(input.props).updateMode(input.mode)
   }
@@ -91,4 +99,12 @@ object RegExpToAlarm {
 
   /** Default priority level of the output */
   val DefaultPriority: Alarm = Alarm.getSetDefault
+
+  /** The name of the property to invert the logic
+   * (i.e. generate an alarm when the string does not match the regular expression */
+  val InvertedPropName: String = "org.eso.ias.tf.regextoalarm.inverted"
+
+  /** By default the RegExp generate an alarm when the string of the IASIO
+   * matches with the regular expression */
+  val DefaultInvertedLogic: Boolean = false
 }
