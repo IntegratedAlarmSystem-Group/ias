@@ -1,12 +1,10 @@
 package org.eso.ias.kafkautils.test;
 
-import ch.qos.logback.classic.Level;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaStringsConsumer.StreamPosition;
 import org.eso.ias.kafkautils.SimpleStringConsumer;
 import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener;
 import org.eso.ias.kafkautils.SimpleStringProducer;
-import org.eso.ias.logging.IASLogger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -123,7 +121,6 @@ public class ConsumerProducerTest implements KafkaConsumerListener {
 	 */
 	@BeforeEach
 	public void setUp() throws Exception {
-		IASLogger.setRootLogLevel(Level.DEBUG);
 		logger.info("Initializing...");
 		consumer = new SimpleStringConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, topicName, "PubSub-Test");
 		Properties props = new Properties();
@@ -134,18 +131,6 @@ public class ConsumerProducerTest implements KafkaConsumerListener {
 		producer.setUp();
 		
 		consumer.startGettingStrings(StreamPosition.END,this);
-
-		// Wait until the consumer is ready
-		long timeout = 10000;
-		long now = System.currentTimeMillis();
-		while (!consumer.isReady() && System.currentTimeMillis()<now+timeout) {
-			Thread.sleep(250);
-		}
-		if (consumer.isReady()) {
-			logger.info("Initialized.");
-		} else {
-			throw new Exception("Consumer did not get ready in time");
-		}
 	}
 	
 	/**
