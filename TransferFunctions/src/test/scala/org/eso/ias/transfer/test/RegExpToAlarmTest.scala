@@ -1,12 +1,12 @@
 package org.eso.ias.transfer.test
 
-import java.util.Properties
-
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.tranfer.RegExpToAlarm
-import org.eso.ias.types._
+import org.eso.ias.types.*
 import org.scalatest.flatspec.AnyFlatSpec
+
+import java.util.Properties
 
 /** A class to test [[org.eso.ias.tranfer.RegExpToAlarm]] */
 class RegExpToAlarmTest extends AnyFlatSpec
@@ -47,7 +47,7 @@ class RegExpToAlarmTest extends AnyFlatSpec
   /** The time frame for the validity */
   val validityTimeFrame = 2000
 
-  behavior of "The BoolToAlarmTest"
+  behavior of "The RegExpToAlarmTest"
 
   it must "get the regular expression and logic from props or use defaults" in {
     val regExp = "ARegularExpression"
