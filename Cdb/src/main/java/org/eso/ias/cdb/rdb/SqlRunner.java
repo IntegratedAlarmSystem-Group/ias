@@ -24,6 +24,7 @@ import org.hibernate.Session;
  * @since v1.0
  *
  */
+@Deprecated
 public class SqlRunner {
 	
 	/**

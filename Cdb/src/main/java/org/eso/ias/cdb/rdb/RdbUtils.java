@@ -35,6 +35,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author acaproni
  *
  */
+@Deprecated
 public class RdbUtils {
 	
 	/**

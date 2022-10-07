@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author acaproni
  *
  */
+@Deprecated
 public class RdbReader implements CdbReader {
 
 	/**
