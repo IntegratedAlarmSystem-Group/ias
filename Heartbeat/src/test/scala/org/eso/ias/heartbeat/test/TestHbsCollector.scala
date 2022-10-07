@@ -9,13 +9,16 @@ import org.eso.ias.heartbeat.serializer.HbJsonSerializer
 import org.eso.ias.heartbeat.{HbProducer, Heartbeat, HeartbeatProducerType, HeartbeatStatus}
 import org.eso.ias.kafkautils.{KafkaHelper, SimpleStringProducer}
 import org.eso.ias.logging.IASLogger
-import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
+
+import org.scalatest.FlatSpec
+
+import scala.language.reflectiveCalls
 
 import java.time.Duration
 
 /** Test the HbsCollector */
-class TestHbsCollector extends AnyFlatSpec with BeforeAndAfterEach with BeforeAndAfterAll {
+class TestHbsCollector extends FlatSpec with BeforeAndAfterEach with BeforeAndAfterAll {
   /** The logger */
   val logger: Logger = IASLogger.getLogger(classOf[TestHbsCollector])
 
@@ -53,20 +56,14 @@ class TestHbsCollector extends AnyFlatSpec with BeforeAndAfterEach with BeforeAn
   override def beforeEach(): Unit = {
     logger.info("Building the HbsCollector to test")
     val id=s"${collectorID}_${System.currentTimeMillis()}"
-    hbsCollector = HbsCollector(
+    hbsCollector = new HbsCollector(
       KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
       id,
       ttl)
     hbsCollector.setup()
-    logger.info("Waiting until the HB collector is ready (connected to kafka)")
-    val timeout = 10000
-    val now = System.currentTimeMillis()
-    while (!hbsCollector.isConsumerReady && System.currentTimeMillis()<now+timeout) {
-      Thread.sleep(250)
-    }
-    if (!hbsCollector.isConsumerReady) {
-      throw new Exception("Timeout: HB Consumer did not get ready in time")
-    }
+
+    Thread.sleep(5000);
+
     logger.info(s"Collector with id=$id initialized and connected to the kafka topic")
   }
 
