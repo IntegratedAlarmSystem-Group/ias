@@ -30,10 +30,15 @@ class RegExpToAlarm (cEleId: String, cEleRunningId: String, validityTimeFrame: L
   val regExp: Regex = regExString.r
 
   /** The alarm to set in the output */
-  val priority: Alarm = Option(props.getProperty(BoolToAlarm.PriorityPropName)).
+  val priority: Alarm = Option(props.getProperty(RegExpToAlarm.PriorityPropName)).
     map(Alarm.valueOf).
-    getOrElse(BoolToAlarm.DefaultPriority)
+    getOrElse(RegExpToAlarm.DefaultPriority)
   require(priority != Alarm.CLEARED)
+
+  val invertedLogic: Boolean =
+    Option(props.getProperty(RegExpToAlarm.InvertedPropName))
+      .map(java.lang.Boolean.parseBoolean)
+      .getOrElse(RegExpToAlarm.DefaultInvertedLogic)
 
   /**
     * Initialize the TF: check that the input is a boolean
@@ -72,7 +77,9 @@ class RegExpToAlarm (cEleId: String, cEleRunningId: String, validityTimeFrame: L
 
     val value = input.value.get.asInstanceOf[String]
 
-    val outputAlarm = if (regExp.findFirstIn(value).isDefined) priority else Alarm.CLEARED
+    val generateAlarm = if (!invertedLogic) regExp.findFirstIn(value).isDefined else !regExp.findFirstIn(value).isDefined
+
+    val outputAlarm = if (generateAlarm) priority else Alarm.CLEARED
 
     actualOutput.updateValue(outputAlarm).updateProps(input.props).updateMode(input.mode)
   }
@@ -87,9 +94,17 @@ object RegExpToAlarm {
     /** The name of the property to pass the regular expression */
   val RegExpPropName = "org.eso.ias.tf.regextoalarm.value"
 
-  /** The nam eof the property to set the prioity of the output */
-  val PriorityPropName: String = "org.eso.ias.tf.booltoalarm.priority"
+  /** The name of the property to set the priority of the output */
+  val PriorityPropName: String = "org.eso.ias.tf.regextoalarm.priority"
 
-  /** Defaul tpriority level of the output */
-  val DefaultPriority = Alarm.getSetDefault
+  /** Default priority level of the output */
+  val DefaultPriority: Alarm = Alarm.getSetDefault
+
+  /** The name of the property to invert the logic
+   * (i.e. generate an alarm when the string does not match the regular expression */
+  val InvertedPropName: String = "org.eso.ias.tf.regextoalarm.inverted"
+
+  /** By default the RegExp generate an alarm when the string of the IASIO
+   * matches with the regular expression */
+  val DefaultInvertedLogic: Boolean = false
 }
