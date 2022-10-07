@@ -17,6 +17,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
+import java.sql.DatabaseMetaData;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -197,8 +198,9 @@ public class RdbUtils {
 	 * @throws IasCdbException in case of error getting the Session
 	 */
 	public synchronized Session getSession() throws IasCdbException {
-		logger.debug("Returning a new hibernate Session");
-		return getSessionFactory().openSession();
+		Session session = getSessionFactory().openSession();
+		logger.info("Got a new hibernate Session");
+		return session;
 	}
 	
 	/**

@@ -477,4 +477,17 @@ public class KafkaStringsConsumer implements Runnable {
             return false;
         }
     }
+
+    /**
+     * Return true if the consumer is ready.
+     *
+     * Kafka API does not provide a way to know if the consumer is ready.
+     * This method uses {@link KafkaConsumer#assignment()}} to understand if the
+     * consumer is ready: the consumer is ready if there are partitions assigned to it.
+     *
+     * @return true if the consumer is ready, false otherwise
+     */
+    public boolean isReady() {
+        return isInitialized.get() && isPartitionAssigned.get();
+    }
 }

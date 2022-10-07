@@ -645,11 +645,24 @@ public class RdbReader implements CdbReader {
 			throw new IasCdbException("Cannot initialize: already closed");
 		}
 		if(!initialized.get()) {
-			logger.debug("Initialized");
-			initialized.set(true);
+			boolean isConnected=false;
+			try {
+				Session s=rdbUtils.getSession();
+				isConnected = s.isConnected();
+			} catch (Exception e) {
+				throw new IasCdbException("Error initializing the CDB RDB reader",e);
+			}
+			if (isConnected) {
+				logger.debug("Initialized");
+				initialized.set(true);
+			} else {
+				throw new IasCdbException("Error initializing the CDB RDB reader");
+			}
 		} else {
 			logger.warn("Already initialized: skipping initialization");
 		}
+
+
 	}
 	
 	/**
