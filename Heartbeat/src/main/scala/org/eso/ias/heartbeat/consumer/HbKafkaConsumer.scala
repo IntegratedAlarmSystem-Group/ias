@@ -181,6 +181,9 @@ class HbKafkaConsumer(brokers: String, consumerId: String)
 
   }
 
+  /** Return true if the kafka string consumer is ready to get logs */
+  def isReady: Boolean = stringConsumer.isReady()
+
 
 }
 

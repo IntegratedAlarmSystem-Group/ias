@@ -67,6 +67,14 @@ object IASLogger {
    rootLogger.setLevel(level)
   }
 
+   def setLogLevel(pkg: String, level: Level): Unit = {
+     require(Option(level).isDefined)
+     require(!pkg.isEmpty)
+     val loggerFactory = LoggerFactory.getILoggerFactory
+     val rootLogger: LogBackLogger = loggerFactory.getLogger(pkg).asInstanceOf[LogBackLogger]
+     rootLogger.setLevel(level)
+   }
+
   /**
     * Set the log level depending if it is passed in the command line,
     * the IAS configuration or the configuration of the tool like the Supervisor)
