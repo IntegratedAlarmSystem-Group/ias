@@ -22,6 +22,7 @@ import java.util.Set;
  * @author acaproni
  *
  */
+@Deprecated
 public class RdbWriter implements CdbWriter {
 	
 	/**
