@@ -1,5 +1,6 @@
 package org.eso.ias.kafkautils;
 
+import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
@@ -239,11 +240,11 @@ public class SimpleStringProducer {
 		}
 		
 		ProducerRecord<String, String> record = new ProducerRecord<String, String>(topic, partition, key, value);
-		Future<RecordMetadata> future = producer.send(record);
 		if (sync) {
+			Future<RecordMetadata> future = producer.send(record);
 			try {
 				RecordMetadata recordMData = future.get(timeout,unit);
-				logger.info("[{}] published [{}] on partition {} of topic {} with an offset of {}",
+				logger.debug("[{}] sync published [{}] on partition {} of topic {} with an offset of {}",
 						clientID,
 						value,
 						recordMData.partition(),
@@ -253,6 +254,26 @@ public class SimpleStringProducer {
 				throw new KafkaUtilsException("Exception got while sending ["+value+"]",e);
 			}
 			
+		} else {
+			producer.send(record, new Callback() {
+				@Override
+				public void onCompletion(RecordMetadata metadata, Exception exception) {
+					if (exception!=null) {
+						logger.error("[{}] error async publishing record [{}] on topic {}",
+								clientID,
+								value,
+								topic,
+								exception);
+					} else {
+						logger.debug("[{}] async published [{}] on partition {} of topic {} with an offset of {}",
+								clientID,
+								value,
+								metadata.partition(),
+								metadata.topic(),
+								metadata.offset());
+					}
+				}
+			});
 		}
 		numOfStringsSent.incrementAndGet();
 	}
