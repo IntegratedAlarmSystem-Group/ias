@@ -39,6 +39,7 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener with B
   val cdbParentPath: Path =  FileSystems.getDefault.getPath(".")
   val cdbFiles = new CdbJsonFiles(cdbParentPath)
   val cdbReader: CdbReader = new JsonReader(cdbFiles)
+  cdbReader.init()
   
   val dasuId = "DasuWithOneASCE"
 

@@ -56,6 +56,7 @@ class Dasu7ASCEsTest extends FlatSpec {
     val cdbParentPath =  FileSystems.getDefault().getPath(".");
     val cdbFiles = new CdbJsonFiles(cdbParentPath)
     val cdbReader: CdbReader = new JsonReader(cdbFiles)
+    cdbReader.init()
   
     val dasuId = "DasuWith7ASCEs"
   
