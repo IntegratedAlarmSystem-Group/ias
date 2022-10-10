@@ -110,8 +110,6 @@ class CommonDefs(object):
                  False otherwise
         """
         try:
-            environ["JAVA_HOME"]
-            environ["JRE_HOME"]
             environ["SCALA_HOME"]
             environ["PYTHONPATH"]
             environ["IAS_ROOT"]
