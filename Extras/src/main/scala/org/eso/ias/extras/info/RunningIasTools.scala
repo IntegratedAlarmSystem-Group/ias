@@ -201,6 +201,11 @@ object RunningIasTools {
     val brokers: String = Option(cmdLine.getOptionValue('b')).getOrElse(DEFAULT_BROKERS)
     val missing: Boolean = cmdLine.hasOption('m')
 
+    if (help) {
+      new HelpFormatter().printHelp(cmdLineSyntax, options)
+      System.exit(0)
+    }
+
     // Tries to access the CDB for showing the missing tools and gt the HB frequency
     val cdbToolsOpt: Option[CdbDefinedTools] = Try {getCdbData(args)}.toOption
 
@@ -221,11 +226,6 @@ object RunningIasTools {
     val logLevel: LogLevelDao = Option(cmdLine.getOptionValue('x'))
       .map(LogLevelDao.valueOf)
       .getOrElse(DEFAULT_LOG_LEVEL)
-
-    if (help) {
-      new HelpFormatter().printHelp(cmdLineSyntax, options)
-      System.exit(0)
-    }
 
     CmdLineParams(brokers, timeout, verbose, logLevel, missing, cdbToolsOpt)
   }
