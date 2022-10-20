@@ -7,6 +7,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 import java.nio.file.{Files, Paths}
 
+import scala.util.Random
+
 class H2NVCacheTest extends AnyFlatSpec  {
 
   val logger: Logger = IASLogger.getLogger(H2NVCache.getClass)
@@ -25,10 +27,12 @@ class H2NVCacheTest extends AnyFlatSpec  {
     logger.info("H2 store items test started")
     val cache = new H2NVCache()
     val fName = cache.h2FileName+".mv.db"
-    // Put randome strings in the cache
+    // Put random strings in the cache
     for (i <- 1 to 10) {
-      assert(cache.put(s"ID$i", H2NVCache.generateRndFileName))
+      val rndStr =  Random.alphanumeric take 10 mkString("")
+      assert(cache.put(s"ID$i", rndStr))
     }
+    assertResult(10) {cache.size}
 
     logger.info("H2 store items test done")
   }

@@ -39,8 +39,26 @@ class H2NVCache(dbUrl: String, userName: String="ias-user", password: String="")
   private def init: Unit = {
     conn = DriverManager.getConnection(dbUrl, userName, password)
     val stmt = conn.createStatement()
-    stmt.execute(H2NVCache.buildDbSqlStatement)
+    val ret = stmt.executeUpdate(H2NVCache.buildDbSqlStatement)
     stmt.close()
+    H2NVCache.logger.info("Creation of table returned {}",ret)
+
+    val st2 = conn.createStatement()
+    val r2 = st2.execute("SHOW TABLES;")
+    val rs = st2.getResultSet
+    val rsType = st2.getResultSetType
+    H2NVCache.logger.info("Result st type: {}",rsType)
+    val md = rs.getMetaData
+    H2NVCache.logger.info("Column count: {}",md.getColumnCount)
+    H2NVCache.logger.info("Column names: {} {}, {} {}", md.getColumnName(1), md.getColumnTypeName(1), md.getColumnName(2),md.getColumnTypeName(2))
+
+    while (rs.next()) {
+      val tName = rs.getString(1)
+      val c = rs.getString(2)
+      H2NVCache.logger.info("RS: {}. {}",tName,c)
+    }
+
+    st2.close()
   }
 
   private def shutdown(): Unit = {
@@ -56,11 +74,12 @@ class H2NVCache(dbUrl: String, userName: String="ias-user", password: String="")
    *         false otherwise
    */
   override def put(key: String, value: String): Boolean = {
-    val sqlStmtStr = s"INSERT INTO ${H2NVCache.tableName} VALUES (key, ${System.currentTimeMillis()}, value);"
+    val sqlStmtStr = s"INSERT INTO ${H2NVCache.tableName} VALUES('$key', ${System.currentTimeMillis()}, '$value');"
     try {
       val stmt = conn.createStatement()
-      stmt.execute(sqlStmtStr)
+      val ret = stmt.executeUpdate(sqlStmtStr)
       stmt.close()
+      H2NVCache.logger.info("INSERT returned {}",ret)
       true
     } catch {
       case t: Throwable =>
@@ -87,7 +106,17 @@ class H2NVCache(dbUrl: String, userName: String="ias-user", password: String="")
   override def del(key: String): Boolean = ???
 
   /** @return the number of objects in the cache (both in memory and persisted) */
-  override def size: Int = ???
+  override def size: Int = {
+    val stmt = conn.createStatement()
+    stmt.execute(s"SELECT COUNT(*) as COUNT_ROW FROM ${H2NVCache.tableName};")
+    val rs = stmt.getResultSet
+    rs.first()
+    val res = rs.getInt(1)
+    stmt.close()
+    res
+  }
+
+
 }
 
 object H2NVCache {
@@ -98,7 +127,10 @@ object H2NVCache {
   val tableName = "CACHE"
 
   /** The statement to build a DB for the cache */
-  val buildDbSqlStatement = s"CREATE TABLE $tableName (ID VARCHAR(255), TSTAMP BIGINT, JSONSTR VARCHAR(2048), CONSTRAINT PK_ID PRIMARY KEY (ID));"
+  val buildDbSqlStatement = s"CREATE TABLE $tableName ("+
+    "ID VARCHAR(255), "+
+    "TSTAMP BIGINT NOT NULL, "+
+    "LASTRINGA VARCHAR(2048) NOT NULL);"
 
   /** @return a random file name for the H2 database */
   def generateRndFileName: String = {
