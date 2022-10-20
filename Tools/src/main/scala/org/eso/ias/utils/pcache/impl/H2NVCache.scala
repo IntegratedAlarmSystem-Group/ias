@@ -37,28 +37,13 @@ class H2NVCache(dbUrl: String, userName: String="ias-user", password: String="")
 
   /** Initialize the database */
   private def init: Unit = {
+    H2NVCache.logger.debug("Initializing H2 DB")
     conn = DriverManager.getConnection(dbUrl, userName, password)
+    H2NVCache.logger.debug("Creating the table in the H2 DB")
     val stmt = conn.createStatement()
     val ret = stmt.executeUpdate(H2NVCache.buildDbSqlStatement)
     stmt.close()
-    H2NVCache.logger.info("Creation of table returned {}",ret)
-
-    val st2 = conn.createStatement()
-    val r2 = st2.execute("SHOW TABLES;")
-    val rs = st2.getResultSet
-    val rsType = st2.getResultSetType
-    H2NVCache.logger.info("Result st type: {}",rsType)
-    val md = rs.getMetaData
-    H2NVCache.logger.info("Column count: {}",md.getColumnCount)
-    H2NVCache.logger.info("Column names: {} {}, {} {}", md.getColumnName(1), md.getColumnTypeName(1), md.getColumnName(2),md.getColumnTypeName(2))
-
-    while (rs.next()) {
-      val tName = rs.getString(1)
-      val c = rs.getString(2)
-      H2NVCache.logger.info("RS: {}. {}",tName,c)
-    }
-
-    st2.close()
+    H2NVCache.logger.info("H2 DB initialized")
   }
 
   private def shutdown(): Unit = {
@@ -74,12 +59,13 @@ class H2NVCache(dbUrl: String, userName: String="ias-user", password: String="")
    *         false otherwise
    */
   override def put(key: String, value: String): Boolean = {
+    require(key.nonEmpty && value.nonEmpty)
     val sqlStmtStr = s"INSERT INTO ${H2NVCache.tableName} VALUES('$key', ${System.currentTimeMillis()}, '$value');"
     try {
       val stmt = conn.createStatement()
       val ret = stmt.executeUpdate(sqlStmtStr)
       stmt.close()
-      H2NVCache.logger.info("INSERT returned {}",ret)
+      H2NVCache.logger.debug("INSERT returned {}",ret)
       true
     } catch {
       case t: Throwable =>
@@ -94,7 +80,18 @@ class H2NVCache(dbUrl: String, userName: String="ias-user", password: String="")
    * @param key
    * @return The Object in the cache if it exists, empty otherwise
    */
-  override def get(key: String): Option[String] = ???
+  override def get(key: String): Option[String] = {
+    require(key.nonEmpty)
+    val stmt = conn.createStatement()
+    val sqlStmtStr = s"SELECT ${H2NVCache.jsonStrColName} FROM ${H2NVCache.tableName} WHERE ${H2NVCache.idColName}='$key';"
+    stmt.execute(sqlStmtStr)
+    val rs = stmt.getResultSet
+    if (rs.first()) {
+      Some(rs.getString(1))
+    } else {
+      None
+    }
+  }
 
   /**
    * Remove an object from the cache
@@ -115,8 +112,6 @@ class H2NVCache(dbUrl: String, userName: String="ias-user", password: String="")
     stmt.close()
     res
   }
-
-
 }
 
 object H2NVCache {
@@ -126,11 +121,20 @@ object H2NVCache {
   /** The name of the table in the DB */
   val tableName = "CACHE"
 
+  /** The name of the column with the ID */
+  val idColName = "ID"
+
+  /** The name of the column for the timestamp */
+  val timeStampColName = "TSTAMP"
+
+  /** The name of teh column with the JSPON string */
+  val jsonStrColName = "JSONTSTR"
+
   /** The statement to build a DB for the cache */
   val buildDbSqlStatement = s"CREATE TABLE $tableName ("+
-    "ID VARCHAR(255), "+
-    "TSTAMP BIGINT NOT NULL, "+
-    "LASTRINGA VARCHAR(2048) NOT NULL);"
+    s"$idColName VARCHAR(255) PRIMARY KEY, "+
+    s"$timeStampColName BIGINT NOT NULL, "+
+    s"$jsonStrColName VARCHAR(2048) NOT NULL);"
 
   /** @return a random file name for the H2 database */
   def generateRndFileName: String = {
