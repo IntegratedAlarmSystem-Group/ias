@@ -10,36 +10,38 @@ import java.util.Optional
  *
  * Objects implementing this class store in memory up to n objects or up to
  * the size of the objects in memory passes a given threshold;
- * when the in memory cache is filled, new objects are persisted.
+ * when the in-memory cache is filled, new objects are persisted.
  *
  * Giving a max number of objects  (or memory used by them) equals to 0 force all
- * objects to be persisted.
+ * objects to be persisted. The first threshold that is passed )(num. of items
+ * or memory consumption) triggers the storage of new item in the non-volatile cache.
  *
  * The way objects are persisted depends on the implementation, it can be on file
- * or a RDBMS or other means) and it is transparent to the users of the trait.
+ * or a RDBMS or other means) and it is transparent to the users.
  *
  * Each object persisted in PCache is identified by a key (pretty much like a Map).
- * In the scope of the IAS, it makes sense to store in the cache JSON string
- * as almost everything can be translated to/from JSON strings.
+ * In the scope of the IAS, it makes sense to store in the cache JSON strings
+ * as almost everything can be translated to/from JSON strings and has an ID (IASIOs, CONVERTERS...).
  *
  * The memory used by the objects in the map consists on the sum of the sizes of
- * the keys and the JSON strings i.e. PCache does not take into account the memory
- * used by the storing the objects (for example if the objects are stored in a Map,
- * the memory does not consider the memory used by the Map but only that used by the
- * objects stored in the Map). There ar e better solutions but we do not want to
- * instrument the code.
+ * the keys plus the sizes of the JSON strings i.e. PCache does not take into account the memory
+ * used to store the objects (for example if the objects are stored in a Map,
+ * the memory does not consider the memory used by the Map itself).
+ * There are more accurate solutions but we do not want to instrument the code or add complexity
+ * when not strictly necessary.
  *
  * Besides the key and the JSON string, what PCache ultimately stores depends on
- * the memory and persistence.
+ * the memory and persistence implementations.
  *
  * There are many caches available on the open source world but actually in the IAS
- * the need for a cache is to store objects in memory unless there are too many
- * to be safely stored in memory (risk of OoM).
+ * the need for a cache is to store objects in memory avoiding the risk of OoM.
  * The objects will be put in cache and retrieved by their IDs (pretty much a single table of a RDBMS).
  * As such, PCache is basically a Map protected against OoM.
- * For the in-memory cache, (implementers of [[InMemoryCache]]) PCache uses scala/java native code.
- * For persisting objects in non-volatile memory (implementers of [[NonVolatileCache]]) PCache delegates
- * to open source tools. Implementers can rely on external services (elasticsearch, redis...)
+ *
+ * PCache delegates the in-memory cache to implementers of [[InMemoryCache]] that can either use scala/java code
+ * or delegate to third party open source tools.
+ * For persisting objects in non-volatile memory, (implementers of [[NonVolatileCache]]), PCache delegates
+ * to open source tools. Implementers of [[InMemoryCache]] can rely on external services (elasticsearch, redis...)
  * especially if such services are already available in the system.
  *
  * @param maxSize    The max number of items to keep in memory
@@ -79,15 +81,15 @@ trait PCache(val maxSize: Integer = 0, val maxMemSize: Integer = 0) {
   def del(key: String): Boolean
 
   /**
-   * Get an object from the cache support method for java code
-   * as it return an [[Optional]]
+   * Get an object from the cache
+   * (support method to avoid that java code deeals with the scala Option)
    *
    * @param key
    * @return The Object in the cache if it exists, empty otherwise
    */
   def jget(key: String): Optional[String]
 
-  /** @return the number of objects in the cache (both in memory and persisted) */
+  /** @return the number of objects in the cache (both in memory and non-volatile) */
   def size: Int = inMemorySize + persistedSize
 
   /** @return the number of objects in memory */
@@ -95,5 +97,4 @@ trait PCache(val maxSize: Integer = 0, val maxMemSize: Integer = 0) {
 
   /** @return The number of objects persisted */
   def persistedSize: Int
-
 }
