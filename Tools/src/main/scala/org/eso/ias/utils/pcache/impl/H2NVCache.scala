@@ -100,7 +100,14 @@ class H2NVCache(dbUrl: String, userName: String="ias-user", password: String="")
    * @return True if the object has been removed,
    *         False otherwise (for example the object was not in the cache)
    */
-  override def del(key: String): Boolean = ???
+  override def del(key: String): Boolean = {
+    require(key.nonEmpty)
+    val stmt = conn.createStatement()
+    val sqlStmtStr = s"DELETE FROM ${H2NVCache.tableName} WHERE ${H2NVCache.idColName}='$key';"
+    val ret = stmt.executeUpdate(sqlStmtStr)
+    stmt.close()
+    ret==1
+  }
 
   /** @return the number of objects in the cache (both in memory and persisted) */
   override def size: Int = {
