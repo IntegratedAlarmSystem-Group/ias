@@ -10,9 +10,7 @@ import java.util.Objects
 import scala.util.Random
 
 /**
- * A non volatile cache of objects persisted with H2 (https://www.h2database.com/html/main.html)
- *
- * If an URL is not provided, H2NVCache builds a database in $IAS_TPM.
+ * A non volatile cache of objects persisted with H2 (https://www.h2database.com/html/main* If an URL is not provided, H2NVCache builds a database in $IAS_TMP.
  * If an URL is provided, H2NVCache connects to an existing database: this allows to use
  * in-memory databases or share the same DB on disk between different applications
  */
@@ -23,8 +21,10 @@ class H2NVCache(dbUrl: String, userName: String="ias-user", password: String="")
   /** The connection to the RDBMS */
   private var conn: Connection = _
 
-  init
-  val h2FileName = dbUrl.split(":")(2)
+  init()
+
+  /** The name of the file(s) used by H2 */
+  val h2FileName: String = dbUrl.split(":")(2)
   H2NVCache.logger.info("H2 file: {}",h2FileName)
 
   /**
@@ -36,7 +36,7 @@ class H2NVCache(dbUrl: String, userName: String="ias-user", password: String="")
   }
 
   /** Initialize the database */
-  private def init: Unit = {
+  private def init(): Unit = {
     H2NVCache.logger.debug("Initializing H2 DB")
     conn = DriverManager.getConnection(dbUrl, userName, password)
     H2NVCache.logger.debug("Creating the table in the H2 DB")
@@ -77,7 +77,7 @@ class H2NVCache(dbUrl: String, userName: String="ias-user", password: String="")
   /**
    * Get an object from the cache
    *
-   * @param key
+   * @param key The key of the object
    * @return The Object in the cache if it exists, empty otherwise
    */
   override def get(key: String): Option[String] = {
@@ -138,9 +138,9 @@ object H2NVCache {
   val jsonStrColName = "JSONTSTR"
 
   /** The statement to build a DB for the cache */
-  val buildDbSqlStatement = s"CREATE TABLE $tableName ("+
-    s"$idColName VARCHAR(255) PRIMARY KEY, "+
-    s"$timeStampColName BIGINT NOT NULL, "+
+  val buildDbSqlStatement: String = s"CREATE TABLE $tableName (" +
+    s"$idColName VARCHAR(255) PRIMARY KEY, " +
+    s"$timeStampColName BIGINT NOT NULL, " +
     s"$jsonStrColName VARCHAR(2048) NOT NULL);"
 
   /** @return a random file name for the H2 database */
