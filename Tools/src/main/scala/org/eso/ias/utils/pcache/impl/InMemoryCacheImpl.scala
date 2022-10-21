@@ -77,6 +77,9 @@ class InMemoryCacheImpl(val maxSize: Integer=0, maxMemSize: Integer=0) extends I
     removedObj.nonEmpty
   }
 
+  /** Collects all keys of this map in a set */
+  override def keySet: Set[String] = cache.keySet.toSet
+
   /** @return the number of objects in this cache (both in memory and persisted) */
   def size: Int = cache.size
 

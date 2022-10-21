@@ -35,6 +35,9 @@ trait InMemoryCache {
    */
   def del(key: String): Boolean
 
+  /** Collects all keys of this map in a set */
+  def keySet: Set[String]
+
   /** @return the number of objects in the cache */
   def size: Int
 

@@ -72,4 +72,19 @@ class PCacheTest extends AnyFunSuite {
     assert(cache.get("ID71").isEmpty)
   }
 
+  test("Retrieval of all keys") {
+    val cache = PCache(55, 0)
+    loadCache(100, cache, "ID")
+    assert(cache.inMemorySize == 55)
+    assert(cache.nonVolatileSize == 45)
+    assert(cache.size==100)
+
+
+    val keys = cache.keySet
+    assert(keys.size==100)
+    val inMemKeys = cache.inMemoryKeySet
+    assert(inMemKeys.size==55)
+    val nvKeys = cache.nonVolatileKeySet
+    assert(nvKeys.size==45)
+  }
 }
