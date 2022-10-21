@@ -119,6 +119,20 @@ class H2NVCache(dbUrl: String, userName: String="ias-user", password: String="")
     stmt.close()
     res
   }
+
+  /** Collects all keys of this map in a set */
+  override def keySet: Set[String] = {
+    val stmt = conn.createStatement()
+    stmt.execute(s"SELECT ${H2NVCache.idColName} FROM ${H2NVCache.tableName};")
+    val rs = stmt.getResultSet
+
+    val ret =new Iterator[String] {
+      def hasNext = rs.next()
+      def next() = rs.getString(1)
+    }.toSet
+    stmt.close()
+    ret
+  }
 }
 
 object H2NVCache {

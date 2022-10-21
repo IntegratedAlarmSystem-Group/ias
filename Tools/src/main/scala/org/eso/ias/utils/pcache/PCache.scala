@@ -100,6 +100,16 @@ class PCache(val maxSize: Integer = 0, val maxMemSize: Integer = 0) {
    */
   def jget(key: String): Optional[String] = get(key).toJava
 
+  /** Collects all keys of this map in a set */
+  def keySet: Set[String] = inMemoryKeySet++nonVolatileKeySet
+
+
+  /** Collects all keys of the volatile cache  in a set */
+  def inMemoryKeySet: Set[String] = inMemoryCache.keySet
+
+  /** Collects all keys of the volatile cache in a set */
+  def nonVolatileKeySet: Set[String] = nonVolatileCache.keySet
+
   /** @return the number of objects in the cache (both in memory and non-volatile) */
   def size: Int = inMemorySize + nonVolatileSize
 
@@ -108,4 +118,11 @@ class PCache(val maxSize: Integer = 0, val maxMemSize: Integer = 0) {
 
   /** @return The number of objects persisted */
   def nonVolatileSize: Int = nonVolatileCache.size
+
+  /** @return true if the cache is empty; false otherwise */
+  def isEmpty: Boolean = size==0
+
+  /** @return true if the cache is not empty; false otherwise */
+  def nonEmpty: Boolean = size!=0
+
 }
