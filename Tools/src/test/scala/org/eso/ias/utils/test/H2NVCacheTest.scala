@@ -11,7 +11,7 @@ import scala.util.Random
 
 class H2NVCacheTest extends AnyFlatSpec  {
 
-  val logger: Logger = IASLogger.getLogger(H2NVCache.getClass)
+  val logger: Logger = IASLogger.getLogger(this.getClass)
 
   behavior of "The H2 cache"
 
