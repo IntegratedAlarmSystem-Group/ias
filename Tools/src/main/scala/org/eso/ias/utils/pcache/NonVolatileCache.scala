@@ -1,8 +1,10 @@
 package org.eso.ias.utils.pcache
 
 /**
- * The trait for the cache of objects persisted
+ * The trait for the cache of objects persisted in non-volatile memory
  *
+ * This interface is te same as [[InMemoryCache]]: we keep both as they might diverge
+ * in future and reduce teh chance of errors instantiating the higher level cache
  */
 trait NonVolatileCache {
   /**
@@ -18,7 +20,7 @@ trait NonVolatileCache {
   /**
    * Get an object from the cache
    *
-   * @param key
+   * @param key The key of the object
    * @return The Object in the cache if it exists, empty otherwise
    */
   def get(key: String): Option[String]
@@ -32,6 +34,6 @@ trait NonVolatileCache {
    */
   def del(key: String): Boolean
 
-  /** @return the number of objects in the cache (both in memory and persisted) */
+  /** @return the number of objects in the cache  */
   def size: Int
 }
