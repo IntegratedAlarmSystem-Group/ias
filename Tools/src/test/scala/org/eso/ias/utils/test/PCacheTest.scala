@@ -91,4 +91,20 @@ class PCacheTest extends AnyFunSuite {
     for (x <- 1 to 55) assert(inMemKeys.contains(s"ID$x"))
     for (x <- 56 to 100) assert(nvKeys.contains(s"ID$x"))
   }
+
+  test("Put many items at once") {
+    val cache = PCache(30, 0)
+    val items: Seq[(String, String)] = for {
+      id <- 1 to 50
+      key = s"ID$id"
+      value = Random.alphanumeric take 128 mkString("")
+    } yield (key, value)
+    cache.putAll(items.toList)
+
+    assert(cache.size==50)
+    assert(cache.inMemoryCache.size==30)
+    assert(cache.nonVolatileCache.size==20)
+
+    for (id <- 1 to 50) assert(cache.get(s"ID$id").nonEmpty)
+  }
 }

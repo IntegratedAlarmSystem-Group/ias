@@ -72,6 +72,15 @@ class PCache(val maxSize: Integer = 0, val maxMemSize: Integer = 0) {
   }
 
   /**
+   * Put all the items in the cache
+   *
+   * @param items The list of (key, value) object to add to the cache
+   * @return true if all the items have been successfully added to the list;
+   *         false otherwise
+   */
+  def putAll(items : List[(String, String)]): Boolean = items.forall { (key, value) => put(key,value) }
+
+  /**
    * Get an object from the cache
    *
    * @param key The key of the object to get
