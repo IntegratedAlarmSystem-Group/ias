@@ -86,5 +86,9 @@ class PCacheTest extends AnyFunSuite {
     assert(inMemKeys.size==55)
     val nvKeys = cache.nonVolatileKeySet
     assert(nvKeys.size==45)
+
+    for (x <- 1 to 100) assert(keys.contains(s"ID$x"))
+    for (x <- 1 to 55) assert(inMemKeys.contains(s"ID$x"))
+    for (x <- 56 to 100) assert(nvKeys.contains(s"ID$x"))
   }
 }
