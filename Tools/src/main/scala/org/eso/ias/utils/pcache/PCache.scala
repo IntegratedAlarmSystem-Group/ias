@@ -1,8 +1,10 @@
 package org.eso.ias.utils.pcache
 
-import org.eso.ias.utils.pcache.impl.InMemoryCacheImpl
+import org.eso.ias.utils.pcache.impl.{H2NVCache, InMemoryCacheImpl}
 
 import java.util.Optional
+
+import scala.jdk.OptionConverters._
 
 /**
  * PCache is a cache that optionally persists objects in a DB or a file or other means
@@ -48,10 +50,13 @@ import java.util.Optional
  * @param maxMemSize The max size (MBytes) of memory that can be used by the object in memory
  *
  */
-trait PCache(val maxSize: Integer = 0, val maxMemSize: Integer = 0) {
+class PCache(val maxSize: Integer = 0, val maxMemSize: Integer = 0) {
 
   /** The in memory cache */
   val inMemoryCache: InMemoryCache = new InMemoryCacheImpl(maxSize, maxMemSize)
+
+  /** The non-volatile cache */
+  lazy val nonVolatileCache = new H2NVCache()
 
   /**
    * Puts/update a value in the cache
@@ -61,15 +66,18 @@ trait PCache(val maxSize: Integer = 0, val maxMemSize: Integer = 0) {
    * @return true if the object has been stored in the cache,
    *              false otherwise
    * */
-  def put(key: String, value: String): Boolean
+  def put(key: String, value: String): Boolean = {
+    if (inMemoryCache.put(key,value)) true
+    else nonVolatileCache.put(key, value)
+  }
 
   /**
    * Get an object from the cache
    *
-   * @param key
+   * @param key The key of the object to get
    * @return The Object in the cache if it exists, empty otherwise
    */
-  def get(key: String): Option[String]
+  def get(key: String): Option[String] = inMemoryCache.get(key).orElse(nonVolatileCache.get(key))
 
   /**
    * Remove an object from the cache
@@ -78,23 +86,26 @@ trait PCache(val maxSize: Integer = 0, val maxMemSize: Integer = 0) {
    * @return True if the object has been removed,
    *         False otherwise (for example the object was not in the cache)
    */
-  def del(key: String): Boolean
+  def del(key: String): Boolean = {
+    if (inMemoryCache.del(key)) true
+    else nonVolatileCache.del(key)
+  }
 
   /**
    * Get an object from the cache
-   * (support method to avoid that java code deeals with the scala Option)
+   * (support method to avoid that java code deals with the scala Option)
    *
-   * @param key
+   * @param key The key of the object
    * @return The Object in the cache if it exists, empty otherwise
    */
-  def jget(key: String): Optional[String]
+  def jget(key: String): Optional[String] = get(key).toJava
 
   /** @return the number of objects in the cache (both in memory and non-volatile) */
-  def size: Int = inMemorySize + persistedSize
+  def size: Int = inMemorySize + nonVolatileSize
 
   /** @return the number of objects in memory */
   def inMemorySize: Int = inMemoryCache.size
 
   /** @return The number of objects persisted */
-  def persistedSize: Int
+  def nonVolatileSize: Int = nonVolatileCache.size
 }
