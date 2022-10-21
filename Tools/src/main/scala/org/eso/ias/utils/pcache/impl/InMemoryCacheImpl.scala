@@ -8,14 +8,14 @@ import org.eso.ias.utils.pcache.InMemoryCache
  * @param maxSize    The max number of items to keep in memory
  * @param maxMemSize The max size of memory (MBytes) that can be used by the object in memory
  */
-class InMemoryCacheImpl(maxSize: Integer, maxMemSize: Integer) extends InMemoryCache {
+class InMemoryCacheImpl(val maxSize: Integer=0, maxMemSize: Integer=0) extends InMemoryCache {
   require(maxSize >= 0 && maxMemSize >= 0)
 
   //* Max memory in bytes */
   val maxMemSizeBytes = 1048576 * maxMemSize
 
   /** The actual cache */
-  var cache: collection.mutable.Map[String, CacheObj] = new mutable.HashMap[String, CacheObj]()
+  val cache: collection.mutable.Map[String, CacheObj] = new mutable.HashMap[String, CacheObj]()
 
   /** The size in memory of the objects stored in cache */
   var memSize: Long = 0L
@@ -44,12 +44,11 @@ class InMemoryCacheImpl(maxSize: Integer, maxMemSize: Integer) extends InMemoryC
       cache.put(key, obj)
     }
 
-
     (maxSize, maxMemSizeBytes) match {
       case (0, 0) => putItem(key, value); true
-      case (n, 0) => if (size<=n) { putItem(key, value); true} else false
-      case (0, m) => if (memSize<=m) { putItem(key, value); true} else false
-      case (n, m)=> if (size<=n && memSize<=m) { putItem(key, value); true} else false
+      case (n, 0) => if (size<n) { putItem(key, value); true} else false
+      case (0, m) => if (memSize<m) { putItem(key, value); true} else false
+      case (n, m)=> if (size<n && memSize<m) { putItem(key, value); true} else false
     }
   }
 

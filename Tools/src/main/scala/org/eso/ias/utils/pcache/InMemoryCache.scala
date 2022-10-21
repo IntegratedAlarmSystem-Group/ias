@@ -2,6 +2,9 @@ package org.eso.ias.utils.pcache
 
 /**
  * The interface for the in-memory cache
+ *
+ * This interface is te same as [[NonVolatileCache]]: we keep both as they might diverge
+ * in future and reduce teh chance of errors instantiating the higher level cache
  */
 trait InMemoryCache {
 
@@ -32,7 +35,7 @@ trait InMemoryCache {
    */
   def del(key: String): Boolean
 
-  /** @return the number of objects in the cache (both in memory and persisted) */
+  /** @return the number of objects in the cache */
   def size: Int
 
 }
