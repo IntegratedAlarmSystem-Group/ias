@@ -5,6 +5,8 @@ import org.eso.ias.utils.pcache.InMemoryCache
 
 /** The in memory cache that delegates to [[HashMap]]
  *
+ * This class is not thread safe.
+ *
  * @param maxSize    The max number of items to keep in memory
  * @param maxMemSize The max size of memory (MBytes) that can be used by the object in memory
  */

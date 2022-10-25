@@ -10,9 +10,18 @@ import java.util.Objects
 import scala.util.Random
 
 /**
- * A non volatile cache of objects persisted with H2 (https://www.h2database.com/html/main* If an URL is not provided, H2NVCache builds a database in $IAS_TMP.
- * If an URL is provided, H2NVCache connects to an existing database: this allows to use
- * in-memory databases or share the same DB on disk between different applications
+ * A non volatile cache of objects persisted with H2 (https://www.h2database.com/html/main).
+  *
+ * If an URL is not provided, H2NVCache builds a database in $IAS_TMP.
+ * If an URL is provided, H2NVCache connects to an existing database: this allows to share
+ * the same DB on disk between different applications.
+ * 
+ * The URl allows to create the DB in,memory, on a file on disk, to connect to a remote DB:
+ * see [[https://www.h2database.com/html/features.html#database_url H2 URL]] for a detailed discussion.
+ *
+ * This class is not thread safe.
+ *
+ * @param dbUrl The URL of the DB (see H2 for the format)
  */
 class H2NVCache(dbUrl: String, userName: String="ias-user", password: String="") extends NonVolatileCache {
   require(Objects.nonNull(dbUrl) && dbUrl.trim.nonEmpty,"Invalid H2 URL")
@@ -28,8 +37,8 @@ class H2NVCache(dbUrl: String, userName: String="ias-user", password: String="")
   H2NVCache.logger.info("H2 file: {}",h2FileName)
 
   /**
-   * Auxiliary constructor, builds the DB in $IAS_TMP or in the
-   * system temporary folder
+   * Auxiliary constructor, builds the DB in a file in $IAS_TMP 
+   * or in the system temporary folder if $IAS_TMP is not deined.
    */
   def this() = {
     this(H2NVCache.generateRndFileName)
@@ -47,7 +56,7 @@ class H2NVCache(dbUrl: String, userName: String="ias-user", password: String="")
   }
 
   private def shutdown(): Unit = {
-    //DeleteDbFiles.execute()
+    DeleteDbFiles.execute()
   }
 
   /**
