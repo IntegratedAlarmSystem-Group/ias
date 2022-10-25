@@ -103,4 +103,23 @@ class H2NVCacheTest extends AnyFlatSpec  {
     logger.info("H2 must delete entries test done")
   }
 
+  it must "Update an element already in the cache" in {
+    logger.info("H2 update an item started")
+    val cache = new H2NVCache()
+    for (i <- 1 to 10) {
+      val rndStr =  Random.alphanumeric take 10 mkString("")
+      assert(cache.put(s"ID$i", rndStr))
+    }
+    assertResult(10) {cache.size}
+
+    val id = "ID5"
+    val str = "Object of the updated element"
+    assert(cache.put(id, str))
+    assertResult(10) {cache.size}
+    val itemOpt = cache.get(id)
+    assert(itemOpt.nonEmpty)
+    assert(itemOpt.get==str)
+    logger.info("H2 update an item done")
+  }
+
 }
