@@ -102,8 +102,8 @@ class PCacheTest extends AnyFunSuite {
     cache.putAll(items.toList)
 
     assert(cache.size==50)
-    assert(cache.inMemoryCache.size==30)
-    assert(cache.nonVolatileCache.size==20)
+    assert(cache.inMemorySize==30)
+    assert(cache.nonVolatileSize==20)
 
     for (id <- 1 to 50) assert(cache.get(s"ID$id").nonEmpty)
   }

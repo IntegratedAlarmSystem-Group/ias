@@ -22,6 +22,8 @@ import scala.util.Random
  * This class is not thread safe.
  *
  * @param dbUrl The URL of the DB (see H2 for the format)
+ * @param userName The user name to log into the RDMS
+ * @param password The password for the login
  */
 class H2NVCache(dbUrl: String, userName: String="ias-user", password: String="") extends NonVolatileCache {
   require(Objects.nonNull(dbUrl) && dbUrl.trim.nonEmpty,"Invalid H2 URL")
@@ -56,7 +58,7 @@ class H2NVCache(dbUrl: String, userName: String="ias-user", password: String="")
   }
 
   private def shutdown(): Unit = {
-    DeleteDbFiles.execute()
+    //DeleteDbFiles.execute()
   }
 
   /**
