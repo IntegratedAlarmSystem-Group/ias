@@ -4,6 +4,7 @@ import com.typesafe.scalalogging.Logger
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.utils.pcache.NonVolatileCache
 import org.h2.tools.DeleteDbFiles
+import org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException
 
 import java.sql.{Connection, DriverManager}
 import java.util.Objects
@@ -63,7 +64,15 @@ class H2NVCache(dbUrl: String, userName: String="ias-user", password: String="")
     val sqlStmtStr = s"INSERT INTO ${H2NVCache.tableName} VALUES('$key', ${System.currentTimeMillis()}, '$value');"
     try {
       val stmt = conn.createStatement()
-      val ret = stmt.executeUpdate(sqlStmtStr)
+      val ret = try {
+        stmt.executeUpdate(sqlStmtStr)
+      } catch {
+        JdbcSQLIntegrityConstraintViolationException => { // Object already in cache
+          // SQL update instead
+          val sqlStmtStr = s"UPDATE ${H2NVCache.tableName} SET ${H2NVCache.timeStampColName}=${System.currentTimeMillis()}, ${H2NVCache.jsonStrColName}='$value' WHERE ${H2NVCache.idColName}='$key';"
+          stmt.executeUpdate(sqlStmtStr)
+        }
+      }
       stmt.close()
       H2NVCache.logger.debug("INSERT returned {}",ret)
       true
