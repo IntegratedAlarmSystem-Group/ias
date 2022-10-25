@@ -41,4 +41,7 @@ trait InMemoryCache {
   /** @return the number of objects in the cache */
   def size: Int
 
+  /** Empty the cache */
+  def clear(): Unit
+
 }

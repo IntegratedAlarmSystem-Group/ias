@@ -170,4 +170,20 @@ class InMemoryCacheTest extends AnyFlatSpec {
     logger.info("Update an item done")
   }
 
+  it must "Clear the cache" in {
+    logger.info("Clear the cache test started")
+    val cache = new InMemoryCacheImpl(25, 0)
+    // Put random strings in the cache
+    for (i <- 1 to 25) {
+      val rndStr =  Random.alphanumeric take 10 mkString("")
+      assert(cache.put(s"ID$i", rndStr))
+    }
+    assertResult(25) {cache.size}
+
+    cache.clear()
+    assertResult(0) {cache.size}
+
+    logger.info("Clear the cache test done")
+  }
+
 }

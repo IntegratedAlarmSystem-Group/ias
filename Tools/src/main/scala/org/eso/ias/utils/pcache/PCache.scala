@@ -112,6 +112,11 @@ class PCache(val maxSize: Integer = 0, val maxMemSize: Integer = 0) {
   /** Collects all keys of this map in a set */
   def keySet: Set[String] = inMemoryKeySet++nonVolatileKeySet
 
+  /** Empty the cahce */
+  def clear(): Unit = {
+    inMemoryCache.clear()
+    nonVolatileCache.clear()
+  }
 
   /** Collects all keys of the volatile cache  in a set */
   def inMemoryKeySet: Set[String] = inMemoryCache.keySet

@@ -107,4 +107,20 @@ class PCacheTest extends AnyFunSuite {
 
     for (id <- 1 to 50) assert(cache.get(s"ID$id").nonEmpty)
   }
+
+  test("Clear the cache") {
+    val cache = PCache(55, 0)
+    loadCache(100, cache, "ID")
+     assert(cache.inMemorySize == 55)
+    assert(cache.nonVolatileSize == 45)
+    assert(cache.size==100)
+
+    cache.clear()
+    assert(cache.size==0)
+
+    loadCache(100, cache, "ID")
+    assert(cache.inMemorySize == 55)
+    assert(cache.nonVolatileSize == 45)
+    assert(cache.size==100)
+  }
 }

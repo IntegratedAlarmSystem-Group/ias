@@ -103,4 +103,19 @@ class H2NVCacheTest extends AnyFlatSpec  {
     logger.info("H2 must delete entries test done")
   }
 
+  it must "Clear the cache" in {
+    logger.info("H2 must clear the cache test started")
+    val cache = new H2NVCache()
+    // Put random strings in the cache
+    for (i <- 1 to 25) {
+      val rndStr =  Random.alphanumeric take 10 mkString("")
+      assert(cache.put(s"ID$i", rndStr))
+    }
+    assertResult(25) {cache.size}
+
+    cache.clear()
+    assertResult(0) {cache.size}
+
+    logger.info("H2 must clear the cache test done")
+  }
 }
