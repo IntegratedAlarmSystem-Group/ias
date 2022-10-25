@@ -35,7 +35,8 @@ val process = ProcessBuilder("python3", "-V").start()
 process.inputStream.reader(Charsets.UTF_8).use {
 	val pyVersionStr = it.readText()
 	val pyFullVersion = pyVersionStr.drop(pyVersionStr.lastIndexOf(' ')+1)
-	val pyVersion = pyFullVersion.dropLast(pyFullVersion.lastIndexOf('.'))
+	val idx = pyFullVersion.lastIndexOf('.')
+	val pyVersion = pyFullVersion.substring(0,idx)
 	if (gradle is ExtensionAware) {
 		val extension = gradle as ExtensionAware
 		extension.extra["PythonVersion"] = pyVersion
