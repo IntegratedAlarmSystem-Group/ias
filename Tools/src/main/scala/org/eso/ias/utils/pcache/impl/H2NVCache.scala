@@ -133,6 +133,13 @@ class H2NVCache(dbUrl: String, userName: String="ias-user", password: String="")
     stmt.close()
     ret
   }
+
+  /** Empty the cache */
+  override def clear(): Unit = {
+    val stmt = conn.createStatement()
+    stmt.execute(s"DELETE FROM ${H2NVCache.tableName};")
+    stmt.close()
+  }
 }
 
 object H2NVCache {

@@ -85,4 +85,7 @@ class InMemoryCacheImpl(val maxSize: Integer=0, maxMemSize: Integer=0) extends I
   /** @return the number of objects in this cache (both in memory and persisted) */
   def size: Int = cache.size
 
+  /** Empty the cache */
+  override def clear(): Unit = cache.clear
+
 }
