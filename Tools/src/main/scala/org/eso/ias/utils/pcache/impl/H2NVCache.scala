@@ -208,8 +208,11 @@ object H2NVCache {
    */
   case class H2FileCache(val connectionData: H2FileConnectionData = generateRndFileH2Url()) 
   extends H2NVCache(dbUrl = connectionData.h2DbUrl, userName = defaultUserName , password = defaultPassword ) {
+    sys.addShutdownHook(shutdown())
+    
+
     override def shutdown(): Unit = {
-      //DeleteDbFiles.execute()
+      DeleteDbFiles.execute(connectionData.folderName, connectionData.fileName, false)
     }
   }
 
