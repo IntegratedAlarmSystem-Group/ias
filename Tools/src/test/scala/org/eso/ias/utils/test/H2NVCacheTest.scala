@@ -118,4 +118,30 @@ class H2NVCacheTest extends AnyFlatSpec  {
 
     logger.info("H2 must clear the cache test done")
   }
+
+  it must "Allow to share the same NV DB" in {
+    logger.info("H2 must allow to share the same NV DB test started")
+    // Create and populate a Db
+     val cache = new H2NVCache.H2FileCache()
+    // Put random strings in the cache
+    for (i <- 1 to 25) {
+      val rndStr =  Random.alphanumeric take 10 mkString("")
+      assert(cache.put(s"ID$i", rndStr))
+    }
+    assertResult(25) {cache.size}
+
+    // Now access the DB from another cache of type shared
+    val shared = new H2NVCache.H2SharedFileCache(cache.connectionData.folderName, cache.connectionData.fileName)
+    assertResult(25) {shared.size}
+    // Get one item out of the DB
+    val sharedItemOpt = shared.get("ID5")
+    assert(sharedItemOpt.nonEmpty)
+
+    // Get the same item from the cache
+    val cacheItemOpt = shared.get("ID5")
+    assert(cacheItemOpt.nonEmpty)
+    // Check if the items matches
+    assert(sharedItemOpt.get==cacheItemOpt.get)
+    logger.info("H2 must allow to share the same NV DB test done")
+  }
 }
