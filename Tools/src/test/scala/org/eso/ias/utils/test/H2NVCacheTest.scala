@@ -17,7 +17,7 @@ class H2NVCacheTest extends AnyFlatSpec  {
 
   it must "Initialize the DB" in {
     logger.info("H2 intialization test started")
-    val cache = new H2NVCache()
+    val cache = new H2NVCache.H2FileCache()
     val fName = cache.h2FileName+".mv.db"
     assert(Files.exists(Paths.get(fName)), s"H2 file $fName NOT found")
     logger.info("H2 intialization test done")
@@ -25,7 +25,7 @@ class H2NVCacheTest extends AnyFlatSpec  {
 
   it must "store and retrieves items" in {
     logger.info("H2 store and retrieve items test started")
-    val cache = new H2NVCache()
+    val cache = new H2NVCache.H2FileCache()
     val fName = cache.h2FileName+".mv.db"
     // Put random strings in the cache
     for (i <- 1 to 10) {
@@ -55,7 +55,7 @@ class H2NVCacheTest extends AnyFlatSpec  {
 
   it must "Return None if an item is not in cache" in {
     logger.info("H2 returns None for missing ID test started")
-    val cache = new H2NVCache()
+    val cache = new H2NVCache.H2FileCache()
     val fName = cache.h2FileName+".mv.db"
     // Put random strings in the cache
     for (i <- 1 to 10) {
@@ -72,7 +72,7 @@ class H2NVCacheTest extends AnyFlatSpec  {
 
   it must "Delete an entry from the cache" in {
     logger.info("H2 must delete entries test started")
-    val cache = new H2NVCache()
+    val cache = new H2NVCache.H2FileCache()
     val fName = cache.h2FileName+".mv.db"
     // Put random strings in the cache
     for (i <- 1 to 10) {
@@ -105,7 +105,7 @@ class H2NVCacheTest extends AnyFlatSpec  {
 
   it must "Clear the cache" in {
     logger.info("H2 must clear the cache test started")
-    val cache = new H2NVCache()
+    val cache = new H2NVCache.H2FileCache()
     // Put random strings in the cache
     for (i <- 1 to 25) {
       val rndStr =  Random.alphanumeric take 10 mkString("")

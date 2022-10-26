@@ -56,7 +56,7 @@ class PCache(val maxSize: Integer = 0, val maxMemSize: Integer = 0) {
   private val inMemoryCache: InMemoryCache = new InMemoryCacheImpl(maxSize, maxMemSize)
 
   /** The non-volatile cache */
-  private lazy val nonVolatileCache = new H2NVCache()
+  private lazy val nonVolatileCache = H2NVCache.H2FileCache()
 
   /**
    * Puts/update a value in the cache
@@ -142,5 +142,4 @@ class PCache(val maxSize: Integer = 0, val maxMemSize: Integer = 0) {
 
   /** @return true if the cache is not empty; false otherwise */
   def nonEmpty: Boolean = size!=0
-
 }

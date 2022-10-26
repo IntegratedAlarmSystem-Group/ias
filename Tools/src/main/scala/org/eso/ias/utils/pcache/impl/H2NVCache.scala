@@ -11,13 +11,12 @@ import scala.util.Random
 
 /**
  * A non volatile cache of objects persisted with H2 (https://www.h2database.com/html/main).
-  *
- * If an URL is not provided, H2NVCache builds a database in $IAS_TMP.
- * If an URL is provided, H2NVCache connects to an existing database: this allows to share
- * the same DB on disk between different applications.
- * 
- * The URl allows to create the DB in,memory, on a file on disk, to connect to a remote DB:
+ *
+ * The URl allows to create the DB in,memory, on a file on disk, or to connect to a remote DB:
  * see [[https://www.h2database.com/html/features.html#database_url H2 URL]] for a detailed discussion.
+ *
+ * Objects of this class cannot be instantiated directly but must be instantiate with one of the
+ * case classes provided in the companion object.
  *
  * This class is not thread safe.
  *
@@ -25,7 +24,7 @@ import scala.util.Random
  * @param userName The user name to log into the RDMS
  * @param password The password for the login
  */
-class H2NVCache(dbUrl: String, userName: String="ias-user", password: String="") extends NonVolatileCache {
+abstract sealed class H2NVCache(val dbUrl: String, val userName: String, val password: String) extends NonVolatileCache {
   require(Objects.nonNull(dbUrl) && dbUrl.trim.nonEmpty,"Invalid H2 URL")
   H2NVCache.logger.info("H2 database URL: {}",dbUrl)
 
@@ -38,14 +37,6 @@ class H2NVCache(dbUrl: String, userName: String="ias-user", password: String="")
   val h2FileName: String = dbUrl.split(":")(2)
   H2NVCache.logger.info("H2 file: {}",h2FileName)
 
-  /**
-   * Auxiliary constructor, builds the DB in a file in $IAS_TMP 
-   * or in the system temporary folder if $IAS_TMP is not deined.
-   */
-  def this() = {
-    this(H2NVCache.generateRndFileName)
-  }
-
   /** Initialize the database */
   private def init(): Unit = {
     H2NVCache.logger.debug("Initializing H2 DB")
@@ -57,9 +48,7 @@ class H2NVCache(dbUrl: String, userName: String="ias-user", password: String="")
     H2NVCache.logger.info("H2 DB initialized")
   }
 
-  private def shutdown(): Unit = {
-    //DeleteDbFiles.execute()
-  }
+  def shutdown(): Unit
 
   /**
    * Puts/update a value in the cache
@@ -169,16 +158,78 @@ object H2NVCache {
   /** The name of teh column with the JSPON string */
   val jsonStrColName = "JSONTSTR"
 
+  /** The user name for default args */
+  val defaultUserName = "ias-user"
+
+  /** The password for default args */
+  val defaultPassword = ""
+
   /** The statement to build a DB for the cache */
   val buildDbSqlStatement: String = s"CREATE TABLE $tableName (" +
     s"$idColName VARCHAR(255) PRIMARY KEY, " +
     s"$timeStampColName BIGINT NOT NULL, " +
     s"$jsonStrColName VARCHAR(2048) NOT NULL);"
 
-  /** @return a random file name for the H2 database */
-  def generateRndFileName: String = {
+  /**
+    * Connection data for the H2 DB on file
+    *
+    * @param folderName The folder where the files of the DB will be stored
+    * @param fileName The file name used by H2
+    * @param h2DbUrl the H2 UR
+    */
+  case class H2FileConnectionData(val folderName: String, val fileName: String, val h2DbUrl: String)
+
+  /** 
+   * Build a random Url for a H2 file DB in a temporary folder
+   * 
+   * @return a random Url for the H2 database on file 
+   */
+  def generateRndFileH2Url(): H2FileConnectionData = {
     val tmpFolder = Option(System.getProperty("ias.tmp.folder")).getOrElse(System.getProperty("java.io.tmpdir"))
     val rndStr =  Random.alphanumeric take 10 mkString("")
-    s"jdbc:h2:$tmpFolder/$rndStr-${System.currentTimeMillis()}"
+    buildH2Url(tmpFolder,s"$rndStr-${System.currentTimeMillis()}")
+  }
+
+  /**
+    * Build the H2 URL for a file
+    *
+    * @param folder The folder where the files of the DB will be stored
+    * @param fileName The file name used by H2
+    * @return a tuple composed of the folder name, the file name and the H2 URL
+    */  
+  def buildH2Url(folder: String, fileName: String): H2FileConnectionData = 
+    H2FileConnectionData(folder, fileName, s"jdbc:h2:$folder/$fileName")
+
+  /** 
+   * A cache on file in the local file system. It deletes the DB in the file on exit. 
+   *
+   * The file will be created in a temporary folder (IAS_TMP or, if not defined
+   * the temporary folder as returned by the java.io.tmpdir property)
+   */
+  case class H2FileCache(val connectionData: H2FileConnectionData = generateRndFileH2Url()) 
+  extends H2NVCache(dbUrl = connectionData.h2DbUrl, userName = defaultUserName , password = defaultPassword ) {
+    override def shutdown(): Unit = {
+      //DeleteDbFiles.execute()
+    }
+  }
+
+  /** 
+   * A cache on file in the local file system that does not delete the DB on exit
+   *
+   * It connects to the DB on file if it already exists so the same DB on file
+   * can be shared by different apps.
+   * 
+   * @param folder The folder where the DB files are
+   * @param fileName The name of the H@ file
+   * @param userName User name (optional)
+   * @param password Password (optional)
+   */
+  case class H2SharedFileCache(
+    val folder: String, 
+    val fileName: String,
+    override val userName: String = defaultUserName, 
+    override val password: String = defaultPassword)
+  extends H2NVCache(buildH2Url(folder, fileName).h2DbUrl, userName, password){
+    override def shutdown(): Unit = {}
   }
 }
