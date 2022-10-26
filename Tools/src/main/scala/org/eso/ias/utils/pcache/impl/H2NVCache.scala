@@ -42,13 +42,32 @@ abstract sealed class H2NVCache(val dbUrl: String, val userName: String, val pas
     H2NVCache.logger.debug("Initializing H2 DB")
     conn = DriverManager.getConnection(dbUrl, userName, password)
     H2NVCache.logger.debug("Creating the table in the H2 DB")
-    val stmt = conn.createStatement()
-    val ret = stmt.executeUpdate(H2NVCache.buildDbSqlStatement)
-    stmt.close()
+    if (isTableCreated()) {
+      H2NVCache.logger.info("Table already present in the DB")
+    } else {
+      H2NVCache.logger.info("Creating table {} the DB", H2NVCache.tableName)
+      val stmt = conn.createStatement()
+      val ret = stmt.executeUpdate(H2NVCache.buildDbSqlStatement)
+      stmt.close()
+    }
+    
     H2NVCache.logger.info("H2 DB initialized")
   }
 
   def shutdown(): Unit
+
+  /**
+    * Check if the table already exists in the DB
+    *
+    * @return true if the table exists, false otherwise
+    */
+  def isTableCreated(): Boolean = {
+    val sqlStr = s"SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = '${H2NVCache.tableName}'"
+    val stmt = conn.createStatement()
+    val ret = stmt.execute(sqlStr)
+    val rs = stmt.getResultSet
+    rs.first() // If the table returned one row then the table exists
+  }
 
   /**
    * Puts/update a value in the cache
