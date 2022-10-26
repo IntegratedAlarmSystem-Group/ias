@@ -48,11 +48,11 @@ class InMemoryCacheImpl(val maxSize: Integer=0, maxMemSize: Integer=0) extends I
     }
 
     (maxSize, maxMemSizeBytes, cache.contains(key)) match {
-      case (_, _, true) => putItem(key, value); true
-      case (0, 0, false) => putItem(key, value); true
+      case (0, 0, _) => false
       case (n, 0, false) => if (size<n) { putItem(key, value); true } else false
       case (0, m, false) => if (memSize<m) { putItem(key, value); true } else false
       case (n, m, false)=> if (size<n && memSize<m) { putItem(key, value); true } else false
+      case (_, _, true) => putItem(key, value); true
     }
   }
 
