@@ -6,7 +6,7 @@ import org.eso.ias.cdb.json.*;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.TemplateDao;
-import org.eso.ias.converter.config.IasioConfigurationDaoImpl;
+import org.eso.ias.converter.config.Cache;
 import org.eso.ias.converter.config.MonitorPointConfiguration;
 import org.eso.ias.types.IASTypes;
 import org.junit.jupiter.api.AfterEach;
@@ -61,7 +61,7 @@ public class ConverterCdbTest {
 	 */
 	private CdbFiles cdbFiles;
 	
-	private IasioConfigurationDaoImpl configDao;
+	private Cache configDao;
 
 	/**
 	 * Create a Iasio ID from the given index
@@ -167,7 +167,7 @@ public class ConverterCdbTest {
         cdbFiles = new CdbJsonFiles(cdbParentPath);
         CdbReader cdbReader = new JsonReader(cdbFiles);
         cdbReader.init();
-        configDao = new IasioConfigurationDaoImpl(cdbReader);
+        configDao = new Cache(cdbReader);
 
     }
 	
