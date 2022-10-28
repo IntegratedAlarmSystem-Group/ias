@@ -102,9 +102,34 @@ class PCacheTest extends AnyFunSuite {
     cache.putAll(items.toList)
 
     assert(cache.size==50)
-    assert(cache.inMemoryCache.size==30)
-    assert(cache.nonVolatileCache.size==20)
+    assert(cache.inMemorySize==30)
+    assert(cache.nonVolatileSize==20)
 
     for (id <- 1 to 50) assert(cache.get(s"ID$id").nonEmpty)
+  }
+
+  test("Clear the cache") {
+    val cache = PCache(55, 0)
+    loadCache(100, cache, "ID")
+    assert(cache.inMemorySize == 55)
+    assert(cache.nonVolatileSize == 45)
+    assert(cache.size==100)
+
+    cache.clear()
+    assert(cache.size==0)
+
+    loadCache(100, cache, "ID")
+    assert(cache.inMemorySize == 55)
+    assert(cache.nonVolatileSize == 45)
+    assert(cache.size==100)
+  }
+
+  test("All items on NV memory when size is 0") {
+    val cache = PCache(0,0)
+    loadCache(100, cache, "ID")
+    println(s"cache.inMemorySize = ${cache.inMemorySize}")
+    assert(cache.inMemorySize == 0)
+    assert(cache.nonVolatileSize == 100)
+    assert(cache.size==100)
   }
 }

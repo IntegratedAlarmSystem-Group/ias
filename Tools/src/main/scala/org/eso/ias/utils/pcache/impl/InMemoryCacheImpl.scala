@@ -5,6 +5,8 @@ import org.eso.ias.utils.pcache.InMemoryCache
 
 /** The in memory cache that delegates to [[HashMap]]
  *
+ * This class is not thread safe.
+ *
  * @param maxSize    The max number of items to keep in memory
  * @param maxMemSize The max size of memory (MBytes) that can be used by the object in memory
  */
@@ -46,11 +48,11 @@ class InMemoryCacheImpl(val maxSize: Integer=0, maxMemSize: Integer=0) extends I
     }
 
     (maxSize, maxMemSizeBytes, cache.contains(key)) match {
-      case (_, _, true) => putItem(key, value); true
-      case (0, 0, false) => putItem(key, value); true
+      case (0, 0, _) => false
       case (n, 0, false) => if (size<n) { putItem(key, value); true } else false
       case (0, m, false) => if (memSize<m) { putItem(key, value); true } else false
       case (n, m, false)=> if (size<n && memSize<m) { putItem(key, value); true } else false
+      case (_, _, true) => putItem(key, value); true
     }
   }
 
@@ -84,5 +86,8 @@ class InMemoryCacheImpl(val maxSize: Integer=0, maxMemSize: Integer=0) extends I
 
   /** @return the number of objects in this cache (both in memory and persisted) */
   def size: Int = cache.size
+
+  /** Empty the cache */
+  override def clear(): Unit = cache.clear
 
 }

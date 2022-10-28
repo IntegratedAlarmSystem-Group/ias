@@ -53,10 +53,10 @@ import scala.jdk.OptionConverters._
 class PCache(val maxSize: Integer = 0, val maxMemSize: Integer = 0) {
 
   /** The in memory cache */
-  val inMemoryCache: InMemoryCache = new InMemoryCacheImpl(maxSize, maxMemSize)
+  private val inMemoryCache: InMemoryCache = new InMemoryCacheImpl(maxSize, maxMemSize)
 
   /** The non-volatile cache */
-  lazy val nonVolatileCache = new H2NVCache()
+  private lazy val nonVolatileCache = H2NVCache.H2FileCache()
 
   /**
    * Puts/update a value in the cache
@@ -66,7 +66,7 @@ class PCache(val maxSize: Integer = 0, val maxMemSize: Integer = 0) {
    * @return true if the object has been stored in the cache,
    *              false otherwise
    * */
-  def put(key: String, value: String): Boolean = {
+  def put(key: String, value: String): Boolean = synchronized {
     if (inMemoryCache.put(key,value)) true
     else nonVolatileCache.put(key, value)
   }
@@ -78,7 +78,9 @@ class PCache(val maxSize: Integer = 0, val maxMemSize: Integer = 0) {
    * @return true if all the items have been successfully added to the list;
    *         false otherwise
    */
-  def putAll(items : List[(String, String)]): Boolean = items.forall { (key, value) => put(key,value) }
+  def putAll(items : List[(String, String)]): Boolean = synchronized { 
+    items.forall { (key, value) => put(key,value) } 
+  }
 
   /**
    * Get an object from the cache
@@ -86,7 +88,9 @@ class PCache(val maxSize: Integer = 0, val maxMemSize: Integer = 0) {
    * @param key The key of the object to get
    * @return The Object in the cache if it exists, empty otherwise
    */
-  def get(key: String): Option[String] = inMemoryCache.get(key).orElse(nonVolatileCache.get(key))
+  def get(key: String): Option[String] = synchronized {
+    inMemoryCache.get(key).orElse(nonVolatileCache.get(key))
+  }
 
   /**
    * Remove an object from the cache
@@ -95,7 +99,7 @@ class PCache(val maxSize: Integer = 0, val maxMemSize: Integer = 0) {
    * @return True if the object has been removed,
    *         False otherwise (for example the object was not in the cache)
    */
-  def del(key: String): Boolean = {
+  def del(key: String): Boolean = synchronized {
     if (inMemoryCache.del(key)) true
     else nonVolatileCache.del(key)
   }
@@ -110,28 +114,32 @@ class PCache(val maxSize: Integer = 0, val maxMemSize: Integer = 0) {
   def jget(key: String): Optional[String] = get(key).toJava
 
   /** Collects all keys of this map in a set */
-  def keySet: Set[String] = inMemoryKeySet++nonVolatileKeySet
+  def keySet: Set[String] = synchronized { inMemoryKeySet++nonVolatileKeySet }
 
+  /** Empty the cahce */
+  def clear(): Unit = synchronized {
+    inMemoryCache.clear()
+    nonVolatileCache.clear()
+  }
 
   /** Collects all keys of the volatile cache  in a set */
-  def inMemoryKeySet: Set[String] = inMemoryCache.keySet
+  def inMemoryKeySet: Set[String] = synchronized { inMemoryCache.keySet }
 
   /** Collects all keys of the volatile cache in a set */
-  def nonVolatileKeySet: Set[String] = nonVolatileCache.keySet
+  def nonVolatileKeySet: Set[String] = synchronized { nonVolatileCache.keySet }
 
   /** @return the number of objects in the cache (both in memory and non-volatile) */
-  def size: Int = inMemorySize + nonVolatileSize
+  def size: Int = synchronized {inMemorySize + nonVolatileSize }
 
   /** @return the number of objects in memory */
-  def inMemorySize: Int = inMemoryCache.size
+  def inMemorySize: Int = synchronized { inMemoryCache.size }
 
   /** @return The number of objects persisted */
-  def nonVolatileSize: Int = nonVolatileCache.size
+  def nonVolatileSize: Int = synchronized { nonVolatileCache.size }
 
   /** @return true if the cache is empty; false otherwise */
   def isEmpty: Boolean = size==0
 
   /** @return true if the cache is not empty; false otherwise */
   def nonEmpty: Boolean = size!=0
-
 }
