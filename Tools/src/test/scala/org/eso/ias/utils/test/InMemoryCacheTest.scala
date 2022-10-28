@@ -16,7 +16,7 @@ class InMemoryCacheTest extends AnyFlatSpec {
 
   it must "store and retrieves items" in {
     logger.info("Store and retrieve items test started")
-    val cache = new InMemoryCacheImpl()
+    val cache = new InMemoryCacheImpl(200,10)
 
     // Put random strings in the cache
     for (i <- 1 to 10) {
@@ -46,7 +46,7 @@ class InMemoryCacheTest extends AnyFlatSpec {
 
   it must "Return None if an item is not in cache" in {
     logger.info("Returns None for missing ID test started")
-    val cache = new InMemoryCacheImpl()
+    val cache = new InMemoryCacheImpl(200,10)
 
     // Put random strings in the cache
     for (i <- 1 to 10) {
@@ -63,7 +63,7 @@ class InMemoryCacheTest extends AnyFlatSpec {
 
   it must "Delete an entry from the cache" in {
     logger.info("Delete entries test started")
-    val cache = new InMemoryCacheImpl()
+    val cache = new InMemoryCacheImpl(200,10)
 
     // Put random strings in the cache
     for (i <- 1 to 10) {
@@ -149,7 +149,7 @@ class InMemoryCacheTest extends AnyFlatSpec {
 
   it must "Update an element already in the cache" in {
     logger.info("Update an item started")
-    val cache = new InMemoryCacheImpl(10, 0)
+    val cache = new InMemoryCacheImpl(10, 10)
     for (i <- 1 to 10) {
       val rndStr = Random.alphanumeric take 10 mkString ("")
       assert(cache.put(s"ID$i", rndStr))
@@ -168,6 +168,22 @@ class InMemoryCacheTest extends AnyFlatSpec {
     assert(itemOpt.nonEmpty)
     assert(itemOpt.get == str)
     logger.info("Update an item done")
+  }
+
+  it must "Clear the cache" in {
+    logger.info("Clear the cache test started")
+    val cache = new InMemoryCacheImpl(25, 0)
+    // Put random strings in the cache
+    for (i <- 1 to 25) {
+      val rndStr =  Random.alphanumeric take 10 mkString("")
+      assert(cache.put(s"ID$i", rndStr))
+    }
+    assertResult(25) {cache.size}
+
+    cache.clear()
+    assertResult(0) {cache.size}
+
+    logger.info("Clear the cache test done")
   }
 
 }
