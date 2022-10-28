@@ -11,8 +11,6 @@ import org.eso.ias.command.DefaultCommandExecutor;
 import org.eso.ias.command.kafka.CommandManagerKafkaImpl;
 import org.eso.ias.converter.config.Cache;
 import org.eso.ias.converter.config.ConfigurationException;
-import org.eso.ias.converter.config.IasioConfigurationDAO;
-import org.eso.ias.converter.config.IasioConfigurationDaoImpl;
 import org.eso.ias.heartbeat.HbEngine;
 import org.eso.ias.heartbeat.HbProducer;
 import org.eso.ias.heartbeat.HeartbeatProducerType;
