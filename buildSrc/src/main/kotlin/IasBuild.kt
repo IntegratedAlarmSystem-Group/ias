@@ -12,6 +12,7 @@ import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.withType
+import org.jetbrains.kotlin.konan.file.File
 
 open class IasBuild : Plugin<Project> {
     override fun apply(project: Project) {
@@ -187,8 +188,13 @@ open class IasBuild : Plugin<Project> {
             commandLine("src/test/runTests.sh")
         }
 
+
         project.tasks.withType<JavaCompile>().configureEach {
             options.isDeprecation = true
+
+            val compilerArgs = options.compilerArgs
+            // compilerArgs.add("-Xdoclint:all,-missing")
+            compilerArgs.add("-Xlint:all")
 
             val extension = g as ExtensionAware
             val jdkVersion = extension.extra["JdkVersion"].toString().toInt()
