@@ -14,7 +14,7 @@ public class NoneFilter extends FilterBase {
 	/**
 	 * Constructor
 	 * 
-	 * @param pros The properties of this filter (ignored)
+	 * @param props The properties of this filter (ignored)
 	 */
 	public NoneFilter(String props) {
 		super();
