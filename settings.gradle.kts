@@ -50,13 +50,23 @@ process.inputStream.reader(Charsets.UTF_8).use {
 }
 process.waitFor(10, TimeUnit.SECONDS)
 
+val gitBranchProc = ProcessBuilder("git", "rev-parse", "--abbrev-ref", "HEAD").start()
+gitBranchProc.inputStream.reader(Charsets.UTF_8).use {
+	val gitBranch = it.readText()
+	if (gradle is ExtensionAware) {
+		val extension = gradle as ExtensionAware
+		extension.extra["GitBranch"] = gitBranch
+	}
+}
+gitBranchProc.waitFor(10, TimeUnit.SECONDS)
+
 // Sets the version of java in the JdkVersion extra property
-// and the comman dependencies
+// and the common dependencies
 if (gradle is ExtensionAware) {
 	val extension = gradle as ExtensionAware
 	extension.extra["JdkVersion"] = 11
 
-        // Common dependencies
+        // IAS common dependencies
 	extension.extra["scala-library"] = "org.scala-lang:scala3-library_3:3.2.0"
 	extension.extra["scalatest"] = "org.scalatest:scalatest_3:3.2.14"
 	extension.extra["slf4j-api"] = "org.slf4j:slf4j-api:1.7.36"
