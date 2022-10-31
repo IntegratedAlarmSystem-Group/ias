@@ -408,7 +408,7 @@ public class WebServerSender implements IasioListener, AutoCloseable {
 	/**
 	 * This method receives IASValues published in the BSDB.
 	 *
-	 * @see {@link IasioListener#iasiosReceived(Collection)}
+	 * See {@link IasioListener#iasiosReceived(Collection)}
 	 */
 	@Override
 	public void iasiosReceived(Collection<IASValue<?>> events) {

@@ -129,8 +129,8 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor<Alarm> {
 	/**
 	 * Constructor 
 	 * 
-	 * @param asceId: the ID of the ASCE
-	 * @param asceRunningId: the runningID of the ASCE
+	 * @param cEleId: the ID of the ASCE
+	 * @param cEleRunningId: the runningID of the ASCE
 	 * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
 	 * @param props: the user defined properties
 	 */
@@ -179,7 +179,7 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor<Alarm> {
 	public void shutdown() {}
 
 	/**
-	 * @see JavaTransferExecutor#eval(Map, IASValue)
+	 * See JavaTransferExecutor#eval(Map, IASValue)
 	 */
 	public IasIOJ<Alarm> eval(Map<String, IasIOJ<?>> compInputs, IasIOJ<Alarm> actualOutput) throws Exception {
 		if (compInputs.size() != 1)
