@@ -15,5 +15,12 @@ tasks.register("build") {
     }
 }
 
+tasks.register("install") {
+    var envVar: String? = System.getenv("IAS_ROOT")
+    val extension = gradle as ExtensionAware
+    val gitBranchStr = extension.extra["GitBranch"].toString()
+    org.jetbrains.kotlin.konan.file.File(envVar + "/" + "RELEASE.txt").writeText("Built from git branch " + gitBranchStr)
+}
+
 subprojects {
 }
