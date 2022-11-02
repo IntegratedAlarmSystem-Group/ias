@@ -128,7 +128,7 @@ class PydocBuilder(DocGenerator):
             oldWD = os.getcwd()
             logging.info("Changing folder to %s",folder)
             os.chdir(folder)
-            cmd =["pydoc"]
+            cmd =["pydoc3"]
             cmd.append("-w")
             cmd.append("./")
             ret = call(cmd,stdout=self.outFile,stderr=self.outFile)
