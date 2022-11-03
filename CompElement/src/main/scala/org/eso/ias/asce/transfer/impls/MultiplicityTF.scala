@@ -89,7 +89,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
   /**
    * @see TransferExecutor#shutdown()
    */
-  def shutdown() {}
+  def shutdown(): Unit = {}
 
   /**
     * The mode of the ouptut depends on the modes of the inputs:
@@ -124,7 +124,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
 
     // Final cleanup
     // returns  Map(k2 -> B,C, k1 -> A, k3 -> D)
-    grouped.mapValues(_.map(_._2).toList.mkString(","))
+    grouped.view.mapValues(_.map(_._2).toList.mkString(",")).toMap
   }
   
   /**

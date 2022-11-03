@@ -12,13 +12,5 @@ src/test/scala
 src/test/java
 src/test/python
 src/test/resources
-src/test/cdb
-bin
-lib
-lib/python
-lib/ExtTools
-extTools
-classes
+src/test/CDB
 config
-logs
-apidocs

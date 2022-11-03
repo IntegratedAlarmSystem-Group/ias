@@ -11,10 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -126,12 +123,14 @@ public class ConsumerProducerTest implements KafkaConsumerListener {
 	public void setUp() throws Exception {
 		logger.info("Initializing...");
 		consumer = new SimpleStringConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, topicName, "PubSub-Test");
-		consumer.setUp();
+		Properties props = new Properties();
+		props.setProperty("group.id","Group-"+System.currentTimeMillis());
+		consumer.setUp(props);
 		producer = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, "Consumer-ID");
+
 		producer.setUp();
 		
 		consumer.startGettingStrings(StreamPosition.END,this);
-		logger.info("Initialized.");
 	}
 	
 	/**

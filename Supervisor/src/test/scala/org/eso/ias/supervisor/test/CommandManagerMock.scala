@@ -12,7 +12,7 @@ class CommandManagerMock(id: String) extends CommandManager(id) {
    *
    * @param identifier The identifier
    */
-  def this(identifier: Identifier) {
+  def this(identifier: Identifier) = {
     this(identifier.id)
   }
 

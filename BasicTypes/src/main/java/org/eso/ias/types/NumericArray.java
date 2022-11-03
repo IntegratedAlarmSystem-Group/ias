@@ -164,7 +164,7 @@ public class NumericArray {
      *
      * @param index The index in the arrays
      * @param value The value to set in the index position
-     * @throws IndexOutOfBoundsException - if the index is out of range (index < 0 || index > size())
+     * @throws IndexOutOfBoundsException - if the index is out of range ({@literal index < 0 || index > size()})
      */
     public NumericArray set(int index, Number value) {
         Objects.requireNonNull(value, "Cannot add a null value");

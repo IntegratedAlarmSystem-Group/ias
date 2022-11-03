@@ -125,7 +125,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame, pro
   /**
    * @see TransferExecutor#shutdown()
    */
-  def shutdown() {}
+  def shutdown(): Unit = {}
   
   /**
    * @see ScalaTransferExecutor#eval

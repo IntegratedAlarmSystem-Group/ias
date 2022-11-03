@@ -7,14 +7,14 @@ import org.eso.ias.asce.transfer.{JavaTransfer, ScalaTransfer, TransferFunctionL
 import org.eso.ias.asce.transfer.impls.MultiplicityTF
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types._
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
  * Test the basic functionalities of the IAS Component,
  * while the functioning of the transfer function
  * is checked elsewhere.
  */
-class TestComponent extends FlatSpec {
+class TestComponent extends AnyFlatSpec {
 
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)

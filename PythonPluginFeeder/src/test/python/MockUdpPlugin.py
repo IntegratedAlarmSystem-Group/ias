@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 '''
 A plugin that sends some monitor points through the UDP
 socket to the java receiver.

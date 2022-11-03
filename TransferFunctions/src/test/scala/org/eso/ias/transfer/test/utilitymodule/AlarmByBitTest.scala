@@ -7,10 +7,11 @@ import org.eso.ias.asce.transfer.{IasIO, IasioInfo}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.tranfer.utlitymodule.{StatusWord, UMAlarmByBit}
 import org.eso.ias.types._
-import org.scalatest.{BeforeAndAfterEach, FlatSpec}
+import org.scalatest.{BeforeAndAfterEach}
+import org.scalatest.flatspec.AnyFlatSpec
 
 /** Test the UMAlarmByBit TF */
-class AlarmByBitTest extends FlatSpec with BeforeAndAfterEach {
+class AlarmByBitTest extends AnyFlatSpec with BeforeAndAfterEach {
 
   /** The logger */
   val logger = IASLogger.getLogger(this.getClass)

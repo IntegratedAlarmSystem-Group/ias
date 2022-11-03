@@ -1,11 +1,5 @@
 package org.eso.ias.supervisor.test
 
-import java.nio.file.{FileSystems, Path}
-import java.util
-import java.util.Properties
-import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.{CountDownLatch, TimeUnit}
-
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.DasuDao
@@ -17,11 +11,17 @@ import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener
 import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosProducer, SimpleKafkaIasiosConsumer, SimpleStringProducer}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.supervisor.Supervisor
-import org.eso.ias.types._
-import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, FlatSpec}
+import org.eso.ias.types.*
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll}
 
-import scala.collection.JavaConverters
+import java.nio.file.{FileSystems, Path}
+import java.util
+import java.util.Properties
+import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.{CountDownLatch, TimeUnit}
 import scala.collection.mutable.ListBuffer
+import scala.jdk.javaapi.CollectionConverters
 
 /**
  * Test the Supervisor connected to the kafka BSDB.
@@ -49,7 +49,7 @@ import scala.collection.mutable.ListBuffer
  *
  * The test submit some IASIOs and checks what is published in the BSDB.
  */
-class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with BeforeAndAfter {
+class SupervisorWithKafkaTest extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfter {
 
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
@@ -68,7 +68,7 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
   val supervisorId = new Identifier("SupervisorWithKafka", IdentifierType.SUPERVISOR, None)
 
   // The JSON CDB reader
-  val cdbParentPath: Path = FileSystems.getDefault.getPath(".")
+  val cdbParentPath: Path = FileSystems.getDefault.getPath("src/test")
   val cdbFiles = new CdbJsonFiles(cdbParentPath)
   val cdbReader: CdbReader = new JsonReader(cdbFiles)
   cdbReader.init()
@@ -116,9 +116,8 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
   /** The kafka consumer gets AISValues from the BSDB */
   val inputConsumer: InputSubscriber = KafkaSubscriber(supervisorId.id, None, None, new Properties())
   
-  /** The test uses real DASu i.e. the factory instantiates a DasuImpl */
-  val factory: (DasuDao, Identifier, OutputPublisher, InputSubscriber) =>
-    DasuImpl = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) => DasuImpl(dd, i, op, id, 1,1)
+  /** The test uses real DASU i.e. the factory instantiates a DasuImpl */
+  val factory: (DasuDao, Identifier, OutputPublisher, InputSubscriber) => DasuImpl = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) => DasuImpl(dd, i, op, id, 1,1)
 
   /** The supervisor to test */
   val supervisor = new Supervisor(
@@ -139,7 +138,7 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
   
   after {}
 
-  override def beforeAll() {
+  override def beforeAll(): Unit = {
     logger.info("BeforeAll...")
     /**
      * The listener of IASValues published in the BSDB
@@ -152,7 +151,7 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
         * i.e. it has been received by iasiosConsumer
         */
       override def iasiosReceived(events: util.Collection[IASValue[_]]): Unit = {
-        val iasValuesReceived = JavaConverters.collectionAsScalaIterable(events)
+        val iasValuesReceived = CollectionConverters.asScala(events)
 
         logger.info("{} IASValues received", iasValuesReceived.size)
 
@@ -177,7 +176,7 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
     logger.info("BeforeAll done.")
   }
 
-  override def afterAll() {
+  override def afterAll(): Unit = {
     logger.info("AfterAll...")
     iasiosProducer.tearDown()
     iasiosConsumer.tearDown()
@@ -192,18 +191,17 @@ class SupervisorWithKafkaTest extends FlatSpec with BeforeAndAfterAll with Befor
     val t0 = System.currentTimeMillis()-100
       IASValue.build(
         value,
-			  OperationalMode.OPERATIONAL,
-			  IasValidity.RELIABLE,
-			  identifier.fullRunningID,
-			  IASTypes.DOUBLE,
-			  t0,
+        OperationalMode.OPERATIONAL,
+        IasValidity.RELIABLE,
+        identifier.fullRunningID,
+        IASTypes.DOUBLE,
+        t0,
         t0+1,
-			  t0+5,
-			  t0+10,
-			  t0+15,
-			  t0+20,
-			null,
-			null,null)
+        t0+5,
+        t0+10,
+        t0+15,
+        t0+20,
+        null,null,null)
     
   }
 

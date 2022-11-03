@@ -6,10 +6,10 @@ import org.eso.ias.asce.transfer.{IasIO, IasioInfo}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.tranfer.BoolToAlarm
 import org.eso.ias.types._
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /** Test the [[org.eso.ias.tranfer.BoolToAlarm]] transfer function  */
-class BoolToAlarmTest extends FlatSpec {
+class BoolToAlarmTest extends AnyFlatSpec {
 
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)

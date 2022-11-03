@@ -63,7 +63,7 @@ public class CdbReaderFactoryTest {
     @Test
     void testJsonInstantiation() throws Exception {
         logger.info("Checking if the JSON implementation is correctly built");
-        String[] args = {"first", "second", jsonCdbCmdLineParamShort, "./testCdb"};
+        String[] args = {"first", "second", jsonCdbCmdLineParamShort, "./src/test/testCdb"};
         CdbReader cdbReader = CdbReaderFactory.getCdbReader(args);
         JsonReader jReader=(JsonReader)cdbReader;
         cdbReader.init();

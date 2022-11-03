@@ -38,7 +38,7 @@ class ScaladocBuilder(DocGenerator):
         srcs = []
         for root, subdirs, files in os.walk(folder):
             for file in files:
-                if file.endswith(".scala") or file.endswith(".java"):
+                if file.endswith(".tasty"):
                     srcs.append(os.path.join(root,file))
         return srcs
     

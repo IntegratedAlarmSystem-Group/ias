@@ -34,7 +34,7 @@ TEMP=( $OTHER_PARAMS )
 ID=${TEMP_PARMS_ARRAY[0]}
 echo "WebServerSender ID=$ID"
 
-CMD="iasRun -l j $JAVA_PROPS $LOGID_PARAM org.eso.ias.webserversender.WebServerSender $OTHER_PARAMS"
+CMD="iasRun $JAVA_PROPS $LOGID_PARAM org.eso.ias.webserversender.WebServerSender $OTHER_PARAMS"
 
 echo Will run
 echo $CMD

@@ -71,12 +71,12 @@ object Validity {
   /**
    * Implicit conversion from Validity to IasValidity
    */
-  implicit def ValidityToIasValidity(validity: Validity) = validity.iasValidity
+  implicit def ValidityToIasValidity(validity: Validity): IasValidity = validity.iasValidity
   
   /**
    * Implicit conversion from  IasValidity to Validity
    */
-  implicit def IasValidityToValidity(iasValidity: IasValidity) = new Validity(iasValidity)
+  implicit def IasValidityToValidity(iasValidity: IasValidity): Validity = new Validity(iasValidity)
   
   /**
    * Return the lowest validity between all

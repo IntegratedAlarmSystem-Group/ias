@@ -1,8 +1,8 @@
 package org.eso.ias.asce.transfer
 
-import java.util.Properties
-
 import org.eso.ias.types.Identifier
+
+import java.util.Properties
 
 /**
  * The <code>ScalaTransferExecutor<code> provides the interface
@@ -79,12 +79,12 @@ extends TransferExecutor(cEleId,cEleRunningId,validityTimeFrame,props) {
 		* @param id the id to translate, templated or not
 		* @return teh identifer translated if the ASCE is templated
 		*/
-	protected final def getIdentifier(id: String): String = {
-		require(Option(id).isDefined && !id.isEmpty)
-		if (!isTemplated) id
-		else if (Identifier.isTemplatedIdentifier(id)) id
-		else Identifier.buildIdFromTemplate(id, getTemplateInstance.get)
-	}
+  protected final def getIdentifier(id: String): String = {
+    require(Option(id).isDefined && !id.isEmpty)
+    if (!isTemplated) id
+    else if (Identifier.isTemplatedIdentifier(id)) id
+    else Identifier.buildIdFromTemplate(id, getTemplateInstance.get)
+  }
   
   /**
 	 * Produces the output of the component by evaluating the inputs.
@@ -98,7 +98,7 @@ extends TransferExecutor(cEleId,cEleRunningId,validityTimeFrame,props) {
 	 * @param actualOutput: the actual output of the ASCE
 	 * @return the computed value to set as output of the ASCE
 	 */
-	def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[T]): IasIO[T]
+  def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[T]): IasIO[T]
 
 	/**
 		* Initialize the transfer function
@@ -106,6 +106,6 @@ extends TransferExecutor(cEleId,cEleRunningId,validityTimeFrame,props) {
 		* @param inputsInfo The IDs and types of the inputs
     * @param outputInfo The Id and type of thr output
 		*/
-	def initialize(inputsInfo: Set[IasioInfo],outputInfo: IasioInfo): Unit
+  def initialize(inputsInfo: Set[IasioInfo],outputInfo: IasioInfo): Unit
   
 }

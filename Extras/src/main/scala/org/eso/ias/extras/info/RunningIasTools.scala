@@ -166,7 +166,7 @@ object RunningIasTools {
     RunningIasTools.logger.debug("Getting the CDB reader")
     val cdbReader: CdbReader = CdbReaderFactory.getCdbReader(args)
     cdbReader.init()
-    val ret = new CdbDefinedTools(cdbReader)
+    val ret = CdbDefinedTools(cdbReader)
 
     // An exception shutting down the reader shall not invalidate the data read
     try {
@@ -227,8 +227,6 @@ object RunningIasTools {
       .map(LogLevelDao.valueOf)
       .getOrElse(DEFAULT_LOG_LEVEL)
 
-
-
     CmdLineParams(brokers, timeout, verbose, logLevel, missing, cdbToolsOpt)
   }
 
@@ -254,7 +252,7 @@ object RunningIasTools {
 
 
 
-        val runner = new RunningIasTools(value)
+        val runner = RunningIasTools(value)
         runner.setup()
         runner.process()
         val out = runner.generateReport()

@@ -66,16 +66,16 @@ class DocGenerator(object):
                     return True
         return False
         
-    def getSrcPaths(self,sourceFolder, includeTestFolder,folderName,fileExtension):
+    def getSrcPaths(self,sourceFolder, includeTestFolder, folderName,fileExtension):
         """
         Scan the source folder and return a list of source folders
-        containg java files.
-        Java source can be contained into src or test (the latter is used only 
+        containing source files.
+        Source can be contained into src or test (the latter is used only
         if the includeTestFolder parameter is True)
-        The search is recursive because a folder can contains several modules
+        The search is recursive because a folder can contain several modules
         
         @param sourceFolder: root source folder (generally IAS, passed in the command line)
-        @param includeTestFolder: True to inculde test folders in the scan
+        @param includeTestFolder: True to include test folders in the scan
         @param  folderName: the name of the folder containing the sources like java or python 
         @param fileExtension: the extension of the files that the folder is supposed to contain
         """

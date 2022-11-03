@@ -9,7 +9,7 @@ import java.time.Duration
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.{Timer, TimerTask}
-import scala.collection.mutable.{ArrayBuffer, Map => MutableMap}
+import scala.collection.mutable.{ArrayBuffer, Map as MutableMap}
 
 /**
  * HbsCollector gets and collects the HBs received between invocations of
@@ -102,7 +102,7 @@ class HbsCollector(
     assert(ttl>0, "The timer task should not run if ttl<=0")
     if (!paused.get()) {
       val oldestTStamp = System.currentTimeMillis() - ttl
-      val hbsToRemove: MutableMap[String, HbMsg] = hbs.filter( x => x._2.timestamp<oldestTStamp)
+      val hbsToRemove: MutableMap[String, HbMsg] = hbs.filter((key, value) => value.timestamp<oldestTStamp)
       hbsToRemove.keys.foreach(k => {
         HbsCollector.logger.debug(s"Removing old HBs with id ${k}")
         hbs -= k
@@ -119,7 +119,7 @@ class HbsCollector(
    * @param hbProdType the type of the producers
    */
   def getHbsOfType(hbProdType: HeartbeatProducerType): List[HbMsg] = synchronized {
-    val hbsToReturn: MutableMap[String, HbMsg] = hbs.filter( x => x._2.hb.hbType==hbProdType)
+    val hbsToReturn: MutableMap[String, HbMsg] = hbs.filter((key, value) => value.hb.hbType==hbProdType)
     hbsToReturn.values.toList
   }
 

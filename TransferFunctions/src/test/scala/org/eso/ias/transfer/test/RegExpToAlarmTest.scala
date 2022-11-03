@@ -1,15 +1,15 @@
 package org.eso.ias.transfer.test
 
-import java.util.Properties
-
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.tranfer.RegExpToAlarm
-import org.eso.ias.types._
-import org.scalatest.FlatSpec
+import org.eso.ias.types.*
+import org.scalatest.flatspec.AnyFlatSpec
+
+import java.util.Properties
 
 /** A class to test [[org.eso.ias.tranfer.RegExpToAlarm]] */
-class RegExpToAlarmTest extends FlatSpec
+class RegExpToAlarmTest extends AnyFlatSpec
 {
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)

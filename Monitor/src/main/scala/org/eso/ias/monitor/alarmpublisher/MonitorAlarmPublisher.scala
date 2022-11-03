@@ -13,15 +13,15 @@ import org.eso.ias.types.IASValue
 trait MonitorAlarmPublisher {
 
   /** Preparae the publisher to send data */
-  def setUp()
+  def setUp(): Unit
 
   /** Closes the publisher: no alarms will be sent afetr closing */
-  def tearDown()
+  def tearDown(): Unit
 
   /** Send the passed values */
-  def push(iasio: Array[IASValue[_]])
+  def push(iasio: Array[IASValue[_]]): Unit
 
   /** Flush the values to force immediate sending */
-  def flush()
+  def flush(): Unit
 
 }

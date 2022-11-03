@@ -1,13 +1,13 @@
 package org.eso.ias.basictypes.test
 
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 import org.eso.ias.types.Identifier
 import org.eso.ias.types.IdentifierType
 
 /**
  * Test the identifier generated from a template
  */
-class TestTemplatedIdentifier extends FlatSpec {
+class TestTemplatedIdentifier extends AnyFlatSpec {
   behavior of "A Identifier generated form a template"
   
   // Not all identifier types support templates

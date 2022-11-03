@@ -5,7 +5,7 @@ import org.eso.ias.cdb.pojos._
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.Identifier
 
-import scala.collection.JavaConverters
+import scala.jdk.javaapi.CollectionConverters
 
 /**
   * TemplateHelper is a collection of helper methods to transformi
@@ -44,7 +44,7 @@ object TemplateHelper {
     * @param asce The ASCE to normalize the templated input instances
     * @return The ASCE normalized for templated inputs instances
     */
-  def normalizeAsceWithTemplatedInstanceInputs(asce: AsceDao) {
+  def normalizeAsceWithTemplatedInstanceInputs(asce: AsceDao): Unit = {
     require(Option(asce).isDefined)
     TemplateHelper.logger.debug("Normalizing templated input instances of ASCE [{}]", asce.getId)
 
@@ -53,7 +53,7 @@ object TemplateHelper {
 
 
     if (!asce.getTemplatedInstanceInputs.isEmpty) {
-      val templatedInstanceInputs = JavaConverters.collectionAsScalaIterable(asce.getTemplatedInstanceInputs).toSet
+      val templatedInstanceInputs = CollectionConverters.asScala(asce.getTemplatedInstanceInputs).toSet
       templatedInstanceInputs.foreach(templatedInstance => {
         asce.addInput(TemplateHelper.normalizeIasio(templatedInstance.getIasio, templatedInstance.getInstance()), false)
       })
@@ -82,7 +82,7 @@ object TemplateHelper {
     val newOutput = TemplateHelper.normalizeIasio(dasu.getOutput,instance)
     dasu.setOutput(newOutput)
 
-    val asces = JavaConverters.collectionAsScalaIterable(dasu.getAsces).toSet
+    val asces = CollectionConverters.asScala(dasu.getAsces).toSet
     TemplateHelper.logger.debug("{} ASCEs to check",asces.size)
 
     asces.foreach(a => TemplateHelper.logger.debug("DASU [{}] will convert ASCE [{}]",
@@ -95,7 +95,7 @@ object TemplateHelper {
 
     TemplateHelper.logger.debug("DASU normalized with new ID [{}], ASCES =[{}]",
       dasu.getId,
-      JavaConverters.collectionAsScalaIterable(dasu.getAsces).map(_.getId).mkString(", "))
+      CollectionConverters.asScala(dasu.getAsces).map(_.getId).mkString(", "))
 
     dasu
   }
@@ -128,7 +128,7 @@ object TemplateHelper {
     asce.setOutput(newOutput)
 
     // Normalize the inputs that have the same teplate of the ASCE
-    val inputs = JavaConverters.collectionAsScalaIterable(asce.getInputs).toSet
+    val inputs = CollectionConverters.asScala(asce.getInputs).toSet
     asce.getInputs.clear()
     inputs.foreach( input => {
       if (Option(input.getTemplateId).isDefined) {
@@ -142,7 +142,7 @@ object TemplateHelper {
 
     TemplateHelper.logger.debug("ASCE normalized with new ID [{}] and inputs=[{}]",
       asce.getId,
-      JavaConverters.collectionAsScalaIterable(asce.getInputs).map(_.getId).mkString(","))
+      CollectionConverters.asScala(asce.getInputs).map(_.getId).mkString(","))
     asce
   }
 
@@ -207,7 +207,7 @@ object TemplateHelper {
     // Are there templated instance inputs in the ASCE?
     // They need to be normalized as well
     val allAsces: Set[AsceDao] =  allDasus.foldLeft(Set.empty[AsceDao])((z, dasu) => {
-      val ascesOfDasu = JavaConverters.asScalaSet(dasu.getAsces).toSet
+      val ascesOfDasu = CollectionConverters.asScala(dasu.getAsces).toSet
       TemplateHelper.logger.debug("Adding ASCEs of DASU {}: {}",
         dasu.getId,
         ascesOfDasu.map(_.getId).mkString(","))
@@ -255,7 +255,7 @@ object TemplateHelper {
       }
 
       // The ASCEs to deploy in the DASU
-      val asces = JavaConverters.asScalaSet(dtd.getDasu.getAsces)
+      val asces = CollectionConverters.asScala(dtd.getDasu.getAsces)
 
       // Do all the ASCEs have the same template of the DASU?
       val ascesOk = asces.forall(asce => templateId==asce.getTemplateId)
@@ -292,7 +292,7 @@ object TemplateHelper {
       }
 
       // Inputs can have the same template of the DASU or being not templated
-      val inputs = asces.foldLeft(Set.empty[IasioDao])( (set, asce) => set++JavaConverters.collectionAsScalaIterable(asce.getInputs))
+      val inputs = asces.foldLeft(Set.empty[IasioDao])( (set, asce) => set++CollectionConverters.asScala(asce.getInputs))
       val inputsOk = inputs.isEmpty || inputs.forall(iasio => Option(iasio.getTemplateId).isEmpty || templateId==iasio.getTemplateId)
 
       if (!inputsOk) {
@@ -303,7 +303,7 @@ object TemplateHelper {
       }
 
       // Templated inputs can have a different template but and have an instance defined
-      val templatedInputs = asces.foldLeft(Set.empty[TemplateInstanceIasioDao])((set, asce) => set++JavaConverters.collectionAsScalaIterable(asce.getTemplatedInstanceInputs))
+      val templatedInputs = asces.foldLeft(Set.empty[TemplateInstanceIasioDao])((set, asce) => set++CollectionConverters.asScala(asce.getTemplatedInstanceInputs))
       val templatedInputsOk = templatedInputs.isEmpty || templatedInputs.forall( ti => Option(ti.getTemplateId).isDefined)
       if (!templatedInputsOk) {
         TemplateHelper.logger.error("Templated inputs ({}) of DASU {} must have a defined template",

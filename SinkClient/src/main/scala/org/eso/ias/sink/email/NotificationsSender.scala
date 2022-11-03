@@ -3,7 +3,6 @@ package org.eso.ias.sink.email
 import java.time._
 import java.util
 import java.util.concurrent.{Executors, ScheduledExecutorService, TimeUnit}
-
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
 import org.eso.ias.cdb.{CdbReader, CdbReaderFactory}
@@ -15,7 +14,8 @@ import org.eso.ias.supervisor.Supervisor._
 import org.eso.ias.types._
 
 import scala.collection.mutable.ListBuffer
-import scala.collection.{JavaConverters, mutable}
+import scala.collection.mutable
+import scala.jdk.javaapi.CollectionConverters
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -257,7 +257,7 @@ object NotificationsSender {
     val cmdLineParseAction = Try(parser.parse(options,args))
     if (cmdLineParseAction.isFailure) {
       val e = cmdLineParseAction.asInstanceOf[Failure[Exception]].exception
-      println(e + "\n")
+      println(s"$e\n")
       new HelpFormatter().printHelp(cmdLineSyntax, options)
       System.exit(-1)
     }
@@ -334,7 +334,7 @@ object NotificationsSender {
     logger.debug("Getting the IASIOs from the CDB")
     val iasioDaos: List[IasioDao] = {
       val temp: util.Set[IasioDao] = cdbReader.getIasios.orElseThrow(() => new IllegalArgumentException("IasDaos not found in CDB"))
-      JavaConverters.asScalaSet(temp).toList
+       CollectionConverters.asScala(temp).toList
     }
     logger.debug("Got {} IASIOs from the CDB",iasioDaos.length)
 
@@ -343,19 +343,16 @@ object NotificationsSender {
       val templatesFromCdb =  cdbReader.getTemplates
 
       if (!templatesFromCdb.isPresent) List.empty[TemplateDao]
-      else JavaConverters.asScalaSet(templatesFromCdb.get()).toList
+      else CollectionConverters.asScala(templatesFromCdb.get()).toList
     }
     logger.debug("Got {} templates from the CDB",templateDaos.length)
 
     cdbReader.shutdown()
     logger.debug("CdbReader closed")
 
-    val (smtpServer, login,pswd) = {
+    val (smtpServer, login: Option[String],pswd) = {
       val smtpServerOpt = Option(iasDao.getSmtp)
-      if (smtpServerOpt.isEmpty) {
-        println("ERROR: SMTP not found in the IAS configuration in the CDB")
-        System.exit(-2)
-      }
+      require(smtpServerOpt.isDefined, "ERROR: SMTP not found in the IAS configuration in the CDB")
       // The string from the CDB
       // The format is user:password@smtpHost
       val smtpConnStr = smtpServerOpt.get
@@ -365,10 +362,7 @@ object NotificationsSender {
       }
 
       val serverParts = smtpConnStr.split('@')
-      if (serverParts.length!=2) {
-        msLogger.error(s"SMTP connection string [{}] has wrong format: expected [username]:[password]@smtphost",smtpConnStr)
-        System.exit(-3)
-      }
+      require(serverParts.length==2,s"SMTP connection string [$smtpConnStr] has wrong format: expected [username]:[password]@smtphost")
       val server=serverParts(1).trim
       val loginPswd=serverParts(0)
 
@@ -379,20 +373,12 @@ object NotificationsSender {
       } else if (loginNameParts.length==1) { // Only login
         (server, Some(loginNameParts(0).trim), None)
       } else { // login and pswd but login can be empty "" that is an error
-        if (loginNameParts(0).isEmpty) {
-          msLogger.error(s"SMTP connection string [{}] has wrong format: expected [username]:[password]@smtphost",smtpConnStr)
-          System.exit(-4)
-        } else {
-          (server, Some(loginNameParts(0).trim), Some(loginNameParts(1)))
-        }
+        require(!loginNameParts(0).isEmpty,s"SMTP connection string [smtpConnStr] has wrong format: expected [username]:[password]@smtphost")
+        (server, Some(loginNameParts(0).trim), Some(loginNameParts(1)))
       }
     }
-    msLogger.info("SMTP server {}",smtpServer.asInstanceOf[String])
-    val mailSender: Sender = new SmtpSender(
-      server = smtpServer.asInstanceOf[String],
-      loginName = login.asInstanceOf[Option[String]],
-      pswd = pswd.asInstanceOf[Option[String]])
-
+    msLogger.info(s"SMTP server $smtpServer")
+    val mailSender: Sender = new SmtpSender(smtpServer, login, pswd)
 
     val valueListener: ValueListener = new NotificationsSender(emailSenderId,mailSender)
     msLogger.debug("NotificationsSender instantiated")

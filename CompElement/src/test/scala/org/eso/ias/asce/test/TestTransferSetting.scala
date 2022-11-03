@@ -1,17 +1,17 @@
 package org.eso.ias.asce.test
 
-import org.scalatest.FlatSpec
-import java.util.concurrent.ThreadFactory
-import org.eso.ias.asce.transfer.TransferFunctionSetting
-import org.eso.ias.asce.transfer.TransferFunctionLanguage
+import org.eso.ias.asce.transfer.{TransferFunctionLanguage, TransferFunctionSetting}
+import org.scalatest.flatspec.AnyFlatSpec
+
 import java.util.Properties
+import java.util.concurrent.ThreadFactory
 
 /**
  * Test the TransferFunctionSetting
  * 
  * @see TransferFunctionSetting
  */
-class TestTransferFunctionSetting extends FlatSpec {
+class TestTransferFunctionSetting extends AnyFlatSpec {
   
   
   
@@ -32,12 +32,7 @@ class TestTransferFunctionSetting extends FlatSpec {
         None,
         threadFactory)
   }
-  
-  
-  // The thread factory used by the setting to async
-  // load and shutdown the TF objects
-  val threadFactory = new TestThreadFactory() 
-  
+
   behavior of "TransferFunctionSetting"
   
   it must "load and shutdown a java TF" in new TFBuilder {

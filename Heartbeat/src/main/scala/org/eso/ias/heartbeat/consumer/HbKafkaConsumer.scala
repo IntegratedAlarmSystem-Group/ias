@@ -1,9 +1,5 @@
 package org.eso.ias.heartbeat.consumer
 
-import java.util
-import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
-import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
-
 import com.typesafe.scalalogging.Logger
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
 import org.eso.ias.heartbeat.{Heartbeat, HeartbeatStatus}
@@ -12,6 +8,10 @@ import org.eso.ias.kafkautils.{KafkaHelper, KafkaStringsConsumer}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.utils.ISO8601Helper
 
+import java.util
+import java.util.Properties
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicReference}
+import java.util.concurrent.{LinkedBlockingQueue, TimeUnit}
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.util.{Failure, Try}
@@ -24,7 +24,7 @@ trait  HbListener {
     *
     * @param hbMsg The HB meassage
     */
-  def hbReceived(hbMsg: HbMsg)
+  def hbReceived(hbMsg: HbMsg): Unit
 }
 
 /** The message read from the kafka topic */
@@ -65,10 +65,10 @@ case class HbMsg(hb: Heartbeat, status: HeartbeatStatus, props: Map[String, Stri
   * @param brokers Kafka brokers to connect to
   * @param consumerId The id for the consumer
   */
-class HbKafkaConsumer(brokers: String, consumerId: String)
+class HbKafkaConsumer(brokers: String, val consumerId: String)
     extends StringsConsumer with Runnable {
 
-  val stringConsumer = new KafkaStringsConsumer(brokers, KafkaHelper.HEARTBEAT_TOPIC_NAME, consumerId)
+  val stringConsumer: KafkaStringsConsumer = new KafkaStringsConsumer(brokers, KafkaHelper.HEARTBEAT_TOPIC_NAME, consumerId)
 
   /** The buffer of events read from the kafka topic */
   private val buffer: LinkedBlockingQueue[HbMsg] = new LinkedBlockingQueue[HbMsg]()
@@ -107,11 +107,11 @@ class HbKafkaConsumer(brokers: String, consumerId: String)
          val event = Option(msg)
          event.foreach(notifyListeners(_))
        } catch {
-        case e: InterruptedException => HbKafkaConsumer.logger.debug("Interrupted")
+        case e: InterruptedException => if (!closed.get()) HbKafkaConsumer.logger.warn("Interrupted")
         case t: Exception =>  HbKafkaConsumer.logger.warn("Error notifying listener",t)
        }
      }
-    HbKafkaConsumer.logger.info("Thread terminated")
+    HbKafkaConsumer.logger.info(s"Kafka consumer thread of ${consumerId} terminated")
   }
 
   /**
@@ -122,12 +122,12 @@ class HbKafkaConsumer(brokers: String, consumerId: String)
     */
   def notifyListeners(event: HbMsg): Unit = {
     require(Option(event).isDefined)
-    HbKafkaConsumer.logger.debug("Notifying conumers of event {}",event)
+    HbKafkaConsumer.logger.debug("Notifying consumers of event {}",event)
     listeners.synchronized {
       listeners.foreach(l => {
         Try(l.hbReceived(event)) match {
-          case Failure(exception) =>  HbKafkaConsumer.logger.error("Error notifying listener",exception)
-          case _ => HbKafkaConsumer.logger.debug("HB event successfully notified: ",event.toString)
+          case Failure(exception) =>  HbKafkaConsumer.logger.error(s"Error notifying listener: ${exception}")
+          case _ => HbKafkaConsumer.logger.debug(s"HB event successfully notified: ${event.toString}")
         }
       })
     }
@@ -140,7 +140,7 @@ class HbKafkaConsumer(brokers: String, consumerId: String)
     *
     * @param strings The strings read from the kafka topic
     */
-  def stringsReceived(strings: util.Collection[String]) {
+  def stringsReceived(strings: util.Collection[String]): Unit = {
     strings.forEach(str =>  {
       val hbMessage = deserializer.deserializeFromString(str)
       val hb = hbMessage._1
@@ -160,7 +160,9 @@ class HbKafkaConsumer(brokers: String, consumerId: String)
     thread.get().start()
     HbKafkaConsumer.logger.debug("Thread started")
     HbKafkaConsumer.logger.debug("Initializing the string consumer")
-    stringConsumer.setUp()
+    val props: Properties = new Properties();
+    props.setProperty("group.id",consumerId);
+    stringConsumer.setUp(props)
     HbKafkaConsumer.logger.debug("Starting the string consumer")
     stringConsumer.startGettingEvents(this,KafkaStringsConsumer.StreamPosition.END)
     HbKafkaConsumer.logger.info("Initialized")
@@ -174,9 +176,9 @@ class HbKafkaConsumer(brokers: String, consumerId: String)
       Option(thread.get()).foreach(_.interrupt())
       HbKafkaConsumer.logger.debug("Closing the string consumer")
       stringConsumer.tearDown()
-      HbKafkaConsumer.logger.info("Shut down")
+      HbKafkaConsumer.logger.info(s"Consumer ${consumerId} shut down")
     } else {
-      HbKafkaConsumer.logger.warn("Already closed")
+      HbKafkaConsumer.logger.warn(s"Consumer ${consumerId} already closed")
     }
 
   }
