@@ -66,7 +66,7 @@ object IASLogger {
     * This code is dependent of logback because slf4j does not
     * offer any API to set the log level.
     *
-   *  @param pkg the package to change the log level
+    * @param pkg the package to change the log level
     * @param level the log level to set
     */
   def setLogLevel(pkg: String, level: Level): Unit = {
@@ -77,13 +77,6 @@ object IASLogger {
     rootLogger.setLevel(level)
   }
 
-   def setLogLevel(pkg: String, level: Level): Unit = {
-     require(Option(level).isDefined)
-     require(!pkg.isEmpty)
-     val loggerFactory = LoggerFactory.getILoggerFactory
-     val rootLogger: LogBackLogger = loggerFactory.getLogger(pkg).asInstanceOf[LogBackLogger]
-     rootLogger.setLevel(level)
-   }
 
   /**
     * Set the log level depending if it is passed in the command line,
