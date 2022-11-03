@@ -205,7 +205,7 @@ open class IasBuild : Plugin<Project> {
             // Put the jars in lib
             destinationDirectory.set(project.layout.buildDirectory.dir("lib"))
             // Set the name of the jar file (overridden by the test jar task upon)
-            archiveFileName.set("ias"+archiveBaseName.get()+".jar")
+            archiveFileName.set("ias"+archiveFileName.get())
             logger.info("Will create JAR {} in {}", archiveFileName.get(), destinationDirectory.get().toString())
         }
 
