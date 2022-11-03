@@ -1,13 +1,13 @@
 package org.eso.ias.tranfer
 
-import java.util.Properties
-
 import com.typesafe.scalalogging.Logger
 import org.eso.ias.asce.exceptions.{TypeMismatchException, UnexpectedNumberOfInputsException}
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import org.eso.ias.logging.IASLogger
+import org.eso.ias.tranfer.RegExpToAlarm.DefaultInvertedLogic
 import org.eso.ias.types.{Alarm, IASTypes}
 
+import java.util.Properties
 import scala.util.matching.Regex
 
 /**
@@ -38,7 +38,7 @@ class RegExpToAlarm (cEleId: String, cEleRunningId: String, validityTimeFrame: L
   val invertedLogic: Boolean =
     Option(props.getProperty(RegExpToAlarm.InvertedPropName))
       .map(java.lang.Boolean.parseBoolean)
-      .getOrElse(RegExpToAlarm.DefaultInvertedLogic)
+      .getOrElse(DefaultInvertedLogic)
 
   /**
     * Initialize the TF: check that the input is a boolean
@@ -63,7 +63,7 @@ class RegExpToAlarm (cEleId: String, cEleRunningId: String, validityTimeFrame: L
   /**
     * @see TransferExecutor#shutdown()
     */
-  override def shutdown() {
+  override def shutdown(): Unit = {
     RegExpToAlarm.logger.debug("TF of [{}] shut down", cEleId)
   }
 
@@ -77,7 +77,7 @@ class RegExpToAlarm (cEleId: String, cEleRunningId: String, validityTimeFrame: L
 
     val value = input.value.get.asInstanceOf[String]
 
-    val generateAlarm = if (!invertedLogic) regExp.findFirstIn(value).isDefined else !regExp.findFirstIn(value).isDefined
+    val generateAlarm = if (!invertedLogic) regExp.matches(value) else !regExp.matches(value)
 
     val outputAlarm = if (generateAlarm) priority else Alarm.CLEARED
 

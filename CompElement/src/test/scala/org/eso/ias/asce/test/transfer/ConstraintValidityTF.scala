@@ -1,10 +1,10 @@
 package org.eso.ias.asce.test.transfer
 
-import java.util.Properties
-
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.{Alarm, IASTypes, OperationalMode}
+
+import java.util.Properties
 
 /**
  * The TF to check the functioning of the setting of the validity
@@ -21,9 +21,9 @@ import org.eso.ias.types.{Alarm, IASTypes, OperationalMode}
  */
 class ConstraintValidityTF (
     cEleId: String, 
-		cEleRunningId: String,
-		validityTimeFrame: Long,
-		props: Properties) extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,props) {
+    cEleRunningId: String,
+    validityTimeFrame: Long,
+    props: Properties) extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,props) {
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
@@ -41,7 +41,7 @@ class ConstraintValidityTF (
    * 
    * @see TransferExecutor
    */
-  override def shutdown() {
+  override def shutdown(): Unit = {
     logger.info("Shutting down")
   }
   

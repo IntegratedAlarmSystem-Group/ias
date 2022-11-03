@@ -9,9 +9,8 @@ import org.eso.ias.cdb.pojos.LogLevelDao;
 import org.eso.ias.command.CommandManager;
 import org.eso.ias.command.DefaultCommandExecutor;
 import org.eso.ias.command.kafka.CommandManagerKafkaImpl;
+import org.eso.ias.converter.config.Cache;
 import org.eso.ias.converter.config.ConfigurationException;
-import org.eso.ias.converter.config.IasioConfigurationDAO;
-import org.eso.ias.converter.config.IasioConfigurationDaoImpl;
 import org.eso.ias.heartbeat.HbEngine;
 import org.eso.ias.heartbeat.HbProducer;
 import org.eso.ias.heartbeat.HeartbeatProducerType;
@@ -69,9 +68,9 @@ public class Converter implements AutoCloseable {
 	private AtomicBoolean closed=new AtomicBoolean(false);
 
 	/**
-	 * The DAO to get the configuration of monitor points
+	 * The cache to get the configuration of monitor points
 	 */
-	private IasioConfigurationDAO configDao;
+	private Cache cache;
 
 	/**
 	 * The serializer to transform IASValues into strings
@@ -158,11 +157,11 @@ public class Converter implements AutoCloseable {
 
 		commandManager = new CommandManagerKafkaImpl(id,kServers,kStrProd);
 
-		this.configDao= new IasioConfigurationDaoImpl(cdbReader);
+		this.cache = new Cache(cdbReader);
 
 		this.iasValueStrSerializer=	new IasValueJsonSerializer();
 
-		mapper = new ValueMapper(this.configDao, this.iasValueStrSerializer,id);
+		mapper = new ValueMapper(this.cache, this.iasValueStrSerializer,id);
 
 	}
 
@@ -197,7 +196,7 @@ public class Converter implements AutoCloseable {
 		
 		hbEngine.start();
 		
-		configDao.initialize();
+		cache.initialize();
 		Runtime.getRuntime().addShutdownHook(shutDownThread);
 		// Init the stream
 		try {

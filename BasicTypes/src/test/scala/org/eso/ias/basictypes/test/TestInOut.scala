@@ -1,17 +1,18 @@
 package org.eso.ias.basictypes.test
 
-import org.eso.ias.types.IasValidity._
-import org.eso.ias.types._
-import org.scalatest.FlatSpec
+import org.eso.ias.types.*
+import org.eso.ias.types.IasValidity.*
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.JavaConverters
+import scala.jdk.javaapi.CollectionConverters
 
 /**
  * Test the LongMP
  *
  * @author acaproni
  */
-class TestInOut extends FlatSpec {
+class TestInOut extends AnyFlatSpec {
   val supervId = new Identifier("SupervId", IdentifierType.SUPERVISOR, None)
   val dasuId = new Identifier("DasuId", IdentifierType.DASU, supervId)
   val asceId = new Identifier("AsceId", IdentifierType.ASCE, Some(dasuId))
@@ -35,7 +36,7 @@ class TestInOut extends FlatSpec {
 
   it must "Have the same ID after changing other props" in {
     val mp: InOut[Long] = new InOut(
-      None,
+      Option.empty,
       id,
       OperationalMode.OPERATIONAL,
       Some(RELIABLE),
@@ -290,8 +291,7 @@ class TestInOut extends FlatSpec {
     val hioArrayDoubles: InOut[Long] = InOut.asInput(id, IASTypes.ARRAYOFDOUBLES)
 
     // Test the array of Long with java List in the constructor
-    import scala.collection.JavaConverters._
-    val longVals: java.util.List[Long] = List(1L.toLong,2,3,4,5).asJava
+    val longVals: java.util.List[Long] = CollectionConverters.asJava(List(1L.toLong,2,3,4,5))
     val arrayL = new NumericArray(NumericArray.NumericArrayType.LONG,longVals.asInstanceOf[java.util.List[java.lang.Long]])
     val newArrayL = hioArrayLongs.updateValue(Some(arrayL))
     assert(newArrayL.value.isDefined)
@@ -303,7 +303,8 @@ class TestInOut extends FlatSpec {
 
     // Test the array of Double with java List in the constructor
     val doubleVals = List(3.1,4.2,5.3)
-    val arrayD = new NumericArray(NumericArray.NumericArrayType.DOUBLE,doubleVals.toList.map(Double.box).asJava)
+    val arrayD = new NumericArray(
+      NumericArray.NumericArrayType.DOUBLE, CollectionConverters.asJava(doubleVals.toList.map(Double.box)))
     val newArrayD = hioArrayDoubles.updateValue(Some(arrayD))
     assert(newArrayD.value.isDefined)
     assert(newArrayD.value.get.isInstanceOf[NumericArray])

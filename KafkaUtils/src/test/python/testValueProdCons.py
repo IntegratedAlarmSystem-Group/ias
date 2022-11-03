@@ -1,7 +1,7 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 '''
 
-Test the kafka puiblisher and subscriber
+Test the kafka publisher and subscriber
 
 Created on Jun 14, 2018
 
@@ -97,7 +97,7 @@ class TestValueProdCons(unittest.TestCase):
         time.sleep(1)
         logger.info('Publishing %d IasValues',n)
         baseId='Test-ID#'
-        for i in range(0,n):
+        for i in range(0, n):
             v = self.buildLONGValue(baseId+str(i),i)
             producer.send(v)
             
@@ -107,6 +107,14 @@ class TestValueProdCons(unittest.TestCase):
         logger.info('Closing the producer')
         producer.close()
         logger.info('Producer closed')
+
+        # Wait some time if not all the items have been received
+        timeout = 10.0 # seconds max waiting time
+        slept = 0
+        sleep_time = 0.25
+        while (n != len(self.listener.receivedValues)) and (slept < timeout):
+            time.sleep(sleep_time)
+            slept = slept + sleep_time
         
         logger.info('Closing the consumer')
         consumer.close()

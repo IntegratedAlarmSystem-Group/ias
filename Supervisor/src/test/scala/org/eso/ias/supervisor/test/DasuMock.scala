@@ -1,16 +1,15 @@
 package org.eso.ias.supervisor.test
 
-import java.util.concurrent.atomic.AtomicInteger
-
 import org.eso.ias.cdb.pojos.{AsceDao, DasuDao, IasioDao}
 import org.eso.ias.dasu.Dasu
 import org.eso.ias.dasu.publisher.OutputPublisher
 import org.eso.ias.dasu.subscriber.InputSubscriber
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types._
+import org.eso.ias.types.*
 
-import scala.collection.JavaConverters
+import java.util.concurrent.atomic.AtomicInteger
 import scala.collection.mutable.ArrayBuffer
+import scala.jdk.javaapi.CollectionConverters
 import scala.util.{Success, Try}
 
 /** 
@@ -22,10 +21,10 @@ import scala.util.{Success, Try}
  * @param inputSubscriber the subscriber getting events to be processed 
  */
 class DasuMock(
-	dasuIdentifier: Identifier,
-    dasuDao: DasuDao,
-    private val outputPublisher: OutputPublisher,
-    private val inputSubscriber: InputSubscriber)
+  dasuIdentifier: Identifier,
+  dasuDao: DasuDao,
+  private val outputPublisher: OutputPublisher,
+  private val inputSubscriber: InputSubscriber)
 extends Dasu(dasuIdentifier,5,6) {
   
   /** The logger */
@@ -60,11 +59,11 @@ extends Dasu(dasuIdentifier,5,6) {
   /**
    * The configuration of the ASCEs that run in the DASU
    */
-  val asceDaos: Seq[AsceDao] = JavaConverters.asScalaSet(dasuDao.getAsces).toList
+  val asceDaos: Seq[AsceDao] = CollectionConverters.asScala(dasuDao.getAsces).toList
   
   /** The inputs of the DASU */
   val inputsOfTheDasu: Set[String] = {
-    val inputs = asceDaos.foldLeft(Set.empty[IasioDao])( (set, asce) => set++JavaConverters.collectionAsScalaIterable(asce.getInputs))
+    val inputs = asceDaos.foldLeft(Set.empty[IasioDao])( (set, asce) => set++CollectionConverters.asScala(asce.getInputs))
     inputs.map(_.getId)
   }
   logger.info("{} inputs required by Mock_DASU [{}]: {}",
@@ -78,19 +77,19 @@ extends Dasu(dasuIdentifier,5,6) {
     val outputId = new Identifier(dasuDao.getOutput.getId,IdentifierType.IASIO,asceId)
     IASValue.build(
       Alarm.SET_MEDIUM,
-			OperationalMode.OPERATIONAL,
-			IasValidity.RELIABLE,
-			outputId.fullRunningID,
-			IASTypes.ALARM,
+      OperationalMode.OPERATIONAL,
+      IasValidity.RELIABLE,
+      outputId.fullRunningID,
+      IASTypes.ALARM,
       null,
-			null,
-			null,
-			null,
-			null,
-			null,
-			System.currentTimeMillis(),
-			null,
-			null)
+      null,
+      null,
+      null,
+      null,
+      null,
+      System.currentTimeMillis(),
+      null,
+      null)
   }
   
   
@@ -104,7 +103,7 @@ extends Dasu(dasuIdentifier,5,6) {
    * @param iasios the inputs received
    * @see InputsListener
    */
-  override def inputsReceived(iasios: Iterable[IASValue[_]]) {
+  override def inputsReceived(iasios: Iterable[IASValue[_]]): Unit = {
     iasios.foreach(iasio => {
       val id = iasio.id
       inputsReceivedFromSuperv.append(id)
@@ -114,7 +113,7 @@ extends Dasu(dasuIdentifier,5,6) {
     val depIds = iasios.filter(value => getInputIds().contains(value.id)).map(_.fullRunningId)
       
     // Publish the simulated output
-    outputPublisher.publish(output.updateFullIdsOfDependents(JavaConverters.asJavaCollection(depIds)))
+    outputPublisher.publish(output.updateFullIdsOfDependents(CollectionConverters.asJavaCollection(depIds)))
   }
   
   /** The inputs of the DASU */

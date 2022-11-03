@@ -112,7 +112,7 @@ class HbEngine private[heartbeat] (
    * 
    * @param newStateMsg The new state 
    */
-  def updateHbState(newStateMsg: HeartbeatStatus) {
+  def updateHbState(newStateMsg: HeartbeatStatus): Unit = {
     hbStatus.set(newStateMsg)
   }
   
@@ -139,7 +139,7 @@ class HbEngine private[heartbeat] (
   /**
    * Sends the heartbeat to the publisher
    */
-  override def run() {
+  override def run(): Unit = {
     HbEngine.logger.debug("Sending HB")
     assert(started.get,"HB engine not initialized")
     if (!closed.get) {
@@ -174,7 +174,7 @@ class HbEngine private[heartbeat] (
   }
   
   /** Remove all the properties from the map */
-  def clearProps() {
+  def clearProps(): Unit = {
     props.clear()
   }
 }

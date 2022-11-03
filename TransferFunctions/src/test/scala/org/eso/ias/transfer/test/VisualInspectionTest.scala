@@ -7,9 +7,9 @@ import org.eso.ias.logging.IASLogger
 import org.eso.ias.tranfer.VisualInspectionAlarm
 import org.eso.ias.types._
 import org.eso.ias.utils.ISO8601Helper
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
-class VisualInspectionTest extends FlatSpec {
+class VisualInspectionTest extends AnyFlatSpec {
   /**
     * The logger
     */

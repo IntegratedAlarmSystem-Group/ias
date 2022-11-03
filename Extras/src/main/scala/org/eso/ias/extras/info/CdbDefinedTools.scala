@@ -7,7 +7,7 @@ import org.eso.ias.logging.IASLogger
 
 import java.util
 import java.util.Optional
-import scala.collection.JavaConverters
+import scala.jdk.javaapi.{CollectionConverters, OptionConverters}
 
 /**
  * The tools to run, as read from the CDB
@@ -20,8 +20,8 @@ class CdbDefinedTools(val cdbReader: CdbReader) {
 
   /** Convert the java structs returned by the reader to scala native data structures */
   private def convertToScalaList(data: Optional[java.util.Set[String]]): List[String] = {
-    val scalaOpt = if (data.isPresent) Some(data.get()) else None
-    scalaOpt.map(set => JavaConverters.asScalaSet(set).toList).getOrElse(Nil)
+    val scalaOpt = OptionConverters.toScala(data)
+    scalaOpt.map(set => CollectionConverters.asScala(set).toList.sorted).getOrElse(Nil)
   }
 
   val pluginIds: List[String] = convertToScalaList(cdbReader.getPluginIds)
@@ -32,11 +32,7 @@ class CdbDefinedTools(val cdbReader: CdbReader) {
   val converterIds: List[String] = List[String]()
 
   /** The frequency to submit HBs in the IAS (msecs) */
-  val hbFrequency: Option[Long] =  {
-    val temp: Optional[Long] = cdbReader.getIas.map(ias => ias.getHbFrequency*1000L)
-    if (temp.isPresent) Some(temp.get())
-    else None
-  }
+  val hbFrequency: Option[Long] =  OptionConverters.toScala(cdbReader.getIas.map(ias => ias.getHbFrequency*1000L))
 
   /** Associate the HB type to the IDs of the tools */
   val idsByType: Map[HeartbeatProducerType, List[String]] = Map(
@@ -61,5 +57,5 @@ object CdbDefinedTools {
   val logger: Logger = IASLogger.getLogger(CdbDefinedTools.getClass)
 
   val hbType: Array[HeartbeatProducerType] = HeartbeatProducerType.values()
-  val types: Array[HeartbeatProducerType] = hbType.sorted
+  val types: Array[HeartbeatProducerType] = (for tp <- hbType yield tp).sorted
 }

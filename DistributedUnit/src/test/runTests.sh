@@ -1,6 +1,6 @@
 #!/usr/bin/bash
-iasRun -l s org.scalatest.run org.eso.ias.dasu.test.DasuOneASCETest
-iasRun -l s org.scalatest.run org.eso.ias.dasu.test.CheckDasuOutputTimestamps
-iasRun -l s org.scalatest.run org.eso.ias.dasu.test.Dasu7ASCEsTest
-iasRun -l s org.scalatest.run org.eso.ias.dasu.test.JsonPublisherTest
-iasRun -l s org.scalatest.run org.eso.ias.dasu.test.DasuWithKafkaPubSubTest
+iasRun org.scalatest.run org.eso.ias.dasu.test.DasuOneASCETest
+iasRun org.scalatest.run org.eso.ias.dasu.test.CheckDasuOutputTimestamps
+iasRun org.scalatest.run org.eso.ias.dasu.test.Dasu7ASCEsTest
+iasRun org.scalatest.run org.eso.ias.dasu.test.JsonPublisherTest
+iasRun org.scalatest.run org.eso.ias.dasu.test.DasuWithKafkaPubSubTest

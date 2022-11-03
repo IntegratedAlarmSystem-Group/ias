@@ -1,8 +1,5 @@
 package org.eso.ias.dasu.test
 
-import java.nio.file.{FileSystems, Path}
-import java.util.Properties
-
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.DasuDao
@@ -13,10 +10,13 @@ import org.eso.ias.kafkautils.KafkaStringsConsumer.StreamPosition
 import org.eso.ias.kafkautils.SimpleStringConsumer.KafkaConsumerListener
 import org.eso.ias.kafkautils.{KafkaHelper, SimpleStringConsumer, SimpleStringProducer}
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types.IasValidity._
-import org.eso.ias.types._
-import org.scalatest.{BeforeAndAfterAll, FlatSpec}
+import org.eso.ias.types.*
+import org.eso.ias.types.IasValidity.*
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.flatspec.AnyFlatSpec
 
+import java.nio.file.{FileSystems, Path}
+import java.util.Properties
 import scala.collection.mutable.ListBuffer
 import scala.util.Try
 
@@ -31,12 +31,12 @@ import scala.util.Try
  * To check if it works, the test instantiates one kafka producer to submit
  * inputs to the DASU and one consumer to catch if the output produced by the DASU has been pushed in the kafka queue
  */
-class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener with BeforeAndAfterAll {
+class DasuWithKafkaPubSubTest extends AnyFlatSpec with KafkaConsumerListener with BeforeAndAfterAll {
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
   
   // Build the CDB reader
-  val cdbParentPath: Path =  FileSystems.getDefault.getPath(".")
+  val cdbParentPath: Path =  FileSystems.getDefault.getPath("src/test")
   val cdbFiles = new CdbJsonFiles(cdbParentPath)
   val cdbReader: CdbReader = new JsonReader(cdbFiles)
   cdbReader.init()
@@ -55,6 +55,7 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener with B
   val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervId)
   
   val dasuDao: DasuDao = {
+    cdbReader.init()
     val dasuDaoOpt = cdbReader.getDasu(dasuId)
     assert(dasuDaoOpt.isPresent)
     dasuDaoOpt.get()
@@ -113,22 +114,23 @@ class DasuWithKafkaPubSubTest extends FlatSpec with KafkaConsumerListener with B
     val t0 = System.currentTimeMillis()-100
     IASValue.build(
         d,
-			  OperationalMode.OPERATIONAL,
-			  UNRELIABLE,
-			  inputID.fullRunningID,
-			  IASTypes.DOUBLE,
+        OperationalMode.OPERATIONAL,
+        UNRELIABLE,
+        inputID.fullRunningID,
+        IASTypes.DOUBLE,
         t0,
-			  t0+1,
-			  t0+5,
-			  t0+10,
-			  t0+15,
-			  t0+20,
-			  null,
-			  null,
-			  null)
+        t0+1,
+        t0+5,
+        t0+10,
+        t0+15,
+        t0+20,
+
+      null,
+      null,
+      null)
   }
   
-  def stringEventReceived(event: String) {
+  def stringEventReceived(event: String): Unit = {
     logger.info("String received", event)
     val iasValue = jsonSerializer.valueOf(event)
     iasValuesReceived+=iasValue

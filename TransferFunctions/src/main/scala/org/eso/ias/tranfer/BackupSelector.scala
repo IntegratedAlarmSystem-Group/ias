@@ -1,12 +1,12 @@
 package org.eso.ias.tranfer
 
-import java.util.Properties
-
 import com.typesafe.scalalogging.Logger
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types.IasValidity._
+import org.eso.ias.types.IasValidity.*
 import org.eso.ias.types.OperationalMode
+
+import java.util.Properties
 
 /**
   * Sometimes a monitor point has a backup to be used in case of failure
@@ -61,9 +61,7 @@ extends ScalaTransferExecutor[T](asceId,asceRunningId,validityTimeFrame,props) {
 	 *
 	 * @return the computed output of the ASCE
 	 */
-	override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[T]): IasIO[T] = {
-
-
+  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[T]): IasIO[T] = {
     def updateOutput[B >: T](
         value: B,
         mode: OperationalMode,
@@ -112,7 +110,7 @@ extends ScalaTransferExecutor[T](asceId,asceRunningId,validityTimeFrame,props) {
     * @param outputInfo The Id and type of thr output
     **/
   override def initialize(inputsInfo: Set[IasioInfo], outputInfo: IasioInfo): Unit = {
-     BackupSelector.logger.debug("TF of [{}] initializing", asceId)
+    BackupSelector.logger.debug("TF of [{}] initializing", asceId)
 
     if (inputsInfo.size!=prioritizedIDs.size ||
       !inputsInfo.forall(info => prioritizedIDs.contains(info.iasioId))) {
@@ -122,15 +120,15 @@ extends ScalaTransferExecutor[T](asceId,asceRunningId,validityTimeFrame,props) {
       inputsInfo.forall(info => prioritizedIDs.contains(info.iasioId)),
       "Input ids ["+inputsInfo.map(_.iasioId).mkString(",")+"] not contained in constraint ["+prioritizedIDs.mkString(",")+"]")
 
-     require(prioritizedIDs.length>1,s"$BackupSelector.PrioritizedIdsPropName must contain at least 2 IDs")
-     require(prioritizedIDs.forall(!_.isEmpty),s"$BackupSelector.PrioritizedIdsPropName malformed")
-     BackupSelector.logger.info("Priority list of IDs  [{}]", prioritizedIDs.mkString(","))
+    require(prioritizedIDs.length>1,s"$BackupSelector.PrioritizedIdsPropName must contain at least 2 IDs")
+    require(prioritizedIDs.forall(!_.isEmpty),s"$BackupSelector.PrioritizedIdsPropName malformed")
+    BackupSelector.logger.info("Priority list of IDs  [{}]", prioritizedIDs.mkString(","))
   }
 
   /**
    * @see TransferExecutor#shutdown()
    */
-  override def shutdown() {
+  override def shutdown(): Unit = {
     BackupSelector.logger.debug("TF of [{}] shut down", asceId)
   }
   

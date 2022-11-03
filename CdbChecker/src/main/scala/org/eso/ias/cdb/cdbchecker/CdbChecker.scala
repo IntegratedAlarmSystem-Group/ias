@@ -1,7 +1,6 @@
 package org.eso.ias.cdb.cdbchecker
 
 import java.util.Optional
-
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
 import org.eso.ias.cdb.{CdbReader, CdbReaderFactory}
@@ -10,6 +9,7 @@ import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.Identifier
 
 import scala.collection.JavaConverters
+import scala.jdk.javaapi.CollectionConverters
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -43,7 +43,7 @@ class CdbChecker(args: Array[String]) {
   val mapOfTfs: Map[String, TransferFunctionDao] = {
     val tfsOptional = reader.getTransferFunctions
     val tfs: Set[TransferFunctionDao] = if (!tfsOptional.isPresent) Set.empty else {
-      JavaConverters.asScalaSet(tfsOptional.get()).toSet
+      CollectionConverters.asScala(tfsOptional.get()).toSet
     }
     tfs.foldLeft(Map.empty[String,TransferFunctionDao])( (z, tf) => z+(tf.getClassName -> tf))
   }
@@ -53,7 +53,7 @@ class CdbChecker(args: Array[String]) {
   val mapOfTemplates: Map[String, TemplateDao] = {
     val templatesOptional = reader.getTemplates
     val templates: Set[TemplateDao] = if (!templatesOptional.isPresent) Set.empty else {
-      JavaConverters.asScalaSet(templatesOptional.get()).toSet
+      CollectionConverters.asScala(templatesOptional.get()).toSet
     }
     templates.foldLeft(Map.empty[String,TemplateDao])( (z, t) => z+(t.getId -> t))
   }
@@ -67,7 +67,7 @@ class CdbChecker(args: Array[String]) {
   val mapOfIasios: Map[String, IasioDao] = {
     val iasiosOptional = reader.getIasios
     val iasios: Set[IasioDao] = if (!iasiosOptional.isPresent) Set.empty else {
-      JavaConverters.asScalaSet(iasiosOptional.get()).toSet
+      CollectionConverters.asScala(iasiosOptional.get()).toSet
     }
     iasios.foldLeft(Map.empty[String,IasioDao])( (z, i) => z+(i.getId -> i))
   }
@@ -83,7 +83,7 @@ class CdbChecker(args: Array[String]) {
         CdbChecker.logger.error("Error getting IDs",e)
         Set.empty
       case Success(idsOptional) =>
-        if (idsOptional.isPresent) JavaConverters.asScalaSet(idsOptional.get()).toSet else Set.empty
+        if (idsOptional.isPresent) CollectionConverters.asScala(idsOptional.get()).toSet else Set.empty
     }
   }
 
@@ -173,7 +173,7 @@ class CdbChecker(args: Array[String]) {
       val tryToGetDasus = Try(reader.getDasusToDeployInSupervisor(id))
       tryToGetDasus match {
         case Success(set) =>
-          val setOfDtd: Set[DasuToDeployDao] = JavaConverters.asScalaSet(set).toSet
+          val setOfDtd: Set[DasuToDeployDao] = CollectionConverters.asScala(set).toSet
           CdbChecker.logger.info("{} DASUs to deploy on Supervisor [{}]: {}",
             setOfDtd.size.toString,
             id,
@@ -281,13 +281,13 @@ class CdbChecker(args: Array[String]) {
   // Check for duplicated IDs of tools
   val idsOfPlugins: List[String] = {
     val idsOptional = reader.getPluginIds
-    if (idsOptional.isPresent) JavaConverters.asScalaSet(idsOptional.get()).toList
+    if (idsOptional.isPresent) CollectionConverters.asScala(idsOptional.get()).toList
     else List.empty[String]
   }
   CdbChecker.logger.debug("Ids of plugins: {}",idsOfPlugins.mkString(","))
   val idsOfClients: List[String] = {
     val idsOptional = reader.getClientIds
-    if (idsOptional.isPresent) JavaConverters.asScalaSet(idsOptional.get()).toList
+    if (idsOptional.isPresent) CollectionConverters.asScala(idsOptional.get()).toList
     else List.empty[String]
   }
   CdbChecker.logger.debug("Ids of clients: {}",idsOfClients.mkString(","))
@@ -335,7 +335,7 @@ class CdbChecker(args: Array[String]) {
     idsOfDasus.foldLeft(Map.empty[String, Set[String]])((z, idOfDasu) => {
       mapOfDasus.get(idOfDasu) match {
         case Some(d) =>
-          val asceIds = JavaConverters.asScalaSet(d.getAscesIDs).toSet
+          val asceIds = CollectionConverters.asScala(d.getAscesIDs).toSet
           z + (idOfDasu -> asceIds)
         case None =>
           CdbChecker.logger.error("Error getting DASU [{}]:", idOfDasu)
@@ -386,8 +386,8 @@ class CdbChecker(args: Array[String]) {
     }
 
     // Are all the inputs defined?
-    val inputs = JavaConverters.asScalaSet(asceDao.getIasiosIDs).toSet
-    val templatedInputs = JavaConverters.asScalaSet(asceDao.getTemplatedInstanceInputs).toSet
+    val inputs = CollectionConverters.asScala(asceDao.getIasiosIDs).toSet
+    val templatedInputs = CollectionConverters.asScala(asceDao.getTemplatedInstanceInputs).toSet
     if (inputs.isEmpty && templatedInputs.isEmpty) {
       CdbChecker.logger.error("No inputs neither templated inputs defined for ASCE [{}]",id.getOrElse("?"))
       errorsFound = true
@@ -619,7 +619,7 @@ class CdbChecker(args: Array[String]) {
       }
     }
 
-    val asces: Set[AsceDao] = JavaConverters.asScalaSet(dasuDao.getAsces).toSet
+    val asces: Set[AsceDao] = CollectionConverters.asScala(dasuDao.getAsces).toSet
     if (asces.isEmpty) {
       CdbChecker.logger.error("No ASCEs for DASU [{}] not defined in CDB", output.get.getId)
       errorsFound = true
@@ -669,7 +669,7 @@ object CdbChecker {
     val cmdLineParseAction = Try(parser.parse(options,args))
     if (cmdLineParseAction.isFailure) {
       val e = cmdLineParseAction.asInstanceOf[Failure[Exception]].exception
-      println(e + "\n")
+      println(e.toString + "\n")
       new HelpFormatter().printHelp(cmdLineSyntax, options)
       System.exit(-1)
     }

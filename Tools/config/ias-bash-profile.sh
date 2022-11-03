@@ -9,23 +9,14 @@ echo "Setting IAS environment..."
 
 ERRORS_FOUND=0
 # Check pre-requisites
-if [ -z $JAVA_HOME ]; then
-	echo "${bold}JAVA_HOME is not defined!${normal}"
+if ! command -v java &>/dev/null;
+then
+	echo "${bold}java not found (to be installed or added to the PATH)!${normal}"
 	((ERRORS_FOUND++))
 fi
 if [ -z $SCALA_HOME ]; then
 	echo "${bold}SCALA_HOME is not defined!${normal}"
 	((ERRORS_FOUND++))
-fi
-if [ -z "$JRE_HOME" ]; then
-	# Try to guess about jre folder...
-	TEMP_JRE_HOME = $JAVA_HOME/jre
-	if [ -d "$TEMP_JRE_HOME" ]; then
-		export JRE_HOME=$TEMP_JRE_HOME
-	else
-		echo "${bold}JRE_HOME not found and $JAVA_HOME/jre does not exist!${normal}"
-		((ERRORS_FOUND++))
-	fi
 fi
 
 if [ -z "$IAS_ROOT" ]; then
@@ -54,9 +45,13 @@ if [ -z "$IAS_CONFIG_FOLDER" ]; then
     export IAS_CONFIG_FOLDER=$IAS_ROOT/config
 fi
 
-export PYTHONPATH="../../lib/python:$IAS_ROOT/lib/python:$PYTHONPATH"
+# Get python version from the output of 'python3 -V'
+PYTHON_VERSION=$(python3 -V|cut -d ' ' -f2|cut -d '.' -f1-2)
+PY_TEMP=lib/python$PYTHON_VERSION/site-packages
+export PYTHONPATH="build/$PY_TEMP:$IAS_ROOT/$PY_TEMP:$PYTHONPATH"
+unset PY_TEMP
 
-PATH="../../bin:$IAS_ROOT/bin:$JAVA_HOME/bin:$JRE_HOME/bin:$SCALA_HOME/bin:$PATH"
+PATH="build/bin:$IAS_ROOT/bin:$SCALA_HOME/bin:$PATH"
 export PATH
 
 if [ "$ERRORS_FOUND" -eq "0" ]; then 

@@ -2,9 +2,9 @@ package org.eso.ias.heartbeat.test
 
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
 import org.eso.ias.heartbeat.{Heartbeat, HeartbeatProducerType, HeartbeatStatus}
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
-class TestJsonSerialization extends FlatSpec {
+class TestJsonSerialization extends AnyFlatSpec {
   
   /** The JSON serializer to test */
   val serializer = new HbJsonSerializer

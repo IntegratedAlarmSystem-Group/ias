@@ -169,7 +169,7 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
   /**
     * @see TransferExecutor#shutdown()
     */
-  override def shutdown() {
+  override def shutdown(): Unit = {
     ThresholdWithBackupsAndDelay.logger.debug("TF of ASCE [{}] shut down", asceId)
   }
 

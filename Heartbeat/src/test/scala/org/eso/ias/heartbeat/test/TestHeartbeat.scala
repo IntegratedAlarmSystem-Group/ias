@@ -1,12 +1,12 @@
 package org.eso.ias.heartbeat.test
 
 import org.eso.ias.heartbeat.{Heartbeat, HeartbeatProducerType}
-import org.scalatest.FlatSpec
+import org.scalatest.flatspec.AnyFlatSpec
 
 /**
   * Test the heartbeat
   */
-class TestHeartbeat extends FlatSpec {
+class TestHeartbeat extends AnyFlatSpec {
 
   behavior of "The Heartbeat"
 

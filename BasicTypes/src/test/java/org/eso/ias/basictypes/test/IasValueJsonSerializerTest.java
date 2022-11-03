@@ -1,6 +1,5 @@
 package org.eso.ias.basictypes.test;
 
-import org.apache.lucene.search.Collector;
 import org.eso.ias.types.*;
 import org.junit.jupiter.api.Test;
 

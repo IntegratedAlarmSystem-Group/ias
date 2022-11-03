@@ -1,6 +1,6 @@
 package org.eso.ias.types
 
-import org.eso.ias.types.IdentifierType._
+import org.eso.ias.types.IdentifierType.*
 
 /**
  * Companion object
@@ -297,7 +297,7 @@ class Identifier(
     val id: String,
     val idType: IdentifierType, 
     val parentID: Option[Identifier]) 
-extends {
+{
   require (Option(id).isDefined,"Invalid null ID")
   require(!id.isEmpty(),"Invalid empty identifier")
   require(id.indexOf(Identifier.separator) == -1,"Invalid character "+Identifier.separator+" in identifier "+id)
@@ -312,7 +312,7 @@ extends {
   
   // True if the ID is generated from a template
   val fromTemplate = Identifier.isTemplatedIdentifier(id)
-  if (fromTemplate) require(Identifier.canBeTemplated(idType),idType+" does not support template")
+  if (fromTemplate) require(Identifier.canBeTemplated(idType),s"${idType} does not support template")
 
   /**
     * The number of the instance or empty if the
@@ -379,7 +379,7 @@ extends {
    * @param idType the not <code>null</code> type of the identifier
    * @param parentID the parent of the identifier, can be <code>null</code>
    */
-  def this(id: String, instance: Option[Int], idType: IdentifierType, parentID: Option[Identifier]) {
+  def this(id: String, instance: Option[Int], idType: IdentifierType, parentID: Option[Identifier]) = {
     this(Identifier.buildIdFromTemplate(id,instance),idType,parentID)
   }
   
@@ -392,7 +392,7 @@ extends {
    * @param instance the number of the instance of a templated identifier, if not null
    * @param parentID the parent of the identifier, can be <code>null</code>
    */
-  def this(id: String, idType: IdentifierType, instance: Int, parentID: Identifier) {
+  def this(id: String, idType: IdentifierType, instance: Int, parentID: Identifier) = {
     this(id,Option(instance),idType,Option(parentID))
   }
   

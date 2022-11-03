@@ -63,7 +63,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
   /**
    * @see TransferExecutor#shutdown()
    */
-  override def shutdown() {
+  override def shutdown(): Unit = {
     BoolToAlarm.logger.debug("TF of [{}] shut down", cEleId)
   }
 
@@ -72,7 +72,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
 	 *
 	 * @return the computed output of the ASCE
 	 */
-	override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
+  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
     val input =   compInputs.values.head
 
     val value = {

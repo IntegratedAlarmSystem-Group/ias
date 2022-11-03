@@ -32,7 +32,7 @@ extends ScalaTransferExecutor[Double] (cEleId,cEleRunningId,validityTimeFrame,pr
   /**
    * @see TransferExecutor#shutdown()
    */
-  override def shutdown() {}
+  override def shutdown(): Unit = {}
   
   /**
    * eval returns the average of the values of the inputs

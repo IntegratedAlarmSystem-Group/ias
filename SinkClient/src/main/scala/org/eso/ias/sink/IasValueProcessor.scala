@@ -228,7 +228,7 @@ with AutoCloseable {
           kafkaServers: String,
           iasDao: IasDao,
           iasioDaos: List[IasioDao],
-          templateDaos: List[TemplateDao]) {
+          templateDaos: List[TemplateDao]) = {
     this(
       processorIdentifier,
       listeners,
@@ -360,7 +360,7 @@ with AutoCloseable {
             suppressedWarningMessages.getAndSet(0),
             logThrottlingTime)
         } else {
-          suppressedWarningMessages incrementAndGet()
+          suppressedWarningMessages.incrementAndGet()
         }
       }
 

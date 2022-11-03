@@ -3,7 +3,6 @@ package org.eso.ias.monitor
 import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
-
 import com.typesafe.scalalogging.Logger
 import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
 import org.eso.ias.cdb.{CdbReader, CdbReaderFactory}
@@ -18,7 +17,7 @@ import org.eso.ias.kafkautils.{KafkaHelper, SimpleStringProducer}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.monitor.alarmpublisher.{BsdbAlarmPublisherImpl, MonitorAlarmPublisher}
 
-import scala.collection.JavaConverters
+import scala.jdk.javaapi.CollectionConverters
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -157,7 +156,7 @@ object IasMonitor {
     val cmdLineParseAction = Try(parser.parse(options,args))
     if (cmdLineParseAction.isFailure) {
       val e = cmdLineParseAction.asInstanceOf[Failure[Exception]].exception
-      println(e + "\n")
+      println(s"$e\n")
       new HelpFormatter().printHelp(cmdLineSyntax, options)
       System.exit(-1)
     }
@@ -260,13 +259,13 @@ object IasMonitor {
     val supervisorIds = {
       val supervisorIdsFromCdb = reader.getSupervisorIds
       val ids: Set[String] = if (supervisorIdsFromCdb.isPresent) {
-        JavaConverters.asScalaSet(supervisorIdsFromCdb.get).toSet
+        CollectionConverters.asScala(supervisorIdsFromCdb.get).toSet
       } else {
         Set.empty[String]
       }
       IasMonitor.logger.info("Found {} supervisors from CDB: {}",ids.size,ids.mkString(","))
 
-      val excludedIds = JavaConverters.asScalaSet(config.excludedSupervisorIds).toSet
+      val excludedIds = CollectionConverters.asScala(config.excludedSupervisorIds).toSet
       if (excludedIds.nonEmpty) {
         IasMonitor.logger.info("Will not monitor {} supervisors: {}",excludedIds.size,excludedIds.mkString(","))
       }
@@ -275,24 +274,24 @@ object IasMonitor {
     }
     IasMonitor.logger.info("{} supervisors to monitor: {}",supervisorIds.size,supervisorIds.mkString(","))
 
-    val pluginIds: Set[String] = JavaConverters.asScalaSet(config.getPluginIds).toSet
+    val pluginIds: Set[String] = CollectionConverters.asScala(config.getPluginIds).toSet
     IasMonitor.logger.info("{} plugins to monitor: {}",pluginIds.size,pluginIds.mkString(","))
 
-    val converterIds: Set[String] = JavaConverters.asScalaSet(config.getConverterIds).toSet
+    val converterIds: Set[String] = CollectionConverters.asScala(config.getConverterIds).toSet
     IasMonitor.logger.info("{} converters to monitor: {}",converterIds.size,converterIds.mkString(","))
 
-    val clientIds: Set[String] = JavaConverters.asScalaSet(config.getClientIds).toSet
+    val clientIds: Set[String] = CollectionConverters.asScala(config.getClientIds).toSet
     IasMonitor.logger.info("{} clients to monitor: {}",clientIds.size,clientIds.mkString(","))
 
-    val sinkIds: Set[String] = JavaConverters.asScalaSet(config.getSinkIds).toSet
+    val sinkIds: Set[String] = CollectionConverters.asScala(config.getSinkIds).toSet
     IasMonitor.logger.info("{} sink clients to monitor: {}",sinkIds.size,sinkIds.mkString(","))
 
-    val kafkaConenctorConfigs: Set[KafkaSinkConnectorConfig] = JavaConverters.asScalaSet(config.getKafkaSinkConnectors).toSet
+    val kafkaConenctorConfigs: Set[KafkaSinkConnectorConfig] = CollectionConverters.asScala(config.getKafkaSinkConnectors).toSet
     IasMonitor.logger.info("{} kafka connectors to monitor: {}",
       kafkaConenctorConfigs.size,
       kafkaConenctorConfigs.mkString(","))
 
-    val coreToolsIds: Set[String] = JavaConverters.asScalaSet(config.getCoreToolsIds).toSet
+    val coreToolsIds: Set[String] = CollectionConverters.asScala(config.getCoreToolsIds).toSet
     IasMonitor.logger.info("{} IAS core tools to monitor: {}",coreToolsIds.size,coreToolsIds.mkString(","))
 
     val threshold = config.getThreshold

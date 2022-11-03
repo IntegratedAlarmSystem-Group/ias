@@ -76,7 +76,7 @@ class CommonCompBuilder(
     outputId: String,
     outputType: IASTypes,
     numOfInputs: Int,
-    hioType: IASTypes) {
+    hioType: IASTypes) = {
     this(dasuId,asceId,outputId, outputType,List.fill(numOfInputs)(hioType).toSet)
   }
 }

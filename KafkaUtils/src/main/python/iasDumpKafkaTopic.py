@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 '''
 Dump the strings published in the kafka topics
 by delegating to kafka native commands.
@@ -10,6 +10,8 @@ import argparse
 import os
 import sys
 from subprocess import run, DEVNULL, STDOUT, CalledProcessError, TimeoutExpired
+
+from IasKafkaUtils import IaskafkaHelper
 
 
 def check_kafka(kafkaCommand):
@@ -35,17 +37,9 @@ if __name__ == '__main__':
     parser.add_argument(
         '-b',
         '--broker',
-        help='The kafka broker to connect to (default localhost)',
+        help='The kafka broker to connect to (default localhost:9092)',
         action='store',
-        default="localhost",
-        required=False)
-    parser.add_argument(
-        '-p',
-        '--port',
-        help='The port of the kafka broker to connect to (default 9092)',
-        action='store',
-        default=9092,
-        type=int,
+        default="localhost:9092",
         required=False)
     parser.add_argument(
         '-a',
@@ -94,20 +88,14 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     kafkaCommand = "/bin/kafka-console-consumer.sh"
-    if not check_kafka(kafkaCommand):
-        sys.exit(1)
-
-    topics = {
-        'core':"BsdbCoreKTopic",
-        'hb':"HeartbeatTopic",
-        'plugin':"PluginsKTopic",
-        'cmd':"CmdTopic",
-        'reply':"ReplyTopic"}
+    if not IaskafkaHelper.IasKafkaHelper.check_kafka_cmd(kafkaCommand):
+        print (f"ERROR: kafka command {kafkaCommand} NOT found")
+        sys.exit(-1)
 
     cmd = [ os.environ["KAFKA_HOME"]+kafkaCommand ,"--bootstrap-server" ]
-    cmd.append(args.broker+":"+str(+args.port))
+    cmd.append(args.broker)
     cmd.append("--topic")
-    cmd.append(topics[args.topic])
+    cmd.append(IaskafkaHelper.IasKafkaHelper.topics[args.topic])
 
     if args.max_messages:
         max_messages = args.max_messages
@@ -139,16 +127,6 @@ if __name__ == '__main__':
         print("Running",cmd)
 
     try:
-        if applyQuiet:
-            ret = run(cmd, stdout=DEVNULL, stderr=STDOUT, timeout=to)
-        else:
-            ret = run(cmd, timeout=to)
-    except CalledProcessError:
-        if not applyQuiet:
-            sys.stderr.write('Exception\n')
-        exit(1)
-    except TimeoutExpired:
-        if not applyQuiet:
-            sys.stderr.write('TIMEOUT\n')
-        exit(1)
-
+        call(cmd)
+    except KeyboardInterrupt as exception:
+        pass

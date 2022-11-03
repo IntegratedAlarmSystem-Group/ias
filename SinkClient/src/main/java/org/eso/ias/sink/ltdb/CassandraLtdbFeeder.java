@@ -58,7 +58,7 @@ public class CassandraLtdbFeeder {
      *
      * @param contactPoints Cassandra contact points (nor null neither empty)
      * @param keyspace keyspace (nor null neither empty)
-     * @param ttl the time to leave in hours (if <=0, no TTL)
+     * @param ttl the time to leave in hours ({@literal if <=0, no TTL})
      */
     public void start(String contactPoints, String keyspace, long ttl) {
         Objects.requireNonNull(contactPoints);

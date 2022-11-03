@@ -138,7 +138,7 @@ object ComputingElementState {
           case Shutdown()  => new ComputingElementState(AsceStates.ShuttingDown)
           case _ => throw new InvalidAsceStateTransitionException(asceState.actualState,e)
         }
-        case AsceStates.TFSlow =>
+      case AsceStates.TFSlow =>
         e match {
           case Normal()  => new ComputingElementState(AsceStates.Healthy)
           case Shutdown()  => new ComputingElementState(AsceStates.ShuttingDown)
