@@ -1,8 +1,8 @@
 package org.eso.ias.cdb.test.topology
 
 import org.eso.ias.cdb.CdbReader
-import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.{DasuToDeployDao, IasioDao}
+import org.eso.ias.cdb.structuredtext.json.{CdbTxtFiles, JsonReader}
 import org.eso.ias.cdb.topology.TemplateHelper
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -33,7 +33,7 @@ class TemplateHelperTest extends AnyFlatSpec {
     
     // Build the CDB reader
     val cdbParentPath = FileSystems.getDefault().getPath("src/test");
-    val cdbFiles = new CdbJsonFiles(cdbParentPath)
+    val cdbFiles = new CdbTxtFiles(cdbParentPath)
     val cdbReader: CdbReader = new JsonReader(cdbFiles)
     cdbReader.init()
 

@@ -6,6 +6,7 @@ import org.eso.ias.cdb.json.*;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.TemplateDao;
+import org.eso.ias.cdb.structuredtext.json.*;
 import org.eso.ias.converter.config.Cache;
 import org.eso.ias.converter.config.MonitorPointConfiguration;
 import org.eso.ias.types.IASTypes;
@@ -164,7 +165,7 @@ public class ConverterCdbTest {
         // Remove any CDB folder if present
         CdbFolders.ROOT.delete(cdbParentPath);
         assertFalse(CdbFolders.ROOT.exists(cdbParentPath));
-        cdbFiles = new CdbJsonFiles(cdbParentPath);
+        cdbFiles = new CdbTxtFiles(cdbParentPath);
         CdbReader cdbReader = new JsonReader(cdbFiles);
         cdbReader.init();
         configDao = new Cache(cdbReader);

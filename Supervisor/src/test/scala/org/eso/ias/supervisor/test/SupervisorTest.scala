@@ -1,7 +1,7 @@
 package org.eso.ias.supervisor.test
 
 import org.eso.ias.cdb.CdbReader
-import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
+import org.eso.ias.cdb.structuredtext.json.{CdbTxtFiles, JsonReader}
 import org.eso.ias.dasu.publisher.{ListenerOutputPublisherImpl, OutputListener, OutputPublisher}
 import org.eso.ias.dasu.subscriber.DirectInputSubscriber
 import org.eso.ias.logging.IASLogger
@@ -60,7 +60,7 @@ class SupervisorTest extends AnyFlatSpec {
 
     // Build the CDB reader
     val cdbParentPath = FileSystems.getDefault().getPath("src/test");
-    val cdbFiles = new CdbJsonFiles(cdbParentPath)
+    val cdbFiles = new CdbTxtFiles(cdbParentPath)
     val cdbReader: CdbReader = new JsonReader(cdbFiles)
     cdbReader.init()
 

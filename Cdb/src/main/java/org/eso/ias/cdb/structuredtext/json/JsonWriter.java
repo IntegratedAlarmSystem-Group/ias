@@ -1,4 +1,4 @@
-package org.eso.ias.cdb.json;
+package org.eso.ias.cdb.structuredtext.json;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -8,9 +8,9 @@ import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eso.ias.cdb.CdbWriter;
 import org.eso.ias.cdb.IasCdbException;
-import org.eso.ias.cdb.json.pojos.JsonAsceDao;
-import org.eso.ias.cdb.json.pojos.JsonDasuDao;
-import org.eso.ias.cdb.json.pojos.JsonSupervisorDao;
+import org.eso.ias.cdb.structuredtext.json.pojos.JsonAsceDao;
+import org.eso.ias.cdb.structuredtext.json.pojos.JsonDasuDao;
+import org.eso.ias.cdb.structuredtext.json.pojos.JsonSupervisorDao;
 import org.eso.ias.cdb.pojos.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

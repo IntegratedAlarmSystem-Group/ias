@@ -2,10 +2,10 @@ package org.eso.ias.converter.test;
 
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
-import org.eso.ias.cdb.json.CdbFolders;
-import org.eso.ias.cdb.json.CdbJsonFiles;
-import org.eso.ias.cdb.json.JsonReader;
-import org.eso.ias.cdb.json.JsonWriter;
+import org.eso.ias.cdb.structuredtext.json.CdbFolders;
+import org.eso.ias.cdb.structuredtext.json.CdbTxtFiles;
+import org.eso.ias.cdb.structuredtext.json.JsonReader;
+import org.eso.ias.cdb.structuredtext.json.JsonWriter;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
@@ -177,7 +177,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
     /**
      * The directory structure for the JSON CDB
      */
-    private CdbJsonFiles cdbFiles;
+    private CdbTxtFiles cdbFiles;
 
     /**
      * The converter to test
@@ -272,7 +272,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
         iso8601dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         // Builds the JSON CDB
-        cdbFiles = new CdbJsonFiles(cdbParentPath);
+        cdbFiles = new CdbTxtFiles(cdbParentPath);
         CdbWriter cdbWriter = new JsonWriter(cdbFiles);
         cdbWriter.init();
         Set<IasioDao> iasios = new HashSet<>();

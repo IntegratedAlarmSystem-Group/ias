@@ -1,4 +1,4 @@
-package org.eso.ias.cdb.json;
+package org.eso.ias.cdb.structuredtext.json;
 
 import java.io.File;
 import java.io.IOException;

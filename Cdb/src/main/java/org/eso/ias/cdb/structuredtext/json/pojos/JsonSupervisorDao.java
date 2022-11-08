@@ -1,4 +1,4 @@
-package org.eso.ias.cdb.json.pojos;
+package org.eso.ias.cdb.structuredtext.json.pojos;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -9,7 +9,6 @@ import javax.persistence.Basic;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 
-import org.eso.ias.cdb.pojos.DasuDao;
 import org.eso.ias.cdb.pojos.LogLevelDao;
 import org.eso.ias.cdb.pojos.SupervisorDao;
 

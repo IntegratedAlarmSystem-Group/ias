@@ -1,8 +1,8 @@
 package org.eso.ias.supervisor.test
 
 import org.eso.ias.cdb.CdbReader
-import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.DasuDao
+import org.eso.ias.cdb.structuredtext.json.{CdbTxtFiles, JsonReader}
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.dasu.publisher.OutputPublisher
 import org.eso.ias.dasu.subscriber.{InputSubscriber, KafkaSubscriber}
@@ -69,7 +69,7 @@ class SupervisorWithKafkaTest extends AnyFlatSpec with BeforeAndAfterAll with Be
 
   // The JSON CDB reader
   val cdbParentPath: Path = FileSystems.getDefault.getPath("src/test")
-  val cdbFiles = new CdbJsonFiles(cdbParentPath)
+  val cdbFiles = new CdbTxtFiles(cdbParentPath)
   val cdbReader: CdbReader = new JsonReader(cdbFiles)
   cdbReader.init()
 
