@@ -8,6 +8,19 @@ import java.nio.file.Paths;
 import java.util.Objects;
 
 public class CdbJsonFiles implements CdbFiles {
+
+	/** Supported file types */
+	enum FileType {
+		JSON(".json"),
+		YAML(".yamls")
+
+		/** The extension of the supported type */
+		private final String ext;
+
+		private FileType(String ext) {
+			this.ext=ext;
+		}
+	}
 	
 	/**
 	 * The extension of json file names
