@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.IasCdbException;
+import org.eso.ias.cdb.structuredtext.StructuredTextReader;
 import org.eso.ias.cdb.structuredtext.json.pojos.*;
 import org.eso.ias.cdb.pojos.*;
 import org.eso.ias.cdb.structuredtext.json.pojos.*;
@@ -32,23 +33,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @see CdbReader
  * @author acaproni
  */
-public class JsonReader implements CdbReader {
+public class JsonReader extends StructuredTextReader {
 
 	 /**
      * The logger
      */
     private static final Logger logger = LoggerFactory.getLogger(JsonReader.class);
 
-	/**
-	 * Signal if the reader has been initialized
-	 */
-	private final AtomicBoolean initialized = new AtomicBoolean(false);
-
-	/**
-	 * Signal if the reader has been closed
-	 */
-	private final AtomicBoolean closed = new AtomicBoolean(false);
-	
 	/**
 	 * A holder to rebuild the objects from their IDs.
 	 * 
@@ -63,56 +54,14 @@ public class JsonReader implements CdbReader {
 	}
 	
 	/**
-	 * <code>cdbFileNames</code> return the names of the files to read
-	 */
-	private final CdbFiles cdbFileNames;
-	
-	/**
 	 * Constructor
 	 * 
 	 * @param cdbFileNames CdbFile to get the name of the file to red
 	 */
 	public JsonReader(CdbFiles cdbFileNames) {
-		Objects.requireNonNull(cdbFileNames, "cdbFileNames can't be null");
-		this.cdbFileNames=cdbFileNames;
+		super(cdbFileNames);
 	}
 
-	/**
-	 * Get the Ias configuration from JSON file.
-	 * 
-	 * @return The ias configuration red from the JSON file 
-	 * @see CdbReader#getIas()
-	 * @throws IasCdbException In case of error getting the IAS
-	 */
-	@Override
-	public Optional<IasDao> getIas() throws IasCdbException {
-		if (closed.get()) {
-			throw new IasCdbException("The reader is shut down");
-		}
-		if (!initialized.get()) {
-			throw new IasCdbException("The reader is not initialized");
-		}
-
-		File f;
-		try {
-			f= cdbFileNames.getIasFilePath().toFile();
-		} catch (IOException ioe) {
-			throw new IasCdbException("Error getting file",ioe);
-		}
-		if (!canReadFromFile(f)) {
-			return Optional.empty();
-		} else {
-			// Parse the file in a JSON pojo
-			ObjectMapper mapper = new ObjectMapper();
-			try {
-				IasDao ias = mapper.readValue(f, IasDao.class);
-				return Optional.of(ias);
-			} catch (Exception e) {
-				throw new IasCdbException("Error reading IAS from "+f.getAbsolutePath(),e);
-			}
-		}
-	}
-	
 	/**
 	 * Get the IASIOs from the file.
 	 * 
@@ -292,16 +241,6 @@ public class JsonReader implements CdbReader {
 			return Optional.empty();
 		}
 		return templates.get().stream().filter(template -> template.getId().equals(template_id)).findFirst();
-	}
-	
-	/**
-	 * Check if the passed file is readable
-	 *  
-	 * @param inF The file to check
-	 * @return true if the file exists and is readable
-	 */
-	private boolean canReadFromFile(File inF) {
-		return inF.exists() && inF.isFile() && inF.canRead();
 	}
 	
 	/**
@@ -1113,36 +1052,4 @@ public class JsonReader implements CdbReader {
 		return Optional.of(getIdsInFolder(clientFile));
 	}
 
-	/**
-	 * Initialize the CDB
-	 */
-	@Override
-	public void init() throws IasCdbException {
-		if (closed.get()) {
-			throw new IasCdbException("Cannot initialize: already closed");
-		}
-		if(!initialized.get()) {
-			logger.debug("Initialized");
-			initialized.set(true);
-		} else {
-			logger.warn("Already initialized: skipping initialization");
-		}
-	}
-	
-	/**
-	 * Close the CDB and release the associated resources
-	 * @throws IasCdbException
-	 */
-	@Override
-	public void shutdown() throws IasCdbException {
-		if (!initialized.get()) {
-			throw new IasCdbException("Cannot shutdown a reader that has not been initialized");
-		}
-		if (!closed.get()) {
-			logger.debug("Closed");
-			closed.set(true);
-		} else {
-			logger.warn("Already closed!");
-		}
-	}
 }
