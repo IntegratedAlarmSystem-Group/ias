@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eso.ias.cdb.CdbWriter;
 import org.eso.ias.cdb.IasCdbException;
+import org.eso.ias.cdb.structuredtext.StructuredTextWriter;
 import org.eso.ias.cdb.structuredtext.json.pojos.JsonAsceDao;
 import org.eso.ias.cdb.structuredtext.json.pojos.JsonDasuDao;
 import org.eso.ias.cdb.structuredtext.json.pojos.JsonSupervisorDao;
@@ -42,7 +43,7 @@ import java.util.stream.Collectors;
  * @see CdbWriter
  * @author acaproni
  */
-public class JsonWriter implements CdbWriter {
+public class JsonWriter extends StructuredTextWriter {
 
 	/**
      * The logger
@@ -50,58 +51,12 @@ public class JsonWriter implements CdbWriter {
     private static final Logger logger = LoggerFactory.getLogger(JsonWriter.class);
 
 	/**
-	 * Signal if the reader has been initialized
-	 */
-	private final AtomicBoolean initialized = new AtomicBoolean(false);
-
-	/**
-	 * Signal if the reader has been closed
-	 */
-	private final AtomicBoolean closed = new AtomicBoolean(false);
-	
-	/**
-	 * cdbFileNames return the names of the files to read
-	 */
-	private final CdbFiles cdbFileNames;
-	
-	/**
 	 * Constructor
 	 * 
 	 * @param cdbFileNames CdbFile to get the name of the file to red
 	 */
 	public JsonWriter(CdbFiles cdbFileNames) {
-		Objects.requireNonNull(cdbFileNames, "cdbFileNames can't be null");
-		this.cdbFileNames=cdbFileNames;
-	}
-	
-	/**
-	 * Serialize the ias in the JSON file.
-	 * 
-	 * @param ias The IAS configuration to write in the file
-	 */
-	@Override
-	public void writeIas(IasDao ias) throws IasCdbException {
-		if (closed.get()) {
-			throw new IasCdbException("The writer is shut down");
-		}
-		if (!initialized.get()) {
-			throw new IasCdbException("The writer is not initialized");
-		}
-
-		Objects.requireNonNull(ias);
-		File f;
-		try {
-			f= cdbFileNames.getIasFilePath().toFile();
-		}catch (IOException ioe) {
-			throw new IasCdbException("Error getting IAS file",ioe);
-		}
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
-		try {
-			mapper.writerWithDefaultPrettyPrinter().writeValue(f, ias);
-		} catch (Throwable t) {
-			throw new IasCdbException("Error writing JSON IAS",t);
-		}
+		super(cdbFileNames);
 	}
 	
 	/**
@@ -884,41 +839,5 @@ public class JsonWriter implements CdbWriter {
 		} catch (IOException ioe) {
 			throw new IasCdbException("Error reading client file "+f.toString(),ioe);
 		}
-
-
 	}
-
-	/**
-	 * Initialize the CDB
-	 */
-	@Override
-	public void init() throws IasCdbException {
-		if (closed.get()) {
-			throw new IasCdbException("Cannot initialize: already closed");
-		}
-		if(!initialized.get()) {
-			logger.debug("Initialized");
-			initialized.set(true);
-		} else {
-			logger.warn("Already initialized: skipping initialization");
-		}
-	}
-
-	/**
-	 * Close the CDB and release the associated resources
-	 * @throws IasCdbException
-	 */
-	@Override
-	public void shutdown() throws IasCdbException {
-		if (!initialized.get()) {
-			throw new IasCdbException("Cannot shutdown a reader that has not been initialized");
-		}
-		if (!closed.get()) {
-			logger.debug("Closed");
-			closed.set(true);
-		} else {
-			logger.warn("Already closed!");
-		}
-	}
-
 }

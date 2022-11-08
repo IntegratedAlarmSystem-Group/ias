@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.eso.ias.cdb.CdbWriter;
 import org.eso.ias.cdb.IasCdbException;
+import org.eso.ias.cdb.structuredtext.StructuredTextWriter;
 import org.eso.ias.cdb.structuredtext.json.CdbFiles;
 import org.eso.ias.cdb.pojos.*;
 import org.slf4j.Logger;
@@ -17,7 +18,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class YamlWriter implements CdbWriter {
+public class YamlWriter extends StructuredTextWriter {
 
     /**
      * The logger
@@ -25,59 +26,15 @@ public class YamlWriter implements CdbWriter {
     private static final Logger logger = LoggerFactory.getLogger(YamlWriter.class);
 
     /**
-     * Signal if the reader has been initialized
-     */
-    private final AtomicBoolean initialized = new AtomicBoolean(false);
-
-    /**
-     * Signal if the reader has been closed
-     */
-    private final AtomicBoolean closed = new AtomicBoolean(false);
-
-    /**
-     * cdbFileNames return the names of the files to read
-     */
-    private final CdbFiles cdbFileNames;
-
-    /**
      * Constructor
      *
      * @param cdbFileNames CdbFile to get the name of the file to red
      */
     public YamlWriter(CdbFiles cdbFileNames) {
-        Objects.requireNonNull(cdbFileNames, "cdbFileNames can't be null");
-        this.cdbFileNames=cdbFileNames;
+        super(cdbFileNames);
     }
 
-    /**
-     * Serialize the ias in the JSON file.
-     *
-     * @param ias The IAS configuration to write in the file
-     */
-    @Override
-    public void writeIas(IasDao ias) throws IasCdbException {
-        if (closed.get()) {
-            throw new IasCdbException("The writer is shut down");
-        }
-        if (!initialized.get()) {
-            throw new IasCdbException("The writer is not initialized");
-        }
 
-        Objects.requireNonNull(ias);
-        File f;
-        try {
-            f= cdbFileNames.getIasFilePath().toFile();
-        }catch (IOException ioe) {
-            throw new IasCdbException("Error getting IAS file",ioe);
-        }
-        ObjectMapper mapper = new YAMLMapper();
-        mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
-        try {
-            mapper.writerWithDefaultPrettyPrinter().writeValue(f, ias);
-        } catch (Throwable t) {
-            throw new IasCdbException("Error writing JSON IAS",t);
-        }
-    }
 
     /**
      * Serialize the Supervisor in the JSON file.
