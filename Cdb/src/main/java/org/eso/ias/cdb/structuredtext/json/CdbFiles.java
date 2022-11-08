@@ -1,5 +1,7 @@
 package org.eso.ias.cdb.structuredtext.json;
 
+import org.eso.ias.cdb.TextFileType;
+
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -11,6 +13,11 @@ import java.nio.file.Path;
  *
  */
 public interface CdbFiles {
+
+	/**
+	 * @return The type of files in the CDB
+	 */
+	public TextFileType getCdbFileType();
 	
 	/**
 	 * @return The path of ias global configuration

@@ -17,6 +17,11 @@ public class CdbTxtFiles implements CdbFiles {
 	public final String fileExtension;
 
 	/**
+	 * The types of the files in the CDB
+	 */
+	public final TextFileType filesType;
+
+	/**
 	 * The extension of configuration files of the clients
 	 */
 	public static final String confFileExtension=".conf";
@@ -70,6 +75,7 @@ public class CdbTxtFiles implements CdbFiles {
 	public CdbTxtFiles(Path parentFolder, TextFileType fType) throws IOException {
 		Objects.requireNonNull(parentFolder,"The parent folder can't be null");
 		Objects.requireNonNull(fType, "Invalid null file type");
+		this.filesType=fType;
 		this.fileExtension=fType.ext;
 		this.iasFileName="ias"+ fileExtension;
 		this.templatesFileName="templates"+ fileExtension;
@@ -105,7 +111,12 @@ public class CdbTxtFiles implements CdbFiles {
 		return Files.exists(p) && Files.isDirectory(p) && Files.isWritable(p);
 	}
 
-	/** 
+	@Override
+	public TextFileType getCdbFileType() {
+		return filesType;
+	}
+
+	/**
 	 * @return The file to store ias configuration
 	 * @see CdbFiles#getIasFilePath()
 	 */

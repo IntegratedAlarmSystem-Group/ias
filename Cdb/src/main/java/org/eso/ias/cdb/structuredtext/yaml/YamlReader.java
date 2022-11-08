@@ -5,6 +5,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.IasCdbException;
 
+import org.eso.ias.cdb.structuredtext.StructuredTextReader;
 import org.eso.ias.cdb.structuredtext.json.CdbFiles;
 import org.eso.ias.cdb.pojos.*;
 import org.slf4j.Logger;
@@ -18,77 +19,17 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class YamlReader implements CdbReader {
+public class YamlReader  extends StructuredTextReader {
 
     /**
      * The logger
      */
     private static final Logger logger = LoggerFactory.getLogger(YamlReader.class);
 
-	/**
-	 * Signal if the reader has been initialized
-	 */
-	private final AtomicBoolean initialized = new AtomicBoolean(false);
-
-	/**
-	 * <code>cdbFileNames</code> return the names of the files to read
-	 */
-	private final CdbFiles cdbFileNames;
-
-	/**
-	 * Signal if the reader has been closed
-	 */
-	private final AtomicBoolean closed = new AtomicBoolean(false);
-
 	public YamlReader(CdbFiles cdbFileNames) {
-		Objects.requireNonNull(cdbFileNames, "cdbFileNames can't be null");
-		this.cdbFileNames=cdbFileNames;
+		super(cdbFileNames);
 	}
 
-	/**
-	 * Check if the passed file is readable
-	 *
-	 * @param inF The file to check
-	 * @return true if the file exists and is readable
-	 */
-	private boolean canReadFromFile(File inF) {
-		return inF.exists() && inF.isFile() && inF.canRead();
-	}
-
-    /**
-	 * Get the Ias configuration from a CDB.
-	 * 
-	 * @return The ias configuration read from the CDB 
-	 * @throws IasCdbException In case of error getting the IAS
-	 */
-	public Optional<IasDao> getIas() throws IasCdbException {
-		if (closed.get()) {
-			throw new IasCdbException("The reader is shut down");
-		}
-		if (!initialized.get()) {
-			throw new IasCdbException("The reader is not initialized");
-		}
-
-		File f;
-		try {
-			f= cdbFileNames.getIasFilePath().toFile();
-		} catch (IOException ioe) {
-			throw new IasCdbException("Error getting file",ioe);
-		}
-		if (!canReadFromFile(f)) {
-			return Optional.empty();
-		} else {
-			// Parse the YAML file in a pojo
-			ObjectMapper mapper = new YAMLMapper();
-			try {
-				IasDao ias = mapper.readValue(f, IasDao.class);
-				return Optional.of(ias);
-			} catch (Exception e) {
-				throw new IasCdbException("Error reading IAS from "+f.getAbsolutePath(),e);
-			}
-		}
-    }
-	
 	/**
 	 * Get the IASIOs.
 	 * 
@@ -315,35 +256,6 @@ public class YamlReader implements CdbReader {
         throw new IasCdbException("Unsupported operation");
     }
 
-	/**
-	 * Initialize the CDB
-	 */
-	public void init() throws IasCdbException {
-		if (closed.get()) {
-			throw new IasCdbException("Cannot initialize: already closed");
-		}
-		if(!initialized.get()) {
-			logger.debug("Initialized");
-			initialized.set(true);
-		} else {
-			logger.warn("Already initialized: skipping initialization");
-		}
-	}
-	
-	/**
-	 * Close the CDB and release the associated resources
-	 * @throws IasCdbException
-	 */
-	public void shutdown() throws IasCdbException {
-		if (!initialized.get()) {
-			throw new IasCdbException("Cannot shutdown a reader that has not been initialized");
-		}
-		if (!closed.get()) {
-			logger.debug("Closed");
-			closed.set(true);
-		} else {
-			logger.warn("Already closed!");
-		}
-	}
+
 
 }
