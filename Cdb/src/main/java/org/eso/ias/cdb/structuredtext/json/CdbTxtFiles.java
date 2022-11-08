@@ -1,4 +1,4 @@
-package org.eso.ias.cdb.json;
+package org.eso.ias.cdb.structuredtext.json;
 
 import java.io.File;
 import java.io.IOException;
@@ -7,25 +7,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
 
-public class CdbJsonFiles implements CdbFiles {
+import org.eso.ias.cdb.TextFileType;
 
-	/** Supported file types */
-	enum FileType {
-		JSON(".json"),
-		YAML(".yamls")
+public class CdbTxtFiles implements CdbFiles {
 
-		/** The extension of the supported type */
-		private final String ext;
-
-		private FileType(String ext) {
-			this.ext=ext;
-		}
-	}
-	
 	/**
-	 * The extension of json file names
+	 * The extension of file names
 	 */
-	public static final String jsonFileExtension=".json";
+	public final String fileExtension;
 
 	/**
 	 * The extension of configuration files of the clients
@@ -35,22 +24,22 @@ public class CdbJsonFiles implements CdbFiles {
 	/**
 	 * The name of the file containing all the templates
 	 */
-	public static final String iasFileName="ias"+jsonFileExtension;
+	public final String iasFileName;
 	
 	/**
 	 * The name of the file containing all the templates
 	 */
-	public static final String templatesFileName="templates"+jsonFileExtension;
+	public final String templatesFileName;
 	
 	/**
 	 * The name of the file containing all the IASIOs
 	 */
-	public static final String iasiosFileName="iasios"+jsonFileExtension;
+	public final String iasiosFileName;
 	
 	/**
 	 * The name of the file containing all the transfer functions
 	 */
-	public static final String transferFunsFileName="tfs"+jsonFileExtension;
+	public final String transferFunsFileName;
 	
 	/**
 	 * The parent folder of the CDB 
@@ -64,29 +53,28 @@ public class CdbJsonFiles implements CdbFiles {
 	 * Constructor
 	 * 
 	 * @param parentFolder The stringified path of the parent folder of the CDB
+	 * @param fType The type of the text files
 	 * @throws IOException If the passed folder i snot valid
 	 */
-	public CdbJsonFiles(String parentFolder) throws IOException {
-		Objects.requireNonNull(parentFolder,"The parent folder can't be null");
-		if (parentFolder.trim().isEmpty()) {
-			throw new IllegalArgumentException("Invalid empty parent folder");
-		}
-		Path p = Paths.get(parentFolder);
-		if (checkParentFolder(p)) {
-			this.cdbParentFolder=p;
-		} else {
-			throw new IOException("Check folder permission "+parentFolder);
-		}
+	public CdbTxtFiles(String parentFolder, TextFileType fType) throws IOException {
+		this(Paths.get(parentFolder), fType);
 	}
 	
 	/**
 	 * Constructor
 	 * 
 	 * @param parentFolder The path of the parent folder of the CDB
+     * @param fType The type of the text files
 	 * @throws IOException If the passed folder is not valid
 	 */
-	public CdbJsonFiles(Path parentFolder) throws IOException {
+	public CdbTxtFiles(Path parentFolder, TextFileType fType) throws IOException {
 		Objects.requireNonNull(parentFolder,"The parent folder can't be null");
+		Objects.requireNonNull(fType, "Invalid null file type");
+		this.fileExtension=fType.ext;
+		this.iasFileName="ias"+ fileExtension;
+		this.templatesFileName="templates"+ fileExtension;
+		this.iasiosFileName="iasios"+ fileExtension;
+		this.transferFunsFileName="tfs"+ fileExtension;
 		if (checkParentFolder(parentFolder)) {
 			this.cdbParentFolder=parentFolder;
 		} else {
@@ -98,16 +86,11 @@ public class CdbJsonFiles implements CdbFiles {
 	 * Constructor
 	 * 
 	 * @param parentFolder The file pointing to the parent folder of the CDB
+	 * @param fType The type of the text files
 	 * @throws IOException If the passed folder is not valid
 	 */
-	public CdbJsonFiles(File parentFolder) throws IOException {
-		Objects.requireNonNull(parentFolder,"The parent folder can't be null");
-		Path p = parentFolder.toPath();
-		if (checkParentFolder(p)) {
-			this.cdbParentFolder=p;
-		} else {
-			throw new IOException("Check folder permission "+parentFolder.getAbsolutePath());
-		}
+	public CdbTxtFiles(File parentFolder, TextFileType fType) throws IOException {
+		this(parentFolder.toPath(), fType);
 	}
 	
 	/**
@@ -124,7 +107,7 @@ public class CdbJsonFiles implements CdbFiles {
 
 	/** 
 	 * @return The file to store ias configuration
-	 * @see org.eso.ias.cdb.json.CdbFiles#getIasFilePath()
+	 * @see CdbFiles#getIasFilePath()
 	 */
 	@Override
 	public Path getIasFilePath()  throws IOException {
@@ -140,7 +123,7 @@ public class CdbJsonFiles implements CdbFiles {
 		if (supervisorID.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty supervisor ID");
 		}
-		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.SUPERVISOR, true).resolve(supervisorID+jsonFileExtension);
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.SUPERVISOR, true).resolve(supervisorID+ fileExtension);
 	}
 
 	/* (non-Javadoc)
@@ -152,7 +135,7 @@ public class CdbJsonFiles implements CdbFiles {
 		if (dasuID.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty DASU ID");
 		}
-		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.DASU, true).resolve(dasuID+jsonFileExtension);
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.DASU, true).resolve(dasuID+ fileExtension);
 	}
 
 	/* (non-Javadoc)
@@ -164,7 +147,7 @@ public class CdbJsonFiles implements CdbFiles {
 		if (asceID.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty ASCE ID");
 		}
-		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.ASCE, true).resolve(asceID+jsonFileExtension);
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.ASCE, true).resolve(asceID+ fileExtension);
 	}
 
 	/* (non-Javadoc)
@@ -219,6 +202,6 @@ public class CdbJsonFiles implements CdbFiles {
 		if (clientID==null || clientID.isEmpty()) {
 			throw new IllegalArgumentException("Invalid null or empty DASU ID");
 		}
-		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.PLUGIN, true).resolve(clientID+jsonFileExtension);
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.PLUGIN, true).resolve(clientID+ fileExtension);
 	}
 }

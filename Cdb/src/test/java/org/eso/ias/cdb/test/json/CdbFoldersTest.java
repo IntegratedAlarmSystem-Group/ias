@@ -9,7 +9,7 @@ import java.io.FileWriter;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 
-import org.eso.ias.cdb.json.CdbFolders;
+import org.eso.ias.cdb.structuredtext.json.CdbFolders;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

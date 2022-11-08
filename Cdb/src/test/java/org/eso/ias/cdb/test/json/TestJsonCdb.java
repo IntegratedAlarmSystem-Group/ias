@@ -2,8 +2,9 @@ package org.eso.ias.cdb.test.json;
 
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
-import org.eso.ias.cdb.json.*;
+import org.eso.ias.cdb.TextFileType;
 import org.eso.ias.cdb.pojos.*;
+import org.eso.ias.cdb.structuredtext.json.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,7 +54,7 @@ public class TestJsonCdb {
 		CdbFolders.ROOT.delete(cdbParentPath);
 		assertFalse(CdbFolders.ROOT.exists(cdbParentPath));
 		
-		cdbFiles = new CdbJsonFiles(cdbParentPath);
+		cdbFiles = new CdbTxtFiles(cdbParentPath, TextFileType.JSON);
 		assertNotNull(cdbFiles);
 		cdbWriter = new JsonWriter(cdbFiles);
 		assertNotNull(cdbWriter);
@@ -123,7 +124,7 @@ public class TestJsonCdb {
 	@Test
 	public void testGetIasFromFile() throws Exception {
 		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
-		cdbFiles = new CdbJsonFiles(path);
+		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
 		cdbReader = new JsonReader(cdbFiles);
 		cdbReader.init();
 
@@ -535,7 +536,7 @@ public class TestJsonCdb {
 	@Test
 	public void testGetDasusOfSupervisor() throws Exception {
 		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
-		cdbFiles = new CdbJsonFiles(path);
+		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
 		cdbReader = new JsonReader(cdbFiles);
 		cdbReader.init();
 		// Get the DASUs of a Supervisor that has none
@@ -565,7 +566,7 @@ public class TestJsonCdb {
 	@Test
 	public void testGetAscesOfDasu() throws Exception {
 		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
-		cdbFiles = new CdbJsonFiles(path);
+		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
 		cdbReader = new JsonReader(cdbFiles);
 		cdbReader.init();
 
@@ -613,7 +614,7 @@ public class TestJsonCdb {
 	@Test
 	public void testGetIasiosOfAsce() throws Exception {
 		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
-		cdbFiles = new CdbJsonFiles(path);
+		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
 		cdbReader = new JsonReader(cdbFiles);
 		cdbReader.init();
 
@@ -640,7 +641,7 @@ public class TestJsonCdb {
 	@Test
 	public void testGetSupervWithTemplatedDASUs() throws Exception {
 		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
-		cdbFiles = new CdbJsonFiles(path);
+		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
 		cdbReader = new JsonReader(cdbFiles);
 		cdbReader.init();
 
@@ -692,7 +693,7 @@ public class TestJsonCdb {
 	public void testGetTemplates() throws Exception {
 		// Get templates from the CDB in testCdb
 		Path cdbPath =  FileSystems.getDefault().getPath("src/test/testCdb");
-		CdbFiles cdbFiles = new CdbJsonFiles(cdbPath);
+		CdbFiles cdbFiles = new CdbTxtFiles(cdbPath, TextFileType.JSON);
 		CdbReader jcdbReader = new JsonReader(cdbFiles);
 		jcdbReader.init();
 
@@ -735,7 +736,7 @@ public class TestJsonCdb {
     @Test
     public void testGetIdsOfSupervisor() throws Exception {
         Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
-        cdbFiles = new CdbJsonFiles(path);
+        cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
         cdbReader = new JsonReader(cdbFiles);
         cdbReader.init();
 
@@ -754,7 +755,7 @@ public class TestJsonCdb {
     @Test
     public void testGetIdsOfDasus() throws Exception {
         Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
-        cdbFiles = new CdbJsonFiles(path);
+        cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
         cdbReader = new JsonReader(cdbFiles);
         cdbReader.init();
 
@@ -772,7 +773,7 @@ public class TestJsonCdb {
     @Test
     public void testGetIdsOfAsces() throws Exception {
         Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
-        cdbFiles = new CdbJsonFiles(path);
+        cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
         cdbReader = new JsonReader(cdbFiles);
         cdbReader.init();
 
@@ -796,7 +797,7 @@ public class TestJsonCdb {
     @Test
     public void testTemplatedInputsOfAsce() throws Exception {
         Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
-        cdbFiles = new CdbJsonFiles(path);
+        cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
         cdbReader = new JsonReader(cdbFiles);
         cdbReader.init();
 
@@ -827,7 +828,7 @@ public class TestJsonCdb {
 	@Test
 	public void testGetAsceWithTemplatedInputs() throws Exception {
 		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
-		cdbFiles = new CdbJsonFiles(path);
+		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
 		cdbReader = new JsonReader(cdbFiles);
 		cdbReader.init();
 
@@ -849,7 +850,7 @@ public class TestJsonCdb {
 	@Test
 	public void testGetIasio() throws Exception {
 		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
-		cdbFiles = new CdbJsonFiles(path);
+		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
 		cdbReader = new JsonReader(cdbFiles);
 		cdbReader.init();
 
@@ -866,7 +867,7 @@ public class TestJsonCdb {
 	@Test
 	public void testGetPlugin() throws Exception {
 		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
-		cdbFiles = new CdbJsonFiles(path);
+		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
 		cdbReader = new JsonReader(cdbFiles);
 		cdbReader.init();
 
@@ -990,7 +991,7 @@ public class TestJsonCdb {
 	@Test
 	public void testGetPluginIds() throws Exception {
 		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
-		cdbFiles = new CdbJsonFiles(path);
+		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
 		cdbReader = new JsonReader(cdbFiles);
 		cdbReader.init();
 		Optional<Set<String>> idsOpt = cdbReader.getPluginIds();
@@ -1008,7 +1009,7 @@ public class TestJsonCdb {
 	@Test
 	public void testGetClientIds() throws Exception {
 		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
-		cdbFiles = new CdbJsonFiles(path);
+		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
 		cdbReader = new JsonReader(cdbFiles);
 		cdbReader.init();
 		Optional<Set<String>> idsOpt = cdbReader.getClientIds();

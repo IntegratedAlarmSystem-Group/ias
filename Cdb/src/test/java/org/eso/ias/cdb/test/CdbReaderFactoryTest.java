@@ -2,7 +2,7 @@ package org.eso.ias.cdb.test;
 
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbReaderFactory;
-import org.eso.ias.cdb.json.JsonReader;
+import org.eso.ias.cdb.structuredtext.json.JsonReader;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.rdb.RdbReader;
 import org.junit.jupiter.api.AfterEach;

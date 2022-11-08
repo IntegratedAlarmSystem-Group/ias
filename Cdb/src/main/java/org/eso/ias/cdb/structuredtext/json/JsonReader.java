@@ -1,11 +1,12 @@
-package org.eso.ias.cdb.json;
+package org.eso.ias.cdb.structuredtext.json;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.IasCdbException;
-import org.eso.ias.cdb.json.pojos.*;
+import org.eso.ias.cdb.structuredtext.json.pojos.*;
 import org.eso.ias.cdb.pojos.*;
+import org.eso.ias.cdb.structuredtext.json.pojos.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

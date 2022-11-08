@@ -1,4 +1,4 @@
-package org.eso.ias.cdb.json.pojos;
+package org.eso.ias.cdb.structuredtext.json.pojos;
 
 import org.eso.ias.cdb.pojos.TemplateInstanceIasioDao;
 

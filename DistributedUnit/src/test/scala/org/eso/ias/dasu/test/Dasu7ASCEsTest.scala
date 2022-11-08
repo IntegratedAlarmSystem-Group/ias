@@ -1,7 +1,8 @@
 package org.eso.ias.dasu.test
 
 import org.eso.ias.cdb.CdbReader
-import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
+import org.eso.ias.cdb.json.CdbJsonFiles
+import org.eso.ias.cdb.structuredtext.json.JsonReader
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.dasu.publisher.{ListenerOutputPublisherImpl, OutputListener, OutputPublisher}
 import org.eso.ias.dasu.subscriber.DirectInputSubscriber
