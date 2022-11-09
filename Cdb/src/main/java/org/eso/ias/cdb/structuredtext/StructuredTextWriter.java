@@ -11,6 +11,7 @@ import org.eso.ias.cdb.CdbWriter;
 import org.eso.ias.cdb.IasCdbException;
 import org.eso.ias.cdb.pojos.*;
 import org.eso.ias.cdb.structuredtext.json.CdbFiles;
+import org.eso.ias.cdb.structuredtext.json.pojos.JsonAsceDao;
 import org.eso.ias.cdb.structuredtext.json.pojos.JsonDasuDao;
 import org.eso.ias.cdb.structuredtext.json.pojos.JsonSupervisorDao;
 import org.slf4j.Logger;
@@ -220,7 +221,7 @@ public abstract class StructuredTextWriter implements CdbWriter {
         File f;
         try {
             f = cdbFileNames.getIasioFilePath("UnusedID").toFile();
-        }catch (IOException ioe) {
+        } catch (IOException ioe) {
             throw new IasCdbException("Error getting IASIOs file",ioe);
         }
         ObjectMapper mapper = getObjectMapper();
@@ -254,7 +255,7 @@ public abstract class StructuredTextWriter implements CdbWriter {
             try {
                 mapper.writerWithDefaultPrettyPrinter().writeValue(f, iasiosToWrite.values());
             }catch (Throwable t) {
-                throw new IasCdbException("Error writing JSON IASIOs",t);
+                throw new IasCdbException("Error writing IASIOs to "+f.getAbsolutePath(),t);
             }
         }
     }
@@ -348,6 +349,109 @@ public abstract class StructuredTextWriter implements CdbWriter {
             mapper.writerWithDefaultPrettyPrinter().writeValue(f, jsonDasu);
         }catch (Throwable t) {
             throw new IasCdbException("Error writing JSON DASU",t);
+        }
+    }
+
+    /**
+     * Serialize the ASCE in the JSON file.
+     *
+     * @param asce The ASCE configuration to write in the file
+     */
+    @Override
+    public void writeAsce(AsceDao asce) throws IasCdbException {
+        if (closed.get()) {
+            throw new IasCdbException("The writer is shut down");
+        }
+        if (!initialized.get()) {
+            throw new IasCdbException("The writer is not initialized");
+        }
+        Objects.requireNonNull(asce);
+
+        File f;
+        try {
+            f = cdbFileNames.getAsceFilePath(asce.getId()).toFile();
+        }catch (IOException ioe) {
+            throw new IasCdbException("Error getting ASCE file",ioe);
+        }
+        JsonAsceDao jsonAsce = new JsonAsceDao(asce);
+        ObjectMapper mapper = getObjectMapper();
+        mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
+        try {
+            mapper.writerWithDefaultPrettyPrinter().writeValue(f, jsonAsce);
+        }catch (Throwable t) {
+            throw new IasCdbException("Error writing JSON ASCE",t);
+        }
+    }
+
+    /**
+     *  Write the transfer function to the CDB
+     *
+     *  @param transferFunction The TF configuration to write in the file
+     *  @throws IasCdbException In case of error writing the TF
+     */
+    @Override
+    public void writeTransferFunction(TransferFunctionDao transferFunction) throws IasCdbException {
+        if (closed.get()) {
+            throw new IasCdbException("The writer is shut down");
+        }
+        if (!initialized.get()) {
+            throw new IasCdbException("The writer is not initialized");
+        }
+        Objects.requireNonNull(transferFunction);
+        Set<TransferFunctionDao> tfs = new HashSet<>();
+        tfs.add(transferFunction);
+        writeTransferFunctions(tfs, true);
+    }
+
+    /**
+     * Serialize the TFs in the JSON file.
+     *
+     * <P>If <code>append</code> is <code>false</code> then a new file is created otherwise
+     * the TFs in the passed files are written at the end of the file.
+     * <BR>If a TF in <code>tfs</code> already exists in the file, the latter
+     * is replaced by that in the set.
+     *
+     * @param tfs The TFs to write in the file
+     * @param append: if <code>true</code> the passed TFs are appended to the file
+     *                otherwise a new file is created
+     */
+    private void writeTransferFunctions(Set<TransferFunctionDao> tfs, boolean append) throws IasCdbException {
+        File f;
+        try {
+            // The ID is unused in getTFFilePath
+            f = cdbFileNames.getTFFilePath("UnusedID").toFile();
+        } catch (IOException ioe) {
+            throw new IasCdbException("Error getting TFs file",ioe);
+        }
+
+        ObjectMapper mapper = getObjectMapper();
+        mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
+        if (!f.exists() || !append) {
+            try {
+                mapper.writerWithDefaultPrettyPrinter().writeValue(f, tfs);
+            } catch (Throwable t) {
+                throw new IasCdbException("Error writing JSON TFss",t);
+            }
+        } else {
+
+            TransferFunctionDao[] tfsFromFile;
+            try {
+                tfsFromFile = mapper.readValue(f, TransferFunctionDao[].class);
+            } catch (Exception e) {
+                throw new IasCdbException("Exception reading TFs from "+f.getAbsolutePath(),e);
+            }
+            Map<String, TransferFunctionDao> tfsMap = new HashMap<>();
+            for (TransferFunctionDao tDao: tfsFromFile) {
+                tfsMap.put(tDao.getClassName(), tDao);
+            }
+            for (TransferFunctionDao tDao: tfs) {
+                tfsMap.put(tDao.getClassName(), tDao);
+            }
+            try {
+                mapper.writerWithDefaultPrettyPrinter().writeValue(f, tfsMap.values());
+            } catch  (Exception e) {
+                throw new IasCdbException("Exception writing TFs to "+f.getAbsolutePath(),e);
+            }
         }
     }
 }

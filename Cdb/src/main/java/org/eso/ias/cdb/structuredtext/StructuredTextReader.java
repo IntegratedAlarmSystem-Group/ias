@@ -627,4 +627,67 @@ public abstract class StructuredTextReader implements CdbReader {
         }
         return Optional.empty();
     }
+
+    @Override
+    public Optional<TransferFunctionDao> getTransferFunction(String tf_id) throws IasCdbException {
+        if (closed.get()) {
+            throw new IasCdbException("The reader is shut down");
+        }
+        if (!initialized.get()) {
+            throw new IasCdbException("The reader is not initialized");
+        }
+
+        Objects.requireNonNull(tf_id);
+        String cleanedID = tf_id.trim();
+        if (cleanedID.isEmpty()) {
+            throw new IllegalArgumentException("Invalid empty TF ID");
+        }
+        Optional<Set<TransferFunctionDao>> tfs = getTransferFunctions();
+        if (tfs.isPresent()) {
+            for (TransferFunctionDao tf : tfs.get()) {
+                if (tf.getClassName().equals(cleanedID)) {
+                    return Optional.of(tf);
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Get all the TFs.
+     *
+     * @return The TFs read from the configuration file
+     * @throws IasCdbException In case of error getting the IASIOs
+     */
+    @Override
+    public Optional<Set<TransferFunctionDao>> getTransferFunctions() throws IasCdbException {
+        if (closed.get()) {
+            throw new IasCdbException("The reader is shut down");
+        }
+        if (!initialized.get()) {
+            throw new IasCdbException("The reader is not initialized");
+        }
+
+        File f;
+        try {
+            // The ID is not used for JSON: we pass a whatever sting
+            f = cdbFileNames.getTFFilePath("UnusedID").toFile();
+        } catch (IOException ioe) {
+            throw new IasCdbException("Error getting TFs file",ioe);
+        }
+        if (!canReadFromFile(f)) {
+            return Optional.empty();
+        } else {
+            // Parse the file in a JSON pojo
+            ObjectMapper mapper = getObjectMapper();
+            try {
+                Set<TransferFunctionDao> tfs = mapper.readValue(f, new TypeReference<Set<TransferFunctionDao>>(){});
+                return Optional.of(tfs);
+            } catch (Throwable t) {
+                System.err.println("Error reading TFs from "+f.getAbsolutePath()+ ": "+t.getMessage());
+                t.printStackTrace();
+                return Optional.empty();
+            }
+        }
+    }
 }

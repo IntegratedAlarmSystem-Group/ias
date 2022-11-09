@@ -35,24 +35,6 @@ public class YamlWriter extends StructuredTextWriter {
     }
 
     /**
-     * Serialize the ASCE in the JSON file.
-     *
-     * @param asce The ASCE configuration to write in the file
-     */
-    @Override
-    public void writeAsce(AsceDao asce) throws IasCdbException {
-        if (closed.get()) {
-            throw new IasCdbException("The writer is shut down");
-        }
-        if (!initialized.get()) {
-            throw new IasCdbException("The writer is not initialized");
-        }
-        Objects.requireNonNull(asce);
-
-        throw new IasCdbException("Unsupported operation");
-    }
-
-    /**
      * Write the configuration of the passed plugin
      *
      * @param pluginConfigDao the configuraton of the plugin
@@ -120,29 +102,6 @@ public class YamlWriter extends StructuredTextWriter {
     }
 
     /**
-     * Write a IasioDao in the JSON file.
-     *
-     * @param iasio The IASIO to write in the file
-     * @param jg The Jakson2 generator
-     * @throws IOException In case of error writing the IASIO
-     */
-    private void putNextIasio(IasioDao iasio, JsonGenerator jg) throws IOException {
-
-    }
-
-    /**
-     * Write a TransferFunctionDao in the JSON file.
-     *
-     * @param tf The transfer function to write in the file
-     * @param jg The Jakson2 generator
-     * @throws IOException In case of error writing the TF
-     */
-    private void putNextTF(TransferFunctionDao tf, JsonGenerator jg) throws IOException {
-        Objects.requireNonNull(tf);
-
-    }
-
-    /**
      * Write a template in the JSON file.
      *
      * @param tDao The template to write in the file
@@ -186,23 +145,7 @@ public class YamlWriter extends StructuredTextWriter {
         return null;
     }
 
-    /**
-     *  Write the transfer function to the CDB
-     *
-     *  @param transferFunction The TF configuration to write in the file
-     *  @throws IasCdbException In case of error writing the TF
-     */
-    @Override
-    public void writeTransferFunction(TransferFunctionDao transferFunction) throws IasCdbException {
-        if (closed.get()) {
-            throw new IasCdbException("The writer is shut down");
-        }
-        if (!initialized.get()) {
-            throw new IasCdbException("The writer is not initialized");
-        }
-        Objects.requireNonNull(transferFunction);
-        throw new IasCdbException("Unsupported operation");
-    }
+
 
     /**
      *  Write the passed template to the CDB
