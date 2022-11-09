@@ -41,7 +41,7 @@ public class TestTextFileType {
 
     @Test
     void testTypeByFolder() throws Exception {
-        File jFolder = new File(folderNamePrefix+"testCdb");
+        File jFolder = new File(folderNamePrefix+"testJsonCdb");
         Optional<TextFileType> jTypeOpt = TextFileType.getCdbType(jFolder);
         assertFalse(jTypeOpt.isEmpty());
         assertEquals(jTypeOpt.get(), TextFileType.JSON);
