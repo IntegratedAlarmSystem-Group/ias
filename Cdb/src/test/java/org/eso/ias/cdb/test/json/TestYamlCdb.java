@@ -198,88 +198,88 @@ public class TestYamlCdb {
 		assertEquals(superv, optSuperv.get(),"The Supervisors differ!");
 
 	}
-//
-//	@Test
-//	public void testWriteDasu() throws Exception {
-//		SupervisorDao superv = new SupervisorDao();
-//		superv.setId("Supervisor-ID");
-//		superv.setHostName("almadev2.alma.cl");
-//		superv.setLogLevel(LogLevelDao.INFO);
-//
-//		// The DASU to test
-//		DasuDao dasu = new DasuDao();
-//		dasu.setId("DasuID1");
-//		dasu.setLogLevel(LogLevelDao.TRACE);
-//
-//		TransferFunctionDao tfDao = new TransferFunctionDao();
-//		tfDao.setClassName("org.eso.ias.tf.Threshold");
-//		tfDao.setImplLang(TFLanguageDao.SCALA);
-//
-//		AsceDao asce1= new AsceDao();
-//		asce1.setId("ASCE1");
-//		asce1.setDasu(dasu);
-//		asce1.setTransferFunction(tfDao);
-//		IasioDao output1 = new IasioDao("OUT-ID1", "description", IasTypeDao.CHAR,"http://www.eso.org");
-//		asce1.setOutput(output1);
-//
-//		TransferFunctionDao tfDao2 = new TransferFunctionDao();
-//		tfDao2.setClassName("org.eso.ias.tf.Min");
-//		tfDao2.setImplLang(TFLanguageDao.SCALA);
-//
-//		AsceDao asce2= new AsceDao();
-//		asce2.setId("ASCE-2");
-//		asce2.setDasu(dasu);
-//		IasioDao output2 = new IasioDao("ID2", "description", IasTypeDao.DOUBLE,"http://www.eso.org");
-//		asce2.setOutput(output2);
-//		asce2.setTransferFunction(tfDao2);
-//
-//		TransferFunctionDao tfDao3 = new TransferFunctionDao();
-//		tfDao3.setClassName("org.eso.ias.tf.Max");
-//		tfDao3.setImplLang(TFLanguageDao.JAVA);
-//
-//		AsceDao asce3= new AsceDao();
-//		asce3.setId("ASCE-ID-3");
-//		asce3.setDasu(dasu);
-//		IasioDao output3 = new IasioDao("OUT-ID3", "desc3", IasTypeDao.SHORT,"http://www.eso.org");
-//		asce3.setOutput(output2);
-//		asce3.setTransferFunction(tfDao3);
-//
-//		IasioDao dasuOutIasio = new IasioDao("DASU_OUTPUT", "desc-dasu-out", IasTypeDao.ALARM,"http://www.eso.org");
-//		dasu.setOutput(dasuOutIasio);
-//
-//		// Supervisor must be in the CDB as well otherwise
-//		// included objects cannot be rebuilt.
-//		cdbWriter.writeSupervisor(superv);
-//
-//		// ASCE must be in the CDB as well otherwise
-//		// included objects cannot be rebuilt.
-//		cdbWriter.writeAsce(asce1);
-//		cdbWriter.writeAsce(asce2);
-//		cdbWriter.writeAsce(asce3);
-//
-//		cdbWriter.writeIasio(output1, false);
-//		cdbWriter.writeIasio(output2, true);
-//		cdbWriter.writeIasio(output3, true);
-//		cdbWriter.writeIasio(dasuOutIasio, true);
-//
-//		cdbWriter.writeTransferFunction(tfDao);
-//		cdbWriter.writeTransferFunction(tfDao2);
-//		cdbWriter.writeTransferFunction(tfDao3);
-//
-//		dasu.addAsce(asce1);
-//		dasu.addAsce(asce2);
-//		dasu.addAsce(asce3);
-//
-//		// Write the DASU
-//		cdbWriter.writeDasu(dasu);
-//		assertTrue(cdbFiles.getDasuFilePath(dasu.getId()).toFile().exists());
-//
-//		// Read the DASU from CDB and compare with what we just wrote
-//		Optional<DasuDao> theDasuFromCdb = cdbReader.getDasu(dasu.getId());
-//		assertTrue(theDasuFromCdb.isPresent(),"Got a null DASU with ID "+dasu.getId()+" from CDB");
-//		assertEquals(dasu,theDasuFromCdb.get(),"The DASUs differ!");
-//		assertEquals(theDasuFromCdb.get().getOutput().getId(), dasuOutIasio.getId());
-//	}
+
+	@Test
+	public void testWriteDasu() throws Exception {
+		SupervisorDao superv = new SupervisorDao();
+		superv.setId("Supervisor-ID");
+		superv.setHostName("almadev2.alma.cl");
+		superv.setLogLevel(LogLevelDao.INFO);
+
+		// The DASU to test
+		DasuDao dasu = new DasuDao();
+		dasu.setId("DasuID1");
+		dasu.setLogLevel(LogLevelDao.TRACE);
+
+		TransferFunctionDao tfDao = new TransferFunctionDao();
+		tfDao.setClassName("org.eso.ias.tf.Threshold");
+		tfDao.setImplLang(TFLanguageDao.SCALA);
+
+		AsceDao asce1= new AsceDao();
+		asce1.setId("ASCE1");
+		asce1.setDasu(dasu);
+		asce1.setTransferFunction(tfDao);
+		IasioDao output1 = new IasioDao("OUT-ID1", "description", IasTypeDao.CHAR,"http://www.eso.org");
+		asce1.setOutput(output1);
+
+		TransferFunctionDao tfDao2 = new TransferFunctionDao();
+		tfDao2.setClassName("org.eso.ias.tf.Min");
+		tfDao2.setImplLang(TFLanguageDao.SCALA);
+
+		AsceDao asce2= new AsceDao();
+		asce2.setId("ASCE-2");
+		asce2.setDasu(dasu);
+		IasioDao output2 = new IasioDao("ID2", "description", IasTypeDao.DOUBLE,"http://www.eso.org");
+		asce2.setOutput(output2);
+		asce2.setTransferFunction(tfDao2);
+
+		TransferFunctionDao tfDao3 = new TransferFunctionDao();
+		tfDao3.setClassName("org.eso.ias.tf.Max");
+		tfDao3.setImplLang(TFLanguageDao.JAVA);
+
+		AsceDao asce3= new AsceDao();
+		asce3.setId("ASCE-ID-3");
+		asce3.setDasu(dasu);
+		IasioDao output3 = new IasioDao("OUT-ID3", "desc3", IasTypeDao.SHORT,"http://www.eso.org");
+		asce3.setOutput(output2);
+		asce3.setTransferFunction(tfDao3);
+
+		IasioDao dasuOutIasio = new IasioDao("DASU_OUTPUT", "desc-dasu-out", IasTypeDao.ALARM,"http://www.eso.org");
+		dasu.setOutput(dasuOutIasio);
+
+		// Supervisor must be in the CDB as well otherwise
+		// included objects cannot be rebuilt.
+		cdbWriter.writeSupervisor(superv);
+
+		// ASCE must be in the CDB as well otherwise
+		// included objects cannot be rebuilt.
+		cdbWriter.writeAsce(asce1);
+		cdbWriter.writeAsce(asce2);
+		cdbWriter.writeAsce(asce3);
+
+		cdbWriter.writeIasio(output1, false);
+		cdbWriter.writeIasio(output2, true);
+		cdbWriter.writeIasio(output3, true);
+		cdbWriter.writeIasio(dasuOutIasio, true);
+
+		cdbWriter.writeTransferFunction(tfDao);
+		cdbWriter.writeTransferFunction(tfDao2);
+		cdbWriter.writeTransferFunction(tfDao3);
+
+		dasu.addAsce(asce1);
+		dasu.addAsce(asce2);
+		dasu.addAsce(asce3);
+
+		// Write the DASU
+		cdbWriter.writeDasu(dasu);
+		assertTrue(cdbFiles.getDasuFilePath(dasu.getId()).toFile().exists());
+
+		// Read the DASU from CDB and compare with what we just wrote
+		Optional<DasuDao> theDasuFromCdb = cdbReader.getDasu(dasu.getId());
+		assertTrue(theDasuFromCdb.isPresent(),"Got a null DASU with ID "+dasu.getId()+" from CDB");
+		assertEquals(dasu,theDasuFromCdb.get(),"The DASUs differ!");
+		assertEquals(theDasuFromCdb.get().getOutput().getId(), dasuOutIasio.getId());
+	}
 //
 //	@Test
 //	public void testWriteAsce() throws Exception {

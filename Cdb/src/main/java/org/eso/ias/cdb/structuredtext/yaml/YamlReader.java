@@ -31,27 +31,6 @@ public class YamlReader  extends StructuredTextReader {
 	}
 
 	/**
-	 * Read the transfer function configuration from the CDB. 
-	 * 
-	 * @param tf_id The not <code>null</code> nor empty transfer function identifier
-	 * @return The transfer function read from the CDB
-	 * @throws IasCdbException in case of error reading from the CDB
-	 */
-	public Optional<TransferFunctionDao> getTransferFunction(String tf_id) throws IasCdbException {
-        throw new IasCdbException("Unsupported operation");
-    }
-
-	/**
-	 * Get the transfer functions.
-	 *
-	 * @return The transfer functions read from the CDB
-	 * @throws IasCdbException In case of error getting the transfer functions
-	 */
-	public Optional<Set<TransferFunctionDao>> getTransferFunctions() throws IasCdbException {
-        throw new IasCdbException("Unsupported operation");
-    }
-
-	/**
 	 * Read the ttemplate configuration from the CDB. 
 	 * 
 	 * @param template_id The not <code>null</code> nor empty identifier of the template
