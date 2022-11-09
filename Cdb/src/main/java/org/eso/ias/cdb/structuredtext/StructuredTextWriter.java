@@ -11,6 +11,7 @@ import org.eso.ias.cdb.CdbWriter;
 import org.eso.ias.cdb.IasCdbException;
 import org.eso.ias.cdb.pojos.*;
 import org.eso.ias.cdb.structuredtext.json.CdbFiles;
+import org.eso.ias.cdb.structuredtext.json.pojos.JsonDasuDao;
 import org.eso.ias.cdb.structuredtext.json.pojos.JsonSupervisorDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -317,5 +318,36 @@ public abstract class StructuredTextWriter implements CdbWriter {
             ret.setSound(SoundTypeDao.valueOf(soundType));
         }
         return ret;
+    }
+
+    /**
+     * Serialize the DASU in the JSON file.
+     *
+     * @param dasu The DASU configuration to write in the file
+     */
+    @Override
+    public void writeDasu(DasuDao dasu) throws IasCdbException {
+        if (closed.get()) {
+            throw new IasCdbException("The writer is shut down");
+        }
+        if (!initialized.get()) {
+            throw new IasCdbException("The writer is not initialized");
+        }
+
+        Objects.requireNonNull(dasu);
+        File f;
+        try {
+            f = cdbFileNames.getDasuFilePath(dasu.getId()).toFile();
+        }catch (IOException ioe) {
+            throw new IasCdbException("Error getting DASU file",ioe);
+        }
+        JsonDasuDao jsonDasu = new JsonDasuDao(dasu);
+        ObjectMapper mapper = getObjectMapper();
+        mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
+        try {
+            mapper.writerWithDefaultPrettyPrinter().writeValue(f, jsonDasu);
+        }catch (Throwable t) {
+            throw new IasCdbException("Error writing JSON DASU",t);
+        }
     }
 }

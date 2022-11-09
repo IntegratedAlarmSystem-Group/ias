@@ -35,24 +35,6 @@ public class YamlWriter extends StructuredTextWriter {
     }
 
     /**
-     * Serialize the DASU in the JSON file.
-     *
-     * @param dasu The DASU configuration to write in the file
-     */
-    @Override
-    public void writeDasu(DasuDao dasu) throws IasCdbException {
-        if (closed.get()) {
-            throw new IasCdbException("The writer is shut down");
-        }
-        if (!initialized.get()) {
-            throw new IasCdbException("The writer is not initialized");
-        }
-
-        Objects.requireNonNull(dasu);
-        throw new IasCdbException("Unsupported operation");
-    }
-
-    /**
      * Serialize the ASCE in the JSON file.
      *
      * @param asce The ASCE configuration to write in the file
