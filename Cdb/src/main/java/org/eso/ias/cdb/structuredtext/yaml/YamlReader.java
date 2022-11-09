@@ -30,26 +30,9 @@ public class YamlReader  extends StructuredTextReader {
 		super(cdbFileNames);
 	}
 
-	/**
-	 * Read the ttemplate configuration from the CDB. 
-	 * 
-	 * @param template_id The not <code>null</code> nor empty identifier of the template
-	 * @return The template read from the CDB
-	 * @throws IasCdbException in case of error reading from the CDB
-	 */
-	public Optional<TemplateDao> getTemplate(String template_id) throws IasCdbException {
-        throw new IasCdbException("Unsupported operation");
-    }
 
-	/**
-	 * Get the templates.
-	 *
-	 * @return The templates read from the CDB
-	 * @throws IasCdbException In case of error getting the templates
-	 */
-	public Optional<Set<TemplateDao>> getTemplates() throws IasCdbException {
-        throw new IasCdbException("Unsupported operation");
-    }
+
+
 
 	/**
 	 * Return the DASUs to deploy in the Supervisor with the given identifier
