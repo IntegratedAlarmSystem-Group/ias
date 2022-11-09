@@ -59,36 +59,7 @@ public class JsonWriter extends StructuredTextWriter {
 		super(cdbFileNames);
 	}
 	
-	/**
-	 * Serialize the DASU in the JSON file.
-	 * 
-	 * @param dasu The DASU configuration to write in the file
-	 */
-	@Override
-	public void writeDasu(DasuDao dasu) throws IasCdbException {
-		if (closed.get()) {
-			throw new IasCdbException("The writer is shut down");
-		}
-		if (!initialized.get()) {
-			throw new IasCdbException("The writer is not initialized");
-		}
 
-		Objects.requireNonNull(dasu);
-		File f;
-		try { 
-			f = cdbFileNames.getDasuFilePath(dasu.getId()).toFile();
-		}catch (IOException ioe) {
-			throw new IasCdbException("Error getting DASU file",ioe);
-		}
-		JsonDasuDao jsonDasu = new JsonDasuDao(dasu);
-		ObjectMapper mapper = new ObjectMapper();
-		mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
-		try {
-			mapper.writerWithDefaultPrettyPrinter().writeValue(f, jsonDasu);
-		}catch (Throwable t) {
-			throw new IasCdbException("Error writing JSON DASU",t);
-		}
-	}
 	
 	/**
 	 * Serialize the ASCE in the JSON file.
@@ -429,9 +400,7 @@ public class JsonWriter extends StructuredTextWriter {
 		jg.writeStringField("max",Integer.valueOf(tDao.getMax()).toString());
 		jg.writeEndObject();
 	}
-	
 
-	
 	/**
 	 * Get the next TransferFunctionDao from the passed parser, if it exists
 	 * 
