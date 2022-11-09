@@ -152,52 +152,52 @@ public class TestYamlCdb {
 		});
 	}
 
-//	/**
-//	 * Test reading and writing of Supervisor
-//	 * @throws Exception
-//	 */
-//	@Test
-//	public void testWriteSupervisor() throws Exception {
-//
-//		SupervisorDao superv = new SupervisorDao();
-//		superv.setId("Supervisor-ID");
-//		superv.setHostName("almadev2.alma.cl");
-//		superv.setLogLevel(LogLevelDao.INFO);
-//
-//		// Adds the DASUs
-//		DasuDao dasu1 = new DasuDao();
-//		dasu1.setId("DasuID1");
-//		dasu1.setLogLevel(LogLevelDao.TRACE);
-//		IasioDao dasuOutIasio1 = new IasioDao("DASU_OUTPUT1", "desc-dasu-out", IasTypeDao.ALARM,"http://www.eso.org");
-//		dasu1.setOutput(dasuOutIasio1);
-//
-//		DasuDao dasu2 = new DasuDao();
-//		dasu2.setId("DasuID2");
-//		dasu1.setLogLevel(LogLevelDao.WARN);
-//		IasioDao dasuOutIasio2 = new IasioDao("DASU_OUTPUT2", "desc-dasu-out", IasTypeDao.LONG,"http://www.eso.org");
-//		dasu2.setOutput(dasuOutIasio2);
-//
-//		cdbWriter.writeIasio(dasuOutIasio1, false);
-//		cdbWriter.writeIasio(dasuOutIasio2, true);
-//
-//		// DASUs must be in the CDB as well otherwise
-//		// included objects cannot be rebuilt.
-//		cdbWriter.writeDasu(dasu1);
-//		cdbWriter.writeDasu(dasu2);
-//
-//		DasuToDeployDao dtd1 = new DasuToDeployDao(dasu1, null, null);
-//		DasuToDeployDao dtd2 = new DasuToDeployDao(dasu2, null, null);
-//		superv.addDasuToDeploy(dtd1);
-//		superv.addDasuToDeploy(dtd2);
-//
-//		cdbWriter.writeSupervisor(superv);
-//		assertTrue(cdbFiles.getSuperivisorFilePath(superv.getId()).toFile().exists());
-//
-//		Optional<SupervisorDao> optSuperv = cdbReader.getSupervisor(superv.getId());
-//		assertTrue( optSuperv.isPresent(),"Got an empty Supervisor!");
-//		assertEquals(superv, optSuperv.get(),"The Supervisors differ!");
-//
-//	}
+	/**
+	 * Test reading and writing of Supervisor
+	 * @throws Exception
+	 */
+	@Test
+	public void testWriteSupervisor() throws Exception {
+
+		SupervisorDao superv = new SupervisorDao();
+		superv.setId("Supervisor-ID");
+		superv.setHostName("almadev2.alma.cl");
+		superv.setLogLevel(LogLevelDao.INFO);
+
+		// Adds the DASUs
+		DasuDao dasu1 = new DasuDao();
+		dasu1.setId("DasuID1");
+		dasu1.setLogLevel(LogLevelDao.TRACE);
+		IasioDao dasuOutIasio1 = new IasioDao("DASU_OUTPUT1", "desc-dasu-out", IasTypeDao.ALARM,"http://www.eso.org");
+		dasu1.setOutput(dasuOutIasio1);
+
+		DasuDao dasu2 = new DasuDao();
+		dasu2.setId("DasuID2");
+		dasu1.setLogLevel(LogLevelDao.WARN);
+		IasioDao dasuOutIasio2 = new IasioDao("DASU_OUTPUT2", "desc-dasu-out", IasTypeDao.LONG,"http://www.eso.org");
+		dasu2.setOutput(dasuOutIasio2);
+
+		cdbWriter.writeIasio(dasuOutIasio1, false);
+		cdbWriter.writeIasio(dasuOutIasio2, true);
+
+		// DASUs must be in the CDB as well otherwise
+		// included objects cannot be rebuilt.
+		cdbWriter.writeDasu(dasu1);
+		cdbWriter.writeDasu(dasu2);
+
+		DasuToDeployDao dtd1 = new DasuToDeployDao(dasu1, null, null);
+		DasuToDeployDao dtd2 = new DasuToDeployDao(dasu2, null, null);
+		superv.addDasuToDeploy(dtd1);
+		superv.addDasuToDeploy(dtd2);
+
+		cdbWriter.writeSupervisor(superv);
+		assertTrue(cdbFiles.getSuperivisorFilePath(superv.getId()).toFile().exists());
+
+		Optional<SupervisorDao> optSuperv = cdbReader.getSupervisor(superv.getId());
+		assertTrue( optSuperv.isPresent(),"Got an empty Supervisor!");
+		assertEquals(superv, optSuperv.get(),"The Supervisors differ!");
+
+	}
 //
 //	@Test
 //	public void testWriteDasu() throws Exception {

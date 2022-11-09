@@ -31,38 +31,6 @@ public class YamlReader  extends StructuredTextReader {
 	}
 
 	/**
-	 * Get the IASIOs.
-	 * 
-	 * @return The IASIOs read from the CDB
-	 * @throws IasCdbException In case of error getting the IASIOs
-	 */
-	public Optional<Set<IasioDao>> getIasios() throws IasCdbException {
-        throw new IasCdbException("Unsupported operation");
-    }
-	
-	/**
-	 * Get the IASIO with the given ID
-	 * 
-	 * @param id The ID of the IASIO to read the configuration
-	 * @return The IASIO read from the CDB
-	 * @throws IasCdbException In case of error getting the IASIO
-	 */
-	public Optional<IasioDao> getIasio(String id) throws IasCdbException {
-        throw new IasCdbException("Unsupported operation");
-    }
-	
-	/**
-	 * Read the supervisor configuration from the CDB. 
-	 * 
-	 * @param id The not null nor empty supervisor identifier
-	 * @return The Supervisor read from the CDB
-	 * @throws IasCdbException In case of error getting the Supervisor
-	 */
-	public Optional<SupervisorDao> getSupervisor(String id) throws IasCdbException {
-        throw new IasCdbException("Unsupported operation");
-    }
-	
-	/**
 	 * Read the transfer function configuration from the CDB. 
 	 * 
 	 * @param tf_id The not <code>null</code> nor empty transfer function identifier
@@ -103,29 +71,7 @@ public class YamlReader  extends StructuredTextReader {
 	public Optional<Set<TemplateDao>> getTemplates() throws IasCdbException {
         throw new IasCdbException("Unsupported operation");
     }
-	
-	/**
-	 * Read the ASCE configuration from the CDB. 
-	 * 
-	 * @param id The not null nor empty ASCE identifier
-	 * @return The ASCE read from the file
-	 * @throws IasCdbException In case of error getting the ASCE
-	 */
-	public Optional<AsceDao> getAsce(String id) throws IasCdbException {
-        throw new IasCdbException("Unsupported operation");
-    }
-	
-	/**
-	 * Read the DASU configuration from the CDB. 
-	 * 
-	 * @param id The not null nor empty DASU identifier
-	 * @return The DASU read from the file
-	 * @throws IasCdbException In case of error getting the DASU
-	 */
-	public Optional<DasuDao> getDasu(String id) throws IasCdbException {
-        throw new IasCdbException("Unsupported operation");
-    }
-	
+
 	/**
 	 * Return the DASUs to deploy in the Supervisor with the given identifier
 	 * 
