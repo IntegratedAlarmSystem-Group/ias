@@ -385,146 +385,146 @@ public class TestYamlCdb {
 
         System.out.println("testWriteAsce done.");
 	}
-//
-//	/**
-//	 * Check if the writing of one IASIO at a time works
-//	 *
-//	 * @throws Exception
-//	 */
-//	@Test
-//	public void testWriteIasio() throws Exception {
-//		// Is the default value saved for IasioDao#canShelve?
-//		IasioDao iasioDefaultShelve = new IasioDao(
-//				"ioID2",
-//				"IASIO description",
-//				IasTypeDao.ALARM,
-//				"http://www.eso.org");
-//
-//		cdbWriter.writeIasio(iasioDefaultShelve, false);
-//		Optional<IasioDao> optIasioDefShelve = cdbReader.getIasio(iasioDefaultShelve.getId());
-//		assertTrue(optIasioDefShelve.isPresent(),"Got an empty IASIO!");
-//		assertEquals(iasioDefaultShelve, optIasioDefShelve.get(),"The IASIOs differ!");
-//		assertEquals(IasioDao.canSheveDefault,optIasioDefShelve.get().isCanShelve());
-//
-//		IasioDao iasio = new IasioDao(
-//				"ioID",
-//				"IASIO description",
-//				IasTypeDao.ALARM,"http://wiki.alma.cl/ioID",
-//				true,
-//				"templateID",
-//				SoundTypeDao.TYPE2,
-//				"addr1@eso.org; addr@alma.cl");
-//		cdbWriter.writeIasio(iasio, false);
-//
-//		System.out.println(iasio.toString());
-//		System.out.println(iasio.isCanShelve());
-//
-//		assertTrue(cdbFiles.getIasioFilePath(iasio.getId()).toFile().exists());
-//
-//		Optional<IasioDao> optIasio = cdbReader.getIasio(iasio.getId());
-//		assertTrue( optIasio.isPresent(),"Got an empty IASIO!");
-//		assertTrue(optIasio.get().isCanShelve(),"Should be possible to shelve");
-//		assertEquals(iasio, optIasio.get(),"The IASIOs differ!");
-//
-//		// Check if there is one and only one IASIO in the CDB
-//		Optional<Set<IasioDao>> optSet = cdbReader.getIasios();
-//		assertTrue( optSet.isPresent(),"Got an empty set of IASIOs!");
-//		assertEquals(1,optSet.get().size(),"Size of set mismatch");
-//
-//		// Append another IASIO
-//		IasioDao iasio2 = new IasioDao("ioID2", "Another IASIO", IasTypeDao.BOOLEAN,null);
-//		iasio2.setSound(SoundTypeDao.TYPE3);
-//		iasio2.setEmails("emailaddr@site.com");
-//		cdbWriter.writeIasio(iasio2, true);
-//		Optional<Set<IasioDao>> optSet2 = cdbReader.getIasios();
-//		assertTrue(optSet2.isPresent(),"Got an empty set of IASIOs!");
-//		assertEquals(2,optSet2.get().size(),"Size of set mismatch");
-//
-//		// Is the second IASIO ok?
-//		Optional<IasioDao> optIasio2 = cdbReader.getIasio(iasio2.getId());
-//		assertTrue(optIasio2.isPresent(),"Got an empty IASIO!");
-//		assertEquals(iasio2, optIasio2.get(),"The IASIOs differ!");
-//
-//		// Check if updating a IASIO replaces the old one
-//		iasio.setShortDesc("A new Descripton");
-//		System.out.println("===+++===> "+iasio);
-//		cdbWriter.writeIasio(iasio, true);
-//		// There must be still 2 IASIOs in the CDB
-//		optSet = cdbReader.getIasios();
-//		assertTrue( optSet.isPresent(),"Got an empty set of IASIOs!");
-//
-//		for (IasioDao i: optSet.get()) {
-//			System.out.println("==> "+i);
-//		}
-//
-//		assertEquals(2,optSet.get().size(),"Size of set mismatch");
-//		// Check if the IASIO in the CDB has been updated
-//		optIasio = cdbReader.getIasio(iasio.getId());
-//		assertTrue( optIasio.isPresent(),"Got an empty IASIO!");
-//		assertEquals(iasio, optIasio.get(),"The IASIOs differ!");
-//	}
-//
-//	/**
-//	 * Check if the writing of set of IASIOs at once works
-//	 *
-//	 * @throws Exception
-//	 */
-//	@Test
-//	public void testWriteIasios() throws Exception {
-//		Set<IasioDao> set = new HashSet<>();
-//		for (int t=0; t<5; t++) {
-//			IasioDao iasio = new IasioDao("iasioID-"+t, "IASIO description "+t, IasTypeDao.values()[t],"http://www.eso.org");
-//			set.add(iasio);
-//		}
-//		cdbWriter.writeIasios(set, false);
-//		assertTrue(cdbFiles.getIasioFilePath("PlaceHolderID").toFile().exists());
-//
-//		Optional<Set<IasioDao>> optSet = cdbReader.getIasios();
-//		assertTrue( optSet.isPresent(),"Got an empty set of IASIOs!");
-//		assertEquals(set.size(),optSet.get().size(),"Size of set mismatch");
-//
-//		// Check if appending works
-//		Set<IasioDao> set2 = new HashSet<>();
-//		for (int t=0; t<6; t++) {
-//			IasioDao iasio = new IasioDao("2ndset-iasioID-"+t, "IASIO descr "+t*2, IasTypeDao.values()[t],"http://www.eso.org");
-//			iasio.setSound(SoundTypeDao.TYPE1);
-//			set2.add(iasio);
-//		}
-//		cdbWriter.writeIasios(set2, true);
-//		Optional<Set<IasioDao>> optSet2 = cdbReader.getIasios();
-//		assertTrue(optSet2.isPresent(),"Got an empty set of IASIOs!");
-//		assertEquals(set.size()+set2.size(),optSet2.get().size(),"Size of set mismatch");
-//
-//		// Update the first iasios
-//		set.clear();
-//		for (int t=0; t<5; t++) {
-//			IasioDao iasio = new IasioDao("iasioID-"+t, "IASIO "+t, IasTypeDao.values()[t],"http://www.eso.org");
-//			iasio.setSound(SoundTypeDao.TYPE3);
-//			set.add(iasio);
-//		}
-//		cdbWriter.writeIasios(set, true);
-//		// Size must be the same
-//		Optional<Set<IasioDao>> optSet3 = cdbReader.getIasios();
-//
-//		assertTrue(optSet3.isPresent(),"Got an empty set of IASIOs!");
-//		assertEquals(set.size()+set2.size(),optSet3.get().size(),"Size of set mismatch");
-//
-//		// Check if all IASIOs match with the ones in the sets
-//		set.stream().forEach(x -> assertTrue(optSet3.get().contains(x)));
-//		set2.stream().forEach(x -> assertTrue(optSet3.get().contains(x)));
-//
-//		// Finally check if saving without appending really remove the right IASIOs
-//		// by writing again the IASIOs in set
-//		cdbWriter.writeIasios(set, false);
-//		// Size must be the same
-//		Optional<Set<IasioDao>> optSet4 = cdbReader.getIasios();
-//		assertTrue(optSet4.isPresent(),"Got an empty set of IASIOs!");
-//		assertEquals(set.size(),optSet4.get().size(),"Size of set mismatch");
-//
-//		// Check if all IASIOs match with the ones in the sets
-//		set.stream().forEach(x -> assertTrue(optSet4.get().contains(x)));
-//		set2.stream().forEach(x -> assertFalse(optSet4.get().contains(x)));
-//	}
+
+	/**
+	 * Check if the writing of one IASIO at a time works
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	public void testWriteIasio() throws Exception {
+		// Is the default value saved for IasioDao#canShelve?
+		IasioDao iasioDefaultShelve = new IasioDao(
+				"ioID2",
+				"IASIO description",
+				IasTypeDao.ALARM,
+				"http://www.eso.org");
+
+		cdbWriter.writeIasio(iasioDefaultShelve, false);
+		Optional<IasioDao> optIasioDefShelve = cdbReader.getIasio(iasioDefaultShelve.getId());
+		assertTrue(optIasioDefShelve.isPresent(),"Got an empty IASIO!");
+		assertEquals(iasioDefaultShelve, optIasioDefShelve.get(),"The IASIOs differ!");
+		assertEquals(IasioDao.canSheveDefault,optIasioDefShelve.get().isCanShelve());
+
+		IasioDao iasio = new IasioDao(
+				"ioID",
+				"IASIO description",
+				IasTypeDao.ALARM,"http://wiki.alma.cl/ioID",
+				true,
+				"templateID",
+				SoundTypeDao.TYPE2,
+				"addr1@eso.org; addr@alma.cl");
+		cdbWriter.writeIasio(iasio, false);
+
+		System.out.println(iasio.toString());
+		System.out.println(iasio.isCanShelve());
+
+		assertTrue(cdbFiles.getIasioFilePath(iasio.getId()).toFile().exists());
+
+		Optional<IasioDao> optIasio = cdbReader.getIasio(iasio.getId());
+		assertTrue( optIasio.isPresent(),"Got an empty IASIO!");
+		assertTrue(optIasio.get().isCanShelve(),"Should be possible to shelve");
+		assertEquals(iasio, optIasio.get(),"The IASIOs differ!");
+
+		// Check if there is one and only one IASIO in the CDB
+		Optional<Set<IasioDao>> optSet = cdbReader.getIasios();
+		assertTrue( optSet.isPresent(),"Got an empty set of IASIOs!");
+		assertEquals(1,optSet.get().size(),"Size of set mismatch");
+
+		// Append another IASIO
+		IasioDao iasio2 = new IasioDao("ioID2", "Another IASIO", IasTypeDao.BOOLEAN,null);
+		iasio2.setSound(SoundTypeDao.TYPE3);
+		iasio2.setEmails("emailaddr@site.com");
+		cdbWriter.writeIasio(iasio2, true);
+		Optional<Set<IasioDao>> optSet2 = cdbReader.getIasios();
+		assertTrue(optSet2.isPresent(),"Got an empty set of IASIOs!");
+		assertEquals(2,optSet2.get().size(),"Size of set mismatch");
+
+		// Is the second IASIO ok?
+		Optional<IasioDao> optIasio2 = cdbReader.getIasio(iasio2.getId());
+		assertTrue(optIasio2.isPresent(),"Got an empty IASIO!");
+		assertEquals(iasio2, optIasio2.get(),"The IASIOs differ!");
+
+		// Check if updating a IASIO replaces the old one
+		iasio.setShortDesc("A new Descripton");
+		System.out.println("===+++===> "+iasio);
+		cdbWriter.writeIasio(iasio, true);
+		// There must be still 2 IASIOs in the CDB
+		optSet = cdbReader.getIasios();
+		assertTrue( optSet.isPresent(),"Got an empty set of IASIOs!");
+
+		for (IasioDao i: optSet.get()) {
+			System.out.println("==> "+i);
+		}
+
+		assertEquals(2,optSet.get().size(),"Size of set mismatch");
+		// Check if the IASIO in the CDB has been updated
+		optIasio = cdbReader.getIasio(iasio.getId());
+		assertTrue( optIasio.isPresent(),"Got an empty IASIO!");
+		assertEquals(iasio, optIasio.get(),"The IASIOs differ!");
+	}
+
+	/**
+	 * Check if the writing of set of IASIOs at once works
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	public void testWriteIasios() throws Exception {
+		Set<IasioDao> set = new HashSet<>();
+		for (int t=0; t<5; t++) {
+			IasioDao iasio = new IasioDao("iasioID-"+t, "IASIO description "+t, IasTypeDao.values()[t],"http://www.eso.org");
+			set.add(iasio);
+		}
+		cdbWriter.writeIasios(set, false);
+		assertTrue(cdbFiles.getIasioFilePath("PlaceHolderID").toFile().exists());
+
+		Optional<Set<IasioDao>> optSet = cdbReader.getIasios();
+		assertTrue( optSet.isPresent(),"Got an empty set of IASIOs!");
+		assertEquals(set.size(),optSet.get().size(),"Size of set mismatch");
+
+		// Check if appending works
+		Set<IasioDao> set2 = new HashSet<>();
+		for (int t=0; t<6; t++) {
+			IasioDao iasio = new IasioDao("2ndset-iasioID-"+t, "IASIO descr "+t*2, IasTypeDao.values()[t],"http://www.eso.org");
+			iasio.setSound(SoundTypeDao.TYPE1);
+			set2.add(iasio);
+		}
+		cdbWriter.writeIasios(set2, true);
+		Optional<Set<IasioDao>> optSet2 = cdbReader.getIasios();
+		assertTrue(optSet2.isPresent(),"Got an empty set of IASIOs!");
+		assertEquals(set.size()+set2.size(),optSet2.get().size(),"Size of set mismatch");
+
+		// Update the first iasios
+		set.clear();
+		for (int t=0; t<5; t++) {
+			IasioDao iasio = new IasioDao("iasioID-"+t, "IASIO "+t, IasTypeDao.values()[t],"http://www.eso.org");
+			iasio.setSound(SoundTypeDao.TYPE3);
+			set.add(iasio);
+		}
+		cdbWriter.writeIasios(set, true);
+		// Size must be the same
+		Optional<Set<IasioDao>> optSet3 = cdbReader.getIasios();
+
+		assertTrue(optSet3.isPresent(),"Got an empty set of IASIOs!");
+		assertEquals(set.size()+set2.size(),optSet3.get().size(),"Size of set mismatch");
+
+		// Check if all IASIOs match with the ones in the sets
+		set.stream().forEach(x -> assertTrue(optSet3.get().contains(x)));
+		set2.stream().forEach(x -> assertTrue(optSet3.get().contains(x)));
+
+		// Finally check if saving without appending really remove the right IASIOs
+		// by writing again the IASIOs in set
+		cdbWriter.writeIasios(set, false);
+		// Size must be the same
+		Optional<Set<IasioDao>> optSet4 = cdbReader.getIasios();
+		assertTrue(optSet4.isPresent(),"Got an empty set of IASIOs!");
+		assertEquals(set.size(),optSet4.get().size(),"Size of set mismatch");
+
+		// Check if all IASIOs match with the ones in the sets
+		set.stream().forEach(x -> assertTrue(optSet4.get().contains(x)));
+		set2.stream().forEach(x -> assertFalse(optSet4.get().contains(x)));
+	}
 //
 //
 //
