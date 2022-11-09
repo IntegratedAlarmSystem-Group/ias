@@ -34,25 +34,6 @@ public class YamlWriter extends StructuredTextWriter {
         super(cdbFileNames);
     }
 
-
-
-    /**
-     * Serialize the Supervisor in the JSON file.
-     *
-     * @param superv The Supervisor configuration to write in the file
-     */
-    @Override
-    public void writeSupervisor(SupervisorDao superv) throws IasCdbException  {
-        if (closed.get()) {
-            throw new IasCdbException("The writer is shut down");
-        }
-        if (!initialized.get()) {
-            throw new IasCdbException("The writer is not initialized");
-        }
-
-        throw new IasCdbException("Unsupported operation");
-    }
-
     /**
      * Serialize the DASU in the JSON file.
      *
@@ -85,54 +66,6 @@ public class YamlWriter extends StructuredTextWriter {
             throw new IasCdbException("The writer is not initialized");
         }
         Objects.requireNonNull(asce);
-
-        throw new IasCdbException("Unsupported operation");
-    }
-
-    /**
-     * Serialize the IASIO in the JSON file.
-     *
-     * @param iasio The IASIO configuration to write in the file
-     * @param append: if <code>true</code> the passed iasio is appended to the file
-     *                otherwise a new file is created
-     *
-     * @see CdbWriter#writeIasio(IasioDao, boolean)
-     */
-    @Override
-    public void writeIasio(IasioDao iasio, boolean append) throws IasCdbException {
-        if (closed.get()) {
-            throw new IasCdbException("The writer is shut down");
-        }
-        if (!initialized.get()) {
-            throw new IasCdbException("The writer is not initialized");
-        }
-
-        throw new IasCdbException("Unsupported operation");
-    }
-
-    /**
-     * Serialize the IASIOs in the JSON file.
-     *
-     * <P>If <code>append</code> is <code>false</code> then a new file is created otherwise
-     * the IASIOs in the passed files are written at the end of the file.
-     * <BR>If a IASIO in <code>iasios</code> already exists in the file, the latter
-     * is replaced by that in the set.
-     *
-     * @param iasios The IASIOs to write in the file
-     * @param append: if <code>true</code> the passed iasios are appended to the file
-     *                otherwise a new file is created
-     *
-     * @see CdbWriter#writeIasios(Set, boolean)
-     */
-    @Override
-    public void writeIasios(Set<IasioDao> iasios, boolean append) throws IasCdbException {
-        if (closed.get()) {
-            throw new IasCdbException("The writer is shut down");
-        }
-        if (!initialized.get()) {
-            throw new IasCdbException("The writer is not initialized");
-        }
-        Objects.requireNonNull(iasios);
 
         throw new IasCdbException("Unsupported operation");
     }
