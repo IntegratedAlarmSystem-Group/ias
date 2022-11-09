@@ -280,111 +280,111 @@ public class TestYamlCdb {
 		assertEquals(dasu,theDasuFromCdb.get(),"The DASUs differ!");
 		assertEquals(theDasuFromCdb.get().getOutput().getId(), dasuOutIasio.getId());
 	}
-//
-//	@Test
-//	public void testWriteAsce() throws Exception {
-//
-//	    System.out.println("testWriteAsce...");
-//
-//		SupervisorDao superv = new SupervisorDao();
-//		superv.setId("Supervisor-ID");
-//		superv.setHostName("almaias.eso.org");
-//		superv.setLogLevel(LogLevelDao.INFO);
-//
-//		// The DASU that owns the ASCE to test
-//		DasuDao dasu = new DasuDao();
-//		dasu.setId("DasuID1");
-//		dasu.setLogLevel(LogLevelDao.TRACE);
-//
-//		IasioDao dasuOutIasio = new IasioDao("DASU_OUTPUT", "desc-dasu-out", IasTypeDao.ALARM,"http://www.eso.org");
-//		dasu.setOutput(dasuOutIasio);
-//
-//		TransferFunctionDao tfDao1 = new TransferFunctionDao();
-//		tfDao1.setClassName("org.eso.ias.tf.Threshold");
-//		tfDao1.setImplLang(TFLanguageDao.JAVA);
-//
-//		// The template of the ASCE
-//		TemplateDao templateForAsce = new TemplateDao("TemplateID",2,7);
-//
-//		// The template for templated inputs
-//        TemplateDao templateForTemplatedInputs = new TemplateDao("TemplateForTempInputsID",1,3);
-//
-//		// The ASCE to test
-//		AsceDao asce = new AsceDao();
-//		asce.setId("ASCE-ID-For-Testing");
-//		asce.setDasu(dasu);
-//		asce.setTransferFunction(tfDao1);
-//
-//		IasioDao output = new IasioDao("OUTPUT-ID", "One IASIO in output", IasTypeDao.BYTE,"http://www.eso.org");
-//		asce.setOutput(output);
-//
-//		// A set of inputs (one for each possible type
-//		for (int t=0; t<IasTypeDao.values().length; t++) {
-//			IasioDao input = new IasioDao("INPUT-ID"+t, "IASIO "+t+" in input", IasTypeDao.values()[t],"http://www.eso.org");
-//			asce.addInput(input, true);
-//			cdbWriter.writeIasio(input, true);
-//		}
-//		assertEquals(IasTypeDao.values().length,asce.getInputs().size(),"Not all the inputs have bene added to the ASCE");
-//
-//		// Templated INPUT definition in IASIO
-//        IasioDao templatedInputIasio = new IasioDao(
-//                "TEMPL-INPUT-ID",
-//                "Templated IASIO",
-//                IasTypeDao.ALARM,
-//                "http://www.eso.org");
-//        templatedInputIasio.setTemplateId("TemplateForTempInputsID");
-//        cdbWriter.writeIasio(templatedInputIasio,true);
-//
-//		// Adds 2 template inputs
-//        TemplateInstanceIasioDao templatedInput1 = new TemplateInstanceIasioDao();
-//        templatedInput1.setIasio(templatedInputIasio);
-//        templatedInput1.setTemplateId("TemplateForTempInputsID");
-//        templatedInput1.setInstance(1);
-//        asce.addTemplatedInstanceInput(templatedInput1,true);
-//
-//        TemplateInstanceIasioDao templatedInput2 = new TemplateInstanceIasioDao();
-//        templatedInput2.setIasio(templatedInputIasio);
-//        templatedInput2.setTemplateId("TemplateForTempInputsID");
-//        templatedInput2.setInstance(3);
-//        asce.addTemplatedInstanceInput(templatedInput2,true);
-//
-//
-//		// Adds few properties
-//		PropertyDao p1 = new PropertyDao();
-//		p1.setName("Prop1-Name");
-//		p1.setValue("The value of P1");
-//		PropertyDao p2 = new PropertyDao();
-//		p2.setName("Prop2-Name");
-//		p2.setValue("The value of P2");
-//		PropertyDao p3 = new PropertyDao();
-//		p3.setName("Prop3-Name");
-//		p3.setValue("The value of P3");
-//		asce.getProps().add(p1);
-//		asce.getProps().add(p2);
-//		asce.getProps().add(p3);
-//
-//		// Included objects must be in the CDB as well otherwise
-//		// included objects cannot be rebuilt in the ASCE
-//		cdbWriter.writeIasio(output, true);
-//		cdbWriter.writeIasio(dasuOutIasio, true);
-//		cdbWriter.writeSupervisor(superv);
-//		cdbWriter.writeDasu(dasu);
-//		cdbWriter.writeTransferFunction(tfDao1);
-//		cdbWriter.writeTemplate(templateForAsce);
-//        cdbWriter.writeTemplate(templateForTemplatedInputs);
-//
-//		cdbWriter.writeAsce(asce);
-//		assertTrue(cdbFiles.getAsceFilePath(asce.getId()).toFile().exists());
-//
-//		Optional<AsceDao> optAsce = cdbReader.getAsce(asce.getId());
-//		assertTrue(optAsce.isPresent(),"Got a null ASCE with ID "+asce.getId()+" from CDB");
-//		assertEquals(asce.getOutput(),optAsce.get().getOutput());
-//		assertEquals(asce,optAsce.get(),"The ASCEs differ!");
-//
-//		assertEquals(2,optAsce.get().getTemplatedInstanceInputs().size());
-//
-//        System.out.println("testWriteAsce done.");
-//	}
+
+	@Test
+	public void testWriteAsce() throws Exception {
+
+	    System.out.println("testWriteAsce...");
+
+		SupervisorDao superv = new SupervisorDao();
+		superv.setId("Supervisor-ID");
+		superv.setHostName("almaias.eso.org");
+		superv.setLogLevel(LogLevelDao.INFO);
+
+		// The DASU that owns the ASCE to test
+		DasuDao dasu = new DasuDao();
+		dasu.setId("DasuID1");
+		dasu.setLogLevel(LogLevelDao.TRACE);
+
+		IasioDao dasuOutIasio = new IasioDao("DASU_OUTPUT", "desc-dasu-out", IasTypeDao.ALARM,"http://www.eso.org");
+		dasu.setOutput(dasuOutIasio);
+
+		TransferFunctionDao tfDao1 = new TransferFunctionDao();
+		tfDao1.setClassName("org.eso.ias.tf.Threshold");
+		tfDao1.setImplLang(TFLanguageDao.JAVA);
+
+		// The template of the ASCE
+		TemplateDao templateForAsce = new TemplateDao("TemplateID",2,7);
+
+		// The template for templated inputs
+        TemplateDao templateForTemplatedInputs = new TemplateDao("TemplateForTempInputsID",1,3);
+
+		// The ASCE to test
+		AsceDao asce = new AsceDao();
+		asce.setId("ASCE-ID-For-Testing");
+		asce.setDasu(dasu);
+		asce.setTransferFunction(tfDao1);
+
+		IasioDao output = new IasioDao("OUTPUT-ID", "One IASIO in output", IasTypeDao.BYTE,"http://www.eso.org");
+		asce.setOutput(output);
+
+		// A set of inputs (one for each possible type
+		for (int t=0; t<IasTypeDao.values().length; t++) {
+			IasioDao input = new IasioDao("INPUT-ID"+t, "IASIO "+t+" in input", IasTypeDao.values()[t],"http://www.eso.org");
+			asce.addInput(input, true);
+			cdbWriter.writeIasio(input, true);
+		}
+		assertEquals(IasTypeDao.values().length,asce.getInputs().size(),"Not all the inputs have bene added to the ASCE");
+
+		// Templated INPUT definition in IASIO
+        IasioDao templatedInputIasio = new IasioDao(
+                "TEMPL-INPUT-ID",
+                "Templated IASIO",
+                IasTypeDao.ALARM,
+                "http://www.eso.org");
+        templatedInputIasio.setTemplateId("TemplateForTempInputsID");
+        cdbWriter.writeIasio(templatedInputIasio,true);
+
+		// Adds 2 template inputs
+        TemplateInstanceIasioDao templatedInput1 = new TemplateInstanceIasioDao();
+        templatedInput1.setIasio(templatedInputIasio);
+        templatedInput1.setTemplateId("TemplateForTempInputsID");
+        templatedInput1.setInstance(1);
+        asce.addTemplatedInstanceInput(templatedInput1,true);
+
+        TemplateInstanceIasioDao templatedInput2 = new TemplateInstanceIasioDao();
+        templatedInput2.setIasio(templatedInputIasio);
+        templatedInput2.setTemplateId("TemplateForTempInputsID");
+        templatedInput2.setInstance(3);
+        asce.addTemplatedInstanceInput(templatedInput2,true);
+
+
+		// Adds few properties
+		PropertyDao p1 = new PropertyDao();
+		p1.setName("Prop1-Name");
+		p1.setValue("The value of P1");
+		PropertyDao p2 = new PropertyDao();
+		p2.setName("Prop2-Name");
+		p2.setValue("The value of P2");
+		PropertyDao p3 = new PropertyDao();
+		p3.setName("Prop3-Name");
+		p3.setValue("The value of P3");
+		asce.getProps().add(p1);
+		asce.getProps().add(p2);
+		asce.getProps().add(p3);
+
+		// Included objects must be in the CDB as well otherwise
+		// included objects cannot be rebuilt in the ASCE
+		cdbWriter.writeIasio(output, true);
+		cdbWriter.writeIasio(dasuOutIasio, true);
+		cdbWriter.writeSupervisor(superv);
+		cdbWriter.writeDasu(dasu);
+		cdbWriter.writeTransferFunction(tfDao1);
+		cdbWriter.writeTemplate(templateForAsce);
+        cdbWriter.writeTemplate(templateForTemplatedInputs);
+
+		cdbWriter.writeAsce(asce);
+		assertTrue(cdbFiles.getAsceFilePath(asce.getId()).toFile().exists());
+
+		Optional<AsceDao> optAsce = cdbReader.getAsce(asce.getId());
+		assertTrue(optAsce.isPresent(),"Got a null ASCE with ID "+asce.getId()+" from CDB");
+		assertEquals(asce.getOutput(),optAsce.get().getOutput());
+		assertEquals(asce,optAsce.get(),"The ASCEs differ!");
+
+		assertEquals(2,optAsce.get().getTemplatedInstanceInputs().size());
+
+        System.out.println("testWriteAsce done.");
+	}
 //
 //	/**
 //	 * Check if the writing of one IASIO at a time works

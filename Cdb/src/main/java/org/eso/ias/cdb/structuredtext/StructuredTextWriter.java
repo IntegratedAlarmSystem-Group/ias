@@ -454,4 +454,77 @@ public abstract class StructuredTextWriter implements CdbWriter {
             }
         }
     }
+
+    /**
+     *  Write the passed template to the CDB
+     *
+     *  @param templateDao The template DAO to write in the file
+     *  @throws IasCdbException In case of error writing the TF
+     */
+    @Override
+    public void writeTemplate(TemplateDao templateDao) throws IasCdbException {
+        if (closed.get()) {
+            throw new IasCdbException("The writer is shut down");
+        }
+        if (!initialized.get()) {
+            throw new IasCdbException("The writer is not initialized");
+        }
+
+        Objects.requireNonNull(templateDao);
+        Set<TemplateDao> templates = new HashSet<>();
+        templates.add(templateDao);
+        writeTemplates(templates, true);
+    }
+
+    /**
+     * Serialize the templates in the JSON file.
+     *
+     * <P>If <code>append</code> is <code>false</code> then a new file is created otherwise
+     * the templates in the passed files are appended at the end of the file.
+     * <BR>If a emplate in <code>templates</code> already exists in the file, the latter
+     * is replaced by that in the set.
+     *
+     * @param templates The templates to write in the file
+     * @param append: if <code>true</code> the passed TFs are appended to the file
+     *                otherwise a new file is created
+     */
+    private void writeTemplates(Set<TemplateDao> templates, boolean append) throws IasCdbException {
+        File f;
+        try {
+            // The ID is unused in getTFFilePath
+            f = cdbFileNames.getTemplateFilePath("UnusedID").toFile();
+        }catch (IOException ioe) {
+            throw new IasCdbException("Error getting TFs file",ioe);
+        }
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
+        if (!f.exists() || !append) {
+            try {
+                mapper.writerWithDefaultPrettyPrinter().writeValue(f, templates);
+            } catch (Throwable t) {
+                throw new IasCdbException("Error writing templates",t);
+            }
+        } else {
+
+            TemplateDao[] templatesOnFile;
+            try {
+                templatesOnFile = mapper.readValue(f, TemplateDao[].class);
+            } catch (Exception e) {
+                throw new IasCdbException("Error reading templates from" + f.getAbsolutePath(), e);
+            }
+            Map<String, TemplateDao> templatesMap = new HashMap<>();
+            for (TemplateDao tDao: templatesOnFile) {
+                templatesMap.put(tDao.getId(), tDao);
+            }
+            for (TemplateDao tDao: templates) {
+                templatesMap.put(tDao.getId(), tDao);
+            }
+            try {
+                mapper.writerWithDefaultPrettyPrinter().writeValue(f, templatesMap.values());
+            } catch (Throwable t) {
+                throw new IasCdbException("Error writing templates on file "+f.getAbsolutePath(),t);
+            }
+        }
+    }
 }
