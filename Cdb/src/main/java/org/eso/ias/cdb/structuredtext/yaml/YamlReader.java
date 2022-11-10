@@ -30,37 +30,7 @@ public class YamlReader  extends StructuredTextReader {
 		super(cdbFileNames);
 	}
 
-    /**
-     * Get the IDs of the Supervisors.
-     *
-     * This method is useful to deploy the supervisors
-     *
-     * @return The the IDs of the supervisors read from the CDB
-     * @throws IasCdbException In case of error getting the IDs of the supervisors
-     */
-    public Optional<Set<String>> getSupervisorIds() throws IasCdbException {
-        throw new IasCdbException("Unsupported operation");
-    }
 
-    /**
-     * Get the IDs of the DASUs.
-     *
-     * @return The IDs of the DASUs read from the CDB
-     * @throws IasCdbException In case of error getting the IDs of the DASUs
-     */
-    public Optional<Set<String>> getDasuIds() throws IasCdbException {
-        throw new IasCdbException("Unsupported operation");
-    }
-
-    /**
-     * Get the IDs of the ASCEs.
-     *
-     * @return The IDs of the ASCEs read from the CDB
-     * @throws IasCdbException In case of error getting the IDs of the ASCEs
-     */
-    public Optional<Set<String>> getAsceIds() throws IasCdbException {
-        throw new IasCdbException("Unsupported operation");
-    }
 
 	/**
 	 * Return the templated IASIOs in input to the given ASCE.
@@ -108,21 +78,7 @@ public class YamlReader  extends StructuredTextReader {
         throw new IasCdbException("Unsupported operation");
     }
 
-	/**
-	 * @return The IDs of all the plugins in the CDB
-	 * @throws IasCdbException In case of error getting the IDs of the plugins
-	 */
-	public Optional<Set<String>> getPluginIds() throws IasCdbException {
-        throw new IasCdbException("Unsupported operation");
-    }
 
-	/**
-	 * @return The IDs of all the plugins in the CDB
-	 * @throws IasCdbException In case of error getting the IDs of the clients
-	 */
-	public Optional<Set<String>> getClientIds() throws IasCdbException {
-        throw new IasCdbException("Unsupported operation");
-    }
 
 
 

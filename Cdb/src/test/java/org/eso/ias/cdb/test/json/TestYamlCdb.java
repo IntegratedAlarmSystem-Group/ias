@@ -646,7 +646,7 @@ public class TestYamlCdb {
 		cdbReader.init();
 
 		Optional<SupervisorDao> superv4 = cdbReader.getSupervisor("Supervisor-ID4");
-		assert(superv4.isPresent());
+		assertTrue(superv4.isPresent());
 		SupervisorDao superv = superv4.get();
 		assertEquals(2,superv.getDasusToDeploy().size());
 		Map<String , DasuToDeployDao> dasusToDeploy= new HashMap<>();
@@ -662,90 +662,90 @@ public class TestYamlCdb {
 		assertEquals("template3-ID",dtd6.getTemplate().getId());
 		assertEquals(5, dtd6.getInstance().intValue());
 	}
-//
-//	/**
-//	 * Test the writing and reading of the transfer function
-//	 *
-//	 * @throws Exception
-//	 */
-//	@Test
-//	public void testWriteTansferFunction() throws Exception {
-//		TransferFunctionDao tfDao1 = new TransferFunctionDao("org.eso.ias.tf.Test",TFLanguageDao.SCALA);
-//		TransferFunctionDao tfDao2 = new TransferFunctionDao("org.eso.ias.tf.MinMax",TFLanguageDao.JAVA);
-//
-//		cdbWriter.writeTransferFunction(tfDao1);
-//		cdbWriter.writeTransferFunction(tfDao2);
-//
-//		Optional<TransferFunctionDao> optTF1 = cdbReader.getTransferFunction(tfDao1.getClassName());
-//		assertTrue(optTF1.isPresent());
-//		assertEquals(tfDao1, optTF1.get());
-//		Optional<TransferFunctionDao> optTF2 = cdbReader.getTransferFunction(tfDao2.getClassName());
-//		assertTrue(optTF2.isPresent());
-//		assertEquals(tfDao2, optTF2.get());
-//	}
-//
-//	/**
-//	 * Test the retrieval of templates
-//	 *
-//	 * @throws Exception
-//	 */
-//	@Test
-//	public void testGetTemplates() throws Exception {
-//		// Get templates from the CDB in testYamlCdb
-//		Path cdbPath =  FileSystems.getDefault().getPath("src/test/testYamlCdb");
-//		CdbFiles cdbFiles = new CdbTxtFiles(cdbPath, TextFileType.JSON);
-//		CdbReader jcdbReader = new JsonReader(cdbFiles);
-//		jcdbReader.init();
-//
-//		Optional<TemplateDao> template2 = jcdbReader.getTemplate("template2-ID");
-//		assertTrue(template2.isPresent());
-//		assertEquals(0,template2.get().getMin());
-//		assertEquals(10,template2.get().getMax());
-//
-//		Optional<TemplateDao> template1 = jcdbReader.getTemplate("template1-ID");
-//		assertTrue(template1.isPresent());
-//		Optional<TemplateDao> template3 = jcdbReader.getTemplate("template3-ID");
-//		assertTrue(template3.isPresent());
-//	}
-//
-//	/**
-//	 * Test the writing and reading of the template
-//	 *
-//	 * @throws Exception
-//	 */
-//	@Test
-//	public void testWriteTemplate() throws Exception {
-//		TemplateDao tDao1 = new TemplateDao("tID1",3,9);
-//		TemplateDao tDao2 = new TemplateDao("tID2",1,25);
-//
-//		cdbWriter.writeTemplate(tDao1);
-//		cdbWriter.writeTemplate(tDao2);
-//
-//		Optional<TemplateDao> optT1 = cdbReader.getTemplate(tDao1.getId());
-//		assertTrue(optT1.isPresent());
-//		assertEquals(tDao1, optT1.get());
-//		Optional<TemplateDao> optT2 = cdbReader.getTemplate(tDao2.getId());
-//		assertTrue(optT2.isPresent());
-//		assertEquals(tDao2, optT2.get());
-//	}
-//
-//    /**
-//     * Test the getter if IDs of Supervisors
-//     * @throws Exception
-//     */
-//    @Test
-//    public void testGetIdsOfSupervisor() throws Exception {
-//        Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
-//        cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
-//        cdbReader = new JsonReader(cdbFiles);
-//        cdbReader.init();
-//
-//        Optional<Set<String>> idsOpt= cdbReader.getSupervisorIds();
-//        assertTrue(idsOpt.isPresent());
-//        Set<String> ids = idsOpt.get();
-//        assertEquals(4,ids.size());
-//        for (int i=1; i<=ids.size(); i++) assertTrue(ids.contains("Supervisor-ID"+i));
-//    }
+
+	/**
+	 * Test the writing and reading of the transfer function
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	public void testWriteTansferFunction() throws Exception {
+		TransferFunctionDao tfDao1 = new TransferFunctionDao("org.eso.ias.tf.Test",TFLanguageDao.SCALA);
+		TransferFunctionDao tfDao2 = new TransferFunctionDao("org.eso.ias.tf.MinMax",TFLanguageDao.JAVA);
+
+		cdbWriter.writeTransferFunction(tfDao1);
+		cdbWriter.writeTransferFunction(tfDao2);
+
+		Optional<TransferFunctionDao> optTF1 = cdbReader.getTransferFunction(tfDao1.getClassName());
+		assertTrue(optTF1.isPresent());
+		assertEquals(tfDao1, optTF1.get());
+		Optional<TransferFunctionDao> optTF2 = cdbReader.getTransferFunction(tfDao2.getClassName());
+		assertTrue(optTF2.isPresent());
+		assertEquals(tfDao2, optTF2.get());
+	}
+
+	/**
+	 * Test the retrieval of templates
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetTemplates() throws Exception {
+		// Get templates from the CDB in testYamlCdb
+		Path cdbPath =  FileSystems.getDefault().getPath("src/test/testYamlCdb");
+		CdbFiles cdbFiles = new CdbTxtFiles(cdbPath, TextFileType.YAML);
+		CdbReader jcdbReader = new YamlReader(cdbFiles);
+		jcdbReader.init();
+
+		Optional<TemplateDao> template2 = jcdbReader.getTemplate("template2-ID");
+		assertTrue(template2.isPresent());
+		assertEquals(0,template2.get().getMin());
+		assertEquals(10,template2.get().getMax());
+
+		Optional<TemplateDao> template1 = jcdbReader.getTemplate("template1-ID");
+		assertTrue(template1.isPresent());
+		Optional<TemplateDao> template3 = jcdbReader.getTemplate("template3-ID");
+		assertTrue(template3.isPresent());
+	}
+
+	/**
+	 * Test the writing and reading of the template
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	public void testWriteTemplate() throws Exception {
+		TemplateDao tDao1 = new TemplateDao("tID1",3,9);
+		TemplateDao tDao2 = new TemplateDao("tID2",1,25);
+
+		cdbWriter.writeTemplate(tDao1);
+		cdbWriter.writeTemplate(tDao2);
+
+		Optional<TemplateDao> optT1 = cdbReader.getTemplate(tDao1.getId());
+		assertTrue(optT1.isPresent());
+		assertEquals(tDao1, optT1.get());
+		Optional<TemplateDao> optT2 = cdbReader.getTemplate(tDao2.getId());
+		assertTrue(optT2.isPresent());
+		assertEquals(tDao2, optT2.get());
+	}
+
+    /**
+     * Test the getter if IDs of Supervisors
+     * @throws Exception
+     */
+    @Test
+    public void testGetIdsOfSupervisor() throws Exception {
+        Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
+        cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
+        cdbReader = new YamlReader(cdbFiles);
+        cdbReader.init();
+
+        Optional<Set<String>> idsOpt= cdbReader.getSupervisorIds();
+        assertTrue(idsOpt.isPresent());
+        Set<String> ids = idsOpt.get();
+        assertEquals(4,ids.size());
+        for (int i=1; i<=ids.size(); i++) assertTrue(ids.contains("Supervisor-ID"+i));
+    }
 //
 //
 //    /**
