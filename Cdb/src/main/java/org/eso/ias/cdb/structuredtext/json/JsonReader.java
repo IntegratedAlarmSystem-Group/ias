@@ -57,55 +57,9 @@ public class JsonReader extends StructuredTextReader {
 	
 
 
-	/**
-	 * Return the DASUs belonging to the given Supervisor.
-	 * 
-	 * @param id The not <code>null</code> nor empty identifier of the supervisor
-	 * @return A set of DASUs running in the supervisor with the passed id
-	 * @throws IasCdbException in case of error reading CDB or if the 
-	 *                         supervisor with the give identifier does not exist
-	 */
-	public Set<DasuToDeployDao> getDasusToDeployInSupervisor(String id) throws IasCdbException {
-		if (closed.get()) {
-			throw new IasCdbException("The reader is shut down");
-		}
-		if (!initialized.get()) {
-			throw new IasCdbException("The reader is not initialized");
-		}
 
-		Objects.requireNonNull(id, "The ID cant't be null");
-		if (id.isEmpty()) {
-			throw new IllegalArgumentException("Invalid empty ID");
-		}
-		Optional<SupervisorDao> superv = getSupervisor(id);
-		Set<DasuToDeployDao> ret = superv.orElseThrow(() -> new IasCdbException("Supervisor ["+id+"] not dound")).getDasusToDeploy();
-		return (ret==null)? new HashSet<>() : ret;
-	}
 	
-	/**
-	 * Return the ASCEs belonging to the given DASU.
-	 * 
-	 * @param id The not <code>null</code> nor empty identifier of the supervisor
-	 * @return A set of DASUs running in the supervisor with the passed id
-	 * @throws IasCdbException in case of error reading CDB or if the 
-	 *                         DASU with the give identifier does not exist
-	 */
-	public Set<AsceDao> getAscesForDasu(String id) throws IasCdbException {
-		if (closed.get()) {
-			throw new IasCdbException("The reader is shut down");
-		}
-		if (!initialized.get()) {
-			throw new IasCdbException("The reader is not initialized");
-		}
 
-		Objects.requireNonNull(id, "The ID cant't be null");
-		if (id.isEmpty()) {
-			throw new IllegalArgumentException("Invalid empty ID");
-		}
-		Optional<DasuDao> dasu = getDasu(id);
-		Set<AsceDao> ret = dasu.orElseThrow(() -> new IasCdbException("DASU ["+id+"] not found")).getAsces();
-		return (ret==null)? new HashSet<>() : ret;
-	}
 	
 	/**
 	 * Return the IASIOs in input to the given ASCE.

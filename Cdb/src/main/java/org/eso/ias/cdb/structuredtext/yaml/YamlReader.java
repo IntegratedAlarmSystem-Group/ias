@@ -33,30 +33,6 @@ public class YamlReader  extends StructuredTextReader {
 
 
 
-
-	/**
-	 * Return the DASUs to deploy in the Supervisor with the given identifier
-	 * 
-	 * @param id The not <code>null</code> nor empty identifier of the supervisor
-	 * @return A set of DASUs to deploy in the supervisor with the passed id
-	 * @throws IasCdbException in case of error reading CDB or if the 
-	 *                         supervisor with the give identifier does not exist
-	 */
-	public Set<DasuToDeployDao> getDasusToDeployInSupervisor(String id) throws IasCdbException {
-        throw new IasCdbException("Unsupported operation");
-    }
-	
-	/**
-	 * Return the ASCEs belonging to the given DASU.
-	 * 
-	 * @param id The not <code>null</code> nor empty identifier of the DASU
-	 * @return A set of ASCEs running in the DASU with the passed id
-	 * @throws IasCdbException in case of error reading CDB or if the 
-	 *                         DASU with the give identifier does not exist
-	 */
-	public Set<AsceDao> getAscesForDasu(String id) throws IasCdbException {
-        throw new IasCdbException("Unsupported operation");
-    }
 	
 	/**
 	 * Return the IASIOs in input to the given ASCE.

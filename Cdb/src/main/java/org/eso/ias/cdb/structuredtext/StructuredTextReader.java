@@ -219,7 +219,7 @@ public abstract class StructuredTextReader implements CdbReader {
             ret.setLogLevel(jSuperv.getLogLevel());
 
             // Convert each JsonDasuToDeployDao in a DasuToDeployDao
-            for (JsonDasuToDeployDao jdtd: jSupervOpt.get().getDasusToDeploy()) {
+            for (JsonDasuToDeployDao jdtd: jSuperv.getDasusToDeploy()) {
                 // get the dasuDao with the ID in the JsonDasuToDeployDao
                 Optional<DasuDao> optDasu = getDasu(jdtd.getDasuId());
                 if (!optDasu.isPresent()) {
@@ -753,5 +753,33 @@ public abstract class StructuredTextReader implements CdbReader {
             return Optional.empty();
         }
         return templates.get().stream().filter(template -> template.getId().equals(template_id)).findFirst();
+    }
+
+    /**
+     * Return the ASCEs belonging to the given DASU.
+     *
+     * @param id The not <code>null</code> nor empty identifier of the supervisor
+     * @return A set of DASUs running in the supervisor with the passed id
+     * @throws IasCdbException in case of error reading CDB or if the
+     *                         DASU with the give identifier does not exist
+     */
+    public Set<AsceDao> getAscesForDasu(String id) throws IasCdbException {
+        Optional<DasuDao> dasu = getDasu(id);
+        Set<AsceDao> ret = dasu.orElseThrow(() -> new IasCdbException("DASU ["+id+"] not found")).getAsces();
+        return (ret==null)? new HashSet<>() : ret;
+    }
+
+    /**
+     * Return the DASUs belonging to the given Supervisor.
+     *
+     * @param id The not <code>null</code> nor empty identifier of the supervisor
+     * @return A set of DASUs running in the supervisor with the passed id
+     * @throws IasCdbException in case of error reading CDB or if the
+     *                         supervisor with the give identifier does not exist
+     */
+    public Set<DasuToDeployDao> getDasusToDeployInSupervisor(String id) throws IasCdbException {
+        Optional<SupervisorDao> superv = getSupervisor(id);
+        Set<DasuToDeployDao> ret = superv.orElseThrow(() -> new IasCdbException("Supervisor ["+id+"] not dound")).getDasusToDeploy();
+        return (ret==null)? new HashSet<>() : ret;
     }
 }
