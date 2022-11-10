@@ -1,0 +1,8 @@
+---
+dasuID: "DasuID1"
+outputID: "OUT-ID1"
+transferFunctionID: "org.eso.ias.tf.Threshold"
+templatedInputs: []
+id: "ASCE1"
+props: []
+inputIDs: []
