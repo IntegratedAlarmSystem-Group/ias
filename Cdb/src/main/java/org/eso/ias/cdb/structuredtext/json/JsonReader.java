@@ -61,30 +61,7 @@ public class JsonReader extends StructuredTextReader {
 	
 
 	
-	/**
-	 * Return the IASIOs in input to the given ASCE.
-	 * 
-	 * @param id The not <code>null</code> nor empty identifier of the ASCE
-	 * @return A set of IASIOs running in the ASCE with the passed id
-	 * @throws IasCdbException in case of error reading CDB or if the 
-	 *                         ASCE with the give identifier does not exist
-	 */
-	@Override
-	public Collection<IasioDao> getIasiosForAsce(String id) throws IasCdbException {
-		if (closed.get()) {
-			throw new IasCdbException("The reader is shut down");
-		}
-		if (!initialized.get()) {
-			throw new IasCdbException("The reader is not initialized");
-		}
 
-		if (id ==null || id.isEmpty()) {
-			throw new IllegalArgumentException("Invalid null or empty ID");
-		}
-		Optional<AsceDao> asce = getAsce(id);
-		Collection<IasioDao> ret = asce.orElseThrow(() -> new IasCdbException("ASCE ["+id+"] not dound")).getInputs();
-		return (ret==null)? new ArrayList<>() : ret;
-	}
 
 	/**
 	 * Return the templated IASIOs in input to the given ASCE.

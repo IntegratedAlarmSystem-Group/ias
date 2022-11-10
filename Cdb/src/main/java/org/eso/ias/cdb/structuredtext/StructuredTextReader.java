@@ -782,4 +782,19 @@ public abstract class StructuredTextReader implements CdbReader {
         Set<DasuToDeployDao> ret = superv.orElseThrow(() -> new IasCdbException("Supervisor ["+id+"] not dound")).getDasusToDeploy();
         return (ret==null)? new HashSet<>() : ret;
     }
+
+    /**
+     * Return the IASIOs in input to the given ASCE.
+     *
+     * @param id The not <code>null</code> nor empty identifier of the ASCE
+     * @return A set of IASIOs running in the ASCE with the passed id
+     * @throws IasCdbException in case of error reading CDB or if the
+     *                         ASCE with the give identifier does not exist
+     */
+    @Override
+    public Collection<IasioDao> getIasiosForAsce(String id) throws IasCdbException {
+        Optional<AsceDao> asce = getAsce(id);
+        Collection<IasioDao> ret = asce.orElseThrow(() -> new IasCdbException("ASCE ["+id+"] not found")).getInputs();
+        return (ret==null)? new ArrayList<>() : ret;
+    }
 }

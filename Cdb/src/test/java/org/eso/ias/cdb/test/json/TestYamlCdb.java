@@ -604,31 +604,31 @@ public class TestYamlCdb {
 		}
 	}
 
-//	/**
-//	 * Test the getting of IASIOs belonging to a given ASCE
-//	 * <P>
-//	 * This test runs against the JSON CDB contained in testYamlCdb
-//	 *
-//	 * @throws Exception
-//	 */
-//	@Test
-//	public void testGetIasiosOfAsce() throws Exception {
-//		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
-//		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
-//		cdbReader = new JsonReader(cdbFiles);
-//		cdbReader.init();
-//
-//		// Get the IASIOs of ASCE-ID4 that has 3 inputs
-//		Collection<IasioDao> iasios = cdbReader.getIasiosForAsce("ASCE-ID4");
-//		assertEquals(3,iasios.size());
-//		Set<String> iosIds = iasios.stream().map(d -> d.getId()).collect(Collectors.toSet());
-//		assertEquals(3,iosIds.size());
-//		iosIds.forEach( a -> assertTrue(a.equals("iasioID-2") || a.equals("iasioID-3") || a.equals("iasioID-4")));
-//
-//		// Get the IASIOs of ASCE-ID3 that has 2 inputs
-//		iasios = cdbReader.getIasiosForAsce("ASCE-ID3");
-//		assertEquals(2,iasios.size());
-//	}
+	/**
+	 * Test the getting of IASIOs belonging to a given ASCE
+	 * <P>
+	 * This test runs against the JSON CDB contained in testYamlCdb
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetIasiosOfAsce() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
+		cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
+		cdbReader = new YamlReader(cdbFiles);
+		cdbReader.init();
+
+		// Get the IASIOs of ASCE-ID4 that has 3 inputs
+		Collection<IasioDao> iasios = cdbReader.getIasiosForAsce("ASCE-ID4");
+		assertEquals(3,iasios.size());
+		Set<String> iosIds = iasios.stream().map(d -> d.getId()).collect(Collectors.toSet());
+		assertEquals(3,iosIds.size());
+		iosIds.forEach( a -> assertTrue(a.equals("iasioID-2") || a.equals("iasioID-3") || a.equals("iasioID-4")));
+
+		// Get the IASIOs of ASCE-ID3 that has 2 inputs
+		iasios = cdbReader.getIasiosForAsce("ASCE-ID3");
+		assertEquals(2,iasios.size());
+	}
 //
 //	/**
 //	 * Test the getting of Supervisor that deploys templated DASUs
