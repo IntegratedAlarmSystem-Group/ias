@@ -1,0 +1,13 @@
+---
+dasuID: "DasuID3"
+outputID: "OUTPUT-ID"
+transferFunctionID: "org.eso.ias.tf.AnotherFunction"
+id: "ASCE-ID3"
+props:
+- name: "Prop1-Name"
+  value: "The value of P1"
+- name: "Prop2-Name"
+  value: "The value of P2"
+- name: "Prop3-Name"
+  value: "The value of P3"
+inputIDs: [ "iasioID-1", "iasioID-2"]

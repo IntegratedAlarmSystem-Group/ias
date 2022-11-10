@@ -1,10 +1,8 @@
 ---
-- className: "org.eso.ias.tf.Max"
-  asces: []
+- className: "org.eso.ias.tf.AnotherFunction"
+  implLang: "SCALA"
+- className: "org.eso.ias.tf.TestMinMax"
   implLang: "JAVA"
-- className: "org.eso.ias.tf.Min"
-  asces: []
-  implLang: "SCALA"
 - className: "org.eso.ias.tf.Threshold"
-  asces: []
   implLang: "SCALA"
+
