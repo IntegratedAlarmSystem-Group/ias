@@ -1,0 +1,6 @@
+---
+id: "Supervisor-ID1"
+hostName: "almaias.eso.org"
+logLevel: "INFO"
+dasusToDeploy:
+- dasuId: "DasuID2"

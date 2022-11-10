@@ -1,12 +1,12 @@
 ---
-logLevel: INFO
+logLevel: "INFO"
+props:
+- name: "P1-Name"
+  value: "A value for property 1"
+- name: "P2-Name"
+  value: "A value for another property"
 refreshRate: 5
 validityThreshold: 11
 hbFrequency: 10
 bsdbUrl: "127.0.0.1:9092"
-smtp: acaproni:pswd@smtp.test.org
-props: 
-- name: PropName1 
-  value: PropValue1
-- name: PropName2
-  value: PropValue2
+smtp: "acaproni:pswd@smtp.test.org"

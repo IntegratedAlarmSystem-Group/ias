@@ -1,0 +1,13 @@
+---
+- id: "DASU_OUTPUT2"
+  shortDesc: "desc-dasu-out"
+  iasType: "LONG"
+  docUrl: "http://www.eso.org"
+  canShelve: false
+  sound: "NONE"
+- id: "DASU_OUTPUT1"
+  shortDesc: "desc-dasu-out"
+  iasType: "ALARM"
+  docUrl: "http://www.eso.org"
+  canShelve: false
+  sound: "NONE"

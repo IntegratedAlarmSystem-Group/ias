@@ -1,0 +1,9 @@
+[ {
+  "id" : "TemplateForTempInputsID",
+  "min" : 1,
+  "max" : 3
+}, {
+  "id" : "TemplateID",
+  "min" : 2,
+  "max" : 7
+} ]

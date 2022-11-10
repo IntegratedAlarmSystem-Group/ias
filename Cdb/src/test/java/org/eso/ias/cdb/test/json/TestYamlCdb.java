@@ -3,7 +3,6 @@ package org.eso.ias.cdb.test.json;
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
 import org.eso.ias.cdb.TextFileType;
-import org.eso.ias.cdb.structuredtext.json.*;
 import org.eso.ias.cdb.pojos.*;
 import org.eso.ias.cdb.structuredtext.json.CdbFiles;
 import org.eso.ias.cdb.structuredtext.json.CdbFolders;
@@ -24,8 +23,8 @@ import static org.junit.jupiter.api.Assertions.*;
  * Test reading and writing of JSON CDB.
  * <P>
  * Some tests, write the CDB and then read data out of it.
- * <BR>Other tests instead uses the JSON CDB contained in testCdb
- * whose description is in testCdb/ReadMe.txt
+ * <BR>Other tests instead uses the JSON CDB contained in testYamlCdb
+ * whose description is in testYamlCdb/ReadMe.txt
  * 
  * @author acaproni
  *
@@ -71,8 +70,8 @@ public class TestYamlCdb {
 
 	@AfterEach
 	public void tearDown() throws Exception {
-//		CdbFolders.ROOT.delete(cdbParentPath);
-//		assertFalse(CdbFolders.ROOT.exists(cdbParentPath));
+		CdbFolders.ROOT.delete(cdbParentPath);
+		assertFalse(CdbFolders.ROOT.exists(cdbParentPath));
 		
 		cdbReader.shutdown();
 		cdbWriter.shutdown();
@@ -119,7 +118,7 @@ public class TestYamlCdb {
 	/**
 	 * Test the reading of ias.yaml
 	 * <P>
-	 * This test runs against the YAML CDB contained in testCdb
+	 * This test runs against the YAML CDB contained in testYamlCdb
 	 *
 	 * @throws Exception
 	 */
@@ -531,13 +530,13 @@ public class TestYamlCdb {
 //	/**
 //	 * Test the getting of DASUs belonging to a given supervisor
 //	 * <P>
-//	 * This test runs against the JSON CDB contained in testCdb
+//	 * This test runs against the JSON CDB contained in testYamlCdb
 //	 *
 //	 * @throws Exception
 //	 */
 //	@Test
 //	public void testGetDasusOfSupervisor() throws Exception {
-//		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
+//		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
 //		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
 //		cdbReader = new JsonReader(cdbFiles);
 //		cdbReader.init();
@@ -561,13 +560,13 @@ public class TestYamlCdb {
 //	/**
 //	 * Test the getting of ASCEs belonging to a given DASU
 //	 * <P>
-//	 * This test runs against the JSON CDB contained in testCdb
+//	 * This test runs against the JSON CDB contained in testYamlCdb
 //	 *
 //	 * @throws Exception
 //	 */
 //	@Test
 //	public void testGetAscesOfDasu() throws Exception {
-//		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
+//		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
 //		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
 //		cdbReader = new JsonReader(cdbFiles);
 //		cdbReader.init();
@@ -609,13 +608,13 @@ public class TestYamlCdb {
 //	/**
 //	 * Test the getting of IASIOs belonging to a given ASCE
 //	 * <P>
-//	 * This test runs against the JSON CDB contained in testCdb
+//	 * This test runs against the JSON CDB contained in testYamlCdb
 //	 *
 //	 * @throws Exception
 //	 */
 //	@Test
 //	public void testGetIasiosOfAsce() throws Exception {
-//		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
+//		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
 //		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
 //		cdbReader = new JsonReader(cdbFiles);
 //		cdbReader.init();
@@ -635,14 +634,14 @@ public class TestYamlCdb {
 //	/**
 //	 * Test the getting of Supervisor that deploys templated DASUs
 //	 * <P>
-//	 * This test runs against the JSON CDB contained in testCdb and
+//	 * This test runs against the JSON CDB contained in testYamlCdb and
 //	 * gets Supervisor-ID4.
 //	 *
 //	 * @throws Exception
 //	 */
 //	@Test
 //	public void testGetSupervWithTemplatedDASUs() throws Exception {
-//		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
+//		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
 //		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
 //		cdbReader = new JsonReader(cdbFiles);
 //		cdbReader.init();
@@ -693,8 +692,8 @@ public class TestYamlCdb {
 //	 */
 //	@Test
 //	public void testGetTemplates() throws Exception {
-//		// Get templates from the CDB in testCdb
-//		Path cdbPath =  FileSystems.getDefault().getPath("src/test/testCdb");
+//		// Get templates from the CDB in testYamlCdb
+//		Path cdbPath =  FileSystems.getDefault().getPath("src/test/testYamlCdb");
 //		CdbFiles cdbFiles = new CdbTxtFiles(cdbPath, TextFileType.JSON);
 //		CdbReader jcdbReader = new JsonReader(cdbFiles);
 //		jcdbReader.init();
@@ -737,7 +736,7 @@ public class TestYamlCdb {
 //     */
 //    @Test
 //    public void testGetIdsOfSupervisor() throws Exception {
-//        Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
+//        Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
 //        cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
 //        cdbReader = new JsonReader(cdbFiles);
 //        cdbReader.init();
@@ -756,7 +755,7 @@ public class TestYamlCdb {
 //     */
 //    @Test
 //    public void testGetIdsOfDasus() throws Exception {
-//        Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
+//        Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
 //        cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
 //        cdbReader = new JsonReader(cdbFiles);
 //        cdbReader.init();
@@ -774,7 +773,7 @@ public class TestYamlCdb {
 //     */
 //    @Test
 //    public void testGetIdsOfAsces() throws Exception {
-//        Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
+//        Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
 //        cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
 //        cdbReader = new JsonReader(cdbFiles);
 //        cdbReader.init();
@@ -792,13 +791,13 @@ public class TestYamlCdb {
 //    /**
 //     * Test the getting of templated inputs of an ASCE
 //     * <P>
-//     * This test runs against the JSON CDB contained in testCdb
+//     * This test runs against the JSON CDB contained in testYamlCdb
 //     *
 //     * @throws Exception
 //     */
 //    @Test
 //    public void testTemplatedInputsOfAsce() throws Exception {
-//        Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
+//        Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
 //        cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
 //        cdbReader = new JsonReader(cdbFiles);
 //        cdbReader.init();
@@ -829,7 +828,7 @@ public class TestYamlCdb {
 //     */
 //	@Test
 //	public void testGetAsceWithTemplatedInputs() throws Exception {
-//		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
+//		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
 //		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
 //		cdbReader = new JsonReader(cdbFiles);
 //		cdbReader.init();
@@ -851,7 +850,7 @@ public class TestYamlCdb {
 //     */
 //	@Test
 //	public void testGetIasio() throws Exception {
-//		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
+//		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
 //		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
 //		cdbReader = new JsonReader(cdbFiles);
 //		cdbReader.init();
@@ -868,7 +867,7 @@ public class TestYamlCdb {
 //	 */
 //	@Test
 //	public void testGetPlugin() throws Exception {
-//		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
+//		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
 //		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
 //		cdbReader = new JsonReader(cdbFiles);
 //		cdbReader.init();
@@ -992,7 +991,7 @@ public class TestYamlCdb {
 //	 */
 //	@Test
 //	public void testGetPluginIds() throws Exception {
-//		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
+//		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
 //		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
 //		cdbReader = new JsonReader(cdbFiles);
 //		cdbReader.init();
@@ -1010,7 +1009,7 @@ public class TestYamlCdb {
 //	 */
 //	@Test
 //	public void testGetClientIds() throws Exception {
-//		Path path = FileSystems.getDefault().getPath("./src/test/testCdb");
+//		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
 //		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
 //		cdbReader = new JsonReader(cdbFiles);
 //		cdbReader.init();
