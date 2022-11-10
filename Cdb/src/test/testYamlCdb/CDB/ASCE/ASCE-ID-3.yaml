@@ -1,8 +1,0 @@
----
-dasuID: "DasuID1"
-outputID: "ID2"
-transferFunctionID: "org.eso.ias.tf.Max"
-templatedInputs: []
-id: "ASCE-ID-3"
-props: []
-inputIDs: []

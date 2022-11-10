@@ -201,7 +201,7 @@ public abstract class StructuredTextReader implements CdbReader {
         try {
             jSupervOpt = parseSupervisorFile(cleanedID);
         } catch (IOException ioe) {
-            throw new IasCdbException("Error getting JSON Supervisor",ioe);
+            throw new IasCdbException("Error getting " +cdbFileNames.getCdbFileType()+" Supervisor",ioe);
         }
 
         if (jSupervOpt.isPresent()) {
