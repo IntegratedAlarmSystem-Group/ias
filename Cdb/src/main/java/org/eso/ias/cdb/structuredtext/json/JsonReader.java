@@ -96,134 +96,11 @@ public class JsonReader extends StructuredTextReader {
 
 
 
-    /**
-     * Return the IDs in the passed folders.
-     *
-     * For Superrvisors, DASUs, ASCEs, and TFS the Ids match with the names of the
-     * files in the folder.
-     *
-     * @param placeHolderFilename A place holder for a file in the folder
-     * @return the IDs in the passed folders.
-     */
-	private Set<String> getIdsInFolder(File placeHolderFilename) throws IasCdbException {
-		if (closed.get()) {
-			throw new IasCdbException("The reader is shut down");
-		}
-		if (!initialized.get()) {
-			throw new IasCdbException("The reader is not initialized");
-		}
 
-        String fName = placeHolderFilename.toString();
-        int pos = fName.lastIndexOf(File.separatorChar);
-        if (pos <=0) throw new IasCdbException("Invalid file name!");
 
-        FilenameFilter filter = new FilenameFilter() {
-            @Override
-            public boolean accept(File file, String s) {
-                return s.toLowerCase().endsWith(".json");
-            }
-        };
-        String folderName= fName.substring(0,pos);
-        File folder = new File(folderName);
-        File[] filesInFolder = folder.listFiles(filter);
 
-        Set<String> ret = new HashSet<>();
-        for (File file: filesInFolder) {
-            String jSonfFileName = file.toString();
-            int i = jSonfFileName.lastIndexOf('.');
-            String fileNameWithoutExtension=jSonfFileName.substring(0,i);
-            i = fileNameWithoutExtension.lastIndexOf(File.separatorChar);
-            if (i==-1) {
-                ret.add(fileNameWithoutExtension);
-            } else {
-                String cleanedFile = fileNameWithoutExtension.substring(i+1);
-                ret.add(cleanedFile);
-            }
-        }
-        return ret;
-    }
 
-	/**
-	 * Get the IDs of the Supervisors.
-	 *
-	 * This method is useful to deploy the supervisors
-	 *
-	 * @return The the IDs of the supervisors read from the CDB
-	 * @throws IasCdbException In case of error getting the IDs of the supervisors
-	 */
-	@Override
-	public Optional<Set<String>> getSupervisorIds() throws IasCdbException {
-		if (closed.get()) {
-			throw new IasCdbException("The reader is shut down");
-		}
-		if (!initialized.get()) {
-			throw new IasCdbException("The reader is not initialized");
-		}
 
-	    // We do not care if this supervisor exists or not as we need the
-        // to scan the folder for the names of all the files if contains
-        File supervFile;
-        try {
-            supervFile = cdbFileNames.getSuperivisorFilePath("PlaceHolder").toFile();
-        } catch (IOException ioe) {
-            throw new IasCdbException("Error getting path",ioe);
-        }
-
-        return Optional.of(getIdsInFolder(supervFile));
-    }
-
-	/**
-	 * Get the IDs of the DASUs.
-	 *
-	 * @return The IDs of the DASUs read from the CDB
-	 * @throws IasCdbException In case of error getting the IDs of the DASUs
-	 */
-	@Override
-	public Optional<Set<String>> getDasuIds() throws IasCdbException {
-		if (closed.get()) {
-			throw new IasCdbException("The reader is shut down");
-		}
-		if (!initialized.get()) {
-			throw new IasCdbException("The reader is not initialized");
-		}
-
-        // We do not care if this DASU exists or not as we need the
-        // to scan the folder for the names of all the files if contains
-        File dasuFile;
-        try {
-            dasuFile = cdbFileNames.getDasuFilePath("PlaceHolder").toFile();
-        } catch (IOException ioe) {
-            throw new IasCdbException("Error getting path",ioe);
-        }
-
-        return Optional.of(getIdsInFolder(dasuFile));
-    }
-
-	/**
-	 * Get the IDs of the ASCEs.
-	 *
-	 * @return The IDs of the ASCEs read from the CDB
-	 * @throws IasCdbException In case of error getting the IDs of the ASCEs
-	 */
-	@Override
-	public Optional<Set<String>> getAsceIds() throws IasCdbException {
-		if (closed.get()) {
-			throw new IasCdbException("The reader is shut down");
-		}
-		if (!initialized.get()) {
-			throw new IasCdbException("The reader is not initialized");
-		}
-	   // We do not care if this ASCE exists or not as we need the
-        // to scan the folder for the names of all the files if contains
-        File asceFile;
-        try {
-            asceFile = cdbFileNames.getAsceFilePath("PlaceHolder").toFile();
-        } catch (IOException ioe) {
-            throw new IasCdbException("Error getting path",ioe);
-        }
-
-        return Optional.of(getIdsInFolder(asceFile));
-    }
 
 	/**
 	 * Get the configuration of the client with the passed identifier.
@@ -323,54 +200,6 @@ public class JsonReader extends StructuredTextReader {
 		}
 	}
 
-	/**
-	 * @return The IDs of all the plugins in the CDB
-	 * @throws IasCdbException In case of error getting the IDs of the plugins
-	 */
-	@Override
-	public Optional<Set<String>> getPluginIds() throws IasCdbException {
-		if (closed.get()) {
-			throw new IasCdbException("The reader is shut down");
-		}
-		if (!initialized.get()) {
-			throw new IasCdbException("The reader is not initialized");
-		}
 
-		// We do not care if this plugin exists or not as we need the
-		// to scan the folder for the names of all the files if contains
-		File pluginFile;
-		try {
-			pluginFile = cdbFileNames.getPluginFilePath("PlaceHolder").toFile();
-		} catch (IOException ioe) {
-			throw new IasCdbException("Error getting path",ioe);
-		}
-
-		return Optional.of(getIdsInFolder(pluginFile));
-	}
-
-	/**
-	 * @return The IDs of all the plugins in the CDB
-	 * @throws IasCdbException In case of error getting the IDs of the clients
-	 */
-	@Override
-	public Optional<Set<String>> getClientIds() throws IasCdbException {
-		if (closed.get()) {
-			throw new IasCdbException("The reader is shut down");
-		}
-		if (!initialized.get()) {
-			throw new IasCdbException("The reader is not initialized");
-		}
-
-		// We do not care if this plugin exists or not as we need the
-		// to scan the folder for the names of all the files if contains
-		File clientFile;
-		try {
-			clientFile = cdbFileNames.getClientFilePath("PlaceHolder").toFile();
-		} catch (IOException ioe) {
-			throw new IasCdbException("Error getting path",ioe);
-		}
-
-		return Optional.of(getIdsInFolder(clientFile));
-	}
 
 }

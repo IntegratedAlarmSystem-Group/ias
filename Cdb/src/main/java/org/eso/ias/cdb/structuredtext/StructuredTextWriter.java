@@ -252,67 +252,6 @@ public abstract class StructuredTextWriter implements CdbWriter {
     }
 
     /**
-     * Get the next IasioDao from the passed parser, if it exists
-     *
-     * @param jp The jackson parser
-     * @return The IasioDao read from the parser if found
-     * @throws IOException In case of error getting the next IASIO
-     */
-    private IasioDao getNextIasio(JsonParser jp) throws IOException {
-        String iasioId=null;
-        String iasioDesc=null;
-        String iasioType=null;
-        String iasioUrl=null;
-        String templateId=null;
-        String emails = null;
-        String soundType=null;
-        while(jp.nextToken() != JsonToken.END_OBJECT){
-            String name = jp.getCurrentName();
-            if ("id".equals(name)) {
-                jp.nextToken();
-                iasioId=jp.getText();
-            }
-            if ("shortDesc".equals(name)) {
-                jp.nextToken();
-                iasioDesc=jp.getText();
-            }
-            if ("iasType".equals(name)) {
-                jp.nextToken();
-                iasioType=jp.getText();
-            }
-            if ("docUrl".equals(name)) {
-                jp.nextToken();
-                iasioUrl=jp.getText();
-            }
-            if ("templateId".equals(name)) {
-                jp.nextToken();
-                templateId=jp.getText();
-            }
-            if ("emails".equals(name)) {
-                jp.nextToken();
-                String temp = jp.getText();
-                if (temp!=null) emails=temp;
-            }
-            if ("sound".equals(name)) {
-                jp.nextToken();
-                soundType=jp.getText();
-            }
-        }
-
-        IasioDao ret = new IasioDao(iasioId,iasioDesc, IasTypeDao.valueOf(iasioType),iasioUrl);
-        if (templateId!=null && !templateId.trim().isEmpty()) {
-            ret.setTemplateId(templateId);
-        }
-        if (emails!=null && !emails.trim().isEmpty()) {
-            ret.setEmails(emails);
-        }
-        if (soundType!=null && !soundType.trim().isEmpty()) {
-            ret.setSound(SoundTypeDao.valueOf(soundType));
-        }
-        return ret;
-    }
-
-    /**
      * Serialize the DASU in the JSON file.
      *
      * @param dasu The DASU configuration to write in the file
