@@ -34,79 +34,7 @@ public class YamlWriter extends StructuredTextWriter {
         super(cdbFileNames);
     }
 
-    /**
-     * Write the configuration of the passed plugin
-     *
-     * @param pluginConfigDao the configuraton of the plugin
-     * @throws IasCdbException In case of error writing the configuration
-     */
-    @Override
-    public void writePluginConfig(PluginConfigDao pluginConfigDao) throws IasCdbException {
-        if (closed.get()) {
-            throw new IasCdbException("The writer is shut down");
-        }
-        if (!initialized.get()) {
-            throw new IasCdbException("The writer is not initialized");
-        }
 
-        Objects.requireNonNull(pluginConfigDao);
-        throw new IasCdbException("Unsupported operation");
-    }
-
-    /**
-     * Write the configuration of the client with the passed identifier.
-     *
-     * The configuration is written as it is i.e. without converting to JSON
-     * because the format of the config is defined by each client
-     *
-     * @param clientConfigDao the configuraton of the client
-     * @throws IasCdbException In case of error writing the configuration
-     */
-    @Override
-    public void writeClientConfig(ClientConfigDao clientConfigDao) throws IasCdbException {
-        if (closed.get()) {
-            throw new IasCdbException("The writer is shut down");
-        }
-        if (!initialized.get()) {
-            throw new IasCdbException("The writer is not initialized");
-        }
-
-        Objects.requireNonNull(clientConfigDao);
-        throw new IasCdbException("Unsupported operation");
-    }
-
-    /**
-     * Initialize the CDB
-     */
-    @Override
-    public void init() throws IasCdbException {
-        if (closed.get()) {
-            throw new IasCdbException("Cannot initialize: already closed");
-        }
-        if(!initialized.get()) {
-            logger.debug("Initialized");
-            initialized.set(true);
-        } else {
-            logger.warn("Already initialized: skipping initialization");
-        }
-    }
-
-    /**
-     * Close the CDB and release the associated resources
-     * @throws IasCdbException
-     */
-    @Override
-    public void shutdown() throws IasCdbException {
-        if (!initialized.get()) {
-            throw new IasCdbException("Cannot shutdown a reader that has not been initialized");
-        }
-        if (!closed.get()) {
-            logger.debug("Closed");
-            closed.set(true);
-        } else {
-            logger.warn("Already closed!");
-        }
-    }
 
 }
 

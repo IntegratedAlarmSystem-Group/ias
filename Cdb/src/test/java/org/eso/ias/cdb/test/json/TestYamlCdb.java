@@ -787,237 +787,237 @@ public class TestYamlCdb {
 
     }
 
-//    /**
-//     * Test the getting of templated inputs of an ASCE
-//     * <P>
-//     * This test runs against the JSON CDB contained in testYamlCdb
-//     *
-//     * @throws Exception
-//     */
-//    @Test
-//    public void testTemplatedInputsOfAsce() throws Exception {
-//        Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
-//        cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
-//        cdbReader = new JsonReader(cdbFiles);
-//        cdbReader.init();
-//
-//        // Get on ASCE without templated inputs
-//        Optional<AsceDao> asce = cdbReader.getAsce("ASCE-ID4");
-//        assertTrue(asce.isPresent());
-//        assertTrue(asce.get().getTemplatedInstanceInputs().isEmpty());
-//
-//        // Get one ASCE with templated inputs
-//        asce = cdbReader.getAsce("ASCE-WITH-TEMPLATED-INPUTS");
-//        assertTrue(asce.isPresent());
-//
-//        Set<TemplateInstanceIasioDao> templInstances= asce.get().getTemplatedInstanceInputs();
-//        assertEquals(3,templInstances.size());
-//
-//        templInstances.forEach( ti -> {
-//            assertEquals("templated-inputs",ti.getTemplateId());
-//            assertEquals("TempInput",ti.getIasio().getId());
-//            assertTrue(ti.getInstance()>=3 && ti.getInstance()<=5);
-//        });
-//    }
-//
-//    /**
-//     * Test the ASCE with templated inputs
-//     *
-//     * @throws Exception
-//     */
-//	@Test
-//	public void testGetAsceWithTemplatedInputs() throws Exception {
-//		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
-//		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
-//		cdbReader = new JsonReader(cdbFiles);
-//		cdbReader.init();
-//
-//		Optional<AsceDao> asceWithTemplatedInputs = cdbReader.getAsce("ASCE-WITH-TEMPLATED-INPUTS");
-//		assertTrue(asceWithTemplatedInputs.isPresent());
-//		assertEquals(3,asceWithTemplatedInputs.get().getTemplatedInstanceInputs().size());
-//		assertEquals(2,asceWithTemplatedInputs.get().getInputs().size());
-//        Optional<AsceDao> asceWithTemplatedInputsOnly = cdbReader.getAsce("ASCE-WITH-TEMPLATED-INPUTS-ONLY");
-//        assertTrue(asceWithTemplatedInputsOnly.isPresent());
-//        assertTrue(asceWithTemplatedInputsOnly.get().getInputs().isEmpty());
-//        assertEquals(3,asceWithTemplatedInputsOnly.get().getTemplatedInstanceInputs().size());
-//	}
-//
-//	/**
-//     * Test the getting of an IASIO form file
-//     *
-//     * @throws Exception
-//     */
-//	@Test
-//	public void testGetIasio() throws Exception {
-//		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
-//		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
-//		cdbReader = new JsonReader(cdbFiles);
-//		cdbReader.init();
-//
-//		Optional<IasioDao> iDao=cdbReader.getIasio("SoundInput");
-//		assertTrue(iDao.isPresent());
-//		assertEquals(iDao.get().getSound(),SoundTypeDao.TYPE2);
-//		assertTrue(iDao.get().isCanShelve());
-//	}
-//
-//	/**
-//	 * Test getting the PluginConfig from a JSON file
-//	 * @throws Exception
-//	 */
-//	@Test
-//	public void testGetPlugin() throws Exception {
-//		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
-//		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
-//		cdbReader = new JsonReader(cdbFiles);
-//		cdbReader.init();
-//
-//		String pluginId = "PluginIDForTesting";
-//
-//		Optional<PluginConfigDao> pCOnfDao = cdbReader.getPlugin(pluginId);
-//		assertTrue(pCOnfDao.isPresent());
-//		PluginConfigDao pConf = pCOnfDao.get();
-//		System.out.println("PluginConfig:\n"+pConf.toString());
-//		assertEquals("ACS",pConf.getMonitoredSystemId());
-//
-//		Map<String,String> props = new HashMap();
-//		for (PropertyDao p: pConf.getProps()) {
-//			props.put(p.getName(),p.getValue());
-//		}
-//		assertEquals(2,props.size());
-//		assertEquals("itsValue",props.get("a-key"));
-//		assertEquals("AnotherValue",props.get("Anotherkey"));
-//
-//		Map<String,ValueDao> values = new HashMap<>();
-//		for (ValueDao v:pConf.getValues() ) {
-//			values.put(v.getId(),v);
-//
-//		}
-//		assertEquals(2, values.size());
-//		ValueDao v1 = values.get("AlarmID");
-//		assertNotNull(v1);
-//		assertEquals(500,v1.getRefreshTime());
-//		assertEquals("TheFilter",v1.getFilter());
-//		assertEquals("Options",v1.getFilterOptions());
-//		ValueDao v2 = values.get("TempID");
-//		assertEquals(1500,v2.getRefreshTime());
-//		assertEquals("Average",v2.getFilter());
-//		assertEquals("1, 150, 5",v2.getFilterOptions());
-//	}
-//
-//
-//	 /**
-//	 * Test the writing and reading of the configuration of clients
-//	 * @throws Exception
-//	 */
-//	@Test
-//	public void testClientConfig() throws Exception {
-//
-//		ClientConfigDao configDao1 = new ClientConfigDao("ID1", "Configuration 1");
-//		ClientConfigDao configDao2 = new ClientConfigDao("ID2", "Configuration 2");
-//
-//		cdbWriter.writeClientConfig(configDao1);
-//		cdbWriter.writeClientConfig(configDao2);
-//
-//		Optional<ClientConfigDao> c1 = cdbReader.getClientConfig("ID1");
-//		assertTrue(c1.isPresent());
-//		System.out.println("configDao1="+configDao1.toString());
-//		System.out.println("c1="+c1.get().toString());
-//		assertEquals(configDao1,c1.get());
-//		Optional<ClientConfigDao> c2 = cdbReader.getClientConfig("ID2");
-//		assertTrue(c2.isPresent());
-//		assertEquals(configDao2,c2.get());
-//
-//		// Now try with a big config
-//		StringBuilder builder = new StringBuilder();
-//		for (int t=0; builder.length()<100000; t++) {
-//			builder.append(t);
-//			builder.append (' ');
-//		}
-//		ClientConfigDao longConfig = new ClientConfigDao("LongConfigId", builder.toString());
-//		cdbWriter.writeClientConfig(longConfig);
-//
-//		Optional<ClientConfigDao> c3 = cdbReader.getClientConfig("LongConfigId");
-//		assertTrue(c3.isPresent());
-//		assertEquals(longConfig,c3.get());
-//	}
-//
-//	/**
-//	 * Test reading and writing of plugin configurations
-//	 *
-//	 * @throws Exception
-//	 */
-//	@Test
-//	public void testWritePluginConfig() throws Exception {
-//		PluginConfigDao pConf = new PluginConfigDao();
-//		pConf.setId("GeneratedPluginConfig");
-//		pConf.setDefaultFilter("Mean");
-//		pConf.setDefaultFilterOptions("100");
-//		pConf.setMonitoredSystemId("MSys");
-//
-//		PropertyDao prop = new PropertyDao();
-//		prop.setName("pName");
-//		prop.setValue("pVal");
-//		Set<PropertyDao> arrayProps = pConf.getProps();
-//		arrayProps.add(prop);
-//
-//		ValueDao v1 = new ValueDao();
-//		v1.setId("V1");
-//		v1.setRefreshTime(1250);
-//
-//		ValueDao v2 = new ValueDao();
-//		v2.setId("Value-2");
-//		v2.setRefreshTime(750);
-//		v2.setFilter("Avg");
-//		v2.setFilterOptions("10");
-//		Set<ValueDao> values = new HashSet<>();
-//		values.add(v1);
-//		values.add(v2);
-//		pConf.setValues(values);
-//
-//		cdbWriter.writePluginConfig(pConf);
-//		assertTrue(cdbFiles.getPluginFilePath(pConf.getId()).toFile().exists(),"Plugin "+pConf.getId()+" configuration file does NOT exist");
-//
-//
-//		Optional<PluginConfigDao> pConfFromCdb = cdbReader.getPlugin(pConf.getId());
-//		assertTrue(pConfFromCdb.isPresent());
-//
-//		assertEquals(pConf,pConfFromCdb.get());
-//	}
-//
-//	/**
-//	 * Test {@link JsonReader#getPluginIds()}
-//	 * @throws Exception
-//	 */
-//	@Test
-//	public void testGetPluginIds() throws Exception {
-//		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
-//		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
-//		cdbReader = new JsonReader(cdbFiles);
-//		cdbReader.init();
-//		Optional<Set<String>> idsOpt = cdbReader.getPluginIds();
-//		assertTrue(idsOpt.isPresent());
-//		assertEquals(2,idsOpt.get().size());
-//		assertTrue(idsOpt.get().contains("PluginIDForTesting"));
-//		assertTrue(idsOpt.get().contains("PluginID2"));
-//		cdbReader.shutdown();
-//	}
-//
-//	/**
-//	 * Test {@link JsonReader#getPluginIds()}
-//	 * @throws Exception
-//	 */
-//	@Test
-//	public void testGetClientIds() throws Exception {
-//		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
-//		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
-//		cdbReader = new JsonReader(cdbFiles);
-//		cdbReader.init();
-//		Optional<Set<String>> idsOpt = cdbReader.getClientIds();
-//		assertTrue(idsOpt.isPresent());
-//		assertEquals(1,idsOpt.get().size());
-//		assertTrue(idsOpt.get().contains("test"));
-//		cdbReader.shutdown();
-//	}
+    /**
+     * Test the getting of templated inputs of an ASCE
+     * <P>
+     * This test runs against the JSON CDB contained in testYamlCdb
+     *
+     * @throws Exception
+     */
+    @Test
+    public void testTemplatedInputsOfAsce() throws Exception {
+        Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
+        cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
+        cdbReader = new YamlReader(cdbFiles);
+        cdbReader.init();
+
+        // Get on ASCE without templated inputs
+        Optional<AsceDao> asce = cdbReader.getAsce("ASCE-ID4");
+        assertTrue(asce.isPresent());
+        assertTrue(asce.get().getTemplatedInstanceInputs().isEmpty());
+
+        // Get one ASCE with templated inputs
+        asce = cdbReader.getAsce("ASCE-WITH-TEMPLATED-INPUTS");
+        assertTrue(asce.isPresent());
+
+        Set<TemplateInstanceIasioDao> templInstances= asce.get().getTemplatedInstanceInputs();
+        assertEquals(3,templInstances.size());
+
+        templInstances.forEach( ti -> {
+            assertEquals("templated-inputs",ti.getTemplateId());
+            assertEquals("TempInput",ti.getIasio().getId());
+            assertTrue(ti.getInstance()>=3 && ti.getInstance()<=5);
+        });
+    }
+
+    /**
+     * Test the ASCE with templated inputs
+     *
+     * @throws Exception
+     */
+	@Test
+	public void testGetAsceWithTemplatedInputs() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
+		cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
+		cdbReader = new YamlReader(cdbFiles);
+		cdbReader.init();
+
+		Optional<AsceDao> asceWithTemplatedInputs = cdbReader.getAsce("ASCE-WITH-TEMPLATED-INPUTS");
+		assertTrue(asceWithTemplatedInputs.isPresent());
+		assertEquals(3,asceWithTemplatedInputs.get().getTemplatedInstanceInputs().size());
+		assertEquals(2,asceWithTemplatedInputs.get().getInputs().size());
+        Optional<AsceDao> asceWithTemplatedInputsOnly = cdbReader.getAsce("ASCE-WITH-TEMPLATED-INPUTS-ONLY");
+        assertTrue(asceWithTemplatedInputsOnly.isPresent());
+        assertTrue(asceWithTemplatedInputsOnly.get().getInputs().isEmpty());
+        assertEquals(3,asceWithTemplatedInputsOnly.get().getTemplatedInstanceInputs().size());
+	}
+
+	/**
+     * Test the getting of an IASIO form file
+     *
+     * @throws Exception
+     */
+	@Test
+	public void testGetIasio() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
+		cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
+		cdbReader = new YamlReader(cdbFiles);
+		cdbReader.init();
+
+		Optional<IasioDao> iDao=cdbReader.getIasio("SoundInput");
+		assertTrue(iDao.isPresent());
+		assertEquals(iDao.get().getSound(),SoundTypeDao.TYPE2);
+		assertTrue(iDao.get().isCanShelve());
+	}
+
+	/**
+	 * Test getting the PluginConfig from a JSON file
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetPlugin() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
+		cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
+		cdbReader = new YamlReader(cdbFiles);
+		cdbReader.init();
+
+		String pluginId = "PluginIDForTesting";
+
+		Optional<PluginConfigDao> pCOnfDao = cdbReader.getPlugin(pluginId);
+		assertTrue(pCOnfDao.isPresent());
+		PluginConfigDao pConf = pCOnfDao.get();
+		System.out.println("PluginConfig:\n"+pConf.toString());
+		assertEquals("ACS",pConf.getMonitoredSystemId());
+
+		Map<String,String> props = new HashMap();
+		for (PropertyDao p: pConf.getProps()) {
+			props.put(p.getName(),p.getValue());
+		}
+		assertEquals(2,props.size());
+		assertEquals("itsValue",props.get("a-key"));
+		assertEquals("AnotherValue",props.get("Anotherkey"));
+
+		Map<String,ValueDao> values = new HashMap<>();
+		for (ValueDao v:pConf.getValues() ) {
+			values.put(v.getId(),v);
+
+		}
+		assertEquals(2, values.size());
+		ValueDao v1 = values.get("AlarmID");
+		assertNotNull(v1);
+		assertEquals(500,v1.getRefreshTime());
+		assertEquals("TheFilter",v1.getFilter());
+		assertEquals("Options",v1.getFilterOptions());
+		ValueDao v2 = values.get("TempID");
+		assertEquals(1500,v2.getRefreshTime());
+		assertEquals("Average",v2.getFilter());
+		assertEquals("1, 150, 5",v2.getFilterOptions());
+	}
+
+
+	 /**
+	 * Test the writing and reading of the configuration of clients
+	 * @throws Exception
+	 */
+	@Test
+	public void testClientConfig() throws Exception {
+
+		ClientConfigDao configDao1 = new ClientConfigDao("ID1", "Configuration 1");
+		ClientConfigDao configDao2 = new ClientConfigDao("ID2", "Configuration 2");
+
+		cdbWriter.writeClientConfig(configDao1);
+		cdbWriter.writeClientConfig(configDao2);
+
+		Optional<ClientConfigDao> c1 = cdbReader.getClientConfig("ID1");
+		assertTrue(c1.isPresent());
+		System.out.println("configDao1="+configDao1.toString());
+		System.out.println("c1="+c1.get().toString());
+		assertEquals(configDao1,c1.get());
+		Optional<ClientConfigDao> c2 = cdbReader.getClientConfig("ID2");
+		assertTrue(c2.isPresent());
+		assertEquals(configDao2,c2.get());
+
+		// Now try with a big config
+		StringBuilder builder = new StringBuilder();
+		for (int t=0; builder.length()<100000; t++) {
+			builder.append(t);
+			builder.append (' ');
+		}
+		ClientConfigDao longConfig = new ClientConfigDao("LongConfigId", builder.toString());
+		cdbWriter.writeClientConfig(longConfig);
+
+		Optional<ClientConfigDao> c3 = cdbReader.getClientConfig("LongConfigId");
+		assertTrue(c3.isPresent());
+		assertEquals(longConfig,c3.get());
+	}
+
+	/**
+	 * Test reading and writing of plugin configurations
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	public void testWritePluginConfig() throws Exception {
+		PluginConfigDao pConf = new PluginConfigDao();
+		pConf.setId("GeneratedPluginConfig");
+		pConf.setDefaultFilter("Mean");
+		pConf.setDefaultFilterOptions("100");
+		pConf.setMonitoredSystemId("MSys");
+
+		PropertyDao prop = new PropertyDao();
+		prop.setName("pName");
+		prop.setValue("pVal");
+		Set<PropertyDao> arrayProps = pConf.getProps();
+		arrayProps.add(prop);
+
+		ValueDao v1 = new ValueDao();
+		v1.setId("V1");
+		v1.setRefreshTime(1250);
+
+		ValueDao v2 = new ValueDao();
+		v2.setId("Value-2");
+		v2.setRefreshTime(750);
+		v2.setFilter("Avg");
+		v2.setFilterOptions("10");
+		Set<ValueDao> values = new HashSet<>();
+		values.add(v1);
+		values.add(v2);
+		pConf.setValues(values);
+
+		cdbWriter.writePluginConfig(pConf);
+		assertTrue(cdbFiles.getPluginFilePath(pConf.getId()).toFile().exists(),"Plugin "+pConf.getId()+" configuration file does NOT exist");
+
+
+		Optional<PluginConfigDao> pConfFromCdb = cdbReader.getPlugin(pConf.getId());
+		assertTrue(pConfFromCdb.isPresent());
+
+		assertEquals(pConf,pConfFromCdb.get());
+	}
+
+	/**
+	 * Test {@link YamlReader#getPluginIds()}
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetPluginIds() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
+		cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
+		cdbReader = new YamlReader(cdbFiles);
+		cdbReader.init();
+		Optional<Set<String>> idsOpt = cdbReader.getPluginIds();
+		assertTrue(idsOpt.isPresent());
+		assertEquals(2,idsOpt.get().size());
+		assertTrue(idsOpt.get().contains("PluginIDForTesting"));
+		assertTrue(idsOpt.get().contains("PluginID2"));
+		cdbReader.shutdown();
+	}
+
+	/**
+	 * Test {@link YamlReader#getPluginIds()}
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetClientIds() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
+		cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
+		cdbReader = new YamlReader(cdbFiles);
+		cdbReader.init();
+		Optional<Set<String>> idsOpt = cdbReader.getClientIds();
+		assertTrue(idsOpt.isPresent());
+		assertEquals(1,idsOpt.get().size());
+		assertTrue(idsOpt.get().contains("test"));
+		cdbReader.shutdown();
+	}
 
 }
 

@@ -1,0 +1,17 @@
+---
+id: "PluginIDForTesting"
+monitoredSystemId: "ACS"
+props:
+- name: "a-key"
+  value: "itsValue"
+- name: "Anotherkey"
+  value: "AnotherValue"
+values: 
+- id: "AlarmID"
+  refreshTime: "500"
+  filter: "TheFilter"
+  filterOptions: "Options"
+- id: "TempID"
+  refreshTime: "1500"
+  filter: "Average"
+  filterOptions: "1, 150, 5"
