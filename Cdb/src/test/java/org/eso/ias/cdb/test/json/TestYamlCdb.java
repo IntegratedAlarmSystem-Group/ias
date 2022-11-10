@@ -629,39 +629,39 @@ public class TestYamlCdb {
 		iasios = cdbReader.getIasiosForAsce("ASCE-ID3");
 		assertEquals(2,iasios.size());
 	}
-//
-//	/**
-//	 * Test the getting of Supervisor that deploys templated DASUs
-//	 * <P>
-//	 * This test runs against the JSON CDB contained in testYamlCdb and
-//	 * gets Supervisor-ID4.
-//	 *
-//	 * @throws Exception
-//	 */
-//	@Test
-//	public void testGetSupervWithTemplatedDASUs() throws Exception {
-//		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
-//		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
-//		cdbReader = new JsonReader(cdbFiles);
-//		cdbReader.init();
-//
-//		Optional<SupervisorDao> superv4 = cdbReader.getSupervisor("Supervisor-ID4");
-//		assert(superv4.isPresent());
-//		SupervisorDao superv = superv4.get();
-//		assertEquals(2,superv.getDasusToDeploy().size());
-//		Map<String , DasuToDeployDao> dasusToDeploy= new HashMap<>();
-//		for (DasuToDeployDao dtd: superv.getDasusToDeploy()) {
-//			dasusToDeploy.put(dtd.getDasu().getId(), dtd);
-//		}
-//		DasuToDeployDao dtd5 = dasusToDeploy.get("DasuID5");
-//		assertNotNull(dtd5);
-//		assertEquals("template1-ID",dtd5.getTemplate().getId());
-//		assertEquals(3, dtd5.getInstance().intValue());
-//		DasuToDeployDao dtd6 = dasusToDeploy.get("DasuID6");
-//		assertNotNull(dtd6);
-//		assertEquals("template3-ID",dtd6.getTemplate().getId());
-//		assertEquals(5, dtd6.getInstance().intValue());
-//	}
+
+	/**
+	 * Test the getting of Supervisor that deploys templated DASUs
+	 * <P>
+	 * This test runs against the JSON CDB contained in testYamlCdb and
+	 * gets Supervisor-ID4.
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetSupervWithTemplatedDASUs() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
+		cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
+		cdbReader = new YamlReader(cdbFiles);
+		cdbReader.init();
+
+		Optional<SupervisorDao> superv4 = cdbReader.getSupervisor("Supervisor-ID4");
+		assert(superv4.isPresent());
+		SupervisorDao superv = superv4.get();
+		assertEquals(2,superv.getDasusToDeploy().size());
+		Map<String , DasuToDeployDao> dasusToDeploy= new HashMap<>();
+		for (DasuToDeployDao dtd: superv.getDasusToDeploy()) {
+			dasusToDeploy.put(dtd.getDasu().getId(), dtd);
+		}
+		DasuToDeployDao dtd5 = dasusToDeploy.get("DasuID5");
+		assertNotNull(dtd5);
+		assertEquals("template1-ID",dtd5.getTemplate().getId());
+		assertEquals(3, dtd5.getInstance().intValue());
+		DasuToDeployDao dtd6 = dasusToDeploy.get("DasuID6");
+		assertNotNull(dtd6);
+		assertEquals("template3-ID",dtd6.getTemplate().getId());
+		assertEquals(5, dtd6.getInstance().intValue());
+	}
 //
 //	/**
 //	 * Test the writing and reading of the transfer function
