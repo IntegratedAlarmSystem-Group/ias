@@ -746,47 +746,47 @@ public class TestYamlCdb {
         assertEquals(4,ids.size());
         for (int i=1; i<=ids.size(); i++) assertTrue(ids.contains("Supervisor-ID"+i));
     }
-//
-//
-//    /**
-//     * Test the getter if IDs of DASUs
-//     * @throws Exception
-//     */
-//    @Test
-//    public void testGetIdsOfDasus() throws Exception {
-//        Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
-//        cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
-//        cdbReader = new JsonReader(cdbFiles);
-//        cdbReader.init();
-//
-//        Optional<Set<String>> idsOpt= cdbReader.getDasuIds();
-//        assertTrue(idsOpt.isPresent());
-//        Set<String> ids = idsOpt.get();
-//        assertEquals(6,ids.size());
-//        for (int i=1; i<=ids.size(); i++) assertTrue(ids.contains("DasuID"+i));
-//    }
-//
-//    /**
-//     * Test the getter if IDs of ASCEs
-//     * @throws Exception
-//     */
-//    @Test
-//    public void testGetIdsOfAsces() throws Exception {
-//        Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
-//        cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
-//        cdbReader = new JsonReader(cdbFiles);
-//        cdbReader.init();
-//
-//        Optional<Set<String>> idsOpt= cdbReader.getAsceIds();
-//        assertTrue(idsOpt.isPresent());
-//        Set<String> ids = idsOpt.get();
-//        assertEquals(8,ids.size());
-//        for (int i=1; i<=6; i++) assertTrue(ids.contains("ASCE-ID"+i));
-//		assertTrue(ids.contains("ASCE-WITH-TEMPLATED-INPUTS"));
-//		assertTrue(ids.contains("ASCE-WITH-TEMPLATED-INPUTS-ONLY"));
-//
-//    }
-//
+
+
+    /**
+     * Test the getter if IDs of DASUs
+     * @throws Exception
+     */
+    @Test
+    public void testGetIdsOfDasus() throws Exception {
+        Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
+        cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
+        cdbReader = new YamlReader(cdbFiles);
+        cdbReader.init();
+
+        Optional<Set<String>> idsOpt= cdbReader.getDasuIds();
+        assertTrue(idsOpt.isPresent());
+        Set<String> ids = idsOpt.get();
+        assertEquals(6,ids.size());
+        for (int i=1; i<=ids.size(); i++) assertTrue(ids.contains("DasuID"+i));
+    }
+
+    /**
+     * Test the getter if IDs of ASCEs
+     * @throws Exception
+     */
+    @Test
+    public void testGetIdsOfAsces() throws Exception {
+        Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
+        cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
+        cdbReader = new YamlReader(cdbFiles);
+        cdbReader.init();
+
+        Optional<Set<String>> idsOpt= cdbReader.getAsceIds();
+        assertTrue(idsOpt.isPresent());
+        Set<String> ids = idsOpt.get();
+        assertEquals(8,ids.size());
+        for (int i=1; i<=6; i++) assertTrue(ids.contains("ASCE-ID"+i));
+		assertTrue(ids.contains("ASCE-WITH-TEMPLATED-INPUTS"));
+		assertTrue(ids.contains("ASCE-WITH-TEMPLATED-INPUTS-ONLY"));
+
+    }
+
 //    /**
 //     * Test the getting of templated inputs of an ASCE
 //     * <P>
