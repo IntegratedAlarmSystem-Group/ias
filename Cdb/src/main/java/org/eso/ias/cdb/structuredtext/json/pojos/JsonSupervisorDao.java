@@ -45,7 +45,7 @@ public class JsonSupervisorDao {
 	/**
 	 * The DASUs are replaced by their IDs
 	 */
-	private Set<JsonDasuToDeployDao>dasusToDeploy = new HashSet<>();
+	private Set<JsonDasuToDeployDao>dasusToDeploy;
 	
 	/**
 	 * Empty constructor.
@@ -89,6 +89,9 @@ public class JsonSupervisorDao {
 	}
 
 	public Set<JsonDasuToDeployDao> getDasusToDeploy() {
+		if (dasusToDeploy==null) {
+			dasusToDeploy = new HashSet<>();
+		}
 		return dasusToDeploy;
 	}
 	

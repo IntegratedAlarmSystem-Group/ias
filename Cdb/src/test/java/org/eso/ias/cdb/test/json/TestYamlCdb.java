@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -524,87 +525,85 @@ public class TestYamlCdb {
 		set.stream().forEach(x -> assertTrue(optSet4.get().contains(x)));
 		set2.stream().forEach(x -> assertFalse(optSet4.get().contains(x)));
 	}
-//
-//
-//
-//	/**
-//	 * Test the getting of DASUs belonging to a given supervisor
-//	 * <P>
-//	 * This test runs against the JSON CDB contained in testYamlCdb
-//	 *
-//	 * @throws Exception
-//	 */
-//	@Test
-//	public void testGetDasusOfSupervisor() throws Exception {
-//		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
-//		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
-//		cdbReader = new JsonReader(cdbFiles);
-//		cdbReader.init();
-//		// Get the DASUs of a Supervisor that has none
-//		Set<DasuToDeployDao> dasus = cdbReader.getDasusToDeployInSupervisor("Supervisor-ID2");
-//		assertTrue(dasus.isEmpty());
-//		// Get the DASUs of a Supervisor that has one
-//		dasus = cdbReader.getDasusToDeployInSupervisor("Supervisor-ID1");
-//		assertEquals(1,dasus.size());
-//		Iterator<DasuToDeployDao> iter = dasus.iterator();
-//		DasuToDeployDao dtd = iter.next();
-//		assertEquals("DasuID1",dtd.getDasu().getId());
-//		// Get the DASUs of a Supervisor that has three
-//		dasus = cdbReader.getDasusToDeployInSupervisor("Supervisor-ID3");
-//		assertEquals(3,dasus.size());
-//		Set<String> dasuIds = dasus.stream().map(d -> d.getDasu().getId()).collect(Collectors.toSet());
-//		assertEquals(3,dasuIds.size());
-//		dasus.forEach( d -> assertTrue(d.getDasu().getId().equals("DasuID2") || d.getDasu().getId().equals("DasuID3")||d.getDasu().getId().equals("DasuID4")));
-//	}
-//
-//	/**
-//	 * Test the getting of ASCEs belonging to a given DASU
-//	 * <P>
-//	 * This test runs against the JSON CDB contained in testYamlCdb
-//	 *
-//	 * @throws Exception
-//	 */
-//	@Test
-//	public void testGetAscesOfDasu() throws Exception {
-//		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
-//		cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
-//		cdbReader = new JsonReader(cdbFiles);
-//		cdbReader.init();
-//
-//		// Get the ASCE of DasuID1 that has no ASCE
-//		Set<AsceDao> asces = cdbReader.getAscesForDasu("DasuID1");
-//		assertTrue(asces.isEmpty());
-//		// Get the ASCEs of DasuID2 that contains ASCE-ID1
-//		asces = cdbReader.getAscesForDasu("DasuID2");
-//		assertEquals(2, asces.size());
-//		asces.forEach( asce -> assertTrue("ASCE-ID1".equals(asce.getId()) || "ASCE-WITH-TEMPLATED-INPUTS".equals(asce.getId())));
-//
-//		// Get the ASCE of DasuID3 that has 3 ASCEs
-//		asces = cdbReader.getAscesForDasu("DasuID3");
-//		assertEquals(3, asces.size());
-//		Set<String> asceIds = asces.stream().map(d -> d.getId()).collect(Collectors.toSet());
-//		assertEquals(3, asceIds.size());
-//		asces.forEach( a -> assertTrue(a.getId().equals("ASCE-ID2") || a.getId().equals("ASCE-ID3") || a.getId().equals("ASCE-ID4")));
-//
-//		// Check the transfer functions
-//		for (AsceDao asce: asces) {
-//			String asceId = asce.getId();
-//			TransferFunctionDao tfDao = asce.getTransferFunction();
-//			assertNotNull(tfDao);
-//			String className = tfDao.getClassName();
-//			assertNotNull(className);
-//			TFLanguageDao language = tfDao.getImplLang();
-//			assertNotNull(language);
-//			if (asceId.equals("ASCE-ID2") || asceId.equals("ASCE-ID3")) {
-//				assertEquals("org.eso.ias.tf.AnotherFunction",className);
-//				assertEquals(TFLanguageDao.SCALA, language);
-//			} else if (asceId.equals("ASCE-ID4")) {
-//				assertEquals("org.eso.ias.tf.TestMinMax",className);
-//				assertEquals(TFLanguageDao.JAVA, language);
-//			}
-//		}
-//	}
-//
+
+	/**
+	 * Test the getting of DASUs belonging to a given supervisor
+	 * <P>
+	 * This test runs against the CDB contained in testYamlCdb
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetDasusOfSupervisor() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
+		cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
+		cdbReader = new YamlReader(cdbFiles);
+		cdbReader.init();
+		// Get the DASUs of a Supervisor that has none
+		Set<DasuToDeployDao> dasus = cdbReader.getDasusToDeployInSupervisor("Supervisor-ID2");
+		assertTrue(dasus.isEmpty());
+		// Get the DASUs of a Supervisor that has one
+		dasus = cdbReader.getDasusToDeployInSupervisor("Supervisor-ID1");
+		assertEquals(1,dasus.size());
+		Iterator<DasuToDeployDao> iter = dasus.iterator();
+		DasuToDeployDao dtd = iter.next();
+		assertEquals("DasuID1",dtd.getDasu().getId());
+		// Get the DASUs of a Supervisor that has three
+		dasus = cdbReader.getDasusToDeployInSupervisor("Supervisor-ID3");
+		assertEquals(3,dasus.size());
+		Set<String> dasuIds = dasus.stream().map(d -> d.getDasu().getId()).collect(Collectors.toSet());
+		assertEquals(3,dasuIds.size());
+		dasus.forEach( d -> assertTrue(d.getDasu().getId().equals("DasuID2") || d.getDasu().getId().equals("DasuID3")||d.getDasu().getId().equals("DasuID4")));
+	}
+
+	/**
+	 * Test the getting of ASCEs belonging to a given DASU
+	 * <P>
+	 * This test runs against the JSON CDB contained in testYamlCdb
+	 *
+	 * @throws Exception
+	 */
+	@Test
+	public void testGetAscesOfDasu() throws Exception {
+		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
+		cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
+		cdbReader = new YamlReader(cdbFiles);
+		cdbReader.init();
+
+		// Get the ASCE of DasuID1 that has no ASCE
+		Set<AsceDao> asces = cdbReader.getAscesForDasu("DasuID1");
+		assertTrue(asces.isEmpty());
+		// Get the ASCEs of DasuID2 that contains ASCE-ID1
+		asces = cdbReader.getAscesForDasu("DasuID2");
+		assertEquals(2, asces.size());
+		asces.forEach( asce -> assertTrue("ASCE-ID1".equals(asce.getId()) || "ASCE-WITH-TEMPLATED-INPUTS".equals(asce.getId())));
+
+		// Get the ASCE of DasuID3 that has 3 ASCEs
+		asces = cdbReader.getAscesForDasu("DasuID3");
+		assertEquals(3, asces.size());
+		Set<String> asceIds = asces.stream().map(d -> d.getId()).collect(Collectors.toSet());
+		assertEquals(3, asceIds.size());
+		asces.forEach( a -> assertTrue(a.getId().equals("ASCE-ID2") || a.getId().equals("ASCE-ID3") || a.getId().equals("ASCE-ID4")));
+
+		// Check the transfer functions
+		for (AsceDao asce: asces) {
+			String asceId = asce.getId();
+			TransferFunctionDao tfDao = asce.getTransferFunction();
+			assertNotNull(tfDao);
+			String className = tfDao.getClassName();
+			assertNotNull(className);
+			TFLanguageDao language = tfDao.getImplLang();
+			assertNotNull(language);
+			if (asceId.equals("ASCE-ID2") || asceId.equals("ASCE-ID3")) {
+				assertEquals("org.eso.ias.tf.AnotherFunction",className);
+				assertEquals(TFLanguageDao.SCALA, language);
+			} else if (asceId.equals("ASCE-ID4")) {
+				assertEquals("org.eso.ias.tf.TestMinMax",className);
+				assertEquals(TFLanguageDao.JAVA, language);
+			}
+		}
+	}
+
 //	/**
 //	 * Test the getting of IASIOs belonging to a given ASCE
 //	 * <P>

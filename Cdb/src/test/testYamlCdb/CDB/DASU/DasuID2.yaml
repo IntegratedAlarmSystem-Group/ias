@@ -1,5 +1,5 @@
 ---
-asceIDs: []
+asceIDs: [ "ASCE-ID1", "ASCE-WITH-TEMPLATED-INPUTS" ]
 outputId: "DASU_OUTPUT2"
 id: "DasuID2"
 logLevel: null
