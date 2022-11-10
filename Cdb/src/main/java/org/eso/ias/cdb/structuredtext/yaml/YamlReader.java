@@ -30,22 +30,6 @@ public class YamlReader  extends StructuredTextReader {
 		super(cdbFileNames);
 	}
 
-
-
-
-	
-	/**
-	 * Return the IASIOs in input to the given ASCE.
-	 * 
-	 * @param id The not <code>null</code> nor empty identifier of the ASCE
-	 * @return A set of IASIOs in input to the ASCE
-	 * @throws IasCdbException in case of error reading CDB or if the 
-	 *                         ASCE with the give identifier does not exist
-	 */
-	public Collection<IasioDao> getIasiosForAsce(String id) throws IasCdbException {
-        throw new IasCdbException("Unsupported operation");
-    }
-
     /**
      * Get the IDs of the Supervisors.
      *
