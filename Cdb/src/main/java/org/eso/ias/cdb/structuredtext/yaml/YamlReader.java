@@ -1,23 +1,14 @@
 package org.eso.ias.cdb.structuredtext.yaml;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.IasCdbException;
 
 import org.eso.ias.cdb.structuredtext.StructuredTextReader;
-import org.eso.ias.cdb.structuredtext.json.CdbFiles;
+import org.eso.ias.cdb.structuredtext.CdbFiles;
 import org.eso.ias.cdb.pojos.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class YamlReader  extends StructuredTextReader {
 
@@ -47,7 +38,6 @@ public class YamlReader  extends StructuredTextReader {
 	public Collection<TemplateInstanceIasioDao> getTemplateInstancesIasiosForAsce(String id) throws IasCdbException {
         throw new IasCdbException("Unsupported operation");
     }
-
 
 
 

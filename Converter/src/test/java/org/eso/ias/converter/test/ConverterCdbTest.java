@@ -2,10 +2,13 @@ package org.eso.ias.converter.test;
 
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
-import org.eso.ias.cdb.json.*;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.TemplateDao;
+import org.eso.ias.cdb.structuredtext.CdbFiles;
+import org.eso.ias.cdb.structuredtext.CdbFolders;
+import org.eso.ias.cdb.structuredtext.CdbTxtFiles;
+import org.eso.ias.cdb.structuredtext.StructuredTextReader;
 import org.eso.ias.cdb.structuredtext.json.*;
 import org.eso.ias.converter.config.Cache;
 import org.eso.ias.converter.config.MonitorPointConfiguration;
@@ -163,10 +166,7 @@ public class ConverterCdbTest {
     @BeforeEach
     public void setUp() throws Exception {
         // Remove any CDB folder if present
-        CdbFolders.ROOT.delete(cdbParentPath);
-        assertFalse(CdbFolders.ROOT.exists(cdbParentPath));
-        cdbFiles = new CdbTxtFiles(cdbParentPath);
-        CdbReader cdbReader = new JsonReader(cdbFiles);
+        CdbReader cdbReader = new StructuredTextReader(cdbParentPath.toFile());
         cdbReader.init();
         configDao = new Cache(cdbReader);
 

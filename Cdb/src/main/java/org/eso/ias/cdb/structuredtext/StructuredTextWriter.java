@@ -1,17 +1,15 @@
 package org.eso.ias.cdb.structuredtext;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.eso.ias.cdb.CdbWriter;
 import org.eso.ias.cdb.IasCdbException;
+import org.eso.ias.cdb.TextFileType;
 import org.eso.ias.cdb.pojos.*;
-import org.eso.ias.cdb.structuredtext.json.CdbFiles;
-import org.eso.ias.cdb.structuredtext.json.pojos.JsonAsceDao;
-import org.eso.ias.cdb.structuredtext.json.pojos.JsonDasuDao;
-import org.eso.ias.cdb.structuredtext.json.pojos.JsonSupervisorDao;
+import org.eso.ias.cdb.structuredtext.pojos.JsonAsceDao;
+import org.eso.ias.cdb.structuredtext.pojos.JsonDasuDao;
+import org.eso.ias.cdb.structuredtext.pojos.JsonSupervisorDao;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +21,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public abstract class StructuredTextWriter implements CdbWriter {
+public class StructuredTextWriter implements CdbWriter {
 
     /**
      * The logger
@@ -46,12 +44,34 @@ public abstract class StructuredTextWriter implements CdbWriter {
     protected final CdbFiles cdbFileNames;
 
     /**
+     * The type of the files of the CDB
+     */
+    public final TextFileType cdbFilesType;
+
+    /**
      * Constructor
      * @param cdbFileNames  The files of the CDB
      */
     public StructuredTextWriter(CdbFiles cdbFileNames) {
         Objects.requireNonNull(cdbFileNames, "cdbFileNames can't be null");
         this.cdbFileNames=cdbFileNames;
+        cdbFilesType = cdbFileNames.getCdbFileType();
+    }
+
+    public StructuredTextWriter(File parentFolder) throws IasCdbException {
+        Objects.requireNonNull(parentFolder);
+        Optional<TextFileType> cdbTypeOpt = TextFileType.getCdbType(parentFolder);
+        if (cdbTypeOpt.isEmpty()) {
+            throw new IasCdbException("Could not get the type of the CDB from "+parentFolder.getAbsolutePath());
+        }
+        try {
+            this.cdbFileNames=new CdbTxtFiles(parentFolder, cdbTypeOpt.get());
+            cdbFilesType = cdbFileNames.getCdbFileType();
+            logger.info("{} CDB writer from CDB in {}", cdbFilesType, parentFolder.getAbsolutePath());
+        } catch (Exception e) {
+            throw new IasCdbException("Error building the CdbFiles for folder "+parentFolder.getAbsolutePath(), e);
+        }
+
     }
 
     /**

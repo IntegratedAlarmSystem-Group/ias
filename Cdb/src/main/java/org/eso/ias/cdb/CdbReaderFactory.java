@@ -1,7 +1,7 @@
 package org.eso.ias.cdb;
 
-import org.eso.ias.cdb.structuredtext.json.CdbFiles;
-import org.eso.ias.cdb.structuredtext.json.CdbTxtFiles;
+import org.eso.ias.cdb.structuredtext.CdbFiles;
+import org.eso.ias.cdb.structuredtext.CdbTxtFiles;
 import org.eso.ias.cdb.structuredtext.json.JsonReader;
 import org.eso.ias.cdb.rdb.RdbReader;
 import org.slf4j.Logger;

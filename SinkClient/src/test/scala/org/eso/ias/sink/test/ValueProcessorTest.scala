@@ -2,7 +2,7 @@ package org.eso.ias.sink.test
 
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.pojos.{IasTypeDao, IasioDao, TemplateDao}
-import org.eso.ias.cdb.structuredtext.json.{CdbTxtFiles, JsonReader}
+import org.eso.ias.cdb.structuredtext.StructuredTextReader
 import org.eso.ias.command.{CommandListener, CommandManager}
 import org.eso.ias.dasu.subscriber.DirectInputSubscriber
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
@@ -132,8 +132,7 @@ class ValueProcessorTest extends AnyFlatSpec {
 
     // Build the CDB reader
     val cdbParentPath = FileSystems.getDefault().getPath("src/test");
-    val cdbFiles = new CdbTxtFiles(cdbParentPath)
-    val cdbReader: CdbReader = new JsonReader(cdbFiles)
+    val cdbReader: CdbReader = new StructuredTextReader(cdbParentPath.toFile)
     cdbReader.init()
 
     val iasDao = {
