@@ -1125,5 +1125,4 @@ public class StructuredTextReader implements CdbReader {
         Collection<TemplateInstanceIasioDao> ret = asce.orElseThrow(() -> new IasCdbException("ASCE ["+id+"] not dound")).getTemplatedInstanceInputs();
         return (ret==null)? new ArrayList<>() : ret;
     }
-
 }

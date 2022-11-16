@@ -5,11 +5,7 @@ import org.eso.ias.cdb.CdbWriter;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.TemplateDao;
-import org.eso.ias.cdb.structuredtext.CdbFiles;
-import org.eso.ias.cdb.structuredtext.CdbFolders;
-import org.eso.ias.cdb.structuredtext.CdbTxtFiles;
-import org.eso.ias.cdb.structuredtext.StructuredTextReader;
-import org.eso.ias.cdb.structuredtext.json.*;
+import org.eso.ias.cdb.structuredtext.*;
 import org.eso.ias.converter.config.Cache;
 import org.eso.ias.converter.config.MonitorPointConfiguration;
 import org.eso.ias.types.IASTypes;
@@ -100,7 +96,7 @@ public class ConverterCdbTest {
 			throw new IllegalArgumentException("Invalid number of IASIOs to write in the CDB");
 		}
 		logger.info("Populating JSON CDB in {} with {} IASIOS",cdbParentPath.toAbsolutePath().toString(),numOfIasios);
-		CdbWriter cdbWriter = new JsonWriter(cdbFiles);
+		CdbWriter cdbWriter = new StructuredTextWriter(cdbFiles);
 		cdbWriter.init();
 		createTemplate(cdbWriter);
 		populateCDB(numOfIasios, cdbWriter);

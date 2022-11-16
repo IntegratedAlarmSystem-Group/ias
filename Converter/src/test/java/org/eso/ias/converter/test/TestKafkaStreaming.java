@@ -5,8 +5,6 @@ import org.eso.ias.cdb.CdbWriter;
 import org.eso.ias.cdb.structuredtext.CdbFolders;
 import org.eso.ias.cdb.structuredtext.StructuredTextReader;
 import org.eso.ias.cdb.structuredtext.StructuredTextWriter;
-import org.eso.ias.cdb.structuredtext.json.JsonReader;
-import org.eso.ias.cdb.structuredtext.json.JsonWriter;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
