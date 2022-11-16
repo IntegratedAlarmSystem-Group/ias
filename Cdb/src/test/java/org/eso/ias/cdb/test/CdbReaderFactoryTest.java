@@ -2,7 +2,7 @@ package org.eso.ias.cdb.test;
 
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbReaderFactory;
-import org.eso.ias.cdb.structuredtext.json.JsonReader;
+import org.eso.ias.cdb.structuredtext.StructuredTextReader;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.rdb.RdbReader;
 import org.junit.jupiter.api.AfterEach;
@@ -56,7 +56,7 @@ public class CdbReaderFactoryTest {
         String[] args = {"first", "second", "third"};
         CdbReader cdbReader = CdbReaderFactory.getCdbReader(args);
         assertNotNull(cdbReader);
-        assertThrows(ClassCastException.class, () -> {JsonReader jReader=(JsonReader)cdbReader;});
+        assertThrows(ClassCastException.class, () -> {StructuredTextReader jReader=(StructuredTextReader)cdbReader;});
         RdbReader rdbReader = (RdbReader)cdbReader;
     }
 
@@ -65,7 +65,7 @@ public class CdbReaderFactoryTest {
         logger.info("Checking if the JSON implementation is correctly built");
         String[] args = {"first", "second", jsonCdbCmdLineParamShort, "./src/test/testCdb"};
         CdbReader cdbReader = CdbReaderFactory.getCdbReader(args);
-        JsonReader jReader=(JsonReader)cdbReader;
+        StructuredTextReader jReader=(StructuredTextReader)cdbReader;
         cdbReader.init();
         Optional<IasDao> iasDaoOptional = cdbReader.getIas();
         assertTrue(iasDaoOptional.isPresent());

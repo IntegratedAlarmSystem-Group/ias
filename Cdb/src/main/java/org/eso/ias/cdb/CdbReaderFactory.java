@@ -2,11 +2,12 @@ package org.eso.ias.cdb;
 
 import org.eso.ias.cdb.structuredtext.CdbFiles;
 import org.eso.ias.cdb.structuredtext.CdbTxtFiles;
-import org.eso.ias.cdb.structuredtext.json.JsonReader;
+import org.eso.ias.cdb.structuredtext.StructuredTextReader;
 import org.eso.ias.cdb.rdb.RdbReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -141,9 +142,10 @@ public class CdbReaderFactory {
         }
         if (jsonCdbReaderL.isPresent() || jsonCdbReaderS.isPresent()) {
             String cdbPath = jsonCdbReaderL.orElseGet(() -> jsonCdbReaderS.get());
-            logger.info("Loading JSON CdbReader with folder {}",cdbPath);
-            CdbFiles cdbfiles = new CdbTxtFiles(cdbPath, TextFileType.JSON);
-            return new JsonReader(cdbfiles);
+            logger.info("Loading CdbReader with folder {}",cdbPath);
+            StructuredTextReader reader = new StructuredTextReader(new File(cdbPath));
+            logger.info("CDB reader initialized in {} of type {}", cdbPath, reader.cdbFilesType);
+            return reader;
         } else {
             logger.debug("NO JSON CdbReader requested");
         }
