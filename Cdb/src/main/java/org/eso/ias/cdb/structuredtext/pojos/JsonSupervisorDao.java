@@ -1,4 +1,4 @@
-package org.eso.ias.cdb.structuredtext.json.pojos;
+package org.eso.ias.cdb.structuredtext.pojos;
 
 import java.util.HashSet;
 import java.util.Objects;
