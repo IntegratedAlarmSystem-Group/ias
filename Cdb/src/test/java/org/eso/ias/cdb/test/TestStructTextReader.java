@@ -26,11 +26,11 @@ public class TestStructTextReader {
      */
     @Test
     public void testCdbTypeDetection() throws Exception {
-        String yamlFolder = "srd/test/testYamlCdb";
+        String yamlFolder = "src/test/testYamlCdb";
         StructuredTextReader yamlReader = new StructuredTextReader(new File(yamlFolder));
         assertEquals(TextFileType.YAML, yamlReader.cdbFilesType);
 
-        String jsonFolder = "srd/test/testJsonCdb";
+        String jsonFolder = "src/test/testJsonCdb";
         StructuredTextReader jsonReader = new StructuredTextReader(new File(jsonFolder));
         assertEquals(TextFileType.JSON, jsonReader.cdbFilesType);
 
