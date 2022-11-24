@@ -1,4 +1,4 @@
-package org.eso.ias.cdb.structuredtext.json.pojos;
+package org.eso.ias.cdb.structuredtext.pojos;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.eso.ias.cdb.pojos.AsceDao;
