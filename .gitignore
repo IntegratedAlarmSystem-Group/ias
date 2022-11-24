@@ -3,6 +3,7 @@
 **/.settings
 **/*.RELEASE
 **/build/
+**/bin/
 **/c4che
 .cache-*
 ias.iml
