@@ -7,7 +7,7 @@ import org.eso.ias.cdb.pojos.*;
 import org.eso.ias.cdb.rdb.RdbReader;
 import org.eso.ias.cdb.rdb.RdbUtils;
 import org.eso.ias.cdb.rdb.RdbWriter;
-import org.eso.ias.cdb.test.json.TestJsonCdb;
+import org.eso.ias.cdb.test.TestJsonCdb;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

@@ -2,10 +2,9 @@ package org.eso.ias.converter.test;
 
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
-import org.eso.ias.cdb.structuredtext.json.CdbFolders;
-import org.eso.ias.cdb.structuredtext.json.CdbTxtFiles;
-import org.eso.ias.cdb.structuredtext.json.JsonReader;
-import org.eso.ias.cdb.structuredtext.json.JsonWriter;
+import org.eso.ias.cdb.structuredtext.CdbFolders;
+import org.eso.ias.cdb.structuredtext.StructuredTextReader;
+import org.eso.ias.cdb.structuredtext.StructuredTextWriter;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
@@ -175,11 +174,6 @@ public class TestKafkaStreaming extends ConverterTestBase {
     public static final Path cdbParentPath =  FileSystems.getDefault().getPath(".");
 
     /**
-     * The directory structure for the JSON CDB
-     */
-    private CdbTxtFiles cdbFiles;
-
-    /**
      * The converter to test
      */
     private Converter converter;
@@ -272,8 +266,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
         iso8601dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         // Builds the JSON CDB
-        cdbFiles = new CdbTxtFiles(cdbParentPath);
-        CdbWriter cdbWriter = new JsonWriter(cdbFiles);
+        CdbWriter cdbWriter = new StructuredTextWriter(cdbParentPath.toFile());
         cdbWriter.init();
         Set<IasioDao> iasios = new HashSet<>();
         for (MonitorPointDataHolder mpdh: mpdToSend) {
@@ -292,7 +285,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
         cdbWriter.shutdown();
 
         // The reader to pass to the converter
-        CdbReader cdbReader = new JsonReader(cdbFiles);
+        CdbReader cdbReader = new StructuredTextReader(cdbParentPath.toFile());
         cdbReader.init();
 
         // Finally builds the converter

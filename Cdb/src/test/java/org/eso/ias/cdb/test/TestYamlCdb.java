@@ -1,14 +1,14 @@
-package org.eso.ias.cdb.test.json;
+package org.eso.ias.cdb.test;
 
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
 import org.eso.ias.cdb.TextFileType;
 import org.eso.ias.cdb.pojos.*;
-import org.eso.ias.cdb.structuredtext.json.CdbFiles;
-import org.eso.ias.cdb.structuredtext.json.CdbFolders;
-import org.eso.ias.cdb.structuredtext.json.CdbTxtFiles;
-import org.eso.ias.cdb.structuredtext.yaml.YamlReader;
-import org.eso.ias.cdb.structuredtext.yaml.YamlWriter;
+import org.eso.ias.cdb.structuredtext.CdbFiles;
+import org.eso.ias.cdb.structuredtext.CdbFolders;
+import org.eso.ias.cdb.structuredtext.CdbTxtFiles;
+import org.eso.ias.cdb.structuredtext.StructuredTextWriter;
+import org.eso.ias.cdb.structuredtext.StructuredTextReader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,11 +21,13 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Test reading and writing of JSON CDB.
+ * Test reading and writing of structured text CDB.
  * <P>
  * Some tests, write the CDB and then read data out of it.
- * <BR>Other tests instead uses the JSON CDB contained in testYamlCdb
+ * <BR>Other tests instead uses the CDB contained in testYamlCdb
  * whose description is in testYamlCdb/ReadMe.txt
+ *
+ * This test is the same of the JSON test for YAML.
  * 
  * @author acaproni
  *
@@ -33,17 +35,17 @@ import static org.junit.jupiter.api.Assertions.*;
 public class TestYamlCdb {
 	
 	/**
-	 * JSON files helper
+	 * The files helper
 	 */
 	private CdbFiles cdbFiles;
 	
 	/**
-	 * JSON files writer
+	 * The files writer
 	 */
 	private CdbWriter cdbWriter;
 	
 	/**
-	 * JSON files reader
+	 * The files reader
 	 */
 	private CdbReader cdbReader;
 	
@@ -60,9 +62,9 @@ public class TestYamlCdb {
 		
 		cdbFiles = new CdbTxtFiles(cdbParentPath, TextFileType.YAML);
 		assertNotNull(cdbFiles);
-		cdbWriter = new YamlWriter(cdbFiles);
+		cdbWriter = new StructuredTextWriter(cdbFiles);
 		assertNotNull(cdbWriter);
-		cdbReader = new YamlReader(cdbFiles);
+		cdbReader = new StructuredTextReader(cdbFiles);
 		assertNotNull(cdbReader);
 		
 		cdbReader.init();
@@ -127,7 +129,7 @@ public class TestYamlCdb {
 	public void testGetIasFromFile() throws Exception {
 		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
 		cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
-		cdbReader = new YamlReader(cdbFiles);
+		cdbReader = new StructuredTextReader(cdbFiles);
 		cdbReader.init();
 
 		Optional<IasDao> iasOpt = cdbReader.getIas();
@@ -537,7 +539,7 @@ public class TestYamlCdb {
 	public void testGetDasusOfSupervisor() throws Exception {
 		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
 		cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
-		cdbReader = new YamlReader(cdbFiles);
+		cdbReader = new StructuredTextReader(cdbFiles);
 		cdbReader.init();
 		// Get the DASUs of a Supervisor that has none
 		Set<DasuToDeployDao> dasus = cdbReader.getDasusToDeployInSupervisor("Supervisor-ID2");
@@ -559,7 +561,7 @@ public class TestYamlCdb {
 	/**
 	 * Test the getting of ASCEs belonging to a given DASU
 	 * <P>
-	 * This test runs against the JSON CDB contained in testYamlCdb
+	 * This test runs against the CDB contained in testYamlCdb
 	 *
 	 * @throws Exception
 	 */
@@ -567,7 +569,7 @@ public class TestYamlCdb {
 	public void testGetAscesOfDasu() throws Exception {
 		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
 		cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
-		cdbReader = new YamlReader(cdbFiles);
+		cdbReader = new StructuredTextReader(cdbFiles);
 		cdbReader.init();
 
 		// Get the ASCE of DasuID1 that has no ASCE
@@ -607,7 +609,7 @@ public class TestYamlCdb {
 	/**
 	 * Test the getting of IASIOs belonging to a given ASCE
 	 * <P>
-	 * This test runs against the JSON CDB contained in testYamlCdb
+	 * This test runs against the CDB contained in testYamlCdb
 	 *
 	 * @throws Exception
 	 */
@@ -615,7 +617,7 @@ public class TestYamlCdb {
 	public void testGetIasiosOfAsce() throws Exception {
 		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
 		cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
-		cdbReader = new YamlReader(cdbFiles);
+		cdbReader = new StructuredTextReader(cdbFiles);
 		cdbReader.init();
 
 		// Get the IASIOs of ASCE-ID4 that has 3 inputs
@@ -633,7 +635,7 @@ public class TestYamlCdb {
 	/**
 	 * Test the getting of Supervisor that deploys templated DASUs
 	 * <P>
-	 * This test runs against the JSON CDB contained in testYamlCdb and
+	 * This test runs against the CDB contained in testYamlCdb and
 	 * gets Supervisor-ID4.
 	 *
 	 * @throws Exception
@@ -642,7 +644,7 @@ public class TestYamlCdb {
 	public void testGetSupervWithTemplatedDASUs() throws Exception {
 		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
 		cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
-		cdbReader = new YamlReader(cdbFiles);
+		cdbReader = new StructuredTextReader(cdbFiles);
 		cdbReader.init();
 
 		Optional<SupervisorDao> superv4 = cdbReader.getSupervisor("Supervisor-ID4");
@@ -694,7 +696,7 @@ public class TestYamlCdb {
 		// Get templates from the CDB in testYamlCdb
 		Path cdbPath =  FileSystems.getDefault().getPath("src/test/testYamlCdb");
 		CdbFiles cdbFiles = new CdbTxtFiles(cdbPath, TextFileType.YAML);
-		CdbReader jcdbReader = new YamlReader(cdbFiles);
+		CdbReader jcdbReader = new StructuredTextReader(cdbFiles);
 		jcdbReader.init();
 
 		Optional<TemplateDao> template2 = jcdbReader.getTemplate("template2-ID");
@@ -737,7 +739,7 @@ public class TestYamlCdb {
     public void testGetIdsOfSupervisor() throws Exception {
         Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
         cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
-        cdbReader = new YamlReader(cdbFiles);
+        cdbReader = new StructuredTextReader(cdbFiles);
         cdbReader.init();
 
         Optional<Set<String>> idsOpt= cdbReader.getSupervisorIds();
@@ -756,7 +758,7 @@ public class TestYamlCdb {
     public void testGetIdsOfDasus() throws Exception {
         Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
         cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
-        cdbReader = new YamlReader(cdbFiles);
+        cdbReader = new StructuredTextReader(cdbFiles);
         cdbReader.init();
 
         Optional<Set<String>> idsOpt= cdbReader.getDasuIds();
@@ -774,7 +776,7 @@ public class TestYamlCdb {
     public void testGetIdsOfAsces() throws Exception {
         Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
         cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
-        cdbReader = new YamlReader(cdbFiles);
+        cdbReader = new StructuredTextReader(cdbFiles);
         cdbReader.init();
 
         Optional<Set<String>> idsOpt= cdbReader.getAsceIds();
@@ -790,7 +792,7 @@ public class TestYamlCdb {
     /**
      * Test the getting of templated inputs of an ASCE
      * <P>
-     * This test runs against the JSON CDB contained in testYamlCdb
+     * This test runs against the CDB contained in testYamlCdb
      *
      * @throws Exception
      */
@@ -798,7 +800,7 @@ public class TestYamlCdb {
     public void testTemplatedInputsOfAsce() throws Exception {
         Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
         cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
-        cdbReader = new YamlReader(cdbFiles);
+        cdbReader = new StructuredTextReader(cdbFiles);
         cdbReader.init();
 
         // Get on ASCE without templated inputs
@@ -829,7 +831,7 @@ public class TestYamlCdb {
 	public void testGetAsceWithTemplatedInputs() throws Exception {
 		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
 		cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
-		cdbReader = new YamlReader(cdbFiles);
+		cdbReader = new StructuredTextReader(cdbFiles);
 		cdbReader.init();
 
 		Optional<AsceDao> asceWithTemplatedInputs = cdbReader.getAsce("ASCE-WITH-TEMPLATED-INPUTS");
@@ -851,7 +853,7 @@ public class TestYamlCdb {
 	public void testGetIasio() throws Exception {
 		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
 		cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
-		cdbReader = new YamlReader(cdbFiles);
+		cdbReader = new StructuredTextReader(cdbFiles);
 		cdbReader.init();
 
 		Optional<IasioDao> iDao=cdbReader.getIasio("SoundInput");
@@ -861,14 +863,14 @@ public class TestYamlCdb {
 	}
 
 	/**
-	 * Test getting the PluginConfig from a JSON file
+	 * Test getting the PluginConfig from a file
 	 * @throws Exception
 	 */
 	@Test
 	public void testGetPlugin() throws Exception {
 		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
 		cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
-		cdbReader = new YamlReader(cdbFiles);
+		cdbReader = new StructuredTextReader(cdbFiles);
 		cdbReader.init();
 
 		String pluginId = "PluginIDForTesting";
@@ -985,14 +987,14 @@ public class TestYamlCdb {
 	}
 
 	/**
-	 * Test {@link YamlReader#getPluginIds()}
+	 * Test {@link StructuredTextReader#getPluginIds()}
 	 * @throws Exception
 	 */
 	@Test
 	public void testGetPluginIds() throws Exception {
 		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
 		cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
-		cdbReader = new YamlReader(cdbFiles);
+		cdbReader = new StructuredTextReader(cdbFiles);
 		cdbReader.init();
 		Optional<Set<String>> idsOpt = cdbReader.getPluginIds();
 		assertTrue(idsOpt.isPresent());
@@ -1003,14 +1005,14 @@ public class TestYamlCdb {
 	}
 
 	/**
-	 * Test {@link YamlReader#getPluginIds()}
+	 * Test {@link StructuredTextReader#getClientIds()}
 	 * @throws Exception
 	 */
 	@Test
 	public void testGetClientIds() throws Exception {
 		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
 		cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
-		cdbReader = new YamlReader(cdbFiles);
+		cdbReader = new StructuredTextReader(cdbFiles);
 		cdbReader.init();
 		Optional<Set<String>> idsOpt = cdbReader.getClientIds();
 		assertTrue(idsOpt.isPresent());

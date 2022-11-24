@@ -1,12 +1,11 @@
 package org.eso.ias.cdb;
 
-import org.eso.ias.cdb.structuredtext.json.CdbFiles;
-import org.eso.ias.cdb.structuredtext.json.CdbTxtFiles;
-import org.eso.ias.cdb.structuredtext.json.JsonReader;
+import org.eso.ias.cdb.structuredtext.StructuredTextReader;
 import org.eso.ias.cdb.rdb.RdbReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -21,15 +20,16 @@ import java.util.Optional;
  *
  * It offers a common strategy to be used consistently by all the IAS tools.
  *
- * The strategy is as follow:
+ * The strategy is as follows:
  *  - if -cdbClass java.class param is present in the command line then the passed class
  *                 is dynamically loaded and built (empty constructor); the configuration
  *                 parameters eventually expected by such class will be passed by means of java
  *                 properties (-D...)
- *  - else if jCdb file.path param is present in the command line then the JSON CDB
- *                      implementation will be returned passing the passed file path
+ *  - else if jCdb file.path param is present in the command line then the JSON/YAML CDB
+ *                      implementation will be returned with the passed file path
+ *                      (the type JSON/YAML is retrieved from the content of the folder itself)
  *  - else the RDB implementation is returned (note that the parameters to connect to the RDB are passed
- *                 in the hibernate configuration file
+ *                 in the hibernate configuration file)
  *
  * RDB implementation is the fallback if none of the other possibilities succeeds.
  *
@@ -47,14 +47,14 @@ public class CdbReaderFactory {
     public static final String cdbClassCmdLineParam="-cdbClass";
 
     /**
-     * The long parameter to set in the command line to build a JSON CdbReader
+     * The long parameter to set in the command line to build a JSON/YAML CdbReader
      */
-    public static final String jsonCdbCmdLineParamLong ="-jCdb";
+    public static final String sTxtCdbCmdLineParamLong ="-jCdb";
 
     /**
-     * The short parameter to set in the command line to build a JSON CdbReader
+     * The short parameter to set in the command line to build a JSON/YAML CdbReader
      */
-    public static final String jsonCdbCmdLineParamShort ="-j";
+    public static final String sTxtCdbCmdLineParamShort ="-j";
 
     /**
      * get the value of the passed parameter from the eray of strings.
@@ -117,11 +117,11 @@ public class CdbReaderFactory {
     }
 
     /**
-     * Gets and return the CdbReader to use to read the CDB applying the policiy described in the javadoc
+     * Gets and return the CdbReader to use to read the CDB applying the policy described in the javadoc
      * of the class
      *
      * @param cmdLine The command line
-     * @return the CdbReader to read th CDB
+     * @return the CdbReader to read the CDB
      * @throws Exception in case of error building the CdbReader
      */
     public static CdbReader getCdbReader(String[] cmdLine) throws Exception {
@@ -134,18 +134,19 @@ public class CdbReaderFactory {
             logger.debug("No external CdbReader found");
         }
 
-        Optional<String> jsonCdbReaderS = getValueOfParam(jsonCdbCmdLineParamShort,cmdLine);
-        Optional<String> jsonCdbReaderL = getValueOfParam(jsonCdbCmdLineParamLong,cmdLine);
-        if (jsonCdbReaderS.isPresent() && jsonCdbReaderL.isPresent()) {
-            throw new Exception("JSON CDB path defined twice: check "+jsonCdbCmdLineParamShort+"and "+jsonCdbCmdLineParamLong+" params in cmd line");
+        Optional<String> structuredTxtCdbReaderS = getValueOfParam(sTxtCdbCmdLineParamShort,cmdLine);
+        Optional<String> structuredTxtCdbReaderL = getValueOfParam(sTxtCdbCmdLineParamLong,cmdLine);
+        if (structuredTxtCdbReaderS.isPresent() && structuredTxtCdbReaderL.isPresent()) {
+            throw new Exception("JSON/YAML CDB path defined twice: check "+ sTxtCdbCmdLineParamShort +"and "+ sTxtCdbCmdLineParamLong +" params in cmd line");
         }
-        if (jsonCdbReaderL.isPresent() || jsonCdbReaderS.isPresent()) {
-            String cdbPath = jsonCdbReaderL.orElseGet(() -> jsonCdbReaderS.get());
-            logger.info("Loading JSON CdbReader with folder {}",cdbPath);
-            CdbFiles cdbfiles = new CdbTxtFiles(cdbPath, TextFileType.JSON);
-            return new JsonReader(cdbfiles);
+        if (structuredTxtCdbReaderL.isPresent() || structuredTxtCdbReaderS.isPresent()) {
+            String cdbPath = structuredTxtCdbReaderL.orElseGet(() -> structuredTxtCdbReaderS.get());
+            logger.info("Loading CdbReader with folder {}",cdbPath);
+            StructuredTextReader reader = new StructuredTextReader(new File(cdbPath));
+            logger.info("CDB reader of type {} in {}", reader.cdbFilesType,cdbPath);
+            return reader;
         } else {
-            logger.debug("NO JSON CdbReader requested");
+            logger.debug("NO JSON/YAML CdbReader requested");
         }
         return new RdbReader();
     }

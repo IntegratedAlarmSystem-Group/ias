@@ -1,4 +1,4 @@
-package org.eso.ias.cdb.test.json;
+package org.eso.ias.cdb.test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -9,7 +9,7 @@ import java.io.FileWriter;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 
-import org.eso.ias.cdb.structuredtext.json.CdbFolders;
+import org.eso.ias.cdb.structuredtext.CdbFolders;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
