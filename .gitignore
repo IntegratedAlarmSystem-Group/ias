@@ -11,6 +11,7 @@ ias.iml
 .gradle
 **/.project
 **/.classpath
+.vscode/
 
 ## Project specific files:
 IntegratedAlarmSystemRoot
