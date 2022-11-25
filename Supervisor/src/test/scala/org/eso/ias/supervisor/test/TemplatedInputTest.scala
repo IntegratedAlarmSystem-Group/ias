@@ -1,8 +1,8 @@
 package org.eso.ias.supervisor.test
 
 import org.eso.ias.cdb.CdbReader
-import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.DasuDao
+import org.eso.ias.cdb.structuredtext.StructuredTextReader
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.dasu.publisher.{ListenerOutputPublisherImpl, OutputListener, OutputPublisher}
 import org.eso.ias.dasu.subscriber.{DirectInputSubscriber, InputSubscriber}
@@ -97,8 +97,7 @@ class TemplatedInputTest extends AnyFlatSpec {
 
     // Build the CDB reader
     val cdbParentPath = FileSystems.getDefault().getPath("src/test");
-    val cdbFiles = new CdbJsonFiles(cdbParentPath)
-    val cdbReader: CdbReader = new JsonReader(cdbFiles)
+    val cdbReader: CdbReader = new StructuredTextReader(cdbParentPath.toFile)
     cdbReader.init()
 
     val supervIdentifier = new Identifier("SupervisorToTestInputs", IdentifierType.SUPERVISOR, None)

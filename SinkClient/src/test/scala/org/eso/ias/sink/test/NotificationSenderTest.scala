@@ -1,8 +1,8 @@
 package org.eso.ias.sink.test
 
 import org.eso.ias.cdb.CdbReader
-import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.{IasDao, IasioDao}
+import org.eso.ias.cdb.structuredtext.StructuredTextReader
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.sink.ValueListener
 import org.eso.ias.sink.email.{AlarmState, AlarmStateTracker, NotificationsSender, Sender}
@@ -82,8 +82,7 @@ class NotificationSenderTest extends AnyFlatSpec {
   trait Fixture {
     // Build the CDB reader
     val cdbParentPath = FileSystems.getDefault().getPath("src/test");
-    val cdbFiles = new CdbJsonFiles(cdbParentPath)
-    val cdbReader: CdbReader = new JsonReader(cdbFiles)
+    val cdbReader: CdbReader = new StructuredTextReader(cdbParentPath.toFile)
     cdbReader.init()
 
     val iasiosDaos: Set[IasioDao] = {
