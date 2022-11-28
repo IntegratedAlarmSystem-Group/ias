@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.eso.ias.cdb.CdbWriter;
 import org.eso.ias.cdb.IasCdbException;
-import org.eso.ias.cdb.TextFileType;
+import org.eso.ias.cdb.structuredtext.TextFileType;
 import org.eso.ias.cdb.pojos.*;
 import org.eso.ias.cdb.structuredtext.pojos.JsonAsceDao;
 import org.eso.ias.cdb.structuredtext.pojos.JsonDasuDao;
@@ -539,7 +539,7 @@ public class StructuredTextWriter implements CdbWriter {
             throw new IasCdbException("Error getting client file "+clientConfigDao.getId(),ioe);
         }
 
-        List<String> strings = new ArrayList();
+        List<String> strings = new ArrayList<>();
         strings.add(clientConfigDao.getConfig());
         try {
             Files.write(f,strings, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);

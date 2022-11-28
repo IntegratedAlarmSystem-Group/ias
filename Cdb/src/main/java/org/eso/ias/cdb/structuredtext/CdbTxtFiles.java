@@ -7,8 +7,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Objects;
 
-import org.eso.ias.cdb.TextFileType;
-
 public class CdbTxtFiles implements CdbFiles {
 
 	/**

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.IasCdbException;
-import org.eso.ias.cdb.TextFileType;
+import org.eso.ias.cdb.structuredtext.TextFileType;
 import org.eso.ias.cdb.pojos.*;
 import org.eso.ias.cdb.structuredtext.pojos.*;
 import org.slf4j.Logger;

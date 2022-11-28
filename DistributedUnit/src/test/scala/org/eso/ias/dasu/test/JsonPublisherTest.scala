@@ -2,7 +2,7 @@ package org.eso.ias.dasu.test
 
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.pojos.DasuDao
-import org.eso.ias.cdb.structuredtext.StructuredTextReader
+import org.eso.ias.cdb.structuredtext.{StructuredTextReader, CdbTxtFiles, TextFileType, CdbFiles}
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.dasu.publisher.JsonWriterPublisher
 import org.eso.ias.dasu.subscriber.DirectInputSubscriber
@@ -25,8 +25,9 @@ class JsonPublisherTest extends AnyFlatSpec {
   private val logger = IASLogger.getLogger(this.getClass);
   
   // Build the CDB reader
-  val cdbParentPath =  FileSystems.getDefault().getPath("src/test");
-  val cdbReader: CdbReader = new StructuredTextReader(cdbParentPath.toFile)
+  val cdbParentPath =  FileSystems.getDefault().getPath("src/test")
+  val cdbFiles = new CdbTxtFiles(cdbParentPath, TextFileType.JSON)
+  val cdbReader: CdbReader = new StructuredTextReader(cdbFiles)
   cdbReader.init()
   
   val dasuId = "DasuWithOneASCE"
