@@ -2,6 +2,7 @@ package org.eso.ias.converter.test;
 
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
+import org.eso.ias.cdb.TextFileType;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.TemplateDao;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -161,8 +163,10 @@ public class ConverterCdbTest {
 
     @BeforeEach
     public void setUp() throws Exception {
-        // Remove any CDB folder if present
-        CdbReader cdbReader = new StructuredTextReader(cdbParentPath.toFile());
+        // Create the CDB folder
+		new File(cdbParentPath.toFile().getAbsolutePath()+"/CDB").mkdirs();
+		cdbFiles = new CdbTxtFiles(cdbParentPath.toFile().getAbsolutePath(), TextFileType.JSON);
+        CdbReader cdbReader = new StructuredTextReader(cdbFiles);
         cdbReader.init();
         configDao = new Cache(cdbReader);
 
