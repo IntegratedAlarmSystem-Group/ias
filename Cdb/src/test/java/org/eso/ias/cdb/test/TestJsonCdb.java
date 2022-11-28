@@ -2,7 +2,7 @@ package org.eso.ias.cdb.test;
 
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
-import org.eso.ias.cdb.TextFileType;
+import org.eso.ias.cdb.structuredtext.TextFileType;
 import org.eso.ias.cdb.pojos.*;
 import org.eso.ias.cdb.structuredtext.CdbFiles;
 import org.eso.ias.cdb.structuredtext.CdbFolders;
@@ -883,7 +883,7 @@ public class TestJsonCdb {
 		System.out.println("PluginConfig:\n"+pConf.toString());
 		assertEquals("ACS",pConf.getMonitoredSystemId());
 
-		Map<String,String> props = new HashMap();
+		Map<String,String> props = new HashMap<>();
 		for (PropertyDao p: pConf.getProps()) {
 			props.put(p.getName(),p.getValue());
 		}

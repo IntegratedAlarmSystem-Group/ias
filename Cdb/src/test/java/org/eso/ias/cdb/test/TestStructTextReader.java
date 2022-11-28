@@ -1,7 +1,7 @@
 package org.eso.ias.cdb.test;
 
 import org.eso.ias.cdb.IasCdbException;
-import org.eso.ias.cdb.TextFileType;
+import org.eso.ias.cdb.structuredtext.TextFileType;
 import org.eso.ias.cdb.structuredtext.StructuredTextReader;
 import org.junit.jupiter.api.Test;
 

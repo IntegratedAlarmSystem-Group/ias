@@ -1,4 +1,4 @@
-package org.eso.ias.cdb;
+package org.eso.ias.cdb.structuredtext;
 
 import java.io.File;
 import java.io.FileFilter;

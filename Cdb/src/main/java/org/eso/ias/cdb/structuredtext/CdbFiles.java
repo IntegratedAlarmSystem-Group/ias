@@ -1,6 +1,6 @@
 package org.eso.ias.cdb.structuredtext;
 
-import org.eso.ias.cdb.TextFileType;
+import org.eso.ias.cdb.structuredtext.TextFileType;
 
 import java.io.IOException;
 import java.nio.file.Path;
