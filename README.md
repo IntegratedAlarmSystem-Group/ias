@@ -8,8 +8,7 @@ Browse the [wiki pages](https://github.com/IntegratedAlarmSystem-Group/ias/wiki)
 `ant build` build all the modules and install them in `$IAS_ROOT`
 
 The core is composed of the following modules (in order of compilation):
-* `Tools`: generation of API documentation, external libraruies, configuration files
-* `Utils`: IAS python scripts, support of scala logging and ISO 8601 timestamps
+* `Tools`: generation of API documentation, external libraruies, configuration files, IAS python scripts, support of scala logging and ISO 8601 timestamps
 * `Cdb`: RDB and JSON CDB
 * `BasicTypes`: IAS supported value types, operational mode, validity
 * `KafkaUtils`: producers, consumers and utilities for Kafka
