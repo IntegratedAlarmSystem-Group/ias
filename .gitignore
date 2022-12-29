@@ -12,6 +12,8 @@ ias.iml
 **/.project
 **/.classpath
 .vscode/
+.bloop/
+.metals/
 
 ## Project specific files:
 IntegratedAlarmSystemRoot
