@@ -10,9 +10,9 @@ import org.eso.ias.utils.ISO8601Helper;
  * 
  * In this case it is better to have java enumerations instead 
  * of scala because the two differ too much up to the point
- * that scala Enumeration are not usable within java sources.
+ * that scala Enumeration are not usable within java sources (true before scala 3).
  *
- * TODO: avoid duplication with org.eso.ias.cdb.pojos.IasTypeDao
+ * TODO: avoid duplication with org.eso.ias.cdb.pojos.IasTypeDao (Issue #17)
  * @see org.eso.ias.cdb.pojos.IasTypeDao
  * @author acaproni
  *
@@ -113,7 +113,10 @@ public enum IASTypes {
 		case TIMESTAMP: return ISO8601Helper.timestampToMillis(value);
 		case ARRAYOFDOUBLES: return NumericArray.valueOf(NumericArray.NumericArrayType.DOUBLE,value);
 		case ARRAYOFLONGS: return NumericArray.valueOf(NumericArray.NumericArrayType.LONG,value);
-    	case ALARM: return Alarm.valueOf(value);
+    	case ALARM: {
+			System.out.println("Converting alarm from string ["+value+"]");
+			return new Alarm(AlarmState.CLEAR_ACK, Priority.getDefaultPriority()); //Alarm.valueOf(value);
+		}
     	default: throw new UnsupportedOperationException("Unsupported type "+this);
 	}
     }

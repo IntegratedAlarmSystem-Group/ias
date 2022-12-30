@@ -135,7 +135,7 @@ public class IasValueJsonSerializerTest {
 
 		String alarmId = "AlarmType-ID";
 		IASValue<?> alarm = IASValue.build(
-			Alarm.SET_MEDIUM,
+			new Alarm(),
 			OperationalMode.DEGRADED,
 			IasValidity.RELIABLE,
 			new Identifier(alarmId, IdentifierType.IASIO, asceIdentifier).fullRunningID(),
@@ -257,7 +257,7 @@ public class IasValueJsonSerializerTest {
 		// One test setting all the timestamps
 		String alarmId = "AlarmType-ID";
 		IASValue<?> alarm = IASValue.build(
-			Alarm.SET_LOW,
+			new Alarm(AlarmState.CLEAR_UNACK, Priority.LOW),
 			OperationalMode.DEGRADED,
 			IasValidity.RELIABLE,
 			new Identifier(alarmId, IdentifierType.IASIO, asceIdentifier).fullRunningID(),
@@ -299,7 +299,7 @@ public class IasValueJsonSerializerTest {
 		// sure the property is empty
 		String alarmId2 = "AlarmType-ID2";
 		IASValue<?> alarm2 = IASValue.build(
-			Alarm.SET_CRITICAL,
+			new Alarm(AlarmState.SET_UNACK, Priority.CRITICAL),
 			OperationalMode.DEGRADED,
 			IasValidity.RELIABLE,
 			new Identifier(alarmId, IdentifierType.IASIO, asceIdentifier).fullRunningID(),
@@ -351,7 +351,7 @@ public class IasValueJsonSerializerTest {
 		// One test setting all the timestamps
 		String alarmId = "AlarmType-ID";
 		IASValue<?> alarm = IASValue.build(
-			Alarm.SET_MEDIUM,
+			new Alarm(),
 			OperationalMode.DEGRADED,
 			IasValidity.RELIABLE,
 			new Identifier(alarmId, IdentifierType.IASIO, asceIdentifier).fullRunningID(),
@@ -391,7 +391,7 @@ public class IasValueJsonSerializerTest {
 		// One test setting additional properties
 		String alarmId = "AlarmType-ID";
 		IASValue<?> alarm = IASValue.build(
-			Alarm.getSetDefault(),
+			new Alarm(AlarmState.SET_UNACK, Priority.HIGH),
 			OperationalMode.DEGRADED,
 			IasValidity.RELIABLE,
 			new Identifier(alarmId, IdentifierType.IASIO, asceIdentifier).fullRunningID(),
