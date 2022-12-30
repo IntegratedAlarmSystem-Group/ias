@@ -173,7 +173,7 @@ class TestInOut extends AnyFlatSpec {
     hioChar.updateValue(Some('C'))
     hioString.updateValue(Some("Test"))
     hioTStamp.updateValue(Some(System.currentTimeMillis()))
-    hioAlarm.updateValue(Some(Alarm.SET_MEDIUM))
+    hioAlarm.updateValue(Some(new Alarm()))
 
   }
 

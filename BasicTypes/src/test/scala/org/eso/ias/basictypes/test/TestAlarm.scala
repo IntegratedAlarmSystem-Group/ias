@@ -2,6 +2,8 @@ package org.eso.ias.basictypes.test
 
 import org.scalatest.flatspec.AnyFlatSpec
 import org.eso.ias.types.Alarm
+import org.eso.ias.types.AlarmState
+import org.eso.ias.types.Priority
 
 /**
  * Test the Alarm
@@ -12,20 +14,20 @@ class TestAlarm extends AnyFlatSpec {
   
   
   it must "not have CLEAR as default" in {
-    val alarm: Alarm = Alarm.getSetDefault
+    val alarm: Alarm = new Alarm()
     
-    assert(alarm!=Alarm.CLEARED)
+    assert(alarm.alarmState.isSet)
   }
   
   it must "forbid to increase the priority of a CLEARED" in {
-    val alarm = Alarm.CLEARED
+    val alarm = new Alarm(AlarmState.CLEAR_ACK, Priority.MEDIUM)
     assertThrows[IllegalStateException] {
       alarm.increasePriority()
     }
   }
   
   it must "forbid to lower the priority of a CLEARED" in {
-    val alarm = Alarm.CLEARED
+    val alarm = new Alarm(AlarmState.CLEAR_UNACK, Priority.MEDIUM)
     assertThrows[IllegalStateException] {
       alarm.lowerPriority()
     }
@@ -36,44 +38,29 @@ class TestAlarm extends AnyFlatSpec {
    * of the one with the highest priority
    */
   it must "increase the priority of any alarm" in {
-    val maxPrioAl = Alarm.getMaxPriorityAlarm
-    assert(maxPrioAl.increasePriority==maxPrioAl)
+    val maxPrioAl = new Alarm(AlarmState.SET_UNACK, Priority.getMaxPriority)
+    assert(maxPrioAl.increasePriority.priority==maxPrioAl.priority)
     
-    var alarm = Alarm.getMinPriorityAlarm
-    for (i <- 0 to Alarm.values().length) {
+    var alarm = new Alarm(AlarmState.SET_ACK, Priority.getMinPriority)
+    for (i <- 0 to Priority.values().length) {
        alarm = alarm.increasePriority
     }
-    assert(maxPrioAl==alarm)
+    assert(maxPrioAl.priority==alarm.priority)
     
   }
   
   /**
-   * This test checks if it is possible to increase the priority of any ALARM even
+   * This test checks if it is possible to lower the priority of any ALARM even
    * of the one with the highest priority
    */
   it must "lower the priority of any alarm" in {
-    val minPrioAl = Alarm.getMinPriorityAlarm
-    assert(minPrioAl.lowerPriority==minPrioAl)
+    val minPrioAl = new Alarm(AlarmState.SET_ACK, Priority.getMinPriority)
+    assert(minPrioAl.lowerPriority.priority==minPrioAl.priority)
     
-    var alarm = Alarm.getMaxPriorityAlarm
-    for (i <- 0 to Alarm.values().length) {
+    var alarm = new Alarm(AlarmState.SET_ACK, Priority.getMaxPriority)
+    for (i <- 0 to Priority.values().length) {
        alarm = alarm.lowerPriority
     }
-    assert(alarm==minPrioAl)
+    assert(alarm.priority==minPrioAl.priority)
   }
-  
-  it must "return the proper alarm from the priority" in {
-    Alarm.values().foreach( alarm => {
-      if (alarm.priorityLevel.isPresent) {
-        val priority = alarm.priorityLevel.get()
-        val alarmFromPrio = Alarm.fromPriority(priority)
-        assert(alarmFromPrio==alarm)
-      }
-    })
-    
-    assertThrows[IllegalArgumentException]{ Alarm.fromPriority(0) }
-    assertThrows[IllegalArgumentException]{ Alarm.fromPriority(-1) }
-    assertThrows[IllegalArgumentException]{ Alarm.fromPriority(120) }
-  }
-  
 }
