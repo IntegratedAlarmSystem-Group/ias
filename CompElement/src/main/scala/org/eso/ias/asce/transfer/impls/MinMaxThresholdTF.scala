@@ -1,14 +1,14 @@
 package org.eso.ias.asce.transfer.impls
 
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
-import java.util.Properties
 
+import java.util.Properties
 import org.eso.ias.asce.exceptions.PropsMisconfiguredException
 import org.eso.ias.asce.exceptions.UnexpectedNumberOfInputsException
-import org.eso.ias.types.IASTypes._
+import org.eso.ias.types.IASTypes.*
 import org.eso.ias.asce.exceptions.TypeMismatchException
-import MinMaxThresholdTF._
-import org.eso.ias.types.Alarm
+import MinMaxThresholdTF.*
+import org.eso.ias.types.{Alarm, Priority}
 
 /**
  * The TF implementing a Min/Max threshold TF  (there is also
@@ -76,10 +76,9 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame, pro
    * The priority of the alarm can be set defining a property; 
    * otherwise use the default
    */
-  val alarmSet: Alarm = 
-    Option(props.getProperty(alarmPriorityPropName)).map(Alarm.valueOf(_)).getOrElse(Alarm.getSetDefault) 
-  
-  
+  val alarmPriority: Priority =
+    Option(props.getProperty(alarmPriorityPropName)).map(Priority.valueOf(_)).getOrElse(Priority.getDefaultPriority)
+
   /**
    * Get the value of a property from the passed properties.
    * 
@@ -97,9 +96,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame, pro
       default
     }
   }
-  
-  
-  
+
   /**
    * Initialize the TF by getting the four properties
    * (being the properties lazy, they will be initialized here.
@@ -151,10 +148,13 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame, pro
       case _ => throw new TypeMismatchException(iasio.fullRunningId,iasio.iasType,List(LONG,INT,SHORT,BYTE,DOUBLE,FLOAT))
     }
     
-    // It cope with the case that the value of the actual output is not 
+    // Get the alarm from the last output
+    val actualAlarm: Alarm = actualOutput.value.getOrElse(Alarm.getInitialAlarmState(alarmPriority))
+
+    // It cope with the case that the value of the actual output is not
     // defined (i.e. it is Optional.empty. In that case the variable
-    // is initialized to false 
-    val wasSet = actualOutput.value.map(_!=Alarm.cleared()).getOrElse(false)
+    // is initialized to false
+    val wasSet = actualAlarm.isSet
  
     // The condition is true if the value is over the limits (high on and low on)
     // but remains set is the old values was set and the value is
@@ -162,7 +162,8 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame, pro
     val condition = 
       (doubleValue>=highOn || doubleValue<=lowOn) ||
       wasSet && (doubleValue>=highOff || doubleValue<=lowOff)
-    val newValue = if (condition) alarmSet else Alarm.cleared()
+
+    val newValue: Alarm = actualAlarm.setIf(condition)
     actualOutput.updateValue(newValue).updateMode(iasio.mode).updateProps(Map("actualValue"->doubleValue.toString()))
   }
   

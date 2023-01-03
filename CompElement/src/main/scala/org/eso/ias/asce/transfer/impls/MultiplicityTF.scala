@@ -1,13 +1,12 @@
 package org.eso.ias.asce.transfer.impls
 
 import java.util.Properties
-
 import com.typesafe.scalalogging.Logger
 import org.eso.ias.asce.exceptions.{PropNotFoundException, WrongPropValue}
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types.IASTypes._
-import org.eso.ias.types.{Alarm, OperationalMode}
+import org.eso.ias.types.IASTypes.*
+import org.eso.ias.types.{Alarm, OperationalMode, Priority}
 
 import scala.util.control.NonFatal
 
@@ -63,11 +62,10 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
   }
   
   /**
-   * The priority of the alarm from the java prorty or None if not defined
+   * The priority of the alarm from the java property or the default if not defined
    */
-  val alarmFromCDB: Option[Alarm] =
-    Option(props.getProperty(MultiplicityTF.alarmPriorityPropName)).map(Alarm.valueOf(_))
-  alarmFromCDB.foreach( alarm=> require(alarm!=Alarm.CLEARED, "The alarm for multiplicty must be SET"))
+  val priorityFromCDB: Priority =
+    Option(props.getProperty(MultiplicityTF.alarmPriorityPropName)).map(Priority.valueOf(_)).getOrElse(Priority.getDefaultPriority)
 
   /**
     * Check that all the inputs and the output are alarms
@@ -137,11 +135,9 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
       input.value.isDefined && input.value.get.asInstanceOf[Alarm].isSet
     }).map(_.asInstanceOf[IasIO[Alarm]])
 
-    val newAlarm = if (activeAlarms.size>=threshold) {
-      alarmFromCDB.getOrElse({
-        Alarm.fromPriority(activeAlarms.map(_.value.get.priorityLevel.get()).max)
-      })
-    } else Alarm.cleared()
+    val actualAlarm = actualOutput.value.getOrElse(Alarm.getInitialAlarmState(priorityFromCDB))
+
+    val newAlarm: Alarm = actualAlarm.setIf (activeAlarms.size>=threshold)
 
     // The properties of the output
     val props = if (newAlarm.isSet) {
