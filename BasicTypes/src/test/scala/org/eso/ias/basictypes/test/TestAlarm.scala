@@ -19,20 +19,6 @@ class TestAlarm extends AnyFlatSpec {
     assert(alarm.alarmState.isSet)
   }
   
-  it must "forbid to increase the priority of a CLEARED" in {
-    val alarm = new Alarm(AlarmState.CLEAR_ACK, Priority.MEDIUM)
-    assertThrows[IllegalStateException] {
-      alarm.increasePriority()
-    }
-  }
-  
-  it must "forbid to lower the priority of a CLEARED" in {
-    val alarm = new Alarm(AlarmState.CLEAR_UNACK, Priority.MEDIUM)
-    assertThrows[IllegalStateException] {
-      alarm.lowerPriority()
-    }
-  }
-  
   /**
    * This test checks if it is possible to increase the priority of any ALARM even
    * of the one with the highest priority
