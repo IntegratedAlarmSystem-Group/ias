@@ -103,6 +103,17 @@ public class Alarm {
 	}
 
 	/**
+	 * Set or clear the alarm depending on the passed condition
+	 *
+	 * @param condition the codnition to set/unset the alarm
+	 * @return the alarm set if condition is true, or cleared if the condition is false
+	 */
+	public Alarm setIf(boolean condition) {
+		if (condition) return set();
+		else return clear();
+	}
+
+	/**
 	 * @return true if the alarm is set, false otherwise
 	 */
 	public boolean isSet() {
