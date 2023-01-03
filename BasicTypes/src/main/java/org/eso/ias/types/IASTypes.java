@@ -113,10 +113,7 @@ public enum IASTypes {
 		case TIMESTAMP: return ISO8601Helper.timestampToMillis(value);
 		case ARRAYOFDOUBLES: return NumericArray.valueOf(NumericArray.NumericArrayType.DOUBLE,value);
 		case ARRAYOFLONGS: return NumericArray.valueOf(NumericArray.NumericArrayType.LONG,value);
-    	case ALARM: {
-			System.out.println("Converting alarm from string ["+value+"]");
-			return new Alarm(AlarmState.CLEAR_ACK, Priority.getDefaultPriority()); //Alarm.valueOf(value);
-		}
+    	case ALARM: return Alarm.valueOf(value);
     	default: throw new UnsupportedOperationException("Unsupported type "+this);
 	}
     }
