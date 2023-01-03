@@ -12,12 +12,14 @@ from IasBasicTypes.IasValue import IasValue
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
 from IasBasicTypes.OperationalMode import OperationalMode
 from IasBasicTypes.Validity import Validity
-
+from IasBasicTypes.Alarm import Alarm
+from IasBasicTypes.AlarmState import AlarmState
+from IasBasicTypes.Priority import Priority
 
 class TestIasValue(unittest.TestCase):
 
     # A JSON string for testing
-    jSonStr = """{"value":"CLEARED","sentToBsdbTStamp":"2018-03-07T13:08:43.525","dasuProductionTStamp":"2018-03-07T13:08:43.524",
+    jSonStr = """{"value":"CLEAR_ACK:MEDIUM","sentToBsdbTStamp":"2018-03-07T13:08:43.525","dasuProductionTStamp":"2018-03-07T13:08:43.524",
             "depsFullRunningIds":["(MonitoredSystemID:MONITORED_SOFTWARE_SYSTEM)@(PluginID:PLUGIN)@(ConverterID:CONVERTER)@(Temperature3:IASIO)",
             "(MonitoredSystemID:MONITORED_SOFTWARE_SYSTEM)@(PluginID:PLUGIN)@(ConverterID:CONVERTER)@(Temperature2:IASIO)",
             "(MonitoredSystemID:MONITORED_SOFTWARE_SYSTEM)@(PluginID:PLUGIN)@(ConverterID:CONVERTER)@(Temperature4:IASIO)",
@@ -27,7 +29,7 @@ class TestIasValue(unittest.TestCase):
             "props":{"key1":"value1","key2":"value2"}}"""
             
             
-    jSonStr2 = """{"value":"SET_HIGH","pluginProductionTStamp":"1970-01-01T00:00:00.1",
+    jSonStr2 = """{"value":"SET_UNACK:HIGH","pluginProductionTStamp":"1970-01-01T00:00:00.1",
             "sentToConverterTStamp":"1970-01-01T00:00:00.2", "receivedFromPluginTStamp":"1970-01-01T00:00:00.3",
             "convertedProductionTStamp":"1970-01-01T00:00:00.4","sentToBsdbTStamp":"1970-01-01T00:00:00.5",
             "readFromBsdbTStamp":"1970-01-01T00:00:00.6","dasuProductionTStamp":"1970-01-01T00:00:00.7",
@@ -66,7 +68,7 @@ class TestIasValue(unittest.TestCase):
     def testName(self):
         iasValue = IasValue.fromJSon(self.jSonStr)
         
-        self.assertEqual(iasValue.id,"TooManyHighTempAlarm")
+        self.assertEqual(iasValue.id, "TooManyHighTempAlarm")
         
         expectedProps= {"key1":"value1","key2":"value2"}
         expectedDeps = ["(MonitoredSystemID:MONITORED_SOFTWARE_SYSTEM)@(PluginID:PLUGIN)@(ConverterID:CONVERTER)@(Temperature3:IASIO)",
@@ -75,7 +77,7 @@ class TestIasValue(unittest.TestCase):
             "(MonitoredSystemID:MONITORED_SOFTWARE_SYSTEM)@(PluginID:PLUGIN)@(ConverterID:CONVERTER)@(Temperature1:IASIO)"]
         
         
-        self.assertEqual(iasValue.value,"CLEARED")
+        self.assertEqual(iasValue.value,"CLEAR_ACK:MEDIUM")
         self.assertEqual(iasValue.valueTypeStr,"ALARM")
         self.assertEqual(iasValue.valueType,IASType.ALARM)
         self.assertEqual(iasValue.fullRunningId,"(SupervId:SUPERVISOR)@(DasuWith7ASCEs:DASU)@(ASCE-AlarmsThreshold:ASCE)@(TooManyHighTempAlarm:IASIO)")
@@ -98,7 +100,10 @@ class TestIasValue(unittest.TestCase):
         expectedDeps2 = ["(SupervId1:SUPERVISOR)@(dasuVID1:DASU)@(asceVID1:ASCE)@(AlarmID1:IASIO)","(SupervId2:SUPERVISOR)@(dasuVID2:DASU)@(asceVID2:ASCE)@(AlarmID2:IASIO)"]
         
         iasValue2 = IasValue.fromJSon(self.jSonStr2)
-        self.assertEqual(iasValue2.value,"SET_HIGH")
+        self.assertEqual(iasValue2.value, "SET_UNACK:HIGH")
+        alarm = Alarm.fromString(iasValue2.value)
+        assert(alarm.alarmState==AlarmState.SET_UNACK)
+        assert(alarm.priority==Priority.HIGH)
         self.assertEqual(iasValue2.valueTypeStr,"ALARM")
         self.assertEqual(iasValue2.valueType,IASType.ALARM)
         self.assertEqual(iasValue2.fullRunningId,"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(AlarmType-ID:IASIO)")

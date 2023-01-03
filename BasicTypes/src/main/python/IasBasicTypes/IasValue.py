@@ -189,7 +189,7 @@ class IasValue(object):
         # If the type is alarm, check if it is valid
         valueType=IASType.fromString(valueTypeStr)
         if valueType is IASType.ALARM:
-            alarm =Alarm.fromString(value)
+            alarm = Alarm.fromString(value)
         
         iasValue = IasValue(value,valueType,fullRunningId,modeStr,iasValidityStr)
         
@@ -230,15 +230,15 @@ class IasValue(object):
         """
         Extract the id from the fullRunningId
         """
-        if frid is None or frid is "":
-            raise ValueError("The FullRuning ID cannot be empty")
+        if frid is None or frid=="":
+            raise ValueError("The FullRunning ID cannot be empty")
         
         parts = frid.split("@")
         iasioIdList = [t for t in parts if t.count("IASIO")]
         if len(iasioIdList)!=1:
             raise ValueError("Invalid format of fullRunningId"+frid)
         iasioId=iasioIdList[0]
-        if iasioId[0] is not '(' or iasioId[len(iasioId)-1] is not ')' or iasioId.count(':') is not 1:
+        if iasioId[0]!='(' or iasioId[len(iasioId)-1]!=')' or iasioId.count(':')!=1:
             raise ValueError("Invalid format of fullRunningId"+frid)
         return iasioId[1:-1].split(":")[0]
     

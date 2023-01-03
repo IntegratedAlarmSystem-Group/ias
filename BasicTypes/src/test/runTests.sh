@@ -10,3 +10,5 @@ iasRun org.scalatest.run org.eso.ias.basictypes.test.TestAlarm
 iasRun org.scalatest.run org.eso.ias.basictypes.test.TestOperationalMode
 testIasValue
 testTimestamp
+testAlarm
+
