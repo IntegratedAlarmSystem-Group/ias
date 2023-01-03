@@ -102,8 +102,17 @@ public class Alarm {
 	 * @return the alarm buit from the string
 	 */
 	public static Alarm valueOf(String value) {
+		if (value==null || value.isBlank()) {
+			throw new IllegalArgumentException("Empty or null string to convert to an Alarm");
+		}
 		System.out.println("ALARM STRING="+value);
-		throw new UnsupportedOperationException("Not yet implemented");
+		String[] parts = value.split(":");
+		if (parts.length!=2) {
+			throw new IllegalArgumentException("Malformed alarm string to parse: "+value);
+		}
+		AlarmState state = AlarmState.valueOf(parts[0]);
+		Priority priority = Priority.valueOf(parts[1]);
+		return new Alarm(state, priority);
 	}
 	
 	
