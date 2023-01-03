@@ -14,6 +14,7 @@ import org.eso.ias.asce.exceptions.UnexpectedNumberOfInputsException;
 import org.eso.ias.asce.transfer.IasIOJ;
 import org.eso.ias.asce.transfer.JavaTransferExecutor;
 import org.eso.ias.asce.transfer.TransferExecutor;
+import org.eso.ias.types.Priority;
 
 /**
  * The TF implementing a Min/Max threshold TF  (there is also
@@ -98,8 +99,8 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor<Alarm> {
 	 */
 	public final double lowOff = getValue(props, MinMaxThresholdTFJava.lowOffPropName, Double.MIN_VALUE);
 	
-	public final Alarm alarmSet = Alarm.valueOf(
-			props.getProperty(MinMaxThresholdTFJava.alarmPriorityPropName, Alarm.getSetDefault().toString()));
+	public final Priority alarmPriority = Priority.valueOf(
+			props.getProperty(MinMaxThresholdTFJava.alarmPriorityPropName, Priority.getDefaultPriority().toString()));
 	
 	/** 
 	 * Additional properties
@@ -205,21 +206,17 @@ public class MinMaxThresholdTFJava extends JavaTransferExecutor<Alarm> {
 		default:
 			throw new TypeMismatchException(iasio.getFullrunningId());
 		}
-		
-		System.out.println("===>"+actualOutput.getId()+" "+actualOutput.getValue());
-		boolean wasActivated = actualOutput.getValue().isPresent() && actualOutput.getValue().get().isSet();
+
+		Alarm actualAlarm = actualOutput.getValue().orElse(Alarm.getInitialAlarmState(alarmPriority));
+		boolean wasActivated = actualAlarm.isSet();
 		
 		boolean condition = 
 				hioValue >= highOn || hioValue <= lowOn ||
 				wasActivated && (hioValue>=highOff || hioValue<=lowOff);
 				
 				
-		Alarm newOutput;
-		if (condition) {
-			newOutput=alarmSet;
-		} else {
-			newOutput=Alarm.cleared();
-		}
+		Alarm newOutput =actualAlarm.setIf(condition);
+
 		additionalProperties.put("actualValue", Double.valueOf(hioValue).toString());
 		return actualOutput.updateValue(newOutput).updateMode(iasio.getMode()).updateProps(additionalProperties);
 	}
