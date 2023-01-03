@@ -4,7 +4,7 @@ package org.eso.ias.types;
  * The priorities of the alarms
  * 
  * The priorities are defined from the lowest to the highest
- * so that the hightset priority has also the greater ordinal number
+ * so that the highest priority has also the greater ordinal number
  */
 public enum Priority {
     LOW,
