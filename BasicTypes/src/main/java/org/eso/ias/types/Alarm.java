@@ -31,12 +31,12 @@ public class Alarm {
 
 	/**
 	 * Build and return the alarm that corresponds to the start state
-	 * of the alarm state machine (i.e. cleared, and unacked) with default priority.
+	 * of the alarm state machine (i.e. cleared, and acknowledged) with default priority.
 	 *
 	 * @return the alarm of the start state of the state machine
 	 */
 	public static Alarm getInitialAlarmState() {
-		return new Alarm(AlarmState.CLEAR_UNACK, Priority.getDefaultPriority());
+		return new Alarm(AlarmState.CLEAR_ACK, Priority.getDefaultPriority());
 	}
 
 	/**
