@@ -2,6 +2,7 @@ import logging
 import sys
 
 from IasBasicTypes.Alarm import Alarm
+from IasBasicTypes.Priority import Priority
 from IasBasicTypes.IasType import IASType
 from IasBasicTypes.OperationalMode import OperationalMode
 from IasTransferFunction.TransferFunction import TransferFunction
@@ -73,9 +74,9 @@ class MinMaxThreshold(TransferFunction):
 
         priorityStr = props.get(self.priorityPropName)
         if priorityStr is not None:
-            self.alarmSet = Alarm.fromString(priorityStr)
+            self.priority = Priority.value_of(priorityStr)
         else:
-            self.alarmSet = Alarm.SET_MEDIUM
+            self.alarmSet = Priority.get_default_priority()
 
     def initialize(self, inputsInfo, outputInfo):
         '''
@@ -122,17 +123,17 @@ class MinMaxThreshold(TransferFunction):
 
         if actualOutput.value is not None and isinstance(actualOutput.value,str):
             actualOutput.value = IASType.ALARM.convertStrToValue(actualOutput.value)
-        wasActivated = actualOutput.value is not None and actualOutput.value.isSet()
+        wasActivated = actualOutput.value is not None and actualOutput.value.is_set()
 
 
         condition =  inputValue.value >= self.highOn or \
                      inputValue.value <= self.lowOn or \
                      wasActivated and (inputValue.value>=self.highOff or inputValue.value<=self.lowOff)
 
-        newValue = None
-        if condition:
-            newValue = self.alarmSet
-        else:
-            newValue = Alarm.CLEARED
+        actualValue = actualOutput.value
+        if actualValue is None:
+            actualValue = Alarm.get_initial_alarmstate(self.priority)
+        print(">>>>>>>>>>>>>>>>>>", type(actualValue))
+        newValue = actualValue.set_if(condition)
 
         return actualOutput.updateProps(props).updateMode(inputMode).updateValue(newValue)

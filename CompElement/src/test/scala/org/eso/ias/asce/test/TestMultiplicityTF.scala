@@ -21,7 +21,7 @@ class TestMultiplicityTF extends AnyFlatSpec with BeforeAndAfterEach {
   
   val props = new Properties()
   props.put(MultiplicityTF.ThresholdPropName,"3")
-  props.put(MultiplicityTF.alarmPriorityPropName,Alarm.SET_LOW.toString)
+  props.put(MultiplicityTF.alarmPriorityPropName, Priority.LOW.toString)
   
   val threadFactory = new TestThreadFactory()
   
@@ -112,15 +112,14 @@ class TestMultiplicityTF extends AnyFlatSpec with BeforeAndAfterEach {
    * @param asce: the ASCE to check the alarm state of the output
    * @param alarmState: The expected alarm in output
    */
-  def checkAlarmActivation(asce: ComputingElement[Alarm], alarmState: Alarm): Boolean = {
+  def checkAlarmActivation(asce: ComputingElement[Alarm], isSet: Boolean): Boolean = {
     assert(asce.isOutputAnAlarm,"The output is not an alarm")
     val iasio = asce.output
     assert(iasio.iasType==IASTypes.ALARM)
 
-
     iasio.value.forall(a => {
-      logger.info("Checking if {} is {}",a,alarmState)
-      a==alarmState
+      logger.info("Checking if {} activation state is {}",a,isSet)
+      a.asInstanceOf[Alarm].isSet==isSet
     })
   }
 
@@ -134,12 +133,12 @@ class TestMultiplicityTF extends AnyFlatSpec with BeforeAndAfterEach {
     require(n>0)
     val inputsMPsList = inputsMPs.toList
     val list = for (i <- inputsMPsList.indices) yield {
-      if (i<=n-1) inputsMPsList(i).updateValue(Some(Alarm.SET_HIGH)).updateProdTStamp(System.currentTimeMillis()).toIASValue()
-      else inputsMPsList(i).updateValue(Some(Alarm.CLEARED)).updateProdTStamp(System.currentTimeMillis()).toIASValue()
+      if (i<=n-1) inputsMPsList(i).updateValue(Some(Alarm.getInitialAlarmState(Priority.HIGH).set())).updateProdTStamp(System.currentTimeMillis()).toIASValue()
+      else inputsMPsList(i).updateValue(Some(Alarm.getInitialAlarmState())).updateProdTStamp(System.currentTimeMillis()).toIASValue()
     }
     val ret: Set[IASValue[_]] = list.toSet
     assert(ret.size==inputsMPs.size)
-    assert(ret.count(value => value.value==Alarm.SET_HIGH)==n)
+    assert(ret.count(value => value.value.asInstanceOf[Alarm].isSet)==n)
     ret
   }
 
@@ -162,43 +161,43 @@ class TestMultiplicityTF extends AnyFlatSpec with BeforeAndAfterEach {
 
   it must "run the multiplicity TF" in {
     // Change all inputs do  trigger the TF
-    val changedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getSetDefault)).updateProdTStamp(System.currentTimeMillis()).toIASValue())
+    val changedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getInitialAlarmState.set())).updateProdTStamp(System.currentTimeMillis()).toIASValue())
     scalaCompWithPriority.get.update(changedMPs)
-    assert(checkAlarmActivation(scalaCompWithPriority.get,Alarm.SET_LOW))
+    assert(checkAlarmActivation(scalaCompWithPriority.get, true))
 
     // Clearing all must disable
-    val clearedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.CLEARED)).updateProdTStamp(System.currentTimeMillis()).toIASValue())
+    val clearedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getInitialAlarmState)).updateProdTStamp(System.currentTimeMillis()).toIASValue())
     scalaCompWithPriority.get.update(clearedMPs)
-    assert(checkAlarmActivation(scalaCompWithPriority.get,Alarm.CLEARED))
+    assert(checkAlarmActivation(scalaCompWithPriority.get, false))
 
     val act1=activate(1)
     scalaCompWithPriority.get.update(act1)
-    assert(checkAlarmActivation(scalaCompWithPriority.get,Alarm.CLEARED))
+    assert(checkAlarmActivation(scalaCompWithPriority.get, false))
 
     val act2=activate(2)
     scalaCompWithPriority.get.update(act2)
-    assert(checkAlarmActivation(scalaCompWithPriority.get,Alarm.CLEARED))
+    assert(checkAlarmActivation(scalaCompWithPriority.get, false))
 
     val act3=activate(3)
     scalaCompWithPriority.get.update(act3)
-    assert(checkAlarmActivation(scalaCompWithPriority.get,Alarm.SET_LOW))
+    assert(checkAlarmActivation(scalaCompWithPriority.get, true))
 
     val act4=activate(4)
     scalaCompWithPriority.get.update(act4)
-    assert(checkAlarmActivation(scalaCompWithPriority.get,Alarm.SET_LOW))
+    assert(checkAlarmActivation(scalaCompWithPriority.get, true))
 
     // Activate all again
     scalaCompWithPriority.get.update(changedMPs)
-    assert(checkAlarmActivation(scalaCompWithPriority.get,Alarm.SET_LOW))
+    assert(checkAlarmActivation(scalaCompWithPriority.get, true))
 
     // Clear all again
     scalaCompWithPriority.get.update(clearedMPs)
-    assert(checkAlarmActivation(scalaCompWithPriority.get,Alarm.CLEARED))
+    assert(checkAlarmActivation(scalaCompWithPriority.get, false))
   }
 
   it must "set the IDs of active inputs in a property" in {
     // Change all inputs do  trigger the TF
-    val changedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getSetDefault)).updateProdTStamp(System.currentTimeMillis()).toIASValue())
+    val changedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getInitialAlarmState.set())).updateProdTStamp(System.currentTimeMillis()).toIASValue())
     scalaCompWithPriority.get.update(changedMPs)
     assert(scalaCompWithPriority.get.output.value.isDefined)
     assert(scalaCompWithPriority.get.output.value.get.asInstanceOf[Alarm].isSet)
@@ -213,7 +212,7 @@ class TestMultiplicityTF extends AnyFlatSpec with BeforeAndAfterEach {
     inputsMPs.map(_.id.id).forall(activeIDs.contains(_))
 
     // Clear the output and check that the property is not defined
-    val clearedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.CLEARED)).updateProdTStamp(System.currentTimeMillis()).toIASValue())
+    val clearedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getInitialAlarmState)).updateProdTStamp(System.currentTimeMillis()).toIASValue())
     scalaCompWithPriority.get.update(clearedMPs)
     assert(!scalaCompWithPriority.get.output.value.get.asInstanceOf[Alarm].isSet)
     assert(scalaCompWithPriority.get.output.props.isEmpty)
@@ -235,7 +234,7 @@ class TestMultiplicityTF extends AnyFlatSpec with BeforeAndAfterEach {
     // Merge is not tested here!
 
     // Change all inputs do  trigger the TF
-    val changedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getSetDefault)).updateProdTStamp(System.currentTimeMillis()).toIASValue())
+    val changedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getInitialAlarmState.set())).updateProdTStamp(System.currentTimeMillis()).toIASValue())
     scalaCompWithPriority.get.update(changedMPs)
     assert(scalaCompWithPriority.get.output.value.isDefined)
     assert(scalaCompWithPriority.get.output.value.get.asInstanceOf[Alarm].isSet)
@@ -247,7 +246,7 @@ class TestMultiplicityTF extends AnyFlatSpec with BeforeAndAfterEach {
 
     // NOw CLEAR the alarm assigning properties to the inputs
     // In this case the properties of the inputs must not be propagated to the output
-    val clearedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.CLEARED)).updateProdTStamp(System.currentTimeMillis()).toIASValue())
+    val clearedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getInitialAlarmState)).updateProdTStamp(System.currentTimeMillis()).toIASValue())
     val cleareddWithProps = clearedMPs.map(iasValue => {
       // Add a random property
       val prop = Map(iasValue.id->System.currentTimeMillis().toString)
@@ -303,37 +302,37 @@ class TestMultiplicityTF extends AnyFlatSpec with BeforeAndAfterEach {
     // The same test as before but now the TF ruturn the inputs with the highest priority
 
    // Change all inputs do  trigger the TF
-    val changedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getSetDefault)).updateProdTStamp(System.currentTimeMillis()).toIASValue())
+    val changedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getInitialAlarmState.set())).updateProdTStamp(System.currentTimeMillis()).toIASValue())
     scalaCompWithNoPriority.get.update(changedMPs)
-    assert(checkAlarmActivation(scalaCompWithNoPriority.get,Alarm.SET_MEDIUM))
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get, true))
 
     // Clearing all must disable
-    val clearedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.CLEARED)).updateProdTStamp(System.currentTimeMillis()).toIASValue())
+    val clearedMPs = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getInitialAlarmState)).updateProdTStamp(System.currentTimeMillis()).toIASValue())
     scalaCompWithNoPriority.get.update(clearedMPs)
-    assert(checkAlarmActivation(scalaCompWithNoPriority.get,Alarm.CLEARED))
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get, false))
 
     val act1=activate(1)
     scalaCompWithNoPriority.get.update(act1)
-    assert(checkAlarmActivation(scalaCompWithNoPriority.get,Alarm.CLEARED))
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get, false))
 
     val act2=activate(2)
     scalaCompWithNoPriority.get.update(act2)
-    assert(checkAlarmActivation(scalaCompWithNoPriority.get,Alarm.CLEARED))
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get, false))
 
     val act3=activate(3)
     scalaCompWithNoPriority.get.update(act3)
-    assert(checkAlarmActivation(scalaCompWithNoPriority.get,Alarm.SET_HIGH))
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get, true))
 
     val act4=activate(4)
     scalaCompWithNoPriority.get.update(act4)
-    assert(checkAlarmActivation(scalaCompWithNoPriority.get,Alarm.SET_HIGH))
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get, true))
 
     // Activate all again
     scalaCompWithNoPriority.get.update(changedMPs)
-    assert(checkAlarmActivation(scalaCompWithNoPriority.get,Alarm.SET_MEDIUM))
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get, true))
 
     // Clear all again
     scalaCompWithNoPriority.get.update(clearedMPs)
-    assert(checkAlarmActivation(scalaCompWithNoPriority.get,Alarm.CLEARED))
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get, false))
   }
 }
