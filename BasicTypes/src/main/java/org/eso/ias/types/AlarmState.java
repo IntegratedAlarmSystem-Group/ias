@@ -38,7 +38,8 @@ public enum AlarmState {
     /** The alarm has been Acked (by operator) */
     public AlarmState ack() {
 		switch (this) {
-			case SET_ACK, CLEAR_ACK: return this;
+			case SET_ACK:
+			case CLEAR_ACK: return this;
 			case SET_UNACK: return SET_ACK;
 			case CLEAR_UNACK: return CLEAR_ACK;
 			default: throw new UnsupportedOperationException("Unknown alarm state "+this);
@@ -48,8 +49,10 @@ public enum AlarmState {
     /** The alarm is set (by the TF) */
     public AlarmState set() {
 		switch (this) {
-			case SET_ACK, SET_UNACK: return this;
-			case CLEAR_ACK, CLEAR_UNACK: return SET_UNACK;
+			case SET_ACK:
+			case SET_UNACK: return this;
+			case CLEAR_ACK:
+			case CLEAR_UNACK: return SET_UNACK;
 			default: throw new UnsupportedOperationException("Unknown alarm state "+this);
 		}
 	}
@@ -57,7 +60,8 @@ public enum AlarmState {
     /** The alarm is clear (by the TF) */
     public AlarmState clear() {
 		switch (this) {
-			case CLEAR_ACK, CLEAR_UNACK: return this;
+			case CLEAR_ACK:
+			case CLEAR_UNACK: return this;
 			case SET_ACK: return CLEAR_ACK;
 			case SET_UNACK: return CLEAR_UNACK;
 			default: throw new UnsupportedOperationException("Unknown alarm state "+this);
