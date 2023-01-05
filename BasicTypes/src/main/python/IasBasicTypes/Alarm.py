@@ -30,8 +30,18 @@ class Alarm():
         if alarmState is None or priority is None:
             raise ValueError("Invalid None priority or alarm state")
 
+        if not isinstance(alarmState, AlarmState):
+            raise ValueError("Cannot build the alarm: wrong type of alarm state given")
         self.alarmState = alarmState
+
+        if not isinstance(priority, Priority):
+            raise ValueError("Cannot build the alarm: wrong type of priority given")
         self.priority = priority
+
+        # String representation of the Alarm returned by to_string()
+        # It is useful to have it available as a property for translating python alrms in java alarm
+        # by jep (see PythonExecutorTF.java)
+        self.string_repr = f"{self.alarmState.to_string()}:{self.priority.to_string()}"
 
     def __eq__(self, other):
         '''
@@ -89,6 +99,12 @@ class Alarm():
             return Alarm(newState, self.priority)
 
     def set_if(self, condition):
+        '''
+        Set or unset the alarm depending on the boolean condition
+
+        :param condition: the condition to set or clear the alarm
+        :return: the alarm set or cleared
+        '''
         if condition:
             return self.set()
         else:
@@ -129,22 +145,21 @@ class Alarm():
         """
         :return: the string representation of the alarm
         """
-        return f"{self.alarmState.to_string()}:{self.priority.to_string()}"
+        return self.string_repr
 
     @staticmethod
     def fromString(alarmString):
         '''
-        :param alarmString the string representation of an Alarm like
-                      Alarm.SET_CRITICAL or SET_MEDIUM
+        :param alarmString the string representation of an Alarm as produced by self.to_string()
         :return the alarm represented by the passed a string
         '''
         if alarmString is None or alarmString=="":
             raise ValueError("Invalid string representation of an alarmString")
 
         temp = str(alarmString)
-        parts = alarmString.split(":")
+        parts = temp.split(":")
         if len(parts)!=2:
-            raise ValueError(f"Malformed alarm string: [$alarmString]")
+            raise ValueError("Malformed alarm string: "+temp)
 
         alState = AlarmState.value_of(parts[0])
         prio = Priority.value_of(parts[1])
