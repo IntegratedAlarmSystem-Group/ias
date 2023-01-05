@@ -4,7 +4,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
 
-import org.eso.ias.converter.Converter;
 import org.eso.ias.types.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -55,7 +54,7 @@ public abstract class TransferExecutor {
     /**
      * The logger
      */
-    private static final Logger logger = LoggerFactory.getLogger(Converter.class);
+    private static final Logger logger = LoggerFactory.getLogger(TransferExecutor.class);
 	
 	/**
 	 * Constructor
