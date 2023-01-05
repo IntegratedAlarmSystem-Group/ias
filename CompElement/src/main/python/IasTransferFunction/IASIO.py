@@ -1,6 +1,6 @@
 from IasBasicTypes.OperationalMode import OperationalMode
 
-class IASIO(object):
+class IASIO():
     '''
     The IASIO object passed to python TFs.
     It is the python implementation of the java IasIOJ.
