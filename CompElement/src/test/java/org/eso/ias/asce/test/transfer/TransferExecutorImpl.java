@@ -60,7 +60,7 @@ public class TransferExecutorImpl  extends JavaTransferExecutor<Alarm> {
 			System.out.println(input);
 		}
 		IasIOJ<Alarm> newValue = actualOutput.updateMode(OperationalMode.SHUTTEDDOWN);
-		newValue=newValue.updateValue(Alarm.getSetDefault()); 
+		newValue=newValue.updateValue(Alarm.getInitialAlarmState());
 		System.out.println("Returning: "+newValue);
 		return newValue;
 	}

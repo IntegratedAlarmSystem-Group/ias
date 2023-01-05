@@ -54,7 +54,7 @@ class TestTransferFunction(TransferFunction):
         :param actualOutput: the actual output (IASIO)
         :return: the new output of the ASCE (IASIO)
         '''
-        logging.debug("Running python MinMaxThreshold TF of ASCE %s",self.asceRunningId)
+        logging.debug("Running python TestTransferFunction TF of ASCE %s",self.asceRunningId)
 
         inputIASIO = compInputs[self.idOfInput]
         inputValue = inputIASIO.value

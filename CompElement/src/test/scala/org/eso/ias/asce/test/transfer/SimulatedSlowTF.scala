@@ -69,8 +69,8 @@ class SimulatedSlowTF(
       SimulatedSlowTF.logger.info("Waked up")
     }
 
-    if (inputValue) actualOutput.updateValue(Alarm.getSetDefault)
-    else actualOutput.updateValue(Alarm.CLEARED)
+    if (inputValue) actualOutput.updateValue(Alarm.getInitialAlarmState.set())
+    else actualOutput.updateValue(Alarm.getInitialAlarmState)
   }
 }
 
