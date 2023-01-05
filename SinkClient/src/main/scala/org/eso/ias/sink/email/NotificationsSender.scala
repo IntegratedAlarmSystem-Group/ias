@@ -165,7 +165,7 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
     require(Option(alarmId).isDefined && !alarmId.isEmpty)
     require(Option(state).isDefined)
     val recipients = iasValuesDaos(Identifier.getBaseId(alarmId)).getEmails.split(",")
-    NotificationsSender.msLogger.debug("Sending notifcation of alarm {} status change to {}", alarmId, recipients.mkString(","))
+    NotificationsSender.msLogger.debug("Sending notification of alarm {} status change to {}", alarmId, recipients.mkString(","))
     val sendOp = Try(sender.notify(recipients.map(_.trim).toList, alarmId, state))
     if (sendOp.isFailure) NotificationsSender.msLogger.error("Error sending alarm state notification notification to {}", recipients.mkString(","), sendOp.asInstanceOf[Failure[_]].exception)
   }
