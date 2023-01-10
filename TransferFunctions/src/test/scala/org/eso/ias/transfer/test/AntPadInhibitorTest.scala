@@ -175,7 +175,7 @@ class AntPadInhibitorTest extends AnyFlatSpec with BeforeAndAfterEach {
     val ret = nonTypedTF.eval(inputMap,out)
 
     assert(ret.value.isDefined)
-    assert(!ret.value.get.isSet)
+    assert(ret.value.get.isCleared)
     assert(ret.props.isEmpty)
   }
 

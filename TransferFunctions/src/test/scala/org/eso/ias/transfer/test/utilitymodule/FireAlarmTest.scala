@@ -84,7 +84,7 @@ class FireAlarmTest extends AnyFlatSpec with BeforeAndAfterEach {
     val output = fireTransfer.eval(Map(statusWordId-> new IasIO(input)),out)
     assert(output.value.isDefined)
     assert(output.value.get.isSet)
-    assert(output.value.get.priority==Priority.CRITICAL)
+    assert(output.value.get.priority==Priority.getDefaultPriority)
 
     val statusWord2 = new StatusWordBuilder(List(1,2, 3,5,6,7))
     val input2: InOut[String] = swInputInOut.updateValue(Some(statusWord2.statusWordString))
