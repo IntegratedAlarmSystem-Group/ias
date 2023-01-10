@@ -15,10 +15,10 @@ from IasBasicTypes.OperationalMode import OperationalMode
 
 class JsonMsg(object):
     '''
-    This class encapsulate the field of the message to send
+    Objects of this class encapsulate the field of the message to send
     to the java plugin as JSON string
     
-    It is the  counter part of the java org.eso.ias.plugin.network.MessageDao
+    It is the counter part of the java org.eso.ias.plugin.network.MessageDao
     
     The type must be one of types supported by the IAS as defined in
     org.eso.ias.types.IASTypes
@@ -124,7 +124,7 @@ class JsonMsg(object):
             mode = str(self.operationalMode).split('.')[1]
         
         if self.valueType==IASType.ALARM:
-            value = str(self.value).split(".")[1]
+            value = self.value.to_string()
         elif self.valueType==IASType.ARRAYOFLONGS or self.valueType==IASType.ARRAYOFDOUBLES:
             value = str(self.value)
         else:
