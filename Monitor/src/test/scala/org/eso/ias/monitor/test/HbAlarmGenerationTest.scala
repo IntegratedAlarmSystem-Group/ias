@@ -163,7 +163,7 @@ class HbAlarmGenerationTest extends AnyFlatSpec with BeforeAndAfterAll with Befo
     MonitorAlarm.values().foreach( ma => {
       logger.info("Alarm {} is {}",ma.name(),ma.getAlarm)
     })
-    MonitorAlarm.values().foreach( ma => assert(ma.getAlarm==Alarm.getInitialAlarmState,ma.toString+" should be CLEAR"))
+    MonitorAlarm.values().foreach( ma => assert(ma.getAlarm.isCleared, ma.toString+" should be CLEAR"))
 
     logger.info("Giving time to invalidate")
     Thread.sleep(TimeUnit.MILLISECONDS.convert(threshold+1,TimeUnit.SECONDS))

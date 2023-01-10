@@ -141,7 +141,9 @@ class AntPadInhibitor(asceId: String, asceRunningId: String, validityTimeFrame:L
       OperationalMode.UNKNOWN
     }
 
-    val alarmOut = actualAlarm.setIf(foundAntennaInPad).setPriority(alarmInput.value.get.asInstanceOf[Alarm].priority)
+    val alarmOut =
+      actualAlarm.setIf(foundAntennaInPad && alarmInput.value.get.asInstanceOf[Alarm].isSet)
+        .setPriority(alarmInput.value.get.asInstanceOf[Alarm].priority)
 
     val outputWithUpdatedMode=actualOutput.updateValue(alarmOut).updateMode(mode)
     if (foundAntennaInPad && alarmOut.isSet)

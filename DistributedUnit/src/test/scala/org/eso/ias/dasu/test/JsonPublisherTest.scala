@@ -87,11 +87,11 @@ class JsonPublisherTest extends AnyFlatSpec {
   
   behavior of "The DASU"
   
-  it must "produce the output when a new set inputs is notified" in {
+  it must "produce the output when a new set of inputs is notified" in {
     // Start the getting of events in the DASU
     dasu.start()
     val inputs: Set[IASValue[_]] = Set(buildValue(0))
-    // Sumbit the inputs
+    // Submit the inputs
     inputsProvider.sendInputs(inputs)
     
     // Read the produced JSON file
