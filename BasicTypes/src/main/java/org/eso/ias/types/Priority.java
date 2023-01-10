@@ -37,7 +37,7 @@ public enum Priority {
      * The priority higher than this priority
      * 
      * @return the priority higher than this one or
-     *           this if it is the highest priority
+     *         this if it is the highest priority
      */
     public Priority getHigherPrio() {
         if (this==CRITICAL) {
