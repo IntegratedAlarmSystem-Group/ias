@@ -28,6 +28,15 @@ public enum AlarmState {
 
 	/**
 	 *
+	 * @return <code>true</code> if the alarm is cleared;
+	 *         <code>false</code> otherwise
+	 */
+	public final boolean isCleared() {
+		return this==CLEAR_ACK || this==CLEAR_UNACK;
+	}
+
+	/**
+	 *
 	 * @return true if the alarm has been acknowledged
 	 * 		   false otherwise
 	 */
