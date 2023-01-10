@@ -92,13 +92,13 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 	private final Map<String, MonitorPointData> receivedMonitorPoints = Collections.synchronizedMap(new HashMap<>());
 
 	@BeforeAll
-	private static  void beforeAll() {
+	public static  void beforeAll() {
 		stringProducer = new SimpleStringProducer(serverName+":"+port,"ProducerId");
 		stringProducer.setUp();
 	}
 
 	@AfterAll
-	private static void afterAll() {
+	public static void afterAll() {
 		stringProducer.tearDown();
 	}
 	
