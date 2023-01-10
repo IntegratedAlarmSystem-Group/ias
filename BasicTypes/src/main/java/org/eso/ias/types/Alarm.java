@@ -46,7 +46,7 @@ public class Alarm {
 	 * @return the alarm of the start state of the state machine
 	 */
 	public static Alarm getInitialAlarmState(Priority priority) {
-		return new Alarm(AlarmState.CLEAR_UNACK, priority);
+		return getInitialAlarmState().setPriority(priority);
 	}
 
 	/**
