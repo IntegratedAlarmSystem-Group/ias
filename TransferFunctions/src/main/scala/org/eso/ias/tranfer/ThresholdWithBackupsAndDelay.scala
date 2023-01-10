@@ -2,13 +2,12 @@ package org.eso.ias.tranfer
 
 import java.util.Properties
 import java.util.concurrent.TimeUnit
-
 import com.typesafe.scalalogging.Logger
 import org.eso.ias.asce.exceptions.{PropsMisconfiguredException, TypeMismatchException}
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types.{Alarm, IasValidity, OperationalMode}
-import org.eso.ias.types.IASTypes._
+import org.eso.ias.types.{Alarm, IasValidity, OperationalMode, Priority}
+import org.eso.ias.types.IASTypes.*
 
 /**
   * This class is very similar to the BackupSelector but in case of a failure
@@ -16,7 +15,7 @@ import org.eso.ias.types.IASTypes._
   * is over (or below) the thresholds to generate an alarm.
   *
   * Monitor points in inputs are assumed to be numeric and for the calculation
-  * are all converted to boolean.
+  * are all converted to double.
   *
   * Thresholds are defined in the same way they are defined in the MinMaxThresholdTF.
   *
@@ -26,7 +25,7 @@ import org.eso.ias.types.IASTypes._
   * The ThresholdWithBackupsAndDelay generates an alarm if the value of the main monitor point
   * (or, if not available, one of the backups) is greater (lower) then the threshold.
   * If a delay is given, the generation or clearing of the alarm is done only after
-  * the timeout elaspes.
+  * the timeout elapses.
   *
   * @param asceId : the ID of the ASCE
   * @param asceRunningId: the runningID of the ASCE
@@ -78,7 +77,7 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
   val idOfMainInput: Option[String] = Option(props.getProperty(ThresholdWithBackupsAndDelay.MaindIdPropName))
 
   /** The priority to SET */
-  val alarmPriority: Alarm = Alarm.valueOf(
+  val alarmPriority: Priority = Priority.valueOf(
     props.getProperty(ThresholdWithBackupsAndDelay.AlarmPriorityPropName,ThresholdWithBackupsAndDelay.AlarmPriorityDefault.name()))
 
   /**
@@ -155,11 +154,6 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
         Map(ThresholdWithBackupsAndDelay.MaindIdPropName->lowOff.toString))
     }
 
-    if (alarmPriority==Alarm.CLEARED) {
-      throw new PropsMisconfiguredException(
-        Map(ThresholdWithBackupsAndDelay.AlarmPriorityPropName->alarmPriority.toString))
-    }
-
     ThresholdWithBackupsAndDelay.logger.info("TF of ASCE [{}]: ID of the main IASIO: [{}]",asceId,idOfMainInput.get)
     ThresholdWithBackupsAndDelay.logger.info("TF of ASCE [{}]: priority of alarm: [{}]",asceId,alarmPriority.name())
 
@@ -210,10 +204,10 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
 
   /**
     * Check if the output must be SET or CLEARED because
-    * the value of the main input (or one of the backup) is
-    * over the threshold
+    * the value of the main input (or one of the backups) is
+    * greater than the threshold
     *
-    * @param wasSet truee if the alarm was set
+    * @param wasSet true if the alarm was set
     * @param doubleValues the values of the IASIOs in input
     * @return true if the alarm must be set
     */
@@ -236,10 +230,10 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
 
 
     // The actual Alarm
-    val actualOutputAlarm = actualOutput.value
+    val actualOutputAlarm: Alarm = actualOutput.value.getOrElse(Alarm.getInitialAlarmState)
 
     // If not yet initialized, assumed alarm not set
-    val wasSet = actualOutputAlarm.exists(_ != Alarm.cleared())
+    val wasSet: Boolean = actualOutputAlarm.isSet
 
     ThresholdWithBackupsAndDelay.logger.debug("TF of ASCE[{}]: wasSet={}",asceId,wasSet)
 
@@ -256,17 +250,17 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
       else mustBeSetByThreshold(wasSet, iasioVals)
     }
     // The alarm to set in the output by the Threshold only
-    val requestedAlarmByThreshold: Alarm = if (toBeSetByThreshold) alarmPriority else Alarm.cleared()
+    val requestedAlarmByThreshold: Alarm = actualOutputAlarm.setIf(toBeSetByThreshold)
     ThresholdWithBackupsAndDelay.logger.debug("TF of ASCE[{}]: requested by thershold={}",asceId,requestedAlarmByThreshold.toString)
 
-    val newOutput = {
-      if (actualOutputAlarm.isEmpty) { // First iteration
+    val newOutput: Alarm = {
+      if (actualOutput.value.isEmpty) { // First iteration
         lastStateChangeTimeRequest = System.currentTimeMillis()
         lastCalcAlarmState = Some(requestedAlarmByThreshold)
-        if (delayToSet>0) Alarm.CLEARED // Always CLEAR at the beginning with delay
+        if (delayToSet>0) actualOutputAlarm // Always CLEAR at the beginning with delay
         else requestedAlarmByThreshold // Immediate activation
-      } else if (actualOutputAlarm.get==requestedAlarmByThreshold) {
-        // If the output imatches with the new request state
+      } else if (actualOutputAlarm.isSet && requestedAlarmByThreshold.isSet) {
+        // If the output matches with the new request state
         // then it does not change
         lastStateChangeTimeRequest = System.currentTimeMillis()
         lastCalcAlarmState = Some(requestedAlarmByThreshold)
@@ -277,7 +271,7 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
         (toBeSetByThreshold && delayFromLastChange>=delayToSet)) {
           requestedAlarmByThreshold
         } else {
-          actualOutputAlarm.get
+          actualOutputAlarm
         }
       }
     }
@@ -330,7 +324,7 @@ object ThresholdWithBackupsAndDelay {
   val AlarmPriorityPropName: String = "org.eso.ias.thresholdbackup.alarm.priority"
 
   /** The priority of the alarm generated by default */
-  val AlarmPriorityDefault: Alarm = Alarm.getSetDefault
+  val AlarmPriorityDefault: Priority = Priority.getDefaultPriority
 
   /** The time to wait (seconds) before setting the alarm  */
   val DelayToSetTimePropName: String = "org.eso.ias.thresholdbackup.delaiedthreshold.settime"

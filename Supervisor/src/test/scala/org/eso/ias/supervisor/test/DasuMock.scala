@@ -76,7 +76,7 @@ extends Dasu(dasuIdentifier,5,6) {
     val asceId = new Identifier("ASCE_ID_RUNTIME_GENERATED",IdentifierType.ASCE,dasuIdentifier)
     val outputId = new Identifier(dasuDao.getOutput.getId,IdentifierType.IASIO,asceId)
     IASValue.build(
-      Alarm.SET_MEDIUM,
+      Alarm.getInitialAlarmState.set(),
       OperationalMode.OPERATIONAL,
       IasValidity.RELIABLE,
       outputId.fullRunningID,

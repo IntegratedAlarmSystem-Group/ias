@@ -140,18 +140,18 @@ class HbAlarmGenerationTest extends AnyFlatSpec with BeforeAndAfterAll with Befo
   }
 
   it must "set CLEAR all the alarms at the beginning" in {
-    MonitorAlarm.values().foreach( ma => assert(ma.getAlarm==Alarm.CLEARED))
+    MonitorAlarm.values().foreach( ma => assert(ma.getAlarm==Alarm.getInitialAlarmState))
   }
 
   it must "SET all alarms if HB not received in time" in {
     Thread.sleep(TimeUnit.MILLISECONDS.convert(threshold+1,TimeUnit.SECONDS))
-    MonitorAlarm.values().foreach( ma => assert(ma.getAlarm!=Alarm.CLEARED))
+    MonitorAlarm.values().foreach( ma => assert(ma.getAlarm!=Alarm.getInitialAlarmState))
   }
 
   it must "CLEAR or SET the alarms when HB is/is not received" in {
     logger.info("Giving time to invalidate")
     Thread.sleep(TimeUnit.MILLISECONDS.convert(threshold+1,TimeUnit.SECONDS))
-    MonitorAlarm.values().foreach( ma => assert(ma.getAlarm!=Alarm.CLEARED))
+    MonitorAlarm.values().foreach( ma => assert(ma.getAlarm!=Alarm.getInitialAlarmState))
     sendHBs(pluginHBs)
     sendHBs(converterHBs)
     sendHBs(clientHBs)
@@ -163,13 +163,13 @@ class HbAlarmGenerationTest extends AnyFlatSpec with BeforeAndAfterAll with Befo
     MonitorAlarm.values().foreach( ma => {
       logger.info("Alarm {} is {}",ma.name(),ma.getAlarm)
     })
-    MonitorAlarm.values().foreach( ma => assert(ma.getAlarm==Alarm.CLEARED,ma.toString+" should be CLEAR"))
+    MonitorAlarm.values().foreach( ma => assert(ma.getAlarm==Alarm.getInitialAlarmState,ma.toString+" should be CLEAR"))
 
     logger.info("Giving time to invalidate")
     Thread.sleep(TimeUnit.MILLISECONDS.convert(threshold+1,TimeUnit.SECONDS))
     MonitorAlarm.values().foreach( ma => {
       logger.info("State of {} is {}",ma.id,ma.getAlarm)
-      assert(ma.getAlarm!=Alarm.CLEARED)}
+      assert(ma.getAlarm!=Alarm.getInitialAlarmState)}
     )
   }
 

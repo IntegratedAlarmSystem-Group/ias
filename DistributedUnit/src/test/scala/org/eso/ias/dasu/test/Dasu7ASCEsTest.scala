@@ -226,7 +226,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
     assert(iasValuesReceived.size==1)
     val outputProducedByDasu = iasValuesReceived.last
     assert(outputProducedByDasu.valueType==IASTypes.ALARM)
-    assert(outputProducedByDasu.value.asInstanceOf[Alarm]== Alarm.CLEARED)
+    assert(outputProducedByDasu.value.asInstanceOf[Alarm]== Alarm.getInitialAlarmState)
     assert(outputProducedByDasu.productionTStamp.isPresent())
     
     // wait to avoid the throttling
@@ -244,7 +244,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
     assert(iasValuesReceived.size==2)
     val outputProducedByDasu2 = iasValuesReceived.last
     assert(outputProducedByDasu2.valueType==IASTypes.ALARM)
-    assert(outputProducedByDasu2.value.asInstanceOf[Alarm]== Alarm.getSetDefault)
+    assert(outputProducedByDasu2.value.asInstanceOf[Alarm]== Alarm.getInitialAlarmState)
     assert(outputProducedByDasu2.productionTStamp.isPresent())
     
     assert(outputProducedByDasu2.dependentsFullRuningIds.isPresent())
@@ -294,7 +294,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
     val outputProducedByDasu = dasu.lastCalculatedOutput.get
     assert(outputProducedByDasu.isDefined)
     assert(outputProducedByDasu.get.valueType==IASTypes.ALARM)
-    assert(outputProducedByDasu.get.value.asInstanceOf[Alarm]== Alarm.getSetDefault)
+    assert(outputProducedByDasu.get.value.asInstanceOf[Alarm]== Alarm.getInitialAlarmState)
     dasu.cleanUp()
   }
   

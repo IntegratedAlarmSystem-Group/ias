@@ -374,7 +374,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
 
         MonitorPointDataHolder unknown2 = new MonitorPointDataHolder(
                 "UNKNOWN-ID2",
-                Alarm.SET_CRITICAL,
+                Alarm.getInitialAlarmState(Priority.CRITICAL).set(),
                 System.currentTimeMillis(),
                 System.currentTimeMillis(),
                 IASTypes.ALARM);

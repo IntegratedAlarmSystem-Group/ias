@@ -291,7 +291,7 @@ public class ConverterTestBase {
 	 */
 	private final MonitorPointDataHolder mpAlarm = new MonitorPointDataHolder(
 			"AlarmId",
-			Alarm.SET_MEDIUM, 
+			Alarm.getInitialAlarmState().set(),
 			1900L,
 			1950L,
 			IASTypes.ALARM);

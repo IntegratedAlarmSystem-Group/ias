@@ -34,7 +34,7 @@ class ThresholdBackupAndDelayTest extends AnyFlatSpec with BeforeAndAfterEach {
   /** the IASIO in output */
   val out: IasIO[Double] = new IasIO(InOut.asOutput(outId,IASTypes.ALARM))
 
-  /** Ouput info for the initialize */
+  /** Ouptut info for the initialize */
   val outputInfo = new IasioInfo(outId.id,IASTypes.ALARM)
 
   val inputIds: List[String] = (for (i <- 1 to 5) yield "InputID"+i).toList
@@ -45,13 +45,13 @@ class ThresholdBackupAndDelayTest extends AnyFlatSpec with BeforeAndAfterEach {
   /** The Identifiers of the inputs */
   val inputIDentifiers= inputIds.map(id => new Identifier(id,IdentifierType.IASIO, Some(compID)))
 
-  /** the ID of themain input */
+  /** the ID of the main input */
   val mainInputId = "InputID1"
 
-  /** The Identifier of themain input */
+  /** The Identifier of the main input */
   val mainInputIdentifer = inputIDentifiers.find(id => id.id==mainInputId).get
 
-  /** The ID of the main AISIO */
+  /** The ID of the main IASIO */
   val aId = new Identifier("A",IdentifierType.IASIO, Some(compID))
 
   /** The time frame for the validity */
@@ -69,7 +69,7 @@ class ThresholdBackupAndDelayTest extends AnyFlatSpec with BeforeAndAfterEach {
   /** Delay before setting the alarm */
   val delayTimeToSet = 3
 
-/** Delay before setting the alarm */
+  /** Delay before setting the alarm */
   val delayTimeToClear = 5
 
 
@@ -78,11 +78,11 @@ class ThresholdBackupAndDelayTest extends AnyFlatSpec with BeforeAndAfterEach {
     inputs.foldLeft(Map[String, IasIO[Double]]())((z, iasio) => z ++ Map(iasio.id -> iasio))
   initialMapOfInputs.foreach( x => ThresholdWithBackupsAndDelay.logger.info("id={}, type={} value={}",x._2.id, x._2.iasType,x._2.value.toString))
 
-  /** The inital the IASIO in output */
+  /** The initial the IASIO in output */
   val initialOutput: IasIO[Alarm] = new IasIO(InOut.asOutput(outId,IASTypes.ALARM))
 
-  /** The alarm set by the TF */
-  val alarmSetByTf = Alarm.SET_CRITICAL
+  /** The priority of the alarm set by the TF */
+  val alarmSetByTf = Priority.CRITICAL
 
   override def beforeEach() : scala.Unit = {
     logger.info("Initializing before running a test")
@@ -128,7 +128,7 @@ class ThresholdBackupAndDelayTest extends AnyFlatSpec with BeforeAndAfterEach {
     assert(defaultTF.highOff==8)
     assert(defaultTF.lowOn==(-12))
     assert(defaultTF.lowOff==(-5))
-    assert(defaultTF.alarmPriority==Alarm.SET_CRITICAL)
+    assert(defaultTF.alarmPriority==Priority.CRITICAL)
     assert(defaultTF.delayToSet==delayTimeToSet*1000)
     assert(defaultTF.delayToClear==delayTimeToClear*1000)
     assert(defaultTF.idOfMainInput==Some(mainInputId))
@@ -144,11 +144,10 @@ class ThresholdBackupAndDelayTest extends AnyFlatSpec with BeforeAndAfterEach {
     props.put(ThresholdWithBackupsAndDelay.HighOffPropName,"12") // Error!
     props.put(ThresholdWithBackupsAndDelay.LowOnPropName,"-12")
     props.put(ThresholdWithBackupsAndDelay.LowOffPropName,"-5")
-    props.put(ThresholdWithBackupsAndDelay.AlarmPriorityPropName,Alarm.SET_CRITICAL.name())
+    props.put(ThresholdWithBackupsAndDelay.AlarmPriorityPropName,Priority.CRITICAL.name())
     props.put(ThresholdWithBackupsAndDelay.DelayToSetTimePropName,"2")
     props.put(ThresholdWithBackupsAndDelay.DelayToClearTimePropName,"3")
     props.put(ThresholdWithBackupsAndDelay.MaindIdPropName,mainInputId)
-
 
     val tf = new ThresholdWithBackupsAndDelay(compID.id,compID.fullRunningID,validityTimeFrame,props)
     assertThrows[PropsMisconfiguredException] { tf.initialize(inputinfos,outputInfo) }
@@ -158,12 +157,7 @@ class ThresholdBackupAndDelayTest extends AnyFlatSpec with BeforeAndAfterEach {
     val tf2 = new ThresholdWithBackupsAndDelay(compID.id,compID.fullRunningID,validityTimeFrame,props)
     assertThrows[PropsMisconfiguredException] { tf2.initialize(inputinfos,outputInfo) }
 
-    props.put(ThresholdWithBackupsAndDelay.LowOnPropName,"-12") // Removes previous error
-    props.put(ThresholdWithBackupsAndDelay.AlarmPriorityPropName,Alarm.CLEARED.name())
-    val tf3 = new ThresholdWithBackupsAndDelay(compID.id,compID.fullRunningID,validityTimeFrame,props)
-    assertThrows[PropsMisconfiguredException] { tf3.initialize(inputinfos,outputInfo) }
-
-    props.put(ThresholdWithBackupsAndDelay.AlarmPriorityPropName,Alarm.SET_MEDIUM.name()) // Removes previous error
+    props.put(ThresholdWithBackupsAndDelay.AlarmPriorityPropName,Priority.MEDIUM.name()) // Removes previous error
     props.put(ThresholdWithBackupsAndDelay.DelayToSetTimePropName,"-1")
     val tf4 = new ThresholdWithBackupsAndDelay(compID.id,compID.fullRunningID,validityTimeFrame,props)
     assertThrows[PropsMisconfiguredException] { tf4.initialize(inputinfos,outputInfo) }
@@ -186,13 +180,12 @@ class ThresholdBackupAndDelayTest extends AnyFlatSpec with BeforeAndAfterEach {
     val newOutput: IasIO[Alarm] = defaultTF.eval(initialMapOfInputs, initialOutput)
 
     assert(newOutput.value.isDefined)
-    assert(newOutput.value.get==Alarm.CLEARED)
+    assert(newOutput.value.get.isCleared)
   }
 
   it must "immediately SET and CLEAR if there are no delays" in {
     defaultProps.put(ThresholdWithBackupsAndDelay.DelayToClearTimePropName, "0")
     defaultProps.put(ThresholdWithBackupsAndDelay.DelayToSetTimePropName, "0")
-
 
     val tf = new ThresholdWithBackupsAndDelay(compID.id, compID.fullRunningID, validityTimeFrame, defaultProps)
     tf.initialize(inputinfos,outputInfo)
@@ -206,7 +199,7 @@ class ThresholdBackupAndDelayTest extends AnyFlatSpec with BeforeAndAfterEach {
     val newOutput: IasIO[Alarm] = tf.eval(mapWithSet, initialOutput)
 
     assert(newOutput.value.isDefined)
-    assert(newOutput.value.get == alarmSetByTf)
+    assert(newOutput.value.get.isSet)
 
     val mapWithClear = initialMapOfInputs + (mainInputId -> initialMapOfInputs(mainInputId).updateValue(0.0))
     val newOutput2: IasIO[Alarm] = tf.eval(mapWithClear, initialOutput)
@@ -230,24 +223,24 @@ class ThresholdBackupAndDelayTest extends AnyFlatSpec with BeforeAndAfterEach {
       val map = initialMapOfInputs + (mainInputId -> initialMapOfInputs(mainInputId).updateValue(i.toDouble))
       output = tf.eval(map, output)
       assert(output.value.isDefined)
-      if (i<tf.highOn) assert(output.value.get==Alarm.CLEARED)
-      else assert(output.value.get==alarmSetByTf)
+      if (i<tf.highOn) assert(output.value.get.isCleared)
+      else assert(output.value.get.isSet)
     }
 
     for (i <- 20 to -20 by -1) {
       val map = initialMapOfInputs + (mainInputId -> initialMapOfInputs(mainInputId).updateValue(i.toDouble))
       output = tf.eval(map, output)
       assert(output.value.isDefined)
-      if (i>=tf.highOff || i<=tf.lowOn) assert(output.value.get==alarmSetByTf)
-      else assert(output.value.get==Alarm.CLEARED)
+      if (i>=tf.highOff || i<=tf.lowOn) assert(output.value.get.isSet)
+      else assert(output.value.get.isCleared)
     }
 
     for (i <- -20 to 0) {
       val map = initialMapOfInputs + (mainInputId -> initialMapOfInputs(mainInputId).updateValue(i.toDouble))
       output = tf.eval(map, output)
       assert(output.value.isDefined)
-      if (i<=tf.lowOff) assert(output.value.get==alarmSetByTf)
-      else assert(output.value.get==Alarm.CLEARED)
+      if (i<=tf.lowOff) assert(output.value.get.isSet)
+      else assert(output.value.get.isCleared)
     }
   }
 
@@ -266,7 +259,7 @@ class ThresholdBackupAndDelayTest extends AnyFlatSpec with BeforeAndAfterEach {
     var output = initialOutput
     output = tf.eval(map, output)
     assert(output.value.isDefined)
-    assert(output.value.get==alarmSetByTf)
+    assert(output.value.get.isSet)
 
     val map2 = map+
       (mainInputId -> map(mainInputId).updateValue(30D))+
@@ -335,8 +328,7 @@ class ThresholdBackupAndDelayTest extends AnyFlatSpec with BeforeAndAfterEach {
     Thread.sleep(1000)
     output = tf.eval(mapSet, output)
     assert(output.value.isDefined)
-    assert(output.value.get==alarmSetByTf)
-
+    assert(output.value.get.isSet)
   }
 
   it must "wait before de-activating" in {
@@ -388,7 +380,7 @@ class ThresholdBackupAndDelayTest extends AnyFlatSpec with BeforeAndAfterEach {
     Thread.sleep(TimeUnit.MILLISECONDS.convert(delayTimeToSet+1, TimeUnit.SECONDS))
     output = tf.eval(mapSet, output)
     assert(output.value.isDefined)
-    assert(output.value.get==alarmSetByTf)
+    assert(output.value.get.isSet)
 
     val initialTime = System.currentTimeMillis()
     val expectedTimeChange = initialTime+TimeUnit.MILLISECONDS.convert(delayTimeToClear+delayTimeToSet, TimeUnit.SECONDS)
@@ -398,7 +390,7 @@ class ThresholdBackupAndDelayTest extends AnyFlatSpec with BeforeAndAfterEach {
       output = tf.eval(lastSentMap, output)
       lastSentMap = if (lastSentMap.eq(mapSet)) mapUnset else mapSet
       assert(output.value.isDefined)
-      assert(output.value.get==alarmSetByTf)
+      assert(output.value.get.isSet)
       logger.info("TF produced {}",output.value.get)
       Thread.sleep(500)
     }

@@ -106,7 +106,7 @@ class JsonPublisherTest extends AnyFlatSpec {
     val iasValue = jsonSerializer.valueOf(strReadFromFile)
     assert(iasValue.id=="ThresholdAlarm")
     assert(iasValue.valueType==IASTypes.ALARM)
-    assert(iasValue.value==Alarm.CLEARED)
+    assert(iasValue.value==Alarm.getInitialAlarmState)
     outputFile.deleteOnExit()
   }  
 }

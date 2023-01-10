@@ -45,7 +45,7 @@ class VisualInspectionTest extends AnyFlatSpec {
 
   behavior of "The VisualInspection transfer function"
 
-  it must "propery get the IDs of the IDs of the inputs" in {
+  it must "get the IDs of the IDs of the inputs" in {
     val tf = new VisualInspectionAlarm(compID.id,compID.fullRunningID,1000,new Properties())
     tf.initialize(inputsInfo,outputInfo)
 
@@ -53,74 +53,74 @@ class VisualInspectionTest extends AnyFlatSpec {
     assert(tf.idOfTstampInput=="visualInspectionTStamp")
   }
 
-  it must "initially produce CLEAR if windspeed not set" in {
+  it must "initially produce CLEAR if the wind speed not set" in {
     val tf = new VisualInspectionAlarm(compID.id,compID.fullRunningID,1000,new Properties())
     tf.initialize(inputsInfo,outputInfo)
 
-    val windAlarm = windSpeedAlarmInput.updateValue(Alarm.CLEARED)
+    val windAlarm = windSpeedAlarmInput.updateValue(Alarm.getInitialAlarmState)
     val visualTime = visualInspectionInput.updateValue("1900-01-01T00:00:00.000")
 
     val map = Map("WindSpeedAlarm" -> windAlarm, "visualInspectionTStamp" -> visualTime)
 
     val out = tf.eval(map,initialOutput)
     assert(out.value.isDefined)
-    assert(!out.value.get.asInstanceOf[Alarm].isSet)
+    assert(!out.value.get.isSet)
   }
 
-  it must "always produce SET if windspeed set" in {
+  it must "always produce SET if the wind speed set" in {
     val tf = new VisualInspectionAlarm(compID.id,compID.fullRunningID,1000,new Properties())
     tf.initialize(inputsInfo,outputInfo)
 
-    val windAlarm = windSpeedAlarmInput.updateValue(Alarm.getSetDefault)
+    val windAlarm = windSpeedAlarmInput.updateValue(Alarm.getInitialAlarmState.set())
     val visualTime = visualInspectionInput.updateValue("1900-01-01T00:00:00.000")
 
     val map = Map("WindSpeedAlarm" -> windAlarm, "visualInspectionTStamp" -> visualTime)
 
     val out = tf.eval(map,initialOutput)
     assert(out.value.isDefined)
-    assert(out.value.get.asInstanceOf[Alarm].isSet)
+    assert(out.value.get.isSet)
 
     val updateVI = visualTime.updateValue(ISO8601Helper.getTimestamp(System.currentTimeMillis()))
     val map2 = Map("WindSpeedAlarm" -> windAlarm, "visualInspectionTStamp" -> updateVI)
     val out2 = tf.eval(map2,out)
     assert(out2.value.isDefined)
-    assert(out2.value.get.asInstanceOf[Alarm].isSet)
+    assert(out2.value.get.isSet)
   }
 
-  it must "not clear the output until the VI is not done" in {
+  it must "not clear the output until the VI is done" in {
     val tf = new VisualInspectionAlarm(compID.id,compID.fullRunningID,1000,new Properties())
     tf.initialize(inputsInfo,outputInfo)
 
-    val windAlarm = windSpeedAlarmInput.updateValue(Alarm.getSetDefault)
+    val windAlarm = windSpeedAlarmInput.updateValue(Alarm.getInitialAlarmState.set())
     val visualTime = visualInspectionInput.updateValue(ISO8601Helper.getTimestamp(System.currentTimeMillis()))
 
     val map = Map("WindSpeedAlarm" -> windAlarm, "visualInspectionTStamp" -> visualTime)
 
     val out = tf.eval(map,initialOutput)
     assert(out.value.isDefined)
-    assert(out.value.get.asInstanceOf[Alarm].isSet)
+    assert(out.value.get.isSet)
 
-    // Clear the alarm but not the time of the visual inspectio:
+    // Clear the alarm but not the time of the visual inspection:
     // the output remains SET
-    val clearedWindSpeed = windAlarm.updateValue(Alarm.CLEARED)
+    val clearedWindSpeed = windAlarm.updateValue(Alarm.getInitialAlarmState)
     val map2 = Map("WindSpeedAlarm" -> clearedWindSpeed, "visualInspectionTStamp" -> visualTime)
     val out2 = tf.eval(map2,out)
     assert(out2.value.isDefined)
-    assert(out2.value.get.asInstanceOf[Alarm].isSet)
+    assert(out2.value.get.isSet)
 
     // Set wind alarm again
-    val resetWindSpeed = clearedWindSpeed.updateValue(Alarm.getSetDefault)
+    val resetWindSpeed = clearedWindSpeed.updateValue(Alarm.getInitialAlarmState.set())
     val map3 = Map("WindSpeedAlarm" -> resetWindSpeed, "visualInspectionTStamp" -> visualTime)
     val out3 = tf.eval(map3,out)
     assert(out3.value.isDefined)
-    assert(out3.value.get.asInstanceOf[Alarm].isSet)
+    assert(out3.value.get.isSet)
 
     // Clear the wind alarm
-    val reclearedWindSpeed = resetWindSpeed.updateValue(Alarm.CLEARED)
+    val reclearedWindSpeed = resetWindSpeed.updateValue(Alarm.getInitialAlarmState)
     val map4 = Map("WindSpeedAlarm" -> reclearedWindSpeed, "visualInspectionTStamp" -> visualTime)
     val out4 = tf.eval(map4,out)
     assert(out4.value.isDefined)
-    assert(out4.value.get.asInstanceOf[Alarm].isSet)
+    assert(out4.value.get.isSet)
 
     // Finally do the visual inspection: output must be cleared
     Thread.sleep(100)
@@ -128,6 +128,6 @@ class VisualInspectionTest extends AnyFlatSpec {
     val map5 = Map("WindSpeedAlarm" -> reclearedWindSpeed, "visualInspectionTStamp" -> viDone)
     val out5 = tf.eval(map5,out)
     assert(out5.value.isDefined)
-    assert(!out5.value.get.asInstanceOf[Alarm].isSet)
+    assert(!out5.value.get.isSet)
   }
 }

@@ -5,7 +5,7 @@ import org.eso.ias.asce.exceptions.{TypeMismatchException, UnexpectedNumberOfInp
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.tranfer.RegExpToAlarm.DefaultInvertedLogic
-import org.eso.ias.types.{Alarm, IASTypes}
+import org.eso.ias.types.{Alarm, IASTypes, Priority}
 
 import java.util.Properties
 import scala.util.matching.Regex
@@ -30,10 +30,9 @@ class RegExpToAlarm (cEleId: String, cEleRunningId: String, validityTimeFrame: L
   val regExp: Regex = regExString.r
 
   /** The alarm to set in the output */
-  val priority: Alarm = Option(props.getProperty(RegExpToAlarm.PriorityPropName)).
-    map(Alarm.valueOf).
+  val priority: Priority = Option(props.getProperty(RegExpToAlarm.PriorityPropName)).
+    map(Priority.valueOf).
     getOrElse(RegExpToAlarm.DefaultPriority)
-  require(priority != Alarm.CLEARED)
 
   val invertedLogic: Boolean =
     Option(props.getProperty(RegExpToAlarm.InvertedPropName))
@@ -79,9 +78,9 @@ class RegExpToAlarm (cEleId: String, cEleRunningId: String, validityTimeFrame: L
 
     val generateAlarm = if (!invertedLogic) regExp.matches(value) else !regExp.matches(value)
 
-    val outputAlarm = if (generateAlarm) priority else Alarm.CLEARED
+    val actualAlarm: Alarm = actualOutput.value.getOrElse(Alarm.getInitialAlarmState(priority)).setIf(generateAlarm)
 
-    actualOutput.updateValue(outputAlarm).updateProps(input.props).updateMode(input.mode)
+    actualOutput.updateValue(actualAlarm).updateProps(input.props).updateMode(input.mode)
   }
 }
 
@@ -98,7 +97,7 @@ object RegExpToAlarm {
   val PriorityPropName: String = "org.eso.ias.tf.regextoalarm.priority"
 
   /** Default priority level of the output */
-  val DefaultPriority: Alarm = Alarm.getSetDefault
+  val DefaultPriority: Priority = Priority.getDefaultPriority
 
   /** The name of the property to invert the logic
    * (i.e. generate an alarm when the string does not match the regular expression */

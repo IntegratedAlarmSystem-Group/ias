@@ -67,17 +67,17 @@ class SmtpSender(val server: String, val loginName: Option[String], val pswd: Op
 
 
   /**
-    * Fromat the alarm state and th epriority (if the alarm is not cleared)
-    * in a human readble
-    * @param alarmState the alarm state
+    * Format the alarm state and the priority (if the alarm is not cleared)
+    * in a human readable string
+   *
+    * @param alarmSnapshot the alarm state
     * @return the activation state and the priority
     */
-  private def formatAlarmSetAndPriority(alarmState: AlarmState): (String, String) = {
-    if (alarmState.alarm==Alarm.CLEARED) {
-      (Alarm.CLEARED.name(),"")
+  private def formatAlarmSetAndPriority(alarmSnapshot: AlarmSnapshot): (String, String) = {
+    if (!alarmSnapshot.alarm.isSet) {
+      ("CLEARED","")
     } else {
-      val p = alarmState.alarm.name().split("_")(1)
-      ("SET",s"priority $p")
+      ("SET",alarmSnapshot.alarm.priority.toString)
     }
   }
 
@@ -116,7 +116,7 @@ class SmtpSender(val server: String, val loginName: Option[String], val pswd: Op
     * @param alarmId the ID of the alarm
     * @param alarmState the state to notify
     */
-  override def notify(recipients: List[String], alarmId: String, alarmState: AlarmState): Unit = {
+  override def notify(recipients: List[String], alarmId: String, alarmState: AlarmSnapshot): Unit = {
     require(Option(recipients).isDefined && recipients.nonEmpty,"No recipients given")
     require(Option(alarmId).isDefined && !alarmId.trim.isEmpty,"Invalid alarm ID")
     require(Option(alarmState).isDefined,"No alarm state to notify")

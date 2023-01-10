@@ -1,15 +1,14 @@
 package org.eso.ias.tranfer
 
 import java.util.Properties
-
 import com.typesafe.scalalogging.Logger
 import org.eso.ias.asce.exceptions.{TypeMismatchException, UnexpectedNumberOfInputsException}
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types.{Alarm, IASTypes}
+import org.eso.ias.types.{Alarm, IASTypes, Priority}
 /**
-  * This transfer function generate an alarm depending on th evalue of the boolean in input:
-  * if the value of the input is TRUE then set the alarm in output, otherwise the alarm is cleared.
+  * This transfer function generates an alarm depending on the value of the boolean in input:
+  * if the value of the input is TRUE then it sets the alarm in output, otherwise clears the alarm.
   *
   * To invert the logic (i.e. generate an alarm when the boolean is False), set the BoolToAlarm.InvertLogicPropName
   * property to true
@@ -32,11 +31,10 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
     map(java.lang.Boolean.valueOf(_).booleanValue()).
     getOrElse(BoolToAlarm.DefaultLogicPropValue.booleanValue())
 
-  /** The alarm to set in the output */
-  val priority: Alarm = Option(props.getProperty(BoolToAlarm.PriorityPropName)).
-      map(Alarm.valueOf).
+  /** The priority of alarm to set in the output */
+  val priority: Priority = Option(props.getProperty(BoolToAlarm.PriorityPropName)).
+      map(Priority.valueOf).
       getOrElse(BoolToAlarm.DefaultPriority)
-  require(priority!=Alarm.CLEARED)
 
   /**
     * Initialize the TF: check that the input is a boolean
@@ -81,7 +79,8 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
       else !inputValue
     }
 
-    val outputAlarm = if (value) priority else Alarm.CLEARED
+    val actualAlarm = actualOutput.value.getOrElse(Alarm.getInitialAlarmState(priority))
+    val outputAlarm = actualAlarm.setIf(value)
 
     actualOutput.updateValue(outputAlarm).updateProps(input.props).updateMode(input.mode)
   }
@@ -104,5 +103,5 @@ object BoolToAlarm {
   val PriorityPropName: String = "org.eso.ias.tf.booltoalarm.priority"
 
   /** Defaul tpriority level of the output */
-  val DefaultPriority = Alarm.getSetDefault
+  val DefaultPriority = Priority.getDefaultPriority
 }
