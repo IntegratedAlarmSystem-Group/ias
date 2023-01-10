@@ -201,7 +201,6 @@ public class Alarm {
 		if (value==null || value.isBlank()) {
 			throw new IllegalArgumentException("Empty or null string to convert to an Alarm");
 		}
-		System.out.println("ALARM STRING="+value);
 		String[] parts = value.split(":");
 		if (parts.length!=2) {
 			throw new IllegalArgumentException("Malformed alarm string to parse: "+value);
