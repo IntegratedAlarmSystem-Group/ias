@@ -59,7 +59,7 @@ public class MapperTest extends ConverterTestBase {
 		MonitorPointDataHolder unconfiguredMpdh = 
 				new MonitorPointDataHolder(
 						"Unrecognized",
-						Alarm.CLEARED, 
+						Alarm.getInitialAlarmState(),
 						System.currentTimeMillis()-100,
 						System.currentTimeMillis(),
 						IASTypes.ALARM);

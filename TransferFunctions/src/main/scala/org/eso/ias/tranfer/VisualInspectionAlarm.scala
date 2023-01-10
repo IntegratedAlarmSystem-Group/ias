@@ -13,11 +13,11 @@ import org.eso.ias.utils.ISO8601Helper
   * and a visual inspection is still pending.
   *
   * The inputs of the  VisualInspectionAlarm TF are:
-  * - alarm that the windspeed passed the threshold
+  * - alarm that the wind speed passed the threshold
   * - date (String) when the last inspection has been done
   *
   * If the last inspection date is older then the activation date of the alarm,
-  * the alarm reamions active even if the wind speed drops below the threshold.
+  * the alarm stays active even if the wind speed drops below the threshold.
   *
   * To keep this TF generic, the IDs of the inputs are not hardcoded but are
   * retrieved at run time from the types of the inputs.
@@ -96,6 +96,8 @@ class VisualInspectionAlarm(cEleId: String, cEleRunningId: String, validityTimeF
     // Update the timestamp
     lastInspectionTimestamp=lastInspectionTimestamp.max(ISO8601Helper.timestampToMillis(visualInput.value.get.toString))
 
+    val actualAlarm: Alarm = actualOutput.value.getOrElse(Alarm.getInitialAlarmState)
+
     // Set the flag to record if the alarm was activated at the next iteration
     // At the same time, if the alarm was active and is now cleared,
     // save the deactivation timesstamp
@@ -111,16 +113,16 @@ class VisualInspectionAlarm(cEleId: String, cEleRunningId: String, validityTimeF
     val ret=if (alarmInput.value.get.asInstanceOf[Alarm].isSet) {
       // If the alarm is set, the output must always be set
       if (actualOutput.value.isDefined && actualOutput.value.get.isSet) actualOutput
-      else actualOutput.updateValue(Alarm.getSetDefault)
+      else actualOutput.updateValue(actualAlarm.set())
     } else {
       // The wind is below the threshold but we must check the timestamp of the visual
       // inspection before clearing the output
       if (lastInspectionTimestamp>alarmDeactivationTimestamp) {
         if (actualOutput.value.isDefined && !actualOutput.value.get.isSet) actualOutput
-        else actualOutput.updateValue(Alarm.CLEARED)
+        else actualOutput.updateValue(actualAlarm.clear())
       } else {
         if (actualOutput.value.isDefined && actualOutput.value.get.isSet) actualOutput
-        else actualOutput.updateValue(Alarm.getSetDefault)
+        else actualOutput.updateValue(actualAlarm.set())
       }
     }
 

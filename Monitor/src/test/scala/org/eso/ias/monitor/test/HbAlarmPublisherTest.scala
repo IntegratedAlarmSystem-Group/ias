@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import com.typesafe.scalalogging.Logger
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.monitor.{MonitorAlarm, MonitorAlarmsProducer}
-import org.eso.ias.types.{Alarm, IASValue}
+import org.eso.ias.types.{Alarm, IASValue, Priority}
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -155,7 +155,8 @@ class HbAlarmPublisherTest extends AnyFlatSpec with AlarmPublisherListener with 
   }
 
   it must "send the property and alarm activation" in {
-    MonitorAlarm.CLIENT_DEAD.set(Alarm.SET_CRITICAL,"id")
+    MonitorAlarm.CLIENT_DEAD.setPriority(Priority.CRITICAL)
+    MonitorAlarm.CLIENT_DEAD.set("id")
     monitorAlarm.start()
     Thread.sleep(refreshRate*1000+500)
     assert(alarmsReceived.size()==MonitorAlarm.values.size)
@@ -165,7 +166,8 @@ class HbAlarmPublisherTest extends AnyFlatSpec with AlarmPublisherListener with 
     alarmsReceived.forEach( alarm => {
       val al = Alarm.valueOf(alarm.value.toString)
       if (alarm.id==MonitorAlarm.CLIENT_DEAD.id || alarm.id==MonitorAlarm.GLOBAL.id) {
-        assert(al==Alarm.SET_CRITICAL)
+        assert(al.priority==Priority.CRITICAL)
+        assert(al.isSet)
 
         val p = alarm.props
         assert(p.isPresent)

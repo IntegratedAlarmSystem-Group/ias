@@ -161,7 +161,7 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
     * @param alarmId The ID of the alarm
     * @param state the state of the alarm
     */
-  def notifyAlarm(alarmId: String, state: AlarmState): Unit = {
+  def notifyAlarm(alarmId: String, state: AlarmSnapshot): Unit = {
     require(Option(alarmId).isDefined && !alarmId.isEmpty)
     require(Option(state).isDefined)
     val recipients = iasValuesDaos(Identifier.getBaseId(alarmId)).getEmails.split(",")
@@ -202,9 +202,9 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
         val validity = value.iasValidity
 
         // The last state in the current time interval
-        val oldState: Option[AlarmState] = alarmsToTrack(id).getActualAlarmState()
+        val oldState: Option[AlarmSnapshot] = alarmsToTrack(id).getActualAlarmState()
         // The state of the last round interval
-        val lastRoundState: Option[AlarmState] = alarmsToTrack(id).stateOfLastRound
+        val lastRoundState: Option[AlarmSnapshot] = alarmsToTrack(id).stateOfLastRound
 
         // Update the state of the alarm state tracker
         alarmsToTrack(id) = alarmsToTrack(id).stateUpdate(alarm, validity, tStamp)

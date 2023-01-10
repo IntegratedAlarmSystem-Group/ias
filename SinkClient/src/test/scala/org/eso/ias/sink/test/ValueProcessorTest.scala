@@ -367,7 +367,7 @@ class ValueProcessorTest extends AnyFlatSpec {
   }
 
   it must "not process events before being inited" in new Fixture {
-    val value: IASValue[_] = buildValue("ASCEOnDasu2-ID1-Out",Alarm.SET_MEDIUM)
+    val value: IASValue[_] = buildValue("ASCEOnDasu2-ID1-Out",Alarm.getInitialAlarmState(Priority.MEDIUM).set())
     inputsProvider.sendInputs(Set(value))
     Thread.sleep(2*IasValueProcessor.defaultPeriodicSendingTimeInterval)
 
@@ -376,7 +376,7 @@ class ValueProcessorTest extends AnyFlatSpec {
 
   it must "process events after being inited" in new Fixture {
     processor.init()
-    val value: IASValue[_] = buildValue("ASCEOnDasu2-ID1-Out",Alarm.SET_MEDIUM)
+    val value: IASValue[_] = buildValue("ASCEOnDasu2-ID1-Out",Alarm.getInitialAlarmState(Priority.MEDIUM).set())
     inputsProvider.sendInputs(Set(value))
     Thread.sleep(2*IasValueProcessor.defaultPeriodicSendingTimeInterval)
 
@@ -387,7 +387,7 @@ class ValueProcessorTest extends AnyFlatSpec {
   it must "not process events after being closed" in new Fixture {
     processor.init()
     processor.close()
-    val value: IASValue[_] = buildValue("ASCEOnDasu2-ID1-Out",Alarm.SET_MEDIUM)
+    val value: IASValue[_] = buildValue("ASCEOnDasu2-ID1-Out",Alarm.getInitialAlarmState(Priority.MEDIUM).set())
     inputsProvider.sendInputs(Set(value))
     Thread.sleep(2*IasValueProcessor.defaultPeriodicSendingTimeInterval)
 
@@ -396,7 +396,7 @@ class ValueProcessorTest extends AnyFlatSpec {
 
   it must "discard unrecognized (not in CDB) values" in new Fixture {
     processor.init()
-    val value: IASValue[_] = buildValue("Unrecognized id",Alarm.SET_MEDIUM)
+    val value: IASValue[_] = buildValue("Unrecognized id",Alarm.getInitialAlarmState(Priority.MEDIUM).set())
     inputsProvider.sendInputs(Set(value))
     Thread.sleep(2*IasValueProcessor.defaultPeriodicSendingTimeInterval)
 
@@ -410,7 +410,7 @@ class ValueProcessorTest extends AnyFlatSpec {
     val templatedId = Identifier.buildIdFromTemplate("TemplatedId",12)
     println("Submitting a value with ID "+templatedId)
     assert(Identifier.isTemplatedIdentifier(templatedId))
-    val value: IASValue[_] = buildValue(templatedId,Alarm.SET_MEDIUM)
+    val value: IASValue[_] = buildValue(templatedId,Alarm.getInitialAlarmState(Priority.MEDIUM).set())
     inputsProvider.sendInputs(Set(value))
     Thread.sleep(2*IasValueProcessor.defaultPeriodicSendingTimeInterval)
 
@@ -421,7 +421,12 @@ class ValueProcessorTest extends AnyFlatSpec {
   it must "process many events" in new Fixture {
     processor.init()
 
-    val alarms = List(Alarm.CLEARED, Alarm.SET_CRITICAL, Alarm.SET_HIGH, Alarm.SET_LOW, Alarm.SET_MEDIUM)
+    val alarms = List(
+      Alarm.getInitialAlarmState,
+      Alarm.getInitialAlarmState(Priority.CRITICAL).set(),
+      Alarm.getInitialAlarmState(Priority.HIGH).set(),
+      Alarm.getInitialAlarmState(Priority.LOW).set(),
+      Alarm.getInitialAlarmState(Priority.MEDIUM).set())
     val valuesToSend = for {
       alarm <- alarms
       iasioDao <- iasiosDaos
@@ -451,7 +456,12 @@ class ValueProcessorTest extends AnyFlatSpec {
   it must "cope with excetion in the process" in new Fixture {
     processorWithFailures.init()
 
-    val alarms = List(Alarm.CLEARED, Alarm.SET_CRITICAL, Alarm.SET_HIGH, Alarm.SET_LOW, Alarm.SET_MEDIUM)
+    val alarms = List(
+      Alarm.getInitialAlarmState,
+      Alarm.getInitialAlarmState(Priority.CRITICAL).set(),
+      Alarm.getInitialAlarmState(Priority.HIGH).set(),
+      Alarm.getInitialAlarmState(Priority.LOW).set(),
+      Alarm.getInitialAlarmState(Priority.MEDIUM).set())
     val valuesToSend = for {
       alarm <- alarms
       iasioDao <- iasiosDaos
@@ -482,7 +492,7 @@ class ValueProcessorTest extends AnyFlatSpec {
     processorWithTO.init()
 
     // Send one value to trigger the timeout
-    val value: IASValue[_] = buildValue("ASCEOnDasu2-ID1-Out",Alarm.SET_MEDIUM)
+    val value: IASValue[_] = buildValue("ASCEOnDasu2-ID1-Out",Alarm.getInitialAlarmState(Priority.MEDIUM).set())
     inputsProviderWithTO.sendInputs(Set(value))
 
     logger.info("Giving thread time to fail")

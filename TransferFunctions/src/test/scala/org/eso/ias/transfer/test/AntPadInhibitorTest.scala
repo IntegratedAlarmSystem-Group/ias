@@ -126,7 +126,7 @@ class AntPadInhibitorTest extends AnyFlatSpec with BeforeAndAfterEach {
 
 
   it must "return CLEAR when ant/pad input is empty" in {
-    val i: InOut[_] = inputInOut.updateValue(Some(Alarm.SET_HIGH))
+    val i: InOut[_] = inputInOut.updateValue(Some(Alarm.getInitialAlarmState))
     val a: InOut[_] = antPadInOut.updateValue(Some(""))
 
     val inputMap: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i), antPadInputId-> new IasIO(a))
@@ -134,12 +134,12 @@ class AntPadInhibitorTest extends AnyFlatSpec with BeforeAndAfterEach {
     val ret = nonTypedTF.eval(inputMap,out)
 
     assert(ret.value.isDefined)
-    assert(ret.value.get.asInstanceOf[Alarm]==Alarm.CLEARED)
+    assert(!ret.value.get.isSet)
     assert(ret.props.isEmpty)
   }
 
   it must "return CLEAR when there are no antennas in the pads" in {
-    val i: InOut[_] = inputInOut.updateValue(Some(Alarm.SET_HIGH))
+    val i: InOut[_] = inputInOut.updateValue(Some(Alarm.getInitialAlarmState.set()))
     val a: InOut[_] = antPadInOut.updateValue(Some("DA41:W001,DV01:S003"))
 
     val inputMap: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i), antPadInputId-> new IasIO(a))
@@ -147,12 +147,12 @@ class AntPadInhibitorTest extends AnyFlatSpec with BeforeAndAfterEach {
     val ret = nonTypedTF.eval(inputMap,out)
 
     assert(ret.value.isDefined)
-    assert(ret.value.get.asInstanceOf[Alarm]==Alarm.CLEARED)
+    assert(!ret.value.get.isSet)
     assert(ret.props.isEmpty)
   }
 
   it must "return SET when there are antennas in the pads" in {
-    val i: InOut[_] = inputInOut.updateValue(Some(Alarm.SET_HIGH))
+    val i: InOut[_] = inputInOut.updateValue(Some(Alarm.getInitialAlarmState.set()))
     val a: InOut[_] = antPadInOut.updateValue(Some("DA41:W001,DV01:S003,DA54:A025"))
 
     val inputMap: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i), antPadInputId-> new IasIO(a))
@@ -160,14 +160,14 @@ class AntPadInhibitorTest extends AnyFlatSpec with BeforeAndAfterEach {
     val ret = nonTypedTF.eval(inputMap,out)
 
     assert(ret.value.isDefined)
-    assert(ret.value.get.asInstanceOf[Alarm]==Alarm.SET_HIGH)
+    assert(ret.value.get.isSet)
     val antInpAds= ret.props.get(AntPadInhibitor.AffectedAntennaAlarmPropName)
     assert(antInpAds.nonEmpty)
     logger.info("Found antennas in pad {}",antInpAds.get)
   }
 
   it must "return CLEAR when there are antennas in the pads but input is CLEAR" in {
-    val i: InOut[_] = inputInOut.updateValue(Some(Alarm.CLEARED))
+    val i: InOut[_] = inputInOut.updateValue(Some(Alarm.getInitialAlarmState))
     val a: InOut[_] = antPadInOut.updateValue(Some("DA41:W001,DV01:S003,DA54:A025"))
 
     val inputMap: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i), antPadInputId-> new IasIO(a))
@@ -175,12 +175,12 @@ class AntPadInhibitorTest extends AnyFlatSpec with BeforeAndAfterEach {
     val ret = nonTypedTF.eval(inputMap,out)
 
     assert(ret.value.isDefined)
-    assert(ret.value.get.asInstanceOf[Alarm]==Alarm.CLEARED)
+    assert(!ret.value.get.isSet)
     assert(ret.props.isEmpty)
   }
 
   it must "return CLEAR when there are antennas in the pads but none of the proper type" in {
-    val i: InOut[_] = inputInOut.updateValue(Some(Alarm.SET_HIGH))
+    val i: InOut[_] = inputInOut.updateValue(Some(Alarm.getInitialAlarmState.set()))
     val a: InOut[_] = antPadInOut.updateValue(Some("DA41:W001,DV01:S003,DA54:A025"))
 
     val inputMap: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i), antPadInputId-> new IasIO(a))
@@ -188,12 +188,12 @@ class AntPadInhibitorTest extends AnyFlatSpec with BeforeAndAfterEach {
     val ret = typedTF.eval(inputMap,out)
 
     assert(ret.value.isDefined)
-    assert(ret.value.get.asInstanceOf[Alarm]==Alarm.CLEARED)
+    assert(!ret.value.get.isSet)
     assert(ret.props.isEmpty)
   }
 
   it must "return SET when there are antennas in the pads with one of the proper type" in {
-    val i: InOut[_] = inputInOut.updateValue(Some(Alarm.SET_HIGH))
+    val i: InOut[_] = inputInOut.updateValue(Some(Alarm.getInitialAlarmState.set()))
     val a: InOut[_] = antPadInOut.updateValue(Some("DA41:W001,DV01:S003,DA54:A025,PM07:A022"))
 
     val inputMap: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i), antPadInputId-> new IasIO(a))
@@ -201,7 +201,7 @@ class AntPadInhibitorTest extends AnyFlatSpec with BeforeAndAfterEach {
     val ret = nonTypedTF.eval(inputMap,out)
 
     assert(ret.value.isDefined)
-    assert(ret.value.get.asInstanceOf[Alarm]==Alarm.SET_HIGH)
+    assert(ret.value.get.isSet)
     val antInpAds= ret.props.get(AntPadInhibitor.AffectedAntennaAlarmPropName)
     assert(antInpAds.nonEmpty)
     logger.info("Found antennas in pad {}",antInpAds.get)

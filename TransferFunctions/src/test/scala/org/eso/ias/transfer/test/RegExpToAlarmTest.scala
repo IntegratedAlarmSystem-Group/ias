@@ -32,7 +32,7 @@ class RegExpToAlarmTest extends AnyFlatSpec
   /** Ouput info for the initialize */
   val outputInfo = new IasioInfo(outId.id,IASTypes.ALARM)
 
-  /** THe id of th einput */
+  /** THe id of the input */
   val inputId = "Input-Id"
 
   /** The Identifier of the ALARM input */
@@ -59,9 +59,9 @@ class RegExpToAlarmTest extends AnyFlatSpec
     }
 
     props.put(RegExpToAlarm.RegExpPropName,regExp)
-    props.put(RegExpToAlarm.PriorityPropName,Alarm.SET_CRITICAL.toString)
+    props.put(RegExpToAlarm.PriorityPropName,Priority.CRITICAL.toString)
     val tf2 = new RegExpToAlarm(compID.id, compID.fullRunningID, validityTimeFrame, props)
-    assert(tf2.priority==Alarm.SET_CRITICAL)
+    assert(tf2.priority==Priority.CRITICAL)
     assert(tf2.regExString==regExp)
   }
 
@@ -76,19 +76,20 @@ class RegExpToAlarmTest extends AnyFlatSpec
     val inputMap: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i))
     val ret = tf.eval(inputMap,out)
     assert(ret.value.isDefined)
-    assert(ret.value.get==RegExpToAlarm.DefaultPriority)
+    assert(ret.value.get.isSet)
+    assert(ret.value.get.priority==Priority.getDefaultPriority)
 
     val i2 = i.updateValue(Some("Ale"))
     val inputMap2: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i2))
     val ret2 = tf.eval(inputMap2,out)
     assert(ret2.value.isDefined)
-    assert(ret2.value.get==Alarm.CLEARED)
+    assert(ret2.value.get.isCleared)
 
     val i3 = i2.updateValue(Some("aaaaAlebbbbb"))
     val inputMap3: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i3))
     val ret3 = tf.eval(inputMap3,out)
     assert(ret3.value.isDefined)
-    assert(ret3.value.get==RegExpToAlarm.DefaultPriority)
+    assert(ret3.value.get.isSet)
   }
 
   it must "produce the expected output (inverted logic)" in {
@@ -103,19 +104,19 @@ class RegExpToAlarmTest extends AnyFlatSpec
     val inputMap: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i))
     val ret = tf.eval(inputMap,out)
     assert(ret.value.isDefined)
-    assert(ret.value.get==Alarm.CLEARED)
+    assert(ret.value.get.isCleared)
 
     val i2 = i.updateValue(Some("Ale"))
     val inputMap2: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i2))
     val ret2 = tf.eval(inputMap2,out)
     assert(ret2.value.isDefined)
-    assert(ret2.value.get==RegExpToAlarm.DefaultPriority)
+    assert(ret2.value.get.isSet)
 
     val i3 = i2.updateValue(Some("aaaaAlebbbbb"))
     val inputMap3: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i3))
     val ret3 = tf.eval(inputMap3,out)
     assert(ret3.value.isDefined)
-    assert(ret3.value.get==Alarm.CLEARED)
+    assert(ret3.value.get.isCleared)
   }
 
   it must "Forward mode and properties of the input" in {
@@ -130,7 +131,7 @@ class RegExpToAlarmTest extends AnyFlatSpec
     val inputMap: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i))
     val ret = tf.eval(inputMap,out)
     assert(ret.value.isDefined)
-    assert(ret.value.get==RegExpToAlarm.DefaultPriority)
+    assert(ret.value.get.isSet)
     assert(ret.mode==OperationalMode.MALFUNCTIONING)
     assert(ret.props==additionalProps)
   }

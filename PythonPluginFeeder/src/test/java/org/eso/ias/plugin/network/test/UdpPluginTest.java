@@ -14,6 +14,7 @@ import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher.PublisherEventsListener;
 import org.eso.ias.types.Alarm;
 import org.eso.ias.types.OperationalMode;
+import org.eso.ias.types.Priority;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * test the {@link UdpPlugin} closing the loop from
+ * Test the {@link UdpPlugin} closing the loop from
  * python to the monitor point published
  * by the java plugin:
  * UdpPlugin.py -> UdpPlugin.java -> Plugin.java -> BSDB
@@ -162,7 +163,7 @@ public class UdpPluginTest implements PublisherEventsListener {
 		
 		MonitorPointData mpdAlarm = publishedMPoints.get("ID-Alarm");
 		assertEquals(OperationalMode.UNKNOWN.toString(),mpdAlarm.getOperationalMode());
-		assertEquals(Alarm.SET_HIGH.toString(), mpdAlarm.getValue());
+		assertEquals(Alarm.getInitialAlarmState(Priority.HIGH).set().toString(), mpdAlarm.getValue());
 
 		MonitorPointData mpdArrayLong = publishedMPoints.get("ID-ArrayLong");
 		assertEquals(OperationalMode.UNKNOWN.toString(),mpdArrayLong.getOperationalMode());

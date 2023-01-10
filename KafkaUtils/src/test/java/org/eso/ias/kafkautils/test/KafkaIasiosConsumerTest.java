@@ -360,7 +360,7 @@ public class KafkaIasiosConsumerTest implements IasioListener {
 		// Accepted alarms
 		List<String> idsOfAlarms = new LinkedList<>();
 		for (int i=1; i<75; i++) idsOfAlarms.add("ID-TypeAlarm-"+i);
-		Collection<IASValue<?>> alarmIasios = buildValues(idsOfAlarms, Alarm.SET_HIGH, IASTypes.ALARM);
+		Collection<IASValue<?>> alarmIasios = buildValues(idsOfAlarms, Alarm.getInitialAlarmState(Priority.HIGH).set(), IASTypes.ALARM);
 		
 		// Rejected boolean
 		List<String> idsOfbooleans = new LinkedList<>();

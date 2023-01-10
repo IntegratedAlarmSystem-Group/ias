@@ -234,7 +234,7 @@ class TestSupervisorTfChanged
     iasiosProducer.push(iasio)
     Thread.sleep(10000)
     val lastIasio = iasiosReceived.get(iasiosReceived.size()-1)
-    assert(lastIasio.value.asInstanceOf[Alarm]==Alarm.SET_MEDIUM)
+    assert(lastIasio.value.asInstanceOf[Alarm]==Alarm.getInitialAlarmState.set())
 
     // Set a new TF: in this case the same min/max TF with different limits
     // is obtained by changing the ASCE configuration file
@@ -266,6 +266,6 @@ class TestSupervisorTfChanged
 
     Thread.sleep(10000)
     val lastIasio2 = iasiosReceived.get(iasiosReceived.size()-1)
-    assert(lastIasio2.value.asInstanceOf[Alarm]==Alarm.CLEARED)
+    assert(!lastIasio2.value.asInstanceOf[Alarm].isSet)
   }
 }

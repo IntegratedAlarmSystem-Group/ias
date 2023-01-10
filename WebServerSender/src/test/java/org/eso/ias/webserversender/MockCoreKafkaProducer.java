@@ -21,8 +21,8 @@ public class MockCoreKafkaProducer {
 		IASValue<?> msg;
 		int counter = 0;
 
-		Alarm value1 = Alarm.CLEARED;
-		Alarm value2 = Alarm.SET_MEDIUM;
+		Alarm value1 = Alarm.getInitialAlarmState();
+		Alarm value2 = Alarm.getInitialAlarmState().set();
 		Alarm aux;
 
 		while (true) {
