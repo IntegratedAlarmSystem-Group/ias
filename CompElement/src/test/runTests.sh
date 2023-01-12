@@ -7,4 +7,5 @@ iasRun org.scalatest.run org.eso.ias.asce.test.TestMultiplicityTF
 iasRun org.scalatest.run org.eso.ias.asce.test.TestSlowTF
 iasRun org.scalatest.run org.eso.ias.asce.test.TestPyTF
 iasRun org.scalatest.run org.eso.ias.asce.test.TestMinMaxPyTF
+iasRun org.scalatest.run org.eso.ias.asce.test.TestAlarmAck
 

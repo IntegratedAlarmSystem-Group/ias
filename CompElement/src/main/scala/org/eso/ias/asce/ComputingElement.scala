@@ -500,7 +500,37 @@ abstract class ComputingElement[T](
     }
   }
 
+  /**
+   * ACK the alarm produced by the TF of the ASCE.
+   *
+   * This function should be executed only if the type of the output is an alarm so in that case
+   * an error message is logged but the TF is not marked as broken.
+   * The ratio behind this choice is that the ACK is a command coming from outside: ACKing a
+   * value that is not an alarm is an error produced somewhere else that should be reported but
+   * not impact the functioning of the ASCE.
+   * 
+   * The function updates the value of the last produced [[this.output]]. 
+   * This value will be passed to the TF the next time it is run because the inputs changed. 
+   *
+   * @return true if the alarm has been acknowledged, false otherwise
+   */
+  def ack(): Boolean = synchronized {
+    (output.iasType, output.value) match
+      case (IASTypes.ALARM, Some(alarm)) =>
+        _output = output.updateValue(Some(alarm.asInstanceOf[Alarm].ack()))
+        ComputingElement.logger.info("[{}] alarm [{}] ACKed", asceIdentifier,output.id.id)
+        true
+      case (IASTypes.ALARM, None) =>
+        // Right type but the alarm has not yet been produced by the TF
+        ComputingElement.logger.error("[{}] cannot ACK the output [{}]: not yet produced by the TF", asceIdentifier,output.id.id)
+        false
+      case (_, _) =>
+        // Trying to ACK an output of the wrong type!
+        ComputingElement.logger.error("[{}] cannot ACK the output [{}] of type {}", asceIdentifier,output.id.id, output.iasType)
+        false
+  }
 }
+
 /**
  * The ComputingElement object to build a ComputingElement from the AsceDao red from the CDB
  */
