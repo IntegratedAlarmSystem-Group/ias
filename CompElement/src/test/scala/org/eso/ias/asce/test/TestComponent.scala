@@ -10,7 +10,7 @@ import org.eso.ias.types._
 import org.scalatest.flatspec.AnyFlatSpec
 
 /**
- * Test the basic functionalities of the IAS Component,
+ * Test the basic functionalities of the IAS computing element (ASCE),
  * while the functioning of the transfer function
  * is checked elsewhere.
  */
@@ -45,19 +45,19 @@ class TestComponent extends AnyFlatSpec {
   // The threshold to assess the validity from the arrival time of the input
   val validityThresholdInSecs = 2
   
-  behavior of "A Component"
+  behavior of "A Computing element (ASCE)"
   
   it must "catch an error instantiating a wrong TF class" in {
     logger.info("Testing with wrong TF class name")
     val output: InOut[Alarm] = InOut.asOutput(outId,IASTypes.ALARM)
     
-    val threadaFactory = new CompEleThreadFactory("Test-runninId")
+    val threadFactory = new CompEleThreadFactory("Test-runninId")
     // A transfer function that does not exist
     val tfSetting =new TransferFunctionSetting(
         "org.eso.ias.asce.transfer.TransferExecutorImpl",
         TransferFunctionLanguage.java,
         None,
-        threadaFactory)
+        threadFactory)
     val comp: ComputingElement[Alarm] = new ComputingElement[Alarm](
        compId,
        output,
@@ -69,7 +69,7 @@ class TestComponent extends AnyFlatSpec {
     assert(comp.asceIdentifier==compId)
     assert(comp.output.id==outId)
     
-    // A newly created ASCE haa a state equal to Initializing
+    // A newly created ASCE has a state equal to Initializing
     assert(comp.getState()==AsceStates.Initializing)
     
     // After an error in the initialization, the state changes to TFBroken
