@@ -1,0 +1,11 @@
+{
+	"logLevel": "INFO",
+	"refreshRate": "3",
+	"validityThreshold": "4",
+	"hbFrequency":"5",
+        "bsdbUrl":"localhost:9092",
+	"props":[
+		{"name":"Prop1-Name","value":"The value of P1"},
+		{"name":"Prop2-Name","value":"The value of P2"}
+		]
+}
