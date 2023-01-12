@@ -152,13 +152,13 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame, pro
     val actualAlarm: Alarm = actualOutput.value.getOrElse(Alarm.getInitialAlarmState(alarmPriority))
 
     // It cope with the case that the value of the actual output is not
-    // defined (i.e. it is Optional.empty. In that case the variable
+    // defined (i.e. it is Optional.empty). In that case the variable
     // is initialized to false
     val wasSet = actualAlarm.isSet
  
     // The condition is true if the value is over the limits (high on and low on)
     // but remains set is the old values was set and the value is
-    // between high on and hiogh off or between low on and low off
+    // between high on and high off or between low on and low off
     val condition = 
       (doubleValue>=highOn || doubleValue<=lowOn) ||
       wasSet && (doubleValue>=highOff || doubleValue<=lowOff)
