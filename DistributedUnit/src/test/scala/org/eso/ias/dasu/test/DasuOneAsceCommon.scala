@@ -52,7 +52,7 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, validityThreshold: Int
   // The identifier of the converter
   val converterId = new Identifier("ConverterID",IdentifierType.CONVERTER,Some(pluginId))
 
-  // The ID of the monitor point in unput (it matched the ID in theJSON file)
+  // The ID of the monitor point in input (it matched the ID in theJSON file)
   val inputID = new Identifier("Temperature", IdentifierType.IASIO,converterId)
   
   /** Notifies about a new output produced by the DASU */
