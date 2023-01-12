@@ -1,0 +1,8 @@
+{
+  "dasuID":"ACKDASU",
+  "outputID":"ACKASCE3-OUTPUT",
+  "props":[{"name":"org.eso.ias.tf.mutliplicity.threshold","value":"1"}],
+  "id":"ACKASCE3",
+  "transferFunctionID":"org.eso.ias.asce.transfer.impls.MultiplicityTF",
+  "inputIDs":["ACKASCE1-OUTPUT", "ACKASCE2-OUTPUT"]
+}
