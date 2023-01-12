@@ -76,9 +76,16 @@ public class Alarm {
 	}
 
 	/**
-	 * ACK an alarm avoiding to build a new Alarm if the state did not change
+	 * ACK an alarm.
 	 *
-	 * @return the acked alarm or this if the alarm was already ackec
+	 * It avoids building a new Alarm if the state did not change.
+	 *
+	 * <EM>Note</EM>: this method shall not be called by the TF because the ACK is
+	 *                done by the user and not programmatically by the TF. The ACK
+	 *                will be communicated by the oeprator GUI (or other tools) as a command
+	 *                that triggers the execution of this method.
+	 *
+	 * @return the acked alarm or this if the alarm was already ACKed
 	 */
 	public Alarm ack() {
 		AlarmState as = alarmState.ack();
