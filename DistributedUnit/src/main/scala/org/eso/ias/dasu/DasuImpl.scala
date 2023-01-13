@@ -620,7 +620,12 @@ class DasuImpl (
       alarmIdentifier.id)
 
     // All checks passed: ack the alarm
-    asces(asceId.get).ack()
+    val acked = asces(asceId.get).ack()
+    if (acked) {
+      DasuImpl.logger.debug("DASU [{}]: send the ACKed alarm {} to BSD", id, alarmId.get)
+      publishOutput(calcOutputValidity())
+    }
+    acked
   }
 }
 
