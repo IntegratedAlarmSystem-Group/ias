@@ -590,8 +590,10 @@ class DasuImpl (
         id,
         alarmIdentifier.fullRunningID)
       return false
+    } else {
+      DasuImpl.logger.debug("DASU [{}]: this is the DASU in the identifier of the alarm {} to ack", id, alarmIdentifier.id)
     }
-    DasuImpl.logger.debug("DASU [{}]: the alarm {} seems produced by this DASU", id, alarmIdentifier.id)
+
 
     // Check if this DASU really produces the alarm
     val alarmId = alarmIdentifier.getIdOfType(IdentifierType.IASIO)
