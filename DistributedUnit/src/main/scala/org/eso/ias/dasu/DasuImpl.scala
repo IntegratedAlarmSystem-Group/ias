@@ -580,10 +580,17 @@ class DasuImpl (
     // The DASU in the identifier can be missing if, for example, the IASIO is produced by a plugin
     val dasuId: Option[String] = alarmIdentifier.getIdOfType(IdentifierType.DASU)
     if (!dasuId.isDefined) {
-      DasuImpl.logger.warn("Cannot ACK: the IASIO {} is not produced by a DASU",alarmIdentifier.fullRunningID)
+      DasuImpl.logger.warn("DASU [{}]: cannot ACK as the IASIO {} has no DASU in the identifier", id, alarmIdentifier.fullRunningID)
       return false
     }
-    if dasuId.get!=id then return false
+    if (dasuId.get!=id) {
+      DasuImpl.logger.warn("DASU [{}]: DASU mismatch in identifier (expected {}, found {}) ACKing {}",
+        id,
+        dasuId.get,
+        id,
+        alarmIdentifier.fullRunningID)
+      return false
+    }
     DasuImpl.logger.debug("DASU [{}]: the alarm {} seems produced by this DASU", id, alarmIdentifier.id)
 
     // Check if this DASU really produces the alarm
