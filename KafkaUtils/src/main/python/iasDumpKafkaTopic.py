@@ -116,7 +116,7 @@ if __name__ == '__main__':
     else:
         to = None
 
-     # Quiet can be used only with at least one betwee
+     # Quiet can be used only with at least one between
      # --max-messages and --timeout-ms
     applyQuiet = args.quiet and (args.timeout_ms or args.max_messages)
 
@@ -127,6 +127,6 @@ if __name__ == '__main__':
         print("Running",cmd)
 
     try:
-        call(cmd)
+        run(cmd)
     except KeyboardInterrupt as exception:
         pass
