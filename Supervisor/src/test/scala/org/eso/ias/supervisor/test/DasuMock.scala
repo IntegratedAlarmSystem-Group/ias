@@ -7,6 +7,7 @@ import org.eso.ias.dasu.subscriber.InputSubscriber
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.*
 
+import java.util.Objects
 import java.util.concurrent.atomic.AtomicInteger
 import scala.collection.mutable.ArrayBuffer
 import scala.jdk.javaapi.CollectionConverters
@@ -90,10 +91,9 @@ extends Dasu(dasuIdentifier,5,6) {
       System.currentTimeMillis(),
       null,
       null)
+
   }
-  
-  
-  
+
   logger.info("Mock-DASU [{}] built", dasuIdentifier.id)
   
   /**
@@ -114,6 +114,21 @@ extends Dasu(dasuIdentifier,5,6) {
       
     // Publish the simulated output
     outputPublisher.publish(output.updateFullIdsOfDependents(CollectionConverters.asJavaCollection(depIds)))
+  }
+
+  /**
+   * ACK the alarm if the ASCE that produces it runs in this DASU.
+   *
+   * The DASU delegates the acknowledgment to the ASCE that produces the alarm
+   *
+   * @param alarmIdentifier the identifier of the alarm to ACK
+   * @return true if the alarm has been ACKed, false otherwise
+   * @see See [[org.eso.ias.asce.ComputingElement.ack()]]
+   */
+  override def ack(alarmIdentifier: Identifier): Boolean = {
+    Objects.requireNonNull(alarmIdentifier)
+    DasuMock.logger.info("DusuMock [{}]: ACKing {} ", id, alarmIdentifier.fullRunningID)
+    true
   }
   
   /** The inputs of the DASU */
@@ -160,6 +175,8 @@ extends Dasu(dasuIdentifier,5,6) {
  *  
  */
 object DasuMock {
+  /** The logger */
+  private val logger = IASLogger.getLogger(this.getClass)
   
   /** 
    *  Factory method used by the Supervisor to build the DASU
