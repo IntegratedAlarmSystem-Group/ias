@@ -147,8 +147,8 @@ class AckTest extends AnyFlatSpec with OutputListener with BeforeAndAfterEach {
 
   behavior of "The ACK of the DASU"
 
-  it must "Instantiate the DASU" in {
-    logger.info("Test started")
+  it must "ack an alarm" in {
+    logger.info("Test of working ACK started")
     dasu.enableAutoRefreshOfOutput(false)
 
     val inputs: Set[IASValue[_]] = Set(buildValue(inputID1,0), buildValue(inputID2,0))
@@ -209,6 +209,32 @@ class AckTest extends AnyFlatSpec with OutputListener with BeforeAndAfterEach {
     val out4 = dasu.lastCalculatedOutput.get().get.value.asInstanceOf[Alarm]
     assert(out4.isCleared)
     assert(out4.isAcked)
+
+    logger.info("Test done")
+  }
+
+  it must "return false when ACK is rejected" in {
+    // Test the cases when the DASU rejects to ACK the passed ID
+    logger.info("Test of rejected ACK")
+
+    // Output not yet produced
+    val id: Identifier = dasu.asceThatProducesTheOutput.output.id
+    assert(!dasu.ack(id))
+
+    // Try to ACK a value that is not an alarm neither is produced by the DASU
+    assert(!dasu.ack(inputID1))
+
+    // The ID of the alarm to ack has a wrong ASCE
+    val wrongAsceFullId = Identifier("(SupervId:SUPERVISOR)@(ACKDASU:DASU)@(ACKASCE-WRONG:ASCE)@(ACKASCE3-OUTPUT:IASIO)")
+    assert(!dasu.ack(wrongAsceFullId))
+
+    // The ID of the alarm to ack has a wrong DASU
+    val wrongDasuFullId = Identifier("(SupervId:SUPERVISOR)@(ACKDASU-WRONG:DASU)@(ACKASCE3:ASCE)@(ACKASCE3-OUTPUT:IASIO)")
+    assert(!dasu.ack(wrongDasuFullId))
+
+    // The ID of the alarm to ack has a wrong AISIO
+    val wrongIasioFullId = Identifier("(SupervId:SUPERVISOR)@(ACKDASU:DASU)@(ACKASCE3:ASCE)@(ACKASCE3-WRONG:IASIO)")
+    assert(!dasu.ack(wrongIasioFullId))
 
     logger.info("Test done")
   }
