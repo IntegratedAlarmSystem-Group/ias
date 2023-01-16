@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * The {@code CommandManagerKafkaImpl} is the command executors that subscribes as a consumer of the kafka command topic
  * to get commands and as producer of the kafka reply topic to publish replies
- * Its task is to receive the commands fon behalf of the process where it runs, discarding the commands targeted to
+ * Its task is to receive the commands on behalf of the process where it runs, discarding the commands targeted to
  * other processes.
  *
  * Commands are forwarded to the listener for execution and the replies published
