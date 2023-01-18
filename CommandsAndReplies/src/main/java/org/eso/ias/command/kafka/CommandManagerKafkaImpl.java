@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * The {@code CommandManagerKafkaImpl} is the command executors that subscribes as a consumer of the kafka command topic
+ * The {@code CommandManagerKafkaImpl} is the command executor that subscribes as a consumer of the kafka command topic
  * to get commands and as producer of the kafka reply topic to publish replies
  * Its task is to receive the commands on behalf of the process where it runs, discarding the commands targeted to
  * other processes.

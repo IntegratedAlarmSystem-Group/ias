@@ -4,7 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * The CommandManager bae class for command executors subscribes as a consumer of the command topic and a producer of the reply topic.
+ * The CommandManager base class for command executors subscribes as a consumer of the command topic and 
+ * as a producer of the reply topic.
  * Its task is to receive the commands for the process where it runs, discarding the commands targeted to
  * other processes.
  *

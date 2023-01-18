@@ -11,7 +11,10 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -19,6 +22,18 @@ import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Objects of this class send commands and optionally wait for the reply through the kafka topics.
+ *
+ * Methods to send commands are synchronized i.e. it is not possible to send a command before the
+ * previous send terminates. This is in particular true for the request/reply
+ * (the {@link #sendSync(String, CommandType, List, Map, long, TimeUnit)}) that releases the lock
+ * when the reply has been received or the timelout elapses.
+ * This forces the sender to serialize requests and replies and can be a limitation if the sender needs
+ * to sand a bounce of commands.
+ *
+ * There is room for improvement, but at the present it is all the IAS need.
+ *
+ * To implement the reply, the CommandCenter uses a {@link BlockingQueue} ({@link #repliesQueue})
+ * to get the received reply or the timeout.
  *
  */
 public class CommandSender implements ReplyListener {
@@ -76,7 +91,7 @@ public class CommandSender implements ReplyListener {
     /**
      * The lock to wait for the reply
      */
-    private final AtomicReference<CountDownLatch> requestReplyLock = new AtomicReference<>();
+//    private final AtomicReference<CountDownLatch> requestReplyLock = new AtomicReference<>();
 
     /**
      * The id to wait for in the reply
@@ -84,6 +99,9 @@ public class CommandSender implements ReplyListener {
      * This is the ID of the command that is forwarded in the reply
      */
     private final AtomicLong idToWait = new AtomicLong();
+
+    /** The queue of reply messages */
+    private final LinkedBlockingQueue<ReplyMessage> repliesQueue = new LinkedBlockingQueue<>();
 
     /**
      * Constructor
@@ -173,6 +191,7 @@ public class CommandSender implements ReplyListener {
      *
      * @param reply The not-null reply read from the topic
      */
+    @Override
     public void  newReply(ReplyMessage reply) {
         if (!requestReplyInProgress.get() || reply.getSenderFullRunningId().equals(senderFullRunningId)) {
             // This process is not the sender of this command
@@ -189,9 +208,15 @@ public class CommandSender implements ReplyListener {
 
         // A request/reply is in progress
         if (reply.getId()==idToWait.get()) {
-            logger.debug("/ {} received from {}",reply.getId(),reply.getSenderFullRunningId());
+            logger.debug("Reply {} received from {}",reply.getId(),reply.getSenderFullRunningId());
             requestReplyInProgress.set(false);
-            requestReplyLock.get().countDown();
+            while (!closed.get()) {
+                try {
+                    repliesQueue.put(reply);
+                } catch (InterruptedException ie) {
+                    continue;
+                }
+            }
         } else {
             logger.debug("Received reply {} but waiting for reply {}",reply.getId(),idToWait.get());
         }
@@ -211,10 +236,11 @@ public class CommandSender implements ReplyListener {
      * @param properties The optional properties of the command
      * @param timeout the time interval for the timeout
      * @param timeUnit the time unit for the timeout
-     * @return true if the reply has been received and false if the waiting time elapsed before getting the reply
+     * @return the reply received by the destinator of the command;
+     *         empty if the waiting time elapsed before getting the reply
      * @throws InterruptedException
      */
-    public synchronized boolean sendSync(
+    public synchronized Optional<ReplyMessage> sendSync(
             String destId,
             CommandType command,
             List<String> params,
@@ -238,7 +264,8 @@ public class CommandSender implements ReplyListener {
         );
         logger.debug("Id {} assigned to command {} to {}",id,command,destId);
         idToWait.set(id);
-        requestReplyLock.set(new CountDownLatch(1));
+//        requestReplyLock.set(new CountDownLatch(1));
+        repliesQueue.clear();
         boolean isThereACmdInProgress=requestReplyInProgress.getAndSet(true);
         logger.debug("Is there a sync. command in progress? {}",isThereACmdInProgress);
 
@@ -248,18 +275,18 @@ public class CommandSender implements ReplyListener {
             logger.info("Command {} sent to {} with id {}", command,destId,id);
         } else {
             logger.warn("Command sender closed: command {} to {} discarded",cmd.getCommand(),cmd.getDestId());
-            return false;
+            return Optional.empty();
         }
 
         logger.debug("Waiting for reply with id {} from {}...",idToWait.get(),cmd.getDestId());
-        boolean replyReceived;
+        Optional<ReplyMessage> replyReceived;
         try {
-           replyReceived = requestReplyLock.get().await(timeout,timeUnit);
+           replyReceived = Optional.ofNullable(repliesQueue.poll(timeout, timeUnit));
         } catch (InterruptedException ie) {
             requestReplyInProgress.set(false);
             throw ie;
         }
-        if (!replyReceived) {
+        if (replyReceived.isEmpty()) {
             // timeout
             logger.debug("Timeout while waiting for the reply of cmd {} from {} ", id,destId);
             requestReplyInProgress.set(false);
@@ -285,7 +312,6 @@ public class CommandSender implements ReplyListener {
             CommandType command,
             List<String> params,
             Map<String, String> properties) throws Exception {
-
 
         CommandMessage cmd = new CommandMessage(
                 senderFullRunningId,
