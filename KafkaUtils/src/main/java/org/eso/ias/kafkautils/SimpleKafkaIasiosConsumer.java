@@ -55,7 +55,7 @@ public class SimpleKafkaIasiosConsumer implements KafkaStringsConsumer.StringsCo
     private KafkaIasiosConsumer.IasioListener iasioListener;
 
     /**
-     * The string consumer to get strings from teh kafka topic
+     * The string consumer to get strings from the kafka topic
      */
     private final KafkaStringsConsumer stringsConsumer;
 
@@ -149,7 +149,7 @@ public class SimpleKafkaIasiosConsumer implements KafkaStringsConsumer.StringsCo
             }
         }
 
-        // Check if the porcessed records are too old and publishes only if they are enough recent
+        // Check if the processed records are too old and publishes only if they are enough recent
         // If they are too old than the consumer is too slow processing events and seek to the end
         if (maxTimeDifference<=seekIfOlderThan) {
             try {
@@ -157,8 +157,8 @@ public class SimpleKafkaIasiosConsumer implements KafkaStringsConsumer.StringsCo
                 if (!ret.isEmpty()) {
                     iasioListener.iasiosReceived(ret);
                 }
-            } catch (Exception e) {
-                logger.error("Error notifying IASValues to the listener: {} values potentially lost", ret.size(), e);
+            } catch (Throwable t) {
+                logger.error("Error notifying IASValues to the listener: {} values potentially lost", ret.size(), t);
             }
         } else {
             logger.warn("Consumer too slow processing events: seeking to the end of the topic ({} ISOIOs discarded)",ret.size());
