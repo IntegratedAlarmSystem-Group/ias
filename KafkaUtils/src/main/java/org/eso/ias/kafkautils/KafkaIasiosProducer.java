@@ -52,7 +52,7 @@ public class KafkaIasiosProducer {
 	 * 
 	 * @param stringProducer The {@link SimpleStringProducer} to push strings in the topic
 	 * @param topic The topic to send strings to
-	 * @param serializer The serializer to convert AISValues to strings
+	 * @param serializer The serializer to convert IASValues to strings
 	 */
 	public KafkaIasiosProducer(SimpleStringProducer stringProducer, String topic, IasValueStringSerializer serializer) {
 		Objects.requireNonNull(stringProducer,"The SimpleStringProducer can't be null");
