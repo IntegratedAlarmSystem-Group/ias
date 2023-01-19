@@ -58,10 +58,10 @@ class SupervisorWithKafkaTest extends AnyFlatSpec with BeforeAndAfterAll with Be
   val pluginId = new Identifier("SimulatedPluginID", IdentifierType.PLUGIN, monSysId)
   val converterId = new Identifier("ConverterID", IdentifierType.CONVERTER, pluginId)
 
-  /** The ID of the temeprature processed by a DASU of the Supervisor */
+  /** The ID of the temperature processed by a DASU of the Supervisor */
   val temperatureID = new Identifier("Temperature", IdentifierType.IASIO, converterId)
 
-  /** The ID of the strenght processed by a DASU of the Supervisor */
+  /** The ID of the strength processed by a DASU of the Supervisor */
   val strenghtID = new Identifier("Strenght", IdentifierType.IASIO, converterId)
 
   /** The identifier of the supervisor */
@@ -184,7 +184,7 @@ class SupervisorWithKafkaTest extends AnyFlatSpec with BeforeAndAfterAll with Be
   }
 
   /**
-   * Build a IASVlaue to submit to the BSDB
+   * Build a [[IASValue]] to submit to the BSDB
    */
   def buildIasioToSubmit(identifier: Identifier, value: Double): IASValue[_] = {
     val t0 = System.currentTimeMillis()-100
@@ -201,10 +201,9 @@ class SupervisorWithKafkaTest extends AnyFlatSpec with BeforeAndAfterAll with Be
         t0+15,
         t0+20,
         null,null,null)
-    
   }
 
-  behavior of "The Supervisor with Kafka input/ouput"
+  behavior of "The Supervisor with Kafka input/output"
 
   it must "activate 2 DASUs with one ASCE each" in {
     val latch = new CountDownLatch(1)
