@@ -261,7 +261,6 @@ public class CommandSender implements ReplyListener {
         );
         logger.debug("Id {} assigned to command {} to {}",id,command,destId);
         idToWait.set(id);
-//        requestReplyLock.set(new CountDownLatch(1));
         repliesQueue.clear();
         boolean isThereACmdInProgress=requestReplyInProgress.getAndSet(true);
         logger.debug("Is there a sync. command in progress? {}",isThereACmdInProgress);
