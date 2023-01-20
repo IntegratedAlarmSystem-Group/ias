@@ -89,11 +89,6 @@ public class CommandSender implements ReplyListener {
     private final AtomicBoolean requestReplyInProgress = new AtomicBoolean(false);
 
     /**
-     * The lock to wait for the reply
-     */
-//    private final AtomicReference<CountDownLatch> requestReplyLock = new AtomicReference<>();
-
-    /**
      * The id to wait for in the reply
      *
      * This is the ID of the command that is forwarded in the reply
@@ -120,7 +115,7 @@ public class CommandSender implements ReplyListener {
             throw new IllegalArgumentException("Invalid null/empty full running ID of the sender");
         }
         this.senderFullRunningId=senderFullRuningId;
-        Objects.requireNonNull(stringProducer==null,"The producer can't be null");
+        Objects.requireNonNull(stringProducer, "The producer can't be null");
         this.cmdProducer=stringProducer;
         if (senderId==null || senderId.isEmpty()) {
             throw new IllegalArgumentException("Invalid null/empty ID of the sender");
@@ -139,7 +134,7 @@ public class CommandSender implements ReplyListener {
      * @param brokers URL of kafka brokers
      */
     public CommandSender(Identifier identifier, SimpleStringProducer stringProducer, String brokers) {
-        this(identifier.fullRunningID(),stringProducer,identifier.id(),brokers);
+        this(identifier.id(),stringProducer,identifier.id(),brokers);
     }
 
     /**
@@ -210,9 +205,11 @@ public class CommandSender implements ReplyListener {
         if (reply.getId()==idToWait.get()) {
             logger.debug("Reply {} received from {}",reply.getId(),reply.getSenderFullRunningId());
             requestReplyInProgress.set(false);
-            while (!closed.get()) {
+            boolean added = false;
+            while (!added && !closed.get()) {
                 try {
                     repliesQueue.put(reply);
+                    added = true;
                 } catch (InterruptedException ie) {
                     continue;
                 }
@@ -250,7 +247,7 @@ public class CommandSender implements ReplyListener {
         if (destId.equals(CommandMessage.BROADCAST_ADDRESS)) {
             throw new IllegalArgumentException("BROADCAST cannot be used for send-reply");
         }
-        logger.debug("Sending command {} to {}",command,destId);
+        logger.debug("Sending sync command {} to {}",command,destId);
 
         long id = cmdId.incrementAndGet();
         CommandMessage cmd = new CommandMessage(
