@@ -15,6 +15,7 @@ from IasPlugin3.JsonMsg import JsonMsg
 from IasBasicTypes.OperationalMode import OperationalMode
 from IasBasicTypes.IasType import IASType
 from IasBasicTypes.Alarm import Alarm
+from IasBasicTypes.Priority import Priority
 
 class MessageReceiver(Thread):
     
@@ -89,7 +90,7 @@ class TestUdpPlugin(unittest.TestCase):
         self.plugin.start()
         self.plugin.submit("MPoint-ID", 2.3, IASType.DOUBLE)
         self.plugin.submit("MPoint-IDOpMode", 5, IASType.INT,operationalMode=OperationalMode.MAINTENANCE)
-        self.plugin.submit("MPoint-Alarm", Alarm.SET_CRITICAL, IASType.ALARM,operationalMode=OperationalMode.DEGRADED)
+        self.plugin.submit("MPoint-Alarm", Alarm.get_initial_alarmstate(Priority.CRITICAL).set(), IASType.ALARM,operationalMode=OperationalMode.DEGRADED)
         time.sleep(2*UdpPlugin.SENDING_TIME_INTERVAL)
         self.assertEqual(len(self.receiver.msgReceived),3)
         dict = {}
@@ -111,10 +112,10 @@ class TestUdpPlugin(unittest.TestCase):
         self.assertEqual(m.operationalMode,OperationalMode.MAINTENANCE)
         
         m = dict["MPoint-Alarm"]
-        self.assertEqual(m.mPointID,"MPoint-Alarm")
-        self.assertEqual(m.value,Alarm.SET_CRITICAL)
-        self.assertEqual(m.valueType,IASType.ALARM)
-        self.assertEqual(m.operationalMode,OperationalMode.DEGRADED)
+        self.assertEqual(m.mPointID, "MPoint-Alarm")
+        self.assertEqual(m.value, Alarm.get_initial_alarmstate(Priority.CRITICAL).set())
+        self.assertEqual(m.valueType, IASType.ALARM)
+        self.assertEqual(m.operationalMode, OperationalMode.DEGRADED)
         
 
 if __name__ == '__main__':

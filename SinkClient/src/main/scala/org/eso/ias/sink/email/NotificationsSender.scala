@@ -161,11 +161,11 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
     * @param alarmId The ID of the alarm
     * @param state the state of the alarm
     */
-  def notifyAlarm(alarmId: String, state: AlarmState): Unit = {
+  def notifyAlarm(alarmId: String, state: AlarmSnapshot): Unit = {
     require(Option(alarmId).isDefined && !alarmId.isEmpty)
     require(Option(state).isDefined)
     val recipients = iasValuesDaos(Identifier.getBaseId(alarmId)).getEmails.split(",")
-    NotificationsSender.msLogger.debug("Sending notifcation of alarm {} status change to {}", alarmId, recipients.mkString(","))
+    NotificationsSender.msLogger.debug("Sending notification of alarm {} status change to {}", alarmId, recipients.mkString(","))
     val sendOp = Try(sender.notify(recipients.map(_.trim).toList, alarmId, state))
     if (sendOp.isFailure) NotificationsSender.msLogger.error("Error sending alarm state notification notification to {}", recipients.mkString(","), sendOp.asInstanceOf[Failure[_]].exception)
   }
@@ -202,9 +202,9 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
         val validity = value.iasValidity
 
         // The last state in the current time interval
-        val oldState: Option[AlarmState] = alarmsToTrack(id).getActualAlarmState()
+        val oldState: Option[AlarmSnapshot] = alarmsToTrack(id).getActualAlarmState()
         // The state of the last round interval
-        val lastRoundState: Option[AlarmState] = alarmsToTrack(id).stateOfLastRound
+        val lastRoundState: Option[AlarmSnapshot] = alarmsToTrack(id).stateOfLastRound
 
         // Update the state of the alarm state tracker
         alarmsToTrack(id) = alarmsToTrack(id).stateUpdate(alarm, validity, tStamp)

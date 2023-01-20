@@ -12,6 +12,7 @@ import org.eso.ias.plugin.filter.Filter.EnrichedSample;
 import org.eso.ias.plugin.filter.FilteredValue;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 
+import org.eso.ias.types.Priority;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -39,12 +40,12 @@ public class JsonConversionTest {
 	public void testAlarmTypeConversion() throws Exception {
 		
 		List<EnrichedSample> samples = new Vector<>();
-		Sample s = new Sample(Alarm.SET_MEDIUM);
+		Sample s = new Sample(Alarm.getInitialAlarmState(Priority.MEDIUM).set());
 		EnrichedSample vs = new EnrichedSample(s, true);
 		samples.add(vs);
 		
 		// Check the conversion to/from Alarm
-		Alarm alarmSample = Alarm.SET_MEDIUM;
+		Alarm alarmSample = Alarm.getInitialAlarmState(Priority.MEDIUM).set();
 		FilteredValue fv = new FilteredValue(alarmSample, samples, System.currentTimeMillis());
 		ValueToSend vts = new ValueToSend("IASIO-ALARM-ID", fv,OperationalMode.UNKNOWN, IasValidity.RELIABLE);
 		

@@ -131,12 +131,14 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
       throw new DelayedAlarmException("Output type is not alarm: "+actualOutput.iasType)
     }
 
+    val actualAlarmValue =  actualOutput.value.getOrElse(Alarm.getInitialAlarmState)
+
     if (lastInputValue.isEmpty) {
 	    // Initialization: if the output was never activated then
 	    // return a CLEARED alarm because the delay did not elapsed
 	    lastStateChangeTime=System.currentTimeMillis()
 	    lastInputValue=Some(iasio.value.get.asInstanceOf[Alarm])
-	    actualOutput.updateValue(Alarm.cleared)
+	    actualOutput.updateValue(actualAlarmValue.clear())
 	  } else {
       
       // Did the input change?
@@ -148,18 +150,18 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
       val delayFromLastChange = System.currentTimeMillis()-lastStateChangeTime
       
       if (
-          (actualOutput.value.get==Alarm.getSetDefault && delayFromLastChange<waitTimeToClear.get) ||
-          (actualOutput.value.get==Alarm.cleared && delayFromLastChange<waitTimeToSet.get)) {
+          (actualAlarmValue.isSet && delayFromLastChange<waitTimeToClear.get) ||
+          (!actualAlarmValue.isSet && delayFromLastChange<waitTimeToSet.get)) {
         // Not enough time elapsed from the last time the input changed: 
         // the output remains the same
         actualOutput
       } else {
         // enough time elapsed without changes in the input:
         // shell the output change?
-        if (iasio.value.get==actualOutput.value.get) {
+        if (iasio.value.get==actualAlarmValue) {
           actualOutput
         } else {
-          actualOutput.updateValue(iasio.value.get).updateProps(iasio.props)
+          actualOutput.updateValue(actualAlarmValue.setIf(iasio.value.get.asInstanceOf[Alarm].isSet)).updateProps(iasio.props)
         }
       }
     }

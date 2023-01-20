@@ -57,10 +57,10 @@ public class TransferExecutorImpl  extends JavaTransferExecutor<Alarm> {
 		System.out.println("java TransferExecutorImpl: evaluating "+compInputs.size()+" inputs");
 		System.out.println("java TransferExecutorImpl for comp. with ID="+compElementId+" and output "+actualOutput.toString());
 		for (IasIOJ<?> input: compInputs.values()) {
-			System.out.println(input);
+			System.out.println(input.toString());
 		}
 		IasIOJ<Alarm> newValue = actualOutput.updateMode(OperationalMode.SHUTTEDDOWN);
-		newValue=newValue.updateValue(Alarm.getSetDefault()); 
+		newValue=newValue.updateValue(Alarm.getInitialAlarmState().set());
 		System.out.println("Returning: "+newValue);
 		return newValue;
 	}

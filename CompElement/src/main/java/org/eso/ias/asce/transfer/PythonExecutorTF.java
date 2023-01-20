@@ -2,6 +2,7 @@ package org.eso.ias.asce.transfer;
 
 import jep.Interpreter;
 import jep.SharedInterpreter;
+import jep.python.PyObject;
 import org.eso.ias.asce.CompEleThreadFactory;
 import org.eso.ias.types.Alarm;
 import org.eso.ias.types.IASTypes;
@@ -129,6 +130,70 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
     }
 
     /**
+     * Convert the java value of the given type to the right python value
+     * and assign it to variable name in the python intepreter
+     *
+     * @param value the value to assign to the variable
+     * @param pythonVarName the name of the variable to set in the interpreter
+     */
+    private void convertJavaIasValueToPython(IasIOJ<?> value, String pythonVarName) {
+        Objects.requireNonNull(value, "Invalid null value");
+
+        switch (value.getType()) {
+            case LONG:
+            case INT:
+            case SHORT:
+            case BYTE:
+            case TIMESTAMP:
+                pythonInterpreter.exec(pythonVarName+"=int("+value.getValue().get()+")");
+                break;
+            case DOUBLE:
+            case FLOAT:
+                pythonInterpreter.exec(pythonVarName+"=float("+value.getValue().get()+")");
+                break;
+            case BOOLEAN:
+                if (value.getValue().get()==Boolean.TRUE) {
+                    pythonInterpreter.exec(pythonVarName+"=True");
+                } else {
+                    pythonInterpreter.exec(pythonVarName+"=False");
+                }
+                break;
+            case CHAR:
+                pythonInterpreter.exec(pythonVarName+"='"+((Character)(value.getValue().get())).charValue()+"'");
+                break;
+            case STRING:
+                pythonInterpreter.exec(pythonVarName+"='"+value.getValue().get().toString()+"'");
+                break;
+            case ARRAYOFDOUBLES:
+                NumericArray nad = (NumericArray)value.getValue().get();
+                Double[] doubles=nad.toArrayOfDouble();
+                pythonInterpreter.exec(pythonVarName+"=[]");
+                for (Double num: doubles) {
+                    pythonInterpreter.exec(pythonVarName+".append(float("+num+"))");
+                }
+                break;
+            case ARRAYOFLONGS:
+                NumericArray nal = (NumericArray)value.getValue().get();
+                Double[] longs=nal.toArrayOfDouble();
+                pythonInterpreter.exec(pythonVarName+"=[]");
+                for (Double num: longs) {
+                    pythonInterpreter.exec(pythonVarName+".append(int("+num+"))");
+                }
+                break;
+            case ALARM:
+                Alarm alarm = (Alarm)value.getValue().get();
+                pythonInterpreter.exec("from IasBasicTypes.Alarm import Alarm");
+                pythonInterpreter.exec("from IasBasicTypes.AlarmState import AlarmState");
+                pythonInterpreter.exec("from IasBasicTypes.Priority import Priority");
+                pythonInterpreter.exec(pythonVarName+"=Alarm(AlarmState."+alarm.alarmState.name()+", Priority."+alarm.priority.name()+")");
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupported input type "+value.getType());
+        }
+
+    }
+
+    /**
      * Run the TF in the python code
      *
      * @param compInputs: the inputs to the ASCE
@@ -141,6 +206,7 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
         actualOutput.getValue().ifPresent(v -> logger.debug("Actual output value {}",v));
         pythonInterpreter.exec("inputs = {}");
         for (String key: compInputs.keySet()) {
+            logger.debug("Converting input param {} of type {}", compInputs.get(key).getId(), compInputs.get(key).getType());
 
             pythonInterpreter.set("id", compInputs.get(key).getId());
             pythonInterpreter.set("runningId", compInputs.get(key).getFullrunningId());
@@ -149,75 +215,11 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
             pythonInterpreter.set("validity", compInputs.get(key).getValidity());
             assert compInputs.get(key).getValue().isPresent() : "Input value shall not be empty";
 
-            // Translate the value of the input to a proper (possibly native) python type
-            switch (compInputs.get(key).getType()) {
-                case LONG:
-                case INT:
-                case SHORT:
-                case BYTE:
-                case TIMESTAMP:
-                    pythonInterpreter.exec("iasValue=int("+compInputs.get(key).getValue().get()+")");
-                    break;
-                case DOUBLE:
-                case FLOAT:
-                    pythonInterpreter.exec("iasValue=float("+compInputs.get(key).getValue().get()+")");
-                    break;
-                case BOOLEAN:
-                    if (compInputs.get(key).getValue().get()==Boolean.TRUE) {
-                        pythonInterpreter.exec("iasValue=True");
-                    } else {
-                        pythonInterpreter.exec("iasValue=False");
-                    }
-                    break;
-                case CHAR:
-                    pythonInterpreter.exec("iasValue='"+((Character)(compInputs.get(key).getValue().get())).charValue()+"'");
-                    break;
-                case STRING:
-                    pythonInterpreter.exec("iasValue='"+compInputs.get(key).getValue().get().toString()+"'");
-                    break;
-                case ARRAYOFDOUBLES:
-                    NumericArray nad = (NumericArray)compInputs.get(key).getValue().get();
-                    Double[] doubles=nad.toArrayOfDouble();
-                    pythonInterpreter.exec("iasValue=[]");
-                    for (Double num: doubles) {
-                        pythonInterpreter.exec("iasValue.append(float("+num+"))");
-                    }
-                    break;
-                case ARRAYOFLONGS:
-                    NumericArray nal = (NumericArray)compInputs.get(key).getValue().get();
-                    Double[] longs=nal.toArrayOfDouble();
-                    pythonInterpreter.exec("iasValue=[]");
-                    for (Double num: longs) {
-                        pythonInterpreter.exec("iasValue.append(int("+num+"))");
-                    }
-                    break;
-                case ALARM:
-                    Alarm alarm = (Alarm)compInputs.get(key).getValue().get();
-                    pythonInterpreter.exec("from IasBasicTypes.Alarm import Alarm");
-                    switch (alarm) {
-                        case CLEARED:
-                            pythonInterpreter.exec("iasValue=Alarm.CLEARED");
-                            break;
-                        case SET_LOW:
-                            pythonInterpreter.exec("iasValue=Alarm.SET_LOW");
-                            break;
-                        case SET_MEDIUM:
-                            pythonInterpreter.exec("iasValue=Alarm.SET_MEDIUM");
-                            break;
-                        case SET_HIGH:
-                            pythonInterpreter.exec("iasValue=Alarm.SET_HIGH");
-                            break;
-                        case SET_CRITICAL:
-                            pythonInterpreter.exec("iasValue=Alarm.SET_CRITICAL");
-                            break;
-                    }
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Unsupported input type "+compInputs.get(key));
-            }
+            convertJavaIasValueToPython(compInputs.get(key), "iasValue");
+
+            logger.debug("Input params converted");
             assert compInputs.get(key).productionTStamp().isPresent() : "Input production timestamp shall not be empty";
             pythonInterpreter.set("prodTStamp", compInputs.get(key).productionTStamp().get());
-
 
             pythonInterpreter.exec("props = {}");
             Map<String, String> props = compInputs.get(key).getProps();
@@ -226,19 +228,20 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
                     pythonInterpreter.exec("props['"+k+"']='"+props.get(k)+"'");
                 }
             }
+            logger.debug("Properties converted to python");
 
             pythonInterpreter.exec("input = IASIO(id,runningId,mode,iasType,validity,iasValue,prodTStamp,props)");
             pythonInterpreter.exec("inputs[id]=input");
         }
 
-        logger.debug("Converting output {}",actualOutput.getId());
+        logger.debug("Converting output {} of type {}",actualOutput.getId(), actualOutput.getType().name());
         pythonInterpreter.set("id", actualOutput.getId());
         pythonInterpreter.set("runningId", actualOutput.getFullrunningId());
         pythonInterpreter.set("mode", actualOutput.getMode());
         pythonInterpreter.set("iasType", actualOutput.getType());
         pythonInterpreter.set("validity", actualOutput.getValidity());
         if (actualOutput.getValue().isPresent()) {
-            pythonInterpreter.set("outputValue", actualOutput.getValue().get());
+            convertJavaIasValueToPython(actualOutput, "outputValue");
         } else {
             pythonInterpreter.exec("outputValue = None");
         }
@@ -264,7 +267,8 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
 
         logger.debug("Decoding the output generated by the python TF of ASCE {}",compElementRunningId);
 
-        String newModeStr = (String)pythonInterpreter.getValue("out.mode");
+        String newModeStr = (String)pythonInterpreter.getValue("out.mode.name");
+        logger.debug("New mode will be decoded from string {}", newModeStr);
         int dotIidx = newModeStr.lastIndexOf('.');
         OperationalMode newMode;
         if (dotIidx!=-1) {
@@ -272,13 +276,17 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
         } else {
             newMode = OperationalMode.valueOf(newModeStr);
         }
+        logger.debug("New operatopnal mode {}",newMode);
 
         // Save the properties in a java HashMap
         HashMap<String,String> newProps = new HashMap<>();
         pythonInterpreter.set("propsMap",newProps);
         pythonInterpreter.exec("for k,v in out.props.items():\n  propsMap.put(str(k),str(v))");
+        logger.debug("Got {} properties", newProps.size());
 
+        logger.debug("Getting the value calculated by the python TF...");
         Object str = pythonInterpreter.getValue("out");
+        logger.debug("Got the output produced by the python TF");
 
         T value=convertPyOutputValueToJava(pythonInterpreter.getValue("out.value"));
 
@@ -355,13 +363,11 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
                 ArrayList<Long> longs = (ArrayList<Long>)pyObj;
                 return (T)(new NumericArray(NumericArray.NumericArrayType.LONG,longs));
             case ALARM:
-                if (pyObj instanceof String) {
-                    String temp = (String) pyObj;
-                    int idx = temp.lastIndexOf('.');
-                    if (idx >= 0) {
-                        temp = temp.substring(idx + 1);
-                    }
-                    return (T) Alarm.valueOf((String) temp);
+                if (pyObj instanceof PyObject) {
+                    String alarmStr = ((PyObject)pyObj).getAttr("string_repr").toString();
+                    return (T)Alarm.valueOf(alarmStr);
+                } else if (pyObj instanceof String) {
+                    return (T) Alarm.valueOf((String)pyObj);
                 } else {
                     return (T)pyObj;
                 }
@@ -441,6 +447,7 @@ public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
                 pythonInterpreter.exec("userProps['"+k+"']='"+props.get(k)+"'");
             }
         }
+        logger.debug("Properties processed");
 
         // Get the name of the python class from importOfPythonClass
         // whose format is "from X.Y.Z import C"

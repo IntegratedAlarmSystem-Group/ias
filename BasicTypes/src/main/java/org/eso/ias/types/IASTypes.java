@@ -10,9 +10,9 @@ import org.eso.ias.utils.ISO8601Helper;
  * 
  * In this case it is better to have java enumerations instead 
  * of scala because the two differ too much up to the point
- * that scala Enumeration are not usable within java sources.
+ * that scala Enumeration are not usable within java sources (true before scala 3).
  *
- * TODO: avoid duplication with org.eso.ias.cdb.pojos.IasTypeDao
+ * TODO: avoid duplication with org.eso.ias.cdb.pojos.IasTypeDao (Issue #17)
  * @see org.eso.ias.cdb.pojos.IasTypeDao
  * @author acaproni
  *

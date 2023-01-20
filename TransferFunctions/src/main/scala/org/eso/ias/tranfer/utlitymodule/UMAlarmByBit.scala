@@ -78,10 +78,11 @@ class UMAlarmByBit (asceId: String, asceRunningId: String, validityTimeFrame:Lon
 
     val status = new StatusWord(umStatusWord)
 
-    val alarmActivated = status.statusOf(bitNumber)
+    val alarmActivated: Boolean = status.statusOf(bitNumber)
 
-    val newOutput = if (alarmActivated) actualOutput.updateValue(Alarm.SET_MEDIUM) else
-      actualOutput.updateValue(Alarm.CLEARED)
+    val actualAlarm = actualOutput.value.getOrElse(Alarm.getInitialAlarmState)
+
+    val newOutput = actualOutput.updateValue(actualAlarm.setIf(alarmActivated))
 
     newOutput.updateProps(input.props).updateMode(input.mode)
   }

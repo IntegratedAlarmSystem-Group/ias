@@ -13,6 +13,7 @@ Created on May 10, 2018
 import time
 
 from IasBasicTypes.Alarm import Alarm
+from IasBasicTypes.Priority import Priority
 from IasBasicTypes.IasType import IASType
 from IasBasicTypes.OperationalMode import OperationalMode
 from IasPlugin3.UdpPlugin import UdpPlugin
@@ -26,7 +27,7 @@ if __name__ == '__main__':
     udpPlugin.submit("ID-Bool", False, IASType.BOOLEAN, operationalMode=OperationalMode.OPERATIONAL)
     udpPlugin.submit("ID-Char", 'X', IASType.CHAR, operationalMode=OperationalMode.DEGRADED)
     udpPlugin.submit("ID-String", 'Testing for test', IASType.STRING, operationalMode=OperationalMode.CLOSING)
-    udpPlugin.submit("ID-Alarm", Alarm.SET_HIGH, IASType.ALARM)
+    udpPlugin.submit("ID-Alarm", Alarm.get_initial_alarmstate(Priority.HIGH).set(), IASType.ALARM)
     udpPlugin.submit("ID-ArrayLong", [-1,5,10,0], IASType.ARRAYOFLONGS)
     udpPlugin.submit("ID-ArrayDouble", [-123,0.654,7], IASType.ARRAYOFDOUBLES)
     
