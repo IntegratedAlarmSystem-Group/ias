@@ -28,7 +28,7 @@ class TestJavaConversion  extends AnyFlatSpec {
     val alarmMode = OperationalMode.STARTUP
     val mode = OperationalMode.OPERATIONAL
     // The values
-    val alarmValue = Some(Alarm.SET_MEDIUM)
+    val alarmValue = Some(Alarm.getInitialAlarmState)
     val doubleValue = Some(48.6D)
     val floatValue = Some(-11.5F)
     val longValue = Some(11L)
@@ -257,11 +257,11 @@ class TestJavaConversion  extends AnyFlatSpec {
     
     val alarmVal = alarmHIO.toIASValue()
     val alarm = alarmVal.value
-    val alarmCleared = Alarm.CLEARED
+    val alarmCleared = Alarm.getInitialAlarmState(Priority.HIGH)
     val newAlarmValue = alarmVal.updateValue(alarmCleared)
     val alarmHio = alarmHIO.update(newAlarmValue)
     
-    assert(alarmHio.value.get.asInstanceOf[Alarm]==Alarm.CLEARED)
+    assert(alarmHio.value.get.asInstanceOf[Alarm]==alarmCleared)
     assert(alarmHio.fromIasValueValidity.isEmpty)
     assert(alarmHio.fromInputsValidity.isDefined)
     assert(alarmHio.fromInputsValidity.get.iasValidity==IasValidity.RELIABLE)

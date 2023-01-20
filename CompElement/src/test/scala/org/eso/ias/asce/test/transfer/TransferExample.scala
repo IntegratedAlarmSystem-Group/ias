@@ -44,7 +44,7 @@ class TransferExample(
     System.out.println("scala TransferExample for comp. with ID="+compElementId+" and output "+actualOutput.toString());
     for (hio <- compInputs.values) println(hio.toString())
     
-    val newAlarm = Alarm.getSetDefault
+    val newAlarm = Alarm.getInitialAlarmState.set()
     actualOutput.updateMode(OperationalMode.SHUTTEDDOWN).updateValue(newAlarm) 
   }
   

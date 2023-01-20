@@ -153,7 +153,7 @@ public class TemplatedConversionTest {
         configDao.addConfig("NotTemplatedId",IASTypes.ALARM,null,null);
         configDao.addConfig(idOfTemplatedMp,IASTypes.ALARM,3,6);
 
-        String nonTemplatedStr = buildMPDataString("NotTemplatedId",Alarm.SET_HIGH,Optional.empty());
+        String nonTemplatedStr = buildMPDataString("NotTemplatedId",Alarm.getInitialAlarmState(Priority.HIGH).set(),Optional.empty());
         String generatedIasValue = valueMapper.apply(nonTemplatedStr);
         assertNotNull(generatedIasValue);
     }
@@ -164,7 +164,7 @@ public class TemplatedConversionTest {
 
        configDao.addConfig("NotTemplatedId",IASTypes.ALARM,null,null);
        configDao.addConfig(idOfTemplatedMp,IASTypes.ALARM,3,6);
-       String templatedIdemplatedStr = buildMPDataString(idOfTemplatedMp,Alarm.SET_HIGH,Optional.of(5));
+       String templatedIdemplatedStr = buildMPDataString(idOfTemplatedMp,Alarm.getInitialAlarmState(Priority.HIGH).set(),Optional.of(5));
        String templatedIasValue = valueMapper.apply(templatedIdemplatedStr);
        assertNotNull(templatedIasValue);
 
@@ -177,7 +177,7 @@ public class TemplatedConversionTest {
        configDao.addConfig("NotTemplatedId",IASTypes.ALARM,null,null);
        configDao.addConfig(idOfTemplatedMp,IASTypes.ALARM,3,6);
 
-       String templatedIdemplatedStr = buildMPDataString(idOfTemplatedMp,Alarm.SET_HIGH,Optional.of(0));
+       String templatedIdemplatedStr = buildMPDataString(idOfTemplatedMp,Alarm.getInitialAlarmState(Priority.HIGH).set(),Optional.of(0));
        String templatedIasValue = valueMapper.apply(templatedIdemplatedStr);
        assertNull(templatedIasValue);
 
@@ -190,7 +190,7 @@ public class TemplatedConversionTest {
        configDao.addConfig("NotTemplatedId",IASTypes.ALARM,null,null);
        configDao.addConfig(idOfTemplatedMp,IASTypes.ALARM,3,6);
 
-       String templatedIdemplatedStr = buildMPDataString("NotFoundID",Alarm.SET_HIGH,Optional.of(4));
+       String templatedIdemplatedStr = buildMPDataString("NotFoundID",Alarm.getInitialAlarmState(Priority.HIGH).set(),Optional.of(4));
        String templatedIasValue = valueMapper.apply(templatedIdemplatedStr);
        assertNull(templatedIasValue);
     }

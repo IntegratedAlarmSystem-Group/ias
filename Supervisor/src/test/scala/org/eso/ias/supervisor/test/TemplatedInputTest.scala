@@ -167,7 +167,7 @@ class TemplatedInputTest extends AnyFlatSpec {
 
     val t2 = System.currentTimeMillis()-25
     val templInstValue1 = IASValue.build(
-      Alarm.SET_MEDIUM,
+      Alarm.getInitialAlarmState.set(),
       OperationalMode.OPERATIONAL,
       IasValidity.RELIABLE,
       idTemplInstanceInput1.fullRunningID,
@@ -183,7 +183,7 @@ class TemplatedInputTest extends AnyFlatSpec {
 
     val t3 = System.currentTimeMillis()-10
     val templInstValue2 = IASValue.build(
-      Alarm.SET_CRITICAL,
+      Alarm.getInitialAlarmState(Priority.CRITICAL).set(),
       OperationalMode.OPERATIONAL,
       IasValidity.RELIABLE,
       idTemplInstanceInput2.fullRunningID,

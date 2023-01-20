@@ -5,7 +5,7 @@ import org.eso.ias.cdb.pojos.{IasDao, IasioDao}
 import org.eso.ias.cdb.structuredtext.StructuredTextReader
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.sink.ValueListener
-import org.eso.ias.sink.email.{AlarmState, AlarmStateTracker, NotificationsSender, Sender}
+import org.eso.ias.sink.email.{AlarmSnapshot, AlarmStateTracker, NotificationsSender, Sender}
 import org.eso.ias.types.*
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -23,7 +23,7 @@ import scala.language.reflectiveCalls
 class SenderTest extends Sender {
 
   /** The type of notification to send */
-  class Notification(val recipients: List[String], val alarmId: String, val alarmState: AlarmState)
+  class Notification(val recipients: List[String], val alarmId: String, val alarmState: AlarmSnapshot)
 
   /** The logger */
   private val logger = IASLogger.getLogger(classOf[SenderTest])
@@ -62,7 +62,7 @@ class SenderTest extends Sender {
     * @param alarmId    the ID of the alarm
     * @param alarmState the state to notify
     */
-  override def notify(recipients: List[String], alarmId: String, alarmState: AlarmState): Unit = {
+  override def notify(recipients: List[String], alarmId: String, alarmState: AlarmSnapshot): Unit = {
     require(Option(recipients).isDefined && recipients.nonEmpty)
     require(Option(alarmId).isDefined && !alarmId.trim.isEmpty)
     require(Option(alarmState).isDefined)
@@ -192,7 +192,7 @@ class NotificationSenderTest extends AnyFlatSpec {
   it must "not send notification for unrecognized alarms" in new Fixture {
     valueListener.setUp(iasDao,iasioDaosMap)
 
-    val alarm = buildValue("TheID",Alarm.SET_CRITICAL,IasValidity.RELIABLE,System.currentTimeMillis())
+    val alarm = buildValue("TheID",Alarm.getInitialAlarmState(Priority.CRITICAL).set(),IasValidity.RELIABLE,System.currentTimeMillis())
     notificationsSender.processIasValues(List(alarm))
 
     assert(sender.notifications.isEmpty)
@@ -203,14 +203,15 @@ class NotificationSenderTest extends AnyFlatSpec {
   it must "send notification for alarm being SET" in new Fixture {
     valueListener.setUp(iasDao,iasioDaosMap)
 
-    val alarm = buildValue("Dasu2-OutID",Alarm.SET_CRITICAL,IasValidity.RELIABLE,System.currentTimeMillis())
+    val alarm = buildValue("Dasu2-OutID",Alarm.getInitialAlarmState(Priority.CRITICAL).set(),IasValidity.RELIABLE,System.currentTimeMillis())
     notificationsSender.processIasValues(List(alarm))
 
     assert(sender.notifications.length==1)
 
     val notification = sender.notifications(0)
     assert(notification.alarmId=="Dasu2-OutID")
-    assert(notification.alarmState.alarm==Alarm.SET_CRITICAL)
+    assert(notification.alarmState.alarm.isSet)
+    assert(notification.alarmState.alarm.priority==Priority.CRITICAL)
     assert(notification.alarmState.validity==IasValidity.RELIABLE)
     assert(notification.recipients==List("recp2@web.site.org"))
 
@@ -223,14 +224,15 @@ class NotificationSenderTest extends AnyFlatSpec {
 
     val templatedId = Identifier.buildIdFromTemplate("TemplatedId",7)
 
-    val alarm = buildValue(templatedId,Alarm.SET_CRITICAL,IasValidity.RELIABLE,System.currentTimeMillis())
+    val alarm = buildValue(templatedId,Alarm.getInitialAlarmState(Priority.CRITICAL).set(),IasValidity.RELIABLE,System.currentTimeMillis())
     notificationsSender.processIasValues(List(alarm))
 
     assert(sender.notifications.length==1)
 
     val notification = sender.notifications(0)
     assert(notification.alarmId==templatedId)
-    assert(notification.alarmState.alarm==Alarm.SET_CRITICAL)
+    assert(notification.alarmState.alarm.isSet)
+    assert(notification.alarmState.alarm.priority==Priority.CRITICAL)
     assert(notification.alarmState.validity==IasValidity.RELIABLE)
     assert(notification.recipients==List("template@web.site.org"))
 
@@ -241,7 +243,7 @@ class NotificationSenderTest extends AnyFlatSpec {
   it must "not send notification if the state did not change" in new Fixture {
     valueListener.setUp(iasDao,iasioDaosMap)
 
-    val alarm = buildValue("Dasu2-OutID",Alarm.SET_CRITICAL,IasValidity.RELIABLE,System.currentTimeMillis())
+    val alarm = buildValue("Dasu2-OutID",Alarm.getInitialAlarmState(Priority.CRITICAL).set(),IasValidity.RELIABLE,System.currentTimeMillis())
     notificationsSender.processIasValues(List(alarm))
     notificationsSender.processIasValues(List(alarm))
     notificationsSender.processIasValues(List(alarm))
@@ -252,7 +254,8 @@ class NotificationSenderTest extends AnyFlatSpec {
 
     val notification = sender.notifications(0)
     assert(notification.alarmId=="Dasu2-OutID")
-    assert(notification.alarmState.alarm==Alarm.SET_CRITICAL)
+    assert(notification.alarmState.alarm.isSet)
+    assert(notification.alarmState.alarm.priority==Priority.CRITICAL)
     assert(notification.alarmState.validity==IasValidity.RELIABLE)
     assert(notification.recipients==List("recp2@web.site.org"))
 
@@ -262,10 +265,10 @@ class NotificationSenderTest extends AnyFlatSpec {
   it must "not send notifications if the state changes many times" in new Fixture {
     valueListener.setUp(iasDao,iasioDaosMap)
 
-    val alarm1 = buildValue("Dasu2-OutID",Alarm.SET_CRITICAL,IasValidity.RELIABLE,System.currentTimeMillis())
-    val alarm2 = buildValue("Dasu2-OutID",Alarm.SET_LOW,IasValidity.UNRELIABLE,System.currentTimeMillis())
-    val alarm3 = buildValue("Dasu2-OutID",Alarm.CLEARED,IasValidity.UNRELIABLE,System.currentTimeMillis())
-    val alarm4 = buildValue("Dasu2-OutID",Alarm.SET_MEDIUM,IasValidity.RELIABLE,System.currentTimeMillis())
+    val alarm1 = buildValue("Dasu2-OutID",Alarm.getInitialAlarmState(Priority.CRITICAL).set(),IasValidity.RELIABLE,System.currentTimeMillis())
+    val alarm2 = buildValue("Dasu2-OutID",Alarm.getInitialAlarmState(Priority.LOW).set(),IasValidity.UNRELIABLE,System.currentTimeMillis())
+    val alarm3 = buildValue("Dasu2-OutID",Alarm.getInitialAlarmState,IasValidity.UNRELIABLE,System.currentTimeMillis())
+    val alarm4 = buildValue("Dasu2-OutID",Alarm.getInitialAlarmState(Priority.MEDIUM).set(),IasValidity.RELIABLE,System.currentTimeMillis())
     notificationsSender.processIasValues(List(alarm1,alarm2,alarm3,alarm4))
 
     assert(sender.notifications.length==4)
@@ -276,10 +279,10 @@ class NotificationSenderTest extends AnyFlatSpec {
   it must "not send notifications if the state remains the same but validity changes" in new Fixture {
     valueListener.setUp(iasDao,iasioDaosMap)
 
-    val alarm1 = buildValue("Dasu2-OutID",Alarm.SET_CRITICAL,IasValidity.RELIABLE,System.currentTimeMillis())
-    val alarm2 = buildValue("Dasu2-OutID",Alarm.SET_CRITICAL,IasValidity.UNRELIABLE,System.currentTimeMillis())
-    val alarm3 = buildValue("Dasu2-OutID",Alarm.SET_CRITICAL,IasValidity.RELIABLE,System.currentTimeMillis())
-    val alarm4 = buildValue("Dasu2-OutID",Alarm.SET_CRITICAL,IasValidity.RELIABLE,System.currentTimeMillis())
+    val alarm1 = buildValue("Dasu2-OutID",Alarm.getInitialAlarmState(Priority.CRITICAL).set(),IasValidity.RELIABLE,System.currentTimeMillis())
+    val alarm2 = buildValue("Dasu2-OutID",Alarm.getInitialAlarmState(Priority.CRITICAL).set(),IasValidity.UNRELIABLE,System.currentTimeMillis())
+    val alarm3 = buildValue("Dasu2-OutID",Alarm.getInitialAlarmState(Priority.CRITICAL).set(),IasValidity.RELIABLE,System.currentTimeMillis())
+    val alarm4 = buildValue("Dasu2-OutID",Alarm.getInitialAlarmState(Priority.CRITICAL).set(),IasValidity.RELIABLE,System.currentTimeMillis())
     notificationsSender.processIasValues(List(alarm1,alarm2,alarm3,alarm4))
 
     assert(sender.notifications.length==1)
@@ -290,14 +293,14 @@ class NotificationSenderTest extends AnyFlatSpec {
   it must "send notifications to all the recipients" in new Fixture {
     valueListener.setUp(iasDao,iasioDaosMap)
 
-    val alarm = buildValue("Dasu3-OutID", Alarm.SET_CRITICAL,IasValidity.RELIABLE,System.currentTimeMillis())
+    val alarm = buildValue("Dasu3-OutID", Alarm.getInitialAlarmState(Priority.CRITICAL).set(),IasValidity.RELIABLE,System.currentTimeMillis())
     notificationsSender.processIasValues(List(alarm))
 
     assert(sender.notifications.length==1)
 
     val notification = sender.notifications(0)
     assert(notification.alarmId=="Dasu3-OutID")
-    assert(notification.alarmState.alarm==Alarm.SET_CRITICAL)
+    assert(notification.alarmState.alarm==Alarm.getInitialAlarmState(Priority.CRITICAL).set())
     assert(notification.alarmState.validity==IasValidity.RELIABLE)
     assert(notification.recipients.toSet==Set("recp1@web.site.org", "recp3@web.site.org"))
 

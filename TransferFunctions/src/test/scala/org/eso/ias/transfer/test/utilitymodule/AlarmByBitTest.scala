@@ -98,7 +98,7 @@ class AlarmByBitTest extends AnyFlatSpec with BeforeAndAfterEach {
     } {
       assert(output.iasType==IASTypes.ALARM,"Unexpected output type: "+output.iasType)
       assert(output.value.isDefined)
-      assert(output.value.get==Alarm.CLEARED)
+      assert(output.value.get.isCleared)
     }
   }
 
@@ -110,13 +110,13 @@ class AlarmByBitTest extends AnyFlatSpec with BeforeAndAfterEach {
     val input: InOut[String] = swInputInOut.updateValue(Some(statusWord.statusWordString))
     val output = bitTransfer.eval(Map(statusWordId-> new IasIO(input)),out)
     assert(output.value.isDefined)
-    assert(output.value.get==Alarm.SET_MEDIUM)
+    assert(output.value.get.isSet)
 
     val statusWord2 = new StatusWordBuilder(List(1,3,5,6,7))
     val input2: InOut[String] = swInputInOut.updateValue(Some(statusWord2.statusWordString))
     val output2 = bitTransfer.eval(Map(statusWordId-> new IasIO(input2)),out)
     assert(output2.value.isDefined)
-    assert(output2.value.get==Alarm.CLEARED)
+    assert(output2.value.get.isCleared)
 
   }
 

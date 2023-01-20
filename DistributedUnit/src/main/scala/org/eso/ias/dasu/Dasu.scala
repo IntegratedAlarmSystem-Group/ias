@@ -13,7 +13,7 @@ import scala.util.Try
  * 
  * The DASU, once notified of new inputs received from the BSDB (or other sources),
  * forwards the IASIOs to the ASCEs to produce the output.
- * If no new inputs arrived the DASU generate the output anyhow to notify that the DASU is alive.
+ * If no new inputs arrived the DASU generates the output anyhow to notify that the DASU is alive.
  * At a first glance it seems enough to check the validity of the last set of inputs to assign 
  * the validity of the output.
  * 
@@ -27,7 +27,7 @@ import scala.util.Try
  * 
  * Newly received inputs are immediately processed unless they arrive so often
  * to need the CPU running at 100%. In this case the DASU delayed the evaluation
- * of the output collecting the inputs intil the throttling time interval elapses.
+ * of the output collecting the inputs until the throttling time interval elapses.
  * 
  * @constructor create a DASU with the given identifier
  * @param dasuIdentifier the identifier of the DASU
@@ -60,9 +60,7 @@ abstract class Dasu(
    */
   lazy val templateInstance: Option[Int] = dasuIdentifier.templateInstance
   
-  /** 
-   *  Auto send time interval in milliseconds
-   */
+  /** Auto send time interval in milliseconds */
   val autoSendTimeIntervalMillis: Long = TimeUnit.MILLISECONDS.convert(autoSendTimeInterval.toLong, TimeUnit.SECONDS)
   
   /** 
@@ -79,8 +77,7 @@ abstract class Dasu(
     prop.map(s => Try(s.toInt).getOrElse(Dasu.DefaultMinAllowedRefreshRate)).getOrElse(Dasu.DefaultMinAllowedRefreshRate).abs.toLong
   }
   logger.debug("Output calculation throttling of DASU [{}] set to {}",id,throttling.toString)
-      
-  
+
   /** The IDs of the inputs of the DASU */
   def getInputIds(): Set[String]
   
@@ -110,10 +107,19 @@ abstract class Dasu(
    */
   override def inputsReceived(iasios: Iterable[IASValue[_]]): Unit
   
-  /**
-   * Release all the resources before exiting
-   */
+  /** Release all the resources before exiting */
   def cleanUp(): Unit
+
+  /**
+   * ACK the alarm if the ASCE that produces it runs in this DASU.
+   *
+   * The DASU delegates the acknowledgment to the ASCE that produces the alarm
+   *
+   * @param alarmIdentifier the identifier of the alarm to ACK
+   * @return true if the alarm has been ACKed, false otherwise
+   * @see See [[org.eso.ias.asce.ComputingElement.ack()]]
+   */
+  def ack(alarmIdentifier: Identifier): Boolean
 }
 
 /** Companion object */

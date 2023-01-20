@@ -11,6 +11,7 @@ import datetime
 import unittest
 
 from IasBasicTypes.Alarm import Alarm
+from IasBasicTypes.Priority import Priority
 from IasBasicTypes.IasType import IASType
 from IasBasicTypes.OperationalMode import OperationalMode
 from IasPlugin3.JsonMsg import JsonMsg
@@ -56,7 +57,7 @@ class TestJsonMessage(unittest.TestCase):
         '''
         Test the conversion of all possible IAS data types
         '''
-        msg = JsonMsg("MPoint-IDS", "A Test String", IASType.STRING,operationalMode=OperationalMode.OPERATIONAL)
+        msg = JsonMsg("MPoint-IDS", "A Test String", IASType.STRING, operationalMode=OperationalMode.OPERATIONAL)
         jStr = msg.dumps()
         print(jStr)
         fromJString = JsonMsg.parse(jStr)
@@ -69,7 +70,7 @@ class TestJsonMessage(unittest.TestCase):
         '''
         Test the conversion of all possible IAS data types
         '''
-        msg = JsonMsg("MPoint-IDB", True, IASType.BOOLEAN,operationalMode=OperationalMode.INITIALIZATION)
+        msg = JsonMsg("MPoint-IDB", True, IASType.BOOLEAN, operationalMode=OperationalMode.INITIALIZATION)
         jStr = msg.dumps()
         print(jStr)
         fromJString = JsonMsg.parse(jStr)
@@ -82,46 +83,49 @@ class TestJsonMessage(unittest.TestCase):
         '''
         Test the conversion of all possible IAS data types
         '''
-        msg = JsonMsg("MPoint-IDC", 'X', IASType.CHAR,operationalMode=OperationalMode.CLOSING)
+        msg = JsonMsg("MPoint-IDC", 'X', IASType.CHAR, operationalMode=OperationalMode.CLOSING)
         jStr = msg.dumps()
         print(jStr)
         fromJString = JsonMsg.parse(jStr)
         self.assertEqual(fromJString.mPointID, "MPoint-IDC")
         self.assertEqual(fromJString.value, 'X')
-        self.assertEqual(fromJString.valueType,IASType.CHAR)
+        self.assertEqual(fromJString.valueType, IASType.CHAR)
         self.assertEqual(fromJString.operationalMode, OperationalMode.CLOSING)
         
     def testTypeConversionsAlarm(self):
         '''
         Test the conversion of all possible IAS data types
         '''
-        msg = JsonMsg("MPoint-IDC", Alarm.SET_MEDIUM, IASType.ALARM,operationalMode=OperationalMode.SHUTTEDDOWN)
+        msg = JsonMsg("MPoint-IDC", Alarm.get_initial_alarmstate(Priority.MEDIUM).set(), IASType.ALARM, operationalMode=OperationalMode.SHUTTEDDOWN)
         jStr = msg.dumps()
-        print(jStr)
+        print("testTypeConversionsAlarm JSON msg:", jStr)
         fromJString = JsonMsg.parse(jStr)
         self.assertEqual(fromJString.mPointID, "MPoint-IDC")
-        self.assertEqual(fromJString.value, Alarm.SET_MEDIUM)
-        self.assertEqual(fromJString.valueType,IASType.ALARM)
+        self.assertEqual(fromJString.value, Alarm.get_initial_alarmstate(Priority.MEDIUM).set())
+        self.assertTrue(fromJString.value.is_set())
+        self.assertEqual(fromJString.value.priority, Priority.MEDIUM)
+        self.assertFalse(fromJString.value.is_acked())
+        self.assertEqual(fromJString.valueType, IASType.ALARM)
         self.assertEqual(fromJString.operationalMode, OperationalMode.SHUTTEDDOWN)
 
     def testTypeConversionsArrayLongs(self):
-        msg = JsonMsg("MPoint-ARRAY-LONGS", [1,2,3,4,5,-1], IASType.ARRAYOFLONGS,operationalMode=OperationalMode.OPERATIONAL)
+        msg = JsonMsg("MPoint-ARRAY-LONGS", [1,2,3,4,5,-1], IASType.ARRAYOFLONGS, operationalMode=OperationalMode.OPERATIONAL)
         jStr = msg.dumps()
         print(jStr)
         fromJString = JsonMsg.parse(jStr)
         self.assertEqual(fromJString.mPointID, "MPoint-ARRAY-LONGS")
         self.assertEqual(fromJString.value, [1,2,3,4,5,-1])
-        self.assertEqual(fromJString.valueType,IASType.ARRAYOFLONGS)
+        self.assertEqual(fromJString.valueType, IASType.ARRAYOFLONGS)
         self.assertEqual(fromJString.operationalMode, OperationalMode.OPERATIONAL)
 
     def testTypeConversionsArrayDoubles(self):
-        msg = JsonMsg("MPoint-ARRAY-DOUBLES", [0,0.123,-987.321,-1], IASType.ARRAYOFDOUBLES,operationalMode=OperationalMode.OPERATIONAL)
+        msg = JsonMsg("MPoint-ARRAY-DOUBLES", [0,0.123,-987.321,-1], IASType.ARRAYOFDOUBLES, operationalMode=OperationalMode.OPERATIONAL)
         jStr = msg.dumps()
         print(jStr)
         fromJString = JsonMsg.parse(jStr)
         self.assertEqual(fromJString.mPointID, "MPoint-ARRAY-DOUBLES")
         self.assertEqual(fromJString.value, [0,0.123,-987.321,-1])
-        self.assertEqual(fromJString.valueType,IASType.ARRAYOFDOUBLES)
+        self.assertEqual(fromJString.valueType, IASType.ARRAYOFDOUBLES)
         self.assertEqual(fromJString.operationalMode, OperationalMode.OPERATIONAL)
 
 if __name__ == '__main__':

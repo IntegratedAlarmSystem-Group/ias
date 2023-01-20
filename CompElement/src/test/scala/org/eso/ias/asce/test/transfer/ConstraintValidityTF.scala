@@ -68,7 +68,7 @@ class ConstraintValidityTF (
     }
     
     
-    val newAlarm = Alarm.getSetDefault
+    val newAlarm = Alarm.getInitialAlarmState.set()
     actualOutput.updateMode(OperationalMode.DEGRADED).updateValue(newAlarm).setValidityConstraint(validityConstraints)
   }
   
