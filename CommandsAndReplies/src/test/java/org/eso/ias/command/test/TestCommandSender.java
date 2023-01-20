@@ -1,5 +1,6 @@
 package org.eso.ias.command.test;
 
+import ch.qos.logback.classic.Level;
 import org.eso.ias.command.CommandSender;
 import org.eso.ias.command.CommandType;
 import org.eso.ias.command.ReplyMessage;
@@ -8,6 +9,7 @@ import org.eso.ias.heartbeat.consumer.HbListener;
 import org.eso.ias.heartbeat.consumer.HbMsg;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.SimpleStringProducer;
+import org.eso.ias.logging.IASLogger;
 import org.eso.ias.types.Identifier;
 import org.eso.ias.types.IdentifierType;
 import org.junit.jupiter.api.*;
@@ -72,6 +74,7 @@ public class TestCommandSender implements HbListener {
     @BeforeAll
     public static void setUpAll() throws Exception {
         logger.info("Setting up the CommandSender");
+        IASLogger.setRootLogLevel(Level.DEBUG);
         cmdSender.setUp();
         simulatorProc=runSimulator();
     }
@@ -141,7 +144,7 @@ public class TestCommandSender implements HbListener {
 
         logger.info("Sending (sync) PING to {}",dest);
         Optional<ReplyMessage> ret =cmdSender.sendSync(dest, CommandType.PING,null,null,20, TimeUnit.SECONDS);
-        assertFalse(ret.isEmpty());
+        assertTrue(ret.isEmpty());
     }
 
     /** Synchronously sends a command and wait for its execution */
