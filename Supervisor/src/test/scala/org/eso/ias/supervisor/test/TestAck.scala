@@ -26,6 +26,10 @@ import scala.sys.process.*
  * - check if the IASIOS have been effectively set/cleared
  *
  * The ACK command is sent using the [[CommandSender]].
+ *
+ * The tests waits for a certain time (greater than the auto refresh time interval)
+ * to be sure that the supervisor emits the alarms i.e. there is no other synchronization mechanism
+ * than waiting for a resonable time before getting the alarms
  */
 class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach with IasioListener {
   /** The logger */
@@ -36,13 +40,16 @@ class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach
   val converterId = new Identifier("ConverterID", IdentifierType.CONVERTER, pluginId)
 
   /** The ID of the temperature processed by a DASU of the Supervisor */
-  val temperatureID = new Identifier("Temperature", IdentifierType.IASIO, converterId)
+  val temperatureId = new Identifier("Temperature", IdentifierType.IASIO, converterId)
 
-  /** The id of the alarm generated when the temperature goes over the thresholds */
+  /** The id of the alarm generated when the temperature goes over the threshold */
   val temperatureAlarmId = Identifier("(SupervisorWithKafka:SUPERVISOR)@(DasuTemperature:DASU)@(AsceTemperature:ASCE)@(TemperatureAlarm:IASIO)")
 
+  /** The id of the alarm generated when the strength goes over the threshold */
+  val strengthAlarmId = Identifier("(SupervisorWithKafka:SUPERVISOR)@(DasuStrenght:DASU)@(AsceStrenght:ASCE)@(StrenghtAlarm:IASIO)")
+
   /** The ID of the strength processed by a DASU of the Supervisor */
-  val strenghtID = new Identifier("Strenght", IdentifierType.IASIO, converterId)
+  val strenghtId = new Identifier("Strenght", IdentifierType.IASIO, converterId)
 
   /** The ID of the supervisor */
   val supervisorId = "SupervisorWithKafka"
@@ -94,7 +101,7 @@ class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach
 
   override def beforeAll(): Unit = {
 
-    IASLogger.setRootLogLevel(Level.DEBUG)
+//    IASLogger.setRootLogLevel(Level.DEBUG)
 
     Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler {
       override def uncaughtException(t: Thread, e: Throwable): Unit = {
@@ -175,7 +182,7 @@ class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach
 
   behavior of "The ACK in the Supervisor"
 
-  it must "return ERROR if the output has not been generated yet" in {
+  it must "ACK the alarm" in {
     logger.info("Test started")
     val params = CollectionConverters.asJava(List("IASIO-ID", "User provided comment for ACK"))
     val props = CollectionConverters.asJava(Map[String, String]())
@@ -184,7 +191,7 @@ class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach
     assert(reply.get().getExitStatus==CommandExitStatus.ERROR) // THE IASIO to ACK does not exist
 
     // Trigger the generation of the alarm
-    val iasio = buildIasioToSubmit(temperatureID, 5)
+    val iasio = buildIasioToSubmit(temperatureId, 5)
     iasiosProd.push(CollectionConverters.asJava(List(iasio)))
     logger.info("Giving time to get the updated alarm")
     Thread.sleep(10000) // The alarm is published continuously due to the refresh
@@ -197,7 +204,7 @@ class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach
     assert(alarmOpt.get.value.isAcked)
 
     // Set the alarm
-    val iasio2 = buildIasioToSubmit(temperatureID, 100)
+    val iasio2 = buildIasioToSubmit(temperatureId, 100)
     iasiosProd.push(CollectionConverters.asJava(List(iasio2)))
     logger.info("Giving time to get the updated alarm")
     Thread.sleep(10000) // The alarm is published continuously due to the refresh
@@ -210,7 +217,7 @@ class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach
     assert(!alarmOpt2.get.value.isAcked)
 
     // ACK the alarm
-    val alToAck = "(SupervisorWithKafka:SUPERVISOR)@(DasuTemperature:DASU)@(AsceTemperature:ASCE)@(TemperatureAlarm:IASIO)"
+    val alToAck = temperatureAlarmId.fullRunningID
     val params2 = CollectionConverters.asJava(List(alToAck, "User provided comment for ACK - correct"))
     logger.info("ACKing the alarm")
     val reply2 = cmdSender.sendSync(supervisorId, CommandType.ACK, params2, props, 15, TimeUnit.SECONDS)
@@ -227,7 +234,92 @@ class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach
     assert(alarmOpt3.get.value.isSet)
     assert(alarmOpt3.get.value.isAcked)
 
+    // Clear the alarm (clean exit)
+    val iasio3 = buildIasioToSubmit(temperatureId, 0)
+    iasiosProd.push(CollectionConverters.asJava(List(iasio3)))
+
     logger.info("Test terminated")
+  }
+
+  it must "ack the right alarm" in {
+    logger.info("Test for side effects started")
+    // Check that if the supervisor has more active alarms, the ACK is forwarded
+    // to the right DASU (i.e. no side effects)
+
+    // Set bot the alarms produced by the Supervisor
+    val temp =  buildIasioToSubmit(temperatureId, 100)
+    val strength = buildIasioToSubmit(strenghtId, 100)
+    iasiosProd.push(CollectionConverters.asJava(List(temp, strength)))
+    logger.info("Giving time to get the updated alarm")
+    Thread.sleep(10000) // The alarm is published continuously due to the refresh
+    logger.info("Test resumed")
+    val tempAlOpt1 = Option(alarmsReceived.get(temperatureAlarmId.fullRunningID))
+    assert(tempAlOpt1.isDefined)
+    assert(tempAlOpt1.get.value.isSet)
+    assert(!tempAlOpt1.get.value.isAcked)
+    val strengthAlOpt1 = Option(alarmsReceived.get(strengthAlarmId.fullRunningID))
+    assert(strengthAlOpt1.isDefined)
+    assert(strengthAlOpt1.get.value.isSet)
+    assert(!strengthAlOpt1.get.value.isAcked)
+
+    // ACK strength alarm, temperature must remain un acked
+    val alToAck = strengthAlarmId.fullRunningID
+    val params = CollectionConverters.asJava(List(alToAck, "User provided comment for ACK - correct"))
+    val props = CollectionConverters.asJava(Map[String, String]())
+    logger.info("ACKing the strength alarm")
+    val reply = cmdSender.sendSync(supervisorId, CommandType.ACK, params, props, 15, TimeUnit.SECONDS)
+    logger.info("ACK cmd sent")
+    assert(reply.isPresent)
+    assert(reply.get().getExitStatus==CommandExitStatus.OK) // The command to ACK has been executed
+    logger.info("Giving time to get the updated alarm")
+    Thread.sleep(10000) // The alarm is published continuously due to the refresh
+    logger.info("Test resumed")
+    // Check if only the strength alarm has been ACKed
+    val tempAlOpt2 = Option(alarmsReceived.get(temperatureAlarmId.fullRunningID))
+    assert(tempAlOpt2.isDefined)
+    assert(tempAlOpt2.get.value.isSet)
+    assert(!tempAlOpt2.get.value.isAcked)
+    val strengthAlOpt2 = Option(alarmsReceived.get(strengthAlarmId.fullRunningID))
+    assert(strengthAlOpt2.isDefined)
+    assert(strengthAlOpt2.get.value.isSet)
+    assert(strengthAlOpt2.get.value.isAcked)
+
+    // Clear both alarms (one remains UN-ACKed)
+    val temp2 =  buildIasioToSubmit(temperatureId, 0)
+    val strength2 = buildIasioToSubmit(strenghtId, 0)
+    iasiosProd.push(CollectionConverters.asJava(List(temp2, strength2)))
+    logger.info("Giving time to get the updated alarm")
+    Thread.sleep(10000) // The alarm is published continuously due to the refresh
+    logger.info("Test resumed")
+    val tempAlOpt3 = Option(alarmsReceived.get(temperatureAlarmId.fullRunningID))
+    assert(tempAlOpt3.isDefined)
+    assert(tempAlOpt3.get.value.isCleared)
+    assert(!tempAlOpt3.get.value.isAcked)
+    val strengthAlOpt3 = Option(alarmsReceived.get(strengthAlarmId.fullRunningID))
+    assert(strengthAlOpt3.isDefined)
+    assert(strengthAlOpt3.get.value.isCleared)
+    assert(strengthAlOpt3.get.value.isAcked)
+
+    // Finally ACK the temperature alarm that is still UN-ACKed
+    val tempAlarmToAck = temperatureAlarmId.fullRunningID
+    val params2 = CollectionConverters.asJava(List(tempAlarmToAck, "User provided comment for ACK - correct"))
+    logger.info("ACKing the temperature alarm asynchronously")
+    cmdSender.sendAsync(supervisorId, CommandType.ACK, params2, props)
+    logger.info("ACK cmd sent")
+    logger.info("Giving time to get the updated alarm")
+    Thread.sleep(10000) // The alarm is published continuously due to the refresh
+    logger.info("Test resumed")
+    // Check that the alarm has been ACKed
+    val tempAlOpt4 = Option(alarmsReceived.get(temperatureAlarmId.fullRunningID))
+    assert(tempAlOpt4.isDefined)
+    assert(tempAlOpt4.get.value.isCleared)
+    assert(tempAlOpt4.get.value.isAcked)
+    val strengthAlOpt4 = Option(alarmsReceived.get(strengthAlarmId.fullRunningID))
+    assert(strengthAlOpt4.isDefined)
+    assert(strengthAlOpt4.get.value.isCleared)
+    assert(strengthAlOpt4.get.value.isAcked)
+
+    logger.info("Test for side effects done")
   }
 
 }
