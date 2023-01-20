@@ -47,7 +47,7 @@ class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach
   /** The ID of the supervisor */
   val supervisorId = "SupervisorWithKafka"
 
-  val cmdSenderId = new Identifier("CmdSender", IdentifierType.CLIENT)
+  val cmdSenderId = new Identifier("SupervAckTest", IdentifierType.CLIENT)
 
   /** The supervisor, external process */
   var supervisorProc: Process = _
@@ -60,14 +60,14 @@ class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach
 
   /** The produce to send IASIO so the supervisor */
   val iasiosProd: KafkaIasiosProducer = new KafkaIasiosProducer(
-    new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, "SupervAckTestIaisiosProd"),
+    new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, cmdSenderId.id),
     KafkaHelper.IASIOs_TOPIC_NAME,
     new IasValueJsonSerializer())
 
   val iasiosCons: KafkaIasiosConsumer = new KafkaIasiosConsumer (
     KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
     KafkaHelper.IASIOs_TOPIC_NAME,
-    "SupervAckTestIasiosCons",
+    cmdSenderId.id,
     new util.HashSet[String](),
     CollectionConverters.asJava(Set(IASTypes.ALARM))) // The test processes only alarms
 
@@ -83,7 +83,7 @@ class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach
      *
      * @param events The IASIOs received in the topic
      */
-  override def iasiosReceived( events: util.Collection[IASValue[_]]): Unit = {
+  override def iasiosReceived(events: util.Collection[IASValue[_]]): Unit = {
     logger.info("{} alarms received", events.size())
     val iasios = CollectionConverters.asScala(events)
     iasios.filter(io => io.valueType==IASTypes.ALARM).foreach(e => {
@@ -121,9 +121,15 @@ class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach
   }
 
   override def afterAll(): Unit = {
-    logger.info("Terminating the supervisor")
+
+    logger.info("Closing the IASIO consumer")
+    iasiosCons.tearDown()
+    logger.info("Closing the IASIO producer")
+    iasiosProd.tearDown()
+
 
     // Send a command to terminate the supervisor
+    logger.info("Sending SHUTDOWN cmd to the supervisor")
     val reply = cmdSender.sendSync(supervisorId, CommandType.SHUTDOWN, null, null, 15, TimeUnit.SECONDS)
     if (!reply.isPresent) {
       logger.warn("No reply received by the Supervisor to the SHUTDOWN command")
@@ -133,7 +139,7 @@ class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach
       }
     }
     cmdSender.close()
-    Thread.sleep(5000)
+    Thread.sleep(10000)
 
     // If still alive, try to kill it
     if (supervisorProc.isAlive()) {
@@ -142,8 +148,7 @@ class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach
       supervisorProc.destroy()
     } else logger.info("The supervisor is dead")
 
-    iasiosCons.tearDown()
-    iasiosProd.tearDown()
+
   }
 
   override def beforeEach(): Unit = { alarmsReceived.clear() }
@@ -183,7 +188,9 @@ class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach
     iasiosProd.push(CollectionConverters.asJava(List(iasio)))
     logger.info("Giving time to get the updated alarm")
     Thread.sleep(10000) // The alarm is published continuously due to the refresh
+    logger.info("Test resumed")
     val alarmOpt = Option(alarmsReceived.get(temperatureAlarmId.fullRunningID))
+    logger.info("Alarm1 retrieved from the queue")
     assert(alarmOpt.isDefined)
     logger.info("The alarm for the test is {}", alarmOpt.get.value.asInstanceOf[Alarm])
     assert(alarmOpt.get.value.isCleared)
@@ -194,11 +201,31 @@ class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach
     iasiosProd.push(CollectionConverters.asJava(List(iasio2)))
     logger.info("Giving time to get the updated alarm")
     Thread.sleep(10000) // The alarm is published continuously due to the refresh
+    logger.info("Test resumed")
     val alarmOpt2 = Option(alarmsReceived.get(temperatureAlarmId.fullRunningID))
+    logger.info("Alarm2 retrieved from the queue")
     assert(alarmOpt2.isDefined)
     logger.info("The alarm for the test is {}", alarmOpt2.get.value.asInstanceOf[Alarm])
     assert(alarmOpt2.get.value.isSet)
     assert(!alarmOpt2.get.value.isAcked)
+
+    // ACK the alarm
+    val alToAck = "(SupervisorWithKafka:SUPERVISOR)@(DasuTemperature:DASU)@(AsceTemperature:ASCE)@(TemperatureAlarm:IASIO)"
+    val params2 = CollectionConverters.asJava(List(alToAck, "User provided comment for ACK - correct"))
+    logger.info("ACKing the alarm")
+    val reply2 = cmdSender.sendSync(supervisorId, CommandType.ACK, params2, props, 15, TimeUnit.SECONDS)
+    logger.info("ACK cmd sent")
+    assert(reply2.isPresent)
+    assert(reply2.get().getExitStatus==CommandExitStatus.OK) // The command to ACK has been executed
+    logger.info("Giving time to get the updated alarm")
+    Thread.sleep(10000) // The alarm is published continuously due to the refresh
+    logger.info("Test resumed")
+    val alarmOpt3 = Option(alarmsReceived.get(temperatureAlarmId.fullRunningID))
+    logger.info("Alarm3 retrieved from the queue")
+    assert(alarmOpt3.isDefined)
+    logger.info("The alarm for the test is {}", alarmOpt3.get.value)
+    assert(alarmOpt3.get.value.isSet)
+    assert(alarmOpt3.get.value.isAcked)
 
     logger.info("Test terminated")
   }
