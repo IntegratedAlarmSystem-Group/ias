@@ -5,10 +5,9 @@ Created on Jun 12, 2018
 '''
 from datetime import datetime
 from threading import Thread
-
+import traceback
 import time
-from kafka import KafkaConsumer
-from kafka.structs import TopicPartition
+from confluent_kafka import Consumer
 
 from IASLogging.logConf import Log
 from IasBasicTypes.IasValue import IasValue
@@ -43,7 +42,7 @@ class KafkaValueConsumer(Thread):
     The listener must inherit from IasValueListener
     
     KafkaValueConsumer does not create a topic that must be created by the producer.
-    If the topic does not exists, the thread waits antil the producer creates it.
+    If the topic does not exist, the thread waits until the producer creates it.
     '''
     
     # The listener to send IasValues to
@@ -80,63 +79,55 @@ class KafkaValueConsumer(Thread):
             raise ValueError("The listener can't be None")
             
         if not isinstance(listener,IasValueListener):
-            raise ValueError("The listener msut be a subclass of IasValueListener")
+            raise ValueError("The listener must be a subclass of IasValueListener")
         self.listener=listener
         
         if topic is None:
             raise ValueError("The topic can't be None")
-        self.topic=topic
-        
-        self.consumer = KafkaConsumer(
-            bootstrap_servers=kafkabrokers,
-            client_id=clientid,
-            enable_auto_commit=True)
-        Thread.setDaemon(self, True)
-        logger.info('Kafka consumer %s connected to %s and topic %s',clientid,kafkabrokers,topic)
-        
-    def run(self):
-        """
-        The thread to get IasValues from the BSDB
-        """
-        logger.info('Thread to poll for IasValues started')
+        self.topic = topic
 
-        partitionsIds=None
-        n = 1 
-        if not self.terminateThread:
-            while partitionsIds is None: 
-                partitionsIds=self.consumer.partitions_for_topic(self.topic)
-                if partitionsIds is None:
-                    if n%10==0:
-                        logger.info("Waiting for topic %s to be created",self.topic)
-                    n = n + 1
-                    time.sleep(0.100)
-            
-            partitionsIds=self.consumer.partitions_for_topic(self.topic)
-            logger.info('%d partitions found on topic %s: %s',len(partitionsIds),self.topic,partitionsIds)
-            partitions=[]
-            for pId in partitionsIds:
-                partitions.append(TopicPartition(self.topic,pId))
-            self.consumer.assign(partitions)
-            
-            self.consumer.seek_to_end()
+        conf = { 'bootstrap.servers': kafkabrokers,
+                 'client.id': clientid,
+                 'group.id': groupid,
+                 'enable.auto.commit': True,
+                 'auto.offset.reset': 'latest'}
         
-        self.isGettingEvents=True
-        while True and not self.terminateThread:
-            try:
-                messages = self.consumer.poll(500)
-            except:
-                KeyboardInterrupt
-                break
-            for listOfConsumerRecords in messages.values():
-                for cr in listOfConsumerRecords:
-                    json = cr.value.decode("utf-8")
+        self.consumer = Consumer(conf)
+
+        Thread.setDaemon(self, True)
+        logger.info('Kafka consumer %s connected to %s and topic %s', clientid, kafkabrokers, topic)
+
+    def run(self):
+        logger.info('Thread to poll for IasValues started')
+        try:
+            self.consumer.subscribe([self.topic])
+
+            self.isGettingEvents=True
+            while not self.terminateThread:
+                msg = self.consumer.poll(timeout=1.0)
+                if msg is None: continue
+
+                if msg.error():
+                    if msg.error().code() == KafkaError._PARTITION_EOF:
+                        # End of partition event
+                        logger.error('topic %s [partition %d] reached end at offset %d',msg.topic(), msg.partition(), msg.offset())
+                    elif msg.error():
+                        logger.error('Error polling event %s', msg.error())
+                        raise KafkaException(msg.error())
+                else:
+                    json = msg.value().decode("utf-8")
                     iasValue = IasValue.fromJSon(json)
                     iasValue.readFromBsdbTStamp=datetime.utcnow()
                     iasValue.readFromBsdbTStampStr=Iso8601TStamp.datetimeToIsoTimestamp(iasValue.readFromBsdbTStamp)
                     self.listener.iasValueReceived(iasValue)
-        self.isGettingEvents=False
+        except Exception:
+            traceback.print_exc()
+        finally:
+            # Close down consumer to commit final offsets.
+            self.consumer.close()
+            self.isGettingEvents = False
         logger.info('Thread terminated')
-        
+
     def start(self):
         logger.info('Starting thread to poll for IasValues')
         Thread.start(self)
@@ -145,6 +136,8 @@ class KafkaValueConsumer(Thread):
         '''
         Shuts down the thread
         '''
-        self.consumer.close()
         self.terminateThread = True
+        self.join(5)  # Ensure the thread exited before closing the consumer
+        self.consumer.close()
+
         

@@ -15,7 +15,7 @@ from IasBasicTypes.IasValue import IasValue
 from IasKafkaUtils.KafkaValueConsumer import IasValueListener, KafkaValueConsumer
 from IasKafkaUtils.KafkaValueProducer import KafkaValueProducer
 
-logger=Log.getLogger(__file__)
+logger = Log.getLogger(__file__)
 
 class TestListener(IasValueListener):
     '''
@@ -39,8 +39,8 @@ class TestListener(IasValueListener):
 
 class TestValueProdCons(unittest.TestCase):
     
-    kafkabrokers='localhost:9092'
-    topic="Test-PyProdCons-Topic"
+    kafkabrokers = 'localhost:9092'
+    topic = "Test-PyProdCons-Topic"
     listener = TestListener()
     
     # JSON string to build IasValues
@@ -65,16 +65,16 @@ class TestValueProdCons(unittest.TestCase):
         '''
         iasValue = IasValue.fromJSon(self.jsonStr)
         frid = self.fullRunningIdPrefix+ident+self.fullRunningIdSuffix
-        iasValue.fullRunningId=frid
-        iasValue.id=ident
-        iasValue.value=str(value)
+        iasValue.fullRunningId = frid
+        iasValue.id = ident
+        iasValue.value = str(value)
         return iasValue
 
 
     def testName(self):
 
         logger.info('Building the producer')
-        producer = KafkaValueProducer(self.kafkabrokers,self.topic,'PyProducerTest-ID')
+        producer = KafkaValueProducer(self.kafkabrokers, self.topic, 'PyProducerTest-ID')
         
         logger.info('Building the consumer')
         consumer = KafkaValueConsumer(
