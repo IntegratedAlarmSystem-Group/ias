@@ -23,12 +23,13 @@ import os
 import socket
 
 import sys
-from kafka import KafkaProducer
+from confluent_kafka import Producer
 
 from IASLogging.logConf import Log
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
 from IasCmdReply.IasCommand import IasCommand
 from IasCmdReply.IasCommandType import IasCommandType
+from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 
 
 def on_send_error(excp):
@@ -107,11 +108,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if not args.params:
-        logger.info("Going to send command %s to %s",args.command,args.dest)
+        logger.info("Going to send command %s to %s", args.command, args.dest)
     else:
         logger.info("Going to send command %s to %s and params %s",args.command,args.dest,str(args.params))
 
-    kafkaTopicName = "CmdTopic"
+    kafkaTopicName = IasKafkaHelper.topics['cmd']
     senderFullRunningId = "(%s:CLIENT)" % (args.sender)
     commandType = IasCommandType.fromString(args.command)
     if not args.params:
@@ -120,7 +121,6 @@ if __name__ == '__main__':
         params = args.params
 
     # Check if the command line contains all and only the requested parameters
-    print(commandType.num_of_params,params)
     if commandType.num_of_params==0 and params is not None:
         logger.error("Command %s rejected: it takes no parameters but got %s",args.command,str(params))
         sys.exit(-1)
@@ -139,20 +139,15 @@ if __name__ == '__main__':
     cmdJsonStr = cmdToSend.toJSonString()
     logger.info("JSON string of the cmd = [%s]",cmdJsonStr)
 
-    kafkaBroker = "%s:%d" % (args.broker,args.port)
-    logger.info("Connecting to broker %s, producer id %s and topic %s...",kafkaBroker,args.sender,kafkaTopicName)
-    producer = KafkaProducer(
-        bootstrap_servers=kafkaBroker,
-        client_id=args.sender,
-        linger_ms=100,
-        key_serializer=str.encode,
-        value_serializer=str.encode)
+    kafkaBrokers = "%s:%d" % (args.broker, args.port)
+    logger.info("Connecting to broker %s, producer id %s and topic %s...", kafkaBrokers, args.sender, kafkaTopicName)
+
+    conf = { 'bootstrap.servers': kafkaBrokers, 'client.id': args.sender}
+    producer = Producer(conf)
 
     logger.info("Pushing the command in the topic")
-    producer.send(kafkaTopicName,value=cmdJsonStr,key=str(args.cmdId)).add_errback(on_send_error)
-
-    logger.info("Waiting until the command has been sent")
+    producer.produce(kafkaTopicName, value=cmdJsonStr, key=str(args.cmdId))
     producer.flush()
-    logger.info("Command sent. Closing...")
-    producer.close()
+
+    logger.info("Command sent.")
     logger.info("Done")
