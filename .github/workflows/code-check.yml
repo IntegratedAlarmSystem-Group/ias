@@ -19,4 +19,9 @@ jobs:
         uses: actions/checkout@v3
       - run: python -V
       - run: java -version
-      - run: ls /
+      - run: mkdir IasRoot
+      - name: Build with gradlew
+        run: ./gradlew build
+        env:
+          IAS_ROOT: IasRoot
+
