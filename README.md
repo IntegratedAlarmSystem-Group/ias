@@ -1,3 +1,5 @@
+[![ias-build-install](https://github.com/IntegratedAlarmSystem-Group/ias/actions/workflows/ias-build-install.yml/badge.svg)](https://github.com/IntegratedAlarmSystem-Group/ias/actions/workflows/ias-build-install.yml)
+
 # ias
 The production version of the core of Integrated Alarm System.
 
@@ -5,7 +7,7 @@ Website: [Integrated Alarm System](https://integratedalarmsystem-group.github.io
 
 Browse the [wiki pages](https://github.com/IntegratedAlarmSystem-Group/ias/wiki) for help.
 
-`ant build` build all the modules and install them in `$IAS_ROOT`
+Use `gradlew build install` to build all the modules and install them in `$IAS_ROOT`
 
 The core is composed of the following modules (in order of compilation):
 * `Tools`: generation of API documentation, external libraruies, configuration files, IAS python scripts, support of scala logging and ISO 8601 timestamps
