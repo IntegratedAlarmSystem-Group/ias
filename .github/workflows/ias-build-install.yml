@@ -1,4 +1,4 @@
-name: code-check
+name: ias-build-install
 run-name: ${{ github.actor }} Build IAS
 on: [push]
 env:
