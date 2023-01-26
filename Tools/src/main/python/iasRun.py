@@ -2,6 +2,8 @@
 '''
 Created on Sep 26, 2016
 
+Run a IAS tool like the supervisor.
+
 @author: acaproni
 '''
 
@@ -70,7 +72,7 @@ def setProps(propsDict,className,logFileNameId):
     # can be retrieved with System.getEnv
 
 
-def addUserProps(propsDict,userProps):
+def addUserProps(propsDict, userProps):
     """
     Adds to the dictionary the user properties passed in the command line.
 
@@ -139,7 +141,10 @@ if __name__ == '__main__':
     Run a java or scala tool.
     """
 
-    parser = argparse.ArgumentParser(description='Run a java or scala program.')
+    # The parse does not provide the help because teh default help
+    # shows the message and terminates the application.
+    # The user is instead more probably interested in the help of the tool executed by iasRun
+    parser = argparse.ArgumentParser(description='Run a java or scala program.', add_help=False)
     parser.add_argument(
                         '-i',
                         '--logfileId',
@@ -161,6 +166,13 @@ if __name__ == '__main__':
                         action='store_true',
                         default=False,
                         required=False)
+    parser.add_argument(
+        '-h',
+        '--help',
+        help='Print this help',
+        action='store_true',
+        default=False,
+        required=False)
     parser.add_argument(
                         '-a',
                         '--assertions',
@@ -190,9 +202,13 @@ if __name__ == '__main__':
                     help='Command line parameters')
     args = parser.parse_args()
 
+    if args.help:
+        parser.print_help()
+        print()
+
     # Start the logger with param define by the user.
-    stdoutLevel=args.levelStdOut
-    consoleLevel=args.levelConsole
+    stdoutLevel = args.levelStdOut
+    consoleLevel = args.levelConsole
     logger = Log.getLogger(__file__, stdoutLevel, consoleLevel)
 
     # Is the environment ok?
@@ -208,10 +224,10 @@ if __name__ == '__main__':
         logger.info("\nVerbose mode ON")
 
     # Get java options from JAVA_OPTS environment variable
-    javaOptions=javaOpts()
+    javaOptions = javaOpts()
 
     # Build the command line in cmd
-    cmd=['java']
+    cmd = ['java']
 
     # Enable/Disable assertions
     enableAssertions = args.assertions
