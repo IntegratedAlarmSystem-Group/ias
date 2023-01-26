@@ -2,7 +2,7 @@ name: code-check
 run-name: ${{ github.actor }} check IAS code quality
 on: [push]
 jobs:
-  Build IAS:
+  Build-IAS:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Java JDK
@@ -24,6 +24,5 @@ jobs:
         run: ./gradlew build install
         env:
           IAS_ROOT: IasRoot
-      - run: ls IasRoot
-      - run: ls IasRoot/lib
+      - run: ls -R IasRoot
 
