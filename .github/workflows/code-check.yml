@@ -2,8 +2,17 @@ name: code-check
 run-name: ${{ github.actor }} check IAS code quality
 on: [push]
 jobs:
-  check-bats-version:
+  check-code:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Setup Java JDK
+        uses: actions/setup-java@v3.9.0
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+          java-package: 'jdk'
+      - name: Checkout IAS code
+        uses: actions/checkout@v3
+
+
       - run: ls
