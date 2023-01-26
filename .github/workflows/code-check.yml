@@ -1,6 +1,8 @@
 name: code-check
 run-name: ${{ github.actor }} check IAS code quality
 on: [push]
+env:
+  IAS_ROOT: 'IasRoot'
 jobs:
   Build-IAS:
     runs-on: ubuntu-latest
@@ -21,10 +23,8 @@ jobs:
       - run: pwd
       - run: python -V
       - run: java -version
-      - run: mkdir IasRoot
+      - run: mkdir $IAS_ROOT
       - name: Build with gradlew
         run: ./gradlew build install
-        env:
-          IAS_ROOT: IasRoot
-      - run: ls -R IasRoot
+      - run: ls -R $IAS_ROOT
 
