@@ -214,6 +214,9 @@ if __name__ == '__main__':
 
     if ias_run_args.help:
         parser.print_help()
+        print("Scala/Java parameters follow iasRun parameters)")
+        print("Example: iasRun -r org.junit.platform.console.ConsoleLauncher -c org.eso.ias.basictypes.test.IasValueJsonSerializerTest")
+        print ("-r is an argument for iasRun, -c is an argument for java/sca class")
         logger.debug("Will Trigger the help of the java/scala executable")
 
     # Is the environment ok?
