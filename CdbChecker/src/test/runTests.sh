@@ -1,4 +1,4 @@
 #!/usr/bin/bash
-iasRun org.scalatest.run org.eso.ias.cdb.test.topology.DasuTopologyTest
-iasRun org.scalatest.run org.eso.ias.cdb.test.topology.TemplateHelperTest
+iasRun -r org.scalatest.run org.eso.ias.cdb.test.topology.DasuTopologyTest
+iasRun -r org.scalatest.run org.eso.ias.cdb.test.topology.TemplateHelperTest
 

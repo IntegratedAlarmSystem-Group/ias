@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-iasRun org.junit.platform.console.ConsoleLauncher -c org.eso.ias.kafkautils.test.ConsumerProducerTest
-iasRun org.junit.platform.console.ConsoleLauncher -c org.eso.ias.kafkautils.test.KafkaIasiosConsumerTest
-iasRun org.junit.platform.console.ConsoleLauncher -c org.eso.ias.kafkautils.test.SlowIasiosProcessorTest
+iasRun -r org.junit.platform.console.ConsoleLauncher -c org.eso.ias.kafkautils.test.ConsumerProducerTest
+iasRun -r org.junit.platform.console.ConsoleLauncher -c org.eso.ias.kafkautils.test.KafkaIasiosConsumerTest
+iasRun -r org.junit.platform.console.ConsoleLauncher -c org.eso.ias.kafkautils.test.SlowIasiosProcessorTest
 testValueProdCons
