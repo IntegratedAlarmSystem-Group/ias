@@ -156,7 +156,7 @@ if __name__ == '__main__':
                         default="",
                         required=False)
     parser.add_argument(
-        '-c',
+        '-r',
         '--className',
         help='The scala or java class to execute',
         action='store',
