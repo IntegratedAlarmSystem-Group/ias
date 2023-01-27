@@ -199,19 +199,22 @@ if __name__ == '__main__':
                         default='info',
                         required=False)
 
-    parser.add_argument('params', nargs=argparse.REMAINDER, help='Command line parameters to pass to the JVM executable')
-    args = parser.parse_args()
+    #parser.add_argument('params', nargs=argparse.REMAINDER, help='Command line parameters to pass to the JVM executable')
 
-    print("Parsed ARGS:", args)
-
-    if args.help:
-        parser.print_help()
-        print("Triggering the help of the java/scala executable...")
+    parsed_args = parser.parse_known_args()
+    ias_run_args = parsed_args[0]  # Args for this script
+    jvm_prg_args = parsed_args[1]  # Args for the java/scala program
 
     # Start the logger with param define by the user.
-    stdoutLevel = args.logLevelFile
-    consoleLevel = args.logLevelConsole
+    stdoutLevel = ias_run_args.logLevelFile
+    consoleLevel = ias_run_args.logLevelConsole
     logger = Log.getLogger(__file__, stdoutLevel, consoleLevel)
+
+    logger.debug("Parsed ARGS: for iasRun: %s, for JVM %s", ias_run_args, jvm_prg_args)
+
+    if ias_run_args.help:
+        parser.print_help()
+        logger.debug("Will Trigger the help of the java/scala executable")
 
     # Is the environment ok?
     # Fail fast!
@@ -229,7 +232,7 @@ if __name__ == '__main__':
     cmd = ['java']
 
     # Enable/Disable assertions
-    enableAssertions = args.assertions
+    enableAssertions = ias_run_args.assertions
     if enableAssertions:
         javaOptions.append("-ea")
         logger.debug("Assertions are enabled.")
@@ -255,9 +258,9 @@ if __name__ == '__main__':
     # Default and user defined properties are in a dictionary:
     # this way it is easy for the user to override default properties.
     props = {}
-    setProps(props, args.className, args.logfileId)
-    if args.jProp is not None:
-        addUserProps(props, args.jProp)
+    setProps(props, ias_run_args.className, ias_run_args.logfileId)
+    if ias_run_args.jProp is not None:
+        addUserProps(props, ias_run_args.jProp)
     if len(props) > 0:
         stingOfPros = formatProps(props)
         # Sort to enhance readability
@@ -281,21 +284,16 @@ if __name__ == '__main__':
         logger.debug("\t %s",jar)
 
     # Add the class
-    cmd.append(args.className)
+    cmd.append(ias_run_args.className)
 
     # Finally the command line parameters
-    if args.help:
+    if ias_run_args.help:
         # Forward the help
         cmd.append("-h")
-    if len(args.params)>0:
-        cmd.extend(args.params)
-
-    if len(args.params) > 0:
-        logger.debug("with params:")
-        for arg in args.params:
-            logger.debug("\t %s", arg)
-    else:
-        logger.debug("with no params")
+        logger.debug("Triggering the help in the JVM by forwarding -h")
+    if len(jvm_prg_args)>0:
+        cmd.extend(jvm_prg_args)
+        logger.debug("Addes java/scala params %s", jvm_prg_args)
 
     arrowDown =  chr(8595)
     delimiter = ""
@@ -303,7 +301,7 @@ if __name__ == '__main__':
         delimiter = delimiter + arrowDown
 
     logger.debug("Will run %s", cmd)
-    logger.info("%s %s output %s", delimiter, args.className, delimiter)
+    logger.info("%s %s output %s", delimiter, ias_run_args.className, delimiter)
 
     call(cmd)
 
@@ -311,4 +309,4 @@ if __name__ == '__main__':
     delimiter = ""
     for t in range(17):
         delimiter = delimiter + arrowUp
-    logger.info("%s %s done %s", delimiter, args.className, delimiter)
+    logger.info("%s %s done %s", delimiter, ias_run_args.className, delimiter)
