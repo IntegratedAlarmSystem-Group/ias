@@ -34,7 +34,7 @@ TEMP=( $OTHER_PARAMS )
 ID=${TEMP_PARMS_ARRAY[0]}
 echo "Convert ID=$ID"
 
-CMD="iasRun $JAVA_PROPS $LOGID_PARAM org.eso.ias.converter.Converter $OTHER_PARAMS"
+CMD="iasRun $JAVA_PROPS $LOGID_PARAM -r org.eso.ias.converter.Converter $OTHER_PARAMS"
 
 echo Will run
 echo $CMD
