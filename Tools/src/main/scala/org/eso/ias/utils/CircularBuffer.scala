@@ -7,7 +7,7 @@ import scala.reflect.ClassTag
  *
  * The buffer does not store null items.
  *
- * @tparam The type of the objects stored in the buffer
+ * @tparam T the type of the objects stored in the buffer
  * @Constructor Build a circular buffer
  * @param maxBufferSize The max number of items to store in the circular buffer
  * @author acaproni
@@ -70,6 +70,9 @@ class CircularBuffer[T: ClassTag](maxBufferSize: Int) {
     assert(itemsInBuffer>=0 && itemsInBuffer<=array.length, s"Wrong buffer size $itemsInBuffer not in [0, ${array.length}]")
   }
 
+  /**
+   * @return the oldest item in the buffer or None if the buffer is empty
+   */
   def get(): Option[T] = {
     if (itemsInBuffer == 0) None // Empty buffer
     else {
@@ -84,11 +87,46 @@ class CircularBuffer[T: ClassTag](maxBufferSize: Int) {
     }
   }
 
+  /**
+   * Put all the passed items in the buffer
+   *
+   * @param items the items to put in the buffer
+   */
+  def putAll(items: List[T]): Unit = {
+    items.foreach(put(_))
+  }
+
+  /**
+   * @return the items in the buffer
+   */
+  def getAll(): List[T] = {
+    val numOfItems = itemsInBuffer
+    val ret = for {
+      i <- 1 to numOfItems
+      v = get().get
+    } yield (v)
+    ret.toList
+  }
+
+  /** Remove all the elements from the buffer */
+  def clear(): Unit = {
+    readPointer = 0
+    writePointer = 0
+    itemsInBuffer  = 0
+  }
+
   def dump(): Unit = {
     println(s"readP=$readPointer, writeP=$writePointer, itemsInBuffer=$itemsInBuffer: ${array.mkString(":")}")
   }
 }
 
 object CircularBuffer {
+
+  /**
+   * Builds a circular buffer
+   *
+   * @tparam T the type of the objects in the buffer
+   * @param size the max number of items in the circular buffer
+   */
   def apply[T: ClassTag](size: Int): CircularBuffer[T] = new CircularBuffer[T](size)
 }
