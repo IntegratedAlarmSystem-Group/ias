@@ -5,7 +5,12 @@ import scala.reflect.ClassTag
 /**
  * A circular buffer of a fixed size backed by an Array.
  *
- * The buffer does not store null items.
+ * The buffer does not allow to store null items.
+ *
+ * The position to read and write elements in the buffer is stored in the [[readPointer]] and [[writePointer]] pointers
+ * (i.e. indexes of the array) to avoid moving objects from one position to another in the buffer.
+ *
+ * The CircularBuffer is thread safe.
  *
  * @tparam T the type of the objects stored in the buffer
  * @Constructor Build a circular buffer
@@ -33,20 +38,20 @@ class CircularBuffer[T: ClassTag](maxBufferSize: Int) {
   private[this] var itemsInBuffer: Int = 0
 
   /** True if the buffer is empty; false otherwise */
-  def isEmpty(): Boolean = itemsInBuffer==0
+  def isEmpty(): Boolean = synchronized { itemsInBuffer==0 }
 
   /** @return the length of the buffer i.e. the max number of items that the buffer can store */
   def length: Int = array.length
 
   /** @return the number of objects in the circular buffer */
-  def size: Int = itemsInBuffer
+  def size: Int = synchronized { itemsInBuffer }
 
   /**
    * Put a new object in the circular buffer deleting the oldest one if the buffer is full
    *
    * @param item the object to add
    */
-  def put(item: T): Unit = {
+  def put(item: T): Unit = synchronized {
     require(Option(item).isDefined, "The circular buffer does not accept null objects")
 
     array(writePointer)=item
@@ -73,7 +78,7 @@ class CircularBuffer[T: ClassTag](maxBufferSize: Int) {
   /**
    * @return the oldest item in the buffer or None if the buffer is empty
    */
-  def get(): Option[T] = {
+  def get(): Option[T] = synchronized {
     if (itemsInBuffer == 0) None // Empty buffer
     else {
       val ret = Some(array(readPointer))
@@ -92,14 +97,14 @@ class CircularBuffer[T: ClassTag](maxBufferSize: Int) {
    *
    * @param items the items to put in the buffer
    */
-  def putAll(items: List[T]): Unit = {
+  def putAll(items: List[T]): Unit = synchronized {
     items.foreach(put(_))
   }
 
   /**
    * @return the items in the buffer
    */
-  def getAll(): List[T] = {
+  def getAll(): List[T] = synchronized {
     val numOfItems = itemsInBuffer
     val ret = for {
       i <- 1 to numOfItems
@@ -109,13 +114,17 @@ class CircularBuffer[T: ClassTag](maxBufferSize: Int) {
   }
 
   /** Remove all the elements from the buffer */
-  def clear(): Unit = {
+  def clear(): Unit = synchronized {
     readPointer = 0
     writePointer = 0
     itemsInBuffer  = 0
   }
 
-  def dump(): Unit = {
+  /**
+   * Debug method to dump the content of the buffer and the value
+   * the indexes in the array stored by the pointers
+   */
+  def dump(): Unit = synchronized {
     println(s"readP=$readPointer, writeP=$writePointer, itemsInBuffer=$itemsInBuffer: ${array.mkString(":")}")
   }
 }
