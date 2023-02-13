@@ -1,4 +1,4 @@
-package org.eso.ias.kafkaneo
+package org.eso.ias.kafkaneo.consumer
 
 import scala.jdk.javaapi.CollectionConverters
 
@@ -81,7 +81,7 @@ object ConsumerHelper {
     ret.setProperty("key.deserializer", systemProps.getOrElse("key.deserializer", userProps.getOrElse("key.deserializer", keyDeserializer)))
     ret.setProperty("value.deserializer", systemProps.getOrElse("value.deserializer", userProps.getOrElse("value.deserializer", valueDeserializer)))
 
-    // Set the default values for the properties not yet set
+    // Set the default values for the properties if not not yet set
     DefaultProps.keys.foreach(k => if !ret.contains(k) then ret.setProperty(k, DefaultProps(k)))
 
     ret
