@@ -18,6 +18,4 @@ enum IasTopic(val kafkaTopicName: String) extends Enum[IasTopic] {
   /** The topic for replies to commands */
   case Reply extends IasTopic("ReplyTopic")
 
-  /** @return the name of the Kafka topic */
-  def kafkaTopicName(topic: IasTopic): String = topic.toString
 }
