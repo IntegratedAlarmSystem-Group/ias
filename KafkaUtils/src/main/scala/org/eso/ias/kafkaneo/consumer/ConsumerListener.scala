@@ -1,36 +1,34 @@
 package org.eso.ias.kafkaneo.consumer
 
 import com.typesafe.scalalogging.Logger
-import org.eso.ias.kafkaneo.{ConsumerListener, IasTopic}
+import org.eso.ias.kafkaneo.IasTopic
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.utils.CircularBuffer
 
 import java.util.concurrent.atomic.AtomicBoolean
 import scala.jdk.javaapi.CollectionConverters
+import scala.reflect.ClassTag
 
 /**
- * The consumer of Kafka events
+ * The listener of Kafka events
  *
- * The consumer must be enabled to get events.
+ * The listener must be enabled to get events.
  * When paused, it cache up to [[maxCacheSize]] items: when the cache is full, oldest events are removed
- * to leave room for the new events
+ * to leave room for new events
  *
  * @tparam K The type of the key
  * @tparam V The type of the value
  *
  * @param maxCacheSize: max number of events cached when the listener is paused
  */
-abstract class ConsumerListener[K, V](val maxCacheSize: Int = ConsumerListener.CacheSize) {
+abstract class ConsumerListener[K, V](val iasTopic: IasTopic, val maxCacheSize: Int = ConsumerListener.CacheSize) {
 
   /**
    * Each event read from Kafka is composed of the key and the value
    * @param key the key
    * @param value the value
    */
-  case class KEvent(val key: K, val value: V)
-
-  /** The topic associated with this listener */
-  val iasTopic: IasTopic
+  case class KEvent(key: K, value: V)
 
   /** The cache to store events when the listener is paused */
   private[this] lazy val cache = CircularBuffer[KEvent](maxCacheSize)
@@ -52,7 +50,11 @@ abstract class ConsumerListener[K, V](val maxCacheSize: Int = ConsumerListener.C
   def pause(): Unit = paused.set(true)
 
   /** Pause the listener */
-  def resume(): Unit = paused.set(false)
+  def resume(): Unit = synchronized {
+    paused.set(false)
+    internalOnKEvents(cache.getAll())
+    cache.clear()
+  }
 
   /** Enable the sending of events to the listener (when disabled events are discarded) */
   def enable(): Unit = enabled.set(true)
@@ -65,17 +67,18 @@ abstract class ConsumerListener[K, V](val maxCacheSize: Int = ConsumerListener.C
    * if the listener is enabled and not paused, the events are forwarded
    * to the listener by the [[onKafkaEvents()]]
    */
-  private[kafkaneo] final def internalOnKEvents(events: List[KEvent]): Unit = {
+  private[kafkaneo] final def internalOnKEvents(events: List[KEvent]): Unit = synchronized {
     (enabled.get(), paused.get()) match {
       case (false, _) =>
-      case (true, true) => onKafkaEvents(events)
-      case (true, false) =>  cacheEvents(events)
+      case (true, false) => onKafkaEvents(events)
+      case (true, true) =>  cacheEvents(events)
     }
   }
 
   /** Cache the events when the listener is paused */
   private[this] def cacheEvents(events: List[KEvent]): Unit = {
     assert(paused.get(), "The listener shall be paused to cache events")
+    cache.putAll(events)
   }
 
   /**
@@ -96,8 +99,8 @@ abstract class ConsumerListener[K, V](val maxCacheSize: Int = ConsumerListener.C
  * @tparam K The type of the key
  * @tparam V The type of the value
  */
-abstract class ConsumerListenerJ[K, V](sz: Int = ConsumerListener.CacheSize)
-  extends ConsumerListener[K, V](sz) {
+abstract class ConsumerListenerJ[K, V](topic: IasTopic, sz: Int = ConsumerListener.CacheSize)
+  extends ConsumerListener[K, V](topic, sz) {
 
   /**
    * Process events
