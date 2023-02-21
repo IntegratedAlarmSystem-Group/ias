@@ -98,5 +98,29 @@ class ListenerTest extends AnyFlatSpec {
     assert(l.records.size == 2)
   }
 
+  it should "discard events when paused" in {
+    val l = new ListenerForTest[String, String](IasTopic.Heartbeat, 5)
+    val events: List[l.KEvent] = List(l.KEvent("Key1", "Value1"))
+    l.enable()
+    l.internalOnKEvents(events)
+    assert(l.records.size == 1)
+
+    l.pause()
+    l.records.clear()
+
+    // Push more items than the ones that should be stored in cache
+    val events2: List[l.KEvent] = List(
+      l.KEvent("Key2", "Value2"), l.KEvent("Key3", "Value3"), l.KEvent("Key4", "Value4"),
+      l.KEvent("Key5", "Value5"), l.KEvent("Key6", "Value6"), l.KEvent("Key7", "Value7"),
+      l.KEvent("Key8", "Value8"), l.KEvent("Key8", "Value8"), l.KEvent("Key9", "Value9"))
+    l.internalOnKEvents(events2)
+    l.resume()
+    assert(l.records.size == 5)
+    val expectedEvents: List[l.KEvent] = List(
+      l.KEvent("Key6", "Value6"), l.KEvent("Key7", "Value7"),
+      l.KEvent("Key8", "Value8"), l.KEvent("Key8", "Value8"), l.KEvent("Key9", "Value9"))
+    assert(l.records.toList == expectedEvents)
+  }
+
 
 }

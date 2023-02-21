@@ -21,7 +21,7 @@ import scala.reflect.ClassTag
  *
  * @param maxCacheSize: max number of events cached when the listener is paused
  */
-abstract class ConsumerListener[K, V](val iasTopic: IasTopic, val maxCacheSize: Int = ConsumerListener.CacheSize) {
+trait ConsumerListener[K, V](val iasTopic: IasTopic, val maxCacheSize: Int = ConsumerListener.CacheSize) {
 
   /**
    * Each event read from Kafka is composed of the key and the value
@@ -68,8 +68,9 @@ abstract class ConsumerListener[K, V](val iasTopic: IasTopic, val maxCacheSize: 
    * to the listener by the [[onKafkaEvents()]]
    */
   private[kafkaneo] final def internalOnKEvents(events: List[KEvent]): Unit = synchronized {
+    ConsumerListener.logger.debug("Internally dispatching {} events", events.size)
     (enabled.get(), paused.get()) match {
-      case (false, _) =>
+      case (false, _) => ConsumerListener.logger.warn("No events dispatched as the listeners has not been enabled")
       case (true, false) => onKafkaEvents(events)
       case (true, true) =>  cacheEvents(events)
     }
@@ -88,6 +89,8 @@ abstract class ConsumerListener[K, V](val iasTopic: IasTopic, val maxCacheSize: 
    */
   def onKafkaEvents(events: List[KEvent]): Unit
 }
+
+
 
 /**
  * The consumer of Kafka events specialized for java consumers
