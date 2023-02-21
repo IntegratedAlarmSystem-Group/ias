@@ -2,7 +2,7 @@ package org.eso.ias.kafkaneo.consumer
 
 import com.typesafe.scalalogging.Logger
 import org.eso.ias.kafkaneo
-import org.eso.ias.kafkaneo.{ConsumersStatistics, IasTopic}
+import org.eso.ias.kafkaneo.{IasTopic}
 import org.eso.ias.logging.IASLogger
 import org.slf4j.event.Level
 
@@ -10,8 +10,7 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong}
 import java.util.{Collections, Timer, TimerTask}
 
 /**
- * Build and publish the statistics for the consumers in the form of
- * log messages.
+ * Build and publish the statistics for the consumers in the form of log messages.
  *
  * The ConsumersStatistics collects the number of events read from the topics and periodically
  * publish log messages with the statistics.
@@ -125,10 +124,9 @@ extends TimerTask {
       }
     }
 
-
     stats.foreach {
       case (topic, values) => {
-        val msg = s"Stats. for consumer $id on topic $topic: ${values.totMsg.get()} msgs processed, ${values.totRecords.get()} records (${values.totRecords.get()/timerPeriod} rec/min)"
+        val msg = s"Stats. for consumer $id on topic $topic: ${values.totMsgs.get()} msgs processed, ${values.totRecords.get()} records (${values.totRecords.get()/timerPeriod} rec/min)"
         log(msg)
       }
     }

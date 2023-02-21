@@ -11,6 +11,9 @@ object ConsumerHelper {
   /** The name of the default class to deserialize the value */
   val DefaultKeyDeserializer: String = "org.apache.kafka.common.serialization.StringDeserializer"
 
+  /** The default kafka broker */
+  val DefaultKafkaBroker = "localhost:9092"
+
 
   /** Default properties for the consumer */
   val DefaultProps = Map(
@@ -23,24 +26,24 @@ object ConsumerHelper {
    *
    * Delegates to [[setupProps()]].
    *
+   * @param groupId the group.id of the consumer
    * @param userProps User defined properties
    * @param kafkaServers the kafka servers to connect to
-   * @param groupId the group.id of the consumer
    * @param keyDeserializer the deserializer for the keys
    * @param valueDeserializer the deserializer for the values
    * @return the properties to pass to the kafka Consumer
    */
   def setupPropsJ(
-                  userProps: java.util.Properties,
-                  kafkaServers: String,
-                  groupId: String,
-                  keyDeserializer: String,
-                  valueDeserializer: String): java.util.Properties = {
+                 groupId: String,
+                 userProps: java.util.Properties,
+                 kafkaServers: String,
+                 keyDeserializer: String,
+                 valueDeserializer: String): java.util.Properties = {
 
     setupProps(
+      groupId,
       CollectionConverters.asScala(userProps).toMap,
       kafkaServers,
-      groupId,
       keyDeserializer,
       valueDeserializer)
   }
@@ -57,19 +60,19 @@ object ConsumerHelper {
    * Default properties ([[DefaultProps]]) are added if not already present in the
    * user.properties
    *
+   * @param groupId the group.id of the consumer
    * @param userProps User defined properties
    * @param kafkaServers the kafka servers to connect to
-   * @param groupId the group.id of the consumer
    * @param keyDeserializer the deserializer for the keys
    * @param valueDeserializer the deserializer for the values
    * @return the properties to pass to the kafka Consumer
    */
   def setupProps(
-                  userProps: Map[String, String],
-                  kafkaServers: String,
                   groupId: String,
-                  keyDeserializer: String,
-                  valueDeserializer: String): java.util.Properties = {
+                  userProps: Map[String, String] = Map.empty,
+                  kafkaServers: String = DefaultKafkaBroker,
+                  keyDeserializer: String = DefaultKeyDeserializer,
+                  valueDeserializer: String = DefaultValueDeserializer): java.util.Properties = {
 
     val systemProps: Map[String, String] = CollectionConverters.asScala(System.getProperties).toMap
 
