@@ -2,6 +2,13 @@ package org.eso.ias.kafkaneo.consumer
 
 import scala.jdk.javaapi.CollectionConverters
 
+/** The position to start reading messages when a partition is assigned to a consumer */
+enum StartReadingPos extends Enum[StartReadingPos] {
+  case Begin // Start  reading from the beginning
+  case End // Start reading from the end
+  case Default // Start reading position set in the configuration (i.e. nothing done by the consumer)
+}
+
 /** Helper for handling Kafka Consumer */
 object ConsumerHelper {
 
