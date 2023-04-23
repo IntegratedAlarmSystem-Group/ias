@@ -32,4 +32,4 @@ if __name__ == '__main__':
     stdoutLevel=args.levelStdOut
     consoleLevel=args.levelConsole
     logger=Log.getLogger(os.path.basename(__file__),stdoutLevel,consoleLevel)
-    CommonDefs.buildClasspath()
+    print(CommonDefs.buildClasspath())
