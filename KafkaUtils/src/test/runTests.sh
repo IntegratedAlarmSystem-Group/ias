@@ -3,5 +3,6 @@ iasRun -r org.junit.platform.console.ConsoleLauncher -c org.eso.ias.kafkautils.t
 iasRun -r org.junit.platform.console.ConsoleLauncher -c org.eso.ias.kafkautils.test.KafkaIasiosConsumerTest
 iasRun -r org.junit.platform.console.ConsoleLauncher -c org.eso.ias.kafkautils.test.SlowIasiosProcessorTest
 iasRun -r org.scalatest.run org.eso.ias.kafkaneo.test.consumer.ListenerTest
+iasRun -r org.scalatest.run org.eso.ias.kafkaneo.test.consumer.ConsumerHelperTest
 iasRun -r org.scalatest.run org.eso.ias.kafkaneo.test.consumer.ConsumerTest
 testValueProdCons
