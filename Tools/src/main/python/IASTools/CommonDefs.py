@@ -23,18 +23,6 @@ class CommonDefs(object):
     logger = logging.getLogger("CommonDefs")
 
     @classmethod
-    def addsTestClasses(cls):
-        """
-        With gradle we do not put test classes into jar files but leave them in build/src/test
-        In this way the build is faster and there is no risk to install jars of test classes in IAS_ROOT
-
-        :return:
-        """
-        testClasses = FileSupport.FileSupport.getClassFiles()
-        for t in testClasses:
-            print ("\t==>\t", t)
-    
-    @classmethod
     def buildClasspath(cls):
         """
         Build the class path by reading the jars from the
@@ -106,7 +94,7 @@ class CommonDefs(object):
         """
         Check if IAS enviroment is correctly set up
         
-        @return: True is the enviroment is correctly set;
+        @return: True if the enviroment is correctly set;
                  False otherwise
         """
         try:
