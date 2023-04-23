@@ -9,7 +9,7 @@ class ConsumerHelperTest extends AnyFlatSpec {
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
 
-  "A ConsumerHelper" should "Gte the group id" in {
+  "A ConsumerHelper" should "Get the group id" in {
     val servers = "host:9095, host2:9091"
     val p = ConsumerHelper.setupProps("MyGruopID", Map.empty, servers, "KDser", "VDser")
 
