@@ -14,6 +14,7 @@ import java.util
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.{ArrayList, Collection, Collections}
 import java.util.concurrent.{ConcurrentHashMap, CopyOnWriteArrayList}
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.jdk.javaapi.CollectionConverters
 import scala.util.control.Breaks.{break, breakable}
@@ -36,9 +37,8 @@ import scala.util.control.Breaks.{break, breakable}
  *    In short if you want your consumer to get all events from topic 1 and all events from topic 2
  *    (most common case in IAS) then you have to ensure that the consumer is the only one consumer in the group
  *    for both topics.
- *  - the serializer/deserializer is the same for all the topics so it is the client that gets the event
- *    as it has been read from kafka and translate it into an object of the right type
- *    (for example the event is a JSON string then it must be parsed to build the java object like a command
+ *  - the serializer/deserializer is the same for all the topics for example a StringSerialize/StringDeserializer
+ *    (for example the event is a JSON string, then it must be parsed to build the java object like a command
  *    or a IASIO)
  *
  * @tparam K The type of the key
@@ -90,7 +90,7 @@ class Consumer[K, V](
    */
   private[this] val listeners: Map[IasTopic, java.util.List[ConsumerListener[K, V]]] = {
     val map = scala.collection.mutable.Map[IasTopic, java.util.List[ConsumerListener[K, V]]]()
-    IasTopic.values.foreach( map.put(_, Collections.synchronizedList(new java.util.LinkedList[ConsumerListener[K, V]]())))
+    IasTopic.values.foreach( map.put(_, new java.util.LinkedList[ConsumerListener[K, V]]()))
     map.toMap
   }
 
@@ -100,7 +100,7 @@ class Consumer[K, V](
   /** The Kafka consumer getting events from the kafka topic   */
   val consumer: KafkaConsumer[K, V] = {
     val props = ConsumerHelper.setupProps(groupId, kafkaProperties, kafkaServers, keyDeserializer, valueDeserializer)
-    new KafkaConsumer(props)
+    new KafkaConsumer[K,V](props)
   }
 
   /** Signal if the consumer has been started */
@@ -121,8 +121,12 @@ class Consumer[K, V](
   /** The statistics */
   val stats = new ConsumersStatistics(id)
 
-  /** The set of topics from where this consumer get events from */
-  private[this] val subScribedTopics = collection.mutable.HashSet[IasTopic]()
+  /** The topics from where this consumer get events from (i.e. the topics for which there are listeners) */
+  def topicsOfListeners(): List[IasTopic] = synchronized {
+    (for {
+      k <- listeners.keys if (!listeners(k).isEmpty)
+    } yield (k)).toList
+  }
 
   /**
    * Adds a listener (consumer) of events published in the topic
@@ -133,10 +137,7 @@ class Consumer[K, V](
   def addListener(listener: ConsumerListener[K, V]): Unit = synchronized {
     require(Option(listener).isDefined)
     val topicListeners = listeners(listener.iasTopic)
-    topicListeners.synchronized {
-      if (!topicListeners.contains(listener)) then topicListeners.add(listener)
-    }
-    subScribedTopics.add(listener.iasTopic)
+    if (!topicListeners.contains(listener)) then topicListeners.add(listener)
   }
 
   /**
@@ -161,15 +162,38 @@ class Consumer[K, V](
     CollectionConverters.asScala(listeners(topic)).toList
   }
 
+  /**
+   * Subscribe to the kafka topics for which there are listeners waiting to get events
+   * and unsubscribe to topics for which there are no listeners waiting to get events.
+   *
+   * The former happens when new listeners are added to the consumer,
+   * the latter when listeners are removed from the consumer
+   */
+  private[this] def subscribeToTopics(): Unit = synchronized {
+    val topicsToSubscribe: Set[String] = topicsOfListeners().map(_.kafkaTopicName).toSet
+    Consumer.logger.debug("Consumer [{}] needs to get events from the following topics: {}",id,topicsToSubscribe.mkString)
+    val assignedTopicPartitions: Set[TopicPartition] = CollectionConverters.asScala(consumer.assignment()).toSet
+    Consumer.logger.debug("Consumer [{}] is assigned to the following topic/partition {}",
+      id,
+      assignedTopicPartitions.map(tp => s"${tp.topic()}/${tp.partition()}".mkString))
+    val assignedTopics = assignedTopicPartitions.map(_.topic())
+
+    if (topicsToSubscribe!=assignedTopics) {
+      Consumer.logger.debug("Consumer [{}] is going to subscribe to a new set of topics...",id)
+      consumer.subscribe(CollectionConverters.asJava(topicsToSubscribe), this)
+      Consumer.logger.info("Consumer [{}] subscribed {} topics",id, topicsToSubscribe.mkString)
+    } else {
+      Consumer.logger.info("Consumer [{}] already subscribed to the topics requested by the listeners: ",id, topicsToSubscribe.mkString)
+    }
+  }
+
   /** Start the consumer: connect to the BSDB and start getting events from the thread */
   def init(): Unit = synchronized {
     if (isClosed.get) {
       Consumer.logger.error("Cannot open a closed consumer")
     } else {
       // Subscribe to the topics
-      val kTopics = subScribedTopics.map(_.kafkaTopicName).toList
-      consumer.subscribe(CollectionConverters.asJava(kTopics), this)
-      Consumer.logger.info("Consumer {} subscribed to topics {}", id, kTopics.mkString(", "))
+      subscribeToTopics()
       // Start the consumer thread
       Consumer.logger.info("Starting the consumer {}", id)
       consumerThread = new Thread(this, s"ConsumerThread:$id")
@@ -270,7 +294,13 @@ class Consumer[K, V](
         listenersToDispatchEvents.map(_.size()).getOrElse(0))
 
       listenersToDispatchEvents.foreach(l => // Is there a listener?
-        l.forEach(consListener => consListener.internalOnKEvents(eventsToDispatch.map( e => consListener.KEvent(e.key(), e.value())))))
+        l.forEach(consListener => {
+          val events = eventsToDispatch.map( e => consListener.KEvent(e.key(), e.value()))
+          try consListener.internalOnKEvents(events)
+          catch
+            case t: Throwable => Consumer.logger.error("Consumer [{}] got en error dispatching {} events to a listener of {}",
+              id, events.size, consListener.iasTopic,t)
+        }))
     }
 
   }
@@ -294,9 +324,8 @@ class Consumer[K, V](
               Consumer.logger.warn("Consumer [{}]: no values read from the topics in the past {} seconds", id, POLLING_TIMEOUT.getSeconds)
             }
             break
-
           case t: Throwable =>
-            Consumer.logger.error("Consumer [{}] got an exception while getting BSDB events", id, t)
+            Consumer.logger.error("Consumer [{}] got an exception while getting kafka events", id, t)
             break
         }
       }

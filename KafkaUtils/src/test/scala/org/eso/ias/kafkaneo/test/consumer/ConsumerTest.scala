@@ -5,10 +5,10 @@ import org.eso.ias.kafkaneo.IasTopic
 import org.eso.ias.kafkaneo.consumer.{Consumer, ConsumerHelper, ConsumerListener}
 import org.eso.ias.kafkautils.SimpleStringProducer
 import org.eso.ias.logging.IASLogger
-import org.scalatest.BeforeAndAfterAll
+import org.scalatest.{BeforeAndAfterAllConfigMap, ConfigMap}
 import org.scalatest.flatspec.AnyFlatSpec
 
-class ConsumerTest extends AnyFlatSpec with BeforeAndAfterAll {
+class ConsumerTest extends AnyFlatSpec with BeforeAndAfterAllConfigMap {
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
 
@@ -17,11 +17,12 @@ class ConsumerTest extends AnyFlatSpec with BeforeAndAfterAll {
   /** The producer of events */
   private val producer = new SimpleStringProducer(ConsumerHelper.DefaultKafkaBroker, "ConsumerTestProducer")
 
-  override def beforeAll(): Unit = {
+  override protected def beforeAll(configMap: ConfigMap): Unit = {
+    println(s"\n\nCONFIG: ${configMap.keySet.mkString}\n\n")
     producer.setUp()
   }
 
-  override def afterAll(): Unit = {
+  override protected def afterAll(configMap: ConfigMap): Unit = {
     producer.tearDown()
   }
 
@@ -30,16 +31,16 @@ class ConsumerTest extends AnyFlatSpec with BeforeAndAfterAll {
    *
    * @param n The number of items to be received by the listener
    * @param ml THe listener of items
-   * @param maxTimeout The mak timeout (msec) to wait until all the items have been received
-   * @return true if the items has been received, false otherwise
+   * @param maxTimeout The max timeout (msec) to wait until all the items have been received
+   * @return The number of received events
    */
-  def waitForItems(n: Int, ml: MockListener, maxTimeout: Int): Boolean = {
+  def waitForItems(n: Int, ml: MockListener, maxTimeout: Int): Int = {
     require(n>0)
     require(maxTimeout>0)
 
     val endTime = System.currentTimeMillis()+maxTimeout
     while (ml.size<n && System.currentTimeMillis()<endTime) { Thread.sleep(100) }
-    ml.size==n
+    ml.size
   }
 
   behavior of "The Kafka Neo Consumer"
@@ -123,7 +124,7 @@ class ConsumerTest extends AnyFlatSpec with BeforeAndAfterAll {
     val itemsToPush = 10
 
     val itemToSend: Seq[(String, String)] = for {
-      i <- 1 to itemsToPush;
+      i <- 1 to itemsToPush
     } yield (s"$msg$i", s"$k$i")
 
     for (item <- itemToSend) {
@@ -133,10 +134,7 @@ class ConsumerTest extends AnyFlatSpec with BeforeAndAfterAll {
     producer.flush()
 
     logger.info("Waiting to receive the item")
-    assert(waitForItems(itemsToPush, ml1, 10000))
-
-    logger.info("Checking if all the events has been received...")
-    assert(ml1.size==10)
+    assert(waitForItems(itemsToPush, ml1, 10000)==10)
 
     val receivedItems = ml1.getRecvEvents().map(r =>  (r.value, r.key) )
     assert(itemToSend==receivedItems)
@@ -186,7 +184,7 @@ class ConsumerTest extends AnyFlatSpec with BeforeAndAfterAll {
     val itemsToPush = 10
 
     val itemToSend: Seq[(String, String)] = for {
-      i <- 1 to itemsToPush;
+      i <- 1 to itemsToPush
     } yield (s"$msg$i", s"$k$i")
 
     for (item <- itemToSend) {
@@ -196,21 +194,16 @@ class ConsumerTest extends AnyFlatSpec with BeforeAndAfterAll {
     producer.flush()
 
     logger.info("Waiting to receive the item")
-    assert(waitForItems(itemsToPush, ml1, 10000))
-    assert(waitForItems(itemsToPush, ml2, 10000))
-    assert(waitForItems(itemsToPush, ml3, 10000))
+    assert(waitForItems(itemsToPush, ml1, 10000)==itemsToPush)
+    assert(waitForItems(itemsToPush, ml2, 10000)==itemsToPush)
+    assert(waitForItems(itemsToPush, ml3, 10000)==itemsToPush)
 
-    logger.info("Checking if all the listeners received all the events...")
-    assert(ml1.size==itemsToPush)
-    assert(ml2.size==itemsToPush)
-    assert(ml3.size==itemsToPush)
-
-    logger.info("Check if events are sent only to the lsistener of the right topic")
-    assert(ml4.isEmpty)
-    assert(ml5.isEmpty)
-    assert(ml6.isEmpty)
-    assert(ml7.isEmpty)
-    assert(ml8.isEmpty)
+    logger.info("Check if events are sent only to the listener of the right topic")
+    assert(ml4.isEmpty, s"Unexpected items received in CMD topic ${ml4.getRecvEvents().mkString}")
+    assert(ml5.isEmpty, s"Unexpected items received in Core topic ${ml5.getRecvEvents().mkString}")
+    assert(ml6.isEmpty, s"Unexpected items received in Hb topic ${ml6.getRecvEvents().mkString}")
+    assert(ml7.isEmpty, s"Unexpected items received in Plugins topic ${ml7.getRecvEvents().mkString}")
+    assert(ml8.isEmpty, s"Unexpected items received in Reply topic ${ml8.getRecvEvents().mkString}")
 
     val receivedItems1 = ml1.getRecvEvents().map(r =>  (r.value, r.key) )
     assert(itemToSend==receivedItems1)
@@ -218,6 +211,87 @@ class ConsumerTest extends AnyFlatSpec with BeforeAndAfterAll {
     assert(itemToSend==receivedItems2)
     val receivedItems3 = ml3.getRecvEvents().map(r =>  (r.value, r.key) )
     assert(itemToSend==receivedItems3)
+
+    logger.info("Closing the consumer")
+    consumer.close()
+    logger.info("Consumer closed. Test terminated")
+  }
+
+  it should "get and dispatch events from multiple topics" in {
+
+    def builEventsForTopic(topic: IasTopic, nEvents: Int): List[(String, String, String)] = {
+      val msg = s"$topic-DataMsg-"
+      val k = s"$topic-Key-"
+
+      val ret =for {
+        i <- 1 to nEvents
+      } yield (s"$msg$i", s"$k$i", topic.kafkaTopicName)
+      ret.toList
+    }
+
+    logger.info("Testing the getting of events from several topics")
+
+    val consumer = new Consumer[String, String]("Test5Id", "Test5Group")
+    val ml1 = new MockListener(IasTopic.Test)
+    ml1.enable()
+    consumer.addListener(ml1)
+
+    val ml2 = new MockListener(IasTopic.Core)
+    ml2.enable()
+    consumer.addListener(ml2)
+
+    val ml3 = new MockListener(IasTopic.Heartbeat)
+    ml3.enable()
+    consumer.addListener(ml3)
+
+    val ml4 = new MockListener(IasTopic.Plugins)
+    ml4.enable()
+    consumer.addListener(ml4)
+
+    logger.info("Initializing the consumer")
+    consumer.init()
+    logger.info("Giving the consumer time to initialize")
+    Thread.sleep(10000)
+
+
+    val numOfTestEvents = 15
+    val testEvents = builEventsForTopic(IasTopic.Test, numOfTestEvents)
+
+    val numOfCoreEvents = 55
+    val coreEvents = builEventsForTopic(IasTopic.Core, numOfCoreEvents)
+
+    val numOfHbEvents = 35
+    val hbEvents = builEventsForTopic(IasTopic.Heartbeat, numOfHbEvents)
+
+    val numOfpluginsEvents = 46
+    val pluginsEvents = builEventsForTopic(IasTopic.Plugins, numOfpluginsEvents)
+
+    val numOfCmdEvents = 8
+    val cmdEvents = builEventsForTopic(IasTopic.Command, numOfCmdEvents)
+
+    val totEventsToSend: List[(String, String, String)] = testEvents:::coreEvents:::hbEvents:::pluginsEvents:::cmdEvents
+
+    for (item <- totEventsToSend) {
+      logger.info(s"Pushing v=${item._1},k=${item._2} in ${item._3}")
+      producer.push(item._1, item._3, null, item._2)
+    }
+    producer.flush()
+
+    logger.info("Waiting to receive the item from the topics")
+    assert(waitForItems(numOfTestEvents, ml1, 10000)==numOfTestEvents, s"Wrong number of items from TEST topic ${ml1.getRecvEvents().mkString}")
+    assert(waitForItems(numOfCoreEvents, ml2, 10000)==numOfCoreEvents, s"Wrong number of items from CORE topic ${ml2.getRecvEvents().mkString}")
+    assert(waitForItems(numOfHbEvents, ml3, 10000)==numOfHbEvents, s"Wrong number of items from HB topic ${ml3.getRecvEvents().mkString}")
+    assert(waitForItems(numOfpluginsEvents, ml4, 10000)==numOfpluginsEvents, s"Wrong number of items from PLUGIN topic ${ml4.getRecvEvents().mkString}")
+
+    logger.info("Checking if events have been delivered to the right listeners")
+    val rcvTestItems = ml1.getRecvEvents().map(r => (r.value, r.key))
+    assert(testEvents.map( i => (i._1, i._2)) == rcvTestItems)
+    val rcvCoreItems = ml2.getRecvEvents().map(r => (r.value, r.key))
+    assert(coreEvents.map( i => (i._1, i._2)) == rcvCoreItems)
+    val rcvHbItems = ml3.getRecvEvents().map(r => (r.value, r.key))
+    assert(hbEvents .map( i => (i._1, i._2))== rcvHbItems)
+    val rcvPluginItems = ml4.getRecvEvents().map(r => (r.value, r.key))
+    assert(pluginsEvents.map( i => (i._1, i._2)) == rcvPluginItems)
 
     logger.info("Closing the consumer")
     consumer.close()
