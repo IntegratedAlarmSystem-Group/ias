@@ -50,8 +50,8 @@ import scala.util.control.Breaks.{break, breakable}
  * @param kafkaServers the string of servers and ports to connect to kafka servers
  * @param keyDeserializer the name of the class to deserialize the key
  * @param valueDeserializer the name of the class to deserialize the value
- * @param startReadingPos The psotion in the kafka stream to start reading message,
- *                        defualt to the end of the stream
+ * @param startReadingPos The position in the kafka stream to start reading message,
+ *                        default to the end of the stream
  * @param kafkaProperties Other kafka properties to allow the user to pass custom properties
  * @author Alessandro Caproni
  * @since 13.0
@@ -124,30 +124,28 @@ class Consumer[K, V](
   /** The topics from where this consumer get events from (i.e. the topics for which there are listeners) */
   def topicsOfListeners(): List[IasTopic] = synchronized {
     (for {
-      k <- listeners.keys if (!listeners(k).isEmpty)
-    } yield (k)).toList
+      k <- listeners.keys if !listeners(k).isEmpty
+    } yield k).toList
   }
 
   /**
    * Adds a listener (consumer) of events published in the topic
    *
-   * @param iasTopic the topic whose events must be notified to the listener
    * @param listener the listener (consumer) of events
    */
   def addListener(listener: ConsumerListener[K, V]): Unit = synchronized {
     require(Option(listener).isDefined)
     val topicListeners = listeners(listener.iasTopic)
-    if (!topicListeners.contains(listener)) then topicListeners.add(listener)
+    if !topicListeners.contains(listener) then topicListeners.add(listener)
   }
 
   /**
    * Removes a listener (consumer) of events published in the topic
    *
-   * @param iasTopic the topic whose events must be notified to the listener
    * @param listener the listener (consumer) to remove
-   * @return true if the listener was in the container, flase otherwise
+   * @return true if the listener was in the container, false otherwise
    */
-  def removeListener( listener: ConsumerListener[_, _]): Boolean = synchronized {
+  def removeListener( listener: ConsumerListener[K, V]): Boolean = synchronized {
     require(Option(listener).isDefined)
     listeners(listener.iasTopic).remove(listener)
   }
