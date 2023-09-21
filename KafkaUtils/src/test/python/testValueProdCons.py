@@ -85,14 +85,12 @@ class TestValueProdCons(unittest.TestCase):
             'PyConsumerTestGroup')
         logger.info('Starting the consumer')
         consumer.start()
-        
 
-        
         n=100
 
         # Wait one second to be sure the consumer is ready
         # Setting up partitions and assign consumers to group, rebalancing etc.
-        # can slow down the process even iof the consumer is ready and waiting 
+        # can slow down the process even if the consumer is ready and waiting
         # to get data
         time.sleep(1)
         logger.info('Publishing %d IasValues',n)
