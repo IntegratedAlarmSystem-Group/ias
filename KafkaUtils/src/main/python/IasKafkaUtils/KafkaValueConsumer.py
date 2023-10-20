@@ -59,7 +59,7 @@ class KafkaValueConsumer(Thread):
     terminateThread = False
 
     # Signal if the thread is getting event from the topic 
-    # This is not teh same of starting the thread vecause
+    # This is not teh same of starting the thread because
     ## if the topic does not exist, the thread wait until
     # it is created but is not yet getting events
     isGettingEvents = False
@@ -93,10 +93,13 @@ class KafkaValueConsumer(Thread):
                 'enable.auto.commit': True,
                 'auto.offset.reset': 'latest'}
 
-        self.consumer = Consumer(conf)
+        self.consumer = Consumer(conf, logger=logger)
 
         Thread.daemon = True
         logger.info('Kafka consumer %s connected to %s and topic %s', clientid, kafkabrokers, topic)
+
+    def onAssign(self):
+        pass
 
     def run(self):
         logger.info('Thread to poll for IasValues started')
@@ -115,8 +118,8 @@ class KafkaValueConsumer(Thread):
                         logger.error('topic %s [partition %d] reached end at offset %d', msg.topic(), msg.partition(),
                                      msg.offset())
                     else:
-                        logger.error('Error polling event %s', msg.error().reason)
-                        raise Exception(msg.error().reason)
+                        logger.error('Error polling event %s', msg.error().str())
+                        raise Exception(msg.error().str())
                 else:
                     json = msg.value().decode("utf-8")
                     iasValue = IasValue.fromJSon(json)
