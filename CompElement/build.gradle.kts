@@ -26,22 +26,16 @@ dependencies {
 
 sourceSets {
     main {
-        withConvention(ScalaSourceSet::class) {
-            scala {
-                setSrcDirs(listOf("src/main/scala")+listOf("src/main/java"))
-                //setSrcDirs(listOf("src/main/java"))
-            }
-            java {
-                //setSrcDirs(listOf("src/main/java"))
-                setSrcDirs( listOf<String>() )
-            }
+        scala {
+            setSrcDirs(listOf("src/main/scala")+listOf("src/main/java"))
+        }
+        java {
+            setSrcDirs( listOf<String>() )
         }
     }
     test {
-        withConvention(ScalaSourceSet::class) {
-            scala {
-                setSrcDirs(listOf("src/test/scala")) // +listOf("src/test/java"))
-            }
+        scala {
+            setSrcDirs(listOf("src/test/scala")) // +listOf("src/test/java"))
         }
     }
 }
