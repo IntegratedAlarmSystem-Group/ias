@@ -77,9 +77,9 @@ if (gradle is ExtensionAware) {
 	extension.extra["junit-jupiter-engine"] = "org.junit.jupiter:junit-jupiter-engine:5.9.1"
 	extension.extra["junit-platform-console-standalone"] = "org.junit.platform:junit-platform-console-standalone:1.9.1"
 	extension.extra["commons-cli"] = "commons-cli:commons-cli:1.5.0"
-	extension.extra["kafka-clients"] = "org.apache.kafka:kafka-clients:3.5.1"
-	extension.extra["kafka-streams"] = "org.apache.kafka:kafka-streams:3.5.1"
-	extension.extra["kafka-connect-api"] = "org.apache.kafka:connect-api:3.5.1"
+	extension.extra["kafka-clients"] = "org.apache.kafka:kafka-clients:3.6.0"
+	extension.extra["kafka-streams"] = "org.apache.kafka:kafka-streams:3.6.0"
+	extension.extra["kafka-connect-api"] = "org.apache.kafka:connect-api:3.6.0"
 	extension.extra["hibernate-jpa"] = "org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final"
 }
 
