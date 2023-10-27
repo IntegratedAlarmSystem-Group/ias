@@ -69,7 +69,7 @@ if (gradle is ExtensionAware) {
         // IAS common dependencies
 	extension.extra["scala-library"] = "org.scala-lang:scala3-library_3:3.3.1"
 	extension.extra["scalatest"] = "org.scalatest:scalatest_3:3.2.17"
-	extension.extra["slf4j-api"] = "org.slf4j:slf4j-api:1.7.36"
+	extension.extra["slf4j-api"] = "org.slf4j:slf4j-api:2.0.9"
 	extension.extra["scala-logging"] = "com.typesafe.scala-logging:scala-logging_3:3.9.5"
 	extension.extra["logback-classic"] = "ch.qos.logback:logback-classic:1.2.11"
 	extension.extra["jackson-databind"] = "com.fasterxml.jackson.core:jackson-databind:2.13.4.2"
