@@ -4,7 +4,7 @@ Created on Jun 12, 2018
 @author: acaproni
 '''
 from datetime import datetime
-from threading import Thread
+from threading import Thread, Lock
 import traceback
 import time
 from confluent_kafka import Consumer, KafkaError
@@ -40,10 +40,13 @@ class KafkaValueConsumer(Thread):
     
     Each received IasValue is sent to the listener.
     
-    The listener must inherit from IasValueListener
+    The listener must inherit from IasValueListener.
     
     KafkaValueConsumer does not create a topic that must be created by the producer.
     If the topic does not exist, the thread waits until the producer creates it.
+
+    KafkaValueConsumer implements a boolean watchdog that is set to True
+    at every iteration of the thread (i.e. when data arrives or the timeout elapses)
     '''
 
     # The listener to send IasValues to
@@ -96,6 +99,13 @@ class KafkaValueConsumer(Thread):
         self.consumer = Consumer(conf, logger=logger)
 
         Thread.daemon = True
+
+        # the watch dog 
+        self.watchDog = False
+
+        # The lock for the watch dog
+        self.watchDogLock = Lock()
+
         logger.info('Kafka consumer %s connected to %s and topic %s', clientid, kafkabrokers, topic)
 
     def onAssign(self):
@@ -109,6 +119,9 @@ class KafkaValueConsumer(Thread):
             self.isGettingEvents = True
             while not self.terminateThread:
                 msg = self.consumer.poll(timeout=1.0)
+                # Reset the watch dog
+                with self.watchDogLock:
+                    self.watchDog = True
                 if msg is None:
                     continue
 
@@ -145,3 +158,15 @@ class KafkaValueConsumer(Thread):
         self.terminateThread = True
         self.join(5)  # Ensure the thread exited before closing the consumer
         self.consumer.close()
+
+    def getWatchdog(self):
+        """
+        Return and reset the watch dog.
+
+        Returns:
+        bool: True if the waychdog has been set, False otherwise
+        """
+        with self.watchDogLock:
+            ret = self.watchDog
+            self.watchDog = False
+        return ret
