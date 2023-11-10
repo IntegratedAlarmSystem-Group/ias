@@ -75,16 +75,16 @@ public enum CdbFolders {
 	/**
 	 * Delete the subfolder, if it exists.
 	 * 
-	 * @param cdbParentPath: The path to the parent of the CDB
+	 * @param folderToDelete: The subfolder to delete
 	 * @return <code>true</code> if the folder has been deleted,
 	 * 	       <code>false</code> otherwise
 	 */
-	public boolean delete(Path cdbParentPath) {
-		if (cdbParentPath==null) {
+	public boolean delete(Path folderToDelete) {
+		if (folderToDelete==null) {
 			throw new NullPointerException("The parent path of the CDB can't be null");
 		}
-		Path folderPath = buildPath(cdbParentPath);
-		if (!exists(cdbParentPath)) {
+		Path folderPath = buildPath(folderToDelete);
+		if (!exists(folderToDelete)) {
 			// The folder does not exist ==> nothing to do
 			return false;
 		}
