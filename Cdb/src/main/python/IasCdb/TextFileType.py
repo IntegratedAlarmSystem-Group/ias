@@ -1,6 +1,6 @@
-from pathlib import Path
 from enum import Enum
 import os
+import glob
 from typing import Union
 
 class FileType(Enum):
@@ -58,13 +58,14 @@ class TextFileType:
         if not folder:
             raise ValueError(f"Invalid empty folder")
 
-        cdb_folder = folder+"/CDB"
+        cdb_folder = os.path.join(folder,"CDB")
         if not os.path.isdir(cdb_folder):
             raise ValueError(f"The folder {cdb_folder} is unreadable or does not exist")
 
         # Look for ias.*: there should be only one
-        files = [f.name for f in cdb_folder.iterdir() if f.name.startswith("ias.")]
-        if len(files) != 1:
+        files = os.listdir(cdb_folder)
+        file =  [f for f in files if f.startswith("ias.")]
+        if len(file) != 1:
             return None
         else:
-            return cls.from_file(files[0])
+            return cls.from_file(file[0])
