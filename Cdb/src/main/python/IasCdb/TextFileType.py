@@ -13,6 +13,10 @@ class TextFileType:
     SUPPORTED_TYPES = { FileType.YAML:".yaml", FileType.JSON:".json"}
 
     @classmethod
+    def getExtension(cls, file_type: FileType) -> str:
+        return TextFileType.SUPPORTED_TYPES[file_type]
+
+    @classmethod
     def from_file(cls, file_name: str) -> Union[FileType, None]:
         """
         Get the type of the file from the extension of the passed file name

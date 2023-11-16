@@ -2,6 +2,7 @@
 Python implementation of CdbFolders.java
 """
 
+from genericpath import isdir
 import os
 import shutil
 
@@ -19,6 +20,12 @@ class Folders(Enum):
     CLIENT =9
 
 class CdbFolders:
+    '''
+    CdbFolder is the python translation of the java CdbFolder.java
+
+    The differences are mostly due to the fact that python implemntation 
+    of enumerated differs from java 
+    '''
 
     ALL_FOLDERS = {
         Folders.ROOT:"CDB",
@@ -32,109 +39,80 @@ class CdbFolders:
         Folders.CLIENT:"CLIENT"
     }
 
-
-    def __init__(self, folder_name):
-        """
+    def __init__(self, folder: Folders, cdb_parent_path: str) -> None:
+        '''
         Constructor
-        Args:
-        cdb_parent_path: the parent folder of the CDB
-        """
-        self.folder_name = folder_name
 
-    def delete(self, cdb_parent_path) -> bool:
+        Args:
+            folder: the forlder of this object
+            cdb_parent_path: the path of the folder containig the CDB
+        '''
+        self.folder = folder
+        self.cdb_parent_path = cdb_parent_path
+        if not self.cdb_parent_path:
+            raise ValueError("The parent path can't be null/empty")
+        if self.folder==Folders.ROOT:
+            self.folder_path = os.path.join(cdb_parent_path, CdbFolders.ALL_FOLDERS[Folders.ROOT])
+        else:
+            self.folder_path = os.path.join(cdb_parent_path, CdbFolders.ALL_FOLDERS[Folders.ROOT], CdbFolders.ALL_FOLDERS[folder])
+        if not os.path.isdir(self.cdb_parent_path):
+            raise ValueError(f"CDB parent folder {self.cdb_parent_path} does not exist!")
+
+    def delete(self) -> bool:
         """
-        Delete the subfolder, if it exists.
-	    Args:* 
-	      folderToDelete: The subfolder to delete
-        Returns
-	        True if the folder has been deleted,
-	        False otherwise
+        Delete the subfolder represented by this object, if it exists.
+	    
+        Returns:
+	        True if the folder has been deleted, False otherwise
         """
-        if cdb_parent_path is None:
-            raise ValueError("The parent path of the CDB can't be None")
-        
-        folder_path = self._build_path(cdb_parent_path)
-        
-        if not self.exists(cdb_parent_path):
+        if not os.path.isdir(self.folder_path):
             # The folder does not exist ==> nothing to do
             return False
         
-        self._delete_folder(folder_path)
+        self._delete_folder()
         return True
 
-    def _delete_folder(self, folder_to_delete):
+    def _delete_folder(self) -> None:
         """
         Recursively delete a folder from the file system.
         Args:
             folder_to_delete: The folder to delete
         """
-        if folder_to_delete is None:
-            raise ValueError("Cannot delete a NULL folder")
-        
-        for root, dirs, files in os.walk(folder_to_delete, topdown=False):
+        if not os.path.isdir(self.folder_path):
+            # The folder does not exist ==> nothing to do
+            return        
+        for root, dirs, files in os.walk(self.folder_path, topdown=False):
             for file in files:
                 os.remove(os.path.join(root, file))
             for dir in dirs:
                 os.rmdir(os.path.join(root, dir))
-        os.rmdir(folder_to_delete)
+        os.rmdir(self.folder_path)
 
-    def _build_path(self, cdb_parent_path) -> str:
+    def get_folder(self, create: bool) -> str:
         """
-        Build the path of the subfolde
+        Get the path of the CDB sub folder and if it is the case, creates it.
 
         Args:
-            cdb_parent_path: The path to the parent of the CDB
-        Returns:
-            The path to the subfolder
-        """
-        if cdb_parent_path is None:
-            raise ValueError("The parent path of the CDB can't be None")
-        
-        if self.folder_name == self.ROOT:
-            folder_path = os.path.join(cdb_parent_path, self.ROOT)
-        else:
-            folder_path = os.path.join(cdb_parent_path, self.ROOT, self.folder_name)
-        
-        return folder_path
-
-    def get_folder(self, cdb_parent_path, create):
-        """
-        Get the path of the CDB folder and if it is the case, creates it.
-
-        Args:
-            cdbParentPath: The path to the parent of the CDB
             create: if True and the subfolder does not exist, then create it
         Returns:
             the path to the subfolder.
         """
-        if cdb_parent_path is None:
-            raise ValueError("The parent path of the CDB can't be None")
-        
-        folder_path = self._build_path(cdb_parent_path)
-        if self.exists(cdb_parent_path):
-            if os.path.isdir(folder_path) and os.access(folder_path, os.W_OK):
-                # No need to create the folder
-                return folder_path
-            else:
-                raise IOError(f"{folder_path} exists but is unusable: check permissions and type")
-        else:
-            os.makedirs(folder_path)
-            return folder_path
+        # does not exist: create if requested
+        if create and not os.path.isdir(self.folder_path):
+            os.makedirs(self.folder_path)
+        return self.folder_path
 
-    def exists(self, cdb_parent_path: str) -> bool:
+    def exists(self) -> bool:
         """
         Check if the subfolder exists
 
-        Args:
-            cdbParentPath The path of the folder
         Returns:
             True if the folder exists, False otherwise
         """
-        path = self._build_path(cdb_parent_path)
-        return os.path.exists(path)
+        return os.path.exists(self.folder_path)
 
     @staticmethod
-    def get_subfolder(cdb_parent_path, folder, create):
+    def get_subfolder(cdb_parent_path: str, folder: Folders, create: bool) -> str:
         """
         Get the path of a CDB folder and if it is the case, creates the folder
 
@@ -145,12 +123,12 @@ class CdbFolders:
         Returns:
             the path to the subfolder
         """
-        if folder is None:
+        if not folder:
             raise ValueError("CDB subfolder can't be None")
-        if cdb_parent_path is None:
+        if not cdb_parent_path:
             raise ValueError("CDB parent folder can't be None")
-        cdb_folders =CdbFolders(cdb_parent_path)
-        return cdb_folders.get_folder(folder, create)
+        cdb_folders = CdbFolders(folder, cdb_parent_path)
+        return cdb_folders.get_folder(create)
 
     @staticmethod
     def create_folders(cdb_parent_path: str):
@@ -161,6 +139,8 @@ class CdbFolders:
         Args:
             cdbParentPath: The path to the parent of the CDB
         """
-        cdb_folders =CdbFolders(cdb_parent_path)
+        if not cdb_parent_path:
+            raise ValueError("CDB parent folder can't be None")
         for folder in CdbFolders.ALL_FOLDERS:
-            cdb_folders.get_folder(cdb_parent_path, True)
+            folder = CdbFolders(folder, cdb_parent_path)
+            folder.get_folder(True)
