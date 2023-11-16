@@ -98,5 +98,11 @@ class TestCdbFiles(unittest.TestCase):
         file_path=reader.get_plugin_file_path("PluginID2")
         self.assertTrue(pathlib.Path(file_path))
 
+    def testGuessingCdbType(self):
+        j_reader = CdbTxtFiles.from_folder(self.json_cdb)
+        self.assertEqual(j_reader.files_type, FileType.JSON)
+        y_reader = CdbTxtFiles.from_folder(self.yaml_cdb)
+        self.assertEqual(y_reader.files_type, FileType.YAML)
+
 if __name__ == '__main__':
     unittest.main()

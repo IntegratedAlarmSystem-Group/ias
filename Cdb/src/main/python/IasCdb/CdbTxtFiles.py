@@ -8,6 +8,18 @@ class CdbTxtFiles():
 
     confFileExtension = ".conf"
 
+    @classmethod
+    def from_folder(cls, parent_folder: str):
+        """
+        Build the the CdbTxtFiles from the contento of the passed folder
+        i.e. it guess the type of the CDB (YAML, JSON) by looking at
+        the content of the foder
+        """
+        cdb_type = TextFileType.get_cdb_type(parent_folder)
+        if cdb_type is None:
+            raise ValueError(f"{parent_folder} is not a parent folder of a CDB")
+        return CdbTxtFiles(parent_folder, cdb_type)
+
     def __init__(self, parent_folder: str, files_type: FileType) -> None:
         self.cdb_parent_folder = parent_folder
         self.files_type = files_type
