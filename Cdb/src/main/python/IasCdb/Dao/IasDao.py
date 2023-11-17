@@ -21,29 +21,15 @@ class IasDao:
         if not os.path.isfile(file_name):
             raise ValueError(f"Cannot read {file_name}")
         if file_type==FileType.YAML:
-            cls.read_from_yaml(file_name)
+            import yaml
+            with open(file_name) as f:
+                data=yaml.safe_load(f)
         elif file_type==FileType.JSON:
-            return cls.read_from_json(file_name)
+            import json
+            with open(file_name) as f:
+                data = json.load(f)
         else :
             raise ValueError(f"Unrecognized file {file_name}")
-        
-    
-    @classmethod
-    def read_from_yaml(cls, file_name: str):
-        pass
-
-    @classmethod
-    def read_from_json(cls, file_name: str):
-        """
-        Read the ias configuration from a JSON file
-        Args:
-            file_name: the json file containing the IAS configuratio
-        Return:
-            The IasDao built parsing the file
-        """
-        import json
-        with open(file_name) as f:
-                data = json.load(f)
         log_lvl = LogLevelDao.from_string(data['logLevel'])
         refresh_rate=int(data['refreshRate'])
         validity_threshold = int(data['validityThreshold'])
