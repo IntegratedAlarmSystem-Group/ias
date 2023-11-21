@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'form.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.5.3
+## Created by: Qt User Interface Compiler version 6.6.0
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -19,7 +19,7 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
 from PySide6.QtWidgets import (QApplication, QHBoxLayout, QHeaderView, QLabel,
     QLayout, QListWidget, QListWidgetItem, QMainWindow,
     QMenu, QMenuBar, QSizePolicy, QStatusBar,
-    QTableView, QVBoxLayout, QWidget)
+    QTableView, QToolBar, QVBoxLayout, QWidget)
 
 class Ui_AlarmGui(object):
     def setupUi(self, AlarmGui):
@@ -30,11 +30,15 @@ class Ui_AlarmGui(object):
         self.action_Connect.setObjectName(u"action_Connect")
         self.actionE_xit = QAction(AlarmGui)
         self.actionE_xit.setObjectName(u"actionE_xit")
+        self.action_Pause = QAction(AlarmGui)
+        self.action_Pause.setObjectName(u"action_Pause")
+        self.action_Pause.setCheckable(True)
+        self.action_Pause.setMenuRole(QAction.TextHeuristicRole)
         self.centralwidget = QWidget(AlarmGui)
         self.centralwidget.setObjectName(u"centralwidget")
         self.horizontalLayoutWidget = QWidget(self.centralwidget)
         self.horizontalLayoutWidget.setObjectName(u"horizontalLayoutWidget")
-        self.horizontalLayoutWidget.setGeometry(QRect(-1, 9, 791, 541))
+        self.horizontalLayoutWidget.setGeometry(QRect(-1, 9, 801, 541))
         self.horizontalLayout = QHBoxLayout(self.horizontalLayoutWidget)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.horizontalLayout.setSizeConstraint(QLayout.SetMinimumSize)
@@ -69,8 +73,8 @@ class Ui_AlarmGui(object):
 
         self.horizontalLayout.addLayout(self.verticalLayout_2)
 
-        self.horizontalLayout.setStretch(0, 50)
-        self.horizontalLayout.setStretch(1, 50)
+        self.horizontalLayout.setStretch(0, 60)
+        self.horizontalLayout.setStretch(1, 40)
         AlarmGui.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(AlarmGui)
         self.menubar.setObjectName(u"menubar")
@@ -83,10 +87,14 @@ class Ui_AlarmGui(object):
         self.statusbar = QStatusBar(AlarmGui)
         self.statusbar.setObjectName(u"statusbar")
         AlarmGui.setStatusBar(self.statusbar)
+        self.toolBar = QToolBar(AlarmGui)
+        self.toolBar.setObjectName(u"toolBar")
+        AlarmGui.addToolBar(Qt.TopToolBarArea, self.toolBar)
 
         self.menubar.addAction(self.menu_File.menuAction())
         self.menu_File.addAction(self.action_Connect)
         self.menu_File.addAction(self.actionE_xit)
+        self.toolBar.addAction(self.action_Pause)
 
         self.retranslateUi(AlarmGui)
         self.actionE_xit.triggered.connect(AlarmGui.close)
@@ -101,8 +109,13 @@ class Ui_AlarmGui(object):
         self.action_Connect.setToolTip(QCoreApplication.translate("AlarmGui", u"Connect to IAS", None))
 #endif // QT_CONFIG(tooltip)
         self.actionE_xit.setText(QCoreApplication.translate("AlarmGui", u"E&xit", None))
+        self.action_Pause.setText(QCoreApplication.translate("AlarmGui", u"&Pause", None))
+#if QT_CONFIG(tooltip)
+        self.action_Pause.setToolTip(QCoreApplication.translate("AlarmGui", u"Pause/Resume", None))
+#endif // QT_CONFIG(tooltip)
         self.label.setText(QCoreApplication.translate("AlarmGui", u"Alarms", None))
         self.label_2.setText(QCoreApplication.translate("AlarmGui", u"Details", None))
         self.menu_File.setTitle(QCoreApplication.translate("AlarmGui", u"&File", None))
+        self.toolBar.setWindowTitle(QCoreApplication.translate("AlarmGui", u"toolBar", None))
     # retranslateUi
 
