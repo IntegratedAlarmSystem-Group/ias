@@ -1,3 +1,5 @@
+import os
+
 from IasCdb.TextFileType import FileType, TextFileType
 from IasCdb.CdbTxtFiles import CdbTxtFiles
 from IasCdb.Dao.IasDao import IasDao
@@ -14,6 +16,8 @@ class CdbReader:
             parent_folder: the folder that contains CDB
         """
         self.parent_folder=parent_folder
+        if not os.path.isdir(parent_folder):
+            raise ValueError(f"Invalid parent folder {parent_folder}")
         self.cdbTxtFiles = CdbTxtFiles.from_folder(parent_folder)
         self.files_type = self.cdbTxtFiles.files_type
 
