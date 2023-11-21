@@ -20,7 +20,6 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         self.ias_cdb=ias_cdb
         # the dialog to connect to the IAS
         self.connectDlg = None
-        print("Started with CDB",self.ias_cdb)
 
     @Slot()
     def on_action_Connect_triggered(self):
@@ -36,6 +35,10 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
             # The user pressed the Ok button ==> Connect!
             print("URL",self.connectDlg.getBrokers())
         self.connectDlg = None
+
+    @Slot()
+    def on_action_Pause_toggled(self):
+        print(f"Pause/Resume check status {self.ui.action_Pause.isChecked()}")
 
 def parse(app):
     """
