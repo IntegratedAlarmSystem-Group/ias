@@ -1,0 +1,3 @@
+{
+    "files": ["connect_to_ias_dlg.py","connect_dialog.ui","form.ui","iasAlarmGui.py"]
+}
