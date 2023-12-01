@@ -49,7 +49,14 @@
         </widget>
        </item>
        <item>
-        <widget class="QTableView" name="tableView"/>
+        <widget class="QTableView" name="alarmTable">
+         <property name="alternatingRowColors">
+          <bool>true</bool>
+         </property>
+         <attribute name="verticalHeaderVisible">
+          <bool>false</bool>
+         </attribute>
+        </widget>
        </item>
       </layout>
      </item>
@@ -63,7 +70,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QListWidget" name="listWidget"/>
+        <widget class="QListWidget" name="alarmDetailsList"/>
        </item>
       </layout>
      </item>
@@ -106,6 +113,7 @@
     <bool>false</bool>
    </attribute>
    <addaction name="action_Pause"/>
+   <addaction name="action_Remove_cleared"/>
   </widget>
   <action name="action_Connect">
    <property name="text">
@@ -132,6 +140,20 @@
    </property>
    <property name="menuRole">
     <enum>QAction::TextHeuristicRole</enum>
+   </property>
+  </action>
+  <action name="action_Remove_cleared">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Remove cleared</string>
+   </property>
+   <property name="toolTip">
+    <string>Automatically remove cleared alarms</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
    </property>
   </action>
  </widget>

@@ -51,7 +51,7 @@ class Ui_ConnectToIas(object):
 
         self.lineEdit = QLineEdit(self.layoutWidget)
         self.lineEdit.setObjectName(u"lineEdit")
-        self.lineEdit.setText(u"")
+        self.lineEdit.setText(u"localhost:9092")
         self.lineEdit.setDragEnabled(False)
 
         self.horizontalLayout.addWidget(self.lineEdit)
