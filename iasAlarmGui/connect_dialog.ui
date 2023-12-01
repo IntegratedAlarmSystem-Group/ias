@@ -79,7 +79,7 @@
        <string>list of comma separated server:port to connect to IAS</string>
       </property>
       <property name="text">
-       <string notr="true"/>
+       <string notr="true">localhost:9092</string>
       </property>
       <property name="dragEnabled">
        <bool>false</bool>

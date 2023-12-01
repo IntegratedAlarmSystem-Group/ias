@@ -1,16 +1,19 @@
 # This Python file uses the following encoding: utf-8
-import sys, os, logging
+import sys, os, logging, string, random, threading
 
 from PySide6.QtCore import Slot, QCommandLineOption, QCommandLineParser
 from PySide6.QtWidgets import QApplication, QMainWindow
-
 
 # Important:
 # You need to run the following command to generate the ui_form.py file
 #     pyside6-uic form.ui -o ui_form.py, or
 #     pyside2-uic form.ui -o ui_form.py
-from ui_form import Ui_AlarmGui
+from ui_alarm_gui import Ui_AlarmGui
+from AlarmTableModel import AlarmTableModel
 from connect_to_ias_dlg import ConnectToIasDlg
+
+from IasKafkaUtils.KafkaValueConsumer import KafkaValueConsumer
+from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 
 class MainWindow(QMainWindow, Ui_AlarmGui):
     def __init__(self, ias_cdb, parent=None):
@@ -18,6 +21,19 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         self.ui = Ui_AlarmGui()
         self.ui.setupUi(self)
         self.ias_cdb=ias_cdb
+
+        self.ui.alarmDetailsList.addItem("SET")
+
+        self.tableModel = AlarmTableModel(self.ui.alarmTable)
+        self.ui.alarmTable.setModel(self.tableModel)
+
+        # The consumer of alarms. The listener is the table model
+        self.value_consumer: KafkaValueConsumer = None
+        # The group must be unique to get all the alarms so we append a random part
+        chars=string.ascii_uppercase + string.digits
+        self.group_id: str  = "iasAlarmGui-".join(random.choice(chars) for _ in range(5))
+        self.client_id: str = "iasAlarmGui"
+
         # the dialog to connect to the IAS
         self.connectDlg = None
 
@@ -29,16 +45,41 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
 
     # @Slot()
     def on_ConnectDialog_finished(self):
-        print("on_ConnectDialog_finished")
         dlg_ret_code = self.connectDlg.result()
         if dlg_ret_code==1:
             # The user pressed the Ok button ==> Connect!
-            print("URL",self.connectDlg.getBrokers())
+            self.ui.action_Connect.setEnabled(False)
+            brokers = self.connectDlg.getBrokers()
+            assert brokers is not None, "The dialog should not return an empty broker user presses Ok"
+            logging.info("Connecting to the BSDB %s",self.connectDlg.getBrokers())
+            # Start the thread to connect
+            connect_thread = threading.Thread(target=self.connectToIas, args=(brokers,))
+            connect_thread.start()
         self.connectDlg = None
 
     @Slot()
     def on_action_Pause_toggled(self):
         print(f"Pause/Resume check status {self.ui.action_Pause.isChecked()}")
+
+    def connectToIas(self, bsdb_brokers: str) -> None:
+        """
+        Connect to the IAS passing the table model as listener
+
+        This function runs in a thread
+        """
+        try:
+            logging.info("Building the value consumer with client id=%s and group_id=%s", self.client_id, self.group_id)
+            self.value_consumer = KafkaValueConsumer(
+                self.tableModel,
+                bsdb_brokers,
+                IasKafkaHelper.topics['core'],
+                self.client_id,
+                self.group_id)
+            logging.info("Starting to get alarms from the BSDB...")
+            self.value_consumer.start()
+        except Exception as e:
+            logging.error("Error connecting to the BSDB: %s",str(e))
+        self.ui.action_Connect.setEnabled(True)
 
 def parse(app):
     """
@@ -60,6 +101,7 @@ def parse(app):
         return parser.value(cdb_option)
     else:
         return None
+
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'form.ui'
+## Form generated from reading UI file 'alarm_gui.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.6.0
 ##
@@ -34,6 +34,10 @@ class Ui_AlarmGui(object):
         self.action_Pause.setObjectName(u"action_Pause")
         self.action_Pause.setCheckable(True)
         self.action_Pause.setMenuRole(QAction.TextHeuristicRole)
+        self.action_Remove_cleared = QAction(AlarmGui)
+        self.action_Remove_cleared.setObjectName(u"action_Remove_cleared")
+        self.action_Remove_cleared.setCheckable(True)
+        self.action_Remove_cleared.setMenuRole(QAction.NoRole)
         self.centralwidget = QWidget(AlarmGui)
         self.centralwidget.setObjectName(u"centralwidget")
         self.horizontalLayoutWidget = QWidget(self.centralwidget)
@@ -50,10 +54,12 @@ class Ui_AlarmGui(object):
 
         self.verticalLayout.addWidget(self.label)
 
-        self.tableView = QTableView(self.horizontalLayoutWidget)
-        self.tableView.setObjectName(u"tableView")
+        self.alarmTable = QTableView(self.horizontalLayoutWidget)
+        self.alarmTable.setObjectName(u"alarmTable")
+        self.alarmTable.setAlternatingRowColors(True)
+        self.alarmTable.verticalHeader().setVisible(False)
 
-        self.verticalLayout.addWidget(self.tableView)
+        self.verticalLayout.addWidget(self.alarmTable)
 
 
         self.horizontalLayout.addLayout(self.verticalLayout)
@@ -65,10 +71,10 @@ class Ui_AlarmGui(object):
 
         self.verticalLayout_2.addWidget(self.label_2)
 
-        self.listWidget = QListWidget(self.horizontalLayoutWidget)
-        self.listWidget.setObjectName(u"listWidget")
+        self.alarmDetailsList = QListWidget(self.horizontalLayoutWidget)
+        self.alarmDetailsList.setObjectName(u"alarmDetailsList")
 
-        self.verticalLayout_2.addWidget(self.listWidget)
+        self.verticalLayout_2.addWidget(self.alarmDetailsList)
 
 
         self.horizontalLayout.addLayout(self.verticalLayout_2)
@@ -95,6 +101,7 @@ class Ui_AlarmGui(object):
         self.menu_File.addAction(self.action_Connect)
         self.menu_File.addAction(self.actionE_xit)
         self.toolBar.addAction(self.action_Pause)
+        self.toolBar.addAction(self.action_Remove_cleared)
 
         self.retranslateUi(AlarmGui)
         self.actionE_xit.triggered.connect(AlarmGui.close)
@@ -112,6 +119,10 @@ class Ui_AlarmGui(object):
         self.action_Pause.setText(QCoreApplication.translate("AlarmGui", u"&Pause", None))
 #if QT_CONFIG(tooltip)
         self.action_Pause.setToolTip(QCoreApplication.translate("AlarmGui", u"Pause/Resume", None))
+#endif // QT_CONFIG(tooltip)
+        self.action_Remove_cleared.setText(QCoreApplication.translate("AlarmGui", u"&Remove cleared", None))
+#if QT_CONFIG(tooltip)
+        self.action_Remove_cleared.setToolTip(QCoreApplication.translate("AlarmGui", u"Automatically remove cleared alarms", None))
 #endif // QT_CONFIG(tooltip)
         self.label.setText(QCoreApplication.translate("AlarmGui", u"Alarms", None))
         self.label_2.setText(QCoreApplication.translate("AlarmGui", u"Details", None))
