@@ -85,8 +85,6 @@ class IASType(Enum):
         else:
             raise NotImplementedError("Not supported conversion for IAS data type: "+self)
 
-
-
     @staticmethod
     def fromString(typeString):
         '''
@@ -98,11 +96,11 @@ class IASType(Enum):
             raise ValueError("Invalid string representation of a type")
         
         temp = str(typeString)
-        if "." not in temp:
-            temp="IASType."+temp
         for valueType in IASType:
             if str(valueType)==temp:
                 return valueType
         # No enumerated matches with typeString
         raise NotImplementedError("Not supported/find IAS data type: " + typeString)
     
+    def __str__(self):
+        return self.name

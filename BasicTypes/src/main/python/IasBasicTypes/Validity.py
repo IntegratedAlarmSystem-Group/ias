@@ -25,8 +25,6 @@ class Validity(Enum):
             raise ValueError("Invalid string representation of validity")
         
         temp = str(validityString)
-        if "." not in temp:
-            temp="Validity."+temp
         for validityState in Validity:
             if str(validityState)==temp:
                 return validityState
@@ -38,4 +36,7 @@ class Validity(Enum):
         @return the string representation of this validity
         """
         return self.name()
+    
+    def __str__(self):
+        return self.name
     
