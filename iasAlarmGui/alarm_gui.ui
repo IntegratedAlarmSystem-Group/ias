@@ -53,6 +53,9 @@
          <property name="alternatingRowColors">
           <bool>true</bool>
          </property>
+         <property name="selectionBehavior">
+          <enum>QAbstractItemView::SelectRows</enum>
+         </property>
          <attribute name="verticalHeaderVisible">
           <bool>false</bool>
          </attribute>
@@ -132,6 +135,11 @@
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/icons/pause.png</normaloff>
+     <normalon>:/icons/play.png</normalon>:/icons/pause.png</iconset>
+   </property>
    <property name="text">
     <string>&amp;Pause</string>
    </property>
@@ -146,6 +154,11 @@
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/icons/remove.png</normaloff>
+     <normalon>:/icons/remove.png</normalon>:/icons/remove.png</iconset>
+   </property>
    <property name="text">
     <string>&amp;Remove cleared</string>
    </property>
@@ -157,7 +170,9 @@
    </property>
   </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="resources.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>actionE_xit</sender>

@@ -61,6 +61,10 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
     def on_action_Pause_toggled(self):
         print(f"Pause/Resume check status {self.ui.action_Pause.isChecked()}")
 
+    @Slot()
+    def on_action_Remove_cleared_toggled(self):
+        print(f"Auto remove cleared {self.ui.action_Remove_cleared.isChecked()}")
+
     def connectToIas(self, bsdb_brokers: str) -> None:
         """
         Connect to the IAS passing the table model as listener
