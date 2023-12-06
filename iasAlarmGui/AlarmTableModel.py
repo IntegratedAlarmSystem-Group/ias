@@ -5,7 +5,7 @@ import logging, threading, time
 from PySide6.QtCore import QAbstractTableModel
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QTableView
-from PySide6.QtGui import QPalette, QColor
+from PySide6.QtGui import QColor, QBrush
 
 from IasKafkaUtils.KafkaValueConsumer import IasValueListener
 from IasBasicTypes.IasValue import IasValue
@@ -87,27 +87,22 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
             else:
                 return ias_value_in_row.id
         elif role == Qt.BackgroundRole:
-            print("===> Qt.BackgroundRole")
             ias_value_in_row = self.alarms[index.row()]
             priority = self.get_priority(ias_value_in_row)
             if priority == Priority.CRITICAL:
-                print("===> CRITICAL")
-                return QColor.fromString('darkRed')
+                return QColor.fromString('darkred')
             elif priority==Priority.HIGH:
-                print("===> HIGH")
                 return QColor.fromString('red')
             elif priority==Priority.MEDIUM:
-                print("===> MEDIUM")
-                return QColor.fromString('darkYellow')
+                return QColor.fromString('orange')
             elif priority==Priority.LOW:
-                print("===> LOW")
                 return QColor.fromString('yellow')
             else:
                 return QColor('white')
         elif role == Qt.TextAlignmentRole:
             return Qt.AlignVCenter + Qt.AlignHCenter
         elif role == Qt.ForegroundRole:
-            return QColor.fromString('white')
+            return QColor.fromString('black')
 
     def rowCount(self, index):
         # The length of the outer list.
