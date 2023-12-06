@@ -11,6 +11,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow
 from ui_alarm_gui import Ui_AlarmGui
 from AlarmTableModel import AlarmTableModel
 from connect_to_ias_dlg import ConnectToIasDlg
+from about_dlg import AboutDlg
 
 from IasKafkaUtils.KafkaValueConsumer import KafkaValueConsumer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
@@ -42,6 +43,11 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         self.connectDlg = ConnectToIasDlg(self.ias_cdb, self)
         self.connectDlg.open()
         self.connectDlg.finished.connect(self.on_ConnectDialog_finished)
+
+    @Slot()
+    def on_action_About_triggered(self):
+        self.aboutDlg = AboutDlg(self)
+        self.aboutDlg.open()
 
     # @Slot()
     def on_ConnectDialog_finished(self):
