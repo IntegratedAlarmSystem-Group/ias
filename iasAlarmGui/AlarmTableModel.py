@@ -88,6 +88,15 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
                 return ias_value_in_row.id
         elif role == Qt.BackgroundRole:
             ias_value_in_row = self.alarms[index.row()]
+            alarmState = self.get_state(ias_value_in_row)
+            # If the alarm is not set then colors do not depend on priority
+            if not alarmState.is_set():
+                if alarmState.is_acked():
+                    # Acked and clear
+                    return QColor.fromString('green')
+                else:
+                    # Clear but not yet acked
+                    return QColor.fromString('darkseagreen')
             priority = self.get_priority(ias_value_in_row)
             if priority == Priority.CRITICAL:
                 return QColor.fromString('darkred')
