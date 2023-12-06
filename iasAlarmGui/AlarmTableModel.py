@@ -144,9 +144,7 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
             self.received_alarms.append(alarm)
 
     def setData(self,index, value, role=Qt.EditRole):
-        print("setData")
         if role==Qt.EditRole:
-            print("==>",index.row(), index.column(),value)
             if index.isValid() and 0 <= index.row() < len(self.alarms):
                 self.dataChanged.emit(index,index)
                 return True

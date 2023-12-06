@@ -16,10 +16,12 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QIcon, QImage, QKeySequence, QLinearGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
-from PySide6.QtWidgets import (QApplication, QHBoxLayout, QHeaderView, QLabel,
-    QLayout, QListWidget, QListWidgetItem, QMainWindow,
-    QMenu, QMenuBar, QSizePolicy, QStatusBar,
-    QTableView, QToolBar, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QAbstractItemView, QApplication, QHBoxLayout, QHeaderView,
+    QLabel, QLayout, QListWidget, QListWidgetItem,
+    QMainWindow, QMenu, QMenuBar, QSizePolicy,
+    QStatusBar, QTableView, QToolBar, QVBoxLayout,
+    QWidget)
+import rc_resources
 
 class Ui_AlarmGui(object):
     def setupUi(self, AlarmGui):
@@ -33,10 +35,18 @@ class Ui_AlarmGui(object):
         self.action_Pause = QAction(AlarmGui)
         self.action_Pause.setObjectName(u"action_Pause")
         self.action_Pause.setCheckable(True)
+        icon = QIcon()
+        icon.addFile(u":/icons/pause.png", QSize(), QIcon.Normal, QIcon.Off)
+        icon.addFile(u":/icons/play.png", QSize(), QIcon.Normal, QIcon.On)
+        self.action_Pause.setIcon(icon)
         self.action_Pause.setMenuRole(QAction.TextHeuristicRole)
         self.action_Remove_cleared = QAction(AlarmGui)
         self.action_Remove_cleared.setObjectName(u"action_Remove_cleared")
         self.action_Remove_cleared.setCheckable(True)
+        icon1 = QIcon()
+        icon1.addFile(u":/icons/remove.png", QSize(), QIcon.Normal, QIcon.Off)
+        icon1.addFile(u":/icons/remove.png", QSize(), QIcon.Normal, QIcon.On)
+        self.action_Remove_cleared.setIcon(icon1)
         self.action_Remove_cleared.setMenuRole(QAction.NoRole)
         self.centralwidget = QWidget(AlarmGui)
         self.centralwidget.setObjectName(u"centralwidget")
@@ -57,6 +67,7 @@ class Ui_AlarmGui(object):
         self.alarmTable = QTableView(self.horizontalLayoutWidget)
         self.alarmTable.setObjectName(u"alarmTable")
         self.alarmTable.setAlternatingRowColors(True)
+        self.alarmTable.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.alarmTable.verticalHeader().setVisible(False)
 
         self.verticalLayout.addWidget(self.alarmTable)

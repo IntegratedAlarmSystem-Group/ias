@@ -4,6 +4,7 @@
         "connect_dialog.ui",
         "alarm_gui.ui",
         "iasAlarmGui.py",
-        "AlarmTableModel.py"
+        "AlarmTableModel.py",
+        "resources.qrc"
     ]
 }
