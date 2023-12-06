@@ -48,6 +48,8 @@ class Ui_AlarmGui(object):
         icon1.addFile(u":/icons/remove.png", QSize(), QIcon.Normal, QIcon.On)
         self.action_Remove_cleared.setIcon(icon1)
         self.action_Remove_cleared.setMenuRole(QAction.NoRole)
+        self.action_About = QAction(AlarmGui)
+        self.action_About.setObjectName(u"action_About")
         self.centralwidget = QWidget(AlarmGui)
         self.centralwidget.setObjectName(u"centralwidget")
         self.horizontalLayoutWidget = QWidget(self.centralwidget)
@@ -100,6 +102,8 @@ class Ui_AlarmGui(object):
         self.menubar.setNativeMenuBar(True)
         self.menu_File = QMenu(self.menubar)
         self.menu_File.setObjectName(u"menu_File")
+        self.menu_Help = QMenu(self.menubar)
+        self.menu_Help.setObjectName(u"menu_Help")
         AlarmGui.setMenuBar(self.menubar)
         self.statusbar = QStatusBar(AlarmGui)
         self.statusbar.setObjectName(u"statusbar")
@@ -109,8 +113,10 @@ class Ui_AlarmGui(object):
         AlarmGui.addToolBar(Qt.TopToolBarArea, self.toolBar)
 
         self.menubar.addAction(self.menu_File.menuAction())
+        self.menubar.addAction(self.menu_Help.menuAction())
         self.menu_File.addAction(self.action_Connect)
         self.menu_File.addAction(self.actionE_xit)
+        self.menu_Help.addAction(self.action_About)
         self.toolBar.addAction(self.action_Pause)
         self.toolBar.addAction(self.action_Remove_cleared)
 
@@ -135,9 +141,11 @@ class Ui_AlarmGui(object):
 #if QT_CONFIG(tooltip)
         self.action_Remove_cleared.setToolTip(QCoreApplication.translate("AlarmGui", u"Automatically remove cleared alarms", None))
 #endif // QT_CONFIG(tooltip)
+        self.action_About.setText(QCoreApplication.translate("AlarmGui", u"&About", None))
         self.label.setText(QCoreApplication.translate("AlarmGui", u"Alarms", None))
         self.label_2.setText(QCoreApplication.translate("AlarmGui", u"Details", None))
         self.menu_File.setTitle(QCoreApplication.translate("AlarmGui", u"&File", None))
+        self.menu_Help.setTitle(QCoreApplication.translate("AlarmGui", u"&Help", None))
         self.toolBar.setWindowTitle(QCoreApplication.translate("AlarmGui", u"toolBar", None))
     # retranslateUi
 
