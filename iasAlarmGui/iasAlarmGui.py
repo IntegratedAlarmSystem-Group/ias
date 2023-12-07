@@ -88,6 +88,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
                 self.group_id)
             logging.info("Starting to get alarms from the BSDB...")
             self.value_consumer.start()
+            self.ui.action_Connect.setDisabled(True)
         except Exception as e:
             logging.error("Error connecting to the BSDB: %s",str(e))
         self.ui.action_Connect.setEnabled(True)

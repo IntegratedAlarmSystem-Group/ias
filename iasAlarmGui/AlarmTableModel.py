@@ -231,9 +231,10 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
         """
         with self.lock:
             self.pasued=enable
-            for alarm in self.paused_buffer:
-                self.add_received_alarm(alarm, self.received_alarms)
-            self.paused_buffer = []
+            if not self.paused:
+                for alarm in self.paused_buffer:
+                    self.add_received_alarm(alarm, self.received_alarms)
+                self.paused_buffer = []
 
 
 

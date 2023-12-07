@@ -126,6 +126,10 @@
    <addaction name="action_Remove_cleared"/>
   </widget>
   <action name="action_Connect">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/icons/connect.png</normaloff>:/icons/connect.png</iconset>
+   </property>
    <property name="text">
     <string>&amp;Connect...</string>
    </property>
