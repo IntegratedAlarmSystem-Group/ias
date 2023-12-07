@@ -93,7 +93,8 @@ class KafkaValueConsumer(Thread):
         conf = {'bootstrap.servers': kafkabrokers,
                 'client.id': clientid,
                 'group.id': groupid,
-                'enable.auto.commit': True,
+                'enable.auto.commit': 'true',
+                'allow.auto.create.topics': 'true',
                 'auto.offset.reset': 'latest'}
 
         self.consumer = Consumer(conf, logger=logger)
@@ -106,15 +107,24 @@ class KafkaValueConsumer(Thread):
         # The lock for the watch dog
         self.watchDogLock = Lock()
 
-        logger.info('Kafka consumer %s connected to %s and topic %s', clientid, kafkabrokers, topic)
+        # Confluent consumer does not create a topic even if the auto.create.topic=true
+        # subscribed is set by onAssign and unlock the polling thread
+        self.subscribed = False
 
-    def onAssign(self):
-        pass
+        logger.info('Kafka consumer %s will connect to %s and topic %s', clientid, kafkabrokers, topic)
+
+    def onAssign(self, consumer, partition):
+        logger.info("Kafka consumer assigned to partition %s", partition)
+        self.subscribed = True
+
+    def onLost(self):
+        logger.info("Partition lost")
+        self.subscribed = False
 
     def run(self):
         logger.info('Thread to poll for IasValues started')
         try:
-            self.consumer.subscribe([self.topic])
+            self.consumer.subscribe([self.topic], on_assign=self.onAssign)
 
             self.isGettingEvents = True
             while not self.terminateThread:
@@ -122,7 +132,7 @@ class KafkaValueConsumer(Thread):
                 # Reset the watch dog
                 with self.watchDogLock:
                     self.watchDog = True
-                if msg is None:
+                if msg is None or not self.subscribed:
                     continue
 
                 if msg.error() is not None:
@@ -149,6 +159,7 @@ class KafkaValueConsumer(Thread):
 
     def start(self):
         logger.info('Starting thread to poll for IasValues')
+        self.terminateThread = False
         Thread.start(self)
 
     def close(self):
