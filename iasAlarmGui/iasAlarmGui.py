@@ -66,6 +66,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
     @Slot()
     def on_action_Pause_toggled(self):
         print(f"Pause/Resume check status {self.ui.action_Pause.isChecked()}")
+        self.tableModel.pause(self.ui.action_Pause.isChecked())
 
     @Slot()
     def on_action_Remove_cleared_toggled(self):
