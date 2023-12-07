@@ -5,7 +5,7 @@ import logging, threading, time
 from PySide6.QtCore import QAbstractTableModel
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QTableView
-from PySide6.QtGui import QColor, QBrush
+from PySide6.QtGui import QColor
 
 from IasKafkaUtils.KafkaValueConsumer import IasValueListener
 from IasBasicTypes.IasValue import IasValue
@@ -56,6 +56,13 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
         # The thread that update the table
         self.thread = threading.Thread(daemon=True, target=self.flush_alarms)
         self.thread.start()
+
+        # Set to True when the GUI is paused i.e. the table must not be update
+        # and the alarms saved in a temporary buffer until resumed
+        self.pasued = False
+
+        # The temporary buffer to store alarms when paused
+        self.paused_buffer: list[IasValue] = []
 
     def get_priority(self, ias_value: IasValue) -> Priority:
         """
@@ -136,21 +143,31 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
             return
         # Add the alarm to the model
         with self.lock:
-            self.add_received_alarm(iasValue)
-        print(f"Alarm {iasValue.id} appended to the model:",iasValue.toString())
+            if self.pasued:
+                self.add_received_alarm(iasValue, self.paused_buffer)
+            else:
+                self.add_received_alarm(iasValue, self.received_alarms)
 
-    def add_received_alarm(self, alarm: IasValue) -> None:
+    def add_received_alarm(self, alarm: IasValue, alarm_list: list[IasValue]) -> None:
         """
-        Adds the alarm to self.received_alarms replacing an old alarm
-        if it is already in the list
+        Adds the alarm to the list, replacing an old alarm
+        if it is already in the list.
+
+        Depending on the apassed list, this function adds the alarm to
+        the alarm displayed by the view or to the list of alarms buffered when
+        the view is paused
+
+        Args:
+            alarm: the alarm to add
+            alarm_list: the list to add the alarm to
         """
         with self.lock:
-            for index, ias_value in enumerate(self.received_alarms):
+            for index, ias_value in enumerate(alarm_list):
                 if ias_value.id==alarm.id:
                     # alarm already in the list
-                    self.received_alarms[index]=alarm
+                    alarm_list[index]=alarm
                     return
-            self.received_alarms.append(alarm)
+            alarm_list.append(alarm)
 
     def setData(self,index, value, role=Qt.EditRole):
         if role==Qt.EditRole:
@@ -204,6 +221,19 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
                         self.setData(self.createIndex(pos, 2),alarm)
                 self.received_alarms.clear()
                 print(f"{len(self.alarms)} alarms in table")
+
+    def pause(self, enable: bool) -> None:
+        """
+        Pause resume the update of the table
+
+        Args:
+            enable: if True pause the update otherwise resume
+        """
+        with self.lock:
+            self.pasued=enable
+            for alarm in self.paused_buffer:
+                self.add_received_alarm(alarm, self.received_alarms)
+            self.paused_buffer = []
 
 
 
