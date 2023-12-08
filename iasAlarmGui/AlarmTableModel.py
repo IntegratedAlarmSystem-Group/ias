@@ -292,6 +292,11 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
             del self.alarms[row]
             self.endRemoveRows()
 
+    def get_row_content(self, index: int)->IasValue:
+        with self.lock:
+            return self.alarms[index]
+
+
 
 
 

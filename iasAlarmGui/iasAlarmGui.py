@@ -16,6 +16,8 @@ from about_dlg import AboutDlg
 from IasKafkaUtils.KafkaValueConsumer import KafkaValueConsumer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 
+from IasBasicTypes.Alarm import Alarm, IasValue
+
 class MainWindow(QMainWindow, Ui_AlarmGui):
     def __init__(self, ias_cdb, parent=None):
         super().__init__(parent)
@@ -27,6 +29,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
 
         self.tableModel = AlarmTableModel(self.ui.alarmTable)
         self.ui.alarmTable.setModel(self.tableModel)
+        self.ui.alarmTable.selectionModel().selectionChanged.connect(self.onTableSelectionChanged)
 
         # The consumer of alarms. The listener is the table model
         self.value_consumer: KafkaValueConsumer = None
@@ -93,6 +96,26 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         except Exception as e:
             logging.error("Error connecting to the BSDB: %s",str(e))
         self.ui.action_Connect.setEnabled(True)
+
+    def onTableSelectionChanged(self, selected, deselected):
+        """
+        The user seleted one row of the table: fills the
+        details in the right side of the GUI
+        """
+        print("Selected", selected,"deselected",deselected)
+        for index in self.ui.alarmTable.selectionModel().selectedRows():
+            ias_value = self.tableModel.get_row_content(index.row())
+            self.fill_details(ias_value)
+
+    def fill_details(self, ias_value: IasValue)-> None:
+        """
+        Fills the details in the right side of the GUI
+        with the details of the IasValue
+
+        Args:
+            ias_value: the IasValue whose fields will be shown in the details
+        """
+        alarm=Alarm.fromString(ias_value.value)
 
 def parse(app):
     """
