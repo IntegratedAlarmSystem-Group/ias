@@ -71,6 +71,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
     @Slot()
     def on_action_Remove_cleared_toggled(self):
         print(f"Auto remove cleared {self.ui.action_Remove_cleared.isChecked()}")
+        self.tableModel.remove_cleared(self.ui.action_Remove_cleared.isChecked())
 
     def connectToIas(self, bsdb_brokers: str) -> None:
         """

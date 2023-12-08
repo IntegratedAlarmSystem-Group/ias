@@ -3,7 +3,7 @@
 import logging, threading, time
 
 from PySide6.QtCore import QAbstractTableModel
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QModelIndex
 from PySide6.QtWidgets import QTableView
 from PySide6.QtGui import QColor
 
@@ -59,10 +59,13 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
 
         # Set to True when the GUI is paused i.e. the table must not be update
         # and the alarms saved in a temporary buffer until resumed
-        self.pasued = False
+        self.paused = False
 
         # The temporary buffer to store alarms when paused
         self.paused_buffer: list[IasValue] = []
+
+        # True if the model automatically removes cleared alarms the table
+        self.autoremove_cleared=False
 
     def get_priority(self, ias_value: IasValue) -> Priority:
         """
@@ -143,7 +146,7 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
             return
         # Add the alarm to the model
         with self.lock:
-            if self.pasued:
+            if self.paused:
                 self.add_received_alarm(iasValue, self.paused_buffer)
             else:
                 self.add_received_alarm(iasValue, self.received_alarms)
@@ -153,7 +156,7 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
         Adds the alarm to the list, replacing an old alarm
         if it is already in the list.
 
-        Depending on the apassed list, this function adds the alarm to
+        Depending on the passed list, this function adds the alarm to
         the alarm displayed by the view or to the list of alarms buffered when
         the view is paused
 
@@ -197,30 +200,37 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
     def flush_alarms(self) -> None:
         """
         Flush the alarms received in the last period in self.alarms
-        so that they are displaied in the table
+        so that they are displayed in the table
 
         New alarms are inserted in the head so they move on top of the table
         """
-        print("Table updated thread started")
+        logging.debug("Table updater thread started")
         while True:
             time.sleep(self.timeout)
             with self.lock:
                 if len(self.received_alarms)==0:
                     continue
-                print(f"Adding {len(self.received_alarms)} alarms to the table")
                 for alarm in self.received_alarms:
                     pos = self.get_index_of_alarm(alarm)
                     if pos==-1:
                         # Alarm not already in the list: inserted in the head of the list
-                        self.alarms.insert(0,alarm)
-                        self.layoutChanged.emit()
+                        # unless set and acked plus autoremove is set in the toolbar
+                        if not (self.autoremove_cleared and self.cleared_and_acked(alarm)):
+                            self.alarms.insert(0,alarm)
+                            self.layoutChanged.emit()
                     else:
-                        self.alarms[pos]=alarm
-                        self.setData(self.createIndex(pos, 0),alarm)
-                        self.setData(self.createIndex(pos, 1),alarm)
-                        self.setData(self.createIndex(pos, 2),alarm)
+                        # The alarm is already in the list so its state must be updated
+                        # or removed if autoremove has been selected in the toolbar
+                        # and the alarm is acked and clear
+                        if self.autoremove_cleared and self.cleared_and_acked(alarm):
+                            self.removeRows([pos])
+                        else:
+                            self.alarms[pos]=alarm
+                            self.setData(self.createIndex(pos, 0),alarm)
+                            self.setData(self.createIndex(pos, 1),alarm)
+                            self.setData(self.createIndex(pos, 2),alarm)
                 self.received_alarms.clear()
-                print(f"{len(self.alarms)} alarms in table")
+        logging.debug("Table updater thread terminated")
 
     def pause(self, enable: bool) -> None:
         """
@@ -230,11 +240,59 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
             enable: if True pause the update otherwise resume
         """
         with self.lock:
-            self.pasued=enable
+            self.paused=enable
             if not self.paused:
                 for alarm in self.paused_buffer:
                     self.add_received_alarm(alarm, self.received_alarms)
                 self.paused_buffer = []
+
+    def cleared_and_acked(self, alarm: IasValue)-> bool:
+        """
+        Check if the alarm is cleared and acked.
+        Cleared and acked alarms must be removed from the table
+        if the auto-remove has been enabled in the tool bar
+        Args:
+            alarm the alarm whose state must be checked
+        Returns:
+            True if the alarm is acked and clear, False otherwise
+        """
+        state=self.get_state(alarm)
+        return state.is_acked() and not state.is_set()
+
+    def remove_cleared(self, enable: bool)-> None:
+        """
+        Set the property to auto remove cleared alarms
+        Args:
+            enable: if True auto-remove of cleared alarms is enabled
+                    otherwise is disabled
+        """
+        with self.lock:
+            self.autoremove_cleared=enable
+            print("Alarms in table",len(self.alarms),len(self.received_alarms))
+            # index of the rows o remove
+            rowsToRemove=[]
+            if enable:
+                for index, ias_value in enumerate(self.alarms):
+                    if self.cleared_and_acked(ias_value):
+                        rowsToRemove.insert(0,index)
+                self.removeRows(rowsToRemove)
+
+    def removeRows(self, rows: list[int])->None:
+        """
+        Removes the rows from the table
+        Args:
+            rows: the rows to remove
+        """
+        # Ensure the rows is a list ordered from highest index to lowest index
+        rows.sort(reverse=True)
+        for row in rows:
+            print("Removing row",row)
+            index = QModelIndex()
+            self.beginRemoveRows(index, row, row)
+            del self.alarms[row]
+            self.endRemoveRows()
+
+
 
 
 
