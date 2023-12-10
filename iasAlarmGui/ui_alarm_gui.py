@@ -89,6 +89,11 @@ class Ui_AlarmGui(object):
 
         self.alarmDetailsList = QListWidget(self.horizontalLayoutWidget)
         self.alarmDetailsList.setObjectName(u"alarmDetailsList")
+        self.alarmDetailsList.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.alarmDetailsList.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.alarmDetailsList.setSelectionMode(QAbstractItemView.NoSelection)
+        self.alarmDetailsList.setWordWrap(True)
+        self.alarmDetailsList.setItemAlignment(Qt.AlignLeading)
 
         self.verticalLayout_2.addWidget(self.alarmDetailsList)
 
