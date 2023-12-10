@@ -16,7 +16,9 @@ from about_dlg import AboutDlg
 from IasKafkaUtils.KafkaValueConsumer import KafkaValueConsumer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 
-from IasBasicTypes.Alarm import Alarm, IasValue
+from IasBasicTypes.Alarm import Alarm
+from IasBasicTypes.IasValue import IasValue
+from AlarmDetailsHelper import AlarmDetailsHelper
 
 class MainWindow(QMainWindow, Ui_AlarmGui):
     def __init__(self, ias_cdb, parent=None):
@@ -25,7 +27,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         self.ui.setupUi(self)
         self.ias_cdb=ias_cdb
 
-        self.ui.alarmDetailsList.addItem("SET")
+        self.alarm_details = AlarmDetailsHelper(self.ui.alarmDetailsList)
 
         self.tableModel = AlarmTableModel(self.ui.alarmTable)
         self.ui.alarmTable.setModel(self.tableModel)
@@ -115,7 +117,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         Args:
             ias_value: the IasValue whose fields will be shown in the details
         """
-        alarm=Alarm.fromString(ias_value.value)
+        self.alarm_details.update(ias_value)
 
 def parse(app):
     """
