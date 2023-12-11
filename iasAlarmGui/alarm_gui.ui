@@ -73,21 +73,9 @@
         </widget>
        </item>
        <item>
-        <widget class="QListWidget" name="alarmDetailsList">
-         <property name="horizontalScrollBarPolicy">
-          <enum>Qt::ScrollBarAlwaysOn</enum>
-         </property>
-         <property name="editTriggers">
-          <set>QAbstractItemView::NoEditTriggers</set>
-         </property>
-         <property name="selectionMode">
-          <enum>QAbstractItemView::NoSelection</enum>
-         </property>
-         <property name="wordWrap">
+        <widget class="QTextEdit" name="alarmDetailsTE">
+         <property name="readOnly">
           <bool>true</bool>
-         </property>
-         <property name="itemAlignment">
-          <set>Qt::AlignHCenter|Qt::AlignLeading|Qt::AlignLeft</set>
          </property>
         </widget>
        </item>

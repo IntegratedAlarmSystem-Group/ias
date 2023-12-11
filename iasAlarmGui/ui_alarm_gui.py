@@ -17,10 +17,9 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QHBoxLayout, QHeaderView,
-    QLabel, QLayout, QListWidget, QListWidgetItem,
-    QMainWindow, QMenu, QMenuBar, QSizePolicy,
-    QStatusBar, QTableView, QToolBar, QVBoxLayout,
-    QWidget)
+    QLabel, QLayout, QMainWindow, QMenu,
+    QMenuBar, QSizePolicy, QStatusBar, QTableView,
+    QTextEdit, QToolBar, QVBoxLayout, QWidget)
 import rc_resources
 
 class Ui_AlarmGui(object):
@@ -87,15 +86,11 @@ class Ui_AlarmGui(object):
 
         self.verticalLayout_2.addWidget(self.label_2)
 
-        self.alarmDetailsList = QListWidget(self.horizontalLayoutWidget)
-        self.alarmDetailsList.setObjectName(u"alarmDetailsList")
-        self.alarmDetailsList.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.alarmDetailsList.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.alarmDetailsList.setSelectionMode(QAbstractItemView.NoSelection)
-        self.alarmDetailsList.setWordWrap(True)
-        self.alarmDetailsList.setItemAlignment(Qt.AlignLeading)
+        self.alarmDetailsTE = QTextEdit(self.horizontalLayoutWidget)
+        self.alarmDetailsTE.setObjectName(u"alarmDetailsTE")
+        self.alarmDetailsTE.setReadOnly(True)
 
-        self.verticalLayout_2.addWidget(self.alarmDetailsList)
+        self.verticalLayout_2.addWidget(self.alarmDetailsTE)
 
 
         self.horizontalLayout.addLayout(self.verticalLayout_2)
