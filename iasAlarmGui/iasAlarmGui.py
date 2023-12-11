@@ -31,6 +31,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         self.tableModel = AlarmTableModel(self.ui.alarmTable)
         self.ui.alarmTable.setModel(self.tableModel)
         self.ui.alarmTable.selectionModel().selectionChanged.connect(self.onTableSelectionChanged)
+        self.ui.alarmTable.horizontalHeader().setStretchLastSection(True)
 
         # The consumer of alarms. The listener is the table model
         self.value_consumer: KafkaValueConsumer = None
