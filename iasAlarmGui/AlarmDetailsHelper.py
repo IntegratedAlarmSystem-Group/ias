@@ -12,7 +12,11 @@ class AlarmDetailsHelper:
     def format_and_add(self, key: str, value: str)-> None:
         widgitItem = QListWidgetItem()
         widget = QWidget()
-        widgetText =  QLabel(f"<B>{key}</B>: {value}")
+        if value is not None:
+            widgetText =  QLabel(f"<B>{key}</B>: {value}")
+        else:
+            widgetText =  QLabel(f"<B>{key}</B>: -")
+        widgetText.setWordWrap(True)
         widgetLayout = QHBoxLayout()
         widgetLayout.addWidget(widgetText)
         widgetLayout.setSizeConstraint(QLayout.SetFixedSize)
@@ -20,6 +24,15 @@ class AlarmDetailsHelper:
         widgitItem.setSizeHint(widget.sizeHint())
         self.details_list.addItem(widgitItem)
         self.details_list.setItemWidget(widgitItem, widget)
+
+    def format_frid(self, frid: str)->str:
+        return frid.replace("@", " @ ")
+
+    def format_frids(self, frids: list[str])->str:
+        ret = "<UL>"
+        for frid in frids:
+            ret+=f"<LI>{self.format_frid(frid)}</LI>"
+        return "</UL>"+ret
 
     def update(self, ias_value: IasValue) -> None:
         """
@@ -39,4 +52,13 @@ class AlarmDetailsHelper:
         self.format_and_add("Validity", ias_value.iasValidityStr)
         self.format_and_add("Mode", ias_value.modeStr)
         self.format_and_add("Type", ias_value.valueTypeStr)
-        self.format_and_add("FRID", ias_value.fullRunningId)
+        self.format_and_add("FRID", self.format_frid(ias_value.fullRunningId))
+        self.format_and_add("Dependencies", self.format_frids(ias_value.dependentsFullRuningIds))
+        self.format_and_add("Plugin prod. stamp", ias_value.pluginProductionTStampStr)
+        self.format_and_add("Sent to Converter tstamp", ias_value.sentToConverterTStampStr)
+        self.format_and_add("Recv from plugin tstamp", ias_value.receivedFromPluginTStampStr)
+        self.format_and_add("Converted tstamp", ias_value.convertedProductionTStampStr)
+        self.format_and_add("Converted tstamp", ias_value.convertedProductionTStampStr)
+        self.format_and_add("Sent to BSDB tstamp", ias_value.sentToBsdbTStampStr)
+        self.format_and_add("Read from BSDB tstamp", ias_value.readFromBsdbTStampStr)
+        self.format_and_add("DASU prod. tstamp", ias_value.dasuProductionTStampStr)
