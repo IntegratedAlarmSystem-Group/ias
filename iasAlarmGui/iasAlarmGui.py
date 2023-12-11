@@ -33,6 +33,9 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         self.ui.alarmTable.selectionModel().selectionChanged.connect(self.onTableSelectionChanged)
         self.ui.alarmTable.horizontalHeader().setStretchLastSection(True)
 
+        self.ui.splitter.setSizes([250,100])
+        self.ui.alarmDetailsTE.setText("Alarm details")
+
         # The consumer of alarms. The listener is the table model
         self.value_consumer: KafkaValueConsumer = None
         # The group must be unique to get all the alarms so we append a random part

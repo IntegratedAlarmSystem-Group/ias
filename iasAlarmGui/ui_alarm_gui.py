@@ -17,9 +17,9 @@ from PySide6.QtGui import (QAction, QBrush, QColor, QConicalGradient,
     QPainter, QPalette, QPixmap, QRadialGradient,
     QTransform)
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QHBoxLayout, QHeaderView,
-    QLabel, QLayout, QMainWindow, QMenu,
-    QMenuBar, QSizePolicy, QStatusBar, QTableView,
-    QTextEdit, QToolBar, QVBoxLayout, QWidget)
+    QMainWindow, QMenu, QMenuBar, QSizePolicy,
+    QSplitter, QStatusBar, QTableView, QTextEdit,
+    QToolBar, QWidget)
 import rc_resources
 
 class Ui_AlarmGui(object):
@@ -55,50 +55,23 @@ class Ui_AlarmGui(object):
         self.centralwidget = QWidget(AlarmGui)
         self.centralwidget.setObjectName(u"centralwidget")
         self.centralwidget.setMinimumSize(QSize(300, 150))
-        self.horizontalLayout_2 = QHBoxLayout(self.centralwidget)
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.horizontalLayout = QHBoxLayout()
+        self.horizontalLayout = QHBoxLayout(self.centralwidget)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.horizontalLayout.setSizeConstraint(QLayout.SetMinimumSize)
-        self.horizontalLayout.setContentsMargins(10, 10, 10, 10)
-        self.verticalLayout = QVBoxLayout()
-        self.verticalLayout.setObjectName(u"verticalLayout")
-        self.label = QLabel(self.centralwidget)
-        self.label.setObjectName(u"label")
-
-        self.verticalLayout.addWidget(self.label)
-
-        self.alarmTable = QTableView(self.centralwidget)
+        self.splitter = QSplitter(self.centralwidget)
+        self.splitter.setObjectName(u"splitter")
+        self.splitter.setOrientation(Qt.Horizontal)
+        self.alarmTable = QTableView(self.splitter)
         self.alarmTable.setObjectName(u"alarmTable")
         self.alarmTable.setAlternatingRowColors(True)
         self.alarmTable.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.splitter.addWidget(self.alarmTable)
         self.alarmTable.verticalHeader().setVisible(False)
-
-        self.verticalLayout.addWidget(self.alarmTable)
-
-
-        self.horizontalLayout.addLayout(self.verticalLayout)
-
-        self.verticalLayout_2 = QVBoxLayout()
-        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.label_2 = QLabel(self.centralwidget)
-        self.label_2.setObjectName(u"label_2")
-
-        self.verticalLayout_2.addWidget(self.label_2)
-
-        self.alarmDetailsTE = QTextEdit(self.centralwidget)
+        self.alarmDetailsTE = QTextEdit(self.splitter)
         self.alarmDetailsTE.setObjectName(u"alarmDetailsTE")
         self.alarmDetailsTE.setReadOnly(True)
+        self.splitter.addWidget(self.alarmDetailsTE)
 
-        self.verticalLayout_2.addWidget(self.alarmDetailsTE)
-
-
-        self.horizontalLayout.addLayout(self.verticalLayout_2)
-
-        self.horizontalLayout.setStretch(0, 60)
-        self.horizontalLayout.setStretch(1, 40)
-
-        self.horizontalLayout_2.addLayout(self.horizontalLayout)
+        self.horizontalLayout.addWidget(self.splitter)
 
         AlarmGui.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(AlarmGui)
@@ -148,8 +121,6 @@ class Ui_AlarmGui(object):
         self.action_Remove_cleared.setToolTip(QCoreApplication.translate("AlarmGui", u"Automatically remove cleared alarms", None))
 #endif // QT_CONFIG(tooltip)
         self.action_About.setText(QCoreApplication.translate("AlarmGui", u"&About", None))
-        self.label.setText(QCoreApplication.translate("AlarmGui", u"Alarms", None))
-        self.label_2.setText(QCoreApplication.translate("AlarmGui", u"Details", None))
         self.menu_File.setTitle(QCoreApplication.translate("AlarmGui", u"&File", None))
         self.menu_Help.setTitle(QCoreApplication.translate("AlarmGui", u"&Help", None))
         self.toolBar.setWindowTitle(QCoreApplication.translate("AlarmGui", u"toolBar", None))
