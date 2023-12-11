@@ -7,20 +7,26 @@
     <x>0</x>
     <y>0</y>
     <width>800</width>
-    <height>600</height>
+    <height>503</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>IAS Alarm GUI</string>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <property name="minimumSize">
+    <size>
+     <width>300</width>
+     <height>150</height>
+    </size>
+   </property>
    <widget class="QWidget" name="horizontalLayoutWidget">
     <property name="geometry">
      <rect>
       <x>-1</x>
-      <y>9</y>
+      <y>-1</y>
       <width>801</width>
-      <height>541</height>
+      <height>551</height>
      </rect>
     </property>
     <layout class="QHBoxLayout" name="horizontalLayout" stretch="60,40">

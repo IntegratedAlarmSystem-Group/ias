@@ -26,7 +26,7 @@ class Ui_AlarmGui(object):
     def setupUi(self, AlarmGui):
         if not AlarmGui.objectName():
             AlarmGui.setObjectName(u"AlarmGui")
-        AlarmGui.resize(800, 600)
+        AlarmGui.resize(800, 503)
         self.action_Connect = QAction(AlarmGui)
         self.action_Connect.setObjectName(u"action_Connect")
         icon = QIcon()
@@ -54,9 +54,10 @@ class Ui_AlarmGui(object):
         self.action_About.setObjectName(u"action_About")
         self.centralwidget = QWidget(AlarmGui)
         self.centralwidget.setObjectName(u"centralwidget")
+        self.centralwidget.setMinimumSize(QSize(300, 150))
         self.horizontalLayoutWidget = QWidget(self.centralwidget)
         self.horizontalLayoutWidget.setObjectName(u"horizontalLayoutWidget")
-        self.horizontalLayoutWidget.setGeometry(QRect(-1, 9, 801, 541))
+        self.horizontalLayoutWidget.setGeometry(QRect(-1, -1, 801, 551))
         self.horizontalLayout = QHBoxLayout(self.horizontalLayoutWidget)
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.horizontalLayout.setSizeConstraint(QLayout.SetMinimumSize)
