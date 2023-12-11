@@ -16,7 +16,6 @@ from about_dlg import AboutDlg
 from IasKafkaUtils.KafkaValueConsumer import KafkaValueConsumer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 
-from IasBasicTypes.Alarm import Alarm
 from IasBasicTypes.IasValue import IasValue
 from AlarmDetailsHelper import AlarmDetailsHelper
 
@@ -104,7 +103,6 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         The user seleted one row of the table: fills the
         details in the right side of the GUI
         """
-        print("Selected", selected,"deselected",deselected)
         for index in self.ui.alarmTable.selectionModel().selectedRows():
             ias_value = self.tableModel.get_row_content(index.row())
             self.fill_details(ias_value)

@@ -87,7 +87,7 @@
           <bool>true</bool>
          </property>
          <property name="itemAlignment">
-          <set>Qt::AlignLeading</set>
+          <set>Qt::AlignHCenter|Qt::AlignLeading|Qt::AlignLeft</set>
          </property>
         </widget>
        </item>

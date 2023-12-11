@@ -142,7 +142,6 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
         """
         # Discard non alarms IasValues
         if not iasValue or iasValue.valueType!=IASType.ALARM:
-            print(f"IasValue {iasValue.id} of type {iasValue.id,str(iasValue.value)} discarded")
             return
         # Add the alarm to the model
         with self.lock:
