@@ -55,21 +55,20 @@ class Ui_AlarmGui(object):
         self.centralwidget = QWidget(AlarmGui)
         self.centralwidget.setObjectName(u"centralwidget")
         self.centralwidget.setMinimumSize(QSize(300, 150))
-        self.horizontalLayoutWidget = QWidget(self.centralwidget)
-        self.horizontalLayoutWidget.setObjectName(u"horizontalLayoutWidget")
-        self.horizontalLayoutWidget.setGeometry(QRect(-1, -1, 801, 551))
-        self.horizontalLayout = QHBoxLayout(self.horizontalLayoutWidget)
+        self.horizontalLayout_2 = QHBoxLayout(self.centralwidget)
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName(u"horizontalLayout")
         self.horizontalLayout.setSizeConstraint(QLayout.SetMinimumSize)
         self.horizontalLayout.setContentsMargins(10, 10, 10, 10)
         self.verticalLayout = QVBoxLayout()
         self.verticalLayout.setObjectName(u"verticalLayout")
-        self.label = QLabel(self.horizontalLayoutWidget)
+        self.label = QLabel(self.centralwidget)
         self.label.setObjectName(u"label")
 
         self.verticalLayout.addWidget(self.label)
 
-        self.alarmTable = QTableView(self.horizontalLayoutWidget)
+        self.alarmTable = QTableView(self.centralwidget)
         self.alarmTable.setObjectName(u"alarmTable")
         self.alarmTable.setAlternatingRowColors(True)
         self.alarmTable.setSelectionBehavior(QAbstractItemView.SelectRows)
@@ -82,12 +81,12 @@ class Ui_AlarmGui(object):
 
         self.verticalLayout_2 = QVBoxLayout()
         self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.label_2 = QLabel(self.horizontalLayoutWidget)
+        self.label_2 = QLabel(self.centralwidget)
         self.label_2.setObjectName(u"label_2")
 
         self.verticalLayout_2.addWidget(self.label_2)
 
-        self.alarmDetailsTE = QTextEdit(self.horizontalLayoutWidget)
+        self.alarmDetailsTE = QTextEdit(self.centralwidget)
         self.alarmDetailsTE.setObjectName(u"alarmDetailsTE")
         self.alarmDetailsTE.setReadOnly(True)
 
@@ -98,6 +97,9 @@ class Ui_AlarmGui(object):
 
         self.horizontalLayout.setStretch(0, 60)
         self.horizontalLayout.setStretch(1, 40)
+
+        self.horizontalLayout_2.addLayout(self.horizontalLayout)
+
         AlarmGui.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(AlarmGui)
         self.menubar.setObjectName(u"menubar")
