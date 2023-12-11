@@ -26,7 +26,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         self.ui.setupUi(self)
         self.ias_cdb=ias_cdb
 
-        self.alarm_details = AlarmDetailsHelper(self.ui.alarmDetailsList)
+        self.alarm_details = AlarmDetailsHelper(self.ui.alarmDetailsTE)
 
         self.tableModel = AlarmTableModel(self.ui.alarmTable)
         self.ui.alarmTable.setModel(self.tableModel)
