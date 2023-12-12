@@ -3,7 +3,7 @@
 ################################################################################
 ## Form generated from reading UI file 'alarm_gui.ui'
 ##
-## Created by: Qt User Interface Compiler version 6.6.0
+## Created by: Qt User Interface Compiler version 6.6.1
 ##
 ## WARNING! All changes made in this file will be lost when recompiling UI file!
 ################################################################################
@@ -27,28 +27,31 @@ class Ui_AlarmGui(object):
         if not AlarmGui.objectName():
             AlarmGui.setObjectName(u"AlarmGui")
         AlarmGui.resize(800, 503)
+        icon = QIcon()
+        icon.addFile(u":/icons/ias-logo.png", QSize(), QIcon.Normal, QIcon.Off)
+        AlarmGui.setWindowIcon(icon)
         self.action_Connect = QAction(AlarmGui)
         self.action_Connect.setObjectName(u"action_Connect")
-        icon = QIcon()
-        icon.addFile(u":/icons/connect.png", QSize(), QIcon.Normal, QIcon.Off)
-        self.action_Connect.setIcon(icon)
+        icon1 = QIcon()
+        icon1.addFile(u":/icons/connect.png", QSize(), QIcon.Normal, QIcon.Off)
+        self.action_Connect.setIcon(icon1)
         self.actionE_xit = QAction(AlarmGui)
         self.actionE_xit.setObjectName(u"actionE_xit")
         self.action_Pause = QAction(AlarmGui)
         self.action_Pause.setObjectName(u"action_Pause")
         self.action_Pause.setCheckable(True)
-        icon1 = QIcon()
-        icon1.addFile(u":/icons/pause.png", QSize(), QIcon.Normal, QIcon.Off)
-        icon1.addFile(u":/icons/play.png", QSize(), QIcon.Normal, QIcon.On)
-        self.action_Pause.setIcon(icon1)
+        icon2 = QIcon()
+        icon2.addFile(u":/icons/pause.png", QSize(), QIcon.Normal, QIcon.Off)
+        icon2.addFile(u":/icons/play.png", QSize(), QIcon.Normal, QIcon.On)
+        self.action_Pause.setIcon(icon2)
         self.action_Pause.setMenuRole(QAction.TextHeuristicRole)
         self.action_Remove_cleared = QAction(AlarmGui)
         self.action_Remove_cleared.setObjectName(u"action_Remove_cleared")
         self.action_Remove_cleared.setCheckable(True)
-        icon2 = QIcon()
-        icon2.addFile(u":/icons/remove.png", QSize(), QIcon.Normal, QIcon.Off)
-        icon2.addFile(u":/icons/remove.png", QSize(), QIcon.Normal, QIcon.On)
-        self.action_Remove_cleared.setIcon(icon2)
+        icon3 = QIcon()
+        icon3.addFile(u":/icons/remove.png", QSize(), QIcon.Normal, QIcon.Off)
+        icon3.addFile(u":/icons/remove.png", QSize(), QIcon.Normal, QIcon.On)
+        self.action_Remove_cleared.setIcon(icon3)
         self.action_Remove_cleared.setMenuRole(QAction.NoRole)
         self.action_About = QAction(AlarmGui)
         self.action_About.setObjectName(u"action_About")
@@ -76,7 +79,7 @@ class Ui_AlarmGui(object):
         AlarmGui.setCentralWidget(self.centralwidget)
         self.menubar = QMenuBar(AlarmGui)
         self.menubar.setObjectName(u"menubar")
-        self.menubar.setGeometry(QRect(0, 0, 800, 22))
+        self.menubar.setGeometry(QRect(0, 0, 800, 19))
         self.menubar.setDefaultUp(False)
         self.menubar.setNativeMenuBar(True)
         self.menu_File = QMenu(self.menubar)
