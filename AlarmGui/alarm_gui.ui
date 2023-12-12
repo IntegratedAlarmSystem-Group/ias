@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>IAS Alarm GUI</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="resources.qrc">
+    <normaloff>:/icons/ias-logo.png</normaloff>:/icons/ias-logo.png</iconset>
+  </property>
   <widget class="QWidget" name="centralwidget">
    <property name="minimumSize">
     <size>
@@ -52,7 +56,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>22</height>
+     <height>19</height>
     </rect>
    </property>
    <property name="defaultUp">
