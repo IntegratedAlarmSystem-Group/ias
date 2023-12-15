@@ -27,7 +27,8 @@ include(
 	"TransferFunctions",
 	"SinkClient",
 	"Extras",
-	"Monitor")
+	"Monitor",
+	"AlarmGui")
 
 // Gets the version of python 3 installed in this server
 // and stores it in an extra property named PythonVersion
