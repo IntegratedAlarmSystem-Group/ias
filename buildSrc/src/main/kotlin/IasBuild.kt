@@ -1,8 +1,11 @@
 package org.eso.ias.build.plugin
 
+import java.io.File as JavaFile
+
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Exec
@@ -136,6 +139,20 @@ open class IasBuild : Plugin<Project> {
         // Untar the archive in build/distribution
         val untar = project.tasks.register<Copy>("Untar") {
             dependsOn(":${project.name}:distTar")
+
+            onlyIf {
+                // This task must be executed only for java and scala modules
+                // for which the distTar task creates the tar
+                //
+                // So we exclude the task for python only modules
+                // (like modules that create GUIs) that do not have the java and scala plugin
+                val folder = project.layout.buildDirectory.dir("distributions")
+                val tarFileName = folder.get().asFile.path+"/${project.name}.tar"
+                
+                var file = JavaFile(tarFileName)
+                file.exists()
+            }
+
             val folder = project.layout.buildDirectory.dir("distributions")
             val tarFileName = folder.get().asFile.path+"/${project.name}.tar"
             from(project.tarTree(tarFileName))
@@ -175,13 +192,42 @@ open class IasBuild : Plugin<Project> {
             into(project.layout.buildDirectory.dir(destFolder))
         }
 
-        project.tasks.getByPath(":${project.name}:build").finalizedBy(conf)
-        project.tasks.getByPath(":${project.name}:build").finalizedBy(pyScripts)
-        project.tasks.getByPath(":${project.name}:build").finalizedBy(shScripts)
-        project.tasks.getByPath(":${project.name}:build").finalizedBy(pyModules)
-        project.tasks.getByPath(":${project.name}:build").finalizedBy(copyExtLibs)
-        project.tasks.getByPath(":${project.name}:build").finalizedBy(pyTestScripts)
-        project.tasks.getByPath(":${project.name}:build").finalizedBy(pyTestModules)
+        try {
+            // Standard module with scala and or java (not python only)
+            // but not for python only modules that have no build task
+            val buildTask = project.tasks.getByPath(":${project.name}:build")
+
+            buildTask.finalizedBy(conf)
+            buildTask.finalizedBy(pyScripts)
+            buildTask.finalizedBy(shScripts)
+            buildTask.finalizedBy(pyModules)
+            buildTask.finalizedBy(copyExtLibs)
+            buildTask.finalizedBy(pyTestScripts)
+            buildTask.finalizedBy(pyTestModules)
+
+        } catch (e: Exception) {
+            // If there is no build then it is a python only module 
+            // including a module with PySide6 GUI only
+            logger.info("Build task not found")
+            
+            project.tasks.create("build")
+            project.tasks.create("distTar")
+
+            val buildTask = project.tasks.getByPath(":${project.name}:build")
+            buildTask.finalizedBy(conf)
+            buildTask.finalizedBy(pyScripts)
+            buildTask.finalizedBy(shScripts)
+            buildTask.finalizedBy(pyModules)
+            buildTask.finalizedBy(pyTestScripts)
+            buildTask.finalizedBy(pyTestModules)
+        }
+        // project.tasks.getByPath(":${project.name}:build").finalizedBy(conf)
+        // project.tasks.getByPath(":${project.name}:build").finalizedBy(pyScripts)
+        // project.tasks.getByPath(":${project.name}:build").finalizedBy(shScripts)
+        // project.tasks.getByPath(":${project.name}:build").finalizedBy(pyModules)
+        // project.tasks.getByPath(":${project.name}:build").finalizedBy(copyExtLibs)
+        // project.tasks.getByPath(":${project.name}:build").finalizedBy(pyTestScripts)
+        // project.tasks.getByPath(":${project.name}:build").finalizedBy(pyTestModules)
 
         val runIasTestsTask = project.tasks.register<Exec>("iasTest") {
             dependsOn(":build", pyTestScripts)
