@@ -8,7 +8,9 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.tasks.Copy
+import org.gradle.api.tasks.Delete
 import org.gradle.api.tasks.Exec
+import org.gradle.api.file.ConfigurableFileTree
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.scala.ScalaCompile
 import org.gradle.jvm.tasks.Jar
@@ -17,7 +19,10 @@ import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.konan.file.File
 
+import org.eso.ias.build.plugin.GuiBuilder
+
 open class IasBuild : Plugin<Project> {
+
     override fun apply(project: Project) {
 
         val logger = project.getLogger()
@@ -192,11 +197,47 @@ open class IasBuild : Plugin<Project> {
             into(project.layout.buildDirectory.dir(destFolder))
         }
 
+        // Build PySide6 code like .ui and .qrc by delegating to GuiBuilder
+        val pyside6GuiBuilder = project.tasks.register("GuiBuilder") {
+            dependsOn(pyModules)
+            onlyIf {
+                var folder = JavaFile("src/main/gui") 
+                folder.exists()
+            }
+            val destFolder = "lib/python${pythonVersion}/site-packages"
+            val directory = project.layout.buildDirectory.dir(destFolder).get().getAsFile().getPath()
+            val guiBuilder = GuiBuilder(directory)
+            guiBuilder.build()
+        }
+
+        // Copy the python files generated building PySide6 resources
+        // in the build folder
+        val copyPyGuiModules = project.tasks.register<Copy>("CopyPyGuiMods") {
+            dependsOn(pyside6GuiBuilder)
+
+            val srcFolder = "src/main/gui"
+
+            from(project.layout.projectDirectory.dir(srcFolder))
+            include("**/*.py")
+            exclude("*.py")
+            val destFolder = "lib/python${pythonVersion}/site-packages"
+            into(project.layout.buildDirectory.dir(destFolder))
+        }
+
+        // Delete the python files generated building PySide6 resources
+        val delGuiPy = project.tasks.register<Delete>("CleanTempGuiPy") {
+            dependsOn(copyPyGuiModules)
+            val srcFolder = "src/main/gui"
+            val tree: ConfigurableFileTree = project.fileTree(srcFolder)
+            tree.include("**/*.py")
+
+            delete(tree)
+        }
+
         try {
             // Standard module with scala and or java (not python only)
             // but not for python only modules that have no build task
             val buildTask = project.tasks.getByPath(":${project.name}:build")
-
             buildTask.finalizedBy(conf)
             buildTask.finalizedBy(pyScripts)
             buildTask.finalizedBy(shScripts)
@@ -217,6 +258,9 @@ open class IasBuild : Plugin<Project> {
             buildTask.finalizedBy(conf)
             buildTask.finalizedBy(pyScripts)
             buildTask.finalizedBy(shScripts)
+            buildTask.finalizedBy(pyside6GuiBuilder) // Build PySide6 stuff
+            buildTask.finalizedBy(copyPyGuiModules)
+            buildTask.finalizedBy(delGuiPy)
             buildTask.finalizedBy(pyModules)
             buildTask.finalizedBy(pyTestScripts)
             buildTask.finalizedBy(pyTestModules)

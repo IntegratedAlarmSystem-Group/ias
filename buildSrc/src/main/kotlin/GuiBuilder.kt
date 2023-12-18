@@ -8,11 +8,9 @@ import java.lang.ProcessBuilder
  * pyton code
  * 
  * GUI sources are in src/main/gui/PkgName/: 
- * the class finds the GUI files, builds them and
- * copy the files in the build folder from where they will be installed
- *
+ * the class finds and builds the GUI files
  */
-class GuiBuilder(destFolder: String) {
+class GuiBuilder(val destFolder: String) {
     val guiFolder = "src/main/gui"
     val uiExt="ui"
     val resExt = "qrc"
@@ -24,8 +22,6 @@ class GuiBuilder(destFolder: String) {
     fun build() {
         // Iterate over the folders (packages) and build the GUI files
         for (pkg in packages) {
-            println( "Checking GUI package: "+pkg.getPath())
-
             val uiFilesToBuild = JavaFile(pkg.getPath()).walk().filter{ file -> file.isFile && file.extension==uiExt}
             val resFilesToBuild = JavaFile(pkg.getPath()).walk().filter{ file -> file.isFile && file.extension==resExt}
 
@@ -44,9 +40,7 @@ class GuiBuilder(destFolder: String) {
         val fNameNoExt = ui_file.nameWithoutExtension
         val src = pkg.getPath()+"/"+fNameNoExt+"."+uiExt
         val dest = pkg.getPath()+"/ui_"+fNameNoExt+".py"
-        println("Building ui: "+fNameNoExt+" "+src+" "+dest)
-        val result = ProcessBuilder(uiBuilder, "-o", src, dest).start().waitFor()
-        println("Result: "+result)
+        ProcessBuilder(uiBuilder, src, "-o", dest, " --from-imports").start().waitFor()
     }
 
     // Build the ui file with pyside6-uic
@@ -54,10 +48,7 @@ class GuiBuilder(destFolder: String) {
         val fNameNoExt = qrc_file.nameWithoutExtension
         val src = pkg.getPath()+"/"+fNameNoExt+"."+resExt
         val dest = pkg.getPath()+"/rc_"+fNameNoExt+".py"
-        println("Building QRC: "+fNameNoExt+" "+src+" "+dest)
-        val result = ProcessBuilder(resBuilder, "-o", src, dest).start().waitFor()
-        println("Result: "+result)
-        
+        ProcessBuilder(resBuilder, src, "-o", dest).start().waitFor()        
     }
 
 }
