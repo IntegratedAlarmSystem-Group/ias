@@ -8,11 +8,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Java JDK
-        uses: actions/setup-java@v3.9.0
+        uses: actions/setup-java@v4
         with:
-          java-version: '11'
+          java-version: '17'
           distribution: 'adopt'
-          java-package: 'jdk'
       - name: Setup Python
         uses: actions/setup-python@v4.5.0
         with:
@@ -24,7 +23,12 @@ jobs:
       - run: python -V
       - run: java -version
       - run: mkdir $IAS_ROOT
+      - run: rm -rf $IAS_ROOT/*
+      - name: Clean
+        run: ./gradlew clean
       - name: Build IAS with gradlew
         run: ./gradlew build
       - name: Install IAS in IAS_ROOT
         run: ./gradlew install
+      - name: List IAS_ROOT content
+        run: ls -lR $IAS_ROOT

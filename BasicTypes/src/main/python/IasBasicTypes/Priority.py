@@ -23,6 +23,9 @@ class Priority(Enum):
         '''
         return Priority.__getitem__(name)
 
+    def __str__(self):
+        return self.name
+
     def to_string(self):
         '''
 
