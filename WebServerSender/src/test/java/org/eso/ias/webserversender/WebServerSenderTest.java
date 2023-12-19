@@ -55,7 +55,7 @@ public class WebServerSenderTest {
 	/**
 	 * Port to connect to the mock Websocket Server
 	 */
-	private final int port = 8081;
+	private final int port = 10000;
 
 	/**
 	 * URI to connect to the mock Websocket Server
