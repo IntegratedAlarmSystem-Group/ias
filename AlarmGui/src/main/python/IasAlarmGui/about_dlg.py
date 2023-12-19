@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QDialog
-from ui_about_dialog import Ui_AboutDlg
+from IasAlarmGui.ui_about_dialog import Ui_AboutDlg
 
 class AboutDlg(QDialog, Ui_AboutDlg):
     def __init__(self,parent=None):
