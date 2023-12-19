@@ -212,8 +212,9 @@ open class IasBuild : Plugin<Project> {
 
         // Copy the python files generated building PySide6 resources
         // in the build folder
-        val copyPyGuiModules = project.tasks.register<Copy>("CopyPyGuiMods") {
+        val copyPyGuiModules = project.tasks.register<Copy>("CopyPyGuiModules") {
             dependsOn(pyside6GuiBuilder)
+            finalizedBy(installLib)
 
             val srcFolder = "src/main/gui"
 
@@ -248,9 +249,7 @@ open class IasBuild : Plugin<Project> {
 
         } catch (e: Exception) {
             // If there is no build then it is a python only module 
-            // including a module with PySide6 GUI only
-            logger.info("Build task not found")
-            
+            // including a module with PySide6 GUI only           
             project.tasks.create("build")
             project.tasks.create("distTar")
 
@@ -258,20 +257,16 @@ open class IasBuild : Plugin<Project> {
             buildTask.finalizedBy(conf)
             buildTask.finalizedBy(pyScripts)
             buildTask.finalizedBy(shScripts)
+
+            // Tasks for GUIs
             buildTask.finalizedBy(pyside6GuiBuilder) // Build PySide6 stuff
             buildTask.finalizedBy(copyPyGuiModules)
             buildTask.finalizedBy(delGuiPy)
+
             buildTask.finalizedBy(pyModules)
             buildTask.finalizedBy(pyTestScripts)
             buildTask.finalizedBy(pyTestModules)
         }
-        // project.tasks.getByPath(":${project.name}:build").finalizedBy(conf)
-        // project.tasks.getByPath(":${project.name}:build").finalizedBy(pyScripts)
-        // project.tasks.getByPath(":${project.name}:build").finalizedBy(shScripts)
-        // project.tasks.getByPath(":${project.name}:build").finalizedBy(pyModules)
-        // project.tasks.getByPath(":${project.name}:build").finalizedBy(copyExtLibs)
-        // project.tasks.getByPath(":${project.name}:build").finalizedBy(pyTestScripts)
-        // project.tasks.getByPath(":${project.name}:build").finalizedBy(pyTestModules)
 
         val runIasTestsTask = project.tasks.register<Exec>("iasTest") {
             dependsOn(":build", pyTestScripts)
