@@ -42,6 +42,9 @@
        </attribute>
       </widget>
       <widget class="QTextEdit" name="alarmDetailsTE">
+       <property name="toolTip">
+        <string>Alarm details</string>
+       </property>
        <property name="readOnly">
         <bool>true</bool>
        </property>
