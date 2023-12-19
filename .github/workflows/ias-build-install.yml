@@ -23,7 +23,10 @@ jobs:
       - run: python -V
       - run: java -version
       - run: mkdir $IAS_ROOT
+      - run: rm -rf $IAS_ROOT/*
       - name: Build IAS with gradlew
         run: ./gradlew build
       - name: Install IAS in IAS_ROOT
         run: ./gradlew install
+      - name: List IAS_ROOT content
+        run: ls -lR $IAS_ROOT
