@@ -18,6 +18,8 @@ jobs:
           python-version: '3.10'
       - name: Checkout IAS code
         uses: actions/checkout@v3
+      - name: Install PySide6
+        run: pip install PySide6
       - run: git status
       - run: pwd
       - run: python -V
