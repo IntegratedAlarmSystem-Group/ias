@@ -8,9 +8,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup Java JDK
-        uses: actions/setup-java@v3.9.0
+        uses: actions/setup-java@v3.17.0
         with:
-          java-version: '11'
+          java-version: '17'
           distribution: 'adopt'
           java-package: 'jdk'
       - name: Setup Python
