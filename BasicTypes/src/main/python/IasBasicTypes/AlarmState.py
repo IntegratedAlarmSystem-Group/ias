@@ -80,3 +80,6 @@ class AlarmState(Enum):
         :return: the string representation of the alarm state
         '''
         return self.name
+
+    def __str__(self):
+        return self.name

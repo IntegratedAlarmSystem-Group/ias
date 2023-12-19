@@ -7,3 +7,5 @@ iasRun -r org.junit.platform.console.ConsoleLauncher -c org.eso.ias.cdb.test.Tes
 #iasRun org.junit.platform.console.ConsoleLauncher -c org.eso.ias.cdb.test.rdb.TestRdbCdb
 export IAS_EXTERNAL_JARS="src/test/ExtJARS/" && mkdir -p $IAS_EXTERNAL_JARS && iasRun -r org.junit.platform.console.ConsoleLauncher -c org.eso.ias.cdb.test.CdbReaderFactoryTest
 #alchemyTest
+testCdbFolders
+testCdbTxtFiles
