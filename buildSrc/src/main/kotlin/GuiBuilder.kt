@@ -10,8 +10,7 @@ import java.lang.ProcessBuilder
  * GUI sources are in src/main/gui/PkgName/: 
  * the class finds and builds the GUI files
  */
-class GuiBuilder(val destFolder: String) {
-    val guiFolder = "src/main/gui"
+class GuiBuilder(val guiFolder: String, val destFolder: String) {
     val uiExt="ui"
     val resExt = "qrc"
     val packages = JavaFile(guiFolder).walk().filter { file -> file.isDirectory && file.getPath()!=guiFolder}
