@@ -201,12 +201,16 @@ open class IasBuild : Plugin<Project> {
         val pyside6GuiBuilder = project.tasks.register("GuiBuilder") {
             dependsOn(pyModules)
             onlyIf {
-                var folder = JavaFile("src/main/gui") 
-                folder.exists()
+                var folder = "src/main/gui"
+                val f = project.layout.projectDirectory.dir(folder)
+                f.getAsFile().exists()
             }
+            var folder = "src/main/gui"
+            val guiFolder = project.layout.projectDirectory.dir(folder).getAsFile().getPath()
+            logger.info("Building GUI in {}", guiFolder)
             val destFolder = "lib/python${pythonVersion}/site-packages"
-            val directory = project.layout.buildDirectory.dir(destFolder).get().getAsFile().getPath()
-            val guiBuilder = GuiBuilder(directory)
+            val directory = project.layout.projectDirectory.dir(destFolder).getAsFile().getPath()
+            val guiBuilder = GuiBuilder(guiFolder, directory)
             guiBuilder.build()
         }
 
@@ -235,38 +239,31 @@ open class IasBuild : Plugin<Project> {
             delete(tree)
         }
 
+        // Standard module with scala and or java (not python only)
+        // but not for python only modules that have no build task
+        val buildTask = project.tasks.getByPath(":${project.name}:build")
+        buildTask.finalizedBy(conf)
+        buildTask.finalizedBy(pyScripts)
+        buildTask.finalizedBy(shScripts)
+
+        // Tasks for GUIs
         try {
-            // Standard module with scala and or java (not python only)
-            // but not for python only modules that have no build task
-            val buildTask = project.tasks.getByPath(":${project.name}:build")
-            buildTask.finalizedBy(conf)
-            buildTask.finalizedBy(pyScripts)
-            buildTask.finalizedBy(shScripts)
-            buildTask.finalizedBy(pyModules)
-            buildTask.finalizedBy(copyExtLibs)
-            buildTask.finalizedBy(pyTestScripts)
-            buildTask.finalizedBy(pyTestModules)
+            // distTar is not created for python only (or GUI) modules that use
+            // the base plugin instead of java or scala. In this case, 
+            // we add it. In case distTar exists, an exception
+            // is thrown but there is nothing to do
+            project.tasks.create("distTar") 
+        } catch (e: Exception) {}
 
-        } catch (e: Exception) {
-            // If there is no build then it is a python only module 
-            // including a module with PySide6 GUI only           
-            project.tasks.create("build")
-            project.tasks.create("distTar")
+        
+        buildTask.finalizedBy(pyside6GuiBuilder) // Build PySide6 stuff
+        buildTask.finalizedBy(copyPyGuiModules)
+        buildTask.finalizedBy(delGuiPy)
 
-            val buildTask = project.tasks.getByPath(":${project.name}:build")
-            buildTask.finalizedBy(conf)
-            buildTask.finalizedBy(pyScripts)
-            buildTask.finalizedBy(shScripts)
-
-            // Tasks for GUIs
-            buildTask.finalizedBy(pyside6GuiBuilder) // Build PySide6 stuff
-            buildTask.finalizedBy(copyPyGuiModules)
-            buildTask.finalizedBy(delGuiPy)
-
-            buildTask.finalizedBy(pyModules)
-            buildTask.finalizedBy(pyTestScripts)
-            buildTask.finalizedBy(pyTestModules)
-        }
+        buildTask.finalizedBy(pyModules)
+        buildTask.finalizedBy(copyExtLibs)
+        buildTask.finalizedBy(pyTestScripts)
+        buildTask.finalizedBy(pyTestModules)
 
         val runIasTestsTask = project.tasks.register<Exec>("iasTest") {
             dependsOn(":build", pyTestScripts)

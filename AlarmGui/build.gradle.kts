@@ -1,5 +1,7 @@
 plugins {
+    base
     id("org.eso.ias.build.plugin")
+
 }
 
 abstract class GuiTask : DefaultTask() {
