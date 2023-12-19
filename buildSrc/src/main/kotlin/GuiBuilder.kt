@@ -40,14 +40,14 @@ class GuiBuilder(val destFolder: String) {
         val fNameNoExt = ui_file.nameWithoutExtension
         val src = pkg.getPath()+"/"+fNameNoExt+"."+uiExt
         val dest = pkg.getPath()+"/ui_"+fNameNoExt+".py"
-        ProcessBuilder(uiBuilder, src, "-o", dest, " --from-imports").start().waitFor()
+        ProcessBuilder(uiBuilder, src, "-o", dest, "--from-imports").start().waitFor()
     }
 
     // Build the ui file with pyside6-uic
     fun build_qrc(qrc_file: JavaFile, pkg: JavaFile) {
         val fNameNoExt = qrc_file.nameWithoutExtension
         val src = pkg.getPath()+"/"+fNameNoExt+"."+resExt
-        val dest = pkg.getPath()+"/rc_"+fNameNoExt+".py"
+        val dest = pkg.getPath()+"/"+fNameNoExt+"_rc.py"
         ProcessBuilder(resBuilder, src, "-o", dest).start().waitFor()        
     }
 
