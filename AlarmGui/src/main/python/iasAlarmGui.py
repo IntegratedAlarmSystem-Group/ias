@@ -9,16 +9,16 @@ from PySide6.QtWidgets import QApplication, QMainWindow
 # You need to run the following command to generate the ui_form.py file
 #     pyside6-uic form.ui -o ui_form.py, or
 #     pyside2-uic form.ui -o ui_form.py
-from ui_alarm_gui import Ui_AlarmGui
-from AlarmTableModel import AlarmTableModel
-from connect_to_ias_dlg import ConnectToIasDlg
-from about_dlg import AboutDlg
+from IasAlarmGui.ui_alarm_gui import Ui_AlarmGui
+from IasAlarmGui.AlarmTableModel import AlarmTableModel
+from IasAlarmGui.connect_to_ias_dlg import ConnectToIasDlg
+from IasAlarmGui.about_dlg import AboutDlg
 
 from IasKafkaUtils.KafkaValueConsumer import KafkaValueConsumer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 
 from IasBasicTypes.IasValue import IasValue
-from AlarmDetailsHelper import AlarmDetailsHelper
+from IasAlarmGui.AlarmDetailsHelper import AlarmDetailsHelper
 
 class MainWindow(QMainWindow, Ui_AlarmGui):
     def __init__(self, ias_cdb, parent=None):

@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QDialogButtonBox
 from PySide6.QtWidgets import QErrorMessage, QFileDialog
 
 
-from ui_connect_dialog import Ui_ConnectToIas
+from IasAlarmGui.ui_connect_dialog import Ui_ConnectToIas
 
 from IasCdb.CdbReader import CdbReader
 
