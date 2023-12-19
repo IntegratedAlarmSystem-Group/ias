@@ -40,7 +40,8 @@ class GuiBuilder(val destFolder: String) {
         val fNameNoExt = ui_file.nameWithoutExtension
         val src = pkg.getPath()+"/"+fNameNoExt+"."+uiExt
         val dest = pkg.getPath()+"/ui_"+fNameNoExt+".py"
-        ProcessBuilder(uiBuilder, src, "-o", dest, "--from-imports").start().waitFor()
+        val result = ProcessBuilder(uiBuilder, src, "-o", dest, "--from-imports").start().waitFor()
+        assert(result==0) { "Error building "+ui_file+" with "+uiBuilder }
     }
 
     // Build the ui file with pyside6-uic
@@ -48,7 +49,8 @@ class GuiBuilder(val destFolder: String) {
         val fNameNoExt = qrc_file.nameWithoutExtension
         val src = pkg.getPath()+"/"+fNameNoExt+"."+resExt
         val dest = pkg.getPath()+"/"+fNameNoExt+"_rc.py"
-        ProcessBuilder(resBuilder, src, "-o", dest).start().waitFor()        
+        val result = ProcessBuilder(resBuilder, src, "-o", dest).start().waitFor()
+        assert(result==0) { "Error building "+qrc_file+" with "+resBuilder }
     }
 
 }
