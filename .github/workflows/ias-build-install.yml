@@ -25,6 +25,7 @@ jobs:
       - run: mkdir $IAS_ROOT
       - run: rm -rf $IAS_ROOT/*
       - name: Build IAS with gradlew
+        run: ./gradlew clean
         run: ./gradlew build
       - name: Install IAS in IAS_ROOT
         run: ./gradlew install
