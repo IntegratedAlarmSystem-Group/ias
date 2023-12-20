@@ -232,8 +232,9 @@ open class IasBuild : Plugin<Project> {
         // Delete the python files generated building PySide6 resources
         val delGuiPy = project.tasks.register<Delete>("CleanTempGuiPy") {
             dependsOn(copyPyGuiModules)
-            val srcFolder = "src/main/gui"
-            val tree: ConfigurableFileTree = project.fileTree(srcFolder)
+            val srcFolder = project.layout.projectDirectory.dir("src/main/gui")
+            val tree: ConfigurableFileTree = project.fileTree(srcFolder.getAsFile().getPath())
+
             tree.include("**/*.py")
 
             delete(tree)
