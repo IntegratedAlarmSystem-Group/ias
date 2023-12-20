@@ -26,16 +26,14 @@ open class IasBuild : Plugin<Project> {
     override fun apply(project: Project) {
 
         val logger = project.getLogger()
-        logger.info("IAS build plugin in {}", project.buildDir)
+        logger.info("IAS build plugin in {}", project.getLayout().getBuildDirectory())
 
         // Get the python version from the property in settings.gradle.kts
         val g = project.gradle
-        val pythonVersion = if (g is ExtensionAware) {
+        val pythonVersion = {
             val extension = g as ExtensionAware
             extension.extra["PythonVersion"]
-        } else {
-            throw GradleException("Cannot determine the version of python3")
-        }
+        } 
         logger.info("Using python version {}", pythonVersion)
 
         // Configurations
@@ -268,6 +266,20 @@ open class IasBuild : Plugin<Project> {
 
         val runIasTestsTask = project.tasks.register<Exec>("iasTest") {
             dependsOn(":build", pyTestScripts)
+            onlyIf {
+                val testFolder = project.layout.projectDirectory.dir("src/test")
+                if (testFolder.getAsFile().exists()) {
+                    val testFile = testFolder.file("runTests.sh").getAsFile()
+                    val cond = testFile.exists()
+                    if (!cond) {
+                        logger.warn("Test file missing {}",testFile.getPath())    
+                    }
+                    cond
+                } else {
+                    logger.warn("Test folder missing {}",testFolder.getAsFile().getPath())
+                    false
+                }
+            }
             commandLine("src/test/runTests.sh")
         }
 
