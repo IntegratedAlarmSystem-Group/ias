@@ -30,10 +30,7 @@ open class IasBuild : Plugin<Project> {
 
         // Get the python version from the property in settings.gradle.kts
         val g = project.gradle
-        val pythonVersion = {
-            val extension = g as ExtensionAware
-            extension.extra["PythonVersion"]
-        } 
+        val pythonVersion = (g as ExtensionAware).extra["PythonVersion"]
         logger.info("Using python version {}", pythonVersion)
 
         // Configurations
