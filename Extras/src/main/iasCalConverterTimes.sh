@@ -1,2 +1,2 @@
 #!/bin/bash
-iasRun org.eso.ias.extras.times.CalcConversionTime $@
+iasRun -r org.eso.ias.extras.times.CalcConversionTime $@

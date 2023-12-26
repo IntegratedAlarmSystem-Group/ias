@@ -63,5 +63,35 @@
             "id":"TooManyHighTempAlarm",
             "shortDesc":"Too many active alarms",
             "iasType":"ALARM"
-    }
+    },
+
+  {
+    "id":"ACKASCE1-INPUT",
+    "shortDesc":"Input for testing ACK",
+    "iasType":"LONG"
+  },
+
+  {
+    "id":"ACKASCE1-OUTPUT",
+    "shortDesc":"Output for testing ACK",
+    "iasType":"ALARM"
+  },
+
+  {
+    "id":"ACKASCE2-INPUT",
+    "shortDesc":"Input for testing ACK",
+    "iasType":"LONG"
+  },
+
+  {
+    "id":"ACKASCE2-OUTPUT",
+    "shortDesc":"Output for testing ACK",
+    "iasType":"ALARM"
+  },
+
+  {
+    "id":"ACKASCE3-OUTPUT",
+    "shortDesc":"Output for testing ACK",
+    "iasType":"ALARM"
+  }
 ]

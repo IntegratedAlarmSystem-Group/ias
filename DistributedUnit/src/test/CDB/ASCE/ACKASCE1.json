@@ -1,0 +1,12 @@
+{
+  "dasuID":"ACKDASU",
+  "outputID":"ACKASCE1-OUTPUT",
+  "props":[
+    {"name":"org.eso.ias.tf.minmaxthreshold.highOn","value":"50"},
+    {"name":"org.eso.ias.tf.minmaxthreshold.highOff","value":"25"},
+    {"name":"org.eso.ias.tf.minmaxthreshold.lowOn","value":"-20"},
+    {"name":"org.eso.ias.tf.minmaxthreshold.lowOff","value":"-10"}],
+  "id":"ACKASCE1",
+  "transferFunctionID":"org.eso.ias.asce.transfer.impls.MinMaxThresholdTF",
+  "inputIDs":["ACKASCE1-INPUT"]
+}

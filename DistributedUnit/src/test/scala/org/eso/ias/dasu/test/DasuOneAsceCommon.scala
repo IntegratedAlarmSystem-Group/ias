@@ -1,8 +1,8 @@
 package org.eso.ias.dasu.test
 
 import org.eso.ias.cdb.CdbReader
-import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.DasuDao
+import org.eso.ias.cdb.structuredtext.{StructuredTextReader, CdbFiles, CdbTxtFiles, TextFileType}
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.dasu.publisher.{ListenerOutputPublisherImpl, OutputListener, OutputPublisher}
 import org.eso.ias.dasu.subscriber.DirectInputSubscriber
@@ -25,8 +25,8 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, validityThreshold: Int
   
   // Build the CDB reader
   val cdbParentPath =  FileSystems.getDefault().getPath("src/test");
-  val cdbFiles = new CdbJsonFiles(cdbParentPath)
-  val cdbReader: CdbReader = new JsonReader(cdbFiles)
+  val cdbFiles: CdbFiles = new CdbTxtFiles(cdbParentPath, TextFileType.JSON)
+  val cdbReader: CdbReader = new StructuredTextReader(cdbFiles)
   cdbReader.init()
   
   val dasuId = "DasuWithOneASCE"
@@ -52,7 +52,7 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, validityThreshold: Int
   // The identifier of the converter
   val converterId = new Identifier("ConverterID",IdentifierType.CONVERTER,Some(pluginId))
 
-  // The ID of the monitor point in unput (it matched the ID in theJSON file)
+  // The ID of the monitor point in input (it matched the ID in theJSON file)
   val inputID = new Identifier("Temperature", IdentifierType.IASIO,converterId)
   
   /** Notifies about a new output produced by the DASU */

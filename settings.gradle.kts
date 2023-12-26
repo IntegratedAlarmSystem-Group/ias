@@ -27,7 +27,8 @@ include(
 	"TransferFunctions",
 	"SinkClient",
 	"Extras",
-	"Monitor")
+	"Monitor",
+	"AlarmGui")
 
 // Gets the version of python 3 installed in this server
 // and stores it in an extra property named PythonVersion
@@ -64,22 +65,22 @@ gitBranchProc.waitFor(10, TimeUnit.SECONDS)
 // and the common dependencies
 if (gradle is ExtensionAware) {
 	val extension = gradle as ExtensionAware
-	extension.extra["JdkVersion"] = 11
+	extension.extra["JdkVersion"] = 17
 
         // IAS common dependencies
-	extension.extra["scala-library"] = "org.scala-lang:scala3-library_3:3.2.0"
-	extension.extra["scalatest"] = "org.scalatest:scalatest_3:3.2.14"
-	extension.extra["slf4j-api"] = "org.slf4j:slf4j-api:1.7.36"
-	extension.extra["scala-logging"] = "com.typesafe.scala-logging:scala-logging_3:3.9.4"
-	extension.extra["logback-classic"] = "ch.qos.logback:logback-classic:1.2.11"
+	extension.extra["scala-library"] = "org.scala-lang:scala3-library_3:3.3.1"
+	extension.extra["scalatest"] = "org.scalatest:scalatest_3:3.2.17"
+	extension.extra["slf4j-api"] = "org.slf4j:slf4j-api:2.0.9"
+	extension.extra["scala-logging"] = "com.typesafe.scala-logging:scala-logging_3:3.9.5"
+	extension.extra["logback-classic"] = "ch.qos.logback:logback-classic:1.4.11"
 	extension.extra["jackson-databind"] = "com.fasterxml.jackson.core:jackson-databind:2.13.4.2"
-	extension.extra["junit-jupiter-api"] = "org.junit.jupiter:junit-jupiter-api:5.8.2"
-	extension.extra["junit-jupiter-engine"] = "org.junit.jupiter:junit-jupiter-engine:5.8.2"
-	extension.extra["junit-platform-console-standalone"] = "org.junit.platform:junit-platform-console-standalone:1.8.2"
+	extension.extra["junit-jupiter-api"] = "org.junit.jupiter:junit-jupiter-api:5.10.0"
+	extension.extra["junit-jupiter-engine"] = "org.junit.jupiter:junit-jupiter-engine:5.10.0"
+	extension.extra["junit-platform-console-standalone"] = "org.junit.platform:junit-platform-console-standalone:1.10.0"
 	extension.extra["commons-cli"] = "commons-cli:commons-cli:1.5.0"
-	extension.extra["kafka-clients"] = "org.apache.kafka:kafka-clients:3.3.1"
-	extension.extra["kafka-streams"] = "org.apache.kafka:kafka-streams:3.3.1"
-	extension.extra["kafka-connect-api"] = "org.apache.kafka:connect-api:3.3.1"
+	extension.extra["kafka-clients"] = "org.apache.kafka:kafka-clients:3.6.0"
+	extension.extra["kafka-streams"] = "org.apache.kafka:kafka-streams:3.6.0"
+	extension.extra["kafka-connect-api"] = "org.apache.kafka:connect-api:3.6.0"
 	extension.extra["hibernate-jpa"] = "org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final"
 }
 

@@ -3,24 +3,24 @@ package org.eso.ias.sink.email
 import org.eso.ias.types.{Alarm, IasValidity}
 
 /**
-  * The state of the alarm recorded by the tracker.
+  * The state (snapshot) of the alarm recorded by the tracker.
   *
   * @param alarm the activation state of the alarm
   * @param validity the validity
   * @param timestamp the timestamp when the alarm has been set or cleared
   */
-class AlarmState(val alarm: Alarm, val validity: IasValidity, val timestamp: Long)
+class AlarmSnapshot(val alarm: Alarm, val validity: IasValidity, val timestamp: Long)
 
 /**
   * AlarmStateTracker records the changes of the state of an alarm to be notified
   * to the user by email or some other mechanism.
   *
   * The update of an alarm is a AlarmState.
-  * The state is one of the values defined in Alarm so it records acrtivation, priority, validity and deactivation.
+  * The state is one of the values defined in Alarm so it records activation, priority, validity and deactivation.
   *
-  * The tracker saves the lstate of the last riund i.e. the actual state before
+  * The tracker saves the state of the last round i.e. the actual state before
   * resetting. This allows to know if the state changed since the last reset and also
-  * avoid saving states if they did not change from one time inetrval to another
+  * avoid saving states if they did not change from one time interval to another
   *
   * The AlarmStateTracker is immutable.
   * New change of state are added at the head of the list.
@@ -30,9 +30,9 @@ class AlarmState(val alarm: Alarm, val validity: IasValidity, val timestamp: Lon
   * @param stateOfLastRound the last state before resetting
   */
 class AlarmStateTracker private(
-                 val id: String,
-                 val stateChanges: List[AlarmState],
-                 val stateOfLastRound: Option[AlarmState]) {
+                                 val id: String,
+                                 val stateChanges: List[AlarmSnapshot],
+                                 val stateOfLastRound: Option[AlarmSnapshot]) {
   require(Option(id).isDefined && !id.isEmpty)
 
   /**
@@ -47,7 +47,7 @@ class AlarmStateTracker private(
     require(Option(alarm).isDefined,"Invalid empty alarm")
     require(Option(validity).isDefined,"Invalid empty validity")
 
-    val state = new AlarmState(alarm,validity,timestamp)
+    val state = new AlarmSnapshot(alarm,validity,timestamp)
     (stateChanges, stateOfLastRound) match {
       case (Nil, None) =>  if (alarm.isSet) new AlarmStateTracker(id,List(state),None)
                            else this
@@ -80,7 +80,7 @@ class AlarmStateTracker private(
   /**
     * @return The actual state, if exists
     */
-  def getActualAlarmState(): Option[AlarmState] = {
+  def getActualAlarmState(): Option[AlarmSnapshot] = {
     if(stateChanges.isEmpty) None
     else Some(stateChanges.head)
   }

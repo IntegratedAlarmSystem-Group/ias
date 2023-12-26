@@ -1,7 +1,7 @@
 package org.eso.ias.dasu.test
 
 import org.eso.ias.cdb.CdbReader
-import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
+import org.eso.ias.cdb.structuredtext.{StructuredTextReader, CdbFiles, CdbTxtFiles, TextFileType}
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.dasu.publisher.{ListenerOutputPublisherImpl, OutputListener, OutputPublisher}
 import org.eso.ias.dasu.subscriber.DirectInputSubscriber
@@ -54,8 +54,8 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
   trait Fixture {
     // Build the CDB reader
     val cdbParentPath =  FileSystems.getDefault().getPath("src/test");
-    val cdbFiles = new CdbJsonFiles(cdbParentPath)
-    val cdbReader: CdbReader = new JsonReader(cdbFiles)
+    val cdbFiles: CdbFiles = new CdbTxtFiles(cdbParentPath, TextFileType.JSON)
+    val cdbReader: CdbReader = StructuredTextReader(cdbFiles)
     cdbReader.init()
   
     val dasuId = "DasuWith7ASCEs"
@@ -206,7 +206,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
     logger.info("Submitting a set with only one temp {} in NON nominal state",inputTemperature1ID.id)
     inputsProvider.sendInputs(Set(buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,100)))
     println("Another empty set submitted")
-    // Stil no alarm because teh DASU have not yet received all the inputs
+    // Still no alarm because the DASU has not yet received all the inputs
     assert(iasValuesReceived.size==0)
     
     // wait to avoid the throttling
@@ -226,7 +226,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
     assert(iasValuesReceived.size==1)
     val outputProducedByDasu = iasValuesReceived.last
     assert(outputProducedByDasu.valueType==IASTypes.ALARM)
-    assert(outputProducedByDasu.value.asInstanceOf[Alarm]== Alarm.CLEARED)
+    assert(outputProducedByDasu.value.asInstanceOf[Alarm]== Alarm.getInitialAlarmState)
     assert(outputProducedByDasu.productionTStamp.isPresent())
     
     // wait to avoid the throttling
@@ -244,7 +244,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
     assert(iasValuesReceived.size==2)
     val outputProducedByDasu2 = iasValuesReceived.last
     assert(outputProducedByDasu2.valueType==IASTypes.ALARM)
-    assert(outputProducedByDasu2.value.asInstanceOf[Alarm]== Alarm.getSetDefault)
+    assert(outputProducedByDasu2.value.asInstanceOf[Alarm]== Alarm.getInitialAlarmState.set())
     assert(outputProducedByDasu2.productionTStamp.isPresent())
     
     assert(outputProducedByDasu2.dependentsFullRuningIds.isPresent())
@@ -284,7 +284,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
 
     // We sent 4 updates and expect that the DASU
     // * updated immediately the output when the first inputs have been submitted
-    // * with the second submit of inputs, the DASU activate the throttling and delayed the execution
+    // * with the second set of inputs, the DASU activates the throttling and delayed the execution
     // * finally the throttling time expires and the output is calculated
     // 
     // In total the DASU is expected to run 2 (instead of 4) update cycles
@@ -294,7 +294,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
     val outputProducedByDasu = dasu.lastCalculatedOutput.get
     assert(outputProducedByDasu.isDefined)
     assert(outputProducedByDasu.get.valueType==IASTypes.ALARM)
-    assert(outputProducedByDasu.get.value.asInstanceOf[Alarm]== Alarm.getSetDefault)
+    assert(outputProducedByDasu.get.value.asInstanceOf[Alarm]== Alarm.getInitialAlarmState.set())
     dasu.cleanUp()
   }
   

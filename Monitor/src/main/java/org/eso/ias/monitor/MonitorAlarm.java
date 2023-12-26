@@ -1,6 +1,7 @@
 package org.eso.ias.monitor;
 
 import org.eso.ias.types.Alarm;
+import org.eso.ias.types.Priority;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -34,7 +35,7 @@ public enum MonitorAlarm {
     /**
      * The last alarm sent for this monitorAlarm
      */
-    private AtomicReference<Alarm> alarm = new AtomicReference<>(Alarm.CLEARED);
+    private AtomicReference<Alarm> alarm = new AtomicReference<>(Alarm.getInitialAlarmState());
 
     /**
      * The IDs of the faulty monitored tools (plugins, converters...)
@@ -56,21 +57,26 @@ public enum MonitorAlarm {
      */
     private Alarm getGlobalAlarm() {
         if (this!=GLOBAL) {
-            throw new UnsupportedOperationException("Must be called for GLOABL only");
+            throw new RuntimeException("Must be called for GLOABL only");
         }
 
-        Alarm ret = Alarm.cleared();
+        // Get the higher priority of all the alarms that are set (if any)
+        Priority topmostPriority = null;
         for (MonitorAlarm monAlarm: MonitorAlarm.values()) {
-            if (monAlarm!=GLOBAL) {
-                Optional<Integer> priorityLvl = monAlarm.getAlarm().priorityLevel;
-                if (priorityLvl.isPresent()) {
-                    if (!ret.priorityLevel.isPresent() || priorityLvl.get()>ret.priorityLevel.get()) {
-                        ret = Alarm.fromPriority(priorityLvl.get());
-                    }
-                }
+            if (monAlarm==GLOBAL || !monAlarm.alarm.get().isSet()) {
+                continue;
+            }
+            if (topmostPriority==null || monAlarm.alarm.get().priority.compareTo(topmostPriority)>0) {
+                topmostPriority=monAlarm.alarm.get().priority;
             }
         }
-    return ret;
+
+        if (topmostPriority!=null) { // One alarm was set so GLOBAL must be set
+            GLOBAL.alarm.set(GLOBAL.alarm.get().setPriority(topmostPriority).set());
+        } else {
+            GLOBAL.alarm.set(GLOBAL.alarm.get().clear());
+        }
+        return GLOBAL.alarm.get();
     }
 
     /**
@@ -131,39 +137,35 @@ public enum MonitorAlarm {
         if (this==GLOBAL) {
             throw new UnsupportedOperationException("Cannot set the state of GLoBAL");
         }
-        alarm.set(Alarm.cleared());
+        alarm.set(alarm.get().clear());
         faultyIds.set("");
     }
 
     /**
-     * Set the alarm.
+     * Set an alarm
      *
-     * This method can be called for each {@link MonitorAlarm} apart of GLOBAL.
-     *
-     * @param alarm the not null alarm to set
-     * @param faultyIds the comma separated IDs of tools that did not sent the HB
-     */
-    public void set(Alarm alarm, String faultyIds) {
-        Objects.requireNonNull(alarm);
-        Objects.requireNonNull(faultyIds);
-        if (this==GLOBAL) {
-            throw new UnsupportedOperationException("Cannot set the state of GLoBAL");
-        }
-        if (alarm==Alarm.CLEARED) {
-            clear();
-        } else {
-            this.alarm.set(alarm);
-            this.faultyIds.set(faultyIds);
-        }
-    }
-
-    /**
-     * Set an alarm with the default priority
+     * This method can be called for each {@link MonitorAlarm} apart of GLOBAL
+     * whose clearing/setting is done by {@link #getGlobalAlarm()}
      *
      * @param faultyIds the comma separated IDs of tools that did not sent the HB
      */
     public void set(String faultyIds) {
-        set(Alarm.getSetDefault(),faultyIds);
+        if (this==GLOBAL) {
+            throw new UnsupportedOperationException("Cannot set the state of GLOBAL");
+        }
+        Objects.requireNonNull(faultyIds);
+        alarm.set(alarm.get().set());
+        this.faultyIds.set(faultyIds);
+    }
+
+    /**
+     * Set the priority of the alarm
+     *
+     * @param newPriority the priority to set
+     */
+    public void setPriority(Priority newPriority) {
+        Objects.requireNonNull(newPriority);
+        alarm.set(alarm.get().setPriority(newPriority));
     }
 }
 

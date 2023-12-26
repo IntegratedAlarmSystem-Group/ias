@@ -2,10 +2,12 @@ package org.eso.ias.converter.test;
 
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
-import org.eso.ias.cdb.json.CdbFolders;
-import org.eso.ias.cdb.json.CdbJsonFiles;
-import org.eso.ias.cdb.json.JsonReader;
-import org.eso.ias.cdb.json.JsonWriter;
+import org.eso.ias.cdb.structuredtext.TextFileType;
+import org.eso.ias.cdb.structuredtext.CdbFiles;
+import org.eso.ias.cdb.structuredtext.CdbFolders;
+import org.eso.ias.cdb.structuredtext.CdbTxtFiles;
+import org.eso.ias.cdb.structuredtext.StructuredTextReader;
+import org.eso.ias.cdb.structuredtext.StructuredTextWriter;
 import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
@@ -175,11 +177,6 @@ public class TestKafkaStreaming extends ConverterTestBase {
     public static final Path cdbParentPath =  FileSystems.getDefault().getPath(".");
 
     /**
-     * The directory structure for the JSON CDB
-     */
-    private CdbJsonFiles cdbFiles;
-
-    /**
      * The converter to test
      */
     private Converter converter;
@@ -272,8 +269,8 @@ public class TestKafkaStreaming extends ConverterTestBase {
         iso8601dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
 
         // Builds the JSON CDB
-        cdbFiles = new CdbJsonFiles(cdbParentPath);
-        CdbWriter cdbWriter = new JsonWriter(cdbFiles);
+        CdbFiles cdbFiles = new CdbTxtFiles(cdbParentPath, TextFileType.JSON);
+        CdbWriter cdbWriter = new StructuredTextWriter(cdbFiles);
         cdbWriter.init();
         Set<IasioDao> iasios = new HashSet<>();
         for (MonitorPointDataHolder mpdh: mpdToSend) {
@@ -292,7 +289,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
         cdbWriter.shutdown();
 
         // The reader to pass to the converter
-        CdbReader cdbReader = new JsonReader(cdbFiles);
+        CdbReader cdbReader = new StructuredTextReader(cdbParentPath.toFile());
         cdbReader.init();
 
         // Finally builds the converter
@@ -377,7 +374,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
 
         MonitorPointDataHolder unknown2 = new MonitorPointDataHolder(
                 "UNKNOWN-ID2",
-                Alarm.SET_CRITICAL,
+                Alarm.getInitialAlarmState(Priority.CRITICAL).set(),
                 System.currentTimeMillis(),
                 System.currentTimeMillis(),
                 IASTypes.ALARM);

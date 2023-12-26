@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CMD="iasRun org.eso.ias.extras.info.RunningIasTools $@"
+CMD="iasRun -r org.eso.ias.extras.info.RunningIasTools $@"
 
 echo Will run
 echo $CMD

@@ -1,21 +1,23 @@
 package org.eso.ias.asce.test
 
-import java.util.Properties
+import ch.qos.logback.classic.Level
 
+import java.util.Properties
 import org.eso.ias.asce.transfer.{JavaTransfer, TransferFunctionLanguage, TransferFunctionSetting}
 import org.eso.ias.asce.{AsceStates, CompEleThreadFactory, ComputingElement}
 import org.eso.ias.logging.IASLogger
-import org.eso.ias.types._
+import org.eso.ias.types.*
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 
-import scala.collection.mutable.{Map => MutableMap}
+import scala.collection.mutable.Map as MutableMap
 import scala.util.Try
 
 /**
  * Test the python transfer class: build a PythonExecutorTF that, in turn,
  * delegates method execution to python code
  */
-class TestMinMaxPyTF extends AnyFlatSpec {
+class TestMinMaxPyTF extends AnyFlatSpec with BeforeAndAfterAll {
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
 
@@ -60,7 +62,7 @@ class TestMinMaxPyTF extends AnyFlatSpec {
   props.setProperty("HighOff","40")
   props.setProperty("LowOn","-20")
   props.setProperty("LowOff","-10")
-  props.setProperty("Priority", "SET_CRITICAL")
+  props.setProperty("Priority", Priority.CRITICAL.toString)
 
   val javaComp: ComputingElement[Alarm] = new ComputingElement[Alarm](
     compID,
@@ -69,6 +71,10 @@ class TestMinMaxPyTF extends AnyFlatSpec {
     pythonTFSetting,
     validityThresholdInSecs,
     props) with JavaTransfer[Alarm]
+
+  override def beforeAll(): Unit = {
+    IASLogger.setRootLogLevel(Level.DEBUG)
+  }
 
   behavior of "The python MinMaxThreshold TF"
 
@@ -87,9 +93,10 @@ class TestMinMaxPyTF extends AnyFlatSpec {
     assert(newOut.isSuccess,"Exception got from the TF")
 
     val out: InOut[Alarm] = newOut.get
-    assert (out.iasType==IASTypes.ALARM,"The TF produced a value of the worng type "+out.iasType )
+    assert (out.iasType==IASTypes.ALARM,"The TF produced a value of the wrong type "+out.iasType )
     assert(out.value.isDefined)
-    assert(out.value.get==Alarm.CLEARED)
+    val alarm: Alarm =  out.value.get.asInstanceOf[Alarm]
+    assert(!alarm.isSet())
 
     assert (out.id.id==outId.id,"Unexpected output ID")
     assert(out.id.fullRunningID==outId.fullRunningID,"Unexpected output full running ID")
@@ -115,13 +122,13 @@ class TestMinMaxPyTF extends AnyFlatSpec {
   }
 
   it must "activate the output depending on the value of the input" in {
-    logger.info("Testing the functioning of the pyton TF")
+    logger.info("Testing the functioning of the python TF")
     val inputs = Map(inputID -> mp.updateValue(Some(3L)))
     val newOut: Try[InOut[Alarm]] = javaComp.transfer(inputs,compID,output)
     assert(newOut.isSuccess,"Exception got from the TF")
     val out: InOut[Alarm] = newOut.get
     assert(out.value.isDefined)
-    assert(out.value.get==Alarm.CLEARED)
+    assert(!out.value.get.asInstanceOf[Alarm].isSet)
 
     // Do not activate between HOff and HOn
     // Remain active between hOFF and hON
@@ -130,7 +137,7 @@ class TestMinMaxPyTF extends AnyFlatSpec {
     assert(newOut2.isSuccess,"Exception got from the TF")
     val out2 = newOut2.get
     assert(out2.value.isDefined)
-    assert(out2.value.get==Alarm.CLEARED)
+    assert(!out2.value.get.asInstanceOf[Alarm].isSet)
 
     // Activation by too high
     val inputs3 = Map(inputID -> mp.updateValue(Some(55L)))
@@ -138,7 +145,8 @@ class TestMinMaxPyTF extends AnyFlatSpec {
     assert(newOut3.isSuccess,"Exception got from the TF")
     val out3: InOut[Alarm] = newOut3.get
     assert(out3.value.isDefined)
-    assert(out3.value.get==Alarm.SET_CRITICAL)
+    assert(out3.value.get.asInstanceOf[Alarm].isSet)
+    assert(out3.value.get.asInstanceOf[Alarm].priority==Priority.CRITICAL)
 
     // Remain active between hOFF and hON
     val inputs4 = Map(inputID -> mp.updateValue(Some(45L)))
@@ -146,7 +154,8 @@ class TestMinMaxPyTF extends AnyFlatSpec {
     assert(newOut4.isSuccess,"Exception got from the TF")
     val out4 = newOut4.get
     assert(out4.value.isDefined)
-    assert(out4.value.get==Alarm.SET_CRITICAL)
+    assert(out4.value.get.asInstanceOf[Alarm].isSet)
+    assert(out4.value.get.asInstanceOf[Alarm].priority==Priority.CRITICAL)
 
     // Deactivate below hOn
     val inputs5 = Map(inputID -> mp.updateValue(Some(35L)))
@@ -154,7 +163,7 @@ class TestMinMaxPyTF extends AnyFlatSpec {
     assert(newOut5.isSuccess,"Exception got from the TF")
     val out5 = newOut5.get
     assert(out5.value.isDefined)
-    assert(out5.value.get==Alarm.CLEARED)
+    assert(!out5.value.get.asInstanceOf[Alarm].isSet)
 
     // Do not activate between lOn and lOff
     val inputs6 = Map(inputID -> mp.updateValue(Some(-15L)))
@@ -162,7 +171,7 @@ class TestMinMaxPyTF extends AnyFlatSpec {
     assert(newOut6.isSuccess,"Exception got from the TF")
     val out6 = newOut6.get
     assert(out6.value.isDefined)
-    assert(out6.value.get==Alarm.CLEARED)
+    assert(!out6.value.get.asInstanceOf[Alarm].isSet)
 
     // Activate between lOn and lOff
     val inputs7 = Map(inputID -> mp.updateValue(Some(-25L)))
@@ -170,7 +179,8 @@ class TestMinMaxPyTF extends AnyFlatSpec {
     assert(newOut7.isSuccess,"Exception got from the TF")
     val out7 = newOut7.get
     assert(out7.value.isDefined)
-    assert(out7.value.get==Alarm.SET_CRITICAL)
+    assert(out7.value.get.asInstanceOf[Alarm].isSet)
+    assert(out7.value.get.asInstanceOf[Alarm].priority==Priority.CRITICAL)
 
     // Do not activate between lOn and lOff
     val inputs8 = Map(inputID -> mp.updateValue(Some(-15L)))
@@ -178,7 +188,8 @@ class TestMinMaxPyTF extends AnyFlatSpec {
     assert(newOut8.isSuccess,"Exception got from the TF")
     val out8 = newOut8.get
     assert(out8.value.isDefined)
-    assert(out8.value.get==Alarm.SET_CRITICAL)
+    assert(out8.value.get.asInstanceOf[Alarm].isSet)
+    assert(out8.value.get.asInstanceOf[Alarm].priority==Priority.CRITICAL)
 
     // Deactivate when greater than lOff
     val inputs9 = Map(inputID -> mp.updateValue(Some(0L)))
@@ -186,7 +197,7 @@ class TestMinMaxPyTF extends AnyFlatSpec {
     assert(newOut9.isSuccess,"Exception got from the TF")
     val out9 = newOut9.get
     assert(out9.value.isDefined)
-    assert(out9.value.get==Alarm.CLEARED)
+    assert(!out9.value.get.asInstanceOf[Alarm].isSet)
   }
 
 }

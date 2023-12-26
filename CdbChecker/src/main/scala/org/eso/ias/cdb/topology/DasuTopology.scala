@@ -53,7 +53,7 @@ class DasuTopology(
   // is used by other ASCEs in this same DASU. The only exception is
   // output produced by the last ASCE that is the output of the DASU itself
   require(asces.map(_.outputId).filterNot(_==outputId).toSet.subsetOf(asces.flatMap(_.inputsIds).toSet),
-      s"The ouput produced by some ASCEs of DASU [$id] is unused")
+      s"The output produced by some ASCEs of DASU [$id] is unused")
 
   /** The inputs of the DASU
    *
@@ -313,7 +313,8 @@ class DasuTopology(
         val newRestTree = cloneReplaceTree(root,newNodeRest,newNodeRest)
         val linearizedRest = linearizeTree(newRestTree,newRestTree,trees)
         linearizedNewNode:::linearizedRest:::trees
-      //case (List(_,_),_) => Nil
+      case (s::rest, t) =>
+        throw new RuntimeException(s"Error linearizing the three of IASIOs. Input of type $t should not exist!")
     }
   }
 

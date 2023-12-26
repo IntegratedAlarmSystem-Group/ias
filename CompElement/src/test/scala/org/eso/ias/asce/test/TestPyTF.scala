@@ -1,9 +1,11 @@
 package org.eso.ias.asce.test
 
+import ch.qos.logback.classic.Level
 import org.eso.ias.asce.transfer.{JavaTransfer, TransferFunctionLanguage, TransferFunctionSetting}
 import org.eso.ias.asce.{AsceStates, CompEleThreadFactory, ComputingElement}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.*
+import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpec
 
 import java.util.Properties
@@ -20,7 +22,7 @@ import scala.util.Try
  *
  * The test is repeated for each possible IASIO type
  */
-class TestPyTF extends AnyFlatSpec {
+class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
 
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
@@ -103,7 +105,7 @@ class TestPyTF extends AnyFlatSpec {
 
   val inputIDAlarm = "MPointID-ALARM"
   val mpIdAlarm = new Identifier(inputIDAlarm,IdentifierType.IASIO,Option(compID))
-  val mpAlarm = InOut.asInput(mpIdAlarm,IASTypes.ALARM).updateValue(Some(Alarm.SET_LOW)).updateProdTStamp(System.currentTimeMillis())
+  val mpAlarm = InOut.asInput(mpIdAlarm,IASTypes.ALARM).updateValue(Some(Alarm.getInitialAlarmState(Priority.LOW).set())).updateProdTStamp(System.currentTimeMillis())
   val outputAlarm: InOut[Alarm] = InOut.asOutput(outId, IASTypes.ALARM)
 
   // The threshold to assess the validity from the arrival time of the input
@@ -115,6 +117,10 @@ class TestPyTF extends AnyFlatSpec {
     TransferFunctionLanguage.python,
     None,
     threadFactory)
+
+  override def beforeAll(): Unit = {
+    // IASLogger.setRootLogLevel(Level.DEBUG)
+  }
 
   behavior of "The python Transfer Function"
 
@@ -130,8 +136,6 @@ class TestPyTF extends AnyFlatSpec {
       pythonTFSetting,
       validityThresholdInSecs,
       new Properties()) with JavaTransfer[Alarm]
-
-
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -160,9 +164,9 @@ class TestPyTF extends AnyFlatSpec {
     assert(newOut.isSuccess,"Exception got from the TF")
 
     val out: InOut[Alarm] = newOut.get
-    assert (out.iasType==IASTypes.ALARM,"The TF produced a value of the worng type "+out.iasType )
+    assert (out.iasType==IASTypes.ALARM,"The TF produced a value of the wrong type "+out.iasType )
     assert(out.value.isDefined)
-    assert(out.value.get==Alarm.SET_LOW)
+    assert(out.value.get.asInstanceOf[Alarm].isSet)
 
     assert (out.id.id==outId.id,"Unexpected output ID")
     assert(out.id.fullRunningID==outId.fullRunningID,"Unexpected output full running ID")
@@ -533,7 +537,7 @@ class TestPyTF extends AnyFlatSpec {
 
   it must "support input of type ALARM" in {
     logger.info("Testing support of input type ALARM")
-    val inputsMPs: Map[String, InOut[_]] = Map(mpIdAlarm.id -> mpAlarm.updateValue(Some(Alarm.SET_HIGH)))
+    val inputsMPs: Map[String, InOut[_]] = Map(mpIdAlarm.id -> mpAlarm.updateValue(Some(Alarm.getInitialAlarmState(Priority.HIGH).set())))
 
     val javaComp: ComputingElement[Alarm] = new ComputingElement[Alarm](
       compID,
@@ -553,7 +557,7 @@ class TestPyTF extends AnyFlatSpec {
     val out: InOut[Alarm] = newOut.get
     assert(out.iasType == IASTypes.ALARM, "The TF produced a value of the worng type " + out.iasType)
     assert(out.value.isDefined)
-    assert(out.value.get == Alarm.SET_HIGH)
+    assert(out.value.get.asInstanceOf[Alarm].isSet)
 
     logger.info("Input type ALARM tested")
   }

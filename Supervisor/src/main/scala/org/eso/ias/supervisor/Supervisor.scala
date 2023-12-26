@@ -98,7 +98,7 @@ class Supervisor private (
   
   /** The ID of the Supervisor */
   val id: String = supervisorIdentifier.id
-  
+
   Supervisor.logger.info("Building Supervisor [{}] with fullRunningId [{}]",id,supervisorIdentifier.fullRunningID)
 
   val iasDao: IasDao =
@@ -200,7 +200,7 @@ class Supervisor private (
     commandManagerOpt.getOrElse(new CommandManagerKafkaImpl(supervisorIdentifier.id,kafkaBrokers,stringProducerOpt.get))
 
   /** The command executor that executes the commands received from the cmd topic */
-  val cmdExecutor: SupervisorCmdExecutor = new SupervisorCmdExecutor(tfIDs)
+  val cmdExecutor: SupervisorCmdExecutor = new SupervisorCmdExecutor(tfIDs, dasus)
 
   Supervisor.logger.info("Supervisor [{}] built",id)
 

@@ -20,5 +20,5 @@ trait Sender {
     * @param alarmId the ID of the alarm
     * @param alarmState the state to notify
     */
-  def notify(recipients: List[String], alarmId: String, alarmState: AlarmState): Unit
+  def notify(recipients: List[String], alarmId: String, alarmState: AlarmSnapshot): Unit
 }

@@ -54,7 +54,7 @@ class TestTransferFunction extends AnyFlatSpec {
       val mpId = new Identifier(id,IdentifierType.IASIO,Option(compID))
       i=i+1
       val mp = if ((i%2)==0) {
-        InOut.asInput(mpId,IASTypes.ALARM).updateValue(Some(Alarm.CLEARED)).updateProdTStamp(System.currentTimeMillis())
+        InOut.asInput(mpId,IASTypes.ALARM).updateValue(Some(Alarm.getInitialAlarmState)).updateProdTStamp(System.currentTimeMillis())
       } else {
         val mpVal = 1L
         InOut.asInput(mpId,IASTypes.LONG).updateValue(Some(1L)).updateProdTStamp(System.currentTimeMillis())
@@ -157,7 +157,7 @@ class TestTransferFunction extends AnyFlatSpec {
     // Send all the possible inputs to check if the state changes and the ASCE runs the TF
     inputsMPs.keys.foreach( k => {
       val inout = inputsMPs(k)
-      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.updateValue(Some(Alarm.getSetDefault))
+      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.updateValue(Some(Alarm.getInitialAlarmState.set()))
         else inout.updateValue(Some(-5L))
       inputsMPs(k)=newIasio
     })
@@ -173,7 +173,7 @@ class TestTransferFunction extends AnyFlatSpec {
     assert(out.value.isDefined)
     logger.info("Actual value = {}",out.value.toString())
     val alarm = out.value.get.asInstanceOf[Alarm]
-    assert(alarm==Alarm.getSetDefault)
+    assert(alarm==Alarm.getInitialAlarmState.set())
   }
   
   it must "run the scala TF executor" in new CompBuilder {
@@ -182,7 +182,7 @@ class TestTransferFunction extends AnyFlatSpec {
     // Send all the possible inputs to check if the state changes and the ASCE runs the TF
     inputsMPs.keys.foreach( k => {
       val inout = inputsMPs(k)
-      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.updateValue(Some(Alarm.getSetDefault))
+      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.updateValue(Some(Alarm.getInitialAlarmState.set()))
         else inout.updateValue(Some(-5L))
       inputsMPs(k)=newIasio
     })
@@ -196,7 +196,7 @@ class TestTransferFunction extends AnyFlatSpec {
     
     logger.info("Actual value = {}",scalaComp.output.value.toString())
     val alarm = scalaComp.output.value.get
-    assert(alarm==Alarm.getSetDefault)
+    assert(alarm==Alarm.getInitialAlarmState.set())
   }
   
   it must "detect a broken scala TF executor" in new CompBuilder {
@@ -205,7 +205,7 @@ class TestTransferFunction extends AnyFlatSpec {
     // Send all the possible inputs to check if the state changes and the ASCE runs the TF
     inputsMPs.keys.foreach( k => {
       val inout = inputsMPs(k)
-      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.updateValue(Some(Alarm.getSetDefault))
+      val newIasio = if (inout.iasType==IASTypes.ALARM) inout.updateValue(Some(Alarm.getInitialAlarmState.set()))
         else inout.updateValue(Some(-5L))
       inputsMPs(k)=newIasio
     })

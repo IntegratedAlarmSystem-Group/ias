@@ -1,11 +1,16 @@
 package org.eso.ias.build.plugin
 
+import java.io.File as JavaFile
+
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.plugins.ExtensionAware
 import org.gradle.api.tasks.Copy
+import org.gradle.api.tasks.Delete
 import org.gradle.api.tasks.Exec
+import org.gradle.api.file.ConfigurableFileTree
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.scala.ScalaCompile
 import org.gradle.jvm.tasks.Jar
@@ -14,20 +19,18 @@ import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.konan.file.File
 
+import org.eso.ias.build.plugin.GuiBuilder
+
 open class IasBuild : Plugin<Project> {
+
     override fun apply(project: Project) {
 
         val logger = project.getLogger()
-        logger.info("IAS build plugin in {}", project.buildDir)
+        logger.info("IAS build plugin in {}", project.getLayout().getBuildDirectory())
 
         // Get the python version from the property in settings.gradle.kts
         val g = project.gradle
-        val pythonVersion = if (g is ExtensionAware) {
-            val extension = g as ExtensionAware
-            extension.extra["PythonVersion"]
-        } else {
-            throw GradleException("Cannot determine the version of python3")
-        }
+        val pythonVersion = (g as ExtensionAware).extra["PythonVersion"]
         logger.info("Using python version {}", pythonVersion)
 
         // Configurations
@@ -136,6 +139,20 @@ open class IasBuild : Plugin<Project> {
         // Untar the archive in build/distribution
         val untar = project.tasks.register<Copy>("Untar") {
             dependsOn(":${project.name}:distTar")
+
+            onlyIf {
+                // This task must be executed only for java and scala modules
+                // for which the distTar task creates the tar
+                //
+                // So we exclude the task for python only modules
+                // (like modules that create GUIs) that do not have the java and scala plugin
+                val folder = project.layout.buildDirectory.dir("distributions")
+                val tarFileName = folder.get().asFile.path+"/${project.name}.tar"
+                
+                var file = JavaFile(tarFileName)
+                file.exists()
+            }
+
             val folder = project.layout.buildDirectory.dir("distributions")
             val tarFileName = folder.get().asFile.path+"/${project.name}.tar"
             from(project.tarTree(tarFileName))
@@ -175,16 +192,91 @@ open class IasBuild : Plugin<Project> {
             into(project.layout.buildDirectory.dir(destFolder))
         }
 
-        project.tasks.getByPath(":${project.name}:build").finalizedBy(conf)
-        project.tasks.getByPath(":${project.name}:build").finalizedBy(pyScripts)
-        project.tasks.getByPath(":${project.name}:build").finalizedBy(shScripts)
-        project.tasks.getByPath(":${project.name}:build").finalizedBy(pyModules)
-        project.tasks.getByPath(":${project.name}:build").finalizedBy(copyExtLibs)
-        project.tasks.getByPath(":${project.name}:build").finalizedBy(pyTestScripts)
-        project.tasks.getByPath(":${project.name}:build").finalizedBy(pyTestModules)
+        // Build PySide6 code like .ui and .qrc by delegating to GuiBuilder
+        val pyside6GuiBuilder = project.tasks.register("GuiBuilder") {
+            dependsOn(pyModules)
+            onlyIf {
+                var folder = "src/main/gui"
+                val f = project.layout.projectDirectory.dir(folder)
+                f.getAsFile().exists()
+            }
+            var folder = "src/main/gui"
+            val guiFolder = project.layout.projectDirectory.dir(folder).getAsFile().getPath()
+            logger.info("Building GUI in {}", guiFolder)
+            val destFolder = "lib/python${pythonVersion}/site-packages"
+            val directory = project.layout.projectDirectory.dir(destFolder).getAsFile().getPath()
+            val guiBuilder = GuiBuilder(guiFolder, directory)
+            guiBuilder.build()
+        }
+
+        // Copy the python files generated building PySide6 resources
+        // in the build folder
+        val copyPyGuiModules = project.tasks.register<Copy>("CopyPyGuiModules") {
+            dependsOn(pyside6GuiBuilder)
+            finalizedBy(installLib)
+
+            val srcFolder = "src/main/gui"
+
+            from(project.layout.projectDirectory.dir(srcFolder))
+            include("**/*.py")
+            exclude("*.py")
+            val destFolder = "lib/python${pythonVersion}/site-packages"
+            into(project.layout.buildDirectory.dir(destFolder))
+        }
+
+        // Delete the python files generated building PySide6 resources
+        val delGuiPy = project.tasks.register<Delete>("CleanTempGuiPy") {
+            dependsOn(copyPyGuiModules)
+            val srcFolder = project.layout.projectDirectory.dir("src/main/gui")
+            val tree: ConfigurableFileTree = project.fileTree(srcFolder.getAsFile().getPath())
+
+            tree.include("**/*.py")
+
+            delete(tree)
+        }
+
+        // Standard module with scala and or java (not python only)
+        // but not for python only modules that have no build task
+        val buildTask = project.tasks.getByPath(":${project.name}:build")
+        buildTask.finalizedBy(conf)
+        buildTask.finalizedBy(pyScripts)
+        buildTask.finalizedBy(shScripts)
+
+        // Tasks for GUIs
+        try {
+            // distTar is not created for python only (or GUI) modules that use
+            // the base plugin instead of java or scala. In this case, 
+            // we add it. In case distTar exists, an exception
+            // is thrown but there is nothing to do
+            project.tasks.create("distTar") 
+        } catch (e: Exception) {}
+
+        
+        buildTask.finalizedBy(pyside6GuiBuilder) // Build PySide6 stuff
+        buildTask.finalizedBy(copyPyGuiModules)
+        buildTask.finalizedBy(delGuiPy)
+
+        buildTask.finalizedBy(pyModules)
+        buildTask.finalizedBy(copyExtLibs)
+        buildTask.finalizedBy(pyTestScripts)
+        buildTask.finalizedBy(pyTestModules)
 
         val runIasTestsTask = project.tasks.register<Exec>("iasTest") {
             dependsOn(":build", pyTestScripts)
+            onlyIf {
+                val testFolder = project.layout.projectDirectory.dir("src/test")
+                if (testFolder.getAsFile().exists()) {
+                    val testFile = testFolder.file("runTests.sh").getAsFile()
+                    val cond = testFile.exists()
+                    if (!cond) {
+                        logger.warn("Test file missing {}",testFile.getPath())    
+                    }
+                    cond
+                } else {
+                    logger.warn("Test folder missing {}",testFolder.getAsFile().getPath())
+                    false
+                }
+            }
             commandLine("src/test/runTests.sh")
         }
 

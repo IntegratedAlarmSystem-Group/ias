@@ -50,12 +50,12 @@ public class WebServerSenderTest {
 	/**
 	 * Kafka Server to connect to
 	 */
-	private final String kafkaServer = "localhost:9092";
+	private final String kafkaServer = KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS;
 
 	/**
 	 * Port to connect to the mock Websocket Server
 	 */
-	private final int port = 8081;
+	private final int port = 10000;
 
 	/**
 	 * URI to connect to the mock Websocket Server

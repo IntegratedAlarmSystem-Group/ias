@@ -11,7 +11,7 @@ import org.eso.ias.logging.IASLogger
 /** 
  *  The input subscriber to send event to the listener
  *  
- *  This subscriber, especially useful for testing, allows to programamtically 
+ *  This subscriber, especially useful for testing, allows to programmatically 
  *  submit inputs that will be immediately sent to the listener.
  */
 class DirectInputSubscriber extends InputSubscriber {

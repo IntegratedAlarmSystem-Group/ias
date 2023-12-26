@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class KafkaStringsConsumer implements Runnable, ConsumerRebalanceListener {
 
     /**
-     * The interface fopr the listener of strings
+     * The interface for the listener of strings
      */
     public interface StringsConsumer {
         /**

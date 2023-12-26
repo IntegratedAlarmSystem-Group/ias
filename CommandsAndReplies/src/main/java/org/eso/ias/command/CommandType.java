@@ -8,7 +8,7 @@ public enum CommandType {
     SHUTDOWN(0), // Shuts down the process
     RESTART(0), // Restart the process
     SET_LOG_LEVEL(1), // Set the log level of the process
-    ACK(2), // ACK an alarm: one parameter is the ID of the alarm, the othe ris the comment of the operator
+    ACK(2), // ACK an alarm: one parameter is the full running ID of the alarm, the other is the comment of the operator
     TF_CHANGED(1); // Signal that a TF has been changed with the ID of the TF
 
     /**

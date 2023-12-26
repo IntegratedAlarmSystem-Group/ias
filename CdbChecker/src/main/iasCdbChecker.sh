@@ -20,7 +20,7 @@ then
 	echo "Found java properties: $JAVA_PROPS"
 fi
 
-CMD="iasRun $JAVA_PROPS $LOGID_PARAM org.eso.ias.cdb.cdbchecker.CdbChecker $OTHER_PARAMS"
+CMD="iasRun $JAVA_PROPS -i CdbChecker -r org.eso.ias.cdb.cdbchecker.CdbChecker $OTHER_PARAMS"
 
 echo Will run
 echo $CMD

@@ -3,6 +3,7 @@
 **/.settings
 **/*.RELEASE
 **/build/
+**/bin/
 **/c4che
 .cache-*
 ias.iml
@@ -10,6 +11,10 @@ ias.iml
 .gradle
 **/.project
 **/.classpath
+.vscode/
+.bloop/
+.metals/
+**/__pycache__/
 
 ## Project specific files:
 IntegratedAlarmSystemRoot
