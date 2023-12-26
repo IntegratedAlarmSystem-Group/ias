@@ -99,12 +99,12 @@ class DelayedAlarmTest extends AnyFlatSpec {
     props.put(DelayedAlarm.delayToSetTimePropName, "10")
     val tf = new DelayedAlarm(compID.id,compID.fullRunningID,1000,props)
     tf.initialize(Set(new IasioInfo(initialInput.id,IASTypes.ALARM)),new IasioInfo(initialOutput.id,initialOutput.iasType))
-    val map = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.getSetDefault))
+    val map = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.getInitialAlarmState.set()))
     
     val newOutput = tf.eval(map, initialOutput)
     
     assert(newOutput.value.isDefined)
-    assert(newOutput.value.get==Alarm.CLEARED)
+    assert(newOutput.value.get.isCleared)
   }
   
   it must "set the alarm if the input does not change in the time interval" in {
@@ -116,7 +116,7 @@ class DelayedAlarmTest extends AnyFlatSpec {
     tf.initialize(Set(new IasioInfo(initialInput.id,IASTypes.ALARM)),new IasioInfo(initialOutput.id,initialOutput.iasType))
     
     // Send the initial value
-    val map = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.getSetDefault))
+    val map = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.getInitialAlarmState.set()))
     
     val initialTime = System.currentTimeMillis()
     val expectedTimeChange = initialTime+TimeUnit.MILLISECONDS.convert(timeToSet, TimeUnit.SECONDS)
@@ -128,7 +128,7 @@ class DelayedAlarmTest extends AnyFlatSpec {
       logger.info("Sending input {}",map.values.head.value.get)
       output = tf.eval(map, output)
       assert(output.value.isDefined)
-      assert(output.value.get==Alarm.CLEARED)
+      assert(output.value.get.isCleared)
       logger.info("TF produced {}",output.value.get)
       Thread.sleep(3000)
     }
@@ -137,7 +137,7 @@ class DelayedAlarmTest extends AnyFlatSpec {
     val newOutput = tf.eval(map, output)
     assert(newOutput.value.isDefined)
     logger.info("TF produced {}",newOutput.value.get)
-    assert(newOutput.value.get==Alarm.getSetDefault)
+    assert(newOutput.value.get.isSet)
   }
   
   it must "clear the alarm if the input remains clear in the time interval" in {
@@ -150,7 +150,7 @@ class DelayedAlarmTest extends AnyFlatSpec {
     tf.initialize(Set(new IasioInfo(initialInput.id,IASTypes.ALARM)),new IasioInfo(initialOutput.id,initialOutput.iasType))
     
     // Send the initial value
-    val map = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.getSetDefault))
+    val map = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.getInitialAlarmState.set()))
     
     // Force activation
     var output = initialOutput
@@ -159,17 +159,17 @@ class DelayedAlarmTest extends AnyFlatSpec {
     output = tf.eval(map, output)
     assert(output.value.isDefined)
     logger.info("TF produced {}",output.value.get)
-    assert(output.value.get==Alarm.getSetDefault)
+    assert(output.value.get.isSet)
     
     val initialTime = System.currentTimeMillis()
     val expectedTimeChange = initialTime+TimeUnit.MILLISECONDS.convert(timeToClear, TimeUnit.SECONDS)
     
-    val mapToUnset = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.CLEARED))
+    val mapToUnset = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.getInitialAlarmState))
     while (System.currentTimeMillis() < expectedTimeChange) {
       logger.info("Sending input {}",map.values.head.value.get)
       output = tf.eval(mapToUnset, output)
       assert(output.value.isDefined)
-      assert(output.value.get==Alarm.getSetDefault)
+      assert(output.value.get.isSet)
       logger.info("TF produced {}",output.value.get)
       Thread.sleep(2500)
     }
@@ -178,7 +178,7 @@ class DelayedAlarmTest extends AnyFlatSpec {
     val newOutput = tf.eval(mapToUnset, output)
     assert(newOutput.value.isDefined)
     logger.info("TF produced {}",newOutput.value.get)
-    assert(newOutput.value.get==Alarm.CLEARED)
+    assert(newOutput.value.get.isCleared)
   }
   
   it must "be steady if the input oscillates" in {
@@ -190,8 +190,8 @@ class DelayedAlarmTest extends AnyFlatSpec {
     val tf = new DelayedAlarm(compID.id,compID.fullRunningID,1000,props)
     tf.initialize(Set(new IasioInfo(initialInput.id,IASTypes.ALARM)),new IasioInfo(initialOutput.id,initialOutput.iasType))
     
-    val mapSet = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.getSetDefault))
-    val mapUnset = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.CLEARED))
+    val mapSet = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.getInitialAlarmState.set()))
+    val mapUnset = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.getInitialAlarmState))
     
     // Force activation
     var output = initialOutput
@@ -200,7 +200,7 @@ class DelayedAlarmTest extends AnyFlatSpec {
     output = tf.eval(mapSet, output)
     assert(output.value.isDefined)
     logger.info("TF produced {}",output.value.get)
-    assert(output.value.get==Alarm.getSetDefault)
+    assert(output.value.get.isSet)
     
     val initialTime = System.currentTimeMillis()
     val expectedTimeChange = initialTime+TimeUnit.MILLISECONDS.convert(timeToClear+timeToSet, TimeUnit.SECONDS)
@@ -210,7 +210,7 @@ class DelayedAlarmTest extends AnyFlatSpec {
       output = tf.eval(lastSentMap, output)
       lastSentMap = if (lastSentMap==mapSet) mapUnset else mapSet
       assert(output.value.isDefined)
-      assert(output.value.get==Alarm.getSetDefault)
+      assert(output.value.get.isSet)
       logger.info("TF produced {}",output.value.get)
       Thread.sleep(500)
     }

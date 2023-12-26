@@ -66,10 +66,9 @@ class UMFireTF(asceId: String, asceRunningId: String, validityTimeFrame:Long, pr
 
     val status = new StatusWord(umStatusWord)
 
-    val fireActivated = status.statusOf(StatusWord.Fire) && status.statusOf(StatusWord.ACPower)
+    val fireActivated: Boolean = status.statusOf(StatusWord.Fire) && status.statusOf(StatusWord.ACPower)
 
-    val newOutput = if (fireActivated) actualOutput.updateValue(Alarm.SET_CRITICAL) else
-      actualOutput.updateValue(Alarm.CLEARED)
+    val newOutput = actualOutput.updateValue(actualOutput.value.getOrElse(Alarm.getInitialAlarmState).setIf(fireActivated))
 
     newOutput.updateProps(input.props).updateMode(input.mode)
   }

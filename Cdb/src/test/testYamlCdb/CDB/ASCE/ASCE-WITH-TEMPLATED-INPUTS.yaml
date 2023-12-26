@@ -1,0 +1,17 @@
+---
+dasuID: "DasuID2"
+outputID: "OUTPUT-ID"
+transferFunctionID: "org.eso.ias.tf.Threshold"
+templatedInputs:
+  - iasioId: "TempInput"
+    templateId: "templated-inputs"
+    instanceNum: 3
+  - iasioId: "TempInput"
+    templateId: "templated-inputs"
+    instanceNum: 4
+  - iasioId: "TempInput"
+    templateId: "templated-inputs"
+    instanceNum: 5
+id: "ASCE-WITH-TEMPLATED-INPUTS"
+props: []
+inputIDs: ["iasioID-1","iasioID-2"]

@@ -6,72 +6,83 @@ import os
 
 class Log(object):
 
-    # Static variable to know if the loggin has been initialized
+    # Static variable to know if the logging has been initialized
     initialized = False
 
     # File handler
-    fileHandler = None
+    file_handler = None
 
     # Console Handler
-    consoleHandler = None
+    console_handler = None
 
     # The main logger
     logger = None
 
+
     @staticmethod
-    def initLogging (nameFile,stdoutLevel='info',consoleLevel='info'):
+    def initLogging (nameFile, file_level_name='info', console_level_name='info'):
       '''
       Initialize the logging for IAS environment.
 
       To get a logger, use getLogger()
       '''
 
-      #take the path for logs folder inside $IAS_ROOT
+      # Take the path for logs folder inside $IAS_ROOT
       Log.initialized = True
       logPath=os.environ["IAS_LOGS_FOLDER"]
+
       #If the file doesn't exist it's created
       try:
           os.makedirs(logPath)
       except OSError as e:
           if e.errno != errno.EEXIST:
            raise
+
       cleanedFileName = nameFile.split(os.sep)[len(nameFile.split(os.sep))-1]
-      #Format of the data for filename
-      now = datetime.datetime.utcnow().strftime('%Y-%m-%d_%H:%M:%S.%f')[:-3]
-      LEVELS = { 'debug':logging.DEBUG,
-              'info':logging.INFO,
-              'warning':logging.WARNING,
-              'error':logging.ERROR,
-              'critical':logging.CRITICAL,
-              }
-      stdLevel_name = stdoutLevel
-      consoleLevel= consoleLevel
-      stdLevel = LEVELS.get(stdLevel_name, logging.NOTSET)
-      consoleLevel = LEVELS.get(consoleLevel, logging.NOTSET)
-      file=("{0}/{1}.log".format(logPath, str(cleanedFileName)+str(now)))
+      #Format of the data for the file name
+      now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H_%M_%S')[:-3]
+
+      log_levels = {'debug': logging.DEBUG,
+                'info': logging.INFO,
+                'warn': logging.WARNING,
+                'error': logging.ERROR,
+                'critical': logging.CRITICAL}
+
+      file_level = log_levels.get(file_level_name.lower(), logging.NOTSET)
+      console_level = log_levels.get(console_level_name.lower(), logging.NOTSET)
+
+      file_name=("{0}/{1}.{2}.log".format(logPath, cleanedFileName, now))
+
+      print("Pyhton log file name", file_name)
 
       logger = logging.getLogger(__name__)
-      logger.setLevel(logging.INFO)
-      # create file handler which logs even debug messages
-      Log.fileHandler = logging.FileHandler(file)
-      Log.fileHandler.setLevel(stdLevel)
-      # create console handler with a higher log level
-      Log.consoleHandler = logging.StreamHandler()
-      Log.consoleHandler.setLevel(consoleLevel)
-      # create formatter and add it to the handlers
-      formatterConsole = logging.Formatter('%(asctime)s%(msecs)d %(levelname)-8s [%(filename)s %(lineno)d] %(message)s' , '%H:%M:%S.')
-      formatterFile =  logging.Formatter('%(asctime)s%(msecs)d  | %(levelname)s | [%(filename)s %(lineno)d] [%(threadName)s] | %(message)s')
-      Log.fileHandler.setFormatter(formatterFile)
-      Log.consoleHandler.setFormatter(formatterConsole)
-      # add the handlers to the logger
-      logger.addHandler(Log.fileHandler)
-      logger.addHandler(Log.consoleHandler)
+      logger.setLevel(logging.DEBUG)
+
+      # Create file handler which logs even debug messages
+      Log.file_handler = logging.FileHandler(file_name)
+      Log.file_handler.setLevel(file_level)
+
+      # Create console handler with a higher log level
+      Log.console_handler = logging.StreamHandler()
+      Log.console_handler.setLevel(console_level)
+
+      # Create and add the formatters to the handlers
+      formatter_console = logging.Formatter('%(asctime)s%(msecs)d %(levelname)-8s [%(filename)s %(lineno)d] %(message)s' , '%H:%M:%S.')
+      formatter_file =  logging.Formatter('%(asctime)s%(msecs)d  | %(levelname)s | [%(filename)s %(lineno)d] [%(threadName)s] | %(message)s')
+      Log.file_handler.setFormatter(formatter_file)
+      Log.console_handler.setFormatter(formatter_console)
+
+      # Finally, add the handlers to the logger
+      logger.addHandler(Log.file_handler)
+      logger.addHandler(Log.console_handler)
+
       return logger
 
+
     @staticmethod
-    def getLogger(fileName,stdoutLevel='info',consoleLevel='info'):
+    def getLogger(fileName, fileLevel='info', consoleLevel='info'):
         if not Log.initialized:
-            Log.logger = Log.initLogging(fileName,stdoutLevel,consoleLevel)
+            Log.logger = Log.initLogging(fileName, fileLevel, consoleLevel)
             return Log.logger
         else:
             return Log.logger.getChild(fileName)

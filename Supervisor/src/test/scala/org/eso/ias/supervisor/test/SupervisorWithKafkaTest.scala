@@ -1,8 +1,8 @@
 package org.eso.ias.supervisor.test
 
 import org.eso.ias.cdb.CdbReader
-import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.DasuDao
+import org.eso.ias.cdb.structuredtext.StructuredTextReader
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.dasu.publisher.OutputPublisher
 import org.eso.ias.dasu.subscriber.{InputSubscriber, KafkaSubscriber}
@@ -58,10 +58,10 @@ class SupervisorWithKafkaTest extends AnyFlatSpec with BeforeAndAfterAll with Be
   val pluginId = new Identifier("SimulatedPluginID", IdentifierType.PLUGIN, monSysId)
   val converterId = new Identifier("ConverterID", IdentifierType.CONVERTER, pluginId)
 
-  /** The ID of the temeprature processed by a DASU of the Supervisor */
+  /** The ID of the temperature processed by a DASU of the Supervisor */
   val temperatureID = new Identifier("Temperature", IdentifierType.IASIO, converterId)
 
-  /** The ID of the strenght processed by a DASU of the Supervisor */
+  /** The ID of the strength processed by a DASU of the Supervisor */
   val strenghtID = new Identifier("Strenght", IdentifierType.IASIO, converterId)
 
   /** The identifier of the supervisor */
@@ -69,8 +69,7 @@ class SupervisorWithKafkaTest extends AnyFlatSpec with BeforeAndAfterAll with Be
 
   // The JSON CDB reader
   val cdbParentPath: Path = FileSystems.getDefault.getPath("src/test")
-  val cdbFiles = new CdbJsonFiles(cdbParentPath)
-  val cdbReader: CdbReader = new JsonReader(cdbFiles)
+  val cdbReader: CdbReader = new StructuredTextReader(cdbParentPath.toFile)
   cdbReader.init()
 
   /** The serializer to JSON strings */
@@ -185,7 +184,7 @@ class SupervisorWithKafkaTest extends AnyFlatSpec with BeforeAndAfterAll with Be
   }
 
   /**
-   * Build a IASVlaue to submit to the BSDB
+   * Build a [[IASValue]] to submit to the BSDB
    */
   def buildIasioToSubmit(identifier: Identifier, value: Double): IASValue[_] = {
     val t0 = System.currentTimeMillis()-100
@@ -202,10 +201,9 @@ class SupervisorWithKafkaTest extends AnyFlatSpec with BeforeAndAfterAll with Be
         t0+15,
         t0+20,
         null,null,null)
-    
   }
 
-  behavior of "The Supervisor with Kafka input/ouput"
+  behavior of "The Supervisor with Kafka input/output"
 
   it must "activate 2 DASUs with one ASCE each" in {
     val latch = new CountDownLatch(1)

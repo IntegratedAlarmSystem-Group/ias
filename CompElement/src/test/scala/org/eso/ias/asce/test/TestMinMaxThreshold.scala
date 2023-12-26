@@ -1,11 +1,10 @@
 package org.eso.ias.asce.test
 
 import java.util.Properties
-
 import org.eso.ias.asce.ComputingElement
 import org.eso.ias.asce.transfer.{JavaTransfer, ScalaTransfer, TransferFunctionLanguage, TransferFunctionSetting}
 import org.eso.ias.asce.transfer.impls.{MinMaxThresholdTF, MinMaxThresholdTFJava}
-import org.eso.ias.types.{Alarm, IASTypes, InOut}
+import org.eso.ias.types.{Alarm, IASTypes, InOut, Priority}
 import org.scalatest.flatspec.AnyFlatSpec
 
 class TestMinMaxThreshold extends AnyFlatSpec {
@@ -66,7 +65,7 @@ class TestMinMaxThreshold extends AnyFlatSpec {
     props.put(MinMaxThresholdTF.highOffPropName, "25")
     props.put(MinMaxThresholdTF.lowOffPropName, "-10")
     props.put(MinMaxThresholdTF.lowOnPropName, "-20")
-    props.put(MinMaxThresholdTF.alarmPriorityPropName,Alarm.SET_CRITICAL.toString())
+    props.put(MinMaxThresholdTF.alarmPriorityPropName,Priority.CRITICAL.toString())
     
     val scalaComp: ComputingElement[Alarm] = new ComputingElement[Alarm](
        commons.compID,
@@ -105,7 +104,7 @@ class TestMinMaxThreshold extends AnyFlatSpec {
     props.put(MinMaxThresholdTFJava.highOffPropName, "25")
     props.put(MinMaxThresholdTFJava.lowOffPropName, "-10")
     props.put(MinMaxThresholdTFJava.lowOnPropName, "-20")
-    props.put(MinMaxThresholdTF.alarmPriorityPropName,Alarm.SET_HIGH.toString())
+    props.put(MinMaxThresholdTF.alarmPriorityPropName,Priority.CRITICAL.toString)
     
     val javaComp: ComputingElement[Alarm] = new ComputingElement[Alarm](
        commons.compID,
@@ -139,12 +138,19 @@ class TestMinMaxThreshold extends AnyFlatSpec {
    * @param hio: the IASIO to check the alarm state
    * @param alarmState: The expected alarm
    */
-  def checkAlarmActivation(asce: ComputingElement[Alarm], alarmState: Alarm): Boolean = {
+  def checkAlarmActivation(asce: ComputingElement[Alarm], isSet: Boolean, priority: Priority): Boolean = {
     assert(asce.isOutputAnAlarm)
     val iasio = asce.output
     assert(iasio.iasType==IASTypes.ALARM)
     
-    iasio.value.forall(a => a==alarmState)
+    iasio.value.forall(a => {
+      val alarm = a.asInstanceOf[Alarm]
+
+      if (alarm.priority!=priority) System.err.println(s"Priority mismatch found ${alarm.priority} exp. $priority")
+      if (alarm.isSet!=isSet) System.err.println(s"Alarm set state mismatch found ${alarm.isSet} exp. $isSet")
+
+      alarm.priority==priority && alarm.isSet==isSet
+    })
   }
   
   
@@ -155,12 +161,12 @@ class TestMinMaxThreshold extends AnyFlatSpec {
     // Change the input to trigger the TF
     val changedMP = inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(5L)).updateProdTStamp(System.currentTimeMillis())
     scalaComp.update(Set(changedMP.toIASValue()))
-    assert(checkAlarmActivation(scalaComp,Alarm.CLEARED))
+    assert(checkAlarmActivation(scalaComp,false, Priority.CRITICAL))
     
     // Activate high
     val highMp = changedMP.updateValue(Some(100L)).updateProdTStamp(System.currentTimeMillis())
     scalaComp.update(Set(highMp.toIASValue()))
-    assert(checkAlarmActivation(scalaComp,Alarm.SET_CRITICAL))
+    assert(checkAlarmActivation(scalaComp,true, Priority.CRITICAL))
     
     // Is the property set with the value that triggered the alarm?
     assert(scalaComp.output.props.isDefined)
@@ -172,7 +178,7 @@ class TestMinMaxThreshold extends AnyFlatSpec {
     // Increase does not deactivate the alarm
     val moreHigh=highMp.updateValue(Some(150L)).updateProdTStamp(System.currentTimeMillis())
     scalaComp.update(Set(moreHigh.toIASValue()))
-    assert(checkAlarmActivation(scalaComp,Alarm.SET_CRITICAL))
+    assert(checkAlarmActivation(scalaComp,true, Priority.CRITICAL))
     
     val propValueMap2=scalaComp.output.props.get
     assert(propValueMap2("actualValue")==150L.toDouble.toString())
@@ -180,12 +186,12 @@ class TestMinMaxThreshold extends AnyFlatSpec {
     // Decreasing without passing HighOn does not deactivate
     val noDeact = moreHigh.updateValue(Some(40L)).updateProdTStamp(System.currentTimeMillis())
     scalaComp.update(Set(noDeact.toIASValue()))
-    assert(checkAlarmActivation(scalaComp,Alarm.SET_CRITICAL))
+    assert(checkAlarmActivation(scalaComp,true, Priority.CRITICAL))
     
     // Below HighOff deactivate the alarm
     val deact = noDeact.updateValue(Some(10L)).updateProdTStamp(System.currentTimeMillis())
     scalaComp.update(Set(deact.toIASValue()))
-    assert(checkAlarmActivation(scalaComp,Alarm.CLEARED))
+    assert(checkAlarmActivation(scalaComp,false, Priority.CRITICAL))
     
     val propValueMap3=scalaComp.output.props.get
     assert(propValueMap3("actualValue")==10L.toDouble.toString())
@@ -193,27 +199,27 @@ class TestMinMaxThreshold extends AnyFlatSpec {
     // Below LowOff but not passing LowOn does not activate
     val aBitLower = deact.updateValue(Some(-15L)).updateProdTStamp(System.currentTimeMillis())
     scalaComp.update(Set(aBitLower.toIASValue()))
-    assert(checkAlarmActivation(scalaComp,Alarm.CLEARED))
+    assert(checkAlarmActivation(scalaComp,false, Priority.CRITICAL))
     
     // Passing LowOn activate
     val actLow = aBitLower.updateValue(Some(-30L)).updateProdTStamp(System.currentTimeMillis())
     scalaComp.update(Set(actLow.toIASValue()))
-    assert(checkAlarmActivation(scalaComp,Alarm.SET_CRITICAL))
+    assert(checkAlarmActivation(scalaComp,true, Priority.CRITICAL))
     
     // Decreasing more remain activate
     val evenLower = actLow.updateValue(Some(-40L)).updateProdTStamp(System.currentTimeMillis())
     scalaComp.update(Set(evenLower.toIASValue()))
-    assert(checkAlarmActivation(scalaComp,Alarm.SET_CRITICAL))
+    assert(checkAlarmActivation(scalaComp,true, Priority.CRITICAL))
     
     // Increasing but not passing LowOff remains active
     val aBitHigher = evenLower.updateValue(Some(-15L)).updateProdTStamp(System.currentTimeMillis())
     scalaComp.update(Set(aBitHigher.toIASValue()))
-    assert(checkAlarmActivation(scalaComp,Alarm.SET_CRITICAL))
+    assert(checkAlarmActivation(scalaComp,true, Priority.CRITICAL))
     
     // Passing LowOff deactivate
     val deactFromLow = aBitHigher.updateValue(Some(0L)).updateProdTStamp(System.currentTimeMillis())
     scalaComp.update(Set(deactFromLow.toIASValue()))
-    assert(checkAlarmActivation(scalaComp,Alarm.CLEARED))
+    assert(checkAlarmActivation(scalaComp,false, Priority.CRITICAL))
   }
   
   behavior of "The java MinMaxThreshold executor"
@@ -235,13 +241,13 @@ class TestMinMaxThreshold extends AnyFlatSpec {
     val changedMP = inputsMPs.head.asInstanceOf[InOut[Long]].updateValue(Some(5L)).updateProdTStamp(System.currentTimeMillis())
     javaComp.update(Set(changedMP.toIASValue()))
 
-    assert(checkAlarmActivation(javaComp,Alarm.CLEARED))
+    assert(checkAlarmActivation(javaComp, false, Priority.CRITICAL))
     
     // Activate high
     val highMp = changedMP.updateValue(Some(100L)).updateProdTStamp(System.currentTimeMillis())
     javaComp.update(Set(highMp.toIASValue()))
     println("===> "+javaComp.output.value.get)
-    assert(checkAlarmActivation(javaComp,Alarm.SET_HIGH))
+    assert(checkAlarmActivation(javaComp,true, Priority.CRITICAL))
     
     // Is the property set with the value that triggered the alarm?
     assert(javaComp.output.props.isDefined)
@@ -252,7 +258,7 @@ class TestMinMaxThreshold extends AnyFlatSpec {
     // Increase does not deactivate the alarm
     val moreHigh=highMp.updateValue(Some(150L)).updateProdTStamp(System.currentTimeMillis())
     javaComp.update(Set(moreHigh.toIASValue()))
-    assert(checkAlarmActivation(javaComp,Alarm.SET_HIGH))
+    assert(checkAlarmActivation(javaComp, true, Priority.CRITICAL))
     
     val propValueMap2=javaComp.output.props.get
     assert(propValueMap2("actualValue")==150L.toDouble.toString())
@@ -260,12 +266,12 @@ class TestMinMaxThreshold extends AnyFlatSpec {
     // Decreasing without passing HighOn does not deactivate
     val noDeact = moreHigh.updateValue(Some(40L)).updateProdTStamp(System.currentTimeMillis())
     javaComp.update(Set(noDeact.toIASValue()))
-    assert(checkAlarmActivation(javaComp,Alarm.SET_HIGH))
+    assert(checkAlarmActivation(javaComp, true, Priority.CRITICAL))
     
     // Below HighOff deactivate the alarm
     val deact = noDeact.updateValue(Some(10L)).updateProdTStamp(System.currentTimeMillis())
     javaComp.update(Set(deact.toIASValue()))
-    assert(checkAlarmActivation(javaComp,Alarm.CLEARED))
+    assert(checkAlarmActivation(javaComp, false, Priority.CRITICAL))
     
     val propValueMap3=javaComp.output.props.get
     assert(propValueMap3("actualValue")==10L.toDouble.toString())
@@ -273,27 +279,27 @@ class TestMinMaxThreshold extends AnyFlatSpec {
     // Below LowOff but not passing LowOn does not activate
     val aBitLower = deact.updateValue(Some(-15L)).updateProdTStamp(System.currentTimeMillis())
     javaComp.update(Set(aBitLower.toIASValue()))
-    assert(checkAlarmActivation(javaComp,Alarm.CLEARED))
+    assert(checkAlarmActivation(javaComp, false, Priority.CRITICAL))
     
     // Passing LowOn activate
     val actLow = aBitLower.updateValue(Some(-30L)).updateProdTStamp(System.currentTimeMillis())
     javaComp.update(Set(actLow.toIASValue()))
-    assert(checkAlarmActivation(javaComp,Alarm.SET_HIGH))
+    assert(checkAlarmActivation(javaComp, true, Priority.CRITICAL))
     
     // Decreasing more remain activate
     val evenLower = actLow.updateValue(Some(-40L)).updateProdTStamp(System.currentTimeMillis())
     javaComp.update(Set(evenLower.toIASValue()))
-    assert(checkAlarmActivation(javaComp,Alarm.SET_HIGH))
+    assert(checkAlarmActivation(javaComp, true, Priority.CRITICAL))
     
     // Increasing but not passing LowOff remains active
     val aBitHigher = evenLower.updateValue(Some(-15L)).updateProdTStamp(System.currentTimeMillis())
     javaComp.update(Set(aBitHigher.toIASValue()))
-    assert(checkAlarmActivation(javaComp,Alarm.SET_HIGH))
+    assert(checkAlarmActivation(javaComp, true, Priority.CRITICAL))
     
     // Passing LowOff deactivate
     val deactFromLow = aBitHigher.updateValue(Some(0L)).updateProdTStamp(System.currentTimeMillis())
     javaComp.update(Set(deactFromLow.toIASValue()))
-    assert(checkAlarmActivation(javaComp,Alarm.CLEARED))
+    assert(checkAlarmActivation(javaComp, false, Priority.CRITICAL))
   }
   
 }

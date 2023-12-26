@@ -1,0 +1,9 @@
+<RCC>
+  <qresource prefix="/icons">
+    <file alias="ias-logo.png">icons/ias-logo.png</file>
+    <file alias="pause.png">icons/control-pause.png</file>
+    <file alias="play.png">icons/control.png</file>
+    <file alias="remove.png">icons/broom.png</file>
+    <file alias="connect.png">icons/plug-connect.png</file>
+  </qresource>
+</RCC>

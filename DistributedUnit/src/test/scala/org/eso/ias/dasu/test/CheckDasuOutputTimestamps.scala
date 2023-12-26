@@ -2,6 +2,7 @@ package org.eso.ias.dasu.test
 
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IASValue
+import org.eso.ias.types.Alarm
 import org.scalatest.{BeforeAndAfter}
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -133,15 +134,15 @@ class CheckDasuOutputTimestamps extends AnyFlatSpec with BeforeAndAfter {
   
   it must "be updated when the value of the output changes" in {
     f.dasu.get.enableAutoRefreshOfOutput(false)
-    val inputs: Set[IASValue[_]] = Set(f.buildValue(0)) // CLEARED
+    val inputs: Set[IASValue[_]] = Set(f.buildValue(0)) // CLEARED ACK
     f.inputsProvider.sendInputs(inputs)
     
     Thread.sleep(2*f.dasu.get.throttling)
-    val inputs2: Set[IASValue[_]] = Set(f.buildValue(100)) // SET
+    val inputs2: Set[IASValue[_]] = Set(f.buildValue(100)) // SET NOT ACK
     f.inputsProvider.sendInputs(inputs2)
     
     Thread.sleep(2*f.dasu.get.throttling)
-    val inputs3: Set[IASValue[_]] = Set(f.buildValue(10)) // CLEARED
+    val inputs3: Set[IASValue[_]] = Set(f.buildValue(10)) // CLEARED NOT ACK
     f.inputsProvider.sendInputs(inputs3)
     
     Thread.sleep(2*f.dasu.get.throttling)
@@ -157,7 +158,11 @@ class CheckDasuOutputTimestamps extends AnyFlatSpec with BeforeAndAfter {
     assert(out1.mode==out2.mode && out1.mode==out3.mode)
     assert(out1.iasValidity==out2.iasValidity && out1.iasValidity==out3.iasValidity)
     assert(out1.fullRunningId==out2.fullRunningId && out1.fullRunningId==out3.fullRunningId)
-    assert(out1.value==out3.value)
+    assert(!out2.value.asInstanceOf[Alarm].isAcked)
+    assert(out2.value.asInstanceOf[Alarm].isSet)
+    assert(out3.value.asInstanceOf[Alarm].priority==out1.value.asInstanceOf[Alarm].priority)
+    assert(out3.value.asInstanceOf[Alarm].isCleared)
+    assert(!out3.value.asInstanceOf[Alarm].isAcked)
     assert(out1.value!=out2.value)
     assert(out1.sentToBsdbTStamp.get<out2.sentToBsdbTStamp.get)
     assert(out2.sentToBsdbTStamp.get<out3.sentToBsdbTStamp.get)

@@ -1,8 +1,8 @@
 package org.eso.ias.dasu.test
 
 import org.eso.ias.cdb.CdbReader
-import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.DasuDao
+import org.eso.ias.cdb.structuredtext.{StructuredTextReader, CdbTxtFiles, TextFileType}
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.dasu.publisher.KafkaPublisher
 import org.eso.ias.dasu.subscriber.KafkaSubscriber
@@ -37,8 +37,8 @@ class DasuWithKafkaPubSubTest extends AnyFlatSpec with KafkaConsumerListener wit
   
   // Build the CDB reader
   val cdbParentPath: Path =  FileSystems.getDefault.getPath("src/test")
-  val cdbFiles = new CdbJsonFiles(cdbParentPath)
-  val cdbReader: CdbReader = new JsonReader(cdbFiles)
+  val cdbFiles = new CdbTxtFiles(cdbParentPath,TextFileType.JSON)
+  val cdbReader: CdbReader = new StructuredTextReader(cdbFiles)
   cdbReader.init()
   
   val dasuId = "DasuWithOneASCE"

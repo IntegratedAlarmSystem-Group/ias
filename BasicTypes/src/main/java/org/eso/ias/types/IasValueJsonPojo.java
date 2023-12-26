@@ -14,13 +14,12 @@ import java.util.Set;
 /**
  * A java pojo to serialize/deserialize {@link IASValue} objects.
  * <P>
- * This pojo is meant to solve the problem of
- * serializing/deserializing abstract classes with jackson2
- * and offers setters and getters. The reason to have this class
- * separated by IASValue is to 
+ * This pojo solves the problem of serializing/deserializing abstract
+ * classes with jackson2 and offers setters and getters.
+ * The reasons to have this class separated by IASValue are:
  * <UL>
  * 	<LI>avoid providing setters that would brake the immutability of the {@link IASValue}
- *  <LI>replace optional.empty() with <code>null</code> so that a null value 
+ *  <LI>replace Optional.empty() with <code>null</code> so that a null value
  *      is not serialized in the JSON string (@see {@link Include})
  *  <LI>replace Long timestamps with ISO-8601 strings
  * </UL>

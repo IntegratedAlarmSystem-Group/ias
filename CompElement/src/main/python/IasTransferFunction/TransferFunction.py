@@ -1,6 +1,6 @@
 import logging
 
-class TransferFunction(object):
+class TransferFunction():
     '''
     Base (and abstract) class to provide TFs in python programming language.
 

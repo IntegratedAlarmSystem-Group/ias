@@ -62,12 +62,12 @@ class HbMonitor(
                  val supervisorIds: Set[String],
                  val coreToolIds: Set[String],
                  val threshold: Long,
-                 val pluginsAlarmPriority: Alarm=Alarm.getSetDefault,
-                 val convertersAlarmPriority: Alarm=Alarm.getSetDefault,
-                 val clientsAlarmPriority: Alarm=Alarm.getSetDefault,
-                 val sinksAlarmPriority: Alarm=Alarm.getSetDefault,
-                 val supervisorsAlarmPriority: Alarm=Alarm.getSetDefault,
-                 val coreToolAlarmPriority: Alarm = Alarm.getSetDefault) extends HbListener with Runnable {
+                 val pluginsAlarmPriority: Alarm=Alarm.getInitialAlarmState,
+                 val convertersAlarmPriority: Alarm=Alarm.getInitialAlarmState,
+                 val clientsAlarmPriority: Alarm=Alarm.getInitialAlarmState,
+                 val sinksAlarmPriority: Alarm=Alarm.getInitialAlarmState,
+                 val supervisorsAlarmPriority: Alarm=Alarm.getInitialAlarmState,
+                 val coreToolAlarmPriority: Alarm = Alarm.getInitialAlarmState) extends HbListener with Runnable {
   require(Option(hbConsumer).isDefined)
   require(threshold>0,"Invalid negative threshold")
   require(Option(pluginIds).isDefined)
@@ -166,13 +166,13 @@ class HbMonitor(
     def faultyIds(m: MutableMap[String, Boolean]): List[String] = m.view.filterKeys(k => !m(k)).keys.toList
 
     // Update the passed alarm
-    def updateAlarm(alarm: MonitorAlarm, faultyIds: List[String], priority: Alarm=Alarm.getSetDefault): Unit = {
+    def updateAlarm(alarm: MonitorAlarm, faultyIds: List[String], priority: Alarm=Alarm.getInitialAlarmState): Unit = {
       HbMonitor.logger.debug("Updating alarm {} with faulty ids {} and priority {}",
         alarm.id,
         faultyIds.mkString(","),
         priority)
-      if (faultyIds.isEmpty) alarm.set(Alarm.cleared(), faultyIds.mkString(","))
-      else alarm.set(priority, faultyIds.mkString(","))
+      if (faultyIds.isEmpty) alarm.clear()
+      else alarm.set(faultyIds.mkString(","))
     }
 
     updateAlarm(MonitorAlarm.PLUGIN_DEAD,faultyIds(pluginsHbMsgs),pluginsAlarmPriority)

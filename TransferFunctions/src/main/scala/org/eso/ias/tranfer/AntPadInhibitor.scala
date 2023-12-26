@@ -95,7 +95,7 @@ class AntPadInhibitor(asceId: String, asceRunningId: String, validityTimeFrame:L
     * the names of the antennas whose names match with
     * the regular expression passed in the java properties
     *
-    * @param antsPadsMP: the natennas to pads string received in input
+    * @param antsPadsMP: the antennas to pads string received in input
     * @return the comma separated list of names of affected antennas
     */
   def affectedAntennas(antsPadsMP: String): String = {
@@ -129,14 +129,9 @@ class AntPadInhibitor(asceId: String, asceRunningId: String, validityTimeFrame:L
     val antennasInPads = affectedAntennas(antPadMPValue)
     val foundAntennaInPad = antennasInPads.nonEmpty
 
-    val alarmInput = compInputs.values.filter(_.iasType==IASTypes.ALARM).head
+    val alarmInput: IasIO[_] = compInputs.values.filter(_.iasType==IASTypes.ALARM).head
 
-    val alarmOut = if (foundAntennaInPad) {
-      actualOutput.updateValue(alarmInput.value.get)
-    } else {
-      // No antennas in the pads of the WS
-      actualOutput.updateValue(Alarm.CLEARED)
-    }
+    val actualAlarm: Alarm = actualOutput.value.getOrElse(Alarm.getInitialAlarmState)
 
     val mode = if (alarmInput.mode==OperationalMode.OPERATIONAL && antPadMp.get.mode==OperationalMode.OPERATIONAL) {
       OperationalMode.OPERATIONAL
@@ -146,11 +141,15 @@ class AntPadInhibitor(asceId: String, asceRunningId: String, validityTimeFrame:L
       OperationalMode.UNKNOWN
     }
 
-    val outputWiithUpdatedMode=alarmOut.updateMode(mode)
-    if (foundAntennaInPad && alarmOut.value.get.isSet)
-      outputWiithUpdatedMode.updateProps(alarmInput.props++Map(AntPadInhibitor.AffectedAntennaAlarmPropName -> antennasInPads))
+    val alarmOut =
+      actualAlarm.setIf(foundAntennaInPad && alarmInput.value.get.asInstanceOf[Alarm].isSet)
+        .setPriority(alarmInput.value.get.asInstanceOf[Alarm].priority)
+
+    val outputWithUpdatedMode=actualOutput.updateValue(alarmOut).updateMode(mode)
+    if (foundAntennaInPad && alarmOut.isSet)
+      outputWithUpdatedMode.updateProps(alarmInput.props++Map(AntPadInhibitor.AffectedAntennaAlarmPropName -> antennasInPads))
     else
-      outputWiithUpdatedMode.updateProps(alarmInput.props)
+      outputWithUpdatedMode.updateProps(alarmInput.props)
 
   }
 
@@ -159,7 +158,7 @@ class AntPadInhibitor(asceId: String, asceRunningId: String, validityTimeFrame:L
 object AntPadInhibitor {
 
   /** The logger */
-  val logger: Logger = IASLogger.getLogger(ThresholdWithBackupsAndDelay.getClass)
+  val logger: Logger = IASLogger.getLogger(AntPadInhibitor.getClass)
 
   /** The name of the property to pass the regular expression */
   val PadNameMatcherName: String = "org.eso.ias.antpadinhibitor.padnameregexp"

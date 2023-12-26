@@ -1,12 +1,15 @@
 package org.eso.ias.command.test;
 
+import ch.qos.logback.classic.Level;
 import org.eso.ias.command.CommandSender;
 import org.eso.ias.command.CommandType;
+import org.eso.ias.command.ReplyMessage;
 import org.eso.ias.heartbeat.consumer.HbKafkaConsumer;
 import org.eso.ias.heartbeat.consumer.HbListener;
 import org.eso.ias.heartbeat.consumer.HbMsg;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.SimpleStringProducer;
+import org.eso.ias.logging.IASLogger;
 import org.eso.ias.types.Identifier;
 import org.eso.ias.types.IdentifierType;
 import org.junit.jupiter.api.*;
@@ -16,6 +19,7 @@ import scala.Option;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 
@@ -23,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
- * Test the command center by running the {@link CommandManagerSimulator}.
+ * Test the command sender by running the {@link CommandManagerSimulator}.
  *
  * The simulator gets and executes commands that this test sends using the {@link CommandSender}.
  */
@@ -70,6 +74,7 @@ public class TestCommandSender implements HbListener {
     @BeforeAll
     public static void setUpAll() throws Exception {
         logger.info("Setting up the CommandSender");
+        IASLogger.setRootLogLevel(Level.DEBUG);
         cmdSender.setUp();
         simulatorProc=runSimulator();
     }
@@ -106,6 +111,7 @@ public class TestCommandSender implements HbListener {
         logger.info("Running the simulator");
         List<String> cmdToRun = new Vector<>();
         cmdToRun.add("iasRun");
+        cmdToRun.add("-r");
         cmdToRun.add("org.eso.ias.command.test.CommandManagerSimulator");
         ProcessBuilder procBuilder = new ProcessBuilder(cmdToRun);
         procBuilder.inheritIO();
@@ -138,8 +144,8 @@ public class TestCommandSender implements HbListener {
         String dest = "DoesNotExist";
 
         logger.info("Sending (sync) PING to {}",dest);
-        boolean ret =cmdSender.sendSync(dest, CommandType.PING,null,null,20, TimeUnit.SECONDS);
-        assertFalse(ret);
+        Optional<ReplyMessage> ret =cmdSender.sendSync(dest, CommandType.PING,null,null,20, TimeUnit.SECONDS);
+        assertTrue(ret.isEmpty());
     }
 
     /** Synchronously sends a command and wait for its execution */
@@ -147,7 +153,7 @@ public class TestCommandSender implements HbListener {
     public void testSyncSend() throws Exception {
         logger.info("Sending (sync) PING to {}",destId);
         assertTrue(
-                cmdSender.sendSync(destId,CommandType.PING,null,null,30,TimeUnit.SECONDS),
+                cmdSender.sendSync(destId,CommandType.PING,null,null,30,TimeUnit.SECONDS).isPresent(),
                 "Send sync did not terminate i.e. timeout");
     }
 
@@ -155,7 +161,7 @@ public class TestCommandSender implements HbListener {
     public void testRestart() throws Exception {
         logger.info("Sending (sync) RESTART to {}",destId);
       assertTrue(
-                cmdSender.sendSync(destId,CommandType.RESTART,null,null,30,TimeUnit.SECONDS),
+                cmdSender.sendSync(destId,CommandType.RESTART,null,null,30,TimeUnit.SECONDS).isPresent(),
                 "Send sync did not terminate i.e. timeout");
       hbs.clear();
       logger.info("Give the process time to restart");

@@ -1,11 +1,14 @@
 package org.eso.ias.command.test;
 
+import ch.qos.logback.classic.Level;
 import org.eso.ias.command.*;
 import org.eso.ias.command.kafka.CommandManagerKafkaImpl;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.KafkaStringsConsumer;
 import org.eso.ias.kafkautils.SimpleStringConsumer;
 import org.eso.ias.kafkautils.SimpleStringProducer;
+import org.eso.ias.logging.IASLogger;
+import org.eso.ias.utils.ISO8601Helper;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * Objects of this class are the listener of the commands so we expect that every time a command is submitted
  * the listener {@link #newCommand(CommandMessage)} runs and the reply is sent by the manager
- * This means that objects of this class are senders of commands and replies. But they are alsio the recipt of the
+ * This means that objects of this class are senders of commands and replies. But they are also the receiver of the
  * commands
  *
  */
@@ -61,7 +65,7 @@ public class TestCommandManager implements
     private static SimpleStringProducer cmdProducer;
 
     /**
-     * The consumer of replies: the test get from this consumer the replies
+     * The consumer of replies: the tests get from this consumer the replies
      * produced by the {@link org.eso.ias.command.CommandManager}
      */
     private static SimpleStringConsumer replyConsumer;
@@ -94,6 +98,9 @@ public class TestCommandManager implements
      */
     private static final  AtomicReference<CountDownLatch> lock = new AtomicReference<>();
 
+    /** The ID of the commands to send */
+    private static final AtomicInteger cmdId = new AtomicInteger(0);
+
     /**
      * @see {@link AutoCloseable#close()}
      */
@@ -103,6 +110,9 @@ public class TestCommandManager implements
     @BeforeAll
     public static void setUpAll() throws Exception {
         logger.debug("Setting up static producer and consumer");
+
+//        IASLogger.setRootLogLevel(Level.DEBUG);
+
         replyConsumer = new SimpleStringConsumer(
                 KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
                 KafkaHelper.REPLY_TOPIC_NAME,
@@ -144,12 +154,14 @@ public class TestCommandManager implements
             manager.start(this,this);
             logger.info("CommandManager to test started");
         }
+
+        repliesReceived.clear();
+
         logger.debug("Ready to run a new test");
     }
 
     @AfterEach
     public void tearDown() throws Exception {
-        repliesReceived.clear();
     }
 
     /**
@@ -191,11 +203,12 @@ public class TestCommandManager implements
         logger.info("Test the sending of a command and reception of the reply");
         numOfRepliesToGet=1;
         lock.set(new CountDownLatch(1));
+        int cId = cmdId.getAndIncrement();
         CommandMessage cmd = new CommandMessage(
                 commandSenderFullRunningId,
                 commandManagerId,
                 CommandType.PING,
-                1,
+                cId,
                 null,
                 System.currentTimeMillis(),
                 null);
@@ -207,7 +220,7 @@ public class TestCommandManager implements
         assertTrue(lock.get().await(5, TimeUnit.SECONDS),"Reply not received");
 
         ReplyMessage reply = repliesReceived .get(0);
-        assertEquals(1,reply.getId());
+        assertEquals(cId,reply.getId());
         assertEquals(CommandType.PING,reply.getCommand());
         assertEquals(CommandExitStatus.OK, reply.getExitStatus());
         logger.info("Done testCommandReply");
@@ -218,11 +231,12 @@ public class TestCommandManager implements
         logger.info("Test the sending of a broadcast command and reception of the reply");
         numOfRepliesToGet=1;
         lock.set(new CountDownLatch(1));
+        int cId = cmdId.getAndIncrement();
         CommandMessage cmd = new CommandMessage(
                 commandSenderFullRunningId,
                 CommandMessage.BROADCAST_ADDRESS,
                 CommandType.TF_CHANGED,
-                2,
+                cId,
                 null,
                 System.currentTimeMillis(),
                 null);
@@ -233,8 +247,8 @@ public class TestCommandManager implements
         logger.info("Command sent. Waiting for the reply...");
         assertTrue(lock.get().await(5, TimeUnit.SECONDS),"Reply not received");
 
-        ReplyMessage reply = repliesReceived .get(0);
-        assertEquals(2,reply.getId());
+        ReplyMessage reply = repliesReceived.get(0);
+        assertEquals(cId,reply.getId());
         assertEquals(CommandType.TF_CHANGED,reply.getCommand());
         assertEquals(CommandExitStatus.OK,reply.getExitStatus());
 
@@ -260,11 +274,13 @@ public class TestCommandManager implements
         List<Long> idsSent = new Vector<>();
         for (int i =0; i<numOfRepliesToGet; i++) {
 
+            int cId = cmdId.getAndIncrement();
+
             CommandMessage cmd = new CommandMessage(
                     commandSenderFullRunningId,
                     CommandMessage.BROADCAST_ADDRESS,
                     CommandType.PING,
-                    1000+i,
+                    cId,
                     null,
                     System.currentTimeMillis(),
                     null);
@@ -286,7 +302,16 @@ public class TestCommandManager implements
             Long id = r.getId();
             assertTrue(idsSent.contains(id));
             assertTrue(idsSent.remove(id));
+            assertEquals(CommandExitStatus.OK, r.getExitStatus());
         }
+
+        // Check if there are duplicated replies
+        logger.info("Waiting to get duplicated replies, if any...");
+        Thread.sleep(10); // Time to receive new replies
+        assertEquals(
+                numOfRepliesToGet,repliesReceived.size(),
+                "Got "+(repliesReceived.size()-numOfRepliesToGet)+" duplicated replies");
+        logger.info("No duplicated replies received");
 
         logger.info("Done testMultipleCommands");
     }
@@ -296,6 +321,7 @@ public class TestCommandManager implements
         logger.info("Test that the status of a reply is ERROR when the listener thorws an exception");
         numOfRepliesToGet=1;
         lock.set(new CountDownLatch(1));
+
         CommandMessage cmd = new CommandMessage(
                 commandSenderFullRunningId,
                 commandManagerId,
@@ -328,7 +354,7 @@ public class TestCommandManager implements
         logger.info("Test presence of properties in the reply");
         numOfRepliesToGet=1;
         lock.set(new CountDownLatch(1));
-
+        int cId = cmdId.getAndIncrement();
         Map<String,String> props = new HashMap<>();
         props.put("v1","2");
         props.put("v2","3");
@@ -341,7 +367,7 @@ public class TestCommandManager implements
                 commandSenderFullRunningId,
                 commandManagerId,
                 CommandType.SET_LOG_LEVEL,
-                4,
+                cId,
                 params,
                 System.currentTimeMillis(),
                 props);
@@ -352,8 +378,8 @@ public class TestCommandManager implements
         logger.info("Command sent. Waiting for the reply...");
         assertTrue(lock.get().await(5, TimeUnit.SECONDS),"Reply not received");
 
-        ReplyMessage reply = repliesReceived .get(0);
-        assertEquals(4,reply.getId());
+        ReplyMessage reply = repliesReceived.get(0);
+        assertEquals(cId,reply.getId());
         assertEquals(CommandType.SET_LOG_LEVEL, reply.getCommand());
         assertEquals(CommandExitStatus.UNKNOWN, reply.getExitStatus());
         assertNotNull(reply.getProperties());
@@ -372,7 +398,7 @@ public class TestCommandManager implements
      * @param event The string received in the topic
      */
     @Override
-    public void stringEventReceived(String event) {
+    public synchronized void stringEventReceived(String event) {
         if (event==null || event.isEmpty()) {
             logger.warn("Got an empty reply");
             return;
@@ -388,9 +414,9 @@ public class TestCommandManager implements
         repliesReceived.add(reply);
         logger.info("Reply received: {}",reply.toString());
 
-        System.out.println("*** ==> received reply with id="+reply.getId());
+        logger.info("Received a reply with id={}", reply.getId());
         if (repliesReceived.size()==numOfRepliesToGet) {
-            logger.debug("All expected replies {} have been received (in queue {} items)",numOfRepliesToGet,repliesReceived.size());
+            logger.debug("All expected replies {} have been received ({} items in queue)",numOfRepliesToGet,repliesReceived.size());
             lock.get().countDown();
         } else {
             logger.debug("Replies to get {}, replies received {}: {} missing replies",

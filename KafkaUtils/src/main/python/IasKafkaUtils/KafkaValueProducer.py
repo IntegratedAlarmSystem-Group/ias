@@ -3,8 +3,7 @@ Created on Jun 14, 2018
 
 @author: acaproni
 '''
-from kafka import KafkaProducer
-
+from confluent_kafka import Producer
 from IASLogging.logConf import Log
 
 logger = logger=Log.getLogger(__file__)
@@ -35,14 +34,11 @@ class KafkaValueProducer(object):
             raise ValueError('Invalid empty topic name')
         
         logger.info("Building kafka producer to connect to %s, with topic %s and id %s",
-                    kafkabrokers,topic,clientid)
+                    kafkabrokers, topic, clientid)
+
+        conf = { 'bootstrap.servers': kafkabrokers, 'client.id': clientid}
         
-        self.producer = KafkaProducer(
-            bootstrap_servers=kafkabrokers, 
-            client_id=clientid,
-            linger_ms=100,
-            key_serializer=str.encode,
-            value_serializer=str.encode)
+        self.producer = Producer(conf)
         if type(topic) == bytes:
             self.topic = topic.decode('utf-8')
         else:
@@ -60,7 +56,8 @@ class KafkaValueProducer(object):
         '''
         iasValueStr = value=iasValue.toJSonString()
         id = iasValue.id
-        return self.producer.send(self.topic,value=iasValueStr,key=id)
+        self.producer.produce(self.topic, value=iasValueStr, key=id)
+        self.producer.flush()
         
     def flush(self):
         '''
@@ -72,6 +69,6 @@ class KafkaValueProducer(object):
         '''
         Close the producer: delegates to the kafka producer
         '''
-        self.producer.close(2000)
+        #self.producer.close()
         
         

@@ -621,19 +621,19 @@ class CdbChecker(args: Array[String]) {
 
     val asces: Set[AsceDao] = CollectionConverters.asScala(dasuDao.getAsces).toSet
     if (asces.isEmpty) {
-      CdbChecker.logger.error("No ASCEs for DASU [{}] not defined in CDB", output.get.getId)
+      CdbChecker.logger.error("No ASCEs for DASU [{}] not defined in CDB", id.getOrElse("?"))
       errorsFound = true
     } else {
       CdbChecker.logger.info("{} ASCEs to deploy in DASU [{}]: {}",
         asces.size,
-        output.get.getId,
+        id.getOrElse("?"),
         asces.map(_.getId).mkString(","))
     }
 
     val templateId = Option(dasuDao.getTemplateId)
     templateId.foreach(tid => {
       if (!mapOfTemplates.keySet.contains(tid)) {
-        CdbChecker.logger.error("Template [{}] not found for DASU [{}]",tid,output.get.getId)
+        CdbChecker.logger.error("Template [{}] not found for DASU [{}]",tid,id.getOrElse("?"))
         errorsFound = true
       }
     })

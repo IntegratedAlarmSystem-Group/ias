@@ -1,8 +1,8 @@
 package org.eso.ias.dasu.test
 
 import org.eso.ias.cdb.CdbReader
-import org.eso.ias.cdb.json.{CdbJsonFiles, JsonReader}
 import org.eso.ias.cdb.pojos.DasuDao
+import org.eso.ias.cdb.structuredtext.{StructuredTextReader, CdbTxtFiles, TextFileType, CdbFiles}
 import org.eso.ias.dasu.DasuImpl
 import org.eso.ias.dasu.publisher.JsonWriterPublisher
 import org.eso.ias.dasu.subscriber.DirectInputSubscriber
@@ -25,9 +25,9 @@ class JsonPublisherTest extends AnyFlatSpec {
   private val logger = IASLogger.getLogger(this.getClass);
   
   // Build the CDB reader
-  val cdbParentPath =  FileSystems.getDefault().getPath("src/test");
-  val cdbFiles = new CdbJsonFiles(cdbParentPath)
-  val cdbReader: CdbReader = new JsonReader(cdbFiles)
+  val cdbParentPath =  FileSystems.getDefault().getPath("src/test")
+  val cdbFiles = new CdbTxtFiles(cdbParentPath, TextFileType.JSON)
+  val cdbReader: CdbReader = new StructuredTextReader(cdbFiles)
   cdbReader.init()
   
   val dasuId = "DasuWithOneASCE"
@@ -87,11 +87,11 @@ class JsonPublisherTest extends AnyFlatSpec {
   
   behavior of "The DASU"
   
-  it must "produce the output when a new set inputs is notified" in {
+  it must "produce the output when a new set of inputs is notified" in {
     // Start the getting of events in the DASU
     dasu.start()
     val inputs: Set[IASValue[_]] = Set(buildValue(0))
-    // Sumbit the inputs
+    // Submit the inputs
     inputsProvider.sendInputs(inputs)
     
     // Read the produced JSON file
@@ -106,7 +106,7 @@ class JsonPublisherTest extends AnyFlatSpec {
     val iasValue = jsonSerializer.valueOf(strReadFromFile)
     assert(iasValue.id=="ThresholdAlarm")
     assert(iasValue.valueType==IASTypes.ALARM)
-    assert(iasValue.value==Alarm.CLEARED)
+    assert(iasValue.value==Alarm.getInitialAlarmState)
     outputFile.deleteOnExit()
   }  
 }

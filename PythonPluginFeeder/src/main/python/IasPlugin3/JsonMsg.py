@@ -15,10 +15,10 @@ from IasBasicTypes.OperationalMode import OperationalMode
 
 class JsonMsg(object):
     '''
-    This class encapsulate the field of the message to send
+    Objects of this class encapsulate the field of the message to send
     to the java plugin as JSON string
     
-    It is the  counter part of the java org.eso.ias.plugin.network.MessageDao
+    It is the counter part of the java org.eso.ias.plugin.network.MessageDao
     
     The type must be one of types supported by the IAS as defined in
     org.eso.ias.types.IASTypes
@@ -31,7 +31,7 @@ class JsonMsg(object):
     valueTypeJsonParamName = "valueType"
     operationaModeParamName = "operMode"
         
-    def __init__(self, mpointId, value, valueType, timestamp=datetime.utcnow(), operationalMode=None):
+    def __init__(self, mpointId, value, valueType: IASType, timestamp=datetime.utcnow(), operationalMode=None):
         '''
         Constructor
         
@@ -68,9 +68,8 @@ class JsonMsg(object):
             raise ValueError("Invalid empty value")
         self.value=value
        
-        if not isinstance(valueType, IASType):
-            raise ValueError("Invalid type: "+valueType)
-        self.valueType=valueType
+
+        self.valueType: IASType =valueType
         
         if not operationalMode is None and not isinstance(operationalMode,OperationalMode):
             raise ValueError("Invalid operational mode "+operationalMode)
@@ -115,8 +114,7 @@ class JsonMsg(object):
         '''
         Return the JSON string to send to the java plugin 
         '''
-        
-        vType = str(self.valueType).split('.')[1]
+        vType = str(self.valueType)
         
         if self.operationalMode is None:
             mode = ""
@@ -124,7 +122,7 @@ class JsonMsg(object):
             mode = str(self.operationalMode).split('.')[1]
         
         if self.valueType==IASType.ALARM:
-            value = str(self.value).split(".")[1]
+            value = self.value.to_string()
         elif self.valueType==IASType.ARRAYOFLONGS or self.valueType==IASType.ARRAYOFDOUBLES:
             value = str(self.value)
         else:
