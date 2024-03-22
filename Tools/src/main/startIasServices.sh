@@ -11,9 +11,7 @@ echo "Cleaning $KAFKA_DATA..."
 sudo mkdir -p $KAFKA_DATA
 sudo rm -rf $KAFKA_DATA/*
 
-
-
-echo  "Starting kafka..."
+echo "Starting kafka..."
 cd /opt/kafka
 KAFKA_CLUSTER_ID="$(bin/kafka-storage.sh random-uuid)"
 echo "Cluster ID: $KAFKA_CLUSTER_ID" 
