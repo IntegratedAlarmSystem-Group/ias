@@ -40,21 +40,24 @@ class CommonDefs(object):
         # The classpath
         classpath = ""
 
-        # Get the folder with external jars from the environment variable, if exists
-        externalJarsPath = None
+        # Get the folders with external jars from the environment variable, if exists
+        externalJarsPaths = []
         try:
-           externalJarsPath = environ['IAS_EXTERNAL_JARS']
+           paths = environ['IAS_EXTERNAL_JARS'].split(":")
+           for folder in paths:
+               if path.exists(folder) and path.isdir(folder):
+                   externalJarsPaths.append(folder)
+                   CommonDefs.logger.debug("Folder %s added to the external folders of jars",folder)
+               else:
+                    CommonDefs.logger.warn("Folder of jars %s discarded", folder)
         except:
-            pass
+            CommonDefs.logger.debug("No external jars defined")
 
-        # Adds the jar files in the external folder
-        if externalJarsPath is not None:
-            CommonDefs.logger.info("Defined a folder for external jars: %s", externalJarsPath)
-            # Check if externalJarsPath is a directory and is readable
-            if not path.isdir(externalJarsPath):
-                CommonDefs.logger.error("Unreadable folder of external jars: %s",externalJarsPath)
-            else:
-                for root, subFolders, files in walk(externalJarsPath):
+        # Adds the jar files in the external folders
+        if externalJarsPaths:
+            CommonDefs.logger.info("Found %d folders of external jars", len(externalJarsPaths))
+            for folder in externalJarsPaths:
+                for root, subFolders, files in walk(folder):
                     for jarFileName in files:
                         if (jarFileName.lower().endswith('.jar') and jars.count(jarFileName)==0):
                             filePath=path.join(root,jarFileName)
@@ -63,7 +66,7 @@ class CommonDefs(object):
                             classpath=classpath+filePath
                             jars.append(jarFileName)
         else:
-            CommonDefs.logger.info("No folder for external JARs defined (i.e. no IAS-EXTERNAL-JARS env. variable set)")
+            CommonDefs.logger.info("No folders of external JARs defined (i.e. no IAS-EXTERNAL-JARS env. variable set)")
 
         # Add the jars from the current module and IAS_ROOT lib folders
         for folder in FileSupport.FileSupport.getIASFolders('lib'):
