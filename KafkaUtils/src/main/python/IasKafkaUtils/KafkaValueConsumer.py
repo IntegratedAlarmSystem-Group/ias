@@ -121,6 +121,14 @@ class KafkaValueConsumer(Thread):
         logger.info("Partition lost")
         self.subscribed = False
 
+    def isSubscribed(self) -> bool:
+        """
+        Returns:
+            True if the consumer is subscribed to a partition, 
+            False otherwise
+        """
+        return self.subscribed
+
     def run(self):
         logger.info('Thread to poll for IasValues started')
         try:
@@ -133,6 +141,7 @@ class KafkaValueConsumer(Thread):
                 with self.watchDogLock:
                     self.watchDog = True
                 if msg is None or not self.subscribed:
+                    logger.debug(f"Polling thread is subscribed { self.subscribed}")
                     continue
 
                 if msg.error() is not None:
@@ -175,7 +184,7 @@ class KafkaValueConsumer(Thread):
         Return and reset the watch dog.
 
         Returns:
-        bool: True if the waychdog has been set, False otherwise
+        bool: True if the watchdog has been set, False otherwise
         """
         with self.watchDogLock:
             ret = self.watchDog
