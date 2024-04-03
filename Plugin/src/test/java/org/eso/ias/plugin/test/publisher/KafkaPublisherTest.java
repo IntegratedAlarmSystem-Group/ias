@@ -1,13 +1,15 @@
 package org.eso.ias.plugin.test.publisher;
 
+import org.eso.ias.kafkautils.KafkaStringsConsumer;
 import org.eso.ias.kafkautils.SimpleStringProducer;
+import org.eso.ias.kafkautils.KafkaStringsConsumer.StreamPosition;
+import org.eso.ias.kafkautils.KafkaStringsConsumer.StringsConsumer;
 import org.eso.ias.plugin.Sample;
 import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.filter.Filter.EnrichedSample;
 import org.eso.ias.plugin.publisher.MonitorPointData;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.KafkaPublisher;
-import org.eso.ias.plugin.test.publisher.SimpleKafkaConsumer.KafkaConsumerListener;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
 import org.eso.ias.types.IasValidity;
 import org.eso.ias.types.OperationalMode;
@@ -24,9 +26,9 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Test the sneding of {@link MonitorPointData} by the {@link KafkaPublisher}.
+ * Test the sending of {@link MonitorPointData} by the {@link KafkaPublisher}.
  * <P>
- * <code>KafkaPublisherTest</code> always send items with different IDs because
+ * <code>KafkaPublisherTest</code> always sends items with different IDs because
  * it tests if all the events published are pushed in the kafka topic.
  * Checking the buffering to avoid to send items with the same ID in short time 
  * as well as the throttling has already been tested by {@link PublisherBaseTest}.
@@ -34,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author acaproni
  *
  */
-public class KafkaPublisherTest implements KafkaConsumerListener {
+public class KafkaPublisherTest implements StringsConsumer {
 	
 	/**
 	 * The logger
@@ -79,7 +81,7 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 	/**
 	 * The consumer to get events from the topic
 	 */
-	private SimpleKafkaConsumer consumer;
+	private KafkaStringsConsumer consumer;
 	
 	/**
 	 * The semaphore to wait on the desired number of events
@@ -114,9 +116,13 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 		kPub = new KafkaPublisher(pluginId, monitoredSystemId, stringProducer, schedExecutorSvc);
 		logger.info("Kafka producer initialized");
 		
-		consumer = new SimpleKafkaConsumer(KafkaPublisher.defaultTopicName, serverName, port,this);
+		String kafkaBrokers = serverName+":"+ port;
+		String consumer_id = "KafkaPubTestConsumer-"+System.currentTimeMillis(); // Unique ID
+		consumer = new KafkaStringsConsumer(kafkaBrokers, KafkaPublisher.defaultTopicName, consumer_id);
 		consumer.setUp();
 		logger.info("Kafka consumer initialized");
+
+		assertDoesNotThrow(() -> {consumer.startGettingEvents(this, StreamPosition.END);});
 		
 		logger.info("Initialized");
 	}
@@ -149,6 +155,9 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 		Long val = Long.valueOf(System.currentTimeMillis());
 		List<EnrichedSample> samples = Arrays.asList(new EnrichedSample(new Sample(val),true));
 		ValueToSend fv = new ValueToSend("MP-ID", val, samples, System.currentTimeMillis(),OperationalMode.OPERATIONAL,IasValidity.RELIABLE);
+
+		assertFalse(kPub.isClosed());
+		assertFalse(kPub.isStopped());
 		
 		kPub.offer(fv);
 		
@@ -217,16 +226,18 @@ public class KafkaPublisherTest implements KafkaConsumerListener {
 	 * @see org.eso.ias.plugin.test.publisher.SimpleKafkaConsumer.KafkaConsumerListener#consumeKafkaEvent(java.lang.String)
 	 */
 	@Override
-	public void consumeKafkaEvent(String event) {
-		try {
-			MonitorPointData mpData = MonitorPointData.fromJsonString(event);
-			receivedMonitorPoints.put(mpData.getId(), mpData);
-		} catch (PublisherException pe) {
-			logger.error("Error building the monitor point value",pe);
+	public void stringsReceived(Collection<String> strings) {
+		for (String str: strings) {
+			try {
+				MonitorPointData mpData = MonitorPointData.fromJsonString(str);
+				receivedMonitorPoints.put(mpData.getId(), mpData);
+			} catch (PublisherException pe) {
+				logger.error("Error building the monitor point value", pe);
+			}
+			if (eventsToReceive!=null) {
+				eventsToReceive.countDown();
+			}
 		}
-		if (eventsToReceive!=null) {
-			eventsToReceive.countDown();
-		}
-	}
 
+	}
 }
