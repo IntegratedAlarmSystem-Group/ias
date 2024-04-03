@@ -35,6 +35,7 @@ class TestListener(IasValueListener):
         Print the IasValue in the stdout
         """
         self.receivedValues.append(iasValue)
+        logger.info("Value received %s",str(iasValue.value))
 
 
 class TestValueProdCons(unittest.TestCase):
@@ -69,6 +70,24 @@ class TestValueProdCons(unittest.TestCase):
         iasValue.id = ident
         iasValue.value = str(value)
         return iasValue
+    
+    def waitUntilSubscribed(self, consumer, timeout) -> bool:
+        """
+        Wait until the consumer is subscribed to a partition or
+        the timeout elapses
+        Params:
+            consumer: the consumer to check for subscription
+            timeout: the max time to wait for the consumer to subscribe (seconds)
+        Returns:
+            True if the consumer is subscribed to a partition; flase if the
+            timeout elapses befor the consumer subscribes to a partition
+
+        """ 
+        elapsed_secs=0
+        while not consumer.isSubscribed() or elapsed_secs>timeout:
+            time.sleep(1)
+            elapsed_secs = elapsed_secs + 1
+        return consumer.isSubscribed()
 
 
     def testName(self):
@@ -81,18 +100,18 @@ class TestValueProdCons(unittest.TestCase):
             self.listener,
             self.kafkabrokers,
             self.topic,
-            'PyConsumerTest',
-            'PyConsumerTestGroup')
+            'PyConsumerTest', # Client ID
+            'PyConsumerTestGroup') # Group ID
         logger.info('Starting the consumer')
         consumer.start()
 
         n=100
 
-        # Wait one second to be sure the consumer is ready
-        # Setting up partitions and assign consumers to group, rebalancing etc.
-        # can slow down the process even if the consumer is ready and waiting
-        # to get data
-        time.sleep(1)
+        # Wait until the consumer is subscribed to a partition
+        logger.info("Wait until the consumer subscribes to a partition")
+        isSubscribed = self.waitUntilSubscribed(consumer, 30)
+        self.assertTrue(isSubscribed)
+        
         logger.info('Publishing %d IasValues',n)
         baseId='Test-ID#'
         for i in range(0, n):
@@ -100,7 +119,7 @@ class TestValueProdCons(unittest.TestCase):
             producer.send(v)
             
         producer.flush()
-        logger.info('%d monitor pint sent',n)
+        logger.info('%d monitor point sent',n)
         
         logger.info('Closing the producer')
         producer.close()

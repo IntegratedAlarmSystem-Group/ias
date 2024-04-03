@@ -6,7 +6,7 @@ import org.eso.ias.asce.exceptions.{PropNotFoundException, WrongPropValue}
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IASTypes.*
-import org.eso.ias.types.{Alarm, OperationalMode, Priority}
+import org.eso.ias.types.{Alarm, OperationalMode, Priority, IasValidity}
 
 import scala.util.control.NonFatal
 
@@ -124,20 +124,53 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
     // returns  Map(k2 -> B,C, k1 -> A, k3 -> D)
     grouped.view.mapValues(_.map(_._2).toList.mkString(",")).toMap
   }
+
+
+  /**
+    * Set the validity constraint to apply to the TF
+    * 
+    * The validity depnds on the validity of the inputs that contribute
+    * to the determination of the output 
+    * @see https://github.com/IntegratedAlarmSystem-Group/ias/issues/201
+    *
+    * @param isSet True if the output is set, Flase if cleared
+    * @param setAlarms The IDs of the alarms in input that are SET
+    * @param clearedAlarms The IDs of the alarms in input that are SET
+    * @return the IDs of the alarm to use to set the validity of the output
+    */
+  def buildValidityConstraint(
+    isSet: Boolean, 
+    setAlarms: Iterable[IasIO[Alarm]], 
+    clearedAlarms: Iterable[IasIO[Alarm]]): Option[Set[String]] = {
+
+      val validSetAlarms = setAlarms.filter(alarm => {alarm.validity==IasValidity.RELIABLE}).toSet
+      val validUnsetAlarms = clearedAlarms.filter(alarm => {alarm.validity==IasValidity.RELIABLE}).toSet
+
+      val totAlarmsSz = setAlarms.size+clearedAlarms.size
+
+      if (isSet && validSetAlarms.size>=threshold) Some(validSetAlarms.map(_.id))
+      else if (!isSet && validUnsetAlarms.size>totAlarmsSz-threshold) Some(validUnsetAlarms.map(_.id))
+      else None
+    }
   
   /**
    * @see ScalaTransferExecutor#eval
    */
   def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
 
-    // Get the active alarms in input
+    // Get the active (SET) alarms in input
     val activeAlarms: Iterable[IasIO[Alarm]] = compInputs.values.filter(input =>{
-      input.value.isDefined && input.value.get.asInstanceOf[Alarm].isSet
+      input.value.isDefined && input.value.get.asInstanceOf[Alarm].isSet()
+    }).map(_.asInstanceOf[IasIO[Alarm]])
+
+    // Get the inactive (CLEARED) alarms in input
+    val inactiveAlarms: Iterable[IasIO[Alarm]] = compInputs.values.filter(input =>{
+      input.value.isDefined && input.value.get.asInstanceOf[Alarm].isCleared()
     }).map(_.asInstanceOf[IasIO[Alarm]])
 
     val actualAlarm = actualOutput.value.getOrElse(Alarm.getInitialAlarmState(priorityFromCDB))
 
-    val newAlarm: Alarm = actualAlarm.setIf (activeAlarms.size>=threshold)
+    val newAlarm: Alarm = actualAlarm.setIf(activeAlarms.size>=threshold)
 
     // The properties of the output
     val props = if (newAlarm.isSet) {
@@ -153,7 +186,9 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
       getOutputMode(compInputs.values.map(_.mode))
     }
 
-    actualOutput.updateValue(newAlarm).updateMode(mode).updateProps(props)
+    val validityConstraints = buildValidityConstraint(newAlarm.isSet(), activeAlarms, inactiveAlarms)
+
+    actualOutput.updateValue(newAlarm).updateMode(mode).updateProps(props).setValidityConstraint(validityConstraints)
   }
 }
 
