@@ -222,7 +222,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
       Set(v1,v2,v3,v4)
     }
     inputsProvider.sendInputs(setOfInputs)
-    // No the DASU has all the inputs and must produce the output
+    // Now the DASU has all the inputs and must produce the output
     assert(iasValuesReceived.size==1)
     val outputProducedByDasu = iasValuesReceived.last
     assert(outputProducedByDasu.valueType==IASTypes.ALARM)
@@ -244,7 +244,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
     assert(iasValuesReceived.size==2)
     val outputProducedByDasu2 = iasValuesReceived.last
     assert(outputProducedByDasu2.valueType==IASTypes.ALARM)
-    assert(outputProducedByDasu2.value.asInstanceOf[Alarm]== Alarm.getInitialAlarmState.set())
+    assert(outputProducedByDasu2.value.asInstanceOf[Alarm].isSet())
     assert(outputProducedByDasu2.productionTStamp.isPresent())
     
     assert(outputProducedByDasu2.dependentsFullRuningIds.isPresent())
@@ -311,13 +311,12 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
     
     logger.info("Submits a set of RELIABLE inputs")
     val inputs: Set[IASValue[_]] = Set(buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,0))
-    val setOfInputs1: Set[IASValue[_]] = {
-      val v1=buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,5)
-      val v2=buildValue(inputTemperature2ID.id, inputTemperature2ID.fullRunningID,6)
-      val v3=buildValue(inputTemperature3ID.id, inputTemperature3ID.fullRunningID,7)
-      val v4=buildValue(inputTemperature4ID.id, inputTemperature4ID.fullRunningID,8)
-      Set(v1,v2,v3,v4)
-    }
+    val setOfInputs1 = Set[IASValue[_]](
+      buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,5),
+      buildValue(inputTemperature2ID.id, inputTemperature2ID.fullRunningID,6),
+      buildValue(inputTemperature3ID.id, inputTemperature3ID.fullRunningID,7),
+      buildValue(inputTemperature4ID.id, inputTemperature4ID.fullRunningID,8)
+    )
     inputsProvider.sendInputs(setOfInputs1)
      
     // wait to avoid the throttling to engage
@@ -330,6 +329,20 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
     val setOfInputs2 = Set[IASValue[_]](buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,5,UNRELIABLE))
     
     inputsProvider.sendInputs(setOfInputs2)
+    // wait to avoid the throttling to engage
+    Thread.sleep(2*dasu.throttling)
+    // The DASU does notproduce any output because the Multiplicity TF takes
+    // into account the validity of only the inputs that are relevant
+    // @see https://github.com/IntegratedAlarmSystem-Group/ias/issues/201
+    assert(iasValuesReceived.size==0)
+
+    // Invalidate more inputs to trigger a change of validity of the output
+    val setOfInputs3 = Set[IASValue[_]](
+      buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,5,UNRELIABLE),
+      buildValue(inputTemperature2ID.id, inputTemperature2ID.fullRunningID,5,UNRELIABLE),
+      buildValue(inputTemperature3ID.id, inputTemperature3ID.fullRunningID,5,UNRELIABLE)
+    )
+    inputsProvider.sendInputs(setOfInputs3)
     // wait to avoid the throttling to engage
     Thread.sleep(2*dasu.throttling)
     assert(iasValuesReceived.size==1)
