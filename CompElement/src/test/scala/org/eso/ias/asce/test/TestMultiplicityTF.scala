@@ -111,6 +111,7 @@ class TestMultiplicityTF extends AnyFlatSpec with BeforeAndAfterEach {
    *
    * @param asce: the ASCE to check the alarm state of the output
    * @param alarmState: The expected alarm in output
+   * @return True if the alarm is SET, False otherwise
    */
   def checkAlarmActivation(asce: ComputingElement[Alarm], isSet: Boolean): Boolean = {
     assert(asce.isOutputAnAlarm,"The output is not an alarm")
@@ -140,6 +141,49 @@ class TestMultiplicityTF extends AnyFlatSpec with BeforeAndAfterEach {
     assert(ret.size==inputsMPs.size)
     assert(ret.count(value => value.value.asInstanceOf[Alarm].isSet)==n)
     ret
+  }
+
+  /**
+    * Check if in the set, the value with the passed id has the passed validity
+    *
+    * @param values The set of values from where to get the IASValue with the given ID
+    * @param id the ID of the IASValue to check
+    * @param validity the requested validity
+    * @return True iif the IASValue with the given id has a validity equal to validity
+    */
+  def checkValidity(values: Set[IASValue[_]], id: String, validity: IasValidity): Boolean = {
+    val set: Set[IASValue[?]]=values.filter(_.id==id)
+    assert(set.size==1)
+    set.forall(_.iasValidity==validity)
+  }
+
+  /**
+    * Set the validity of the passed value.
+    * Being IASValue immutable, a new object is built if the validity
+    * to set differs from the validity of the passed IASValue 
+    *
+    * @param iasValue the value whose validity must be changed
+    * @param validity the validity to set
+    * @return a IASValue with the validity set 
+    */
+  def setValidity(iasValue: IASValue[_], validity: IasValidity): IASValue[_] = {
+    if (iasValue.iasValidity==validity) return iasValue
+    val value = iasValue.asInstanceOf[IASValue[Alarm]]
+    return new IASValue[Alarm](
+				value.value,
+				value.mode,
+				validity,
+				value.fullRunningId,
+				value.valueType,
+				value.readFromMonSysTStamp,
+				value.productionTStamp,
+				value.sentToConverterTStamp,
+				value.receivedFromPluginTStamp,
+				value.convertedProductionTStamp,
+				value.sentToBsdbTStamp,
+				value.readFromBsdbTStamp,
+				value.dependentsFullRuningIds,
+				value.props);
   }
 
   behavior of "The scala MultiplicityTF executor with given priority"
@@ -335,4 +379,134 @@ class TestMultiplicityTF extends AnyFlatSpec with BeforeAndAfterEach {
     scalaCompWithNoPriority.get.update(clearedMPs)
     assert(checkAlarmActivation(scalaCompWithNoPriority.get, false))
   }
+
+  // The following is to test the validity of the output when some of the inputs
+  // are valid and some invalid
+  behavior of "The validity constraints of the output of the scala MultiplicityTF"
+
+  it must "be not empty when enough SET inputs are reliable" in {
+    // Change all inputs to SET to trigger the TF
+    val changedMPs: Set[IASValue[?]] = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getInitialAlarmState.set())).updateProdTStamp(System.currentTimeMillis()).toIASValue())
+    // At the beginning all the inputs are UNRELIABLE
+    changedMPs.foreach( value => {assert(value.iasValidity==IasValidity.UNRELIABLE)})
+    scalaCompWithNoPriority.get.update(changedMPs)
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get, true))
+    assert(scalaCompWithNoPriority.get.output.validityConstraint.isEmpty)
+
+    // Activate 3 (threshold) alarms so the output is still SET
+    // but now SET alarms in input will be RELIABLE, UNSET UNRELIABLE
+    // 
+    // We expect the output to be SET and RELIABLE (unreliable unset ignored)
+    val activated3 = activate(3)
+    val activatedSetMPs = activated3.map( iasValue => {
+      if (iasValue.asInstanceOf[IASValue[Alarm]].value.isSet()) setValidity(iasValue, IasValidity.RELIABLE)
+      else setValidity(iasValue, IasValidity.UNRELIABLE)
+    })
+    scalaCompWithNoPriority.get.update(activatedSetMPs)
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get, true))
+    assert(scalaCompWithNoPriority.get.output.validityConstraint.nonEmpty)
+    val constraintIds = scalaCompWithNoPriority.get.output.validityConstraint.get
+    assert(constraintIds.size==3)
+    assert(constraintIds.forall(checkValidity(activatedSetMPs,_,IasValidity.RELIABLE)))
+
+    // Same test with 4 (>threshold) SET alarms
+    val activated4 = activate(4)
+    val activatedSetMPs4 = activated4.map( iasValue => {
+      if (iasValue.asInstanceOf[IASValue[Alarm]].value.isSet()) setValidity(iasValue, IasValidity.RELIABLE)
+      else setValidity(iasValue, IasValidity.UNRELIABLE)
+    })
+    scalaCompWithNoPriority.get.update(activatedSetMPs4)
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get, true))
+    assert(scalaCompWithNoPriority.get.output.validityConstraint.nonEmpty)
+    val constraintIds4 = scalaCompWithNoPriority.get.output.validityConstraint.get
+    assert(constraintIds4.size==4)
+    assert(constraintIds4.forall(checkValidity(activatedSetMPs4,_,IasValidity.RELIABLE)))
+  }
+
+  it must "be empty when not enough SET inputs are reliable" in {
+    // Change all inputs to SET to trigger the TF
+    val changedMPs: Set[IASValue[?]] = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getInitialAlarmState.set())).updateProdTStamp(System.currentTimeMillis()).toIASValue())
+    // At the beginning all the inputs are UNRELIABLE
+    changedMPs.foreach( value => {assert(value.iasValidity==IasValidity.UNRELIABLE)})
+    scalaCompWithNoPriority.get.update(changedMPs)
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get, true))
+    assert(scalaCompWithNoPriority.get.output.validityConstraint.isEmpty)
+
+    // Activate 2 (threshold) alarms so the output is still SET
+    // but now SET alarms in input will be RELIABLE, UNSET UNRELIABLE
+    // 
+    // We expect the output to be UNSET and RELIABLE (unreliable unset ignored)
+    val activated2 = activate(2)
+    val activatedSetMPs = activated2.map( iasValue => {
+      if (iasValue.asInstanceOf[IASValue[Alarm]].value.isSet()) setValidity(iasValue, IasValidity.RELIABLE)
+      else setValidity(iasValue, IasValidity.UNRELIABLE)
+    })
+    scalaCompWithNoPriority.get.update(activatedSetMPs)
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get, false))
+    assert(scalaCompWithNoPriority.get.output.validityConstraint.isEmpty)
+  }
+
+  it must "be non empty when enough UNSET inputs are reliable" in {
+    // Change all inputs to SET to trigger the TF
+    val changedMPs: Set[IASValue[?]] = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getInitialAlarmState.set())).updateProdTStamp(System.currentTimeMillis()).toIASValue())
+    // At the beginning all the inputs are UNRELIABLE
+    changedMPs.foreach( value => {assert(value.iasValidity==IasValidity.UNRELIABLE)})
+    scalaCompWithNoPriority.get.update(changedMPs)
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get, true))
+    assert(scalaCompWithNoPriority.get.output.validityConstraint.isEmpty)
+
+    // Activate 2 (threshold) alarms so the output is still SET
+    // but now UNSET alarms in input will be RELIABLE, UNSET UNRELIABLE
+    // 
+    // We expect the output to be UNSET and RELIABLE (unreliable unset ignored)
+    val activated2 = activate(2)
+    val activatedUnSetMPs = activated2.map( iasValue => {
+      if (!iasValue.asInstanceOf[IASValue[Alarm]].value.isSet()) setValidity(iasValue, IasValidity.RELIABLE)
+      else setValidity(iasValue, IasValidity.UNRELIABLE)
+    })
+    scalaCompWithNoPriority.get.update(activatedUnSetMPs)
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get, false))
+    assert(scalaCompWithNoPriority.get.output.validityConstraint.nonEmpty)
+    val constraintIds2 = scalaCompWithNoPriority.get.output.validityConstraint.get
+    assert(constraintIds2.size==3)
+    assert(constraintIds2.forall(checkValidity(activatedUnSetMPs,_,IasValidity.RELIABLE)))
+
+    // Same as before but with 4 RELIABLE UNSET inputs
+    val activated1 = activate(1)
+    val activatedUnSetMPs4 = activated1.map( iasValue => {
+      if (!iasValue.asInstanceOf[IASValue[Alarm]].value.isSet()) setValidity(iasValue, IasValidity.RELIABLE)
+      else setValidity(iasValue, IasValidity.UNRELIABLE)
+    })
+    scalaCompWithNoPriority.get.update(activatedUnSetMPs4)
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get, false))
+    assert(scalaCompWithNoPriority.get.output.validityConstraint.nonEmpty)
+    val constraintIds4 = scalaCompWithNoPriority.get.output.validityConstraint.get
+    assert(constraintIds4.size==4)
+    assert(constraintIds4.forall(checkValidity(activatedUnSetMPs4,_,IasValidity.RELIABLE)))
+  }
+
+  it must "be empty when not enough UNSET inputs are reliable" in {
+    // Change all inputs to SET to trigger the TF
+    val changedMPs: Set[IASValue[?]] = inputsMPs.map ( iasio => iasio.updateValue(Some(Alarm.getInitialAlarmState.set())).updateProdTStamp(System.currentTimeMillis()).toIASValue())
+    // At the beginning all the inputs are UNRELIABLE
+    changedMPs.foreach( value => {assert(value.iasValidity==IasValidity.UNRELIABLE)})
+    scalaCompWithNoPriority.get.update(changedMPs)
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get, true))
+    assert(scalaCompWithNoPriority.get.output.validityConstraint.isEmpty)
+
+    // Activate 3 (threshold) alarms so the output is still SET
+    // but now UNSET alarms in input will be RELIABLE, SET UNRELIABLE
+    // 
+    // We expect the output to be UNSET and RELIABLE (unreliable unset ignored)
+    val activated2 = activate(3)
+    val activatedSetMPs = activated2.map( iasValue => {
+      if (!iasValue.asInstanceOf[IASValue[Alarm]].value.isSet()) setValidity(iasValue, IasValidity.RELIABLE)
+      else setValidity(iasValue, IasValidity.UNRELIABLE)
+    })
+    scalaCompWithNoPriority.get.update(activatedSetMPs)
+    assert(checkAlarmActivation(scalaCompWithNoPriority.get, true))
+    assert(scalaCompWithNoPriority.get.output.validityConstraint.isEmpty)
+  }
+
+  
 }
