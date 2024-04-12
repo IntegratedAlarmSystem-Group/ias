@@ -4,7 +4,7 @@ A collection of methods to help dealing with kafka
 
 import os
 
-class IasKafkaHelper(object):
+class IasKafkaHelper():
 
     # Associates human readable topic names with their names in kafka
     topics = {
