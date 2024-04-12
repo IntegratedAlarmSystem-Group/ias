@@ -155,7 +155,7 @@ class KafkaValueConsumer(Thread):
                 else:
                     json = msg.value().decode("utf-8")
                     iasValue = IasValue.fromJSon(json)
-                    iasValue.readFromBsdbTStamp = datetime.utcnow()
+                    iasValue.readFromBsdbTStamp = datetime.now(datetime.UTC)
                     iasValue.readFromBsdbTStampStr = Iso8601TStamp.datetimeToIsoTimestamp(iasValue.readFromBsdbTStamp)
                     self.listener.iasValueReceived(iasValue)
         except Exception:
