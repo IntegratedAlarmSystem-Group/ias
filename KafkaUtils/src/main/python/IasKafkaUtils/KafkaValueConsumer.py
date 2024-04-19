@@ -4,6 +4,7 @@ Created on Jun 12, 2018
 @author: acaproni
 '''
 from datetime import datetime
+from datetime import timezone
 from threading import Thread, Lock
 import traceback
 import time
@@ -130,7 +131,7 @@ class KafkaValueConsumer(Thread):
         return self.subscribed
 
     def run(self):
-        logger.info('Thread to poll for IasValues started')
+        logger.info('Thread to poll for Kafka logs started')
         try:
             self.consumer.subscribe([self.topic], on_assign=self.onAssign)
 
@@ -155,7 +156,7 @@ class KafkaValueConsumer(Thread):
                 else:
                     json = msg.value().decode("utf-8")
                     iasValue = IasValue.fromJSon(json)
-                    iasValue.readFromBsdbTStamp = datetime.now(datetime.UTC)
+                    iasValue.readFromBsdbTStamp = datetime.now(timezone.utc)
                     iasValue.readFromBsdbTStampStr = Iso8601TStamp.datetimeToIsoTimestamp(iasValue.readFromBsdbTStamp)
                     self.listener.iasValueReceived(iasValue)
         except Exception:
