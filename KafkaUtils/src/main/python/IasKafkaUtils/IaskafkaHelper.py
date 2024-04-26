@@ -64,7 +64,7 @@ class IasKafkaHelper():
         """
         Create a topic
 
-        It delegates to the AdminClient for creating the topic with the given name
+        It delegates to the AdminClient for deleting the topic with the given name
 
         Args:
             topicName: the neame of the topic to create
