@@ -22,7 +22,7 @@ class IasKafkaHelper():
         Check if a topic with the given name exists
 
         Args:
-            topicName: the neame of the topic to check
+            topicName: the name of the topic to check
             kafkaBrokers: the kafka brokers
         Return:
           True if the topic exists; False otherwise
