@@ -1,32 +1,19 @@
 '''
-Created on Jun 12, 2018
-
-@author: acaproni
+Consume and send to a listener, the kafka events
+published in a topic.
 '''
-from datetime import datetime
-from datetime import timezone
+
 from threading import Thread, Lock
-import traceback
-import time
 from confluent_kafka import Consumer, KafkaError
-
 from IASLogging.logConf import Log
-from IasBasicTypes.IasValue import IasValue
-from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
-from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
+import traceback
 
-logger = Log.getLogger(__file__)
-
-
-class IasValueListener(object):
+class IasLogListener:
     """
-    The class to get IasValue
-    
-    The listener passed to KafkaValueConsumer
-    must be a subclass of IasValueListener
+    The listener of logs read from IAS topics
     """
 
-    def iasValueReceived(self, iasValue):
+    def iasLogReceived(self, log: str) -> None:
         """
         The callback to notify new IasValues
         received from the BSDB
@@ -34,65 +21,60 @@ class IasValueListener(object):
         The implementation must override this method
         """
         raise NotImplementedError("Must override this method to get events")
-
-
-class KafkaValueConsumer(Thread):
+    
+class IasLogConsumer(Thread):
     '''
-    Kafka consumer of IasValues.
+    The consumer of IAS logs.
     
-    Each received IasValue is sent to the listener.
+    Each received log is sent to the listener.
     
-    The listener must inherit from IasValueListener.
     
-    KafkaValueConsumer does not create a topic that must be created by the producer.
-    If the topic does not exist, the thread waits until the producer creates it.
-
-    KafkaValueConsumer implements a boolean watchdog that is set to True
-    at every iteration of the thread (i.e. when data arrives or the timeout elapses)
+    IasLogConsumer implements a boolean watchdog that is set to True
+    at every iteration of the thread (i.e. new when data arrives or the timeout elapses)
     '''
+    # The logger
+    logger = Log.getLogger(__file__)
 
-    # The listener to send IasValues to
-    listener = None
+    # The listener to send logs to
+    listener: IasLogListener = None
 
     # The kafka consumer
-    consumer = None
+    consumer: Consumer = None
 
-    # The topic
-    topic = None
+    # The name of the topic
+    topic: str = None
 
     # Signal the thread to terminate
-    terminateThread = False
+    terminateThread: bool = False
 
-    # Signal if the thread is getting event from the topic 
-    # This is not teh same of starting the thread because
-    ## if the topic does not exist, the thread wait until
+    # Signal if the thread is getting events from the topic 
+    # This is not the same of starting the thread because
+    # if the topic does not exist, the thread wait until
     # it is created but is not yet getting events
     isGettingEvents = False
 
     def __init__(self,
-                 listener,
-                 kafkabrokers,
-                 topic,
-                 clientid,
-                 groupid):
+                 listener: IasLogListener,
+                 kafkabrokers: str,
+                 topic: str,
+                 clientid: str,
+                 groupid: str):
         '''
         Constructor
         
-        @param listener the listener to send IasValues to
+        @param listener the listener to send logs to
         '''
         Thread.__init__(self)
         if listener is None:
             raise ValueError("The listener can't be None")
 
-        if not isinstance(listener, IasValueListener):
-            raise ValueError("The listener must be a subclass of IasValueListener")
+        if not isinstance(listener, IasLogListener):
+            raise ValueError("The listener must be a subclass of IasLogListener")
         self.listener = listener
 
         if topic is None:
             raise ValueError("The topic can't be None")
         self.topic = topic
-
-        self.kafkaBrokers = kafkabrokers
 
         conf = {'bootstrap.servers': kafkabrokers,
                 'client.id': clientid,
@@ -101,7 +83,7 @@ class KafkaValueConsumer(Thread):
                 'allow.auto.create.topics': 'true',
                 'auto.offset.reset': 'latest'}
 
-        self.consumer = Consumer(conf, logger=logger)
+        self.consumer = Consumer(conf, logger=self.logger)
 
         Thread.daemon = True
 
@@ -115,14 +97,14 @@ class KafkaValueConsumer(Thread):
         # subscribed is set by onAssign and unlock the polling thread
         self.subscribed = False
 
-        logger.info('Kafka consumer %s will connect to %s and topic %s', clientid, kafkabrokers, topic)
+        self.logger.info('Kafka consumer %s will connect to %s and topic %s', clientid, kafkabrokers, topic)
 
     def onAssign(self, consumer, partition):
-        logger.info("Kafka consumer assigned to partition %s", partition)
+        self.logger.info("Kafka consumer assigned to partition %s", partition)
         self.subscribed = True
 
     def onLost(self):
-        logger.info("Partition lost")
+        self.logger.info("Partition lost")
         self.subscribed = False
 
     def isSubscribed(self) -> bool:
@@ -134,17 +116,8 @@ class KafkaValueConsumer(Thread):
         return self.subscribed
 
     def run(self):
-        logger.info('Thread to poll for Kafka logs started')
+        self.logger.info('Thread to poll logs started')
         try:
-
-            # For some reason the python client does not create the topic and this
-            # function hangs forever waiting to subscribe
-            # So we force a topic reation before subscribing
-            if IasKafkaHelper.createTopic(self.topic, self.kafkaBrokers):
-                logger.debug("Topic %s created", self.topic)
-            else:
-                logger.debug("Topic %s exists", self.topic)
-
             self.consumer.subscribe([self.topic], on_assign=self.onAssign)
 
             self.isGettingEvents = True
@@ -154,33 +127,30 @@ class KafkaValueConsumer(Thread):
                 with self.watchDogLock:
                     self.watchDog = True
                 if msg is None or not self.subscribed:
-                    logger.debug(f"Polling thread is subscribed { self.subscribed}")
+                    self.logger.debug(f"Polling thread is subscribed { self.subscribed}")
                     continue
 
                 if msg.error() is not None:
                     if msg.error().code() == KafkaError._PARTITION_EOF:
                         # End of partition event
-                        logger.error('topic %s [partition %d] reached end at offset %d', msg.topic(), msg.partition(),
+                        self.logger.error('topic %s [partition %d] reached end at offset %d', msg.topic(), msg.partition(),
                                      msg.offset())
                     else:
-                        logger.error('Error polling event %s', msg.error().str())
+                        self.logger.error('Error polling event %s', msg.error().str())
                         raise Exception(msg.error().str())
                 else:
-                    json = msg.value().decode("utf-8")
-                    iasValue = IasValue.fromJSon(json)
-                    iasValue.readFromBsdbTStamp = datetime.now(timezone.utc)
-                    iasValue.readFromBsdbTStampStr = Iso8601TStamp.datetimeToIsoTimestamp(iasValue.readFromBsdbTStamp)
-                    self.listener.iasValueReceived(iasValue)
+                    log = msg.value().decode("utf-8")
+                    self.listener.iasLogReceived(log)
         except Exception:
             traceback.print_exc()
         finally:
             # Close down consumer to commit final offsets.
             self.consumer.close()
             self.isGettingEvents = False
-        logger.info('Thread terminated')
+        self.logger.info('Thread terminated')
 
     def start(self):
-        logger.info('Starting thread to poll for IasValues')
+        self.logger.info('Starting thread to poll events from topic %s', self.topic)
         self.terminateThread = False
         Thread.start(self)
 
