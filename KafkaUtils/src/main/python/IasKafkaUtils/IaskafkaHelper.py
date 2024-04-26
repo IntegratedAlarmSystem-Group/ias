@@ -39,7 +39,7 @@ class IasKafkaHelper():
         It delegates to the AdminClient for creating the topic with the given name
 
         Args:
-            topicName: the neame of the topic to create
+            topicName: the name of the topic to create
             kafkaBrokers: the kafka brokers
         Return:
           True if the topic was created or already exists; False otherwise
