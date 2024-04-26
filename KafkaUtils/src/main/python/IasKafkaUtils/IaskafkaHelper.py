@@ -29,10 +29,7 @@ class IasKafkaHelper():
         """
         admin = AdminClient({'bootstrap.servers': kafkaBrokers})
         metadata = admin.list_topics()
-        for t in iter(metadata.topics.values()):
-            if t.topic == topicName:
-                return True
-        return False
+        return topicName in metadata.topics
 
     @classmethod
     def createTopic(cls, topicName: str, kafkaBrokers: str):
