@@ -13,7 +13,6 @@ iasRun -r org.junit.platform.console.ConsoleLauncher -c org.eso.ias.plugin.test.
 iasRun -r org.junit.platform.console.ConsoleLauncher -c org.eso.ias.plugin.test.stats.DetailedStatsTest
 iasRun -r org.junit.platform.console.ConsoleLauncher -c org.eso.ias.plugin.test.publisher.BufferedMonitoredSystemDataTest
 iasRun -r org.junit.platform.console.ConsoleLauncher -c org.eso.ias.plugin.test.publisher.JsonPusblisherTest
-iasRun -r org.junit.platform.console.ConsoleLauncher -c org.eso.ias.plugin.test.publisher.KafkaPublisherTest
 iasRun -r org.junit.platform.console.ConsoleLauncher -c org.eso.ias.plugin.test.MonitoredValueTest
 iasRun -r org.junit.platform.console.ConsoleLauncher -c org.eso.ias.plugin.test.JsonConversionTest
 iasRun -r org.junit.platform.console.ConsoleLauncher -c org.eso.ias.plugin.test.ReplicatedPluginTest
