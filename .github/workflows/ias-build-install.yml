@@ -33,7 +33,7 @@ jobs:
       - name: Install IAS in IAS_ROOT
         run: ./gradlew install
       - name: Create IasRoot artifact
-        working-directory: /home/runner/work
+        working-directory: /home/runner/work/ias
         run: |
           ls
           tar czf IasRoot.tgz IasRoot
