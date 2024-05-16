@@ -31,7 +31,7 @@ jobs:
       - name: Build IAS with gradlew
         run: ./gradlew build
       - name: Install IAS in IAS_ROOT
-        run: ./gradlew install
+        run: ./gradlew install clean
       - name: Create IasRoot artifact
         uses: actions/upload-artifact@v4
         with:
