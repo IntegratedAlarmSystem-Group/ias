@@ -33,13 +33,10 @@ jobs:
       - name: Install IAS in IAS_ROOT
         run: ./gradlew install
       - name: Create IasRoot artifact
-        working-directory: /home/runner/work/ias
-        run: |
-          ls
-          tar czf IasRoot.tgz IasRoot
-      - name: Upload IasRoot artifact
         uses: actions/upload-artifact@v4
         with:
           name: IasRoot
-          path: /home/runner/work/ias/IasRoot.tgz
+          path: |
+            /home/runner/work/ias/IasRoot
+            /home/runner/work/ias/ias
           if-no-files-found: error
