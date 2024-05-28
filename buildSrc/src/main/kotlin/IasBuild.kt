@@ -311,10 +311,6 @@ open class IasBuild : Plugin<Project> {
             val compilerArgs = options.compilerArgs
             // compilerArgs.add("-Xdoclint:all,-missing")
             compilerArgs.add("-Xlint:all")
-
-            val extension = g as ExtensionAware
-            val jdkVersion = extension.extra["JdkVersion"].toString().toInt()
-            options.release.set(jdkVersion)
         }
 
         project.tasks.withType<Jar>().configureEach {
