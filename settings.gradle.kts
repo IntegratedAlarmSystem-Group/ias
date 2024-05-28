@@ -61,11 +61,9 @@ gitBranchProc.inputStream.reader(Charsets.UTF_8).use {
 }
 gitBranchProc.waitFor(10, TimeUnit.SECONDS)
 
-// Sets the version of java in the JdkVersion extra property
-// and the common dependencies
+// Sets common dependencies
 if (gradle is ExtensionAware) {
 	val extension = gradle as ExtensionAware
-	extension.extra["JdkVersion"] = 17
 
         // IAS common dependencies
 	extension.extra["scala-library"] = "org.scala-lang:scala3-library_3:3.3.1"
