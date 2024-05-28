@@ -19,6 +19,8 @@ import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Global configuration for the IAS
  * 
@@ -75,6 +77,7 @@ public class IasDao {
 	 * In case of kafka it is a comma separated list of server:port
 	 */
 	@Basic(optional=false)
+	@JsonProperty(required = true)
 	private String bsdbUrl;
 
 	/**
