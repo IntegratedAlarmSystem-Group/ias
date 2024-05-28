@@ -591,6 +591,7 @@ object Supervisor {
       Integer.getInteger(ValidityThresholdPropName,fromCdb._2),
       fromCdb._3)
     }
+    require(kafkaBrokers.isDefined, "BSDB URL missing in IAS configuration")
 
     val inputsProvider: InputSubscriber = KafkaSubscriber(supervisorId,None,kafkaBrokers,System.getProperties)
 
