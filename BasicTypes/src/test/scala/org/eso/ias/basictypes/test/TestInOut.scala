@@ -59,7 +59,7 @@ class TestInOut extends AnyFlatSpec {
     assert(mp2.value.isDefined)
     assert(mp2.value.get == 3L)
     // Trivial check of the update of the timestamp 
-    assert(mp2.productionTStamp.isEmpty)
+    assert(mp2.productionTStamp.isDefined)
     assert(mp2.mode == OperationalMode.OPERATIONAL)
     assert(mp2.fromIasValueValidity.isDefined)
     assert(mp2.fromIasValueValidity.get == Validity(RELIABLE))
