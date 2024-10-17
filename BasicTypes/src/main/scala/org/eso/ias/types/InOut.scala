@@ -179,7 +179,7 @@ case class InOut[A](
   def updateValue(newValue: Some[_ >: A]): InOut[A] = {
     assert(InOut.checkType(newValue.get,iasType),"The type of "+newValue.get.toString+" ("+newValue.get.getClass().getName()+") is not "+iasType)
     
-    this.copy(value=newValue)
+    this.copy(value=newValue, productionTStamp=Some(System.currentTimeMillis()))
   }
   
   /**
@@ -195,9 +195,9 @@ case class InOut[A](
   def updateValueValidity(newValue: Some[_ >: A], newValidity: Some[Validity]): InOut[A] = {
     assert(InOut.checkType(newValue.get,iasType))
     if (isOutput()) {
-      this.copy(value=newValue,fromInputsValidity=newValidity)
+      this.copy(value=newValue,fromInputsValidity=newValidity, productionTStamp=Some(System.currentTimeMillis()))
     } else {
-      this.copy(value=newValue,fromIasValueValidity=newValidity)
+      this.copy(value=newValue,fromIasValueValidity=newValidity, productionTStamp=Some(System.currentTimeMillis()))
     }
   }
   
