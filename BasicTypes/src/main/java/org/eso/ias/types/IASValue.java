@@ -210,7 +210,7 @@ public class IASValue<T> {
 				this.fullRunningId,
 				this.valueType,
 				this.readFromMonSysTStamp,
-				this.productionTStamp,
+				Optional.of(System.currentTimeMillis()), // Production timestamp
 				this.sentToConverterTStamp,
 				this.receivedFromPluginTStamp,
 				this.convertedProductionTStamp,
