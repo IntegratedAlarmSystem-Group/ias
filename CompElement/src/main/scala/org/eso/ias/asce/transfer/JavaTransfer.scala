@@ -26,8 +26,8 @@ trait JavaTransfer[T] extends ComputingElement[T] {
    * Flush the scala Map into a Java Map
    */
   private[this] def flushInputsOnJavaMap(
-      inputs: Map[String, InOut[_]]): JavaMap[String, IasIOJ[_]] = {
-    val map: JavaMap[String, IasIOJ[_]] = new JavaHashMap[String, IasIOJ[_]]()
+      inputs: Map[String, InOut[?]]): JavaMap[String, IasIOJ[?]] = {
+    val map: JavaMap[String, IasIOJ[?]] = new JavaHashMap[String, IasIOJ[?]]()
     
     inputs.values.foreach(iasio => {
       map.put(iasio.id.id,new IasIOJ(iasio))
@@ -42,11 +42,11 @@ trait JavaTransfer[T] extends ComputingElement[T] {
    * @see ComputingElementBase#transfer
    */
   def transfer(
-      inputs: Map[String, InOut[_]], 
+      inputs: Map[String, InOut[?]], 
       id: Identifier,
       actualOutput: InOut[T]): Try[InOut[T]] = {
     Try[InOut[T]]{
-      val map: JavaMap[String, IasIOJ[_]] = flushInputsOnJavaMap(inputs)
+      val map: JavaMap[String, IasIOJ[?]] = flushInputsOnJavaMap(inputs)
       val out: IasIOJ[T] = new IasIOJ(actualOutput)
       tfSetting.transferExecutor.get.asInstanceOf[JavaTransferExecutor[T]].
         eval( map, out).inOut.asInstanceOf[InOut[T]]

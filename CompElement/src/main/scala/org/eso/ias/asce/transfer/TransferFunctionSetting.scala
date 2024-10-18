@@ -59,7 +59,7 @@ class TransferFunctionSetting(
    * but is needed at least for meaningful log messages
    */
   val nameOfClassToLoad =
-    if (language==TransferFunctionLanguage.python) classOf[PythonExecutorTF[_]].getName
+    if (language==TransferFunctionLanguage.python) classOf[PythonExecutorTF[?]].getName
     else className
 
   /**
@@ -129,13 +129,13 @@ class TransferFunctionSetting(
     TransferFunctionSetting.logger.info("Initializing the TF {} with language {}",nameOfClassToLoad,language)
 
     // Load the class
-    val tfExecutorClass: Try[Class[_]] =
+    val tfExecutorClass: Try[Class[?]] =
       if (language==TransferFunctionLanguage.python) {
         TransferFunctionSetting.logger.debug("Loading the java class to run python TF {}",nameOfClassToLoad)
         // In case of python the java class implementing the TF is known
         // so we do not load the class with a forName because in this way
         // the compiler wil actually ensure that this class exists
-        Try(classOf[PythonExecutorTF[_]])
+        Try(classOf[PythonExecutorTF[?]])
       } else {
         TransferFunctionSetting.logger.debug("Loading java class {}",nameOfClassToLoad)
         Try(this.getClass.getClassLoader.loadClass(className))
@@ -187,7 +187,7 @@ class TransferFunctionSetting(
    *
    */
   private[this] def instantiateExecutor(
-    executorClass: Class[_],
+    executorClass: Class[?],
     asceId: String,
     asceRunningId: String,
     validityTimeFrame: Long,
@@ -232,7 +232,7 @@ class TransferFunctionSetting(
             Array(asceId, asceRunningId, validityTimeFrame.toLong, props, className)
           else Array(asceId, asceRunningId, validityTimeFrame, props)
         // Invoke the constructor to build the TransferExecutor
-        c.newInstance(args: _*).asInstanceOf[TransferExecutor]
+        c.newInstance(args*).asInstanceOf[TransferExecutor]
       }))
     }
 

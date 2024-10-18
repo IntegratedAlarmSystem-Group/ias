@@ -1,6 +1,7 @@
 package org.eso.ias.asce.test
 
 import java.util.Properties
+import scala.compiletime.uninitialized
 
 import org.eso.ias.asce.transfer.{ScalaTransfer, TransferFunctionLanguage, TransferFunctionSetting}
 import org.eso.ias.asce.{AsceStates, ComputingElement}
@@ -35,7 +36,7 @@ class TestSlowTF  extends AnyFlatSpec with BeforeAndAfterEach {
   val input: InOut[Boolean] =  InOut.asInput(inputId, IASTypes.BOOLEAN)
 
   /** The ASCE to test */
-  var asce: ComputingElement[Alarm] = _
+  var asce: ComputingElement[Alarm] = uninitialized
 
   override def beforeEach(): Unit = {
     val tfSettings = new TransferFunctionSetting(

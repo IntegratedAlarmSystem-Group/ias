@@ -482,7 +482,7 @@ class Identifier(
   override def equals(other: Any): Boolean = {
     other match {
       case that: Identifier =>
-        (that canEqual this) && fullRunningID==that.fullRunningID
+        (that.canEqual(this)) && fullRunningID==that.fullRunningID
       case _ => false
     }
   }
