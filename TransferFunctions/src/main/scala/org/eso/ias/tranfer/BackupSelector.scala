@@ -61,7 +61,7 @@ extends ScalaTransferExecutor[T](asceId,asceRunningId,validityTimeFrame,props) {
 	 *
 	 * @return the computed output of the ASCE
 	 */
-  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[T]): IasIO[T] = {
+  override def eval(compInputs: Map[String, IasIO[?]], actualOutput: IasIO[T]): IasIO[T] = {
     def updateOutput[B >: T](
         value: B,
         mode: OperationalMode,

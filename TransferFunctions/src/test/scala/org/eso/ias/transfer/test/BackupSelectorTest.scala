@@ -110,7 +110,7 @@ class BackupSelectorTest extends AnyFlatSpec with BeforeAndAfterEach {
   }
 
   it must "throws exception in intialize if IDs mismatch" in {
-    val inputs: Set[IasIO[_]] = Set (main,a,b,wrong)
+    val inputs: Set[IasIO[?]] = Set (main,a,b,wrong)
     val inputInfos = inputs.map (iasio => new IasioInfo(iasio.id,iasio.iasType))
     assertThrows[BackupSelectorException] {
       tf.initialize(inputInfos,new IasioInfo(out.id,out.iasType))
@@ -118,7 +118,7 @@ class BackupSelectorTest extends AnyFlatSpec with BeforeAndAfterEach {
   }
 
   it must "successfully initialize with correct IDs" in {
-    val inputs: Set[IasIO[_]] = Set (main,a,b,c)
+    val inputs: Set[IasIO[?]] = Set (main,a,b,c)
     val inputInfos = inputs.map (iasio => new IasioInfo(iasio.id,iasio.iasType))
      tf.initialize(inputInfos,new IasioInfo(out.id,out.iasType))
   }
