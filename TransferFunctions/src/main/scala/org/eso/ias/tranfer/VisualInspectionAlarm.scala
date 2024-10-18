@@ -90,9 +90,9 @@ class VisualInspectionAlarm(cEleId: String, cEleRunningId: String, validityTimeF
     *
     * @return the computed output of the ASCE
     */
-  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
-    val alarmInput: IasIO[_] = compInputs(idOfAlarmInput)
-    val visualInput: IasIO[_] = compInputs(idOfTstampInput)
+  override def eval(compInputs: Map[String, IasIO[?]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
+    val alarmInput: IasIO[?] = compInputs(idOfAlarmInput)
+    val visualInput: IasIO[?] = compInputs(idOfTstampInput)
 
     // Update the timestamp
     lastInspectionTimestamp=lastInspectionTimestamp.max(ISO8601Helper.timestampToMillis(visualInput.value.get.toString))
