@@ -1,6 +1,7 @@
 package org.eso.ias.transfer.test
 
 import java.util.Properties
+import scala.compiletime.uninitialized
 
 import com.typesafe.scalalogging.Logger
 import org.eso.ias.asce.exceptions.UnexpectedNumberOfInputsException
@@ -53,7 +54,7 @@ class RelocationSelectorTest extends AnyFlatSpec with BeforeAndAfterEach {
   val validityTimeFrame = 2000
 
   /** The TF to test */
-  var tf: RelocationSelector[Double] = _
+  var tf: RelocationSelector[Double] = uninitialized
 
   /**
     *  Build the IASIO in input with the passed id, type and timestamp

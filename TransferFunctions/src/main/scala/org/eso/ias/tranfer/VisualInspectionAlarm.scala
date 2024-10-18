@@ -1,6 +1,7 @@
 package org.eso.ias.tranfer
 
 import java.util.Properties
+import scala.compiletime.uninitialized
 
 import org.eso.ias.asce.exceptions.{TypeMismatchException, UnexpectedNumberOfInputsException}
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
@@ -31,10 +32,10 @@ class VisualInspectionAlarm(cEleId: String, cEleRunningId: String, validityTimeF
   extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,props) {
 
   /** The ID of the ALARM in input */
-  var idOfAlarmInput: String = _
+  var idOfAlarmInput: String = uninitialized
 
   /** The ID of the timestamp in input */
-  var idOfTstampInput: String = _
+  var idOfTstampInput: String = uninitialized
 
   /** The point in time of the last timestamp */
   var lastInspectionTimestamp: Long = Long.MinValue

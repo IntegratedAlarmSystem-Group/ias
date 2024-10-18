@@ -1,6 +1,7 @@
 package org.eso.ias.transfer.test
 
 import java.util.Properties
+import scala.compiletime.uninitialized
 
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo}
 import org.eso.ias.logging.IASLogger
@@ -48,10 +49,10 @@ class AntPadInhibitorTest extends AnyFlatSpec with BeforeAndAfterEach {
   val outputInfo = new IasioInfo(outId.id,IASTypes.ALARM)
 
    /** Default AntPadInhibitor TF to test */
-  var nonTypedTF: AntPadInhibitor = _
+  var nonTypedTF: AntPadInhibitor = uninitialized
 
   /**  AntPadInhibitor TF to test with antenna type filter*/
-  var typedTF: AntPadInhibitor = _
+  var typedTF: AntPadInhibitor = uninitialized
 
   /** The time frame for the validity */
   val validityTimeFrame = 2000
