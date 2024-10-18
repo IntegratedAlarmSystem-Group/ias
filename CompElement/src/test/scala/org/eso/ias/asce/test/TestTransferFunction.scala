@@ -17,7 +17,7 @@ class TestTransferFunction extends AnyFlatSpec {
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
   
-  def convert(iasios: Set[InOut[_]]): Set[IASValue[_]] = {
+  def convert(iasios: Set[InOut[?]]): Set[IASValue[?]] = {
     iasios.map( io => io.toIASValue())
   }
   
@@ -49,7 +49,7 @@ class TestTransferFunction extends AnyFlatSpec {
     // Create numOfInputs MPs
     // with a inherited validity RELIABLE 
     var i=0 // To create different types of MPs
-    val inputsMPs: MutableMap[String, InOut[_]] = MutableMap[String, InOut[_]]()
+    val inputsMPs: MutableMap[String, InOut[?]] = MutableMap[String, InOut[?]]()
     for (id <- requiredInputIDs) {
       val mpId = new Identifier(id,IdentifierType.IASIO,Option(compID))
       i=i+1

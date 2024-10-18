@@ -126,7 +126,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
 
   it must "load and initialize the python object" in {
     logger.info("Testing initialize")
-    val inputsMPs: MutableMap[String, InOut[_]] = MutableMap[String, InOut[_]]()
+    val inputsMPs: MutableMap[String, InOut[?]] = MutableMap[String, InOut[?]]()
     inputsMPs+=(mpIdAlarm.id -> mpAlarm)
 
     val javaComp: ComputingElement[Alarm] = new ComputingElement[Alarm](
@@ -144,7 +144,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
 
   it must "run the TF" in {
     logger.info("Testing python eval(...)")
-    val inputsMPs: Map[String, InOut[_]] = Map(mpIdAlarm.id -> mpAlarm)
+    val inputsMPs: Map[String, InOut[?]] = Map(mpIdAlarm.id -> mpAlarm)
 
     val javaComp: ComputingElement[Alarm] = new ComputingElement[Alarm](
       compID,
@@ -181,7 +181,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     logger.info("Test setting of additional properties")
 
     val additionalPros = Map("key1" -> "Value1","key2" -> "Value2","key3" -> "Value3")
-    val inputsMPs: Map[String, InOut[_]] = Map(mpIdAlarm.id -> mpAlarm.updateProps(additionalPros))
+    val inputsMPs: Map[String, InOut[?]] = Map(mpIdAlarm.id -> mpAlarm.updateProps(additionalPros))
 
     val javaComp: ComputingElement[Alarm] = new ComputingElement[Alarm](
       compID,
@@ -212,7 +212,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
 
   it must "support input of type LONG" in {
     logger.info("Testing support of input type LONG")
-    val inputsMPs: Map[String, InOut[_]] = Map(mpIdLong.id -> mpLong.updateValue(Some(25L)))
+    val inputsMPs: Map[String, InOut[?]] = Map(mpIdLong.id -> mpLong.updateValue(Some(25L)))
 
     val javaComp: ComputingElement[java.lang.Long] = new ComputingElement[java.lang.Long](
       compID,
@@ -239,7 +239,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
 
   it must "support input of type INT" in {
     logger.info("Testing support of input type INT")
-    val inputsMPs: Map[String, InOut[_]] = Map(mpIdInt.id -> mpInt.updateValue(Some(25)))
+    val inputsMPs: Map[String, InOut[?]] = Map(mpIdInt.id -> mpInt.updateValue(Some(25)))
 
     val javaComp: ComputingElement[java.lang.Integer] = new ComputingElement[java.lang.Integer](
       compID,
@@ -265,7 +265,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
   }
   it must "support input of type SHORT" in {
     logger.info("Testing support of input type SHORT")
-    val inputsMPs: Map[String, InOut[_]] = Map(mpIdShort.id -> mpShort.updateValue(Some(5: Short)))
+    val inputsMPs: Map[String, InOut[?]] = Map(mpIdShort.id -> mpShort.updateValue(Some(5: Short)))
 
     val javaComp: ComputingElement[java.lang.Short] = new ComputingElement[java.lang.Short](
       compID,
@@ -292,7 +292,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
 
   it must "support input of type BYTE" in {
     logger.info("Testing support of input type BYTE")
-    val inputsMPs: Map[String, InOut[_]] = Map(mpIdByte.id -> mpByte.updateValue(Some(8: Byte)))
+    val inputsMPs: Map[String, InOut[?]] = Map(mpIdByte.id -> mpByte.updateValue(Some(8: Byte)))
 
     val javaComp: ComputingElement[java.lang.Byte] = new ComputingElement[java.lang.Byte](
       compID,
@@ -319,7 +319,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
 
   it must "support input of type DOUBLE" in {
     logger.info("Testing support of input type DOUBLE")
-    val inputsMPs: Map[String, InOut[_]] = Map(mpIdDouble.id -> mpDouble.updateValue(Some(5.5D)))
+    val inputsMPs: Map[String, InOut[?]] = Map(mpIdDouble.id -> mpDouble.updateValue(Some(5.5D)))
 
     val javaComp: ComputingElement[java.lang.Double] = new ComputingElement[java.lang.Double](
       compID,
@@ -346,7 +346,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
 
   it must "support input of type FLOAT" in {
     logger.info("Testing support of input type FLOAT")
-    val inputsMPs: Map[String, InOut[_]] = Map(mpIdFloat.id -> mpFloat.updateValue(Some(3.3f)))
+    val inputsMPs: Map[String, InOut[?]] = Map(mpIdFloat.id -> mpFloat.updateValue(Some(3.3f)))
 
     val javaComp: ComputingElement[java.lang.Float] = new ComputingElement[java.lang.Float](
       compID,
@@ -373,7 +373,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
 
   it must "support input of type BOOLEAN" in {
     logger.info("Testing support of input type BOOLEAN")
-    val inputsMPs: Map[String, InOut[_]] = Map(mpIdBool.id -> mpBool.updateValue(Some(true)))
+    val inputsMPs: Map[String, InOut[?]] = Map(mpIdBool.id -> mpBool.updateValue(Some(true)))
 
     val javaComp: ComputingElement[java.lang.Boolean] = new ComputingElement[java.lang.Boolean](
       compID,
@@ -400,7 +400,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
 
   it must "support input of type CHAR" in {
     logger.info("Testing support of input type CHAR")
-    val inputsMPs: Map[String, InOut[_]] = Map(mpIdChar.id -> mpChar.updateValue(Some('T')))
+    val inputsMPs: Map[String, InOut[?]] = Map(mpIdChar.id -> mpChar.updateValue(Some('T')))
 
     val javaComp: ComputingElement[java.lang.Character] = new ComputingElement[java.lang.Character](
       compID,
@@ -427,7 +427,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
 
   it must "support input of type STRING" in {
     logger.info("Testing support of input type STRING")
-    val inputsMPs: Map[String, InOut[_]] = Map(mpIdString.id -> mpString.updateValue(Some("Test")))
+    val inputsMPs: Map[String, InOut[?]] = Map(mpIdString.id -> mpString.updateValue(Some("Test")))
 
     val javaComp: ComputingElement[java.lang.String] = new ComputingElement[java.lang.String](
       compID,
@@ -454,7 +454,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
 
   it must "support input of type TIMESTAMP" in {
     logger.info("Testing support of input type TIMESTAMP")
-    val inputsMPs: Map[String, InOut[_]] = Map(mpIdTStamp.id -> mpTStamp.updateValue(Some(1234567890L)))
+    val inputsMPs: Map[String, InOut[?]] = Map(mpIdTStamp.id -> mpTStamp.updateValue(Some(1234567890L)))
 
     val javaComp: ComputingElement[java.lang.Long] = new ComputingElement[java.lang.Long](
       compID,
@@ -482,7 +482,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
   it must "support input of type ARRAYOFDOUBLES" in {
     logger.info("Testing support of input type ARRAYOFDOUBLES")
     val inputArray: NumericArray = new NumericArray(List(1.2D,2.3D,3.4D),NumericArray.NumericArrayType.DOUBLE)
-    val inputsMPs: Map[String, InOut[_]] = Map(mpIdArrayDoubles.id -> mpArrayDoubles.updateValue(Some(inputArray)))
+    val inputsMPs: Map[String, InOut[?]] = Map(mpIdArrayDoubles.id -> mpArrayDoubles.updateValue(Some(inputArray)))
 
     val javaComp: ComputingElement[NumericArray] = new ComputingElement[NumericArray](
       compID,
@@ -510,7 +510,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
   it must "support input of type ARRAYOFLONGS" in {
     logger.info("Testing support of input type ARRAYOFLONGS")
     val inputArray: NumericArray = new NumericArray(List(1L,2L,3L),NumericArray.NumericArrayType.LONG)
-    val inputsMPs: Map[String, InOut[_]] = Map(mpIdArrayLongs.id -> mpArrayLongs.updateValue(Some(inputArray)))
+    val inputsMPs: Map[String, InOut[?]] = Map(mpIdArrayLongs.id -> mpArrayLongs.updateValue(Some(inputArray)))
 
     val javaComp: ComputingElement[NumericArray] = new ComputingElement[NumericArray](
       compID,
@@ -537,7 +537,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
 
   it must "support input of type ALARM" in {
     logger.info("Testing support of input type ALARM")
-    val inputsMPs: Map[String, InOut[_]] = Map(mpIdAlarm.id -> mpAlarm.updateValue(Some(Alarm.getInitialAlarmState(Priority.HIGH).set())))
+    val inputsMPs: Map[String, InOut[?]] = Map(mpIdAlarm.id -> mpAlarm.updateValue(Some(Alarm.getInitialAlarmState(Priority.HIGH).set())))
 
     val javaComp: ComputingElement[Alarm] = new ComputingElement[Alarm](
       compID,
@@ -564,7 +564,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
 
   it can "run many times the TF (Stress test)" in {
     logger.info("Performing a stress test with an input type LONG")
-    val inputsMPs: Map[String, InOut[_]] = Map(mpIdLong.id -> mpLong.updateValue(Some(25L)))
+    val inputsMPs: Map[String, InOut[?]] = Map(mpIdLong.id -> mpLong.updateValue(Some(25L)))
 
     val javaComp: ComputingElement[java.lang.Long] = new ComputingElement[java.lang.Long](
       compID,
@@ -580,7 +580,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     // Run many times the TF
     var output: InOut[java.lang.Long] = InOut.asOutput(outId, IASTypes.LONG)
     for (l <- 0L until 15000) {
-      val inputsMPs: Map[String, InOut[_]] = Map(mpIdLong.id -> mpLong.updateValue(Some(l)))
+      val inputsMPs: Map[String, InOut[?]] = Map(mpIdLong.id -> mpLong.updateValue(Some(l)))
       val newOut: Try[InOut[java.lang.Long]] = javaComp.transfer(inputsMPs,compID,output)
       assert(newOut.isSuccess,"Exception got from the TF")
       output= newOut.get

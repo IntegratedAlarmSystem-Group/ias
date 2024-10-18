@@ -39,7 +39,7 @@ class TransferExample(
     println("Scala TransferExample shutting down")
   }
   
-  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
+  override def eval(compInputs: Map[String, IasIO[?]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
     System.out.println("scala TransferExample: evaluating "+compInputs.size+" inputs");
     System.out.println("scala TransferExample for comp. with ID="+compElementId+" and output "+actualOutput.toString());
     for (hio <- compInputs.values) println(hio.toString())
