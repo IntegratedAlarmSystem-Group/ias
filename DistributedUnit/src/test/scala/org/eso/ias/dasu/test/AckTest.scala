@@ -18,6 +18,7 @@ import java.util.concurrent.{ArrayBlockingQueue, BlockingQueue, CountDownLatch, 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.compiletime.uninitialized
 
 /**
  * Test the ACK of an alarm produced by a DASU.
@@ -51,8 +52,7 @@ class AckTest extends AnyFlatSpec with OutputListener with BeforeAndAfterEach {
   val dasuIdentifier = new Identifier(dasuId, IdentifierType.DASU, supervId)
 
   // The DASU to test
-  var dasu: DasuImpl = _
-
+  var dasu: DasuImpl = uninitialized
   // The identifier of the monitored system
   val monSysId = new Identifier("ConverterID", IdentifierType.MONITORED_SOFTWARE_SYSTEM, None)
 
