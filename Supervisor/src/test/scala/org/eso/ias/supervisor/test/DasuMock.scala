@@ -73,7 +73,7 @@ extends Dasu(dasuIdentifier,5,6) {
     inputsOfTheDasu.mkString(", "))
   
   /** The output published when inputs are received */
-  val output: IASValue[_] = {
+  val output: IASValue[?] = {
     val asceId = new Identifier("ASCE_ID_RUNTIME_GENERATED",IdentifierType.ASCE,dasuIdentifier)
     val outputId = new Identifier(dasuDao.getOutput.getId,IdentifierType.IASIO,asceId)
     IASValue.build(
@@ -103,7 +103,7 @@ extends Dasu(dasuIdentifier,5,6) {
    * @param iasios the inputs received
    * @see InputsListener
    */
-  override def inputsReceived(iasios: Iterable[IASValue[_]]): Unit = {
+  override def inputsReceived(iasios: Iterable[IASValue[?]]): Unit = {
     iasios.foreach(iasio => {
       val id = iasio.id
       inputsReceivedFromSuperv.append(id)

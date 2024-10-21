@@ -90,7 +90,7 @@ class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach
      *
      * @param events The IASIOs received in the topic
      */
-  override def iasiosReceived(events: util.Collection[IASValue[_]]): Unit = {
+  override def iasiosReceived(events: util.Collection[IASValue[?]]): Unit = {
     logger.info("{} alarms received", events.size())
     val iasios = CollectionConverters.asScala(events)
     iasios.filter(io => io.valueType==IASTypes.ALARM).foreach(e => {
@@ -163,7 +163,7 @@ class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach
 //  override def afterEach(): Unit = {}
 
   /** Build a [[IASValue]] to send to the supervisor  */
-  def buildIasioToSubmit(identifier: Identifier, value: Double): IASValue[_] = {
+  def buildIasioToSubmit(identifier: Identifier, value: Double): IASValue[?] = {
     val t0 = System.currentTimeMillis() - 100
     IASValue.build(
       value,
