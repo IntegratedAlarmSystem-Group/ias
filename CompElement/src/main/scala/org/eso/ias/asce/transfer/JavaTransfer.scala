@@ -25,7 +25,7 @@ trait JavaTransfer[T] extends ComputingElement[T] {
   /**
    * Flush the scala Map into a Java Map
    */
-  private[this] def flushInputsOnJavaMap(
+  private def flushInputsOnJavaMap(
       inputs: Map[String, InOut[?]]): JavaMap[String, IasIOJ[?]] = {
     val map: JavaMap[String, IasIOJ[?]] = new JavaHashMap[String, IasIOJ[?]]()
     
