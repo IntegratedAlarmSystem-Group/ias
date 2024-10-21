@@ -40,7 +40,7 @@ extends ScalaTransferExecutor[Double] (cEleId,cEleRunningId,validityTimeFrame,pr
    * @return the average of the values of the inputs
    * @see ScalaTransferExecutor#eval
    */
-  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Double]): IasIO[Double] = {
+  override def eval(compInputs: Map[String, IasIO[?]], actualOutput: IasIO[Double]): IasIO[Double] = {
     val inputs = compInputs.values
     val values = inputs.map( input => {
       input.iasType match {
