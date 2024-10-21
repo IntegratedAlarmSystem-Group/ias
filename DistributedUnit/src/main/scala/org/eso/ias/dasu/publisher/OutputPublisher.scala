@@ -39,5 +39,5 @@ trait OutputPublisher {
    * @param iasio the not null IASIO to publish
    * @return a try to let the caller aware of errors publishing
    */
-  def publish(iasio: IASValue[_]): Try[Unit]  
+  def publish(iasio: IASValue[?]): Try[Unit]  
 }

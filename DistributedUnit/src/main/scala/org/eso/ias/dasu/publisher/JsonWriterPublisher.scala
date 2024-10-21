@@ -53,7 +53,7 @@ class JsonWriterPublisher(val writer: Writer) extends OutputPublisher {
    * @param aisio the not null IASIO to publish
    * @return a try to let the caller aware of errors publishing
    */
-  def publish(iasio: IASValue[_]): Try[Unit] = {
+  def publish(iasio: IASValue[?]): Try[Unit] = {
     require(Option(iasio).isDefined)
     Try{ 
       writer.write(jsonSerializer.iasValueToString(iasio)) 

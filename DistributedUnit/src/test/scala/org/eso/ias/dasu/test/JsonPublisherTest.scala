@@ -64,7 +64,7 @@ class JsonPublisherTest extends AnyFlatSpec {
   // The ID of the monitor point in unput (it matched the ID in theJSON file)
   val inputID = new Identifier("Temperature", IdentifierType.IASIO,converterId)
   
-  def buildValue(d: Double): IASValue[_] = {
+  def buildValue(d: Double): IASValue[?] = {
     
     val t0 = System.currentTimeMillis()-100
     
@@ -90,7 +90,7 @@ class JsonPublisherTest extends AnyFlatSpec {
   it must "produce the output when a new set of inputs is notified" in {
     // Start the getting of events in the DASU
     dasu.start()
-    val inputs: Set[IASValue[_]] = Set(buildValue(0))
+    val inputs: Set[IASValue[?]] = Set(buildValue(0))
     // Submit the inputs
     inputsProvider.sendInputs(inputs)
     
