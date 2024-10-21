@@ -8,6 +8,7 @@ import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IASValue
 
 import scala.util.{Failure, Success, Try}
+import scala.compiletime.uninitialized
 
 /**
   * The listener of IasValues to be processed
@@ -28,7 +29,7 @@ abstract class ValueListener(val id: String) {
   protected var iasValuesDaos: Map[String,IasioDao] = Map.empty
 
   /** The configuration of the IAS read from the CDB */
-  protected var iasDao: IasDao = _
+  protected var iasDao: IasDao = uninitialized
 
   /**
     * If one of the method of the listener threw one execption
