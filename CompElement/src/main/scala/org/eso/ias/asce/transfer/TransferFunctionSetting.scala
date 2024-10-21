@@ -48,7 +48,7 @@ class TransferFunctionSetting(
     val className: String,
     val language: TransferFunctionLanguage.Value,
     templateInstance: Option[Int],
-    private[this] val threadFactory: ThreadFactory) {
+    private val threadFactory: ThreadFactory) {
   require(Option[String](className).isDefined && !className.isEmpty)
   require(Option[TransferFunctionLanguage.Value](language).isDefined)
 
@@ -161,7 +161,7 @@ class TransferFunctionSetting(
    *
    * @param executor: The executor to shutdown
    */
-  private[this] def shutdownExecutor(executor: Option[TransferExecutor]): Unit = {
+  private def shutdownExecutor(executor: Option[TransferExecutor]): Unit = {
     require(executor.isDefined)
     try {
       executor.get.shutdown()
@@ -186,7 +186,7 @@ class TransferFunctionSetting(
    * @return The instantiated executor
    *
    */
-  private[this] def instantiateExecutor(
+  private def instantiateExecutor(
     executorClass: Class[?],
     asceId: String,
     asceRunningId: String,
