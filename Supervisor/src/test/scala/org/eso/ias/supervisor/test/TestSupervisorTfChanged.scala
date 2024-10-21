@@ -16,6 +16,7 @@ import java.util
 import java.util.concurrent.TimeUnit
 import java.util.{Collection, Collections}
 import scala.jdk.javaapi.CollectionConverters
+import scala.compiletime.uninitialized
 
 /**
  * Test the functioning of the Supervisor when the TF changed and the TF_CHANGED command arrives.
@@ -56,13 +57,13 @@ class TestSupervisorTfChanged
   val stringProducer = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,commandSenderIdentifier.id)
 
   /** The command sender to send commands to the Supervisor */
-  var commandSender: CommandSender = _
+  var commandSender: CommandSender = uninitialized
 
   /** The producer to sends inputs to the Supervisor */
-  var iasiosProducer: KafkaIasiosProducer = _
+  var iasiosProducer: KafkaIasiosProducer = uninitialized
 
   /** The consumer to get the output of the Supervisor */
-  var iasiosConsumer: KafkaIasiosConsumer = _
+  var iasiosConsumer: KafkaIasiosConsumer = uninitialized
 
   /** The JSON serializer of IASIOs */
   val iasValueSerializer: IasValueStringSerializer = new IasValueJsonSerializer

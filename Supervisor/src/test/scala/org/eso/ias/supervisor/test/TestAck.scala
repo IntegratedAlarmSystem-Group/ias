@@ -15,6 +15,7 @@ import java.util.concurrent.{LinkedBlockingDeque, LinkedBlockingQueue, TimeUnit}
 import java.util.concurrent.atomic.AtomicReference
 import scala.jdk.javaapi.CollectionConverters
 import scala.sys.process.*
+import scala.compiletime.uninitialized
 
 /**
  * Test the execution of the ACK command in the Supervisor.
@@ -57,7 +58,7 @@ class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach
   val cmdSenderId = new Identifier("SupervAckTest", IdentifierType.CLIENT)
 
   /** The supervisor, external process */
-  var supervisorProc: Process = _
+  var supervisorProc: Process = uninitialized
 
   /** The shared kafka string producer */
   val  stringProducer: SimpleStringProducer = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, cmdSenderId.fullRunningID)
