@@ -112,7 +112,7 @@ abstract class ValueListener(val id: String) {
     *
     * @param iasValues the values read from the BSDB
     */
-  final def processIasValues(iasValues: List[IASValue[_]]): String = {
+  final def processIasValues(iasValues: List[IASValue[?]]): String = {
     assert(Option(iasValues).isDefined,"Invalid empty list of values to process")
     if (initialized.get && !closed.get() && iasValues.nonEmpty && !broken.get()) {
       Try(process(iasValues)) match {
@@ -131,7 +131,7 @@ abstract class ValueListener(val id: String) {
     *
     * @param iasValues the values read from the BSDB
     */
-  protected def process(iasValues: List[IASValue[_]]): Unit
+  protected def process(iasValues: List[IASValue[?]]): Unit
 }
 
 object ValueListener {

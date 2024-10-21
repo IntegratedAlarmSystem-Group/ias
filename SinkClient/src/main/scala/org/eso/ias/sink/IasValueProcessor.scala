@@ -153,7 +153,7 @@ with AutoCloseable {
     * Values received from the BSDB are saved in this list
     * until being processed by the listeners
     */
-  val receivedIasValues: ListBuffer[IASValue[_]] = ListBuffer[IASValue[_]]()
+  val receivedIasValues: ListBuffer[IASValue[?]] = ListBuffer[IASValue[?]]()
 
   /**
     * If the size of the buffer is greater than bufferSizeThreshold
@@ -488,7 +488,7 @@ with AutoCloseable {
     *
     * @param iasios the IasValues read from the BSDB
     */
-  override def inputsReceived(iasios: Iterable[IASValue[_]]): Unit = synchronized {
+  override def inputsReceived(iasios: Iterable[IASValue[?]]): Unit = synchronized {
     assert(Option(iasios).isDefined)
     // Is there at least one processor alive?
     if (!isThereActiveListener) {
