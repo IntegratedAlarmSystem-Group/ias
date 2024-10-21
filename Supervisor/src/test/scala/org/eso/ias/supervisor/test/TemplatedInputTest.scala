@@ -64,7 +64,7 @@ class TemplatedInputTest extends AnyFlatSpec {
     /**
      * Events i.e. outputs received
      */
-    val outputEventsreceived = new ArrayBuffer[IASValue[_]]
+    val outputEventsreceived = new ArrayBuffer[IASValue[?]]
 
     /**
      * Stringified outputs received
@@ -83,7 +83,7 @@ class TemplatedInputTest extends AnyFlatSpec {
       /**
        * @see OutputListener
        */
-      def outputEvent(output: IASValue[_]): Unit = {
+      def outputEvent(output: IASValue[?]): Unit = {
         outputEventsreceived.append(output)
       }
     }
@@ -197,7 +197,7 @@ class TemplatedInputTest extends AnyFlatSpec {
       null,
       null,null)
     
-    val inputs:  Set[IASValue[_]] = Set(nonTemplatedValue,templatedValue,templInstValue1,templInstValue2)
+    val inputs:  Set[IASValue[?]] = Set(nonTemplatedValue,templatedValue,templInstValue1,templInstValue2)
     
     // Sends the input to the Supervisor and the DASU
     inputsProvider.sendInputs(inputs)
