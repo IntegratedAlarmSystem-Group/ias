@@ -71,7 +71,7 @@ class RegExpToAlarm (cEleId: String, cEleRunningId: String, validityTimeFrame: L
     *
     * @return the computed output of the ASCE
     */
-  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
+  override def eval(compInputs: Map[String, IasIO[?]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
     val input = compInputs.values.head
 
     val value = input.value.get.asInstanceOf[String]

@@ -49,7 +49,7 @@ extends ScalaTransferExecutor[Long](cEleId,cEleRunningId,validityTimeFrame,props
    * eval sums the values of all the IasIO in the map, getting them 
    * with their IDs
    */
-  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Long]): IasIO[Long] = {
+  override def eval(compInputs: Map[String, IasIO[?]], actualOutput: IasIO[Long]): IasIO[Long] = {
     
     val nonTempInOut = getValue(compInputs, nontTemplatedId)
     assert(nonTempInOut.isDefined)

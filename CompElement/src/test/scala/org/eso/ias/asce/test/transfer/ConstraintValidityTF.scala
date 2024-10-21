@@ -45,7 +45,7 @@ class ConstraintValidityTF (
     logger.info("Shutting down")
   }
   
-  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
+  override def eval(compInputs: Map[String, IasIO[?]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
     logger.info("Evaluating {} inputs for comp. with ID {} and output {}",
         compInputs.size.toString(),
         compElementId,

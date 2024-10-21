@@ -90,7 +90,7 @@ import scala.util.{Failure, Success, Try}
 abstract class ComputingElement[T](
     val asceIdentifier: Identifier,
     private var _output: InOut[T],
-    initialInputs: Set[InOut[_]],
+    initialInputs: Set[InOut[?]],
     val tfSetting: TransferFunctionSetting,
     validityThresholdSecs: Int,
     val props: Properties) {
@@ -156,7 +156,7 @@ abstract class ComputingElement[T](
    * When the DASU sends the last received IASIOs, this map is
    * updated with the new values and a new output is produced
    */
-  val inputs: MutableMap[String, InOut[_]] = MutableMap()++initialInputs.map(iasio => iasio.id.id -> iasio)
+  val inputs: MutableMap[String, InOut[?]] = MutableMap()++initialInputs.map(iasio => iasio.id.id -> iasio)
   // Are there duplicate IDs?
   require(initialInputs.size==inputs.keySet.size,"The initial set of inputs contain duplicates!")
   
@@ -220,7 +220,7 @@ abstract class ComputingElement[T](
    * @see transfer(...)
    */
   private def transfer(
-      immutableMapOfInputs: Map[String, InOut[_]], 
+      immutableMapOfInputs: Map[String, InOut[?]], 
       actualOutput: InOut[T],
       actualState: ComputingElementState): (InOut[T], ComputingElementState) = {
     
@@ -302,7 +302,7 @@ abstract class ComputingElement[T](
    * @return The new output
    */
   def transfer(
-      inputs: Map[String, InOut[_]], 
+      inputs: Map[String, InOut[?]], 
       id: Identifier,
       actualOutput: InOut[T]) : Try[InOut[T]]
 
@@ -409,7 +409,7 @@ abstract class ComputingElement[T](
    * @param inputs the inputs of the ASCE 
    * @return the validity from the inputs of the IASIO  
    */
-  private def getMinValidityOfInputs(iasio: InOut[T], inputs: Iterable[InOut[_]]): Try[Validity] = {
+  private def getMinValidityOfInputs(iasio: InOut[T], inputs: Iterable[InOut[?]]): Try[Validity] = {
     require(Option(iasio).isDefined)
     require(Option(inputs).isDefined)
     
@@ -418,7 +418,7 @@ abstract class ComputingElement[T](
     
     // If there are constraints, discard the inputs whose ID 
     // is not contained in the constraints
-    val selectedInputsByConstraint: Set[InOut[_]] =
+    val selectedInputsByConstraint: Set[InOut[?]] =
       iasio.validityConstraint.map( set => inputs.filter(input => set.contains(input.id.id)))
       .getOrElse(inputs).toSet
     
@@ -450,7 +450,7 @@ abstract class ComputingElement[T](
    *            It is None if at least one of the inputs has not yet been initialized
    *         2) the state of the ASCE
    */
-  def update(iasValues: Set[IASValue[_]]): (Option[InOut[T]], AsceStates.State) = synchronized {
+  def update(iasValues: Set[IASValue[?]]): (Option[InOut[T]], AsceStates.State) = synchronized {
     require(Option(iasValues).isDefined,"Set of inputs not defined")
     
     // Check if the passed set of IASIOs contains at least one IASIO that is 
@@ -581,7 +581,7 @@ object ComputingElement {
         new CompEleThreadFactory(asceId.fullRunningID))
     
     // Builds the initial set of inputs: all the InOut at the beginning have a null value
-    val initialIasios: Set[InOut[_]] = inputsIasioDaos.map(iDao => 
+    val initialIasios: Set[InOut[?]] = inputsIasioDaos.map(iDao => 
       InOut.asInput(
           new Identifier(iDao.getId,IdentifierType.IASIO,None),
           IASTypes.fromIasioDaoType(iDao.getIasType)))

@@ -10,6 +10,7 @@ import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatest.flatspec.AnyFlatSpec
 import scala.collection.mutable.ListBuffer
 import scala.util.Try
+import scala.compiletime.uninitialized
 
 /**
  * Test the HB kafka publisher and consumer
@@ -32,15 +33,15 @@ class TestKafkaPublisher extends AnyFlatSpec with HbListener with BeforeAndAfter
   val supervHeartbeat = Heartbeat(HeartbeatProducerType.SUPERVISOR,supervId)
 
   /** The consumer receiving events from the HB topic */
-  var hbKafkaConsumer: HbKafkaConsumer = _
+  var hbKafkaConsumer: HbKafkaConsumer = uninitialized
 
   private val buffer: ListBuffer[HbMsg] = new ListBuffer[HbMsg]
 
   /** The stirng producer used by the  HbKafkaProducer */
-  var stringProducer: SimpleStringProducer = _
+  var stringProducer: SimpleStringProducer = uninitialized
 
   /** The kafka producer to test */
-  var kProd: HbKafkaProducer = _
+  var kProd: HbKafkaProducer = uninitialized
 
   def hbReceived(hbMsg: HbMsg): Unit = {
     require(Option(hbMsg).isDefined)

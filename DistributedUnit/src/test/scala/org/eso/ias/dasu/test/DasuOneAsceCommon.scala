@@ -56,7 +56,7 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, validityThreshold: Int
   val inputID = new Identifier("Temperature", IdentifierType.IASIO,converterId)
   
   /** Notifies about a new output produced by the DASU */
-  override def outputEvent(output: IASValue[_]): Unit = {
+  override def outputEvent(output: IASValue[?]): Unit = {
     logger.info("Output received [{}]", output.id)
     outputValuesReceived.append(output)
   }
@@ -69,7 +69,7 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, validityThreshold: Int
   /**
    * The output values published by the DASU 
    */
-  val outputValuesReceived = new ArrayBuffer[IASValue[_]]()
+  val outputValuesReceived = new ArrayBuffer[IASValue[?]]()
   
   /** Notifies about a new output produced by the DASU 
    *  formatted as String
@@ -91,7 +91,7 @@ class DasuOneAsceCommon(autoRefreshTimeInterval: Integer, validityThreshold: Int
   }
   
   
-  def buildValue(d: Double): IASValue[_] = {
+  def buildValue(d: Double): IASValue[?] = {
     
     val t0 = System.currentTimeMillis()-100
     

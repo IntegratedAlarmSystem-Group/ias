@@ -120,7 +120,7 @@ class AntPadInhibitor(asceId: String, asceRunningId: String, validityTimeFrame:L
     *
     * @return the computed output of the ASCE
     */
-  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
+  override def eval(compInputs: Map[String, IasIO[?]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
     val antPadMp= getValue(compInputs,AntPadInhibitor.AntennasToPadsID)
     assert(antPadMp.isDefined,AntPadInhibitor.AntennasToPadsID+" inputs not defined!")
 
@@ -129,7 +129,7 @@ class AntPadInhibitor(asceId: String, asceRunningId: String, validityTimeFrame:L
     val antennasInPads = affectedAntennas(antPadMPValue)
     val foundAntennaInPad = antennasInPads.nonEmpty
 
-    val alarmInput: IasIO[_] = compInputs.values.filter(_.iasType==IASTypes.ALARM).head
+    val alarmInput: IasIO[?] = compInputs.values.filter(_.iasType==IASTypes.ALARM).head
 
     val actualAlarm: Alarm = actualOutput.value.getOrElse(Alarm.getInitialAlarmState)
 

@@ -1,6 +1,7 @@
 package org.eso.ias.transfer.test.utilitymodule
 
 import java.util.Properties
+import scala.compiletime.uninitialized
 
 import org.eso.ias.asce.exceptions.PropsMisconfiguredException
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo}
@@ -47,7 +48,7 @@ class AlarmByBitTest extends AnyFlatSpec with BeforeAndAfterEach {
   val inputInfos = Set(new IasioInfo(statusWordId,IASTypes.STRING))
 
   /** The TF to test */
-  var bitTransfer: UMAlarmByBit = _
+  var bitTransfer: UMAlarmByBit = uninitialized
 
   /** The properties to pass to the TF */
   val props: Properties = new Properties()

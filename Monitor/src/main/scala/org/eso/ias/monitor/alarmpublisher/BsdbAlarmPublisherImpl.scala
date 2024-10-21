@@ -24,7 +24,7 @@ class BsdbAlarmPublisherImpl(val stringProducer: SimpleStringProducer) extends  
   override def tearDown(): Unit = producer.tearDown()
 
   /** Send the passed values to the BSDB */
-  override def push(iasios: Array[IASValue[_]]): Unit = {
+  override def push(iasios: Array[IASValue[?]]): Unit = {
     require(Option(iasios).isDefined)
     if (iasios.nonEmpty) {
       producer.push(CollectionConverters.asJavaCollection(iasios))

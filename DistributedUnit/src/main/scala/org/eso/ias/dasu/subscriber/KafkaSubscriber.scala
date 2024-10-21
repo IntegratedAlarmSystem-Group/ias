@@ -49,7 +49,7 @@ extends IasioListener with InputSubscriber {
 	  * @param iasValues The values read from the BSDB
 	  * @see IasiosListener
 	 */
-  override def iasiosReceived(iasValues: Collection[IASValue[_]]): Unit = {
+  override def iasiosReceived(iasValues: Collection[IASValue[?]]): Unit = {
     assert(Option(iasValues).isDefined)
     val receivedIasios = CollectionConverters.asScala(iasValues)
      KafkaSubscriber.logger.debug(("Subscriber of [{}] receeved {} events "),consumerId,receivedIasios.size)

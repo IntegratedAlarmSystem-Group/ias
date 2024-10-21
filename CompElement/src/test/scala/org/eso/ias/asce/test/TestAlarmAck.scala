@@ -32,7 +32,7 @@ class TestAlarmAck extends AnyFlatSpec {
   val inputMP = InOut.asInput(mpIIdentifier, IASTypes.LONG)
 
   // The input
-  val initialInputs: Set[InOut[_]] = Set(inputMP)
+  val initialInputs: Set[InOut[?]] = Set(inputMP)
 
   // Build the IASIO in output
   val output = InOut.asOutput(
@@ -51,7 +51,7 @@ class TestAlarmAck extends AnyFlatSpec {
   props.put(MinMaxThresholdTF.lowOnPropName, "-20")
   props.put(MinMaxThresholdTF.alarmPriorityPropName, Priority.HIGH.toString)
 
-  def convert(iasios: Set[InOut[_]]): Set[IASValue[_]] = {
+  def convert(iasios: Set[InOut[?]]): Set[IASValue[?]] = {
     iasios.map(io => io.toIASValue())
   }
 

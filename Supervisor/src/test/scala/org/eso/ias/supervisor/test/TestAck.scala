@@ -15,6 +15,7 @@ import java.util.concurrent.{LinkedBlockingDeque, LinkedBlockingQueue, TimeUnit}
 import java.util.concurrent.atomic.AtomicReference
 import scala.jdk.javaapi.CollectionConverters
 import scala.sys.process.*
+import scala.compiletime.uninitialized
 
 /**
  * Test the execution of the ACK command in the Supervisor.
@@ -57,7 +58,7 @@ class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach
   val cmdSenderId = new Identifier("SupervAckTest", IdentifierType.CLIENT)
 
   /** The supervisor, external process */
-  var supervisorProc: Process = _
+  var supervisorProc: Process = uninitialized
 
   /** The shared kafka string producer */
   val  stringProducer: SimpleStringProducer = new SimpleStringProducer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, cmdSenderId.fullRunningID)
@@ -90,7 +91,7 @@ class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach
      *
      * @param events The IASIOs received in the topic
      */
-  override def iasiosReceived(events: util.Collection[IASValue[_]]): Unit = {
+  override def iasiosReceived(events: util.Collection[IASValue[?]]): Unit = {
     logger.info("{} alarms received", events.size())
     val iasios = CollectionConverters.asScala(events)
     iasios.filter(io => io.valueType==IASTypes.ALARM).foreach(e => {
@@ -163,7 +164,7 @@ class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach
 //  override def afterEach(): Unit = {}
 
   /** Build a [[IASValue]] to send to the supervisor  */
-  def buildIasioToSubmit(identifier: Identifier, value: Double): IASValue[_] = {
+  def buildIasioToSubmit(identifier: Identifier, value: Double): IASValue[?] = {
     val t0 = System.currentTimeMillis() - 100
     IASValue.build(
       value,

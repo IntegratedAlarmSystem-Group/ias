@@ -138,8 +138,8 @@ class CalcConversionTime(servers: String)
   /**
     * Process the IASIOs consumed from the core topic to extract times
     */
-  override def iasiosReceived(events: util.Collection[IASValue[_]]): Unit = {
-    val iasios: Iterable[IASValue[_]] = CollectionConverters.asScala(events)
+  override def iasiosReceived(events: util.Collection[IASValue[?]]): Unit = {
+    val iasios: Iterable[IASValue[?]] = CollectionConverters.asScala(events)
 
     // Discard IASIOs produced by DASUs
     val iasiosFromPlugin = iasios.filter( iasValue =>

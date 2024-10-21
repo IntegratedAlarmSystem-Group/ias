@@ -54,7 +54,7 @@ class HbEngine private[heartbeat] (
   private val props: MutableMap[String,String] = MutableMap.empty
   
   /** The periodic feature that push the heartbeat */
-  private val feature = new AtomicReference[ScheduledFuture[_]]()
+  private val feature = new AtomicReference[ScheduledFuture[?]]()
 
   /**
     * @return true if the HB has been started; false otherwise

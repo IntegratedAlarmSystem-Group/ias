@@ -41,7 +41,7 @@ class TestMultiplicityTF extends AnyFlatSpec with BeforeAndAfterEach {
   val output: InOut[Alarm] = InOut.asOutput(outId,IASTypes.ALARM)
     
   /** The Map of IASValues for updating the inputs to the ASCE */
-  val inputsMPs: Set[InOut[_]]  = {
+  val inputsMPs: Set[InOut[?]]  = {
     val v = for (i <- 1 to 5) yield {
     InOut.asInput(
         new Identifier("INPUT-HIO-ID#"+i, IdentifierType.IASIO,compID),
@@ -130,14 +130,14 @@ class TestMultiplicityTF extends AnyFlatSpec with BeforeAndAfterEach {
    *
    * @param n desired number of activated alarms
    */
-  def activate(n: Integer): Set[IASValue[_]] = {
+  def activate(n: Integer): Set[IASValue[?]] = {
     require(n>0)
     val inputsMPsList = inputsMPs.toList
     val list = for (i <- inputsMPsList.indices) yield {
       if (i<=n-1) inputsMPsList(i).updateValue(Some(Alarm.getInitialAlarmState(Priority.HIGH).set())).updateProdTStamp(System.currentTimeMillis()).toIASValue()
       else inputsMPsList(i).updateValue(Some(Alarm.getInitialAlarmState())).updateProdTStamp(System.currentTimeMillis()).toIASValue()
     }
-    val ret: Set[IASValue[_]] = list.toSet
+    val ret: Set[IASValue[?]] = list.toSet
     assert(ret.size==inputsMPs.size)
     assert(ret.count(value => value.value.asInstanceOf[Alarm].isSet)==n)
     ret
@@ -151,7 +151,7 @@ class TestMultiplicityTF extends AnyFlatSpec with BeforeAndAfterEach {
     * @param validity the requested validity
     * @return True iif the IASValue with the given id has a validity equal to validity
     */
-  def checkValidity(values: Set[IASValue[_]], id: String, validity: IasValidity): Boolean = {
+  def checkValidity(values: Set[IASValue[?]], id: String, validity: IasValidity): Boolean = {
     val set: Set[IASValue[?]]=values.filter(_.id==id)
     assert(set.size==1)
     set.forall(_.iasValidity==validity)
@@ -166,7 +166,7 @@ class TestMultiplicityTF extends AnyFlatSpec with BeforeAndAfterEach {
     * @param validity the validity to set
     * @return a IASValue with the validity set 
     */
-  def setValidity(iasValue: IASValue[_], validity: IasValidity): IASValue[_] = {
+  def setValidity(iasValue: IASValue[?], validity: IasValidity): IASValue[?] = {
     if (iasValue.iasValidity==validity) return iasValue
     val value = iasValue.asInstanceOf[IASValue[Alarm]]
     return new IASValue[Alarm](

@@ -23,19 +23,19 @@ class CircularBuffer[T: ClassTag](maxBufferSize: Int) {
 
   /**
    * The pointer to read items from.
-   * It points to the oldest item in the buffer. Hoewever the read ointer is valid
+   * It points to the oldest item in the buffer. Hoewever readPointer is valid
    * only if there are items in the buffer
    */
-  private[this] var readPointer: Int = 0
+  private var readPointer: Int = 0
 
   /** The pointer to write items into */
-  private[this] var writePointer: Int = 0
+  private var writePointer: Int = 0
 
   /** The array that backs up the circular buffer */
-  private[this] val array: Array[T] = Array.ofDim[T](maxBufferSize)
+  private val array: Array[T] = Array.ofDim[T](maxBufferSize)
 
   /** The number of items in the buffer */
-  private[this] var itemsInBuffer: Int = 0
+  private var itemsInBuffer: Int = 0
 
   /** True if the buffer is empty; false otherwise */
   def isEmpty(): Boolean = synchronized { itemsInBuffer==0 }

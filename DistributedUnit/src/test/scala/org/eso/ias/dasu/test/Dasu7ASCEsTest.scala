@@ -64,7 +64,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
   
     /** Notifies about a new output produced by the DASU */
     class TestListener extends OutputListener {
-      override def outputEvent(output: IASValue[_]): Unit = {
+      override def outputEvent(output: IASValue[?]): Unit = {
         logger.info("Event received from DASU: [{}]",output.id)
         eventsReceived.incrementAndGet();
         iasValuesReceived.append(output)
@@ -124,18 +124,18 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
     /** The number of JSON strings received */
     val strsReceived = new AtomicInteger(0)
 
-    val iasValuesReceived = new ListBuffer[IASValue[_]]
+    val iasValuesReceived = new ListBuffer[IASValue[?]]
   
     def buildValue(
       id: String, 
       fullRunningID: String, 
-      d: Double): IASValue[_] = buildValue(id, fullRunningID, d, RELIABLE)
+      d: Double): IASValue[?] = buildValue(id, fullRunningID, d, RELIABLE)
   
     def buildValue(
       id: String, 
       fullRunningID: String, 
       d: Double,
-      validity: IasValidity): IASValue[_] = {
+      validity: IasValidity): IASValue[?] = {
     
         val t0 = System.currentTimeMillis()-100
     
@@ -191,7 +191,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
     iasValuesReceived.clear()
     eventsReceived.set(0)
     logger.info("Submitting a set with only one temp {} in nominal state",inputTemperature1ID.id)
-    val inputs: Set[IASValue[_]] = Set(buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,0))
+    val inputs: Set[IASValue[?]] = Set(buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,0))
     // Submit the inputs but we do not expect any output before
     // the DASU receives all the inputs
     inputsProvider.sendInputs(inputs)
@@ -214,7 +214,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
     
     // Submit the other inputs and then we expect the DASU to
     // produce the output
-    val setOfInputs: Set[IASValue[_]] = {
+    val setOfInputs: Set[IASValue[?]] = {
       val v1=buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,5)
       val v2=buildValue(inputTemperature2ID.id, inputTemperature2ID.fullRunningID,6)
       val v3=buildValue(inputTemperature3ID.id, inputTemperature3ID.fullRunningID,7)
@@ -233,7 +233,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
     Thread.sleep(2*dasu.throttling)
     
     //Submit a new set of inputs to trigger the alarm in the output of the DASU
-    val setOfInputs2: Set[IASValue[_]] = {
+    val setOfInputs2: Set[IASValue[?]] = {
       val v1=buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,100)
       val v2=buildValue(inputTemperature2ID.id, inputTemperature2ID.fullRunningID,100)
       val v3=buildValue(inputTemperature3ID.id, inputTemperature3ID.fullRunningID,100)
@@ -258,15 +258,15 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
     iasValuesReceived.clear()
     eventsReceived.set(0)
     logger.info("Quickly submits sets of inputs")
-    val inputs: Set[IASValue[_]] = Set(buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,0))
-    val setOfInputs1: Set[IASValue[_]] = {
+    val inputs: Set[IASValue[?]] = Set(buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,0))
+    val setOfInputs1: Set[IASValue[?]] = {
       val v1=buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,5)
       val v2=buildValue(inputTemperature2ID.id, inputTemperature2ID.fullRunningID,6)
       val v3=buildValue(inputTemperature3ID.id, inputTemperature3ID.fullRunningID,7)
       val v4=buildValue(inputTemperature4ID.id, inputTemperature4ID.fullRunningID,8)
       Set(v1,v2,v3,v4)
     }
-    val setOfInputs2: Set[IASValue[_]] = {
+    val setOfInputs2: Set[IASValue[?]] = {
       val v1=buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,100)
       val v2=buildValue(inputTemperature2ID.id, inputTemperature2ID.fullRunningID,100)
       val v3=buildValue(inputTemperature3ID.id, inputTemperature3ID.fullRunningID,100)
@@ -310,8 +310,8 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
     dasu.enableAutoRefreshOfOutput(false)
     
     logger.info("Submits a set of RELIABLE inputs")
-    val inputs: Set[IASValue[_]] = Set(buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,0))
-    val setOfInputs1 = Set[IASValue[_]](
+    val inputs: Set[IASValue[?]] = Set(buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,0))
+    val setOfInputs1 = Set[IASValue[?]](
       buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,5),
       buildValue(inputTemperature2ID.id, inputTemperature2ID.fullRunningID,6),
       buildValue(inputTemperature3ID.id, inputTemperature3ID.fullRunningID,7),
@@ -326,7 +326,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
     
     iasValuesReceived.clear()
     eventsReceived.set(0)
-    val setOfInputs2 = Set[IASValue[_]](buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,5,UNRELIABLE))
+    val setOfInputs2 = Set[IASValue[?]](buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,5,UNRELIABLE))
     
     inputsProvider.sendInputs(setOfInputs2)
     // wait to avoid the throttling to engage
@@ -337,7 +337,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
     assert(iasValuesReceived.size==0)
 
     // Invalidate more inputs to trigger a change of validity of the output
-    val setOfInputs3 = Set[IASValue[_]](
+    val setOfInputs3 = Set[IASValue[?]](
       buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,5,UNRELIABLE),
       buildValue(inputTemperature2ID.id, inputTemperature2ID.fullRunningID,5,UNRELIABLE),
       buildValue(inputTemperature3ID.id, inputTemperature3ID.fullRunningID,5,UNRELIABLE)
@@ -358,7 +358,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
     // Avoid auto refresh to engage
     dasu.enableAutoRefreshOfOutput(true)
     
-    val setOfInputs1: Set[IASValue[_]] = {
+    val setOfInputs1: Set[IASValue[?]] = {
       val v1=buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,5)
       val v2=buildValue(inputTemperature2ID.id, inputTemperature2ID.fullRunningID,6)
       val v3=buildValue(inputTemperature3ID.id, inputTemperature3ID.fullRunningID,7)
@@ -372,7 +372,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
     assert(iasValuesReceived.size==1)
     assert(iasValuesReceived.head.iasValidity == RELIABLE)
     
-    val setOfInputs2: Set[IASValue[_]] = {
+    val setOfInputs2: Set[IASValue[?]] = {
       val v1=buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,8)
       val v2=buildValue(inputTemperature2ID.id, inputTemperature2ID.fullRunningID,23)
       val v3=buildValue(inputTemperature3ID.id, inputTemperature3ID.fullRunningID,11)

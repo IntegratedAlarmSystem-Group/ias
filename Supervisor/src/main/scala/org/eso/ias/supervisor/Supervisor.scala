@@ -378,7 +378,7 @@ class Supervisor private (
    *  
    *  @param iasios the inputs received
    */
-  override def inputsReceived(iasios: Iterable[IASValue[_]]): Unit = {
+  override def inputsReceived(iasios: Iterable[IASValue[?]]): Unit = {
     
     val receivedIds = iasios.map(i => i.id)
     statsLogger.numberOfInputsReceived(receivedIds.size)
@@ -451,7 +451,7 @@ class Supervisor private (
    * @param iasio the not IASIO to publish
    * @return a try to let the caller aware of errors publishing
    */
-  def publish(iasio: IASValue[_]): Try[Unit] = outputPublisher.publish(iasio)
+  def publish(iasio: IASValue[?]): Try[Unit] = outputPublisher.publish(iasio)
   
   /** 
    *  The Supervisor has its own subscriber so this initialization,

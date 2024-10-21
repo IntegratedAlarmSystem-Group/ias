@@ -44,7 +44,7 @@ class TestMinMaxPyTF extends AnyFlatSpec with BeforeAndAfterAll {
   val inputID = "MPointID"
   val mpId = new Identifier(inputID,IdentifierType.IASIO,Option(compID))
   val mp = InOut.asInput(mpId,IASTypes.LONG).updateValue(Some(1L)).updateProdTStamp(System.currentTimeMillis())
-  val inputsMPs: MutableMap[String, InOut[_]] = MutableMap[String, InOut[_]]()
+  val inputsMPs: MutableMap[String, InOut[?]] = MutableMap[String, InOut[?]]()
   inputsMPs+=(mp.id.id -> mp)
 
   // The threshold to assess the validity from the arrival time of the input

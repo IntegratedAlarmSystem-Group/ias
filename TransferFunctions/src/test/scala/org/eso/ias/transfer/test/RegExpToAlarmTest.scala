@@ -72,21 +72,21 @@ class RegExpToAlarmTest extends AnyFlatSpec
 
     val tf = new RegExpToAlarm(compID.id, compID.fullRunningID, validityTimeFrame, props)
 
-    val i: InOut[_] = inputInOut.updateValue(Some("aAlebbbb"))
-    val inputMap: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i))
+    val i: InOut[?] = inputInOut.updateValue(Some("aAlebbbb"))
+    val inputMap: Map[String,IasIO[?]] = Map(inputId-> new IasIO(i))
     val ret = tf.eval(inputMap,out)
     assert(ret.value.isDefined)
     assert(ret.value.get.isSet)
     assert(ret.value.get.priority==Priority.getDefaultPriority)
 
     val i2 = i.updateValue(Some("Ale"))
-    val inputMap2: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i2))
+    val inputMap2: Map[String,IasIO[?]] = Map(inputId-> new IasIO(i2))
     val ret2 = tf.eval(inputMap2,out)
     assert(ret2.value.isDefined)
     assert(ret2.value.get.isCleared)
 
     val i3 = i2.updateValue(Some("aaaaAlebbbbb"))
-    val inputMap3: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i3))
+    val inputMap3: Map[String,IasIO[?]] = Map(inputId-> new IasIO(i3))
     val ret3 = tf.eval(inputMap3,out)
     assert(ret3.value.isDefined)
     assert(ret3.value.get.isSet)
@@ -100,20 +100,20 @@ class RegExpToAlarmTest extends AnyFlatSpec
 
     val tf = new RegExpToAlarm(compID.id, compID.fullRunningID, validityTimeFrame, props)
 
-    val i: InOut[_] = inputInOut.updateValue(Some("aAlebbbb"))
-    val inputMap: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i))
+    val i: InOut[?] = inputInOut.updateValue(Some("aAlebbbb"))
+    val inputMap: Map[String,IasIO[?]] = Map(inputId-> new IasIO(i))
     val ret = tf.eval(inputMap,out)
     assert(ret.value.isDefined)
     assert(ret.value.get.isCleared)
 
     val i2 = i.updateValue(Some("Ale"))
-    val inputMap2: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i2))
+    val inputMap2: Map[String,IasIO[?]] = Map(inputId-> new IasIO(i2))
     val ret2 = tf.eval(inputMap2,out)
     assert(ret2.value.isDefined)
     assert(ret2.value.get.isSet)
 
     val i3 = i2.updateValue(Some("aaaaAlebbbbb"))
-    val inputMap3: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i3))
+    val inputMap3: Map[String,IasIO[?]] = Map(inputId-> new IasIO(i3))
     val ret3 = tf.eval(inputMap3,out)
     assert(ret3.value.isDefined)
     assert(ret3.value.get.isCleared)
@@ -127,8 +127,8 @@ class RegExpToAlarmTest extends AnyFlatSpec
     val additionalProps: Map[String, String] = Map("Prop1"-> "Value1", "Prop12"-> "Value2")
 
     val tf = new RegExpToAlarm(compID.id, compID.fullRunningID, validityTimeFrame, props)
-    val i: InOut[_] = inputInOut.updateValue(Some("aAle")).updateMode(OperationalMode.MALFUNCTIONING).updateProps(additionalProps)
-    val inputMap: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i))
+    val i: InOut[?] = inputInOut.updateValue(Some("aAle")).updateMode(OperationalMode.MALFUNCTIONING).updateProps(additionalProps)
+    val inputMap: Map[String,IasIO[?]] = Map(inputId-> new IasIO(i))
     val ret = tf.eval(inputMap,out)
     assert(ret.value.isDefined)
     assert(ret.value.get.isSet)

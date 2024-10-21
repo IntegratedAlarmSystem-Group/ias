@@ -31,7 +31,7 @@ class SupervisorTest extends AnyFlatSpec {
     /**
      * Events i.e. outputs received
      */
-    val outputEventsreceived = new ArrayBuffer[IASValue[_]]
+    val outputEventsreceived = new ArrayBuffer[IASValue[?]]
 
     /**
      * Stringified outputs received
@@ -49,7 +49,7 @@ class SupervisorTest extends AnyFlatSpec {
       /**
        * @see OutputListener
        */
-      def outputEvent(output: IASValue[_]): Unit = {
+      def outputEvent(output: IASValue[?]): Unit = {
         outputEventsreceived.append(output)
       }
     }

@@ -44,7 +44,7 @@ class TestMinMaxThreshold extends AnyFlatSpec {
     }
   }
   
-  def withScalaComp(testCode: (ComputingElement[Alarm], Set[InOut[_]]) => Any): Unit = {
+  def withScalaComp(testCode: (ComputingElement[Alarm], Set[InOut[?]]) => Any): Unit = {
     val commons = new CommonCompBuilder(
         "TestMinMAxThreshold-DASU-ID",
         "TestMinMAxThreshold-ASCE-ID",
@@ -82,7 +82,7 @@ class TestMinMaxThreshold extends AnyFlatSpec {
     }
   }
   
-  def withJavaComp(testCode: (ComputingElement[Alarm], Set[InOut[_]]) => Any): Unit = {
+  def withJavaComp(testCode: (ComputingElement[Alarm], Set[InOut[?]]) => Any): Unit = {
     val commons = new CommonCompBuilder(
         "TestMinMAxThreshold-DASU-ID",
         "TestMinMAxThreshold-ASCE-ID",

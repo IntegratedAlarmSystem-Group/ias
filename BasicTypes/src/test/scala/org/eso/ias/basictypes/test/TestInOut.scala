@@ -203,7 +203,7 @@ class TestInOut extends AnyFlatSpec {
     assert(inOut.fromIasValueValidity.get.iasValidity==iasValue.iasValidity)
 
     // Update a IASIO with no value with a passed IASValue
-    val iasio: InOut[_] = InOut.asOutput(iasioId, IASTypes.LONG)
+    val iasio: InOut[?] = InOut.asOutput(iasioId, IASTypes.LONG)
     val newiasIo = iasio.update(iasValue)
     assert(newiasIo.iasType == iasValue.valueType)
     assert(newiasIo.value.isDefined)

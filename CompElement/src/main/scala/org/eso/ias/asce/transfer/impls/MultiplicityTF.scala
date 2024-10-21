@@ -156,7 +156,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
   /**
    * @see ScalaTransferExecutor#eval
    */
-  def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
+  def eval(compInputs: Map[String, IasIO[?]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
 
     // Get the active (SET) alarms in input
     val activeAlarms: Iterable[IasIO[Alarm]] = compInputs.values.filter(input =>{

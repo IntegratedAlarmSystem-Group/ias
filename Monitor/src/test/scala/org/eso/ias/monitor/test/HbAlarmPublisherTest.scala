@@ -11,6 +11,7 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.jdk.javaapi.CollectionConverters
+import scala.compiletime.uninitialized
 
 /**
   * Check that the alarms are effectively sent to the producer
@@ -34,14 +35,14 @@ class HbAlarmPublisherTest extends AnyFlatSpec with AlarmPublisherListener with 
   val flushExecutions = new AtomicInteger()
 
   /** The alrms published */
-  val alarmsReceived: util.List[IASValue[_]] = Collections.synchronizedList(new util.ArrayList[IASValue[_]]())
+  val alarmsReceived: util.List[IASValue[?]] = Collections.synchronizedList(new util.ArrayList[IASValue[?]]())
 
   /**
     * The alrams have been published
     *
     * @param iasValues the alarms published
     */
-  override def alarmsPublished(iasValues: Array[IASValue[_]]): Unit = {
+  override def alarmsPublished(iasValues: Array[IASValue[?]]): Unit = {
     alarmsReceived.addAll(CollectionConverters.asJavaCollection(iasValues))
     iasValues.foreach(value => MonitorAlarmsProducer.logger.info("Alarm received [{}]",value.toString))
   }
@@ -73,7 +74,7 @@ class HbAlarmPublisherTest extends AnyFlatSpec with AlarmPublisherListener with 
   val producer = new AlarmPublisherListenerImpl(this)
 
   /** The object to test */
-  var monitorAlarm: MonitorAlarmsProducer = _
+  var monitorAlarm: MonitorAlarmsProducer = uninitialized
 
   override protected def beforeEach(): Unit = {
     super.beforeEach()

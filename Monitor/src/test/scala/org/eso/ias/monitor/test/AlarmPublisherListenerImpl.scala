@@ -11,7 +11,7 @@ trait AlarmPublisherListener {
     *
     * @param iasValues the alarms published
     */
-  def alarmsPublished(iasValues: Array[IASValue[_]]): Unit
+  def alarmsPublished(iasValues: Array[IASValue[?]]): Unit
 
   /**
     * setUp has been called in the producer
@@ -44,7 +44,7 @@ class AlarmPublisherListenerImpl(val listener: AlarmPublisherListener) extends M
   override def tearDown(): Unit = listener.tearDownInvoked()
 
   /** Send the passed values */
-  override def push(iasios: Array[IASValue[_]]): Unit = listener.alarmsPublished(iasios)
+  override def push(iasios: Array[IASValue[?]]): Unit = listener.alarmsPublished(iasios)
 
   /** Flush the values to force immediate sending */
   override def flush(): Unit = listener.flushUpInvoked()

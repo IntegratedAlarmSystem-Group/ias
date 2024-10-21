@@ -1,6 +1,7 @@
 package org.eso.ias.transfer.test
 
 import java.util.Properties
+import scala.compiletime.uninitialized
 
 import com.typesafe.scalalogging.Logger
 import org.eso.ias.asce.exceptions.UnexpectedNumberOfInputsException
@@ -53,7 +54,7 @@ class RelocationSelectorTest extends AnyFlatSpec with BeforeAndAfterEach {
   val validityTimeFrame = 2000
 
   /** The TF to test */
-  var tf: RelocationSelector[Double] = _
+  var tf: RelocationSelector[Double] = uninitialized
 
   /**
     *  Build the IASIO in input with the passed id, type and timestamp
@@ -84,7 +85,7 @@ class RelocationSelectorTest extends AnyFlatSpec with BeforeAndAfterEach {
   behavior of "The RelocationSelector transfer function"
 
   it must "throws exception in intialize if gets only 1 input" in {
-    val inputs: Set[IasIO[_]] = Set (a)
+    val inputs: Set[IasIO[?]] = Set (a)
     val inputInfos = inputs.map (iasio => new IasioInfo(iasio.id,iasio.iasType))
     assertThrows[UnexpectedNumberOfInputsException] {
       tf.initialize(inputInfos,new IasioInfo(out.id,out.iasType))
@@ -92,7 +93,7 @@ class RelocationSelectorTest extends AnyFlatSpec with BeforeAndAfterEach {
   }
 
   it must "successfully initialize with correct IDs" in {
-    val inputs: Set[IasIO[_]] = Set (a,b,c)
+    val inputs: Set[IasIO[?]] = Set (a,b,c)
     val inputInfos = inputs.map (iasio => new IasioInfo(iasio.id,iasio.iasType))
     tf.initialize(inputInfos,new IasioInfo(out.id,out.iasType))
   }

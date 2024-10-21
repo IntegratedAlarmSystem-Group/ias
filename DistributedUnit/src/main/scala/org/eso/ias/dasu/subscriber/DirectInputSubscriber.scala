@@ -77,7 +77,7 @@ class DirectInputSubscriber extends InputSubscriber {
    *  Send the passed inputs to the listener 
    *  @param iasios the inputs to be processed by the DASU
    */
-  def sendInputs(iasios: Set[IASValue[_]]) = {
+  def sendInputs(iasios: Set[IASValue[?]]) = {
     require(Option(iasios).isDefined)
     val iasiosToSend = {
       if (acceptedInputs.nonEmpty) iasios.filter(iasio => acceptedInputs.contains(iasio.id))

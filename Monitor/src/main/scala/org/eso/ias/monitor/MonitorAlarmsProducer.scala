@@ -97,7 +97,7 @@ class MonitorAlarmsProducer(val publisher: MonitorAlarmPublisher, val refreshRat
     * @param prop property with the list of faulty IDs
     * @return the IASValue to send to the BSDB
     */
-  def buildIasValue(id: String, value: Alarm, prop: String): IASValue[_] = {
+  def buildIasValue(id: String, value: Alarm, prop: String): IASValue[?] = {
     val identifier = new Identifier(id,IdentifierType.IASIO,Some(monitorIdentifier))
 
     val now = System.currentTimeMillis()

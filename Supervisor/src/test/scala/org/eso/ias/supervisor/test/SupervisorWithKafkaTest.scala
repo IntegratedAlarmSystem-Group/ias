@@ -93,7 +93,7 @@ class SupervisorWithKafkaTest extends AnyFlatSpec with BeforeAndAfterAll with Be
   logger.info("Testing producer started")
 
   /** All the values read from the BSDB */
-  val receivedIasValues = new ListBuffer[IASValue[_]]()
+  val receivedIasValues = new ListBuffer[IASValue[?]]()
 
   /**
    * The kafka consumer gets all the IASIOs written in the IASIO kafka topic
@@ -149,7 +149,7 @@ class SupervisorWithKafkaTest extends AnyFlatSpec with BeforeAndAfterAll with Be
         * A value has been read from the BSDB
         * i.e. it has been received by iasiosConsumer
         */
-      override def iasiosReceived(events: util.Collection[IASValue[_]]): Unit = {
+      override def iasiosReceived(events: util.Collection[IASValue[?]]): Unit = {
         val iasValuesReceived = CollectionConverters.asScala(events)
 
         logger.info("{} IASValues received", iasValuesReceived.size)
@@ -186,7 +186,7 @@ class SupervisorWithKafkaTest extends AnyFlatSpec with BeforeAndAfterAll with Be
   /**
    * Build a [[IASValue]] to submit to the BSDB
    */
-  def buildIasioToSubmit(identifier: Identifier, value: Double): IASValue[_] = {
+  def buildIasioToSubmit(identifier: Identifier, value: Double): IASValue[?] = {
     val t0 = System.currentTimeMillis()-100
       IASValue.build(
         value,

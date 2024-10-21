@@ -42,7 +42,7 @@ class DasuOneASCETest extends AnyFlatSpec  with BeforeAndAfter {
   
   it must "produce the output when a new set inputs is notified" in {
     // Start the getting of events in the DASU
-    val inputs: Set[IASValue[_]] = Set(f.buildValue(0))
+    val inputs: Set[IASValue[?]] = Set(f.buildValue(0))
     // Sumbit the inputs
     f.inputsProvider.sendInputs(inputs)
     // Give time to produce the output
@@ -54,7 +54,7 @@ class DasuOneASCETest extends AnyFlatSpec  with BeforeAndAfter {
     f.dasu.get.enableAutoRefreshOfOutput(false)
     val before = System.currentTimeMillis()
     // Start the getting of events in the DASU
-    val inputs: Set[IASValue[_]] = Set(f.buildValue(0))
+    val inputs: Set[IASValue[?]] = Set(f.buildValue(0))
     // Sumbit the inputs
     f.inputsProvider.sendInputs(inputs)
     
@@ -72,7 +72,7 @@ class DasuOneASCETest extends AnyFlatSpec  with BeforeAndAfter {
     f.dasu.get.enableAutoRefreshOfOutput(false)
     val before = System.currentTimeMillis()
     // Start the getting of events in the DASU
-    val inputs: Set[IASValue[_]] = Set(f.buildValue(0))
+    val inputs: Set[IASValue[?]] = Set(f.buildValue(0))
     // Sumbit the inputs
     f.inputsProvider.sendInputs(inputs)
     

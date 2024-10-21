@@ -31,7 +31,7 @@ object IASLogger {
    */
   def getLogger(name: String) = Logger(name)
   
-  def getLogger(c: java.lang.Class[_]) = Logger(c)
+  def getLogger(c: java.lang.Class[?]) = Logger(c)
   
   /**
    * Print the status of the logger in the stdout

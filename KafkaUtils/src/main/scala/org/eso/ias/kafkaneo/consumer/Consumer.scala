@@ -18,6 +18,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.jdk.javaapi.CollectionConverters
 import scala.util.control.Breaks.{break, breakable}
+import scala.compiletime.uninitialized
 
 /**
  * Kafka consumer to get events from the BSDB.
@@ -88,7 +89,7 @@ class Consumer[K, V](
    * The map is initialized with an empty list for each possible value i.e.
    * a list for each [[IasTopic]]
    */
-  private[this] val listeners: Map[IasTopic, java.util.List[ConsumerListener[K, V]]] = {
+  private val listeners: Map[IasTopic, java.util.List[ConsumerListener[K, V]]] = {
     val map = scala.collection.mutable.Map[IasTopic, java.util.List[ConsumerListener[K, V]]]()
     IasTopic.values.foreach( map.put(_, new java.util.LinkedList[ConsumerListener[K, V]]()))
     map.toMap
@@ -110,7 +111,7 @@ class Consumer[K, V](
   val isClosed: AtomicBoolean = new AtomicBoolean(false)
 
   /** The thread consuming BSDB events */
-  private[this] var consumerThread: Thread = _
+  private var consumerThread: Thread = uninitialized
 
   /** A flag signaling that the shutdown from the hook is in progress */
   private val isShuttingDown = new AtomicBoolean(false)
@@ -167,7 +168,7 @@ class Consumer[K, V](
    * The former happens when new listeners are added to the consumer,
    * the latter when listeners are removed from the consumer
    */
-  private[this] def subscribeToTopics(): Unit = synchronized {
+  private def subscribeToTopics(): Unit = synchronized {
     val topicsToSubscribe: Set[String] = topicsOfListeners().map(_.kafkaTopicName).toSet
     Consumer.logger.debug("Consumer [{}] needs to get events from the following topics: {}",id,topicsToSubscribe.mkString)
     val assignedTopicPartitions: Set[TopicPartition] = CollectionConverters.asScala(consumer.assignment()).toSet

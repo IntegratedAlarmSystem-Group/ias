@@ -8,6 +8,7 @@ import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IASValue
 
 import scala.util.{Failure, Success, Try}
+import scala.compiletime.uninitialized
 
 /**
   * The listener of IasValues to be processed
@@ -28,7 +29,7 @@ abstract class ValueListener(val id: String) {
   protected var iasValuesDaos: Map[String,IasioDao] = Map.empty
 
   /** The configuration of the IAS read from the CDB */
-  protected var iasDao: IasDao = _
+  protected var iasDao: IasDao = uninitialized
 
   /**
     * If one of the method of the listener threw one execption
@@ -112,7 +113,7 @@ abstract class ValueListener(val id: String) {
     *
     * @param iasValues the values read from the BSDB
     */
-  final def processIasValues(iasValues: List[IASValue[_]]): String = {
+  final def processIasValues(iasValues: List[IASValue[?]]): String = {
     assert(Option(iasValues).isDefined,"Invalid empty list of values to process")
     if (initialized.get && !closed.get() && iasValues.nonEmpty && !broken.get()) {
       Try(process(iasValues)) match {
@@ -131,7 +132,7 @@ abstract class ValueListener(val id: String) {
     *
     * @param iasValues the values read from the BSDB
     */
-  protected def process(iasValues: List[IASValue[_]]): Unit
+  protected def process(iasValues: List[IASValue[?]]): Unit
 }
 
 object ValueListener {

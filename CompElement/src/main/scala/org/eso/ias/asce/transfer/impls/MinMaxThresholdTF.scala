@@ -127,7 +127,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame, pro
   /**
    * @see ScalaTransferExecutor#eval
    */
-  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
+  override def eval(compInputs: Map[String, IasIO[?]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
     if (compInputs.size!=1) {
       throw new UnexpectedNumberOfInputsException(compInputs.size,1)
     }

@@ -146,7 +146,7 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
       NotificationsSender.msLogger.debug("Digests will report the state of {} alarm states for user {}",alarmStates.length,user)
       val sendOp = Try(sender.digestNotify(user,alarmStates))
       if (sendOp.isFailure) {
-        NotificationsSender.msLogger.error("Error sending periodic notification to {}",user, sendOp.asInstanceOf[Failure[_]].exception)
+        NotificationsSender.msLogger.error("Error sending periodic notification to {}",user, sendOp.asInstanceOf[Failure[?]].exception)
       } else {
         NotificationsSender.msLogger.debug("Digest sent to {}",user)
       }
@@ -167,7 +167,7 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
     val recipients = iasValuesDaos(Identifier.getBaseId(alarmId)).getEmails.split(",")
     NotificationsSender.msLogger.debug("Sending notification of alarm {} status change to {}", alarmId, recipients.mkString(","))
     val sendOp = Try(sender.notify(recipients.map(_.trim).toList, alarmId, state))
-    if (sendOp.isFailure) NotificationsSender.msLogger.error("Error sending alarm state notification notification to {}", recipients.mkString(","), sendOp.asInstanceOf[Failure[_]].exception)
+    if (sendOp.isFailure) NotificationsSender.msLogger.error("Error sending alarm state notification notification to {}", recipients.mkString(","), sendOp.asInstanceOf[Failure[?]].exception)
   }
 
 
@@ -176,11 +176,11 @@ class NotificationsSender(id: String, val sender: Sender) extends ValueListener(
     *
     * @param iasValues the values read from the BSDB
     */
-  override protected def process(iasValues: List[IASValue[_]]): Unit = synchronized {
+  override protected def process(iasValues: List[IASValue[?]]): Unit = synchronized {
     NotificationsSender.msLogger.debug("Processing {} values read from BSDB",iasValues.length)
 
     // The criteria to filter out the IAS values that are not interesting for the notifications
-    def accept(iasValue: IASValue[_]): Boolean = {
+    def accept(iasValue: IASValue[?]): Boolean = {
       iasValue.valueType==IASTypes.ALARM &&
         iasValue.mode!=OperationalMode.MAINTENANCE &&
         alarmsToTrack.contains(Identifier.getBaseId(iasValue.id))

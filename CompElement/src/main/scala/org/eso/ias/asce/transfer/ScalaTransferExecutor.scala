@@ -45,9 +45,9 @@ extends TransferExecutor(cEleId,cEleRunningId,validityTimeFrame,props) {
 	  * @return the IASValue of the given ID, or None if not found in the Map
 	  */
   protected final def getValue(
-                                inputs: Map[String, IasIO[_]],
+                                inputs: Map[String, IasIO[?]],
                                 id: String,
-                                instance: Option[Int]=None): Option[IasIO[_]] = {
+                                instance: Option[Int]=None): Option[IasIO[?]] = {
     if (Option(id).isEmpty || id.isEmpty) {
       throw new IllegalArgumentException("Invalid null or empty identifier");
     }
@@ -98,7 +98,7 @@ extends TransferExecutor(cEleId,cEleRunningId,validityTimeFrame,props) {
 	 * @param actualOutput: the actual output of the ASCE
 	 * @return the computed value to set as output of the ASCE
 	 */
-  def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[T]): IasIO[T]
+  def eval(compInputs: Map[String, IasIO[?]], actualOutput: IasIO[T]): IasIO[T]
 
 	/**
 		* Initialize the transfer function

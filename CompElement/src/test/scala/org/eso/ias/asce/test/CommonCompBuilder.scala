@@ -52,7 +52,7 @@ class CommonCompBuilder(
     outputType)
 
   // The Map of IASValues for updating the inputs to the ASCE
-  val inputsMPs: Set[InOut[_]]  = inputTypes.zipWithIndex.map( a => {
+  val inputsMPs: Set[InOut[?]]  = inputTypes.zipWithIndex.map( a => {
      InOut.asInput(
          new Identifier(("INPUT-HIO-ID#"+a._2), IdentifierType.IASIO,compID),
          a._1)

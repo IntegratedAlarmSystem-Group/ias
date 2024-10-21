@@ -2,6 +2,7 @@ package org.eso.ias.transfer.test
 
 import java.util.concurrent.TimeUnit
 import java.util.{Optional, Properties}
+import scala.compiletime.uninitialized
 
 import org.eso.ias.asce.exceptions.PropsMisconfiguredException
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo}
@@ -61,7 +62,7 @@ class ThresholdBackupAndDelayTest extends AnyFlatSpec with BeforeAndAfterEach {
   val defaultProps: Properties = new Properties
 
   /** Default ThresholdWithBackupsAndDelay TF to test */
-  var defaultTF: ThresholdWithBackupsAndDelay = _
+  var defaultTF: ThresholdWithBackupsAndDelay = uninitialized
 
   /** Initial set of inputs */
   val inputs: List[IasIO[Double]] = inputIDentifiers.map(id => buildInput(id,0))
