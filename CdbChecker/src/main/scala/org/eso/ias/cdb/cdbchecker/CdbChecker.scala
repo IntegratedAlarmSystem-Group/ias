@@ -77,7 +77,7 @@ class CdbChecker(args: Array[String]) {
   val idsOfIasios: Set[String] = mapOfIasios.values.map(_.getId).toSet
 
   /** Method to convert IDs of Supervisors, DASUs and ASCEs to String  */
-  private[this] def convertIdsFromReader(idsFromCdb: Try[Optional[java.util.Set[String]]]): Set[String] = {
+  private def convertIdsFromReader(idsFromCdb: Try[Optional[java.util.Set[String]]]): Set[String] = {
     idsFromCdb match {
       case Failure(e) =>
         CdbChecker.logger.error("Error getting IDs",e)
