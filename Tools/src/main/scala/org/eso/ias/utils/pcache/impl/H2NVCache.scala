@@ -9,6 +9,7 @@ import org.h2.jdbc.JdbcSQLIntegrityConstraintViolationException
 import java.sql.{Connection, DriverManager}
 import java.util.Objects
 import scala.util.Random
+import scala.compiletime.uninitialized
 
 /**
  * A non volatile cache of objects persisted with H2 (https://www.h2database.com/html/main).
@@ -30,7 +31,7 @@ abstract sealed class H2NVCache(val dbUrl: String, val userName: String, val pas
   H2NVCache.logger.info("H2 database URL: {}",dbUrl)
 
   /** The connection to the RDBMS */
-  private var conn: Connection = _
+  private var conn: Connection = uninitialized
 
   init()
 
