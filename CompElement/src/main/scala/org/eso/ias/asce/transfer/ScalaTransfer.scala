@@ -35,11 +35,11 @@ trait ScalaTransfer[T] extends ComputingElement[T] {
     * @return
     */
   def transfer(
-      inputs: Map[String, InOut[_]], 
+      inputs: Map[String, InOut[?]], 
       id: Identifier,
       actualOutput: InOut[T]): Try[InOut[T]] = {
     
-    val ins: Map[String, IasIO[_]] = inputs.view.mapValues( inout => new IasIO(inout)).toMap
+    val ins: Map[String, IasIO[?]] = inputs.view.mapValues( inout => new IasIO(inout)).toMap
     
     val out: IasIO[T] = new IasIO(actualOutput)
     

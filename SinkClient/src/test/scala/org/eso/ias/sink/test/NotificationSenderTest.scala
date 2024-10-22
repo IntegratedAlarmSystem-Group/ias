@@ -123,7 +123,7 @@ class NotificationSenderTest extends AnyFlatSpec {
     * @param tStamp plugin production time stamp
     * @return the IASValue
     */
-  def buildValue(id: String, d: Alarm, validity: IasValidity, tStamp: Long): IASValue[_] = {
+  def buildValue(id: String, d: Alarm, validity: IasValidity, tStamp: Long): IASValue[?] = {
 
     // The identifier of the monitored system
     val monSysId = new Identifier("ConverterID",IdentifierType.MONITORED_SOFTWARE_SYSTEM,None)

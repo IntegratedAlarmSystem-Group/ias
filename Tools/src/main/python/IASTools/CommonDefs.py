@@ -101,7 +101,6 @@ class CommonDefs(object):
                  False otherwise
         """
         try:
-            environ["SCALA_HOME"]
             environ["PYTHONPATH"]
             environ["IAS_ROOT"]
             environ["IAS_LOGS_FOLDER"]

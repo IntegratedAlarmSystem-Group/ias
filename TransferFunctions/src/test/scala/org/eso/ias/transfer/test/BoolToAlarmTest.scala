@@ -69,21 +69,21 @@ class BoolToAlarmTest extends AnyFlatSpec {
 
     val tf = new BoolToAlarm(compID.id, compID.fullRunningID, validityTimeFrame, props)
 
-    val i: InOut[_] = inputInOut.updateValue(Some(true))
-    val inputMap: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i))
+    val i: InOut[?] = inputInOut.updateValue(Some(true))
+    val inputMap: Map[String,IasIO[?]] = Map(inputId-> new IasIO(i))
     val ret = tf.eval(inputMap,out)
     assert(ret.value.isDefined)
     assert(ret.value.get.isSet)
     assert(ret.value.get.priority==Priority.getDefaultPriority)
 
     val i2 = i.updateValue(Some(false))
-    val inputMap2: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i2))
+    val inputMap2: Map[String,IasIO[?]] = Map(inputId-> new IasIO(i2))
     val ret2 = tf.eval(inputMap2,out)
     assert(ret2.value.isDefined)
     assert(!ret2.value.get.isSet)
 
     val i3 = i2.updateValue(Some(true))
-    val inputMap3: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i3))
+    val inputMap3: Map[String,IasIO[?]] = Map(inputId-> new IasIO(i3))
     val ret3 = tf.eval(inputMap3,out)
     assert(ret3.value.isDefined)
     assert(ret3.value.get.isSet)
@@ -96,21 +96,21 @@ class BoolToAlarmTest extends AnyFlatSpec {
 
     val tf = new BoolToAlarm(compID.id, compID.fullRunningID, validityTimeFrame, props)
 
-    val i: InOut[_] = inputInOut.updateValue(Some(true))
-    val inputMap: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i))
+    val i: InOut[?] = inputInOut.updateValue(Some(true))
+    val inputMap: Map[String,IasIO[?]] = Map(inputId-> new IasIO(i))
     val ret = tf.eval(inputMap,out)
     assert(ret.value.isDefined)
     assert(ret.value.get.isCleared)
 
     val i2 = i.updateValue(Some(false))
-    val inputMap2: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i2))
+    val inputMap2: Map[String,IasIO[?]] = Map(inputId-> new IasIO(i2))
     val ret2 = tf.eval(inputMap2,out)
     assert(ret2.value.isDefined)
     assert(ret2.value.get.isSet)
     assert(ret2.value.get.priority==Priority.getDefaultPriority)
 
     val i3 = i2.updateValue(Some(true))
-    val inputMap3: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i3))
+    val inputMap3: Map[String,IasIO[?]] = Map(inputId-> new IasIO(i3))
     val ret3 = tf.eval(inputMap3,out)
     assert(ret3.value.isDefined)
     assert(ret3.value.get.isCleared)
@@ -122,8 +122,8 @@ class BoolToAlarmTest extends AnyFlatSpec {
     val additionalProps: Map[String, String] = Map("Prop1"-> "Value1", "Prop12"-> "Value2")
 
     val tf = new BoolToAlarm(compID.id, compID.fullRunningID, validityTimeFrame, props)
-    val i: InOut[_] = inputInOut.updateValue(Some(true)).updateMode(OperationalMode.MALFUNCTIONING).updateProps(additionalProps)
-    val inputMap: Map[String,IasIO[_]] = Map(inputId-> new IasIO(i))
+    val i: InOut[?] = inputInOut.updateValue(Some(true)).updateMode(OperationalMode.MALFUNCTIONING).updateProps(additionalProps)
+    val inputMap: Map[String,IasIO[?]] = Map(inputId-> new IasIO(i))
     val ret = tf.eval(inputMap,out)
     assert(ret.value.isDefined)
     assert(ret.value.get.isSet)

@@ -18,6 +18,7 @@ import java.util.concurrent.{ArrayBlockingQueue, BlockingQueue, CountDownLatch, 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.compiletime.uninitialized
 
 /**
  * Test the ACK of an alarm produced by a DASU.
@@ -51,8 +52,7 @@ class AckTest extends AnyFlatSpec with OutputListener with BeforeAndAfterEach {
   val dasuIdentifier = new Identifier(dasuId, IdentifierType.DASU, supervId)
 
   // The DASU to test
-  var dasu: DasuImpl = _
-
+  var dasu: DasuImpl = uninitialized
   // The identifier of the monitored system
   val monSysId = new Identifier("ConverterID", IdentifierType.MONITORED_SOFTWARE_SYSTEM, None)
 
@@ -77,12 +77,12 @@ class AckTest extends AnyFlatSpec with OutputListener with BeforeAndAfterEach {
   val executorService: Executor = Executors.newCachedThreadPool()
 
   /** The output values published by the DASU */
-  val outputValuesReceived: ArrayBlockingQueue[IASValue[_]] = new ArrayBlockingQueue[IASValue[_]](1000)
+  val outputValuesReceived: ArrayBlockingQueue[IASValue[?]] = new ArrayBlockingQueue[IASValue[?]](1000)
 
   IASLogger.setRootLogLevel(Level.DEBUG)
 
   /** Notifies about a new output produced by the DASU */
-  override def outputEvent(output: IASValue[_]): Unit = {
+  override def outputEvent(output: IASValue[?]): Unit = {
     logger.info("Event received {}", output.id)
     outputValuesReceived.put(output)
   }
@@ -103,7 +103,7 @@ class AckTest extends AnyFlatSpec with OutputListener with BeforeAndAfterEach {
    * @param timeout the timeout (secs)
    * @return the events received
    */
-  def waitEvents(numOfEvents: Int =1, acc: List[IASValue[_]]): List[IASValue[_]] = {
+  def waitEvents(numOfEvents: Int =1, acc: List[IASValue[?]]): List[IASValue[?]] = {
     require(numOfEvents>=0)
     logger.info("Waiting for {} events", numOfEvents)
 
@@ -111,7 +111,7 @@ class AckTest extends AnyFlatSpec with OutputListener with BeforeAndAfterEach {
     else waitEvents(numOfEvents-1, outputValuesReceived.take()::acc)
   }
 
-  def buildValue(mpId: Identifier, d: Long): IASValue[_] = {
+  def buildValue(mpId: Identifier, d: Long): IASValue[?] = {
 
     val t0 = System.currentTimeMillis() - 100
 
@@ -151,32 +151,32 @@ class AckTest extends AnyFlatSpec with OutputListener with BeforeAndAfterEach {
     logger.info("Test of working ACK started")
     dasu.enableAutoRefreshOfOutput(false)
 
-    val inputs: Set[IASValue[_]] = Set(buildValue(inputID1,0), buildValue(inputID2,0))
+    val inputs: Set[IASValue[?]] = Set(buildValue(inputID1,0), buildValue(inputID2,0))
 
     // The Future to get the result
-    val future: Future[List[IASValue[_]]] = Future {
+    val future: Future[List[IASValue[?]]] = Future {
       waitEvents(1, List())
     }(ExecutionContext.fromExecutor(executorService))
 
     inputsProvider.sendInputs(inputs)
 
-    val items: List[IASValue[_]] = Await.result(future, Duration(5, TimeUnit.SECONDS))
+    val items: List[IASValue[?]] = Await.result(future, Duration(5, TimeUnit.SECONDS))
 
     val out = dasu.lastCalculatedOutput.get().get.value.asInstanceOf[Alarm]
     assert(out.isAcked)
     assert(out.isCleared)
 
     // Set the alarm
-    val inputs2: Set[IASValue[_]] = Set(buildValue(inputID1,100), buildValue(inputID2,0))
+    val inputs2: Set[IASValue[?]] = Set(buildValue(inputID1,100), buildValue(inputID2,0))
 
     // The Future to get the result
-    val future2: Future[List[IASValue[_]]] = Future {
+    val future2: Future[List[IASValue[?]]] = Future {
       waitEvents(1, List())
     }(ExecutionContext.fromExecutor(executorService))
 
     inputsProvider.sendInputs(inputs2)
 
-    val items2: List[IASValue[_]] = Await.result(future2, Duration(5, TimeUnit.SECONDS))
+    val items2: List[IASValue[?]] = Await.result(future2, Duration(5, TimeUnit.SECONDS))
 
     val out2 = dasu.lastCalculatedOutput.get().get.value.asInstanceOf[Alarm]
     assert(out2.isSet)
@@ -184,28 +184,28 @@ class AckTest extends AnyFlatSpec with OutputListener with BeforeAndAfterEach {
 
     // ACK
     // The Future to get the result
-    val future3: Future[List[IASValue[_]]] = Future {
+    val future3: Future[List[IASValue[?]]] = Future {
       waitEvents(1, List())
     }(ExecutionContext.fromExecutor(executorService))
 
     dasu.ack(Identifier(dasu.lastCalculatedOutput.get().get.fullRunningId))
 
-    val items3: List[IASValue[_]] = Await.result(future3, Duration(5, TimeUnit.SECONDS))
+    val items3: List[IASValue[?]] = Await.result(future3, Duration(5, TimeUnit.SECONDS))
     logger.info("Received {} events", items.size)
     val out3 = items3.head.value.asInstanceOf[Alarm]
     assert(out3.isSet)
     assert(out3.isAcked)
 
     // Clear the alarm
-    val inputs4: Set[IASValue[_]] = Set(buildValue(inputID1, 0), buildValue(inputID2, 0))
+    val inputs4: Set[IASValue[?]] = Set(buildValue(inputID1, 0), buildValue(inputID2, 0))
 
     // The Future to get the result
-    val future4: Future[List[IASValue[_]]] = Future {
+    val future4: Future[List[IASValue[?]]] = Future {
       waitEvents(1, List())
     }(ExecutionContext.fromExecutor(executorService))
 
     inputsProvider.sendInputs(inputs4)
-    val items4: List[IASValue[_]] = Await.result(future4, Duration(5, TimeUnit.SECONDS))
+    val items4: List[IASValue[?]] = Await.result(future4, Duration(5, TimeUnit.SECONDS))
     val out4 = dasu.lastCalculatedOutput.get().get.value.asInstanceOf[Alarm]
     assert(out4.isCleared)
     assert(out4.isAcked)

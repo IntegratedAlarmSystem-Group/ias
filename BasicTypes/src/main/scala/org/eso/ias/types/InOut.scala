@@ -73,7 +73,7 @@ import scala.jdk.javaapi.CollectionConverters
   * @author acaproni
  */
 case class InOut[A](
-    value: Option[_ >: A],
+    value: Option[? >: A],
     id: Identifier,
     mode: OperationalMode,
     fromIasValueValidity: Option[Validity],
@@ -176,10 +176,10 @@ case class InOut[A](
    * @param newValue: The new value of the IASIO
    * @return A new InOut with updated value
    */
-  def updateValue(newValue: Some[_ >: A]): InOut[A] = {
+  def updateValue(newValue: Some[? >: A]): InOut[A] = {
     assert(InOut.checkType(newValue.get,iasType),"The type of "+newValue.get.toString+" ("+newValue.get.getClass().getName()+") is not "+iasType)
     
-    this.copy(value=newValue)
+    this.copy(value=newValue, productionTStamp=Some(System.currentTimeMillis()))
   }
   
   /**
@@ -192,12 +192,12 @@ case class InOut[A](
    * @param newValidity the new validity (either fromIasValueValidity or fromInputsValidity)
    * @return A new InOut with updated value and validity
    */
-  def updateValueValidity(newValue: Some[_ >: A], newValidity: Some[Validity]): InOut[A] = {
+  def updateValueValidity(newValue: Some[? >: A], newValidity: Some[Validity]): InOut[A] = {
     assert(InOut.checkType(newValue.get,iasType))
     if (isOutput()) {
-      this.copy(value=newValue,fromInputsValidity=newValidity)
+      this.copy(value=newValue,fromInputsValidity=newValidity, productionTStamp=Some(System.currentTimeMillis()))
     } else {
-      this.copy(value=newValue,fromIasValueValidity=newValidity)
+      this.copy(value=newValue,fromIasValueValidity=newValidity, productionTStamp=Some(System.currentTimeMillis()))
     }
   }
   
@@ -333,7 +333,7 @@ case class InOut[A](
    * if this INOut is an input of a ASCE or in fromInputsValidity if it the the output 
    * of a ASCE.
    */
-  def update(iasValue: IASValue[_]): InOut[A] = {
+  def update(iasValue: IASValue[?]): InOut[A] = {
     require(Option(iasValue).isDefined,"Cannot update from a undefined IASValue")
     require(Option(iasValue.value).isDefined,"Cannot update when the IASValue has no value")
     require(Option(iasValue.dependentsFullRuningIds).isDefined,"Cannot update when the IASValue has no dependent ids")

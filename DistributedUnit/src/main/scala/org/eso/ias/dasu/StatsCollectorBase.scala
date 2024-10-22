@@ -18,7 +18,7 @@ abstract class StatsCollectorBase(id: String, timeInterval: Long) {
   private val scheduler: ScheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
 
   /** The future to cancel logging of statistics */
-  private var future = new AtomicReference[ScheduledFuture[_]]()
+  private var future = new AtomicReference[ScheduledFuture[?]]()
 
   /**
     * The method to log statistics, called at regular time intervals

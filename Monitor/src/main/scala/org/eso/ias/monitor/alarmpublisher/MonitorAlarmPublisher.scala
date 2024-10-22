@@ -19,7 +19,7 @@ trait MonitorAlarmPublisher {
   def tearDown(): Unit
 
   /** Send the passed values */
-  def push(iasio: Array[IASValue[_]]): Unit
+  def push(iasio: Array[IASValue[?]]): Unit
 
   /** Flush the values to force immediate sending */
   def flush(): Unit

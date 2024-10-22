@@ -99,7 +99,7 @@ class DelayedAlarmTest extends AnyFlatSpec {
     props.put(DelayedAlarm.delayToSetTimePropName, "10")
     val tf = new DelayedAlarm(compID.id,compID.fullRunningID,1000,props)
     tf.initialize(Set(new IasioInfo(initialInput.id,IASTypes.ALARM)),new IasioInfo(initialOutput.id,initialOutput.iasType))
-    val map = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.getInitialAlarmState.set()))
+    val map = Map[String, IasIO[?]]( initialOutput.id -> initialOutput.updateValue(Alarm.getInitialAlarmState.set()))
     
     val newOutput = tf.eval(map, initialOutput)
     
@@ -116,7 +116,7 @@ class DelayedAlarmTest extends AnyFlatSpec {
     tf.initialize(Set(new IasioInfo(initialInput.id,IASTypes.ALARM)),new IasioInfo(initialOutput.id,initialOutput.iasType))
     
     // Send the initial value
-    val map = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.getInitialAlarmState.set()))
+    val map = Map[String, IasIO[?]]( initialOutput.id -> initialOutput.updateValue(Alarm.getInitialAlarmState.set()))
     
     val initialTime = System.currentTimeMillis()
     val expectedTimeChange = initialTime+TimeUnit.MILLISECONDS.convert(timeToSet, TimeUnit.SECONDS)
@@ -150,7 +150,7 @@ class DelayedAlarmTest extends AnyFlatSpec {
     tf.initialize(Set(new IasioInfo(initialInput.id,IASTypes.ALARM)),new IasioInfo(initialOutput.id,initialOutput.iasType))
     
     // Send the initial value
-    val map = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.getInitialAlarmState.set()))
+    val map = Map[String, IasIO[?]]( initialOutput.id -> initialOutput.updateValue(Alarm.getInitialAlarmState.set()))
     
     // Force activation
     var output = initialOutput
@@ -164,7 +164,7 @@ class DelayedAlarmTest extends AnyFlatSpec {
     val initialTime = System.currentTimeMillis()
     val expectedTimeChange = initialTime+TimeUnit.MILLISECONDS.convert(timeToClear, TimeUnit.SECONDS)
     
-    val mapToUnset = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.getInitialAlarmState))
+    val mapToUnset = Map[String, IasIO[?]]( initialOutput.id -> initialOutput.updateValue(Alarm.getInitialAlarmState))
     while (System.currentTimeMillis() < expectedTimeChange) {
       logger.info("Sending input {}",map.values.head.value.get)
       output = tf.eval(mapToUnset, output)
@@ -190,8 +190,8 @@ class DelayedAlarmTest extends AnyFlatSpec {
     val tf = new DelayedAlarm(compID.id,compID.fullRunningID,1000,props)
     tf.initialize(Set(new IasioInfo(initialInput.id,IASTypes.ALARM)),new IasioInfo(initialOutput.id,initialOutput.iasType))
     
-    val mapSet = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.getInitialAlarmState.set()))
-    val mapUnset = Map[String, IasIO[_]]( initialOutput.id -> initialOutput.updateValue(Alarm.getInitialAlarmState))
+    val mapSet = Map[String, IasIO[?]]( initialOutput.id -> initialOutput.updateValue(Alarm.getInitialAlarmState.set()))
+    val mapUnset = Map[String, IasIO[?]]( initialOutput.id -> initialOutput.updateValue(Alarm.getInitialAlarmState))
     
     // Force activation
     var output = initialOutput
