@@ -172,7 +172,7 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
     *
     * @return the double in the passed iasio, if any
     */
-  def getDoubleValueOfIasio(iasio: IasIO[_]): Double = {
+  def getDoubleValueOfIasio(iasio: IasIO[?]): Double = {
     iasio.value.map( value =>
       iasio.iasType match {
         case LONG => value.asInstanceOf[Long].toDouble
@@ -195,8 +195,8 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
     * @param inputs the inputs
     * @return the values of the inputs, or empty if no IASIO is valid
     */
-  def getIasiosWithBackup(inputs: Map[String, IasIO[_]]): List[IasIO[_]] = {
-    val validInputs: List[IasIO[_]] = inputs.values.filter(
+  def getIasiosWithBackup(inputs: Map[String, IasIO[?]]): List[IasIO[?]] = {
+    val validInputs: List[IasIO[?]] = inputs.values.filter(
       iasio => iasio.validity==IasValidity.RELIABLE && iasio.mode==OperationalMode.OPERATIONAL).toList
     if (validInputs.map(_.id).contains(getIdentifier(idOfMainInput.get))) List(getValue(inputs,idOfMainInput.get).get)
     else validInputs
@@ -223,7 +223,7 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
     *
     * @return the computed output of the ASCE
     */
-  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
+  override def eval(compInputs: Map[String, IasIO[?]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
     assert(compInputs.values.forall(_.value.isDefined)) // This should be ensured by ASCE
     assert(getValue(compInputs, idOfMainInput.get).isDefined,
       "ASCE ["+compElementId+"] ID of main input "+idOfMainInput.get+" not found: received inputs "+compInputs.keySet.mkString(","))
@@ -238,7 +238,7 @@ class ThresholdWithBackupsAndDelay(asceId: String, asceRunningId: String, validi
     ThresholdWithBackupsAndDelay.logger.debug("TF of ASCE[{}]: wasSet={}",asceId,wasSet)
 
     // Get the valid IASIOs if any
-    val iasios: List[IasIO[_]] = getIasiosWithBackup(compInputs)
+    val iasios: List[IasIO[?]] = getIasiosWithBackup(compInputs)
     ThresholdWithBackupsAndDelay.logger.debug("TF of ASCE[{}]: operational and valid iasios {}",asceId,iasios.map(_.id).mkString(","))
 
     /** The values of the valid and operational inputs */

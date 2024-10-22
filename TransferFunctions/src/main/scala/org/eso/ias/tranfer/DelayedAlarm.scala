@@ -117,7 +117,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
 	 * 
 	 * @return the computed output of the ASCE
 	 */
-  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
+  override def eval(compInputs: Map[String, IasIO[?]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
 	  // Here waitTimeToClear and waitTimeToSet must be defined because if they are not
 	  // an exception in thrown by initialize() and the execution of the TF never enabled
     assert(waitTimeToClear.isDefined && waitTimeToSet.isDefined)

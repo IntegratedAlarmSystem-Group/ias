@@ -26,7 +26,7 @@ class ListenerOutputPublisherImpl (
     extends OutputPublisher {
   require(Option(listener).isDefined,"Invalid listener")
   
-  def publishValue(iasValue: IASValue[_]): Try[Unit] = Try(listener.outputEvent(iasValue))
+  def publishValue(iasValue: IASValue[?]): Try[Unit] = Try(listener.outputEvent(iasValue))
   
   def publishStringValue(str: Option[String]): Try[Unit] = Try(str.foreach(x => listener.outputStringifiedEvent(x)))
   
@@ -50,7 +50,7 @@ class ListenerOutputPublisherImpl (
    * @param iasValue the not null value to publish converted as IASValue
    * @return a try to let the caller aware of errors publishing
    */
-  override def publish(iasValue: IASValue[_]): Try[Unit] = {
+  override def publish(iasValue: IASValue[?]): Try[Unit] = {
     assert(Option(iasValue).isDefined,"Invalid IASIO to publish")
     val stringifiedIasValue = stringSerializer.map(_.iasValueToString(iasValue))
     

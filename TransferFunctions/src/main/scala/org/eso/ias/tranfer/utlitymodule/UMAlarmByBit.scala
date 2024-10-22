@@ -72,8 +72,8 @@ class UMAlarmByBit (asceId: String, asceRunningId: String, validityTimeFrame:Lon
     *
     * @return the computed output of the ASCE
     */
-  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
-    val input: IasIO[_] = compInputs.values.head
+  override def eval(compInputs: Map[String, IasIO[?]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
+    val input: IasIO[?] = compInputs.values.head
     val umStatusWord = input.value.get.asInstanceOf[String]
 
     val status = new StatusWord(umStatusWord)

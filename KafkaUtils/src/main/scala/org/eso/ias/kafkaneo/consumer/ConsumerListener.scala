@@ -31,20 +31,20 @@ trait ConsumerListener[K, V](val iasTopic: IasTopic, val maxCacheSize: Int = Con
   case class KEvent(key: K, value: V)
 
   /** The cache to store events when the listener is paused */
-  private[this] lazy val cache = CircularBuffer[KEvent](maxCacheSize)
+  private lazy val cache = CircularBuffer[KEvent](maxCacheSize)
 
   /**
    * If true the events are forwarded to the listener
    * otherwise they are discarded
    */
-  private[this] val enabled = new AtomicBoolean(false)
+  private val enabled = new AtomicBoolean(false)
 
   /**
    * If false the events are forwarded to the listener
    * otherwise they are cached and dispatched as soon as
    * the listener is resumed
    */
-  private[this] val paused = new AtomicBoolean(false)
+  private val paused = new AtomicBoolean(false)
 
   /** Pause the listener */
   def pause(): Unit = paused.set(true)
@@ -77,7 +77,7 @@ trait ConsumerListener[K, V](val iasTopic: IasTopic, val maxCacheSize: Int = Con
   }
 
   /** Cache the events when the listener is paused */
-  private[this] def cacheEvents(events: List[KEvent]): Unit = {
+  private def cacheEvents(events: List[KEvent]): Unit = {
     assert(paused.get(), "The listener shall be paused to cache events")
     cache.putAll(events)
   }

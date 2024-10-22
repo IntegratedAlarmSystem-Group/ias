@@ -17,7 +17,7 @@ class TestTransferFunction extends AnyFlatSpec {
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
   
-  def convert(iasios: Set[InOut[_]]): Set[IASValue[_]] = {
+  def convert(iasios: Set[InOut[?]]): Set[IASValue[?]] = {
     iasios.map( io => io.toIASValue())
   }
   
@@ -49,7 +49,7 @@ class TestTransferFunction extends AnyFlatSpec {
     // Create numOfInputs MPs
     // with a inherited validity RELIABLE 
     var i=0 // To create different types of MPs
-    val inputsMPs: MutableMap[String, InOut[_]] = MutableMap[String, InOut[_]]()
+    val inputsMPs: MutableMap[String, InOut[?]] = MutableMap[String, InOut[?]]()
     for (id <- requiredInputIDs) {
       val mpId = new Identifier(id,IdentifierType.IASIO,Option(compID))
       i=i+1
@@ -319,7 +319,7 @@ class TestTransferFunction extends AnyFlatSpec {
     assert(selectorInput.id.id==ConstraintValidityTF.constraintSetterID)
     
     // Consider only the validity of the LONG (odd ID)
-    val moreIds = selectorInput.updateValue(Some("ID1,ID3,ID5")).updateProdTStamp(System.currentTimeMillis())
+    val moreIds = selectorInput.updateValue(Some("ID1,ID3,ID5"))// Production timestamp updated in updatevalue(..)
     // Send the inputs and get the result
     val resultMoreIds = constraintValidityScalaComponent.update(convert(inputsMPs.values.toSet+moreIds))
     logger.info("The TF returned with {} validity from inputs",resultMoreIds._1.get.fromInputsValidity)
@@ -348,10 +348,11 @@ class TestTransferFunction extends AnyFlatSpec {
     // Now One of the inputs, id3WithDealy, has not been refreshed in timne
     logger.info("Giving time to invalidate one of the inputs")
     Thread.sleep((validityThresholdInSecs+1)*1000)
-    val id1WithDealy = id1.updateValue(Some(10L)).updateProdTStamp(System.currentTimeMillis())
-    val id3WithDealy = id3.updateValue(Some(15L)) // Do not update the production time
-    val id5WithDealy = id5.updateValue(Some(20L)).updateProdTStamp(System.currentTimeMillis())
-    val resultWintConstraintsAnddelays = constraintValidityScalaComponent.update(convert(Set(id1WithDealy,id3WithDealy,id5WithDealy)))
+    val id1WithDealy = id1.updateValue(Some(10L))
+    // Does not update the value of id3 so that its validity is UNRELIABLE
+    //val id3WithDealy = id3.updateValue(Some(15L))
+    val id5WithDealy = id5.updateValue(Some(20L))
+    val resultWintConstraintsAnddelays = constraintValidityScalaComponent.update(convert(Set(id1WithDealy,id3,id5WithDealy)))
     logger.info("The TF returned with {} validity from inputs",resultWintConstraintsAnddelays._1.get.fromInputsValidity)
     assert(resultWintConstraintsAnddelays._1.isDefined)
     assert(resultWintConstraintsAnddelays._1.get.validityConstraint.isDefined)
@@ -361,7 +362,7 @@ class TestTransferFunction extends AnyFlatSpec {
     assert(resultWintConstraintsAnddelays._1.get.fromInputsValidity.get.iasValidity==UNRELIABLE)
     
     // Now restore the time stamps and check again
-    val id3WithDeleay2 = id3.updateValue(Some(30L)).updateProdTStamp(System.currentTimeMillis())
+    val id3WithDeleay2 = id3.updateValue(Some(30L))
     val dealayFixedResult = constraintValidityScalaComponent.update(convert(Set(id3WithDeleay2)))
     logger.info("The TF returned with {} validity from inputs",dealayFixedResult._1.get.fromInputsValidity)
     assert(dealayFixedResult._1.isDefined)

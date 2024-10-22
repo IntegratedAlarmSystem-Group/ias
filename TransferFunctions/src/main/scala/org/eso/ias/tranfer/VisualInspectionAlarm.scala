@@ -1,6 +1,7 @@
 package org.eso.ias.tranfer
 
 import java.util.Properties
+import scala.compiletime.uninitialized
 
 import org.eso.ias.asce.exceptions.{TypeMismatchException, UnexpectedNumberOfInputsException}
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
@@ -31,10 +32,10 @@ class VisualInspectionAlarm(cEleId: String, cEleRunningId: String, validityTimeF
   extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,props) {
 
   /** The ID of the ALARM in input */
-  var idOfAlarmInput: String = _
+  var idOfAlarmInput: String = uninitialized
 
   /** The ID of the timestamp in input */
-  var idOfTstampInput: String = _
+  var idOfTstampInput: String = uninitialized
 
   /** The point in time of the last timestamp */
   var lastInspectionTimestamp: Long = Long.MinValue
@@ -89,9 +90,9 @@ class VisualInspectionAlarm(cEleId: String, cEleRunningId: String, validityTimeF
     *
     * @return the computed output of the ASCE
     */
-  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
-    val alarmInput: IasIO[_] = compInputs(idOfAlarmInput)
-    val visualInput: IasIO[_] = compInputs(idOfTstampInput)
+  override def eval(compInputs: Map[String, IasIO[?]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
+    val alarmInput: IasIO[?] = compInputs(idOfAlarmInput)
+    val visualInput: IasIO[?] = compInputs(idOfTstampInput)
 
     // Update the timestamp
     lastInspectionTimestamp=lastInspectionTimestamp.max(ISO8601Helper.timestampToMillis(visualInput.value.get.toString))

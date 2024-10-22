@@ -14,10 +14,6 @@ then
 	echo "${bold}java not found (to be installed or added to the PATH)!${normal}"
 	((ERRORS_FOUND++))
 fi
-if [ -z $SCALA_HOME ]; then
-	echo "${bold}SCALA_HOME is not defined!${normal}"
-	((ERRORS_FOUND++))
-fi
 
 if [ -z "$IAS_ROOT" ]; then
 	echo "${bold}IAS_ROOT is not defined!${normal}"
@@ -51,7 +47,7 @@ PY_TEMP=lib/python$PYTHON_VERSION/site-packages
 export PYTHONPATH="build/$PY_TEMP:$IAS_ROOT/$PY_TEMP:$PYTHONPATH"
 unset PY_TEMP
 
-PATH="build/bin:$IAS_ROOT/bin:$SCALA_HOME/bin:$PATH"
+PATH="build/bin:$IAS_ROOT/bin:$PATH"
 export PATH
 
 if [ "$ERRORS_FOUND" -eq "0" ]; then 

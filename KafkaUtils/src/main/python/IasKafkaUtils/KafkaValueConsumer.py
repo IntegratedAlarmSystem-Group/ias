@@ -4,6 +4,7 @@ Created on Jun 12, 2018
 @author: acaproni
 '''
 from datetime import datetime
+from datetime import timezone
 from threading import Thread, Lock
 import traceback
 import time
@@ -12,6 +13,7 @@ from confluent_kafka import Consumer, KafkaError
 from IASLogging.logConf import Log
 from IasBasicTypes.IasValue import IasValue
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
+from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 
 logger = Log.getLogger(__file__)
 
@@ -90,6 +92,8 @@ class KafkaValueConsumer(Thread):
             raise ValueError("The topic can't be None")
         self.topic = topic
 
+        self.kafkaBrokers = kafkabrokers
+
         conf = {'bootstrap.servers': kafkabrokers,
                 'client.id': clientid,
                 'group.id': groupid,
@@ -130,8 +134,17 @@ class KafkaValueConsumer(Thread):
         return self.subscribed
 
     def run(self):
-        logger.info('Thread to poll for IasValues started')
+        logger.info('Thread to poll for Kafka logs started')
         try:
+
+            # For some reason the python client does not create the topic and this
+            # function hangs forever waiting to subscribe
+            # So we force a topic reation before subscribing
+            if IasKafkaHelper.createTopic(self.topic, self.kafkaBrokers):
+                logger.debug("Topic %s created", self.topic)
+            else:
+                logger.debug("Topic %s exists", self.topic)
+
             self.consumer.subscribe([self.topic], on_assign=self.onAssign)
 
             self.isGettingEvents = True
@@ -155,7 +168,7 @@ class KafkaValueConsumer(Thread):
                 else:
                     json = msg.value().decode("utf-8")
                     iasValue = IasValue.fromJSon(json)
-                    iasValue.readFromBsdbTStamp = datetime.utcnow()
+                    iasValue.readFromBsdbTStamp = datetime.now(timezone.utc)
                     iasValue.readFromBsdbTStampStr = Iso8601TStamp.datetimeToIsoTimestamp(iasValue.readFromBsdbTStamp)
                     self.listener.iasValueReceived(iasValue)
         except Exception:

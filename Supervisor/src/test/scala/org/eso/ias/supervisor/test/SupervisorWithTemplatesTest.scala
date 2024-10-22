@@ -31,7 +31,7 @@ class SupervisorWithTemplatesTest extends AnyFlatSpec {
     /**
      * Events i.e. outputs received
      */
-    val outputEventsreceived = new ArrayBuffer[IASValue[_]]
+    val outputEventsreceived = new ArrayBuffer[IASValue[?]]
 
     /**
      * Stringified outputs received
@@ -49,7 +49,7 @@ class SupervisorWithTemplatesTest extends AnyFlatSpec {
       /**
        * @see OutputListener
        */
-      def outputEvent(output: IASValue[_]): Unit = {
+      def outputEvent(output: IASValue[?]): Unit = {
         outputEventsreceived.append(output)
       }
     }
@@ -225,7 +225,7 @@ class SupervisorWithTemplatesTest extends AnyFlatSpec {
     // Build the inputs for DasuTemplateID1:
     // the other DASUS shall not receive IASValues
     val t0 = System.currentTimeMillis()-100
-    val tempIasio: IASValue[_] = IASValue.build(
+    val tempIasio: IASValue[?] = IASValue.build(
       5.5,
       OperationalMode.OPERATIONAL,
       IasValidity.RELIABLE,
@@ -240,7 +240,7 @@ class SupervisorWithTemplatesTest extends AnyFlatSpec {
       null, null,null)
 
     val t1 = System.currentTimeMillis()-100
-    val templ1: IASValue[_] = IASValue.build(
+    val templ1: IASValue[?] = IASValue.build(
         5.5,
       OperationalMode.OPERATIONAL,
       IasValidity.RELIABLE,
@@ -254,7 +254,7 @@ class SupervisorWithTemplatesTest extends AnyFlatSpec {
       t1+20,
       null,	null,null)
     val t2 = System.currentTimeMillis()-100
-    val templ2: IASValue[_] = IASValue.build(
+    val templ2: IASValue[?] = IASValue.build(
         5.5,
       OperationalMode.OPERATIONAL, IasValidity.RELIABLE,
       new Identifier("AsceTemp1-ID2-In[!#3!]", IdentifierType.IASIO, AsceId).fullRunningID,
@@ -268,7 +268,7 @@ class SupervisorWithTemplatesTest extends AnyFlatSpec {
       null, null,null)
 			
 		// Sends the IASValues to the DASUs
-    val iasiosToSend: Set[IASValue[_]] = Set(templ1,tempIasio,templ2)
+    val iasiosToSend: Set[IASValue[?]] = Set(templ1,tempIasio,templ2)
     logger.info("Sending inputs: {}",iasiosToSend.map(_.id).mkString)
     inputsProvider.sendInputs(iasiosToSend)
     
@@ -317,7 +317,7 @@ class SupervisorWithTemplatesTest extends AnyFlatSpec {
     
     // And for DasuTemplateID2
     val t1 = System.currentTimeMillis()-100
-    val templ1: IASValue[_] = IASValue.build(
+    val templ1: IASValue[?] = IASValue.build(
         7.5,
       OperationalMode.OPERATIONAL,
       IasValidity.RELIABLE,
@@ -331,7 +331,7 @@ class SupervisorWithTemplatesTest extends AnyFlatSpec {
       t1+20,
       null, null,null)
 
-    val iasioForDasusSet: Set[IASValue[_]] = iasioForDasu1.toSet + templ1
+    val iasioForDasusSet: Set[IASValue[?]] = iasioForDasu1.toSet + templ1
     val ids = iasioForDasusSet.map(i => i.id)
 
     logger.info("Sending {} iasios {}", ids.size.toString, ids.mkString(", "))

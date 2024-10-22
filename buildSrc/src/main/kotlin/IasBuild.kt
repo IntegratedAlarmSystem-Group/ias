@@ -261,7 +261,7 @@ open class IasBuild : Plugin<Project> {
         buildTask.finalizedBy(pyTestScripts)
         buildTask.finalizedBy(pyTestModules)
 
-        val runIasTestsTask = project.tasks.register<Exec>("iasTest") {
+        val runIasUnitTestsTask = project.tasks.register<Exec>("iasUnitTest") {
             dependsOn(":build", pyTestScripts)
             onlyIf {
                 val testFolder = project.layout.projectDirectory.dir("src/test")
@@ -280,6 +280,30 @@ open class IasBuild : Plugin<Project> {
             commandLine("src/test/runTests.sh")
         }
 
+        val runIasIntTestsTask = project.tasks.register<Exec>("iasIntTest") {
+            dependsOn(":build", pyTestScripts)
+            onlyIf {
+                val testFolder = project.layout.projectDirectory.dir("src/test")
+                if (testFolder.getAsFile().exists()) {
+                    val testFile = testFolder.file("runIntTests.sh").getAsFile()
+                    val cond = testFile.exists()
+                    if (!cond) {
+                        logger.warn("Test file missing {}",testFile.getPath())    
+                    }
+                    cond
+                } else {
+                    logger.warn("Test folder missing {}",testFolder.getAsFile().getPath())
+                    false
+                }
+            }
+            commandLine("src/test/runIntTests.sh")
+        }
+
+        val runIasTests = project.tasks.register("iasTest") {
+            dependsOn(runIasUnitTestsTask)
+            dependsOn(runIasIntTestsTask)
+        }
+
 
         project.tasks.withType<JavaCompile>().configureEach {
             options.isDeprecation = true
@@ -287,10 +311,6 @@ open class IasBuild : Plugin<Project> {
             val compilerArgs = options.compilerArgs
             // compilerArgs.add("-Xdoclint:all,-missing")
             compilerArgs.add("-Xlint:all")
-
-            val extension = g as ExtensionAware
-            val jdkVersion = extension.extra["JdkVersion"].toString().toInt()
-            options.release.set(jdkVersion)
         }
 
         project.tasks.withType<Jar>().configureEach {

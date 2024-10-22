@@ -84,7 +84,7 @@ class DasuWithKafkaPubSubTest extends AnyFlatSpec with KafkaConsumerListener wit
   val jsonSerializer = new IasValueJsonSerializer()
   
   /** The list with the events received */ 
-  val iasValuesReceived: ListBuffer[IASValue[_]] = ListBuffer()
+  val iasValuesReceived: ListBuffer[IASValue[?]] = ListBuffer()
   
   logger.info("Giving kakfka stuff time to be ready...")
   Try(Thread.sleep(5000))
@@ -110,7 +110,7 @@ class DasuWithKafkaPubSubTest extends AnyFlatSpec with KafkaConsumerListener wit
     super.afterAll()
   }
   
-  def buildValue(d: Double): IASValue[_] = {
+  def buildValue(d: Double): IASValue[?] = {
     val t0 = System.currentTimeMillis()-100
     IASValue.build(
         d,
