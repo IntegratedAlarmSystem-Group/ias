@@ -48,7 +48,7 @@ class ListenerForTest(
   val callstoUserDefinedProcess = new AtomicInteger(0)
 
   /** The values received from the BSDB and to be processed */
-  val receivedValues = ListBuffer[IASValue[_]]()
+  val receivedValues = ListBuffer[IASValue[?]]()
 
   override def close(): Unit = {
     callstoUserDefinedClose.incrementAndGet()
@@ -66,7 +66,7 @@ class ListenerForTest(
 
   }
 
-  override def process(iasValues: List[IASValue[_]]): Unit = {
+  override def process(iasValues: List[IASValue[?]]): Unit = {
     callstoUserDefinedProcess.incrementAndGet()
     if (timesOut>0) {
       Thread.sleep(timesOut*1000)
@@ -220,7 +220,7 @@ class ValueProcessorTest extends AnyFlatSpec {
     * @param d the value
     * @return the IASValue
     */
-  def buildValue(id: String, d: Alarm): IASValue[_] = {
+  def buildValue(id: String, d: Alarm): IASValue[?] = {
 
     // The identifier of the monitored system
     val monSysId = new Identifier("ConverterID",IdentifierType.MONITORED_SOFTWARE_SYSTEM,None)
@@ -367,7 +367,7 @@ class ValueProcessorTest extends AnyFlatSpec {
   }
 
   it must "not process events before being inited" in new Fixture {
-    val value: IASValue[_] = buildValue("ASCEOnDasu2-ID1-Out",Alarm.getInitialAlarmState(Priority.MEDIUM).set())
+    val value: IASValue[?] = buildValue("ASCEOnDasu2-ID1-Out",Alarm.getInitialAlarmState(Priority.MEDIUM).set())
     inputsProvider.sendInputs(Set(value))
     Thread.sleep(2*IasValueProcessor.defaultPeriodicSendingTimeInterval)
 
@@ -376,7 +376,7 @@ class ValueProcessorTest extends AnyFlatSpec {
 
   it must "process events after being inited" in new Fixture {
     processor.init()
-    val value: IASValue[_] = buildValue("ASCEOnDasu2-ID1-Out",Alarm.getInitialAlarmState(Priority.MEDIUM).set())
+    val value: IASValue[?] = buildValue("ASCEOnDasu2-ID1-Out",Alarm.getInitialAlarmState(Priority.MEDIUM).set())
     inputsProvider.sendInputs(Set(value))
     Thread.sleep(2*IasValueProcessor.defaultPeriodicSendingTimeInterval)
 
@@ -387,7 +387,7 @@ class ValueProcessorTest extends AnyFlatSpec {
   it must "not process events after being closed" in new Fixture {
     processor.init()
     processor.close()
-    val value: IASValue[_] = buildValue("ASCEOnDasu2-ID1-Out",Alarm.getInitialAlarmState(Priority.MEDIUM).set())
+    val value: IASValue[?] = buildValue("ASCEOnDasu2-ID1-Out",Alarm.getInitialAlarmState(Priority.MEDIUM).set())
     inputsProvider.sendInputs(Set(value))
     Thread.sleep(2*IasValueProcessor.defaultPeriodicSendingTimeInterval)
 
@@ -396,7 +396,7 @@ class ValueProcessorTest extends AnyFlatSpec {
 
   it must "discard unrecognized (not in CDB) values" in new Fixture {
     processor.init()
-    val value: IASValue[_] = buildValue("Unrecognized id",Alarm.getInitialAlarmState(Priority.MEDIUM).set())
+    val value: IASValue[?] = buildValue("Unrecognized id",Alarm.getInitialAlarmState(Priority.MEDIUM).set())
     inputsProvider.sendInputs(Set(value))
     Thread.sleep(2*IasValueProcessor.defaultPeriodicSendingTimeInterval)
 
@@ -410,7 +410,7 @@ class ValueProcessorTest extends AnyFlatSpec {
     val templatedId = Identifier.buildIdFromTemplate("TemplatedId",12)
     println("Submitting a value with ID "+templatedId)
     assert(Identifier.isTemplatedIdentifier(templatedId))
-    val value: IASValue[_] = buildValue(templatedId,Alarm.getInitialAlarmState(Priority.MEDIUM).set())
+    val value: IASValue[?] = buildValue(templatedId,Alarm.getInitialAlarmState(Priority.MEDIUM).set())
     inputsProvider.sendInputs(Set(value))
     Thread.sleep(2*IasValueProcessor.defaultPeriodicSendingTimeInterval)
 
@@ -492,7 +492,7 @@ class ValueProcessorTest extends AnyFlatSpec {
     processorWithTO.init()
 
     // Send one value to trigger the timeout
-    val value: IASValue[_] = buildValue("ASCEOnDasu2-ID1-Out",Alarm.getInitialAlarmState(Priority.MEDIUM).set())
+    val value: IASValue[?] = buildValue("ASCEOnDasu2-ID1-Out",Alarm.getInitialAlarmState(Priority.MEDIUM).set())
     inputsProviderWithTO.sendInputs(Set(value))
 
     logger.info("Giving thread time to fail")

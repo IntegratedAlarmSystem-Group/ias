@@ -10,6 +10,7 @@ import org.eso.ias.kafkautils.{KafkaHelper, SimpleStringProducer}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.monitor.{HbMonitor, MonitorAlarm}
 import org.eso.ias.types.Alarm
+import scala.compiletime.uninitialized
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -69,13 +70,13 @@ class HbAlarmGenerationTest extends AnyFlatSpec with BeforeAndAfterAll with Befo
   val coreIds = coreHBs.map(_.name)
 
   /** The producer of HBs */
-  var hbProducer: HbKafkaProducer = _
+  var hbProducer: HbKafkaProducer = uninitialized
 
   /** The HB consumer to pass to the [[org.eso.ias.monitor.HbMonitor]] */
-  var hbConsumer: HbKafkaConsumer = _
+  var hbConsumer: HbKafkaConsumer = uninitialized
 
   /** The HB monitor to test */
-  var hbMonitor: HbMonitor = _
+  var hbMonitor: HbMonitor = uninitialized
 
   /** Threshold to send alarms if the HB has net been received */
   val threshold: Long = 5

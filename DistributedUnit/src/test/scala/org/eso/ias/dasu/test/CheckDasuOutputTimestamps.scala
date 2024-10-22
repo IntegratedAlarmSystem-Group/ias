@@ -46,7 +46,7 @@ class CheckDasuOutputTimestamps extends AnyFlatSpec with BeforeAndAfter {
     
     f.dasu.get.enableAutoRefreshOfOutput(false)
     
-    val inputs: Set[IASValue[_]] = Set(f.buildValue(0))
+    val inputs: Set[IASValue[?]] = Set(f.buildValue(0))
     f.inputsProvider.sendInputs(inputs)
     Thread.sleep(1000)
     f.outputValuesReceived.clear()
@@ -97,7 +97,7 @@ class CheckDasuOutputTimestamps extends AnyFlatSpec with BeforeAndAfter {
   
   it must "enable/disable the auto-refresh" in {
     f.dasu.get.enableAutoRefreshOfOutput(true)
-    val inputs: Set[IASValue[_]] = Set(f.buildValue(0))
+    val inputs: Set[IASValue[?]] = Set(f.buildValue(0))
     f.inputsProvider.sendInputs(inputs)
     
     // Leave the DASU time to send the last computed output
@@ -134,15 +134,15 @@ class CheckDasuOutputTimestamps extends AnyFlatSpec with BeforeAndAfter {
   
   it must "be updated when the value of the output changes" in {
     f.dasu.get.enableAutoRefreshOfOutput(false)
-    val inputs: Set[IASValue[_]] = Set(f.buildValue(0)) // CLEARED ACK
+    val inputs: Set[IASValue[?]] = Set(f.buildValue(0)) // CLEARED ACK
     f.inputsProvider.sendInputs(inputs)
     
     Thread.sleep(2*f.dasu.get.throttling)
-    val inputs2: Set[IASValue[_]] = Set(f.buildValue(100)) // SET NOT ACK
+    val inputs2: Set[IASValue[?]] = Set(f.buildValue(100)) // SET NOT ACK
     f.inputsProvider.sendInputs(inputs2)
     
     Thread.sleep(2*f.dasu.get.throttling)
-    val inputs3: Set[IASValue[_]] = Set(f.buildValue(10)) // CLEARED NOT ACK
+    val inputs3: Set[IASValue[?]] = Set(f.buildValue(10)) // CLEARED NOT ACK
     f.inputsProvider.sendInputs(inputs3)
     
     Thread.sleep(2*f.dasu.get.throttling)
@@ -170,14 +170,14 @@ class CheckDasuOutputTimestamps extends AnyFlatSpec with BeforeAndAfter {
   
   it must "be updated when the value of the output does not change" in {
     
-    val inputs: Set[IASValue[_]] = Set(f.buildValue(0)) // CLEARED
+    val inputs: Set[IASValue[?]] = Set(f.buildValue(0)) // CLEARED
     f.inputsProvider.sendInputs(inputs)
     
     f.dasu.get.enableAutoRefreshOfOutput(true)
     
     
     Thread.sleep(2*f.dasu.get.autoSendTimeIntervalMillis+1000)
-    val inputs2: Set[IASValue[_]] = Set(f.buildValue(20)) // Again cleared
+    val inputs2: Set[IASValue[?]] = Set(f.buildValue(20)) // Again cleared
     f.inputsProvider.sendInputs(inputs2)
     
     // One for the immediate sending +2 for the aut-sending 

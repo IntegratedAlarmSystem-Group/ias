@@ -40,7 +40,7 @@ class TestComponent extends AnyFlatSpec {
   // The ID of the second MP in input
   val mpI2Identifier = new Identifier(requiredInputIDs(1),IdentifierType.IASIO,Option(compId))
   val mp2 = InOut.asInput(mpI2Identifier, IASTypes.ALARM)
-  val actualInputs: Set[InOut[_]] = Set(mp1,mp2)
+  val actualInputs: Set[InOut[?]] = Set(mp1,mp2)
   
   // The threshold to assess the validity from the arrival time of the input
   val validityThresholdInSecs = 2
