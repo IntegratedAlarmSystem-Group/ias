@@ -8,7 +8,7 @@ import org.eso.ias.logging.IASLogger
 class MockListener(topic: IasTopic) extends ConsumerListener[String, String](topic) {
 
   /** The events consumed from the topic */
-  private[this] val receivedEvents = new collection.mutable.ListBuffer[KEvent]()
+  private val receivedEvents = new collection.mutable.ListBuffer[KEvent]()
 
   /** Empty the list of received events */
   def clear(): Unit = synchronized { receivedEvents.clear() }

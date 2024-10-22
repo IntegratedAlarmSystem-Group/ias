@@ -39,7 +39,7 @@ class ThrowExceptionTF(
   /**
    * This method does nothing but throwing an exception
    */
-  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Nothing]): IasIO[Nothing] = {
+  override def eval(compInputs: Map[String, IasIO[?]], actualOutput: IasIO[Nothing]): IasIO[Nothing] = {
     println("ThrowExceptionTF: Throwing exception!")
     throw new Exception("Exception from a broken TF");
   }

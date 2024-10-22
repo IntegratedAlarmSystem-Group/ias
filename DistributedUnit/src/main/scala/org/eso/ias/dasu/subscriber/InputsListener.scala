@@ -9,5 +9,5 @@ trait InputsListener {
    *  
    *  @param iasios the inputs received
    */
-  def inputsReceived(iasios: Iterable[IASValue[_]]): Unit
+  def inputsReceived(iasios: Iterable[IASValue[?]]): Unit
 }

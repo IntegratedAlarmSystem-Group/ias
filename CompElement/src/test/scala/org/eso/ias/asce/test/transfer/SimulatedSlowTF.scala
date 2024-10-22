@@ -56,7 +56,7 @@ class SimulatedSlowTF(
     * @param actualOutput: the actual output of the ASCE
     * @return the computed value to set as output of the ASCE
     */
-  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
+  override def eval(compInputs: Map[String, IasIO[?]], actualOutput: IasIO[Alarm]): IasIO[Alarm] = {
     assert(compInputs.size == 1)
     val input = compInputs.values.head.asInstanceOf[IasIO[Boolean]]
     assert(input.value.isDefined)

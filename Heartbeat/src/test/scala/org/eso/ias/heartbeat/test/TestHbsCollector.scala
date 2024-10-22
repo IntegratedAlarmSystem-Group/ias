@@ -13,6 +13,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
 import java.time.Duration
+import scala.compiletime.uninitialized
 
 /** Test the HbsCollector */
 class TestHbsCollector extends AnyFlatSpec with BeforeAndAfterEach with BeforeAndAfterAll {
@@ -29,13 +30,13 @@ class TestHbsCollector extends AnyFlatSpec with BeforeAndAfterEach with BeforeAn
   val ttl = 5000L
 
   /** The producer of HBs */
-  var hbProducer: HbProducer = _
+  var hbProducer: HbProducer = uninitialized
 
   /** The collector to test */
-  var hbsCollector: HbsCollector = _
+  var hbsCollector: HbsCollector = uninitialized
 
   /** The string producer used by the  HbKafkaProducer */
-  var stringProducer: SimpleStringProducer = _
+  var stringProducer: SimpleStringProducer = uninitialized
 
   override def beforeAll(): Unit = {
     IASLogger.setRootLogLevel(Level.DEBUG)

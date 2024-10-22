@@ -74,7 +74,7 @@ extends ScalaTransferExecutor[T](cEleId,cEleRunningId,validityTimeFrame,props) {
     *
     * @return the computed output of the ASCE
     */
-  override def eval(compInputs: Map[String, IasIO[_]], actualOutput: IasIO[T]): IasIO[T] = {
+  override def eval(compInputs: Map[String, IasIO[?]], actualOutput: IasIO[T]): IasIO[T] = {
 
     // Gets the first input that is reliable by time and from inputs.
     val selectedInput: Option[IasIO[T]] = compInputs.values.find(input => {
