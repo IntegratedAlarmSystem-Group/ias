@@ -23,13 +23,10 @@ import os
 import socket
 
 import sys
-from confluent_kafka import Producer
 
 from IASLogging.logConf import Log
-from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
-from IasCmdReply.IasCommand import IasCommand
 from IasCmdReply.IasCommandType import IasCommandType
-from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
+from IasCmdReply.IasCommandSender import IasCommandSender
 
 
 def on_send_error(excp):
@@ -37,14 +34,14 @@ def on_send_error(excp):
 
 if __name__ == '__main__':
 
-    logger = Log.getLogger(__file__)
-
     userName = getpass.getuser()
     hostName = socket.gethostname()
 
     commands = []
     for cmd in IasCommandType:
         commands.append(cmd.name)
+
+    log_levels = [ 'DEBUG', 'INFO' , 'WARNING', 'ERROR', 'CRITICAL']
 
     temp = sys.argv[0].split(os.path.sep)
     progName = temp[len(temp)-1]
@@ -102,17 +99,37 @@ if __name__ == '__main__':
         default=1,
         type=int,
         required=False)
+    
+    parser.add_argument(
+        '-lso',
+        '--levelStdOut',
+        help='Logging level: Set the level of the message for the file logger, default: Info level',
+        action='store',
+        choices=['info', 'debug', 'warning', 'error', 'critical'],
+        default='info',
+        required=False)
+    parser.add_argument(
+        '-lcon',
+        '--levelConsole',
+        help='Logging level: Set the level of the message for the console logger, default: Info level',
+        action='store',
+        choices=['info', 'debug', 'warning', 'error', 'critical'],
+        default='warning',
+        required=False)
 
     parser.add_argument('params', nargs='*', help="Command parameters")
 
     args = parser.parse_args()
+
+    stdoutLevel=args.levelStdOut
+    consoleLevel=args.levelConsole
+    logger = Log.getLogger(__file__, stdoutLevel, consoleLevel)
 
     if not args.params:
         logger.info("Going to send command %s to %s", args.command, args.dest)
     else:
         logger.info("Going to send command %s to %s and params %s",args.command,args.dest,str(args.params))
 
-    kafkaTopicName = IasKafkaHelper.topics['cmd']
     senderFullRunningId = "(%s:CLIENT)" % (args.sender)
     commandType = IasCommandType.fromString(args.command)
     if not args.params:
@@ -128,26 +145,21 @@ if __name__ == '__main__':
             logger.error("Command %s rejected: it takes %d parameters but got %s",args.command,commandType.num_of_params,str(params))
             sys.exit(-1)
 
-    cmdToSend = IasCommand(
-        args.dest,
-        senderFullRunningId,
-        commandType,
-        args.cmdId,
-        Iso8601TStamp.now(),
-        params
-    )
-    cmdJsonStr = cmdToSend.toJSonString()
-    logger.info("JSON string of the cmd = [%s]",cmdJsonStr)
-
     kafkaBrokers = "%s:%d" % (args.broker, args.port)
-    logger.info("Connecting to broker %s, producer id %s and topic %s...", kafkaBrokers, args.sender, kafkaTopicName)
 
-    conf = { 'bootstrap.servers': kafkaBrokers, 'client.id': args.sender}
-    producer = Producer(conf)
+    sender_id = "iasSendCmd_"+args.sender
 
-    logger.info("Pushing the command in the topic")
-    producer.produce(kafkaTopicName, value=cmdJsonStr, key=str(args.cmdId))
-    producer.flush()
+    cmd_sender  = IasCommandSender(senderFullRunningId, sender_id, kafkaBrokers)
+    cmd_sender.set_up()
+
+    # Send the command synchronously to be sure that it is effectively sent
+    # before the script terminates
+    cmd_sender.send_sync(
+        args.dest,
+        IasCommandType.fromString(args.command),
+        str(args.params))
 
     logger.info("Command sent.")
+
+    cmd_sender.close()
     logger.info("Done")
