@@ -1,8 +1,8 @@
 from confluent_kafka import Producer
-from threading import Event
 from queue import Queue, Empty
+from typing import List, Dict
 import time
-from typing import List, Dict, Optional
+import traceback
 
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
 from IASLogging.logConf import Log
@@ -68,6 +68,14 @@ class IasCommandSender(IasLogListener):
             raise RuntimeError("Cannot initialized a closed object")
         if not self.initialized:
             self.reply_consumer.start()
+            # Wait until the consumer is subscribed
+            timeout = 60 # seconds
+            iteration = 0
+            while not self.reply_consumer.isSubscribed() and iteration<2*timeout:
+                time.sleep(0.50)
+                iteration = iteration+1
+            if not self.reply_consumer.isSubscribed():
+                raise RuntimeError("Failed to subscribe to kafka topic")
             self.initialized = True
         else:
             self.logger.warning("Already initialized")
@@ -170,8 +178,19 @@ class IasCommandSender(IasLogListener):
 
             if timeout>0:
                 self.logger.debug(f"Waiting for reply with id {self.id_to_wait} from {dest_id}")
+                try:
+                    reply = self.replies_queue.get(True, timeout)
+                    self.replies_queue.task_done()
+                    return reply
+                except Empty as to:
+                    # Timeout!
+                    return None
             else:
                 self.logger.debug(f"Will not wait for the reply from {dest_id}")
+                # TODO:
+                # Check if the reply is accepted anyhow as in this case it must be removed from the queue
+                # or better must not be put in the queue
+
                 return None
         finally:
             self.request_reply_in_progress = False
@@ -218,17 +237,18 @@ class IasCommandSender(IasLogListener):
         if str:
             self.logger.debug("Got a reply %s", log)
             try:
-                reply = IasReply.fromJSon(str)
-                print("Got a reply",str)
+                reply = IasReply.fromJSon(log)
                 if not self.id_to_wait:
                     self.logger.debug("Discarded reply as not waiting for replies %s", reply.destFullRunningId)
                     return
                 if reply.destFullRunningId==self.sender_full_running_id:
-                    if reply.id==self.id_to_wait:
+                    if reply.id==str(self.id_to_wait):
                         self.replies_queue.put(reply)
                     else:
-                        self.logger.debug("Discarded reply whith id %d whaile waiting for id %d", reply.id, self.id_to_wait)
+                        self.logger.debug("Discarded reply whith id %d while waiting for id %d", reply.id, self.id_to_wait)
                 else:
                     self.logger.debug("Discarded reply whose destination is %s", reply.destFullRunningId)
             except Exception as ex:
-                self.logger.error(f"Malformed JSON string representing a reply: [{str}]")
+                self.logger.error(f"Malformed JSON string representing a reply: [{log}]")
+                traceback.print_exception(ex)
+

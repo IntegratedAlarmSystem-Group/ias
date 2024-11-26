@@ -29,10 +29,10 @@ class IasCommand(object):
     destId = None
 
     # The command to execute
-    command = None
+    command: IasCommandType = None
 
     # The unique identifier (in the context of the sender) of the command
-    id = None
+    id: int = None
 
     # The parameters of the command, if any
     params = None
@@ -43,7 +43,7 @@ class IasCommand(object):
     # Additional properties, if any
     props = None
 
-    def __init__(self, dest, sender, cmd, id, tStamp, params=None, props=None):
+    def __init__(self, dest: str, sender: str, cmd, id: int, tStamp: str, params=None, props=None):
         '''
         Constructor
 
@@ -69,9 +69,9 @@ class IasCommand(object):
         if not cmd:
             raise ValueError("Invalid command")
         if isinstance(cmd,IasCommandType):
-            self.command = cmd.name
-        else:
             self.command = cmd
+        else:
+            self.command = IasCommandType.fromString(cmd)
 
         if not id:
             raise ValueError("Invalid id of the command")
@@ -90,7 +90,7 @@ class IasCommand(object):
         """
         temp = {}
         temp["destId"] = self.destId
-        temp["command"] = self.command
+        temp["command"] = self.command.name
         temp["senderFullRunningId"] = self.senderFullRunningId
         temp["id"] = self.id
         temp["timestamp"] = self.timestamp
@@ -113,12 +113,22 @@ class IasCommand(object):
 
         fromJsonDict = json.loads(jsonStr)
 
+        if "params" in fromJsonDict:
+            params = fromJsonDict["params"]
+        else:
+            params = None
+
+        if "properties" in fromJsonDict:
+            props = fromJsonDict["properties"]
+        else:
+            props = None
+
         return IasCommand(
             fromJsonDict["destId"],
             fromJsonDict["senderFullRunningId"],
-            fromJsonDict["command"],
-            fromJsonDict["id"],
+            IasCommandType.fromString(fromJsonDict["command"]),
+            int(fromJsonDict["id"]),
             fromJsonDict["timestamp"],
-            fromJsonDict["params"],
-            fromJsonDict["properties"]
+            params,
+            props
         )

@@ -29,7 +29,7 @@ class IasCmdExitStatus(Enum):
 
         temp = str(exitStatusStr)
         if "." not in temp:
-            temp="exitStatusStr."+temp
+            temp="IasCmdExitStatus."+temp
         for exitStatus in IasCmdExitStatus:
             if str(exitStatus)==temp:
                 return exitStatus
