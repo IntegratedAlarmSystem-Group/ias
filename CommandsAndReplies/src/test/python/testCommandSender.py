@@ -27,7 +27,9 @@ class CmdListener(IasLogListener):
 
 class TestCommandSender(unittest.TestCase):
     '''
-    Test sending of comamnds from IasCommandSender
+    Test sending of comamnds from IasCommandSender.
+
+    This test does not test the sending of replies that is tested in testCommandManeger
 
     Reply is not tested in this context
     '''
@@ -53,11 +55,11 @@ class TestCommandSender(unittest.TestCase):
             time.sleep(0.50)
             iteration = iteration+1
         if not cls.cmd_consumer.isSubscribed():
-            raise RuntimeError("Failed to subscribe to tkafka topic")
+            raise RuntimeError("Failed to subscribe to kafka topic")
         else:
             print("Consumer subscribed")
     
-    def testSendCommand(self):
+    def testSendASyncCommand(self):
         print("Prepare the command")
         dest = "CmdDest"
         cmd = IasCommandType.SET_LOG_LEVEL
@@ -67,14 +69,27 @@ class TestCommandSender(unittest.TestCase):
         sender_frId = "FullRuningIdeSender"
         cmd_sender = IasCommandSender(sender_frId, "sender_id_test", IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
         cmd_sender.set_up()
-        cmd_sender.send_sync(dest, cmd, params, props)
+        cmd_sender.send_async(dest, cmd, params, props)
 
-        # Wait for the cmd: raise exception if not cmd is received in time
+        # Wait for the cmd: raise exception if no cmd is received in time
         recv_cmd = TestCommandSender.received_cmds.get(block=True, timeout=60)
-        self.assertEqual(recv_cmd.command,cmd.name)
-        
+        self.assertEqual(recv_cmd.command,cmd)
+        self.assertEqual(recv_cmd.destId, dest)
+        self.assertEqual(recv_cmd.senderFullRunningId,sender_frId)
+        self.assertEqual(int(recv_cmd.id), 1)
 
+    def testSendASyncNoReply(self):
+        print("Prepare the command")
+        dest = "CmdDest"
+        cmd = IasCommandType.SET_LOG_LEVEL
+        params = [ "PAR1", "PAR2"]
+        props = { "p1":1, "p2":122}
         
+        sender_frId = "FullRuningIdeSender"
+        cmd_sender = IasCommandSender(sender_frId, "sender_id_test", IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
+        cmd_sender.set_up()
+        reply = cmd_sender.send_sync(dest, cmd, params, props,timeout=0)
+        self.assertIsNone(reply)
 
 if __name__ == "__main__":
     logger=Log.getLogger(__file__)

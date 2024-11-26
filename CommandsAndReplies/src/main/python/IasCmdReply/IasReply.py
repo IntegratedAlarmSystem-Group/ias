@@ -26,13 +26,13 @@ class IasReply(object):
     destFullRunningId = None
 
     # The unique identifier (in the context of the sender) of the command.
-    id = None
+    id: str = None
 
     # The command just executed
-    command = None
+    command: IasCommandType = None
 
     #  The exit status of the command
-    exitStatus = None
+    exitStatus: IasCmdExitStatus = None
 
     # The point in time when the command has been received from the kafka topic (ISO 8601)
     receptionTStamp = None
@@ -43,7 +43,7 @@ class IasReply(object):
     # Additional properties, if any
     properties = None
 
-    def __init__(self, sender, dest, cmd, id, exitStatus, recvTStamp, procTStamp, properties=None):
+    def __init__(self, sender, dest, cmd: IasCommandType|str, id, exitStatus: IasCmdExitStatus|str, recvTStamp, procTStamp, properties=None):
         if not sender:
             raise ValueError("Invalid sender")
         self.senderFullRunningId = sender
@@ -53,9 +53,9 @@ class IasReply(object):
         if not cmd:
             raise ValueError("Invalid command")
         if isinstance(cmd,IasCommandType):
-            self.command = cmd.name
-        else:
             self.command = cmd
+        else:
+            self.command = IasCommandType.fromString(cmd)
 
         if not id:
             raise ValueError("Invalid id of the command")
@@ -64,9 +64,9 @@ class IasReply(object):
         if not exitStatus:
             raise ValueError("Invalid result of command")
         if isinstance(exitStatus,IasCmdExitStatus):
-            self.exitStatus = exitStatus.name
-        else:
             self.exitStatus = exitStatus
+        else:
+            self.exitStatus = IasCmdExitStatus.fromString(exitStatus)
 
         if not recvTStamp:
             raise ValueError("Invalid time of reception")
@@ -83,10 +83,10 @@ class IasReply(object):
         """
         temp = {}
         temp["destFullRunningId"] = self.destFullRunningId
-        temp["command"] = self.command
+        temp["command"] = self.command.name
         temp["senderFullRunningId"] = self.senderFullRunningId
         temp["id"] = self.id
-        temp["exitStatus"] = self.exitStatus
+        temp["exitStatus"] = self.exitStatus.name
         temp["receptionTStamp"] = self.receptionTStamp
         temp["processedTStamp"] = self.processedTStamp
         if self.properties is not None and len(self.properties)>0:
@@ -106,13 +106,18 @@ class IasReply(object):
 
         fromJsonDict = json.loads(jsonStr)
 
+        if "properties" in fromJsonDict:
+            props = fromJsonDict["properties"]
+        else:
+            props = None
+
         return IasReply(
             fromJsonDict["senderFullRunningId"],
             fromJsonDict["destFullRunningId"],
-            fromJsonDict["command"],
+            IasCommandType.fromString(fromJsonDict["command"]),
             fromJsonDict["id"],
-            fromJsonDict["exitStatus"],
+            IasCmdExitStatus.fromString(fromJsonDict["exitStatus"]),
             fromJsonDict["receptionTStamp"],
             fromJsonDict["processedTStamp"],
-            fromJsonDict["properties"]
+            props
         )
