@@ -1,6 +1,5 @@
 import json
 
-from IasHeartbeat.IasHeartbeat import IasHeartbeat
 from IasHeartbeat.IasHeartbeatStatus import IasHeartbeatStatus
 
 class HeartbeatMessage:
@@ -37,7 +36,7 @@ class HeartbeatMessage:
         Returns:
            A Json string representing the HeartbeatMessage
         """
-        ret = f'"timestamp":"{self.timestamp}","hbStringrepresentation":"{self.hbStringrepresentation}", "state":"{self.state}"'
+        ret = f'"timestamp":"{self.timestamp}","hbStringrepresentation":"{self.hbStringrepresentation}", "state":"{self.state.name}"'
         if self.props:
             jsonDict = json.dumps(self.props)
             ret = f'{ret},"props":{jsonDict}'
@@ -54,7 +53,7 @@ class HeartbeatMessage:
         j = json.loads(json_str)
         return HeartbeatMessage(
             j["hbStringrepresentation"],
-            j["state"],
+            IasHeartbeatStatus.fromString(j["state"]),
             j.get("props", None),
             j["timestamp"]
         )
