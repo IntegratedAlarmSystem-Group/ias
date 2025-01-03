@@ -4,4 +4,5 @@ iasRun -r org.scalatest.run org.eso.ias.heartbeat.test.TestHeartbeat
 iasRun -r org.scalatest.run org.eso.ias.heartbeat.test.TestEngine
 hbStatusTest
 hbProdTypeTest
-heartbeatTest.py
+heartbeatTest
+hbMessageTest
