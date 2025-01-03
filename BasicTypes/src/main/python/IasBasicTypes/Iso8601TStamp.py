@@ -12,7 +12,7 @@ class Iso8601TStamp(object):
     '''
 
     @staticmethod
-    def datetimeToIsoTimestamp(tStamp):
+    def datetimeToIsoTimestamp(tStamp: datetime) -> str:
         '''
         Format the passed (datetime) timestamp as ISO.
         
@@ -33,7 +33,7 @@ class Iso8601TStamp(object):
         return splittedTStamp[0]+"."+milliseconds
     
     @staticmethod
-    def Iso8601ToDatetime(iso8601TStamp):
+    def Iso8601ToDatetime(iso8601TStamp: str) -> datetime:
         """
         Convert the passed ISO 8601 timestamo 
         to a datetime
@@ -55,7 +55,7 @@ class Iso8601TStamp(object):
         return datetime(year,month,day,hour,mins,sec,micorsec)
     
     @staticmethod
-    def now():
+    def now() -> str:
         """
         @return The ISO timestamp of the actual time
         """
