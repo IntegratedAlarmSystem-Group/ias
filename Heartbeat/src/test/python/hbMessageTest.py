@@ -15,7 +15,7 @@ class HbMessageTest(unittest.TestCase):
 
         self.assertEqual(hbMsg.timestamp, "2025-01-03T09:58:56.641")
         self.assertEqual(hbMsg.hbStringrepresentation, "SupervisorWithKafka:SUPERVISOR@ias-fc40")
-        self.assertEqual(hbMsg.state, "RUNNING")
+        self.assertEqual(hbMsg.state, IasHeartbeatStatus.RUNNING)
         self.assertIsNone(hbMsg.props)
 
     def testFromStrWithProps(self):
