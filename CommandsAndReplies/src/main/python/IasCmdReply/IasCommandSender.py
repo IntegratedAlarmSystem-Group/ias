@@ -75,7 +75,7 @@ class IasCommandSender(IasLogListener):
                 time.sleep(0.50)
                 iteration = iteration+1
             if not self.reply_consumer.isSubscribed():
-                raise RuntimeError("Failed to subscribe to kafka topic")
+                raise RuntimeError("Failed to subscribe to reply kafka topic")
             self.initialized = True
         else:
             self.logger.warning("Already initialized")
