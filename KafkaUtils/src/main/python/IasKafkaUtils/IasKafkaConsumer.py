@@ -9,6 +9,8 @@ from confluent_kafka import TopicPartition
 from IASLogging.logConf import Log
 import traceback
 
+from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
+
 class IasLogListener:
     """
     The listener of logs read from IAS topics
@@ -83,6 +85,8 @@ class IasLogConsumer(Thread):
             raise ValueError("The topic can't be None")
         self.topic = topic
 
+        self.kafkaBrokers = kafkabrokers
+
         conf = {'bootstrap.servers': kafkabrokers,
                 'client.id': clientid,
                 'group.id': groupid,
@@ -133,7 +137,7 @@ class IasLogConsumer(Thread):
                 with self.watchDogLock:
                     self.watchDog = True
                 if msg is None or not self.subscribed:
-                    self.logger.debug(f"Polling thread is subscribed { self.subscribed}")
+                    self.logger.debug(f"Polling thread is subscribed to topic {self.topic}: {self.subscribed}")
                     continue
 
                 if msg.error() is not None:
@@ -169,6 +173,13 @@ class IasLogConsumer(Thread):
         Returns:
             True if the consumer is assigned to the topic, False otherwise
         """
+         # For some reason the python client does not create the topic and this
+        # function hangs forever waiting to subscribe
+        # So we force a topic reation before subscribing
+        if IasKafkaHelper.createTopic(self.topic, self.kafkaBrokers):
+            self.logger.debug("Topic %s created", self.topic)
+        else:
+            self.logger.debug("Topic %s exists", self.topic)
         self.consumer.subscribe([self.topic], on_assign=self.onAssign)
         self.logger.info('Starting thread to poll events from topic %s', self.topic)
         self.terminateThread = False
@@ -192,7 +203,7 @@ class IasLogConsumer(Thread):
             self.join(5)  # Ensure the thread exited before closing the consumer
             self.consumer.close()
         else:
-            self.logger.warn("Consumer aready terminated")
+            self.logger.warning("Consumer aready terminated")
 
     def getWatchdog(self):
         """
