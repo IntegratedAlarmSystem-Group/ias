@@ -19,7 +19,7 @@ from IasBasicTypes.Priority import Priority
 class TestIasValue(unittest.TestCase):
 
     # A JSON string for testing
-    jSonStr = """{"value":"CLEAR_ACK:MEDIUM","sentToBsdbTStamp":"2018-03-07T13:08:43.525","dasuProductionTStamp":"2018-03-07T13:08:43.524",
+    jSonStr = """{"value":"CLEAR_ACK:MEDIUM","sentToBsdbTStamp":"2018-03-07T13:08:43.525","productionTStamp":"2018-03-07T13:08:43.524",
             "depsFullRunningIds":["(MonitoredSystemID:MONITORED_SOFTWARE_SYSTEM)@(PluginID:PLUGIN)@(ConverterID:CONVERTER)@(Temperature3:IASIO)",
             "(MonitoredSystemID:MONITORED_SOFTWARE_SYSTEM)@(PluginID:PLUGIN)@(ConverterID:CONVERTER)@(Temperature2:IASIO)",
             "(MonitoredSystemID:MONITORED_SOFTWARE_SYSTEM)@(PluginID:PLUGIN)@(ConverterID:CONVERTER)@(Temperature4:IASIO)",
@@ -29,37 +29,37 @@ class TestIasValue(unittest.TestCase):
             "props":{"key1":"value1","key2":"value2"}}"""
             
             
-    jSonStr2 = """{"value":"SET_UNACK:HIGH","pluginProductionTStamp":"1970-01-01T00:00:00.1",
+    jSonStr2 = """{"value":"SET_UNACK:HIGH","productionTStamp":"1970-01-01T00:00:00.1",
             "sentToConverterTStamp":"1970-01-01T00:00:00.2", "receivedFromPluginTStamp":"1970-01-01T00:00:00.3",
             "convertedProductionTStamp":"1970-01-01T00:00:00.4","sentToBsdbTStamp":"1970-01-01T00:00:00.5",
-            "readFromBsdbTStamp":"1970-01-01T00:00:00.6","dasuProductionTStamp":"1970-01-01T00:00:00.7",
+            "readFromBsdbTStamp":"1970-01-01T00:00:00.6",
             "depsFullRunningIds":["(SupervId1:SUPERVISOR)@(dasuVID1:DASU)@(asceVID1:ASCE)@(AlarmID1:IASIO)","(SupervId2:SUPERVISOR)@(dasuVID2:DASU)@(asceVID2:ASCE)@(AlarmID2:IASIO)"],
             "mode":"DEGRADED","iasValidity":"RELIABLE",
             "fullRunningId":"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(AlarmType-ID:IASIO)",
             "valueType":"ALARM"}"""
 
-    jSonStrTimestamp = """{"value":"2018-05-09T16:15:05","pluginProductionTStamp":"1970-01-01T00:00:00.1",
+    jSonStrTimestamp = """{"value":"2018-05-09T16:15:05","productionTStamp":"1970-01-01T00:00:00.1",
             "sentToConverterTStamp":"1970-01-01T00:00:00.2", "receivedFromPluginTStamp":"1970-01-01T00:00:00.3",
             "convertedProductionTStamp":"1970-01-01T00:00:00.4","sentToBsdbTStamp":"1970-01-01T00:00:00.5",
-            "readFromBsdbTStamp":"1970-01-01T00:00:00.6","dasuProductionTStamp":"1970-01-01T00:00:00.7",
+            "readFromBsdbTStamp":"1970-01-01T00:00:00.6",
             "depsFullRunningIds":["(SupervId1:SUPERVISOR)@(dasuVID1:DASU)@(asceVID1:ASCE)@(AlarmID1:IASIO)"],
             "mode":"OPERATIONAL","iasValidity":"RELIABLE",
             "fullRunningId":"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(Timestamp-ID:IASIO)",
             "valueType":"TIMESTAMP"}"""
 
-    jSonStrArrayOfLongs = """{"value":"[1, 2, 3, 4]","pluginProductionTStamp":"1970-01-01T00:00:00.1",
+    jSonStrArrayOfLongs = """{"value":"[1, 2, 3, 4]","productionTStamp":"1970-01-01T00:00:00.1",
             "sentToConverterTStamp":"1970-01-01T00:00:00.2", "receivedFromPluginTStamp":"1970-01-01T00:00:00.3",
             "convertedProductionTStamp":"1970-01-01T00:00:00.4","sentToBsdbTStamp":"1970-01-01T00:00:00.5",
-            "readFromBsdbTStamp":"1970-01-01T00:00:00.6","dasuProductionTStamp":"1970-01-01T00:00:00.7",
+            "readFromBsdbTStamp":"1970-01-01T00:00:00.6",
             "depsFullRunningIds":["(SupervId1:SUPERVISOR)@(dasuVID1:DASU)@(asceVID1:ASCE)@(AlarmID1:IASIO)"],
             "mode":"OPERATIONAL","iasValidity":"RELIABLE",
             "fullRunningId":"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(Timestamp-ID:IASIO)",
             "valueType":"ARRAYOFLONGS"}"""
 
-    jSonStrArrayOfDoubles = """{"value":"[0.123,-99.05,2,3,5,7]","pluginProductionTStamp":"1970-01-01T00:00:00.1",
+    jSonStrArrayOfDoubles = """{"value":"[0.123,-99.05,2,3,5,7]","productionTStamp":"1970-01-01T00:00:00.1",
             "sentToConverterTStamp":"1970-01-01T00:00:00.2", "receivedFromPluginTStamp":"1970-01-01T00:00:00.3",
             "convertedProductionTStamp":"1970-01-01T00:00:00.4","sentToBsdbTStamp":"1970-01-01T00:00:00.5",
-            "readFromBsdbTStamp":"1970-01-01T00:00:00.6","dasuProductionTStamp":"1970-01-01T00:00:00.7",
+            "readFromBsdbTStamp":"1970-01-01T00:00:00.6",
             "depsFullRunningIds":["(SupervId1:SUPERVISOR)@(dasuVID1:DASU)@(asceVID1:ASCE)@(AlarmID1:IASIO)"],
             "mode":"OPERATIONAL","iasValidity":"RELIABLE",
             "fullRunningId":"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(Timestamp-ID:IASIO)",
@@ -89,13 +89,12 @@ class TestIasValue(unittest.TestCase):
         self.assertEqual(iasValue.iasValidity,Validity.RELIABLE)
         self.assertEqual(iasValue.props,expectedProps)
     
-        self.assertEqual(iasValue.pluginProductionTStampStr,None)
         self.assertEqual(iasValue.sentToConverterTStampStr,None)
         self.assertEqual(iasValue.receivedFromPluginTStampStr,None)
         self.assertEqual(iasValue.convertedProductionTStampStr,None)
         self.assertEqual(iasValue.sentToBsdbTStampStr,"2018-03-07T13:08:43.525")
         self.assertEqual(iasValue.readFromBsdbTStampStr,None)
-        self.assertEqual(iasValue.dasuProductionTStampStr,"2018-03-07T13:08:43.524")
+        self.assertEqual(iasValue.productionTStampStr,"2018-03-07T13:08:43.524")
         
         expectedDeps2 = ["(SupervId1:SUPERVISOR)@(dasuVID1:DASU)@(asceVID1:ASCE)@(AlarmID1:IASIO)","(SupervId2:SUPERVISOR)@(dasuVID2:DASU)@(asceVID2:ASCE)@(AlarmID2:IASIO)"]
         
@@ -115,9 +114,6 @@ class TestIasValue(unittest.TestCase):
         self.assertEqual(iasValue2.iasValidity,Validity.RELIABLE)
         self.assertEqual(iasValue2.props,None)
     
-        self.assertEqual(iasValue2.pluginProductionTStampStr,"1970-01-01T00:00:00.1")
-        self.assertEqual(iasValue2.pluginProductionTStamp,Iso8601TStamp.Iso8601ToDatetime(iasValue2.pluginProductionTStampStr))
-        
         self.assertEqual(iasValue2.sentToConverterTStampStr,"1970-01-01T00:00:00.2")
         self.assertEqual(iasValue2.sentToConverterTStamp,Iso8601TStamp.Iso8601ToDatetime(iasValue2.sentToConverterTStampStr))
         
@@ -133,8 +129,8 @@ class TestIasValue(unittest.TestCase):
         self.assertEqual(iasValue2.readFromBsdbTStampStr,"1970-01-01T00:00:00.6")
         self.assertEqual(iasValue2.readFromBsdbTStamp,Iso8601TStamp.Iso8601ToDatetime(iasValue2.readFromBsdbTStampStr))
         
-        self.assertEqual(iasValue2.dasuProductionTStampStr,"1970-01-01T00:00:00.7")
-        self.assertEqual(iasValue2.dasuProductionTStamp,Iso8601TStamp.Iso8601ToDatetime(iasValue2.dasuProductionTStampStr))
+        self.assertEqual(iasValue2.productionTStampStr,"1970-01-01T00:00:00.1")
+        self.assertEqual(iasValue2.productionTStamp,Iso8601TStamp.Iso8601ToDatetime(iasValue2.productionTStampStr))
     
     def testToJSON(self):
         iasValue = IasValue.fromJSon(self.jSonStr)
@@ -154,9 +150,6 @@ class TestIasValue(unittest.TestCase):
         self.assertEqual(iasValue.dependentsFullRuningIds,iasFomJson.dependentsFullRuningIds)
         self.assertEqual(iasValue.props,iasFomJson.props)
         
-        
-        self.assertEqual(iasValue.pluginProductionTStampStr,iasFomJson.pluginProductionTStampStr)
-        self.assertEqual(iasValue.pluginProductionTStamp,iasFomJson.pluginProductionTStamp)
         self.assertEqual(iasValue.sentToConverterTStampStr,iasFomJson.sentToConverterTStampStr)
         self.assertEqual(iasValue.sentToConverterTStamp,iasFomJson.sentToConverterTStamp)
         self.assertEqual(iasValue.receivedFromPluginTStampStr,iasFomJson.receivedFromPluginTStampStr)
@@ -167,8 +160,8 @@ class TestIasValue(unittest.TestCase):
         self.assertEqual(iasValue.sentToBsdbTStamp,iasFomJson.sentToBsdbTStamp)
         self.assertEqual(iasValue.readFromBsdbTStampStr,iasFomJson.readFromBsdbTStampStr)
         self.assertEqual(iasValue.readFromBsdbTStamp,iasFomJson.readFromBsdbTStamp)
-        self.assertEqual(iasValue.dasuProductionTStampStr,iasFomJson.dasuProductionTStampStr)
-        self.assertEqual(iasValue.dasuProductionTStamp,iasFomJson.dasuProductionTStamp)
+        self.assertEqual(iasValue.productionTStampStr,iasFomJson.productionTStampStr)
+        self.assertEqual(iasValue.productionTStamp,iasFomJson.productionTStamp)
         
         #### Same test with the other JSON string
         
@@ -188,8 +181,6 @@ class TestIasValue(unittest.TestCase):
         self.assertEqual(iasValue2.dependentsFullRuningIds,iasFomJson2.dependentsFullRuningIds)
         self.assertEqual(iasValue2.props,iasFomJson2.props)
         
-        self.assertEqual(iasValue2.pluginProductionTStampStr,iasFomJson2.pluginProductionTStampStr)
-        self.assertEqual(iasValue2.pluginProductionTStamp,iasFomJson2.pluginProductionTStamp)
         self.assertEqual(iasValue2.sentToConverterTStampStr,iasFomJson2.sentToConverterTStampStr)
         self.assertEqual(iasValue2.sentToConverterTStamp,iasFomJson2.sentToConverterTStamp)
         self.assertEqual(iasValue2.receivedFromPluginTStampStr,iasFomJson2.receivedFromPluginTStampStr)
@@ -200,8 +191,8 @@ class TestIasValue(unittest.TestCase):
         self.assertEqual(iasValue2.sentToBsdbTStamp,iasFomJson2.sentToBsdbTStamp)
         self.assertEqual(iasValue2.readFromBsdbTStampStr,iasFomJson2.readFromBsdbTStampStr)
         self.assertEqual(iasValue2.readFromBsdbTStamp,iasFomJson2.readFromBsdbTStamp)
-        self.assertEqual(iasValue2.dasuProductionTStampStr,iasFomJson2.dasuProductionTStampStr)
-        self.assertEqual(iasValue2.dasuProductionTStamp,iasFomJson2.dasuProductionTStamp)
+        self.assertEqual(iasValue2.productionTStampStr,iasFomJson2.productionTStampStr)
+        self.assertEqual(iasValue2.productionTStamp,iasFomJson2.productionTStamp)
 
     def testTimestamp(self):
         '''

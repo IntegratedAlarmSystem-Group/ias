@@ -2,11 +2,14 @@
 Consume and send to a listener, the kafka events
 published in a topic.
 '''
-
+import time
 from threading import Thread, Lock
 from confluent_kafka import Consumer, KafkaError
+from confluent_kafka import TopicPartition
 from IASLogging.logConf import Log
 import traceback
+
+from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 
 class IasLogListener:
     """
@@ -28,9 +31,15 @@ class IasLogConsumer(Thread):
     
     Each received log is sent to the listener.
     
-    
+    To start getting logs, the start() function must be executed.
+    To effectively get logs, the consumer must be subscribed to the topic (@see #230).
+    The assignment might happen some seconds after start() terminates.
+    start() waits for the assigment (or timeout) is the optional timeout is provided; alternatively
+    IsSubscribed() can be invoked to know if the consumer is assigned to the topic.
+
     IasLogConsumer implements a boolean watchdog that is set to True
     at every iteration of the thread (i.e. new when data arrives or the timeout elapses)
+
     '''
     # The logger
     logger = Log.getLogger(__file__)
@@ -76,6 +85,8 @@ class IasLogConsumer(Thread):
             raise ValueError("The topic can't be None")
         self.topic = topic
 
+        self.kafkaBrokers = kafkabrokers
+
         conf = {'bootstrap.servers': kafkabrokers,
                 'client.id': clientid,
                 'group.id': groupid,
@@ -118,7 +129,6 @@ class IasLogConsumer(Thread):
     def run(self):
         self.logger.info('Thread to poll logs started')
         try:
-            self.consumer.subscribe([self.topic], on_assign=self.onAssign)
 
             self.isGettingEvents = True
             while not self.terminateThread:
@@ -127,7 +137,7 @@ class IasLogConsumer(Thread):
                 with self.watchDogLock:
                     self.watchDog = True
                 if msg is None or not self.subscribed:
-                    self.logger.debug(f"Polling thread is subscribed { self.subscribed}")
+                    self.logger.debug(f"Polling thread is subscribed to topic {self.topic}: {self.subscribed}")
                     continue
 
                 if msg.error() is not None:
@@ -149,18 +159,51 @@ class IasLogConsumer(Thread):
             self.isGettingEvents = False
         self.logger.info('Thread terminated')
 
-    def start(self):
+    def start(self, waitAssigmentTimeout: float = 0) -> bool:
+        """
+        Start the consumer
+
+        This function starts the cosumer thread to get logs from the kafka topic.
+
+        If a timeout greater than 1 is provided, the functions waits for the assignemt to the topic
+        before returning.
+
+        Args: 
+            waitAssignemnttimeout: the time to wait for the assignment (seconds)
+        Returns:
+            True if the consumer is assigned to the topic, False otherwise
+        """
+         # For some reason the python client does not create the topic and this
+        # function hangs forever waiting to subscribe
+        # So we force a topic reation before subscribing
+        if IasKafkaHelper.createTopic(self.topic, self.kafkaBrokers):
+            self.logger.debug("Topic %s created", self.topic)
+        else:
+            self.logger.debug("Topic %s exists", self.topic)
+        self.consumer.subscribe([self.topic], on_assign=self.onAssign)
         self.logger.info('Starting thread to poll events from topic %s', self.topic)
         self.terminateThread = False
         Thread.start(self)
+
+        if waitAssigmentTimeout>=1:
+            # Wait for assignment
+            poll_time = 0.250
+            start_time = time.time()
+            while not self.isSubscribed() and time.time()<start_time+waitAssigmentTimeout:
+                time.sleep(poll_time)
+            
+        return self.isSubscribed()
 
     def close(self):
         '''
         Shuts down the thread
         '''
-        self.terminateThread = True
-        self.join(5)  # Ensure the thread exited before closing the consumer
-        self.consumer.close()
+        if not self.terminateThread:
+            self.terminateThread = True
+            self.join(5)  # Ensure the thread exited before closing the consumer
+            self.consumer.close()
+        else:
+            self.logger.warning("Consumer aready terminated")
 
     def getWatchdog(self):
         """

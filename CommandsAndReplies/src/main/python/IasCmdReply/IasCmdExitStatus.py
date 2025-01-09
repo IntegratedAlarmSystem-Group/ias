@@ -24,12 +24,12 @@ class IasCmdExitStatus(Enum):
                       IasCmdExitStatus.OK or OK
         @return the command exit status represented by the passed string
         '''
-        if not str:
+        if not exitStatusStr:
             raise ValueError("Invalid string representation of the exit status of a comamnd")
 
         temp = str(exitStatusStr)
         if "." not in temp:
-            temp="exitStatusStr."+temp
+            temp="IasCmdExitStatus."+temp
         for exitStatus in IasCmdExitStatus:
             if str(exitStatus)==temp:
                 return exitStatus

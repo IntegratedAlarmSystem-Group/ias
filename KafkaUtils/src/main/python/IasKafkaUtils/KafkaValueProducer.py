@@ -69,6 +69,6 @@ class KafkaValueProducer(object):
         '''
         Close the producer: delegates to the kafka producer
         '''
-        #self.producer.close()
+        pass
         
         
