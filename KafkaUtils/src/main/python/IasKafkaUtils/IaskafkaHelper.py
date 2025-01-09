@@ -16,6 +16,9 @@ class IasKafkaHelper():
         'cmd': "CmdTopic",
         'reply': "ReplyTopic"}
     
+    # Default list of servers
+    DEFAULT_BOOTSTRAP_BROKERS="localhost:9092"
+    
     @classmethod
     def topicExists(cks, topicName: str, kafkaBrokers: str) -> bool:
         """

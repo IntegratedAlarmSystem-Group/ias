@@ -45,6 +45,7 @@ class Log(object):
       log_levels = {'debug': logging.DEBUG,
                 'info': logging.INFO,
                 'warn': logging.WARNING,
+                'warning': logging.WARNING,
                 'error': logging.ERROR,
                 'critical': logging.CRITICAL}
 

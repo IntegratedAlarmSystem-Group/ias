@@ -1,8 +1,14 @@
 #!/bin/bash 
+{
+echo Terminating IAS serices at `date +%Y/%m/%dT%H:%M:%S.%N`
 if [ -z $KAFKA_HOME ]
 then
-        echo "Set KAFKA_HOME before running this script"
-        exit 1
+if [ -d "/opt/kafka" ]; then
+export KAFKA_HOME="/opt/kafka"
+else
+echo "Set KAFKA_HOME or install kafka in /opt/kafka before running this script"
+exit 1
+fi
 fi
 KAFKA_DATA="/var/lib/kafkadata"
 
@@ -15,4 +21,5 @@ sudo rm -rf $KAFKA_DATA/*
 echo "Done"
 echo
 cd -
+} 2>&1 |tee /var/log/kafka/stopIasServices-`date +%Y%m%d-%H%M%S`.log
 
