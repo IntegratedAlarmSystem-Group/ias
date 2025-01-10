@@ -1,6 +1,6 @@
 import logging
 import atexit
-import cx_Oracle
+import oracledb
 
 from IasCdb.SqlFile import SqlFile
 
@@ -9,7 +9,7 @@ class SqlRunner(object):
     Runs SQL scripts and statements after connecting to the oracle
     database.
 
-    Requires cx_Oracle
+    Requires oracledb from oracle (https://python-oracledb.readthedocs.io/en/latest/index.html)
     '''
 
     def __init__(self, user, pswd, dbUrl):
@@ -30,7 +30,7 @@ class SqlRunner(object):
             raise ValueError("Invalid null/empty URL to connectr to the DB")
 
         conStr = '%s/%s@%s' % (user,pswd,dbUrl)
-        self.connection = cx_Oracle.connect(conStr)
+        self.connection = oracledb.connect(conStr)
         self.logger.debug('Oracle DB %s connected (user %s)',dbUrl,user)
 
         self.cursor = self.connection.cursor()
