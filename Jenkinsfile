@@ -17,4 +17,12 @@ pipeline {
             }
         }
     }
+    stage('Create IasRoot Folder') {
+            steps {
+                dir('IasRoot') {
+                    // This will create the IasRoot directory
+                    sh 'mkdir -p .'
+                }
+            }
+        }
 }
