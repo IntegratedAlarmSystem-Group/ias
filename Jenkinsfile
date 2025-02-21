@@ -35,5 +35,10 @@ pipeline {
                 }
             }
         }
+        stage('Compress IasRoot') {
+            steps {
+                sh 'tar -czf IasRoot.tgz -C IasRoot .'
+            }
+        }
     }
 }
