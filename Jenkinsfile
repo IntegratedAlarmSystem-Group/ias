@@ -3,9 +3,10 @@ pipeline {
 
     environment {
         // Define your environment variables here
-        GRADLE_HOME = '/path/to/gradle'
-        JAVA_HOME = '/path/to/java'
-        PATH = "${env.PATH}:${env.GRADLE_HOME}/bin:${env.JAVA_HOME}/bin"
+        //GRADLE_HOME = '/path/to/gradle'
+        //JAVA_HOME = '/path/to/java'
+        //PATH = "${env.PATH}:${env.GRADLE_HOME}/bin:${env.JAVA_HOME}/bin"
+        IASROOT = "${env.WORKSPACE}/IasRoot"
     }
 
     stages {
