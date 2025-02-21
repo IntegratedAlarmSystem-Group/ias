@@ -5,7 +5,7 @@ pipeline {
         // Define your environment variables here
         //GRADLE_HOME = '/path/to/gradle'
         //JAVA_HOME = '/path/to/java'
-        //PATH = "${env.PATH}:${env.GRADLE_HOME}/bin:${env.JAVA_HOME}/bin"
+        PATH = "${env.PATH}:${env.HOME}./local/bin"
         IASROOT = "${env.WORKSPACE}/IasRoot"
     }
 
