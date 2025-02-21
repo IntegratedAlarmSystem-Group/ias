@@ -4,12 +4,10 @@ pipeline {
 	stages {
 		stage('Checkout') {
 			steps {
-				dir('ias') {
-					checkout scm: [
-						$class: 'GitSCM',
-						branches: scm.branches
-					]
-				}
+				checkout scmGit(
+					branches: [[name: '*/master']],
+					extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'ias'], cleanBeforeCheckout(deleteUntrackedNestedRepositories: true)], 
+					userRemoteConfigs: [[]])
 			}
 		}
 	}
