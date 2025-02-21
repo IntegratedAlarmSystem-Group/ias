@@ -9,14 +9,8 @@ pipeline {
         }
         stage('Create Folders') {
             steps {
-                dir('IasRoot') {
-                    // This will create the IasRoot directory
-                    sh 'mkdir -p .'
-                }
-                dir('ias') {
-                    // This will create the ias directory
-                    sh 'mkdir -p .'
-                }
+                sh 'mkdir -p IasRoot'
+                sh 'mkdir -p ias'
             }
         }
         stage('Checkout') {
