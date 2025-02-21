@@ -1,6 +1,13 @@
 pipeline {
     agent any
 
+    environment {
+        // Define your environment variables here
+        GRADLE_HOME = '/path/to/gradle'
+        JAVA_HOME = '/path/to/java'
+        PATH = "${env.PATH}:${env.GRADLE_HOME}/bin:${env.JAVA_HOME}/bin"
+    }
+
     stages {
         stage('Clean Workspace') {
             steps {
@@ -17,6 +24,13 @@ pipeline {
             steps {
                 dir('ias') {
                     git url: 'https://github.com/IntegratedAlarmSystem-Group/ias.git', branch: 'develop'
+                }
+            }
+        }
+        stage('Build') {
+            steps {
+                dir('ias') {
+                    sh './gradlew build'
                 }
             }
         }
