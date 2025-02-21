@@ -4,10 +4,12 @@ pipeline {
 	stages {
 		stage('Checkout') {
 			steps {
-				checkout scm: [
-					$class: 'GitSCM',
-					branches: scm.branches
-				]
+				dir('ias') {
+					checkout scm: [
+						$class: 'GitSCM',
+						branches: scm.branches
+					]
+				}
 			}
 		}
 	}
