@@ -7,17 +7,21 @@ pipeline {
                 deleteDir()
             }
         }
-        stage('Create IasRoot Folder') {
+        stage('Create Folders') {
             steps {
                 dir('IasRoot') {
                     // This will create the IasRoot directory
+                    sh 'mkdir -p .'
+                }
+                dir('ias') {
+                    // This will create the ias directory
                     sh 'mkdir -p .'
                 }
             }
         }
         stage('Checkout') {
             steps {
-                dir('IasRoot/ias') {
+                dir('ias') {
                     git url: 'https://github.com/IntegratedAlarmSystem-Group/ias.git', branch: 'develop'
                 }
             }
