@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    options {
+        // This is required if you want to clean before build
+        skipDefaultCheckout(true)
+    }
+    
     environment {
         // Define your environment variables here
         //GRADLE_HOME = '/path/to/gradle'
@@ -12,7 +17,7 @@ pipeline {
     stages {
         stage('Clean Workspace') {
             steps {
-                deleteDir()
+                cleanWs()
             }
         }
         stage('Create Folders') {
