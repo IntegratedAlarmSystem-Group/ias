@@ -40,6 +40,13 @@ pipeline {
                 }
             }
         }
+        stage('Install') {
+            steps {
+                dir('ias') {
+                    sh './gradlew install'
+                }
+            }
+        }
         stage('Compress IasRoot') {
             steps {
                 sh 'tar -czf IasRoot.tgz -C IasRoot .'
