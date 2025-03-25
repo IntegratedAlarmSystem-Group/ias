@@ -2,7 +2,7 @@ name: ias-build-install
 run-name: ${{ github.actor }} Build IAS
 on: [push]
 env:
-  IAS_ROOT: '/home/runner/work/IasRoot'
+  IAS_ROOT: '/home/runner/work/ias/IasRoot'
 jobs:
   Build-IAS:
     runs-on: ubuntu-latest
@@ -16,17 +16,17 @@ jobs:
         uses: actions/setup-python@v4.5.0
         with:
           python-version: '3.10'
-      - run: pwd
-      - name: Checkout IAS code
-        uses: actions/checkout@v3
-      - name: Install PySide6
-        run: pip install PySide6
-      - run: git status
-      - run: pwd
       - run: python -V
       - run: java -version
       - run: mkdir $IAS_ROOT
-      - run: rm -rf $IAS_ROOT/*
+      - run: mkdir GIT
+      - run: cd GIT
+      - name: Checkout IAS code
+        uses: actions/checkout@v3
+      - run: cd /home/runner/work/ias
+      - name: Install PySide6
+        run: pip install PySide6
+      - run: cd /home/runner/work/ias/GIT/ias
       - name: Clean
         run: ./gradlew clean
       - name: Build IAS with gradlew
