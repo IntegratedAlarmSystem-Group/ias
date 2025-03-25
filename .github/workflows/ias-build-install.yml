@@ -21,11 +21,8 @@ jobs:
       - name: Install PySide6
         run: pip install PySide6
       - run: java -version
-      - run: pwd
-      - run: ls
       - run: mkdir $IAS_ROOT
       - run: mkdir GITHUB_WORKSPACE
-      - run: ls
       - name: Checkout IAS code
         uses: actions/checkout@v4
       - run: cd $GITHUB_WORKSPACE
@@ -37,9 +34,6 @@ jobs:
         run: ./gradlew install
       - name: List IAS_ROOT content
         run: ls -lR $IAS_ROOT
-      - run: cd /home/runner/work/ias/ias
-      - run: pwd
-      - run: ls
       - uses: actions/upload-artifact@v4
         with:
           name: IasRoot
