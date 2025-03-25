@@ -3,7 +3,7 @@ run-name: ${{ github.actor }} Build IAS
 on: [push]
 env:
   IAS_ROOT: '/home/runner/work/ias/ias/IasRoot'
-  GITHUB_WORKSPACE: 'home/runner/work/ias/ias/GIT'
+  GITHUB_WORKSPACE: '/home/runner/work/ias/ias/GIT'
 jobs:
   Build-IAS:
     runs-on: ubuntu-latest
@@ -40,17 +40,9 @@ jobs:
       - run: cd /home/runner/work/ias/ias
       - run: pwd
       - run: ls
-      - name: Create IAS root tar file
-        run: tar czf IasRoot.tgz IasRoot
       - uses: actions/upload-artifact@v4
         with:
           name: IasRoot
           path: IasRoot
-          retention-days: 30
-          include-hidden-files: true
-      - uses: actions/upload-artifact@v4
-        with:
-          name: IasRoot
-          path: IasRoot.tgz
           retention-days: 30
           include-hidden-files: true
