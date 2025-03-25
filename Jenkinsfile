@@ -53,4 +53,10 @@ pipeline {
             }
         }
     }
+
+    post {
+        success {
+            archiveArtifacts artifacts: IasRoot.tgz
+        }
+    }
 }
