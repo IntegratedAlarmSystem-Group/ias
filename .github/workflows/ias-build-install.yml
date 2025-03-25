@@ -16,6 +16,7 @@ jobs:
         uses: actions/setup-python@v4.5.0
         with:
           python-version: '3.10'
+      - run: echo "HOME: $HOME"
       - run: pwd
       - name: Checkout IAS code
         uses: actions/checkout@v3
