@@ -56,7 +56,7 @@ pipeline {
 
     post {
         success {
-            archiveArtifacts artifacts: IasRoot.tgz
+            archiveArtifacts artifacts: '**/*.tgz'
         }
     }
 }
