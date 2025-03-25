@@ -34,3 +34,5 @@ jobs:
         run: ./gradlew install
       - name: List IAS_ROOT content
         run: ls -lR $IAS_ROOT
+      - name: Create IAS root tar file
+        run: tar czf /home/runner/work/ias/IasRoot.tgz $IAS_ROOT
