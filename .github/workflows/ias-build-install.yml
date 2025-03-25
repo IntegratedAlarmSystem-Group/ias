@@ -19,6 +19,8 @@ jobs:
           python-version: '3.10'
       - run: python -V
       - run: java -version
+      - run: pwd
+      - run: ls
       - run: mkdir $IAS_ROOT
       - run: mkdir GITHUB_WORKSPACE
       - name: Checkout IAS code
