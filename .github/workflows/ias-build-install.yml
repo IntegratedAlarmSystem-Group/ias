@@ -2,8 +2,8 @@ name: ias-build-install
 run-name: ${{ github.actor }} Build IAS
 on: [push]
 env:
-  IAS_ROOT: '/home/runner/work/ias/IasRoot'
-  GITHUB_WORKSPACE: 'home/runner/work/ias/GIT'
+  IAS_ROOT: '/home/runner/work/ias/ias/IasRoot'
+  GITHUB_WORKSPACE: 'home/runner/work/ias/ias/GIT'
 jobs:
   Build-IAS:
     runs-on: ubuntu-latest
@@ -18,16 +18,16 @@ jobs:
         with:
           python-version: '3.10'
       - run: python -V
+      - name: Install PySide6
+        run: pip install PySide6
       - run: java -version
       - run: pwd
       - run: ls
       - run: mkdir $IAS_ROOT
       - run: mkdir GITHUB_WORKSPACE
+      - run: ls
       - name: Checkout IAS code
         uses: actions/checkout@v4
-      - run: cd /home/runner/work/ias
-      - name: Install PySide6
-        run: pip install PySide6
       - run: cd $GITHUB_WORKSPACE
       - name: Clean
         run: ./gradlew clean
@@ -37,7 +37,7 @@ jobs:
         run: ./gradlew install
       - name: List IAS_ROOT content
         run: ls -lR $IAS_ROOT
-      - run: cd /home/runner/work/ias
+      - run: cd /home/runner/work/ias/ias
       - run: pwd
       - run: ls
       - name: Create IAS root tar file
