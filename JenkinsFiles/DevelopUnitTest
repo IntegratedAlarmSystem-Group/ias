@@ -31,7 +31,7 @@ pipeline {
                     ls
                     tar -xzf IasRoot.tgz -C $IAS_ROOT
                     pwd
-                    ls
+                    ls $IAS_ROOT
                 '''
             }
         }
@@ -39,6 +39,7 @@ pipeline {
             steps {
                 dir('ias') {
                     git url: 'https://github.com/IntegratedAlarmSystem-Group/ias.git', branch: 'develop'
+                    sh 'ls -la'
                 }
             }
         }
