@@ -16,6 +16,13 @@ pipeline {
                 sh 'tar -xzf IasRoot.tgz -C ./'
             }
         }
+        stage('Checkout') {
+            steps {
+                dir('ias') {
+                    git url: 'https://github.com/IntegratedAlarmSystem-Group/ias.git', branch: 'develop'
+                }
+            }
+        }
         stage('Run Unit Tests') {
             steps {
                 // Assuming tests are in the extracted folder
