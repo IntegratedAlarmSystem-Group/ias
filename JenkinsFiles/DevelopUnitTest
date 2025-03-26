@@ -1,6 +1,12 @@
 pipeline {
     agent any
-    
+
+    environment {
+        // Define your environment variables here
+        PATH = "${env.PATH}:/var/lib/jenkins/.local/bin"
+        IAS_ROOT = "${env.WORKSPACE}/IasRoot"
+    }
+
     stages {
         stage('Retrieve Artifact') {
             steps {
@@ -26,7 +32,7 @@ pipeline {
         stage('Run Unit Tests') {
             steps {
                 // Assuming tests are in the extracted folder
-                sh './gradlew iasUintTest'
+                sh './gradlew iasUnitTest'
             }
         }
     }
