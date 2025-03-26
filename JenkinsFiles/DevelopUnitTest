@@ -7,12 +7,12 @@ pipeline {
         PATH = "${env.PATH}:${env.IAS_ROOT}/bin:/var/lib/jenkins/.local/bin"
     }
 
-    stage('Clean Workspace') {
-        steps {
-            cleanWs()
-        }
-    }
     stages {
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
         stage('Retrieve Artifact') {
             steps {
                 copyArtifacts(
