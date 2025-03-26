@@ -58,6 +58,7 @@ pipeline {
             steps {
                 dir('ias') {
                     sh '''
+                        #!/bin/bash
                         source Tools/config/ias-bash-profile.sh
                         ./gradlew iasUnitTest
                     '''
