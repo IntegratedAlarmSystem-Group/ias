@@ -57,6 +57,8 @@ pipeline {
     post {
         success {
             archiveArtifacts artifacts: '**/*.tgz'
+            build job: 'DevelopUnitTest', wait: false
+
         }
     }
 }
