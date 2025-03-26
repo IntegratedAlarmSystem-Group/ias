@@ -49,7 +49,7 @@ pipeline {
             steps {
                 dir('ias') {
                     sh '''
-                        ./gradlew build'
+                        ./gradlew build
                     '''
                 }
             }
@@ -57,9 +57,10 @@ pipeline {
         stage('Run Unit Tests') {
             steps {
                 dir('ias') {
-                    // Assuming tests are in the extracted folder
-                    source Tools/config/ias-bash-profile.sh
-                    sh './gradlew iasUnitTest'
+                    sh '''
+                        source Tools/config/ias-bash-profile.sh
+                        ./gradlew iasUnitTest
+                    '''
                 }
             }
         }
