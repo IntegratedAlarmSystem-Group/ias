@@ -5,18 +5,18 @@ ERRORS_FOUND=0
 # Check pre-requisites
 if ! command -v java &>/dev/null;
 then
-	echo "${bold}java not found (to be installed or added to the PATH)!${normal}"
+	echo "java not found (to be installed or added to the PATH)!"
 	((ERRORS_FOUND++))
 fi
 
 if [ -z "$IAS_ROOT" ]; then
-	echo "${bold}IAS_ROOT is not defined!${normal}"
+	echo "IAS_ROOT is not defined!"
 	((ERRORS_FOUND++))
 fi
 
 # Check if IAS_ROOT folder exists
 if [ ! -d "$IAS_ROOT" ]; then
-	echo "${bold}IAS root $IAS_ROOT does not exist!${normal}"
+	echo "IAS root $IAS_ROOT does not exist!"
 	((ERRORS_FOUND++))
 fi
 	
