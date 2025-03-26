@@ -3,8 +3,8 @@ pipeline {
 
     environment {
         // Define your environment variables here
-        PATH = "${env.PATH}:/var/lib/jenkins/.local/bin"
         IAS_ROOT = "${env.WORKSPACE}/IasRoot"
+        PATH = "${env.PATH}:${env.IAS_ROOT}/bin:/var/lib/jenkins/.local/bin"
     }
 
     stages {
