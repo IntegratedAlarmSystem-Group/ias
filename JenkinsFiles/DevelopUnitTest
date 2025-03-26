@@ -45,8 +45,10 @@ pipeline {
         }
         stage('Run Unit Tests') {
             steps {
-                // Assuming tests are in the extracted folder
-                sh './gradlew iasUnitTest'
+                dir('ias') {
+                    // Assuming tests are in the extracted folder
+                    sh './gradlew iasUnitTest'
+                }
             }
         }
     }
