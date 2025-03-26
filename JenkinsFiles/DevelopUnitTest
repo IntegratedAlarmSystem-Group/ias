@@ -49,7 +49,7 @@ pipeline {
             steps {
                 dir('ias') {
                     sh '''
-                        . Tools/config/ias-bash-profile.sh
+                        source Tools/config/ias-bash-profile.sh
                         ./gradlew build'
                     '''
                 }
