@@ -43,6 +43,16 @@ pipeline {
                 }
             }
         }
+        stage('Build') {
+            steps {
+                dir('ias') {
+                    sh '''
+                        . Tools/config/ias-bash-profile.sh
+                        ./gradlew build'
+                    '''
+                }
+            }
+        }
         stage('Run Unit Tests') {
             steps {
                 dir('ias') {
