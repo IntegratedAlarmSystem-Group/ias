@@ -18,12 +18,13 @@ pipeline {
             }
         }
         stage('Extract Artifact') {
-            sh '''
-                mkdir -p ias
-                tar -xzf IasRoot.tgz
-                pwd
-                ls
-            '''
+            steps {
+                sh '''
+                    tar -xzf IasRoot.tgz
+                    pwd
+                    ls
+                '''
+            }
         }
         stage('Checkout') {
             steps {
