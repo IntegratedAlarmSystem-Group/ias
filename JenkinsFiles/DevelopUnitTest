@@ -55,13 +55,9 @@ pipeline {
             }
         }
         stage('Run Unit Tests') {
-            steps {
-                dir('ias') {
-                    sh '''
-                        #!/bin/bash
-                        source Tools/config/ias-bash-profile.sh
-                        ./gradlew iasUnitTest
-                    '''
+    steps {
+        dir('ias') {
+            sh 'bash -c "source Tools/config/ias-bash-profile.sh && ./gradlew iasUnitTest"'
                 }
             }
         }
