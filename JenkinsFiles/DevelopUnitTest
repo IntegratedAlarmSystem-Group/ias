@@ -20,7 +20,9 @@ pipeline {
         stage('Extract Artifact') {
             steps {
                 sh '''
-                    mkdir ${env.IAS_ROOT}
+                    mkdir -p ${env.IAS_ROOT}
+                    rm -rf ${env.IAS_ROOT}/*
+                    ls
                     tar -xzf IasRoot.tgz -C ${env.IAS_ROOT}
                     pwd
                     ls
