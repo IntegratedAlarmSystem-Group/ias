@@ -1,0 +1,35 @@
+pipeline {
+    agent any
+    
+    stages {
+        stage('Retrieve Artifact') {
+            steps {
+                copyArtifacts(
+                    projectName: 'IAS develop pipeline',
+                    filter: 'IasRoot.tgz',
+                    selector: lastSuccessful()
+                )
+            }
+        }
+        stage('Extract Artifact') {
+            steps {
+                sh 'tar -xzf IasRoot.tgz -C ./'
+            }
+        }
+        stage('Run Unit Tests') {
+            steps {
+                // Assuming tests are in the extracted folder
+                sh './gradlew iasUintTest'
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo 'Unit tests completed successfully!'
+        }
+        failure {
+            echo 'Unit tests failed!'
+        }
+    }
+}
