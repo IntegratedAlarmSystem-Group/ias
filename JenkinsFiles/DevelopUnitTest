@@ -62,8 +62,11 @@ pipeline {
             }
         }
         stage('Log-parser') {
-            steps {
-                logparser([$class: 'LogParserPublisher', parsingRulesPath: '/var/lib/jenkins/minimal-rules', useProjectRule: false, failBuildOnError: true, unstableOnWarning: false, Logparsergraphs: true ]) 
+            script {
+                logParser failBuildOnError: false, 
+                  parsingRulesPath: '/var/lib/jenkins/iasLogParserRules.txt', 
+                  useProjectRule: false, 
+                  projectRulePath: ''
             }
         }
     }
