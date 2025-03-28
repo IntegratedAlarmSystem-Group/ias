@@ -62,11 +62,10 @@ pipeline {
             }
         }
         stage('Log-parser') {
-            script {
+           steps {
                 logParser failBuildOnError: false, 
                   parsingRulesPath: '/var/lib/jenkins/iasLogParserRules.txt', 
-                  useProjectRule: false, 
-                  projectRulePath: ''
+                  useProjectRule: false
             }
         }
     }
