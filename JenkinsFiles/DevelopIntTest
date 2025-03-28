@@ -62,10 +62,10 @@ pipeline {
     
     post {
         success {
-            echo 'Unit tests completed successfully!'
+            echo 'Integration tests completed successfully!'
         }
         failure {
-            echo 'Unit tests failed!'
+            echo 'Integration tests failed!'
         }
     }
 }
