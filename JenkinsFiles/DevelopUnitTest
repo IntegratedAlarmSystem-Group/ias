@@ -19,7 +19,7 @@ pipeline {
             steps {
                 copyArtifacts(
                     projectName: 'IAS develop pipeline',
-                    filter: 'IasRoot.tgz',
+                    filter: '*.tgz',
                     selector: lastSuccessful()
                 )
             }
@@ -27,11 +27,16 @@ pipeline {
         stage('Extract Artifact') {
             steps {
                 sh '''
-                    echo "IAS_ROOT is set to: $IAS_ROOT"
+                    ls
+                    echo "Extract IAS_ROOT to: $IAS_ROOT..."
                     mkdir -p $IAS_ROOT
                     rm -rf $IAS_ROOT/*
                     ls
                     tar -xzf IasRoot.tgz -C $IAS_ROOT
+                    echo "Extract ias..."
+                    mkdir -p ias
+                    rm -rf ias/*
+                    tar -xzf ias.tgz -C ias
                     pwd
                     ls $IAS_ROOT
                 '''
