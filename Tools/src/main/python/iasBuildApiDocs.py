@@ -33,6 +33,15 @@ if __name__ == '__main__':
         dest="srcFolder",
         required=True)
     parser.add_argument(
+        "-l",
+        "--language",
+        help="The language to generate the documentation for (default all)",
+        action='store',
+        choices=['all', 'scala', 'java', 'python'],
+        default='all',
+        required=False
+    )
+    parser.add_argument(
         '-lso',
         '--levelStdOut',
         help='Logging level: Set the level of the message for the file logger, default: Debug level',
@@ -57,14 +66,17 @@ if __name__ == '__main__':
     logger.info("Reading sources from %s",args.srcFolder)
 
     # Build scala documentation
-    logger.info("Building scaladoc")
-    scalaBuilder = ScaladocBuilder(args.srcFolder,join(args.destFolder,"scala"))
-    scalaBuilder.buildScaladocs()
+    if args.language=='all' or args.language=='scala':
+        logger.info("Building scaladoc")
+        scalaBuilder = ScaladocBuilder(args.srcFolder,join(args.destFolder,"scala"))
+        scalaBuilder.buildScaladocs()
 
-    logger.info("Building javadoc")
-    javaBuilder = JavadocBuilder(args.srcFolder,join(args.destFolder,"java"))
-    javaBuilder.buildJavadocs()
+    if args.language=='all' or args.language=='java':
+        logger.info("Building javadoc")
+        javaBuilder = JavadocBuilder(args.srcFolder,join(args.destFolder,"java"))
+        javaBuilder.buildJavadocs()
 
-    logger.info("Building pydoc")
-    pythonBuilder = PydocBuilder(args.srcFolder,join(args.destFolder,"python"))
-    pythonBuilder.buildPydocs()
+    if args.language=='all' or args.language=='python':
+        logger.info("Building pydoc")
+        pythonBuilder = PydocBuilder(args.srcFolder,join(args.destFolder,"python"))
+        pythonBuilder.buildPydocs()

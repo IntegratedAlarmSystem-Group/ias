@@ -12,7 +12,7 @@ import shutil
 from subprocess import call
 from glob import glob
 from IASApiDocs.DocGenerator import DocGenerator
-import logging 
+from IASLogging.logConf import Log
 
 class PydocBuilder(DocGenerator):
     '''
@@ -23,7 +23,7 @@ class PydocBuilder(DocGenerator):
     def __init__(self,srcFolder,dstFolder,includeTestFolder=False,outFile=sys.stdout):
         """ 
         Constructor
-        @param srcFolder: the folder with python sources to generate their documentation
+        @param srcFolder: the folder of python sources to generate their documentation
         @param dstFolder: destination folder for pydocs  
         @param includeTestFolder: True if the class must generate documentation for the python
                 sources in test folders (defaults to False)
@@ -31,6 +31,7 @@ class PydocBuilder(DocGenerator):
         """
         self.includeTestFolder=includeTestFolder
         super(PydocBuilder, self).__init__(srcFolder,dstFolder,outFile)
+        self.logger=Log.getLogger(__file__)
         
     def getPythonFilesInFolder(self,folder):
         """
@@ -44,18 +45,18 @@ class PydocBuilder(DocGenerator):
         for f in files:
             if f.endswith(".py"):
                 ret.append(f)
-        
+        self.logger.info("Found %d python source files in %s", len(ret), folder)
         return ret 
         
     def buildIndex(self,folder):
         """
-        Build the index.thm file needed by github web server.
+        Build the index.html file needed by github web server.
         
         The index will simply list the generated html files
         
         @param folder: the folder containing html files to index
         """
-        logging.info("Generating index in %s",folder)
+        self.logger.info("Generating index in %s",folder)
         
         htmlFilePaths = glob(folder+"/*.html")
         htmlFiles = []
@@ -74,7 +75,7 @@ class PydocBuilder(DocGenerator):
                 if (parts[0] not in pyModules):
                     pyModules.append(parts[0])
         pyModules.sort()
-        logging.info("Python modules %s",pyModules)
+        self.logger.info("Python modules %s",pyModules)
         
         msg = "<!DOCTYPE html><html>\n<body>\n"
         msg += "\t<h1>IAS python API</h1>\n"
@@ -106,7 +107,7 @@ class PydocBuilder(DocGenerator):
         text_file.write(msg)
         text_file.close()
         
-        logging.info("%s/index.html written",folder)
+        self.logger.info("%s/index.html written",folder)
     
     def buildPydocs(self):
         """
@@ -119,26 +120,26 @@ class PydocBuilder(DocGenerator):
         
         folders = self.getSrcPaths(self.srcFolder, False,"python",".py")
         
-        logging.info("Folders %s",folders)
-        logging.info("SourceFolder %s",self.srcFolder)
+        self.logger.info("Folders %s",folders)
+        self.logger.info("SourceFolder %s",self.srcFolder)
                    
         for folder in folders:
-            logging.info("Generating pydoc in %s",folder)
+            self.logger.info("Generating pydoc from %s",folder)
             
             oldWD = os.getcwd()
-            logging.info("Changing folder to %s",folder)
+            self.logger.info("Changing folder to %s",folder)
             os.chdir(folder)
             cmd =["pydoc3"]
             cmd.append("-w")
             cmd.append("./")
             ret = call(cmd,stdout=self.outFile,stderr=self.outFile)
             
-            logging.info("Moving htmls to %s",self.dstFolder)
+            self.logger.info("Moving htmls to %s",self.dstFolder)
             files = os.listdir(".")
             for f in files:
                 if (f.endswith(".html")):
                     shutil.move(f, self.dstFolder)
-            logging.info("Changing folder back to %s",oldWD)
+            self.logger.info("Changing folder back to %s",oldWD)
             os.chdir(oldWD)
         
         self.buildIndex(self.dstFolder)
