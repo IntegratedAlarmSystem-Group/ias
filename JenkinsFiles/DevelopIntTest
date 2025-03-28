@@ -43,7 +43,7 @@ pipeline {
                 '''
             }
         }
-        stage('Run Unit Tests') {
+        stage('Run Integration Tests') {
             steps {
                 dir('ias') {
                     sh 'bash -c "source Tools/config/ias-bash-profile.sh && ./gradlew iasIntTest"'
