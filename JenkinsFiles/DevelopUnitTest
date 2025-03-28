@@ -38,7 +38,8 @@ pipeline {
                     rm -rf ias/*
                     tar -xzf ias.tgz -C ias
                     pwd
-                    ls $IAS_ROOT
+                    ls
+                    rm -rf *.tgz
                 '''
             }
         }
