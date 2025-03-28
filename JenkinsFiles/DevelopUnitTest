@@ -80,10 +80,8 @@ pipeline {
     }
     
     post {
-        post {
-            success {
-                build job: 'DevelopIntTest', wait: false
-            }
+        success {
+            build job: 'DevelopIntTest', wait: false
         }
     }
 }
