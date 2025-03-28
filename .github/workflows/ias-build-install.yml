@@ -2,7 +2,8 @@ name: ias-build-install
 run-name: ${{ github.actor }} Build IAS
 on: [push]
 env:
-  IAS_ROOT: '/home/runner/work/ias/IasRoot'
+  IAS_ROOT: '/home/runner/work/ias/ias/IasRoot'
+  GITHUB_WORKSPACE: '/home/runner/work/ias/ias/GIT'
 jobs:
   Build-IAS:
     runs-on: ubuntu-latest
@@ -13,30 +14,29 @@ jobs:
           java-version: '17'
           distribution: 'adopt'
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v4.5.0
         with:
           python-version: '3.10'
-      - name: Checkout IAS code
-        uses: actions/checkout@v4
+      - run: python -V
       - name: Install PySide6
         run: pip install PySide6
-      - run: git status
-      - run: pwd
-      - run: python -V
       - run: java -version
       - run: mkdir $IAS_ROOT
-      - run: rm -rf $IAS_ROOT/*
+      - run: mkdir GITHUB_WORKSPACE
+      - name: Checkout IAS code
+        uses: actions/checkout@v4
+      - run: cd $GITHUB_WORKSPACE
       - name: Clean
         run: ./gradlew clean
       - name: Build IAS with gradlew
         run: ./gradlew build
       - name: Install IAS in IAS_ROOT
-        run: ./gradlew install clean
-      - name: Create IasRoot artifact
-        uses: actions/upload-artifact@v4
+        run: ./gradlew install
+      - name: List IAS_ROOT content
+        run: ls -lR $IAS_ROOT
+      - uses: actions/upload-artifact@v4
         with:
           name: IasRoot
-          path: |
-            /home/runner/work/ias/IasRoot
-            /home/runner/work/ias/ias
-          if-no-files-found: error
+          path: IasRoot
+          retention-days: 30
+          include-hidden-files: true
