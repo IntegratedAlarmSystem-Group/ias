@@ -52,6 +52,11 @@ pipeline {
                 sh 'tar -czf IasRoot.tgz -C IasRoot .'
             }
         }
+        stage('Compress ias') {
+            steps {
+                sh 'tar -czf ias.tgz -C ias .'
+            }
+        }
     }
 
     post {
