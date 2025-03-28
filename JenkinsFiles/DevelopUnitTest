@@ -50,6 +50,7 @@ pipeline {
                 }
             }
         }
+        /*
         stage('Build') {
             steps {
                 dir('ias') {
@@ -59,6 +60,7 @@ pipeline {
                 }
             }
         }
+        */
         stage('Run Unit Tests') {
             steps {
                 dir('ias') {
