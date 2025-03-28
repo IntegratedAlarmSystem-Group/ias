@@ -15,7 +15,7 @@ pipeline {
                 cleanWs()
             }
         }
-        stage('Retrieve Artifact') {
+        stage('Retrieve Artifacts') {
             steps {
                 copyArtifacts(
                     projectName: 'IAS develop pipeline',
@@ -24,7 +24,7 @@ pipeline {
                 )
             }
         }
-        stage('Extract Artifact') {
+        stage('Extract Artifacts') {
             steps {
                 sh '''
                     ls
@@ -42,6 +42,7 @@ pipeline {
                 '''
             }
         }
+        /*
         stage('Checkout') {
             steps {
                 dir('ias') {
@@ -50,7 +51,6 @@ pipeline {
                 }
             }
         }
-        /*
         stage('Build') {
             steps {
                 dir('ias') {
