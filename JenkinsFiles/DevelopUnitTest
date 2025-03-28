@@ -80,11 +80,10 @@ pipeline {
     }
     
     post {
-        success {
-            echo 'Unit tests completed successfully!'
-        }
-        failure {
-            echo 'Unit tests failed!'
+        post {
+            success {
+                build job: 'DevelopIntTest', wait: false
+            }
         }
     }
 }
