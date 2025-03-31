@@ -60,7 +60,7 @@ chmod 777 %{buildroot}%{prefix}/tmp
 /opt/IasRoot
 %license LICENSES/*
 %{syspython3_sitelib}/%{name}.pth
-%exclude /opt/IasRoot/ias.spec
+%exclude /opt/IasRoot/config/ias.spec
 
 %changelog
 * Wed May 08 2024 acaproni Creation of the SPEC
