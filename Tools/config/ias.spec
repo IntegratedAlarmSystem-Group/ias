@@ -11,11 +11,20 @@ Source0:        %{url}/archive/refs/tags/%{version}.tar.gz#/%{name}-%{version}.t
 BuildRequires:  (java-17-openjdk-devel or java-21-openjdk-devel or java-lastest-openjdk-devel)
 BuildRequires:  javapackages-tools
 BuildRequires:  python3-devel >= 3.10
-BuildRequires:	python3-confluent-kafka
+BuildRequires:	%{py3_dist confluent-kafka}
+BuildRequires:	python3-dateutil
+BuildRequires:	%{py3_dist pyyaml}
+BuildRequires:	%{py3_dist sqlalchemy}
+BuildRequires:	%{py3_dist oracledb}
 
-Requires:   python3 >= 3.10
-Requires:	python3-confluent-kafka
-Requires:	(java-17-openjdk-headless or java-21-openjdk-headless or java-latest-openjdk-headless)
+Requires:  python3 >= 3.10
+Requires:  python3-confluent-kafka
+Requires:  (java-17-openjdk-headless or java-21-openjdk-headless or java-latest-openjdk-headless)
+Requires:  %{py3_dist confluent-kafka}
+Requires:  %{py3_dist dateutil}
+Requires:  %{py3_dist pyyaml}
+Requires:  %{py3_dist sqlalchemy}
+Requires:  %{py3_dist oracledb}
 
 %global syspython3_sitelib  /usr/lib/python%{python3_version}/site-packages
 %global prefix              /opt/IasRoot
@@ -58,10 +67,10 @@ chmod 777 %{buildroot}%{prefix}/tmp
 
 #%check
 # Run IAS uniit tests
-#export IAS_ROOT=%{buildroot}%{prefix}
-#. ./Tools/config/ias-bash-profile.sh 
-#./gradlew iasUnitTest
-#./gradlew clean
+export IAS_ROOT=%{buildroot}%{prefix}
+. ./Tools/config/ias-bash-profile.sh 
+./gradlew iasUnitTest
+./gradlew clean
 
 %files
 /opt/IasRoot
