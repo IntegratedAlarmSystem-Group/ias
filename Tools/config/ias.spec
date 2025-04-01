@@ -39,6 +39,13 @@ mkdir -p %{buildroot}%{prefix}
 export IAS_ROOT=%{buildroot}%{prefix}
 ./gradlew install
 
+# make executables available via system path
+mkdir -p %{buildroot}%{sysbindir}
+for i in $(ls -1 %{buildroot}%{prefix}/bin/|grep -v Test)
+do
+    ln -v -s "%{buildroot}%{prefix}/bin/$i" %{buildroot}%{sysbindir}/
+done
+
 # install pth file
 echo %{python3_sitelib} > %{name}.pth
 install -m644 -D -t %{buildroot}%{syspython3_sitelib} %{name}.pth
@@ -61,6 +68,7 @@ chmod 777 %{buildroot}%{prefix}/tmp
 %license LICENSES/*
 %{syspython3_sitelib}/%{name}.pth
 %exclude /opt/IasRoot/config/ias.spec
+%exclude /opt/IasRoot/bin/*Test
 
 %changelog
 * Wed May 08 2024 acaproni Creation of the SPEC
