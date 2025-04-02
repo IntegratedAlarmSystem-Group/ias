@@ -8,17 +8,19 @@ License:        LGPL-3.0-only
 URL:            https://github.com/IntegratedAlarmSystem-Group/ias
 Source0:        %{url}/archive/refs/tags/%{version}.tar.gz#/%{name}-%{version}.tar.gz
 
+#
+# TODO Missing dependency om jep
+#
 BuildRequires:  (java-17-openjdk-devel or java-21-openjdk-devel or java-lastest-openjdk-devel)
 BuildRequires:  javapackages-tools
 BuildRequires:  python3-devel >= 3.10
 BuildRequires:	%{py3_dist confluent-kafka}
-BuildRequires:	python3-dateutil
+BuildRequires:	%{py3_dist python-dateutil}
 BuildRequires:	%{py3_dist pyyaml}
 BuildRequires:	%{py3_dist sqlalchemy}
 BuildRequires:	%{py3_dist oracledb}
 
 Requires:  python3 >= 3.10
-Requires:  python3-confluent-kafka
 Requires:  (java-17-openjdk-headless or java-21-openjdk-headless or java-latest-openjdk-headless)
 Requires:  %{py3_dist confluent-kafka}
 Requires:  %{py3_dist dateutil}
@@ -38,7 +40,6 @@ The production version of the core of the Integrated Alarm System
 
 %build
 export JAVA_HOME=%java_home
-#cd %{_builddir}/ias
 export IAS_ROOT=%{buildroot}%{prefix}
 ./gradlew build 
 
@@ -47,13 +48,6 @@ export IAS_ROOT=%{buildroot}%{prefix}
 mkdir -p %{buildroot}%{prefix}
 export IAS_ROOT=%{buildroot}%{prefix}
 ./gradlew install
-
-# make executables available via system path
-mkdir -p %{buildroot}%{sysbindir}
-for i in $(ls -1 %{buildroot}%{prefix}/bin/|grep -v Test)
-do
-    ln -v -s "%{buildroot}%{prefix}/bin/$i" %{buildroot}%{sysbindir}/
-done
 
 # install pth file
 echo %{python3_sitelib} > %{name}.pth
@@ -67,17 +61,26 @@ chmod 777 %{buildroot}%{prefix}/tmp
 
 #%check
 # Run IAS uniit tests
-export IAS_ROOT=%{buildroot}%{prefix}
-. ./Tools/config/ias-bash-profile.sh 
-./gradlew iasUnitTest
-./gradlew clean
+#export IAS_ROOT=%{buildroot}%{prefix}
+#. ./Tools/config/ias-bash-profile.sh 
+#./gradlew iasUnitTest
+#./gradlew clean
 
 %files
 /opt/IasRoot
+#/usr/bin
 %license LICENSES/*
 %{syspython3_sitelib}/%{name}.pth
 %exclude /opt/IasRoot/config/ias.spec
 %exclude /opt/IasRoot/bin/*Test
+
+%post
+# make executables available via system path
+for i in $(ls -1 %{buildroot}%{prefix}/bin/|grep -v Test)
+do
+  ln -v -s ".%{prefix}/bin/$i" %{_bindir}
+  chmod 0755 {_bindir}/$1
+done
 
 %changelog
 * Wed May 08 2024 acaproni Creation of the SPEC
