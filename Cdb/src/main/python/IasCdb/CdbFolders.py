@@ -2,7 +2,6 @@
 Python implementation of CdbFolders.java
 """
 
-from genericpath import isdir
 import os
 import shutil
 
