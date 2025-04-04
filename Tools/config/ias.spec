@@ -161,11 +161,6 @@ export IAS_ROOT=%{buildroot}%{_prefix}
 %{sysbindir}/startIasServices
 %{sysbindir}/stopIasServices
  
-#############
-#### %dnl /usr/lib/python3.12/site-packages/ias.pth
-#### %dnl /usr/share/licenses/ias
-#### %dnl /usr/share/licenses/ias/LGPL-3.0-only.txt
-
 %license LICENSES/*
 %{syspython3_sitelib}/%{name}.pth
 
