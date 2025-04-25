@@ -213,7 +213,6 @@ open class IasBuild : Plugin<Project> {
         // in the build folder
         val copyPyGuiModules = project.tasks.register<Copy>("CopyPyGuiModules") {
             dependsOn(pyside6GuiBuilder)
-            finalizedBy(installLib)
 
             val srcFolder = "src/main/gui"
 
