@@ -19,9 +19,14 @@ tasks.register("build") {
 
 tasks.register("install") {
     doLast {
+        if (!checkIntegrity()) {
+            throw GradleException("Integrity check not passed: IAS_ROOT is undefined")
+        }
         var envVar: String? = System.getenv("IAS_ROOT")
+        logger.lifecycle("Installing IAS license, realease and readme files in $envVar")
         val extension = gradle as ExtensionAware
         val gitBranchStr = extension.extra["GitBranch"].toString()
+        logger.lifecycle("Installing branch: $gitBranchStr")
         org.jetbrains.kotlin.konan.file.File(envVar + "/" + "RELEASE.txt").writeText("Built from git branch " + gitBranchStr)
 
         val licFile = File("LICENSE.md")
