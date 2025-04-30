@@ -1,6 +1,7 @@
 package org.eso.ias.build.plugin
 
 import java.io.File as JavaFile
+import java.nio.file.attribute.PosixFilePermissions
 
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
@@ -54,8 +55,19 @@ open class IasBuild : Plugin<Project> {
             rename { filename: String ->
                 filename.substringBefore('.')
             }
-            fileMode = 484 // 0744
             into(project.layout.buildDirectory.dir(destFolder))
+            // Set file permissions directly
+            filePermissions {
+                user {
+                    read = true
+                    execute = true
+                }
+                group {
+                    read = true
+                    execute = true
+                }
+                other.execute = true
+            }
         }
 
         // Shell scripts
@@ -68,8 +80,20 @@ open class IasBuild : Plugin<Project> {
             rename { filename: String ->
                 filename.substringBefore('.')
             }
-            fileMode = 484 // 0744
             into(project.layout.buildDirectory.dir(destFolder))
+            // Set file permissions directly
+            filePermissions {
+                user {
+                    read = true
+                    execute = true
+                }
+                group {
+                    read = true
+                    execute = true
+                }
+                other.execute = true
+            }
+            
         }
 
 
@@ -176,8 +200,22 @@ open class IasBuild : Plugin<Project> {
             rename { filename: String ->
                 filename.substringBefore('.')
             }
-            fileMode = 484 // 0744
+            
             into(project.layout.buildDirectory.dir(destFolder))
+
+            // Set file permissions directly
+            filePermissions {
+                user {
+                    read = true
+                    execute = true
+                }
+                group {
+                    read = true
+                    execute = true
+                }
+                other.execute = true
+            }
+
         }
 
         // Copy python test modules
@@ -213,7 +251,6 @@ open class IasBuild : Plugin<Project> {
         // in the build folder
         val copyPyGuiModules = project.tasks.register<Copy>("CopyPyGuiModules") {
             dependsOn(pyside6GuiBuilder)
-            finalizedBy(installLib)
 
             val srcFolder = "src/main/gui"
 
