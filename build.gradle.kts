@@ -1,4 +1,6 @@
 import java.nio.file.StandardCopyOption
+import java.io.File
+
 
 fun checkIntegrity(): Boolean {
     var envVar: String? = System.getenv("IAS_ROOT")
@@ -27,7 +29,16 @@ tasks.register("install") {
         val extension = gradle as ExtensionAware
         val gitBranchStr = extension.extra["GitBranch"].toString()
         logger.lifecycle("Installing branch: $gitBranchStr")
-        org.jetbrains.kotlin.konan.file.File(envVar + "/" + "RELEASE.txt").writeText("Built from git branch " + gitBranchStr)
+
+        // Create the directory if it doesn't exist
+        val directory = File(envVar)
+        if (!directory.exists()) {
+            directory.mkdirs()
+        }
+
+        val file = File(directory, "RELEASE.txt")
+        file.writeText(gitBranchStr)
+        // org.jetbrains.kotlin.konan.file.File(envVar + "/" + "RELEASE.txt").writeText("Built from git branch " + gitBranchStr)
 
         val licFile = File("LICENSE.md")
         val outLicFile = File(envVar + "/" + "LICENSE.md")
