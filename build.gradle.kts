@@ -18,7 +18,7 @@ tasks.register("build") {
 }
 
 tasks.register("install") {
-    doLast {
+    doFirst {
         if (!checkIntegrity()) {
             throw GradleException("Integrity check not passed: IAS_ROOT is undefined")
         }
