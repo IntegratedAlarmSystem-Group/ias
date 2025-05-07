@@ -25,6 +25,8 @@ jobs:
       - run: mkdir $IAS_ROOT
       - name: Checkout IAS code
         uses: actions/checkout@v4
+        with:
+          path: GIT
       - run: ls
       - run: cd $GITHUB_WORKSPACE
       - name: Clean
@@ -61,9 +63,10 @@ jobs:
           name: IasRoot
           path: IasRoot
       - run: ls -la
-      - run: mkdir -p $GITHUB_WORKSPACE
       - name: Checkout IAS code
         uses: actions/checkout@v4
+        with:
+          path: GIT
       - run: ls -la
       - run: cd $GITHUB_WORKSPACE
       - name: Clean
