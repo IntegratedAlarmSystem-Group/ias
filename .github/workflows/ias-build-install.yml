@@ -91,7 +91,7 @@ jobs:
           cd GIT
           . Tools/config/ias-bash-profile.sh
           python3 -V
-          pwd
+          env
           ./gradlew iasUnitTest 2>&1 >unit-tests.out
       - uses: actions/upload-artifact@v4
         with:
