@@ -28,6 +28,7 @@ jobs:
         with:
           path: GIT
       - run: ls
+      - run: ls GIT
       - run: cd GIT/ias
       - name: Clean
         run: ./gradlew clean
