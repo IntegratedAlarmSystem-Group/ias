@@ -69,6 +69,7 @@ jobs:
         with:
           name: ias-root.tgz
           path: ias-root.tgz
+      - run: ls -la
       - name: Extract tar with IAS_ROOT
         run: tar xvzf ias-root.tgz
       - run: ls -la
