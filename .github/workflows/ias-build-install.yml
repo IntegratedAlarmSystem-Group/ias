@@ -101,7 +101,7 @@ jobs:
           . Tools/config/ias-bash-profile.sh
           python3 -V
           env
-          ./gradlew iasUnitTest 2>&1 >unit-tests.out
+          ./gradlew iasUnitTest 2>&1 >~/unit-tests.out
       - uses: actions/upload-artifact@v4
         with:
           name: unit-tests.out
