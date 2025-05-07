@@ -102,9 +102,11 @@ jobs:
           python3 -V
           env
           ./gradlew iasUnitTest 2>&1 >~/unit-tests.out
+          ls
+          ls ~
       - uses: actions/upload-artifact@v4
         with:
           name: unit-tests.out
-          path: unit-tests.out
+          path: ~/unit-tests.out
           retention-days: 15
           include-hidden-files: true
