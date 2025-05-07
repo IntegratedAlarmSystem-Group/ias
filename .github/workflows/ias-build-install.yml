@@ -3,13 +3,11 @@ run-name: ${{ github.actor }} Build IAS
 on: [push]
 env:
   IAS_ROOT: '/home/runner/work/ias/ias/IasRoot'
-  GITHUB_WORKSPACE: '/home/runner/work/ias/ias/GIT'
 jobs:
   Build-IAS:
     runs-on: ubuntu-latest
     outputs:
       ias_root_path: ${{ steps.set-env.outputs.IAS_ROOT }}
-      ias_github_path: ${{ steps.set-env.outputs.GITHUB_WORKSPACE }}
     steps:
       - name: Setup Java JDK
         uses: actions/setup-java@v4
@@ -25,9 +23,9 @@ jobs:
         run: pip install PySide6
       - run: java -version
       - run: mkdir $IAS_ROOT
-      - run: mkdir $GITHUB_WORKSPACE
       - name: Checkout IAS code
         uses: actions/checkout@v4
+      - run: ls
       - run: cd $GITHUB_WORKSPACE
       - name: Clean
         run: ./gradlew clean
