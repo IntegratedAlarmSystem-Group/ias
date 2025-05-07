@@ -47,7 +47,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: ias-root.tgz
-          path: ias-root.tgz
+          path: .
           retention-days: 7
           include-hidden-files: true
   unit-tests:
