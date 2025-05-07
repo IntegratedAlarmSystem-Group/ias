@@ -46,21 +46,22 @@ jobs:
   unit-tests:
     needs: Build-IAS
     runs-on: ubuntu-latest
+    env:
+      IAS_ROOT: '/home/runner/work/ias/ias/IasRoot'
     steps:
-      - run: echo "Using IAS_ROOT ${{ needs.Build-IAS.outputs.ias_root_path }}"
-      - run: echo "Using GITHUB_WORKSPACE ${{ needs.Build-IAS.outputs.ias_github_path }}"
+      - run: echo "Using IAS_ROOT $IAS_ROOT"
       - run: env
       - run: pwd
       - name: Install PySide6
         run: pip install PySide6
       - name: Install jep
         run: pip install jep
-      - run: ls -la
       - name: Download IAS ROOT
         uses: actions/download-artifact@v4
         with:
           name: IasRoot
           path: IasRoot
+      - run: ls -la
       - name: Checkout IAS code
         uses: actions/checkout@v4
       - run: cd $GITHUB_WORKSPACE
