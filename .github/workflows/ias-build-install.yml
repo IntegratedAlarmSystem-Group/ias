@@ -56,5 +56,12 @@ jobs:
         with:
           name: IasRoot
           path: IasRoot
-      - run: mkdir ${{ needs.Build-IAS.outputs.ias_github_path }}
+      - name: Checkout IAS code
+        uses: actions/checkout@v4
+      - run: cd $GITHUB_WORKSPACE
+      - name: Clean
+        run: ./gradlew clean
+      - name: Build IAS with gradlew
+        run: ./gradlew build
+      - run: ls -l
       - run: ls -l IasRoot
