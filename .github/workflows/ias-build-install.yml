@@ -28,10 +28,10 @@ jobs:
         with:
           path: GIT
       - run: ls
-      - run: cd GIT
-      - run: ls
       - name: Clean
-        run: ./gradlew clean
+        run: |
+          cd GIT
+          ./gradlew clean
       - name: Build IAS with gradlew
         run: ./gradlew build
       - name: Install IAS in IAS_ROOT
