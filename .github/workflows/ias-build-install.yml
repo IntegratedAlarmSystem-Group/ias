@@ -25,7 +25,7 @@ jobs:
         run: pip install PySide6
       - run: java -version
       - run: mkdir $IAS_ROOT
-      - run: mkdir GITHUB_WORKSPACE
+      - run: mkdir $GITHUB_WORKSPACE
       - name: Checkout IAS code
         uses: actions/checkout@v4
       - run: cd $GITHUB_WORKSPACE
@@ -48,6 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       IAS_ROOT: '/home/runner/work/ias/ias/IasRoot'
+      GITHUB_WORKSPACE: '/home/runner/work/ias/ias/GIT'
     steps:
       - run: echo "Using IAS_ROOT $IAS_ROOT"
       - run: env
@@ -62,8 +63,10 @@ jobs:
           name: IasRoot
           path: IasRoot
       - run: ls -la
+      - run: mkdir -p $GITHUB_WORKSPACE
       - name: Checkout IAS code
         uses: actions/checkout@v4
+      - run: ls -la
       - run: cd $GITHUB_WORKSPACE
       - name: Clean
         run: ./gradlew clean
