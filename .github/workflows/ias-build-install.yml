@@ -46,7 +46,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: IasBuildFolder
-          path: $GITHUB_WORKSPACE
+          path: ${{ github.workspace }}
           retention-days: 15
           include-hidden-files: true
   unit-tests:
