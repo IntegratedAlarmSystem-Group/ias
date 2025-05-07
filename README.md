@@ -1,4 +1,4 @@
-[![ias-build-install](https://github.com/IntegratedAlarmSystem-Group/ias/actions/workflows/ias-build-install.yml/badge.svg)](https://github.com/IntegratedAlarmSystem-Group/ias/actions/workflows/ias-build-install.yml)
+[![ias-build](https://github.com/IntegratedAlarmSystem-Group/ias/actions/workflows/ias-build-install.yml/badge.svg)](https://github.com/IntegratedAlarmSystem-Group/ias/actions/workflows/ias-build-install.yml)
 
 # ias
 The production version of the core of Integrated Alarm System.
