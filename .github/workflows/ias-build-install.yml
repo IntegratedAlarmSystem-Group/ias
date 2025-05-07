@@ -57,9 +57,16 @@ jobs:
       IAS_ROOT: '/home/runner/work/ias/ias/IasRoot'
       GITHUB_WORKSPACE: '/home/runner/work/ias/ias/GIT'
     steps:
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'adopt'
+      - name: Setup Python
+        uses: actions/setup-python@v4.5.0
+        with:
+          python-version: '3.10'
       - run: echo "Using IAS_ROOT $IAS_ROOT"
-      - run: env
-      - run: pwd
       - name: Install PySide6
         run: pip install PySide6
       - name: Install jep
