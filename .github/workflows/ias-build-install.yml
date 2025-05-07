@@ -51,6 +51,11 @@ jobs:
       - run: echo "Using GITHUB_WORKSPACE ${{ needs.Build-IAS.outputs.ias_github_path }}"
       - run: env
       - run: pwd
+      - name: Install PySide6
+        run: pip install PySide6
+      - name: Install jep
+        run: pip install jep
+      - run: ls -la
       - name: Download IAS ROOT
         uses: actions/download-artifact@v4
         with:
