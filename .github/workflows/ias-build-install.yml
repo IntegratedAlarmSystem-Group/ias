@@ -68,5 +68,11 @@ jobs:
         run: ./gradlew clean
       - name: Build IAS with gradlew
         run: ./gradlew build
-      - run: ls -l
-      - run: ls -l IasRoot
+      - name: Run unit tests
+        run: ./gradlew iasUnitTest 2>&1 >unit-tests.out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: unit-tests.out
+          path: unit-tests.out
+          retention-days: 15
+          include-hidden-files: true
