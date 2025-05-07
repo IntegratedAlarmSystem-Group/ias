@@ -33,9 +33,13 @@ jobs:
           cd GIT
           ./gradlew clean
       - name: Build IAS with gradlew
-        run: ./gradlew build
+        run: |
+          cd GIT
+          ./gradlew build
       - name: Install IAS in IAS_ROOT
-        run: ./gradlew install
+        run: |
+          cd GIT
+          ./gradlew install
       - name: List IAS_ROOT content
         run: ls -lR $IAS_ROOT
       - uses: actions/upload-artifact@v4
@@ -69,13 +73,19 @@ jobs:
         with:
           path: GIT
       - run: ls -la
-      - run: cd GIT/ias
       - name: Clean
-        run: ./gradlew clean
+        run: |
+          cd GIT
+          ./gradlew clean
       - name: Build IAS with gradlew
-        run: ./gradlew build
+        run: |
+          cd GIT
+          ./gradlew build
       - name: Run unit tests
-        run: . Tools/config/ias-bash-profile.sh && ./gradlew iasUnitTest 2>&1 >unit-tests.out
+        run: |
+          cd GIT
+          . Tools/config/ias-bash-profile.sh
+          ./gradlew iasUnitTest 2>&1 >unit-tests.out
       - uses: actions/upload-artifact@v4
         with:
           name: unit-tests.out
