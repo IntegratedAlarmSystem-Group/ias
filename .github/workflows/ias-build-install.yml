@@ -42,11 +42,13 @@ jobs:
           ./gradlew install
       - name: List IAS_ROOT content
         run: ls -lR $IAS_ROOT
+      - name: Create a tar archive of IAS_ROOT with preserved attributes
+          run: tar -cvzf ias-root.tar.gz IasRoot
       - uses: actions/upload-artifact@v4
         with:
-          name: IasRoot
-          path: IasRoot
-          retention-days: 15
+          name: IasRootTar
+          path: ias-root.tar.gz
+          retention-days: 7
           include-hidden-files: true
   unit-tests:
     needs: Build-IAS
@@ -65,8 +67,10 @@ jobs:
       - name: Download IAS ROOT
         uses: actions/download-artifact@v4
         with:
-          name: IasRoot
-          path: IasRoot
+          name: IasRootTar
+          path: ias-root.tar.gz
+      - name: Extract tar with IAS_ROOT
+        run: tar xv ias-root.tar.gz
       - run: ls -la
       - name: Checkout IAS code
         uses: actions/checkout@v4
