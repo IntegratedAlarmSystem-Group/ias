@@ -28,7 +28,7 @@ jobs:
         with:
           path: GIT
       - run: ls
-      - run: cd GIT
+      - run: cd GIT/ias
       - name: Clean
         run: ./gradlew clean
       - name: Build IAS with gradlew
@@ -68,7 +68,7 @@ jobs:
         with:
           path: GIT
       - run: ls -la
-      - run: cd GIT
+      - run: cd GIT/ias
       - name: Clean
         run: ./gradlew clean
       - name: Build IAS with gradlew
