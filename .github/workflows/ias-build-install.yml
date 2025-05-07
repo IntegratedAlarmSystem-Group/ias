@@ -90,7 +90,8 @@ jobs:
         run: |
           cd GIT
           . Tools/config/ias-bash-profile.sh
-          ls -la $IAS_ROOT/bin
+          python3 -V
+          pwd
           ./gradlew iasUnitTest 2>&1 >unit-tests.out
       - uses: actions/upload-artifact@v4
         with:
