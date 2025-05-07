@@ -54,7 +54,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: echo "Using IAS_ROOT ${{ needs.Build-IAS.outputs.ias_root_path }}
-      - run: echo "Using GITHUB_WORKSPACE ${{ needs.Build-IAS.outputs.ias_github_path }}
+      - run: echo "Using GITHUB_WORKSPACE ${{ needs.Build-IAS.outputs.ias_github_path }}"
       - name: Download IAS ROOT
         uses: actions/download-artifact@v4
         with:
