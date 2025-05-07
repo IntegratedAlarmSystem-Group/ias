@@ -71,6 +71,8 @@ jobs:
         run: pip install PySide6
       - name: Install jep
         run: pip install jep
+      - name: Install python dateutil
+        run: pip install python-dateutil
       - name: Download IAS ROOT
         uses: actions/download-artifact@v4
         with:
