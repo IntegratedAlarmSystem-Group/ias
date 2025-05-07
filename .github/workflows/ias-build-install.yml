@@ -49,5 +49,6 @@ jobs:
         with:
           name: IasRoot
           path: IasRoot
-      - name: List
-        run: ls -l
+      - run: env
+      - run: pwd
+      - run: ls -l IasRoot
