@@ -91,19 +91,3 @@ class CommonDefs(object):
             print("Directory is not empty")
 
         return classpath
-                            
-    @classmethod
-    def checkEnvironment(cls):
-        """
-        Check if IAS enviroment is correctly set up
-        
-        @return: True if the enviroment is correctly set;
-                 False otherwise
-        """
-        try:
-            environ["PYTHONPATH"]
-            environ["IAS_ROOT"]
-            environ["IAS_LOGS_FOLDER"]
-            return True
-        except:
-            return False

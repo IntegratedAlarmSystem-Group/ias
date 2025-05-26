@@ -1,4 +1,5 @@
 #!/bin/bash 
+. ias-env
 {
 echo Terminating IAS serices at `date +%Y/%m/%dT%H:%M:%S.%N`
 if [ -z $KAFKA_HOME ]

@@ -3,6 +3,8 @@ import errno
 import logging
 import os
 
+from IASTools.DefaultPaths import DefaultPaths
+
 
 class Log(object):
 
@@ -27,9 +29,9 @@ class Log(object):
       To get a logger, use getLogger()
       '''
 
-      # Take the path for logs folder inside $IAS_ROOT
+      # Take the path for logs folder
       Log.initialized = True
-      logPath=os.environ["IAS_LOGS_FOLDER"]
+      logPath=DefaultPaths.get_ias_logs_folder()
 
       #If the file doesn't exist it's created
       try:

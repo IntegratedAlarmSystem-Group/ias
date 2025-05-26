@@ -5,7 +5,7 @@ Created on Sep 23, 2016
 '''
 import logging
 from os import environ, getcwd, walk, path, makedirs, access, W_OK, X_OK
-
+from IASTools.DefaultPaths import DefaultPaths
 
 class FileSupport(object):
     '''
@@ -31,7 +31,7 @@ class FileSupport(object):
         "src": None }
 
     # IAS root from the environment
-    __iasRoot = environ['IAS_ROOT']
+    __iasRoot = DefaultPaths.get_ias_root_folder()
 
     def __init__(self, fileName, fileType=None):
         '''
@@ -169,7 +169,7 @@ class FileSupport(object):
         
         An exception is thrown in case of error
         """
-        tmpFolder=environ["IAS_TMP_FOLDER"]
+        tmpFolder=DefaultPaths.get_ias_tmp_folder()
         if not path.exists(tmpFolder):
             makedirs(tmpFolder)
         else:
@@ -189,7 +189,7 @@ class FileSupport(object):
         
         An exception is thrown in case of error
         """
-        logsFolder=environ["IAS_LOGS_FOLDER"]
+        logsFolder=DefaultPaths.get_ias_logs_folder()
         if not path.exists(logsFolder):
             makedirs(logsFolder)
         else:
@@ -200,4 +200,3 @@ class FileSupport(object):
             if not access(logsFolder, W_OK | X_OK):
                 logging.error("%s is not writable", logsFolder)
                 raise OSError(logsFolder+" is not writable")
-        

@@ -16,9 +16,9 @@ from subprocess import call
 from IASLogging.logConf import Log
 from IASTools.CommonDefs import CommonDefs
 from IASTools.FileSupport import FileSupport
+from IASTools.DefaultPaths import DefaultPaths
 
-
-def setProps(propsDict,className,logFileNameId):
+def setProps(propsDict,className,logFileNameId, logger):
     """
     Adds to the passed dictionary, the properties to be passed to all java/scala
     executables.
@@ -31,9 +31,10 @@ def setProps(propsDict,className,logFileNameId):
     @param logFileNameId A string identifier to append to the name of the log file
     """
     # Environment variables
-    propsDict["ias.root.folder"]=os.environ["IAS_ROOT"]
-    propsDict["ias.logs.folder"]=os.environ["IAS_LOGS_FOLDER"]
-    propsDict["ias.tmp.folder"]=os.environ["IAS_TMP_FOLDER"]
+    propsDict["ias.root.folder"]=DefaultPaths.get_ias_root_folder()
+    propsDict["ias.logs.folder"]=DefaultPaths.get_ias_logs_folder()
+    propsDict["ias.tmp.folder"]=DefaultPaths.get_ias_tmp_folder()
+    propsDict["ias.config.folder"]=DefaultPaths.get_ias_config_folder()
 
     # The name of the host where the tool runs
     propsDict["ias.hostname"]=socket.gethostname()
@@ -53,8 +54,6 @@ def setProps(propsDict,className,logFileNameId):
     if len(logFileNameId.strip())>0:
         log_file_name = log_file_name+"-"+logFileNameId.strip()
     propsDict["ias.logs.filename"]= log_file_name
-
-    propsDict["ias.config.folder"]=os.environ["IAS_CONFIG_FOLDER"]
 
     # Set the config file for sl4j (defined in Logging)
     logback_config_file_name="logback.xml"
@@ -219,11 +218,10 @@ if __name__ == '__main__':
         print ("-r is an argument for iasRun, -c is an argument for java/sca class")
         logger.debug("Will Trigger the help of the java/scala executable")
 
-    # Is the environment ok?
+    # Check IAS folders
     # Fail fast!
-    if not CommonDefs.checkEnvironment():
-        logger.info("Some setting missing in IAS environment.")
-        logger.info("Set the environment with ias-bash_profile before running IAS applications")
+    if not DefaultPaths.check_ias_folders():
+        logger.error("Some IAS folders are not set or not writable.")
         sys.exit(-1)
 
     logger.info("Start IASRun")
@@ -261,7 +259,7 @@ if __name__ == '__main__':
     # Default and user defined properties are in a dictionary:
     # this way it is easy for the user to override default properties.
     props = {}
-    setProps(props, ias_run_args.className, ias_run_args.logfileId)
+    setProps(props, ias_run_args.className, ias_run_args.logfileId,logger)
     if ias_run_args.jProp is not None:
         addUserProps(props, ias_run_args.jProp)
     if len(props) > 0:
