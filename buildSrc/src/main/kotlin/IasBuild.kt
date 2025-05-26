@@ -19,6 +19,8 @@ import org.gradle.kotlin.dsl.extra
 import org.gradle.kotlin.dsl.register
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.konan.file.File
+import org.gradle.api.tasks.TaskProvider
+import org.gradle.kotlin.dsl.register
 
 import org.eso.ias.build.plugin.GuiBuilder
 
@@ -218,6 +220,37 @@ open class IasBuild : Plugin<Project> {
 
         }
 
+        // Spawn one copy task for each python test modules
+        val testPython: TaskProvider<Exec> = project.tasks.register<Exec>("testPython") {
+            group = "verification"
+            description = "Runs Python tests with pytest and generates reports"
+            
+            commandLine = listOf(
+                "pytest-3",
+                "src/test/python",
+                "--junitxml=build/test-results/python-tests.xml",
+                "--html=build/reports/python-tests.html",
+                "--self-contained-html"
+            )
+
+            onlyIf {
+                var folder = "src/test/python"
+                val f = project.layout.projectDirectory.dir(folder)
+                f.getAsFile().exists()
+            }
+    
+            doLast {
+                println("Python test reports generated at:")
+                println(" - build/test-results/python-tests.xml")
+                println(" - build/reports/python-tests.html")
+            }
+        }
+    
+        // Hook into the check lifecycle
+        project.tasks.named("check") {
+            dependsOn(testPython)
+        }
+    
         // Copy python test modules
         // i.e. each folder in src/test/python
         val pyTestModules = project.tasks.register<Copy>("CopyPyTestMods") {
