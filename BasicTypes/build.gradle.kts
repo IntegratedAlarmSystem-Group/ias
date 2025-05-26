@@ -20,6 +20,14 @@ dependencies {
     
     implementation(project(":Tools"))
     implementation(project(":Cdb"))
+
+    if (g is ExtensionAware) {
+        val extension = g as ExtensionAware
+        testImplementation(extension.extra["scalatest"].toString())
+        testImplementation(extension.extra["scalatestplus-junit"].toString())
+        testImplementation(extension.extra["junit-jupiter-api"].toString())
+        testRuntimeOnly(extension.extra["junit-jupiter-engine"].toString())
+    }
 }
 
 sourceSets {
@@ -37,3 +45,12 @@ sourceSets {
         }
     }
 }
+
+
+tasks.test {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
+}
+
