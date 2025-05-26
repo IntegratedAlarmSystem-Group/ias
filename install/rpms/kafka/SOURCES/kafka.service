@@ -1,0 +1,22 @@
+[Unit]
+Description=Apache Kafka Server
+Documentation=http://kafka.apache.org/documentation.html
+After=network.target
+
+[Service]
+User=kafka
+Group=kafka
+Type=simple
+ExecStart=/opt/kafka/bin/kafka-start-wrapper.sh /opt/kafka/config/kraft/server.properties
+ExecStop=/opt/kafka/bin/kafka-server-stop.sh
+Restart=on-failure
+LimitNOFILE=100000
+Environment="KAFKA_HEAP_OPTS=-Xmx1G -Xms1G"
+Environment="KAFKA_LOG4J_OPTS=-Dkafka.logs.dir=/var/log/kafka"
+StandardOutput=journal
+StandardError=journal
+
+
+[Install]
+WantedBy=multi-user.target
+
