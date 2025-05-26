@@ -4,7 +4,7 @@ TEMP_PARMS_ARRAY=( "$@" )
 
 JAVA_PROPS=""
 OTHER_PARAMS=""
-
+. ias-env
 for index in "${!TEMP_PARMS_ARRAY[@]}"
 do
     if [[ ${TEMP_PARMS_ARRAY[index]} == -D* ]] ;

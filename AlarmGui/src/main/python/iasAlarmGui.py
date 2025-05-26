@@ -19,6 +19,7 @@ from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 
 from IasBasicTypes.IasValue import IasValue
 from IasAlarmGui.AlarmDetailsHelper import AlarmDetailsHelper
+from IASTools.DefaultPaths import DefaultPaths
 
 class MainWindow(QMainWindow, Ui_AlarmGui):
     def __init__(self, ias_cdb, parent=None):
@@ -147,10 +148,8 @@ def parse(app):
 
 if __name__ == "__main__":
     logging.debug("IAS Alarm GUI started")
-    try:
-        os.environ["IAS_ROOT"]
-    except:
-        logging.error("Environment not set: IAS_ROOT undefined!")
+    if not DefaultPaths.check_ias_folders():
+        logging.error("IAS folders not set!")
         sys.exit(1)
     app = QApplication(sys.argv)
     app.setApplicationName("IasAlarmGui")
