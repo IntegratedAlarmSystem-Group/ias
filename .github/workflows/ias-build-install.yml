@@ -98,7 +98,7 @@ jobs:
       - name: Run unit tests
         run: |
           cd GIT
-          . Tools/config/ias-bash-profile.sh
+          . Tools/src/main/ias-bash-profile.sh
           python3 -V
           env
           ./gradlew iasUnitTest 2>&1 >~/unit-tests.out

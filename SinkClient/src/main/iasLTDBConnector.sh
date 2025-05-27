@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+. ias-env
 if [ "x$IAS_LOGS_FOLDER" = "x" ]
 then
 	export LOG_DIR="$IAS_ROOT/logs"

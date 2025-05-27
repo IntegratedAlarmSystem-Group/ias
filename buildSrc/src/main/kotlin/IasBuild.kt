@@ -141,6 +141,7 @@ open class IasBuild : Plugin<Project> {
             dependsOn(":${project.name}:CopyExtLib")
             dependsOn(":${project.name}:CopyPyMods")
             dependsOn(":${project.name}:CopyPyTestMods")
+            dependsOn(":${project.name}:CopyPyGuiModules")
 
             from(project.layout.buildDirectory.dir("lib"))
             include("**/*")
