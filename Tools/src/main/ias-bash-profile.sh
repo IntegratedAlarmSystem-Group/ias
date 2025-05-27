@@ -35,7 +35,7 @@ fi
 if [ -z "$IAS_TMP_FOLDER" ]; then
     export IAS_TMP_FOLDER=$IAS_ROOT/tmp
 fi
-if [ ! -d "$IAS_LOGS_FOLDER" ]; then
+if [ ! -d "$IAS_TMP_FOLDER" ]; then
 	echo "Warning: IAS tmp folder $IAS_TMP_FOLDER does not exist!"
 	((ERRORS_FOUND++))
 fi
@@ -44,10 +44,7 @@ if [ -z "$IAS_CONFIG_FOLDER" ]; then
     export IAS_CONFIG_FOLDER=$IAS_ROOT/config
 fi
 if [ ! -d "$IAS_CONFIG_FOLDER" ]; then
-	echo "Warning: IAS config folder $if [ ! -d "$IAS_LOGS_FOLDER" ]; then
-	echo "Warning: IAS log folder $IAS_LOGS_FOLDER does not exist!"
-	((ERRORS_FOUND++))
-fi does not exist!"
+	echo "Warning: IAS config folder $IAS_CONFIG_FOLDER does not exist!"
 	((ERRORS_FOUND++))
 fi
 

@@ -29,16 +29,16 @@ class DefaultPaths:
     @classmethod
     def get_ias_root_var_name(cls) -> str:
         """
-        Get the IAS root folder.
+         Get the IAS root environment variable name.
         
-        :return: The IAS root folder path.
+        :return: The IAS root environment variable name.
         """
-        return cls._default_ias_root_folder
+        return cls._ias_root_env_var
 
     @classmethod
     def get_ias_logs_var_name(cls) -> str:
         """
-        Get the IAS logs folder.
+         Get the IAS logs environment variable name.
         
         :return: The IAS logs folder path.
         """
@@ -47,29 +47,29 @@ class DefaultPaths:
     @classmethod
     def get_ias_tmp_var_name(cls) -> str:
         """
-        Get the IAS temporary folder.
+        Get the IAS temporary environment variable name.
         
-        :return: The IAS temporary folder path.
+        :return: The IAS tmp environment variable name.
         """
-        return cls._default_ias_tmp_folder
+        return cls._ias_tmp_env_var
 
     @classmethod
     def get_ias_config_var_name(cls) -> str:
         """
-        Get the IAS configuration folder.
+        Get the IAS configuration environment variable name.
         
-        :return: The IAS configuration folder path.
+        :return: The IAS configuration environment variable name.
         """
-        return cls._default_ais_config_folder
+        return cls._ias_config_env_var
     
     @classmethod
     def get_kafka_home_var_name(cls) -> str:
         """
-        Get the Kafka home folder.
+        Get the Kafka home environment variable name.
         
-        :return: The Kafka home folder path.
+        :return: The Kafka home environment variable name.
         """
-        return cls._default_kafka_home_folder
+        return cls._kafka_home_env_var
 
     @classmethod
     def get_ias_root_folder(cls) -> str:
@@ -134,7 +134,7 @@ class DefaultPaths:
         :param folder_path: The path of the folder to check/create.
         :raises OSError: If the folder cannot be created or is not a directory.
         """
-        print("Checking and creating folder:", folder_path)
+        logging.debug("Checking and creating folder: %s", folder_path)
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
         else:
@@ -156,11 +156,11 @@ class DefaultPaths:
         try:
             if not os.path.exists(cls.get_ias_root_folder()):
                 raise OSError(f"IAS root folder {cls.get_ias_root_folder()} does not exist")
-            print("ROOT ok")
+            logging.debug("IAS root folder exists")
             cls.check_and_create_folder(cls.get_ias_logs_folder())
-            print("LOGS ok")
+            logging.debug("IAS logs folder ready")
             cls.check_and_create_folder(cls.get_ias_tmp_folder())
-            print("TMP ok")
+            logging.debug("IAS tmp folder ready")
             return True
         except Exception as e:
             logging.error("Error checking IAS folders: %s", e)
