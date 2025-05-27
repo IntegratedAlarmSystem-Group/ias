@@ -28,12 +28,18 @@ if [ -z "$IAS_LOGS_FOLDER" ]; then
     export IAS_LOGS_FOLDER=$IAS_ROOT/logs
 fi
 if [ ! -d "$IAS_LOGS_FOLDER" ]; then
+	mkdir -p "$IAS_LOGS_FOLDER"
+fi
+if [ ! -d "$IAS_LOGS_FOLDER" ]; then
 	echo "Warning: IAS log folder $IAS_LOGS_FOLDER does not exist!"
 	((ERRORS_FOUND++))
 fi
 
 if [ -z "$IAS_TMP_FOLDER" ]; then
     export IAS_TMP_FOLDER=$IAS_ROOT/tmp
+fi
+if [ ! -d "$IAS_TMP_FOLDER" ]; then
+	mkdir -p "$IAS_TMP_FOLDER"
 fi
 if [ ! -d "$IAS_TMP_FOLDER" ]; then
 	echo "Warning: IAS tmp folder $IAS_TMP_FOLDER does not exist!"
