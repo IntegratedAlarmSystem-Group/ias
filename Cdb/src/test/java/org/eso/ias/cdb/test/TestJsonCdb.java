@@ -166,6 +166,13 @@ public class TestJsonCdb {
 		superv.setHostName("almadev2.alma.cl");
 		superv.setLogLevel(LogLevelDao.INFO);
 
+
+		// Check maxThrottling time and max thread defaults
+		assertEquals(superv.getMaxThreads(), 512);
+		assertEquals(superv.getThrottlingTime(), 250);
+		superv.setMaxThreads(1024);
+		superv.setThrottlingTime(750);
+
 		// Adds the DASUs
 		DasuDao dasu1 = new DasuDao();
 		dasu1.setId("DasuID1");
