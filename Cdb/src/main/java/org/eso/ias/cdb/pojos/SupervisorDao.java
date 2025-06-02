@@ -48,40 +48,9 @@ public class SupervisorDao {
 	@Enumerated(EnumType.STRING)
 	@Basic(optional=true)
 	private LogLevelDao logLevel;
-
-	/**
-	 * The Supervisor let a DASU process the inputs in a thread so that
-	 * all the outputs can be produced concurrently (#248).
-	 * 
-	 * Ideally there should be one thread for each DASU in the Supervisor 
-	 * but we can limit the number of threads to avoid
-	 * the creation of too many threads in the same process.
-	 * 
-	 * In a reasonable deployment, the Supervisor should not run too many DASUs
-	 * so the default value of 512 seems at this stage more than enough.
-	 * 
-	 * The minimum number of threads is to 32.
-	 */
-	@Basic(optional=true)
-	private int maxThreads = 512;
 	
-	/**
-	 * The time in milliseconds to wait between consecutive running of a DASU.
-	 * 
-	 * The Supervisor collects the inputs during this time, then runs the DASU against
-	 * the collected inputs. 
-	 * 
-	 * It might be reasonable to increase the value from the default but special care should 
-	 * be taken using shorter time intervals as during that short time it is possible that 
-	 * not all the inputs have been arrived and the recalculation is practically useless.
-	 * 
-	 * A value littler then 100ms is not recommended as it can lead to
-	 * a very high CPU usage.
-	 * The min accepted value is 50ms.
-	 */
-	@Basic(optional=true)
-	private int throttlingTime = 250; // in milliseconds, default 250ms
-		
+	
+	
 	/**
 	 * This one-to-many annotation matches with the many-to-one
 	 * annotation in the {@link DasuToDeployDao} 
@@ -123,50 +92,6 @@ public class SupervisorDao {
 
 	public void setLogLevel(LogLevelDao logLevel) {
 		this.logLevel = logLevel;
-	}
-
-	/**
-	 * The throttling time is the time in milliseconds to wait
-	 * between consecutive running of a DASU.
-	 * 
-	 * @return The throttling time in milliseconds
-	 */
-	public int getMaxThreads() {
-		return maxThreads;
-	}
-
-	/**
-	 * Set the max number of threads to run the DASUs in this Supervisor.
-	 * 
-	 * @param maxThreads The maximum number of threads to run the DASUs
-	 */
-	public void setMaxThreads(int maxThreads) {
-		if (maxThreads<32) {
-			throw new IllegalArgumentException("The minimum number of threads must be at least 32");
-		}
-		this.maxThreads = maxThreads;
-	}
-
-	/**
-	 * The throttling time is the time in milliseconds to wait
-	 * between consecutive running of a DASU.
-	 * 
-	 * @return The throttling time in milliseconds
-	 */
-	public int getThrottlingTime() {
-		return throttlingTime;
-	}
-
-	/**
-	 * Set the throttiling time
-	 * 
-	 * @param throttlingTime The time in milliseconds to wait
-	 */
-	public void setThrottlingTime(int throttlingTime) {
-		if (throttlingTime<50) {
-			throw new IllegalArgumentException("The minimum throttling time must be at least 50ms");
-		}
-		this.throttlingTime = throttlingTime;
 	}
 
 	/**
@@ -240,10 +165,6 @@ public class SupervisorDao {
 		Optional.ofNullable(logLevel).ifPresent(x -> ret.append(x.toString()));
 		ret.append(", hostName=");
 		ret.append(getHostName());
-		ret.append(", maxThreads=");
-		ret.append(maxThreads);
-		ret.append(", throttlingTime=");
-		ret.append(throttlingTime);
 		ret.append(", DASUs to deploy={");
 		dasusToDeploy.forEach(x -> { ret.append(' '); ret.append(x.getDasu().getId()); });
 		ret.append("}]");
@@ -269,9 +190,7 @@ public class SupervisorDao {
 				this.id.equals(superv.getId()) &&
 				Objects.equals(this.hostName, superv.getHostName()) &&
 				Objects.equals(this.logLevel, superv.getLogLevel()) &&
-				Objects.equals(this.getDasusIDs(),superv.getDasusIDs()) &&
-				this.maxThreads==superv.getMaxThreads() &&
-				this.throttlingTime==superv.getThrottlingTime();
+				Objects.equals(this.getDasusIDs(),superv.getDasusIDs());
 	}
 
 	/**

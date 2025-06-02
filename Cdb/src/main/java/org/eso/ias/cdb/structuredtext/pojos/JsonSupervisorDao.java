@@ -41,39 +41,6 @@ public class JsonSupervisorDao {
 	@Enumerated(EnumType.STRING)
 	@Basic(optional=true)
 	private LogLevelDao logLevel;
-
-	/**
-	 * The Supervisor let a DASU process the inputs in a thread so that
-	 * all the outputs can be produced concurrently (#248).
-	 * 
-	 * Ideally there should be one thread for each DASU in the Supervisor 
-	 * but we can limit the number of threads to avoid
-	 * the creation of too many threads in the same process.
-	 * 
-	 * In a reasonable deployment, the Supervisor should not run too many DASUs
-	 * so the default value of 512 seems at this stage more than enough.
-	 * 
-	 * The minimum number of threads is to 32.
-	 */
-	@Basic(optional=true)
-	private int maxThreads = 512;
-	
-	/**
-	 * The time in milliseconds to wait between consecutive running of a DASU.
-	 * 
-	 * The Supervisor collects the inputs during this time, then runs the DASU against
-	 * the collected inputs. 
-	 * 
-	 * It might be reasonable to increase the value from the default but special care should 
-	 * be taken using shorter time intervals as during that short time it is possible that 
-	 * not all the inputs have been arrived and the recalculation is practically useless.
-	 * 
-	 * A value littler then 100ms is not recommended as it can lead to
-	 * a very high CPU usage.
-	 * The min accepted value is 50ms.
-	 */
-	@Basic(optional=true)
-	private int throttlingTime = 250; // in milliseconds, default 250ms
 	
 	/**
 	 * The DASUs are replaced by their IDs
@@ -102,8 +69,6 @@ public class JsonSupervisorDao {
 		id = supervisorDao.getId();
 		hostName = supervisorDao.getHostName();
 		logLevel = supervisorDao.getLogLevel();
-		maxThreads = supervisorDao.getMaxThreads();
-		throttlingTime = supervisorDao.getThrottlingTime();
 		this.dasusToDeploy=supervisorDao.getDasusToDeploy().stream().map(i -> new JsonDasuToDeployDao(i)).collect(Collectors.toSet());
 	}
 
@@ -114,10 +79,6 @@ public class JsonSupervisorDao {
 		ret.append(getLogLevel());
 		ret.append(", hostName=");
 		ret.append(getHostName());
-		ret.append(", maxThreads=");
-		ret.append(maxThreads);
-		ret.append(", throttlingTime=");
-		ret.append(throttlingTime);
 		ret.append(", DASUs={");
 		for (JsonDasuToDeployDao jdtd : getDasusToDeploy()) {
 			ret.append(" ");
@@ -177,25 +138,6 @@ public class JsonSupervisorDao {
 
 	public void setLogLevel(LogLevelDao logLevel) {
 		this.logLevel = logLevel;
-	}
-
-	public int getMaxThreads() {
-		return maxThreads;
-	}
-	public void setMaxThreads(int maxThreads) {
-		if (maxThreads<32) {
-			throw new IllegalArgumentException("The minimum number of threads must be at least 32");
-		}
-		this.maxThreads = maxThreads;
-	}
-	public int getThrottlingTime() {
-		return throttlingTime;
-	}
-	public void setThrottlingTime(int throttlingTime) {
-		if (throttlingTime<50) {
-			throw new IllegalArgumentException("The minimum throttling time must be at least 50ms");
-		}
-		this.throttlingTime = throttlingTime;
 	}
 
 	@Override
