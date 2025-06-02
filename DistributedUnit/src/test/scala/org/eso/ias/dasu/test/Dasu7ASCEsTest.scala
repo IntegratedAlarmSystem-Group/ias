@@ -159,7 +159,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
     /** 
      * A function to wait until the DASU has processed all the inputs or the timeout expires.
      * 
-     * This function wark if no new inputs are submitted to the DASU while waiting.
+     * This function works if no new inputs are submitted to the DASU while waiting.
      * The DASU does not offer a function for checking the state of the computation 
      * so this function actively wait on the inputs to be processed and the
      * on the presence of scheduled tasks to process the output.
