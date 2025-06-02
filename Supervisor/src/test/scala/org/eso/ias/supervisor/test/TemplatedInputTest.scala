@@ -202,9 +202,14 @@ class TemplatedInputTest extends AnyFlatSpec {
     // Sends the input to the Supervisor and the DASU
     inputsProvider.sendInputs(inputs)
     
-    // Did the DASU produce the output?
-    assert(stringEventsreceived.size==1)
-    assert(outputEventsreceived.size==1)
+    // A thread of the DASU produces the output: give time to the thread
+    val now = System.currentTimeMillis()
+    while (outputEventsreceived.isEmpty && System.currentTimeMillis() < now + 5000) {
+      Thread.sleep(100)
+    }
+    // The output shall be ready now
+    assert(stringEventsreceived.size==1, "Expected one output event, but got: " + stringEventsreceived.size)	
+    assert(outputEventsreceived.size==1, "Expected one output event, but got: " + outputEventsreceived.size)
     
     val valueOfOutput = outputEventsreceived.head.value.asInstanceOf[Long]
     assert(valueOfOutput==14L)

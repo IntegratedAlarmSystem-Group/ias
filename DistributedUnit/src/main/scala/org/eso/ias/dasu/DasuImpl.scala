@@ -21,8 +21,12 @@ import scala.util.{Failure, Success, Try}
  * A DASU normally has 2 threads running:
  * - the automatic sending of the output when no new input arrives 
  *   or the output did not change
- * - a thread for the throttling to avoid that processing too many 
- *   inputs takes 100% CPU
+ * - a thread (with throttling) to process the inputs and generate the output
+ * 
+ * As of #248, the DASU processes the inputs to generate the output in a thread
+ * that is immediately executed upon reception of the inputs. 
+ * To avoid using 100% of CPU two consecutive generation of the output are delayed
+ * by a throttling time interval. During that time the DASU continues to collect inputs.
  * 
  * @param dasuIdentifier       the identifier of the DASU
  * @param dasuDao              The CDB configuration of the DASU
@@ -78,6 +82,8 @@ class DasuImpl (
     }
     asceDaos.foldLeft(Map[String,ComputingElement[?]]())(addToMapFunc)
   }
+
+
   DasuImpl.logger.info("DASU [{}] ASCEs loaded: [{}]",id, asces.keys.mkString(", "))
 
   // Activate the ASCEs
@@ -142,10 +148,30 @@ class DasuImpl (
   val started = new AtomicBoolean(false)
 
   /**
-   *  The task to delay the generation the output
-   *  when new inputs must be processed
+   * The task to delay the generation the output
+   * when new inputs must be processed
+   * 
+   * It is defined only when a task is running or scheduled to run in a near future.
    */
   val throttlingTask = new AtomicReference[Option[ScheduledFuture[?]]](None)
+
+  /**
+    * The point in time when the DASU started calculating the output for the last time
+    *
+    * Together with calcEndTime can be used to calculate how long does the DASU take 
+    * to generate the output
+    */
+  val calcStartTime = new AtomicLong(0)
+
+  /**
+   * The point in time when the DASU finished calculating the output for the last time.
+   *
+   * It is used to schedulate the next generation of the output against the throttling time
+   *
+   * Together with calcStartTime can be used to calculate how long does the DASU take
+   * to generate the output
+   */
+  val calcEndTime = new AtomicLong(0)
 
   /**
    * The Runnable to update the output when it is delayed by the throttling
@@ -153,6 +179,7 @@ class DasuImpl (
   val delayedUpdateTask: Runnable = new Runnable {
     override def run() = {
         DasuImpl.logger.debug("DASU [{}] running the throttling task",id)
+        calcStartTime.set(System.currentTimeMillis())
         Try(updateAndPublishOutput()) match {
           case Failure(exception) =>
             DasuImpl.logger.error("Exception caught in DASU [{}] while producing the output with throttling",
@@ -160,6 +187,11 @@ class DasuImpl (
               exception)
           case _ =>
         }
+        calcEndTime.set(System.currentTimeMillis())
+        throttlingTask.set(None) // Reset the throttling task
+
+        // Comments inputsReceived explains why this call is needed at this point
+        scheduleNextOutputCalculation()
       }
   }
 
@@ -288,21 +320,42 @@ class DasuImpl (
   }
 
   /**
-   * New inputs have been received from the BSDB.
+   * New inputs have been received from the BSDB: the recalculation of the output
+   * is performed by a thread: the method returns immediately after scheduling the recalculation
    *
    * This method is not invoked while automatically re-sending the last computed value.
    * Such value is in fact stored into lastSentOutput and does not trigger
    * a recalculation by the DASU. 
+   * 
+   * This method gets the inputs received from the BSDB and calculate the output running 
+   * a thread.
+   * The calculation of the output is delayed if the throttling is in place by scheduling
+   * a task to be run after the end of the throttling window. If the throttling is not in place,
+   * the output is calculated concurrently by running a task immediately.
+   * 
+   * This method only schedules the thread to recalculate the output when new inputs are received
+   * and the thread has not been already scheduled or is running.
+   * 
+   * There is one case that is not covered here:
+   * - the thread is running and new inputs arrive before it terminates
+   * - no new inputs arrive
+   * This case is  corner case the likely will never happens when many inputs are continously produced.
+   * However if it happens the inputs recived in this situation will never be processsed
+   * (they will only as soon as a new inputs arrives).
+   * For this reason, when the thread that calculates the new output terminates, it checks 
+   * if there are new inputs and in that case it schedules a new execution of the output calculation.
    *
    * @param iasios the inputs received
    * @see InputsListener
    */
   override def inputsReceived(iasios: Iterable[IASValue[?]]): Unit = synchronized {
     assert(iasios.nonEmpty)
+    DasuImpl.logger.debug(s"DASU [$id] received ${iasios.size} inputs.")
 
     def acceptIasValue(value: IASValue[?]): Boolean = {
       assert(Option(value).isDefined)
       assert(value.productionTStamp.isPresent,"Undefined production timestamp for "+value.toString)
+
       // Accept the value if
       //  * its ID is the ID of an input
       //  * its timetsamp is newer that that already in the map of inputs to process
@@ -312,7 +365,7 @@ class DasuImpl (
       valueFromMap.map (v => {
 
         val valueTstamp = value.productionTStamp.get
-        assert(v.productionTStamp.isPresent, "Misisng production timestamp Wrong timestamp for value from map: "+value.toString)
+        assert(v.productionTStamp.isPresent, "Missing production timestamp for value from map: "+value.toString)
         val tstampOfValueInMap = v.productionTStamp.get()
 
         valueTstamp>=tstampOfValueInMap
@@ -322,6 +375,7 @@ class DasuImpl (
     }
 
     // Merge the inputs with the buffered ones to keep only the last updated values
+    // The scheduled task clears the buffered inputs (in updateAndPublishOutput)
     notYetProcessedInputs.synchronized {
       iasios.filter( acceptIasValue(_)).foreach(iasio => {
         fullRunningIdsOfInputs.synchronized { fullRunningIdsOfInputs.put(iasio.id, iasio.fullRunningId) }
@@ -329,29 +383,30 @@ class DasuImpl (
         notYetProcessedInputs.put(iasio.id,iasio)
       })
     }
+    scheduleNextOutputCalculation() // Schedule the next output calculation
+  }
 
-    // The new output must be immediately recalculated and sent unless 
-    // * the throttling is already in place (i.e. calculation already delayed)
-    // * the last value has been updated shortly before 
-    //   (i.e. the calculation must be delayed and the throttling activated)
-    val now = System.currentTimeMillis()
-    val afterEndOfThrottling = now>lastUpdateTime.get+throttling
-    val beforeEndOfThrottling = !afterEndOfThrottling
-    val throttlingIsScheduled = throttlingTask.get().isDefined && !throttlingTask.get().get.isDone
-
-    (throttlingIsScheduled, beforeEndOfThrottling) match {
-      case (true, true)  =>  // delayed: do nothing
-      case (_ , false)   =>  // send immediately
-        Try(updateAndPublishOutput()) match {
-          case Failure(exception) =>
-            DasuImpl.logger.error("Exception caught while producing the output of DASU [{}]",id,exception)
-          case _ =>
-        }
-      case (false, true) => // Activate throttling
-        val delay =  throttling+now-lastSentTime.get
-        val schedFeature = scheduledExecutor.schedule(delayedUpdateTask,delay,TimeUnit.MILLISECONDS)
-        throttlingTask.set(Some(schedFeature))
+  /**
+    * Schedule the next recalculation of the output based on 
+    * - the presence of new inputs
+    * - the point in time when the last calculation ended and the throttling time.
+    * 
+    * No recalulcalation is scheduled if there are no new inputs to process.
+    * The delay depends on the time when the last calculation ended and the throttling time.
+    */
+  def scheduleNextOutputCalculation(): Unit = synchronized {
+    // If the calculation of the output is already scheduled or running or there are no new inputs, do not schedule it again
+    if (throttlingTask.get().isEmpty && hasInputsToProcess) { 
+      val now = System.currentTimeMillis()
+      // Schedule the output calculation
+      val delay = if (now >= calcEndTime.get() + throttling) 0 else calcEndTime.get() + throttling - now
+      val schedFeature = scheduledExecutor.schedule(delayedUpdateTask, delay, TimeUnit.MILLISECONDS)
+      throttlingTask.set(Some(schedFeature))
+      DasuImpl.logger.debug(s"DASU [$id] scheduled the next output calculation in ${delay} msecs.")
+    } else {
+      DasuImpl.logger.debug(s"DASU [$id] does not schedule the next output calculation: throttling task already running or no inputs to process")
     }
+    
   }
 
   /**
@@ -428,6 +483,7 @@ class DasuImpl (
     }
 
     lastCalculatedOutput.set(propagateIasios(inputsFromMap))
+    DasuImpl.logger.debug(s"DASU [$id] calculated output")
     val endTime = System.currentTimeMillis()
 
     lastUpdateTime.set(endTime)
@@ -435,7 +491,6 @@ class DasuImpl (
 
     // Publish the value only if the output has been produced
     lastCalculatedOutput.get.foreach( output => {
-
       DasuImpl.logger.debug("DASU [{}] calculated output [{}] with validity {}",
         id,
         output.id,
@@ -461,7 +516,24 @@ class DasuImpl (
         statsCollector.updateStats(endTime-startTime)
       }
     })
+  }
 
+  /**
+    * Check if there are inputs to process 
+    */
+  def hasInputsToProcess: Boolean = {
+    notYetProcessedInputs.synchronized {
+      notYetProcessedInputs.size() > 0
+    }
+  }
+
+  /**
+   * Check if the a task for processing inputs has been scheduled
+   *
+   * @return true if a task for processing inputs has been scheduled
+   */
+  def hasScheduledTask: Boolean = {
+    throttlingTask.get().isDefined
   }
 
   /**
