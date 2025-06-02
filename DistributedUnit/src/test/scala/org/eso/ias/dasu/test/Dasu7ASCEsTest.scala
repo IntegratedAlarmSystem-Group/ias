@@ -155,6 +155,38 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
         null,
         null)
     }
+
+    /** 
+     * A function to wait until the DASU has processed all the inputs or the timeout expires.
+     * 
+     * This function wark if no new inputs are submitted to the DASU while waiting.
+     * The DASU does not offer a function for checking the state of the computation 
+     * so this function actively wait on the inputs to be processed and the
+     * on the presence of scheduled tasks to process the output.
+     */
+    def waitDasuProcessedAllInputs(timeout: Int): Boolean = {
+      val startTime = System.currentTimeMillis()
+      val endTime = startTime + timeout
+      // wait until there are no more inputs to process
+      while (dasu.hasInputsToProcess) {
+        Thread.sleep(100)
+        if (System.currentTimeMillis() > endTime) {
+          logger.warn("Timeout expired while waiting for the DASU to process all inputs")
+          return false
+        }
+      }
+      
+      // Wait until there are no more scheduled task to calculate the output
+      while (dasu.hasScheduledTask) {
+        Thread.sleep(100)
+        if (System.currentTimeMillis() > endTime) {
+          logger.warn("Timeout expired while waiting for the DASU to process all scheduled tasks")
+          return false
+        }
+      }
+      println("DASU has processed all inputs and has no scheduled tasks")
+      true
+    }
   }
 
   behavior of "The DASU with 7 ASCEs"
@@ -196,7 +228,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
     // the DASU receives all the inputs
     inputsProvider.sendInputs(inputs)
     println("Set submitted")
-    // We expect no alarm because teh DASU has not yet received all the inputs
+    // We expect no alarm because the DASU has not yet received all the inputs
     assert(iasValuesReceived.size==0)
     
     // wait to avoid the throttling to engage
@@ -205,12 +237,12 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
     // Submit a set with Temperature 1 in a non nominal state
     logger.info("Submitting a set with only one temp {} in NON nominal state",inputTemperature1ID.id)
     inputsProvider.sendInputs(Set(buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,100)))
-    println("Another empty set submitted")
+    println("Another set submitted")
+    // Give time to process the inputs to the thread
+    assert(waitDasuProcessedAllInputs(1000))
     // Still no alarm because the DASU has not yet received all the inputs
     assert(iasValuesReceived.size==0)
     
-    // wait to avoid the throttling
-    Thread.sleep(2*dasu.throttling)
     
     // Submit the other inputs and then we expect the DASU to
     // produce the output
@@ -222,7 +254,10 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
       Set(v1,v2,v3,v4)
     }
     inputsProvider.sendInputs(setOfInputs)
-    // Now the DASU has all the inputs and must produce the output
+    
+    // Give time to process the inputs to the thread
+    assert(waitDasuProcessedAllInputs(1000))
+    // Now the DASU has all the inputs and must have produced the output
     assert(iasValuesReceived.size==1)
     val outputProducedByDasu = iasValuesReceived.last
     assert(outputProducedByDasu.valueType==IASTypes.ALARM)
@@ -241,6 +276,9 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
       Set(v1,v2,v3,v4)
     }
     inputsProvider.sendInputs(setOfInputs2)
+
+    // Wait until the DAS has processed all the inputs
+    waitDasuProcessedAllInputs(1000)
     assert(iasValuesReceived.size==2)
     val outputProducedByDasu2 = iasValuesReceived.last
     assert(outputProducedByDasu2.valueType==IASTypes.ALARM)
