@@ -184,7 +184,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
           return false
         }
       }
-      println("DASU has processed all inputs and has no scheduled tasks")
+      logger.info("DASU has processed all inputs and has no scheduled tasks")
       true
     }
   }
