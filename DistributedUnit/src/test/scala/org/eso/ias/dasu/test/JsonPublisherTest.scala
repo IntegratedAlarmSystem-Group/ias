@@ -84,6 +84,39 @@ class JsonPublisherTest extends AnyFlatSpec {
       null, 
       null)
   }
+
+  /** 
+     * A function to wait until the DASU has processed all the inputs or the timeout expires.
+     * 
+     * This function wark if no new inputs are submitted to the DASU while waiting.
+     * The DASU does not offer a function for checking the state of the computation 
+     * so this function actively wait on the inputs to be processed and the
+     * on the presence of scheduled tasks to process the output.
+     */
+    def waitDasuProcessedAllInputs(timeout: Int): Boolean = {
+      val startTime = System.currentTimeMillis()
+      val endTime = startTime + timeout
+      // wait until there are no more inputs to process
+      while (dasu.hasInputsToProcess) {
+        Thread.sleep(100)
+        if (System.currentTimeMillis() > endTime) {
+          logger.warn("Timeout expired while waiting for the DASU to process all inputs")
+          return false
+        }
+      }
+      
+      // Wait until there are no more scheduled task to calculate the output
+      while (dasu.hasScheduledTask) {
+        Thread.sleep(100)
+        if (System.currentTimeMillis() > endTime) {
+          logger.warn("Timeout expired while waiting for the DASU to process all scheduled tasks")
+          return false
+        }
+      }
+      println("DASU has processed all inputs and has no scheduled tasks")
+      true
+    }
+  
   
   behavior of "The DASU"
   
@@ -93,6 +126,8 @@ class JsonPublisherTest extends AnyFlatSpec {
     val inputs: Set[IASValue[?]] = Set(buildValue(0))
     // Submit the inputs
     inputsProvider.sendInputs(inputs)
+    // Wait until the thread of the DASU has processed all inputs
+    assert(waitDasuProcessedAllInputs(1000), "DASU did not process all inputs in time")
     
     // Read the produced JSON file
     assert(outputFile.exists())
