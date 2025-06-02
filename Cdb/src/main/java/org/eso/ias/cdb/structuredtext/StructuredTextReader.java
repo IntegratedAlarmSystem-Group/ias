@@ -249,8 +249,6 @@ public class StructuredTextReader implements CdbReader {
             ret.setId(jSuperv.getId());
             ret.setHostName(jSuperv.getHostName());
             ret.setLogLevel(jSuperv.getLogLevel());
-            ret.setMaxThreads(jSuperv.getMaxThreads());
-            ret.setThrottlingTime(jSuperv.getThrottlingTime());
 
             // Convert each JsonDasuToDeployDao in a DasuToDeployDao
             for (JsonDasuToDeployDao jdtd: jSuperv.getDasusToDeploy()) {
