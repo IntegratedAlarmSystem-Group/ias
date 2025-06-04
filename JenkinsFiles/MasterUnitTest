@@ -1,0 +1,87 @@
+pipeline {
+    agent any
+
+    environment {
+        // Define your environment variables here
+        JAVA_HOME="/usr/lib/jvm/java-21-openjdk-amd64"
+        KAFKA_HOME="/opt/kafka"
+        IAS_ROOT = "${env.WORKSPACE}/IasRoot"
+        PATH = "${env.PATH}:${env.IAS_ROOT}/bin:${env.JAVA_HOME}/bin:${KAFKA_HOME}/bin:/var/lib/jenkins/.local/bin"
+    }
+
+    stages {
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+        stage('Retrieve Artifacts') {
+            steps {
+                copyArtifacts(
+                    projectName: 'IAS master pipeline',
+                    filter: '*.tgz',
+                    selector: lastSuccessful()
+                )
+            }
+        }
+        stage('Extract Artifacts') {
+            steps {
+                sh '''
+                    ls
+                    echo "Extract IAS_ROOT to: $IAS_ROOT..."
+                    mkdir -p $IAS_ROOT
+                    rm -rf $IAS_ROOT/*
+                    ls
+                    tar -xzf IasRoot.tgz -C $IAS_ROOT
+                    echo "Extract ias..."
+                    mkdir -p ias
+                    rm -rf ias/*
+                    tar -xzf ias.tgz -C ias
+                    pwd
+                    ls
+                    rm -rf *.tgz
+                '''
+            }
+        }
+        /*
+        stage('Checkout') {
+            steps {
+                dir('ias') {
+                    git url: 'https://github.com/IntegratedAlarmSystem-Group/ias.git', branch: 'master'
+                    sh 'ls -la'
+                }
+            }
+        }
+        stage('Build') {
+            steps {
+                dir('ias') {
+                    sh '''
+                        ./gradlew build
+                    '''
+                }
+            }
+        }
+        */
+        stage('Run Unit Tests') {
+            steps {
+                dir('ias') {
+                    sh 'bash -c "source Tools/src/main/ias-bash-profile.sh && ./gradlew iasUnitTest"'
+                }
+            }
+        }
+        stage('Log-parser') {
+           steps {
+                logParser failBuildOnError: false, 
+                  parsingRulesPath: '/var/lib/jenkins/iasLogParserRules.txt', 
+                  useProjectRule: false,
+                  projectRulePath: ''
+            }
+        }
+    }
+    
+    post {
+        success {
+            build job: 'MasterIntTest', wait: false
+        }
+    }
+}
