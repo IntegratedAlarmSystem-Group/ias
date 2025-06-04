@@ -31,3 +31,5 @@ jobs:
         env:
           # To report GitHub Actions status checks
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Only lint last committed files otherwise takes ages
+          VALIDATE_ALL_CODEBASE: false
