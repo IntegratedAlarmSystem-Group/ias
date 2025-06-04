@@ -1,5 +1,5 @@
 [![ias-build](https://github.com/IntegratedAlarmSystem-Group/ias/actions/workflows/ias-build-install.yml/badge.svg)](https://github.com/IntegratedAlarmSystem-Group/ias/actions/workflows/ias-build-install.yml)
-[![Super-Linter](https://github.com/IntegratedAlarmSystem-Group/ias/actions/workflows/lint.yml/badge.svg)](https://github.com/marketplace/actions/super-linter)
+[![Super-Linter](https://github.com/IntegratedAlarmSystem-Group/ias/actions/workflows/lint.yml/badge.svg)]([https://github.com/marketplace/actions/super-linter](https://github.com/IntegratedAlarmSystem-Group/ias/actions/workflows/lint.yml))
 # ias
 The production version of the core of Integrated Alarm System.
 
