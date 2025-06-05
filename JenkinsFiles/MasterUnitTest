@@ -62,16 +62,25 @@ pipeline {
             }
         }
         */
+        stage('Prepare python venv for jep') {
+          steps {
+              sh '''
+                   python3 -m venv venv
+                   . venv/bin/activate
+                   pip3 install jep
+                '''
+          }
+        }
         stage('Run Unit Tests') {
             steps {
                 dir('ias') {
-                    sh 'bash -c "source Tools/src/main/ias-bash-profile.sh && ./gradlew iasUnitTest"'
+                    sh 'bash -c "source ../venv/bin/activate && source Tools/src/main/ias-bash-profile.sh && ./gradlew iasUnitTest"'
                 }
             }
         }
         stage('Log-parser') {
            steps {
-                logParser failBuildOnError: false, 
+                logParser failBuildOnError: true, 
                   parsingRulesPath: '/var/lib/jenkins/iasLogParserRules.txt', 
                   useProjectRule: false,
                   projectRulePath: ''
