@@ -64,12 +64,12 @@ pipeline {
         */
         stage('Prepare python venv for jep') {
           steps {
-            sh '''
-                 python3 -m venv venv
-                 source venv/bin/activate
-                    pip install jep
-               '''
-            }
+              sh '''
+                   python3 -m venv venv
+                   source venv/bin/activate
+                      pip install jep
+              '''
+          }
         }
         stage('Run Unit Tests') {
             steps {
