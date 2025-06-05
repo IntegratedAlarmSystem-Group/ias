@@ -50,6 +50,9 @@ if [ -z "$IAS_CONFIG_FOLDER" ]; then
     export IAS_CONFIG_FOLDER=$IAS_ROOT/config
 fi
 if [ ! -d "$IAS_CONFIG_FOLDER" ]; then
+	mkdir -p "$IAS_CONFIG_FOLDER"
+fi
+if [ ! -d "$IAS_CONFIG_FOLDER" ]; then
 	echo "Warning: IAS config folder $IAS_CONFIG_FOLDER does not exist!"
 	((ERRORS_FOUND++))
 fi
