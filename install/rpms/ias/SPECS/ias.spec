@@ -87,7 +87,7 @@ export IAS_ROOT=%{buildroot}%{_prefix}
 %exclude %{_prefix}/LICENSE.md
 %exclude %{_prefix}/README.md
 %exclude %{_prefix}/RELEASE.txt
-%exclude %{_prefix}/logs
+%exclude %{_prefix}/logs/*
 
 %dir %{_bindir}
 %exclude %{_bindir}/MockUdpPlugin
@@ -173,4 +173,5 @@ export IAS_ROOT=%{buildroot}%{_prefix}
 
 %changelog
 * Wed May 08 2024 acaproni Creation of the SPEC
+* Wed Jun 11 2026 acaproni Reviewd and prepared for v13.1.4.2
 - 
