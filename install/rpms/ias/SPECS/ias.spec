@@ -23,6 +23,13 @@ BuildRequires:	%{py3_dist oracledb}
 BuildRequires:	%{py3_dist pyside6}
 BuildRequires:	pyside6-tools
 
+# JEP is required for running the tests, you can skip this requirements if accepts some tests
+# to fail
+#
+# JEP (https://github.com/ninia/jep) does not provide an RPM (we have prepared the SPEC
+# to build python3_jep that is in the install folder of the IAS sources)
+BuildRequires:	%{py3_dist jep}
+
 Requires:  python3 >= 3.10
 Requires:  (java-21-openjdk-headless or java-latest-openjdk-headless)
 Requires:  %{py3_dist confluent-kafka}
@@ -32,7 +39,15 @@ Requires:  %{py3_dist sqlalchemy}
 Requires:  %{py3_dist oracledb}
 Requires:  %{py3_dist pyside6}
 
-# TODO Suggests: Kafka
+# At run-time JEP is required to execute python transfer functions from java
+# 
+# JEP (https://github.com/ninia/jep) does not provide an RPM (we have prepared the SPEC
+# to build python3_jep that is in the install folder of the IAS sources)
+Requires:	%{py3_dist jep}
+
+# Apache kafka does not provide an RPM (we have prepared the SPEC
+# to build kafka that is in the install folder of the IAS sources)
+Requires: kafka
 
 %global syspython3_sitelib  /usr/lib/python%{python3_version}/site-packages
 %global _prefix              /opt/IasRoot
