@@ -6,7 +6,7 @@ Created on May 9, 2018
 
 import json
 from datetime import datetime
-import timezone
+from datetime import timezone
 import dateutil.parser
 
 from IasBasicTypes.IasType import IASType
