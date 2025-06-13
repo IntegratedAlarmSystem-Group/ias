@@ -1,5 +1,5 @@
 Name:           ias
-Version:        13.1.3
+Version:        13.1.4.2
 Release:        1%{?dist}
 Summary:        Install the Integrated Alarm System
 BuildArch:      noarch
@@ -11,24 +11,43 @@ Source0:        %{url}/archive/refs/tags/%{version}.tar.gz#/%{name}-%{version}.t
 #
 # TODO Missing dependency on jep
 #
-BuildRequires:  (java-17-openjdk-devel or java-21-openjdk-devel or java-lastest-openjdk-devel)
+BuildRequires:  python3-rpm-macros
+BuildRequires:  python%{python3_pkgversion}-devel >= 3.10
+BuildRequires:  java-21-openjdk-devel
 BuildRequires:  javapackages-tools
-BuildRequires:  python3-devel >= 3.10
 BuildRequires:	%{py3_dist confluent-kafka}
 BuildRequires:	%{py3_dist python-dateutil}
 BuildRequires:	%{py3_dist pyyaml}
 BuildRequires:	%{py3_dist sqlalchemy}
 BuildRequires:	%{py3_dist oracledb}
+BuildRequires:	%{py3_dist pyside6}
+BuildRequires:	pyside6-tools
+
+# JEP is required for running the tests, you can skip this requirements if accepts some tests
+# to fail
+#
+# JEP (https://github.com/ninia/jep) does not provide an RPM (we have prepared the SPEC
+# to build python3_jep that is in the install folder of the IAS sources)
+BuildRequires:	%{py3_dist jep}
 
 Requires:  python3 >= 3.10
-Requires:  (java-17-openjdk-headless or java-21-openjdk-headless or java-latest-openjdk-headless)
+Requires:  (java-21-openjdk-headless or java-latest-openjdk-headless)
 Requires:  %{py3_dist confluent-kafka}
 Requires:  %{py3_dist python-dateutil}
 Requires:  %{py3_dist pyyaml}
 Requires:  %{py3_dist sqlalchemy}
 Requires:  %{py3_dist oracledb}
+Requires:  %{py3_dist pyside6}
 
-# TODO Suggests: Kafka
+# At run-time JEP is required to execute python transfer functions from java
+# 
+# JEP (https://github.com/ninia/jep) does not provide an RPM (we have prepared the SPEC
+# to build python3_jep that is in the install folder of the IAS sources)
+Requires:	%{py3_dist jep}
+
+# Apache kafka does not provide an RPM (we have prepared the SPEC
+# to build kafka that is in the install folder of the IAS sources)
+Requires: kafka
 
 %global syspython3_sitelib  /usr/lib/python%{python3_version}/site-packages
 %global _prefix              /opt/IasRoot
@@ -41,7 +60,7 @@ The production version of the core of the Integrated Alarm System
 %autosetup -n ias-%{version}
 
 %build
-export JAVA_HOME=%java_home
+export JAVA_HOME=%{java_home}
 export IAS_ROOT=%{buildroot}%{_prefix}
 ./gradlew build 
 
@@ -71,9 +90,9 @@ chmod 777 %{buildroot}%{_prefix}/logs
 chmod 777 %{buildroot}%{_prefix}/tmp
 
 %check
-# Run IAS uniit tests
+# Run IAS unit tests
 export IAS_ROOT=%{buildroot}%{_prefix}
-. ./Tools/config/ias-bash-profile.sh 
+. ./Tools/src/main/ias-bash-profile.sh
 ./gradlew iasUnitTest
 ./gradlew clean
 
@@ -83,10 +102,13 @@ export IAS_ROOT=%{buildroot}%{_prefix}
 %exclude %{_prefix}/LICENSE.md
 %exclude %{_prefix}/README.md
 %exclude %{_prefix}/RELEASE.txt
- 
+%exclude %{_prefix}/logs/*
+
 %dir %{_bindir}
 %exclude %{_bindir}/MockUdpPlugin
 %exclude %{_bindir}/*Test*
+%{_bindir}/ias-bash-profile
+%{_bindir}/ias-env
 %{_bindir}/iasAlarmGui
 %{_bindir}/iasBuildApiDocs
 %{_bindir}/iasCalConverterTimes
@@ -112,9 +134,7 @@ export IAS_ROOT=%{buildroot}%{_prefix}
 %exclude %{_prefix}/config/LPGPv3License.txt
 %{_prefix}/config/LtdbCassandraConnector.properties
 %{_prefix}/config/LtdbCassandraStandalone.properties
-%{_prefix}/config/ias-bash-profile.sh
 %{_prefix}/config/kafka-connect-log4j.xml
-%exclude %{_prefix}/config/ias.spec
 %{_prefix}/config/kafka_kraft_server.properties
 %{_prefix}/config/logback.xml
  
@@ -141,6 +161,8 @@ export IAS_ROOT=%{buildroot}%{_prefix}
 %dir %{_prefix}/tmp
  
 %exclude %{sysbindir}/MockUdpPlugin
+%{sysbindir}/ias-bash-profile
+%{sysbindir}/ias-env
 %{sysbindir}/iasAlarmGui
 %{sysbindir}/iasBuildApiDocs
 %{sysbindir}/iasCalConverterTimes
@@ -166,4 +188,5 @@ export IAS_ROOT=%{buildroot}%{_prefix}
 
 %changelog
 * Wed May 08 2024 acaproni Creation of the SPEC
+* Wed Jun 11 2026 acaproni Reviewd and prepared for v13.1.4.2
 - 
