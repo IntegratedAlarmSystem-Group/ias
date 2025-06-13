@@ -6,6 +6,7 @@ Created on May 9, 2018
 
 import socket, os
 from datetime import datetime
+import timezone
 from IasPlugin3.JsonMsg import JsonMsg
 import logging
 from threading import Timer, RLock
@@ -120,7 +121,7 @@ class UdpPlugin(object):
         else:
             return None
         
-    def submit(self, mPointID, value, valueType, timestamp=datetime.utcnow(), operationalMode=None):
+    def submit(self, mPointID, value, valueType, timestamp=datetime.now(timezone.utc), operationalMode=None):
         '''
         Submit a monitor point or alarm with the give ID to the java plugin.
         

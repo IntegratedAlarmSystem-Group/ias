@@ -1,4 +1,4 @@
-import datetime
+import datetime, timezone
 import errno
 import logging
 import os
@@ -42,7 +42,7 @@ class Log(object):
 
       cleanedFileName = nameFile.split(os.sep)[len(nameFile.split(os.sep))-1]
       #Format of the data for the file name
-      now = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H_%M_%S')[:-3]
+      now = datetime.datetime.now(timezone.utc).strftime('%Y-%m-%dT%H_%M_%S')[:-3]
 
       log_levels = {'debug': logging.DEBUG,
                 'info': logging.INFO,
