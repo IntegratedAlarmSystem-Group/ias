@@ -4,7 +4,7 @@ Created on Jun 8, 2018
 @author: acaproni
 '''
 from datetime import datetime
-import timezone
+from datetime import timezone
 
 class Iso8601TStamp(object):
     '''

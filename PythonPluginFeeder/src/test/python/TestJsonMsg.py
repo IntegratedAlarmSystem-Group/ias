@@ -7,7 +7,8 @@ Created on May 10, 2018
 
 @author: acaproni
 '''
-import datetime, timezone
+import datetime
+from datetime import timezone
 import unittest
 
 from IasBasicTypes.Alarm import Alarm

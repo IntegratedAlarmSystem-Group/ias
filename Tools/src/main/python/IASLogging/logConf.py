@@ -1,4 +1,5 @@
-import datetime, timezone
+import datetime
+from datetime import timezone
 import errno
 import logging
 import os
