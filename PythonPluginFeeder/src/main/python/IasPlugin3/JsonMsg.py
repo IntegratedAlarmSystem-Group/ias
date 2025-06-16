@@ -6,7 +6,7 @@ Created on May 9, 2018
 
 import json
 from datetime import datetime
-
+from datetime import timezone
 import dateutil.parser
 
 from IasBasicTypes.IasType import IASType
@@ -31,7 +31,7 @@ class JsonMsg(object):
     valueTypeJsonParamName = "valueType"
     operationaModeParamName = "operMode"
         
-    def __init__(self, mpointId, value, valueType: IASType, timestamp=datetime.utcnow(), operationalMode=None):
+    def __init__(self, mpointId, value, valueType: IASType, timestamp=datetime.now(timezone.utc), operationalMode=None):
         '''
         Constructor
         

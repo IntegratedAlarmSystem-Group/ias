@@ -4,6 +4,7 @@ Created on Jun 8, 2018
 @author: acaproni
 '''
 from datetime import datetime
+from datetime import timezone
 
 class Iso8601TStamp(object):
     '''
@@ -59,6 +60,6 @@ class Iso8601TStamp(object):
         """
         @return The ISO timestamp of the actual time
         """
-        timestamp=datetime.utcnow()
+        timestamp=datetime.now(timezone.utc)
         return Iso8601TStamp.datetimeToIsoTimestamp(timestamp)
     
