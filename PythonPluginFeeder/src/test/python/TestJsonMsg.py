@@ -8,6 +8,7 @@ Created on May 10, 2018
 @author: acaproni
 '''
 import datetime
+from datetime import timezone
 import unittest
 
 from IasBasicTypes.Alarm import Alarm
@@ -29,7 +30,7 @@ class TestJsonMessage(unittest.TestCase):
         '''
         Test the conversion of all possible IAS data types
         '''
-        tStamp = datetime.datetime.utcnow()
+        tStamp = datetime.datetime.now(timezone.utc)
         msg = JsonMsg("MPoint-ID", 2.3, IASType.DOUBLE,tStamp,OperationalMode.CLOSING)
         jStr = msg.dumps()
         print(jStr)
@@ -43,7 +44,7 @@ class TestJsonMessage(unittest.TestCase):
         '''
         Test the conversion of all possible IAS data types
         '''
-        tStamp = datetime.datetime.utcnow()
+        tStamp = datetime.datetime.now(timezone.utc)
         msg = JsonMsg("MPoint-IDL", 97, IASType.LONG,tStamp,OperationalMode.DEGRADED)
         jStr = msg.dumps()
         print(jStr)

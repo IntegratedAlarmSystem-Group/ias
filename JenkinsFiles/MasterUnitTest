@@ -69,7 +69,6 @@ pipeline {
                    . venv/bin/activate
                    pip3 install jep
                    pip3 install python-dateutil
-                   pip3 install dateutil
                 '''
           }
         }
