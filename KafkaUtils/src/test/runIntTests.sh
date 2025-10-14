@@ -6,3 +6,4 @@ iasRun -r org.scalatest.run org.eso.ias.kafkaneo.test.consumer.ListenerTest
 iasRun -r org.scalatest.run org.eso.ias.kafkaneo.test.consumer.ConsumerHelperTest
 iasRun -r org.scalatest.run org.eso.ias.kafkaneo.test.consumer.ConsumerTest
 testValueProdCons
+testKafkaHelper

@@ -12,6 +12,7 @@ import unittest
 
 from IASLogging.logConf import Log
 from IasBasicTypes.IasValue import IasValue
+from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 from IasKafkaUtils.KafkaValueConsumer import IasValueListener, KafkaValueConsumer
 from IasKafkaUtils.KafkaValueProducer import KafkaValueProducer
 
@@ -40,7 +41,7 @@ class TestListener(IasValueListener):
 
 class TestValueProdCons(unittest.TestCase):
     
-    kafkabrokers = 'localhost:9092'
+    kafkabrokers = IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS
     topic = "Test-PyProdCons-Topic"
     listener = TestListener()
     
