@@ -47,7 +47,10 @@ Requires:	%{py3_dist jep}
 
 # Apache kafka does not provide an RPM (we have prepared the SPEC
 # to build kafka that is in the install folder of the IAS sources)
-Requires: kafka
+#
+# Kafka can be run in a remote server so we only suggests to install it.
+# Integration tests require a local installation of kafka by defualt.
+Suggests: kafka
 
 %global syspython3_sitelib  /usr/lib/python%{python3_version}/site-packages
 %global _prefix              /opt/IasRoot
@@ -187,7 +190,7 @@ export IAS_ROOT=%{buildroot}%{_prefix}
 %{syspython3_sitelib}/%{name}.pth
 
 %changelog
-* Wed Oct 15 2025 acaproni IAS v13.1.5
+* Wed Oct 15 2025 acaproni IAS v13.1.5; kafka only suggested
 * Wed Jun 11 2025 acaproni Reviewd and prepared for v13.1.4.2
 * Wed May 08 2024 acaproni Creation of the SPEC
 - 
