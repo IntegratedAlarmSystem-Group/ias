@@ -1,5 +1,5 @@
 Name:           ias
-Version:        13.1.4.2
+Version:        13.1.5
 Release:        1%{?dist}
 Summary:        Install the Integrated Alarm System
 BuildArch:      noarch
@@ -187,6 +187,7 @@ export IAS_ROOT=%{buildroot}%{_prefix}
 %{syspython3_sitelib}/%{name}.pth
 
 %changelog
+* Wed Oct 15 2025 acaproni IAS v13.1.5
+* Wed Jun 11 2025 acaproni Reviewd and prepared for v13.1.4.2
 * Wed May 08 2024 acaproni Creation of the SPEC
-* Wed Jun 11 2026 acaproni Reviewd and prepared for v13.1.4.2
 - 
