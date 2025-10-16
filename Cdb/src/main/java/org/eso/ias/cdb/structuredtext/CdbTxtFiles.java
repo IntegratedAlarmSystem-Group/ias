@@ -68,9 +68,8 @@ public class CdbTxtFiles implements CdbFiles {
 	 * 
 	 * @param parentFolder The path of the parent folder of the CDB
      * @param fType The type of the text files
-	 * @throws IOException If the passed folder is not valid
 	 */
-	public CdbTxtFiles(Path parentFolder, TextFileType fType) throws IOException {
+	public CdbTxtFiles(Path parentFolder, TextFileType fType)  {
 		Objects.requireNonNull(parentFolder,"The parent folder can't be null");
 		Objects.requireNonNull(fType, "Invalid null file type");
 		this.filesType=fType;
@@ -79,11 +78,7 @@ public class CdbTxtFiles implements CdbFiles {
 		this.templatesFileName="templates"+ fileExtension;
 		this.iasiosFileName="iasios"+ fileExtension;
 		this.transferFunsFileName="tfs"+ fileExtension;
-		if (checkParentFolder(parentFolder)) {
-			this.cdbParentFolder=parentFolder;
-		} else {
-			throw new IOException("Check folder permission "+parentFolder.toAbsolutePath());
-		}
+		this.cdbParentFolder=parentFolder;
 	}
 	
 	/**
@@ -97,18 +92,6 @@ public class CdbTxtFiles implements CdbFiles {
 		this(parentFolder.toPath(), fType);
 	}
 	
-	/**
-	 * Check if the passed path is a writable folder.
-	 * 
-	 * @param p The path to the folder to check
-	 * @return <code>true</code> if the path passed all the checks,
-	 *         <code>false</code> otherwise
-	 */
-	private boolean checkParentFolder(Path p) {
-		Objects.requireNonNull(p);
-		return Files.exists(p) && Files.isDirectory(p) && Files.isWritable(p);
-	}
-
 	@Override
 	public TextFileType getCdbFileType() {
 		return filesType;
