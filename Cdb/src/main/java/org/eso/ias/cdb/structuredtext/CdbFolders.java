@@ -1,7 +1,7 @@
 package org.eso.ias.cdb.structuredtext;
 
 import java.io.File;
-import java.io.IOException;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 
 /**
@@ -76,8 +76,9 @@ public enum CdbFolders {
 	 * 
 	 * @param cdbParentPath: The path to the parent of the CDB
 	 * @return The path to the subfolder
+	 * @throws InvalidPathException If the path is not valid
 	 */
-	private Path buildPath(Path cdbParentPath) {
+	private Path buildPath(Path cdbParentPath) throws InvalidPathException {
 		if (cdbParentPath==null) {
 			throw new NullPointerException("The parent path of the CDB can't be null");
 		}
@@ -95,9 +96,9 @@ public enum CdbFolders {
 	 * 
 	 * @param cdbParentPath: The path to the parent of the CDB
 	 * @return the path to the subfolder.
-	 * @throws IOException If the folder is not writeable
+	 * @throws InvalidPathException If the path is not valid
 	 */
-	public Path getFolder(Path cdbParentPath) throws IOException {
+	public Path getFolder(Path cdbParentPath) throws InvalidPathException {
 		if (cdbParentPath==null) {
 			throw new NullPointerException("The parent path of the CDB can't be null");
 		}
@@ -118,14 +119,14 @@ public enum CdbFolders {
 	}
 	
 	/**
-	 * Get the path of a CDB folder and if it is the case, creates the folder.
+	 * Get the path of a CDB sub-folder.
 	 * 
 	 * @param cdbParentPath: The path to the parent of the CDB
 	 * @param folder: the CDB folder to create 
 	 * @return the path to the subfolder.
-	 * @throws IOException In case of error getting the path
+	 * @throws InvalidPathException If the path is not valid
 	 */
-	public static Path getSubfolder(Path cdbParentPath, CdbFolders folder) throws IOException {
+	public static Path getSubfolder(Path cdbParentPath, CdbFolders folder) throws InvalidPathException {
 		if (folder==null) {
 			throw new NullPointerException("CDB subfolder can't be null");
 		}
