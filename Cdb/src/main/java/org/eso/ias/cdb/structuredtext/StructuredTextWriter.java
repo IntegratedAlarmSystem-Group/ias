@@ -118,11 +118,19 @@ public class StructuredTextWriter implements CdbWriter {
         if (parentFolder==null) {
             throw new IasCdbException("Cannot get the parent folder of file "+file);
         }
+
         if (!Files.exists(parentFolder)) {
             try {
                 Files.createDirectories(parentFolder);
             } catch (IOException ioe) {
-                throw new IasCdbException("Error creating folder "+parentFolder.toAbsolutePath(),ioe);
+                throw new IasCdbException("Error creating folder "+parentFolder.toAbsolutePath(), ioe);
+            }
+        } else {
+            if (!Files.isDirectory(parentFolder)) {
+                throw new IasCdbException("Parent path is not a directory: "+parentFolder.toAbsolutePath());
+            }
+            if (!Files.isWritable(parentFolder)) {
+                throw new IasCdbException("Parent directory is not writable: "+parentFolder.toAbsolutePath());
             }
         }
     }
