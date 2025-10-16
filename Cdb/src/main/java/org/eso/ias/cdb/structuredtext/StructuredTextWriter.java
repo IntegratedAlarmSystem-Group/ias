@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.eso.ias.cdb.CdbWriter;
 import org.eso.ias.cdb.IasCdbException;
-import org.eso.ias.cdb.structuredtext.TextFileType;
 import org.eso.ias.cdb.pojos.*;
 import org.eso.ias.cdb.structuredtext.pojos.JsonAsceDao;
 import org.eso.ias.cdb.structuredtext.pojos.JsonDasuDao;
@@ -39,9 +38,9 @@ public class StructuredTextWriter implements CdbWriter {
     protected final AtomicBoolean closed = new AtomicBoolean(false);
 
     /**
-     * cdbFileNames return the names of the files to read
+     * The CdbFiles to get the names of the files to write
      */
-    protected final CdbFiles cdbFileNames;
+    protected final CdbFiles cdbFiles;
 
     /**
      * The type of the files of the CDB
@@ -52,26 +51,25 @@ public class StructuredTextWriter implements CdbWriter {
      * Constructor
      * @param cdbFileNames  The files of the CDB
      */
-    public StructuredTextWriter(CdbFiles cdbFileNames) {
-        Objects.requireNonNull(cdbFileNames, "cdbFileNames can't be null");
-        this.cdbFileNames=cdbFileNames;
-        cdbFilesType = cdbFileNames.getCdbFileType();
+    public StructuredTextWriter(CdbFiles cdbFiles) {
+        Objects.requireNonNull(cdbFiles, "cdbFileNames can't be null");
+        this.cdbFiles=cdbFiles;
+        cdbFilesType = cdbFiles.getCdbFileType();
     }
 
     public StructuredTextWriter(File parentFolder) throws IasCdbException {
-        Objects.requireNonNull(parentFolder);
+        Objects.requireNonNull(parentFolder, "Parent folder can't be null");
         Optional<TextFileType> cdbTypeOpt = TextFileType.getCdbType(parentFolder);
         if (cdbTypeOpt.isEmpty()) {
             throw new IasCdbException("Could not get the type of the CDB from "+parentFolder.getAbsolutePath());
         }
         try {
-            this.cdbFileNames=new CdbTxtFiles(parentFolder, cdbTypeOpt.get());
-            cdbFilesType = cdbFileNames.getCdbFileType();
+            this.cdbFiles=new CdbTxtFiles(parentFolder, cdbTypeOpt.get());
+            cdbFilesType = cdbFiles.getCdbFileType();
             logger.info("{} CDB writer from CDB in {}", cdbFilesType, parentFolder.getAbsolutePath());
         } catch (Exception e) {
             throw new IasCdbException("Error building the CdbFiles for folder "+parentFolder.getAbsolutePath(), e);
         }
-
     }
 
     /**
@@ -108,16 +106,46 @@ public class StructuredTextWriter implements CdbWriter {
     }
 
     /**
+     * Check if the file containing the given file exists and is writable.
+     * It creates the directory if it does not exist.
+     * 
+     * @param file The file whose parent directory must be checked and,
+     *             if it is the case, created
+     * @throws IasCdbException In case of error creating the folder or if it is not writable
+     */
+    void checkFolderOfFile(Path file) throws IasCdbException {
+        Path parentFolder = file.getParent();
+        if (parentFolder==null) {
+            throw new IasCdbException("Cannot get the parent folder of file "+file);
+        }
+
+        if (!Files.exists(parentFolder)) {
+            try {
+                Files.createDirectories(parentFolder);
+            } catch (IOException ioe) {
+                throw new IasCdbException("Error creating folder "+parentFolder.toAbsolutePath(), ioe);
+            }
+        } else {
+            if (!Files.isDirectory(parentFolder)) {
+                throw new IasCdbException("Parent path is not a directory: "+parentFolder.toAbsolutePath());
+            }
+            if (!Files.isWritable(parentFolder)) {
+                throw new IasCdbException("Parent directory is not writable: "+parentFolder.toAbsolutePath());
+            }
+        }
+    }
+
+    /**
      * Get the {@link ObjectMapper} depending on the type of
      * files in the CDB
      *
      * @return The {@link ObjectMapper} to parse the files
      */
     protected ObjectMapper getObjectMapper() {
-        switch (cdbFileNames.getCdbFileType()) {
+        switch (cdbFiles.getCdbFileType()) {
             case JSON: return new ObjectMapper();
             case YAML: return new YAMLMapper();
-            default: throw new UnsupportedOperationException("Unsupported CDB file type "+cdbFileNames.getCdbFileType());
+            default: throw new UnsupportedOperationException("Unsupported CDB file type "+cdbFiles.getCdbFileType());
         }
     }
 
@@ -138,10 +166,11 @@ public class StructuredTextWriter implements CdbWriter {
         Objects.requireNonNull(ias);
         File f;
         try {
-            f= cdbFileNames.getIasFilePath().toFile();
+            f= cdbFiles.getIasFilePath().toFile();
         }catch (IOException ioe) {
             throw new IasCdbException("Error getting IAS file",ioe);
         }
+        checkFolderOfFile(f.toPath());
         ObjectMapper mapper = getObjectMapper();
         mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
         try {
@@ -168,10 +197,11 @@ public class StructuredTextWriter implements CdbWriter {
         Objects.requireNonNull(superv);
         File f;
         try {
-            f = cdbFileNames.getSuperivisorFilePath(superv.getId()).toFile();
+            f = cdbFiles.getSuperivisorFilePath(superv.getId()).toFile();
         }catch (IOException ioe) {
             throw new IasCdbException("Error getting Supervisor file",ioe);
         }
+        checkFolderOfFile(f.toPath());
 
         JsonSupervisorDao jsonSup = new JsonSupervisorDao(superv);
         ObjectMapper mapper = getObjectMapper();
@@ -234,10 +264,11 @@ public class StructuredTextWriter implements CdbWriter {
 
         File f;
         try {
-            f = cdbFileNames.getIasioFilePath("UnusedID").toFile();
+            f = cdbFiles.getIasioFilePath("UnusedID").toFile();
         } catch (IOException ioe) {
             throw new IasCdbException("Error getting IASIOs file",ioe);
         }
+        checkFolderOfFile(f.toPath());
         ObjectMapper mapper = getObjectMapper();
         mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
         if (!f.exists() || !append) {
@@ -291,10 +322,11 @@ public class StructuredTextWriter implements CdbWriter {
         Objects.requireNonNull(dasu);
         File f;
         try {
-            f = cdbFileNames.getDasuFilePath(dasu.getId()).toFile();
+            f = cdbFiles.getDasuFilePath(dasu.getId()).toFile();
         }catch (IOException ioe) {
             throw new IasCdbException("Error getting DASU file",ioe);
         }
+        checkFolderOfFile(f.toPath());
         JsonDasuDao jsonDasu = new JsonDasuDao(dasu);
         ObjectMapper mapper = getObjectMapper();
         mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
@@ -322,10 +354,11 @@ public class StructuredTextWriter implements CdbWriter {
 
         File f;
         try {
-            f = cdbFileNames.getAsceFilePath(asce.getId()).toFile();
+            f = cdbFiles.getAsceFilePath(asce.getId()).toFile();
         }catch (IOException ioe) {
             throw new IasCdbException("Error getting ASCE file",ioe);
         }
+        checkFolderOfFile(f.toPath());
         JsonAsceDao jsonAsce = new JsonAsceDao(asce);
         ObjectMapper mapper = getObjectMapper();
         mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
@@ -372,10 +405,11 @@ public class StructuredTextWriter implements CdbWriter {
         File f;
         try {
             // The ID is unused in getTFFilePath
-            f = cdbFileNames.getTFFilePath("UnusedID").toFile();
+            f = cdbFiles.getTFFilePath("UnusedID").toFile();
         } catch (IOException ioe) {
             throw new IasCdbException("Error getting TFs file",ioe);
         }
+        checkFolderOfFile(f.toPath());
 
         ObjectMapper mapper = getObjectMapper();
         mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
@@ -445,12 +479,13 @@ public class StructuredTextWriter implements CdbWriter {
         File f;
         try {
             // The ID is unused in getTFFilePath
-            f = cdbFileNames.getTemplateFilePath("UnusedID").toFile();
+            f = cdbFiles.getTemplateFilePath("UnusedID").toFile();
         }catch (IOException ioe) {
             throw new IasCdbException("Error getting TFs file",ioe);
         }
+        checkFolderOfFile(f.toPath());
 
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = getObjectMapper(); // use YAML or JSON accordingly
         mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
         if (!f.exists() || !append) {
             try {
@@ -499,10 +534,11 @@ public class StructuredTextWriter implements CdbWriter {
         Objects.requireNonNull(pluginConfigDao);
         File f;
         try {
-            f = cdbFileNames.getPluginFilePath(pluginConfigDao.getId()).toFile();
+            f = cdbFiles.getPluginFilePath(pluginConfigDao.getId()).toFile();
         } catch (IOException ioe) {
             throw new IasCdbException("Error getting plugin file "+pluginConfigDao.getId(),ioe);
         }
+        checkFolderOfFile(f.toPath());
 
         ObjectMapper mapper = getObjectMapper();
         mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
@@ -534,17 +570,18 @@ public class StructuredTextWriter implements CdbWriter {
         Objects.requireNonNull(clientConfigDao);
         Path f;
         try {
-            f = cdbFileNames.getClientFilePath(clientConfigDao.getId());
+            f = cdbFiles.getClientFilePath(clientConfigDao.getId());
         } catch (IOException ioe) {
             throw new IasCdbException("Error getting client file "+clientConfigDao.getId(),ioe);
         }
+        checkFolderOfFile(f);
 
         List<String> strings = new ArrayList<>();
         strings.add(clientConfigDao.getConfig());
         try {
             Files.write(f,strings, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException ioe) {
-            throw new IasCdbException("Error reading client file "+f.toString(),ioe);
+            throw new IasCdbException("Error writing client file "+f.toString(),ioe);
         }
     }
 

@@ -1,0 +1,12 @@
+{ 
+	"id":"PluginID2",
+	"monitoredSystemId":"LCU",
+	"props": [
+		{"name":"a","value":"Value"}],
+	"values":[
+		{"id":"AlarmID",
+		"refreshTime":"500",
+		"filter":"TheFilter",
+		"filterOptions":"Options"}]
+}
+

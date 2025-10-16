@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Test reading and writing of JSON CDB.
  * <P>
  * Some tests, write the CDB and then read data out of it.
- * <BR>Other tests instead uses the JSON CDB contained in testCdb
+ * <BR>Other tests instead uses the JSON CDB contained in testJsonCdb
  * whose description is in testCdb/ReadMe.txt
  * 
  * @author acaproni
@@ -55,7 +55,7 @@ public class TestJsonCdb {
 	@BeforeEach
 	public void setUp() throws Exception {
 		// Remove any CDB folder if present
-		CdbFolders.ROOT.delete(cdbParentPath);
+		CdbFoldersTestHelper.deleteFolder(CdbFolders.ROOT.getFolder(cdbParentPath));
 		assertFalse(CdbFolders.ROOT.exists(cdbParentPath));
 		
 		cdbFiles = new CdbTxtFiles(cdbParentPath, TextFileType.JSON);
@@ -71,7 +71,7 @@ public class TestJsonCdb {
 
 	@AfterEach
 	public void tearDown() throws Exception {
-		CdbFolders.ROOT.delete(cdbParentPath);
+		CdbFoldersTestHelper.deleteFolder(CdbFolders.ROOT.getFolder(cdbParentPath));
 		assertFalse(CdbFolders.ROOT.exists(cdbParentPath));
 		
 		cdbReader.shutdown();

@@ -2,7 +2,6 @@ package org.eso.ias.converter.test;
 
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
-import org.eso.ias.cdb.structuredtext.TextFileType;
 import org.eso.ias.cdb.pojos.IasTypeDao;
 import org.eso.ias.cdb.pojos.IasioDao;
 import org.eso.ias.cdb.pojos.TemplateDao;
@@ -17,8 +16,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
@@ -84,6 +88,25 @@ public class ConverterCdbTest {
     private static IasTypeDao buildIasType(int n) {
 		return IasTypeDao.values()[n%IasTypeDao.values().length];
 	}
+
+	public static void deleteFolder(Path folderPath) throws IOException {
+		if (!Files.exists(folderPath)) {
+			return;
+		}
+        Files.walkFileTree(folderPath, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.delete(file); // delete file
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                Files.delete(dir); // delete directory after its contents
+                return FileVisitResult.CONTINUE;
+            }
+        });
+    }
 	
 	/**
 	 * Populate the CDB with the passed number of IASIO
@@ -175,7 +198,7 @@ public class ConverterCdbTest {
 	@AfterEach
 	public void tearDown() throws Exception{
 		configDao.close();
-		CdbFolders.ROOT.delete(cdbParentPath);
+		ConverterCdbTest.deleteFolder(CdbFolders.ROOT.getFolder(cdbParentPath));
 		assertFalse(CdbFolders.ROOT.exists(cdbParentPath));
 	}
 	
