@@ -477,7 +477,7 @@ public class StructuredTextWriter implements CdbWriter {
         }
         checkFolderOfFile(f.toPath());
 
-        ObjectMapper mapper = new ObjectMapper();
+        ObjectMapper mapper = getObjectMapper(); // use YAML or JSON accordingly
         mapper.setDefaultPrettyPrinter(new DefaultPrettyPrinter());
         if (!f.exists() || !append) {
             try {
@@ -573,7 +573,7 @@ public class StructuredTextWriter implements CdbWriter {
         try {
             Files.write(f,strings, StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
         } catch (IOException ioe) {
-            throw new IasCdbException("Error reading client file "+f.toString(),ioe);
+            throw new IasCdbException("Error writing client file "+f.toString(),ioe);
         }
     }
 
