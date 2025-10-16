@@ -115,7 +115,7 @@ public enum CdbFolders {
 	public boolean exists(Path cdbParentPath) {
 		Path path = buildPath(cdbParentPath);
 		File f = path.toFile();
-		return f.exists();
+		return f.isDirectory();
 	}
 	
 	/**
