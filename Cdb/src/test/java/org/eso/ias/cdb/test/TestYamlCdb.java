@@ -57,7 +57,7 @@ public class TestYamlCdb {
 	@BeforeEach
 	public void setUp() throws Exception {
 		// Remove any CDB folder if present
-		CdbFolders.ROOT.delete(cdbParentPath);
+		CdbFoldersTestHelper.deleteFolder(CdbFolders.ROOT.getFolder(cdbParentPath));
 		assertFalse(CdbFolders.ROOT.exists(cdbParentPath));
 		
 		cdbFiles = new CdbTxtFiles(cdbParentPath, TextFileType.YAML);
@@ -73,7 +73,7 @@ public class TestYamlCdb {
 
 	@AfterEach
 	public void tearDown() throws Exception {
-		CdbFolders.ROOT.delete(cdbParentPath);
+		CdbFoldersTestHelper.deleteFolder(CdbFolders.ROOT.getFolder(cdbParentPath));
 		assertFalse(CdbFolders.ROOT.exists(cdbParentPath));
 		
 		cdbReader.shutdown();

@@ -24,8 +24,13 @@ import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -196,7 +201,24 @@ public class TestKafkaStreaming extends ConverterTestBase {
      */
     SimpleDateFormat iso8601dateFormat= new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.S");
 
+    public static void deleteFolder(Path folderPath) throws IOException {
+		if (!Files.exists(folderPath)) {
+			return;
+		}
+        Files.walkFileTree(folderPath, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.delete(file); // delete file
+                return FileVisitResult.CONTINUE;
+            }
 
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                Files.delete(dir); // delete directory after its contents
+                return FileVisitResult.CONTINUE;
+            }
+        });
+    }
 
     /**
      * Build the {@link MonitorPointData} to send to the converter
@@ -308,7 +330,7 @@ public class TestKafkaStreaming extends ConverterTestBase {
     public void tearDown() throws Exception {
         logger.info("Shutting down the converter");
         converter.close();
-        CdbFolders.ROOT.delete(cdbParentPath);
+        TestKafkaStreaming.deleteFolder(CdbFolders.ROOT.getFolder(cdbParentPath));
     }
 
     /**
