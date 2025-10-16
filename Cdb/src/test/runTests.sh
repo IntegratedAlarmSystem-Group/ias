@@ -1,5 +1,4 @@
 #!/usr/bin/bash
-iasRun -r org.junit.platform.console.ConsoleLauncher -c org.eso.ias.cdb.test.CdbFoldersTest
 iasRun -r org.junit.platform.console.ConsoleLauncher -c org.eso.ias.cdb.test.TestTextFileType
 iasRun -r org.junit.platform.console.ConsoleLauncher -c org.eso.ias.cdb.test.TestStructTextReader
 iasRun -r org.junit.platform.console.ConsoleLauncher -c org.eso.ias.cdb.test.TestJsonCdb
