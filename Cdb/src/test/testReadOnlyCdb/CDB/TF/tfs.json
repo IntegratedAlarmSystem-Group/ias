@@ -1,0 +1,5 @@
+[
+	{ "className" : "org.eso.ias.tf.AnotherFunction", "implLang" : "SCALA" },
+	{ "className" : "org.eso.ias.tf.TestMinMax", "implLang" : "JAVA" },
+	{ "className" : "org.eso.ias.tf.Threshold", "implLang" : "SCALA" }
+]

@@ -1,0 +1,19 @@
+[
+	{"id":"iasioID-4","shortDesc":"IASIO 4","iasType":"DOUBLE","docUrl":"http://wiki.alma.cl/ioID4"},
+	{"id":"iasioID-2","shortDesc":"IASIO 2","iasType":"SHORT","docUrl":"http://wiki.alma.cl/ioID2"},
+	{"id":"iasioID-1","shortDesc":"IASIO 1","iasType":"INT","docUrl":"http://wiki.alma.cl/ioID1"},
+	{"id":"iasioID-0","shortDesc":"IASIO 0","iasType":"LONG","docUrl":"http://wiki.alma.cl/ioID0"},
+	{"id":"iasioID-3","shortDesc":"IASIO 3","iasType":"BYTE","docUrl":"http://wiki.alma.cl/ioID3"},
+	{"id":"iasioID-5","shortDesc":"IASIO 5","iasType":"DOUBLE","docUrl":"http://wiki.alma.cl/ioID4"},
+	{"id":"iasioID-6","shortDesc":"IASIO 6","iasType":"DOUBLE","docUrl":"http://wiki.alma.cl/ioID4"},
+	{"id":"iasioID-7","shortDesc":"IASIO 7","iasType":"ALARM","docUrl":"http://wiki.alma.cl/ioID4"},
+	{"id":"OUTPUT-ID","shortDesc":"ID of output","iasType":"ALARM","docUrl":"http://wiki.alma.cl/outputID"},
+	{"id":"OUTID-DASU1","shortDesc":"Output ID for DASU1","iasType":"ALARM","docUrl":"http://wiki.alma.cl/temp"},
+	{"id":"OUTID-DASU2","shortDesc":"Output ID for DASU2","iasType":"ALARM","docUrl":"http://wiki.alma.cl/temp"},
+	{"id":"OUTID-DASU3","shortDesc":"Output ID for DASU3","iasType":"ALARM","docUrl":"http://wiki.alma.cl/temp"},
+	{"id":"OUTID-DASU4","shortDesc":"Output ID for DASU4","iasType":"ALARM","docUrl":"http://wiki.alma.cl/temp"},
+	{"id":"OUTID-DASU5","shortDesc":"Output ID for DASU5","iasType":"ALARM","docUrl":"http://wiki.alma.cl/temp"},
+	{"id":"TempInput","templateId":"templated-input","shortDesc":"Templated input example","iasType":"ALARM"},
+	{"id":"SoundInput","templateId":"templated-input","shortDesc":"Templated input with sound example","iasType":"ALARM", "sound":"TYPE2", "canShelve":"true" }
+	
+]

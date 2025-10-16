@@ -1,0 +1,1 @@
+{"dasuID":"DasuID1","outputID":"OUTPUT-ID","props":[{"name":"Prop1-Name","value":"The value of P1"},{"name":"Prop2-Name","value":"The value of P2"},{"name":"Prop3-Name","value":"The value of P3"}],"id":"ASCE-ID1","transferFunctionID":"org.eso.ias.tf.AnotherFunction","inputIDs":["iasioID-1","iasioID-2"]}
