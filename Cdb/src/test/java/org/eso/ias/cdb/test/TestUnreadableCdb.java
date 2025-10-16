@@ -3,8 +3,15 @@ package org.eso.ias.cdb.test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.io.IOException;
 import java.nio.file.FileSystems;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
@@ -20,7 +27,9 @@ import org.eso.ias.cdb.structuredtext.CdbFiles;
 import org.eso.ias.cdb.structuredtext.CdbTxtFiles;
 import org.eso.ias.cdb.structuredtext.StructuredTextReader;
 import org.eso.ias.cdb.structuredtext.TextFileType;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -30,6 +39,8 @@ import org.junit.jupiter.api.Test;
  * 
  * Regression test for #262: it does not check the correctness of the data in the CDB
  * but if it can read a read-only CDB 
+ * 
+ * TestUnreadableCdb changes the permissions of TestUnreadableCdb before and after executing the tests
  */
 public class TestUnreadableCdb {
 	
@@ -41,11 +52,27 @@ public class TestUnreadableCdb {
     /**
      * The folder that contains the CDB that is not writable
      */
-    private final String cdbFolderName = "./src/test/testReadOnlyCdb";
+    private static final String cdbFolderName = "./src/test/testReadOnlyCdb";
+
+	@BeforeAll
+	public static void setUpClass() throws Exception {
+        Path path = FileSystems.getDefault().getPath(TestUnreadableCdb.cdbFolderName);
+		TestUnreadableCdb.setPermissions(path, true);
+	}
+
+	@AfterAll
+	public static void tearDownClass() throws Exception {
+		Path path = FileSystems.getDefault().getPath(TestUnreadableCdb.cdbFolderName);
+		TestUnreadableCdb.setPermissions(path, false);
+	}
 
     @BeforeEach
 	public void setUp() throws Exception {
-        Path path = FileSystems.getDefault().getPath(cdbFolderName);
+        Path path = FileSystems.getDefault().getPath(TestUnreadableCdb.cdbFolderName);
+
+		// Checks that fuiles and folders are read-only
+		assertTrue(TestUnreadableCdb.areAllFilesAndFoldersNotWritable(path));
+
 		CdbFiles cdbFiles = new CdbTxtFiles(path, TextFileType.JSON);
 		cdbReader = new StructuredTextReader(cdbFiles);
 		cdbReader.init();
@@ -65,6 +92,66 @@ public class TestUnreadableCdb {
 		Optional<IasDao> iasOpt = cdbReader.getIas();
 		assertTrue(iasOpt.isPresent());
 	}
+
+	
+	private static void setPermissions(Path rootDir, boolean readOnly) throws IOException {
+		Set<PosixFilePermission> folderPerms;
+		Set<PosixFilePermission> filePerms;
+		if (readOnly) {
+			folderPerms = PosixFilePermissions.fromString("r-xr-xr-x");
+			filePerms =   PosixFilePermissions.fromString("r--r--r--");
+		 } else {
+			folderPerms = PosixFilePermissions.fromString("rwxr-xr-x");
+			filePerms =   PosixFilePermissions.fromString("rw-r--r--");
+		 }
+		 
+        
+		Files.walkFileTree(rootDir, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                Files.setPosixFilePermissions(dir, folderPerms);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                Files.setPosixFilePermissions(file, filePerms);
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+		System.out.println("CDB permission set to " + (readOnly ? "read-only" : "read-write"));
+
+    }
+
+	
+	public static boolean areAllFilesAndFoldersNotWritable(Path rootDir) throws IOException {
+        final boolean[] allNotWritable = {true};
+
+        Files.walkFileTree(rootDir, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                if (Files.isWritable(dir)) {
+                    allNotWritable[0] = false;
+                    return FileVisitResult.TERMINATE;
+                }
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                if (Files.isWritable(file)) {
+                    allNotWritable[0] = false;
+                    return FileVisitResult.TERMINATE;
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+        return allNotWritable[0];
+    }
+
+
 
     /**
 	 * Test the retrieval of templates
