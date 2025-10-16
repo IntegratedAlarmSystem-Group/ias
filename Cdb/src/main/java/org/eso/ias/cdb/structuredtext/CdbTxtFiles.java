@@ -50,7 +50,7 @@ public class CdbTxtFiles implements CdbFiles {
 	 * 
 	 * @see CdbFolders
 	 */
-	private final Path cdbParentFolder;
+	public final Path cdbParentFolder;
 	
 	/**
 	 * Constructor
@@ -120,7 +120,7 @@ public class CdbTxtFiles implements CdbFiles {
 	 */
 	@Override
 	public Path getIasFilePath()  throws IOException {
-		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.ROOT, true).resolve(iasFileName);
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.ROOT).resolve(iasFileName);
 	}
 
 	/* (non-Javadoc)
@@ -132,7 +132,7 @@ public class CdbTxtFiles implements CdbFiles {
 		if (supervisorID.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty supervisor ID");
 		}
-		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.SUPERVISOR, true).resolve(supervisorID+ fileExtension);
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.SUPERVISOR).resolve(supervisorID+ fileExtension);
 	}
 
 	/* (non-Javadoc)
@@ -144,7 +144,7 @@ public class CdbTxtFiles implements CdbFiles {
 		if (dasuID.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty DASU ID");
 		}
-		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.DASU, true).resolve(dasuID+ fileExtension);
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.DASU).resolve(dasuID+ fileExtension);
 	}
 
 	/* (non-Javadoc)
@@ -156,7 +156,7 @@ public class CdbTxtFiles implements CdbFiles {
 		if (asceID.isEmpty()) {
 			throw new IllegalArgumentException("Invalid empty ASCE ID");
 		}
-		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.ASCE, true).resolve(asceID+ fileExtension);
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.ASCE).resolve(asceID+ fileExtension);
 	}
 
 	/* (non-Javadoc)
@@ -164,7 +164,7 @@ public class CdbTxtFiles implements CdbFiles {
 	 */
 	@Override
 	public Path getIasioFilePath(String iasioID)  throws IOException{
-		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.IASIO, true).resolve(iasiosFileName);
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.IASIO).resolve(iasiosFileName);
 	}
 
 	/*
@@ -173,7 +173,7 @@ public class CdbTxtFiles implements CdbFiles {
 	 */
 	@Override
 	public Path getTFFilePath(String tfID) throws IOException {
-		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.TF, true).resolve(transferFunsFileName);
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.TF).resolve(transferFunsFileName);
 	}
 	
 	/*
@@ -182,7 +182,7 @@ public class CdbTxtFiles implements CdbFiles {
 	 */
 	@Override
 	public Path getTemplateFilePath(String templateID) throws IOException {
-		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.TEMPLATE, true).resolve(templatesFileName);
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.TEMPLATE).resolve(templatesFileName);
 	}
 
 	/**
@@ -197,7 +197,7 @@ public class CdbTxtFiles implements CdbFiles {
 		if (clientID==null || clientID.isEmpty()) {
 			throw new IllegalArgumentException("Invalid null or empty DASU ID");
 		}
-		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.CLIENT, true).resolve(clientID+confFileExtension);
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.CLIENT).resolve(clientID+confFileExtension);
 	}
 
 	/**
@@ -211,6 +211,6 @@ public class CdbTxtFiles implements CdbFiles {
 		if (clientID==null || clientID.isEmpty()) {
 			throw new IllegalArgumentException("Invalid null or empty DASU ID");
 		}
-		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.PLUGIN, true).resolve(clientID+ fileExtension);
+		return CdbFolders.getSubfolder(cdbParentFolder, CdbFolders.PLUGIN).resolve(clientID+ fileExtension);
 	}
 }
