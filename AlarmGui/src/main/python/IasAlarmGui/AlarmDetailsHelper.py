@@ -50,13 +50,5 @@ class AlarmDetailsHelper:
         md = md + self.format_and_add("Type", ias_value.valueTypeStr)
         md = md + self.format_and_add("FRID", "\n"+self.format_frid(ias_value.fullRunningId))
         md = md + self.format_and_add("Dependencies", "\n"+self.format_frids(ias_value.dependentsFullRuningIds))
-        md = md + self.format_and_add("Plugin prod. stamp", ias_value.pluginProductionTStampStr)
-        md = md + self.format_and_add("Sent to Converter tstamp", ias_value.sentToConverterTStampStr)
-        md = md + self.format_and_add("Recv from plugin tstamp", ias_value.receivedFromPluginTStampStr)
-        md = md + self.format_and_add("Converted tstamp", ias_value.convertedProductionTStampStr)
-        md = md + self.format_and_add("Converted tstamp", ias_value.convertedProductionTStampStr)
-        md = md + self.format_and_add("Sent to BSDB tstamp", ias_value.sentToBsdbTStampStr)
-        md = md + self.format_and_add("Read from BSDB tstamp", ias_value.readFromBsdbTStampStr)
-        md = md + self.format_and_add("DASU prod. tstamp", ias_value.dasuProductionTStampStr)
 
         self.details_text.setMarkdown(md)
