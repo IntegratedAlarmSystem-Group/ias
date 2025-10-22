@@ -5,6 +5,8 @@ The production version of the core of Integrated Alarm System.
 
 Website: [Integrated Alarm System](https://integratedalarmsystem-group.github.io)
 
+🆕IAS [Tutorials](https://github.com/IntegratedAlarmSystem-Group/Tutorials/wiki)
+
 Browse the [wiki pages](https://github.com/IntegratedAlarmSystem-Group/ias/wiki) for help.
 
 Use `gradlew build install` to build all the modules and install them in `$IAS_ROOT`
