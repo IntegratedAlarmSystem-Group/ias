@@ -227,7 +227,9 @@ class CdbChecker(args: Array[String]) {
     for {
       setOfDTD <- mapOfDasusToDeploy.values
       dtd <- setOfDTD
-    } checkDasuToDeploy(dtd)
+    } {
+      errorsFound = errorsFound || checkDasuToDeploy(dtd)
+      }
 
     // The IDs of all the DASUs to deploy (the id contains the instance of the template, if defined)
     val idsOfDasusToDeploy: Set[String] = (for {
@@ -273,7 +275,10 @@ class CdbChecker(args: Array[String]) {
     for {
       asce <- ascesOfDasus
       if !idsOfAsces.contains(asce)
-    } CdbChecker.logger.error("ASCE [{}] not defined in the CDB",asce)
+    } {
+      CdbChecker.logger.error("ASCE [{}] not defined in the CDB",asce)
+      errorsFound = true
+    }
 
     // Check the ASCEs
     for {
