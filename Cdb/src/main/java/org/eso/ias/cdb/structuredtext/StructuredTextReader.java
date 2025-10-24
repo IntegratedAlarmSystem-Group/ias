@@ -890,6 +890,11 @@ public class StructuredTextReader implements CdbReader {
         File folder = new File(folderName);
         File[] filesInFolder = folder.listFiles(filter);
 
+        if (filesInFolder==null) {
+            logger.warn(folderName+" NOT found");
+            return new HashSet<>();
+        }
+
         Set<String> ret = new HashSet<>();
         for (File file: filesInFolder) {
             String jSonfFileName = file.toString();
