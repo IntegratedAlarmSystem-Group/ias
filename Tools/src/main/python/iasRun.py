@@ -11,7 +11,7 @@ import argparse
 import os
 import socket
 import sys
-from subprocess import call
+from subprocess import run
 
 from IASLogging.logConf import Log
 from IASTools.CommonDefs import CommonDefs
@@ -137,8 +137,7 @@ def javaOpts():
         # JAVA_OPTS environment variable not defined
         return []
 
-
-if __name__ == '__main__':
+def main() -> int:
     """
     Run a java or scala tool.
     """
@@ -304,10 +303,16 @@ if __name__ == '__main__':
     logger.debug("Will run %s", cmd)
     logger.info("%s %s output %s", delimiter, ias_run_args.className, delimiter)
 
-    call(cmd)
+    retcode = run(cmd)
 
     arrowUp =  chr(8593)
     delimiter = ""
     for t in range(17):
         delimiter = delimiter + arrowUp
     logger.info("%s %s done %s", delimiter, ias_run_args.className, delimiter)
+    return retcode.returncode
+
+
+if __name__ == '__main__':
+    exit_code = main()
+    sys.exit(exit_code)
