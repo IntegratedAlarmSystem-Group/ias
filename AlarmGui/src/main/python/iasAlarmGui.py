@@ -74,7 +74,6 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_icon)
         self.timer.start(1000)
-        
 
     def update_icon(self):
         """
@@ -218,6 +217,12 @@ def parse(app) -> dict[str, str]:
         )
     parser.addOption(bsdb_option)
 
+    do_not_autoconnect = QCommandLineOption(
+        [ "n", "donotconnect"],
+        "Do not connect automatically to the BSDB at startup"
+    )
+    parser.addOption(do_not_autoconnect)
+
     parser.process(app)
 
     ret = {}
@@ -225,6 +230,10 @@ def parse(app) -> dict[str, str]:
         ret["ias_cdb"] = parser.value(cdb_option)
     if parser.isSet(bsdb_option):
         ret["bsdb_url"] = parser.value(bsdb_option)
+    if parser.isSet(do_not_autoconnect):
+        ret["connect_to_bsdb"] = False
+    else:
+        ret["connect_to_bsdb"] = True
     
     return ret
 
@@ -250,6 +259,12 @@ if __name__ == "__main__":
         url_from_cmd_line=bsdb_url_from_cdmline,
         default_bsdb=IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
     
+    connect_to_bsdb = cmd_line_args.get("connect_to_bsdb")
+    
     widget = MainWindow(bsdb_url=bsdb)
     widget.show()
+    if connect_to_bsdb and bsdb is not None:
+        # Start the thread to connect
+        connect_thread = threading.Thread(target=widget.connectToIas, args=(bsdb,))
+        connect_thread.start()
     sys.exit(app.exec())
