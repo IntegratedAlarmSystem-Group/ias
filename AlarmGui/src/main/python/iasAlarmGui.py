@@ -2,9 +2,9 @@
 
 import sys, logging, string, random, threading
 
-from PySide6.QtCore import Slot, QCommandLineOption, QCommandLineParser
-from PySide6.QtWidgets import QApplication, QMainWindow
-
+from PySide6.QtCore import Slot, QCommandLineOption, QCommandLineParser, QTimer
+from PySide6.QtWidgets import QApplication, QMainWindow, QLabel
+from PySide6.QtGui import QPixmap
 # Important:
 # You need to run the following command to generate the ui_form.py file
 #     pyside6-uic form.ui -o ui_form.py, or
@@ -60,6 +60,41 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
 
         # the dialog to connect to the IAS
         self.connectDlg = None
+
+        # Adds the icon with the beating heart in the status bar
+        self.status_icon_lbl = QLabel()
+        self.heart_ok = QPixmap(":/icons/heart.png").scaled(16, 16)  
+        self.heart_nop = QPixmap(":/icons/heart-empty.png").scaled(16, 16)
+        self.status_icon_lbl.setPixmap(self.heart_nop)
+        self.showing_ok_icon = False # To blink the icon
+        self.ui.statusbar.addPermanentWidget(self.status_icon_lbl)
+
+        
+        # The timer to change icon every 2 seconds
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_icon)
+        self.timer.start(1000)
+        
+
+    def update_icon(self):
+        """
+        Update the icon in the status bar according to the
+        status of the kafka consumer
+        """
+        if self.value_consumer is not None and self.value_consumer.isSubscribed():
+            # Getting events
+            if self.showing_ok_icon:
+                self.status_icon_lbl.setPixmap( self.heart_nop)
+                self.showing_ok_icon = False
+            else:
+                self.status_icon_lbl.setPixmap( self.heart_ok)
+                self.showing_ok_icon = True
+            self.status_icon_lbl.setToolTip("Connected to BSDB")
+        else:
+            # Not getting events
+            self.status_icon_lbl.setPixmap( self.heart_nop)
+            self.status_icon_lbl.setToolTip("Not connected to BSDB")
+            self.showing_ok_icon = False
 
     @Slot()
     def on_action_Disconnect_triggered(self):
