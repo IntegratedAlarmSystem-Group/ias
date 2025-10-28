@@ -55,7 +55,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         self.value_consumer: KafkaValueConsumer = None
         # The group must be unique to get all the alarms so we append a random part
         chars=string.ascii_uppercase + string.digits
-        self.group_id: str  = "iasAlarmGui-".join(random.choice(chars) for _ in range(5))
+        self.group_id: str = "iasAlarmGui-" + "".join(random.choice(chars) for _ in range(5))
         self.client_id: str = "iasAlarmGui"
 
         # the dialog to connect to the IAS
