@@ -31,7 +31,7 @@ class Config:
                      None otherwise
         """
         # The logger
-        self.logger = Log.getLogger(__name__)
+        self.logger = Log.getLogger(__file__)
 
         # The CDB folder read from the comamnd line of from environment variable
         # It is None if no CDB folder can be retrieved from command line or the environment
