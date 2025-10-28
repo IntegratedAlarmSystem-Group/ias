@@ -17,7 +17,6 @@ from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 
 logger = Log.getLogger(__file__)
 
-
 class IasValueListener(object):
     """
     The class to get IasValue
@@ -71,8 +70,8 @@ class KafkaValueConsumer(Thread):
 
     def __init__(self,
                  listener,
-                 kafkabrokers,
-                 topic,
+                 kafkabrokers: str,
+                 topic: str,
                  clientid,
                  groupid):
         '''
@@ -90,16 +89,19 @@ class KafkaValueConsumer(Thread):
 
         if topic is None:
             raise ValueError("The topic can't be None")
-        self.topic = topic
+        self.topic: str = topic
 
-        self.kafkaBrokers = kafkabrokers
+        self.kafkaBrokers: str = kafkabrokers
+        if not self.kafkaBrokers:
+            raise ValueError("The kafka brokers can't be None or empty")
 
         conf = {'bootstrap.servers': kafkabrokers,
                 'client.id': clientid,
                 'group.id': groupid,
                 'enable.auto.commit': 'true',
                 'allow.auto.create.topics': 'true',
-                'auto.offset.reset': 'latest'}
+                'auto.offset.reset': 'latest',
+                'error_cb': self.onError}
 
         self.consumer = Consumer(conf, logger=logger)
 
@@ -124,6 +126,9 @@ class KafkaValueConsumer(Thread):
     def onLost(self):
         logger.info("Partition lost")
         self.subscribed = False
+
+    def onError(self, kafka_error):
+        logger.error("Kafka error: %s", kafka_error.str())
 
     def isSubscribed(self) -> bool:
         """

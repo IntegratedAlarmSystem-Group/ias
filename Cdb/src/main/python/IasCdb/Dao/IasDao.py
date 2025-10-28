@@ -40,10 +40,11 @@ class IasDao:
         except:
             smtp = None
         props = {}
-        for p in data['props']:
-            name = p['name']
-            value=p['value']
-            props[name]=value
+        if 'props' in data:
+            for p in data['props']:
+                name = p['name']
+                value= p['value']
+                props[name]=value
         
         return IasDao(log_lvl, props, refresh_rate,validity_threshold,hb_frequency,bsdb_url,smtp)
 

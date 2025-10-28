@@ -12,22 +12,30 @@ from IasAlarmGui.ui_connect_dialog import Ui_ConnectToIas
 from IasCdb.CdbReader import CdbReader
 
 class ConnectToIasDlg(QDialog,Ui_ConnectToIas):
-    def __init__(self, ias_cdb,parent=None):
+    def __init__(self, bsdb_url: str|None,parent=None):
+        """
+        Constructor
+
+        Params:
+            bsdb_url: The URL of the kafka brokers in format server:port, server:
+                      or None if not available
+        """
         super().__init__(parent)
         self.ui = Ui_ConnectToIas()
         self.ui.setupUi(self)
         self.okBtn = self.ui.buttonBox.button(QDialogButtonBox.Ok)
 
+        self._bsdb_url = bsdb_url
+        self.ui.lineEdit.setText(bsdb_url if bsdb_url else "")
+        self.brokers: str|None = self._bsdb_url
+
         # The regular expression to check the correctness of the
         # connection string (i.e. the BSDB URL)
         self.pattern = r'^[a-zA-Z0-9.-]+:\d+$'
 
-        self.ias_cdb=ias_cdb
-        if self.ias_cdb is not None:
-            url = self.readUrlFromCdb()
-            self.setupPanelWidgets(url)
+        self.setupPanelWidgets(self._bsdb_url)
 
-    def setupPanelWidgets(self, brokers: str) -> None:
+    def setupPanelWidgets(self, brokers: str|None) -> None:
         """
         Setup the content of the text field and enable/disable the Ok button
         depending on the brokers string
@@ -44,34 +52,9 @@ class ConnectToIasDlg(QDialog,Ui_ConnectToIas):
         else:
             self.okBtn.setEnabled(False)
 
-    def readUrlFromCdb(self) -> str|None:
-        """
-        Read and return the URL from the CDB
-
-        Returns:
-            The URL of the kafka brokers read from the CDB
-            or None if the path to the cdb is not available
-        """
-        if not self.ias_cdb:
-            return None
-        try:
-            reader = CdbReader(self.ias_cdb)
-        except ValueError as e:
-            self.ui.lineEdit.clear()
-            self.okBtn.setEnabled(False)
-            logging.error(f"Error reading CDB: {e}")
-            error = QErrorMessage(self)
-            error.setWindowTitle("Error reading IAS CDB")
-            error.raise_()
-            error.showMessage(str(e))
-
-            return None
-        ias = reader.get_ias()
-        return ias.bsdb_url
-
     def checkServersString(self, txt: str) -> bool:
         """
-        Check if the txt is in the form "server:ip, server:ip..."
+        Check if the txt is in the form "server:port, server:port..."
         Args:
             txt: the string containing the URL of the kafka brokers
         Returns:
@@ -89,11 +72,29 @@ class ConnectToIasDlg(QDialog,Ui_ConnectToIas):
     def getBrokers(self) -> str:
         """
         Return the kafka brokers
+
+        Params:
+            ias_cdb The parent folder of the CDB
         Returns:
             str: the kafka brokers if the user pressed the Ok button
                  None otherwise
         """
         return self.brokers
+    
+    def readUrlFromCdb(self, ias_cdb) -> str|None:
+        """
+        Read and return the URL from the CDB
+
+        Returns:
+            The URL of the kafka brokers read from the CDB
+        Raises:
+            ValueError: if the CDB cannot be read
+        """
+        if not ias_cdb:
+            raise ValueError("IAS CDB path is not available")
+        reader = CdbReader(ias_cdb)
+        ias = reader.get_ias()
+        return ias.bsdb_url
 
     @Slot()
     def onOkBtnClicked(self):
@@ -110,7 +111,13 @@ class ConnectToIasDlg(QDialog,Ui_ConnectToIas):
                                                         ".",
                                                         QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
 
-        brokers = self.readUrlFromCdb()
+        # Reading the ias.yaml|json from CDB could be slow: think to do it in a thread
+        try:
+            brokers = self.readUrlFromCdb(self.ias_cdb)
+        except ValueError as ve:
+            err_dlg = QErrorMessage(self)
+            err_dlg.showMessage(f"Cannot read the CDB from {self.ias_cdb}: {ve}")
+            return
         self.setupPanelWidgets(brokers)
 
     @Slot()
