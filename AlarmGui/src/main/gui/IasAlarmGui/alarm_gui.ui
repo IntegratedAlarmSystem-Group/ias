@@ -28,14 +28,14 @@
     <item>
      <widget class="QSplitter" name="splitter">
       <property name="orientation">
-       <enum>Qt::Horizontal</enum>
+       <enum>Qt::Orientation::Horizontal</enum>
       </property>
       <widget class="QTableView" name="alarmTable">
        <property name="alternatingRowColors">
         <bool>true</bool>
        </property>
        <property name="selectionBehavior">
-        <enum>QAbstractItemView::SelectRows</enum>
+        <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
        </property>
        <attribute name="verticalHeaderVisible">
         <bool>false</bool>
@@ -59,7 +59,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>19</height>
+     <height>22</height>
     </rect>
    </property>
    <property name="defaultUp">
@@ -73,6 +73,7 @@
      <string>&amp;File</string>
     </property>
     <addaction name="action_Connect"/>
+    <addaction name="action_Disconnect"/>
     <addaction name="actionE_xit"/>
    </widget>
    <widget class="QMenu" name="menu_Help">
@@ -107,7 +108,7 @@
     <string>&amp;Connect...</string>
    </property>
    <property name="toolTip">
-    <string>Connect to IAS</string>
+    <string>Connect to IAS BSDB</string>
    </property>
   </action>
   <action name="actionE_xit">
@@ -131,7 +132,7 @@
     <string>Pause/Resume</string>
    </property>
    <property name="menuRole">
-    <enum>QAction::TextHeuristicRole</enum>
+    <enum>QAction::MenuRole::TextHeuristicRole</enum>
    </property>
   </action>
   <action name="action_Remove_cleared">
@@ -150,12 +151,27 @@
     <string>Automatically remove cleared alarms</string>
    </property>
    <property name="menuRole">
-    <enum>QAction::NoRole</enum>
+    <enum>QAction::MenuRole::NoRole</enum>
    </property>
   </action>
   <action name="action_About">
    <property name="text">
     <string>&amp;About</string>
+   </property>
+  </action>
+  <action name="action_Disconnect">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/icons/disconnect.png</normaloff>:/icons/disconnect.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Disconnect</string>
+   </property>
+   <property name="toolTip">
+    <string>Disconnect from the IAS BSDB</string>
    </property>
   </action>
  </widget>

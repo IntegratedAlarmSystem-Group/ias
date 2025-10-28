@@ -1,10 +1,10 @@
 #! /usr/bin/env python3
 
-import sys, os, logging, string, random, threading
+import sys, string, random, threading, typing
 
-from PySide6.QtCore import Slot, QCommandLineOption, QCommandLineParser
-from PySide6.QtWidgets import QApplication, QMainWindow
-
+from PySide6.QtCore import Slot, QCommandLineOption, QCommandLineParser, QTimer, Signal
+from PySide6.QtWidgets import QApplication, QMainWindow, QLabel
+from PySide6.QtGui import QPixmap
 # Important:
 # You need to run the following command to generate the ui_form.py file
 #     pyside6-uic form.ui -o ui_form.py, or
@@ -18,15 +18,31 @@ from IasKafkaUtils.KafkaValueConsumer import KafkaValueConsumer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 
 from IasBasicTypes.IasValue import IasValue
-from IasAlarmGui.AlarmDetailsHelper import AlarmDetailsHelper
 from IASTools.DefaultPaths import DefaultPaths
+from IASLogging.logConf import Log
+
+from IasAlarmGui.AlarmDetailsHelper import AlarmDetailsHelper
+from IasAlarmGui.config import Config
 
 class MainWindow(QMainWindow, Ui_AlarmGui):
-    def __init__(self, ias_cdb, parent=None):
+    # Signal to update the UI from other threads
+    signal_update_connected_ui = Signal(bool)
+
+    def __init__(self, bsdb_url: str|None, parent=None):
+        """
+        Constructor
+
+        Params:
+            bsdb_url: The URL of the kafka brokers in format server:port, server:port...
+                      or None if not available
+        """
         super().__init__(parent)
         self.ui = Ui_AlarmGui()
         self.ui.setupUi(self)
-        self.ias_cdb=ias_cdb
+        self.bsdb_url = bsdb_url
+
+        # The logger
+        self.logger = Log.getLogger(__name__)
 
         self.alarm_details = AlarmDetailsHelper(self.ui.alarmDetailsTE)
 
@@ -42,15 +58,66 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         self.value_consumer: KafkaValueConsumer = None
         # The group must be unique to get all the alarms so we append a random part
         chars=string.ascii_uppercase + string.digits
-        self.group_id: str  = "iasAlarmGui-".join(random.choice(chars) for _ in range(5))
+        self.group_id: str = "iasAlarmGui-" + "".join(random.choice(chars) for _ in range(5))
         self.client_id: str = "iasAlarmGui"
 
         # the dialog to connect to the IAS
         self.connectDlg = None
 
+        # Adds the icon with the beating heart in the status bar
+        self.status_icon_lbl = QLabel()
+        self.heart_ok = QPixmap(":/icons/heart.png").scaled(16, 16)  
+        self.heart_nop = QPixmap(":/icons/heart-empty.png").scaled(16, 16)
+        self.status_icon_lbl.setPixmap(self.heart_nop)
+        self.showing_ok_icon = False # To blink the icon
+        self.ui.statusbar.addPermanentWidget(self.status_icon_lbl)
+
+        
+        # The timer to change icon every second
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_icon)
+        self.timer.start(1000)
+
+        # Signals to update the UI from other threads
+        self.signal_update_connected_ui.connect(self._set_connected_ui)
+
+    def _set_connected_ui(self, connected: bool) -> None:
+        """
+        Set the UI according to the connection status
+        """
+        self.ui.action_Connect.setEnabled(not connected)
+        self.ui.action_Disconnect.setEnabled(connected)
+
+    def update_icon(self):
+        """
+        Update the icon in the status bar according to the
+        status of the kafka consumer
+        """
+        vc = self.value_consumer   
+        if vc is not None and vc.isSubscribed():
+            # Getting events
+            if self.showing_ok_icon:
+                self.status_icon_lbl.setPixmap( self.heart_nop)
+                self.showing_ok_icon = False
+            else:
+                self.status_icon_lbl.setPixmap( self.heart_ok)
+                self.showing_ok_icon = True
+            self.status_icon_lbl.setToolTip("Connected to BSDB")
+        else:
+            # Not getting events
+            self.status_icon_lbl.setPixmap( self.heart_nop)
+            self.status_icon_lbl.setToolTip("Not connected to BSDB")
+            self.showing_ok_icon = False
+
+    @Slot()
+    def on_action_Disconnect_triggered(self):
+        # Start the thread to connect
+        disconnect_thread = threading.Thread(target=self.disconnectFromIas)
+        disconnect_thread.start()
+
     @Slot()
     def on_action_Connect_triggered(self):
-        self.connectDlg = ConnectToIasDlg(self.ias_cdb, self)
+        self.connectDlg = ConnectToIasDlg(self.bsdb_url, self)
         self.connectDlg.open()
         self.connectDlg.finished.connect(self.on_ConnectDialog_finished)
 
@@ -64,10 +131,10 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         dlg_ret_code = self.connectDlg.result()
         if dlg_ret_code==1:
             # The user pressed the Ok button ==> Connect!
-            self.ui.action_Connect.setEnabled(False)
+            self.signal_update_connected_ui.emit(False)
             brokers = self.connectDlg.getBrokers()
             assert brokers is not None, "The dialog should not return an empty broker user presses Ok"
-            logging.info("Connecting to the BSDB %s",self.connectDlg.getBrokers())
+            self.logger.info("Connecting to the BSDB %s",self.connectDlg.getBrokers())
             # Start the thread to connect
             connect_thread = threading.Thread(target=self.connectToIas, args=(brokers,))
             connect_thread.start()
@@ -90,19 +157,29 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         This function runs in a thread
         """
         try:
-            logging.info("Building the value consumer with client id=%s and group_id=%s", self.client_id, self.group_id)
+            self.logger.info("Building the value consumer with client id=%s and group_id=%s", self.client_id, self.group_id)
             self.value_consumer = KafkaValueConsumer(
                 self.tableModel,
                 bsdb_brokers,
                 IasKafkaHelper.topics['core'],
                 self.client_id,
                 self.group_id)
-            logging.info("Starting to get alarms from the BSDB...")
+            self.logger.info("Starting to get alarms from the BSDB...")
             self.value_consumer.start()
-            self.ui.action_Connect.setDisabled(True)
+            self.signal_update_connected_ui.emit(True)
         except Exception as e:
-            logging.error("Error connecting to the BSDB: %s",str(e))
-        self.ui.action_Connect.setEnabled(True)
+            self.logger.error("Error connecting to the BSDB: %s",str(e))
+            self.signal_update_connected_ui.emit(False)
+
+    def disconnectFromIas(self) -> None:
+        """
+        Disconnect from the IAS
+        """
+        if self.value_consumer is not None:
+            self.logger.info("Disconnecting from the BSDB...")
+            self.value_consumer.close()
+            self.value_consumer = None
+        self.signal_update_connected_ui.emit(False)
 
     def onTableSelectionChanged(self, selected, deselected):
         """
@@ -123,9 +200,15 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         """
         self.alarm_details.update(ias_value)
 
-def parse(app):
+def parse(app) -> dict[str, typing.Any]:
     """
     Parse the command line arguments
+
+    Returns:
+        A dictionary with the params set in the command line:
+            - 'ias_cdb': str if the parent folder of the IAS CDB if set in the command line
+             - 'bsdb_url': str  BSDB (Kafka) URL
+            - 'connect_to_bsdb': bool  True unless --donotconnect is set
     """
     parser = QCommandLineParser()
     parser.addHelpOption()
@@ -137,25 +220,62 @@ def parse(app):
             "ias_cdb"
         )
     parser.addOption(cdb_option)
+
+    bsdb_option = QCommandLineOption(
+            ["b", "bsdburl"],
+            "The URL of the BSDB (kafka) in format server:port, server:port...",
+            "bsdb_url"
+        )
+    parser.addOption(bsdb_option)
+
+    do_not_autoconnect = QCommandLineOption(
+        [ "n", "donotconnect"],
+        "Do not connect automatically to the BSDB at startup"
+    )
+    parser.addOption(do_not_autoconnect)
+
     parser.process(app)
 
+    ret = {}
     if parser.isSet(cdb_option):
-        return parser.value(cdb_option)
+        ret["ias_cdb"] = parser.value(cdb_option)
+    if parser.isSet(bsdb_option):
+        ret["bsdb_url"] = parser.value(bsdb_option)
+    if parser.isSet(do_not_autoconnect):
+        ret["connect_to_bsdb"] = False
     else:
-        return None
-
-
+        ret["connect_to_bsdb"] = True
+    
+    return ret
 
 if __name__ == "__main__":
-    logging.debug("IAS Alarm GUI started")
+    logger = Log.getLogger(__file__)
+    logger.debug("IAS Alarm GUI started")
     if not DefaultPaths.check_ias_folders():
-        logging.error("IAS folders not set!")
+        logger.error("IAS folders not set!")
         sys.exit(1)
     app = QApplication(sys.argv)
     app.setApplicationName("IasAlarmGui")
     app.setApplicationVersion("1.0")
-    cdb_parent_folder=parse(app)
-    logging.info("IAS CDB parent path is %s",cdb_parent_folder)
-    widget = MainWindow(ias_cdb=cdb_parent_folder)
+
+    cmd_line_args = parse(app)
+
+    cdb_parent_folder= cmd_line_args.get("ias_cdb", None)
+    logger.debug("IAS CDB parent path from command line is %s",cdb_parent_folder)
+    bsdb_url_from_cdmline = cmd_line_args.get("bsdb_url", None)
+    logger.debug("BSDB URL from command line is %s",bsdb_url_from_cdmline)
+
+    config = Config(ias_cdb_cmd_line=cdb_parent_folder)
+    bsdb = config.get_bsdb_url(
+        url_from_cmd_line=bsdb_url_from_cdmline,
+        default_bsdb=IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
+    
+    connect_to_bsdb = cmd_line_args.get("connect_to_bsdb")
+    
+    widget = MainWindow(bsdb_url=bsdb)
     widget.show()
+    if connect_to_bsdb and bsdb is not None:
+        # Start the thread to connect
+        connect_thread = threading.Thread(target=widget.connectToIas, args=(bsdb,))
+        connect_thread.start()
     sys.exit(app.exec())
