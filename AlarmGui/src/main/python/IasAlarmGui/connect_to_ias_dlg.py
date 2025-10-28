@@ -26,6 +26,8 @@ class ConnectToIasDlg(QDialog,Ui_ConnectToIas):
         self.okBtn = self.ui.buttonBox.button(QDialogButtonBox.Ok)
 
         self._bsdb_url = bsdb_url
+        self.ui.lineEdit.setText(bsdb_url if bsdb_url else "")
+        self.brokers: str|None = self._bsdb_url
 
         # The regular expression to check the correctness of the
         # connection string (i.e. the BSDB URL)
