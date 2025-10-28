@@ -33,7 +33,7 @@ class ConnectToIasDlg(QDialog,Ui_ConnectToIas):
 
         self.setupPanelWidgets(self._bsdb_url)
 
-    def setupPanelWidgets(self, brokers: str) -> None:
+    def setupPanelWidgets(self, brokers: str|None) -> None:
         """
         Setup the content of the text field and enable/disable the Ok button
         depending on the brokers string
@@ -109,8 +109,13 @@ class ConnectToIasDlg(QDialog,Ui_ConnectToIas):
                                                         ".",
                                                         QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
 
-
-        brokers = self.readUrlFromCdb(self.ias_cdb)
+        # Reading the ias.yaml|json from CDB could be slow: think to do it in a thread
+        try:
+            brokers = self.readUrlFromCdb(self.ias_cdb)
+        except ValueError as ve:
+            err_dlg = QErrorMessage(self)
+            err_dlg.showMessage(f"Cannot read the CDB from {self.ias_cdb}: {ve}")
+            return
         self.setupPanelWidgets(brokers)
 
     @Slot()
