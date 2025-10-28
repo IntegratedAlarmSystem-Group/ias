@@ -27,4 +27,4 @@ The core is composed of the following modules (in order of compilation):
 * `TransferFunctions`: a collection of transfer functions
 * `SinkClient`: clients that gets IASIOs out of the BSDB and process them like the email sender
 * `Tests/SimpleLoopTest`: a module with a test
-* `Extras`: supporting tools like the cdbChecker
+
