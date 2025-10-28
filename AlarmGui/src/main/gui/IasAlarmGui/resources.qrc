@@ -6,5 +6,7 @@
     <file alias="remove.png">icons/broom.png</file>
     <file alias="connect.png">icons/plug-connect.png</file>
     <file alias="disconnect.png">icons/plug-disconnect.png</file>
+    <file alias="heart-empty.png">icons/heart-empty.png</file>
+    <file alias="heart.png">icons/heart.png</file>
   </qresource>
 </RCC>
