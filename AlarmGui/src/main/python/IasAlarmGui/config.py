@@ -27,13 +27,13 @@ class Config:
         Constructor
         
         Params:
-            ias_cdb: The parent folder of the CDB read from the command line if availabel,
+            ias_cdb_cmd_line: The parent folder of the CDB read from the command line if available,
                      None otherwise
         """
         # The logger
         self.logger = Log.getLogger(__file__)
 
-        # The CDB folder read from the comamnd line of from environment variable
+        # The CDB folder read from the command line or from environment variable
         # It is None if no CDB folder can be retrieved from command line or the environment
         self._ias_cdb: str|None = ias_cdb_cmd_line if ias_cdb_cmd_line else Config.CDB_FROM_ENV
 

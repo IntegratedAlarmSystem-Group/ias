@@ -127,7 +127,7 @@ class KafkaValueConsumer(Thread):
         logger.info("Partition lost")
         self.subscribed = False
 
-    def onError(kafka_error):
+    def onError(self, kafka_error):
         logger.error("Kafka error: %s", kafka_error.str())
 
     def isSubscribed(self) -> bool:
