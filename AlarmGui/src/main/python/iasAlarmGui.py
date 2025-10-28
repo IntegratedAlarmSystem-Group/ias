@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-import sys, os, logging, string, random, threading
+import sys, logging, string, random, threading
 
 from PySide6.QtCore import Slot, QCommandLineOption, QCommandLineParser
 from PySide6.QtWidgets import QApplication, QMainWindow
@@ -18,15 +18,28 @@ from IasKafkaUtils.KafkaValueConsumer import KafkaValueConsumer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 
 from IasBasicTypes.IasValue import IasValue
-from IasAlarmGui.AlarmDetailsHelper import AlarmDetailsHelper
 from IASTools.DefaultPaths import DefaultPaths
+from IASLogging.logConf import Log
+
+from IasAlarmGui.AlarmDetailsHelper import AlarmDetailsHelper
+from IasAlarmGui.config import Config
 
 class MainWindow(QMainWindow, Ui_AlarmGui):
-    def __init__(self, ias_cdb, parent=None):
+    def __init__(self, bsdb_url: str|None, parent=None):
+        """
+        Constructor
+
+        Params:
+            bsdb_url: The URL of the kafka brokers in format server:port, server:
+                      or None if not available
+        """
         super().__init__(parent)
         self.ui = Ui_AlarmGui()
         self.ui.setupUi(self)
-        self.ias_cdb=ias_cdb
+        self.bsdb_url = bsdb_url
+
+        # The logger
+        self.logger = Log.getLogger(__name__)
 
         self.alarm_details = AlarmDetailsHelper(self.ui.alarmDetailsTE)
 
@@ -50,7 +63,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
 
     @Slot()
     def on_action_Connect_triggered(self):
-        self.connectDlg = ConnectToIasDlg(self.ias_cdb, self)
+        self.connectDlg = ConnectToIasDlg(self.bsdb_url, self)
         self.connectDlg.open()
         self.connectDlg.finished.connect(self.on_ConnectDialog_finished)
 
@@ -123,9 +136,13 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         """
         self.alarm_details.update(ias_value)
 
-def parse(app):
+def parse(app) -> dict[str, str]:
     """
     Parse the command line arguments
+
+    Returns:
+        A dictionary with the params set in the command line:
+            - 'ias_cdb': if the parent folder of the IAS CDB if set in the command line
     """
     parser = QCommandLineParser()
     parser.addHelpOption()
@@ -137,25 +154,44 @@ def parse(app):
             "ias_cdb"
         )
     parser.addOption(cdb_option)
+
+    bsdb_option = QCommandLineOption(
+            ["b", "bsdburl"],
+            "The URL of the BSDB (kafka) in format server:port, server:port...",
+            "bsdb_url"
+        )
+    parser.addOption(bsdb_option)
+
     parser.process(app)
 
+    ret = {}
     if parser.isSet(cdb_option):
-        return parser.value(cdb_option)
-    else:
-        return None
-
-
+        ret["ias_cdb"] = parser.value(cdb_option)
+    if parser.isSet(bsdb_option):
+        ret["bsdb_url"] = parser.value(bsdb_option)
+    
+    return ret
 
 if __name__ == "__main__":
-    logging.debug("IAS Alarm GUI started")
+    logger = Log.getLogger("iasAlarmGui")
+    logger.debug("IAS Alarm GUI started")
     if not DefaultPaths.check_ias_folders():
-        logging.error("IAS folders not set!")
+        logger.error("IAS folders not set!")
         sys.exit(1)
     app = QApplication(sys.argv)
     app.setApplicationName("IasAlarmGui")
     app.setApplicationVersion("1.0")
-    cdb_parent_folder=parse(app)
-    logging.info("IAS CDB parent path is %s",cdb_parent_folder)
-    widget = MainWindow(ias_cdb=cdb_parent_folder)
+
+    cmd_line_args = parse(app)
+
+    cdb_parent_folder= cmd_line_args.get("ias_cdb", None)
+    logger.debug("IAS CDB parent path from command line is %s",cdb_parent_folder)
+    bsdb_url_from_cdmline = cmd_line_args.get("bsdb_url", None)
+    logger.debug("BSDB URL from command line is %s",bsdb_url_from_cdmline)
+
+    config = Config(ias_cdb_cmd_line=cdb_parent_folder)
+    bsdb = config.get_bsdb_url(url_from_cmd_line=bsdb_url_from_cdmline)
+    
+    widget = MainWindow(bsdb_url=bsdb)
     widget.show()
     sys.exit(app.exec())

@@ -12,20 +12,26 @@ from IasAlarmGui.ui_connect_dialog import Ui_ConnectToIas
 from IasCdb.CdbReader import CdbReader
 
 class ConnectToIasDlg(QDialog,Ui_ConnectToIas):
-    def __init__(self, ias_cdb,parent=None):
+    def __init__(self, bsdb_url: str|None,parent=None):
+        """
+        Constructor
+
+        Params:
+            bsdb_url: The URL of the kafka brokers in format server:port, server:
+                      or None if not available
+        """
         super().__init__(parent)
         self.ui = Ui_ConnectToIas()
         self.ui.setupUi(self)
         self.okBtn = self.ui.buttonBox.button(QDialogButtonBox.Ok)
 
+        self._bsdb_url = bsdb_url
+
         # The regular expression to check the correctness of the
         # connection string (i.e. the BSDB URL)
         self.pattern = r'^[a-zA-Z0-9.-]+:\d+$'
 
-        self.ias_cdb=ias_cdb
-        if self.ias_cdb is not None:
-            url = self.readUrlFromCdb()
-            self.setupPanelWidgets(url)
+        self.setupPanelWidgets(self._bsdb_url)
 
     def setupPanelWidgets(self, brokers: str) -> None:
         """
@@ -44,34 +50,9 @@ class ConnectToIasDlg(QDialog,Ui_ConnectToIas):
         else:
             self.okBtn.setEnabled(False)
 
-    def readUrlFromCdb(self) -> str|None:
-        """
-        Read and return the URL from the CDB
-
-        Returns:
-            The URL of the kafka brokers read from the CDB
-            or None if the path to the cdb is not available
-        """
-        if not self.ias_cdb:
-            return None
-        try:
-            reader = CdbReader(self.ias_cdb)
-        except ValueError as e:
-            self.ui.lineEdit.clear()
-            self.okBtn.setEnabled(False)
-            logging.error(f"Error reading CDB: {e}")
-            error = QErrorMessage(self)
-            error.setWindowTitle("Error reading IAS CDB")
-            error.raise_()
-            error.showMessage(str(e))
-
-            return None
-        ias = reader.get_ias()
-        return ias.bsdb_url
-
     def checkServersString(self, txt: str) -> bool:
         """
-        Check if the txt is in the form "server:ip, server:ip..."
+        Check if the txt is in the form "server:port, server:port..."
         Args:
             txt: the string containing the URL of the kafka brokers
         Returns:
