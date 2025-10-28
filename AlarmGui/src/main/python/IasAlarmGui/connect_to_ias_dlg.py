@@ -70,11 +70,29 @@ class ConnectToIasDlg(QDialog,Ui_ConnectToIas):
     def getBrokers(self) -> str:
         """
         Return the kafka brokers
+
+        Params:
+            ias_cdb The parent folder of the CDB
         Returns:
             str: the kafka brokers if the user pressed the Ok button
                  None otherwise
         """
         return self.brokers
+    
+    def readUrlFromCdb(self, ias_cdb) -> str|None:
+        """
+        Read and return the URL from the CDB
+
+        Returns:
+            The URL of the kafka brokers read from the CDB
+        Raises:
+            ValueError: if the CDB cannot be read
+        """
+        if not ias_cdb:
+            raise ValueError("IAS CDB path is not available")
+        reader = CdbReader(ias_cdb)
+        ias = reader.get_ias()
+        return ias.bsdb_url
 
     @Slot()
     def onOkBtnClicked(self):
@@ -91,7 +109,8 @@ class ConnectToIasDlg(QDialog,Ui_ConnectToIas):
                                                         ".",
                                                         QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks)
 
-        brokers = self.readUrlFromCdb()
+
+        brokers = self.readUrlFromCdb(self.ias_cdb)
         self.setupPanelWidgets(brokers)
 
     @Slot()
