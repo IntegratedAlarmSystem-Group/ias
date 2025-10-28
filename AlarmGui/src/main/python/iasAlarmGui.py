@@ -30,7 +30,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         Constructor
 
         Params:
-            bsdb_url: The URL of the kafka brokers in format server:port, server:
+            bsdb_url: The URL of the kafka brokers in format server:port, server:port...
                       or None if not available
         """
         super().__init__(parent)
@@ -62,6 +62,13 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         self.connectDlg = None
 
     @Slot()
+    def on_action_Disconnect_triggered(self):
+        print("Disconnecting from the BSDB...")
+        # Start the thread to connect
+        disconnect_thread = threading.Thread(target=self.disconnectFromIas)
+        disconnect_thread.start()
+
+    @Slot()
     def on_action_Connect_triggered(self):
         self.connectDlg = ConnectToIasDlg(self.bsdb_url, self)
         self.connectDlg.open()
@@ -78,6 +85,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         if dlg_ret_code==1:
             # The user pressed the Ok button ==> Connect!
             self.ui.action_Connect.setEnabled(False)
+            self.ui.action_Disconnect.setEnabled(True)
             brokers = self.connectDlg.getBrokers()
             assert brokers is not None, "The dialog should not return an empty broker user presses Ok"
             logging.info("Connecting to the BSDB %s",self.connectDlg.getBrokers())
@@ -113,9 +121,22 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
             logging.info("Starting to get alarms from the BSDB...")
             self.value_consumer.start()
             self.ui.action_Connect.setDisabled(True)
+            self.ui.action_Disconnect.setEnabled(True)
         except Exception as e:
             logging.error("Error connecting to the BSDB: %s",str(e))
+            self.ui.action_Connect.setEnabled(True)
+            self.ui.action_Disconnect.setEnabled(False)
+
+    def disconnectFromIas(self) -> None:
+        """
+        Disconnect from the IAS
+        """
+        if self.value_consumer is not None:
+            logging.info("Disconnecting from the BSDB...")
+            self.value_consumer.close()
+            self.value_consumer = None
         self.ui.action_Connect.setEnabled(True)
+        self.ui.action_Disconnect.setEnabled(False)
 
     def onTableSelectionChanged(self, selected, deselected):
         """
@@ -173,7 +194,7 @@ def parse(app) -> dict[str, str]:
     return ret
 
 if __name__ == "__main__":
-    logger = Log.getLogger("iasAlarmGui")
+    logger = Log.getLogger(__file__)
     logger.debug("IAS Alarm GUI started")
     if not DefaultPaths.check_ias_folders():
         logger.error("IAS folders not set!")
@@ -190,7 +211,9 @@ if __name__ == "__main__":
     logger.debug("BSDB URL from command line is %s",bsdb_url_from_cdmline)
 
     config = Config(ias_cdb_cmd_line=cdb_parent_folder)
-    bsdb = config.get_bsdb_url(url_from_cmd_line=bsdb_url_from_cdmline)
+    bsdb = config.get_bsdb_url(
+        url_from_cmd_line=bsdb_url_from_cdmline,
+        default_bsdb=IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
     
     widget = MainWindow(bsdb_url=bsdb)
     widget.show()

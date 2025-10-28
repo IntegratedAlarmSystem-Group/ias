@@ -5,5 +5,6 @@
     <file alias="play.png">icons/control.png</file>
     <file alias="remove.png">icons/broom.png</file>
     <file alias="connect.png">icons/plug-connect.png</file>
+    <file alias="disconnect.png">icons/plug-disconnect.png</file>
   </qresource>
 </RCC>
