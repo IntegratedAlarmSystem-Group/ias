@@ -91,14 +91,7 @@ if __name__ == '__main__':
         required=True)
 
 
-    parser.add_argument(
-        '-i',
-        '--cmdId',
-        help='The identifier of the command',
-        action='store',
-        default=1,
-        type=int,
-        required=False)
+
     
     parser.add_argument(
         '-lso',
