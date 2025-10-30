@@ -24,7 +24,7 @@ public class CommandMessage {
 
     /**
      * The identifier of the receiver  (destination) of the command
-     * or the {@link #BROADCAST_ADDRESS} is the command is for all the IAS processes
+     * or the {@link #BROADCAST_ADDRESS} if the command is for all the IAS processes
      */
     private String destId;
 
