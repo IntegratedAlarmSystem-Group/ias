@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+#! /usr/bin/env -S python3 -u
 '''
 Dumps in the stdout the logs published in a BSDB topic
 
