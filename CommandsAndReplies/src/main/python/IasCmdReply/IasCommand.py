@@ -55,7 +55,7 @@ class IasCommand(object):
             cmd The command to execute (a string or a IasCommandType)
             id The unique identifier of the command (int or string encoding an int)
             tStamp The timestamp when the command has been published (in ISO 8601 format)
-            params The parameters of the command, if any (Nore or list of strings)
+            params The parameters of the command, if any (None or list of strings)
             props Additional properties, if any (None or dictionary of strings)
         '''
         if not dest:

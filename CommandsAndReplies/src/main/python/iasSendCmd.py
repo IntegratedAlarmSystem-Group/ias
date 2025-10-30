@@ -14,7 +14,7 @@ LIMITATIONS:
   - the command does not support properties
   - the default identifier of the kafka broker is composed by the command, the name of the user and the host
     so it does not ensure 100% to be unique as requested by kafka: a parameter in the command line
-    allows to pass a user defined
+    allows to pass a user defined identifier
 '''
 
 import argparse
@@ -132,6 +132,7 @@ if __name__ == '__main__':
 
     senderFullRunningId = "(%s:CLIENT)" % (args.sender)
     commandType = IasCommandType.fromString(args.command)
+
     if not args.params:
         params = None
     else:
@@ -157,7 +158,7 @@ if __name__ == '__main__':
     cmd_sender.send_sync(
         args.dest,
         IasCommandType.fromString(args.command),
-        str(args.params))
+        args.params)
 
     logger.info("Command sent.")
 
