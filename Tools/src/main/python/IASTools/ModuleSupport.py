@@ -7,8 +7,6 @@ from os.path import exists, join
 from os import makedirs
 from shutil import rmtree, copyfile
 from . import FileSupport
-import logging
-
 
 class ModuleSupport(object):
     """
@@ -26,7 +24,9 @@ class ModuleSupport(object):
         @param The root folder of the module
         """
         if not rootOfModule:
-            logging.error("The root of the module can't be None nor empty")
+            from IASLogging.logConf import Log
+            _logger = Log.getLogger(__file__)
+            _logger.error("The root of the module can't be None nor empty")
             raise ValueError("The root of the module can't be None nor empty")
         fileSupport = FileSupport.FileSupport("LPGPv3License.txt","config")
         licenseFile = fileSupport.findFile()
@@ -45,7 +45,9 @@ class ModuleSupport(object):
         @see: self.writeLicenseFile
         """
         if not name:
-            logging.error("The name of the module can't be None nor empty")
+            from IASLogging.logConf import Log
+            _logger = Log.getLogger(__file__)
+            _logger.error("The name of the module can't be None nor empty")
             raise ValueError("The name of the module can't be None nor empty")
         # Read the list of folders to create from the template
         fileSupport = FileSupport.FileSupport("FoldersOfAModule.template","config")
@@ -54,7 +56,9 @@ class ModuleSupport(object):
             folders = f.readlines()
         # Check if the module 
         if not exists(name):
-            logging.info("Creating module %s",name)
+            from IASLogging.logConf import Log
+            _logger = Log.getLogger(__file__)
+            _logger.info("Creating module %s",name)
             makedirs(name)
             ModuleSupport.writeLicenseFile(name)
             for folder in folders:
@@ -66,7 +70,9 @@ class ModuleSupport(object):
             
             return 0
         else:
-            logging.error("%s already exists!!!",name)
+            from IASLogging.logConf import Log
+            _logger = Log.getLogger(__file__)
+            _logger.error("%s already exists!!!",name)
             raise OSError(name+"already exists!!!")
 
     @staticmethod
@@ -76,9 +82,11 @@ class ModuleSupport(object):
         
         @param name: The full path name of the module to remove
         '''
+        from IASLogging.logConf import Log
+        _logger = Log.getLogger(__file__)
         if not name:
-            logging.error("The name of the module can't be None nor empty")
+            _logger.error("The name of the module can't be None nor empty")
             raise ValueError("The name of the module can't be None nor empty")
-        logging.info("Removing module %s",name)
+        _logger.info("Removing module %s",name)
         if exists(name):
             rmtree(name) 
