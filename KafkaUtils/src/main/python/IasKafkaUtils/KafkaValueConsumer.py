@@ -15,8 +15,6 @@ from IasBasicTypes.IasValue import IasValue
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 
-logger = Log.getLogger(__file__)
-
 class IasValueListener(object):
     """
     The class to get IasValue
@@ -80,6 +78,8 @@ class KafkaValueConsumer(Thread):
         @param listener the listener to send IasValues to
         '''
         Thread.__init__(self)
+        self._logger = Log.getLogger(__file__)
+
         if listener is None:
             raise ValueError("The listener can't be None")
 
@@ -103,7 +103,7 @@ class KafkaValueConsumer(Thread):
                 'auto.offset.reset': 'latest',
                 'error_cb': self.onError}
 
-        self.consumer = Consumer(conf, logger=logger)
+        self.consumer = Consumer(conf, logger=self._logger)
 
         Thread.daemon = True
 
@@ -117,18 +117,18 @@ class KafkaValueConsumer(Thread):
         # subscribed is set by onAssign and unlock the polling thread
         self.subscribed = False
 
-        logger.info('Kafka consumer %s will connect to %s and topic %s', clientid, kafkabrokers, topic)
+        self._logger.info('Kafka consumer %s will connect to %s and topic %s', clientid, kafkabrokers, topic)
 
     def onAssign(self, consumer, partition):
-        logger.info("Kafka consumer assigned to partition %s", partition)
+        self._logger.info("Kafka consumer assigned to partition %s", partition)
         self.subscribed = True
 
     def onLost(self):
-        logger.info("Partition lost")
+        self._logger.info("Partition lost")
         self.subscribed = False
 
     def onError(self, kafka_error):
-        logger.error("Kafka error: %s", kafka_error.str())
+        self._logger.error("Kafka error: %s", kafka_error.str())
 
     def isSubscribed(self) -> bool:
         """
@@ -139,16 +139,16 @@ class KafkaValueConsumer(Thread):
         return self.subscribed
 
     def run(self):
-        logger.info('Thread to poll for Kafka logs started')
+        self._logger.info('Thread to poll for Kafka logs started')
         try:
 
             # For some reason the python client does not create the topic and this
             # function hangs forever waiting to subscribe
             # So we force a topic reation before subscribing
             if IasKafkaHelper.createTopic(self.topic, self.kafkaBrokers):
-                logger.debug("Topic %s created", self.topic)
+                self._logger.debug("Topic %s created", self.topic)
             else:
-                logger.debug("Topic %s exists", self.topic)
+                self._logger.debug("Topic %s exists", self.topic)
 
             self.consumer.subscribe([self.topic], on_assign=self.onAssign)
 
@@ -159,16 +159,16 @@ class KafkaValueConsumer(Thread):
                 with self.watchDogLock:
                     self.watchDog = True
                 if msg is None or not self.subscribed:
-                    logger.debug(f"Polling thread is subscribed { self.subscribed}")
+                    self._logger.debug(f"Polling thread is subscribed { self.subscribed}")
                     continue
 
                 if msg.error() is not None:
                     if msg.error().code() == KafkaError._PARTITION_EOF:
                         # End of partition event
-                        logger.error('topic %s [partition %d] reached end at offset %d', msg.topic(), msg.partition(),
+                        self._logger.error('topic %s [partition %d] reached end at offset %d', msg.topic(), msg.partition(),
                                      msg.offset())
                     else:
-                        logger.error('Error polling event %s', msg.error().str())
+                        self._logger.error('Error polling event %s', msg.error().str())
                         raise Exception(msg.error().str())
                 else:
                     json = msg.value().decode("utf-8")
@@ -182,10 +182,10 @@ class KafkaValueConsumer(Thread):
             # Close down consumer to commit final offsets.
             self.consumer.close()
             self.isGettingEvents = False
-        logger.info('Thread terminated')
+        self._logger.info('Thread terminated')
 
     def start(self):
-        logger.info('Starting thread to poll for IasValues')
+        self._logger.info('Starting thread to poll for IasValues')
         self.terminateThread = False
         Thread.start(self)
 
@@ -193,9 +193,11 @@ class KafkaValueConsumer(Thread):
         '''
         Shuts down the thread
         '''
+        self._logger.debug("Closing...")
         self.terminateThread = True
         self.join(5)  # Ensure the thread exited before closing the consumer
         self.consumer.close()
+        self._logger.info("Closed")
 
     def getWatchdog(self):
         """
