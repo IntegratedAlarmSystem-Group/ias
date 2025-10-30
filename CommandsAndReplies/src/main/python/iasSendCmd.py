@@ -14,14 +14,15 @@ LIMITATIONS:
   - the command does not support properties
   - the default identifier of the kafka broker is composed by the command, the name of the user and the host
     so it does not ensure 100% to be unique as requested by kafka: a parameter in the command line
-    allows to pass a user defined
+    allows to pass a user defined identifier
 '''
 
 import argparse
 import getpass
 import os
 import socket
-
+import secrets
+import string
 import sys
 
 from IASLogging.logConf import Log
@@ -43,9 +44,13 @@ if __name__ == '__main__':
 
     log_levels = [ 'DEBUG', 'INFO' , 'WARNING', 'ERROR', 'CRITICAL']
 
+    # Generate a random possibly unique ID
+    length = 8  # The length can be changed but it seems reasonable for this tool
+    alphabet = string.ascii_letters + string.digits
+    secure_string = ''.join(secrets.choice(alphabet) for _ in range(length))
     temp = sys.argv[0].split(os.path.sep)
     progName = temp[len(temp)-1]
-    defaultId = "%s-by-%s-at-%s" % (progName,userName,hostName)
+    defaultId = f"{progName}-{secure_string}-by-{userName}-at-{hostName}"
 
     parser = argparse.ArgumentParser(description='Send commands though the command topic', prog=progName)
     parser.add_argument(
@@ -91,14 +96,7 @@ if __name__ == '__main__':
         required=True)
 
 
-    parser.add_argument(
-        '-i',
-        '--cmdId',
-        help='The identifier of the command',
-        action='store',
-        default=1,
-        type=int,
-        required=False)
+
     
     parser.add_argument(
         '-lso',
@@ -132,6 +130,7 @@ if __name__ == '__main__':
 
     senderFullRunningId = "(%s:CLIENT)" % (args.sender)
     commandType = IasCommandType.fromString(args.command)
+
     if not args.params:
         params = None
     else:
@@ -157,7 +156,7 @@ if __name__ == '__main__':
     cmd_sender.send_sync(
         args.dest,
         IasCommandType.fromString(args.command),
-        str(args.params))
+        args.params)
 
     logger.info("Command sent.")
 
