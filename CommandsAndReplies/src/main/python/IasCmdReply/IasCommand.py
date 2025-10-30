@@ -21,28 +21,6 @@ class IasCommand(object):
     # The address to send a message to all the IAS tools */
     BROADCAST_ADDRESS = "*"
 
-    # The full running ID of the sender of the command
-    senderFullRunningId = None
-
-    # The identifier of the receiver  (destination) of the command
-    # it can be BROADCAST if the command is aimed to ALL the processes
-    destId = None
-
-    # The command to execute
-    command: IasCommandType = None
-
-    # The unique identifier (in the context of the sender) of the command
-    id: int = None
-
-    # The parameters of the command, if any
-    params = None
-
-    # The timestamp when the command has been published (in ISO 8601 format)
-    timestamp = None
-
-    # Additional properties, if any
-    props = None
-
     def __init__(self, dest: str, sender: str, cmd, id: int, tStamp: str, params=None, props=None):
         '''
         Constructor
@@ -55,19 +33,23 @@ class IasCommand(object):
             cmd The command to execute (a string or a IasCommandType)
             id The unique identifier of the command (int or string encoding an int)
             tStamp The timestamp when the command has been published (in ISO 8601 format)
-            params The parameters of the command, if any (Nore or list of strings)
+            params The parameters of the command, if any (None or list of strings)
             props Additional properties, if any (None or dictionary of strings)
         '''
         if not dest:
             raise ValueError("Invalid destination of command")
+        # The identifier of the receiver  (destination) of the command
+        # it can be BROADCAST if the command is aimed to ALL the processes
         self.destId = dest
 
         if not sender:
             raise ValueError("Invalid full running ID of the sender of the command")
+        # The full running ID of the sender of the command
         self.senderFullRunningId = sender
 
         if not cmd:
             raise ValueError("Invalid command")
+        # The command to execute
         if isinstance(cmd,IasCommandType):
             self.command = cmd
         else:
@@ -75,13 +57,18 @@ class IasCommand(object):
 
         if not id:
             raise ValueError("Invalid id of the command")
+        # The unique identifier (in the context of the sender) of the command
         self.id = str(id)
 
         if not tStamp:
             raise ValueError("Invalid timestamp")
+        # The timestamp when the command has been published (in ISO 8601 format)
         self.timestamp = tStamp
 
+        # The parameters of the command, if any
         self.params = params
+
+        # Additional properties, if any
         self.props = props
 
     def toJSonString(self):
