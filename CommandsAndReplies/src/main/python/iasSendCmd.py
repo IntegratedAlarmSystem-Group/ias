@@ -45,7 +45,7 @@ if __name__ == '__main__':
     log_levels = [ 'DEBUG', 'INFO' , 'WARNING', 'ERROR', 'CRITICAL']
 
     # Generate a random possibly unique ID
-    length = 8  # The length can be changed but 6 seems reasonable for this tool
+    length = 8  # The length can be changed but it seems reasonable for this tool
     alphabet = string.ascii_letters + string.digits
     secure_string = ''.join(secrets.choice(alphabet) for _ in range(length))
     temp = sys.argv[0].split(os.path.sep)
