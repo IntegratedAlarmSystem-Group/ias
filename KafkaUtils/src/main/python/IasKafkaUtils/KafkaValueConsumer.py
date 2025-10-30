@@ -48,23 +48,7 @@ class KafkaValueConsumer(Thread):
     at every iteration of the thread (i.e. when data arrives or the timeout elapses)
     '''
 
-    # The listener to send IasValues to
-    listener = None
-
-    # The kafka consumer
-    consumer = None
-
-    # The topic
-    topic = None
-
-    # Signal the thread to terminate
-    terminateThread = False
-
-    # Signal if the thread is getting event from the topic 
-    # This is not teh same of starting the thread because
-    ## if the topic does not exist, the thread wait until
-    # it is created but is not yet getting events
-    isGettingEvents = False
+    
 
     def __init__(self,
                  listener,
@@ -85,10 +69,13 @@ class KafkaValueConsumer(Thread):
 
         if not isinstance(listener, IasValueListener):
             raise ValueError("The listener must be a subclass of IasValueListener")
+        
+        # The listener to send IasValues to
         self.listener = listener
 
         if topic is None:
             raise ValueError("The topic can't be None")
+        # The kafka topic
         self.topic: str = topic
 
         self.kafkaBrokers: str = kafkabrokers
@@ -103,7 +90,17 @@ class KafkaValueConsumer(Thread):
                 'auto.offset.reset': 'latest',
                 'error_cb': self.onError}
 
+        # The kafka consumer
         self.consumer = Consumer(conf, logger=self._logger)
+
+        # Signal if the thread is getting event from the topic 
+        # This is not teh same of starting the thread because
+        ## if the topic does not exist, the thread wait until
+        # it is created but is not yet getting events
+        self.isGettingEvents = False
+
+          # Signal the thread to terminate
+        self.terminateThread = False
 
         Thread.daemon = True
 
