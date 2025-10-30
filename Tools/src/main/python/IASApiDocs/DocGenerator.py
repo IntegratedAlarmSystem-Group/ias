@@ -8,7 +8,6 @@ Created on Jul 7, 2017
 
 import sys
 import os
-import logging 
 
 class DocGenerator(object):
     '''
@@ -36,22 +35,24 @@ class DocGenerator(object):
         @param src: the folder with java sources to check
         @param dst: destination folder to check
         """
+        from IASLogging.logConf import Log
+        _logger = Log.getLogger(__file__)
         # Check if src folder exists
-        if not os.path.exists(src): 
-            logging.error("The source folder %s does not exist",src)
+        if not os.path.exists(src):
+            _logger.error("The source folder %s does not exist",src)
             raise OSError("The source folder", src,"does not exist")
         elif not os.path.isdir(src):
-            logging.error("The source folder %s is  not a directory",src)
+            _logger.error("The source folder %s is  not a directory",src)
             raise OSError("The source folder", src,"is not a directory")
             
         # Check if the destination folder exists
         if not os.path.exists(dst):
             os.mkdir(dst)
         if not os.path.exists(dst):
-            logging.error("The destination folder %s does not exist",dst)
+            _logger.error("The destination folder %s does not exist",dst)
             raise OSError("The destination folder", dst,"does not exist")
         elif not os.path.isdir(dst):
-            logging.error("The destination folder %s is not a directory",dst)
+            _logger.error("The destination folder %s is not a directory",dst)
             raise OSError("The destination folder", dst,"is not a directory")
         
     def containsSources(self,folder,fileExtension):

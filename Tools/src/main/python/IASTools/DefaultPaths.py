@@ -1,5 +1,4 @@
 import os
-import logging
 
 class DefaultPaths:
     """
@@ -79,7 +78,9 @@ class DefaultPaths:
         :return: The IAS root folder path from the environment or the default
         """
         if not cls._ias_root_env_var in os.environ:
-            logging.warning("The IAS_ROOT environment variable is not set. Using default: %s", cls._default_ias_root_folder)
+            from IASLogging.logConf import Log
+            _logger = Log.getLogger(__file__)
+            _logger.warning("The IAS_ROOT environment variable is not set. Using default: %s", cls._default_ias_root_folder)
         return os.getenv(cls._ias_root_env_var, cls._default_ias_root_folder)
 
     @classmethod
@@ -90,7 +91,9 @@ class DefaultPaths:
         :return: The IAS logs folder path from the environment or the default
         """
         if not cls._ias_logs_env_var in os.environ:
-            logging.warning("The IAS_LOGS_FOLDER environment variable is not set. Using default: %s", cls._default_ias_logs_folder)
+            from IASLogging.logConf import Log
+            _logger = Log.getLogger(__file__)
+            _logger.warning("The IAS_LOGS_FOLDER environment variable is not set. Using default: %s", cls._default_ias_logs_folder)
         return os.getenv(cls._ias_logs_env_var, cls._default_ias_logs_folder)
     
     @classmethod
@@ -101,7 +104,9 @@ class DefaultPaths:
         :return: The IAS temporary folder path from the environment or the default
         """
         if not cls._ias_tmp_env_var in os.environ:
-            logging.warning("The IAS_TMP_FOLDER environment variable is not set. Using default: %s", cls._default_ias_tmp_folder)
+            from IASLogging.logConf import Log
+            _logger = Log.getLogger(__file__)
+            _logger.warning("The IAS_TMP_FOLDER environment variable is not set. Using default: %s", cls._default_ias_tmp_folder)
         return os.getenv(cls._ias_tmp_env_var, cls._default_ias_tmp_folder)
 
     @classmethod
@@ -112,7 +117,9 @@ class DefaultPaths:
         :return: The IAS configuration folder path from the environment or the default
         """
         if not cls._ias_config_env_var in os.environ:
-            logging.warning("The IAS_CONFIG_FOLDER environment variable is not set. Using default: %s", cls._default_ias_config_folder)
+            from IASLogging.logConf import Log
+            _logger = Log.getLogger(__file__)
+            _logger.warning("The IAS_CONFIG_FOLDER environment variable is not set. Using default: %s", cls._default_ias_config_folder)
         return os.getenv(cls._ias_config_env_var, cls._default_ias_config_folder)
 
     @classmethod
@@ -123,7 +130,9 @@ class DefaultPaths:
         :return: The Kafka home folder path from the environment or the default
         """
         if not cls._kafka_home_env_var in os.environ:
-            logging.warning("The KAFKA_HOME environment variable is not set. Using default: %s", cls._default_kafka_home_folder)
+            from IASLogging.logConf import Log
+            _logger = Log.getLogger(__file__)
+            _logger.warning("The KAFKA_HOME environment variable is not set. Using default: %s", cls._default_kafka_home_folder)
         return os.getenv(cls._kafka_home_env_var, cls._default_kafka_home_folder)
 
     @classmethod
@@ -134,7 +143,9 @@ class DefaultPaths:
         :param folder_path: The path of the folder to check/create.
         :raises OSError: If the folder cannot be created or is not a directory.
         """
-        logging.debug("Checking and creating folder: %s", folder_path)
+        from IASLogging.logConf import Log
+        _logger = Log.getLogger(__file__)
+        _logger.debug("Checking and creating folder: %s", folder_path)
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
         else:
@@ -153,16 +164,18 @@ class DefaultPaths:
 
         :return: True if all folders are checked and created successfully.
         """
+        from IASLogging.logConf import Log
+        _logger = Log.getLogger(__file__)
         try:
             if not os.path.exists(cls.get_ias_root_folder()):
                 raise OSError(f"IAS root folder {cls.get_ias_root_folder()} does not exist")
-            logging.debug("IAS root folder exists")
+            _logger.debug("IAS root folder exists")
             cls.check_and_create_folder(cls.get_ias_logs_folder())
-            logging.debug("IAS logs folder ready")
+            _logger.debug("IAS logs folder ready")
             cls.check_and_create_folder(cls.get_ias_tmp_folder())
-            logging.debug("IAS tmp folder ready")
+            _logger.debug("IAS tmp folder ready")
             return True
         except Exception as e:
-            logging.error("Error checking IAS folders: %s", e)
+            _logger.error("Error checking IAS folders: %s", e)
             return False
 

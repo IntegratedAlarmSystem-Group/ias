@@ -3,8 +3,6 @@ Created on Sep 22, 2016
 
 @author: acaproni
 '''
-
-import logging
 from os import environ, walk, path, listdir
 
 from . import FileSupport
@@ -19,8 +17,6 @@ class CommonDefs(object):
     # Classpath separator for jars
     __classPathSeparator = ":"
 
-    # The logger
-    logger = logging.getLogger("CommonDefs")
 
     @classmethod
     def buildClasspath(cls):
@@ -31,7 +27,9 @@ class CommonDefs(object):
 
         @return: A string with the jars in the classpath
         """
-
+        from IASLogging.logConf import Log
+        _logger = Log.getLogger(__file__)
+        
         # jars list is used to avoid duplications of jars in the classpath
         # It contains all the jars without the path
         # i.e. lc.jar but not ../lib/lc.jar
@@ -47,15 +45,15 @@ class CommonDefs(object):
            for folder in paths:
                if path.exists(folder) and path.isdir(folder):
                    externalJarsPaths.append(folder)
-                   CommonDefs.logger.debug("Folder %s added to the external folders of jars",folder)
+                   _logger.debug("Folder %s added to the external folders of jars",folder)
                else:
-                    CommonDefs.logger.warn("Folder of jars %s discarded", folder)
+                   _logger.warn("Folder of jars %s discarded", folder)
         except:
-            CommonDefs.logger.debug("No external jars defined")
+            _logger.debug("No external jars defined")
 
         # Adds the jar files in the external folders
         if externalJarsPaths:
-            CommonDefs.logger.info("Found %d folders of external jars", len(externalJarsPaths))
+            _logger.info("Found %d folders of external jars", len(externalJarsPaths))
             for folder in externalJarsPaths:
                 for root, subFolders, files in walk(folder):
                     for jarFileName in files:
@@ -66,7 +64,7 @@ class CommonDefs(object):
                             classpath=classpath+filePath
                             jars.append(jarFileName)
         else:
-            CommonDefs.logger.info("No folders of external JARs defined (i.e. no IAS-EXTERNAL-JARS env. variable set)")
+            _logger.info("No folders of external JARs defined (i.e. no IAS-EXTERNAL-JARS env. variable set)")
 
         # Add the jars from the current module and IAS_ROOT lib folders
         for folder in FileSupport.FileSupport.getIASFolders('lib'):
@@ -88,6 +86,6 @@ class CommonDefs(object):
         resFolder = "src/test/resources"
         if path.isdir(resFolder) and listdir(resFolder):
             classpath = classpath+cls.__classPathSeparator+resFolder
-            print("Directory is not empty")
+            _logger.info("Directory is not empty")
 
         return classpath
