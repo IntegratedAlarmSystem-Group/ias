@@ -1,5 +1,5 @@
 # This Python file uses the following encoding: utf-8
-import re, logging
+import re
 
 from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QDialog

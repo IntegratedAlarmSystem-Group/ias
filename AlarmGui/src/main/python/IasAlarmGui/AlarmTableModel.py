@@ -1,12 +1,13 @@
 # This Python file uses the following encoding: utf-8
 
-import logging, threading, time
+import threading, time
 
 from PySide6.QtCore import QAbstractTableModel
 from PySide6.QtCore import Qt, QModelIndex
 from PySide6.QtWidgets import QTableView
 from PySide6.QtGui import QColor
 
+from IASLogging.logConf import Log
 from IasKafkaUtils.KafkaValueConsumer import IasValueListener
 from IasBasicTypes.IasValue import IasValue
 from IasBasicTypes.IasType import IASType
@@ -28,6 +29,8 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
         Constructor
         """
         super().__init__()
+
+        self._logger = Log.getLogger(__file__)
 
         # The table view widget that display the alarms
         self.view = view
@@ -203,7 +206,7 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
 
         New alarms are inserted in the head so they move on top of the table
         """
-        logging.debug("Table updater thread started")
+        self._logger.debug("Table updater thread started")
         while True:
             time.sleep(self.timeout)
             with self.lock:
@@ -229,7 +232,7 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
                             self.setData(self.createIndex(pos, 1),alarm)
                             self.setData(self.createIndex(pos, 2),alarm)
                 self.received_alarms.clear()
-        logging.debug("Table updater thread terminated")
+        self._logger.debug("Table updater thread terminated")
 
     def pause(self, enable: bool) -> None:
         """
