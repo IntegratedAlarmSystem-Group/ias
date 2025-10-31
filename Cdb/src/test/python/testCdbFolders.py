@@ -32,13 +32,13 @@ class TestCdbFolders(unittest.TestCase):
 
     def testStaticGetFolderNoCreation(self):
         folder = CdbFolders(Folders.SUPERVISOR, self.temp_dir).get_folder(False)
-        self.assertEqual("src/test/PyTestCDB/CDB/Supervisor", folder)
+        self.assertEqual("src/test/PyTestCDB/CDB/SUPERVISOR", folder)
         # Ensure the folder has not been created
         self.assertFalse(os.path.isdir(folder))
 
     def testStaticGetAndCreate(self):
         folder = CdbFolders(Folders.SUPERVISOR, self.temp_dir).get_folder(True)
-        self.assertEqual("src/test/PyTestCDB/CDB/Supervisor", folder)
+        self.assertEqual("src/test/PyTestCDB/CDB/SUPERVISOR", folder)
         # Ensure the folder has not been created
         self.assertTrue(os.path.exists(folder))
 
