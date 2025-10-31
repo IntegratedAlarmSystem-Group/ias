@@ -17,11 +17,13 @@ pipeline {
         }
         stage('Retrieve Artifacts') {
             steps {
-                copyArtifacts(
-                    projectName: 'IAS develop pipeline',
-                    filter: '*.tgz',
-                    selector: lastSuccessful()
-                )
+                script {
+                    copyArtifacts(
+                        projectName: 'IAS develop pipeline',
+                        filter: '*.tgz',
+                        selector: lastSuccessful()
+                    )
+                }
             }
         }
         stage('Extract Artifacts') {
