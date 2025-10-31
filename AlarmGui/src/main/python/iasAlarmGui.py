@@ -42,7 +42,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         self.bsdb_url = bsdb_url
 
         # The logger
-        self.logger = Log.getLogger(__name__)
+        self.logger = Log.getLogger(__file__)
 
         self.alarm_details = AlarmDetailsHelper(self.ui.alarmDetailsTE)
 
@@ -234,6 +234,14 @@ def parse(app) -> dict[str, typing.Any]:
     )
     parser.addOption(do_not_autoconnect)
 
+    log_level = QCommandLineOption(
+        [ "l", "loglevel"],
+        "Set the log level (debug, info, warn, error, critical). Default is info",
+        "log_level",
+        "info"      
+    )
+    parser.addOption(log_level)
+
     parser.process(app)
 
     ret = {}
@@ -245,20 +253,24 @@ def parse(app) -> dict[str, typing.Any]:
         ret["connect_to_bsdb"] = False
     else:
         ret["connect_to_bsdb"] = True
+    ret["log_level"] = parser.value(log_level)
     
     return ret
 
 if __name__ == "__main__":
-    logger = Log.getLogger(__file__)
-    logger.debug("IAS Alarm GUI started")
-    if not DefaultPaths.check_ias_folders():
-        logger.error("IAS folders not set!")
-        sys.exit(1)
+    
     app = QApplication(sys.argv)
     app.setApplicationName("IasAlarmGui")
     app.setApplicationVersion("1.0")
 
     cmd_line_args = parse(app)
+
+    logger = Log.getLogger(__file__, fileLevel='debug', consoleLevel=cmd_line_args['log_level'])
+    logger.debug("IAS Alarm GUI started")
+
+    if not DefaultPaths.check_ias_folders():
+        logger.error("IAS folders not set!")
+        sys.exit(1)
 
     cdb_parent_folder= cmd_line_args.get("ias_cdb", None)
     logger.debug("IAS CDB parent path from command line is %s",cdb_parent_folder)
