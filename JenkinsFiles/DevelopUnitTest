@@ -72,7 +72,7 @@ pipeline {
         stage('Log-parser') {
            steps {
                 logParser failBuildOnError: false, 
-                  parseRulesPath: '/var/lib/jenkins/iasLogParserRules.txt', 
+                  parsingRulesPath: '/var/lib/jenkins/iasLogParserRules.txt', 
                   useProjectRule: false,
                   projectRulePath: ''
             }
