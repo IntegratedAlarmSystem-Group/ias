@@ -3,7 +3,6 @@ Created on Sep 23, 2016
 
 @author: acaproni
 '''
-import logging
 from os import environ, getcwd, walk, path, makedirs, access, W_OK, X_OK
 from IASTools.DefaultPaths import DefaultPaths
 
@@ -85,7 +84,9 @@ class FileSupport(object):
         if self.fileType:
             fileType = self.fileType.lower()
             if not fileType in FileSupport.iasModFileType:
-                logging.error("Unrecognized fileType %s not in %s", fileType, str(FileSupport.iasModFileType))
+                from IASLogging.logConf import Log
+                _logger = Log.getLogger(__file__)
+                _logger.error("Unrecognized fileType %s not in %s", fileType, str(FileSupport.iasModFileType))
                 raise ValueError("Unrecognized fileType '" + fileType +"' not in " + str(FileSupport.iasModFileType))
             folders = (fileType,)
         else:
@@ -174,11 +175,15 @@ class FileSupport(object):
             makedirs(tmpFolder)
         else:
             if not path.isdir(tmpFolder):
-                logging.error("%s is not a directory", tmpFolder)
+                from IASLogging.logConf import Log
+                _logger = Log.getLogger(__file__)
+                _logger.error("%s is not a directory", tmpFolder)
                 raise OSError(tmpFolder+" is not a directory")
             # Can write?
             if not access(tmpFolder, W_OK | X_OK):
-                logging.error("%s is not writable", tmpFolder)
+                from IASLogging.logConf import Log
+                _logger = Log.getLogger(__file__)
+                _logger.error("%s is not writable", tmpFolder)
                 raise OSError(tmpFolder+" is not writable")
         
     @classmethod
@@ -194,9 +199,13 @@ class FileSupport(object):
             makedirs(logsFolder)
         else:
             if not path.isdir(logsFolder):
-                logging.error("%s is not a directory", logsFolder)
+                from IASLogging.logConf import Log
+                _logger = Log.getLogger(__file__)
+                _logger.error("%s is not a directory", logsFolder)
                 raise OSError(logsFolder+" is not a directory")
             # Can write?
             if not access(logsFolder, W_OK | X_OK):
-                logging.error("%s is not writable", logsFolder)
+                from IASLogging.logConf import Log
+                _logger = Log.getLogger(__file__)
+                _logger.error("%s is not writable", logsFolder)
                 raise OSError(logsFolder+" is not writable")

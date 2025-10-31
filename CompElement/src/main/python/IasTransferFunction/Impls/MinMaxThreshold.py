@@ -1,6 +1,6 @@
-import logging
 import sys
 
+from IASLogging.logConf import Log
 from IasBasicTypes.Alarm import Alarm
 from IasBasicTypes.Priority import Priority
 from IasBasicTypes.IasType import IASType
@@ -26,7 +26,8 @@ class MinMaxThreshold(TransferFunction):
         :param props:
         '''
         super().__init__(asceId, asceRunningId,validityTimeFrame, props,instance)
-        logging.info("MinMaxThreshold built for ASCE %s",self.asceRunningId)
+        self.logger = Log.getLogger(__file__)
+        self.logger.info("MinMaxThreshold built for ASCE %s",self.asceRunningId)
 
         # The ID of the input
         self.idOfInput = None
@@ -86,14 +87,14 @@ class MinMaxThreshold(TransferFunction):
         :param outputInfo: The ID and type of the output
         :return:
         '''
-        logging.debug("Initializing MinMaxThreshold python TF of %s",self.asceRunningId)
+        self.logger.debug("Initializing MinMaxThreshold python TF of %s",self.asceRunningId)
 
         assert len(inputsInfo)==1, \
             'Wrong number of inputs of MinMaxThreshold of ASCE %: % instead of 1' % (self.asceRunningId,len(inputsInfo))
 
         inputType = inputsInfo[0].iasType
         self.idOfInput = inputsInfo[0].id
-        logging.info('Input of MinMaxThreshold of ASCE %s: %s',self.asceRunningId,self.idOfInput)
+        self.logger.info('Input of MinMaxThreshold of ASCE %s: %s',self.asceRunningId,self.idOfInput)
         assert  inputType==IASType.DOUBLE or \
                  inputType==IASType.FLOAT or \
                  inputType==IASType.BYTE or \
@@ -113,7 +114,7 @@ class MinMaxThreshold(TransferFunction):
         :param actualOutput: the actual output (IASIO)
         :return: the new output of the ASCE (IASIO)
         '''
-        logging.debug("Running python MinMaxThreshold TF of ASCE %s",self.asceRunningId)
+        self.logger.debug("Running python MinMaxThreshold TF of ASCE %s",self.asceRunningId)
 
         inputValue = compInputs[self.idOfInput]
         inputMode = OperationalMode.fromString(inputValue.mode)
@@ -133,7 +134,6 @@ class MinMaxThreshold(TransferFunction):
         actualValue = actualOutput.value
         if actualValue is None:
             actualValue = Alarm.get_initial_alarmstate(self.priority)
-        print(">>>>>>>>>>>>>>>>>>", type(actualValue))
         newValue = actualValue.set_if(condition)
 
         return actualOutput.updateProps(props).updateMode(inputMode).updateValue(newValue)
