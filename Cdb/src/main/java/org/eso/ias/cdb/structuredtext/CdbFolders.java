@@ -48,7 +48,7 @@ import java.nio.file.Path;
 public enum CdbFolders {
 	
 	ROOT("CDB"),
-	SUPERVISOR("Supervisor"),
+	SUPERVISOR("SUPERVISOR"),
 	DASU("DASU"),
 	ASCE("ASCE"),
 	IASIO("IASIO"),

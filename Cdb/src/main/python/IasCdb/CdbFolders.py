@@ -28,7 +28,7 @@ class CdbFolders:
 
     ALL_FOLDERS = {
         Folders.ROOT:"CDB",
-        Folders.SUPERVISOR:"Supervisor",
+        Folders.SUPERVISOR:"SUPERVISOR",
         Folders.DASU:"DASU",
         Folders.ASCE:"ASCE",
         Folders.IASIO:"IASIO",
