@@ -13,7 +13,7 @@ import java.nio.file.Path;
 * {@code
  * +CDB
  * 	| ias.json
- *  |+ Supervisor
+ *  |+ SUPERVISOR
  *     | <SupID-1>.json
  *     | ...
  *     | <SupID-n>.json
