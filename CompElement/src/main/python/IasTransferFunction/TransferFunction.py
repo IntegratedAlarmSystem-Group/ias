@@ -1,4 +1,4 @@
-import logging
+from IASLogging.logConf import Log
 
 class TransferFunction():
     '''
@@ -18,9 +18,10 @@ class TransferFunction():
         :param validityTimeFrame: The validity time frame (long)
         :param props: a dictionary of properties
         '''
+        self.logger = Log.getLogger(__file__)
         assert asceId is not None and asceId!="", "Invalid ID of ASCE"
         self.asceID=asceId
-        logging.debug("Building python TF for ASCE %s",self.asceID)
+        self.logger.debug("Building python TF for ASCE %s",self.asceID)
         assert asceRunningId is not None and asceRunningId!="", "Invalid running ID of ASCE"
         self.asceRunningId = asceRunningId
         assert validityTimeFrame>=0, "Invalid validity time frame "+validityTimeFrame
@@ -36,7 +37,7 @@ class TransferFunction():
             assert isinstance(instance,int), "The instance must be an integer"
         self.instance = instance
 
-        logging.info("Python TF of %s successfully built",self.asceRunningId)
+        self.logger.info("Python TF of %s successfully built",self.asceRunningId)
 
     def setTemplateInstance(self, instance):
         '''
@@ -47,9 +48,9 @@ class TransferFunction():
         '''
         self.instance=instance
         if (self.instance is None):
-            logging.debug("Python TF of %s is NOT templated",self.asceRunningId)
+            self.logger.debug("Python TF of %s is NOT templated",self.asceRunningId)
         else:
-            logging.info("Python TF of %s has template %d",self.asceRunningId,self.instance)
+            self.logger.info("Python TF of %s has template %d",self.asceRunningId,self.instance)
 
     def isTemplated(self):
         '''
