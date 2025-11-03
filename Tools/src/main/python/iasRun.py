@@ -214,7 +214,7 @@ def main() -> int:
         parser.print_help()
         print("Scala/Java parameters follow iasRun parameters)")
         print("Example: iasRun -r org.junit.platform.console.ConsoleLauncher execute --select-class org.eso.ias.basictypes.test.IasValueJsonSerializerTest")
-        print ("-r is an argument for iasRun, -c is an argument for java/sca class")
+        print ("-r is an argument for iasRun, execute is an argument for java/scala class")
         logger.debug("Will Trigger the help of the java/scala executable")
 
     # Check IAS folders
