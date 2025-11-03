@@ -178,7 +178,7 @@ class DasuImpl (
    */
   val delayedUpdateTask: Runnable = new Runnable {
     override def run() = {
-        DasuImpl.logger.debug("DASU [{}] running the throttling task",id)
+        DasuImpl.logger.debug("DASU [{}] running the throttling task to calc the output",id)
         calcStartTime.set(System.currentTimeMillis())
         Try(updateAndPublishOutput()) match {
           case Failure(exception) =>

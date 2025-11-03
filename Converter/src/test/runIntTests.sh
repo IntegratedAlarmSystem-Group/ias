@@ -1,2 +1,2 @@
 #!/usr/bin/bash
-iasRun -r org.junit.platform.console.ConsoleLauncher -c org.eso.ias.converter.test.TestKafkaStreaming
+iasRun -r org.junit.platform.console.ConsoleLauncher execute --select-class org.eso.ias.converter.test.TestKafkaStreaming
