@@ -43,25 +43,6 @@ pipeline {
                 '''
             }
         }
-        /*
-        stage('Checkout') {
-            steps {
-                dir('ias') {
-                    git url: 'https://github.com/IntegratedAlarmSystem-Group/ias.git', branch: 'master'
-                    sh 'ls -la'
-                }
-            }
-        }
-        stage('Build') {
-            steps {
-                dir('ias') {
-                    sh '''
-                        ./gradlew build
-                    '''
-                }
-            }
-        }
-        */
         stage('Prepare python venv for jep') {
           steps {
               sh '''
