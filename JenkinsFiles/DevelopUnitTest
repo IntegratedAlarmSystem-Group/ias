@@ -6,7 +6,7 @@ pipeline {
         JAVA_HOME="/usr/lib/jvm/java-21-openjdk-amd64"
         KAFKA_HOME="/opt/kafka"
         IAS_ROOT = "${env.WORKSPACE}/IasRoot"
-        PATH = "${env.PATH}:${env.IAS_ROOT}/bin:${env.JAVA_HOME}/bin:${KAFKA_HOME}/bin:/var/lib/jenkins/.local/bin"
+        PATH = "${env.PATH}:${env.JAVA_HOME}/bin:${KAFKA_HOME}/bin:/var/lib/jenkins/.local/bin"
     }
 
     stages {
