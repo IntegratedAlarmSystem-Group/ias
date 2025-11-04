@@ -58,7 +58,9 @@ pipeline {
                 dir('ias') {
                     sh '''
                        #!/bin/bash
-    	               source /var/lib/jenkins/venv/bin/activate
+                       if [ -f "/var/lib/jenkins/venv/bin/activate" ]; then
+                            source /var/lib/jenkins/venv/bin/activate
+                       fi
                        source Tools/src/main/ias-bash-profile.sh
                        ./gradlew iasUnitTest"
                     '''
