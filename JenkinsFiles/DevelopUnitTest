@@ -48,7 +48,7 @@ pipeline {
         stage('Run Unit Tests') {
             steps {
                 dir('ias') {
-                    sh '''
+                    sh '''#!/bin/bash
                         ls
                         ls ./Tools/src/main/
                         . /var/lib/jenkins/venv/bin/activate
