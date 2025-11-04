@@ -49,10 +49,11 @@ pipeline {
             steps {
                 dir('ias') {
                     sh '''
-                       . /var/lib/jenkins/venv/bin/activate
-                       . ./Tools/src/main/ias-bash-profile.sh 
-                       ./gradlew iasUnitTest
-                    '''
+                        ls
+                        . /var/lib/jenkins/venv/bin/activate
+                        . ./Tools/src/main/ias-bash-profile.sh 
+                        ./gradlew iasUnitTest
+                     '''
                 }
             }
         } 
