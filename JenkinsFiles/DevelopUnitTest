@@ -45,25 +45,9 @@ pipeline {
                 '''
             }
         }
-        /*
-        stage('Checkout') {
-            steps {
-                dir('ias') {
-                    git url: 'https://github.com/IntegratedAlarmSystem-Group/ias.git', branch: 'develop'
-                    sh 'ls -la'
-                }
-            }
+        stage('Setup python venv') {
+            sh 'source /var/lib/jenkins/venv/bin/activate'
         }
-        stage('Build') {
-            steps {
-                dir('ias') {
-                    sh '''
-                        ./gradlew build
-                    '''
-                }
-            }
-        }
-        */
         stage('Run Unit Tests') {
             steps {
                 dir('ias') {
