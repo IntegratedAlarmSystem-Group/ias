@@ -51,10 +51,10 @@ pipeline {
                     sh '''
                        #!/bin/bash
                        if [ -f "/var/lib/jenkins/venv/bin/activate" ]; then
-                            source /var/lib/jenkins/venv/bin/activate
+                            . /var/lib/jenkins/venv/bin/activate
                        fi
-                       source Tools/src/main/ias-bash-profile.sh
-                       ./gradlew iasUnitTest"
+                       . Tools/src/main/ias-bash-profile.sh
+                       ./gradlew iasUnitTest
                     '''
                 }
             }
