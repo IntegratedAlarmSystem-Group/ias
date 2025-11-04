@@ -1,5 +1,7 @@
 package org.eso.ias.dasu.test
 
+import ch.qos.logback.classic.Level
+
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.structuredtext.{StructuredTextReader, CdbFiles, CdbTxtFiles, TextFileType}
 import org.eso.ias.dasu.DasuImpl
@@ -12,7 +14,10 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 import java.nio.file.FileSystems
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import scala.collection.mutable.ListBuffer
+import scala.util.{Try, Failure}
 
 // The following import is required by the usage of the fixture
 import org.eso.ias.cdb.pojos.DasuDao
@@ -49,6 +54,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
   
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass);
+  IASLogger.setLogLevel(Some(Level.DEBUG), None, None)
   
   /** Fixture to build same type of objects for the tests */
   trait Fixture {
@@ -62,24 +68,57 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
   
     val stringSerializer = Option(new IasValueJsonSerializer)
   
-    /** Notifies about a new output produced by the DASU */
+    /** 
+     * The listener of outputs produced by the DASU.
+     * 
+     * It allows to wait for a given number of outputs by setting
+     * the optional CountDownLatch
+     */
     class TestListener extends OutputListener {
-      override def outputEvent(output: IASValue[?]): Unit = {
+
+      // The latch to wait for a given number of output
+      private var countDownLatch: Option[CountDownLatch] = None
+
+      override def outputEvent(output: IASValue[?]): Unit = synchronized {
         logger.info("Event received from DASU: [{}]",output.id)
         eventsReceived.incrementAndGet();
         iasValuesReceived.append(output)
+        countDownLatch.foreach(_.countDown())
       }
 
-      /** Notifies about a new output produced by the DASU
-       *  formatted as String
-       */
-      override def outputStringifiedEvent(outputStr: String) = {
+      /** Notifies about a new output produced by the DASUformatted as String */
+      override def outputStringifiedEvent(outputStr: String): Unit = {
         logger.info("JSON output received: [{}]", outputStr)
         strsReceived.incrementAndGet();
       }
+
+      /**
+        * Set the number of events to wait through the CountDownLatch.
+        * 
+        * Ifthe number of events to wait for is l<=0 then waiting is disabled by setting
+        * the latch to None
+        * 
+        * @param Int The number of events to wait if >0
+        */
+      def setCountDown(numOfOutputs: Int): Unit = synchronized {
+        if (numOfOutputs>0) {
+          countDownLatch = Some(new CountDownLatch(numOfOutputs))
+        } else {
+          countDownLatch = None
+        }
+      }
+
+      def await(timeout: Long, timeUnit: TimeUnit): Try[Boolean] = {
+        countDownLatch match {
+          case None        => Failure(new Exception("Call setCountDown before await"))
+          case Some(latch) => Try(latch.await(timeout, timeUnit))
+        }
+      }
     }
+
+    val outputListener = new TestListener()
   
-    val outputPublisher: OutputPublisher = new ListenerOutputPublisherImpl(new TestListener(),stringSerializer)
+    val outputPublisher: OutputPublisher = new ListenerOutputPublisherImpl(outputListener, stringSerializer)
 
     val inputsProvider = new DirectInputSubscriber()
 
@@ -218,6 +257,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
   }
   
   it must "produce outputs when receives sets of inputs (no throttling)" in new Fixture {
+    logger.debug("Start testing outputs generation with no throttling")
     // Start the getting of events in the DASU
     assert(dasu.start().isSuccess)
     iasValuesReceived.clear()
@@ -291,6 +331,7 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
   }
   
   it must "produce outputs when receives sets of inputs with throttling)" in new Fixture {
+    logger.debug("Start testing outputs generation with throttling")
     // Start the getting of events in the DASU
     assert(dasu.start().isSuccess)
     iasValuesReceived.clear()
@@ -311,23 +352,42 @@ class Dasu7ASCEsTest extends AnyFlatSpec {
       val v4=buildValue(inputTemperature4ID.id, inputTemperature4ID.fullRunningID,8)
       Set(v1,v2,v3,v4)
     }
-    inputsProvider.sendInputs(setOfInputs1) // // Calculate output immediately
-    inputsProvider.sendInputs(Set(buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,100))) // Delayed
-    inputsProvider.sendInputs(setOfInputs2) // Delayed
-    // And finally the throttling time expires and the output is generated again
-    // and now with all the inputs, an output is sent to the BSDB
-    
-    // Give the throttling task time to submit the inputs and produce the output
-    Thread.sleep(2*dasu.throttling)
 
-    // We sent 4 updates and expect that the DASU
-    // * updated immediately the output when the first inputs have been submitted
-    // * with the second set of inputs, the DASU activates the throttling and delayed the execution
-    // * finally the throttling time expires and the output is calculated
-    // 
-    // In total the DASU is expected to run 2 (instead of 4) update cycles
-    assert(dasu.statsCollector.iterationsRun.get.toInt==2)
-    assert(iasValuesReceived.size==2) // Only one output has been published
+    // Submit the inputs to trigger the calc. of the output
+    //
+
+    // Sending the first set of inputs triggers the generation of the output in the DASU.
+    // The generation of the output is performed by  a function that is scheduled with 
+    // a delay of 0 milliseconds.
+    // So, checking the generation of the output immediately after sending
+    // the inputs does not make sense because it is generated by a concurrent method
+    //
+    // Instead we wait until the first output arrives that also triggers the throttling
+    outputListener.setCountDown(1)
+    logger.debug("Sending {} inputs to the DASU",setOfInputs1.size)
+    inputsProvider.sendInputs(setOfInputs1)
+    // Wait until the output arrives
+    logger.debug("Waiting for the DASU to produce the output")
+    val outReceived: Try[Boolean] = outputListener.await(dasu.throttling, java.util.concurrent.TimeUnit.MILLISECONDS)
+    assert(outReceived.isSuccess)
+    assert(outReceived.get, "Timeout waiting for the DASU to publish the output")
+    logger.debug("The DASUJ produced the output")
+    
+    // Seding more inputs should not produce 2 new outputs but only one because the throttling is in place
+    // so we should get a timeout waiting for 2 inputs
+    outputListener.setCountDown(2) // Wait for 2 instead of one to trigger the timeout
+    logger.debug("Sending 1 input to the DASU")
+    inputsProvider.sendInputs(Set(buildValue(inputTemperature1ID.id, inputTemperature1ID.fullRunningID,100))) // Delayed
+    logger.debug("Sending {} inputs to the DASU",setOfInputs2.size)
+    inputsProvider.sendInputs(setOfInputs2)
+    logger.debug("Inputs sent to the DASU")
+
+    // This should trigger a timeout 
+    val outsReceived: Try[Boolean] = outputListener.await(2*dasu.throttling+100, java.util.concurrent.TimeUnit.MILLISECONDS)
+    assert(outsReceived.isSuccess)
+    // Check if the timeout is there
+    assert(!outsReceived.get, "The throttling shall produce one output, NOT 2")
+    assert(iasValuesReceived.size==2) // 2 outputs have been published in total
     
     val outputProducedByDasu = dasu.lastCalculatedOutput.get
     assert(outputProducedByDasu.isDefined)
