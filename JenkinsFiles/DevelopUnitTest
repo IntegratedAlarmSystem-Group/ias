@@ -53,7 +53,7 @@ pipeline {
                        if [ -f "/var/lib/jenkins/venv/bin/activate" ]; then
                             . /var/lib/jenkins/venv/bin/activate
                        fi
-                       . Tools/src/main/ias-bash-profile.sh
+                       . ./Tools/src/main/ias-bash-profile.sh
                        ./gradlew iasUnitTest
                     '''
                 }
