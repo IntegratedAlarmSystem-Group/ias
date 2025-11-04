@@ -75,7 +75,12 @@ pipeline {
         stage('Run Unit Tests') {
             steps {
                 dir('ias') {
-                    sh 'bash -c "source ../venv/bin/activate && source Tools/src/main/ias-bash-profile.sh && ./gradlew iasUnitTest"'
+                    sh '''
+                       #!/bin/bash
+    	               source /var/lib/jenkins/venv/bin/activate
+                       source Tools/src/main/ias-bash-profile.sh
+                       ./gradlew iasUnitTest"
+                    '''
                 }
             }
         }
