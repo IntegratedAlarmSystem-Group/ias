@@ -45,20 +45,6 @@ pipeline {
                 '''
             }
         }
-        /* stage('Run Unit Tests') {
-            steps {
-                dir('ias') {
-                    sh '''
-                       #!/bin/bash
-                       if [ -f "/var/lib/jenkins/venv/bin/activate" ]; then
-                            . /var/lib/jenkins/venv/bin/activate
-                       fi
-                       . ./Tools/src/main/ias-bash-profile.sh
-                       ./gradlew iasUnitTest
-                    '''
-                }
-            }
-        } */
         stage('Run Unit Tests') {
             steps {
                 dir('ias') {
