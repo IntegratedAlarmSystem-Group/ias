@@ -45,7 +45,7 @@ pipeline {
                 '''
             }
         }
-        stage('Run Unit Tests') {
+        /* stage('Run Unit Tests') {
             steps {
                 dir('ias') {
                     sh '''
@@ -58,7 +58,18 @@ pipeline {
                     '''
                 }
             }
-        }
+        } */
+        stage('Run Unit Tests') {
+            steps {
+                dir('ias') {
+                    sh '''
+                       . /var/lib/jenkins/venv/bin/activate
+                       . Tools/src/main/ias-bash-profile.sh 
+                       ./gradlew iasUnitTest
+                    '''
+                }
+            }
+        } 
         stage('Log-parser') {
            steps {
                 logParser failBuildOnError: true, 
