@@ -47,7 +47,7 @@ pipeline {
         }
         stage('Setup python venv') {
             steps {
-                sh 'source /var/lib/jenkins/venv/bin/activate'
+                sh '. /var/lib/jenkins/venv/bin/activate'
             }
         }
         stage('Run Unit Tests') {
