@@ -182,8 +182,10 @@ chown -R kafka:kafka /var/log/kafka
 # Reload systemd for the new service
 systemctl daemon-reload
 
-# Format the folder where kafka stores the logs
-sudo -u kafka /opt/kafka/bin/kafka-storage.sh format -t$(uuidgen) -c /opt/kafka/config/server.properties
+# Format the log directory only on fresh installs
+if [ ! -f /var/lib/kafka/data/meta.properties ]; then
+    runuser -u kafka -- /opt/kafka/bin/kafka-storage.sh format -t"$(uuidgen)" -c /opt/kafka/config/server.properties
+fi
 
 %preun
 # Stop Kafka service before removal
