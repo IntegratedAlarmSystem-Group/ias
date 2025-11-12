@@ -1,16 +1,13 @@
 Name: kafka
-Version: 4.0.0
+Version: 4.1.0
 Release: 1%{?dist}
-Summary: Install Apache Kafka with Kraft
+Summary: Install Apache Kafka 
 License: Apache License 2.0
 URL: https://kafka.apache.org
 Source0: kafka-%{version}-src.tgz
 Source1: kafka.service
 Source2: server.properties
-Source3: broker.properties
-Source4: controller.properties
-Source5: reconfig-server.properties
-Source6: kafka-start-wrapper.sh
+Source3: log4j2.yaml
 BuildRequires: (java-17-openjdk-devel or java-21-openjdk-devel or java-latest-openjdk-devel)
 BuildArch: noarch
 
@@ -31,8 +28,7 @@ The Apache Kafka distributed event streaming platform using Kraft.
 %install
 # Create necessary directories
 mkdir -p %{buildroot}/opt
-mkdir -p %{buildroot}/var/lib/kafkadata
-mkdir -p %{buildroot}/var/lib/kafka
+mkdir -p %{buildroot}/var/lib/kafka/data
 mkdir -p %{buildroot}/var/log/kafka
 mkdir -p %{buildroot}/etc/systemd/system
 
@@ -42,12 +38,9 @@ ln -v -s "/opt/%{_kafka}" %{buildroot}/opt/kafka
 
 # Install configuration and systemd service file
 mkdir -p %{buildroot}/opt/kafka_2.13-%{version}/config/kraft
-install -m 644 %{SOURCE2} %{buildroot}/opt/%{_kafka}/config/kraft/server.properties
-install -m 644 %{SOURCE3} %{buildroot}/opt/%{_kafka}/config/kraft/broker.properties
-install -m 644 %{SOURCE4} %{buildroot}/opt/%{_kafka}/config/kraft/controller.properties
-install -m 644 %{SOURCE5} %{buildroot}/opt/%{_kafka}/config/kraft/reconfig-server.properties
+install -m 644 %{SOURCE2} %{buildroot}/opt/%{_kafka}/config/server.properties
+install -m 744 %{SOURCE3} %{buildroot}/opt/%{_kafka}/config/log4j2.yaml
 install -m 644 %{SOURCE1} %{buildroot}/etc/systemd/system/kafka.service
-install -m 744 %{SOURCE6} %{buildroot}/opt/%{_kafka}/bin/kafka-start-wrapper.sh
 
 install -Dm644 LICENSE %{buildroot}/opt/%{_kafka}/LICENSE.txt
 mkdir -p %{buildroot}/usr/share/licenses/kafka
@@ -79,7 +72,6 @@ done
 /opt/%{_kafka}/bin/connect-standalone.sh
 /opt/%{_kafka}/bin/kafka-acls.sh
 /opt/%{_kafka}/bin/kafka-broker-api-versions.sh
-/opt/%{_kafka}/bin/kafka-start-wrapper.sh
 /opt/%{_kafka}/bin/kafka-client-metrics.sh
 /opt/%{_kafka}/bin/kafka-cluster.sh
 /opt/%{_kafka}/bin/kafka-configs.sh
@@ -106,13 +98,16 @@ done
 /opt/%{_kafka}/bin/kafka-run-class.sh
 /opt/%{_kafka}/bin/kafka-server-start.sh
 /opt/%{_kafka}/bin/kafka-server-stop.sh
+/opt/%{_kafka}/bin/kafka-share-consumer-perf-test.sh
 /opt/%{_kafka}/bin/kafka-share-groups.sh
 /opt/%{_kafka}/bin/kafka-storage.sh
 /opt/%{_kafka}/bin/kafka-streams-application-reset.sh
+/opt/%{_kafka}/bin/kafka-streams-groups.sh
 /opt/%{_kafka}/bin/kafka-topics.sh
 /opt/%{_kafka}/bin/kafka-transactions.sh
 /opt/%{_kafka}/bin/kafka-verifiable-consumer.sh
 /opt/%{_kafka}/bin/kafka-verifiable-producer.sh
+/opt/%{_kafka}/bin/kafka-verifiable-share-consumer.sh
 /opt/%{_kafka}/bin/trogdor.sh
 
 %{sysbindir}/connect-distributed.sh
@@ -121,7 +116,6 @@ done
 %{sysbindir}/connect-standalone.sh
 %{sysbindir}/kafka-acls.sh
 %{sysbindir}/kafka-broker-api-versions.sh
-%{sysbindir}/kafka-start-wrapper.sh
 %{sysbindir}/kafka-client-metrics.sh
 %{sysbindir}/kafka-cluster.sh
 %{sysbindir}/kafka-configs.sh
@@ -148,13 +142,16 @@ done
 %{sysbindir}/kafka-run-class.sh
 %{sysbindir}/kafka-server-start.sh
 %{sysbindir}/kafka-server-stop.sh
+%{sysbindir}/kafka-share-consumer-perf-test.sh
 %{sysbindir}/kafka-share-groups.sh
 %{sysbindir}/kafka-storage.sh
 %{sysbindir}/kafka-streams-application-reset.sh
+%{sysbindir}/kafka-streams-groups.sh
 %{sysbindir}/kafka-topics.sh
 %{sysbindir}/kafka-transactions.sh
 %{sysbindir}/kafka-verifiable-consumer.sh
 %{sysbindir}/kafka-verifiable-producer.sh
+%{sysbindir}/kafka-verifiable-share-consumer.sh
 %{sysbindir}/trogdor.sh
 
 %license /opt/%{_kafka}/LICENSE
@@ -165,7 +162,7 @@ done
 %attr(0755, kafka, kafka) /opt/%{_kafka}/site-docs
 
 
-%attr(0755, kafka, kafka) /var/lib/kafkadata
+%attr(0755, kafka, kafka) /var/lib/kafka/data
 %attr(0755, kafka, kafka) /var/lib/kafka
 %attr(0755, kafka, kafka) /var/log/kafka
 %attr(0644, root, root) /etc/systemd/system/kafka.service
@@ -178,12 +175,15 @@ getent passwd kafka >/dev/null || useradd --system -g kafka --no-create-home --s
 %post
 # Set proper ownership
 chown -R kafka:kafka /opt/kafka_2.13-%{version}
-chown -R kafka:kafka /var/lib/kafkadata
+chown -R kafka:kafka /var/lib/kafka/data
 chown -R kafka:kafka /var/lib/kafka
 chown -R kafka:kafka /var/log/kafka
 
 # Reload systemd for the new service
 systemctl daemon-reload
+
+# Format the folder where kafka stores the logs
+sudo -u kafka /opt/kafka/bin/kafka-storage.sh format -t$(uuidgen) -c /opt/kafka/config/server.properties
 
 %preun
 # Stop Kafka service before removal
@@ -198,9 +198,13 @@ if [ $1 -eq 0 ]; then
     getent passwd kafka >/dev/null && userdel kafka || true
     getent group kafka >/dev/null && groupdel kafka || true
 fi
-
+rm -rf /var/lib/kafka
+rm -rf /var/log/kafka
+rm -rf /opt/kafka*
 
 %changelog
+* Wed Nov 12 2025 Alessandro Caproni <acaproni@eso.org> - 4.1.0-1
+- Updated for v4.1.0
 * Fri May 23 2025 Alessandro Caproni <acaproni@eso.org> - 4.0.0-1
 - Initial RPM release of Apache Kafka with KRaft
 

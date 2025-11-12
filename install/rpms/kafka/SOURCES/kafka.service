@@ -1,21 +1,25 @@
 [Unit]
 Description=Apache Kafka Server
-Documentation=http://kafka.apache.org/documentation.html
-After=network.target
+Documentation=https://kafka.apache.org/documentation/
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 User=kafka
 Group=kafka
 Type=simple
-ExecStart=/opt/kafka/bin/kafka-start-wrapper.sh /opt/kafka/config/kraft/server.properties
-ExecStop=/opt/kafka/bin/kafka-server-stop.sh
-Restart=on-failure
-LimitNOFILE=100000
-Environment="KAFKA_HEAP_OPTS=-Xmx1G -Xms1G"
-Environment="KAFKA_LOG4J_OPTS=-Dkafka.logs.dir=/var/log/kafka"
-StandardOutput=journal
-StandardError=journal
 
+Environment="KAFKA_GC_LOG_OPTS=-Xlog:gc*:file=/var/log/kafka/kafkaServer-gc.log:time,uptime,level,tags:filecount=10,filesize=1024000"
+Environment="KAFKA_LOG4J_OPTS=-Dlog4j2.configurationFile=/opt/kafka/config/log4j2.yaml -Dkafka.logs.dir=/var/log/kafka"
+Environment="KAFKA_HEAP_OPTS=-Xms1G -Xmx2G"
+
+ExecStart=/opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/server.properties
+ExecStop=/opt/kafka/bin/kafka-server-stop.sh
+
+Restart=on-failure
+RestartSec=10
+LimitNOFILE=100000
+TimeoutStopSec=180
 
 [Install]
 WantedBy=multi-user.target
