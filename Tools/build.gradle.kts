@@ -7,16 +7,14 @@ plugins {
 dependencies {
     // Scala
     val g = project.gradle
-    if (g is ExtensionAware) {
-      val extension = g as ExtensionAware
-      implementation(extension.extra["scala-library"].toString())
-      implementation(extension.extra["scalatest"].toString())
-      implementation(extension.extra["slf4j-api"].toString())
-      implementation(extension.extra["scala-logging"].toString())
-      implementation(extension.extra["logback-classic"].toString())
-      implementation(extension.extra["junit-platform-console-standalone"].toString())
-      implementation("com.h2database:h2:2.1.214")
-    }
+    val extension = g as ExtensionAware
+    implementation(extension.extra["scala-library"].toString())
+    implementation(extension.extra["scalatest"].toString())
+    implementation(extension.extra["slf4j-api"].toString())
+    implementation(extension.extra["scala-logging"].toString())
+    implementation(extension.extra["logback-classic"].toString())
+    implementation(extension.extra["junit-platform-console-standalone"].toString())
+    implementation("com.h2database:h2:2.1.214")
 }
 
 sourceSets {

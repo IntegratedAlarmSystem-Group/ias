@@ -9,7 +9,7 @@ repositories {
 dependencies {
 
     /* Depend on the kotlin plugin, since we want to access it in our plugin */
-    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.23")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.0")
 
     /* Depend on the default Gradle API's since we want to build a custom plugin */
     compileOnly(gradleApi())

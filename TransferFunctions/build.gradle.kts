@@ -6,12 +6,10 @@ plugins {
 
 dependencies {
     val g = project.gradle
-    if (g is ExtensionAware) {
-      val extension = g as ExtensionAware
-      implementation(extension.extra["scala-library"].toString())
-      implementation(extension.extra["scalatest"].toString())
-      implementation(extension.extra["scala-logging"].toString())
-    }
+    val extension = g as ExtensionAware
+    implementation(extension.extra["scala-library"].toString())
+    implementation(extension.extra["scalatest"].toString())
+    implementation(extension.extra["scala-logging"].toString())
 
     implementation(project(":BasicTypes"))
     implementation(project(":Tools"))

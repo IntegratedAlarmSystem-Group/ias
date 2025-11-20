@@ -44,43 +44,37 @@ process.inputStream.reader(Charsets.UTF_8).use {
 	} else {
 		pyVersion = pyFullVersion
 	}
-	if (gradle is ExtensionAware) {
-		val extension = gradle as ExtensionAware
-		extension.extra["PythonVersion"] = pyVersion
-	}
+	val extension = gradle as ExtensionAware
+	extension.extra["PythonVersion"] = pyVersion
 }
 process.waitFor(10, TimeUnit.SECONDS)
 
 val gitBranchProc = ProcessBuilder("git", "rev-parse", "--abbrev-ref", "HEAD").start()
 gitBranchProc.inputStream.reader(Charsets.UTF_8).use {
 	val gitBranch = it.readText()
-	if (gradle is ExtensionAware) {
-		val extension = gradle as ExtensionAware
-		extension.extra["GitBranch"] = gitBranch
-	}
+	val extension = gradle as ExtensionAware
+	extension.extra["GitBranch"] = gitBranch
 }
 gitBranchProc.waitFor(10, TimeUnit.SECONDS)
 
 // Sets common dependencies
-if (gradle is ExtensionAware) {
-	val extension = gradle as ExtensionAware
+val extension = gradle as ExtensionAware
 
-        // IAS common dependencies
-	extension.extra["scala-library"] = "org.scala-lang:scala3-library_3:3.7.3"
-	extension.extra["scalatest"] = "org.scalatest:scalatest_3:3.2.19"
-	extension.extra["slf4j-api"] = "org.slf4j:slf4j-api:2.0.9"
-	extension.extra["scala-logging"] = "com.typesafe.scala-logging:scala-logging_3:3.9.5"
-	extension.extra["logback-classic"] = "ch.qos.logback:logback-classic:1.4.11"
-	extension.extra["jackson-databind"] = "com.fasterxml.jackson.core:jackson-databind:2.17.0"
-	extension.extra["junit-jupiter-api"] = "org.junit.jupiter:junit-jupiter-api:6.0.0"
-	extension.extra["junit-jupiter-engine"] = "org.junit.jupiter:junit-jupiter-engine:6.0.0"
-	extension.extra["junit-platform-console-standalone"] = "org.junit.platform:junit-platform-console-standalone:6.0.0"
-	extension.extra["commons-cli"] = "commons-cli:commons-cli:1.5.0"
-	extension.extra["kafka-clients"] = "org.apache.kafka:kafka-clients:3.7.0"
-	extension.extra["kafka-streams"] = "org.apache.kafka:kafka-streams:3.7.0"
-	extension.extra["kafka-connect-api"] = "org.apache.kafka:connect-api:3.7.0"
-	extension.extra["hibernate-jpa"] = "org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final"
-}
+	// IAS common dependencies
+extension.extra["scala-library"] = "org.scala-lang:scala3-library_3:3.7.3"
+extension.extra["scalatest"] = "org.scalatest:scalatest_3:3.2.19"
+extension.extra["slf4j-api"] = "org.slf4j:slf4j-api:2.0.9"
+extension.extra["scala-logging"] = "com.typesafe.scala-logging:scala-logging_3:3.9.5"
+extension.extra["logback-classic"] = "ch.qos.logback:logback-classic:1.4.11"
+extension.extra["jackson-databind"] = "com.fasterxml.jackson.core:jackson-databind:2.17.0"
+extension.extra["junit-jupiter-api"] = "org.junit.jupiter:junit-jupiter-api:6.0.0"
+extension.extra["junit-jupiter-engine"] = "org.junit.jupiter:junit-jupiter-engine:6.0.0"
+extension.extra["junit-platform-console-standalone"] = "org.junit.platform:junit-platform-console-standalone:6.0.0"
+extension.extra["commons-cli"] = "commons-cli:commons-cli:1.5.0"
+extension.extra["kafka-clients"] = "org.apache.kafka:kafka-clients:3.7.0"
+extension.extra["kafka-streams"] = "org.apache.kafka:kafka-streams:3.7.0"
+extension.extra["kafka-connect-api"] = "org.apache.kafka:connect-api:3.7.0"
+extension.extra["hibernate-jpa"] = "org.hibernate.javax.persistence:hibernate-jpa-2.1-api:1.0.0.Final"
 
 dependencyResolutionManagement {
 	repositories {
