@@ -1,5 +1,5 @@
 plugins {
-    `java`
+    java
     `java-library-distribution`
     id("org.eso.ias.build.plugin")
 }
@@ -11,8 +11,8 @@ dependencies {
     implementation(extension.extra["commons-cli"].toString())
     implementation(extension.extra["jackson-databind"].toString())
     implementation(extension.extra["slf4j-api"].toString())
-    implementation(extension.extra["junit-jupiter-api"].toString())
-    implementation(extension.extra["junit-jupiter-engine"].toString())
+    //implementation(extension.extra["junit-jupiter-api"].toString())
+    //implementation(extension.extra["junit-jupiter-engine"].toString())
     implementation(extension.extra["kafka-clients"].toString())
     implementation(extension.extra["kafka-streams"].toString())
     implementation(extension.extra["logback-classic"].toString())
@@ -25,4 +25,11 @@ dependencies {
     implementation(project(":BasicTypes"))
     implementation(project(":KafkaUtils"))
     implementation(project(":CommandsAndReplies"))
+
+    testImplementation(extension.extra["junit-jupiter"].toString())
+}
+
+tasks.test {
+            useJUnitPlatform()
+            exclude("**/TestKafkaStreaming.class")
 }

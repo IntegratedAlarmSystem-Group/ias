@@ -9,7 +9,7 @@ dependencies {
     val g = project.gradle
     val extension = g as ExtensionAware
     implementation(extension.extra["scala-library"].toString())
-    implementation(extension.extra["scalatest"].toString())
+    //implementation(extension.extra["scalatest"].toString())
     implementation(extension.extra["scala-logging"].toString())
     implementation(extension.extra["logback-classic"].toString())
     implementation(extension.extra["jackson-databind"].toString())
@@ -24,6 +24,9 @@ dependencies {
     implementation(project(":KafkaUtils"))
     implementation(project(":CommandsAndReplies"))
     implementation(project(":Heartbeat"))
+
+    testImplementation(extension.extra["junit-jupiter"].toString())
+    testImplementation(extension.extra["scalatest"].toString())
 
 }
 
@@ -43,4 +46,7 @@ sourceSets {
     }
 }
 
-
+tasks.test {
+            useJUnitPlatform()
+            exclude ("**/HbAlarmGenerationTest.class")
+}

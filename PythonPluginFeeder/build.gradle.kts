@@ -1,5 +1,5 @@
 plugins {
-    `java`
+    java
     `java-library-distribution`
     id("org.eso.ias.build.plugin")
 }
@@ -10,8 +10,8 @@ dependencies {
     implementation(extension.extra["commons-cli"].toString())
     implementation(extension.extra["jackson-databind"].toString())
     implementation(extension.extra["slf4j-api"].toString())
-    implementation(extension.extra["junit-jupiter-api"].toString())
-    implementation(extension.extra["junit-jupiter-engine"].toString())
+    //implementation(extension.extra["junit-jupiter-api"].toString())
+    //implementation(extension.extra["junit-jupiter-engine"].toString())
     implementation(extension.extra["hibernate-jpa"].toString())
     
     implementation(project(":Plugin"))
@@ -20,6 +20,8 @@ dependencies {
     implementation(project(":Tools"))
     implementation(project(":Cdb"))
     implementation(project(":CommandsAndReplies"))
+
+    testImplementation(extension.extra["junit-jupiter"].toString())
 }
 
 sourceSets {
@@ -28,4 +30,9 @@ sourceSets {
             setSrcDirs(listOf("src/test/resources"))
         }
     }
+}
+
+tasks.test {
+            useJUnitPlatform()
+            exclude("**/UdpPluginTest.class")
 }

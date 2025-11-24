@@ -1,5 +1,5 @@
 plugins {
-    `java`
+    java
     `java-library-distribution`
     id("org.eso.ias.build.plugin")
 }
@@ -12,8 +12,8 @@ dependencies {
     implementation(extension.extra["slf4j-api"].toString())
     implementation(extension.extra["logback-classic"].toString())
     implementation(extension.extra["commons-cli"].toString())
-    implementation(extension.extra["junit-jupiter-api"].toString())
-    implementation(extension.extra["junit-jupiter-engine"].toString())
+    //implementation(extension.extra["junit-jupiter-api"].toString())
+    //implementation(extension.extra["junit-jupiter-engine"].toString())
     implementation(extension.extra["hibernate-jpa"].toString())
     implementation(extension.extra["kafka-clients"].toString())
 
@@ -29,4 +29,12 @@ dependencies {
     implementation(project(":CommandsAndReplies"))
 
     testImplementation("org.eclipse.jetty.websocket:websocket-server:9.4.15.v20190215")
+    testImplementation(extension.extra["junit-jupiter"].toString())
+    testImplementation(extension.extra["scalatest"].toString())
 }
+
+tasks.test {
+            useJUnitPlatform()
+            exclude("org/eso/ias/webserversender/**")
+}
+
