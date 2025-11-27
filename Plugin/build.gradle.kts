@@ -11,8 +11,6 @@ dependencies {
     implementation(extension.extra["jackson-databind"].toString())
     implementation(extension.extra["slf4j-api"].toString())
     implementation(extension.extra["kafka-clients"].toString())
-    //implementation(extension.extra["junit-jupiter-api"].toString())
-    //implementation(extension.extra["junit-jupiter-engine"].toString())
     implementation(extension.extra["hibernate-jpa"].toString())
 
     implementation(project(":Cdb"))
@@ -49,4 +47,7 @@ tasks.test {
             useJUnitPlatform()
             exclude("**/KafkaPublisherTest.class")
             ignoreFailures = true
+
+            // To cope with system properties set statically in PublisherMaxBufferSizeTest
+            forkEvery = 1
 }

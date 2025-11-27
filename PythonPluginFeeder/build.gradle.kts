@@ -10,8 +10,6 @@ dependencies {
     implementation(extension.extra["commons-cli"].toString())
     implementation(extension.extra["jackson-databind"].toString())
     implementation(extension.extra["slf4j-api"].toString())
-    //implementation(extension.extra["junit-jupiter-api"].toString())
-    //implementation(extension.extra["junit-jupiter-engine"].toString())
     implementation(extension.extra["hibernate-jpa"].toString())
     
     implementation(project(":Plugin"))
@@ -34,5 +32,4 @@ sourceSets {
 
 tasks.test {
             useJUnitPlatform()
-            exclude("**/UdpPluginTest.class")
 }

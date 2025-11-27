@@ -11,8 +11,6 @@ dependencies {
     implementation(extension.extra["jackson-databind"].toString())
     implementation(extension.extra["slf4j-api"].toString())
     implementation(extension.extra["logback-classic"].toString())
-    //implementation(extension.extra["junit-jupiter-api"].toString())
-    //implementation(extension.extra["junit-jupiter-engine"].toString())
     implementation(extension.extra["hibernate-jpa"].toString())
     
     implementation("com.mchange:c3p0:0.9.5.2")
@@ -41,7 +39,11 @@ distributions {
 
 tasks.test {
             useJUnitPlatform()
+            // Excluded because RDB has been deprecated
             exclude("**/TestRdbCdb.class")
+            
+            // To be moved in integration tests because it requires iasRun to build te path when 
+            // IAS_EXTERNAL_JARS is set
             exclude("**/CdbReaderFactoryTest.class")
             ignoreFailures = true
 }

@@ -1,6 +1,9 @@
+plugins {
+    base
+}
+
 import java.nio.file.StandardCopyOption
 import java.io.File
-
 
 fun checkIntegrity(): Boolean {
     var envVar: String? = System.getenv("IAS_ROOT")
@@ -10,7 +13,7 @@ fun checkIntegrity(): Boolean {
     return true
 }
 
-tasks.register("build") {
+tasks.named("build") {
     doFirst {
         if (!checkIntegrity()) {
             throw GradleException("Integrity check not passed: IAS_ROOT is undefined")

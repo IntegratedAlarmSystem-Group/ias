@@ -9,26 +9,62 @@
 
 rootProject.name = "ias"
 logger.lifecycle("Preparing global settings for {}", rootProject.name)
-include(
-	"Tools",
-	"Cdb",
-	"BasicTypes",
-	"CdbChecker",
-	"KafkaUtils",
-	"Heartbeat",
-	"CommandsAndReplies",
-	"Plugin",
-	"PythonPluginFeeder",
-	"Converter",
-	"CompElement",
-	"DistributedUnit",
-	"Supervisor",
-	"WebServerSender",
-	"TransferFunctions",
-	"SinkClient",
-	"Extras",
-	"Monitor",
-	"AlarmGui")
+
+// The list subprojects: contains all the projects but test-reports
+// test-reports is not included because test-reports adds the deps using this list
+
+// and must not contain itself
+val subprojectsList = listOf(
+    "Tools",
+    "Cdb",
+    "BasicTypes",
+    "CdbChecker",
+    "KafkaUtils",
+    "Heartbeat",
+    "CommandsAndReplies",
+    "Plugin",
+    "PythonPluginFeeder",
+    "Converter",
+    "CompElement",
+    "DistributedUnit",
+    "Supervisor",
+    "WebServerSender",
+    "TransferFunctions",
+    "SinkClient",
+    "Extras",
+    "Monitor",
+    "AlarmGui"
+)
+
+// INclude all the projects in subprojectsList plust test-reports
+include(*subprojectsList.toTypedArray(), "test-reports")
+
+// include(
+// 	"Tools",
+// 	"Cdb",
+// 	"BasicTypes",
+// 	"CdbChecker",
+// 	"KafkaUtils",
+// 	"Heartbeat",
+// 	"CommandsAndReplies",
+// 	"Plugin",
+// 	"PythonPluginFeeder",
+// 	"Converter",
+// 	"CompElement",
+// 	"DistributedUnit",
+// 	"Supervisor",
+// 	"WebServerSender",
+// 	"TransferFunctions",
+// 	"SinkClient",
+// 	"Extras",
+// 	"Monitor",
+// 	"AlarmGui",
+// 	"test-reports")
+
+
+// Expose as Gradle property so that it can be used in test-reports
+gradle.extra["aggregatedModules"] = subprojectsList
+
 
 // Gets the version of python 3 installed in this server
 // and stores it in an extra property named PythonVersion

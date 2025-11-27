@@ -11,8 +11,6 @@ dependencies {
     implementation(extension.extra["commons-cli"].toString())
     implementation(extension.extra["jackson-databind"].toString())
     implementation(extension.extra["slf4j-api"].toString())
-    //implementation(extension.extra["junit-jupiter-api"].toString())
-    //implementation(extension.extra["junit-jupiter-engine"].toString())
     implementation(extension.extra["kafka-clients"].toString())
     implementation(extension.extra["kafka-streams"].toString())
     implementation(extension.extra["logback-classic"].toString())

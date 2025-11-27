@@ -64,7 +64,7 @@ public class JsonPusblisherTest {
 	
 	@BeforeEach
 	public void setUp() throws Exception {
-		jsonFile = File.createTempFile("JsonPusblisherTest", ".json", new File(System.getProperty("ias.tmp.folder")));
+		jsonFile = File.createTempFile("JsonPusblisherTest", ".json", new File(System.getProperty("ias.tmp.folder","/tmp")));
 		logger.info("JSON data will be written in: {}",jsonFile.getAbsolutePath());
 		
 		BufferedWriter writer = new BufferedWriter(new FileWriter(jsonFile));
