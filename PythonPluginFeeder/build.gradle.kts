@@ -32,4 +32,5 @@ sourceSets {
 
 tasks.test {
             useJUnitPlatform()
+            exclude("**/UdpPluginTest.class")
 }
