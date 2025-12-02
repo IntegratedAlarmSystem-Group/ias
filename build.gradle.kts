@@ -3,7 +3,10 @@ plugins {
 }
 
 import java.nio.file.StandardCopyOption
+import java.nio.file.Files
 import java.io.File
+import org.gradle.api.tasks.testing.Test
+import org.gradle.api.tasks.testing.TestReport
 
 fun checkIntegrity(): Boolean {
     var envVar: String? = System.getenv("IAS_ROOT")
@@ -45,13 +48,72 @@ tasks.register("install") {
 
         val licFile = File("LICENSE.md")
         val outLicFile = File(envVar + "/" + "LICENSE.md")
-        java.nio.file.Files.copy(licFile.toPath(), outLicFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        Files.copy(licFile.toPath(), outLicFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
 
         val readmeFile = File("README.md")
         val outReadmeFile = File(envVar + "/" + "README.md")
-        java.nio.file.Files.copy(readmeFile.toPath(), outReadmeFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+       Files.copy(readmeFile.toPath(), outReadmeFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
     }
 }
 
 subprojects {
+    // If module has Python tests
+    if (file("src/test/python").exists()) {
+        val pytestTask = tasks.register<Exec>("pytest") {
+            description = "Run pytest for $project"
+            group = "verification"
+
+            // Run after Java/Scala tests only if 'test' task exists
+            if (tasks.names.contains("test")) {
+                mustRunAfter(tasks.named("test"))
+            }
+
+            // Ensure pytest runs after assemble (ordering only)
+            mustRunAfter(tasks.named("assemble"))
+
+            // If CopyPyMods exists, order after it
+            if (tasks.names.contains("CopyPyMods")) {
+                mustRunAfter(tasks.named("CopyPyMods"))
+            }
+
+            doFirst {
+                mkdir(layout.buildDirectory.dir("test-results/pytest").get().asFile)
+            }
+
+            // Build PYTHONPATH dynamically
+            val pythonPaths = mutableListOf<String>()
+            pythonPaths.add(layout.buildDirectory.dir("src/test/python").get().asFile.absolutePath)
+
+            // Include all subprojects' site-packages
+            rootProject.subprojects.forEach { sub ->
+                pythonPaths.add(
+                    sub.layout.buildDirectory
+                        .dir("lib/python${gradle.extra["PythonVersion"]}/site-packages")
+                        .get().asFile.absolutePath
+                )
+            }
+
+            val existingPath = System.getenv("PYTHONPATH") ?: ""
+            environment("PYTHONPATH", existingPath + ":" + pythonPaths.joinToString(":"))
+
+            // Use separate directory for pytest reports
+            commandLine(
+                "pytest",
+                "src/test/python",
+                "--junitxml=${layout.buildDirectory.dir("test-results/pytest").get().asFile}/pytest-results.xml"
+            )
+        }
+
+        // Attach pytest to check
+        tasks.matching { it.name == "check" }.configureEach {
+            dependsOn(pytestTask)
+        }
+    }
+
+    // If module has CopyPyMods, ensure assemble triggers it
+    if (tasks.names.contains("CopyPyMods")) {
+        tasks.named("assemble") {
+            dependsOn(tasks.named("CopyPyMods"))
+        }
+    }
 }

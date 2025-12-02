@@ -14,3 +14,10 @@ abstract class GuiTask : DefaultTask() {
 tasks.register<GuiTask>("Gui") {
     dependsOn(":build")
 }
+
+tasks.named("pytest").configure {
+    dependsOn(project(":Cdb").tasks.named("build"))
+    dependsOn(project(":BasicTypes").tasks.named("build"))
+    dependsOn(project(":KafkaUtils").tasks.named("build"))
+    dependsOn(project(":Tools").tasks.named("build"))
+}

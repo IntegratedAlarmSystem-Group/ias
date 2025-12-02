@@ -34,3 +34,7 @@ tasks.test {
             useJUnitPlatform()
             exclude("**/UdpPluginTest.class")
 }
+
+tasks.named("pytest").configure {
+    dependsOn(project(":BasicTypes").tasks.named("build"))
+}

@@ -28,3 +28,9 @@ tasks.test {
             exclude("**/TestCommandManager.class")
 
 }
+
+tasks.named("pytest").configure {
+    dependsOn(project(":Tools").tasks.named("build"))
+    dependsOn(project(":BasicTypes").tasks.named("build"))
+    dependsOn(project(":KafkaUtils").tasks.named("build"))
+}

@@ -1,4 +1,3 @@
-#! /usr/bin/env python3
 '''
 
 Test the kafka publisher and subscriber
@@ -8,7 +7,6 @@ Created on Jun 14, 2018
 @author: acaproni
 '''
 import time
-import unittest
 
 from IASLogging.logConf import Log
 from IasBasicTypes.IasValue import IasValue
@@ -24,13 +22,6 @@ class TestListener(IasValueListener):
     '''
     receivedValues = []
     
-    def __init__(self):
-        """
-        Constructor
-        
-        """
-        pass
-    
     def iasValueReceived(self,iasValue):
         """
         Print the IasValue in the stdout
@@ -39,7 +30,7 @@ class TestListener(IasValueListener):
         logger.info("Value received %s",str(iasValue.value))
 
 
-class TestValueProdCons(unittest.TestCase):
+class TestValueProdCons():
     
     kafkabrokers = IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS
     topic = "Test-PyProdCons-Topic"
@@ -91,7 +82,7 @@ class TestValueProdCons(unittest.TestCase):
         return consumer.isSubscribed()
 
 
-    def testName(self):
+    def test_name(self):
 
         logger.info('Building the producer')
         producer = KafkaValueProducer(self.kafkabrokers, self.topic, 'PyProducerTest-ID')
@@ -111,7 +102,7 @@ class TestValueProdCons(unittest.TestCase):
         # Wait until the consumer is subscribed to a partition
         logger.info("Wait until the consumer subscribes to a partition")
         isSubscribed = self.waitUntilSubscribed(consumer, 30)
-        self.assertTrue(isSubscribed)
+        assert isSubscribed
         
         logger.info('Publishing %d IasValues',n)
         baseId='Test-ID#'
@@ -138,10 +129,4 @@ class TestValueProdCons(unittest.TestCase):
         consumer.close()
         logger.info('Consumer closed')
         
-        self.assertEqual(n, len(self.listener.receivedValues), 'Messages mismatch')
-
-
-if __name__ == "__main__":
-    #import sys;sys.argv = ['', 'Test.testName']
-    logger.info("Start main")
-    unittest.main()
+        assert n == len(self.listener.receivedValues), 'Messages mismatch'

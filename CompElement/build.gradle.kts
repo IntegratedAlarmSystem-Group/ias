@@ -39,5 +39,4 @@ sourceSets {
 
 tasks.test {
             useJUnitPlatform()
-            ignoreFailures = true
 }

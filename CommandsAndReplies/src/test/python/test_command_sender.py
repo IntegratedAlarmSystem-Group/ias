@@ -1,6 +1,3 @@
-#! /usr/bin/env python3
-
-import unittest
 from queue import Queue
 import time
 
@@ -25,7 +22,7 @@ class CmdListener(IasLogListener):
         cmd = IasCommand.fromJSon(log)
         self.logs.put(cmd)
 
-class TestCommandSender(unittest.TestCase):
+class TestCommandSender():
     '''
     Test sending of comamnds from IasCommandSender.
 
@@ -36,7 +33,7 @@ class TestCommandSender(unittest.TestCase):
 
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         print("Setup")
         cls.received_cmds = Queue()
         cls.listener = CmdListener(cls.received_cmds)
@@ -59,7 +56,7 @@ class TestCommandSender(unittest.TestCase):
         else:
             print("Consumer subscribed")
     
-    def testSendASyncCommand(self):
+    def test_send_async_command(self):
         print("Prepare the command")
         dest = "CmdDest"
         cmd = IasCommandType.SET_LOG_LEVEL
@@ -73,12 +70,12 @@ class TestCommandSender(unittest.TestCase):
 
         # Wait for the cmd: raise exception if no cmd is received in time
         recv_cmd = TestCommandSender.received_cmds.get(block=True, timeout=60)
-        self.assertEqual(recv_cmd.command,cmd)
-        self.assertEqual(recv_cmd.destId, dest)
-        self.assertEqual(recv_cmd.senderFullRunningId,sender_frId)
-        self.assertEqual(int(recv_cmd.id), 1)
+        assert recv_cmd.command == cmd
+        assert recv_cmd.destId == dest
+        assert recv_cmd.senderFullRunningId == sender_frId
+        assert int(recv_cmd.id) == 1
 
-    def testSendASyncNoReply(self):
+    def test_send_async_no_reply(self):
         print("Prepare the command")
         dest = "CmdDest"
         cmd = IasCommandType.SET_LOG_LEVEL
@@ -89,9 +86,4 @@ class TestCommandSender(unittest.TestCase):
         cmd_sender = IasCommandSender(sender_frId, "sender_id_test", IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
         cmd_sender.set_up()
         reply = cmd_sender.send_sync(dest, cmd, params, props,timeout=0)
-        self.assertIsNone(reply)
-
-if __name__ == "__main__":
-    logger=Log.getLogger(__file__)
-    logger.info("Start main")
-    unittest.main()
+        assert reply is None

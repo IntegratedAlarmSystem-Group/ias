@@ -1,5 +1,3 @@
-#! /usr/bin/env python3
-import unittest
 import uuid
 import time
 
@@ -28,19 +26,15 @@ class HbListner(HeartbeatListener):
         print(hb.toJSON())
 
 
-class HbConsumerTest(unittest.TestCase):
+class HbConsumerTest():
 
     # The Kafka producer of HBs
     hbProducer: Producer = None
 
     @classmethod
-    def setUpClass(cls):
+    def setup_class(cls):
         conf = { 'bootstrap.servers': IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, 'client.id': "HbConsumerTest-Prod"}
         HbConsumerTest.hbProducer = Producer(conf)
-
-    @classmethod
-    def tearDownClass(cls):
-        pass
 
     @classmethod
     def pushHb(cls, hbm: HeartbeatMessage) -> None:
@@ -49,7 +43,7 @@ class HbConsumerTest(unittest.TestCase):
         HbConsumerTest.hbProducer.produce(topic=IasKafkaHelper.topics['hb'], value=hbMsgStr)
         HbConsumerTest.hbProducer.flush()
 
-    def testGetHbFromTopic(self):
+    def test_get_hb_from_topic(self):
         listener = HbListner()
         # Setup the consumer
         id = "HbClient-"+str(uuid.uuid4())
@@ -58,7 +52,7 @@ class HbConsumerTest(unittest.TestCase):
                                      id,
                                      listener)
         # Starts the consumer and wait for the assignet to the topic
-        self.assertTrue(hbConsumer.start(30))
+        assert hbConsumer.start(30)
 
         hb = IasHeartbeat(IasHeartbeatProducerType.CLIENT,"client_name","host_name")
         timestamp = Iso8601TStamp.now()
@@ -75,15 +69,10 @@ class HbConsumerTest(unittest.TestCase):
             print("Waiting HB...")
             time.sleep(.250)
 
-        self.assertEqual(len(listener.hbs), 1)
+        assert len(listener.hbs) == 1
         recvHb: HeartbeatMessage = listener.hbs[0]
-        self.assertEqual(recvHb.timestamp, timestamp)
-        self.assertEqual(recvHb.state, IasHeartbeatStatus.STARTING_UP)
-        self.assertEqual(recvHb.hbStringrepresentation, hb.stringRepr)
-        self.assertIsNone(recvHb.props)
+        assert recvHb.timestamp == timestamp
+        assert recvHb.state == IasHeartbeatStatus.STARTING_UP
+        assert recvHb.hbStringrepresentation == hb.stringRepr
+        assert recvHb.props is None
         hbConsumer.close()
-
-
-
-if __name__ == "__main__":
-    unittest.main()

@@ -2,59 +2,58 @@
 """
 Test the CdbFolders.py
 """
-import unittest
 import os
 import shutil
 
 from IasCdb.CdbFolders import CdbFolders, Folders
 
-class TestCdbFolders(unittest.TestCase):
+class TestCdbFolders():
     """
     Test CdbFolder.
 
     It uses a temporary folder (self.temp_dir) that is removed at end.
     """
-    def setUp(self):
+    def setup_method(self):
         self.temp_dir = "src/test/PyTestCDB"
         try:
             os.makedirs(os.path.join(self.temp_dir,"CDB"))
         except FileExistsError:
             # The folder should not exist: a leftover from a previous test?
             print(f"Warning: {os.path.join(self.temp_dir,'CDB')} should not exist")
-        self.assertTrue(os.path.join(self.temp_dir,"CDB"))
+        assert os.path.join(self.temp_dir,"CDB")
 
-    def tearDown(self):
+    def teardown_method(self):
         try:
             shutil.rmtree(self.temp_dir)
         except Exception as e: 
             print(f"Error deleting {os.path.join(self.temp_dir,'CDB')}:",e)
         pass 
 
-    def testStaticGetFolderNoCreation(self):
+    def test_static_get_folder_no_creation(self):
         folder = CdbFolders(Folders.SUPERVISOR, self.temp_dir).get_folder(False)
-        self.assertEqual("src/test/PyTestCDB/CDB/SUPERVISOR", folder)
+        assert "src/test/PyTestCDB/CDB/SUPERVISOR" == folder
         # Ensure the folder has not been created
-        self.assertFalse(os.path.isdir(folder))
+        assert not os.path.isdir(folder)
 
-    def testStaticGetAndCreate(self):
+    def test_static_get_and_create(self):
         folder = CdbFolders(Folders.SUPERVISOR, self.temp_dir).get_folder(True)
-        self.assertEqual("src/test/PyTestCDB/CDB/SUPERVISOR", folder)
+        assert "src/test/PyTestCDB/CDB/SUPERVISOR" == folder
         # Ensure the folder has not been created
-        self.assertTrue(os.path.exists(folder))
+        assert os.path.exists(folder)
 
-    def testCdbFolderObject(self):
+    def test_cdb_folder_object(self):
         """
         Test the methods of an object by calling its method
         """
         cdb_folder =  CdbFolders(Folders.DASU, self.temp_dir)
-        self.assertFalse(os.path.isdir(cdb_folder.get_folder(False)))
-        self.assertFalse(cdb_folder.exists())
-        self.assertTrue(os.path.isdir(cdb_folder.get_folder(True)))
-        self.assertTrue(cdb_folder.exists())
+        assert not os.path.isdir(cdb_folder.get_folder(False))
+        assert not cdb_folder.exists()
+        assert os.path.isdir(cdb_folder.get_folder(True))
+        assert cdb_folder.exists()
         cdb_folder.delete()
-        self.assertFalse(cdb_folder.exists())
+        assert not cdb_folder.exists()
     
-    def testStaticCreateFolders(self):
+    def test_static_create_folders(self):
         """
         Test the creation of the main structure of the CDB
         i.e. all the subfolders
@@ -62,7 +61,4 @@ class TestCdbFolders(unittest.TestCase):
         CdbFolders.create_folders(self.temp_dir)
         for folder in Folders:
             folder = CdbFolders(folder, self.temp_dir)
-            self.assertTrue(folder.exists())
-
-if __name__ == '__main__':
-    unittest.main()
+            assert folder.exists()

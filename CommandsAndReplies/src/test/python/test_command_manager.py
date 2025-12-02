@@ -1,7 +1,3 @@
-#! /usr/bin/env python3
-
-import unittest
-
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 from IASLogging.logConf import Log
 
@@ -24,7 +20,7 @@ class TestCmdListener(IasCommandListener):
             print("Got params", cmd.params)
             return IasCmdExitStatus.ERROR
 
-class TestCmdManager(unittest.TestCase):
+class TestCmdManager():
     """
     Test the IasCommandSender and the IasCommandManager together:
         - the command sender sends messages that are read buy the command manager
@@ -32,13 +28,8 @@ class TestCmdManager(unittest.TestCase):
         - the command manager sends the reply of the execution of the command to the command sender
         - the command sender gets the reply
     """
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
-    def testSendASyncReply(self):
+    
+    def test_send_async_reply(self):
         print("Prepare the command")
         cmd_mgr_id = "CmdManagerId"
         cmd_mgr = IasCmdManagerKafka(cmd_mgr_id, TestCmdListener())
@@ -54,10 +45,10 @@ class TestCmdManager(unittest.TestCase):
         cmd_sender = IasCommandSender(sender_frId, "sender_id_test", IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
         cmd_sender.set_up()
         reply = cmd_sender.send_sync(dest, cmd, params, props,timeout=30)
-        self.assertIsNotNone(reply)
-        self.assertEqual(reply.id,'1')
-        self.assertEqual(reply.command, cmd)
-        self.assertEqual(reply.exitStatus, IasCmdExitStatus.OK)
+        assert reply is not None
+        assert reply.id == '1'
+        assert reply.command == cmd
+        assert reply.exitStatus == IasCmdExitStatus.OK
 
         # Send a command but not interestyed in reply
         cmd = IasCommandType.PING
@@ -66,22 +57,16 @@ class TestCmdManager(unittest.TestCase):
         # Send another command and wait to check if we got the right reply
         cmd = IasCommandType.TF_CHANGED
         reply = cmd_sender.send_sync(dest, cmd, params, props,timeout=30)
-        self.assertIsNotNone(reply)
-        self.assertEqual(reply.id,'3')
-        self.assertEqual(reply.command, cmd)
-        self.assertEqual(reply.exitStatus, IasCmdExitStatus.OK)
+        assert reply is not None
+        assert reply.id == '3'
+        assert reply.command == cmd
+        assert reply.exitStatus == IasCmdExitStatus.OK
 
         # Send another command with no params
         # To check if params are correctly received, the listener of command sets an exit code
         cmd = IasCommandType.TF_CHANGED
         reply = cmd_sender.send_sync(dest, cmd, [], props,timeout=30)
-        self.assertIsNotNone(reply)
-        self.assertEqual(reply.id,'4')
-        self.assertEqual(reply.command, cmd)
-        self.assertEqual(reply.exitStatus, IasCmdExitStatus.ERROR)
-
-
-if __name__ == "__main__":
-    logger=Log.getLogger(__file__)
-    logger.info("Start main")
-    unittest.main()
+        assert reply is not None
+        assert reply.id == '4'
+        assert reply.command == cmd
+        assert reply.exitStatus == IasCmdExitStatus.ERROR

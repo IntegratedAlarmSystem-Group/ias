@@ -26,3 +26,13 @@ tasks.test {
             exclude("org/eso/ias/kafkautils/test/**")
             exclude("org/eso/ias/kafkaneo/test/consumer/**")
 }
+
+tasks.named("pytest").configure {
+    dependsOn(project(":Tools").tasks.named("build"))
+    dependsOn(project(":BasicTypes").tasks.named("build"))
+}
+
+tasks.named("pytest").configure {
+    dependsOn(project(":Tools").tasks.named("build"))
+    dependsOn(project(":BasicTypes").tasks.named("build"))
+}

@@ -5,22 +5,16 @@ Created on Mar 17, 2020
 @author: acaproni
 '''
 
-import unittest
+from logging import Logger
 from os import environ, path, mkdir
 from shutil import rmtree
 
 from IASLogging.logConf import Log
 from IASTools.CommonDefs import CommonDefs
 
-class TestCommonDefs(unittest.TestCase):
+class TestCommonDefs():
 
-    iasExtJarsEnvVar = environ['IAS_EXTERNAL_JARS']
-
-    extJarsDirs = iasExtJarsEnvVar.split(":")
-
-    baseFileName = "test"
-
-    jarExtension = ".jar"
+    
 
     # The list of the jars created into the external jars folders
     jars = []
@@ -36,45 +30,55 @@ class TestCommonDefs(unittest.TestCase):
         return name
 
     @classmethod
-    def setUpClass(cls):
-        logger.info("Using ext jars folders %s",str(TestCommonDefs.extJarsDirs))
+    def setup_class(cls):
+        cls.Logger = Log.getLogger(__file__)
+
+        # Steth the environment variable IAS_EXTERNAL_JARS
+        pwd = environ['PWD']
+        environ['IAS_EXTERNAL_JARS']=f"{pwd}/externalJars1:{pwd}/externalJars2"
+
+        cls.iasExtJarsEnvVar = environ['IAS_EXTERNAL_JARS']
+
+        cls.extJarsDirs = cls.iasExtJarsEnvVar.split(":")
+
+        cls.baseFileName = "test"
+
+        cls.jarExtension = ".jar"
+
+        cls.Logger.info("Using ext jars folders %s",str(cls.extJarsDirs))
+
         t = 1
-        for folder in TestCommonDefs.extJarsDirs:
+        for folder in cls.extJarsDirs:
             if not path.exists(folder):
-                logger.info('Creating folder %s',folder)
+                cls.Logger.info('Creating folder %s',folder)
                 mkdir(folder)
-                logger.info("Adding a JAR to %s",folder)
-                addedJar = TestCommonDefs.addJar(
+                cls.Logger.info("Adding a JAR to %s",folder)
+                addedJar = cls.addJar(
                     folder,
-                    TestCommonDefs.baseFileName+str(t),
-                    TestCommonDefs.jarExtension)
-                TestCommonDefs.jars.append(addedJar)
-                logger.info("File %s added", addedJar)
+                    cls.baseFileName+str(t),
+                    cls.jarExtension)
+                cls.jars.append(addedJar)
+                cls.Logger.info("File %s added", addedJar)
                 t = t + 1
             else:
-                logger.error("Folder %s already exists", folder)
-        logger.info("Jar in IAS_EXTERNAL_JARS to check %s",str(TestCommonDefs.jars))
+                cls.Logger.error("Folder %s already exists", folder)
+        cls.Logger.info("Jar in IAS_EXTERNAL_JARS to check %s",str(cls.jars))
         
 
     @classmethod
-    def tearDownClass(cls):
-        for folder in  TestCommonDefs.extJarsDirs:
+    def teardown_class(cls):
+        for folder in  cls.extJarsDirs:
             if path.exists(folder):
-                logger.info('Deleting folder %s',folder)
+                cls.Logger.info('Deleting folder %s',folder)
                 rmtree(folder)
             else:
-                logger.error("Folder %s NOT found", folder)
+                cls.Logger.error("Folder %s NOT found", folder)
 
-    def testImportOfExtJars(self):
+    def test_import_ext_jars(self):
         ''' Checks if the jars in the IAS_EXTERNAL_JARS folders are added to the classpath '''
-        logger.info("Importing of external jar from %s",str(TestCommonDefs.extJarsDirs))
-        self.assertEqual(len(TestCommonDefs.extJarsDirs), 2)
+        TestCommonDefs.Logger.info("Importing of external jar from %s",str(TestCommonDefs.extJarsDirs))
+        assert len(TestCommonDefs.extJarsDirs) == 2
         cp = CommonDefs.buildClasspath()
-        logger.info("Classpath = %s",cp)
+        TestCommonDefs.Logger.info("Classpath = %s",cp)
         for jar in TestCommonDefs.jars:
-            self.assertTrue(jar in cp)
-
-if __name__ == '__main__':
-    logger=Log.getLogger(__file__)
-    logger.info("Start main")
-    unittest.main()
+            assert jar in cp

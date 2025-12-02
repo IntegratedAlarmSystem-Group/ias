@@ -4,7 +4,6 @@ Test the IasKafkaHelper
 '''
 import random
 import string
-import unittest
 from IASLogging.logConf import Log
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 
@@ -18,11 +17,11 @@ def generate_random_string(length=10):
     return ''.join(random.choice(characters) for _ in range(length))
 
 
-class TestKafkaHelper(unittest.TestCase):
+class TestKafkaHelper():
     LOGGER = Log.getLogger(__name__)
     KAFKA_BROKERS = IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS
 
-    def testTopiCreation(self):
+    def test_topic_creation(self):
         '''
         Check the creation of a topic that does not yet already exist
         '''
@@ -32,19 +31,15 @@ class TestKafkaHelper(unittest.TestCase):
         TestKafkaHelper.LOGGER.info("Creating topic with random name %s", topic_name)
 
         # Ensure the topic does not yet exist
-        self.assertFalse(IasKafkaHelper.topicExists(topic_name, TestKafkaHelper.KAFKA_BROKERS))
+        assert not IasKafkaHelper.topicExists(topic_name, TestKafkaHelper.KAFKA_BROKERS)
 
         # Create the topic
-        self.assertTrue(IasKafkaHelper.createTopic(topic_name, TestKafkaHelper.KAFKA_BROKERS))
+        assert IasKafkaHelper.createTopic(topic_name, TestKafkaHelper.KAFKA_BROKERS)
         TestKafkaHelper.LOGGER.info("Topic %s created", topic_name)
 
         # Ensure the topic exists
-        self.assertTrue(IasKafkaHelper.topicExists(topic_name, TestKafkaHelper.KAFKA_BROKERS))
+        assert IasKafkaHelper.topicExists(topic_name, TestKafkaHelper.KAFKA_BROKERS)
 
         # Delete the topic
         TestKafkaHelper.LOGGER.info("Topic %s deleted", topic_name)
-        self.assertTrue(IasKafkaHelper.deleteTopic(topic_name, TestKafkaHelper.KAFKA_BROKERS))
-
-if __name__ == "__main__":
-    unittest.main()
-
+        assert IasKafkaHelper.deleteTopic(topic_name, TestKafkaHelper.KAFKA_BROKERS)

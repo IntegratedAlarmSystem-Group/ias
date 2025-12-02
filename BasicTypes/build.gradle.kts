@@ -39,3 +39,8 @@ sourceSets {
 tasks.test {
             useJUnitPlatform()
 }
+
+tasks.named("pytest").configure {
+    dependsOn(project(":Tools").tasks.named("build"))
+}
+

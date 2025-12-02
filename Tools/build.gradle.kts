@@ -39,3 +39,4 @@ sourceSets {
 tasks.test {
             useJUnitPlatform()
 }
+

@@ -14,11 +14,11 @@ class TestTextFileType():
     def teardown_method(self):
         pass
 
-    def test_get_cdb_type(self):
+    def testGetCdbType(self):
         assert TextFileType.get_cdb_type(self.json_cdb) == FileType.JSON
         assert TextFileType.get_cdb_type(self.yaml_cdb) == FileType.YAML
 
-    def test_get_type_from_file(self):
+    def testGetTypeFromFile(self):
         assert TextFileType.from_file("test.json") == FileType.JSON
         assert TextFileType.from_file("test.yaml") == FileType.YAML
         assert TextFileType.from_file("test.txt") is None

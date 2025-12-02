@@ -1,4 +1,3 @@
-#! /usr/bin/env python3
 '''
 Test for UdpPlugin
 
@@ -6,7 +5,6 @@ Created on May 9, 2018
 
 @author: acaproni
 '''
-import unittest
 import socket
 import time
 from threading import Thread
@@ -48,32 +46,32 @@ class MessageReceiver(Thread):
             print("Message received: "+jsonMsg) 
             
 
-class TestUdpPlugin(unittest.TestCase):
+class TestUdpPlugin():
     
     HOST = 'localhost'
     PORT = 10001
     
-    def setUp(self):
+    def setup_method(self):
         self.receiver = MessageReceiver()
         self.receiver.setUp()
         self.plugin = UdpPlugin(TestUdpPlugin.HOST, TestUdpPlugin.PORT)
         
         
-    def tearDown(self):
+    def teardown_method(self):
         self.plugin.shutdown()
         self.receiver.tearDown()
         ## Give time to close the UDP socket before next iteration
         time.sleep(2*UdpPlugin.SENDING_TIME_INTERVAL) 
     
-    def testDoesNotSendIfNotStarted(self):
+    def test_does_not_send_if_not_started(self):
         '''
         Test if the plugin send nothing before being started
         '''
         self.plugin.submit("MPoint-ID", 123, IASType.INT)
         time.sleep(2*UdpPlugin.SENDING_TIME_INTERVAL)
-        self.assertEqual(len(self.receiver.msgReceived),0)
+        assert len(self.receiver.msgReceived) == 0
         
-    def testSendIfStarted(self):
+    def test_send_if_started(self):
         '''
         Test that the plugin send a monitor point to the UDP after 
         being started
@@ -81,9 +79,9 @@ class TestUdpPlugin(unittest.TestCase):
         self.plugin.start()
         self.plugin.submit("MPoint-ID", 123, IASType.INT)
         time.sleep(2*UdpPlugin.SENDING_TIME_INTERVAL)
-        self.assertEqual(len(self.receiver.msgReceived),1)
+        assert len(self.receiver.msgReceived) == 1
         
-    def testSentValue(self):
+    def test_sent_value(self):
         '''
         Test that the plugin effectively sent what has been submitted
         '''
@@ -92,7 +90,7 @@ class TestUdpPlugin(unittest.TestCase):
         self.plugin.submit("MPoint-IDOpMode", 5, IASType.INT,operationalMode=OperationalMode.MAINTENANCE)
         self.plugin.submit("MPoint-Alarm", Alarm.get_initial_alarmstate(Priority.CRITICAL).set(), IASType.ALARM,operationalMode=OperationalMode.DEGRADED)
         time.sleep(2*UdpPlugin.SENDING_TIME_INTERVAL)
-        self.assertEqual(len(self.receiver.msgReceived),3)
+        assert len(self.receiver.msgReceived) == 3
         dict = {}
         for jmsg in self.receiver.msgReceived:
             msg = JsonMsg.parse(jmsg)
@@ -100,24 +98,19 @@ class TestUdpPlugin(unittest.TestCase):
             
         
         m = dict["MPoint-ID"]
-        self.assertEqual(m.mPointID,"MPoint-ID")
-        self.assertEqual(m.value,2.3)
-        self.assertEqual(m.valueType,IASType.DOUBLE)
-        self.assertIsNone(m.operationalMode)
+        assert m.mPointID == "MPoint-ID"
+        assert m.value == 2.3
+        assert m.valueType == IASType.DOUBLE
+        assert m.operationalMode is None
         
         m = dict["MPoint-IDOpMode"]
-        self.assertEqual(m.mPointID,"MPoint-IDOpMode")
-        self.assertEqual(m.value,5)
-        self.assertEqual(m.valueType,IASType.INT)
-        self.assertEqual(m.operationalMode,OperationalMode.MAINTENANCE)
+        assert m.mPointID == "MPoint-IDOpMode"
+        assert m.value == 5
+        assert m.valueType == IASType.INT
+        assert m.operationalMode == OperationalMode.MAINTENANCE
         
         m = dict["MPoint-Alarm"]
-        self.assertEqual(m.mPointID, "MPoint-Alarm")
-        self.assertEqual(m.value, Alarm.get_initial_alarmstate(Priority.CRITICAL).set())
-        self.assertEqual(m.valueType, IASType.ALARM)
-        self.assertEqual(m.operationalMode, OperationalMode.DEGRADED)
-        
-
-if __name__ == '__main__':
-    unittest.main()
-
+        assert m.mPointID == "MPoint-Alarm"
+        assert m.value == Alarm.get_initial_alarmstate(Priority.CRITICAL).set()
+        assert m.valueType == IASType.ALARM
+        assert m.operationalMode == OperationalMode.DEGRADED

@@ -45,5 +45,8 @@ tasks.test {
             // To be moved in integration tests because it requires iasRun to build te path when 
             // IAS_EXTERNAL_JARS is set
             exclude("**/CdbReaderFactoryTest.class")
-            ignoreFailures = true
+}
+
+tasks.named("pytest").configure {
+    dependsOn(project(":BasicTypes").tasks.named("build"))
 }

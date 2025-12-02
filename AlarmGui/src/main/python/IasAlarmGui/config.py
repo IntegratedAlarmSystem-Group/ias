@@ -13,14 +13,6 @@ class Config:
 
     Parameters passed through the command line takes precedence over those read from environment variables    
     """
-    
-    # The path of the CDB read from the environment variable or None if not defined
-    CDB_FROM_ENV: str|None = os.environ.get("IAS_CDB")
-
-    # The URL of the kafka brokers from the environment or None if not defined
-    BSDB_URL_ENV: str|None = os.environ.get("KAFKA_BROKERS")
-
-    
 
     def __init__(self, ias_cdb_cmd_line: str|None) -> None:
         """
@@ -33,9 +25,15 @@ class Config:
         # The logger
         self.logger = Log.getLogger(__file__)
 
+        # The path of the CDB read from the environment variable or None if not defined
+        self.CDB_FROM_ENV: str|None = os.environ.get("IAS_CDB")
+
+        # The URL of the kafka brokers from the environment or None if not defined
+        self.BSDB_URL_ENV: str|None = os.environ.get("KAFKA_BROKERS")
+
         # The CDB folder read from the command line or from environment variable
         # It is None if no CDB folder can be retrieved from command line or the environment
-        self._ias_cdb: str|None = ias_cdb_cmd_line if ias_cdb_cmd_line else Config.CDB_FROM_ENV
+        self._ias_cdb: str|None = ias_cdb_cmd_line if ias_cdb_cmd_line else self.CDB_FROM_ENV
 
         self.logger.debug("IAS CDB path is %s", self._ias_cdb)
 
@@ -91,9 +89,9 @@ class Config:
             self.logger.debug("Using BSDB URL from CDB: %s", url)
             return url
         
-        self.logger.debug("Using BSDB URL from environment variable: %s", Config.BSDB_URL_ENV)
-        if Config.BSDB_URL_ENV:
-            return Config.BSDB_URL_ENV
+        self.logger.debug("Using BSDB URL from environment variable: %s", self.BSDB_URL_ENV)
+        if self.BSDB_URL_ENV:
+            return self.BSDB_URL_ENV
 
         self.logger.debug("Using default BSDB URL: %s", default_bsdb)
         return default_bsdb

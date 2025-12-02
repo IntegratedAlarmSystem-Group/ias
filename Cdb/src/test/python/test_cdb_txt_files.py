@@ -1,108 +1,103 @@
-#! /usr/bin/env python3
 """
 Test the CdbTxtFiles.py
 """
-import unittest
 import pathlib
 
 from IasCdb.CdbTxtFiles import CdbTxtFiles
 from IasCdb.TextFileType import FileType
 
-class TestCdbFiles(unittest.TestCase):
+class TestCdbFiles():
 
-    def setUp(self):
+    def setup_method(self):
         self.json_cdb = "src/test/testJsonCdb/"
         self.yaml_cdb = "src/test/testYamlCdb"
 
-    def tearDown(self):
+    def teardown_method(self):
         pass
 
-    def testGetJsonIas(self):
+    def test_get_Json_ias(self):
         reader = CdbTxtFiles(self.json_cdb, FileType.JSON)
         file_path=reader.get_ias_file_path()
-        self.assertTrue(pathlib.Path(file_path))
+        assert pathlib.Path(file_path)
 
-    def testGetYamlIas(self):
+    def test_get_Yaml_ias(self):
         reader = CdbTxtFiles(self.json_cdb, FileType.YAML)
         file_path=reader.get_ias_file_path()
-        self.assertTrue(pathlib.Path(file_path))
+        assert pathlib.Path(file_path)
 
-    def testGetJsonSuperv(self):
+    def test_get_json_superv(self):
         reader = CdbTxtFiles(self.json_cdb, FileType.JSON)
         file_path=reader.get_supervisor_file_path("Supervisor-ID1")
-        self.assertTrue(pathlib.Path(file_path))
+        assert pathlib.Path(file_path)
 
-    def testGetYamlSuperv(self):
+    def test_get_yaml_superv(self):
         reader = CdbTxtFiles(self.json_cdb, FileType.YAML)
         file_path=reader.get_supervisor_file_path("Supervisor-ID1")
-        self.assertTrue(pathlib.Path(file_path))
+        assert pathlib.Path(file_path)
 
 
-    def testGetJsonDasu(self):
+    def test_get_json_dasu(self):
         reader = CdbTxtFiles(self.json_cdb, FileType.JSON)
         file_path=reader.get_supervisor_file_path("DasuID2")
-        self.assertTrue(pathlib.Path(file_path))
+        assert pathlib.Path(file_path)
 
-    def testGetYamlDasu(self):
+    def test_get_yaml_dasu(self):
         reader = CdbTxtFiles(self.json_cdb, FileType.YAML)
         file_path=reader.get_supervisor_file_path("DasuID2")
-        self.assertTrue(pathlib.Path(file_path))
+        assert pathlib.Path(file_path)
 
-    def testGetJsonAsce(self):
+    def test_get_json_asce(self):
         reader = CdbTxtFiles(self.json_cdb, FileType.JSON)
         file_path=reader.get_supervisor_file_path("ASCE-WITH-TEMPLATED-INPUTS")
-        self.assertTrue(pathlib.Path(file_path))
+        assert pathlib.Path(file_path)
 
-    def testGetYamlAsce(self):
+    def test_get_yaml_asce(self):
         reader = CdbTxtFiles(self.json_cdb, FileType.YAML)
         file_path=reader.get_supervisor_file_path("ASCE-WITH-TEMPLATED-INPUTS")
-        self.assertTrue(pathlib.Path(file_path))
+        assert pathlib.Path(file_path)
 
-    def testGetJsonIasio(self):
+    def test_get_json_iasio(self):
         reader = CdbTxtFiles(self.json_cdb, FileType.JSON)
         file_path=reader.get_iasio_file_path()
-        self.assertTrue(pathlib.Path(file_path))
+        assert pathlib.Path(file_path)
 
-    def testGetYamlIasio(self):
+    def test_get_yaml_iasio(self):
         reader = CdbTxtFiles(self.json_cdb, FileType.YAML)
         file_path=reader.get_iasio_file_path()
-        self.assertTrue(pathlib.Path(file_path))
+        assert pathlib.Path(file_path)
 
-    def testGetJsonTf(self):
+    def test_get_json_tf(self):
         reader = CdbTxtFiles(self.json_cdb, FileType.JSON)
         file_path=reader.get_tf_file_path()
-        self.assertTrue(pathlib.Path(file_path))
+        assert pathlib.Path(file_path)
 
-    def testGetYamlTf(self):
+    def test_get_yaml_tf(self):
         reader = CdbTxtFiles(self.json_cdb, FileType.YAML)
         file_path=reader.get_tf_file_path()
-        self.assertTrue(pathlib.Path(file_path))
+        assert pathlib.Path(file_path)
     
-    def testGetJsonClient(self):
+    def test_get_json_client(self):
         reader = CdbTxtFiles(self.json_cdb, FileType.JSON)
         file_path=reader.get_client_file_path("test")
-        self.assertTrue(pathlib.Path(file_path))
+        assert pathlib.Path(file_path)
 
-    def testGetYamlClient(self):
+    def test_get_yaml_client(self):
         reader = CdbTxtFiles(self.json_cdb, FileType.YAML)
         file_path=reader.get_client_file_path("test")
-        self.assertTrue(pathlib.Path(file_path))
+        assert pathlib.Path(file_path)
 
-    def testGetJsonPlugin(self):
+    def test_get_json_plugin(self):
         reader = CdbTxtFiles(self.json_cdb, FileType.JSON)
         file_path=reader.get_plugin_file_path("PluginID2")
-        self.assertTrue(pathlib.Path(file_path))
+        assert pathlib.Path(file_path)
 
-    def testGetYamlPlugin(self):
+    def test_get_yaml_plugin(self):
         reader = CdbTxtFiles(self.json_cdb, FileType.YAML)
         file_path=reader.get_plugin_file_path("PluginID2")
-        self.assertTrue(pathlib.Path(file_path))
+        assert pathlib.Path(file_path)
 
-    def testGuessingCdbType(self):
+    def test_guessing_cdb_type(self):
         j_reader = CdbTxtFiles.from_folder(self.json_cdb)
-        self.assertEqual(j_reader.files_type, FileType.JSON)
+        assert j_reader.files_type == FileType.JSON
         y_reader = CdbTxtFiles.from_folder(self.yaml_cdb)
-        self.assertEqual(y_reader.files_type, FileType.YAML)
-
-if __name__ == '__main__':
-    unittest.main()
+        assert y_reader.files_type == FileType.YAML
