@@ -117,3 +117,34 @@ subprojects {
         }
     }
 }
+
+
+val verifyTestResults = tasks.register("verifyTestResults") {
+    group = "verification"
+    description = "Check JUnit XML reports and list files with failures or errors"
+    doLast {
+        val xmlFiles = rootProject.allprojects.flatMap { p ->
+            val dir = p.layout.buildDirectory.dir("test-results").get().asFile
+            dir.walk().filter { it.isFile && it.extension == "xml" }.toList()
+        }
+
+        val failedFiles = xmlFiles.filter { file ->
+            val content = file.readText()
+            content.contains("<failure") || content.contains("<error")
+        }
+
+        if (failedFiles.isNotEmpty()) {
+            println("❌ Test failures detected in the following XML files:")
+            failedFiles.forEach { println(" - ${it.absolutePath}") }
+            throw GradleException("Some tests failed. Check reports above.")
+        } else {
+            println("✅ All tests passed. No failures or errors found.")
+        }
+    }
+}
+
+
+tasks.named("build") {
+    finalizedBy(verifyTestResults)
+}
+
