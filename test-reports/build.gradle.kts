@@ -21,14 +21,12 @@ dependencies {
     
     aggregatedModules.forEach { moduleName ->
         val otherProject = findProject(":$moduleName")
-        if (otherProject != null && (otherProject.pluginManager.hasPlugin("java") || otherProject.pluginManager.hasPlugin("scala"))) {
+        if (
+            otherProject != null &&
+            (otherProject.pluginManager.hasPlugin("java") || otherProject.pluginManager.hasPlugin("scala") || otherProject.pluginManager.hasPlugin("pytest"))) {
             testReportAggregation(otherProject)
         }
     }
-
-
-    // testReportAggregation(project(":Cdb"))
-    testReportAggregation(project(":TransferFunctions"))
 }
 
 

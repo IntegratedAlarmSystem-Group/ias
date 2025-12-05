@@ -22,11 +22,7 @@ dependencies {
 }
 
 tasks.test {
-            useJUnitPlatform()
-            // Exclude integration tests
-            exclude("**/TestCommandSender.class")
-            exclude("**/TestCommandManager.class")
-
+    useJUnitPlatform()
 }
 
 tasks.named("pytest").configure {

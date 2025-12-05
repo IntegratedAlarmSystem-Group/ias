@@ -30,7 +30,4 @@ dependencies {
 
 tasks.test {
             useJUnitPlatform()
-            exclude("**/SupervisorWithKafkaTest.class")
-            exclude("**/TestSupervisorTfChanged.class")
-            exclude("**/TestAck.class")
 }

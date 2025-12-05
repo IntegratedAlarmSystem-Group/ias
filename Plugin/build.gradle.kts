@@ -45,8 +45,6 @@ distributions {
 
 tasks.test {
             useJUnitPlatform()
-            exclude("**/KafkaPublisherTest.class")
-
             // To cope with system properties set statically in PublisherMaxBufferSizeTest
             forkEvery = 1
 }

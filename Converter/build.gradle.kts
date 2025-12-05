@@ -29,5 +29,4 @@ dependencies {
 
 tasks.test {
             useJUnitPlatform()
-            exclude("**/TestKafkaStreaming.class")
 }

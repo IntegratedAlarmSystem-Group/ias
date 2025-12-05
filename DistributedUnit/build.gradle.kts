@@ -25,6 +25,4 @@ dependencies {
 
 tasks.test {
             useJUnitPlatform()
-            /// Exclude integration tests
-            exclude("**/DasuWithKafkaPubSubTest.class")
 }

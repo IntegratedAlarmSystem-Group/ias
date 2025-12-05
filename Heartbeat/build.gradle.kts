@@ -40,7 +40,4 @@ sourceSets {
 
 tasks.test {
             useJUnitPlatform()
-
-            exclude("**/TestKafkaPublisher.class")
-            exclude("**/TestHbsCollector.class")
 }

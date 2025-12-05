@@ -31,6 +31,10 @@ sourceSets {
         }
     }
     test {
+        java {
+            setSrcDirs(listOf("src/test/java")) // explicitly include Java
+        }
+
         scala {
             setSrcDirs(listOf("src/test/scala"))
         }
@@ -38,5 +42,11 @@ sourceSets {
 }
 
 tasks.test {
-            useJUnitPlatform()
+    
+environment("PYTHONPATH", listOf(
+        "/home/acaproni/ias/CompElement/src/main/python",
+        "/home/acaproni/venv/lib64/python3.12/site-packages"
+    ).joinToString(":"))
+    environment("PYTHONHOME", "/home/acaproni/venv")
+    useJUnitPlatform()
 }

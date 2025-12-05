@@ -47,5 +47,4 @@ sourceSets {
 
 tasks.test {
             useJUnitPlatform()
-            exclude ("**/HbAlarmGenerationTest.class")
 }

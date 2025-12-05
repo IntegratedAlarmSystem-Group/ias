@@ -30,9 +30,3 @@ dependencies {
     testImplementation(extension.extra["junit-jupiter"].toString())
     testImplementation(extension.extra["scalatest"].toString())
 }
-
-tasks.test {
-            useJUnitPlatform()
-            exclude("org/eso/ias/webserversender/**")
-}
-
