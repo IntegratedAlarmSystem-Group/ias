@@ -33,34 +33,12 @@ val subprojectsList = listOf(
     "SinkClient",
     "Extras",
     "Monitor",
-    "AlarmGui"
+    "AlarmGui",
+    "test-reports"
 )
 
 // INclude all the projects in subprojectsList plust test-reports
 include(*subprojectsList.toTypedArray(), "test-reports")
-
-// include(
-// 	"Tools",
-// 	"Cdb",
-// 	"BasicTypes",
-// 	"CdbChecker",
-// 	"KafkaUtils",
-// 	"Heartbeat",
-// 	"CommandsAndReplies",
-// 	"Plugin",
-// 	"PythonPluginFeeder",
-// 	"Converter",
-// 	"CompElement",
-// 	"DistributedUnit",
-// 	"Supervisor",
-// 	"WebServerSender",
-// 	"TransferFunctions",
-// 	"SinkClient",
-// 	"Extras",
-// 	"Monitor",
-// 	"AlarmGui",
-// 	"test-reports")
-
 
 // Expose as Gradle property so that it can be used in test-reports
 gradle.extra["aggregatedModules"] = subprojectsList
