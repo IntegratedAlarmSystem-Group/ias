@@ -193,46 +193,6 @@ open class IasBuild : Plugin<Project> {
             exclude("ias*.jar")
         }
 
-        // Copy python test scripts in build/bin
-        // val pyTestScripts = project.tasks.register<Copy>("CopyPyTestScripts") {
-        //     val pyFolder = "src/test/python"
-        //     val destFolder = "bin"
-
-        //     from(project.layout.projectDirectory.dir(pyFolder))
-        //     include("*.py")
-        //     rename { filename: String ->
-        //         filename.substringBefore('.')
-        //     }
-            
-        //     into(project.layout.buildDirectory.dir(destFolder))
-
-        //     // Set file permissions directly
-        //     filePermissions {
-        //         user {
-        //             read = true
-        //             execute = true
-        //         }
-        //         group {
-        //             read = true
-        //             execute = true
-        //         }
-        //         other.execute = true
-        //     }
-
-        // }
-
-        // Copy python test modules
-        // i.e. each folder in src/test/python
-        // val pyTestModules = project.tasks.register<Copy>("CopyPyTestMods") {
-        //     val srcFolder = "src/test/python"
-
-        //     from(project.layout.projectDirectory.dir(srcFolder))
-        //     include("**/*.py")
-        //     exclude("*.py")
-        //     val destFolder = "lib/python${pythonVersion}/site-packages"
-        //     into(project.layout.buildDirectory.dir(destFolder))
-        // }
-
         // Build PySide6 code like .ui and .qrc by delegating to GuiBuilder
         val pyside6GuiBuilder = project.tasks.register("GuiBuilder") {
             dependsOn(pyModules)
@@ -288,7 +248,7 @@ open class IasBuild : Plugin<Project> {
             // the base plugin instead of java or scala. In this case, 
             // we add it. In case distTar exists, an exception
             // is thrown but there is nothing to do
-            project.tasks.create("distTar") 
+            project.tasks.register("distTar") 
         } catch (e: Exception) {}
 
         
@@ -299,50 +259,6 @@ open class IasBuild : Plugin<Project> {
         buildTask.finalizedBy(copyExtLibs)
         // buildTask.finalizedBy(pyTestScripts)
         // buildTask.finalizedBy(pyTestModules)
-
-        // val runIasUnitTestsTask = project.tasks.register<Exec>("iasUnitTest") {
-        //     dependsOn(":build", pyTestScripts)
-        //     onlyIf {
-        //         val testFolder = project.layout.projectDirectory.dir("src/test")
-        //         if (testFolder.getAsFile().exists()) {
-        //             val testFile = testFolder.file("runTests.sh").getAsFile()
-        //             val cond = testFile.exists()
-        //             if (!cond) {
-        //                 logger.warn("Test file missing {}",testFile.getPath())    
-        //             }
-        //             cond
-        //         } else {
-        //             logger.warn("Test folder missing {}",testFolder.getAsFile().getPath())
-        //             false
-        //         }
-        //     }
-        //     commandLine("src/test/runTests.sh")
-        // }
-
-        // val runIasIntTestsTask = project.tasks.register<Exec>("iasIntTest") {
-        //     dependsOn(":build", pyTestScripts)
-        //     onlyIf {
-        //         val testFolder = project.layout.projectDirectory.dir("src/test")
-        //         if (testFolder.getAsFile().exists()) {
-        //             val testFile = testFolder.file("runIntTests.sh").getAsFile()
-        //             val cond = testFile.exists()
-        //             if (!cond) {
-        //                 logger.warn("Test file missing {}",testFile.getPath())    
-        //             }
-        //             cond
-        //         } else {
-        //             logger.warn("Test folder missing {}",testFolder.getAsFile().getPath())
-        //             false
-        //         }
-        //     }
-        //     commandLine("src/test/runIntTests.sh")
-        // }
-
-        // val runIasTests = project.tasks.register("iasTest") {
-        //     dependsOn(runIasUnitTestsTask)
-        //     dependsOn(runIasIntTestsTask)
-        // }
-
 
         project.tasks.withType<JavaCompile>().configureEach {
             options.isDeprecation = true
