@@ -5,8 +5,6 @@ plugins {
 import java.nio.file.StandardCopyOption
 import java.nio.file.Files
 import java.io.File
-import org.gradle.api.tasks.testing.Test
-import org.gradle.api.tasks.testing.TestReport
 
 fun checkIntegrity(): Boolean {
     var envVar: String? = System.getenv("IAS_ROOT")
@@ -66,10 +64,13 @@ subprojects {
             // Run after Java/Scala tests only if 'test' task exists
             if (tasks.names.contains("test")) {
                 mustRunAfter(tasks.named("test"))
+            } else {
+                // Otherwise, run after 'assemble'
+                mustRunAfter(tasks.named("assemble"))
             }
 
             // Ensure pytest runs after assemble (ordering only)
-            mustRunAfter(tasks.named("assemble"))
+            //mustRunAfter(tasks.named("assemble"))
 
             // If CopyPyMods exists, order after it
             if (tasks.names.contains("CopyPyMods")) {
@@ -100,7 +101,7 @@ subprojects {
             commandLine(
                 "pytest",
                 "src/test/python",
-                "--junitxml=${layout.buildDirectory.dir("test-results/pytest").get().asFile}/pytest-results.xml"
+                "--junitxml=${layout.buildDirectory.dir("test-results/pytest").get().asFile}/TEST-${project.name}-pytest.xml"
             )
         }
 
@@ -118,14 +119,18 @@ subprojects {
     }
 }
 
-
 val verifyTestResults = tasks.register("verifyTestResults") {
     group = "verification"
     description = "Check JUnit XML reports and list files with failures or errors"
+
     doLast {
         val xmlFiles = rootProject.allprojects.flatMap { p ->
             val dir = p.layout.buildDirectory.dir("test-results").get().asFile
-            dir.walk().filter { it.isFile && it.extension == "xml" }.toList()
+            if (dir.exists()) {
+                dir.walk().filter { it.isFile && it.extension == "xml" }.toList()
+            } else {
+                emptyList()
+            }
         }
 
         val failedFiles = xmlFiles.filter { file ->
@@ -144,7 +149,16 @@ val verifyTestResults = tasks.register("verifyTestResults") {
 }
 
 
+
+allprojects {
+    // Some projects may not have a 'check' task (e.g., purely custom projects),
+    // so use matching/configureEach to bind only where it exists.
+    tasks.matching { it.name == "check" }.configureEach {
+        finalizedBy(verifyTestResults)
+    }
+}
+
+
 tasks.named("build") {
     finalizedBy(verifyTestResults)
 }
-
