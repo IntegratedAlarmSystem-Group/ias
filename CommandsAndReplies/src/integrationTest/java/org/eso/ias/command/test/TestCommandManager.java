@@ -105,7 +105,7 @@ public class TestCommandManager implements
      * @see {@link AutoCloseable#close()}
      */
     @Override
-    public void close() throws InterruptedException { }
+    public void close() { }
 
     @BeforeAll
     public static void setUpAll() throws Exception {
