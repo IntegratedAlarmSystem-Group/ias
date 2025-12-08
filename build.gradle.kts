@@ -5,6 +5,9 @@ plugins {
 import java.nio.file.StandardCopyOption
 import java.nio.file.Files
 import java.io.File
+import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.api.tasks.testing.Test
+
 
 fun checkIntegrity(): Boolean {
     var envVar: String? = System.getenv("IAS_ROOT")
@@ -109,6 +112,73 @@ subprojects {
         tasks.matching { it.name == "check" }.configureEach {
             dependsOn(pytestTask)
         }
+
+        
+    // Only configure if the project actually uses JVM (Java/Scala)
+    // Note: the 'scala' plugin applies 'java' automatically, so checking for 'java' is enough
+    plugins.withId("java") {
+        // Optional: only if the folder exists
+        val hasItDir = file("src/integrationTest").exists()
+
+        // Create the 'integrationTest' source set
+        val sourceSets = the<SourceSetContainer>()
+        if (hasItDir) {
+            val integrationTest = sourceSets.create("integrationTest") {
+                // Java sources
+                java.srcDir("src/integrationTest/java")
+                // Resources
+                resources.srcDir("src/integrationTest/resources")
+
+                // Classpaths: main output + same deps as normal tests
+                compileClasspath += sourceSets["main"].output + configurations["testRuntimeClasspath"]
+                runtimeClasspath += output + compileClasspath
+            }
+
+            // Reuse the same dependencies you have for unit tests
+            configurations[integrationTest.implementationConfigurationName]
+                .extendsFrom(configurations["testImplementation"])
+            configurations[integrationTest.runtimeOnlyConfigurationName]
+                .extendsFrom(configurations["testRuntimeOnly"])
+
+            // For Scala projects: the Scala plugin automatically recognizes 'src/integrationTest/scala'
+            // — no extra wiring necessary.
+
+            // Register the task that runs integration tests
+            val integrationTestTask = tasks.register<Test>("integrationTest") {
+                description = "Runs the JVM integration tests."
+                group = "verification"
+                testClassesDirs = integrationTest.output.classesDirs
+                classpath = integrationTest.runtimeClasspath
+
+                // Keep the lifecycle sensible: run after unit tests if they exist
+                if (tasks.names.contains("test")) {
+                    shouldRunAfter(tasks.named("test"))
+                }
+
+                // JUnit platform: enable this if your project uses JUnit 5.
+                // If you're still on JUnit 4 or ScalaTest (no JUnit 5 engine), leave it commented.
+                useJUnitPlatform()
+
+                reports.junitXml.required.set(true)
+                reports.html.required.set(true)
+            }
+
+            // Bind into the lifecycle
+            tasks.matching { it.name == "check" }.configureEach {
+                dependsOn(integrationTestTask)
+            }
+
+            // OPTIONAL: If you want pytest to run after integration tests as well,
+            // keep the existing ordering (pytest mustRunAfter 'test') and add:
+            tasks.names.find { it == "pytest" }?.let { _ ->
+                tasks.named("pytest").configure {
+                    mustRunAfter(integrationTestTask)
+                }
+            }
+        }
+    }
+
+
     }
 
     // If module has CopyPyMods, ensure assemble triggers it
