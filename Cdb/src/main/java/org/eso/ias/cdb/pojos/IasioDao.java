@@ -129,8 +129,12 @@ public class IasioDao {
 		this(id,descr,type,docUrl);
 		this.canShelve=canShelve;
 		this.templateId=templateId;
-		setSound(sound);
-		setEmails(emails);
+		if (sound ==null) {
+			this.sound = SoundTypeDao.NONE;
+		} else {
+			this.sound = sound;
+		}
+		this.emails = emails;
 	}
 
 	public String getId() {
