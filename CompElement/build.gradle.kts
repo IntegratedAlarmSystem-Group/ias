@@ -45,6 +45,7 @@ tasks.test {
     
 environment("PYTHONPATH", listOf(
         "/home/acaproni/ias/CompElement/src/main/python",
+        "/home/acaproni/ias/CompElement/src/test/python",
         "/home/acaproni/venv/lib64/python3.12/site-packages"
     ).joinToString(":"))
     environment("PYTHONHOME", "/home/acaproni/venv")
