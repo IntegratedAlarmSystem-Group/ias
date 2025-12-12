@@ -106,10 +106,9 @@ open class IasBuild : Plugin<Project> {
             from(project.layout.projectDirectory.dir(srcFolder))
             include("**/*.py")
             exclude("*.py")
-            val destFolder = "lib/python${pythonVersion}/site-packages"
+            val destFolder = "lib/${pythonVersion}/site-packages"
             into(project.layout.buildDirectory.dir(destFolder))
 
-            dependsOn(project.tasks.named("assemble"))
         }
         
         val installBin = project.tasks.register<Copy>("InstallBin") {
@@ -117,7 +116,6 @@ open class IasBuild : Plugin<Project> {
 
             dependsOn(":${project.name}:CopyPyScripts")
             dependsOn(":${project.name}:CopyShScripts")
-            // dependsOn(":${project.name}:CopyPyTestScripts")
 
             from(project.layout.buildDirectory.dir("bin"))
             include("**/*")
@@ -142,7 +140,6 @@ open class IasBuild : Plugin<Project> {
 
             dependsOn(":${project.name}:CopyExtLib")
             dependsOn(":${project.name}:CopyPyMods")
-            dependsOn(":${project.name}:CopyPyTestMods")
             dependsOn(":${project.name}:CopyPyGuiModules")
 
             from(project.layout.buildDirectory.dir("lib"))
@@ -204,7 +201,7 @@ open class IasBuild : Plugin<Project> {
             var folder = "src/main/gui"
             val guiFolder = project.layout.projectDirectory.dir(folder).getAsFile().getPath()
             logger.info("Building GUI in {}", guiFolder)
-            val destFolder = "lib/python${pythonVersion}/site-packages"
+            val destFolder = "lib/${pythonVersion}/site-packages"
             val directory = project.layout.projectDirectory.dir(destFolder).getAsFile().getPath()
             val guiBuilder = GuiBuilder(guiFolder, directory)
             guiBuilder.build()
@@ -220,7 +217,7 @@ open class IasBuild : Plugin<Project> {
             from(project.layout.projectDirectory.dir(srcFolder))
             include("**/*.py")
             exclude("*.py")
-            val destFolder = "lib/python${pythonVersion}/site-packages"
+            val destFolder = "lib/${pythonVersion}/site-packages"
             into(project.layout.buildDirectory.dir(destFolder))
         }
 
@@ -237,10 +234,11 @@ open class IasBuild : Plugin<Project> {
 
         // Standard module with scala and or java (not python only)
         // but not for python only modules that have no build task
-        val buildTask = project.tasks.getByPath(":${project.name}:build")
-        buildTask.finalizedBy(conf)
-        buildTask.finalizedBy(pyScripts)
-        buildTask.finalizedBy(shScripts)
+        val assembleTask = project.tasks.getByPath(":${project.name}:assemble")
+        assembleTask.dependsOn(conf)
+        assembleTask.dependsOn(pyScripts)
+        assembleTask.dependsOn(shScripts)
+        assembleTask.dependsOn(pyModules)
 
         // Tasks for GUIs
         try {
@@ -252,13 +250,17 @@ open class IasBuild : Plugin<Project> {
         } catch (e: Exception) {}
 
         
-        buildTask.finalizedBy(pyside6GuiBuilder) // Build PySide6 stuff
-        buildTask.finalizedBy(copyPyGuiModules)
-        buildTask.finalizedBy(delGuiPy)
+        assembleTask.dependsOn(copyExtLibs)
 
-        buildTask.finalizedBy(copyExtLibs)
-        // buildTask.finalizedBy(pyTestScripts)
-        // buildTask.finalizedBy(pyTestModules)
+        // If a test task exists (for java and scala only modules) then
+        // jvm tests must depends on the availability of the python modules
+        // to run python code with jep
+        try {
+            val testTask = project.tasks.getByPath(":${project.name}:test")
+            testTask.dependsOn(pyModules)
+        }catch (e: Exception) {}
+
+
 
         project.tasks.withType<JavaCompile>().configureEach {
             options.isDeprecation = true

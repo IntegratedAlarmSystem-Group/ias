@@ -44,24 +44,19 @@ include(*subprojectsList.toTypedArray(), "test-reports")
 gradle.extra["aggregatedModules"] = subprojectsList
 
 
-// Gets the version of python 3 installed in this server
-// and stores it in an extra property named PythonVersion
-val process = ProcessBuilder("python3", "-V").start()
-process.inputStream.reader(Charsets.UTF_8).use {
-	val pyVersionStr = it.readText()
-	val pyFullVersion = pyVersionStr.drop(pyVersionStr.lastIndexOf(' ')+1)
-
-	var pyVersion = ""
-	if (pyVersionStr.count{it== '.'}==2) {
-		val idx = pyFullVersion.lastIndexOf('.')
-		pyVersion = pyFullVersion.substring(0,idx)
-	} else {
-		pyVersion = pyFullVersion
-	}
-	val extension = gradle as ExtensionAware
-	extension.extra["PythonVersion"] = pyVersion
+val pythonVersionComputed = run {
+    val process = ProcessBuilder("python3", "-V")
+        .redirectErrorStream(true)
+        .start()
+    val s = process.inputStream.reader(Charsets.UTF_8).use { it.readText().trim() }
+    process.waitFor()
+    val full = s.substringAfterLast(' ', "")
+    require(full.isNotEmpty()) { "Could not read Python version from: '$s'" }
+    val majorMinor = if (full.count { it == '.' } >= 2)
+        full.substring(0, full.lastIndexOf('.'))
+    else full
+    "python$majorMinor"
 }
-process.waitFor(10, TimeUnit.SECONDS)
 
 val gitBranchProc = ProcessBuilder("git", "rev-parse", "--abbrev-ref", "HEAD").start()
 gitBranchProc.inputStream.reader(Charsets.UTF_8).use {
@@ -74,7 +69,10 @@ gitBranchProc.waitFor(10, TimeUnit.SECONDS)
 // Sets common dependencies
 val extension = gradle as ExtensionAware
 
-	// IAS common dependencies
+// Python version
+extension.extra["PythonVersion"] = pythonVersionComputed
+
+// IAS common dependencies
 extension.extra["scala-library"] = "org.scala-lang:scala3-library_3:3.7.3"
 extension.extra["scalatest"] = "org.scalatest:scalatest_3:3.2.19"
 extension.extra["slf4j-api"] = "org.slf4j:slf4j-api:2.0.9"

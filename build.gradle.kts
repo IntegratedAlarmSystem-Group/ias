@@ -58,26 +58,24 @@ tasks.register("install") {
 }
 
 subprojects {
-    // If module has Python tests
-    if (file("src/test/python").exists()) {
+    // Adds the pytest task to run pythin tests
+    // only if module has Python tests: src/test/python exists and contains at least one *.py file
+    val pythonDir = file("src/test/python")
+
+    val hasPythonFilesTopLevel =
+        pythonDir.exists() &&
+        pythonDir.isDirectory &&
+        (pythonDir.listFiles { f -> f.isFile && f.extension == "py" }?.isNotEmpty() == true)
+
+    if (hasPythonFilesTopLevel) {
         val pytestTask = tasks.register<Exec>("pytest") {
             description = "Run pytest for $project"
             group = "verification"
 
-            // Run after Java/Scala tests only if 'test' task exists
-            if (tasks.names.contains("test")) {
-                mustRunAfter(tasks.named("test"))
-            } else {
-                // Otherwise, run after 'assemble'
-                mustRunAfter(tasks.named("assemble"))
-            }
-
-            // Ensure pytest runs after assemble (ordering only)
-            //mustRunAfter(tasks.named("assemble"))
-
-            // If CopyPyMods exists, order after it
+            // If CopyPyMods exists (likely as the test probably test the modules delivered by the subproject),
+            // the test depends on it
             if (tasks.names.contains("CopyPyMods")) {
-                mustRunAfter(tasks.named("CopyPyMods"))
+                dependsOn(tasks.named("CopyPyMods"))
             }
 
             doFirst {
@@ -89,10 +87,11 @@ subprojects {
             pythonPaths.add(layout.buildDirectory.dir("src/test/python").get().asFile.absolutePath)
 
             // Include all subprojects' site-packages
+            val extension = gradle as ExtensionAware
             rootProject.subprojects.forEach { sub ->
                 pythonPaths.add(
                     sub.layout.buildDirectory
-                        .dir("lib/python${gradle.extra["PythonVersion"]}/site-packages")
+                        .dir("lib/${extension.extra["PythonVersion"]}/site-packages")
                         .get().asFile.absolutePath
                 )
             }
@@ -108,7 +107,8 @@ subprojects {
             )
         }
 
-        // Attach pytest to check
+        // Attach pytest to check (check exists for modules with java, scala and python sources while
+        // test task exists only for modules with java/scala sources)
         tasks.matching { it.name == "check" }.configureEach {
             dependsOn(pytestTask)
         }
@@ -116,67 +116,62 @@ subprojects {
         
     // Only configure if the project actually uses JVM (Java/Scala)
     // Note: the 'scala' plugin applies 'java' automatically, so checking for 'java' is enough
-    plugins.withId("java") {
-        // Optional: only if the folder exists
-        val hasItDir = file("src/integrationTest").exists()
+    // plugins.withId("java") {
+    //     // Optional: only if the folder exists
+    //     val hasItDir = file("src/integrationTest").exists()
 
-        // Create the 'integrationTest' source set
-        val sourceSets = the<SourceSetContainer>()
-        if (hasItDir) {
-            val integrationTest = sourceSets.create("integrationTest") {
-                // Java sources
-                java.srcDir("src/integrationTest/java")
-                // Resources
-                resources.srcDir("src/integrationTest/resources")
+    //     // Create the 'integrationTest' source set
+    //     val sourceSets = the<SourceSetContainer>()
+    //     if (hasItDir) {
+    //         val integrationTest = sourceSets.create("integrationTest") {
+    //             // Java sources
+    //             java.srcDir("src/integrationTest/java")
+    //             // Resources
+    //             resources.srcDir("src/integrationTest/resources")
 
-                // Classpaths: main output + same deps as normal tests
-                compileClasspath += sourceSets["main"].output + configurations["testRuntimeClasspath"]
-                runtimeClasspath += output + compileClasspath
-            }
+    //             // Classpaths: main output + same deps as normal tests
+    //             compileClasspath += sourceSets["main"].output + configurations["testRuntimeClasspath"]
+    //             runtimeClasspath += output + compileClasspath
+    //         }
 
-            // Reuse the same dependencies you have for unit tests
-            configurations[integrationTest.implementationConfigurationName]
-                .extendsFrom(configurations["testImplementation"])
-            configurations[integrationTest.runtimeOnlyConfigurationName]
-                .extendsFrom(configurations["testRuntimeOnly"])
+    //         // Reuse the same dependencies you have for unit tests
+    //         configurations[integrationTest.implementationConfigurationName]
+    //             .extendsFrom(configurations["testImplementation"])
+    //         configurations[integrationTest.runtimeOnlyConfigurationName]
+    //             .extendsFrom(configurations["testRuntimeOnly"])
 
-            // For Scala projects: the Scala plugin automatically recognizes 'src/integrationTest/scala'
-            // — no extra wiring necessary.
+    //         // For Scala projects: the Scala plugin automatically recognizes 'src/integrationTest/scala'
+    //         // — no extra wiring necessary.
 
-            // Register the task that runs integration tests
-            val integrationTestTask = tasks.register<Test>("integrationTest") {
-                description = "Runs the JVM integration tests."
-                group = "verification"
-                testClassesDirs = integrationTest.output.classesDirs
-                classpath = integrationTest.runtimeClasspath
+    //         // Register the task that runs integration tests
+    //         val integrationTestTask = tasks.register<Test>("integrationTest") {
+    //             description = "Runs the JVM integration tests."
+    //             group = "verification"
+    //             testClassesDirs = integrationTest.output.classesDirs
+    //             classpath = integrationTest.runtimeClasspath
 
-                // Keep the lifecycle sensible: run after unit tests if they exist
-                if (tasks.names.contains("test")) {
-                    shouldRunAfter(tasks.named("test"))
-                }
+    //             // Keep the lifecycle sensible: run after unit tests if they exist
+    //             if (tasks.names.contains("test")) {
+    //                 shouldRunAfter(tasks.named("test"))
+    //             }
 
-                // JUnit platform: enable this if your project uses JUnit 5.
-                // If you're still on JUnit 4 or ScalaTest (no JUnit 5 engine), leave it commented.
-                useJUnitPlatform()
+    //             // JUnit platform: enable this if your project uses JUnit 5.
+    //             // If you're still on JUnit 4 or ScalaTest (no JUnit 5 engine), leave it commented.
+    //             useJUnitPlatform()
 
-                reports.junitXml.required.set(true)
-                reports.html.required.set(true)
-            }
+    //             reports.junitXml.required.set(true)
+    //             reports.html.required.set(true)
+    //         }
 
-            // Bind into the lifecycle
-            tasks.matching { it.name == "check" }.configureEach {
-                dependsOn(integrationTestTask)
-            }
-
-            // OPTIONAL: If you want pytest to run after integration tests as well,
-            // keep the existing ordering (pytest mustRunAfter 'test') and add:
-            tasks.names.find { it == "pytest" }?.let { _ ->
-                tasks.named("pytest").configure {
-                    mustRunAfter(integrationTestTask)
-                }
-            }
-        }
-    }
+    //         // OPTIONAL: If you want pytest to run after integration tests as well,
+    //         // keep the existing ordering (pytest mustRunAfter 'test') and add:
+    //         tasks.names.find { it == "pytest" }?.let { _ ->
+    //             tasks.named("pytest").configure {
+    //                 mustRunAfter(integrationTestTask)
+    //             }
+    //         }
+    //     }
+    // }
 
 
     }
@@ -186,6 +181,13 @@ subprojects {
         tasks.named("assemble") {
             dependsOn(tasks.named("CopyPyMods"))
         }
+
+        if (tasks.names.contains("check")) {
+            tasks.named("check") {
+                dependsOn(tasks.named("CopyPyMods"))
+            }
+        }
+
     }
 }
 
