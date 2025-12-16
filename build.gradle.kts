@@ -167,8 +167,9 @@ subprojects {
                 classpath = integrationTest.runtimeClasspath
 
 
-                // Ensure integration test sources are compiled before running
+                // Ensure integration test and test sources are compiled before running
                 dependsOn(tasks.named(integrationTest.classesTaskName))
+                dependsOn(tasks.named(sourceSets["test"].classesTaskName))
 
 
                 // Keep the lifecycle sensible: run after unit tests if they exist
