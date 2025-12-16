@@ -126,14 +126,13 @@ subprojects {
     // Only configure if the project actually uses JVM (Java/Scala)
     // Note: the 'scala' plugin applies 'java' automatically, so checking for 'java' is enough
     plugins.withId("java") {
-        println("Checking ${project.name}")
         // Optional: only if the folder exists
         val hasItDir = file("src/integrationTest").exists()
 
         // Create the 'integrationTest' source set
         val sourceSets = the<SourceSetContainer>()
         if (hasItDir) {
-            println(" Found integration tests for ${project.name}")
+            logger.lifecycle("Found integration tests for ${project.name}")
             val integrationTest = sourceSets.create("integrationTest") {
                 // Java sources
                 java.srcDir("src/integrationTest/java")
@@ -143,6 +142,12 @@ subprojects {
                 // Classpaths: main output + same deps as normal tests
                 compileClasspath += sourceSets["main"].output + configurations["testRuntimeClasspath"]
                 runtimeClasspath += output + compileClasspath
+
+
+                // Add test output so integration tests can see test classes
+                compileClasspath += sourceSets["test"].output
+                runtimeClasspath += sourceSets["test"].output
+
             }
 
             // Reuse the same dependencies you have for unit tests
@@ -179,7 +184,7 @@ subprojects {
                 reports.html.required.set(true)
             }
         } else {
-            println("No integration tests for ${project.name}")
+            logger.info("No integration tests for ${project.name}")
         }
     } 
 
