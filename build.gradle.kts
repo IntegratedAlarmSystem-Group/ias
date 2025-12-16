@@ -97,7 +97,14 @@ subprojects {
             }
 
             val existingPath = System.getenv("PYTHONPATH") ?: ""
-            environment("PYTHONPATH", existingPath + ":" + pythonPaths.joinToString(":"))
+            val sep = File.pathSeparator
+            
+            environment(
+                "PYTHONPATH",
+                listOf(existingPath)
+                    .plus(pythonPaths)
+                    .filter { it.isNotBlank() }
+                    .joinToString(sep))
 
             // Use separate directory for pytest reports
             commandLine(
