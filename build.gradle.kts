@@ -112,19 +112,21 @@ subprojects {
         tasks.matching { it.name == "check" }.configureEach {
             dependsOn(pytestTask)
         }
+    }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
         
     // Only configure if the project actually uses JVM (Java/Scala)
     // Note: the 'scala' plugin applies 'java' automatically, so checking for 'java' is enough
     plugins.withId("java") {
-        println(" Checking")
+        println("Checking ${project.name}")
         // Optional: only if the folder exists
         val hasItDir = file("src/integrationTest").exists()
 
         // Create the 'integrationTest' source set
         val sourceSets = the<SourceSetContainer>()
         if (hasItDir) {
+            println(" Found integration tests for ${project.name}")
             val integrationTest = sourceSets.create("integrationTest") {
                 // Java sources
                 java.srcDir("src/integrationTest/java")
@@ -169,11 +171,11 @@ subprojects {
                 reports.junitXml.required.set(true)
                 reports.html.required.set(true)
             }
+        } else {
+            println("No integration tests for ${project.name}")
         }
-    }
+    } 
 
-
-    }
 
     // If module has CopyPyMods, ensure assemble triggers it
     if (tasks.names.contains("CopyPyMods")) {
