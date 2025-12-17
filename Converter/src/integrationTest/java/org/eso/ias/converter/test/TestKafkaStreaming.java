@@ -37,6 +37,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.eso.ias.converter.test.ConverterTestBase.MonitorPointDataHolder;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
