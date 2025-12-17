@@ -1,19 +1,24 @@
 package org.eso.ias.command.test;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import org.eso.ias.command.CommandManager;
 import org.eso.ias.command.DefaultCommandExecutor;
 import org.eso.ias.command.kafka.CommandManagerKafkaImpl;
-import org.eso.ias.heartbeat.*;
+import org.eso.ias.heartbeat.HbEngine;
+import org.eso.ias.heartbeat.HbMsgSerializer;
+import org.eso.ias.heartbeat.HbProducer;
+import org.eso.ias.heartbeat.Heartbeat;
+import org.eso.ias.heartbeat.HeartbeatProducerType;
+import org.eso.ias.heartbeat.HeartbeatStatus;
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
 import org.eso.ias.kafkautils.KafkaHelper;
 import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * A little program that instantiates a {@link org.eso.ias.command.CommandManager} to get commands and send replies.
@@ -75,12 +80,12 @@ public class CommandManagerSimulator implements AutoCloseable {
             logger.warn("Already closed");
             return;
         }
-        logger.info("Closing the manager");
+        logger.info("Closing the manager simulator");
         hbSender.updateHbState(HeartbeatStatus.EXITING);
         hbSender.shutdown();
         stringProducer.tearDown();
         latch.countDown();
-        logger.info("Closed");
+        logger.info("Manage simulator closed");
     }
 
     public static void main(String [] args) {

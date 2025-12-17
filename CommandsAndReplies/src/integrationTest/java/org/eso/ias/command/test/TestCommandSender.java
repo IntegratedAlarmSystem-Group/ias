@@ -1,6 +1,11 @@
 package org.eso.ias.command.test;
 
-import ch.qos.logback.classic.Level;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.Vector;
+import java.util.concurrent.TimeUnit;
+
 import org.eso.ias.command.CommandSender;
 import org.eso.ias.command.CommandType;
 import org.eso.ias.command.ReplyMessage;
@@ -12,19 +17,17 @@ import org.eso.ias.kafkautils.SimpleStringProducer;
 import org.eso.ias.logging.IASLogger;
 import org.eso.ias.types.Identifier;
 import org.eso.ias.types.IdentifierType;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import ch.qos.logback.classic.Level;
 import scala.Option;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Vector;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Test the command sender by running the {@link CommandManagerSimulator}.
@@ -120,7 +123,7 @@ public class TestCommandSender implements HbListener {
         logger.info("Give the simulator time to be ready...");
         Thread.sleep(10000);
         assertTrue(p.isAlive());
-        logger.info("Simulator started");
+        logger.info("Simulator is alive");
         return p;
     }
 
