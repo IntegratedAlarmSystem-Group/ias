@@ -260,7 +260,51 @@ open class IasBuild : Plugin<Project> {
             testTask.dependsOn(pyModules)
         }catch (e: Exception) {}
 
+        val runIasIntTestsTask = project.tasks.register<Exec>("integrationTest") {
+            group = "verification"
+            description = "Runs integration tests via src/integrationTest/runIntTests.sh"
 
+            // Compute the condition at configuration time
+            val testDir = project.layout.projectDirectory.dir("src/integrationTest").asFile
+            val script = project.layout.projectDirectory.file("src/integrationTest/runIntTests.sh").asFile
+            val shouldRun = testDir.exists() && script.exists()
+
+            // Helpful logs during configuration
+            if (!testDir.exists()) {
+                logger.warn("Integration test folder missing: {}", testDir.path)
+            } else if (!script.exists()) {
+                logger.warn("Integration test script missing: {}", script.path)
+            }
+
+            // If the inputs are present, we enable the task and wire dependencies/command
+            enabled = shouldRun
+
+            if (shouldRun) {
+                // Only add dependency when the task is enabled
+                dependsOn("buildIntegrationTest")
+
+
+                // Working directory so relative paths inside the script work
+                workingDir = project.layout.projectDirectory.asFile
+
+                doFirst {
+                    val outDir = project.layout
+                        .buildDirectory
+                        .dir("integration-test-results")
+                        .get()
+                        .asFile
+                    project.mkdir(outDir)
+                }
+
+                // Actual command to run
+                commandLine("bash", "src/integrationTest/runIntTests.sh")
+
+            }
+
+        }
+
+
+        ////////////////////////////////////
 
         project.tasks.withType<JavaCompile>().configureEach {
             options.isDeprecation = true

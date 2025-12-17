@@ -123,71 +123,45 @@ subprojects {
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
         
-    // Only configure if the project actually uses JVM (Java/Scala)
-    // Note: the 'scala' plugin applies 'java' automatically, so checking for 'java' is enough
     plugins.withId("java") {
-        // Optional: only if the folder exists
         val hasItDir = file("src/integrationTest").exists()
-
-        // Create the 'integrationTest' source set
         val sourceSets = the<SourceSetContainer>()
+
         if (hasItDir) {
-            logger.lifecycle("Found integration tests for ${project.name}")
+            logger.lifecycle("Found integration sources for ${project.name}")
+
             val integrationTest = sourceSets.create("integrationTest") {
-                // Java sources
+                // Java + resources
                 java.srcDir("src/integrationTest/java")
-                // Resources
                 resources.srcDir("src/integrationTest/resources")
 
-                // Classpaths: main output + same deps as normal tests
+                // Classpaths: main output + test deps (if you need them)
                 compileClasspath += sourceSets["main"].output + configurations["testRuntimeClasspath"]
                 runtimeClasspath += output + compileClasspath
 
-
-                // Add test output so integration tests can see test classes
+                // (Optional) let integration sources see compiled test classes
                 compileClasspath += sourceSets["test"].output
                 runtimeClasspath += sourceSets["test"].output
-
             }
 
-            // Reuse the same dependencies you have for unit tests
+            // Reuse unit-test scopes for integration sources
             configurations[integrationTest.implementationConfigurationName]
                 .extendsFrom(configurations["testImplementation"])
             configurations[integrationTest.runtimeOnlyConfigurationName]
                 .extendsFrom(configurations["testRuntimeOnly"])
 
-            // For Scala projects: the Scala plugin automatically recognizes 'src/integrationTest/scala'
-            // — no extra wiring necessary.
+            // === Build-only task: compiles Java/Scala + processes resources ===
+            tasks.register("buildIntegrationTest") {
+                group = "build"
+                description = "Compiles integrationTest Java/Scala sources and resources (no test execution)."
 
-            // Register the task that runs integration tests
-            val integrationTestTask = tasks.register<Test>("integrationTest") {
-                description = "Runs the JVM integration tests."
-                group = "verification"
-                testClassesDirs = integrationTest.output.classesDirs
-                classpath = integrationTest.runtimeClasspath
-
-
-                // Ensure integration test and test sources are compiled before running
-                dependsOn(tasks.named(integrationTest.classesTaskName))
-                dependsOn(tasks.named(sourceSets["test"].classesTaskName))
-
-
-                // Keep the lifecycle sensible: run after unit tests if they exist
-                if (tasks.names.contains("test")) {
-                    shouldRunAfter(tasks.named("test"))
-                }
-
-                // JUnit platform: enable this if your project uses JUnit 5.
-                // If you're still on JUnit 4 or ScalaTest (no JUnit 5 engine), leave it commented.
-                useJUnitPlatform()
-
-                reports.junitXml.required.set(true)
-                reports.html.required.set(true)
+                // Depend on the source set's classes task
+                dependsOn(tasks.named(integrationTest.classesTaskName))  // compiles & processes resources
             }
         } else {
-            logger.info("No integration tests for ${project.name}")
+            logger.info("No integration sources for ${project.name}")
         }
-    } 
+    }
 
 
     // If module has CopyPyMods, ensure assemble triggers it

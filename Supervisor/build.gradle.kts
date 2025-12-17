@@ -12,6 +12,7 @@ dependencies {
     implementation(extension.extra["commons-cli"].toString())
     implementation(extension.extra["logback-classic"].toString())
     implementation(extension.extra["kafka-clients"].toString())
+    implementation(extension.extra["scalatest"].toString())
 
     implementation(project(":BasicTypes"))
     implementation(project(":Tools"))
