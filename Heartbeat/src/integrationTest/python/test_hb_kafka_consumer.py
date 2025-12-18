@@ -26,7 +26,7 @@ class HbListner(HeartbeatListener):
         print(hb.toJSON())
 
 
-class HbConsumerTest():
+class TestHbConsumer():
 
     # The Kafka producer of HBs
     hbProducer: Producer = None
@@ -34,14 +34,14 @@ class HbConsumerTest():
     @classmethod
     def setup_class(cls):
         conf = { 'bootstrap.servers': IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, 'client.id': "HbConsumerTest-Prod"}
-        HbConsumerTest.hbProducer = Producer(conf)
+        TestHbConsumer.hbProducer = Producer(conf)
 
     @classmethod
     def pushHb(cls, hbm: HeartbeatMessage) -> None:
         assert hbm is not None
         hbMsgStr = hbm.toJSON()
-        HbConsumerTest.hbProducer.produce(topic=IasKafkaHelper.topics['hb'], value=hbMsgStr)
-        HbConsumerTest.hbProducer.flush()
+        TestHbConsumer.hbProducer.produce(topic=IasKafkaHelper.topics['hb'], value=hbMsgStr)
+        TestHbConsumer.hbProducer.flush()
 
     def test_get_hb_from_topic(self):
         listener = HbListner()
@@ -61,7 +61,7 @@ class HbConsumerTest():
                                props=None,
                                hbStatus=IasHeartbeatStatus.STARTING_UP)
         
-        HbConsumerTest.pushHb(hbm)
+        TestHbConsumer.pushHb(hbm)
 
         # Wait until the HB is received or timeout
         timeout = time.time()+30

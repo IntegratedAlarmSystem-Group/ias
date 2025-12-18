@@ -166,7 +166,7 @@ class TestPyAck():
         cls.iasioConsumer.close()
         cls.hbConsumer.close()
         # Send the command to terminate to the Supervisor
-        print(f"Sending CMD to shutdown the {TestPyAck.supervisorId}")
+        logger.info(f"Sending CMD to shutdown the {TestPyAck.supervisorId}")
         TestPyAck.cmdSender.send_sync(TestPyAck.supervisorId, IasCommandType.SHUTDOWN)
         # Close the command sender
         TestPyAck.cmdSender.close()

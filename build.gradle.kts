@@ -69,7 +69,7 @@ subprojects {
 
     if (hasPythonFilesTopLevel) {
         val pytestTask = tasks.register<Exec>("pytest") {
-            description = "Run pytest for $project"
+            description = "Run pytest for ${project.name}"
             group = "verification"
 
             // If CopyPyMods exists (likely as the test probably test the modules delivered by the subproject),
@@ -98,15 +98,13 @@ subprojects {
 
             val existingPath = System.getenv("PYTHONPATH") ?: ""
             val sep = File.pathSeparator
-            
-            environment(
-                "PYTHONPATH",
-                listOf(existingPath)
+            val paths = listOf(existingPath)
                     .plus(pythonPaths)
                     .filter { it.isNotBlank() }
-                    .joinToString(sep))
+                    .joinToString(sep)
+            
+            environment("PYTHONPATH", paths)
 
-            // Use separate directory for pytest reports
             commandLine(
                 "pytest",
                 "src/test/python",
@@ -199,22 +197,53 @@ val verifyTestResults = tasks.register("verifyTestResults") {
         }
 
         if (failedFiles.isNotEmpty()) {
-            println("❌ Test failures detected in the following XML files:")
+            println("❌ Unit test failures detected in the following XML files:")
             failedFiles.forEach { println(" - ${it.absolutePath}") }
-            throw GradleException("Some tests failed. Check reports above.")
+            throw GradleException("Some unit tests failed. Check reports above.")
+        } else {
+            println("✅ All unit tests passed. No failures or errors found.")
+        }
+    }
+}
+
+val verifyIntTestResults = tasks.register("verifyIntTestResults") {
+    group = "verification"
+    description = "Check XML reports and list integration files with failures or errors"
+
+    doLast {
+        val xmlFiles = rootProject.allprojects.flatMap { p ->
+            val dir = p.layout.buildDirectory.dir("integration-test-results").get().asFile
+            if (dir.exists()) {
+                dir.walk().filter { it.isFile && it.extension == "xml" }.toList()
+            } else {
+                emptyList()
+            }
+        }
+
+        val failedFiles = xmlFiles.filter { file ->
+            val content = file.readText()
+            content.contains("<failure") || content.contains("<error")
+        }
+
+        if (failedFiles.isNotEmpty()) {
+            println("❌ Integration test failures detected in the following XML files:")
+            failedFiles.forEach { println(" - ${it.absolutePath}") }
+            throw GradleException("Some integration tests failed. Check reports above.")
         } else {
             println("✅ All tests passed. No failures or errors found.")
         }
     }
 }
 
-
-
 allprojects {
     // Some projects may not have a 'check' task (e.g., purely custom projects),
     // so use matching/configureEach to bind only where it exists.
     tasks.matching { it.name == "check" }.configureEach {
         finalizedBy(verifyTestResults)
+    }
+
+    tasks.matching { it.name == "integrationTest" }.configureEach {
+        finalizedBy(verifyIntTestResults)
     }
 }
 

@@ -15,6 +15,7 @@ dependencies {
     implementation(extension.extra["kafka-streams"].toString())
     implementation(extension.extra["logback-classic"].toString())
     implementation(extension.extra["hibernate-jpa"].toString())
+    implementation(extension.extra["junit-platform-console"].toString())
 
     implementation(project(":Cdb"))
     implementation(project(":Plugin"))
