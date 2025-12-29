@@ -196,7 +196,7 @@ public class UdpPluginTest implements PublisherEventsListener {
 	
 	private void launchPythonPlugin() throws Exception {
 		logger.debug("Starting the python plugin");
-		ProcessBuilder builder = new ProcessBuilder("MockUdpPlugin");
+		ProcessBuilder builder = new ProcessBuilder("python3", "src/integrationTest/python/MockUdpPlugin.py");
 		builder.redirectOutput(ProcessBuilder.Redirect.INHERIT);
 		proc = builder.start();
 		logger.debug("Python plugin running");
