@@ -118,7 +118,14 @@ class HbEngine private[heartbeat] (
     hbStatus.set(newStateMsg)
     // Force the immediate sending of th HB with the updated state
     if (!closed.get) {
-      publisher.send(hb,hbStatus.get,props.toMap)
+      new Thread(() => {
+        try {
+          publisher.send(hb, hbStatus.get, props.toMap)
+        } catch {
+          case ex: Throwable =>
+            HbEngine.logger.error(s"Send of HB failed: ${ex.getMessage}")
+        }
+      }).start()
     }
   }
   
@@ -149,7 +156,12 @@ class HbEngine private[heartbeat] (
     HbEngine.logger.debug("Sending HB")
     assert(started.get,"HB engine not initialized")
     if (!closed.get) {
-      publisher.send(hb,hbStatus.get,props.toMap)
+      try {
+        publisher.send(hb, hbStatus.get, props.toMap)
+      } catch {
+        case ex: Throwable =>
+          HbEngine.logger.error(s"Send of HB failed: ${ex.getMessage}")
+      }
     }
   }
   

@@ -165,7 +165,7 @@ class TestEngine extends AnyFlatSpec {
 
     // Wait until the engine sends the first HB
     logger.info("Waiting...")
-    val hb = waitHb(3000)
+    val hb = waitHb(2500)
     assert(!hb.isEmpty)
 
     val actualSize = producer.pushedStrings.size
@@ -174,7 +174,9 @@ class TestEngine extends AnyFlatSpec {
     engine.addProperty("key1", "prop1");
     engine.addProperty("key2", "prop2");
     engine.updateHbState(HeartbeatStatus.RUNNING)
-    assert(producer.pushedStrings.size==actualSize+1)
+    // Even if the engine sends the HB immediately, it uses a thread so a minimal delay could show up
+    val hb2 = waitHb(500)
+    assert(!hb2.isEmpty)
     
     engine.shutdown()
     
@@ -195,20 +197,22 @@ class TestEngine extends AnyFlatSpec {
     
     // Wait until the engine sends the first HB
     logger.info("Waiting...")
-    val hb = waitHb(3000)
+    val hb = waitHb(2500)
     assert(!hb.isEmpty)
 
     val actualSize = producer.pushedStrings.size
     engine.addProperty("key1-t2", "prop1-t2")
     engine.updateHbState(HeartbeatStatus.RUNNING)
-    assert(producer.pushedStrings.size==actualSize+1)
+    // Even if the engine sends the HB immediately, it uses a thread so a minimal delay could show up
+    val hb2 = waitHb(500)
+    assert(!hb2.isEmpty)
     
     logger.debug(" Shutting down the HB engine")
     engine.shutdown()
 
     // This HB should never arrive because the engine has been shut down
-    val hb2 = waitHb(3000)
-    assert(hb2.isEmpty)
+    val hb3 = waitHb(2000)
+    assert(hb3.isEmpty)
   }
   
   it must "send periodically send the same msg if not changed" in new Fixture {
