@@ -2,6 +2,7 @@ package org.eso.ias.heartbeat.test
 
 import org.eso.ias.heartbeat.{HbProducer, Heartbeat, HeartbeatProducerType}
 
+import java.lang.System
 import scala.collection.mutable.ArrayBuffer
 
 // The following import is required by the usage of the fixture
@@ -27,11 +28,11 @@ class MockProducer(serializer: HbMsgSerializer) extends HbProducer(serializer) {
    */
   val pushedStrings: ArrayBuffer[String] = new ArrayBuffer
   
-  /** Flagt he call of initialized method */
+  /** Flag the call of the initialized method */
   var initialzed = false
   
   
-  /** Flagt he call of shutdown method */
+  /** Flag the call of the shutdown method */
   var cleanedUp = false
   
   /** Initialize the producer */
@@ -50,8 +51,8 @@ class MockProducer(serializer: HbMsgSerializer) extends HbProducer(serializer) {
   override def push(hbAsString: String): Unit = {
     val str = Option(hbAsString)
     str.filter(!_.isEmpty).foreach(s => {
-      logger.info("HB received {}",s)
       pushedStrings.append(s)
+      logger.info("HB received from the engine: {}; {} HBs received so far", s, pushedStrings.size)
     })
   }
 }
@@ -66,7 +67,7 @@ class TestEngine extends AnyFlatSpec {
     /** The HB of the supervisor */
     val supervHeartbeat = Heartbeat(HeartbeatProducerType.SUPERVISOR,supervId)
 
-    val frequency = 2
+    val frequency = 2 // Send HBs every 2 seconds
 
     val serializer = new HbJsonSerializer
 
@@ -76,6 +77,29 @@ class TestEngine extends AnyFlatSpec {
      * The engine to test
      */
     val engine = new HbEngine(supervHeartbeat,frequency,producer)
+
+    /**
+    * Wait until the HB engine sends an HB to the producer
+    * or the timeout elapses.
+    * This function is meant to avoid active sleeps in the tests.
+    *
+    * @param timeout The time (msec) to wait for the HB
+    * @return None if no HB has been received before the timeout elapses;
+    *         Some(str) if the HB has been received
+    */
+    def waitHb(timeout: Int): Option[String] = {
+      require(timeout>0)
+      val endTime = System.currentTimeMillis()+timeout
+      val actualSize = producer.pushedStrings.size
+      val waitTimeInterval = 100 // Frequency to check if a new HB arrived
+      while (System.currentTimeMillis()<endTime) {
+        if (producer.pushedStrings.size>actualSize) {
+          return Some(producer.pushedStrings.last)
+        }
+        Thread.sleep(waitTimeInterval)
+      }
+      return None
+    }
   }
   
   /** The logger */
@@ -84,7 +108,13 @@ class TestEngine extends AnyFlatSpec {
   behavior of "The HB engine" 
   
   it must "init and shutdown the producer" in new Fixture {
+    assert(!producer.initialzed)
+    assert(!producer.cleanedUp)
+
     engine.start()
+    assert(producer.initialzed)
+    assert(!producer.cleanedUp)
+
     engine.shutdown()
     
     assert(producer.initialzed)
@@ -93,11 +123,8 @@ class TestEngine extends AnyFlatSpec {
   
   it must "not send HBs before initialization" in new Fixture {
 
-    // Give time to send messages
-    val op = Try(Thread.sleep(3000))
-    assert(op.isSuccess)
-        
-    assert(producer.pushedStrings.isEmpty)
+    val hb = waitHb(3000)
+    assert(hb.isEmpty)
   }
   
   it must "send the default intial message" in new Fixture {
@@ -105,47 +132,49 @@ class TestEngine extends AnyFlatSpec {
     logger.info("Starting engine")
     engine.start()
     
-    // Give time to send one and only one message
+    // Wait until the engine sends the first HB
     logger.info("Waiting...")
-    val op = Try(Thread.sleep(3000))
-    assert(op.isSuccess)
+    val hb = waitHb(3000)
+    assert(!hb.isEmpty)
     
     logger.info("shutting down")
     engine.shutdown()
     
-    assert(producer.pushedStrings.size==1)
-    val status=serializer.deserializeFromString(producer.pushedStrings(0))._2
+    val status=serializer.deserializeFromString(hb.get)._2
     assert(status==engine.initialStatusDefault)
   }
   
   it must "send the intial message" in new Fixture {
 
     engine.start(HeartbeatStatus.RUNNING)
-    
-    // Give time to send one and only one message
-    val op = Try(Thread.sleep(3000))
-    assert(op.isSuccess)
+
+    // Wait until the engine sends the first HB
+    logger.info("Waiting...")
+    val hb = waitHb(3000)
+    assert(!hb.isEmpty)
     
     engine.shutdown()
     
-    assert(producer.pushedStrings.size==1)
-    val status=serializer.deserializeFromString(producer.pushedStrings(0))._2
+    val status=serializer.deserializeFromString(hb.get)._2
     assert(status==HeartbeatStatus.RUNNING)
   }
   
   it must "update the state" in new Fixture {
+    logger.info("Test the updating of the state")
     engine.start(HeartbeatStatus.STARTING_UP)
+
+    // Wait until the engine sends the first HB
+    logger.info("Waiting...")
+    val hb = waitHb(3000)
+    assert(!hb.isEmpty)
+
+    val actualSize = producer.pushedStrings.size
     
-    // Give time to send one and only one message
-    val op = Try(Thread.sleep(3000))
-    assert(op.isSuccess)
-    
+    // Changes the state again: this must be notified immediately
     engine.addProperty("key1", "prop1");
     engine.addProperty("key2", "prop2");
     engine.updateHbState(HeartbeatStatus.RUNNING)
-    
-    val op2 = Try(Thread.sleep(2000))
-    assert(op2.isSuccess)
+    assert(producer.pushedStrings.size==actualSize+1)
     
     engine.shutdown()
     
@@ -161,29 +190,29 @@ class TestEngine extends AnyFlatSpec {
   }
   
   it must "not send HBs after shutdown" in new Fixture {
+    logger.info(" Test if the HB engine stops sending HBs after shutdown")
     engine.start()
     
-    // Give time to send one and only one message
-    val op = Try(Thread.sleep(3000))
-    assert(op.isSuccess)
-    
-    engine.updateHbState(HeartbeatStatus.RUNNING)
+    // Wait until the engine sends the first HB
+    logger.info("Waiting...")
+    val hb = waitHb(3000)
+    assert(!hb.isEmpty)
+
+    val actualSize = producer.pushedStrings.size
     engine.addProperty("key1-t2", "prop1-t2")
+    engine.updateHbState(HeartbeatStatus.RUNNING)
+    assert(producer.pushedStrings.size==actualSize+1)
     
-    val op2 = Try(Thread.sleep(2000))
-    assert(op2.isSuccess)
-    
+    logger.debug(" Shutting down the HB engine")
     engine.shutdown()
-    
-    assert(producer.pushedStrings.size==2)
-    
-    val op3 = Try(Thread.sleep(5000))
-    assert(op3.isSuccess)
-    
-    assert(producer.pushedStrings.size==2)
+
+    // This HB should never arrive because the engine has been shut down
+    val hb2 = waitHb(3000)
+    assert(hb2.isEmpty)
   }
   
   it must "send periodically send the same msg if not changed" in new Fixture {
+    logger.info(" Testing periodic sending of HBs")
     engine.start(HeartbeatStatus.PARTIALLY_RUNNING)
     
     // Give time to send 5 messages

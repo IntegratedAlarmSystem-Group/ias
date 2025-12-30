@@ -8,7 +8,8 @@ import org.eso.ias.logging.IASLogger
 import scala.collection.mutable.{Map => MutableMap}
 
 /**
- * The HbEngine periodically sends the message 
+ * The HbEngine immediately sends HB messages when the status changes.
+ * It also periodically sends the HB message 
  * to the publisher subscriber framework.
  * 
  * Users of this class shall only notify of changes
@@ -92,7 +93,7 @@ class HbEngine private[heartbeat] (
    */
   def start(hbState: HeartbeatStatus): Unit = synchronized {
     require(Option(hbState).isDefined,"An intial state is needed")
-    updateHbState(hbState)
+    hbStatus.set(hbState)
     start()
   }
   
@@ -113,7 +114,12 @@ class HbEngine private[heartbeat] (
    * @param newStateMsg The new state 
    */
   def updateHbState(newStateMsg: HeartbeatStatus): Unit = {
+    // if (newStateMsg==getActualStatus) return
     hbStatus.set(newStateMsg)
+    // Force the immediate sending of th HB with the updated state
+    if (!closed.get) {
+      publisher.send(hb,hbStatus.get,props.toMap)
+    }
   }
   
   /** 
