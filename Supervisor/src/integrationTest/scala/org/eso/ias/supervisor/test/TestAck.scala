@@ -184,12 +184,23 @@ class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach
   behavior of "The ACK in the Supervisor"
 
   it must "ACK the alarm" in {
-    logger.info("Test started")
-    val params = CollectionConverters.asJava(List("IASIO-ID", "User provided comment for ACK"))
+    logger.info("ACK test started")
+
+    // Try to ACK an alarm before the DASU produced it for the first time
+    val params = CollectionConverters.asJava(List(temperatureAlarmId.fullRunningID, "User provided comment for ACK"))
     val props = CollectionConverters.asJava(Map[String, String]())
     val reply = cmdSender.sendSync(supervisorId, CommandType.ACK, params, props, 15, TimeUnit.SECONDS)
     assert(reply.isPresent)
-    assert(reply.get().getExitStatus==CommandExitStatus.ERROR) // THE IASIO to ACK does not exist
+    // At this stage, the IASIO to ACK does not exist because the ASCE has not yet received the 
+    // temperature IASIO in input that triggers the generation of the alarm
+    assert(reply.get().getExitStatus==CommandExitStatus.ERROR) 
+
+    // ACK an alarm passing a malformed frID
+    val params2 = CollectionConverters.asJava(List("malformed-fullRunningID", "User provided comment for ACK"))
+    val props2 = CollectionConverters.asJava(Map[String, String]())
+    val reply2 = cmdSender.sendSync(supervisorId, CommandType.ACK, params2, props2, 15, TimeUnit.SECONDS)
+    assert(reply2.isPresent)
+    assert(reply2.get().getExitStatus==CommandExitStatus.ERROR)
 
     // Trigger the generation of the alarm
     val iasio = buildIasioToSubmit(temperatureId, 5)
@@ -219,12 +230,12 @@ class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach
 
     // ACK the alarm
     val alToAck = temperatureAlarmId.fullRunningID
-    val params2 = CollectionConverters.asJava(List(alToAck, "User provided comment for ACK - correct"))
+    val params3 = CollectionConverters.asJava(List(alToAck, "User provided comment for ACK - correct"))
     logger.info("ACKing the alarm")
-    val reply2 = cmdSender.sendSync(supervisorId, CommandType.ACK, params2, props, 15, TimeUnit.SECONDS)
+    val reply3 = cmdSender.sendSync(supervisorId, CommandType.ACK, params3, props, 15, TimeUnit.SECONDS)
     logger.info("ACK cmd sent")
-    assert(reply2.isPresent)
-    assert(reply2.get().getExitStatus==CommandExitStatus.OK) // The command to ACK has been executed
+    assert(reply3.isPresent)
+    assert(reply3.get().getExitStatus==CommandExitStatus.OK) // The command to ACK has been executed
     logger.info("Giving time to get the updated alarm")
     Thread.sleep(10000) // The alarm is published continuously due to the refresh
     logger.info("Test resumed")
@@ -239,7 +250,7 @@ class TestAck extends AnyFlatSpec with BeforeAndAfterAll with BeforeAndAfterEach
     val iasio3 = buildIasioToSubmit(temperatureId, 0)
     iasiosProd.push(CollectionConverters.asJava(List(iasio3)))
 
-    logger.info("Test terminated")
+    logger.info("Test successfully terminated")
   }
 
   it must "ack the right alarm" in {
