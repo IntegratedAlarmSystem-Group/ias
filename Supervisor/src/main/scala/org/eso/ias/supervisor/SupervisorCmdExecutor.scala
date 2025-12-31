@@ -78,8 +78,9 @@ class SupervisorCmdExecutor(tfIDs: List[String], dasus: Map[String, Dasu])
        } else {
          val tryToConvertAlarmId = Try[Identifier] {Identifier.apply(cmd.getParams.get(0))}
          if (tryToConvertAlarmId.isFailure) {
-           SupervisorCmdExecutor.logger.error("Malformed full running ID of the alarm to ACK: [{}",cmd.getParams.get(0))
-           return new CmdExecutionResult(CommandExitStatus.ERROR, null, false, false)
+          val failureMsg = tryToConvertAlarmId.failed.get
+          SupervisorCmdExecutor.logger.error("Malformed full running ID of the alarm to ACK from command: [{}]. Error: {}",cmd.toString(), failureMsg)
+          return new CmdExecutionResult(CommandExitStatus.ERROR, null, false, false)
          }
          val alarmToAck = tryToConvertAlarmId.get
          val userComment = cmd.getParams.get(1) // The Supervisor does nothing with the user comment
