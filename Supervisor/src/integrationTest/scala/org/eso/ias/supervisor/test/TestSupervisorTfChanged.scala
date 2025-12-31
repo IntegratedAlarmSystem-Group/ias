@@ -141,7 +141,7 @@ class TestSupervisorTfChanged
     iasiosConsumer.startGettingEvents(StreamPosition.END,this)
 
     hbConsumer = new HbKafkaConsumer(KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,"TestSupervisorTfChangedHbConsumer-"+System.currentTimeMillis())
-    // hbConsumer.addListener(this)
+    hbConsumer.addListener(this)
     hbConsumer.start()
 
     // Give the supervisor time to start
