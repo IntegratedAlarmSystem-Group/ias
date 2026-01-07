@@ -22,7 +22,7 @@ jobs:
       - name: Install python tools
         run: |
           pip install --upgrade pip
-          pip install PySide6 jep python-dateutil pytest confluent-kafka
+          pip install PySide6 jep python-dateutil pytest confluent-kafka PyYAML
       - run: java -version
       - run: mkdir -p $IAS_ROOT
       - name: Checkout IAS code
@@ -42,16 +42,22 @@ jobs:
       - name: List IAS_ROOT content
         run: ls -lR $IAS_ROOT
       - name: Create a tar archive of IAS_ROOT with preserved attributes
-        run: tar -cvzf ias-root.tgz IasRoot
-      - uses: actions/upload-artifact@v4
+        run: tar -cvzf ias-root.tgz -C "$(dirname "$IAS_ROOT")" "$(basename "$IAS_ROOT")"
+      - name: Upload IAS_ROOT tar artifact
+        uses: actions/upload-artifact@v4
         with:
           name: ias-root.tgz
           path: ias-root.tgz
           retention-days: 7
           include-hidden-files: true
-      - uses: actions/upload-artifact@v4
+      - name: Upload unit test output
+        uses: actions/upload-artifact@v4
         with:
           name: unit-tests.out
           path: $HOME/unit-tests.out
           retention-days: 7
           include-hidden-files: true
+      - name: Export IAS_ROOT as step output
+        id: export
+        run: echo "IAS_ROOT=$IAS_ROOT" >> "$GITHUB_OUTPUT"
+
