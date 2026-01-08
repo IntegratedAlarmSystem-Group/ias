@@ -1,12 +1,13 @@
 package org.eso.ias.command;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import org.eso.ias.utils.ISO8601Helper;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import org.eso.ias.utils.ISO8601Helper;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * The java POJO representing a command to be published in the command kafka topic
@@ -89,7 +90,11 @@ public class CommandMessage {
         this.command = command;
         this.id = id;
         this.params = params;
-        setTimestampMillis(timestamp);
+        
+        this.timestampMillis = timestamp;
+        this.timestamp = ISO8601Helper.getTimestamp(timestamp);
+
+
         this.properties = properties;
     }
 
