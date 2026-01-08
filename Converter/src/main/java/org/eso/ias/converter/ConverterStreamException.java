@@ -7,6 +7,8 @@ package org.eso.ias.converter;
  */
 public class ConverterStreamException extends Exception {
 
+	private static final long serialVersionUID = 1L;
+
 	
 	public ConverterStreamException() {
 	

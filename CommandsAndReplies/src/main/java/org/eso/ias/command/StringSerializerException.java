@@ -5,6 +5,9 @@ package org.eso.ias.command;
  * and replies to and from strings.
  */
 public class StringSerializerException extends Exception {
+
+    private static final long serialVersionUID = 1L;
+    
     public StringSerializerException() {
     }
 
