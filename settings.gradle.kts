@@ -73,7 +73,7 @@ val extension = gradle as ExtensionAware
 extension.extra["PythonVersion"] = pythonVersionComputed
 
 // IAS common dependencies
-extension.extra["scala-library"] = "org.scala-lang:scala3-library_3:3.7.3"
+extension.extra["scala-library"] = "org.scala-lang:scala3-library_3:3.7.4"
 extension.extra["scalatest"] = "org.scalatest:scalatest_3:3.2.19"
 extension.extra["slf4j-api"] = "org.slf4j:slf4j-api:2.0.9"
 extension.extra["scala-logging"] = "com.typesafe.scala-logging:scala-logging_3:3.9.5"
