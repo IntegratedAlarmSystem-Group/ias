@@ -1,0 +1,89 @@
+pipeline {
+    agent any
+
+    options {
+        // This is required if you want to clean before build
+        skipDefaultCheckout(true)
+    }
+    
+    environment {
+        // Define your environment variables here
+        IAS_ROOT = "${env.WORKSPACE}/IasRoot"
+    }
+
+    stages {
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+        stage('Create Folders') {
+            steps {
+                sh 'mkdir -p IasRoot'
+                sh 'mkdir -p ias'
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                dir('ias') {
+                  // Uses the SCM defined by the multibranch job (including branch, commit, and credentials)
+                  checkout scm
+                }
+            }
+        }
+        stage('Setup Python Env') {
+            steps {
+                sh '''
+                set -e
+                python3 -m venv venv
+                . venv/bin/activate
+                pip install --upgrade pip
+                pip install -r ias/JenkinsFiles/python-requirements.txt
+                '''
+            }
+        }
+        stage('Build') {
+            steps {
+                dir('ias') {
+                    sh '''
+                      set -e
+                      . ../venv/bin/activate
+                      ./gradlew build -x test
+                    '''
+                }
+            }
+        }
+        stage('Install') {
+            steps {
+                dir('ias') {
+                    sh '''
+                      set -e
+                      . ../venv/bin/activate
+                      ./gradlew install
+                    '''
+                }
+            }
+        }
+        stage('Run Integration Tests') {
+            steps {
+                dir('ias') {
+                  sh '''
+                      . ../venv/bin/activate
+                      . Tools/src/main/ias-bash-profile.sh
+                      ./gradlew --stop
+                      ./gradlew integrationTest
+                  '''
+                }
+            }
+        }
+    }
+    post {
+        always {
+            junit '**/build/test-results/**/*.xml'
+        }
+        failure {
+            echo 'Build failed!'
+        }
+    }
+}
