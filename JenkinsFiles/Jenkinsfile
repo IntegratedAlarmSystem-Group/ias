@@ -38,8 +38,9 @@ pipeline {
         stage('Setup Python Env') {
             steps {
                 sh '''
+                set -e
                 python3 -m venv venv
-                source venv/bin/activate
+                . venv/bin/activate
                 pip install --upgrade pip
                 pip install -r ias/JenkinsFiles/python-requirements.txt
                 '''
