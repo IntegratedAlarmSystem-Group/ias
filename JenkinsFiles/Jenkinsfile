@@ -26,6 +26,18 @@ pipeline {
                 sh 'mkdir -p ias'
             }
         }
+        
+     stage('Setup Python Env') {
+            steps {
+                sh '''
+                python3 -m venv venv
+                source venv/bin/activate
+                pip install --upgrade pip
+                pip install -r requirements.txt
+                '''
+            }
+        }
+
         stage('Checkout') {
             steps {
                 dir('ias') {
@@ -37,6 +49,7 @@ pipeline {
         stage('Build') {
             steps {
                 dir('ias') {
+                    source ../venv/bin/activate
                     sh './gradlew build'
                 }
             }
@@ -44,6 +57,7 @@ pipeline {
         stage('Install') {
             steps {
                 dir('ias') {
+                    source ../venv/bin/activate
                     sh './gradlew install'
                 }
             }
