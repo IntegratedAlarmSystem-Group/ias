@@ -9,7 +9,8 @@ class TestConfigNoCdb():
     @classmethod
     def setup_class(cls):
         cls.old_cdb = os.environ.get('IAS_CDB')
-        del os.environ['IAS_CDB']
+        if cls.old_cdb is not None:
+            del os.environ['IAS_CDB']
 
     @classmethod
     def teardown_class(cls):
