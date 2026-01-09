@@ -48,16 +48,20 @@ pipeline {
         stage('Build') {
             steps {
                 dir('ias') {
-                    source ../venv/bin/activate
-                    sh './gradlew build'
+                    sh '''
+                      source ../venv/bin/activate
+                      ./gradlew build
+                    '''
                 }
             }
         }
         stage('Install') {
             steps {
                 dir('ias') {
-                    source ../venv/bin/activate
-                    sh './gradlew install'
+                    sh '''
+                      source ../venv/bin/activate
+                      ./gradlew install
+                    '''
                 }
             }
         }
