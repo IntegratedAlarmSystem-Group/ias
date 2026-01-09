@@ -26,17 +26,6 @@ pipeline {
                 sh 'mkdir -p ias'
             }
         }
-        
-     stage('Setup Python Env') {
-            steps {
-                sh '''
-                python3 -m venv venv
-                source venv/bin/activate
-                pip install --upgrade pip
-                pip install -r requirements.txt
-                '''
-            }
-        }
 
         stage('Checkout') {
             steps {
@@ -44,6 +33,16 @@ pipeline {
                   // Uses the SCM defined by the multibranch job (including branch, commit, and credentials)
                   checkout scm
                 }
+            }
+        }
+        stage('Setup Python Env') {
+            steps {
+                sh '''
+                python3 -m venv venv
+                source venv/bin/activate
+                pip install --upgrade pip
+                pip install -r ias/JenkinsFiles/python-requirements.txt
+                '''
             }
         }
         stage('Build') {
