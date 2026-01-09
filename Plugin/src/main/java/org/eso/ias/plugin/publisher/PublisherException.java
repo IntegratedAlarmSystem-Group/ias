@@ -10,6 +10,8 @@ import org.eso.ias.plugin.PluginException;
  */
 public class PublisherException extends PluginException {
 
+	private static final long serialVersionUID = 1L;
+
 	public PublisherException(String message) {
 		super(message);
 	}

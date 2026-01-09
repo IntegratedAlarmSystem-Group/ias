@@ -61,10 +61,13 @@ public class MonitorPointData extends MonitorPointDataToBuffer{
 	 */
 	public MonitorPointData(String pluginID, String monitoredSystemID,ValueToSend value) {
 		super(value);
-		setPluginID(pluginID);
-		setMonitoredSystemID(monitoredSystemID);
+		Objects.requireNonNull(pluginID);
+		Objects.requireNonNull(monitoredSystemID);
+		this.pluginID = pluginID;
+
+		this.monitoredSystemID = monitoredSystemID;
 		synchronized (iso8601dateFormat) {
-			setProducedByPluginTime(iso8601dateFormat.format(new Date(System.currentTimeMillis())));
+			this.producedByPluginTime = iso8601dateFormat.format(new Date(System.currentTimeMillis()));
 		}
 	}
 	

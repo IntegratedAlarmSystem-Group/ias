@@ -1,24 +1,24 @@
 plugins {
-    `scala`
-    `java`
+    scala
+    java
     `java-library-distribution`
     id("org.eso.ias.build.plugin")
 }
 
 dependencies {
     val g = project.gradle
-    if (g is ExtensionAware) {
-      val extension = g as ExtensionAware
-      implementation(extension.extra["scala-library"].toString())
-      implementation(extension.extra["scalatest"].toString())
-      implementation(extension.extra["scala-logging"].toString())
-      implementation(extension.extra["logback-classic"].toString())
-      implementation(extension.extra["jackson-databind"].toString())
-      implementation(extension.extra["kafka-clients"].toString())
-    }
+    val extension = g as ExtensionAware
+    implementation(extension.extra["scala-library"].toString())
+    implementation(extension.extra["scala-logging"].toString())
+    implementation(extension.extra["logback-classic"].toString())
+    implementation(extension.extra["jackson-databind"].toString())
+    implementation(extension.extra["kafka-clients"].toString())
     
     implementation(project(":KafkaUtils"))
     implementation(project(":Tools"))
+
+    testImplementation(extension.extra["junit-jupiter"].toString())
+    testImplementation(extension.extra["scalatest"].toString())
 
 }
 
@@ -38,4 +38,6 @@ sourceSets {
     }
 }
 
-
+tasks.test {
+            useJUnitPlatform()
+}

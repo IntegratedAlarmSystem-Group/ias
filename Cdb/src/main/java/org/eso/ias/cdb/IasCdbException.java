@@ -8,6 +8,8 @@ package org.eso.ias.cdb;
  */
 public class IasCdbException extends Exception {
 
+	private static final long serialVersionUID = 1L;
+
 	public IasCdbException() {
 		// TODO Auto-generated constructor stub
 	}

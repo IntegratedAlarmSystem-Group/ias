@@ -106,16 +106,16 @@ open class IasBuild : Plugin<Project> {
             from(project.layout.projectDirectory.dir(srcFolder))
             include("**/*.py")
             exclude("*.py")
-            val destFolder = "lib/python${pythonVersion}/site-packages"
+            val destFolder = "lib/${pythonVersion}/site-packages"
             into(project.layout.buildDirectory.dir(destFolder))
-        }
 
+        }
+        
         val installBin = project.tasks.register<Copy>("InstallBin") {
             var envVar: String? = System.getenv("IAS_ROOT")
 
             dependsOn(":${project.name}:CopyPyScripts")
             dependsOn(":${project.name}:CopyShScripts")
-            dependsOn(":${project.name}:CopyPyTestScripts")
 
             from(project.layout.buildDirectory.dir("bin"))
             include("**/*")
@@ -140,7 +140,6 @@ open class IasBuild : Plugin<Project> {
 
             dependsOn(":${project.name}:CopyExtLib")
             dependsOn(":${project.name}:CopyPyMods")
-            dependsOn(":${project.name}:CopyPyTestMods")
             dependsOn(":${project.name}:CopyPyGuiModules")
 
             from(project.layout.buildDirectory.dir("lib"))
@@ -191,46 +190,6 @@ open class IasBuild : Plugin<Project> {
             exclude("ias*.jar")
         }
 
-        // Copy python test scripts in build/bin
-        val pyTestScripts = project.tasks.register<Copy>("CopyPyTestScripts") {
-            val pyFolder = "src/test/python"
-            val destFolder = "bin"
-
-            from(project.layout.projectDirectory.dir(pyFolder))
-            include("*.py")
-            rename { filename: String ->
-                filename.substringBefore('.')
-            }
-            
-            into(project.layout.buildDirectory.dir(destFolder))
-
-            // Set file permissions directly
-            filePermissions {
-                user {
-                    read = true
-                    execute = true
-                }
-                group {
-                    read = true
-                    execute = true
-                }
-                other.execute = true
-            }
-
-        }
-
-        // Copy python test modules
-        // i.e. each folder in src/test/python
-        val pyTestModules = project.tasks.register<Copy>("CopyPyTestMods") {
-            val srcFolder = "src/test/python"
-
-            from(project.layout.projectDirectory.dir(srcFolder))
-            include("**/*.py")
-            exclude("*.py")
-            val destFolder = "lib/python${pythonVersion}/site-packages"
-            into(project.layout.buildDirectory.dir(destFolder))
-        }
-
         // Build PySide6 code like .ui and .qrc by delegating to GuiBuilder
         val pyside6GuiBuilder = project.tasks.register("GuiBuilder") {
             dependsOn(pyModules)
@@ -242,7 +201,7 @@ open class IasBuild : Plugin<Project> {
             var folder = "src/main/gui"
             val guiFolder = project.layout.projectDirectory.dir(folder).getAsFile().getPath()
             logger.info("Building GUI in {}", guiFolder)
-            val destFolder = "lib/python${pythonVersion}/site-packages"
+            val destFolder = "lib/${pythonVersion}/site-packages"
             val directory = project.layout.projectDirectory.dir(destFolder).getAsFile().getPath()
             val guiBuilder = GuiBuilder(guiFolder, directory)
             guiBuilder.build()
@@ -258,7 +217,7 @@ open class IasBuild : Plugin<Project> {
             from(project.layout.projectDirectory.dir(srcFolder))
             include("**/*.py")
             exclude("*.py")
-            val destFolder = "lib/python${pythonVersion}/site-packages"
+            val destFolder = "lib/${pythonVersion}/site-packages"
             into(project.layout.buildDirectory.dir(destFolder))
         }
 
@@ -275,10 +234,11 @@ open class IasBuild : Plugin<Project> {
 
         // Standard module with scala and or java (not python only)
         // but not for python only modules that have no build task
-        val buildTask = project.tasks.getByPath(":${project.name}:build")
-        buildTask.finalizedBy(conf)
-        buildTask.finalizedBy(pyScripts)
-        buildTask.finalizedBy(shScripts)
+        val assembleTask = project.tasks.getByPath(":${project.name}:assemble")
+        assembleTask.dependsOn(conf)
+        assembleTask.dependsOn(pyScripts)
+        assembleTask.dependsOn(shScripts)
+        assembleTask.dependsOn(pyModules)
 
         // Tasks for GUIs
         try {
@@ -286,62 +246,65 @@ open class IasBuild : Plugin<Project> {
             // the base plugin instead of java or scala. In this case, 
             // we add it. In case distTar exists, an exception
             // is thrown but there is nothing to do
-            project.tasks.create("distTar") 
+            project.tasks.register("distTar") 
         } catch (e: Exception) {}
 
         
-        buildTask.finalizedBy(pyside6GuiBuilder) // Build PySide6 stuff
-        buildTask.finalizedBy(copyPyGuiModules)
-        buildTask.finalizedBy(delGuiPy)
+        assembleTask.dependsOn(copyExtLibs)
 
-        buildTask.finalizedBy(pyModules)
-        buildTask.finalizedBy(copyExtLibs)
-        buildTask.finalizedBy(pyTestScripts)
-        buildTask.finalizedBy(pyTestModules)
+        // If a test task exists (for java and scala only modules) then
+        // jvm tests must depends on the availability of the python modules
+        // to run python code with jep
+        try {
+            val testTask = project.tasks.getByPath(":${project.name}:test")
+            testTask.dependsOn(pyModules)
+        }catch (e: Exception) {}
 
-        val runIasUnitTestsTask = project.tasks.register<Exec>("iasUnitTest") {
-            dependsOn(":build", pyTestScripts)
-            onlyIf {
-                val testFolder = project.layout.projectDirectory.dir("src/test")
-                if (testFolder.getAsFile().exists()) {
-                    val testFile = testFolder.file("runTests.sh").getAsFile()
-                    val cond = testFile.exists()
-                    if (!cond) {
-                        logger.warn("Test file missing {}",testFile.getPath())    
-                    }
-                    cond
-                } else {
-                    logger.warn("Test folder missing {}",testFolder.getAsFile().getPath())
-                    false
-                }
+        val runIasIntTestsTask = project.tasks.register<Exec>("integrationTest") {
+            group = "verification"
+            description = "Runs integration tests via src/integrationTest/runIntTests.sh"
+
+            // Compute the condition at configuration time
+            val testDir = project.layout.projectDirectory.dir("src/integrationTest").asFile
+            val script = project.layout.projectDirectory.file("src/integrationTest/runIntTests.sh").asFile
+            val shouldRun = testDir.exists() && script.exists()
+
+            // Helpful logs during configuration
+            if (!testDir.exists()) {
+                logger.warn("Integration test folder missing: {}", testDir.path)
+            } else if (!script.exists()) {
+                logger.warn("Integration test script missing: {}", script.path)
             }
-            commandLine("src/test/runTests.sh")
-        }
 
-        val runIasIntTestsTask = project.tasks.register<Exec>("iasIntTest") {
-            dependsOn(":build", pyTestScripts)
-            onlyIf {
-                val testFolder = project.layout.projectDirectory.dir("src/test")
-                if (testFolder.getAsFile().exists()) {
-                    val testFile = testFolder.file("runIntTests.sh").getAsFile()
-                    val cond = testFile.exists()
-                    if (!cond) {
-                        logger.warn("Test file missing {}",testFile.getPath())    
-                    }
-                    cond
-                } else {
-                    logger.warn("Test folder missing {}",testFolder.getAsFile().getPath())
-                    false
+            // If the inputs are present, we enable the task and wire dependencies/command
+            enabled = shouldRun
+
+            if (shouldRun) {
+                // Only add dependency when the task is enabled
+                dependsOn("buildIntegrationTest")
+
+
+                // Working directory so relative paths inside the script work
+                workingDir = project.layout.projectDirectory.asFile
+
+                doFirst {
+                    val outDir = project.layout
+                        .buildDirectory
+                        .dir("integration-test-results")
+                        .get()
+                        .asFile
+                    project.mkdir(outDir)
                 }
+
+                // Actual command to run
+                commandLine("bash", "src/integrationTest/runIntTests.sh")
+
             }
-            commandLine("src/test/runIntTests.sh")
+
         }
 
-        val runIasTests = project.tasks.register("iasTest") {
-            dependsOn(runIasUnitTestsTask)
-            dependsOn(runIasIntTestsTask)
-        }
 
+        ////////////////////////////////////
 
         project.tasks.withType<JavaCompile>().configureEach {
             options.isDeprecation = true

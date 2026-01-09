@@ -6,14 +6,11 @@ plugins {
 
 dependencies {
     val g = project.gradle
-    if (g is ExtensionAware) {
-      val extension = g as ExtensionAware
-      implementation(extension.extra["scala-library"].toString())
-      implementation(extension.extra["scalatest"].toString())
-      implementation(extension.extra["scala-logging"].toString())
-      implementation(extension.extra["kafka-clients"].toString())
-      implementation(extension.extra["logback-classic"].toString())
-    }
+    val extension = g as ExtensionAware
+    implementation(extension.extra["scala-library"].toString())
+    implementation(extension.extra["scala-logging"].toString())
+    implementation(extension.extra["kafka-clients"].toString())
+    implementation(extension.extra["logback-classic"].toString())
 
     implementation(project(":BasicTypes"))
     implementation(project(":Tools"))
@@ -22,4 +19,10 @@ dependencies {
     implementation(project(":CdbChecker"))
     implementation(project(":KafkaUtils"))
 
+    testImplementation(extension.extra["junit-jupiter"].toString())
+    testImplementation(extension.extra["scalatest"].toString())
+}
+
+tasks.test {
+            useJUnitPlatform()
 }

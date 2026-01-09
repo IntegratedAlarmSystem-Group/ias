@@ -7,19 +7,17 @@ plugins {
 
 dependencies {
     val g = project.gradle
-    if (g is ExtensionAware) {
-      val extension = g as ExtensionAware
-      implementation(extension.extra["scala-library"].toString())
-      implementation(extension.extra["scalatest"].toString())
-      implementation(extension.extra["scala-logging"].toString())
-      implementation(extension.extra["logback-classic"].toString())
-      implementation(extension.extra["jackson-databind"].toString())
-      implementation(extension.extra["junit-jupiter-api"].toString())
-      implementation(extension.extra["junit-jupiter-engine"].toString())
-    }
+    val extension = g as ExtensionAware
+    implementation(extension.extra["scala-library"].toString())
+    implementation(extension.extra["scala-logging"].toString())
+    implementation(extension.extra["logback-classic"].toString())
+    implementation(extension.extra["jackson-databind"].toString())
     
     implementation(project(":Tools"))
     implementation(project(":Cdb"))
+
+    testImplementation(extension.extra["junit-jupiter"].toString())
+    testImplementation(extension.extra["scalatest"].toString())
 }
 
 sourceSets {
@@ -37,3 +35,12 @@ sourceSets {
         }
     }
 }
+
+tasks.test {
+            useJUnitPlatform()
+}
+
+tasks.named("pytest").configure {
+    dependsOn(project(":Tools").tasks.named("build"))
+}
+

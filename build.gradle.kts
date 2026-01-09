@@ -1,5 +1,12 @@
+plugins {
+    base
+}
+
 import java.nio.file.StandardCopyOption
+import java.nio.file.Files
 import java.io.File
+import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.api.tasks.testing.Test
 
 
 fun checkIntegrity(): Boolean {
@@ -10,7 +17,7 @@ fun checkIntegrity(): Boolean {
     return true
 }
 
-tasks.register("build") {
+tasks.named("build") {
     doFirst {
         if (!checkIntegrity()) {
             throw GradleException("Integrity check not passed: IAS_ROOT is undefined")
@@ -42,13 +49,205 @@ tasks.register("install") {
 
         val licFile = File("LICENSE.md")
         val outLicFile = File(envVar + "/" + "LICENSE.md")
-        java.nio.file.Files.copy(licFile.toPath(), outLicFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        Files.copy(licFile.toPath(), outLicFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
 
         val readmeFile = File("README.md")
         val outReadmeFile = File(envVar + "/" + "README.md")
-        java.nio.file.Files.copy(readmeFile.toPath(), outReadmeFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
+       Files.copy(readmeFile.toPath(), outReadmeFile.toPath(), StandardCopyOption.REPLACE_EXISTING)
     }
 }
 
 subprojects {
+    // Adds the pytest task to run pythin tests
+    // only if module has Python tests: src/test/python exists and contains at least one *.py file
+    val pythonDir = file("src/test/python")
+
+    val hasPythonFilesTopLevel =
+        pythonDir.exists() &&
+        pythonDir.isDirectory &&
+        (pythonDir.listFiles { f -> f.isFile && f.extension == "py" }?.isNotEmpty() == true)
+
+    if (hasPythonFilesTopLevel) {
+        val pytestTask = tasks.register<Exec>("pytest") {
+            description = "Run pytest for ${project.name}"
+            group = "verification"
+
+            // If CopyPyMods exists (likely as the test probably test the modules delivered by the subproject),
+            // the test depends on it
+            if (tasks.names.contains("CopyPyMods")) {
+                dependsOn(tasks.named("CopyPyMods"))
+            }
+
+            doFirst {
+                mkdir(layout.buildDirectory.dir("test-results/pytest").get().asFile)
+            }
+
+            // Build PYTHONPATH dynamically
+            val pythonPaths = mutableListOf<String>()
+            pythonPaths.add(layout.buildDirectory.dir("src/test/python").get().asFile.absolutePath)
+
+            // Include all subprojects' site-packages
+            val extension = gradle as ExtensionAware
+            rootProject.subprojects.forEach { sub ->
+                pythonPaths.add(
+                    sub.layout.buildDirectory
+                        .dir("lib/${extension.extra["PythonVersion"]}/site-packages")
+                        .get().asFile.absolutePath
+                )
+            }
+
+            val existingPath = System.getenv("PYTHONPATH") ?: ""
+            val sep = File.pathSeparator
+            val paths = listOf(existingPath)
+                    .plus(pythonPaths)
+                    .filter { it.isNotBlank() }
+                    .joinToString(sep)
+            
+            environment("PYTHONPATH", paths)
+
+            commandLine(
+                "pytest",
+                "src/test/python",
+                "--junitxml=${layout.buildDirectory.dir("test-results/pytest").get().asFile}/TEST-${project.name}-pytest.xml"
+            )
+        }
+
+        // Attach pytest to check (check exists for modules with java, scala and python sources while
+        // test task exists only for modules with java/scala sources)
+        tasks.matching { it.name == "check" }.configureEach {
+            dependsOn(pytestTask)
+        }
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+        
+    plugins.withId("java") {
+        val hasItDir = file("src/integrationTest").exists()
+        val sourceSets = the<SourceSetContainer>()
+
+        if (hasItDir) {
+            logger.lifecycle("Found integration sources for ${project.name}")
+
+            val integrationTest = sourceSets.create("integrationTest") {
+                // Java + resources
+                java.srcDir("src/integrationTest/java")
+                resources.srcDir("src/integrationTest/resources")
+
+                // Classpaths: main output + test deps (if you need them)
+                compileClasspath += sourceSets["main"].output + configurations["testRuntimeClasspath"]
+                runtimeClasspath += output + compileClasspath
+
+                // (Optional) let integration sources see compiled test classes
+                compileClasspath += sourceSets["test"].output
+                runtimeClasspath += sourceSets["test"].output
+            }
+
+            // Reuse unit-test scopes for integration sources
+            configurations[integrationTest.implementationConfigurationName]
+                .extendsFrom(configurations["testImplementation"])
+            configurations[integrationTest.runtimeOnlyConfigurationName]
+                .extendsFrom(configurations["testRuntimeOnly"])
+
+            // === Build-only task: compiles Java/Scala + processes resources ===
+            tasks.register("buildIntegrationTest") {
+                group = "build"
+                description = "Compiles integrationTest Java/Scala sources and resources (no test execution)."
+
+                // Depend on the source set's classes task
+                dependsOn(tasks.named(integrationTest.classesTaskName))  // compiles & processes resources
+            }
+        } else {
+            logger.info("No integration sources for ${project.name}")
+        }
+    }
+
+
+    // If module has CopyPyMods, ensure assemble triggers it
+    if (tasks.names.contains("CopyPyMods")) {
+        tasks.named("assemble") {
+            dependsOn(tasks.named("CopyPyMods"))
+        }
+
+        if (tasks.names.contains("check")) {
+            tasks.named("check") {
+                dependsOn(tasks.named("CopyPyMods"))
+            }
+        }
+
+    }
+}
+
+val verifyTestResults = tasks.register("verifyTestResults") {
+    group = "verification"
+    description = "Check JUnit XML reports and list files with failures or errors"
+
+    doLast {
+        val xmlFiles = rootProject.allprojects.flatMap { p ->
+            val dir = p.layout.buildDirectory.dir("test-results").get().asFile
+            if (dir.exists()) {
+                dir.walk().filter { it.isFile && it.extension == "xml" }.toList()
+            } else {
+                emptyList()
+            }
+        }
+
+        val failedFiles = xmlFiles.filter { file ->
+            val content = file.readText()
+            content.contains("<failure") || content.contains("<error")
+        }
+
+        if (failedFiles.isNotEmpty()) {
+            println("❌ Unit test failures detected in the following XML files:")
+            failedFiles.forEach { println(" - ${it.absolutePath}") }
+            throw GradleException("Some unit tests failed. Check reports above.")
+        } else {
+            println("✅ All unit tests passed. No failures or errors found.")
+        }
+    }
+}
+
+val verifyIntTestResults = tasks.register("verifyIntTestResults") {
+    group = "verification"
+    description = "Check XML reports and list integration files with failures or errors"
+
+    doLast {
+        val xmlFiles = rootProject.allprojects.flatMap { p ->
+            val dir = p.layout.buildDirectory.dir("integration-test-results").get().asFile
+            if (dir.exists()) {
+                dir.walk().filter { it.isFile && it.extension == "xml" }.toList()
+            } else {
+                emptyList()
+            }
+        }
+
+        val failedFiles = xmlFiles.filter { file ->
+            val content = file.readText()
+            content.contains("<failure") || content.contains("<error")
+        }
+
+        if (failedFiles.isNotEmpty()) {
+            println("❌ Integration test failures detected in the following XML files:")
+            failedFiles.forEach { println(" - ${it.absolutePath}") }
+            throw GradleException("Some integration tests failed. Check reports above.")
+        } else {
+            println("✅ All tests passed. No failures or errors found.")
+        }
+    }
+}
+
+allprojects {
+    // Some projects may not have a 'check' task (e.g., purely custom projects),
+    // so use matching/configureEach to bind only where it exists.
+    tasks.matching { it.name == "check" }.configureEach {
+        finalizedBy(verifyTestResults)
+    }
+
+    tasks.matching { it.name == "integrationTest" }.configureEach {
+        finalizedBy(verifyIntTestResults)
+    }
+}
+
+
+tasks.named("build") {
+    finalizedBy(verifyTestResults)
 }
