@@ -17,6 +17,8 @@ class FileSupport(object):
         "lib": "build/lib",
         "scalaTestClasses": "build/classes/scala/test/",
         "javaTestClasses":  "build/classes/java/test/",
+        "scalaIntTestClasses": "build/classes/scala/integrationTest/",
+        "javaIntTestClasses":  "build/classes/java/integrationTest/",
         "bin": "build/bin",
         "config": "build/config",
         "src": "src"}
@@ -160,7 +162,9 @@ class FileSupport(object):
         Class files are only in the local build/test folder
         :return:
         """
-        return [cls.iasModFileType["scalaTestClasses"], cls.iasModFileType["javaTestClasses"]]
+        return [
+            cls.iasModFileType["scalaTestClasses"], cls.iasModFileType["javaTestClasses"],
+            cls.iasModFileType["scalaIntTestClasses"], cls.iasModFileType["javaIntTestClasses"]]
 
     @classmethod
     def createTmpFolder(cls):

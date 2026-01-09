@@ -7,6 +7,7 @@ import org.eso.ias.cdb.pojos.IasDao;
 import org.eso.ias.cdb.rdb.RdbReader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +50,11 @@ public class CdbReaderFactoryTest {
 
     @AfterEach
     public void tearDown() throws Exception {}
+
+    @BeforeAll
+    public static void afterAll() throws Exception {
+        System.setProperty("IAS_EXTERNAL_JARS","src/test/ExtJARS/");
+    }
 
     @Test
     void testRdbInstantiation() throws Exception {

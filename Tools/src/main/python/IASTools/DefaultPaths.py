@@ -91,10 +91,17 @@ class DefaultPaths:
         :return: The IAS logs folder path from the environment or the default
         """
         if not cls._ias_logs_env_var in os.environ:
-            from IASLogging.logConf import Log
-            _logger = Log.getLogger(__file__)
-            _logger.warning("The IAS_LOGS_FOLDER environment variable is not set. Using default: %s", cls._default_ias_logs_folder)
-        return os.getenv(cls._ias_logs_env_var, cls._default_ias_logs_folder)
+            print(f"WARN: The {cls._ias_logs_env_var} environment variable is not set. Using default: {cls._default_ias_logs_folder}")
+            log_folder = cls._default_ias_logs_folder
+        else:
+            log_folder = os.getenv(cls._ias_logs_env_var)
+
+        # Check if the log folder is writable
+        if os.path.isdir(log_folder) and os.access(log_folder, os.W_OK):
+            return log_folder
+        else:
+            print(f"WARN: log folder {log_folder} does not exists or not writable: using {os.getcwd()} folder for storing logs")
+            return os.getcwd()
     
     @classmethod
     def get_ias_tmp_folder(cls) -> str:

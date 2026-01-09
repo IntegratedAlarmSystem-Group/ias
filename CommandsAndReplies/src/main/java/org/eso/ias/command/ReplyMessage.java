@@ -1,11 +1,12 @@
 package org.eso.ias.command;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import org.eso.ias.utils.ISO8601Helper;
-
 import java.util.Map;
 import java.util.Objects;
+
+import org.eso.ias.utils.ISO8601Helper;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * The java POJO to send replies over the kafka topic.
@@ -92,8 +93,15 @@ public class ReplyMessage {
         this.id = id;
         this.command = command;
         this.exitStatus = exitStatus;
-        setReceptionTStampMillis(receptionTStamp);
-        setProcessedTStampMillis(processedTStamp);
+
+        // Set the reception tstamp
+        this.receptionTStampMillis = receptionTStamp;
+        this.receptionTStamp=ISO8601Helper.getTimestamp(receptionTStamp);
+
+        // Set the processed tstamp
+        this.processedTStampMillis = processedTStamp;
+        this.processedTStamp = ISO8601Helper.getTimestamp(processedTStamp);
+
         this.properties = properties;
     }
 

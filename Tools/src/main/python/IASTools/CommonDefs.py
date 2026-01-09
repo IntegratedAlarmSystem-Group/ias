@@ -77,7 +77,7 @@ class CommonDefs(object):
                         classpath = classpath+filePath
                         jars.append(jarFileName)
 
-        # Adds test classes, if any
+        # Adds unit and integration test classes, if any
         testFolders = FileSupport.FileSupport.getClassFolders()
         for folder in testFolders:
             classpath = classpath+cls.__classPathSeparator+folder

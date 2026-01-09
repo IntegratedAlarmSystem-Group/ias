@@ -1,16 +1,36 @@
 package org.eso.ias.command.kafka;
 
-import org.eso.ias.command.*;
-import org.eso.ias.kafkautils.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.lang.management.ManagementFactory;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Properties;
+import java.util.Vector;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.eso.ias.command.CmdReplyThreadFactory;
+import org.eso.ias.command.CommandExitStatus;
+import org.eso.ias.command.CommandJsonSerializer;
+import org.eso.ias.command.CommandListener;
+import org.eso.ias.command.CommandManager;
+import org.eso.ias.command.CommandMessage;
+import org.eso.ias.command.CommandStringSerializer;
+import org.eso.ias.command.CommandType;
+import org.eso.ias.command.DefaultCommandExecutor;
+import org.eso.ias.command.ReplyJsonSerializer;
+import org.eso.ias.command.ReplyMessage;
+import org.eso.ias.command.ReplyStringSerializer;
+import org.eso.ias.command.StringSerializerException;
+import org.eso.ias.kafkautils.KafkaHelper;
+import org.eso.ias.kafkautils.KafkaStringsConsumer;
+import org.eso.ias.kafkautils.KafkaUtilsException;
+import org.eso.ias.kafkautils.SimpleStringConsumer;
+import org.eso.ias.kafkautils.SimpleStringProducer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The {@code CommandManagerKafkaImpl} is the command executor that subscribes as a consumer of the kafka command topic
@@ -85,7 +105,7 @@ public class CommandManagerKafkaImpl
      *
      * @see #run()
      */
-    private final Thread cmdThread = threadFactory.newThread(this);
+    private Thread cmdThread;
 
     /**
      * The list of commands to process
@@ -168,6 +188,7 @@ public class CommandManagerKafkaImpl
         this.closeable=closeable;
         initialize();
         logger.debug("Starting the command processor thread...");
+        cmdThread = threadFactory.newThread(this);
         cmdThread.start();
         logger.debug("Start getting commands from the topic");
         cmdsConsumer.startGettingStrings(KafkaStringsConsumer.StreamPosition.END,this);

@@ -1,16 +1,16 @@
 package org.eso.ias.kafkautils;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+
 import org.eso.ias.types.IASTypes;
 import org.eso.ias.types.IASValue;
 import org.eso.ias.types.IasValueJsonSerializer;
 import org.eso.ias.types.IasValueStringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
 /**
  * Extends {@link SimpleKafkaIasiosConsumer} providing filtering by IDs and types.
  * <P>
@@ -67,7 +67,18 @@ public class KafkaIasiosConsumer extends SimpleKafkaIasiosConsumer {
 			Set<String> idsOfIDsToAccept,
 			Set<IASTypes> idsOfTypesToAccept) {
 		super(servers, topicName, consumerID);
-		setFilter(idsOfIDsToAccept, idsOfTypesToAccept);
+		
+		 if (idsOfIDsToAccept==null) {
+	       acceptedIds = Collections.unmodifiableSet(new HashSet<>());
+        } else {
+	       acceptedIds = Collections.unmodifiableSet(idsOfIDsToAccept);
+        }
+
+        if (idsOfTypesToAccept==null) {
+           acceptedTypes = Collections.unmodifiableSet(new HashSet<>());
+        } else {
+           acceptedTypes = Collections.unmodifiableSet(idsOfTypesToAccept);
+        }
 	}
 	
 
