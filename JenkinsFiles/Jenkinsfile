@@ -49,7 +49,8 @@ pipeline {
             steps {
                 dir('ias') {
                     sh '''
-                      source ../venv/bin/activate
+                      set -e
+                      . ../venv/bin/activate
                       ./gradlew build
                     '''
                 }
@@ -59,7 +60,8 @@ pipeline {
             steps {
                 dir('ias') {
                     sh '''
-                      source ../venv/bin/activate
+                      set -e
+                      . ../venv/bin/activate
                       ./gradlew install
                     '''
                 }
