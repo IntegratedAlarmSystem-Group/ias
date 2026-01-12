@@ -63,7 +63,7 @@ pipeline {
                     sh '''
                       set -e
                       . ../venv/bin/activate
-                      ./gradlew install
+                      ./gradlew install clean
                     '''
                 }
             }
