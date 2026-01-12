@@ -83,8 +83,9 @@ pipeline {
     post {
         success {
             archiveArtifacts artifacts: '**/*.tgz'
-            build job: 'IntegrationTest', wait: false
-
+            build job: 'IntegrationTest', wait: false, parameters: [
+                string(name: 'BRANCH_NAME', value: env.BRANCH_NAME)
+              ]
         }
         
         always {
