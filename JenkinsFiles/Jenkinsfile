@@ -83,7 +83,7 @@ pipeline {
     post {
         success {
             archiveArtifacts artifacts: '**/*.tgz'
-            build job: 'IntegrationTest', wait: false, parameters: [
+            build job: 'IAS-IntegrationTest', wait: false, parameters: [
                 string(name: 'BRANCH_NAME', value: env.BRANCH_NAME)
               ]
         }
