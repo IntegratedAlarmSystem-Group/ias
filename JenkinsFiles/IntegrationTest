@@ -11,6 +11,11 @@ pipeline {
         IAS_ROOT = "${env.WORKSPACE}/IasRoot"
     }
 
+    parameters {
+        string(name: 'BRANCH_NAME', defaultValue: 'develop', description: 'Branch to test')
+    }
+
+
     stages {
         stage('Clean Workspace') {
             steps {
