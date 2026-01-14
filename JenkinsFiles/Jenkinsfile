@@ -63,7 +63,7 @@ pipeline {
                     sh '''
                       set -e
                       . ../venv/bin/activate
-                      ./gradlew install clean
+                      ./gradlew install
                     '''
                 }
             }
@@ -75,7 +75,9 @@ pipeline {
         }
         stage('Compress ias') {
             steps {
-                sh 'tar -czf ias.tgz -C ias .'
+                sh '''
+                    tar -czf ias.tgz --exclude='build' --exclude='*/build' --exclude='*.log' -C ias .
+                '''
             }
         }
     }
