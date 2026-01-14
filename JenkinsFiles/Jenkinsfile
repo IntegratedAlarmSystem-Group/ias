@@ -52,7 +52,7 @@ pipeline {
                     sh '''
                       set -e
                       . ../venv/bin/activate
-                      ./gradlew build
+                      ./gradlew clean build
                     '''
                 }
             }
