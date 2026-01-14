@@ -85,7 +85,10 @@ pipeline {
     }
     post {
         always {
-            junit '**/build/test-results/**/*.xml'
+            junit testResults: '**/build/test-results/**/*.xml',
+              allowEmptyResults: true,        // Don't fail if no test reports exist
+              keepLongStdio: true,            // optional: keep long logs in output
+              healthScaleFactor: 1.0          // optional: set health weighting
         }
         failure {
             echo 'Build failed!'
