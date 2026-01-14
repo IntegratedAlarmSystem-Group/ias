@@ -75,6 +75,9 @@ pipeline {
                 dir('ias') {
                   sh '''
                       . ../venv/bin/activate
+                      echo "$IAS_ROOT"
+                      ls "$IAS_ROOT"
+                      ls "$IAS_ROOT/bin"
                       . "$IAS_ROOT/bin/ias-bash-profile"
                       ./gradlew --stop
                       ./gradlew integrationTest
