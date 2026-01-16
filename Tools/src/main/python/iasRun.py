@@ -303,7 +303,14 @@ def main() -> int:
     logger.debug("Will run %s", cmd)
     logger.info("%s %s output %s", delimiter, ias_run_args.className, delimiter)
 
-    retcode = run(cmd)
+    try:
+        retcode = run(cmd)
+    except KeyboardInterrupt:
+        logger.info("KeyboardInterrupt")
+        return 0
+    except Exception as e:
+        logger.error("Exception in run: %s", e)
+        return -1
 
     arrowUp =  chr(8593)
     delimiter = ""
