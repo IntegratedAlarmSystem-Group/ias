@@ -20,8 +20,8 @@ if __name__ == '__main__':
         action='store',
         default=None)
     parser.add_argument(
-                        '-lso',
-                        '--levelStdOut',
+                        '-lfi',
+                        '--levelFile',
                         help='Logging level: Set the level of the message for the file logger, default: Debug level',
                         action='store',
                         choices=['info', 'debug', 'warning', 'error', 'critical'],
@@ -39,9 +39,9 @@ if __name__ == '__main__':
         dest='fileName',
         help='The name of the file to search for')
     args = parser.parse_args()
-    stdoutLevel=args.levelStdOut
+    fileLevel=args.levelFile
     consoleLevel=args.levelConsole
-    logger = Log.getLogger(__file__,stdoutLevel,consoleLevel)
+    logger = Log.getLogger(__file__, fileLevel=fileLevel, consoleLevel=consoleLevel)
     fileName=args.fileName
     try:
         if not args.fileType is None:
