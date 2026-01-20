@@ -1,5 +1,5 @@
 import os
-from IasCdb.TextFileType import FileType, TextFileType
+from IasCdb.TextFileType import FileType
 from IasCdb.Dao.LogLevelDao import LogLevelDao
 
 class IasDao:
@@ -29,7 +29,7 @@ class IasDao:
             with open(file_name) as f:
                 data = json.load(f)
         else :
-            raise ValueError(f"Unrecognized file {file_name}")
+            raise ValueError(f"Unrecognized file type {file_type}")
         log_lvl = LogLevelDao.from_string(data['logLevel'])
         refresh_rate=int(data['refreshRate'])
         validity_threshold = int(data['validityThreshold'])
@@ -59,7 +59,6 @@ class IasDao:
                  ):
         """
         Constructor
-        Reads the ias.json or ias.yaml from the CDB
         """
         self.log_level: LogLevelDao = log_level
         self.props: dict[str, str] = props
