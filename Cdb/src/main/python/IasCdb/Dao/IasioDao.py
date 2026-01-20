@@ -18,6 +18,10 @@ class IasioDao:
     # By default an alarm can't be shelved
     canSheveDefault = False
 
+    @staticmethod
+    def str_to_bool(value: str) -> bool:
+        return str(value).lower() in ("true", "1", "yes")
+
     @classmethod
     def from_dict(cls, data): # -> IasioDao:
         """
@@ -34,7 +38,12 @@ class IasioDao:
         iasType: IasTypeDao = IasTypeDao.from_string(data['iasType'])
         templateId = data.get('templateId', None)
         docUrl = data.get('docUrl', None)
-        canShelve = data.get('canShelve', IasioDao.canSheveDefault)
+
+        if data.get('canShelve') is not None:
+            canShelve: bool = cls.str_to_bool(data.get('canShelve'))
+        else:
+            canShelve: bool = IasioDao.canSheveDefault
+
         sound: SoundTypeDao = SoundTypeDao.from_string(data.get('sound', 'NONE'))
         emails = data.get('emails', None)
         
