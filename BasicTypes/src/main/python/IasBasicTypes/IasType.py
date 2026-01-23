@@ -3,11 +3,11 @@ Created on May 10, 2018
 
 @author: acaproni
 '''
-from enum import Enum
+from enum import Enum, unique
 
 from IasBasicTypes.Alarm import Alarm
 
-
+@unique
 class IASType(Enum):
     '''
     The supported data types 
