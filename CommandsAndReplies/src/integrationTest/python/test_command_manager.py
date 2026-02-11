@@ -7,7 +7,7 @@ from IasCmdReply.IasCommandType import IasCommandType
 from IasCmdReply.IasCommandSender import IasCommandSender
 from IasCmdReply.IasCmdManagerKafka import IasCmdManagerKafka, IasCommandListener
 
-class TestCmdListener(IasCommandListener):
+class CmdListener(IasCommandListener):
     def __init__(self) -> None:
         super().__init__()
         print("IasCommandListener built")
@@ -32,7 +32,7 @@ class TestCmdManager():
     def test_send_async_reply(self):
         print("Prepare the command")
         cmd_mgr_id = "CmdManagerId"
-        cmd_mgr = IasCmdManagerKafka(cmd_mgr_id, TestCmdListener())
+        cmd_mgr = IasCmdManagerKafka(cmd_mgr_id, CmdListener())
         cmd_mgr.start()
 
         # Send a command and wait for reply
