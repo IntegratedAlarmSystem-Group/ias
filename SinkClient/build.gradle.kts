@@ -27,6 +27,7 @@ dependencies {
     implementation(project(":DistributedUnit"))
     implementation(project(":Supervisor"))
 
+    testImplementation(platform(extension.extra["junit-bom"].toString()))
     testImplementation(extension.extra["junit-jupiter"].toString())
     testImplementation(extension.extra["scalatest"].toString())
 }

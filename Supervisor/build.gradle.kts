@@ -24,6 +24,7 @@ dependencies {
     implementation(project(":KafkaUtils"))
 
     testImplementation(project(":CompElement"))
+    testImplementation(platform(extension.extra["junit-bom"].toString()))
     testImplementation(extension.extra["junit-jupiter"].toString())
     testImplementation(extension.extra["scalatest"].toString())
 

@@ -15,6 +15,7 @@ dependencies {
     implementation(extension.extra["kafka-streams"].toString())
     implementation(extension.extra["logback-classic"].toString())
     implementation(extension.extra["hibernate-jpa"].toString())
+    implementation(platform(extension.extra["junit-bom"].toString()))
     implementation(extension.extra["junit-platform-console"].toString())
 
     implementation(project(":Cdb"))
@@ -25,6 +26,7 @@ dependencies {
     implementation(project(":KafkaUtils"))
     implementation(project(":CommandsAndReplies"))
 
+    testImplementation(platform(extension.extra["junit-bom"].toString()))
     testImplementation(extension.extra["junit-jupiter"].toString())
 }
 

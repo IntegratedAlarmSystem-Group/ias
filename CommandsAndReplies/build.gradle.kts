@@ -12,12 +12,15 @@ dependencies {
     implementation(extension.extra["slf4j-api"].toString())
     implementation(extension.extra["logback-classic"].toString())
     implementation(extension.extra["kafka-clients"].toString())
+    implementation(platform(extension.extra["junit-bom"].toString()))
+    implementation(extension.extra["junit-platform-console"].toString())
 
     implementation(project(":Tools"))
     implementation(project(":KafkaUtils"))
     implementation(project(":BasicTypes"))
     implementation(project(":Heartbeat"))
 
+    testImplementation(platform(extension.extra["junit-bom"].toString()))
     testImplementation(extension.extra["junit-jupiter"].toString())
 }
 

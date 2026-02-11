@@ -19,6 +19,7 @@ dependencies {
     implementation(project(":CdbChecker"))
     implementation(project(":KafkaUtils"))
 
+    testImplementation(platform(extension.extra["junit-bom"].toString()))
     testImplementation(extension.extra["junit-jupiter"].toString())
     testImplementation(extension.extra["scalatest"].toString())
 }

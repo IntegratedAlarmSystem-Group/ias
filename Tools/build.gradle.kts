@@ -15,6 +15,7 @@ dependencies {
     implementation(extension.extra["logback-classic"].toString())
     implementation("com.h2database:h2:2.1.214")
 
+    testImplementation(platform(extension.extra["junit-bom"].toString()))
     testImplementation(extension.extra["junit-jupiter"].toString())
     testImplementation(extension.extra["scalatest"].toString())
     implementation("org.scalatestplus:junit-5-13_3:3.2.19.0")
