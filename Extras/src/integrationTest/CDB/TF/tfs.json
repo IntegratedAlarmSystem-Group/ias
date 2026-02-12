@@ -1,4 +1,3 @@
 [
-	{"className" : "org.eso.ias.asce.transfer.impls.MinMaxThresholdTF","implLang" : "SCALA"},
-	{"className" : "org.eso.ias.supervisor.test.tf.TemplatedTF", "implLang" : "SCALA"}
+	{"className" : "org.eso.ias.asce.transfer.impls.MinMaxThresholdTF","implLang" : "SCALA"}
 ]

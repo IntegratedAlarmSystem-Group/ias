@@ -1,0 +1,8 @@
+{
+	"logLevel":"DEBUG",
+	"id":"SupervisorForAck",
+	"hostName":"almaias.eso.org",
+	"dasusToDeploy":[
+		{"dasuId":"DasuTemperature", "templateId":null, "instance":null}
+	]
+}
