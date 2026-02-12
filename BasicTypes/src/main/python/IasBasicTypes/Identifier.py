@@ -20,7 +20,6 @@ class Identifier:
     templatedIdRegExp = re.compile(r".+" + templateRegExp.pattern)
 
     def __init__(self, id: str, id_type: IdentifierType, parent_id: Optional['Identifier'] = None):
-        print(f"Creating Identifier with id={id}, id_type={id_type}, parent_id={parent_id}")
         if not id:
             raise ValueError("Invalid empty identifier")
         if Identifier.separator in id:
@@ -115,7 +114,6 @@ class Identifier:
             raise ValueError(f"Invalid fullRunningId format {full_running_id}")
 
         identifiers_descr = full_running_id.split(cls.separator)
-        print(f"from_string {full_running_id}, identifiers_descr={identifiers_descr}")
         parent = None
         for couple in identifiers_descr:
             print(f"Working on couple: {couple} with parent {parent}")
@@ -128,7 +126,6 @@ class Identifier:
         if the_type is None:
             raise ValueError("Invalid null identifier type")
     
-        print(f"Checking if {the_type} has parent {parent_type}")
         if the_type.parents == []:
             return parent_type is None
         else:
