@@ -23,6 +23,16 @@ class IasValue(object):
     
     # The value
     value = None
+
+    # The point in time when the value has been read from the
+	# monitored system (set by the plugin only)
+    # as ISO 8601 string
+    readFromMonSysTStampStr = None
+
+    # The point in time when the value has been read from the
+	# monitored system (set by the plugin only)
+    # as datetime
+    readFromMonSysTStamp = None
     
     # The point in time when the plugin sent the 
     # value to the converter
@@ -187,6 +197,10 @@ class IasValue(object):
         
         iasValue.dependentsFullRuningIds = IasValue.getValue(fromJsonDict,"depsFullRunningIds")
         iasValue.props = IasValue.getValue(fromJsonDict,"props")
+
+        iasValue.readFromMonSysTStampStr = IasValue.getValue(fromJsonDict,"readFromMonSysTStamp")
+        if iasValue.readFromMonSysTStampStr is not None:
+            iasValue.readFromMonSysTStamp=Iso8601TStamp.Iso8601ToDatetime(iasValue.readFromMonSysTStampStr)
                 
         iasValue.sentToConverterTStampStr = IasValue.getValue(fromJsonDict,"sentToConverterTStamp")
         if iasValue.sentToConverterTStampStr is not None:
@@ -261,6 +275,8 @@ class IasValue(object):
             temp["depsFullRunningIds"]=self.dependentsFullRuningIds
         if self.props is not None:
             temp["props"]=self.props
+        if self.readFromMonSysTStampStr is not None:
+            temp["readFromMonSysTStamp"]=self.readFromMonSysTStampStr
         if self.sentToConverterTStampStr is not None:
             temp["sentToConverterTStamp"]=self.sentToConverterTStampStr
         if self.receivedFromPluginTStampStr is not None:
