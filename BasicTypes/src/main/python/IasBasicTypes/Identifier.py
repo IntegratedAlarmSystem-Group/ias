@@ -116,7 +116,6 @@ class Identifier:
         identifiers_descr = full_running_id.split(cls.separator)
         parent = None
         for couple in identifiers_descr:
-            print(f"Working on couple: {couple} with parent {parent}")
             cleaned_couple = couple[len(cls.coupleGroupPrefix):-len(cls.coupleGroupSuffix)]
             id_str, type_str = cleaned_couple.split(cls.coupleSeparator)
             parent = Identifier(id_str, IdentifierType.from_string(type_str), parent)
