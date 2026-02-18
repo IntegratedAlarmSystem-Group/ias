@@ -114,8 +114,8 @@ class IasLogConsumer(Thread):
         self.logger.info("Kafka consumer assigned to partition %s", partition)
         self.subscribed = True
 
-    def onLost(self):
-        self.logger.info("Partition lost")
+    def onLost(self, consumer, partition):
+        self.logger.info("Partition lost %s", partition)
         self.subscribed = False
 
     def isSubscribed(self) -> bool:
