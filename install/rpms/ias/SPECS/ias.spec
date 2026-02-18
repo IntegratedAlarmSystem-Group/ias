@@ -12,7 +12,7 @@ Source0:        %{url}/archive/refs/tags/%{version}.tar.gz#/%{name}-%{version}.t
 # TODO Missing dependency on jep
 #
 BuildRequires:  python3-rpm-macros
-BuildRequires:  python%{python3_pkgversion}-devel >= 3.10
+BuildRequires:  python%{python3_pkgversion}-devel >= 3.11
 BuildRequires:  java-21-openjdk-devel
 BuildRequires:  javapackages-tools
 BuildRequires:	%{py3_dist confluent-kafka}
