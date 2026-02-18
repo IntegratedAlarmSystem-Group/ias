@@ -31,7 +31,7 @@ BuildRequires:	pyside6-tools
 # to build python3_jep that is in the install folder of the IAS sources)
 BuildRequires:	%{py3_dist jep}
 
-Requires:  python3 >= 3.10
+Requires:  python3 >= 3.11
 Requires:  (java-21-openjdk-headless or java-latest-openjdk-headless)
 Requires:  %{py3_dist confluent-kafka}
 Requires:  %{py3_dist python-dateutil}
