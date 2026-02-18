@@ -4,6 +4,7 @@ Created on Jun 8, 2018
 
 @author: acaproni
 '''
+from IasBasicTypes.Identifier import Identifier
 from IASLogging.logConf import Log
 from IasBasicTypes.IasType import IASType
 from IasBasicTypes.IasValue import IasValue
@@ -62,6 +63,86 @@ class TestIasValue():
             "mode":"OPERATIONAL","iasValidity":"RELIABLE",
             "fullRunningId":"(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(Timestamp-ID:IASIO)",
             "valueType":"ARRAYOFDOUBLES"}"""
+    
+    def test_build(self):
+        """
+        Test the build inf IasValues with the IasValue.build() factory method.
+        """
+        val = "15.6"
+        value_type = IASType.DOUBLE
+        id = Identifier.from_string("(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(Temperature-ID:IASIO)")
+        mode = OperationalMode.MAINTENANCE
+        validity = Validity.UNRELIABLE
+
+        ias_value = IasValue.build(
+            value=val,
+            value_type=value_type,
+            fr_id=id,
+            validity=validity,
+            mode=mode)
+        assert ias_value.value == val
+        assert ias_value.valueType == value_type
+        assert ias_value.fullRunningId == str(id)
+        assert ias_value.mode == mode
+        assert ias_value.iasValidity == validity
+
+        assert ias_value.readFromMonSysTStamp is not None
+        assert ias_value.productionTStamp is not None
+        assert ias_value.sentToConverterTStamp is not None
+        assert ias_value.receivedFromPluginTStamp is not None
+        assert ias_value.convertedProductionTStamp is not None
+        assert ias_value.sentToBsdbTStamp is not None
+
+        val = "16"
+        value_type = IASType.LONG
+        id = Identifier.from_string("(SupervId:SUPERVISOR)@(DasuWith7ASCEs:DASU)@(ASCE-AlarmsThreshold:ASCE)@(TooManyHighTempAlarm:IASIO)")
+        mode = OperationalMode.DEGRADED
+        validity = Validity.RELIABLE
+        props = {"key1":"value1","key2":"value2"}
+
+        ias_value = IasValue.build(
+            value=val,
+            value_type=value_type,
+            fr_id=id,
+            validity=validity,
+            mode=mode,
+            props=props)
+        assert ias_value.value == val
+        assert ias_value.valueType == value_type
+        assert ias_value.fullRunningId == str(id)
+        assert ias_value.mode == mode
+        assert ias_value.iasValidity == validity
+        assert ias_value.props == props
+
+        assert ias_value.readFromMonSysTStamp is None
+        assert ias_value.productionTStamp is not None
+        assert ias_value.sentToConverterTStamp is None
+        assert ias_value.receivedFromPluginTStamp is None
+        assert ias_value.convertedProductionTStamp is None
+        assert ias_value.sentToBsdbTStamp is not None
+
+    def test_build_alarm(self):
+        """
+        Test the build_alarm factory method of IasValue.
+        """
+        alarm_state = AlarmState.SET_UNACK
+        alarm_priority = Priority.HIGH
+        id = Identifier.from_string("(SupervId:SUPERVISOR)@(DasuWith7ASCEs:DASU)@(ASCE-AlarmsThreshold:ASCE)@(TooManyHighTempAlarm:IASIO)")
+        mode = OperationalMode.OPERATIONAL
+        validity = Validity.RELIABLE
+
+        ias_value = IasValue.build_alarm(
+            alarm_state=alarm_state,
+            alarm_priority=alarm_priority,
+            fr_id=id,
+            validity=validity,
+            mode=mode)
+        
+        assert ias_value.value == f"{alarm_state.name}:{alarm_priority.name}"
+        assert ias_value.valueType == IASType.ALARM
+        assert ias_value.fullRunningId == str(id)
+        assert ias_value.mode == mode
+        assert ias_value.iasValidity == validity
 
     def test_name(self):
         iasValue = IasValue.fromJSon(self.jSonStr)
