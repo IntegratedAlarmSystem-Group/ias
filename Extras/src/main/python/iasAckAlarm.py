@@ -17,11 +17,12 @@ import os
 import time
 
 from IASLogging.logConf import Log
-from IasCdb.CdbReader import CdbReader
 from IasBasicTypes.Identifier import Identifier
 from IasBasicTypes.IdentifierType import IdentifierType
 from IasCmdReply.IasCommandSender import IasCommandSender
+
 from IasExtras.AlarmAck import AlarmAck
+from IasExtras.Utils import Utils
 
 
 # The logger, intialized by main()
@@ -92,46 +93,6 @@ def parse_args():
                         default='info',
                         required=False)
     return parser.parse_args()
-
-def get_bsdb_from_cdb(cdb_folder: str) -> str :
-    """
-    Get the BSDB URL from the CDB
-    
-    :param cdb_folder: The parend folder of the CDB
-    :type cdb_folder: str
-    :return: The URL to connect to the BSDB read from the IAS CDB
-    :rtype: str
-    """
-    logger.debug("Getting BSDB URL from IAS CDB")
-    cdb_reader = CdbReader(cdb_folder)
-    ias_dao = cdb_reader.get_ias()
-    return ias_dao.bsdb_url
-
-def get_bsdb_url(kafka_brokers, jCdb) -> str :
-    """
-    Get the BSDB URL from (whatever is true)
-    - the kafka brokers passed in the command line
-    - the IAS CDB passed in the command line
-    - the IAS_CDB from the environment variable, if defined
-    - default
-    
-    :param kafka_brokers: kafka brokers URL from command line
-    :param jCdb: Description CDB folder from the command line
-    :return: The URL to connect to the BSDB
-    :rtype: str
-    """
-    if kafka_brokers is not None:
-        logger.debug("Using kafka brokers from command line")
-        return kafka_brokers
-    elif jCdb is not None:
-        logger.debug("Using kafka brokers from IAS CDB passed in command line")
-        return get_bsdb_from_cdb(jCdb)
-    elif os.getenv("IAS_CDB") is not None:
-        logger.debug("Using kafka brokers from IAS_CDB environment variable")
-        # get the kafka brokers from the IAS_CDB env var, if defined
-        return get_bsdb_from_cdb(os.environ["IAS_CDB"])
-    else:
-        return "localhost:9092"
     
 def get_supervisor_id(alarm_frid: str) -> str:
     """
@@ -155,7 +116,7 @@ def main()-> int:
     args = parse_args()
     global logger
     logger = Log.getLogger(__file__, fileLevel=args.levelFile, consoleLevel=args.levelConsole)
-    bsdb_url = get_bsdb_url(args.kafkabrokers, args.jCdb)
+    bsdb_url = Utils.get_bsdb_url(args.kafkabrokers, args.jCdb)
     logger.info(f"BSDB URL: {bsdb_url}")
 
     supervisor_id = get_supervisor_id(args.alarmid)

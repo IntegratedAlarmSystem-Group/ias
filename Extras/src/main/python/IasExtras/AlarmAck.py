@@ -1,7 +1,7 @@
 import uuid
 from confluent_kafka import Producer
 
-from IASLogging.logConf import Log
+import logging
 
 from IasCmdReply.IasCommandSender import IasCommandSender
 from IasCmdReply.IasCommandType import IasCommandType
@@ -38,7 +38,7 @@ class AlarmAck:
         if not isinstance(command_sender, IasCommandSender):
             raise ValueError("Invalid command sender: expected an instance of IasCommandSender")
 
-        self.logger = Log.getLogger(__name__)
+        self.logger = logging.getLogger(__name__)
 
         self.command_sender = command_sender
         

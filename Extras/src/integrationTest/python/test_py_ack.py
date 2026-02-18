@@ -11,6 +11,7 @@ import subprocess
 import uuid
 import pytest
 import queue
+from threading import Event
 
 from IASLogging.logConf import Log
 from IasKafkaUtils.KafkaValueConsumer import KafkaValueConsumer, IasValueListener
@@ -127,7 +128,10 @@ class TestPyAck():
     @classmethod
     def setup_class(cls):
         logger.info("Connecting the IASIO listener")
-        cls.iasio_consumer.start()
+        consumer_ready = Event()
+        cls.iasio_consumer.start(ready_event=consumer_ready)
+        assert consumer_ready.wait(timeout=30), "Kafka not ready before timeout expired"
+        logger.info("IASIO listener connected")
         logger.info("Starting the command sender")
         TestPyAck.cmd_sender.set_up()
 
