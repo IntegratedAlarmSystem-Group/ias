@@ -5,7 +5,7 @@ Created on Jun 12, 2018
 '''
 from datetime import datetime
 from datetime import timezone
-from threading import Thread, Lock
+from threading import Thread, Lock, Event
 import traceback
 import time
 from confluent_kafka import Consumer, KafkaError
@@ -46,9 +46,11 @@ class KafkaValueConsumer(Thread):
 
     KafkaValueConsumer implements a boolean watchdog that is set to True
     at every iteration of the thread (i.e. when data arrives or the timeout elapses)
-    '''
 
-    
+    The KafkaValueConsumer sets an Event, passed in the start() function,
+    to signal when the thread is subscribed to a partition and is getting events.
+    The same information can be get by calling isSubscribed().
+    '''
 
     def __init__(self,
                  listener,
@@ -100,7 +102,7 @@ class KafkaValueConsumer(Thread):
         self.isGettingEvents = False
 
           # Signal the thread to terminate
-        self.terminateThread = False
+        self.terminateThread: Event = Event()
 
         Thread.daemon = True
 
@@ -114,15 +116,35 @@ class KafkaValueConsumer(Thread):
         # subscribed is set by onAssign and unlock the polling thread
         self.subscribed = False
 
+        # Singnal that the self.ready_event Event must be set, if not None
+        self.ready_event_to_set_flag = False
+
+        # The event passed in start() to signal when the thread is subscribed and getting events
+        #
+        # It will not be assigned in onAssign but after the next successfull poll
+        self.ready_event: Event|None = None
+
         self._logger.info('Kafka consumer %s will connect to %s and topic %s', clientid, kafkabrokers, topic)
 
+    # Note that this callback is executed when a new partition is assigned but the consumer
+    # is not yet subscribed to the topic (it will be after the next successfull poll)
+    # It means that items pushed immediately after onAssign is executed before the subscription 
+    # takes place may not be received until the next poll 
+    # (this is also true because the consumer property auto.offset.reset is set to latest, u
+    # sing earliest would change this behaviour)
     def onAssign(self, consumer, partition):
         self._logger.info("Kafka consumer assigned to partition %s", partition)
+        if self.ready_event is not None:
+            self.ready_event_to_set_flag = True
         self.subscribed = True
 
-    def onLost(self):
-        self._logger.info("Partition lost")
+
+    def onLost(self, consumer, partitions):
+        self._logger.warning("Kafka consumer lost partitions %s", partitions)
         self.subscribed = False
+        if self.ready_event is not None:
+            self.ready_event.clear()
+        self.ready_event_to_set_flag = False
 
     def onError(self, kafka_error):
         self._logger.error("Kafka error: %s", kafka_error.str())
@@ -139,24 +161,32 @@ class KafkaValueConsumer(Thread):
         self._logger.info('Thread to poll for Kafka logs started')
         try:
 
-            # For some reason the python client does not create the topic and this
-            # function hangs forever waiting to subscribe
-            # So we force a topic reation before subscribing
+            # Force a topic reation before subscribing
             if IasKafkaHelper.createTopic(self.topic, self.kafkaBrokers):
                 self._logger.debug("Topic %s created", self.topic)
             else:
                 self._logger.debug("Topic %s exists", self.topic)
 
-            self.consumer.subscribe([self.topic], on_assign=self.onAssign)
+            self.consumer.subscribe([self.topic], on_assign=self.onAssign, on_revoke=self.onLost)
+            self._logger.debug("Subscribed to topic %s", self.topic)
 
             self.isGettingEvents = True
-            while not self.terminateThread:
+            while not self.terminateThread.is_set():
                 msg = self.consumer.poll(timeout=1.0)
                 # Reset the watch dog
                 with self.watchDogLock:
                     self.watchDog = True
-                if msg is None or not self.subscribed:
-                    self._logger.debug(f"Polling thread is subscribed { self.subscribed}")
+
+                if not self.subscribed:
+                    continue
+                elif self.ready_event_to_set_flag and self.ready_event is not None:
+                    # Set the event that the consumer is ready after the first successful poll
+                    # after the subscription
+                    self.ready_event.set()
+                    self.ready_event_to_set_flag = False
+                
+                if msg is None: # No message received within the timeout
+                    self._logger.debug(f"Polling thread is NOT subscribed { self.subscribed}")
                     continue
 
                 if msg.error() is not None:
@@ -181,9 +211,15 @@ class KafkaValueConsumer(Thread):
             self.isGettingEvents = False
         self._logger.info('Thread terminated')
 
-    def start(self):
+    def start(self, ready_event: Event = None):
+        """
+        Start polling events from the core topic.
+        
+        :param ready_event: If not None, the event is set when the thread is subscribed to a partition and is getting events.
+        :type ready_event: Event
+        """
         self._logger.info('Starting thread to poll for IasValues')
-        self.terminateThread = False
+        self.ready_event = ready_event
         Thread.start(self)
 
     def close(self):
@@ -191,7 +227,7 @@ class KafkaValueConsumer(Thread):
         Shuts down the thread
         '''
         self._logger.debug("Closing...")
-        self.terminateThread = True
+        self.terminateThread.set()
         self.join(5)  # Ensure the thread exited before closing the consumer
         self.consumer.close()
         self._logger.info("Closed")
