@@ -80,7 +80,7 @@ class TestCommandSender():
         dest = "CmdDest"
         cmd = IasCommandType.SET_LOG_LEVEL
         params = [ "PAR1", "PAR2"]
-        props = { "p1":1, "p2":122}
+        props = { "p1":str(1), "p2":str(122)}
         
         sender_frId = "FullRuningIdeSender"
         cmd_sender = IasCommandSender(sender_frId, "sender_id_test", IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)

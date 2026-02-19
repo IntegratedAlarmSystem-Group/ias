@@ -96,7 +96,7 @@ class IasLogConsumer(Thread):
 
         self.consumer = Consumer(conf, logger=self.logger)
 
-        Thread.daemon = True
+        self.daemon = True
 
         # the watch dog 
         self.watchDog = False
@@ -114,8 +114,8 @@ class IasLogConsumer(Thread):
         self.logger.info("Kafka consumer assigned to partition %s", partition)
         self.subscribed = True
 
-    def onLost(self):
-        self.logger.info("Partition lost")
+    def onLost(self, consumer, partition):
+        self.logger.info("Partition lost %s", partition)
         self.subscribed = False
 
     def isSubscribed(self) -> bool:
@@ -175,7 +175,7 @@ class IasLogConsumer(Thread):
         """
          # For some reason the python client does not create the topic and this
         # function hangs forever waiting to subscribe
-        # So we force a topic reation before subscribing
+        # So we force a topic creation before subscribing
         if IasKafkaHelper.createTopic(self.topic, self.kafkaBrokers):
             self.logger.debug("Topic %s created", self.topic)
         else:
@@ -203,7 +203,7 @@ class IasLogConsumer(Thread):
             self.join(5)  # Ensure the thread exited before closing the consumer
             self.consumer.close()
         else:
-            self.logger.warning("Consumer aready terminated")
+            self.logger.warning("Consumer already terminated")
 
     def getWatchdog(self):
         """

@@ -27,6 +27,8 @@ dependencies {
     implementation(project(":CommandsAndReplies"))
 
     testImplementation("org.eclipse.jetty.websocket:websocket-server:9.4.15.v20190215")
+
+    testImplementation(platform(extension.extra["junit-bom"].toString()))
     testImplementation(extension.extra["junit-jupiter"].toString())
     testImplementation(extension.extra["scalatest"].toString())
 }

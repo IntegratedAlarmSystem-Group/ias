@@ -16,6 +16,7 @@ dependencies {
     implementation(project(":Tools"))
     implementation(project(":BasicTypes"))
 
+    testImplementation(platform(extension.extra["junit-bom"].toString()))
     testImplementation(extension.extra["junit-jupiter"].toString())
     testImplementation(extension.extra["scalatest"].toString())
 }

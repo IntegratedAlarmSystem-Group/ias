@@ -1,0 +1,4 @@
+[
+	{ "id":"TemperatureAlarm", "shortDesc":"Temperature too high", "iasType":"ALARM" },
+	{ "id":"Temperature", "shortDesc":"Temperature", "iasType":"DOUBLE" }
+]

@@ -6,7 +6,7 @@ Created on Jun 14, 2018
 from confluent_kafka import Producer
 from IASLogging.logConf import Log
 
-logger = logger=Log.getLogger(__file__)
+logger = Log.getLogger(__file__)
 
 class KafkaValueProducer(object):
     '''
@@ -54,7 +54,7 @@ class KafkaValueProducer(object):
         @param iasValue: the IasValue to publish
         @return the feature to be informed when the value has been sent
         '''
-        iasValueStr = value=iasValue.toJSonString()
+        iasValueStr = iasValue.toJSonString()
         id = iasValue.id
         self.producer.produce(self.topic, value=iasValueStr, key=id)
         self.producer.flush()
@@ -69,6 +69,7 @@ class KafkaValueProducer(object):
         '''
         Close the producer: delegates to the kafka producer
         '''
-        pass
-        
+        if self.producer is not None:
+            self.producer.flush()   
+            self.producer.close()        
         

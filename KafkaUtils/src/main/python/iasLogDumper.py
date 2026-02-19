@@ -71,7 +71,7 @@ def interrupt_handler(signum, frame):
     termination_lock.release()
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Dumps kafla logs published in the BSDB or a custom topic. Unless -m or -o is set, the tool must be terminated with CTRL=C')
+    parser = argparse.ArgumentParser(description='Dumps kafla logs published in the BSDB or a custom topic. Unless -m or -o is set, the tool must be terminated with CTRL-C')
     parser.add_argument(
                         '-k',
                         '--kafkabrokers',
@@ -95,7 +95,7 @@ if __name__ == '__main__':
     parser.add_argument(
                         '-c',
                         '--clientid',
-                        help='Kafka group ID (default iasLogDumper)',
+                        help='Kafka client ID (default iasLogDumper)',
                         action='store',
                         default="iasLogDumper-client",
                         required=False)

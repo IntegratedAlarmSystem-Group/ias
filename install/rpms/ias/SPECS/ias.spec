@@ -12,7 +12,7 @@ Source0:        %{url}/archive/refs/tags/%{version}.tar.gz#/%{name}-%{version}.t
 # TODO Missing dependency on jep
 #
 BuildRequires:  python3-rpm-macros
-BuildRequires:  python%{python3_pkgversion}-devel >= 3.10
+BuildRequires:  python%{python3_pkgversion}-devel >= 3.11
 BuildRequires:  java-21-openjdk-devel
 BuildRequires:  javapackages-tools
 BuildRequires:	%{py3_dist confluent-kafka}
@@ -31,7 +31,7 @@ BuildRequires:	pyside6-tools
 # to build python3_jep that is in the install folder of the IAS sources)
 BuildRequires:	%{py3_dist jep}
 
-Requires:  python3 >= 3.10
+Requires:  python3 >= 3.11
 Requires:  (java-21-openjdk-headless or java-latest-openjdk-headless)
 Requires:  %{py3_dist confluent-kafka}
 Requires:  %{py3_dist python-dateutil}

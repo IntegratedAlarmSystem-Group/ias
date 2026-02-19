@@ -4,9 +4,16 @@ Created on Jun 7, 2018
 @author: acaproni
 '''
 import json
+from datetime import datetime, timedelta
+from datetime import timezone
+from typing import Self
 
 from IasBasicTypes.Alarm import Alarm
+from IasBasicTypes.AlarmState import AlarmState
+from IasBasicTypes.Priority import Priority
 from IasBasicTypes.IasType import IASType
+from IasBasicTypes.Identifier import Identifier
+from IasBasicTypes.IdentifierType import IdentifierType
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
 from IasBasicTypes.OperationalMode import OperationalMode
 from IasBasicTypes.Validity import Validity
@@ -23,6 +30,16 @@ class IasValue(object):
     
     # The value
     value = None
+
+    # The point in time when the value has been read from the
+	# monitored system (set by the plugin only)
+    # as ISO 8601 string
+    readFromMonSysTStampStr = None
+
+    # The point in time when the value has been read from the
+	# monitored system (set by the plugin only)
+    # as datetime
+    readFromMonSysTStamp = None
     
     # The point in time when the plugin sent the 
     # value to the converter
@@ -163,8 +180,8 @@ class IasValue(object):
             self.iasValidityStr = iasValidity
             self.iasValidity = Validity.fromString(iasValidity)
     
-    @staticmethod
-    def fromJSon(jsonStr):
+    @classmethod
+    def fromJSon(cls, jsonStr) -> Self:
         '''
         Factory method to build a IasValue for a JSON string
         
@@ -187,6 +204,10 @@ class IasValue(object):
         
         iasValue.dependentsFullRuningIds = IasValue.getValue(fromJsonDict,"depsFullRunningIds")
         iasValue.props = IasValue.getValue(fromJsonDict,"props")
+
+        iasValue.readFromMonSysTStampStr = IasValue.getValue(fromJsonDict,"readFromMonSysTStamp")
+        if iasValue.readFromMonSysTStampStr is not None:
+            iasValue.readFromMonSysTStamp=Iso8601TStamp.Iso8601ToDatetime(iasValue.readFromMonSysTStampStr)
                 
         iasValue.sentToConverterTStampStr = IasValue.getValue(fromJsonDict,"sentToConverterTStamp")
         if iasValue.sentToConverterTStampStr is not None:
@@ -245,7 +266,7 @@ class IasValue(object):
             ret = None
         return ret
     
-    def toJSonString(self):
+    def toJSonString(self) -> str:
         """
         @return the JSON representation of the IasValue
         """
@@ -261,6 +282,8 @@ class IasValue(object):
             temp["depsFullRunningIds"]=self.dependentsFullRuningIds
         if self.props is not None:
             temp["props"]=self.props
+        if self.readFromMonSysTStampStr is not None:
+            temp["readFromMonSysTStamp"]=self.readFromMonSysTStampStr
         if self.sentToConverterTStampStr is not None:
             temp["sentToConverterTStamp"]=self.sentToConverterTStampStr
         if self.receivedFromPluginTStampStr is not None:
@@ -276,7 +299,7 @@ class IasValue(object):
              
         return json.dumps(temp)
     
-    def toString(self,verbose=False):
+    def toString(self,verbose=False) -> str:
         """
         @param verbose if True prints all the fields
         @return the JSON representation of the IasValue
@@ -307,6 +330,9 @@ class IasValue(object):
             t = t+"\n\tProperties:"
             for k in self.props.keys():
                 t = "%s\n\t   %s=%s" % (t,k,self.props[k])
+
+        if self.readFromMonSysTStampStr is not None:
+            t = "%s\n\treadFromMonSysTStamp=%s" % (t,self.readFromMonSysTStampStr)
             
         if self.sentToConverterTStampStr is not None:
             t = "%s\n\tsentToConverterTStamp=%s" % (t,self.sentToConverterTStampStr)
@@ -327,4 +353,141 @@ class IasValue(object):
             t = "%s\n\tproductionTStamp=%s" % (t,self.productionTStampStr)
              
         return t
+    
+    @staticmethod
+    def _build_timestamps(fr_id: Identifier) -> dict[str, str]:
+        """
+        Build a dictionary with reasonable timestamps for the IASIO to push.
+        It is an helper function for testing.
+
+        The timestamps are built based on the actual time, with a reasonable delay between them.
+        The timestamps are returned as a dictionary with the same keys as the IasValue json string.
+
+        It produces a different sets of timestamps depending if the IASIO is produced by a plugin
+        or by a DASU. The producer of the IASIO can be inferred by the full running ID: 
+        if it contains a DASU, it is produced by a DASU, otherwise it is produced by a plugin.
+
+        :param fr_id: The full running ID of the IASIO 
+        :type fr_id: Identifier
+        :return: A dictionary with the timestamps
+        :rtype: dict
+        """
+
+        # The actual time, now, is used for the sent to BSDB timestamp
+        # Other timestamps are relative to this timestamp
+        now = datetime.now(timezone.utc)
+
+        # The ofsset fpor the timestamps relative to the production timestamp
+        time_offset = timedelta(milliseconds=10)
+
+        produced_by_plugin = fr_id.get_id_of_type(IdentifierType.PLUGIN) is not None
+
+        timestamps = {}
+
+        if produced_by_plugin:
+            timestamps["readFromMonSysTStamp"] = Iso8601TStamp.datetimeToIsoTimestamp(now-5*time_offset)
+            timestamps["productionTStamp"] = Iso8601TStamp.datetimeToIsoTimestamp(now-4*time_offset) # Produced by th eplugin
+            timestamps["sentToConverterTStamp"] = Iso8601TStamp.datetimeToIsoTimestamp(now-3*time_offset) # Sent by the plugin to the converter
+            timestamps["receivedFromPluginTStamp"] = Iso8601TStamp.datetimeToIsoTimestamp(now-2*time_offset) # Received by converter
+            timestamps["convertedProductionTStamp"] = Iso8601TStamp.datetimeToIsoTimestamp(now-time_offset) # Converted by the converter
+            timestamps["sentToBsdbTStamp"] = Iso8601TStamp.datetimeToIsoTimestamp(now) # Sent by the converter to the BSDB
+        else: # DASU
+            timestamps["productionTStamp"] = Iso8601TStamp.datetimeToIsoTimestamp(now-time_offset) #Produced by DASU
+            timestamps["sentToBsdbTStamp"] = Iso8601TStamp.datetimeToIsoTimestamp(now) # Sent to BSDB
+
+        return timestamps
+
+    @classmethod
+    def build(cls,
+        value: str,
+        value_type: IASType,
+        fr_id: Identifier,
+        validity: Validity,
+        mode: OperationalMode,
+        props: dict[str, str]|None = None) -> Self:
+        """
+        Factory method to build a IasValue useful for tetsing.
+
+        This function builds a IasValue building the json string from the passed
+        parameters and invoking IasValue.fromJSon(): it makes no check on the coinsistency of the passed parameters.
+        For example it does not check if the value is consistent with the type.
+
+        It assigns a reasonable set of timestamps by delegating to `_build_timestamps`.
+
+        Properties are not supported.
+
+        :param value: The value of the IASIO
+        :type value: str
+        :param value_type: The type of the IASIO
+        :type value_type: IASType
+        :param fr_id: The full running ID of the IASIO
+        :type fr_id: Identifier
+        :param validity: The validity of the IASIO
+        :type validity: Validity
+        :param mode: The operational mode of the IASIO
+        :type mode: OperationalMode
+        :param props: The properties of the IASIO
+        :type props: dict[str, str]|None
+        
+        :return: Description
+        :rtype: IasValue
+        """
+        value_dict = {}
+        value_dict = value_dict | cls._build_timestamps(fr_id)
+        value_dict["value"] = value
+        value_dict["valueType"] = value_type.name
+        value_dict["mode"] = mode.name
+        value_dict["iasValidity"] = validity.name
+        value_dict["fullRunningId"] = str(fr_id)
+        if props:
+            value_dict["props"] = props
+        
+        return cls.fromJSon(json.dumps(value_dict))
+    
+    @classmethod
+    def build_alarm(cls,
+        alarm_state: AlarmState,
+        alarm_priority: Priority,
+        fr_id: Identifier,
+        validity: Validity,
+        mode: OperationalMode,
+        props: dict[str, str]|None = None) -> Self:
+        """
+        Factory method to build a IasValue of type ALARM useful for testing.
+
+        This function builds a IasValue building the json string from the passed
+        parameters and invoking IasValue.fromJSon(): it makes no check on the coinsistency of the passed parameters.
+        For example it does not check if the value is consistent with the type.
+
+        It assigns a reasonable set of timestamps by delegating to `_build_timestamps`.
+
+        Properties are not supported.
+
+        :param value: The value of the IASIO
+        :type value: str
+        :param value_type: The type of the IASIO
+        :type value_type: IASType
+        :param fr_id: The full running ID of the IASIO
+        :type fr_id: Identifier
+        :param validity: The validity of the IASIO
+        :type validity: Validity
+        :param mode: The operational mode of the IASIO
+        :type mode: OperationalMode
+        :param props: The properties of the IASIO
+        :type props: dict[str, str]|None
+        
+        :return: Description
+        :rtype: IasValue
+        """
+        value_dict = {}
+        value_dict = value_dict | cls._build_timestamps(fr_id)
+        value_dict["value"] = f"{alarm_state.name}:{alarm_priority.name}"
+        value_dict["valueType"] = IASType.ALARM.name
+        value_dict["mode"] = mode.name
+        value_dict["iasValidity"] = validity.name
+        value_dict["fullRunningId"] = str(fr_id)
+        if props:
+            value_dict["props"] = props
+        
+        return cls.fromJSon(json.dumps(value_dict))
     

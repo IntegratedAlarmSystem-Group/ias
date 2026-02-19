@@ -17,8 +17,9 @@ dependencies {
     implementation("org.hibernate:hibernate-c3p0:5.2.6.Final")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.14.0")
 
+    testImplementation(platform(extension.extra["junit-bom"].toString()))
     testImplementation(extension.extra["junit-jupiter"].toString())
-    testImplementation("org.junit.platform:junit-platform-launcher:6.0.0")
+    testImplementation(extension.extra["junit-platform-launcher"].toString())
 }
 
 sourceSets {

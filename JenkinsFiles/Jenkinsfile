@@ -1,6 +1,12 @@
 pipeline {
     agent any
 
+    
+    triggers {
+        // Run once per day at 03:00 (server time)
+        cron('0 3 * * *')
+    }
+
     options {
         // This is required if you want to clean before build
         skipDefaultCheckout(true)

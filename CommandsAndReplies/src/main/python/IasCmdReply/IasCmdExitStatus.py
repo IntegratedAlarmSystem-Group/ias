@@ -8,11 +8,11 @@ from enum import Enum
 
 class IasCmdExitStatus(Enum):
     '''
-    Th exit status of the ocmmand.
+    The exit status of the command.
 
     It is the python implementation of the java org.eso.ias.command.CommandExitStatus
     '''
-    OK = 0,
+    OK = 0
     REJECTED = 1
     ERROR = 2
     UNKNOWN = 3

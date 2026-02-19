@@ -1,8 +1,0 @@
-{
-	"logLevel":"INFO",
-	"id":"SupervisorToTestInputs",
-	"hostName":"almaias.eso.org",
-	"dasusToDeploy":[
-		{"dasuId":"DasuToTestInputs","templateId":"temp-ID2","instance":"4"}
-	]
-}

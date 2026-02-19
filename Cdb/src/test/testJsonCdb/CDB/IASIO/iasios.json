@@ -14,6 +14,14 @@
 	{"id":"OUTID-DASU4","shortDesc":"Output ID for DASU4","iasType":"ALARM","docUrl":"http://wiki.alma.cl/temp"},
 	{"id":"OUTID-DASU5","shortDesc":"Output ID for DASU5","iasType":"ALARM","docUrl":"http://wiki.alma.cl/temp"},
 	{"id":"TempInput","templateId":"templated-input","shortDesc":"Templated input example","iasType":"ALARM"},
-	{"id":"SoundInput","templateId":"templated-input","shortDesc":"Templated input with sound example","iasType":"ALARM", "sound":"TYPE2", "canShelve":"true" }
+	{
+		"id":"SoundInput",
+		"templateId":"templated-input",
+		"shortDesc":"Templated input with sound example",
+		"iasType":"ALARM", 
+		"sound":"TYPE2", 
+		"canShelve":"true", 
+		"emails": "stencccr@yujiehanjiao.cc"
+	}
 	
 ]
