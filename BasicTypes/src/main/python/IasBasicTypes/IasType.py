@@ -92,7 +92,7 @@ class IASType(Enum):
                       IASType.DOUBLE or DOUBLE 
         @return the type represented by the passed a string
         '''
-        if not str:
+        if not typeString:
             raise ValueError("Invalid string representation of a type")
         
         temp = str(typeString)

@@ -58,7 +58,7 @@ class AlarmAck:
             alarm_id: str, 
             supervisor_id: str,
             comment: str,
-            timeout=0) -> bool:
+            timeout: float=0.0) -> bool:
         """
         Acknowledge the alarm with the given alarm ID.
 
@@ -69,7 +69,8 @@ class AlarmAck:
         :param comment: A comment to include with the acknowledgment
         :type comment: str
         :param timeout: The timeout to wait for the reply if 0, returns immediately 
-        :rtype: float
+        :type timeout float
+        :rtype: bool
         """
         if not supervisor_id:
             raise ValueError("Invalid null/empty supervisor ID")

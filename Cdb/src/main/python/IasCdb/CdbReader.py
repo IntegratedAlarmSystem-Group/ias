@@ -60,7 +60,7 @@ class CdbReader:
 		Args
             id: The not empty supervisor identifier
 		"""
-        raise NotImplemented("Method not yet implemented")
+        raise NotImplementedError("Method not yet implemented")
 	
 
     def get_transfer_function(self, id: str):
@@ -69,13 +69,13 @@ class CdbReader:
         Args:
             id: The not empty transfer function identifier
         """
-        raise NotImplemented("Method not yet implemented")
+        raise NotImplementedError("Method not yet implemented")
 
     def get_transfer_functions(self):
         """
         Get the transfer functions
         """
-        raise NotImplemented("Method not yet implemented")
+        raise NotImplementedError("Method not yet implemented")
 
     def get_template(self, id: str):
         """
@@ -83,13 +83,13 @@ class CdbReader:
         Args:
             id: The not empty identifier of the template
         """
-        raise NotImplemented("Method not yet implemented")
+        raise NotImplementedError("Method not yet implemented")
 
     def get_templates(self):
         """
         Get the templates.
         """
-        raise NotImplemented("Method not yet implemented")
+        raise NotImplementedError("Method not yet implemented")
 
     def get_asce(self, id: str):
         """
@@ -98,7 +98,7 @@ class CdbReader:
         Args:
             id: The not empty ASCE identifier
         """
-        raise NotImplemented("Method not yet implemented")
+        raise NotImplementedError("Method not yet implemented")
 
     def get_dasu(self, id: str):
         """
@@ -107,7 +107,7 @@ class CdbReader:
         Args:
             id: The not empty DASU identifier
         """
-        raise NotImplemented("Method not yet implemented")
+        raise NotImplementedError("Method not yet implemented")
 	
     def get_Dasus_to_deploy_in_supervisor(self, id: str):
         """
@@ -116,7 +116,7 @@ class CdbReader:
         Args:
             id: The not empty identifier of the supervisor
         """
-        raise NotImplemented("Method not yet implemented")
+        raise NotImplementedError("Method not yet implemented")
 
     def get_asces_for_dasu(self, id: str):
         """
@@ -125,7 +125,7 @@ class CdbReader:
         Args:
             id: The not empty identifier of the DASU
         """
-        raise NotImplemented("Method not yet implemented")
+        raise NotImplementedError("Method not yet implemented")
 
     def get_iasios_for_asce(self, id: str):
         """
@@ -134,25 +134,25 @@ class CdbReader:
         Args:
             id: The not empty identifier of the ASCE
         """
-        raise NotImplemented("Method not yet implemented")
+        raise NotImplementedError("Method not yet implemented")
 
     def getSupervisorIds(self):
        """
        Get the IDs of the Supervisors.
        """
-       raise NotImplemented("Method not yet implemented")
+       raise NotImplementedError("Method not yet implemented")
 
     def get_dasu_ids(self):
         """
         Get the IDs of the DASUs.
         """
-        raise NotImplemented("Method not yet implemented")
+        raise NotImplementedError("Method not yet implemented")
 
     def get_asce_ids(self):
         """
         Get the IDs of the ASCEs.
         """
-        raise NotImplemented("Method not yet implemented")
+        raise NotImplementedError("Method not yet implemented")
 
     def get_template_instances_iasios_for_asce(self, id: str):
         """
@@ -161,7 +161,7 @@ class CdbReader:
         Args:
             id: The not empty identifier of the ASCE
         """
-        raise NotImplemented("Method not yet implemented")
+        raise NotImplementedError("Method not yet implemented")
 
     def get_client_config(self, id: str):
         """
@@ -169,7 +169,7 @@ class CdbReader:
         Args:
             id: The not empty ID of the IAS clien
         """
-        raise NotImplemented("Method not yet implemented")
+        raise NotImplementedError("Method not yet implemented")
 
     def get_plugin(self, id: str):
         """
@@ -183,16 +183,16 @@ class CdbReader:
         Args:
             id: he not empty ID of the IAS plugin
         """
-        raise NotImplemented("Method not yet implemented")
+        raise NotImplementedError("Method not yet implemented")
 
     def getPluginIds(self):
         """
         Get the IDs of all the plugins in the CDB
         """
-        raise NotImplemented("Method not yet implemented")
+        raise NotImplementedError("Method not yet implemented")
 
     def get_client_ids(self):
         """
         Get the IDs of all the plugins in the CDB
         """
-        raise NotImplemented("Method not yet implemented")
+        raise NotImplementedError("Method not yet implemented")
