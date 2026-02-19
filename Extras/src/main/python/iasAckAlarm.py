@@ -134,14 +134,19 @@ def main()-> int:
     acker = AlarmAck(full_running_id=full_running_id, command_sender=cmd_sender)
     acker.start()
 
-    acked = acker.ack(alarm_id=args.alarmid, 
-                      supervisor_id=supervisor_id,
-                      comment=args.comment,
-                      timeout=args.timeout)
-    acker.close()
-    cmd_sender.close()
-    logger.info("Alarm acknowledgment process completed.")
-    return 0
+    try:
+        acked = acker.ack(alarm_id=args.alarmid, 
+                        supervisor_id=supervisor_id,
+                        comment=args.comment,
+                        timeout=args.timeout)
+    except:
+        logger.exception("Error while acknowledging the alarm")
+        acked = False
+    finally:
+        logger.debug("Closing")
+        acker.close()
+        cmd_sender.close()
+    return 0 if acked else 1
     
                     
 if __name__ == '__main__':

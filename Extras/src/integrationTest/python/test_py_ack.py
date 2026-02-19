@@ -20,6 +20,9 @@ from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 from IasBasicTypes.IasType import IASType
 from IasBasicTypes.Alarm import Alarm
 from IasBasicTypes.IasValue import IasValue
+from IasBasicTypes.Validity import Validity
+from IasBasicTypes.Identifier import Identifier
+from IasBasicTypes.OperationalMode import OperationalMode
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
 from IasCmdReply.IasCommandSender import IasCommandSender
 from IasCmdReply.IasCommandType import IasCommandType
@@ -116,14 +119,13 @@ class TestPyAck():
         Return:
             The IasValue to send to the core topic
         """
-        now = Iso8601TStamp.now()
-        json = f'{{"value":"{value}","readFromMonSysTStamp":"{now}","receivedFromPluginTStamp":"{now}","sentToConverterTStamp":"{now}",'
-        json = f'{json}"receivedFromPluginTStamp":"{now}","convertedProductionTStamp":"{now}","sentToBsdbTStamp":"{now}","productionTStamp":"{now}",'
-        json = f'{json}"mode":"OPERATIONAL","iasValidity":"RELIABLE",'
-        json = f'{json}"fullRunningId":"{cls.temperature_frid}",'
-        json = f'{json}"valueType":"DOUBLE"}}'
-        logger.info(f"IASIO JSON str built: {json}")
-        return IasValue.fromJSon(json)
+        id = Identifier.from_string(cls.temperature_frid)
+        return IasValue.build(
+            value=str(value), 
+            value_type=IASType.DOUBLE, 
+            fr_id=id, 
+            validity=Validity.RELIABLE, 
+            mode=OperationalMode.OPERATIONAL)
     
     @classmethod
     def setup_class(cls):
@@ -156,7 +158,6 @@ class TestPyAck():
             The alarm received, or None if no alarm is received within the timeout
         """
         logger.info("Waiting for an alarm to be received from the IASIO consumer")
-        TestPyAck.iasio_listener.clear()
         try:
             alarm = TestPyAck.alarms_received.get(timeout=timeout)
             logger.info(f"Alarm received within {timeout} seconds: {alarm.to_string()}")
@@ -174,6 +175,7 @@ class TestPyAck():
         logger.info("Sending high temperature to let the supervisor generate the alarm")
         high_temp = TestPyAck.buildIasio(0.0)
         logger.info(f"Sending high temperature IASIO: {high_temp.toString()}")
+        TestPyAck.iasio_listener.clear()
         TestPyAck.iasio_producer.send(high_temp)
         alarm = self.wait_alarm()
         assert alarm is not None, "Alarm not received after sending high temperature IASIO"
@@ -183,6 +185,7 @@ class TestPyAck():
         logger.info("Sending high temperature to set the alarm")
         high_temp = TestPyAck.buildIasio(100.0)
         logger.info(f"Sending high temperature IASIO: {high_temp.toString()}")
+        TestPyAck.iasio_listener.clear()
         TestPyAck.iasio_producer.send(high_temp)
 
         tries = 0
@@ -228,6 +231,7 @@ class TestPyAck():
         logger.info("Sending high temperature to let the supervisor generate the alarm")
         high_temp = TestPyAck.buildIasio(0.0)
         logger.info(f"Sending high temperature IASIO: {high_temp.toString()}")
+        TestPyAck.iasio_listener.clear()
         TestPyAck.iasio_producer.send(high_temp)
         alarm = self.wait_alarm()
         assert alarm is not None, "Alarm not received after sending high temperature IASIO"

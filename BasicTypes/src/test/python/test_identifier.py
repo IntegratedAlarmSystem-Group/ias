@@ -16,7 +16,7 @@ class TestIdentifier:
         iasio_id = Identifier("IasioID", IdentifierType.IASIO, asce_id)
 
         frid = "(SupervisorID:SUPERVISOR)@(DasuID:DASU)@(AsceID:ASCE)@(IasioID:IASIO)"
-        assert frid == "(SupervisorID:SUPERVISOR)@(DasuID:DASU)@(AsceID:ASCE)@(IasioID:IASIO)"
+        assert frid == iasio_id.build_full_running_id()
 
     def test_id_of_type(self):
         frid = "(SupervisorWithKafka:SUPERVISOR)@(DasuStrenght:DASU)@(AsceStrenght:ASCE)"

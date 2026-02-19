@@ -86,7 +86,6 @@ class TestPushIaioScript():
                                   text=True
         )
         try:
-            proc.wait(10)
             stdout, stderr = proc.communicate(timeout=10)
             
             print("STDOUT:", stdout)
