@@ -5,23 +5,21 @@ plugins {
 }
 
 dependencies {
-    val g = project.gradle
-    val extension = g as ExtensionAware
-    implementation(extension.extra["scala-library"].toString())
-    implementation(extension.extra["jackson-databind"].toString())
-    implementation(extension.extra["slf4j-api"].toString())
-    implementation(extension.extra["logback-classic"].toString())
-    implementation(extension.extra["kafka-clients"].toString())
-    implementation(platform(extension.extra["junit-bom"].toString()))
-    implementation(extension.extra["junit-platform-console"].toString())
+    implementation(libs.scala.library)
+    implementation(libs.jackson.databind)
+    implementation(libs.slf4j.api)
+    implementation(libs.logback.classic)
+    implementation(libs.kafka.clients)
+    implementation(platform(libs.junit.bom))
+    implementation(libs.junit.platform.console)
 
     implementation(project(":Tools"))
     implementation(project(":KafkaUtils"))
     implementation(project(":BasicTypes"))
     implementation(project(":Heartbeat"))
 
-    testImplementation(platform(extension.extra["junit-bom"].toString()))
-    testImplementation(extension.extra["junit-jupiter"].toString())
+    testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter)
 }
 
 tasks.test {
