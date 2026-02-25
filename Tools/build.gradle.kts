@@ -6,18 +6,15 @@ plugins {
 }
 
 dependencies {
-    // Scala
-    val g = project.gradle
-    val extension = g as ExtensionAware
-    implementation(extension.extra["scala-library"].toString())
-    implementation(extension.extra["slf4j-api"].toString())
-    implementation(extension.extra["scala-logging"].toString())
-    implementation(extension.extra["logback-classic"].toString())
+    implementation(libs.scala.library)
+    implementation(libs.slf4j.api)
+    implementation(libs.scala.logging)
+    implementation(libs.logback.classic)
     implementation("com.h2database:h2:2.1.214")
 
-    testImplementation(platform(extension.extra["junit-bom"].toString()))
-    testImplementation(extension.extra["junit-jupiter"].toString())
-    testImplementation(extension.extra["scalatest"].toString())
+    testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.scalatest)
     implementation("org.scalatestplus:junit-5-13_3:3.2.19.0")
 }
 

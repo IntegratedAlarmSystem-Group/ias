@@ -6,14 +6,12 @@ plugins {
 }
 
 dependencies {
-    val g = project.gradle
-    val extension = g as ExtensionAware
-    implementation(extension.extra["scala-library"].toString())
-    implementation(extension.extra["scala-logging"].toString())
-    implementation(extension.extra["logback-classic"].toString())
-    implementation(extension.extra["kafka-clients"].toString())
-    implementation(extension.extra["commons-cli"].toString())
-    implementation(extension.extra["kafka-connect-api"].toString())
+    implementation(libs.scala.library)
+    implementation(libs.scala.logging)
+    implementation(libs.logback.classic)
+    implementation(libs.kafka.clients)
+    implementation(libs.commons.cli)
+    implementation(libs.kafka.connect.api)
     
     implementation("com.datastax.cassandra:cassandra-driver-core:3.6.0")
     implementation("javax.mail:mail:1.4.7")
@@ -27,9 +25,9 @@ dependencies {
     implementation(project(":DistributedUnit"))
     implementation(project(":Supervisor"))
 
-    testImplementation(platform(extension.extra["junit-bom"].toString()))
-    testImplementation(extension.extra["junit-jupiter"].toString())
-    testImplementation(extension.extra["scalatest"].toString())
+    testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.scalatest)
 }
 
 sourceSets {

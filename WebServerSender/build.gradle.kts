@@ -5,15 +5,13 @@ plugins {
 }
 
 dependencies {
-    val g = project.gradle
-    val extension = g as ExtensionAware
-    implementation(extension.extra["scala-library"].toString())
-    implementation(extension.extra["jackson-databind"].toString())
-    implementation(extension.extra["slf4j-api"].toString())
-    implementation(extension.extra["logback-classic"].toString())
-    implementation(extension.extra["commons-cli"].toString())
-    implementation(extension.extra["hibernate-jpa"].toString())
-    implementation(extension.extra["kafka-clients"].toString())
+    implementation(libs.scala.library)
+    implementation(libs.jackson.databind)
+    implementation(libs.slf4j.api)
+    implementation(libs.logback.classic)
+    implementation(libs.commons.cli)
+    implementation(libs.hibernate.jpa)
+    implementation(libs.kafka.clients)
 
     implementation("org.eclipse.jetty.websocket:websocket-api:9.4.15.v20190215")
     implementation("org.eclipse.jetty.websocket:websocket-client:9.4.15.v20190215")
@@ -28,7 +26,7 @@ dependencies {
 
     testImplementation("org.eclipse.jetty.websocket:websocket-server:9.4.15.v20190215")
 
-    testImplementation(platform(extension.extra["junit-bom"].toString()))
-    testImplementation(extension.extra["junit-jupiter"].toString())
-    testImplementation(extension.extra["scalatest"].toString())
+    testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.scalatest)
 }
