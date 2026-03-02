@@ -1,9 +1,11 @@
 import datetime
 from datetime import timezone
+from email import parser
 import logging
 from pathlib import Path
 from threading import Lock
 from logging.handlers import RotatingFileHandler
+import argparse
 
 from IASTools.DefaultPaths import DefaultPaths
 
@@ -113,3 +115,51 @@ class Log():
 
         # Avoid noisy stderr stack traces on handler write errors
         logging.raiseExceptions = False
+
+    @classmethod
+    def add_log_arguments_to_parser(cls, parser: argparse.ArgumentParser) -> None:
+        '''
+        Add the log arguments to an argparse parser.
+
+        This function is meant to ease the addition of log arguments to all the scripts in IAS environment,
+        to have a consistent way to configure logging.
+
+        :param parser: The argparse parser to which add the log arguments.
+        '''
+        if not parser:
+            raise ValueError("The parser cannot be None")
+        parser.add_argument(
+                        '-lf',
+                        '--logLevelFile',
+                        help='Logging level: Set the level of the message for the file logger (default: info)',
+                        action='store',
+                        choices=['info', 'debug', 'warning', 'error', 'critical'],
+                        default='info',
+                        required=False)
+        parser.add_argument(
+                        '-lc',
+                        '--logLevelConsole',
+                        help='Logging level: Set the level of the message for the console logger, (default: info)',
+                        action='store',
+                        choices=['info', 'debug', 'warning', 'error', 'critical'],
+                        default='info',
+                        required=False)
+        
+    @classmethod
+    def init_log_from_cmdline_args(cls, args: argparse.Namespace, name_file: str) -> None:
+        '''
+        Initialize the logging from the command line arguments.
+
+        The arguments in the command line must be proveded as defined by :meth:`~Log.add_log_arguments_to_parser`.
+
+        This function is meant to ease the initialization of logging from command line arguments in all the scripts in IAS environment,
+        to have a consistent way to configure logging.
+
+        init_log_from_cmdline_args delegates to :meth:`~Log.init_logging`.
+
+        :param args: The command line arguments as parsed by argparse.
+        :param name_file: The name of the log file with or without .log extension.
+        '''
+        if not args:
+            raise ValueError("The args cannot be None")
+        cls.init_logging(name_file, args.logLevelFile, args.logLevelConsole)
