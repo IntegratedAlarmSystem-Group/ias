@@ -4,7 +4,7 @@ Created on Sep 22, 2016
 @author: acaproni
 '''
 from os import environ, walk, path, listdir
-
+import logging
 from . import FileSupport
 
 
@@ -27,8 +27,7 @@ class CommonDefs(object):
 
         @return: A string with the jars in the classpath
         """
-        from IASLogging.logConf import Log
-        _logger = Log.getLogger(__file__)
+        _logger = logging.getLogger(__class__.__name__)
         
         # jars list is used to avoid duplications of jars in the classpath
         # It contains all the jars without the path
@@ -47,7 +46,7 @@ class CommonDefs(object):
                    externalJarsPaths.append(folder)
                    _logger.debug("Folder %s added to the external folders of jars",folder)
                else:
-                   _logger.warn("Folder of jars %s discarded", folder)
+                   _logger.warning("Folder of jars %s discarded", folder)
         except:
             _logger.debug("No external jars defined")
 

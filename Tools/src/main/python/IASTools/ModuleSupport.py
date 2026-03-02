@@ -3,6 +3,7 @@ Created on Sep 23, 2016
 
 @author: acaproni
 '''
+import logging
 from os.path import exists, join
 from os import makedirs
 from shutil import rmtree, copyfile
@@ -24,8 +25,7 @@ class ModuleSupport(object):
         @param The root folder of the module
         """
         if not rootOfModule:
-            from IASLogging.logConf import Log
-            _logger = Log.getLogger(__file__)
+            _logger = logging.getLogger(__class__.__name__)
             _logger.error("The root of the module can't be None nor empty")
             raise ValueError("The root of the module can't be None nor empty")
         fileSupport = FileSupport.FileSupport("LPGPv3License.txt","config")
@@ -45,8 +45,7 @@ class ModuleSupport(object):
         @see: self.writeLicenseFile
         """
         if not name:
-            from IASLogging.logConf import Log
-            _logger = Log.getLogger(__file__)
+            _logger = logging.getLogger(__class__.__name__)
             _logger.error("The name of the module can't be None nor empty")
             raise ValueError("The name of the module can't be None nor empty")
         # Read the list of folders to create from the template
@@ -56,8 +55,7 @@ class ModuleSupport(object):
             folders = f.readlines()
         # Check if the module 
         if not exists(name):
-            from IASLogging.logConf import Log
-            _logger = Log.getLogger(__file__)
+            _logger = logging.getLogger(__class__.__name__)
             _logger.info("Creating module %s",name)
             makedirs(name)
             ModuleSupport.writeLicenseFile(name)
@@ -70,8 +68,7 @@ class ModuleSupport(object):
             
             return 0
         else:
-            from IASLogging.logConf import Log
-            _logger = Log.getLogger(__file__)
+            _logger = logging.getLogger(__class__.__name__)
             _logger.error("%s already exists!!!",name)
             raise OSError(name+"already exists!!!")
 
@@ -82,8 +79,7 @@ class ModuleSupport(object):
         
         @param name: The full path name of the module to remove
         '''
-        from IASLogging.logConf import Log
-        _logger = Log.getLogger(__file__)
+        _logger = logging.getLogger(__class__.__name__)
         if not name:
             _logger.error("The name of the module can't be None nor empty")
             raise ValueError("The name of the module can't be None nor empty")
