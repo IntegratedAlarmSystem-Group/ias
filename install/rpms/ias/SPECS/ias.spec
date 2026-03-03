@@ -147,9 +147,9 @@ export IAS_ROOT=%{buildroot}%{_prefix}
 %{_prefix}/lib/ias*.jar
  
 %dir %{python3_sitelib}
-%{python3_sitelib}/IASApiDocs/
-%{python3_sitelib}/IASLogging/
-%{python3_sitelib}/IASTools/
+%{python3_sitelib}/IasApiDocs/
+%{python3_sitelib}/IasLogging/
+%{python3_sitelib}/IasTools/
 %{python3_sitelib}/IasAlarmGui/
 %{python3_sitelib}/IasBasicTypes/
 %{python3_sitelib}/IasCdb/

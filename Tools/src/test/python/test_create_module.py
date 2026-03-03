@@ -4,21 +4,22 @@ Created on Feb 9, 2018
 
 @author: acaproni
 '''
-
+import logging
 from os import environ, access, R_OK
 from os.path import exists, isfile, join, isdir
 from shutil import rmtree
 
-from IASLogging.logConf import Log
-from IASTools.FileSupport import FileSupport
-from IASTools.ModuleSupport import ModuleSupport
+from IasLogging.log import Log
+from IasTools.FileSupport import FileSupport
+from IasTools.ModuleSupport import ModuleSupport
 
 
 class TestCreateModule():
 
     @classmethod
     def setup_class(cls):
-        cls.Logger = Log.getLogger(__file__)
+        Log.init_logging(__file__)
+        cls.Logger = logging.getLogger(__class__.__name__)
         cls.Logger.info("Starting TestCreateModule tests")
     
     def setup_method(self):
@@ -28,8 +29,6 @@ class TestCreateModule():
         
         self.modulePath = join(self.tmpFolder,self.moduleName)
 
-        TestCreateModule.Logger = Log.getLogger(__file__)
-        
     def teardown_method(self):
         if (exists(self.modulePath)):
             TestCreateModule.Logger.warning ("WARNING: module still exist %s",self.modulePath)

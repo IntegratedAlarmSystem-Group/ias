@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-import sys, string, random, threading, typing
+import sys, string, random, threading, typing, logging
 
 from PySide6.QtCore import Slot, QCommandLineOption, QCommandLineParser, QTimer, Signal
 from PySide6.QtWidgets import QApplication, QMainWindow, QLabel
@@ -18,8 +18,8 @@ from IasKafkaUtils.KafkaValueConsumer import KafkaValueConsumer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 
 from IasBasicTypes.IasValue import IasValue
-from IASTools.DefaultPaths import DefaultPaths
-from IASLogging.logConf import Log
+from IasTools.DefaultPaths import DefaultPaths
+from IasLogging.log import Log
 
 from IasAlarmGui.AlarmDetailsHelper import AlarmDetailsHelper
 from IasAlarmGui.config import Config
@@ -42,7 +42,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         self.bsdb_url = bsdb_url
 
         # The logger
-        self.logger = Log.getLogger(__file__)
+        self.logger = logging.getLogger(self.__class__.__name__)
 
         self.alarm_details = AlarmDetailsHelper(self.ui.alarmDetailsTE)
 
@@ -236,7 +236,7 @@ def parse(app) -> dict[str, typing.Any]:
 
     log_level = QCommandLineOption(
         [ "l", "loglevel"],
-        "Set the log level (debug, info, warn, error, critical). Default is info",
+        "Set the log level (debug, info, warning, error, critical). Default is info",
         "log_level",
         "info"      
     )
@@ -265,7 +265,8 @@ if __name__ == "__main__":
 
     cmd_line_args = parse(app)
 
-    logger = Log.getLogger(__file__, fileLevel='debug', consoleLevel=cmd_line_args['log_level'])
+    Log.init_logging(__file__, file_level_name='debug', console_level_name=cmd_line_args['log_level'])
+    logger = logging.getLogger(__name__)
     logger.debug("IAS Alarm GUI started")
 
     if not DefaultPaths.check_ias_folders():

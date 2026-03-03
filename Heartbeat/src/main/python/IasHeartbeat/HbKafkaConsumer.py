@@ -1,6 +1,6 @@
+import logging
 from IasKafkaUtils.IasKafkaConsumer import IasLogListener, IasLogConsumer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
-from IASLogging.logConf import Log
 from IasHeartbeat.HearbeatMessage import HeartbeatMessage
 
 class HeartbeatListener:
@@ -37,7 +37,7 @@ class HbKafkaConsumer(IasLogListener):
             groupid: the group id for the kafka consumer
             listener: the listener to be notified of ne HBs
         """
-        self.logger = Log.getLogger(__name__)
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.listener = listener
         self.log_consumer = IasLogConsumer(self,
                                            kafkabrokers,

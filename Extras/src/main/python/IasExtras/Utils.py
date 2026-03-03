@@ -4,7 +4,6 @@ A collection of utility functions for the Extras module
 import logging
 import os
 
-from IASLogging.logConf import Log
 from IasCdb.CdbReader import CdbReader
 
 class Utils():

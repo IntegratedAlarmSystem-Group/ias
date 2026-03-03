@@ -4,17 +4,14 @@ Created on Mar 17, 2020
 
 @author: acaproni
 '''
-
-from logging import Logger
+import logging
 from os import environ, path, mkdir
 from shutil import rmtree
 
-from IASLogging.logConf import Log
-from IASTools.CommonDefs import CommonDefs
+from IasLogging.log import Log
+from IasTools.CommonDefs import CommonDefs
 
 class TestCommonDefs():
-
-    
 
     # The list of the jars created into the external jars folders
     jars = []
@@ -31,9 +28,10 @@ class TestCommonDefs():
 
     @classmethod
     def setup_class(cls):
-        cls.Logger = Log.getLogger(__file__)
+        Log.init_logging(__file__)
+        cls.Logger = logging.getLogger(__class__.__name__)
 
-        # Steth the environment variable IAS_EXTERNAL_JARS
+        # Test the environment variable IAS_EXTERNAL_JARS
         pwd = environ['PWD']
         environ['IAS_EXTERNAL_JARS']=f"{pwd}/externalJars1:{pwd}/externalJars2"
 

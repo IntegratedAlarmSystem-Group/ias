@@ -9,7 +9,7 @@ import uuid
 import subprocess
 from threading import Event
 
-from IASLogging.logConf import Log
+from IasLogging.log import Log
 from IasKafkaUtils.KafkaValueConsumer import KafkaValueConsumer, IasValueListener
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 from IasBasicTypes.IasValue import IasValue
@@ -46,6 +46,7 @@ class TestPushIaioScript():
 
     @classmethod
     def setup_class(cls):
+        Log.init_logging(__file__)
         # Create a queue to receive the IASIOs
         cls.iasios_received = queue.Queue()
 

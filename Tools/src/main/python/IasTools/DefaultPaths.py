@@ -1,5 +1,5 @@
 import os
-
+import logging
 class DefaultPaths:
     """
     Class to hold default paths for IAS
@@ -78,8 +78,7 @@ class DefaultPaths:
         :return: The IAS root folder path from the environment or the default
         """
         if not cls._ias_root_env_var in os.environ:
-            from IASLogging.logConf import Log
-            _logger = Log.getLogger(__file__)
+            _logger = logging.getLogger(cls.__name__)
             _logger.warning("The IAS_ROOT environment variable is not set. Using default: %s", cls._default_ias_root_folder)
         return os.getenv(cls._ias_root_env_var, cls._default_ias_root_folder)
 
@@ -111,8 +110,7 @@ class DefaultPaths:
         :return: The IAS temporary folder path from the environment or the default
         """
         if not cls._ias_tmp_env_var in os.environ:
-            from IASLogging.logConf import Log
-            _logger = Log.getLogger(__file__)
+            _logger = logging.getLogger(cls.__name__)
             _logger.warning("The IAS_TMP_FOLDER environment variable is not set. Using default: %s", cls._default_ias_tmp_folder)
         return os.getenv(cls._ias_tmp_env_var, cls._default_ias_tmp_folder)
 
@@ -124,8 +122,7 @@ class DefaultPaths:
         :return: The IAS configuration folder path from the environment or the default
         """
         if not cls._ias_config_env_var in os.environ:
-            from IASLogging.logConf import Log
-            _logger = Log.getLogger(__file__)
+            _logger = logging.getLogger(cls.__name__)
             _logger.warning("The IAS_CONFIG_FOLDER environment variable is not set. Using default: %s", cls._default_ias_config_folder)
         return os.getenv(cls._ias_config_env_var, cls._default_ias_config_folder)
 
@@ -137,8 +134,7 @@ class DefaultPaths:
         :return: The Kafka home folder path from the environment or the default
         """
         if not cls._kafka_home_env_var in os.environ:
-            from IASLogging.logConf import Log
-            _logger = Log.getLogger(__file__)
+            _logger = logging.getLogger(cls.__name__)
             _logger.warning("The KAFKA_HOME environment variable is not set. Using default: %s", cls._default_kafka_home_folder)
         return os.getenv(cls._kafka_home_env_var, cls._default_kafka_home_folder)
 
@@ -150,8 +146,7 @@ class DefaultPaths:
         :param folder_path: The path of the folder to check/create.
         :raises OSError: If the folder cannot be created or is not a directory.
         """
-        from IASLogging.logConf import Log
-        _logger = Log.getLogger(__file__)
+        _logger = logging.getLogger(cls.__name__)
         _logger.debug("Checking and creating folder: %s", folder_path)
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
@@ -171,8 +166,7 @@ class DefaultPaths:
 
         :return: True if all folders are checked and created successfully.
         """
-        from IASLogging.logConf import Log
-        _logger = Log.getLogger(__file__)
+        _logger = logging.getLogger(cls.__name__)
         try:
             if not os.path.exists(cls.get_ias_root_folder()):
                 raise OSError(f"IAS root folder {cls.get_ias_root_folder()} does not exist")

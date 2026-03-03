@@ -13,10 +13,9 @@ Created on Jun 12, 2024
 
 import argparse
 import uuid
-import os
-import time
+import logging
 
-from IASLogging.logConf import Log
+from IasLogging.log import Log
 from IasBasicTypes.Identifier import Identifier
 from IasBasicTypes.IdentifierType import IdentifierType
 from IasCmdReply.IasCommandSender import IasCommandSender
@@ -76,22 +75,7 @@ def parse_args():
                         type=float,
                         action='store',
                         required=False)
-    parser.add_argument(
-                        '-lfi',
-                        '--levelFile',
-                        help='Logging level: Set the level of the message for the file logger, default: Debug level',
-                        action='store',
-                        choices=['info', 'debug', 'warning', 'error', 'critical'],
-                        default='debug',
-                        required=False)
-    parser.add_argument(
-                        '-lcon',
-                        '--levelConsole',
-                        help='Logging level: Set the level of the message for the console logger, default: Debug level',
-                        action='store',
-                        choices=['info', 'debug', 'warning', 'error', 'critical'],
-                        default='info',
-                        required=False)
+    Log.add_log_arguments_to_parser(parser)
     return parser.parse_args()
     
 def get_supervisor_id(alarm_frid: str) -> str:
@@ -114,8 +98,9 @@ def main()-> int:
     :rtype: int
     """
     args = parse_args()
+    Log.init_log_from_cmdline_args(args, __file__)
     global logger
-    logger = Log.getLogger(__file__, fileLevel=args.levelFile, consoleLevel=args.levelConsole)
+    logger = logging.getLogger(__name__)
     bsdb_url = Utils.get_bsdb_url(args.kafkabrokers, args.jCdb)
     logger.info(f"BSDB URL: {bsdb_url}")
 

@@ -8,19 +8,17 @@ It is meant to be used for testing and debugging purposes.
 
 import argparse
 import uuid
+import logging
 
 from IasBasicTypes.IasType import IASType
 from IasBasicTypes.IasValue import IasValue
 from IasBasicTypes.Validity import Validity
 from IasBasicTypes.OperationalMode import OperationalMode
-from IASLogging.logConf import Log
+from IasLogging.log import Log
 from IasKafkaUtils.KafkaValueProducer import KafkaValueProducer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 from IasBasicTypes.Identifier import Identifier
 from IasExtras.Utils import Utils
-
-# The logger, intialized by main()
-logger = None
 
 def parse_args():
     epilog = """
@@ -120,28 +118,13 @@ Example usage:
                         choices=[ "RELIABLE", "UNRELIABLE" ],
                         default="RELIABLE",
                         required=False)
-    parser.add_argument(
-                        '-lfi',
-                        '--levelFile',
-                        help='Logging level: Set the level of the message for the file logger, default: Debug level',
-                        action='store',
-                        choices=['info', 'debug', 'warning', 'error', 'critical'],
-                        default='debug',
-                        required=False)
-    parser.add_argument(
-                        '-lcon',
-                        '--levelConsole',
-                        help='Logging level: Set the level of the message for the console logger, default: Debug level',
-                        action='store',
-                        choices=['info', 'debug', 'warning', 'error', 'critical'],
-                        default='info',
-                        required=False)
+    Log.add_log_arguments_to_parser(parser)
     return parser.parse_args()
 
 def main() -> int:
     args = parse_args()
-    global logger
-    logger = Log.getLogger(__file__, fileLevel=args.levelFile, consoleLevel=args.levelConsole)
+    Log.init_log_from_cmdline_args(args, __file__)
+    logger = logging.getLogger("iasPushIasio")
 
     # Build the Identifier to check if the provided frid is valid
     ias_identifier = Identifier.from_string(args.iasioid)

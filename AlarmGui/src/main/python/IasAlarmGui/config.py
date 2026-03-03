@@ -2,8 +2,7 @@
 Configuration for the GUI can be taken from command line parameters, the CDB or environment variables
 """
 import os
-
-from IASLogging.logConf import Log
+import logging
 
 from IasCdb.CdbReader import CdbReader
 
@@ -23,7 +22,7 @@ class Config:
                      None otherwise
         """
         # The logger
-        self.logger = Log.getLogger(__file__)
+        self.logger = logging.getLogger(self.__class__.__name__)
 
         # The path of the CDB read from the environment variable or None if not defined
         self.CDB_FROM_ENV: str|None = os.environ.get("IAS_CDB")

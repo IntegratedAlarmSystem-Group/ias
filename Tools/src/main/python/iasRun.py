@@ -11,12 +11,13 @@ import argparse
 import os
 import socket
 import sys
+import logging
 from subprocess import run
 
-from IASLogging.logConf import Log
-from IASTools.CommonDefs import CommonDefs
-from IASTools.FileSupport import FileSupport
-from IASTools.DefaultPaths import DefaultPaths
+from IasLogging.log import Log
+from IasTools.CommonDefs import CommonDefs
+from IasTools.FileSupport import FileSupport
+from IasTools.DefaultPaths import DefaultPaths
 
 def setProps(propsDict,className,logFileNameId, logger):
     """
@@ -180,33 +181,15 @@ def main() -> int:
                         action='store_false',
                         default=True,
                         required=False)
-    parser.add_argument(
-                        '-lf',
-                        '--logLevelFile',
-                        help='Logging level: Set the level of the message for the file logger of iasRun (default: info)',
-                        action='store',
-                        choices=['info', 'debug', 'warn', 'error', 'critical'],
-                        default='info',
-                        required=False)
-    parser.add_argument(
-                        '-lc',
-                        '--logLevelConsole',
-                        help='Logging level: Set the level of the message for the console logger of iasRun, (default: info)',
-                        action='store',
-                        choices=['info', 'debug', 'warn', 'error', 'critical'],
-                        default='info',
-                        required=False)
-
-    #parser.add_argument('params', nargs=argparse.REMAINDER, help='Command line parameters to pass to the JVM executable')
+    Log.add_log_arguments_to_parser(parser)
 
     parsed_args = parser.parse_known_args()
     ias_run_args = parsed_args[0]  # Args for this script
     jvm_prg_args = parsed_args[1]  # Args for the java/scala program
 
     # Start the logger with param define by the user.
-    stdoutLevel = ias_run_args.logLevelFile
-    consoleLevel = ias_run_args.logLevelConsole
-    logger = Log.getLogger(__file__, stdoutLevel, consoleLevel)
+    Log.init_log_from_cmdline_args(ias_run_args, __file__)
+    logger=logging.getLogger(__name__)
 
     logger.debug("Parsed ARGS: for iasRun: %s, for JVM %s", ias_run_args, jvm_prg_args)
 
@@ -215,7 +198,11 @@ def main() -> int:
         print("Scala/Java parameters follow iasRun parameters)")
         print("Example: iasRun -r org.junit.platform.console.ConsoleLauncher execute --select-class org.eso.ias.basictypes.test.IasValueJsonSerializerTest")
         print ("-r is an argument for iasRun, execute is an argument for java/scala class")
-        logger.debug("Will Trigger the help of the java/scala executable")
+        if ias_run_args.className is not None:
+            logger.debug("Will Trigger the help of the java/scala executable")
+        else:
+            logger.debug("No class specified, cannot trigger the help of the java/scala executable")
+            return 0
 
     # Check IAS folders
     # Fail fast!

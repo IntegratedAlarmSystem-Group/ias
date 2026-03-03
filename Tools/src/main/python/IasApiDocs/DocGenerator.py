@@ -8,7 +8,7 @@ Created on Jul 7, 2017
 
 import sys
 import os
-
+import logging
 class DocGenerator(object):
     '''
     The base class for API docs generators
@@ -35,8 +35,7 @@ class DocGenerator(object):
         @param src: the folder with java sources to check
         @param dst: destination folder to check
         """
-        from IASLogging.logConf import Log
-        _logger = Log.getLogger(__file__)
+        _logger = logging.getLogger(__class__.__name__)
         # Check if src folder exists
         if not os.path.exists(src):
             _logger.error("The source folder %s does not exist",src)

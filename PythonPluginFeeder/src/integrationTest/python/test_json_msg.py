@@ -8,6 +8,7 @@ Created on May 10, 2018
 import datetime
 from datetime import timezone
 
+from IasLogging.log import Log
 from IasBasicTypes.Alarm import Alarm
 from IasBasicTypes.Priority import Priority
 from IasBasicTypes.IasType import IASType
@@ -16,6 +17,10 @@ from IasPlugin3.JsonMsg import JsonMsg
 
 
 class TestJsonMessage():
+
+    @classmethod
+    def setup_class(cls):
+        Log.init_logging(__file__)
     
     def test_type_conversions_double(self):
         '''

@@ -9,10 +9,10 @@ Created on Jul 7, 2017
 import sys
 import os
 import shutil
+import logging
 from subprocess import call
 from glob import glob
-from IASApiDocs.DocGenerator import DocGenerator
-from IASLogging.logConf import Log
+from IasApiDocs.DocGenerator import DocGenerator
 
 class PydocBuilder(DocGenerator):
     '''
@@ -31,7 +31,7 @@ class PydocBuilder(DocGenerator):
         """
         self.includeTestFolder=includeTestFolder
         super(PydocBuilder, self).__init__(srcFolder,dstFolder,outFile)
-        self.logger=Log.getLogger(__file__)
+        self.logger=logging.getLogger(__class__.__name__)
         
     def getPythonFilesInFolder(self,folder):
         """
@@ -67,7 +67,7 @@ class PydocBuilder(DocGenerator):
         htmlFiles.sort()
         
         # Look for python modules that can be taken from
-        # file names having 2 dots like IASApiDocs.DocGenerator.html
+        # file names having 2 dots like IasApiDocs.DocGenerator.html
         pyModules = []
         for f in htmlFiles:
             parts = f.split(".")

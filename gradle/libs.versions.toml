@@ -8,11 +8,6 @@ jackson-databind = "2.17.0"
 jep = "4.3.1"
 junit-bom = "5.13.1"
 junit-jupiter = "5.13.1"
-# junit-jupiter-api = "5.13.1"
-# junit-jupiter-engine = "5.13.1"
-# junit-platform-console-standalone = "1.13.1"
-# junit-platform-console = "1.13.1"
-# junit-platform-launcher = "1.13.1"
 commons-cli = "1.5.0"
 kafka = "3.7.0"
 hibernate-jpa = "1.0.0.Final"
@@ -27,9 +22,6 @@ jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", ver
 jep = { module = "black.ninia:jep", version.ref = "jep" }
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit-bom" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
-# junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit-jupiter-api" }
-# junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit-jupiter-engine" }
-# junit-platform-console-standalone = { module = "org.junit.platform:junit-platform-console-standalone", version.ref = "junit-platform-console-standalone" }
 junit-platform-console = { module = "org.junit.platform:junit-platform-console"}
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher"}
 commons-cli = { module = "commons-cli:commons-cli", version.ref = "commons-cli" }

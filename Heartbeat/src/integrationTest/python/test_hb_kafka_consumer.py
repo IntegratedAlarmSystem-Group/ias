@@ -2,6 +2,8 @@ import uuid
 import time
 
 from confluent_kafka import Producer
+
+from IasLogging.log import Log
 from IasHeartbeat.HearbeatMessage import HeartbeatMessage
 from IasHeartbeat.HbKafkaConsumer import HeartbeatListener, HbKafkaConsumer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
@@ -33,6 +35,7 @@ class TestHbConsumer():
 
     @classmethod
     def setup_class(cls):
+        Log.init_logging(__file__)
         conf = { 'bootstrap.servers': IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, 'client.id': "HbConsumerTest-Prod"}
         TestHbConsumer.hbProducer = Producer(conf)
 

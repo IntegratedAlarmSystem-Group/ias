@@ -1,7 +1,7 @@
 from queue import Queue
 import time
 
-from IASLogging.logConf import Log
+from IasLogging.log import Log
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
 
 """
@@ -34,7 +34,7 @@ class TestCommandSender():
 
     @classmethod
     def setup_class(cls):
-        print("Setup")
+        Log.init_logging(__file__)
         cls.received_cmds = Queue()
         cls.listener = CmdListener(cls.received_cmds)
         cls.cmd_consumer = IasLogConsumer(

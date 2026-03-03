@@ -1,4 +1,6 @@
 import os
+
+from IasLogging.log import Log
 from IasAlarmGui.config import Config
 class TestConfigNoCdb():
     """
@@ -8,6 +10,7 @@ class TestConfigNoCdb():
     """
     @classmethod
     def setup_class(cls):
+        Log.init_logging(__file__)
         cls.old_cdb = os.environ.get('IAS_CDB')
         if cls.old_cdb is not None:
             del os.environ['IAS_CDB']
@@ -36,7 +39,6 @@ class TestConfigNoCdb():
     def test_bsdb_passing_cdb(self):
         """
         The getting the bsdb when a CDB path is given in the constructor"""
-        from IasAlarmGui.config import Config
         cdb_path = "src/test"
         config = Config(cdb_path)
 
