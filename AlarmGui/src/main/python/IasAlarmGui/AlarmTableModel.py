@@ -1,13 +1,12 @@
 # This Python file uses the following encoding: utf-8
 
-import threading, time
+import threading, time, logging
 
 from PySide6.QtCore import QAbstractTableModel
 from PySide6.QtCore import Qt, QModelIndex
 from PySide6.QtWidgets import QTableView
 from PySide6.QtGui import QColor
 
-from IASLogging.logConf import Log
 from IasKafkaUtils.KafkaValueConsumer import IasValueListener
 from IasBasicTypes.IasValue import IasValue
 from IasBasicTypes.IasType import IASType
@@ -30,7 +29,7 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
         """
         super().__init__()
 
-        self._logger = Log.getLogger(__file__)
+        self._logger = logging.getLogger(self.__class__.__name__)
 
         # The table view widget that display the alarms
         self.view = view

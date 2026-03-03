@@ -7,10 +7,9 @@ from datetime import datetime
 from datetime import timezone
 from threading import Thread, Lock, Event
 import traceback
-import time
+import logging
 from confluent_kafka import Consumer, KafkaError
 
-from IASLogging.logConf import Log
 from IasBasicTypes.IasValue import IasValue
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
@@ -64,7 +63,7 @@ class KafkaValueConsumer(Thread):
         @param listener the listener to send IasValues to
         '''
         Thread.__init__(self)
-        self._logger = Log.getLogger(__file__)
+        self._logger = logging.getLogger(self.__class__.__name__)
 
         if listener is None:
             raise ValueError("The listener can't be None")

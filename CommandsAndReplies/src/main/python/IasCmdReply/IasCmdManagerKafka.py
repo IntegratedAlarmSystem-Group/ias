@@ -1,10 +1,10 @@
 from queue import Queue, Empty
 from threading import Thread
 import time
+import logging
 
 from confluent_kafka import Producer
 
-from IASLogging.logConf import Log
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
 from IasKafkaUtils.IasKafkaConsumer import IasLogConsumer, IasLogListener
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
@@ -48,7 +48,7 @@ class KafkaLogListener(IasLogListener):
             logs: The queue to store IasCommands into
             full_run_id: the full runing ID of the process
         """
-        self.logger = Log.getLogger(__name__)
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.kafka_logs = logs
         self.fullRunningId = full_run_id
 
@@ -96,7 +96,7 @@ class IasCmdManagerKafka(Thread):
         if not listener:
             raise ValueError("The listerner of comamnds cannot be None")
         super().__init__()
-        self.logger = Log.getLogger(__name__)
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.fullRunningId = full_run_id
         self.cmd_listener = listener
         # The queue of commands received from the topic

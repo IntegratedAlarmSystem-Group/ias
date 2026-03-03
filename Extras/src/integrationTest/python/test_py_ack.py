@@ -12,8 +12,9 @@ import uuid
 import pytest
 import queue
 from threading import Event
+import logging
 
-from IASLogging.logConf import Log
+from IASLogging.log import Log
 from IasKafkaUtils.KafkaValueConsumer import KafkaValueConsumer, IasValueListener
 from IasKafkaUtils.KafkaValueProducer import KafkaValueProducer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
@@ -29,10 +30,9 @@ from IasCmdReply.IasCommandType import IasCommandType
 
 from IasExtras.AlarmAck import AlarmAck
 
-logger = Log.getLogger(__file__)
-
 @pytest.fixture(scope="session", autouse=True)
 def session_setup():
+    logger = logging.getLogger(__name__)
     logger.info("Starting the Supervisor")
     superv_proc = subprocess.Popen([ "iasSupervisor", "SupervisorForAck", "-j", "src/integrationTest"], shell=False)
     time.sleep(10)  # Wait for the Supervisor to start
@@ -49,6 +49,7 @@ def session_setup():
 class IasioListener(IasValueListener):
     def __init__(self, alarms_received: queue.Queue):
         super().__init__()
+        self._logger = logging.getLogger(__file__)
         # The last alarm received
         self.last_alarm_received: Alarm|None = None
         # The IASIO with the last received alarm
@@ -66,13 +67,13 @@ class IasioListener(IasValueListener):
                 break
 
     def iasValueReceived(self, iasValue: IasValue):
-        logger.info("IasValue received: %s", iasValue.toString())
+        self._logger.info("IasValue received: %s", iasValue.toString())
         if iasValue.valueType==IASType.ALARM:
             self.last_alarm_iasio = iasValue
             self.last_alarm_received = Alarm.fromString(iasValue.value)
 
             self.alarms_received.put(self.last_alarm_received)
-            logger.info("Alarm received %s", self.last_alarm_received.to_string())
+            self._logger.info("Alarm received %s", self.last_alarm_received.to_string())
 
 class TestPyAck():
     # The name of the supervisor
@@ -129,24 +130,26 @@ class TestPyAck():
     
     @classmethod
     def setup_class(cls):
-        logger.info("Connecting the IASIO listener")
+        Log.init_logging(__file__)
+        cls.LOGGER = logging.getLogger(__file__)
+        cls.LOGGER.info("Connecting the IASIO listener")
         consumer_ready = Event()
         cls.iasio_consumer.start(ready_event=consumer_ready)
         assert consumer_ready.wait(timeout=30), "Kafka not ready before timeout expired"
-        logger.info("IASIO listener connected")
-        logger.info("Starting the command sender")
-        TestPyAck.cmd_sender.set_up()
+        cls.LOGGER.info("IASIO listener connected")
+        cls.LOGGER.info("Starting the command sender")
+        cls.cmd_sender.set_up()
 
     @classmethod
     def teardown_class(cls):
-        logger.info("Closing the IASIO listener")
+        cls.LOGGER.info("Closing the IASIO listener")
         cls.iasio_consumer.close()
 
         # Send the command to terminate to the Supervisor
-        logger.info(f"Sending CMD to shutdown the {TestPyAck.supervisor_id} Supervisor")
-        TestPyAck.cmd_sender.send_sync(TestPyAck.supervisor_id, IasCommandType.SHUTDOWN)
+        cls.LOGGER.info(f"Sending CMD to shutdown the {TestPyAck.supervisor_id} Supervisor")
+        cls.cmd_sender.send_sync(TestPyAck.supervisor_id, IasCommandType.SHUTDOWN)
         # Close the command sender
-        TestPyAck.cmd_sender.close()
+        cls.cmd_sender.close()
 
     def wait_alarm(self, timeout: float = 10) -> Alarm|None:
         """
@@ -157,24 +160,24 @@ class TestPyAck():
         Return:
             The alarm received, or None if no alarm is received within the timeout
         """
-        logger.info("Waiting for an alarm to be received from the IASIO consumer")
+        TestPyAck.LOGGER.info("Waiting for an alarm to be received from the IASIO consumer")
         try:
             alarm = TestPyAck.alarms_received.get(timeout=timeout)
-            logger.info(f"Alarm received within {timeout} seconds: {alarm.to_string()}")
+            TestPyAck.LOGGER.info(f"Alarm received within {timeout} seconds: {alarm.to_string()}")
             return alarm
         except queue.Empty:
-            logger.error(f"No alarm received within {timeout} seconds")
+            TestPyAck.LOGGER.error(f"No alarm received within {timeout} seconds")
             return None
 
     def test_ack(self):
         """
         Test the ACK of an alarm through python AI
         """
-        logger.info("Test ACK of an alarm through python API")
+        TestPyAck.LOGGER.info("Test ACK of an alarm through python API")
 
-        logger.info("Sending high temperature to let the supervisor generate the alarm")
+        TestPyAck.LOGGER.info("Sending high temperature to let the supervisor generate the alarm")
         high_temp = TestPyAck.buildIasio(0.0)
-        logger.info(f"Sending high temperature IASIO: {high_temp.toString()}")
+        TestPyAck.LOGGER.info(f"Sending high temperature IASIO: {high_temp.toString()}")
         TestPyAck.iasio_listener.clear()
         TestPyAck.iasio_producer.send(high_temp)
         alarm = self.wait_alarm()
@@ -182,9 +185,9 @@ class TestPyAck():
         assert not alarm.is_set()
 
         # Send an high temperature to set the alarm
-        logger.info("Sending high temperature to set the alarm")
+        TestPyAck.LOGGER.info("Sending high temperature to set the alarm")
         high_temp = TestPyAck.buildIasio(100.0)
-        logger.info(f"Sending high temperature IASIO: {high_temp.toString()}")
+        TestPyAck.LOGGER.info(f"Sending high temperature IASIO: {high_temp.toString()}")
         TestPyAck.iasio_listener.clear()
         TestPyAck.iasio_producer.send(high_temp)
 
@@ -197,7 +200,7 @@ class TestPyAck():
         assert not alarm.is_acked(), "Alarm shold NOT be ACKed at this stage"
 
         # ACk the alarm through the python API
-        logger.info("Acknowledging the alarm through the python API")
+        TestPyAck.LOGGER.info("Acknowledging the alarm through the python API")
         acker = AlarmAck(full_running_id="(AlarmAckTest:CLIENT)",
                          command_sender=TestPyAck.cmd_sender)
         acker.start()
@@ -207,7 +210,7 @@ class TestPyAck():
                           timeout=0,
                           comment="Acknowledged by test")
         assert acked, "Failed to acknowledge the alarm"
-        logger.info("Alarm ACKed")
+        TestPyAck.LOGGER.info("Alarm ACKed")
 
         # Wait for the Supervisor to ACK the alarm
         tries = 0
@@ -226,11 +229,11 @@ class TestPyAck():
         This test is the same of the previous one but instead of using the AlarmAck clas,
         it runs iasAckAlarm
         """
-        logger.info("Test ACK of an alarm through command line tool")
+        TestPyAck.LOGGER.info("Test ACK of an alarm through command line tool")
         
-        logger.info("Sending high temperature to let the supervisor generate the alarm")
+        TestPyAck.LOGGER.info("Sending high temperature to let the supervisor generate the alarm")
         high_temp = TestPyAck.buildIasio(0.0)
-        logger.info(f"Sending high temperature IASIO: {high_temp.toString()}")
+        TestPyAck.LOGGER.info(f"Sending high temperature IASIO: {high_temp.toString()}")
         TestPyAck.iasio_listener.clear()
         TestPyAck.iasio_producer.send(high_temp)
         alarm = self.wait_alarm()
@@ -238,9 +241,9 @@ class TestPyAck():
         assert not alarm.is_set()
 
         # Send an high temperature to set the alarm
-        logger.info("Sending high temperature to set the alarm")
+        TestPyAck.LOGGER.info("Sending high temperature to set the alarm")
         high_temp = TestPyAck.buildIasio(100.0)
-        logger.info(f"Sending high temperature IASIO: {high_temp.toString()}")
+        TestPyAck.LOGGER.info(f"Sending high temperature IASIO: {high_temp.toString()}")
         TestPyAck.iasio_producer.send(high_temp)
 
         tries = 0
@@ -256,7 +259,7 @@ class TestPyAck():
             "-j", "src/integrationTest",
             "-a", TestPyAck.alarm_frid, 
             "-c", '"Acknowledged by command line tool"']
-        logger.info(f"Running command: {' '.join(cmd)}")
+        TestPyAck.LOGGER.info(f"Running command: {' '.join(cmd)}")
         result = subprocess.Popen(cmd, shell=False)
         try:
             result.wait(10)
@@ -265,7 +268,7 @@ class TestPyAck():
             assert False, "iasAckAlarm command did not complete within the timeout"
 
         assert result.returncode==0, f"iasAckAlarm command failed with return code {result.returncode}."
-        logger.info("iasAckAlarm command executed successfully")
+        TestPyAck.LOGGER.info("iasAckAlarm command executed successfully")
 
         # Wait for the Supervisor to ACK the alarm
         # This ensures that the alarm ID is correct

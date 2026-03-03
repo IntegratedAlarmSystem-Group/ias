@@ -5,7 +5,6 @@ Created on Jun 8, 2018
 @author: acaproni
 '''
 from IasBasicTypes.Identifier import Identifier
-from IASLogging.logConf import Log
 from IasBasicTypes.IasType import IASType
 from IasBasicTypes.IasValue import IasValue
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp

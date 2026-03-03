@@ -3,8 +3,9 @@ Created on Dec 16, 2019
 
 @author: acaproni
 '''
+import logging
 from time import sleep
-from IASLogging.logConf import Log
+from IASLogging.log import Log
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
 from IasCmdReply.IasCmdExitStatus import IasCmdExitStatus
 from IasCmdReply.IasCommand import IasCommand
@@ -16,6 +17,10 @@ class TestCmdReply():
     '''
     Test IasCommand and IasReply
     '''
+
+    @classmethod
+    def setup_class(cls):
+        Log.init_logging(__file__)
 
     def test_cmd_constructor(self):
         now = Iso8601TStamp.now()

@@ -1,6 +1,6 @@
 import sys
+import logging
 
-from IASLogging.logConf import Log
 from IasBasicTypes.Alarm import Alarm
 from IasBasicTypes.Priority import Priority
 from IasBasicTypes.IasType import IASType
@@ -26,7 +26,7 @@ class MinMaxThreshold(TransferFunction):
         :param props:
         '''
         super().__init__(asceId, asceRunningId,validityTimeFrame, props,instance)
-        self.logger = Log.getLogger(__file__)
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.info("MinMaxThreshold built for ASCE %s",self.asceRunningId)
 
         # The ID of the input

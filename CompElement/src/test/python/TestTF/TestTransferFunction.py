@@ -1,5 +1,6 @@
 import logging
 
+from IASLogging.log import Log
 from IasBasicTypes.OperationalMode import OperationalMode
 from IasTransferFunction.TransferFunction import TransferFunction
 
@@ -26,6 +27,8 @@ class TestTransferFunction(TransferFunction):
         :param props:
         '''
         super().__init__(asceId, asceRunningId,validityTimeFrame, props,instance)
+        if not Log.is_initialized():
+            Log.init_logging(__file__)
         logging.info("TestTransferFunction built for ASCE %s",self.asceRunningId)
 
         if props is not None:

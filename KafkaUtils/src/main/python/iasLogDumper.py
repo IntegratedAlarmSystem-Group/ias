@@ -9,6 +9,7 @@ Created on Apr 11, 2024
 import argparse
 import sys
 import signal
+from IASLogging.log import Log
 from IasKafkaUtils.IasKafkaConsumer import IasLogListener, IasLogConsumer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 from threading import Lock
@@ -128,8 +129,10 @@ if __name__ == '__main__':
                         action='store_true',
                         default=False,
                         required=False)
+    Log.add_log_arguments_to_parser(parser)
     
     args = parser.parse_args()
+    Log.init_log_from_cmdline_args(args, __file__)
     if args.bsdb_topic is None and args.topic_name is None:
         print("ERROR: one option between topic_name and bsdb_topic must be set in the command line")
         sys.exit(-1)

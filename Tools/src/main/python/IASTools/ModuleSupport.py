@@ -25,7 +25,7 @@ class ModuleSupport(object):
         @param The root folder of the module
         """
         if not rootOfModule:
-            _logger = logging.getLogger(__class__.__name__)
+            _logger = logging.getLogger(ModuleSupport.__name__)
             _logger.error("The root of the module can't be None nor empty")
             raise ValueError("The root of the module can't be None nor empty")
         fileSupport = FileSupport.FileSupport("LPGPv3License.txt","config")
@@ -45,7 +45,7 @@ class ModuleSupport(object):
         @see: self.writeLicenseFile
         """
         if not name:
-            _logger = logging.getLogger(__class__.__name__)
+            _logger = logging.getLogger(ModuleSupport.__name__)
             _logger.error("The name of the module can't be None nor empty")
             raise ValueError("The name of the module can't be None nor empty")
         # Read the list of folders to create from the template
@@ -55,7 +55,7 @@ class ModuleSupport(object):
             folders = f.readlines()
         # Check if the module 
         if not exists(name):
-            _logger = logging.getLogger(__class__.__name__)
+            _logger = logging.getLogger(ModuleSupport.__name__)
             _logger.info("Creating module %s",name)
             makedirs(name)
             ModuleSupport.writeLicenseFile(name)
@@ -68,7 +68,7 @@ class ModuleSupport(object):
             
             return 0
         else:
-            _logger = logging.getLogger(__class__.__name__)
+            _logger = logging.getLogger(ModuleSupport.__name__)
             _logger.error("%s already exists!!!",name)
             raise OSError(name+"already exists!!!")
 
@@ -79,7 +79,7 @@ class ModuleSupport(object):
         
         @param name: The full path name of the module to remove
         '''
-        _logger = logging.getLogger(__class__.__name__)
+        _logger = logging.getLogger(ModuleSupport.__name__)
         if not name:
             _logger.error("The name of the module can't be None nor empty")
             raise ValueError("The name of the module can't be None nor empty")

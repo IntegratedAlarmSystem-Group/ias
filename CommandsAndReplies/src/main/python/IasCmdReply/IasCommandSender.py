@@ -1,11 +1,12 @@
-from confluent_kafka import Producer
 from queue import Queue, Empty
 from typing import List, Dict
 import time
 import traceback
+import logging
+
+from confluent_kafka import Producer
 
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
-from IASLogging.logConf import Log
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 from IasKafkaUtils.IasKafkaConsumer import IasLogConsumer, IasLogListener
 from IasCmdReply.IasCommandType import IasCommandType
@@ -37,7 +38,7 @@ class IasCommandSender(IasLogListener):
         """
         if not sender_full_running_id:
             raise ValueError("Invalid null/empty full running ID of the sender")
-        self.logger = Log.getLogger(__name__)
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.sender_full_running_id = sender_full_running_id
         self.bsdb_sender_id = bsdb_sender_id
 

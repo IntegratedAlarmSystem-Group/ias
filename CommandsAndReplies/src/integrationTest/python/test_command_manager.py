@@ -1,5 +1,5 @@
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
-from IASLogging.logConf import Log
+from IASLogging.log import Log
 
 from IasCmdReply.IasCmdExitStatus import IasCmdExitStatus
 from IasCmdReply.IasCommand import IasCommand
@@ -28,7 +28,10 @@ class TestCmdManager():
         - the command manager sends the reply of the execution of the command to the command sender
         - the command sender gets the reply
     """
-    
+    @classmethod
+    def setup_class(cls):
+        Log.init_logging(__file__)
+        
     def test_send_async_reply(self):
         print("Prepare the command")
         cmd_mgr_id = "CmdManagerId"

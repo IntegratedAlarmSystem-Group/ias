@@ -7,27 +7,30 @@ Created on Jun 14, 2018
 @author: acaproni
 '''
 import time
+import logging
 
-from IASLogging.logConf import Log
+from IASLogging.log import Log
 from IasBasicTypes.IasValue import IasValue
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 from IasKafkaUtils.KafkaValueConsumer import IasValueListener, KafkaValueConsumer
 from IasKafkaUtils.KafkaValueProducer import KafkaValueProducer
-
-logger = Log.getLogger(__file__)
 
 class TestListener(IasValueListener):
     '''
     The listener of IasValues read from the kafka topic
     '''
     receivedValues = []
+
+    def __init__(self):
+        super().__init__()
+        self._logger = logging.getLogger(self.__class__.__name__)
     
     def iasValueReceived(self,iasValue):
         """
         Print the IasValue in the stdout
         """
         self.receivedValues.append(iasValue)
-        logger.info("Value received %s",str(iasValue.value))
+        self._logger.info("Value received %s",str(iasValue.value))
 
 
 class TestValueProdCons():
@@ -48,6 +51,11 @@ class TestValueProdCons():
             
     fullRunningIdPrefix="(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@("
     fullRunningIdSuffix=":IASIO)"
+
+    @classmethod
+    def setup_class(cls):
+        Log.init_logging(__file__)
+        cls.LOGGER = logging.getLogger(__name__)
     
     def buildLONGValue(self,ident, value):
         '''
@@ -84,38 +92,38 @@ class TestValueProdCons():
 
     def test_name(self):
 
-        logger.info('Building the producer')
+        TestValueProdCons.LOGGER.info('Building the producer')
         producer = KafkaValueProducer(self.kafkabrokers, self.topic, 'PyProducerTest-ID')
         
-        logger.info('Building the consumer')
+        TestValueProdCons.LOGGER.info('Building the consumer')
         consumer = KafkaValueConsumer(
             self.listener,
             self.kafkabrokers,
             self.topic,
             'PyConsumerTest', # Client ID
             'PyConsumerTestGroup') # Group ID
-        logger.info('Starting the consumer')
+        TestValueProdCons.LOGGER.info('Starting the consumer')
         consumer.start()
 
         n=100
 
         # Wait until the consumer is subscribed to a partition
-        logger.info("Wait until the consumer subscribes to a partition")
+        TestValueProdCons.LOGGER.info("Wait until the consumer subscribes to a partition")
         isSubscribed = self.waitUntilSubscribed(consumer, 30)
         assert isSubscribed
         
-        logger.info('Publishing %d IasValues',n)
+        TestValueProdCons.LOGGER.info('Publishing %d IasValues',n)
         baseId='Test-ID#'
         for i in range(0, n):
             v = self.buildLONGValue(baseId+str(i),i)
             producer.send(v)
             
         producer.flush()
-        logger.info('%d monitor point sent',n)
+        TestValueProdCons.LOGGER.info('%d monitor point sent',n)
         
-        logger.info('Closing the producer')
+        TestValueProdCons.LOGGER.info('Closing the producer')
         producer.close()
-        logger.info('Producer closed')
+        TestValueProdCons.LOGGER.info('Producer closed')
 
         # Wait some time if not all the items have been received
         timeout = 10.0 # seconds max waiting time
@@ -125,8 +133,8 @@ class TestValueProdCons():
             time.sleep(sleep_time)
             slept = slept + sleep_time
         
-        logger.info('Closing the consumer')
+        TestValueProdCons.LOGGER.info('Closing the consumer')
         consumer.close()
-        logger.info('Consumer closed')
+        TestValueProdCons.LOGGER.info('Consumer closed')
         
         assert n == len(self.listener.receivedValues), 'Messages mismatch'

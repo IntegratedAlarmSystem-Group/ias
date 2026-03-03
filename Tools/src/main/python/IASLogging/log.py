@@ -163,3 +163,13 @@ class Log():
         if not args:
             raise ValueError("The args cannot be None")
         cls.init_logging(name_file, args.logLevelFile, args.logLevelConsole)
+
+    @classmethod
+    def is_initialized(cls) -> bool:
+        '''
+        Check if the logging has been initialized.
+
+        :return: True if the logging has been initialized, False otherwise.
+        '''
+        with cls._init_lock:
+            return cls._root_logger is not None

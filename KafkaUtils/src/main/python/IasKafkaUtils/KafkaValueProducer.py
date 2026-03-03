@@ -3,16 +3,14 @@ Created on Jun 14, 2018
 
 @author: acaproni
 '''
+import logging
 from confluent_kafka import Producer
-from IASLogging.logConf import Log
-
-logger = Log.getLogger(__file__)
 
 class KafkaValueProducer(object):
     '''
     KafkaValueProducer publishes IaValues in a kafka topic
     '''
-
+    
     # The kafka producer
     producer = None
     
@@ -32,8 +30,8 @@ class KafkaValueProducer(object):
         '''
         if not topic:
             raise ValueError('Invalid empty topic name')
-        
-        logger.info("Building kafka producer to connect to %s, with topic %s and id %s",
+        self._logger = logging.getLogger(self.__class__.__name__)
+        self._logger.info("Building kafka producer to connect to %s, with topic %s and id %s",
                     kafkabrokers, topic, clientid)
 
         conf = { 'bootstrap.servers': kafkabrokers, 'client.id': clientid}
@@ -44,7 +42,7 @@ class KafkaValueProducer(object):
         else:
             self.topic=topic
             
-        logger.info("kafka producer connected to %s, with id %s",
+        self._logger.info("kafka producer connected to %s, with id %s",
                     kafkabrokers,clientid)
         
     def send(self,iasValue):

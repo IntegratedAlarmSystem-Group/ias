@@ -1,4 +1,5 @@
-from IASLogging.logConf import Log
+import logging
+from IASLogging.log import Log
 
 class TransferFunction():
     '''
@@ -18,7 +19,9 @@ class TransferFunction():
         :param validityTimeFrame: The validity time frame (long)
         :param props: a dictionary of properties
         '''
-        self.logger = Log.getLogger(__file__)
+        if not Log.is_initialized():
+            Log.init_logging(__file__)
+        self.logger = logging.getLogger(self.__class__.__name__)
         assert asceId is not None and asceId!="", "Invalid ID of ASCE"
         self.asceID=asceId
         self.logger.debug("Building python TF for ASCE %s",self.asceID)

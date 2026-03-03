@@ -3,10 +3,10 @@ Consume and send to a listener, the kafka events
 published in a topic.
 '''
 import time
+import logging
 from threading import Thread, Lock
 from confluent_kafka import Consumer, KafkaError
 from confluent_kafka import TopicPartition
-from IASLogging.logConf import Log
 import traceback
 
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
@@ -41,8 +41,6 @@ class IasLogConsumer(Thread):
     at every iteration of the thread (i.e. new when data arrives or the timeout elapses)
 
     '''
-    # The logger
-    logger = Log.getLogger(__file__)
 
     # The listener to send logs to
     listener: IasLogListener = None
@@ -74,6 +72,8 @@ class IasLogConsumer(Thread):
         @param listener the listener to send logs to
         '''
         Thread.__init__(self)
+        # The logger
+        self.logger = logging.getLogger(IasLogConsumer.__name__)
         if listener is None:
             raise ValueError("The listener can't be None")
 

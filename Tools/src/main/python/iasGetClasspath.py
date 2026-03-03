@@ -5,7 +5,6 @@ Writes the classpath in the stdout
 @author: acaproni
 '''
 import argparse
-import os
 
 from IASLogging.log import Log
 from IASTools.CommonDefs import CommonDefs

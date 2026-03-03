@@ -24,8 +24,9 @@ than waiting for a resonable time before getting the alarms
 import subprocess
 import time
 import uuid
+import logging
 
-from IASLogging.logConf import Log
+from IASLogging.log import Log
 from IasCmdReply.IasCommandSender import IasCommandSender
 from IasCmdReply.IasCommandType import IasCommandType
 from IasCmdReply.IasCmdExitStatus import IasCmdExitStatus
@@ -40,15 +41,13 @@ from IasBasicTypes.IasType import IASType
 from IasBasicTypes.Alarm import Alarm
 from IasKafkaUtils.KafkaValueProducer import KafkaValueProducer
 
-# Set up logging
-logger = Log.getLogger(__file__)
-
 class HbListener(HeartbeatListener):
     """
     The HB listener to know when the Supervisor is ready (i.e. its HB state is RUNNING)
     """
     def __init__(self, supervisorId: str):
         super().__init__()
+        self._logger = logging.getLogger(self.__class__.__name__)
         self.supervisorId = supervisorId
         # The HBs received from kafka
         self. hbs = []
@@ -56,7 +55,7 @@ class HbListener(HeartbeatListener):
         self.lastSupervState: IasHeartbeatStatus = None
 
     def iasHbReceived(self, hb: HeartbeatMessage):
-        logger.info("HB received: %s %s",hb.hbStringrepresentation,hb.state.name)
+        self._logger.info("HB received: %s %s",hb.hbStringrepresentation,hb.state.name)
         if (self.supervisorId in hb.hbStringrepresentation):
             self.hbs.append(hb)
             self.lastSupervState = hb.state
@@ -64,17 +63,18 @@ class HbListener(HeartbeatListener):
 class IasioListener(IasValueListener):
     def __init__(self):
         super().__init__()
+        self._logger = logging.getLogger(self.__class__.__name__)
         # The last alarm received
         self.last_alarm_received: Alarm = None
         # The IASIO with the last received alarm
         self.last_alarm_iasio: IasValue = None
 
     def iasValueReceived(self, iasValue: IasValue):
-        logger.info("IasValue received: %s", iasValue.toString())
+        self._logger.info("IasValue received: %s", iasValue.toString())
         if iasValue.valueType==IASType.ALARM:
             self.last_alarm_iasio = iasValue
             self.last_alarm_received = Alarm.fromString(iasValue.value)
-            logger.info("Alarm received %s", self.last_alarm_received.to_string())
+            self._logger.info("Alarm received %s", self.last_alarm_received.to_string())
 
 class TestPyAck():
 
@@ -135,15 +135,17 @@ class TestPyAck():
         """
         Run the Supervisor, the listeners etc.
         """
-        logger.info("Setting up the test")
+        Log.init_logging(__file__)
+        cls.logger = logging.getLogger(cls.__name__)
+        cls.logger.info("Setting up the test")
         # Start getting HBs
-        logger.info("Connecting the HB listener")
+        cls.logger.info("Connecting the HB listener")
         cls.hbConsumer.start(30)
         
-        logger.info("Connecting the IASIO listener")
+        cls.logger.info("Connecting the IASIO listener")
         cls.iasioConsumer.start()
         
-        logger.info("Starting the Supervisor %s", TestPyAck.supervisorId)
+        cls.logger.info("Starting the Supervisor %s", TestPyAck.supervisorId)
         cmd = ["iasSupervisor", TestPyAck.supervisorId, "-j", "src/test", "-x", "WARN"]
         TestPyAck.completedSupervisorPopen = subprocess.Popen(cmd)
         
@@ -153,10 +155,10 @@ class TestPyAck():
         while now<timeout and cls.hbListener.lastSupervState!=IasHeartbeatStatus.RUNNING:
             time.sleep(1)
         assert cls.hbListener.lastSupervState==IasHeartbeatStatus.RUNNING
-        logger.info("Supervisor up and running")
+        cls.logger.info("Supervisor up and running")
 
         TestPyAck.cmdSender.set_up()
-        logger.info("Test set up")
+        cls.logger.info("Test set up")
 
     @classmethod
     def teardown_class(cls):
@@ -166,7 +168,7 @@ class TestPyAck():
         cls.iasioConsumer.close()
         cls.hbConsumer.close()
         # Send the command to terminate to the Supervisor
-        logger.info(f"Sending CMD to shutdown the {TestPyAck.supervisorId}")
+        cls.logger.info(f"Sending CMD to shutdown the {TestPyAck.supervisorId}")
         TestPyAck.cmdSender.send_sync(TestPyAck.supervisorId, IasCommandType.SHUTDOWN)
         # Close the command sender
         TestPyAck.cmdSender.close()
@@ -178,7 +180,7 @@ class TestPyAck():
             TestPyAck.completedSupervisorPopen.wait(10)
 
     def test_ack_from_python(self):
-        logger.info("Test started")
+        TestPyAck.logger.info("Test started")
 
         value = TestPyAck.buildIasio(0)
         TestPyAck.iasioProducer.send(value)
@@ -200,7 +202,7 @@ class TestPyAck():
         assert not alarm.is_acked()
 
         # Send the ACk command to the Supervisor
-        logger.info("Sending the ACK to the Supervisor")
+        TestPyAck.logger.info("Sending the ACK to the Supervisor")
         ack_cmd_params = [TestPyAck.iasioListener.last_alarm_iasio.fullRunningId,
                           "User provided comment for ACK from python"]
         reply = TestPyAck.cmdSender.send_sync(TestPyAck.supervisorId, 
@@ -210,7 +212,7 @@ class TestPyAck():
                                               30)
         assert reply  is not None
         assert reply.exitStatus == reply.exitStatus.OK
-        logger.info("Reply from cmd %s", str(reply.exitStatus.name))
+        TestPyAck.logger.info("Reply from cmd %s", str(reply.exitStatus.name))
 
         # Give the supervisor time to produce the ACK'ed alarm 
         time.sleep(10)
@@ -219,4 +221,4 @@ class TestPyAck():
         assert alarm.is_set()
         assert alarm.is_acked()
 
-        logger.info("Test done")
+        TestPyAck.logger.info("Test done")

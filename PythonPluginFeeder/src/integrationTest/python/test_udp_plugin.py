@@ -10,12 +10,17 @@ import time
 from threading import Thread
 from IasPlugin3.UdpPlugin import UdpPlugin
 from IasPlugin3.JsonMsg import JsonMsg
+from IASLogging.log import Log
 from IasBasicTypes.OperationalMode import OperationalMode
 from IasBasicTypes.IasType import IASType
 from IasBasicTypes.Alarm import Alarm
 from IasBasicTypes.Priority import Priority
 
 class MessageReceiver(Thread):
+
+    @classmethod
+    def setup_class(cls):
+        Log.init_logging(__file__)
     
     def __init__(self):
         self.closed = False

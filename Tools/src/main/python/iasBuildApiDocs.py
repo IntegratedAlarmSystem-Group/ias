@@ -5,14 +5,14 @@ Created on Jul 7, 2017
 
 @author: acaproni
 '''
-
+import logging
 from argparse import ArgumentParser
 from os.path import join
 
 from IASApiDocs.JavadocBuilder import JavadocBuilder
 from IASApiDocs.PydocBuilder import PydocBuilder
 from IASApiDocs.ScaladocBuilder import ScaladocBuilder
-from IASLogging.logConf import Log
+from IASLogging.log import Log
 
 if __name__ == '__main__':
 
@@ -41,28 +41,12 @@ if __name__ == '__main__':
         default='all',
         required=False
     )
-    parser.add_argument(
-        '-lso',
-        '--levelStdOut',
-        help='Logging level: Set the level of the message for the file logger, default: Debug level',
-        action='store',
-        choices=['info', 'debug', 'warning', 'error', 'critical'],
-        default='info',
-        required=False)
-    parser.add_argument(
-        '-lcon',
-        '--levelConsole',
-        help='Logging level: Set the level of the message for the console logger, default: Debug level',
-        action='store',
-        choices=['info', 'debug', 'warning', 'error', 'critical'],
-        default='info',
-        required=False)
-    args = parser.parse_args()
-    print(args)
+    Log.add_log_arguments_to_parser(parser)
     
-    stdoutLevel=args.levelStdOut
-    consoleLevel=args.levelConsole
-    logger=Log.getLogger(__file__,stdoutLevel,consoleLevel)
+    args = parser.parse_args()
+    Log.init_log_from_cmdline_args(args, __file__)
+    
+    logger=logging.getLogger(__name__)
     logger.info("Reading sources from %s",args.srcFolder)
 
     # Build scala documentation

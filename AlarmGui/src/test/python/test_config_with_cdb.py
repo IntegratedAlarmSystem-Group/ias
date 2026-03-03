@@ -1,5 +1,5 @@
 import os
-from IASLogging.logConf import Log
+from IASLogging.log import Log
 from IasAlarmGui.config import Config
 
 class TestConfigWithCdb():
@@ -14,6 +14,7 @@ class TestConfigWithCdb():
 
     @classmethod
     def setup_class(cls):
+        Log.init_logging(__file__)
         cls.old_cdb = os.environ.get('IAS_CDB')
         os.environ['IAS_CDB'] = "src/test"
 

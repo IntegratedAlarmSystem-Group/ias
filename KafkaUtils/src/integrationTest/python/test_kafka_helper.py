@@ -4,7 +4,8 @@ Test the IasKafkaHelper
 '''
 import random
 import string
-from IASLogging.logConf import Log
+import logging
+from IASLogging.log import Log
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 
 
@@ -18,8 +19,13 @@ def generate_random_string(length=10):
 
 
 class TestKafkaHelper():
-    LOGGER = Log.getLogger(__name__)
+    
     KAFKA_BROKERS = IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS
+
+    @classmethod
+    def setup_class(cls):
+        Log.init_logging(__file__)
+        cls.LOGGER = logging.getLogger(__name__)
 
     def test_topic_creation(self):
         '''

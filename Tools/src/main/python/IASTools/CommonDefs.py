@@ -27,7 +27,7 @@ class CommonDefs(object):
 
         @return: A string with the jars in the classpath
         """
-        _logger = logging.getLogger(__class__.__name__)
+        _logger = logging.getLogger(cls.__name__)
         
         # jars list is used to avoid duplications of jars in the classpath
         # It contains all the jars without the path

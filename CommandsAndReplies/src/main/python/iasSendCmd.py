@@ -24,8 +24,9 @@ import socket
 import secrets
 import string
 import sys
+import logging
 
-from IASLogging.logConf import Log
+from IASLogging.log import Log
 from IasCmdReply.IasCommandType import IasCommandType
 from IasCmdReply.IasCommandSender import IasCommandSender
 
@@ -94,34 +95,15 @@ if __name__ == '__main__':
         choices=commands,
         type=str,
         required=True)
-
-
-
     
-    parser.add_argument(
-        '-lso',
-        '--levelStdOut',
-        help='Logging level: Set the level of the message for the file logger, default: Info level',
-        action='store',
-        choices=['info', 'debug', 'warning', 'error', 'critical'],
-        default='info',
-        required=False)
-    parser.add_argument(
-        '-lcon',
-        '--levelConsole',
-        help='Logging level: Set the level of the message for the console logger, default: Info level',
-        action='store',
-        choices=['info', 'debug', 'warning', 'error', 'critical'],
-        default='warning',
-        required=False)
+    Log.add_log_arguments_to_parser(parser)
 
     parser.add_argument('params', nargs='*', help="Command parameters")
 
     args = parser.parse_args()
 
-    stdoutLevel=args.levelStdOut
-    consoleLevel=args.levelConsole
-    logger = Log.getLogger(__file__, stdoutLevel, consoleLevel)
+    Log.init_log_from_cmdline_args(args, __file__)
+    logger = logging.getLogger(__name__)
 
     if not args.params:
         logger.info("Going to send command %s to %s", args.command, args.dest)
