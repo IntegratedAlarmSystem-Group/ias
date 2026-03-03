@@ -17,18 +17,20 @@ from IasKafkaUtils.KafkaValueProducer import KafkaValueProducer
 
 class TestListener(IasValueListener):
     '''
-    The listener of IasValues read from the kafka topic
+    The listener of IasValues received from the KafkaValueConsumer. 
+    It stores the received values in a list for later checks.
     '''
-    receivedValues = []
 
     def __init__(self):
         super().__init__()
-        self._logger = logging.getLogger(self.__class__.__name__)
+        self._logger = logging.getLogger("TestValueProdCons.TestListener")
+        self.receivedValues = []
     
     def iasValueReceived(self,iasValue):
         """
         Print the IasValue in the stdout
         """
+        # Store the received value in a list for later checks
         self.receivedValues.append(iasValue)
         self._logger.info("Value received %s",str(iasValue.value))
 
@@ -55,7 +57,7 @@ class TestValueProdCons():
     @classmethod
     def setup_class(cls):
         Log.init_logging(__file__)
-        cls.LOGGER = logging.getLogger(__name__)
+        cls.LOGGER = logging.getLogger(cls.__name__)
     
     def buildLONGValue(self,ident, value):
         '''

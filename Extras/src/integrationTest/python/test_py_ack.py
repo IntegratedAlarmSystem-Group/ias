@@ -32,7 +32,7 @@ from IasExtras.AlarmAck import AlarmAck
 
 @pytest.fixture(scope="session", autouse=True)
 def session_setup():
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger("TestPyAck.session_setup")
     logger.info("Starting the Supervisor")
     superv_proc = subprocess.Popen([ "iasSupervisor", "SupervisorForAck", "-j", "src/integrationTest"], shell=False)
     time.sleep(10)  # Wait for the Supervisor to start
@@ -49,7 +49,7 @@ def session_setup():
 class IasioListener(IasValueListener):
     def __init__(self, alarms_received: queue.Queue):
         super().__init__()
-        self._logger = logging.getLogger(__file__)
+        self._logger = logging.getLogger("TestPyAck.IasioListener")
         # The last alarm received
         self.last_alarm_received: Alarm|None = None
         # The IASIO with the last received alarm
@@ -131,7 +131,7 @@ class TestPyAck():
     @classmethod
     def setup_class(cls):
         Log.init_logging(__file__)
-        cls.LOGGER = logging.getLogger(__file__)
+        cls.LOGGER = logging.getLogger(cls.__name__)
         cls.LOGGER.info("Connecting the IASIO listener")
         consumer_ready = Event()
         cls.iasio_consumer.start(ready_event=consumer_ready)

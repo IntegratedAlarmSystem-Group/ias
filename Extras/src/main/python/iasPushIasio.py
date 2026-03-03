@@ -20,9 +20,6 @@ from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 from IasBasicTypes.Identifier import Identifier
 from IasExtras.Utils import Utils
 
-# The logger, intialized by main()
-logger = None
-
 def parse_args():
     epilog = """
 Example usage:
@@ -127,8 +124,7 @@ Example usage:
 def main() -> int:
     args = parse_args()
     Log.init_log_from_cmdline_args(args, __file__)
-    global logger
-    logger = logging.getLogger(__name__)
+    logger = logging.getLogger("iasPushIasio")
 
     # Build the Identifier to check if the provided frid is valid
     ias_identifier = Identifier.from_string(args.iasioid)

@@ -159,7 +159,7 @@ def main() -> int:
         '--className',
         help='The scala or java class to execute',
         action='store',
-        required=False)
+        required=True)
     parser.add_argument(
                         '-D',
                         '--jProp',
@@ -192,8 +192,6 @@ def main() -> int:
     logger=logging.getLogger(__name__)
 
     logger.debug("Parsed ARGS: for iasRun: %s, for JVM %s", ias_run_args, jvm_prg_args)
-
-    print('====>>>', ias_run_args, "===>", jvm_prg_args)
 
     if ias_run_args.help:
         parser.print_help()

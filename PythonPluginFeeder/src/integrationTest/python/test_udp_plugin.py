@@ -7,6 +7,7 @@ Created on May 9, 2018
 '''
 import socket
 import time
+import logging
 from threading import Thread
 from IasPlugin3.UdpPlugin import UdpPlugin
 from IasPlugin3.JsonMsg import JsonMsg
@@ -17,13 +18,10 @@ from IasBasicTypes.Alarm import Alarm
 from IasBasicTypes.Priority import Priority
 
 class MessageReceiver(Thread):
-
-    @classmethod
-    def setup_class(cls):
-        Log.init_logging(__file__)
     
     def __init__(self):
         self.closed = False
+        self.logger = logging.getLogger("TestUdpPlugin.MessageReceiver")
         Thread.__init__(self,name='Udp sender thread',daemon=True)
     
     def setUp(self):
@@ -55,6 +53,11 @@ class TestUdpPlugin():
     
     HOST = 'localhost'
     PORT = 10001
+
+    @classmethod
+    def setup_class(cls):
+        Log.init_logging(__file__)
+        cls.logger = logging.getLogger("TestUdpPlugin")
     
     def setup_method(self):
         self.receiver = MessageReceiver()

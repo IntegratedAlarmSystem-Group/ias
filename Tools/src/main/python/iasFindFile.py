@@ -26,7 +26,7 @@ if __name__ == '__main__':
         help='The name of the file to search for')
     args = parser.parse_args()
     Log.init_log_from_cmdline_args(args, __file__)
-    logger = logging.getLogger(__file__)
+    logger = logging.getLogger("iasFindFile")
     fileName=args.fileName
     try:
         if not args.fileType is None:
