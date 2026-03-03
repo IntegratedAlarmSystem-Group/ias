@@ -7,7 +7,7 @@ from threading import Lock
 from logging.handlers import RotatingFileHandler
 import argparse
 
-from IASTools.DefaultPaths import DefaultPaths
+from IasTools.DefaultPaths import DefaultPaths
 
 
 class Log():

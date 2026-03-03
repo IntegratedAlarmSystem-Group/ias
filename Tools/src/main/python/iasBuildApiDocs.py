@@ -9,10 +9,10 @@ import logging
 from argparse import ArgumentParser
 from os.path import join
 
-from IASApiDocs.JavadocBuilder import JavadocBuilder
-from IASApiDocs.PydocBuilder import PydocBuilder
-from IASApiDocs.ScaladocBuilder import ScaladocBuilder
-from IASLogging.log import Log
+from IasApiDocs.JavadocBuilder import JavadocBuilder
+from IasApiDocs.PydocBuilder import PydocBuilder
+from IasApiDocs.ScaladocBuilder import ScaladocBuilder
+from IasLogging.log import Log
 
 if __name__ == '__main__':
 

@@ -9,9 +9,9 @@ from os import environ, access, R_OK
 from os.path import exists, isfile, join, isdir
 from shutil import rmtree
 
-from IASLogging.log import Log
-from IASTools.FileSupport import FileSupport
-from IASTools.ModuleSupport import ModuleSupport
+from IasLogging.log import Log
+from IasTools.FileSupport import FileSupport
+from IasTools.ModuleSupport import ModuleSupport
 
 
 class TestCreateModule():

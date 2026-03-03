@@ -18,8 +18,8 @@ from IasKafkaUtils.KafkaValueConsumer import KafkaValueConsumer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 
 from IasBasicTypes.IasValue import IasValue
-from IASTools.DefaultPaths import DefaultPaths
-from IASLogging.log import Log
+from IasTools.DefaultPaths import DefaultPaths
+from IasLogging.log import Log
 
 from IasAlarmGui.AlarmDetailsHelper import AlarmDetailsHelper
 from IasAlarmGui.config import Config

@@ -8,8 +8,8 @@ Created on Aug 18, 2016
 import argparse
 import logging
 
-from IASLogging.log import Log
-from IASTools.ModuleSupport import ModuleSupport
+from IasLogging.log import Log
+from IasTools.ModuleSupport import ModuleSupport
 
 if __name__ == '__main__':
 

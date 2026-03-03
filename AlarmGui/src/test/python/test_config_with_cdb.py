@@ -1,5 +1,5 @@
 import os
-from IASLogging.log import Log
+from IasLogging.log import Log
 from IasAlarmGui.config import Config
 
 class TestConfigWithCdb():

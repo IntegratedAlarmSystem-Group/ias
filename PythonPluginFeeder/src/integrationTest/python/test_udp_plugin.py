@@ -10,7 +10,7 @@ import time
 from threading import Thread
 from IasPlugin3.UdpPlugin import UdpPlugin
 from IasPlugin3.JsonMsg import JsonMsg
-from IASLogging.log import Log
+from IasLogging.log import Log
 from IasBasicTypes.OperationalMode import OperationalMode
 from IasBasicTypes.IasType import IASType
 from IasBasicTypes.Alarm import Alarm

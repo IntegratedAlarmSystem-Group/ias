@@ -3,8 +3,8 @@ import os
 import sys
 import datetime
 
-from IASTools.CommonDefs import CommonDefs
-from IASApiDocs.DocGenerator import DocGenerator
+from IasTools.CommonDefs import CommonDefs
+from IasApiDocs.DocGenerator import DocGenerator
 
 """
 This python script generates documentation for IAS java sources

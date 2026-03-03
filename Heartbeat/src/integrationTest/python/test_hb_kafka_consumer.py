@@ -3,7 +3,7 @@ import time
 
 from confluent_kafka import Producer
 
-from IASLogging.log import Log
+from IasLogging.log import Log
 from IasHeartbeat.HearbeatMessage import HeartbeatMessage
 from IasHeartbeat.HbKafkaConsumer import HeartbeatListener, HbKafkaConsumer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper

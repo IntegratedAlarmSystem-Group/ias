@@ -9,7 +9,7 @@ Created on Jun 14, 2018
 import time
 import logging
 
-from IASLogging.log import Log
+from IasLogging.log import Log
 from IasBasicTypes.IasValue import IasValue
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 from IasKafkaUtils.KafkaValueConsumer import IasValueListener, KafkaValueConsumer

@@ -5,7 +5,7 @@ Test the IasKafkaHelper
 import random
 import string
 import logging
-from IASLogging.log import Log
+from IasLogging.log import Log
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 
 

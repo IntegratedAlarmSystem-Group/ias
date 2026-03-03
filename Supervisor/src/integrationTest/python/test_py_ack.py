@@ -26,7 +26,7 @@ import time
 import uuid
 import logging
 
-from IASLogging.log import Log
+from IasLogging.log import Log
 from IasCmdReply.IasCommandSender import IasCommandSender
 from IasCmdReply.IasCommandType import IasCommandType
 from IasCmdReply.IasCmdExitStatus import IasCmdExitStatus

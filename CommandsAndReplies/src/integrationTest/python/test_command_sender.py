@@ -1,7 +1,7 @@
 from queue import Queue
 import time
 
-from IASLogging.log import Log
+from IasLogging.log import Log
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
 
 """

@@ -5,7 +5,7 @@ Created on Dec 16, 2019
 '''
 import logging
 from time import sleep
-from IASLogging.log import Log
+from IasLogging.log import Log
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
 from IasCmdReply.IasCmdExitStatus import IasCmdExitStatus
 from IasCmdReply.IasCommand import IasCommand

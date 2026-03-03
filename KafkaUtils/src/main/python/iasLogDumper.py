@@ -9,7 +9,7 @@ Created on Apr 11, 2024
 import argparse
 import sys
 import signal
-from IASLogging.log import Log
+from IasLogging.log import Log
 from IasKafkaUtils.IasKafkaConsumer import IasLogListener, IasLogConsumer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 from threading import Lock

@@ -12,7 +12,7 @@ import shutil
 import logging
 from subprocess import call
 from glob import glob
-from IASApiDocs.DocGenerator import DocGenerator
+from IasApiDocs.DocGenerator import DocGenerator
 
 class PydocBuilder(DocGenerator):
     '''
@@ -67,7 +67,7 @@ class PydocBuilder(DocGenerator):
         htmlFiles.sort()
         
         # Look for python modules that can be taken from
-        # file names having 2 dots like IASApiDocs.DocGenerator.html
+        # file names having 2 dots like IasApiDocs.DocGenerator.html
         pyModules = []
         for f in htmlFiles:
             parts = f.split(".")

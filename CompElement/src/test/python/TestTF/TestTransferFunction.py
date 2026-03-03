@@ -1,6 +1,6 @@
 import logging
 
-from IASLogging.log import Log
+from IasLogging.log import Log
 from IasBasicTypes.OperationalMode import OperationalMode
 from IasTransferFunction.TransferFunction import TransferFunction
 

@@ -26,7 +26,7 @@ import string
 import sys
 import logging
 
-from IASLogging.log import Log
+from IasLogging.log import Log
 from IasCmdReply.IasCommandType import IasCommandType
 from IasCmdReply.IasCommandSender import IasCommandSender
 

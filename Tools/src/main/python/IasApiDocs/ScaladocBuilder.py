@@ -10,8 +10,8 @@ that in turn run scaladoc
 import sys, os, shutil
 from subprocess import call
 import logging
-from IASApiDocs.DocGenerator import DocGenerator
-from IASTools.CommonDefs import CommonDefs
+from IasApiDocs.DocGenerator import DocGenerator
+from IasTools.CommonDefs import CommonDefs
 
 class ScaladocBuilder(DocGenerator):
     '''

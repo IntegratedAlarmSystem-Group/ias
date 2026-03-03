@@ -8,7 +8,7 @@ Created on May 10, 2018
 import datetime
 from datetime import timezone
 
-from IASLogging.log import Log
+from IasLogging.log import Log
 from IasBasicTypes.Alarm import Alarm
 from IasBasicTypes.Priority import Priority
 from IasBasicTypes.IasType import IASType

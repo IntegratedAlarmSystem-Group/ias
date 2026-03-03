@@ -14,7 +14,7 @@ import queue
 from threading import Event
 import logging
 
-from IASLogging.log import Log
+from IasLogging.log import Log
 from IasKafkaUtils.KafkaValueConsumer import KafkaValueConsumer, IasValueListener
 from IasKafkaUtils.KafkaValueProducer import KafkaValueProducer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper

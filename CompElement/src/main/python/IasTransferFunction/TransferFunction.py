@@ -1,5 +1,5 @@
 import logging
-from IASLogging.log import Log
+from IasLogging.log import Log
 
 class TransferFunction():
     '''

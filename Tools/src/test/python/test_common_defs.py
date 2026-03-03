@@ -8,8 +8,8 @@ import logging
 from os import environ, path, mkdir
 from shutil import rmtree
 
-from IASLogging.log import Log
-from IASTools.CommonDefs import CommonDefs
+from IasLogging.log import Log
+from IasTools.CommonDefs import CommonDefs
 
 class TestCommonDefs():
 

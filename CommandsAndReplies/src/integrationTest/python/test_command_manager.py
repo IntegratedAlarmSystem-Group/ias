@@ -1,5 +1,5 @@
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
-from IASLogging.log import Log
+from IasLogging.log import Log
 
 from IasCmdReply.IasCmdExitStatus import IasCmdExitStatus
 from IasCmdReply.IasCommand import IasCommand

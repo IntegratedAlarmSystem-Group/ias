@@ -14,7 +14,7 @@ from IasBasicTypes.IasType import IASType
 from IasBasicTypes.IasValue import IasValue
 from IasBasicTypes.Validity import Validity
 from IasBasicTypes.OperationalMode import OperationalMode
-from IASLogging.log import Log
+from IasLogging.log import Log
 from IasKafkaUtils.KafkaValueProducer import KafkaValueProducer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 from IasBasicTypes.Identifier import Identifier

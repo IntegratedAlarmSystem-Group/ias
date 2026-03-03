@@ -5,7 +5,7 @@ Created on Sep 23, 2016
 '''
 from os import environ, getcwd, walk, path, makedirs, access, W_OK, X_OK
 import logging
-from IASTools.DefaultPaths import DefaultPaths
+from IasTools.DefaultPaths import DefaultPaths
 
 class FileSupport(object):
     '''

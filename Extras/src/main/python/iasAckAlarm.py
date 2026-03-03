@@ -15,7 +15,7 @@ import argparse
 import uuid
 import logging
 
-from IASLogging.log import Log
+from IasLogging.log import Log
 from IasBasicTypes.Identifier import Identifier
 from IasBasicTypes.IdentifierType import IdentifierType
 from IasCmdReply.IasCommandSender import IasCommandSender

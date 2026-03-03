@@ -14,10 +14,10 @@ import sys
 import logging
 from subprocess import run
 
-from IASLogging.log import Log
-from IASTools.CommonDefs import CommonDefs
-from IASTools.FileSupport import FileSupport
-from IASTools.DefaultPaths import DefaultPaths
+from IasLogging.log import Log
+from IasTools.CommonDefs import CommonDefs
+from IasTools.FileSupport import FileSupport
+from IasTools.DefaultPaths import DefaultPaths
 
 def setProps(propsDict,className,logFileNameId, logger):
     """

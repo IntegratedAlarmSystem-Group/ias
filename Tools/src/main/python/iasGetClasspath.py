@@ -6,8 +6,8 @@ Writes the classpath in the stdout
 '''
 import argparse
 
-from IASLogging.log import Log
-from IASTools.CommonDefs import CommonDefs
+from IasLogging.log import Log
+from IasTools.CommonDefs import CommonDefs
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Get the classpath.')

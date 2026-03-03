@@ -7,8 +7,8 @@ Created on Sep 21, 2016
 import argparse
 import logging
 
-from IASLogging.log import Log
-from IASTools.FileSupport import FileSupport
+from IasLogging.log import Log
+from IasTools.FileSupport import FileSupport
 
 if __name__ == '__main__':
 
