@@ -23,6 +23,7 @@ from IasLogging.log import Log
 
 from IasAlarmGui.AlarmDetailsHelper import AlarmDetailsHelper
 from IasAlarmGui.config import Config
+from IasAlarmGui.alarm_ack_dlg import AckAlarmDlg
 
 class AlarmGuiTableView(QTableView):
     """"
@@ -130,10 +131,20 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         self.signal_update_connected_ui.connect(self._set_connected_ui)
 
     def onRightClick(self, index: int):
-        print("onRightClick")
+        """
+        The user preseed the right mouse button over a row of an alarm
+
+        If the alarm can be acknowledged, shows a popup menu
+        """
+        al_ack_dlg = AckAlarmDlg(parent=self)
+        al_ack_dlg.open()
+
 
     def onLeftClick(self, index: int):
-        print("onLeftClick")
+        """
+        Triggered when the user presses the mouse button over a row
+        """
+        pass
 
     def _set_connected_ui(self, connected: bool) -> None:
         """
