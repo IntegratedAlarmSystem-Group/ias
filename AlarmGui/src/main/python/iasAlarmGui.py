@@ -2,8 +2,8 @@
 
 import sys, string, random, threading, typing, logging
 
-from PySide6.QtCore import Slot, QCommandLineOption, QCommandLineParser, QTimer, Signal
-from PySide6.QtWidgets import QApplication, QMainWindow, QLabel
+from PySide6.QtCore import Slot, QCommandLineOption, QCommandLineParser, QTimer, Signal, Qt
+from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QTableView
 from PySide6.QtGui import QPixmap
 # Important:
 # You need to run the following command to generate the ui_form.py file
@@ -23,6 +23,45 @@ from IasLogging.log import Log
 
 from IasAlarmGui.AlarmDetailsHelper import AlarmDetailsHelper
 from IasAlarmGui.config import Config
+
+class AlarmGuiTableView(QTableView):
+    """"
+    The QTableView subclass to handle the right and left click on the table rows
+    """
+
+    def __init__(self, parent, events_listener):
+        super().__init__(parent)
+        self.events_listener = events_listener
+        if not self.events_listener:
+            raise ValueError("The events_listener must not be None")
+        
+        self.setSelectionBehavior(QTableView.SelectRows)
+        self.setSelectionMode(QTableView.SingleSelection)
+
+        
+    
+    def setModel(self, model):
+        super().setModel(model)
+        # reconnect selectionChanged every time model changes
+        if self.selectionModel():
+            self.selectionModel().selectionChanged.connect(
+                self.events_listener.onTableSelectionChanged)
+        print("Reconnected")
+
+
+    def mousePressEvent(self, event):
+        index = self.indexAt(event.position().toPoint())
+
+        if index.isValid():
+            if event.button() == Qt.LeftButton:
+                print("LEFT CLICK on row", index.row())
+                self.events_listener.onLeftClick(index)
+
+            elif event.button() == Qt.RightButton:
+                print("RIGHT CLICK on row", index.row())
+                self.events_listener.onRightClick(index)
+
+        super().mousePressEvent(event)
 
 class MainWindow(QMainWindow, Ui_AlarmGui):
     # Signal to update the UI from other threads
@@ -44,11 +83,20 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         # The logger
         self.logger = logging.getLogger(self.__class__.__name__)
 
+        # Replace the default alarm table with the AlarmGuiTableView to handle the clicks
+        splitter = self.ui.splitter # The splitter contans the alarmTable in the left side
+        old_table = self.ui.alarmTable
+        new_table = AlarmGuiTableView(splitter, self)
+        i = splitter.indexOf(old_table)
+        splitter.insertWidget(i, new_table)
+        self.ui.alarmTable = new_table
+        old_table.setParent(None)
+        old_table.deleteLater()
+
         self.alarm_details = AlarmDetailsHelper(self.ui.alarmDetailsTE)
 
         self.tableModel = AlarmTableModel(self.ui.alarmTable)
         self.ui.alarmTable.setModel(self.tableModel)
-        self.ui.alarmTable.selectionModel().selectionChanged.connect(self.onTableSelectionChanged)
         self.ui.alarmTable.horizontalHeader().setStretchLastSection(True)
 
         self.ui.splitter.setSizes([250,100])
@@ -80,6 +128,12 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
 
         # Signals to update the UI from other threads
         self.signal_update_connected_ui.connect(self._set_connected_ui)
+
+    def onRightClick(self, index: int):
+        print("onRightClick")
+
+    def onLeftClick(self, index: int):
+        print("onLeftClick")
 
     def _set_connected_ui(self, connected: bool) -> None:
         """
@@ -183,12 +237,15 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
 
     def onTableSelectionChanged(self, selected, deselected):
         """
-        The user seleted one row of the table: fills the
+        The user selected one row of the table: fills the
         details in the right side of the GUI
         """
+        print(">>>> onTableSelectionChanged", selected, deselected)
         for index in self.ui.alarmTable.selectionModel().selectedRows():
             ias_value = self.tableModel.get_row_content(index.row())
             self.fill_details(ias_value)
+        else:
+            self.logger.warning("An item has been selected in the table but cannot show details")
 
     def fill_details(self, ias_value: IasValue)-> None:
         """
