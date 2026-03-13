@@ -31,7 +31,7 @@ class AckAlarmDlg(QDialog, Ui_AckAlarmDlg):
               raise ValueError("The AlarmAck can't be None")
          if not ias_value:
               raise ValueError("The IasValue can't be None")
-         self.logger= logging.getLogger(__name__)
+         self.logger = logging.getLogger(__name__)
          self.ias_value: IasValue = ias_value
          self.deps_values = self.ias_value.dependentsFullRuningIds
          self.alarm = Alarm.fromString(ias_value.value)
@@ -73,17 +73,19 @@ class AckAlarmDlg(QDialog, Ui_AckAlarmDlg):
           Params:
                user_comment: the comment taken from the text field
           """
-          self.logger.info("Acknowledging", self.ias_value.fullRunningId)
+          self.logger.info("Acknowledging %s on Supervisor %s with comment '%s'",
+                            self.ias_value.id, 
+                            self.supervisor_id,
+                            user_comment)
           self.alarm_ack.ack(
                alarm_id=self.ias_value.fullRunningId,
                supervisor_id=self.supervisor_id,
                comment=user_comment,
                timeout=0.0)
-          print("DONE3")
 
      def on_ack_btn_clicked(self):
-          print("HERE")
           comment = self.ui.comment_te.toPlainText()
           asyncio.run(self.ack_thread(comment))
+          self.close()
 
 

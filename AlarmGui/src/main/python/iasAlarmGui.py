@@ -4,8 +4,8 @@ import sys, string, random, threading, typing, logging
 from threading import Lock
 
 from PySide6.QtCore import Slot, QCommandLineOption, QCommandLineParser, QTimer, Signal, Qt
-from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QTableView
-from PySide6.QtGui import QPixmap
+from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QTableView, QMenu
+from PySide6.QtGui import QPixmap, QCursor
 # Important:
 # You need to run the following command to generate the ui_form.py file
 #     pyside6-uic form.ui -o ui_form.py, or
@@ -23,6 +23,8 @@ from IasCmdReply.IasCommandSender import IasCommandSender
 from IasBasicTypes.IasValue import IasValue
 from IasBasicTypes.Identifier import Identifier
 from IasBasicTypes.IdentifierType import IdentifierType
+from IasBasicTypes.Alarm import Alarm
+from IasExtras.AlarmAck import AlarmAck
 from IasTools.DefaultPaths import DefaultPaths
 from IasLogging.log import Log
 from IasExtras.AlarmAck import AlarmAck
@@ -53,17 +55,14 @@ class AlarmGuiTableView(QTableView):
                 self.events_listener.onTableSelectionChanged)
         print("Reconnected")
 
-
     def mousePressEvent(self, event):
         index = self.indexAt(event.position().toPoint())
 
         if index.isValid():
             if event.button() == Qt.LeftButton:
-                print("LEFT CLICK on row", index.row())
                 self.events_listener.onLeftClick(index)
 
             elif event.button() == Qt.RightButton:
-                print("RIGHT CLICK on row", index.row())
                 self.events_listener.onRightClick(index)
 
         super().mousePressEvent(event)
@@ -136,6 +135,10 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         self.showing_ok_icon = False # To blink the icon
         self.ui.statusbar.addPermanentWidget(self.status_icon_lbl)
 
+        # Create the popup menu to ACK
+        self.ack_popup_menu = QMenu(self)
+        self.ack_action = self.ack_popup_menu.addAction("Acknowledge")
+
         
         # The timer to change icon every second
         self.timer = QTimer(self)
@@ -151,16 +154,20 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
 
         If the alarm can be acknowledged, shows a popup menu
         """
-
         # get the alarm for the model and check if it can acknowledged
         ias_value = self.tableModel.get_row_content(index.row())
-        al_ack_dlg = AckAlarmDlg(
-            ias_value=ias_value, 
-            alarm_ack=self.alarm_ack,
-              parent=self)
-        al_ack_dlg.open()
-        print(">>>>>>><<<<<<<")
-
+        alarm_name = ias_value.id
+        alarm = Alarm.fromString(ias_value.value)
+        if not alarm.is_acked():
+            # Show the menu at the global cursor position
+            action = self.ack_popup_menu .exec(QCursor.pos())
+            if action == self.ack_action:
+                self.logger.info("Showing dialog to ACK %s", alarm_name)
+                al_ack_dlg = AckAlarmDlg(
+                    ias_value=ias_value, 
+                    alarm_ack=self.alarm_ack,
+                    parent=self)
+                al_ack_dlg.open()
 
     def onLeftClick(self, index: int):
         """
