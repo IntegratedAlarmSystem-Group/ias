@@ -27,7 +27,6 @@ from IasBasicTypes.Alarm import Alarm
 from IasExtras.AlarmAck import AlarmAck
 from IasTools.DefaultPaths import DefaultPaths
 from IasLogging.log import Log
-from IasExtras.AlarmAck import AlarmAck
 
 from IasAlarmGui.AlarmDetailsHelper import AlarmDetailsHelper
 from IasAlarmGui.config import Config
@@ -53,7 +52,6 @@ class AlarmGuiTableView(QTableView):
         if self.selectionModel():
             self.selectionModel().selectionChanged.connect(
                 self.events_listener.onTableSelectionChanged)
-        print("Reconnected")
 
     def mousePressEvent(self, event):
         index = self.indexAt(event.position().toPoint())
