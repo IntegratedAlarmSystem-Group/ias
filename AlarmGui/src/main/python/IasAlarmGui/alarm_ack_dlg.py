@@ -3,8 +3,8 @@ The dialog to ACK an alarm
 """
 import asyncio
 import logging
+import threading
 from PySide6.QtWidgets import QDialog
-from PySide6.QtWidgets import QLabel
 from PySide6.QtGui import QIcon
 
 from IasBasicTypes.IasValue import IasValue
@@ -63,10 +63,10 @@ class AckAlarmDlg(QDialog, Ui_AckAlarmDlg):
                self.ui.dep_alarms_list.clear()
           else:
                ids = [Identifier.from_string(id).get_id_of_type(IdentifierType.IASIO) for id in self.deps_values]
-               self.ui.dep_alarms_list.addItems(ids)
+               self.ui.dep_alarms_list.addItems([i for i in ids if i is not None])
           self.ui.comment_te.clear()
 
-     async def ack_thread(self, user_comment:str):
+     def ack_thread(self, user_comment:str):
           """
           ACK the alarm
           
@@ -85,7 +85,12 @@ class AckAlarmDlg(QDialog, Ui_AckAlarmDlg):
 
      def on_ack_btn_clicked(self):
           comment = self.ui.comment_te.toPlainText()
-          asyncio.run(self.ack_thread(comment))
+          
+          t = threading.Thread(
+               target=self.ack_thread,
+               args=(comment,),
+               daemon=True   # so it doesn't block app exit
+          )
+          t.start()
+
           self.close()
-
-
