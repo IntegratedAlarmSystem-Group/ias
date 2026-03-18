@@ -3,7 +3,7 @@ Created on May 9, 2018
 
 @author: acaproni
 '''
-
+import warnings
 import json
 from datetime import datetime
 import dateutil.parser
@@ -40,7 +40,12 @@ class JsonMsg(object):
         @param operationalMode: (string) optionally sets a operational mode 
                                 for the passed monitor point
         '''
-        
+        warnings.warn(
+            "'UdpPlugin' is deprecated and will be removed in a future release. "
+            "Use 'IasPlugin3.UdpPlugin' instead.",
+            DeprecationWarning,
+            stacklevel=2  # point to the caller line
+        )
         if not mpointId:
             raise ValueError("Invalid empty ID")
         self.mPointID=str(mpointId) 

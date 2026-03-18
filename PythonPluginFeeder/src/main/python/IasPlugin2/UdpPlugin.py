@@ -6,6 +6,7 @@ Created on May 9, 2018
 
 import logging
 import socket
+import warnings
 from datetime import datetime
 from threading import Timer, RLock
 
@@ -85,7 +86,12 @@ class UdpPlugin(object):
         @param port the port to send UDP packets to
         @raise exception: if the hostname is not resolved
         '''
-        
+        warnings.warn(
+            "'UdpPlugin' is deprecated and will be removed in a future release. "
+            "Use 'IasPlugin3.UdpPlugin' instead.",
+            DeprecationWarning,
+            stacklevel=2  # point to the caller line
+        )
         self._hostname = hostname
         self._port=port
         self._ip = socket.gethostbyname(self._hostname)
