@@ -41,8 +41,8 @@ class JsonMsg(object):
                                 for the passed monitor point
         '''
         warnings.warn(
-            "'UdpPlugin' is deprecated and will be removed in a future release. "
-            "Use 'IasPlugin3.UdpPlugin' instead.",
+            "'JsonMsg' is deprecated and will be removed in a future release. "
+            "Use 'IasPlugin3.JsonMsg' instead.",
             DeprecationWarning,
             stacklevel=2  # point to the caller line
         )
