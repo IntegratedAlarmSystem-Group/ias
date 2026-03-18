@@ -18,7 +18,7 @@ class CdbReader:
         """
         self.parent_folder=parent_folder
         if not os.path.isdir(parent_folder):
-            raise ValueError(f"Invalid parent folder {parent_folder}")
+            raise ValueError(f"Invalid IAS CDB parent folder {parent_folder}: fix it or unset IAS_CDB environment variable")
         self.cdbTxtFiles = CdbTxtFiles.from_folder(parent_folder)
         self.files_type = self.cdbTxtFiles.files_type
 

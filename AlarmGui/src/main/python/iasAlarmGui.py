@@ -1,10 +1,11 @@
 #! /usr/bin/env python3
 
 import sys, string, random, threading, typing, logging
+from threading import Lock
 
-from PySide6.QtCore import Slot, QCommandLineOption, QCommandLineParser, QTimer, Signal
-from PySide6.QtWidgets import QApplication, QMainWindow, QLabel
-from PySide6.QtGui import QPixmap
+from PySide6.QtCore import Slot, QCommandLineOption, QCommandLineParser, QTimer, Signal, Qt
+from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QTableView, QMenu
+from PySide6.QtGui import QPixmap, QCursor
 # Important:
 # You need to run the following command to generate the ui_form.py file
 #     pyside6-uic form.ui -o ui_form.py, or
@@ -17,12 +18,52 @@ from IasAlarmGui.about_dlg import AboutDlg
 from IasKafkaUtils.KafkaValueConsumer import KafkaValueConsumer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 
+from IasCmdReply.IasCommandSender import IasCommandSender
+
 from IasBasicTypes.IasValue import IasValue
+from IasBasicTypes.Identifier import Identifier
+from IasBasicTypes.IdentifierType import IdentifierType
+from IasBasicTypes.Alarm import Alarm
+from IasExtras.AlarmAck import AlarmAck
 from IasTools.DefaultPaths import DefaultPaths
 from IasLogging.log import Log
 
 from IasAlarmGui.AlarmDetailsHelper import AlarmDetailsHelper
 from IasAlarmGui.config import Config
+from IasAlarmGui.alarm_ack_dlg import AckAlarmDlg
+
+class AlarmGuiTableView(QTableView):
+    """"
+    The QTableView subclass to handle the right and left click on the table rows
+    """
+
+    def __init__(self, parent, events_listener):
+        super().__init__(parent)
+        self.events_listener = events_listener
+        if not self.events_listener:
+            raise ValueError("The events_listener must not be None")
+        
+        self.setSelectionBehavior(QTableView.SelectRows)
+        self.setSelectionMode(QTableView.SingleSelection)
+    
+    def setModel(self, model):
+        super().setModel(model)
+        # reconnect selectionChanged every time model changes
+        if self.selectionModel():
+            self.selectionModel().selectionChanged.connect(
+                self.events_listener.onTableSelectionChanged)
+
+    def mousePressEvent(self, event):
+        index = self.indexAt(event.position().toPoint())
+
+        if index.isValid():
+            if event.button() == Qt.LeftButton:
+                self.events_listener.onLeftClick(index)
+
+            elif event.button() == Qt.RightButton:
+                self.events_listener.onRightClick(index)
+
+        super().mousePressEvent(event)
 
 class MainWindow(QMainWindow, Ui_AlarmGui):
     # Signal to update the UI from other threads
@@ -44,11 +85,23 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         # The logger
         self.logger = logging.getLogger(self.__class__.__name__)
 
+        # Protect critical sections
+        self._lock = Lock()
+
+        # Replace the default alarm table with the AlarmGuiTableView to handle the clicks
+        splitter = self.ui.splitter # The splitter contans the alarmTable in the left side
+        old_table = self.ui.alarmTable
+        new_table = AlarmGuiTableView(splitter, self)
+        i = splitter.indexOf(old_table)
+        splitter.insertWidget(i, new_table)
+        self.ui.alarmTable = new_table
+        old_table.setParent(None)
+        old_table.deleteLater()
+
         self.alarm_details = AlarmDetailsHelper(self.ui.alarmDetailsTE)
 
         self.tableModel = AlarmTableModel(self.ui.alarmTable)
         self.ui.alarmTable.setModel(self.tableModel)
-        self.ui.alarmTable.selectionModel().selectionChanged.connect(self.onTableSelectionChanged)
         self.ui.alarmTable.horizontalHeader().setStretchLastSection(True)
 
         self.ui.splitter.setSizes([250,100])
@@ -61,6 +114,14 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         self.group_id: str = "iasAlarmGui-" + "".join(random.choice(chars) for _ in range(5))
         self.client_id: str = "iasAlarmGui"
 
+        self.identifier = Identifier(self.group_id, IdentifierType.CLIENT)
+        self.frid = self.identifier.build_full_running_id()
+        self.logger.info(f"AlarmGui ID {self.frid}")
+
+        # The object to ACK alarms initialized when connecting to the BSDB
+        self.command_sender: IasCommandSender|None = None
+        self.alarm_ack: AlarmAck|None = None
+
         # the dialog to connect to the IAS
         self.connectDlg = None
 
@@ -72,6 +133,10 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         self.showing_ok_icon = False # To blink the icon
         self.ui.statusbar.addPermanentWidget(self.status_icon_lbl)
 
+        # Create the popup menu to ACK
+        self.ack_popup_menu = QMenu(self)
+        self.ack_action = self.ack_popup_menu.addAction("Acknowledge")
+
         
         # The timer to change icon every second
         self.timer = QTimer(self)
@@ -80,6 +145,33 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
 
         # Signals to update the UI from other threads
         self.signal_update_connected_ui.connect(self._set_connected_ui)
+
+    def onRightClick(self, index):
+        """
+        The user preseed the right mouse button over a row of an alarm
+
+        If the alarm can be acknowledged, shows a popup menu
+        """
+        # get the alarm for the model and check if it can acknowledged
+        ias_value = self.tableModel.get_row_content(index.row())
+        alarm_name = ias_value.id
+        alarm = Alarm.fromString(ias_value.value)
+        if not alarm.is_acked():
+            # Show the menu at the global cursor position
+            action = self.ack_popup_menu .exec(QCursor.pos())
+            if action == self.ack_action:
+                self.logger.info("Showing dialog to ACK %s", alarm_name)
+                al_ack_dlg = AckAlarmDlg(
+                    ias_value=ias_value, 
+                    alarm_ack=self.alarm_ack,
+                    parent=self)
+                al_ack_dlg.open()
+
+    def onLeftClick(self, index: int):
+        """
+        Triggered when the user presses the mouse button over a row
+        """
+        pass
 
     def _set_connected_ui(self, connected: bool) -> None:
         """
@@ -136,7 +228,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
             assert brokers is not None, "The dialog should not return an empty broker user presses Ok"
             self.logger.info("Connecting to the BSDB %s",self.connectDlg.getBrokers())
             # Start the thread to connect
-            connect_thread = threading.Thread(target=self.connectToIas, args=(brokers,))
+            connect_thread = threading.Thread(target=self.connectToIas, args=(brokers, self.frid,))
             connect_thread.start()
         self.connectDlg = None
 
@@ -150,7 +242,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         print(f"Auto remove cleared {self.ui.action_Remove_cleared.isChecked()}")
         self.tableModel.remove_cleared(self.ui.action_Remove_cleared.isChecked())
 
-    def connectToIas(self, bsdb_brokers: str) -> None:
+    def connectToIas(self, bsdb_brokers: str, full_running_id: str) -> None:
         """
         Connect to the IAS passing the table model as listener
 
@@ -170,6 +262,25 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         except Exception as e:
             self.logger.error("Error connecting to the BSDB: %s",str(e))
             self.signal_update_connected_ui.emit(False)
+            if self.alarm_ack is not None:
+                try:
+                    self.alarm_ack.close()
+                except Exception as ack_excp:
+                    self.logger.error("Error closing the Alarm ACK", str(ack_excp))
+                self.alarm_ack = None
+            return
+        
+        # Build the command sender
+        self.logger.info("Building the CommandSender")
+        self.command_sender = IasCommandSender(
+            sender_full_running_id=full_running_id, 
+            bsdb_sender_id=f"CommandSender-{self.group_id}",
+            brokers=bsdb_brokers)
+        # Connect the Alarm ACK
+        self.logger.info("Building the AlarmAck")
+        self.alarm_ack = AlarmAck(full_running_id=full_running_id, command_sender=self.command_sender)
+        self.alarm_ack.start()
+        self.logger.info("Successfully connected to IAS")
 
     def disconnectFromIas(self) -> None:
         """
@@ -181,9 +292,15 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
             self.value_consumer = None
         self.signal_update_connected_ui.emit(False)
 
+        if self.alarm_ack is not None:
+            self.alarm_ack.close()
+            self.alarm_ack = None
+            self.command_sender = None
+        self.logger.info("Disconnected from IAS")
+
     def onTableSelectionChanged(self, selected, deselected):
         """
-        The user seleted one row of the table: fills the
+        The user selected one row of the table: fills the
         details in the right side of the GUI
         """
         for index in self.ui.alarmTable.selectionModel().selectedRows():
@@ -289,6 +406,6 @@ if __name__ == "__main__":
     widget.show()
     if connect_to_bsdb and bsdb is not None:
         # Start the thread to connect
-        connect_thread = threading.Thread(target=widget.connectToIas, args=(bsdb,))
+        connect_thread = threading.Thread(target=widget.connectToIas, args=(bsdb,widget.frid,))
         connect_thread.start()
     sys.exit(app.exec())
