@@ -215,8 +215,9 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
                     # Alarm not already in the list: inserted in the head of the list
                     # unless set and acked plus autoremove is set in the toolbar
                     if not (self.autoremove_cleared and self.cleared_and_acked(alarm)):
+                        self.beginInsertRows(QModelIndex(), 0, 0)
                         self.alarms.insert(0,alarm)
-                        self.layoutChanged.emit()
+                        self.endInsertRows()
                 else:
                     # The alarm is already in the list so its state must be updated
                     # or removed if autoremove has been selected in the toolbar
