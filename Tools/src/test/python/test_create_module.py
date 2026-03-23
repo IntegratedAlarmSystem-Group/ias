@@ -21,7 +21,7 @@ class TestCreateModule():
         Log.init_logging(__file__)
         cls.Logger = logging.getLogger(__class__.__name__)
         cls.Logger.info("Starting TestCreateModule tests")
-    
+
     def setup_method(self):
         self.tmpFolder = environ.get('IAS_TMP_FOLDER','/tmp')
         
