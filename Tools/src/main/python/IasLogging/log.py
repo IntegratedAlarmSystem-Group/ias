@@ -72,7 +72,7 @@ class Log():
     @classmethod
     def get_log_file(cls) -> Path:
         """
-        Return the logb file path
+        Return the log file path
 
         Raise an exception if the log has not yet been initialized
         """
@@ -129,21 +129,25 @@ class Log():
         # Create file handler which logs even debug messages
         # Take the path for logs folder
         log_folder_name = DefaultPaths.get_ias_logs_folder()
-        cls._log_folder = Path(log_folder_name).absolute()
-        log_file_name = str(cls._init_log_file(name_file).absolute())
-        try:
-            cls._file_handler = RotatingFileHandler(
-                log_file_name,
-                maxBytes=50 * 1024 * 1024,  # 50 MB
-                backupCount=5,
-                encoding="utf-8")
-            cls._file_handler.setLevel(file_level)
-            formatter_file =  logging.Formatter('%(asctime)s%(msecs)d  | %(levelname)s | [%(filename)s %(lineno)d] [%(threadName)s] | %(message)s')
-            cls._file_handler.setFormatter(formatter_file)
-            cls._root_logger.addHandler(cls._file_handler)  
-            cls._root_logger.info("Log file: %s, file level: %s", log_file_name, file_level_name)
-        except Exception as e:
-            cls._root_logger.error("Error creating file handler for log file %s: %s", log_file_name, e)
+        if log_folder_name is not None:
+            cls._log_folder = Path(log_folder_name).absolute()
+            log_file_name = str(cls._init_log_file(name_file).absolute())
+            try:
+                cls._file_handler = RotatingFileHandler(
+                    log_file_name,
+                    maxBytes=50 * 1024 * 1024,  # 50 MB
+                    backupCount=5,
+                    encoding="utf-8")
+                cls._file_handler.setLevel(file_level)
+                formatter_file =  logging.Formatter('%(asctime)s%(msecs)d  | %(levelname)s | [%(filename)s %(lineno)d] [%(threadName)s] | %(message)s')
+                cls._file_handler.setFormatter(formatter_file)
+                cls._root_logger.addHandler(cls._file_handler)  
+                cls._root_logger.info("Log file: %s, file level: %s", log_file_name, file_level_name)
+            except Exception as e:
+                cls._root_logger.error("Error creating file handler for log file %s: %s", log_file_name, e)
+                cls._file_handler = None
+        else:
+            cls._root_logger.error("No suitable folder to store log files have been found")
             cls._file_handler = None
 
         # Avoid noisy stderr stack traces on handler write errors

@@ -35,7 +35,7 @@ class DefaultPaths:
     # if it does not exist, the tool tries to create it
     _alternative_logs_folders: list[str] = [
         "/var/log/ias",
-        " /opt/IasRoot/logs",
+        "/opt/IasRoot/logs",
         "/var/log",
         os.getenv('HOME','.'),
         "."
@@ -122,12 +122,13 @@ class DefaultPaths:
             return False
 
     @classmethod
-    def get_ias_logs_folder(cls) -> str:
+    def get_ias_logs_folder(cls) -> str|None:
         """
         Get the IAS logs folder from the environment or one of the default
         folders in cls._alternative_log_folder
         
-        :return: The IAS logs folder path from the environment or the default
+        :return: The IAS logs folder path from the environment or the default;
+                 None if no suitable folder has been found
         """
         logs_folder_env_var: str|None = os.getenv(cls._ias_logs_env_var)
         ias_root_env_var: str|None = os.getenv(cls._ias_root_env_var)
@@ -136,7 +137,7 @@ class DefaultPaths:
             folders.append(logs_folder_env_var)
         if ias_root_env_var is not None:
             folders.append(ias_root_env_var+"/logs")
-        # Get the IAS_LOGS_LODER
+        # Get the IAS_LOGS_FOLDER
         folders = folders + cls._alternative_logs_folders
 
         # Return the first folder in folders where a log file can be written
@@ -145,6 +146,7 @@ class DefaultPaths:
             if cls._check_log_folder_candidate(candidate_folder):
                 folder = Path(candidate_folder).absolute()
                 return str(folder)
+        return None
     
     @classmethod
     def get_ias_tmp_folder(cls) -> str:
@@ -154,7 +156,7 @@ class DefaultPaths:
         :return: The IAS temporary folder path from the environment or the default
         """
         if not cls._ias_tmp_env_var in os.environ:
-            print("The IAS_TMP_FOLDER environment variable is not set. Using default: %s", cls._default_ias_tmp_folder)
+            print("The IAS_TMP_FOLDER environment variable is not set. Using default:", cls._default_ias_tmp_folder)
         return os.getenv(cls._ias_tmp_env_var, cls._default_ias_tmp_folder)
 
     @classmethod
@@ -165,7 +167,7 @@ class DefaultPaths:
         :return: The IAS configuration folder path from the environment or the default
         """
         if not cls._ias_config_env_var in os.environ:
-            print("The IAS_CONFIG_FOLDER environment variable is not set. Using default: %s", cls._default_ias_config_folder)
+            print("The IAS_CONFIG_FOLDER environment variable is not set. Using default:", cls._default_ias_config_folder)
         return os.getenv(cls._ias_config_env_var, cls._default_ias_config_folder)
 
     @classmethod
@@ -176,7 +178,7 @@ class DefaultPaths:
         :return: The Kafka home folder path from the environment or the default
         """
         if not cls._kafka_home_env_var in os.environ:
-            print("The KAFKA_HOME environment variable is not set. Using default: %s", cls._default_kafka_home_folder)
+            print("The KAFKA_HOME environment variable is not set. Using default:", cls._default_kafka_home_folder)
         return os.getenv(cls._kafka_home_env_var, cls._default_kafka_home_folder)
 
     @classmethod
@@ -212,6 +214,6 @@ class DefaultPaths:
             cls.check_and_create_folder(cls.get_ias_tmp_folder())
             return True
         except Exception as e:
-            print("Error checking IAS folders: %s", e)
+            print("Error checking IAS folders:", str(e))
             return False
 
