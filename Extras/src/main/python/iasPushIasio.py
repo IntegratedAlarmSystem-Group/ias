@@ -18,7 +18,6 @@ from IasLogging.log import Log
 from IasKafkaUtils.KafkaValueProducer import KafkaValueProducer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 from IasBasicTypes.Identifier import Identifier
-from IasExtras.Utils import Utils
 
 def parse_args():
     epilog = """
@@ -129,7 +128,7 @@ def main() -> int:
     # Build the Identifier to check if the provided frid is valid
     ias_identifier = Identifier.from_string(args.iasioid)
     
-    bsdb_url = Utils.get_bsdb_url(args.kafkabrokers, args.jCdb)
+    bsdb_url = IasKafkaHelper.get_bsdb_url(args.kafkabrokers, args.jCdb)
     topic = IasKafkaHelper.topics['core']
     logger.debug(f"Creating Kafka producer with topic {topic} and BSDB URL {bsdb_url} and client ID {args.bsdbid}")
     producer = KafkaValueProducer(bsdb_url, topic, args.bsdbid)
