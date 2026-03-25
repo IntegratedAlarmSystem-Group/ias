@@ -29,7 +29,6 @@ from IasTools.DefaultPaths import DefaultPaths
 from IasLogging.log import Log
 
 from IasAlarmGui.AlarmDetailsHelper import AlarmDetailsHelper
-from IasAlarmGui.config import Config
 from IasAlarmGui.alarm_ack_dlg import AckAlarmDlg
 
 class AlarmGuiTableView(QTableView):
