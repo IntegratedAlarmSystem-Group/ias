@@ -29,7 +29,6 @@ from IasTools.DefaultPaths import DefaultPaths
 from IasLogging.log import Log
 
 from IasAlarmGui.AlarmDetailsHelper import AlarmDetailsHelper
-from IasAlarmGui.config import Config
 from IasAlarmGui.alarm_ack_dlg import AckAlarmDlg
 
 class AlarmGuiTableView(QTableView):
@@ -391,14 +390,20 @@ if __name__ == "__main__":
         sys.exit(1)
 
     cdb_parent_folder= cmd_line_args.get("ias_cdb", None)
-    logger.debug("IAS CDB parent path from command line is %s",cdb_parent_folder)
-    bsdb_url_from_cdmline = cmd_line_args.get("bsdb_url", None)
-    logger.debug("BSDB URL from command line is %s",bsdb_url_from_cdmline)
+    if cdb_parent_folder is not None:
+        logger.debug("IAS CDB parent path from command line: %s",cdb_parent_folder)
+    else:
+        logger.debug("No CDB folder from command line")
 
-    config = Config(ias_cdb_cmd_line=cdb_parent_folder)
-    bsdb = config.get_bsdb_url(
-        url_from_cmd_line=bsdb_url_from_cdmline,
-        default_bsdb=IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
+    bsdb_url_from_cdmline = cmd_line_args.get("bsdb_url", None)
+    if bsdb_url_from_cdmline:
+        logger.debug("BSDB URL from command line is %s",bsdb_url_from_cdmline)
+    else:
+        logger.info("No BSDB URL from command line")
+    
+    bsdb = IasKafkaHelper.get_bsdb_url(
+        kafka_brokers=bsdb_url_from_cdmline,
+        jCdb=cdb_parent_folder)
     
     connect_to_bsdb = cmd_line_args.get("connect_to_bsdb")
     

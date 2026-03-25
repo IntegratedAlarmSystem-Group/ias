@@ -21,7 +21,7 @@ from IasBasicTypes.IdentifierType import IdentifierType
 from IasCmdReply.IasCommandSender import IasCommandSender
 
 from IasExtras.AlarmAck import AlarmAck
-from IasExtras.Utils import Utils
+from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 
 
 # The logger, intialized by main()
@@ -101,9 +101,9 @@ def main()-> int:
     Log.init_log_from_cmdline_args(args, __file__)
     global logger
     logger = logging.getLogger(__name__)
-    bsdb_url = Utils.get_bsdb_url(args.kafkabrokers, args.jCdb)
+    bsdb_url = IasKafkaHelper.get_bsdb_url(args.kafkabrokers, args.jCdb)
     logger.info(f"BSDB URL: {bsdb_url}")
-
+    
     supervisor_id = get_supervisor_id(args.alarmid)
     if not supervisor_id:
         raise ValueError(f"Cannot extract the Supervisor ID from the alarm ID {args.alarmid}")

@@ -1,12 +1,10 @@
 import os
 
 from IasLogging.log import Log
-from IasAlarmGui.config import Config
-class TestConfigNoCdb():
+from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
+class TestGetBsdbUrlNoCdb():
     """
-    The Config without IAS_CDB being defined in the environment
-
-    Config, in fact, gets the values of the IAS_CDB statically, before instantiating an object.
+    Test the getting of the BSDB URL without IAS_CDB being defined in the environment
     """
     @classmethod
     def setup_class(cls):
@@ -22,31 +20,19 @@ class TestConfigNoCdb():
 
     def test_bsdb_no_cdb(self):
 
-        config = Config(None)
-
-        assert config.get_cdb() is None
-
-        assert config.get_bsdb_url(None, None) is None
+        assert IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS==IasKafkaHelper.get_bsdb_url(kafka_brokers=None, jCdb=None)
 
         url = "10.15.120.7"
-        assert url == config.get_bsdb_url(url)
-
-        default = "127.0.0.1:9099"
-        assert default == config.get_bsdb_url(None, default)
-
-        assert config.get_bsdb_url(None) is None
+        assert url == IasKafkaHelper.get_bsdb_url(kafka_brokers=url, jCdb=None)
 
     def test_bsdb_passing_cdb(self):
         """
         The getting the bsdb when a CDB path is given in the constructor"""
         cdb_path = "src/test"
-        config = Config(cdb_path)
-
-        assert cdb_path == config.get_cdb()
 
         # The url in the CDB (See CDB/ias.yaml)
         url_in_cdb = "192.168.0.196:9095"
-        assert url_in_cdb == config.get_bsdb_url(None)
+        assert url_in_cdb == IasKafkaHelper.get_bsdb_url(kafka_brokers=None, jCdb=cdb_path)
 
         test_url = "10.192.168.3:909"
-        assert test_url == config.get_bsdb_url(test_url)
+        assert test_url == IasKafkaHelper.get_bsdb_url(kafka_brokers=test_url, jCdb=cdb_path)
