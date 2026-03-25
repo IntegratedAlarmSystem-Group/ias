@@ -23,3 +23,9 @@ dependencies {
 tasks.test {
             useJUnitPlatform()
 }
+
+tasks.named("pytest").configure {
+    dependsOn(project(":Cdb").tasks.named("build"))
+    dependsOn(project(":BasicTypes").tasks.named("build"))
+    dependsOn(project(":Tools").tasks.named("build"))
+}

@@ -151,7 +151,7 @@ class IasKafkaHelper():
     @classmethod
     def get_bsdb_url(cls, kafka_brokers, jCdb) -> str :
         """
-        Get the BSDB URL from (whatever is true)
+        Get the BSDB URL from whatever is true first among:
         - the kafka brokers passed in the command line
         - the IAS CDB passed in the command line (jCdb)
         - the IAS_CDB from the environment variable, if defined
