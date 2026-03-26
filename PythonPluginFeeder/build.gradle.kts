@@ -9,6 +9,7 @@ dependencies {
     implementation(libs.jackson.databind)
     implementation(libs.slf4j.api)
     implementation(libs.hibernate.jpa)
+    implementation(libs.logback.classic)
 
     implementation(project(":Plugin"))
     implementation(project(":Heartbeat"))
