@@ -1,6 +1,12 @@
 package org.eso.ias.converter;
 
-import org.apache.commons.cli.*;
+import java.io.IOException;
+
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.help.HelpFormatter;
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbReaderFactory;
 import org.eso.ias.cdb.IasCdbException;
@@ -248,10 +254,20 @@ public class Converter implements AutoCloseable {
 	}
 
     /**
-     * The string shown by the help
-     */
-	private static String cmdLineSyntax = "Usage: Converter Converter-ID [-j|-jcdb JSON-CDB-PATH] [-h|--help] [-x|--logLevel] level";
-
+	/**
+	 * Prints the usage message
+	 * 
+	 * @param options The options expected in the command line
+	 */
+	private static void printUsage(Options options) {
+		String cmdLineSyntax = "Usage: Converter Converter-ID [-j|-jcdb JSON-CDB-PATH] [-h|--help] [-x|--logLevel] level";
+		String header = "Converter consumes logs published by plugins, converts and pushes them in the core topic";
+		try {
+			HelpFormatter.builder().get().printHelp(cmdLineSyntax, header, options, "", true);
+		} catch (IOException e) {
+			System.err.println("Error generating the usage string: "+e.getMessage());
+		}
+	}
 
 	/**
 	 * Parse the command line.
@@ -274,10 +290,9 @@ public class Converter implements AutoCloseable {
         try {
             cmdLine = parser.parse(options, args);
         } catch (Exception e) {
-            HelpFormatter helpFormatter = new HelpFormatter();
             System.err.println("Exception parsing the comamnd line: " + e.getMessage());
             e.printStackTrace(System.err);
-            helpFormatter.printHelp(cmdLineSyntax, options);
+            printUsage(options);
             System.exit(-1);
         }
         boolean help = cmdLine.hasOption('h');
@@ -289,8 +304,7 @@ public class Converter implements AutoCloseable {
             logLvl = logLevelName.map(name -> LogLevelDao.valueOf(name));
         } catch (Exception e) {
             System.err.println("Unrecognized log level");
-            HelpFormatter helpFormatter = new HelpFormatter();
-            helpFormatter.printHelp(cmdLineSyntax, options);
+            printUsage(options);
             System.exit(-1);
         }
 
@@ -305,12 +319,12 @@ public class Converter implements AutoCloseable {
         }
 
         if (help) {
-            new HelpFormatter().printHelp(cmdLineSyntax, options);
+            printUsage(options);
             System.exit(0);
         }
 		if (!supervId.isPresent()) {
 			System.err.println("Missing Converter ID");
-			new HelpFormatter().printHelp(cmdLineSyntax, options);
+			printUsage(options);
 			System.exit(-1);
 		}
 
