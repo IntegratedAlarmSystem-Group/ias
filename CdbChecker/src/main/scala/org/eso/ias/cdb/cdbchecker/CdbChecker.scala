@@ -2,7 +2,8 @@ package org.eso.ias.cdb.cdbchecker
 
 import java.util.Optional
 import com.typesafe.scalalogging.Logger
-import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
+import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, Options}
+import org.apache.commons.cli.help.HelpFormatter
 import org.eso.ias.cdb.{CdbReader, CdbReaderFactory}
 import org.eso.ias.cdb.pojos._
 import org.eso.ias.logging.IASLogger
@@ -696,8 +697,10 @@ class CdbChecker(args: Array[String]) {
 
 object CdbChecker {
 
-  /** Build the usage message */
-  val cmdLineSyntax: String = "cdbChecker [-h|--help] [-j|-jCdb JSON|YAML-CDB-PATH] [-c|--cdbClass <class>] [-x|--logLevel log level]"
+  def printUsage(options: Options) = 
+    val cmdLineSyntax: String = "cdbChecker [-h|--help] [-j|-jCdb JSON|YAML-CDB-PATH] [-c|--cdbClass <class>] [-x|--logLevel log level]"
+    val header: String = "Checks the correctness of the IAS CDB"
+    HelpFormatter.builder().get().printHelp(cmdLineSyntax, header, options, "", true)
 
   /**
     * Parse the command line.
@@ -719,7 +722,7 @@ object CdbChecker {
     if (cmdLineParseAction.isFailure) {
       val e = cmdLineParseAction.asInstanceOf[Failure[Exception]].exception
       println(e.toString + "\n")
-      new HelpFormatter().printHelp(cmdLineSyntax, options)
+      printUsage(options)
       System.exit(-1)
     }
 
@@ -733,14 +736,14 @@ object CdbChecker {
         case Success(opt) => opt
         case Failure(f) =>
           println("Unrecognized log level")
-          new HelpFormatter().printHelp(cmdLineSyntax, options)
+          printUsage(options)
           System.exit(-1)
           None
       }
     }
 
     if (help) {
-      new HelpFormatter().printHelp(cmdLineSyntax, options)
+      printUsage(options)
       System.exit(0)
     }
 

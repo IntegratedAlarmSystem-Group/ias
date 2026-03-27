@@ -4,7 +4,8 @@ import java.time._
 import java.util
 import java.util.concurrent.{Executors, ScheduledExecutorService, TimeUnit}
 import com.typesafe.scalalogging.Logger
-import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
+import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, Options}
+import org.apache.commons.cli.help.HelpFormatter
 import org.eso.ias.cdb.{CdbReader, CdbReaderFactory}
 import org.eso.ias.cdb.pojos._
 import org.eso.ias.kafkautils.KafkaHelper
@@ -235,8 +236,10 @@ object NotificationsSender {
   /** The logger */
   val msLogger: Logger = IASLogger.getLogger(classOf[NotificationsSender])
 
-  /** Build the usage message */
-  val cmdLineSyntax: String = "NotificationSender NotificationSender-ID [-h|--help] [-j|-jcdb JSON-CDB-PATH] [-x|--logLevel log level]"
+  def printUsage(options: Options) = 
+    val cmdLineSyntax: String = "NotificationSender NotificationSender-ID [-h|--help] [-j|-jcdb JSON-CDB-PATH] [-x|--logLevel log level]"
+    val header: String = "Sends email notifications for alarm events"
+    HelpFormatter.builder().get().printHelp(cmdLineSyntax, header, options, "", true)
 
   /**
     * Parse the command line.
@@ -258,7 +261,7 @@ object NotificationsSender {
     if (cmdLineParseAction.isFailure) {
       val e = cmdLineParseAction.asInstanceOf[Failure[Exception]].exception
       println(s"$e\n")
-      new HelpFormatter().printHelp(cmdLineSyntax, options)
+      printUsage(options)
       System.exit(-1)
     }
 
@@ -272,7 +275,7 @@ object NotificationsSender {
         case Success(opt) => opt
         case Failure(f) =>
           println("Unrecognized log level")
-          new HelpFormatter().printHelp(cmdLineSyntax, options)
+          printUsage(options)
           System.exit(-1)
           None
       }
@@ -284,11 +287,11 @@ object NotificationsSender {
 
     if (!help && supervId.isEmpty) {
       println("Missing Supervisor ID")
-      new HelpFormatter().printHelp(cmdLineSyntax, options)
+      printUsage(options)
       System.exit(-1)
     }
     if (help) {
-      new HelpFormatter().printHelp(cmdLineSyntax, options)
+      printUsage(options)
       System.exit(0)
     }
 

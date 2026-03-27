@@ -197,10 +197,15 @@ public class UdpPlugin implements Runnable {
 				System.err.println("Unrecognized log level "+logLevelStr);
 				System.exit(-1);
 			}
-			System.out.println(">>> Setting log level to "+logLevelStr);
-			ch.qos.logback.classic.Level logLevel = ch.qos.logback.classic.Level.toLevel(logLevelStr);
-			ch.qos.logback.classic.Logger log = (ch.qos.logback.classic.Logger)LoggerFactory.getLogger("org.eso.ias.plugin");
-			log.setLevel(logLevel);
+			try {
+				ch.qos.logback.classic.Level logLevel = ch.qos.logback.classic.Level.toLevel(logLevelStr);
+				ch.qos.logback.classic.Logger log = (ch.qos.logback.classic.Logger)LoggerFactory.getLogger("org.eso.ias.plugin");
+				log.setLevel(logLevel);
+			} catch (Exception e) {
+				System.err.println("Error setting the lov level (only logback supported): "+e.getMessage());
+				e.printStackTrace(System.err);
+			}
+			
 		}
 		Logger logger = LoggerFactory.getLogger(UdpPlugin.class);
 		
@@ -255,7 +260,7 @@ public class UdpPlugin implements Runnable {
 		CountDownLatch latch = null;
 		try {
 			latch = udpPlugin.setUp();
-		} catch(PluginException pe) {
+		} catch(Exception pe) {
 			logger.error("The UdpPlugin failed to start",pe);
 			System.exit(-7);
 		}

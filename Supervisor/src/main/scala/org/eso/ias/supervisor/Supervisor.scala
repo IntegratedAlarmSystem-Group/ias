@@ -2,7 +2,8 @@ package org.eso.ias.supervisor
 
 import ch.qos.logback.classic.Level
 import com.typesafe.scalalogging.Logger
-import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
+import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, Options}
+import org.apache.commons.cli.help.HelpFormatter
 import org.eso.ias.cdb.pojos.*
 import org.eso.ias.cdb.topology.TemplateHelper
 import org.eso.ias.cdb.{CdbReader, CdbReaderFactory}
@@ -487,8 +488,10 @@ object Supervisor {
   /** The logger */
   val logger: Logger = IASLogger.getLogger(Supervisor.getClass)
 
-  /** Build the usage message */
-  val cmdLineSyntax: String = "Supervisor Supervisor-ID [-h|--help] [-j|-jcdb JSON-CDB-PATH] [-x|--logLevel log level]"
+  def printUsage(options: Options) =
+    val cmdLineSyntax: String = "Supervisor Supervisor-ID [-h|--help] [-j|-jcdb JSON-CDB-PATH] [-x|--logLevel log level]"
+    val header = "Runs the container of DASUs"
+    HelpFormatter.builder().get().printHelp(cmdLineSyntax, header, options, "", true)
 
   /**
     * Parse the command line.
@@ -510,7 +513,7 @@ object Supervisor {
     if (cmdLineParseAction.isFailure) {
       val e = cmdLineParseAction.asInstanceOf[Failure[Exception]].exception
       println(s"$e\n")
-      new HelpFormatter().printHelp(cmdLineSyntax, options)
+      printUsage(options)
       System.exit(-1)
     }
 
@@ -524,7 +527,7 @@ object Supervisor {
         case Success(opt) => opt
         case Failure(f) =>
           println("Unrecognized log level")
-          new HelpFormatter().printHelp(cmdLineSyntax, options)
+          printUsage(options)
           System.exit(-1)
           None
       }
@@ -536,11 +539,11 @@ object Supervisor {
 
     if (!help && supervId.isEmpty) {
       println("Missing Supervisor ID")
-      new HelpFormatter().printHelp(cmdLineSyntax, options)
+      printUsage(options)
       System.exit(-1)
     }
     if (help) {
-      new HelpFormatter().printHelp(cmdLineSyntax, options)
+      printUsage(options)
       System.exit(0)
     }
 
