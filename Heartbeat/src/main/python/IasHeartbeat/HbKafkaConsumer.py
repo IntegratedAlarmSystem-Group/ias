@@ -79,9 +79,9 @@ class HbKafkaConsumer(IasLogListener):
         try:
             hbm = HeartbeatMessage.fromJSON(log)
         except Exception as e:
-            self.logger.error("Exception caught while parsing the JSON HB %s: %s", log, str(e))
+            self.logger.exception("Exception caught while parsing the JSON HB %s", log, e)
             return
         try:
             self.listener.iasHbReceived(hbm)
         except Exception as e:
-            self.logger.error("Error resturning the user defined callaback: %s", str(e))
+            self.logger.exception("Error caught from the user defined callaback: %s", e)
