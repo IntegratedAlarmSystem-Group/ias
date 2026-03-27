@@ -158,56 +158,59 @@ class KafkaValueConsumer(Thread):
 
     def run(self):
         self._logger.info('Thread to poll for Kafka logs started')
-        try:
+        # Create the topic before subscribing
+        if IasKafkaHelper.createTopic(self.topic, self.kafkaBrokers):
+            self._logger.debug("Topic %s created", self.topic)
+        else:
+            self._logger.debug("Topic already %s exists", self.topic)
 
-            # Force a topic reation before subscribing
-            if IasKafkaHelper.createTopic(self.topic, self.kafkaBrokers):
-                self._logger.debug("Topic %s created", self.topic)
-            else:
-                self._logger.debug("Topic %s exists", self.topic)
+        self.consumer.subscribe([self.topic], on_assign=self.onAssign, on_revoke=self.onLost)
+        self._logger.debug("Subscribed to topic %s", self.topic)
 
-            self.consumer.subscribe([self.topic], on_assign=self.onAssign, on_revoke=self.onLost)
-            self._logger.debug("Subscribed to topic %s", self.topic)
+        self.isGettingEvents = True
+        while not self.terminateThread.is_set():
+            msg = self.consumer.poll(timeout=1.0)
+            # Reset the watch dog
+            with self.watchDogLock:
+                self.watchDog = True
 
-            self.isGettingEvents = True
-            while not self.terminateThread.is_set():
-                msg = self.consumer.poll(timeout=1.0)
-                # Reset the watch dog
-                with self.watchDogLock:
-                    self.watchDog = True
+            if not self.subscribed:
+                continue
+            elif self.ready_event_to_set_flag and self.ready_event is not None:
+                # Set the event that the consumer is ready after the first successful poll
+                # after the subscription
+                self.ready_event.set()
+                self.ready_event_to_set_flag = False
+            
+            if msg is None: # No message received within the timeout
+                self._logger.debug(f"Polling thread is NOT subscribed { self.subscribed}")
+                continue
 
-                if not self.subscribed:
-                    continue
-                elif self.ready_event_to_set_flag and self.ready_event is not None:
-                    # Set the event that the consumer is ready after the first successful poll
-                    # after the subscription
-                    self.ready_event.set()
-                    self.ready_event_to_set_flag = False
-                
-                if msg is None: # No message received within the timeout
-                    self._logger.debug(f"Polling thread is NOT subscribed { self.subscribed}")
-                    continue
-
-                if msg.error() is not None:
-                    if msg.error().code() == KafkaError._PARTITION_EOF:
-                        # End of partition event
-                        self._logger.error('topic %s [partition %d] reached end at offset %d', msg.topic(), msg.partition(),
-                                     msg.offset())
-                    else:
-                        self._logger.error('Error polling event %s', msg.error().str())
-                        raise Exception(msg.error().str())
+            if msg.error() is not None:
+                if msg.error().code() == KafkaError._PARTITION_EOF:
+                    # End of partition event
+                    self._logger.error('topic %s [partition %d] reached end at offset %d', msg.topic(), msg.partition(),
+                                    msg.offset())
                 else:
+                    self._logger.error('Error polling event %s', msg.error().str())
+                continue
+            else:
+                json = ""
+                try:
                     json = msg.value().decode("utf-8")
                     iasValue = IasValue.fromJSon(json)
                     iasValue.readFromBsdbTStamp = datetime.now(timezone.utc)
                     iasValue.readFromBsdbTStampStr = Iso8601TStamp.datetimeToIsoTimestamp(iasValue.readFromBsdbTStamp)
+                except Exception as e:
+                    self._logger.error("Exception parsing a log [%s]", json, e)
+                    continue
+                try:
                     self.listener.iasValueReceived(iasValue)
-        except Exception:
-            traceback.print_exc()
-        finally:
-            # Close down consumer to commit final offsets.
-            self.consumer.close()
-            self.isGettingEvents = False
+                except Exception as e:
+                    self._logger.error("Exception caught from the log listener [%s]", json, e)
+        # Close the consumer to commit final offsets.
+        self.consumer.close()
+        self.isGettingEvents = False
         self._logger.info('Thread terminated')
 
     def start(self, ready_event: Event = None):

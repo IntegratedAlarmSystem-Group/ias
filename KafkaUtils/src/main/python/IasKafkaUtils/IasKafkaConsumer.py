@@ -69,7 +69,12 @@ class IasLogConsumer(Thread):
         '''
         Constructor
         
-        @param listener the listener to send logs to
+        Params:
+            listener the listener to send logs to
+            kafkabrokers: Kafka brokers
+            topic: the kafka topic to get logs from
+            clientid: Kafka client ID
+            groupid: Kafka group ID
         '''
         Thread.__init__(self)
         # The logger
@@ -147,10 +152,18 @@ class IasLogConsumer(Thread):
                                      msg.offset())
                     else:
                         self.logger.error('Error polling event %s', msg.error().str())
-                        raise Exception(msg.error().str())
+                    continue
                 else:
-                    log = msg.value().decode("utf-8")
-                    self.listener.iasLogReceived(log)
+                    try:
+                        log = msg.value().decode("utf-8")
+                    except Exception as e:
+                        self.logger.error("Error decoding log %s", str(msg.value()), e)
+                        continue
+                    try:
+                        self.listener.iasLogReceived(log)
+                    except Exception as e:
+                        self.logger.error("Exception caught from the listener of logs", e)
+                        continue
         except Exception:
             traceback.print_exc()
         finally:

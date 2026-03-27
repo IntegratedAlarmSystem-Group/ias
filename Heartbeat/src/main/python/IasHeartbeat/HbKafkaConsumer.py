@@ -84,4 +84,4 @@ class HbKafkaConsumer(IasLogListener):
         try:
             self.listener.iasHbReceived(hbm)
         except Exception as e:
-            self.logger.error("Error resturning the user defined callaback: %s", str(e))
+            self.logger.error("Error caught from the user defined callaback: %s", str(e))
