@@ -1,5 +1,5 @@
 [versions]
-scala-library = "3.7.4"
+scala-library = "3.8.2"
 scalatest = "3.2.19"
 slf4j-api = "2.0.17"
 scala-logging = "3.9.5"
