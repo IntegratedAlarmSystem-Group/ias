@@ -202,12 +202,12 @@ class KafkaValueConsumer(Thread):
                     iasValue.readFromBsdbTStamp = datetime.now(timezone.utc)
                     iasValue.readFromBsdbTStampStr = Iso8601TStamp.datetimeToIsoTimestamp(iasValue.readFromBsdbTStamp)
                 except Exception as e:
-                    self._logger.error("Exception parsing a log [%s]", json, e)
+                    self._logger.exception("Exception parsing a log [%s]", json, e)
                     continue
                 try:
                     self.listener.iasValueReceived(iasValue)
                 except Exception as e:
-                    self._logger.error("Exception caught from the log listener [%s]", json, e)
+                    self._logger.exception("Exception caught from the log listener [%s]", json, e)
         # Close the consumer to commit final offsets.
         self.consumer.close()
         self.isGettingEvents = False

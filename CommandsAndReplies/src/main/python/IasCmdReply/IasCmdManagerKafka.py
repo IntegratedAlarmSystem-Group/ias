@@ -58,7 +58,7 @@ class KafkaLogListener(IasLogListener):
             try:
                 cmd = IasCommand.fromJSon(log)
             except Exception as e:
-                self.logger.error("Error parsing a log [%s]", log, e)
+                self.logger.exception("Error parsing a log [%s]", log, e)
                 return
             if cmd.destId==self.fullRunningId or cmd.destId==IasCommand.BROADCAST_ADDRESS:
                 self.kafka_logs.put((Iso8601TStamp.now(),cmd))

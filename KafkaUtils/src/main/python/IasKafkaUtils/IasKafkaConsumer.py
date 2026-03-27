@@ -157,19 +157,18 @@ class IasLogConsumer(Thread):
                     try:
                         log = msg.value().decode("utf-8")
                     except Exception as e:
-                        self.logger.error("Error decoding log %s", str(msg.value()), e)
+                        self.logger.exception("Error decoding log %s", str(msg.value()), e)
                         continue
                     try:
                         self.listener.iasLogReceived(log)
                     except Exception as e:
-                        self.logger.error("Exception caught from the listener of logs", e)
+                        self.logger.exception("Exception caught from the listener of logs", e)
                         continue
         except Exception:
             traceback.print_exc()
-        finally:
-            # Close down consumer to commit final offsets.
-            self.consumer.close()
-            self.isGettingEvents = False
+        # Close down consumer to commit final offsets.
+        self.consumer.close()
+        self.isGettingEvents = False
         self.logger.info('Thread terminated')
 
     def start(self, waitAssigmentTimeout: float = 0) -> bool:
