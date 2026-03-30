@@ -15,7 +15,7 @@ from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 from IasKafkaUtils.KafkaValueConsumer import IasValueListener, KafkaValueConsumer
 from IasKafkaUtils.KafkaValueProducer import KafkaValueProducer
 
-class TestListener(IasValueListener):
+class ValueListener(IasValueListener):
     '''
     The listener of IasValues received from the KafkaValueConsumer. 
     It stores the received values in a list for later checks.
@@ -39,7 +39,7 @@ class TestValueProdCons():
     
     kafkabrokers = IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS
     topic = "Test-PyProdCons-Topic"
-    listener = TestListener()
+    listener = ValueListener()
     
     # JSON string to build IasValues
     jsonStr = """{"value":"0","pluginProductionTStamp":"1970-01-01T00:00:00.1",
