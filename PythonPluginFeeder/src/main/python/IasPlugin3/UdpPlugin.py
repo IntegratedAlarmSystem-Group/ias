@@ -105,9 +105,12 @@ class UdpPlugin():
         with self._lock:
             if len(self._MPointsToSend.values()) > 0:
                 self.logger.warning("There are still %d monitor points to send. They will be lost", len(self._MPointsToSend.values()))
+                self._MPointsToSend.clear()
             self._shuttedDown = True
         
-        self._sock.close()
+            self._sock.close()
+            self.logger.debug("UDP socket closed")
+
         self.logger.info('Closed.')
         
     def submit(self, mPointID, value, valueType, timestamp: datetime|None=None, operationalMode=None):
@@ -132,13 +135,11 @@ class UdpPlugin():
         if valueType is None:
             raise ValueError("The type can't be None")
         
-        
-        if self._shuttedDown:
-            self.logger.warning("The plugin is shutted down. Monitor point %s will not be sent", mPointID)
-            return
-        
         msg = JsonMsg(mPointID, value, valueType, timestamp, operationalMode)
         with self._lock:
+            if self._shuttedDown:
+                self.logger.warning("The plugin is shutted down. Monitor point %s will not be sent", mPointID)
+                return
             self._MPointsToSend[msg.mPointID]=msg
         
         self.logger.debug("Monitor point %s of type %s submitted with value %s and mode %s (%d values in queue)",
@@ -166,6 +167,15 @@ class UdpPlugin():
         with self._lock:
             valuesToSend = list(self._MPointsToSend.values())
             self._MPointsToSend.clear()
+            if self._shuttedDown:
+                if len(valuesToSend) > 0:
+                    self.logger.warning("The plugin is shutted down. %d monitor points will not be sent", len(valuesToSend))
+                return
+        
+        if len(valuesToSend) == 0:
+            self.logger.debug("No monitor points to send")
+            return
+        
         self.logger.debug("Flushing %d monitor points",len(valuesToSend))
         #
         # Send the monitor points with the UDP socket
@@ -185,5 +195,7 @@ class UdpPlugin():
         jsonStr = mPoint.dumps()
         
         # send the string to the UDP socket
-        self._sock.sendto(bytes(jsonStr, "utf-8"),(self._ip, self._port))
+        with self._lock:
+            if not self._shuttedDown:
+                self._sock.sendto(bytes(jsonStr, "utf-8"),(self._ip, self._port))
         
