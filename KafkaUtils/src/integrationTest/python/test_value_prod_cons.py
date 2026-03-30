@@ -8,6 +8,7 @@ Created on Jun 14, 2018
 '''
 import time
 import logging
+import pytest
 
 from IasLogging.log import Log
 from IasBasicTypes.IasValue import IasValue
@@ -39,7 +40,6 @@ class TestValueProdCons():
     
     kafkabrokers = IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS
     topic = "Test-PyProdCons-Topic"
-    listener = ValueListener()
     
     # JSON string to build IasValues
     jsonStr = """{"value":"0","pluginProductionTStamp":"1970-01-01T00:00:00.1",
@@ -53,6 +53,11 @@ class TestValueProdCons():
             
     fullRunningIdPrefix="(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@("
     fullRunningIdSuffix=":IASIO)"
+
+    @pytest.fixture(autouse=True)
+    def setup_every_test(self):
+        # Clear the received values list before each test
+        self.listener = ValueListener()
 
     @classmethod
     def setup_class(cls):
