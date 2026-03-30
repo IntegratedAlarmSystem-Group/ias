@@ -68,7 +68,7 @@ class JsonMsg(object):
         if valueType is None:
             raise ValueError("The type can't be None")
         self.valueType: IASType =valueType
-        JsonMsg.logger.debug("3")
+        
         if not operationalMode is None and not isinstance(operationalMode,OperationalMode):
             raise ValueError("Invalid operational mode "+operationalMode)
         self.operationalMode = operationalMode
