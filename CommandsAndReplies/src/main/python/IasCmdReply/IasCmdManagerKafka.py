@@ -1,10 +1,10 @@
 from queue import Queue, Empty
 from threading import Thread
 import time
+import logging
 
 from confluent_kafka import Producer
 
-from IASLogging.logConf import Log
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
 from IasKafkaUtils.IasKafkaConsumer import IasLogConsumer, IasLogListener
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
@@ -48,18 +48,23 @@ class KafkaLogListener(IasLogListener):
             logs: The queue to store IasCommands into
             full_run_id: the full runing ID of the process
         """
-        self.logger = Log.getLogger(__name__)
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.kafka_logs = logs
         self.fullRunningId = full_run_id
 
     def iasLogReceived(self, log: str) -> None:
-        self.logger.debug(f"Received log from BSDB: {log}")
-        cmd = IasCommand.fromJSon(log)
-        if cmd.destId==self.fullRunningId or cmd.destId==IasCommand.BROADCAST_ADDRESS:
-            self.kafka_logs.put((Iso8601TStamp.now(),cmd))
-            self.logger.debug(f"Accepted log for processing: {log}")
-        else:
-            self.logger.debug(f"Log discared as it is not for this process: {log}")
+        if log:
+            self.logger.debug(f"Received log from BSDB: {log}")
+            try:
+                cmd = IasCommand.fromJSon(log)
+            except Exception as e:
+                self.logger.exception("Error parsing a log [%s]", log, e)
+                return
+            if cmd.destId==self.fullRunningId or cmd.destId==IasCommand.BROADCAST_ADDRESS:
+                self.kafka_logs.put((Iso8601TStamp.now(),cmd))
+                self.logger.debug(f"Log accepted: {log}")
+            else:
+                self.logger.debug(f"Log discared as it is not for this process: {log}")
 
 class IasCmdManagerKafka(Thread):
     """
@@ -96,7 +101,7 @@ class IasCmdManagerKafka(Thread):
         if not listener:
             raise ValueError("The listerner of comamnds cannot be None")
         super().__init__()
-        self.logger = Log.getLogger(__name__)
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.fullRunningId = full_run_id
         self.cmd_listener = listener
         # The queue of commands received from the topic

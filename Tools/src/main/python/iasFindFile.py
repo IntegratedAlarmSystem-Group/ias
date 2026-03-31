@@ -5,9 +5,10 @@ Created on Sep 21, 2016
 @author: acaproni
 '''
 import argparse
+import logging
 
-from IASLogging.logConf import Log
-from IASTools.FileSupport import FileSupport
+from IasLogging.log import Log
+from IasTools.FileSupport import FileSupport
 
 if __name__ == '__main__':
 
@@ -19,29 +20,13 @@ if __name__ == '__main__':
         dest="fileType",
         action='store',
         default=None)
-    parser.add_argument(
-                        '-lso',
-                        '--levelStdOut',
-                        help='Logging level: Set the level of the message for the file logger, default: Debug level',
-                        action='store',
-                        choices=['info', 'debug', 'warning', 'error', 'critical'],
-                        default='info',
-                        required=False)
-    parser.add_argument(
-                        '-lcon',
-                        '--levelConsole',
-                        help='Logging level: Set the level of the message for the console logger, default: Debug level',
-                        action='store',
-                        choices=['info', 'debug', 'warning', 'error', 'critical'],
-                        default='info',
-                        required=False)
+    Log.add_log_arguments_to_parser(parser)
     parser.add_argument(
         dest='fileName',
         help='The name of the file to search for')
     args = parser.parse_args()
-    stdoutLevel=args.levelStdOut
-    consoleLevel=args.levelConsole
-    logger = Log.getLogger(__file__,stdoutLevel,consoleLevel)
+    Log.init_log_from_cmdline_args(args, __file__)
+    logger = logging.getLogger("iasFindFile")
     fileName=args.fileName
     try:
         if not args.fileType is None:

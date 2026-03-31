@@ -1,7 +1,8 @@
 package org.eso.ias.extras.info
 
 import com.typesafe.scalalogging.Logger
-import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, HelpFormatter, Options}
+import org.apache.commons.cli.{CommandLine, CommandLineParser, DefaultParser, Options}
+import org.apache.commons.cli.help.HelpFormatter
 import org.eso.ias.cdb.pojos.LogLevelDao
 import org.eso.ias.cdb.{CdbReader, CdbReaderFactory}
 import org.eso.ias.heartbeat.HeartbeatProducerType
@@ -177,6 +178,10 @@ object RunningIasTools {
     ret
   }
 
+  def printUsage(options: Options) =
+    val header = "Prints the list of running IAS tools getting their HBs"
+    HelpFormatter.builder().get().printHelp(cmdLineSyntax, header, options, "", true)
+
   /**
    * Parse the command line.
    *
@@ -191,7 +196,7 @@ object RunningIasTools {
     if (cmdLineParseAction.isFailure) {
       val e = cmdLineParseAction.asInstanceOf[Failure[Exception]].exception
       println(s"$e\n")
-      new HelpFormatter().printHelp(cmdLineSyntax, options)
+      printUsage(options)
       System.exit(-1)
     }
 
@@ -202,7 +207,7 @@ object RunningIasTools {
     val missing: Boolean = cmdLine.hasOption('m')
 
     if (help) {
-      new HelpFormatter().printHelp(cmdLineSyntax, options)
+      printUsage(options)
       System.exit(0)
     }
 
@@ -261,7 +266,7 @@ object RunningIasTools {
       case Failure(exception) =>
         logger.error("Error parsing the command line",exception)
         println()
-        new HelpFormatter().printHelp(cmdLineSyntax, options)
+        printUsage(options)
     }
   }
 }

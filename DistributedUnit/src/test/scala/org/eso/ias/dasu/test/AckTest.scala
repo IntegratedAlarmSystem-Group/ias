@@ -156,7 +156,7 @@ class AckTest extends AnyFlatSpec with OutputListener with BeforeAndAfterEach {
     // The Future to get the result
     val future: Future[List[IASValue[?]]] = Future {
       waitEvents(1, List())
-    }(ExecutionContext.fromExecutor(executorService))
+    }(using ExecutionContext.fromExecutor(executorService))
 
     inputsProvider.sendInputs(inputs)
 
@@ -172,7 +172,7 @@ class AckTest extends AnyFlatSpec with OutputListener with BeforeAndAfterEach {
     // The Future to get the result
     val future2: Future[List[IASValue[?]]] = Future {
       waitEvents(1, List())
-    }(ExecutionContext.fromExecutor(executorService))
+    }(using ExecutionContext.fromExecutor(executorService))
 
     inputsProvider.sendInputs(inputs2)
 
@@ -186,7 +186,7 @@ class AckTest extends AnyFlatSpec with OutputListener with BeforeAndAfterEach {
     // The Future to get the result
     val future3: Future[List[IASValue[?]]] = Future {
       waitEvents(1, List())
-    }(ExecutionContext.fromExecutor(executorService))
+    }(using ExecutionContext.fromExecutor(executorService))
 
     dasu.ack(Identifier(dasu.lastCalculatedOutput.get().get.fullRunningId))
 
@@ -202,7 +202,7 @@ class AckTest extends AnyFlatSpec with OutputListener with BeforeAndAfterEach {
     // The Future to get the result
     val future4: Future[List[IASValue[?]]] = Future {
       waitEvents(1, List())
-    }(ExecutionContext.fromExecutor(executorService))
+    }(using ExecutionContext.fromExecutor(executorService))
 
     inputsProvider.sendInputs(inputs4)
     val items4: List[IASValue[?]] = Await.result(future4, Duration(5, TimeUnit.SECONDS))

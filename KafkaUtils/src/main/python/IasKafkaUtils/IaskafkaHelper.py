@@ -4,10 +4,17 @@ A collection of methods to help dealing with kafka
 
 import os
 import time
+import logging
+from pathlib import Path
 
 from confluent_kafka.admin import (AdminClient, NewTopic)
 
+from IasCdb.CdbReader import CdbReader
+
 class IasKafkaHelper():
+
+    # The logger
+    logger = logging.getLogger(__name__)
 
     # Associates human readable topic names with their names in kafka
     topics = {
@@ -119,3 +126,60 @@ class IasKafkaHelper():
         for t in iter(metadata.topics.values()):
             ret.append(t.topic)
         return ret
+
+    @classmethod
+    def get_bsdb_from_cdb(cls, cdb_parent_folder: str) -> str :
+        """
+        Get the BSDB URL from the CDB
+        
+        :param cdb_parent_folder: The parend folder of the CDB
+        :type cdb_parent_folder: str
+        :return: The URL to connect to the BSDB read from the IAS CDB
+        :rtype: str
+        :raises: ValueError if the CDB parent folder is is not readable or
+                            does not exist
+        """
+        cls.logger.debug("Getting BSDB URL from IAS CDB %s", cdb_parent_folder)
+        # Check if the cdbfolder exists and contains CDB
+        cdb_path = Path(cdb_parent_folder) / "CDB"
+        if not cdb_path.is_dir():
+            raise ValueError(f"Invalid CDB folder {cdb_parent_folder}")
+        cdb_reader = CdbReader(cdb_parent_folder)
+        ias_dao = cdb_reader.get_ias()
+        return ias_dao.bsdb_url
+
+    @classmethod
+    def get_bsdb_url(cls, kafka_brokers, jCdb) -> str :
+        """
+        Get the BSDB URL from whatever is true first among:
+        - the kafka brokers passed in the command line
+        - the IAS CDB passed in the command line (jCdb)
+        - the IAS_CDB from the environment variable, if defined
+        - default
+        
+        :param kafka_brokers: kafka brokers URL from command line
+        :param jCdb: The CDB folder from the command line
+        :return: The URL to connect to the BSDB
+        :rtype: str
+        """
+        if kafka_brokers is not None:
+            cls.logger.debug("Using kafka brokers from command line")
+            return kafka_brokers
+        
+        if jCdb is not None:
+            cls.logger.debug("Using kafka brokers from IAS CDB passed in command line")
+            try:
+                return cls.get_bsdb_from_cdb(jCdb)
+            except Exception as e:
+                cls.logger.error("Invalid CDB folder from command line %s", jCdb)
+        
+        if os.getenv("IAS_CDB") is not None:
+            cls.logger.debug("Using kafka brokers from IAS_CDB environment variable")
+            # get the kafka brokers from the IAS_CDB env var, if defined
+            try:
+                return cls.get_bsdb_from_cdb(os.environ["IAS_CDB"])
+            except Exception as e:
+                cls.logger.error("Invalid CDB folder from environment %s", jCdb)
+
+        cls.logger.info("BSDB URL not found: using default %s", cls.DEFAULT_BOOTSTRAP_BROKERS)
+        return cls.DEFAULT_BOOTSTRAP_BROKERS

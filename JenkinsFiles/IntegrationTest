@@ -1,0 +1,100 @@
+pipeline {
+    agent any
+
+    options {
+        // This is required if you want to clean before build
+        skipDefaultCheckout(true)
+    }
+    
+    environment {
+        // Define your environment variables here
+        IAS_ROOT = "${env.WORKSPACE}/IasRoot"
+    }
+
+    parameters {
+        string(name: 'BRANCH_NAME', defaultValue: 'develop', description: 'Branch to test')
+    }
+
+
+    stages {
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+        stage('Create Folders') {
+            steps {
+                sh 'mkdir -p IasRoot'
+                sh 'mkdir -p ias'
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                dir('ias') {
+                  // Uses the SCM defined by the multibranch job (including branch, commit, and credentials)
+                  checkout scm
+                }
+            }
+        }
+        stage('Setup Python Env') {
+            steps {
+                sh '''
+                set -e
+                python3 -m venv venv
+                . venv/bin/activate
+                pip install --upgrade pip
+                pip install -r ias/JenkinsFiles/python-requirements.txt
+                '''
+            }
+        }
+        stage('Build') {
+            steps {
+                dir('ias') {
+                    sh '''
+                      set -e
+                      . ../venv/bin/activate
+                      ./gradlew build -x test
+                    '''
+                }
+            }
+        }
+        stage('Install') {
+            steps {
+                dir('ias') {
+                    sh '''
+                      set -e
+                      . ../venv/bin/activate
+                      ./gradlew install
+                    '''
+                }
+            }
+        }
+        stage('Run Integration Tests') {
+            steps {
+                dir('ias') {
+                  sh '''
+                      . ../venv/bin/activate
+                      echo "$IAS_ROOT"
+                      ls "$IAS_ROOT"
+                      ls "$IAS_ROOT/bin"
+                      . "$IAS_ROOT/bin/ias-bash-profile"
+                      ./gradlew --stop
+                      ./gradlew integrationTest
+                  '''
+                }
+            }
+        }
+    }
+    post {
+        always {
+            junit testResults: '**/build/integration-test-results/**/*.xml',
+              allowEmptyResults: true,        // Don't fail if no test reports exist
+              keepLongStdio: true,            // optional: keep long logs in output
+              healthScaleFactor: 1.0          // optional: set health weighting
+        }
+        failure {
+            echo 'Build failed!'
+        }
+    }
+}

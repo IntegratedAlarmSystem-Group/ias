@@ -1,5 +1,5 @@
 Name:           ias
-Version:        13.1.5
+Version:        13.2.0
 Release:        1%{?dist}
 Summary:        Install the Integrated Alarm System
 BuildArch:      noarch
@@ -12,12 +12,13 @@ Source0:        %{url}/archive/refs/tags/%{version}.tar.gz#/%{name}-%{version}.t
 # TODO Missing dependency on jep
 #
 BuildRequires:  python3-rpm-macros
-BuildRequires:  python%{python3_pkgversion}-devel >= 3.10
+BuildRequires:  python%{python3_pkgversion}-devel >= 3.11
 BuildRequires:  java-21-openjdk-devel
 BuildRequires:  javapackages-tools
 BuildRequires:	%{py3_dist confluent-kafka}
 BuildRequires:	%{py3_dist python-dateutil}
 BuildRequires:	%{py3_dist pyyaml}
+BuildRequires:	%{py3_dist pytest}
 BuildRequires:	%{py3_dist sqlalchemy}
 BuildRequires:	%{py3_dist oracledb}
 BuildRequires:	%{py3_dist pyside6}
@@ -30,7 +31,7 @@ BuildRequires:	pyside6-tools
 # to build python3_jep that is in the install folder of the IAS sources)
 BuildRequires:	%{py3_dist jep}
 
-Requires:  python3 >= 3.10
+Requires:  python3 >= 3.11
 Requires:  (java-21-openjdk-headless or java-latest-openjdk-headless)
 Requires:  %{py3_dist confluent-kafka}
 Requires:  %{py3_dist python-dateutil}
@@ -63,8 +64,10 @@ The production version of the core of the Integrated Alarm System
 %autosetup -n ias-%{version}
 
 %build
+# Build runs the unit tests too
 export JAVA_HOME=%{java_home}
 export IAS_ROOT=%{buildroot}%{_prefix}
+. ./Tools/src/main/ias-bash-profile.sh
 ./gradlew build 
 
 
@@ -72,6 +75,7 @@ export IAS_ROOT=%{buildroot}%{_prefix}
 mkdir -p %{buildroot}%{_prefix}
 export IAS_ROOT=%{buildroot}%{_prefix}
 ./gradlew install
+./gradlew clean
 # TODO permissions to be fixed in gradle build
 chmod +x %{buildroot}%{_bindir}/*
 
@@ -93,11 +97,7 @@ chmod 777 %{buildroot}%{_prefix}/logs
 chmod 777 %{buildroot}%{_prefix}/tmp
 
 %check
-# Run IAS unit tests
-export IAS_ROOT=%{buildroot}%{_prefix}
-. ./Tools/src/main/ias-bash-profile.sh
-./gradlew iasUnitTest
-./gradlew clean
+# Nothing to do: the build runs also the unit tests
 
 %files
 %dir %{_prefix}
@@ -112,6 +112,7 @@ export IAS_ROOT=%{buildroot}%{_prefix}
 %exclude %{_bindir}/*Test*
 %{_bindir}/ias-bash-profile
 %{_bindir}/ias-env
+%{_bindir}/iasAckAlarm
 %{_bindir}/iasAlarmGui
 %{_bindir}/iasBuildApiDocs
 %{_bindir}/iasCalConverterTimes
@@ -120,17 +121,17 @@ export IAS_ROOT=%{buildroot}%{_prefix}
 %{_bindir}/iasCreateModule
 %{_bindir}/iasFindFile
 %{_bindir}/iasGetClasspath
-%{_bindir}/iasLTDBConnector
 %{_bindir}/iasLogDumper
+%{_bindir}/iasLTDBConnector
 %{_bindir}/iasMailSender
 %{_bindir}/iasMonitor
+%{_bindir}/iasPushIasio
 %{_bindir}/iasRun
 %{_bindir}/iasRunningTools
 %{_bindir}/iasSendCmd
 %{_bindir}/iasSupervisor
+%{_bindir}/iasUdpPlugin
 %{_bindir}/iasWebServerSender
-%{_bindir}/startIasServices
-%{_bindir}/stopIasServices
  
 %dir %{_prefix}/config
 %{_prefix}/config/FoldersOfAModule.template
@@ -146,13 +147,14 @@ export IAS_ROOT=%{buildroot}%{_prefix}
 %{_prefix}/lib/ias*.jar
  
 %dir %{python3_sitelib}
-%{python3_sitelib}/IASApiDocs/
-%{python3_sitelib}/IASLogging/
-%{python3_sitelib}/IASTools/
+%{python3_sitelib}/IasApiDocs/
+%{python3_sitelib}/IasLogging/
+%{python3_sitelib}/IasTools/
 %{python3_sitelib}/IasAlarmGui/
 %{python3_sitelib}/IasBasicTypes/
 %{python3_sitelib}/IasCdb/
 %{python3_sitelib}/IasCmdReply/
+%{python3_sitelib}/IasExtras/
 %{python3_sitelib}/IasHeartbeat/
 %{python3_sitelib}/IasKafkaUtils/
 %{python3_sitelib}/IasPlugin2/
@@ -166,6 +168,7 @@ export IAS_ROOT=%{buildroot}%{_prefix}
 %exclude %{sysbindir}/MockUdpPlugin
 %{sysbindir}/ias-bash-profile
 %{sysbindir}/ias-env
+%{sysbindir}/iasAckAlarm
 %{sysbindir}/iasAlarmGui
 %{sysbindir}/iasBuildApiDocs
 %{sysbindir}/iasCalConverterTimes
@@ -174,22 +177,23 @@ export IAS_ROOT=%{buildroot}%{_prefix}
 %{sysbindir}/iasCreateModule
 %{sysbindir}/iasFindFile
 %{sysbindir}/iasGetClasspath
-%{sysbindir}/iasLTDBConnector
 %{sysbindir}/iasLogDumper
+%{sysbindir}/iasLTDBConnector
 %{sysbindir}/iasMailSender
 %{sysbindir}/iasMonitor
+%{sysbindir}/iasPushIasio
 %{sysbindir}/iasRun
 %{sysbindir}/iasRunningTools
 %{sysbindir}/iasSendCmd
 %{sysbindir}/iasSupervisor
+%{sysbindir}/iasUdpPlugin
 %{sysbindir}/iasWebServerSender
-%{sysbindir}/startIasServices
-%{sysbindir}/stopIasServices
  
 %license LICENSES/*
 %{syspython3_sitelib}/%{name}.pth
 
 %changelog
+* Tue Mar 31 2026 acaproni IAS 13.2.0
 * Wed Oct 15 2025 acaproni IAS v13.1.5; kafka only suggested
 * Wed Jun 11 2025 acaproni Reviewd and prepared for v13.1.4.2
 * Wed May 08 2024 acaproni Creation of the SPEC

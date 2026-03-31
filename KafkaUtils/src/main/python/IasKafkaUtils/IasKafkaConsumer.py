@@ -3,10 +3,10 @@ Consume and send to a listener, the kafka events
 published in a topic.
 '''
 import time
+import logging
 from threading import Thread, Lock
 from confluent_kafka import Consumer, KafkaError
 from confluent_kafka import TopicPartition
-from IASLogging.logConf import Log
 import traceback
 
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
@@ -41,8 +41,6 @@ class IasLogConsumer(Thread):
     at every iteration of the thread (i.e. new when data arrives or the timeout elapses)
 
     '''
-    # The logger
-    logger = Log.getLogger(__file__)
 
     # The listener to send logs to
     listener: IasLogListener = None
@@ -71,9 +69,16 @@ class IasLogConsumer(Thread):
         '''
         Constructor
         
-        @param listener the listener to send logs to
+        Params:
+            listener the listener to send logs to
+            kafkabrokers: Kafka brokers
+            topic: the kafka topic to get logs from
+            clientid: Kafka client ID
+            groupid: Kafka group ID
         '''
         Thread.__init__(self)
+        # The logger
+        self.logger = logging.getLogger(IasLogConsumer.__name__)
         if listener is None:
             raise ValueError("The listener can't be None")
 
@@ -92,11 +97,12 @@ class IasLogConsumer(Thread):
                 'group.id': groupid,
                 'enable.auto.commit': 'true',
                 'allow.auto.create.topics': 'true',
-                'auto.offset.reset': 'latest'}
+                'auto.offset.reset': 'latest',
+                'error_cb': self.onError}
 
         self.consumer = Consumer(conf, logger=self.logger)
 
-        Thread.daemon = True
+        self.daemon = True
 
         # the watch dog 
         self.watchDog = False
@@ -114,9 +120,12 @@ class IasLogConsumer(Thread):
         self.logger.info("Kafka consumer assigned to partition %s", partition)
         self.subscribed = True
 
-    def onLost(self):
-        self.logger.info("Partition lost")
+    def onLost(self, consumer, partition):
+        self.logger.info("Partition lost %s", partition)
         self.subscribed = False
+
+    def onError(self, kafka_error):
+        self.logger.error("Kafka error: %s", kafka_error.str())
 
     def isSubscribed(self) -> bool:
         """
@@ -147,16 +156,23 @@ class IasLogConsumer(Thread):
                                      msg.offset())
                     else:
                         self.logger.error('Error polling event %s', msg.error().str())
-                        raise Exception(msg.error().str())
+                    continue
                 else:
-                    log = msg.value().decode("utf-8")
-                    self.listener.iasLogReceived(log)
+                    try:
+                        log = msg.value().decode("utf-8")
+                    except Exception as e:
+                        self.logger.exception("Error decoding log %s", str(msg.value()), e)
+                        continue
+                    try:
+                        self.listener.iasLogReceived(log)
+                    except Exception as e:
+                        self.logger.exception("Exception caught from the listener of logs", e)
+                        continue
         except Exception:
             traceback.print_exc()
-        finally:
-            # Close down consumer to commit final offsets.
-            self.consumer.close()
-            self.isGettingEvents = False
+        # Close down consumer to commit final offsets.
+        self.consumer.close()
+        self.isGettingEvents = False
         self.logger.info('Thread terminated')
 
     def start(self, waitAssigmentTimeout: float = 0) -> bool:
@@ -175,7 +191,7 @@ class IasLogConsumer(Thread):
         """
          # For some reason the python client does not create the topic and this
         # function hangs forever waiting to subscribe
-        # So we force a topic reation before subscribing
+        # So we force a topic creation before subscribing
         if IasKafkaHelper.createTopic(self.topic, self.kafkaBrokers):
             self.logger.debug("Topic %s created", self.topic)
         else:
@@ -203,7 +219,7 @@ class IasLogConsumer(Thread):
             self.join(5)  # Ensure the thread exited before closing the consumer
             self.consumer.close()
         else:
-            self.logger.warning("Consumer aready terminated")
+            self.logger.warning("Consumer already terminated")
 
     def getWatchdog(self):
         """

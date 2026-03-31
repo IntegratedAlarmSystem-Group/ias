@@ -1,6 +1,11 @@
 package org.eso.ias.webserversender;
 
-import org.apache.commons.cli.*;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.help.HelpFormatter;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
@@ -665,13 +670,18 @@ public class WebServerSender implements IasioListener, AutoCloseable {
 	}
 
 	/**
-	 * Print the usage string
-	 *
-	 * @param options The options expected in the command line
+	 * Prints the usage message
+	 * 
+	 * * @param options The options expected in the command line
 	 */
 	private static void printUsage(Options options) {
-		HelpFormatter formatter = new HelpFormatter();
-		formatter.printHelp( "WebServerSender Sender-ID ", options );
+		String cmdLineSyntax = "WebServerSender Sender-ID"; 
+		String header = "Sends alarms tohrough websockets";
+		try {
+			HelpFormatter.builder().get().printHelp(cmdLineSyntax, header, options, "", true);
+		} catch (IOException e) {
+			System.err.println("Error generating the usage string: "+e.getMessage());
+		}
 	}
 
 	public static void main(String[] args) throws Exception {
@@ -681,8 +691,8 @@ public class WebServerSender implements IasioListener, AutoCloseable {
         options.addOption("h", "help", false, "Print help and exit");
         options.addOption("j", "jCdb", true, "Use the JSON Cdb at the passed path");
 		options.addOption("c", "cdbClass", true, "Use an external CDB reader with the passed class");
-		options.addOption(Option.builder("t").longOpt("filter-types").desc("Space separated list of types to send (LONG, INT, SHORT, BYTE, DOUBLE, FLOAT, BOOLEAN, CHAR, STRING, ALARM)").hasArgs().argName("TYPES").build());
-		options.addOption(Option.builder("i").longOpt("filter-ids").desc("Space separated list of ids to send").hasArgs().argName("IASIOS-IDS").build());
+		options.addOption(Option.builder("t").longOpt("filter-types").desc("Space separated list of types to send (LONG, INT, SHORT, BYTE, DOUBLE, FLOAT, BOOLEAN, CHAR, STRING, ALARM)").hasArgs().argName("TYPES").get());
+		options.addOption(Option.builder("i").longOpt("filter-ids").desc("Space separated list of ids to send").hasArgs().argName("IASIOS-IDS").get());
         options.addOption("x", "logLevel", true, "Set the log level (TRACE, DEBUG, INFO, WARN, ERROR)");
 
 		// Parse the command line

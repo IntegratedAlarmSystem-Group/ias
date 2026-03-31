@@ -6,13 +6,7 @@
 # Sourcing this sxcript is needed for IAS dedvelopment
 
 ERRORS_FOUND=0
-# Check pre-requisites
-if ! command -v java &>/dev/null;
-then
-	echo "java not found (to be installed or added to the PATH)!"
-	((ERRORS_FOUND++))
-fi
-
+# Ensure IAS_ROOT is defined
 if [ -z "$IAS_ROOT" ]; then
 	echo "IAS_ROOT is not defined!"
 	((ERRORS_FOUND++))

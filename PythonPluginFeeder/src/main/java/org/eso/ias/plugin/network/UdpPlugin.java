@@ -1,7 +1,13 @@
 package org.eso.ias.plugin.network;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.cli.*;
+
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.help.HelpFormatter;
 import org.eso.ias.heartbeat.HbProducer;
 import org.eso.ias.plugin.Plugin;
 import org.eso.ias.plugin.PluginException;
@@ -19,10 +25,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
 import java.util.Objects;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -78,7 +86,7 @@ public class UdpPlugin implements Runnable {
 	/**
 	 * The logger
 	 */
-	private static final Logger logger = LoggerFactory.getLogger(UdpPlugin.class);
+	private final Logger logger = LoggerFactory.getLogger(UdpPlugin.class);
 	
 	/**
 	 * The latch to be notified about termination
@@ -151,8 +159,15 @@ public class UdpPlugin implements Runnable {
 	 * @param options The options expected in the command line
 	 */
 	private static void printUsage(Options options) {
-		HelpFormatter formatter = new HelpFormatter();
-		formatter.printHelp( "UdpPlugin", options );
+		HelpFormatter.Builder builder = HelpFormatter.builder();
+		HelpFormatter formatter = builder.get();
+		String header = "Get UDPs from the python UdpPlugin and sends them to the IAS BSDB";
+		String footer = "";
+            try {
+                formatter.printHelp( "UdpPlugin", header, options, footer, true );
+            } catch (IOException ex) {
+                System.err.println("ERROR: "+UdpPlugin.class.getName()+": "+ex.getMessage());
+            }
 	}
 
 	/**
@@ -163,16 +178,36 @@ public class UdpPlugin implements Runnable {
 		Options options = new Options();
 		options.addOption("u","uport",true,"UDP port");
 		options.addOption("c","config-file", true,"Plugin configuration file");
+		options.addOption("x", "logLevel", true, "Optional: sets the log level (logback only) to one of TRACE, DEBUG, INFO, WARN, ERROR");
 		
 		CommandLineParser parser = new DefaultParser();
 		CommandLine cmd=null;
 		try { 
 			cmd = parser.parse(options, args);
 		} catch (ParseException pe) {
-			logger.error("Error parsing the comamnd line: "+pe.getMessage());
+			System.err.println("Error parsing the comamnd line: "+pe.getMessage());
 			printUsage(options);
 			System.exit(-1);
 		}
+
+		if (cmd.hasOption("x")) {
+			String logLevelStr = cmd.getOptionValue("x").toUpperCase();
+			List<String> listOfLevels = List.of("TRACE", "DEBUG", "INFO", "WARN", "ERROR");
+			if (!listOfLevels.contains(logLevelStr)) {
+				System.err.println("Unrecognized log level "+logLevelStr);
+				System.exit(-1);
+			}
+			try {
+				ch.qos.logback.classic.Level logLevel = ch.qos.logback.classic.Level.toLevel(logLevelStr);
+				ch.qos.logback.classic.Logger log = (ch.qos.logback.classic.Logger)LoggerFactory.getLogger("org.eso.ias.plugin");
+				log.setLevel(logLevel);
+			} catch (Exception e) {
+				System.err.println("Error setting the lov level (only logback supported): "+e.getMessage());
+				e.printStackTrace(System.err);
+			}
+			
+		}
+		Logger logger = LoggerFactory.getLogger(UdpPlugin.class);
 		
 		if (!cmd.hasOption("u")) {
 			logger.error("UDP port missing");
@@ -182,7 +217,7 @@ public class UdpPlugin implements Runnable {
 		int udpPort=0;
 		try {
 			udpPort = Integer.parseInt(cmd.getOptionValue("u"));
-			UdpPlugin.logger.info("UDP port {}",udpPort);
+			logger.info("UDP port {}",udpPort);
 		} catch (Exception e) {
 			logger.error("Invalid UDP port {}",cmd.getOptionValue("u"));
 			printUsage(options);
@@ -218,23 +253,23 @@ public class UdpPlugin implements Runnable {
 		try {
 			udpPlugin = new UdpPlugin(pluginConfigDao, udpPort);
 		} catch (Exception e) {
-			UdpPlugin.logger.error("The UdpPlugin failed to build",e);
+			logger.error("The UdpPlugin failed to build",e);
 			System.exit(-6);
 		}
 		
 		CountDownLatch latch = null;
 		try {
 			latch = udpPlugin.setUp();
-		} catch(PluginException pe) {
-			UdpPlugin.logger.error("The UdpPlugin failed to start",pe);
+		} catch(Exception pe) {
+			logger.error("The UdpPlugin failed to start",pe);
 			System.exit(-7);
 		}
 		try {
 			latch.await();
 		} catch (InterruptedException ie) {
-			UdpPlugin.logger.error("UdpPlugin interrupted",ie);
+			logger.error("UdpPlugin interrupted",ie);
 		}
-		UdpPlugin.logger.info("Done.");
+		logger.info("Done.");
 		
 	}
 

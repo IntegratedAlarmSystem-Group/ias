@@ -1,11 +1,12 @@
-from confluent_kafka import Producer
 from queue import Queue, Empty
 from typing import List, Dict
 import time
 import traceback
+import logging
+
+from confluent_kafka import Producer
 
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
-from IASLogging.logConf import Log
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 from IasKafkaUtils.IasKafkaConsumer import IasLogConsumer, IasLogListener
 from IasCmdReply.IasCommandType import IasCommandType
@@ -24,7 +25,7 @@ class IasCommandSender(IasLogListener):
 
     """
 
-    def __init__(self, sender_full_running_id: str, sender_id: str, brokers: str, string_producer: Producer|None=None):
+    def __init__(self, sender_full_running_id: str, bsdb_sender_id: str, brokers: str, string_producer: Producer|None=None):
         """
         Constructor
 
@@ -32,17 +33,17 @@ class IasCommandSender(IasLogListener):
             senderFullRuningId The full runing id of the sender
             stringProducer The string producer to publish commands
                            (if None builds a new producer)
-            senderId The id of the sender
+            senderId The id of the sender (i.e. the BSDB client.id of the Producer and the Consumer)
             brokers URL of kafka brokers
         """
         if not sender_full_running_id:
             raise ValueError("Invalid null/empty full running ID of the sender")
-        self.logger = Log.getLogger(__name__)
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.sender_full_running_id = sender_full_running_id
-        self.sender_id = sender_id
+        self.bsdb_sender_id = bsdb_sender_id
 
         # Kafka producer of comands
-        conf = { 'bootstrap.servers': brokers, 'client.id': sender_id}
+        conf = { 'bootstrap.servers': brokers, 'client.id': bsdb_sender_id}
         if string_producer is None:
             self.cmd_producer = Producer(conf)
         else:
@@ -53,8 +54,8 @@ class IasCommandSender(IasLogListener):
             listener=self,
             kafkabrokers=brokers,
             topic=IasKafkaHelper.topics['reply'],
-            clientid=sender_id,
-            groupid=sender_id)
+            clientid=bsdb_sender_id,
+            groupid=bsdb_sender_id)
         
         self.cmd_id = 0
         self.request_reply_in_progress = False

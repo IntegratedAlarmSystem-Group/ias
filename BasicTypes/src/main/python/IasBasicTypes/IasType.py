@@ -3,11 +3,11 @@ Created on May 10, 2018
 
 @author: acaproni
 '''
-from enum import Enum
+from enum import Enum, unique
 
 from IasBasicTypes.Alarm import Alarm
 
-
+@unique
 class IASType(Enum):
     '''
     The supported data types 
@@ -92,7 +92,7 @@ class IASType(Enum):
                       IASType.DOUBLE or DOUBLE 
         @return the type represented by the passed a string
         '''
-        if not str:
+        if not typeString:
             raise ValueError("Invalid string representation of a type")
         
         temp = str(typeString)

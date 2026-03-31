@@ -12,6 +12,8 @@ import org.eso.ias.plugin.PluginException;
  */
 public class FilterException extends PluginException  {
 
+	private static final long serialVersionUID = 1L;
+
 	public FilterException() {
 	}
 

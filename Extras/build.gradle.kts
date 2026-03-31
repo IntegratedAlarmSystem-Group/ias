@@ -5,15 +5,11 @@ plugins {
 }
 
 dependencies {
-    val g = project.gradle
-    if (g is ExtensionAware) {
-      val extension = g as ExtensionAware
-      implementation(extension.extra["scala-library"].toString())
-      implementation(extension.extra["scala-logging"].toString())
-      implementation(extension.extra["kafka-clients"].toString())
-      implementation(extension.extra["commons-cli"].toString())
-      implementation(extension.extra["logback-classic"].toString())
-    }
+    implementation(libs.scala.library)
+    implementation(libs.scala.logging)
+    implementation(libs.kafka.clients)
+    implementation(libs.commons.cli)
+    implementation(libs.logback.classic)
 
     implementation(project(":BasicTypes"))
     implementation(project(":Cdb"))

@@ -3,12 +3,15 @@ package org.eso.ias.plugin.test.publisher;
 import org.eso.ias.plugin.ValueToSend;
 import org.eso.ias.plugin.publisher.BufferedMonitoredSystemData;
 import org.eso.ias.plugin.publisher.BufferedPublisherBase;
+import org.eso.ias.plugin.publisher.PublisherBase;
 import org.eso.ias.plugin.publisher.PublisherException;
 import org.eso.ias.plugin.publisher.impl.BufferedListenerPublisher;
 import org.eso.ias.plugin.publisher.impl.BufferedListenerPublisher.PublisherEventsListener;
 import org.eso.ias.plugin.publisher.impl.ListenerPublisher;
 import org.eso.ias.plugin.thread.PluginThreadFactory;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -93,6 +96,17 @@ public class PublisherMaxBufferSizeTest implements PublisherEventsListener {
 			expectedValues.countDown(); 
 		}
 	}
+
+	@BeforeAll
+	public static void beforeAll() {
+		// Set the max buffer size property before any tests run
+		System.setProperty(PublisherBase.MAX_BUFFER_SIZE_PROPNAME, "10");
+	}
+
+	@AfterAll
+	public static void afterAll() {
+    	System.clearProperty(PublisherBase.MAX_BUFFER_SIZE_PROPNAME);
+	}
 	
 	@BeforeEach
 	public void setUp() throws Exception {
@@ -109,7 +123,9 @@ public class PublisherMaxBufferSizeTest implements PublisherEventsListener {
 	@AfterEach
 	public void tearDown() throws PublisherException {
 		logger.debug("Releasing resource");
-		publisher.tearDown();
+		if (publisher!=null) { // In case of failure in setUp
+			publisher.tearDown();
+		}
 
 	}
 	

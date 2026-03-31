@@ -1,0 +1,6 @@
+confluent-kafka
+pytest
+python-dateutil
+PySide6
+PyYAML
+jep

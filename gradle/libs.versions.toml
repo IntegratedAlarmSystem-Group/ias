@@ -1,0 +1,31 @@
+[versions]
+scala-library = "3.7.4"
+scalatest = "3.2.19"
+slf4j-api = "2.0.17"
+scala-logging = "3.9.5"
+logback-classic = "1.4.11"
+jackson-databind = "2.17.0"
+jep = "4.3.1"
+junit-bom = "5.13.1"
+junit-jupiter = "5.13.1"
+commons-cli = "1.11.0"
+kafka = "4.1.2"
+hibernate-jpa = "1.0.0.Final"
+
+[libraries]
+scala-library = { module = "org.scala-lang:scala3-library_3", version.ref = "scala-library" }
+scalatest = { module = "org.scalatest:scalatest_3", version.ref = "scalatest" }
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j-api" }
+scala-logging = { module = "com.typesafe.scala-logging:scala-logging_3", version.ref = "scala-logging" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback-classic" }
+jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson-databind" }
+jep = { module = "black.ninia:jep", version.ref = "jep" }
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit-bom" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+junit-platform-console = { module = "org.junit.platform:junit-platform-console"}
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher"}
+commons-cli = { module = "commons-cli:commons-cli", version.ref = "commons-cli" }
+kafka-clients = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka" }
+kafka-streams = { module = "org.apache.kafka:kafka-streams", version.ref = "kafka" }
+kafka-connect-api = { module = "org.apache.kafka:connect-api", version.ref = "kafka" }
+hibernate-jpa = { module = "org.hibernate.javax.persistence:hibernate-jpa-2.1-api", version.ref = "hibernate-jpa" }

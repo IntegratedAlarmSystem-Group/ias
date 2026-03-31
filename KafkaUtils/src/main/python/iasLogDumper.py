@@ -9,6 +9,7 @@ Created on Apr 11, 2024
 import argparse
 import sys
 import signal
+from IasLogging.log import Log
 from IasKafkaUtils.IasKafkaConsumer import IasLogListener, IasLogConsumer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 from threading import Lock
@@ -71,7 +72,7 @@ def interrupt_handler(signum, frame):
     termination_lock.release()
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Dumps kafla logs published in the BSDB or a custom topic. Unless -m or -o is set, the tool must be terminated with CTRL=C')
+    parser = argparse.ArgumentParser(description='Dumps kafla logs published in the BSDB or a custom topic. Unless -m or -o is set, the tool must be terminated with CTRL-C')
     parser.add_argument(
                         '-k',
                         '--kafkabrokers',
@@ -95,7 +96,7 @@ if __name__ == '__main__':
     parser.add_argument(
                         '-c',
                         '--clientid',
-                        help='Kafka group ID (default iasLogDumper)',
+                        help='Kafka client ID (default iasLogDumper)',
                         action='store',
                         default="iasLogDumper-client",
                         required=False)
@@ -128,8 +129,10 @@ if __name__ == '__main__':
                         action='store_true',
                         default=False,
                         required=False)
+    Log.add_log_arguments_to_parser(parser)
     
     args = parser.parse_args()
+    Log.init_log_from_cmdline_args(args, __file__)
     if args.bsdb_topic is None and args.topic_name is None:
         print("ERROR: one option between topic_name and bsdb_topic must be set in the command line")
         sys.exit(-1)

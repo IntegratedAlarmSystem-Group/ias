@@ -418,7 +418,7 @@ public class KafkaStringsConsumer implements Runnable, ConsumerRebalanceListener
                 consumer.seekToEnd(new ArrayList<>());
             }
         } else {
-            KafkaStringsConsumer.logger.info("Consumer [{}]: no new partitions assigned", consumerID);
+            KafkaStringsConsumer.logger.info("Consumer [{}]: no new partitions assigned for topic {}", consumerID, topicName);
         }
     }
 
@@ -546,7 +546,7 @@ public class KafkaStringsConsumer implements Runnable, ConsumerRebalanceListener
     /**
      * Waits until the consumer is ready or a timeout elapses.
      *
-     * This methods waits until the consumer is ready (delegating to {@link #isReady()})or a timeout elapses.
+     * This methods waits until the consumer is ready (delegating to {@link #isReady()}) or a timeout elapses.
      * If at the end of the timeout the consumer is not yet ready, this method only logs a warning
      * as we do not want to block the process in case the consumer becomes ready after for whatever reason.
      * But still the situation is probably not normal and we want to log the event.
@@ -579,9 +579,9 @@ public class KafkaStringsConsumer implements Runnable, ConsumerRebalanceListener
             }
         }
         if (isReady()) {
-            logger.debug("The consumer [{}] is ready", consumerID);
+            logger.debug("The consumer [{}] is ready to get logs from the {} topic", consumerID, topicName);
         } else {
-        logger.warn("The consumer [{}] if not yet ready at the end of the timeout.", consumerID);
+            logger.error("The consumer [{}] is NOT yet ready to get logs from the topic {} at the end of the timeout.", consumerID, topicName);
         }
     }
 }

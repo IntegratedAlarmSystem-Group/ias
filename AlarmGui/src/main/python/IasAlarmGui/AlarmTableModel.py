@@ -1,13 +1,12 @@
 # This Python file uses the following encoding: utf-8
 
-import threading, time
+import threading, logging
 
-from PySide6.QtCore import QAbstractTableModel
+from PySide6.QtCore import QAbstractTableModel, QTimer
 from PySide6.QtCore import Qt, QModelIndex
 from PySide6.QtWidgets import QTableView
 from PySide6.QtGui import QColor
 
-from IASLogging.logConf import Log
 from IasKafkaUtils.KafkaValueConsumer import IasValueListener
 from IasBasicTypes.IasValue import IasValue
 from IasBasicTypes.IasType import IASType
@@ -15,14 +14,13 @@ from IasBasicTypes.Priority import Priority
 from IasBasicTypes.AlarmState import AlarmState
 from IasBasicTypes.Alarm import Alarm
 
-
-
 class AlarmTableModel(QAbstractTableModel, IasValueListener):
     """
     The table model of alarms
 
     Alarms are collected for 1 second then they are flushed in table
     to avoid refreshing too often.
+    Flushing of alarms is done in flush_alarms that is run by a QTimer.
     """
     def __init__(self, view: QTableView):
         """
@@ -30,13 +28,10 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
         """
         super().__init__()
 
-        self._logger = Log.getLogger(__file__)
+        self._logger = logging.getLogger(self.__class__.__name__)
 
         # The table view widget that display the alarms
         self.view = view
-
-        # The period to update the table
-        self.timeout = 1
 
         # The mutex to protect critical section
         self.lock = threading.RLock()
@@ -56,10 +51,6 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
         # the header of the col in the table
         self.header = [ "State", "Priority", "Identifier" ]
 
-        # The thread that update the table
-        self.thread = threading.Thread(daemon=True, target=self.flush_alarms)
-        self.thread.start()
-
         # Set to True when the GUI is paused i.e. the table must not be update
         # and the alarms saved in a temporary buffer until resumed
         self.paused = False
@@ -69,6 +60,14 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
 
         # True if the model automatically removes cleared alarms the table
         self.autoremove_cleared=False
+
+        # Start the timer to update the table
+        
+        self.timer = QTimer()
+        self.timer.setInterval(1000)
+        self.timer.timeout.connect(self.flush_alarms)
+        self.timer.start()
+
 
     def get_priority(self, ias_value: IasValue) -> Priority:
         """
@@ -206,33 +205,32 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
 
         New alarms are inserted in the head so they move on top of the table
         """
-        self._logger.debug("Table updater thread started")
-        while True:
-            time.sleep(self.timeout)
-            with self.lock:
-                if len(self.received_alarms)==0:
-                    continue
-                for alarm in self.received_alarms:
-                    pos = self.get_index_of_alarm(alarm)
-                    if pos==-1:
-                        # Alarm not already in the list: inserted in the head of the list
-                        # unless set and acked plus autoremove is set in the toolbar
-                        if not (self.autoremove_cleared and self.cleared_and_acked(alarm)):
-                            self.alarms.insert(0,alarm)
-                            self.layoutChanged.emit()
+        self._logger.debug("Flushing alarms in table")
+        with self.lock:
+            if len(self.received_alarms)==0:
+                return
+            for alarm in self.received_alarms:
+                pos = self.get_index_of_alarm(alarm)
+                if pos==-1:
+                    # Alarm not already in the list: inserted in the head of the list
+                    # unless set and acked plus autoremove is set in the toolbar
+                    if not (self.autoremove_cleared and self.cleared_and_acked(alarm)):
+                        self.beginInsertRows(QModelIndex(), 0, 0)
+                        self.alarms.insert(0,alarm)
+                        self.endInsertRows()
+                else:
+                    # The alarm is already in the list so its state must be updated
+                    # or removed if autoremove has been selected in the toolbar
+                    # and the alarm is acked and clear
+                    if self.autoremove_cleared and self.cleared_and_acked(alarm):
+                        self.removeRows([pos])
                     else:
-                        # The alarm is already in the list so its state must be updated
-                        # or removed if autoremove has been selected in the toolbar
-                        # and the alarm is acked and clear
-                        if self.autoremove_cleared and self.cleared_and_acked(alarm):
-                            self.removeRows([pos])
-                        else:
-                            self.alarms[pos]=alarm
-                            self.setData(self.createIndex(pos, 0),alarm)
-                            self.setData(self.createIndex(pos, 1),alarm)
-                            self.setData(self.createIndex(pos, 2),alarm)
-                self.received_alarms.clear()
-        self._logger.debug("Table updater thread terminated")
+                        self.alarms[pos]=alarm
+                        self.setData(self.createIndex(pos, 0),alarm)
+                        self.setData(self.createIndex(pos, 1),alarm)
+                        self.setData(self.createIndex(pos, 2),alarm)
+            self.received_alarms.clear()
+        self._logger.info("Alarms flushed in the table")
 
     def pause(self, enable: bool) -> None:
         """

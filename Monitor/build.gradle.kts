@@ -6,18 +6,13 @@ plugins {
 }
 
 dependencies {
-    val g = project.gradle
-    if (g is ExtensionAware) {
-      val extension = g as ExtensionAware
-      implementation(extension.extra["scala-library"].toString())
-      implementation(extension.extra["scalatest"].toString())
-      implementation(extension.extra["scala-logging"].toString())
-      implementation(extension.extra["logback-classic"].toString())
-      implementation(extension.extra["jackson-databind"].toString())
-      implementation(extension.extra["commons-cli"].toString())
-      implementation(extension.extra["hibernate-jpa"].toString())
-      implementation(extension.extra["kafka-clients"].toString())
-    }
+    implementation(libs.scala.library)
+    implementation(libs.scala.logging)
+    implementation(libs.logback.classic)
+    implementation(libs.jackson.databind)
+    implementation(libs.commons.cli)
+    implementation(libs.hibernate.jpa)
+    implementation(libs.kafka.clients)
     
 
     implementation(project(":Tools"))
@@ -26,6 +21,10 @@ dependencies {
     implementation(project(":KafkaUtils"))
     implementation(project(":CommandsAndReplies"))
     implementation(project(":Heartbeat"))
+
+    testImplementation(platform(libs.junit.bom))
+    testImplementation(libs.junit.jupiter)
+    testImplementation(libs.scalatest)
 
 }
 
@@ -45,4 +44,6 @@ sourceSets {
     }
 }
 
-
+tasks.test {
+            useJUnitPlatform()
+}

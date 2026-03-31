@@ -1,6 +1,6 @@
+import logging
 from IasKafkaUtils.IasKafkaConsumer import IasLogListener, IasLogConsumer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
-from IASLogging.logConf import Log
 from IasHeartbeat.HearbeatMessage import HeartbeatMessage
 
 class HeartbeatListener:
@@ -37,7 +37,7 @@ class HbKafkaConsumer(IasLogListener):
             groupid: the group id for the kafka consumer
             listener: the listener to be notified of ne HBs
         """
-        self.logger = Log.getLogger(__name__)
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.listener = listener
         self.log_consumer = IasLogConsumer(self,
                                            kafkabrokers,
@@ -79,9 +79,9 @@ class HbKafkaConsumer(IasLogListener):
         try:
             hbm = HeartbeatMessage.fromJSON(log)
         except Exception as e:
-            self.logger.error("Exception caught while parsing the JSON HB %s: %s", log, str(e))
+            self.logger.exception("Exception caught while parsing the JSON HB %s", log, e)
             return
         try:
             self.listener.iasHbReceived(hbm)
         except Exception as e:
-            self.logger.error("Error resturning the user defined callaback: %s", str(e))
+            self.logger.exception("Error caught from the user defined callaback: %s", e)
