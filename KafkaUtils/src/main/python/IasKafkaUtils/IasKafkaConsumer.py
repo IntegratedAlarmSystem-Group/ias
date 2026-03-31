@@ -97,7 +97,8 @@ class IasLogConsumer(Thread):
                 'group.id': groupid,
                 'enable.auto.commit': 'true',
                 'allow.auto.create.topics': 'true',
-                'auto.offset.reset': 'latest'}
+                'auto.offset.reset': 'latest',
+                'error_cb': self.onError}
 
         self.consumer = Consumer(conf, logger=self.logger)
 
@@ -122,6 +123,9 @@ class IasLogConsumer(Thread):
     def onLost(self, consumer, partition):
         self.logger.info("Partition lost %s", partition)
         self.subscribed = False
+
+    def onError(self, kafka_error):
+        self.logger.error("Kafka error: %s", kafka_error.str())
 
     def isSubscribed(self) -> bool:
         """

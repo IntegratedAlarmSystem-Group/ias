@@ -8,6 +8,7 @@ import json
 from datetime import datetime
 from datetime import timezone
 import dateutil.parser
+import logging
 
 from IasBasicTypes.IasType import IASType
 from IasBasicTypes.OperationalMode import OperationalMode
@@ -30,8 +31,10 @@ class JsonMsg(object):
     valueJsonParamName = "value"
     valueTypeJsonParamName = "valueType"
     operationaModeParamName = "operMode"
+
+    logger = logging.getLogger(__name__)
         
-    def __init__(self, mpointId, value, valueType: IASType, timestamp=datetime.now(timezone.utc), operationalMode=None):
+    def __init__(self, mpointId: str, value, valueType: IASType, timestamp: datetime|None=None, operationalMode:OperationalMode|None=None):
         '''
         Constructor
         
@@ -40,77 +43,62 @@ class JsonMsg(object):
         @param valueType: (IASType) the type of the value
         @param timestamp: (datetime) the point in time when the value 
                           has been read from the monitored system; 
-                          if not provided, it is set to the actual time
-                          It can be either datetime or a ISO-8601 string
+                          if None, the timestamp is set to the actual time
         @param operationalMode: (OperationalMode) optionally sets a operational mode 
                                 for the passed monitor point
         '''
-        
+        JsonMsg.logger.debug("Creating JsonMsg with mPointId %s, value %s, valueType %s, timestamp %s and operational mode %s",
+                             mpointId, value, valueType, timestamp, operationalMode)
         
         if not mpointId:
             raise ValueError("Invalid empty ID")
         self.mPointID=str(mpointId) 
         
         if timestamp is None:
-            raise ValueError("The timestamp can't be None")
+            timestamp = datetime.now(timezone.utc)
         
         if not isinstance(timestamp, datetime):
-            # Is it a ISO 8601 string?
-            temp = str(timestamp)
-            if (self.checkStringIsoTimestamp(temp)):
-                self.timestamp=temp
-            else:
-                raise ValueError("The timestamp must be of type datetime (UCT) or an ISO 8601 string")
-        else: 
-            self.timestamp=self.isoTimestamp(timestamp)
+            raise ValueError("The timestamp must be of type datetime (UCT) or None")
         
-        if value is None or value=="":
+        self.timestamp: str = self.isoTimestamp(timestamp)
+        if value is None:
             raise ValueError("Invalid empty value")
         self.value=value
        
-
+        if valueType is None:
+            raise ValueError("The type can't be None")
         self.valueType: IASType =valueType
         
         if not operationalMode is None and not isinstance(operationalMode,OperationalMode):
             raise ValueError("Invalid operational mode "+operationalMode)
         self.operationalMode = operationalMode
-    
-    
-    def checkStringIsoTimestamp(self,tStamp):
-        '''
-        Check if the passed string represent a ISO timestamp
+
+        JsonMsg.logger.debug("JsonMsg created with mPointId %s, value %s, valueType %s, timestamp %s and operational mode %s",
+                             self.mPointID, self.value, self.valueType, self.timestamp, self.operationalMode)
         
-        @param tStamp the string representing a ISO timestamp
-        @return True if tStamp is a ISO 8601 timestamp,
-                False otherwise
-        '''
-        try:
-            dateutil.parser.parse(tStamp)
-            return True
-        except:
-            return False
-            
-        
-    def isoTimestamp(self, tStamp):
+    def isoTimestamp(self, tStamp: datetime) -> str:
         '''
         Format the passed timestamp as ISO.
         
-        The formatting is needed because datetime is formatted 
-        contains microseconds but we use milliseconds precision
+        The formatting is needed because datetime  
+        contains microseconds while ISO 8601 has milliseconds precision
         
-        @param the datetime to transfor as ISO 8601
+        @param the datetime to convert to ISO 8601
+        @return The ISO 8601 string representation of the passed datetime
         '''
         
         # isoTStamp in microseconds like 2018-05-09T16:15:05.775444
         isoTStamp=tStamp.isoformat() 
         
-        # split the timestamop in 2 parts like
+        # split the timestamp in 2 parts like
         # ['2018-05-09T16:15:05', '775444']
+        if not '.' in isoTStamp:
+            isoTStamp=isoTStamp+".000000"
         splittedTStamp = isoTStamp.split('.')
         milliseconds = splittedTStamp[1][:3]
         return splittedTStamp[0]+"."+milliseconds
         
-    def dumps(self):
+    def dumps(self) -> str:
         '''
         Return the JSON string to send to the java plugin 
         '''
@@ -153,11 +141,13 @@ class JsonMsg(object):
             mode = OperationalMode.fromString(obj[JsonMsg.operationaModeParamName])
         else:
             mode = None
+
+        tstamp = dateutil.parser.isoparse(obj[JsonMsg.tStampJsonParamName])
         
         return JsonMsg(
             obj[JsonMsg.idJsonParamName],
             value,
             mPointType,
-            obj[JsonMsg.tStampJsonParamName],
+            tstamp,
             mode)
         

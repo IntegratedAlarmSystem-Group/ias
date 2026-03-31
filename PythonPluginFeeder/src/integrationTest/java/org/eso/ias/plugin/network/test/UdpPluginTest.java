@@ -1,5 +1,11 @@
 package org.eso.ias.plugin.network.test;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 import org.eso.ias.heartbeat.HbProducer;
 import org.eso.ias.heartbeat.publisher.HbLogProducer;
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer;
@@ -16,18 +22,13 @@ import org.eso.ias.types.Alarm;
 import org.eso.ias.types.OperationalMode;
 import org.eso.ias.types.Priority;
 import org.junit.jupiter.api.AfterEach;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test the {@link UdpPlugin} closing the loop from
@@ -132,10 +133,10 @@ public class UdpPluginTest implements PublisherEventsListener {
 	public void test() throws Exception {
 		logger.debug("Leaving the plugin time to run");
 		udpPluginLatch.await(30, TimeUnit.SECONDS);
-		logger.debug("test terminated");
+		logger.debug("Test started");
 
-		// Check if the python process terminated without errors
-		assertFalse(proc.isAlive(),"Python plugin still running");
+		// Wait until the python process terminates
+		assertTrue(proc.waitFor(15, TimeUnit.SECONDS));
 		assertEquals(0,proc.exitValue(),"Python plugin terminated with error "+proc.exitValue());
 		
 		assertEquals(8, publishedMPoints.size());

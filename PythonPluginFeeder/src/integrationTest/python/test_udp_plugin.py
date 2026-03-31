@@ -8,6 +8,7 @@ Created on May 9, 2018
 import socket
 import time
 import logging
+import datetime
 from threading import Thread
 from IasPlugin3.UdpPlugin import UdpPlugin
 from IasPlugin3.JsonMsg import JsonMsg
@@ -93,12 +94,14 @@ class TestUdpPlugin():
         '''
         Test that the plugin effectively sent what has been submitted
         '''
+        tstamp = datetime.datetime(2026, 3, 1, 11, 15, 7)
         self.plugin.start()
         self.plugin.submit("MPoint-ID", 2.3, IASType.DOUBLE)
         self.plugin.submit("MPoint-IDOpMode", 5, IASType.INT,operationalMode=OperationalMode.MAINTENANCE)
         self.plugin.submit("MPoint-Alarm", Alarm.get_initial_alarmstate(Priority.CRITICAL).set(), IASType.ALARM,operationalMode=OperationalMode.DEGRADED)
+        self.plugin.submit("MPoint-TstampTest", 15, IASType.LONG, timestamp=tstamp)
         time.sleep(2*UdpPlugin.SENDING_TIME_INTERVAL)
-        assert len(self.receiver.msgReceived) == 3
+        assert len(self.receiver.msgReceived) == 4
         dict = {}
         for jmsg in self.receiver.msgReceived:
             msg = JsonMsg.parse(jmsg)
@@ -122,3 +125,10 @@ class TestUdpPlugin():
         assert m.value == Alarm.get_initial_alarmstate(Priority.CRITICAL).set()
         assert m.valueType == IASType.ALARM
         assert m.operationalMode == OperationalMode.DEGRADED
+
+        m = dict["MPoint-TstampTest"]
+        assert m.mPointID == "MPoint-TstampTest"
+        assert m.value == 15
+        assert m.valueType == IASType.LONG
+        assert m.operationalMode is None
+        assert m.timestamp == '2026-03-01T11:15:07.000'
