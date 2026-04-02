@@ -56,11 +56,12 @@ jobs:
           path: ias-root.tgz
           retention-days: 7
           include-hidden-files: true
-      - name: Upload unit test output
+      - name: Upload unit tests output
         uses: actions/upload-artifact@v4
+        if: always()   # ensures upload even if tests fail
         with:
-          name: unit-tests.out
-          path: $HOME/unit-tests.out
+          name: unit-test-results
+          path: $HOME/GIT/**/*.xml
           retention-days: 7
           include-hidden-files: true
       - name: Export IAS_ROOT as step output
