@@ -38,7 +38,8 @@ jobs:
       - name: Clean
         working-directory: GIT
         run: ./gradlew clean
-      - name: Build and unit test IAS with gradlew
+      - name: Build the IAS and run unit tests with gradlew
+        env: JEP_JVM: ${{ env.JAVA_HOME }}/lib/server/libjvm.so          
         working-directory: GIT
         run: ./gradlew build
       - name: Install IAS in IAS_ROOT
