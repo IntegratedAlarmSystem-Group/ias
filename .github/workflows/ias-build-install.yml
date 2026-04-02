@@ -14,7 +14,6 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-      
       - name: Verify Java
         run: |
           echo JAVA_HOME=$JAVA_HOME
@@ -39,7 +38,8 @@ jobs:
         working-directory: GIT
         run: ./gradlew clean
       - name: Build the IAS and run unit tests with gradlew
-        env: JEP_JVM: ${{ env.JAVA_HOME }}/lib/server/libjvm.so          
+        env:
+          JEP_JVM: ${{ env.JAVA_HOME }}/lib/server/libjvm.so          
         working-directory: GIT
         run: ./gradlew build
       - name: Install IAS in IAS_ROOT
