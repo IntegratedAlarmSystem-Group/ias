@@ -61,7 +61,7 @@ jobs:
         if: always()   # ensures upload even if tests fail
         with:
           name: unit-test-results
-          path: $GITHUB_WORKSPACE/**/*.xml
+          path: "**/*.xml"
           retention-days: 7
           include-hidden-files: true
       - name: Export IAS_ROOT as step output
