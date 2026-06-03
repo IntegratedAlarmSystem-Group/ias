@@ -1,5 +1,5 @@
 Name:           ias
-Version:        13.2.0
+Version:        13.2
 Release:        1%{?dist}
 Summary:        Install the Integrated Alarm System
 BuildArch:      noarch
@@ -64,15 +64,16 @@ The production version of the core of the Integrated Alarm System
 %autosetup -n ias-%{version}
 
 %build
+mkdir -p %{buildroot}%{_prefix}
 # Build runs the unit tests too
 export JAVA_HOME=%{java_home}
 export IAS_ROOT=%{buildroot}%{_prefix}
+mkdir -p %{buildroot}%{_prefix}
 . ./Tools/src/main/ias-bash-profile.sh
 ./gradlew build 
 
 
 %install
-mkdir -p %{buildroot}%{_prefix}
 export IAS_ROOT=%{buildroot}%{_prefix}
 ./gradlew install
 ./gradlew clean
@@ -108,8 +109,6 @@ chmod 777 %{buildroot}%{_prefix}/tmp
 %exclude %{_prefix}/logs/*
 
 %dir %{_bindir}
-%exclude %{_bindir}/MockUdpPlugin
-%exclude %{_bindir}/*Test*
 %{_bindir}/ias-bash-profile
 %{_bindir}/ias-env
 %{_bindir}/iasAckAlarm
@@ -160,12 +159,10 @@ chmod 777 %{buildroot}%{_prefix}/tmp
 %{python3_sitelib}/IasPlugin2/
 %{python3_sitelib}/IasPlugin3/
 %{python3_sitelib}/IasTransferFunction/
-%{python3_sitelib}/TestTF/
  
 %dir %{_prefix}/logs
 %dir %{_prefix}/tmp
  
-%exclude %{sysbindir}/MockUdpPlugin
 %{sysbindir}/ias-bash-profile
 %{sysbindir}/ias-env
 %{sysbindir}/iasAckAlarm

@@ -14,8 +14,12 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
+      - name: Verify Java
+        run: |
+          echo JAVA_HOME=$JAVA_HOME
+          ls $JAVA_HOME/lib/server
       - name: Setup Python
-        uses: actions/setup-python@v4.5.0
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - run: python --version
@@ -33,7 +37,9 @@ jobs:
       - name: Clean
         working-directory: GIT
         run: ./gradlew clean
-      - name: Build and unit test IAS with gradlew
+      - name: Build the IAS and run unit tests with gradlew
+        env:
+          JEP_JVM: ${{ env.JAVA_HOME }}/lib/server/libjvm.so          
         working-directory: GIT
         run: ./gradlew build
       - name: Install IAS in IAS_ROOT
@@ -50,11 +56,12 @@ jobs:
           path: ias-root.tgz
           retention-days: 7
           include-hidden-files: true
-      - name: Upload unit test output
+      - name: Upload unit tests output
         uses: actions/upload-artifact@v4
+        if: always()   # ensures upload even if tests fail
         with:
-          name: unit-tests.out
-          path: $HOME/unit-tests.out
+          name: unit-test-results
+          path: "**/*.xml"
           retention-days: 7
           include-hidden-files: true
       - name: Export IAS_ROOT as step output
