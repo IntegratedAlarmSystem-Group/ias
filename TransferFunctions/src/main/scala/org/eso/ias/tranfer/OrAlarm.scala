@@ -48,7 +48,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame,prop
     override def initialize(inputsInfo: Set[IasioInfo], outputInfo: IasioInfo): Unit = {
         OrAlarm.logger.debug("Initializing")
         if (inputsInfo.size<2) {
-            throw new UnexpectedNumberOfInputsException(1, inputsInfo.size)
+            throw new UnexpectedNumberOfInputsException(2, inputsInfo.size)
         }
 
         val types = inputsInfo.map(_.iasioType)

@@ -48,49 +48,48 @@ public enum IASTypes {
 	}
     
     public IasTypeDao toIasTypeDao() {
-    	if (null==this) throw new UnsupportedOperationException("Unsupported IAS type "+this.typeName);
-    	else switch (this) {
-                case LONG -> {
-                    return IasTypeDao.LONG;
-                }
-                case INT -> {
-                    return IasTypeDao.INT;
-                }
-                case SHORT -> {
-                    return IasTypeDao.SHORT;
-                }
-                case BYTE -> {
-                    return IasTypeDao.BYTE;
-                }
-                case DOUBLE -> {
-                    return IasTypeDao.DOUBLE;
-                }
-                case FLOAT -> {
-                    return IasTypeDao.FLOAT;
-                }
-                case BOOLEAN -> {
-                    return IasTypeDao.BOOLEAN;
-                }
-                case CHAR -> {
-                    return IasTypeDao.CHAR;
-                }
-                case STRING -> {
-                    return IasTypeDao.STRING;
-                }
-                case TIMESTAMP -> {
-                    return IasTypeDao.TIMESTAMP;
-                }
-                case ARRAYOFLONGS -> {
-                    return IasTypeDao.ARRAYOFLONGS;
-                }
-                case ARRAYOFDOUBLES -> {
-                    return IasTypeDao.ARRAYOFDOUBLES;
-                }
-                case ALARM -> {
-                    return IasTypeDao.ALARM;
-                }
-                default -> throw new UnsupportedOperationException("Unsupported IAS type "+this.typeName);
-            }
+    	switch (this) {
+			case LONG -> {
+				return IasTypeDao.LONG;
+			}
+			case INT -> {
+				return IasTypeDao.INT;
+			}
+			case SHORT -> {
+				return IasTypeDao.SHORT;
+			}
+			case BYTE -> {
+				return IasTypeDao.BYTE;
+			}
+			case DOUBLE -> {
+				return IasTypeDao.DOUBLE;
+			}
+			case FLOAT -> {
+				return IasTypeDao.FLOAT;
+			}
+			case BOOLEAN -> {
+				return IasTypeDao.BOOLEAN;
+			}
+			case CHAR -> {
+				return IasTypeDao.CHAR;
+			}
+			case STRING -> {
+				return IasTypeDao.STRING;
+			}
+			case TIMESTAMP -> {
+				return IasTypeDao.TIMESTAMP;
+			}
+			case ARRAYOFLONGS -> {
+				return IasTypeDao.ARRAYOFLONGS;
+			}
+			case ARRAYOFDOUBLES -> {
+				return IasTypeDao.ARRAYOFDOUBLES;
+			}
+			case ALARM -> {
+				return IasTypeDao.ALARM;
+			}
+			default -> throw new UnsupportedOperationException("Unsupported IAS type "+this.typeName);
+		}
     }
     
     /**
