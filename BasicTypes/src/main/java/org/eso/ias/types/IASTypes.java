@@ -48,20 +48,48 @@ public enum IASTypes {
 	}
     
     public IasTypeDao toIasTypeDao() {
-    	if (this==LONG) return IasTypeDao.LONG;
-    	else if (this==INT) return IasTypeDao.INT;
-    	else if (this==SHORT) return IasTypeDao.SHORT;
-    	else if (this==BYTE) return IasTypeDao.BYTE;
-    	else if (this==DOUBLE) return IasTypeDao.DOUBLE;
-    	else if (this==FLOAT) return IasTypeDao.FLOAT;
-    	else if (this==BOOLEAN) return IasTypeDao.BOOLEAN;
-    	else if (this==CHAR) return IasTypeDao.CHAR;
-    	else if (this==STRING) return IasTypeDao.STRING;
-    	else if (this==TIMESTAMP) return IasTypeDao.TIMESTAMP;
-		else if (this==ARRAYOFLONGS) return IasTypeDao.ARRAYOFLONGS;
-		else if (this==ARRAYOFDOUBLES) return IasTypeDao.ARRAYOFDOUBLES;
-    	else if (this==ALARM) return IasTypeDao.ALARM;
-    	else throw new UnsupportedOperationException("Unsupported IAS type "+this.typeName);
+    	switch (this) {
+			case LONG -> {
+				return IasTypeDao.LONG;
+			}
+			case INT -> {
+				return IasTypeDao.INT;
+			}
+			case SHORT -> {
+				return IasTypeDao.SHORT;
+			}
+			case BYTE -> {
+				return IasTypeDao.BYTE;
+			}
+			case DOUBLE -> {
+				return IasTypeDao.DOUBLE;
+			}
+			case FLOAT -> {
+				return IasTypeDao.FLOAT;
+			}
+			case BOOLEAN -> {
+				return IasTypeDao.BOOLEAN;
+			}
+			case CHAR -> {
+				return IasTypeDao.CHAR;
+			}
+			case STRING -> {
+				return IasTypeDao.STRING;
+			}
+			case TIMESTAMP -> {
+				return IasTypeDao.TIMESTAMP;
+			}
+			case ARRAYOFLONGS -> {
+				return IasTypeDao.ARRAYOFLONGS;
+			}
+			case ARRAYOFDOUBLES -> {
+				return IasTypeDao.ARRAYOFDOUBLES;
+			}
+			case ALARM -> {
+				return IasTypeDao.ALARM;
+			}
+			default -> throw new UnsupportedOperationException("Unsupported IAS type "+this.typeName);
+		}
     }
     
     /**

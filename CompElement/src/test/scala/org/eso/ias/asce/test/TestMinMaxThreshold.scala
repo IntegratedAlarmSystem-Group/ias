@@ -1,11 +1,14 @@
 package org.eso.ias.asce.test
 
 import java.util.Properties
+import org.scalatest.flatspec.AnyFlatSpec
+
+import org.eso.ias.logging.IASLogger
 import org.eso.ias.asce.ComputingElement
 import org.eso.ias.asce.transfer.{JavaTransfer, ScalaTransfer, TransferFunctionLanguage, TransferFunctionSetting}
 import org.eso.ias.asce.transfer.impls.{MinMaxThresholdTF, MinMaxThresholdTFJava}
 import org.eso.ias.types.{Alarm, IASTypes, InOut, Priority}
-import org.scalatest.flatspec.AnyFlatSpec
+
 
 class TestMinMaxThreshold extends AnyFlatSpec {
   
