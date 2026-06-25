@@ -1,5 +1,5 @@
 Name:           ias
-Version:        13.2
+Version:        13.2.1
 Release:        1%{?dist}
 Summary:        Install the Integrated Alarm System
 BuildArch:      noarch
