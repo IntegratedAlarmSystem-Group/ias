@@ -1,5 +1,5 @@
 Name: kafka
-Version: 4.1.1
+Version: 4.3.1
 Release: 1%{?dist}
 Summary: Install Apache Kafka 
 License: Apache License 2.0
@@ -205,7 +205,10 @@ rm -rf /var/log/kafka
 rm -rf /opt/kafka*
 
 %changelog
+* Mon Jul 13 2026 Alessandro Caproni <acaproni@eso.org> - 4.3.1-1
+- Updated for v4.3.1
 * Wed Dec 17 2025 Alessandro Caproni <acaproni@eso.org> - 4.1.1-1
+- Updated for v4.1.1
 - Updated for v4.1.1
 * Wed Nov 12 2025 Alessandro Caproni <acaproni@eso.org> - 4.1.0-1
 - Updated for v4.1.0
