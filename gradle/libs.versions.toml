@@ -1,15 +1,15 @@
 [versions]
 scala-library = "3.7.4"
-scalatest = "3.2.19"
-slf4j-api = "2.0.17"
-scala-logging = "3.9.5"
+scalatest = "3.2.20"
+slf4j-api = "2.0.18"
+scala-logging = "3.9.6"
 logback-classic = "1.4.11"
 jackson-databind = "2.17.0"
 jep = "4.3.1"
 junit-bom = "5.13.1"
 junit-jupiter = "5.13.1"
 commons-cli = "1.11.0"
-kafka = "4.1.2"
+kafka = "4.3.1"
 hibernate-jpa = "1.0.0.Final"
 
 [libraries]
