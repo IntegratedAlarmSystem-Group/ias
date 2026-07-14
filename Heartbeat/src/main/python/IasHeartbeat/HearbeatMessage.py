@@ -1,6 +1,6 @@
 import json
 
-from IasHeartbeat.IasHeartbeatStatus import IasHeartbeatStatus
+from IasHeartbeat.HeartbeatStatus import HeartbeatStatus
 
 class HeartbeatMessage:
     """
@@ -10,7 +10,7 @@ class HeartbeatMessage:
 
     def __init__(self,
                  hbStringrepRepr: str,
-			     hbStatus: IasHeartbeatStatus,
+			     hbStatus: HeartbeatStatus,
 			     props: dict[str, str],
 			     tStamp: str):
         """
@@ -53,7 +53,7 @@ class HeartbeatMessage:
         j = json.loads(json_str)
         return HeartbeatMessage(
             j["hbStringrepresentation"],
-            IasHeartbeatStatus.fromString(j["state"]),
+            HeartbeatStatus.fromString(j["state"]),
             j.get("props", None),
             j["timestamp"]
         )

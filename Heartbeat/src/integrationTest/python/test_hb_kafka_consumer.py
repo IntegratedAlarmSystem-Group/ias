@@ -7,9 +7,9 @@ from IasLogging.log import Log
 from IasHeartbeat.HearbeatMessage import HeartbeatMessage
 from IasHeartbeat.HbKafkaConsumer import HeartbeatListener, HbKafkaConsumer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
-from IasHeartbeat.IasHeartbeat import IasHeartbeat
-from IasHeartbeat.IasHeartbeatProducerType import IasHeartbeatProducerType
-from IasHeartbeat.IasHeartbeatStatus import IasHeartbeatStatus
+from IasHeartbeat.Heartbeat import Heartbeat
+from IasHeartbeat.HeartbeatProducerType import HeartbeatProducerType
+from IasHeartbeat.HeartbeatStatus import HeartbeatStatus
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
 
 class HbListner(HeartbeatListener):
@@ -57,12 +57,12 @@ class TestHbConsumer():
         # Starts the consumer and wait for the assignet to the topic
         assert hbConsumer.start(30)
 
-        hb = IasHeartbeat(IasHeartbeatProducerType.CLIENT,"client_name","host_name")
+        hb = Heartbeat(HeartbeatProducerType.CLIENT,"client_name","host_name")
         timestamp = Iso8601TStamp.now()
         hbm = HeartbeatMessage(tStamp=timestamp,
                                hbStringrepRepr=hb.stringRepr,
                                props=None,
-                               hbStatus=IasHeartbeatStatus.STARTING_UP)
+                               hbStatus=HeartbeatStatus.STARTING_UP)
         
         TestHbConsumer.pushHb(hbm)
 
@@ -75,7 +75,7 @@ class TestHbConsumer():
         assert len(listener.hbs) == 1
         recvHb: HeartbeatMessage = listener.hbs[0]
         assert recvHb.timestamp == timestamp
-        assert recvHb.state == IasHeartbeatStatus.STARTING_UP
+        assert recvHb.state == HeartbeatStatus.STARTING_UP
         assert recvHb.hbStringrepresentation == hb.stringRepr
         assert recvHb.props is None
         hbConsumer.close()

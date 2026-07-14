@@ -3,10 +3,10 @@ Test the HB Status
 """
 import pytest
 
-from IasHeartbeat.IasHeartbeatStatus import IasHeartbeatStatus
+from IasHeartbeat.HeartbeatStatus import HeartbeatStatus
 
 class TestHbStatus():
     def testFromString(self):
-        assert IasHeartbeatStatus.fromString("PARTIALLY_RUNNING") == IasHeartbeatStatus.PARTIALLY_RUNNING
+        assert HeartbeatStatus.fromString("PARTIALLY_RUNNING") == HeartbeatStatus.PARTIALLY_RUNNING
         with pytest.raises(NotImplementedError) as nie:
-            IasHeartbeatStatus.fromString("UnknownHbStatus")
+            HeartbeatStatus.fromString("UnknownHbStatus")

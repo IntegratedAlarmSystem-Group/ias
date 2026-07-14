@@ -1,6 +1,6 @@
 from enum import Enum
 
-class IasHeartbeatStatus(Enum):
+class HeartbeatStatus(Enum):
     """
     The heartbeat status (python equivalent of HeartbeatStatus.java)
     """
@@ -27,17 +27,17 @@ class IasHeartbeatStatus(Enum):
     @staticmethod
     def fromString(hBStatus: str):
         """
-        Returns the IasHeartbeatStatus of the passed string
+        Returns the HeartbeatStatus of the passed string
         Args:
-            hBStatus: the string representation of the IasHeartbeatStatus
+            hBStatus: the string representation of the HeartbeatStatus
         """
         if not hBStatus:
             raise ValueError("Invalid string representation of the exit status of a comamnd")
 
         temp = str(hBStatus)
         if "." not in temp:
-            temp="IasHeartbeatStatus."+temp
-        for hbst in IasHeartbeatStatus:
+            temp="HeartbeatStatus."+temp
+        for hbst in HeartbeatStatus:
             if str(hbst)==temp:
                 return hbst
         # No enumerated matches with hbst
