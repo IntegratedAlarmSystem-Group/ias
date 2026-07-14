@@ -34,7 +34,7 @@ from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 from IasKafkaUtils.KafkaValueConsumer import KafkaValueConsumer, IasValueListener
 from IasHeartbeat.HbKafkaConsumer import HbKafkaConsumer, HeartbeatListener
 from IasHeartbeat.HearbeatMessage import HeartbeatMessage
-from IasHeartbeat.IasHeartbeatStatus import IasHeartbeatStatus
+from IasHeartbeat.HeartbeatStatus import HeartbeatStatus
 from IasBasicTypes.IasValue import IasValue
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
 from IasBasicTypes.IasType import IASType
@@ -52,7 +52,7 @@ class HbListener(HeartbeatListener):
         # The HBs received from kafka
         self. hbs = []
 
-        self.lastSupervState: IasHeartbeatStatus = None
+        self.lastSupervState: HeartbeatStatus = None
 
     def iasHbReceived(self, hb: HeartbeatMessage):
         self._logger.info("HB received: %s %s",hb.hbStringrepresentation,hb.state.name)
@@ -152,9 +152,9 @@ class TestPyAck():
         # Give the Supervisor time to run
         timeout = 60
         now = 0
-        while now<timeout and cls.hbListener.lastSupervState!=IasHeartbeatStatus.RUNNING:
+        while now<timeout and cls.hbListener.lastSupervState!=HeartbeatStatus.RUNNING:
             time.sleep(1)
-        assert cls.hbListener.lastSupervState==IasHeartbeatStatus.RUNNING
+        assert cls.hbListener.lastSupervState==HeartbeatStatus.RUNNING
         cls.logger.info("Supervisor up and running")
 
         TestPyAck.cmdSender.set_up()
