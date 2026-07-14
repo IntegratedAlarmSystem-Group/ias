@@ -35,7 +35,7 @@ class Heartbeat:
         """
         Build a IasHeartbeat from the string representation
         Params:
-            "ias-fc40" The string representation of the HB
+            strRepr The string representation of the HB
         """
         if not strRepr:
             raise ValueError("Invalid null HB string representation")
