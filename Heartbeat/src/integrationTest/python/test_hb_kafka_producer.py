@@ -1,6 +1,8 @@
 import logging
 import socket
-from queue import Queue
+from queue import Queue, Empty
+
+import pytest
 
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
 from IasKafkaUtils.IasKafkaConsumer import IasLogConsumer, IasLogListener
@@ -128,5 +130,40 @@ class TestHbKafkaProducer():
         TestHbKafkaProducer.logger.info("Third HB receivev")
         assert hb_msg3.state == HeartbeatStatus.EXITING
 
-
+    def test_send_when_closed(self):
+        """
+        Test if the sending is forbidden when the producer
+        has been closed
+        """
+        producer = HbKafkaProducer(
+            clientid="HbKafkaProducerTest", 
+            kafkabrokers=IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
         
+        hb = Heartbeat(
+            hbType=HeartbeatProducerType.CLIENT,
+            name="TestClient",
+            hostName=socket.gethostname())
+        
+        hb_status = HeartbeatStatus.RUNNING
+
+        props = {"prop1": "val1", "prop2": "val2"}
+
+        tstamp = Iso8601TStamp.now()
+
+        if not TestHbKafkaProducer._consumer.isSubscribed():
+            TestHbKafkaProducer.logger.warning("Consumer NOT subscribed")
+
+        producer.send(hb=hb, hb_status=hb_status, props=props,tstamp=tstamp)
+
+        hb_msg = TestHbKafkaProducer._log_container.get(timeout=5)
+        TestHbKafkaProducer.logger.info("HB received %s", hb_msg.toJSON())
+
+        # Close the producer and check if HBs arrives
+        producer.close()
+        producer.send(hb=hb, hb_status=hb_status, props=props,tstamp=tstamp)
+        producer.send(hb=hb, hb_status=hb_status, props=props,tstamp=tstamp)
+        producer.send(hb=hb, hb_status=hb_status, props=props,tstamp=tstamp)
+        # The following is expected to fail when the timeout expires
+        with pytest.raises(Empty):
+            TestHbKafkaProducer._log_container.get(timeout=5)
+
