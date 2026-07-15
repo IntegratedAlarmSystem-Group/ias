@@ -40,6 +40,8 @@ class HbKafkaProducer:
         prod_conf = { 'bootstrap.servers': kafkabrokers, 'client.id': clientid}
         self.producer = Producer(prod_conf)
 
+        self.closed = False
+
     def send(self,
              hb: Heartbeat,
              hb_status: HeartbeatStatus,
@@ -54,14 +56,17 @@ class HbKafkaProducer:
         @param tstamp ISO-8601 timestamp if not it is set to the actual time
         @return the feature to be informed when the value has been sent
         '''
+        if self.closed:
+            self._logger.warning("Producer closed: will not send this HB")
+            return
         if not hb:
             raise ValueError("Invalid Heartbeat to publish")
         if not hb_status:
-            raise ValueError("INvalid HB status to publish")
+            raise ValueError("Invalid HB status to publish")
         
         msg = self._serialize(hb, hb_status, props, tstamp)
         
-        self.producer.produce(self.topic, value=msg, key=id)
+        self.producer.produce(topic=self.topic, value=msg)
         self._logger.debug(f"HB sent {msg}")
         self.producer.flush()
 
@@ -102,7 +107,17 @@ class HbKafkaProducer:
         '''
         Close the producer: delegates to the kafka producer
         '''
+        if self.closed:
+            self._logger.warning("Already closed")
+            return
+        self.closed = True
+        self._logger.debug("Closing")
+
         if self.producer is not None:
+            self._logger.debug("Closing")
             self.producer.flush()   
-            self.producer.close()  
+            # The Producer has no close method so we just force a flush
+            # But the close() exists in newer version of confluent Kakfa 
+            # so swe will need to uncomment in future
+            # self.producer.close()
         self._logger.info("Closed")
