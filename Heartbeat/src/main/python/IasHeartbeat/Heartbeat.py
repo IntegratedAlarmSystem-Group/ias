@@ -1,5 +1,4 @@
 from IasHeartbeat.HeartbeatProducerType import HeartbeatProducerType
-from IasHeartbeat.HeartbeatStatus import HeartbeatStatus
 
 class Heartbeat:
     """
