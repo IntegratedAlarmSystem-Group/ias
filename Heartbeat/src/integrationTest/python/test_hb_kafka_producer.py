@@ -26,25 +26,38 @@ class HbListener(IasLogListener):
         hb_msg = HeartbeatMessage.fromJSON(log)
         self._logs_container.put(hb_msg)
 
+    def clear(self):
+        while True:
+            try:
+                self._logs_container.get_nowait()
+                self._logs_container.task_done()  # only if you're using task tracking
+            except Empty:
+                break
+
 class TestHbKafkaProducer():
 
-    @classmethod
-    def setup_class(cls):
-        cls.logger = logging.getLogger(TestHbKafkaProducer.__name__)
-        cls._log_container = Queue()
+    @pytest.fixture(scope="class", autouse=True)
+    def setup_class(self, request):
+        request.cls.logger = logging.getLogger(TestHbKafkaProducer.__name__)
+        request.cls._log_container = Queue()
 
-        cls._hb_listener = HbListener(cls._log_container)
+        request.cls._hb_listener = HbListener(request.cls._log_container)
 
-        cls._consumer = IasLogConsumer(
+        request.cls._consumer = IasLogConsumer(
             clientid="HbKafkaConsumerTest",
             kafkabrokers=IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
-            listener=cls._hb_listener,
+            listener=request.cls._hb_listener,
             groupid="TestGroupId",
             topic=IasKafkaHelper.topics['hb'])
         
-        cls.logger.info("Starting the consumer oh HB logs...")
-        assert cls._consumer.start(waitAssigmentTimeout=10)
-        cls.logger.info("HB consumer started")
+        request.cls.logger.info("Starting the consumer oh HB logs...")
+        assert request.cls._consumer.start(waitAssigmentTimeout=10)
+        request.cls.logger.info("HB consumer started")
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        # Fixuture executed for each test
+        self._hb_listener.clear()
 
     def test_hb_content(self):
         """
@@ -66,13 +79,13 @@ class TestHbKafkaProducer():
 
         tstamp = Iso8601TStamp.now()
 
-        if not TestHbKafkaProducer._consumer.isSubscribed():
-            TestHbKafkaProducer.logger.warning("Consumer NOT subscribed")
+        if not self._consumer.isSubscribed():
+            self.logger.warning("Consumer NOT subscribed")
 
         producer.send(hb=hb, hb_status=hb_status, props=props,tstamp=tstamp)
 
-        hb_msg = TestHbKafkaProducer._log_container.get(timeout=5)
-        TestHbKafkaProducer.logger.info("HB received %s", hb_msg.toJSON())
+        hb_msg = self._log_container.get(timeout=5)
+        self.logger.info("HB received %s", hb_msg.toJSON())
 
         assert hb_msg.state == hb_status
         assert hb_msg.timestamp == tstamp
@@ -83,9 +96,9 @@ class TestHbKafkaProducer():
         assert hb.name == recv_hb.name
         assert hb.hostname == recv_hb.hostname
 
-        TestHbKafkaProducer.logger.debug("Closing the HB producer")
+        self.logger.debug("Closing the HB producer")
         producer.close()
-        TestHbKafkaProducer.logger.info("Producer closed. Test done")
+        self.logger.info("Producer closed. Test done")
 
     def test_sending_hbs(self):
         """
@@ -118,16 +131,16 @@ class TestHbKafkaProducer():
         producer.send(hb=hb, hb_status=hb_status, props=props,tstamp=tstamp)
 
         # Get the 3 HBs
-        hb_msg1 = TestHbKafkaProducer._log_container.get(timeout=5)
-        TestHbKafkaProducer.logger.info("First HB receivev")
+        hb_msg1 = self._log_container.get(timeout=5)
+        self.logger.info("First HB receivev")
         assert hb_msg1.state == HeartbeatStatus.PARTIALLY_RUNNING
 
-        hb_msg2 = TestHbKafkaProducer._log_container.get(timeout=5)
-        TestHbKafkaProducer.logger.info("Second HB receivev")
+        hb_msg2 = self._log_container.get(timeout=5)
+        self.logger.info("Second HB receivev")
         assert hb_msg2.state == HeartbeatStatus.RUNNING
 
-        hb_msg3 = TestHbKafkaProducer._log_container.get(timeout=5)
-        TestHbKafkaProducer.logger.info("Third HB receivev")
+        hb_msg3 = self._log_container.get(timeout=5)
+        self.logger.info("Third HB receivev")
         assert hb_msg3.state == HeartbeatStatus.EXITING
 
     def test_send_when_closed(self):
@@ -150,13 +163,13 @@ class TestHbKafkaProducer():
 
         tstamp = Iso8601TStamp.now()
 
-        if not TestHbKafkaProducer._consumer.isSubscribed():
-            TestHbKafkaProducer.logger.warning("Consumer NOT subscribed")
+        if not self._consumer.isSubscribed():
+            self.logger.warning("Consumer NOT subscribed")
 
         producer.send(hb=hb, hb_status=hb_status, props=props,tstamp=tstamp)
 
-        hb_msg = TestHbKafkaProducer._log_container.get(timeout=5)
-        TestHbKafkaProducer.logger.info("HB received %s", hb_msg.toJSON())
+        hb_msg = self._log_container.get(timeout=5)
+        self.logger.info("HB received %s", hb_msg.toJSON())
 
         # Close the producer and check if HBs arrives
         producer.close()
@@ -165,5 +178,5 @@ class TestHbKafkaProducer():
         producer.send(hb=hb, hb_status=hb_status, props=props,tstamp=tstamp)
         # The following is expected to fail when the timeout expires
         with pytest.raises(Empty):
-            TestHbKafkaProducer._log_container.get(timeout=5)
+            self._log_container.get(timeout=5)
 
