@@ -1,5 +1,4 @@
 import logging
-import json
 from confluent_kafka import Producer
 
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
@@ -57,7 +56,7 @@ class HbKafkaProducer:
         @return the feature to be informed when the value has been sent
         '''
         if self.closed:
-            self._logger.warning("Producer closed: will not send this HB")
+            self._logger.warning(f"Producer closed: will not send this HB: {hb.stringRepr} with status {hb_status._name_}")
             return
         if not hb:
             raise ValueError("Invalid Heartbeat to publish")
