@@ -55,9 +55,6 @@ class HbKafkaProducer:
         @param tstamp ISO-8601 timestamp if not it is set to the actual time
         @return the feature to be informed when the value has been sent
         '''
-        if self.closed:
-            self._logger.warning(f"Producer closed: will not send this HB: {hb.stringRepr} with status {hb_status._name_}")
-            return
         if not hb:
             raise ValueError("Invalid Heartbeat to publish")
         if not hb_status:
@@ -65,9 +62,13 @@ class HbKafkaProducer:
         
         msg = self._serialize(hb, hb_status, props, tstamp)
         
-        self.producer.produce(topic=self.topic, value=msg)
-        self._logger.debug(f"HB sent {msg}")
-        self.producer.flush()
+        if self.closed:
+            self._logger.warning(f"Producer closed: will not send this HB: {hb.stringRepr} with status {hb_status._name_}")
+            return
+        else:
+            self.producer.produce(topic=self.topic, value=msg)
+            self._logger.debug(f"HB sent {msg}")
+            self.producer.flush()
 
     def _serialize(self,
                    hb: Heartbeat,
@@ -115,8 +116,5 @@ class HbKafkaProducer:
         if self.producer is not None:
             self._logger.debug("Closing")
             self.producer.flush()   
-            # The Producer has no close method so we just force a flush
-            # But the close() exists in newer version of confluent Kakfa 
-            # so swe will need to uncomment in future
-            # self.producer.close()
+            self.producer.close()
         self._logger.info("Closed")
