@@ -221,7 +221,7 @@ class IasLogConsumer(Thread):
             if self.is_alive():
                 self.logger.warning("The thread did not terminate in time")
             self.consumer.close()
-            self.logger("Consumer closed")
+            self.logger.info("Consumer closed")
         else:
             self.logger.warning("Consumer already terminated")
 
