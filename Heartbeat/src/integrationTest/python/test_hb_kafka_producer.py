@@ -1,5 +1,6 @@
 import logging
 import socket
+import uuid
 from queue import Queue, Empty
 
 import pytest
@@ -43,26 +44,30 @@ class TestHbKafkaProducer():
 
         request.cls._hb_listener = HbListener(request.cls._log_container)
 
-        request.cls._consumer = IasLogConsumer(
-            clientid="HbKafkaConsumerTest",
-            kafkabrokers=IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
-            listener=request.cls._hb_listener,
-            groupid="TestGroupId",
-            topic=IasKafkaHelper.topics['hb'])
-        
-        request.cls.logger.info("Starting the consumer oh HB logs...")
-        assert request.cls._consumer.start(waitAssigmentTimeout=10)
-        request.cls.logger.info("HB consumer started")
-
     @pytest.fixture(autouse=True)
     def setup(self):
-        # Fixuture executed for each test
+        # Fixuture executed before each test
         self._hb_listener.clear()
+
+        self._consumer = IasLogConsumer(
+            clientid="HbKafkaConsumerTest",
+            kafkabrokers=IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
+            listener=self._hb_listener,
+            groupid="TestGroupId"+str(uuid.uuid4()),
+            topic=IasKafkaHelper.topics['hb'])
+        
+        self.logger.info("Starting the consumer of HB logs...")
+        assert self._consumer.start(waitAssigmentTimeout=15)
+        self.logger.info("HB consumer started")
+
+        yield
+        # Fixuture executed after each test
+        self._consumer.close()
 
     def test_hb_content(self):
         """
         Test the sending of one HB from the HB kafka producer
-        and check if the content the HB received matches with the one sent
+        and check if the content the HB received matches with the HB just sent
         """
         producer = HbKafkaProducer(
             clientid="HbKafkaProducerTest", 
@@ -84,8 +89,10 @@ class TestHbKafkaProducer():
 
         producer.send(hb=hb, hb_status=hb_status, props=props,tstamp=tstamp)
 
-        hb_msg = self._log_container.get(timeout=5)
+        hb_msg = self._log_container.get(timeout=4)
         self.logger.info("HB received %s", hb_msg.toJSON())
+        producer.close()
+        self.logger.info("Producer closed. Test done")
 
         assert hb_msg.state == hb_status
         assert hb_msg.timestamp == tstamp
@@ -97,8 +104,7 @@ class TestHbKafkaProducer():
         assert hb.hostname == recv_hb.hostname
 
         self.logger.debug("Closing the HB producer")
-        producer.close()
-        self.logger.info("Producer closed. Test done")
+        
 
     def test_sending_hbs(self):
         """
@@ -136,11 +142,11 @@ class TestHbKafkaProducer():
         assert hb_msg1.state == HeartbeatStatus.PARTIALLY_RUNNING
 
         hb_msg2 = self._log_container.get(timeout=5)
-        self.logger.info("Second HB receivev")
+        self.logger.info("Second HB received")
         assert hb_msg2.state == HeartbeatStatus.RUNNING
 
         hb_msg3 = self._log_container.get(timeout=5)
-        self.logger.info("Third HB receivev")
+        self.logger.info("Third HB received")
         assert hb_msg3.state == HeartbeatStatus.EXITING
 
     def test_send_when_closed(self):

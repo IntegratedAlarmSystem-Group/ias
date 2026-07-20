@@ -146,7 +146,7 @@ class IasLogConsumer(Thread):
                 with self.watchDogLock:
                     self.watchDog = True
                 if msg is None or not self.subscribed:
-                    self.logger.debug(f"Polling thread is subscribed to topic {self.topic}: {self.subscribed}")
+                    self.logger.debug(f"Polling thread is {'' if self.subscribed else 'NOT '}subscribed to topic {self.topic}")
                     continue
 
                 if msg.error() is not None:
@@ -160,6 +160,7 @@ class IasLogConsumer(Thread):
                 else:
                     try:
                         log = msg.value().decode("utf-8")
+                        self.consumer.commit(msg)
                     except Exception as e:
                         self.logger.exception("Error decoding log %s", str(msg.value()), e)
                         continue
@@ -217,7 +218,10 @@ class IasLogConsumer(Thread):
         if not self.terminateThread:
             self.terminateThread = True
             self.join(5)  # Ensure the thread exited before closing the consumer
+            if self.is_alive():
+                self.logger.warning("The thread did not terminate in time")
             self.consumer.close()
+            self.logger("Consumer closed")
         else:
             self.logger.warning("Consumer already terminated")
 

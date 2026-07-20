@@ -105,9 +105,11 @@ class HbEngine:
         with self._mutex:
             self._logger.debug(f"HB state transition: {self._hb_state._name_}->{hb_status._name_}")
             self._hb_state = hb_status
-            self._producer.send(hb=self._hb, hb_status=self._hb_state)
+            if not self._interruped.is_set():
+                self._producer.send(hb=self._hb, hb_status=self._hb_state)
 
     def update_props(self, props:dict[str,str]|None)->None:
         with self._mutex:
             self._props = props
-            self._producer.send(hb=self._hb, hb_status=self._hb_state,props=self._props)
+            if not self._interruped.is_set():
+                self._producer.send(hb=self._hb, hb_status=self._hb_state,props=self._props)
