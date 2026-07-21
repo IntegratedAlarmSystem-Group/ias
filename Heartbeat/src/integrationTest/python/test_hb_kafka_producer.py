@@ -104,6 +104,7 @@ class TestHbKafkaProducer():
         assert hb.hostname == recv_hb.hostname
 
         self.logger.debug("Closing the HB producer")
+        producer.close()
         
 
     def test_sending_hbs(self):
@@ -138,7 +139,7 @@ class TestHbKafkaProducer():
 
         # Get the 3 HBs
         hb_msg1 = self._log_container.get(timeout=5)
-        self.logger.info("First HB receivev")
+        self.logger.info("First HB receivedd")
         assert hb_msg1.state == HeartbeatStatus.PARTIALLY_RUNNING
 
         hb_msg2 = self._log_container.get(timeout=5)
@@ -148,6 +149,8 @@ class TestHbKafkaProducer():
         hb_msg3 = self._log_container.get(timeout=5)
         self.logger.info("Third HB received")
         assert hb_msg3.state == HeartbeatStatus.EXITING
+
+        producer.close()
 
     def test_send_when_closed(self):
         """
