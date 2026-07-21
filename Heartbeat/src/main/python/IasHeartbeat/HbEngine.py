@@ -92,7 +92,7 @@ class HbEngine:
             with self._mutex:
                 self._producer.send(hb=self._hb, hb_status=self._hb_state, props=self._props)
                 self._logger.debug(f"HB sent to BSDB: {self._hb.stringRepr} {self._hb_state._name_}")
-            time.sleep(self._frequency)
+            self._interruped.wait(self._frequency)
         self._logger.info("HB engine thread terminated")
 
     def update_hb_state(self, hb_status: HeartbeatStatus)->None:

@@ -138,7 +138,6 @@ class IasLogConsumer(Thread):
     def run(self):
         self.logger.info('Thread to poll logs started')
         try:
-
             self.isGettingEvents = True
             while not self.terminateThread:
                 msg = self.consumer.poll(timeout=1.0)
@@ -160,7 +159,6 @@ class IasLogConsumer(Thread):
                 else:
                     try:
                         log = msg.value().decode("utf-8")
-                        self.consumer.commit(msg)
                     except Exception as e:
                         self.logger.exception("Error decoding log %s", str(msg.value()), e)
                         continue
@@ -217,11 +215,15 @@ class IasLogConsumer(Thread):
         '''
         if not self.terminateThread:
             self.terminateThread = True
-            self.join(5)  # Ensure the thread exited before closing the consumer
             if self.is_alive():
-                self.logger.warning("The thread did not terminate in time")
-            self.consumer.close()
-            self.logger.info("Consumer closed")
+                # The thread closes the consumer: here just check the thread termination
+                self.join(5)  # Ensure the thread exited before closing the consumer
+                if self.is_alive():
+                    self.logger.warning("The thread did not terminate in time")
+            else:
+                # The thread never started
+                self.consumer.close()
+                self.logger.info("Consumer closed")
         else:
             self.logger.warning("Consumer already terminated")
 
