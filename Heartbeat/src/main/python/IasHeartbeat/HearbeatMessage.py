@@ -1,6 +1,6 @@
 import json
 
-from IasHeartbeat.IasHeartbeatStatus import IasHeartbeatStatus
+from IasHeartbeat.HeartbeatStatus import HeartbeatStatus
 
 class HeartbeatMessage:
     """
@@ -10,7 +10,7 @@ class HeartbeatMessage:
 
     def __init__(self,
                  hbStringrepRepr: str,
-			     hbStatus: IasHeartbeatStatus,
+			     hbStatus: HeartbeatStatus,
 			     props: dict[str, str],
 			     tStamp: str):
         """
@@ -30,17 +30,17 @@ class HeartbeatMessage:
         """
         Convert the HeartbeatMessage to a JSON string
 
-        json.dunps() does not work in this case beacuse python.json only converts
-        basic python data types (i.e. it fails with a dict property)
-
         Returns:
            A Json string representing the HeartbeatMessage
         """
-        ret = f'"timestamp":"{self.timestamp}","hbStringrepresentation":"{self.hbStringrepresentation}", "state":"{self.state.name}"'
+        ret = {
+            "timestamp":self.timestamp,
+            "hbStringrepresentation":self.hbStringrepresentation,
+            "state":self.state.name
+        }
         if self.props:
-            jsonDict = json.dumps(self.props)
-            ret = f'{ret},"props":{jsonDict}'
-        return f'{{{ret}}}'
+            ret["props"] = self.props
+        return json.dumps(ret)
 
     @classmethod
     def fromJSON(cls, json_str: str):
@@ -53,7 +53,7 @@ class HeartbeatMessage:
         j = json.loads(json_str)
         return HeartbeatMessage(
             j["hbStringrepresentation"],
-            IasHeartbeatStatus.fromString(j["state"]),
+            HeartbeatStatus.fromString(j["state"]),
             j.get("props", None),
             j["timestamp"]
         )

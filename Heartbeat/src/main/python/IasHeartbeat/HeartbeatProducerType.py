@@ -1,6 +1,6 @@
 from enum import Enum
 
-class IasHeartbeatProducerType(Enum):
+class HeartbeatProducerType(Enum):
     # Plugin
     PLUGIN = 0,
 
@@ -34,8 +34,8 @@ class IasHeartbeatProducerType(Enum):
 
         temp = str(prodType)
         if "." not in temp:
-            temp="IasHeartbeatProducerType."+temp
-        for hbst in IasHeartbeatProducerType:
+            temp="HeartbeatProducerType."+temp
+        for hbst in HeartbeatProducerType:
             if str(hbst)==temp:
                 return hbst
         # No enumerated matches with hbst

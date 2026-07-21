@@ -138,7 +138,6 @@ class IasLogConsumer(Thread):
     def run(self):
         self.logger.info('Thread to poll logs started')
         try:
-
             self.isGettingEvents = True
             while not self.terminateThread:
                 msg = self.consumer.poll(timeout=1.0)
@@ -146,7 +145,7 @@ class IasLogConsumer(Thread):
                 with self.watchDogLock:
                     self.watchDog = True
                 if msg is None or not self.subscribed:
-                    self.logger.debug(f"Polling thread is subscribed to topic {self.topic}: {self.subscribed}")
+                    self.logger.debug(f"Polling thread is {'' if self.subscribed else 'NOT '}subscribed to topic {self.topic}")
                     continue
 
                 if msg.error() is not None:
@@ -216,8 +215,15 @@ class IasLogConsumer(Thread):
         '''
         if not self.terminateThread:
             self.terminateThread = True
-            self.join(5)  # Ensure the thread exited before closing the consumer
-            self.consumer.close()
+            if self.is_alive():
+                # The thread closes the consumer: here just check the thread termination
+                self.join(5)  # Ensure the thread exited before closing the consumer
+                if self.is_alive():
+                    self.logger.warning("The thread did not terminate in time")
+            else:
+                # The thread never started
+                self.consumer.close()
+                self.logger.info("Consumer closed")
         else:
             self.logger.warning("Consumer already terminated")
 
