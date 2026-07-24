@@ -106,7 +106,7 @@ class IasLogConsumer(Thread):
         self._logger.info('Kafka consumer %s will connect to %s and topic %s', clientid, kafkabrokers, topic)
 
         # Signal the thread to terminate
-        self.terminateThread: Event = Event()
+        self._terminate_thread: Event = Event()
 
         # Flags to not close consumer more than once
         self._closed: bool =  False
@@ -140,7 +140,7 @@ class IasLogConsumer(Thread):
     def run(self):
         self._logger.info('Thread to poll logs started')
         try:
-            while not self.terminateThread.is_set():
+            while not self._terminate_thread.is_set():
                 msg = self._consumer.poll(timeout=1.0)
                 # Reset the watch dog
                 with self._watchdog_lock:
@@ -164,7 +164,8 @@ class IasLogConsumer(Thread):
                         self._logger.exception("Error decoding log %s", str(msg.value()), e)
                         continue
                     try:
-                        self._listener.iasLogReceived(log)
+                        if not self._terminate_thread.is_set():
+                            self._listener.iasLogReceived(log)
                     except Exception as e:
                         self._logger.exception("Exception caught from the listener of logs", e)
                         continue
@@ -217,7 +218,7 @@ class IasLogConsumer(Thread):
             return
         
         if self.is_alive():
-            self.terminateThread.set()
+            self._terminate_thread.set()
             self.join(5)  # Ensure the thread exited before closing the consumer
             if self.is_alive():
                 self._logger.warning("The thread did not terminate in time")
