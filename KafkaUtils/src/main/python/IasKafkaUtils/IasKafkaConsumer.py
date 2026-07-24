@@ -74,9 +74,9 @@ class IasLogConsumer(Thread):
             raise ValueError("The topic can't be None")
         self._topic = topic
 
-        if not self._kafkaBrokers:
+        if not kafkabrokers:
             raise ValueError("Invalid kafka brokers")
-        self._kafkaBrokers = kafkabrokers
+        self._kafka_brokers = kafkabrokers
 
         if not clientid:
             raise ValueError("Invalid kafka client ID")
@@ -124,10 +124,18 @@ class IasLogConsumer(Thread):
     def isSubscribed(self) -> bool:
         """
         Returns:
-            True if the consumer is subscribed to a partition, 
+            True if the consumer is subscribed to at least one partition, 
             False otherwise
         """
         return len(self._consumer.assignment())>0
+
+    def isGettingLogs(self):
+        """
+        Returns:
+            True if the consumer is getting events from the kafka topic partitions,
+            False otherwise
+        """
+        return self.is_alive() and self.isSubscribed()
 
     def run(self):
         self._logger.info('Thread to poll logs started')
@@ -183,7 +191,7 @@ class IasLogConsumer(Thread):
          # For some reason the python client does not create the topic and this
         # function hangs forever waiting to subscribe
         # So we force a topic creation before subscribing
-        if IasKafkaHelper.createTopic(self._topic, self._kafkaBrokers):
+        if IasKafkaHelper.createTopic(self._topic, self._kafka_brokers):
             self._logger.debug("Topic %s created", self._topic)
         else:
             self._logger.debug("Topic %s exists", self._topic)
