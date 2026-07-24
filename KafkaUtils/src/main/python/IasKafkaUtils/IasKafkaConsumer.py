@@ -106,7 +106,7 @@ class IasLogConsumer(Thread):
         self._logger.info('Kafka consumer %s will connect to %s and topic %s', clientid, kafkabrokers, topic)
 
         # Signal the thread to terminate
-        terminateThread: Event = Event()
+        self.terminateThread: Event = Event()
 
         # Flags to not close consumer more than once
         self._closed: bool =  False
@@ -140,7 +140,7 @@ class IasLogConsumer(Thread):
     def run(self):
         self._logger.info('Thread to poll logs started')
         try:
-            while not self.terminateThread:
+            while not self.terminateThread.is_set():
                 msg = self._consumer.poll(timeout=1.0)
                 # Reset the watch dog
                 with self._watchdog_lock:
