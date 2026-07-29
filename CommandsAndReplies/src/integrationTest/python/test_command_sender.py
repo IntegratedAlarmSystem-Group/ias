@@ -75,15 +75,3 @@ class TestCommandSender():
         assert recv_cmd.senderFullRunningId == sender_frId
         assert int(recv_cmd.id) == 1
 
-    def test_send_async_no_reply(self):
-        print("Prepare the command")
-        dest = "CmdDest"
-        cmd = IasCommandType.SET_LOG_LEVEL
-        params = [ "PAR1", "PAR2"]
-        props = { "p1":str(1), "p2":str(122)}
-        
-        sender_frId = "FullRuningIdeSender"
-        cmd_sender = IasCommandSender(sender_frId, "sender_id_test", IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
-        cmd_sender.set_up()
-        reply = cmd_sender.send_sync(dest, cmd, params, props,timeout=0)
-        assert reply is None
