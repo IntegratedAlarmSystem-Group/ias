@@ -68,14 +68,7 @@ class IasCommandSender(IasLogListener):
         if self.closed:
             raise RuntimeError("Cannot initialized a closed object")
         if not self.initialized:
-            self.reply_consumer.start()
-            # Wait until the consumer is subscribed
-            timeout = 60 # seconds
-            iteration = 0
-            while not self.reply_consumer.isSubscribed() and iteration<2*timeout:
-                time.sleep(0.50)
-                iteration = iteration+1
-            if not self.reply_consumer.isSubscribed():
+            if not self.reply_consumer.start(60):
                 raise RuntimeError("Failed to subscribe to reply kafka topic")
             self.initialized = True
         else:
@@ -132,7 +125,7 @@ class IasCommandSender(IasLogListener):
             command: IasCommandType, 
             params: List[str]|None=None,
             properties: Dict[str, str]|None=None,
-            timeout: float=0) -> IasReply|None:
+            timeout: float=5) -> IasReply|None:
         """
         Send a command synchronously,
 
@@ -147,8 +140,7 @@ class IasCommandSender(IasLogListener):
             command The command to send
             params The optional parameters of the command
             properties The optional properties of the command
-            timeout the time interval (>=0) for the timeout getting the reply
-                    (if 0 does not wait for the reply) 
+            timeout the time interval (>0) for the timeout getting the reply
         Return:
             the reply received by the destinator of the command or 
             None if the waiting time elapsed before getting the reply
@@ -160,38 +152,31 @@ class IasCommandSender(IasLogListener):
             self.logger.error("Cannot send commands from an uninitialized sender: command discarded")
 
         if dest_id == "BROADCAST":
-            raise ValueError("BROADCAST cannot be used for send-reply")
+            raise ValueError("BROADCAST cannot be used for send-reply: use send_async")
         
         if self.request_reply_in_progress:
-            raise RuntimeError("Cannt process two commands at the same time")
+            raise RuntimeError("Can't process two commands at the same time")
         self.request_reply_in_progress = True
+
+        if not timeout or timeout<=0:
+            raise ValueError(f"Invalid timeout {timeout}: must be >=0")
 
         try:
             self.logger.debug(f"Sending sync command {command} to {dest_id}")
-
-            if timeout<0:
-                raise ValueError(f"Invalid timeout {timeout}: must be >0")
 
             self.cmd_id += 1
             self.id_to_wait = self.cmd_id
             self._publish_cmd(self.cmd_id, dest_id,command, params, properties)
             self.cmd_producer.flush() # sync
 
-            if timeout>0:
-                self.logger.debug(f"Waiting for reply with id {self.id_to_wait} from {dest_id}")
-                try:
-                    reply = self.replies_queue.get(True, timeout)
-                    self.replies_queue.task_done()
-                    return reply
-                except Empty as to:
-                    # Timeout!
-                    return None
-            else:
-                self.logger.debug(f"Will not wait for the reply from {dest_id}")
-                # TODO:
-                # Check if the reply is accepted anyhow as in this case it must be removed from the queue
-                # or better must not be put in the queue
-
+            self.logger.debug(f"Waiting up to {timeout} seconds to get the reply with id {self.id_to_wait} from {dest_id}")
+            try:
+                reply = self.replies_queue.get(True, timeout)
+                self.replies_queue.task_done()
+                return reply
+            except Empty:
+                # Timeout!
+                self.logger.warning(f"Reply with id={self.id_to_wait} not received before timeout")
                 return None
         finally:
             self.request_reply_in_progress = False
