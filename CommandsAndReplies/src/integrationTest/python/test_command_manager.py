@@ -23,7 +23,7 @@ class CmdListener(IasCommandListener):
 class TestCmdManager():
     """
     Test the IasCommandSender and the IasCommandManager together:
-        - the command sender sends messages that are read buy the command manager
+        - the command sender sends messages that are read by the command manager
         - the command manager sends the comand to the listener for processing
         - the command manager sends the reply of the execution of the command to the command sender
         - the command sender gets the reply

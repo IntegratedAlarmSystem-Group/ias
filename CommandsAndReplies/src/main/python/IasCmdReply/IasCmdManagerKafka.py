@@ -139,8 +139,8 @@ class IasCmdManagerKafka(Thread):
         The method executed by the tread that sends commands to the lsitener
         and pushes replies in the topic
         """
+        self.logger.debug("Thread to get comamnds started")
         while not self.terminate:
-            self.logger.debug("Thread to get comamnds started")
             try:
                 (recv_tstamp_str, cmd) = self.cmd_queue.get(block=True, timeout=0.5)
             except Empty: # Timeout
