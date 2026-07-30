@@ -96,7 +96,7 @@ class Log():
         if name_file.lower().endswith('.log'):
             name_file = name_file[:-4]
         cleanedFileName = Path(name_file).stem
-        now = datetime.datetime.now(timezone.utc).strftime('%Y-%m-%dT%H_%M_%S')
+        now = datetime.datetime.now(timezone.utc).strftime('%Y-%m-%dT%H_%M_%S_%f')
         cls._log_file = cls._log_folder / f"{cleanedFileName}_{now}.log"
         return cls._log_file
 
