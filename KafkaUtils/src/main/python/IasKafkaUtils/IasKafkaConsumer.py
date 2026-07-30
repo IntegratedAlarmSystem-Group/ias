@@ -136,7 +136,7 @@ class IasLogConsumer(Thread):
                            self._groupid,
                            kafka_error.str())
 
-    def onRevoke(consumer, partitions):
+    def onRevoke(self, consumer, partitions):
         self._logger.warning("Kafka consumer with client id %s and group id %s revoked partitions %s", 
                                   self._clientid,
                                   self._groupid,
