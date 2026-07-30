@@ -175,9 +175,9 @@ class TestPyAck():
         """
         TestPyAck.LOGGER.info("Test ACK of an alarm through python API")
 
-        TestPyAck.LOGGER.info("Sending high temperature to let the supervisor generate the alarm")
+        TestPyAck.LOGGER.info("Sending a temperature to let the supervisor generate the alarm")
         high_temp = TestPyAck.buildIasio(0.0)
-        TestPyAck.LOGGER.info(f"Sending high temperature IASIO: {high_temp.toString()}")
+        TestPyAck.LOGGER.info(f"Sending a temperature IASIO: {high_temp.toString()}")
         TestPyAck.iasio_listener.clear()
         TestPyAck.iasio_producer.send(high_temp)
         alarm = self.wait_alarm()
