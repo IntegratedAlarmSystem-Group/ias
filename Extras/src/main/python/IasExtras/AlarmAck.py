@@ -76,6 +76,8 @@ class AlarmAck:
             raise ValueError("Invalid null/empty supervisor ID")
         if not alarm_id:
             raise ValueError("Invalid null/empty alarm ID")
+        if timeout<0:
+            raise ValueError(f"Timeout must be >=0 but {timeout} was given")
         
         self.logger.debug(f"Acknowledging alarm with ID {alarm_id} and comment'{comment}'")
 

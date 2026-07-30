@@ -7,6 +7,7 @@ The test run miasPushIasio commands and checks if the IASIOs are pushed in the c
 import queue
 import uuid
 import subprocess
+import logging
 from threading import Event
 
 from IasLogging.log import Log
@@ -17,26 +18,29 @@ from IasBasicTypes.IasValue import IasValue
 class IasioListener(IasValueListener):
     def __init__(self, iasios_received: queue.Queue):
         super().__init__()
+        self.logger=logging.getLogger(IasioListener.__name__)
         # The last alarm received
         self.last_iasio_received: IasValue|None = None
 
-        self.iasios_received: queue.Queue = iasios_received
+        self.queue: queue.Queue = iasios_received
 
     def clear(self):
+        self.logger.debug("Clearing the queue of IasValues")
         self.last_iasio_received = None
         while True:
             try:
-                self.iasios_received.get_nowait()
+                self.queue.get_nowait()
             except queue.Empty:
                 break
+        self.logger.debug("Queue empty")
 
     def iasValueReceived(self, iasValue: IasValue):
-        print(f"IasValue received: {iasValue.toString()}")
+        self.logger.info(f"IasValue received: {iasValue.toString()}")
         self.last_iasio_received = iasValue
-        self.iasios_received.put(iasValue)
-        print(f"IASIO received {self.last_iasio_received.toString()}")
+        self.queue.put(iasValue)
+        self.logger.info("IasValue in queue")
 
-class TestPushIaioScript():
+class TestPushIasioScript():
 
     # The frId of the temperature IASIO
     temperature_frid = id = "(Monitored-System-ID:MONITORED_SOFTWARE_SYSTEM)@(plugin-ID:PLUGIN)@(Converter-ID:CONVERTER)@(Temperature-ID:IASIO)"
@@ -47,6 +51,7 @@ class TestPushIaioScript():
     @classmethod
     def setup_class(cls):
         Log.init_logging(__file__)
+        cls.LOGGER = logging.getLogger(TestPushIasioScript.__name__)
         # Create a queue to receive the IASIOs
         cls.iasios_received = queue.Queue()
 
@@ -58,28 +63,28 @@ class TestPushIaioScript():
                                        IasKafkaHelper.topics['core'], 
                                        id, 
                                        id)
-        print("Connecting the IASIO listener")
+        cls.LOGGER.info("Connecting the IASIO listener")
         consumer_ready = Event()
         cls.iasio_consumer.start(ready_event=consumer_ready)
-        print("Wait until the consumer is ready...")
+        cls.LOGGER.info("Wait until the consumer is ready...")
         assert consumer_ready.wait(timeout=30), "Kafka not ready before timeout expired"
-        print("IASIO listener connected")
+        cls.LOGGER.info("IASIO consumer connected")
 
     @classmethod
     def teardown_class(cls):
-        print("Closing the IASIO listener")
+        cls.LOGGER.info("Closing the IASIO listener")
         cls.iasio_consumer.close()
-        print("IASIO listener closed")
+        cls.LOGGER.info("IASIO listener closed")
 
     def test_push_iasio(self):
-        print(f"Testing the pushing of an IASIO with iasPushIasio, isSubscribed={TestPushIaioScript.iasio_consumer.isSubscribed()}")
-        TestPushIaioScript.iasio_listener.clear()
+        TestPushIasioScript.LOGGER.info(f"Testing the pushing of an IASIO with iasPushIasio, isSubscribed={TestPushIasioScript.iasio_consumer.isSubscribed()}")
+        TestPushIasioScript.iasio_listener.clear()
         cmd = [
             "iasPushIasio",
-            "-i", TestPushIaioScript.alarm_frid,
+            "-i", TestPushIasioScript.alarm_frid,
             "-t", "ALARM",
             "-v", "SET_ACK:HIGH"]
-        print(f"Running command: {' '.join(cmd)}")
+        TestPushIasioScript.LOGGER.info(f"Running command: {' '.join(cmd)}")
         proc = subprocess.Popen(cmd, 
                                   shell=False,
                                   stdout=subprocess.PIPE,
@@ -89,23 +94,24 @@ class TestPushIaioScript():
         try:
             stdout, stderr = proc.communicate(timeout=10)
             
-            print("STDOUT:", stdout)
-            print("STDERR:", stderr)
-            print("RETURN CODE:", proc.returncode)
+            print("iasPushIasio STDOUT:", stdout)
+            print("iasPushIasio STDERR:", stderr)
+            print("iasPushIasio RETURN CODE:", proc.returncode)
 
         except subprocess.TimeoutExpired:
             proc.kill()
             assert False, "iasPushIasio command did not complete in time"
 
         assert proc.returncode==0, f"iasPushIasio command failed with return code {proc.returncode}."
-        print("iasPushIasio command executed successfully")
+        TestPushIasioScript.LOGGER.info("iasPushIasio command executed successfully")
 
         iasio = None
         try:
-            print("Waiting for the IASIO to be received from the BSDB...")
-            iasio = TestPushIaioScript.iasios_received.get(timeout=30)
+            TestPushIasioScript.LOGGER.info("Waiting for the IASIO to be received from the BSDB...")
+            iasio = TestPushIasioScript.iasios_received.get(timeout=30)
+            TestPushIasioScript.LOGGER.info("IASIO received")
         except queue.Empty:
-            pass
+            TestPushIasioScript.LOGGER.error("NO IASIO received")
         assert iasio, "No IASIO received from iasPushIasio"
 
         
