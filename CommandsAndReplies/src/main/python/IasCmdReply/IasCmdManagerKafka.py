@@ -115,7 +115,10 @@ class IasCmdManagerKafka(Thread):
             groupid=kgroup_id)
         
         # Kafka producer of replies
-        conf = { 'bootstrap.servers': kbrokers, 'client.id': self.fullRunningId}
+        conf = { 'bootstrap.servers': kbrokers, 
+                'client.id': self.fullRunningId, 
+                'acks': 'all',
+                "enable.idempotence": True,}
         if replyProducer is None:
             self.reply_producer = Producer(conf)
         else:

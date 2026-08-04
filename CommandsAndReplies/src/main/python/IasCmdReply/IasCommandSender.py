@@ -43,7 +43,11 @@ class IasCommandSender(IasLogListener):
         self.bsdb_sender_id = bsdb_sender_id
 
         # Kafka producer of comands
-        conf = { 'bootstrap.servers': brokers, 'client.id': bsdb_sender_id}
+        conf = { 
+            'bootstrap.servers': brokers, 
+            'client.id': bsdb_sender_id, 
+            'acks': 'all', 
+            "enable.idempotence": True,}
         if string_producer is None:
             self.cmd_producer = Producer(conf)
         else:
@@ -71,6 +75,7 @@ class IasCommandSender(IasLogListener):
             if not self.reply_consumer.start(60):
                 raise RuntimeError("Failed to subscribe to reply kafka topic")
             self.initialized = True
+            self.logger.info("Reply consumer initialized")
         else:
             self.logger.warning("Already initialized")
         
@@ -90,7 +95,7 @@ class IasCommandSender(IasLogListener):
             dest_id: str, 
             command: IasCommandType, 
             params: List[str]|None,
-            properties: Dict[str, str]|None,):
+            properties: Dict[str, str]|None,) -> None:
         """
         Publish a command in the kafka command topic
 
@@ -101,6 +106,11 @@ class IasCommandSender(IasLogListener):
             params The optional parameters of the command
             properties The optional properties of the command
         """
+        if self.closed:
+            self.logger.error("Cannot send commands from a closed sender: command discarded")
+        if not self.initialized:
+            self.logger.error("Cannot send commands from an uninitialized sender: command discarded")
+
         ias_command = IasCommand(
             dest=dest_id,
             sender=self.sender_full_running_id,
@@ -116,8 +126,22 @@ class IasCommandSender(IasLogListener):
         self.cmd_producer.produce(
             IasKafkaHelper.topics['cmd'],
             value=ias_cmd_str,
-            key=str(id))
+            key=str(id), callback=self._delivery_report)
+        self.cmd_producer.flush()
         self.logger.debug("Cmd with ID %d published in the kafka topic", id)
+
+    def _delivery_report(self, err, msg):
+        """
+        Callback for the delivery report of a command sent to kafka
+        
+        @param err: the error if any
+        @param msg: the message sent
+        """
+        if err is not None:
+            self.logger.error('Command delivery failed: %s', err)
+        else:
+            self.logger.debug('Command delivered to %s [%d] at offset %d',
+                        msg.topic(), msg.partition(), msg.offset())
 
     def send_sync(
             self,
@@ -167,7 +191,7 @@ class IasCommandSender(IasLogListener):
             self.cmd_id += 1
             self.id_to_wait = self.cmd_id
             self._publish_cmd(self.cmd_id, dest_id,command, params, properties)
-            self.cmd_producer.flush() # sync
+            self.cmd_producer.flush()
 
             self.logger.debug(f"Waiting up to {timeout} seconds to get the reply with id {self.id_to_wait} from {dest_id}")
             try:
@@ -237,4 +261,6 @@ class IasCommandSender(IasLogListener):
             except Exception as ex:
                 self.logger.error(f"Malformed JSON string representing a reply: [{log}]")
                 traceback.print_exception(ex)
+        else:
+            self.logger.error("Got a null/empty reply")
 
