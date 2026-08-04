@@ -108,6 +108,7 @@ subprojects {
             commandLine(
                 "pytest",
                 "src/test/python",
+                "-rP",
                 "--junitxml=${layout.buildDirectory.dir("test-results/pytest").get().asFile}/TEST-${project.name}-pytest.xml"
             )
         }
