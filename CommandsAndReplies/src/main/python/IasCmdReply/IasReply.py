@@ -16,39 +16,19 @@ class IasReply(object):
 
     It is the python equivalent of the java org.eso.ias.command.ReplyMessage
 
-    All parameters are strings, the timestamps are string formatted as ISO-8601
+    All parameters are strings, the timestamps are strings formatted as ISO-8601
     '''
-
-    # The full running ID of the sender of the reply
-    senderFullRunningId = None
-
-    # The full running ID of the receiver of the command.
-    destFullRunningId = None
-
-    # The unique identifier (in the context of the sender) of the command.
-    id: str = None
-
-    # The command just executed
-    command: IasCommandType = None
-
-    #  The exit status of the command
-    exitStatus: IasCmdExitStatus = None
-
-    # The point in time when the command has been received from the kafka topic (ISO 8601)
-    receptionTStamp = None
-
-    # The point in time when the execution of the command terminated (ISO 8601)
-    processedTStamp = None
-
-    # Additional properties, if any
-    properties = None
-
     def __init__(self, sender, dest, cmd: IasCommandType|str, id, exitStatus: IasCmdExitStatus|str, recvTStamp, procTStamp, properties=None):
         if not sender:
             raise ValueError("Invalid sender")
+
+        # The full running ID of the sender of the reply
         self.senderFullRunningId = sender
+
         if not dest:
             raise ValueError("Invalid destination")
+
+        # The full running ID of the receiver of the command.
         self.destFullRunningId = dest
         if not cmd:
             raise ValueError("Invalid command")
@@ -59,6 +39,7 @@ class IasReply(object):
 
         if not id:
             raise ValueError("Invalid id of the command")
+        # The unique identifier (in the context of the sender) of the command.
         self.id = str(id)
 
         if not exitStatus:
