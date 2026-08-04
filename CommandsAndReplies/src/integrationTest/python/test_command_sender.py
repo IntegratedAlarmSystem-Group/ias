@@ -1,5 +1,6 @@
 from queue import Queue
 import time
+import uuid
 
 from IasLogging.log import Log
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
@@ -41,20 +42,11 @@ class TestCommandSender():
             listener=cls.listener,
             kafkabrokers=IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
             topic=IasKafkaHelper.topics['cmd'],
-            clientid="TestCommandSender.cli"+Iso8601TStamp.now(),
-            groupid="TestCommandSender.grp"+Iso8601TStamp.now())
-        cls.cmd_consumer.start()
-
-        # Wait until the consumer is subscribed
-        timeout = 60 # seconds
-        iteration = 0 
-        while not cls.cmd_consumer.isSubscribed() and iteration<2*timeout:
-            time.sleep(0.50)
-            iteration = iteration+1
-        if not cls.cmd_consumer.isSubscribed():
-            raise RuntimeError("Failed to subscribe to kafka topic")
-        else:
-            print("Consumer subscribed")
+            clientid="TestCommandSender.cli"+str(uuid.uuid4()),
+            groupid="TestCommandSender.grp"+str(uuid.uuid4()))
+        cls.cmd_consumer.start(waitAssigmentTimeout=30)
+        assert cls.cmd_consumer.isGettingLogs()
+        print("Consumer subscribed")
     
     def test_send_async_command(self):
         print("Prepare the command")
@@ -65,11 +57,17 @@ class TestCommandSender():
         
         sender_frId = "FullRuningIdeSender"
         cmd_sender = IasCommandSender(sender_frId, "sender_id_test", IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
+        print("Iitializing the IasCommandSender")
         cmd_sender.set_up()
+        print("IasCommandSender initialized")
+        print("Sending command",cmd)
         cmd_sender.send_async(dest, cmd, params, props)
+        print(" Command sent")
 
         # Wait for the cmd: raise exception if no cmd is received in time
+        print(" Waiting for the replay")
         recv_cmd = TestCommandSender.received_cmds.get(block=True, timeout=60)
+        print("Reply received")
         assert recv_cmd.command == cmd
         assert recv_cmd.destId == dest
         assert recv_cmd.senderFullRunningId == sender_frId
