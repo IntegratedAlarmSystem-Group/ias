@@ -125,28 +125,30 @@ def main() -> int:
     Log.init_log_from_cmdline_args(args, __file__)
     logger = logging.getLogger("iasPushIasio")
 
-    # Build the Identifier to check if the provided frid is valid
-    ias_identifier = Identifier.from_string(args.iasioid)
-    
-    bsdb_url = IasKafkaHelper.get_bsdb_url(args.kafkabrokers, args.jCdb)
-    topic = IasKafkaHelper.topics['core']
-    logger.debug(f"Creating Kafka producer with topic {topic} and BSDB URL {bsdb_url} and client ID {args.bsdbid}")
-    producer = KafkaValueProducer(bsdb_url, topic, args.bsdbid)
-    logger.info(f"Kafka IasValue producer created with BSDB URL {bsdb_url} and client ID {args.bsdbid}")
+    try:
+        # Build the Identifier to check if the provided frid is valid
+        ias_identifier = Identifier.from_string(args.iasioid)
+        
+        bsdb_url = IasKafkaHelper.get_bsdb_url(args.kafkabrokers, args.jCdb)
+        topic = IasKafkaHelper.topics['core']
+        logger.debug(f"Creating Kafka producer with topic {topic} and BSDB URL {bsdb_url} and client ID {args.bsdbid}")
+        producer = KafkaValueProducer(bsdb_url, topic, args.bsdbid)
+        logger.info(f"Kafka IasValue producer created with BSDB URL {bsdb_url} and client ID {args.bsdbid}")
 
-    ias_value = IasValue.build(
-        value = args.iasiovalue,
-        value_type = IASType.fromString(args.iasiotype),
-        fr_id = ias_identifier,
-        validity = Validity.fromString(args.validity),
-        mode=OperationalMode.fromString(args.opermode))
-    logger.info(f"IasValue to push: {ias_value.toJSonString()}")
+        ias_value = IasValue.build(
+            value = args.iasiovalue,
+            value_type = IASType.fromString(args.iasiotype),
+            fr_id = ias_identifier,
+            validity = Validity.fromString(args.validity),
+            mode=OperationalMode.fromString(args.opermode))
+        logger.debug(f"IasValue to push: {ias_value.toJSonString()}")
 
-    producer.send(ias_value)
-    producer.flush()
-    logger.info("IasValue sent to kafka topic %s", topic)
-    return 0
-    
+        producer.send(ias_value)
+        logger.info("IasValue sent to kafka topic %s", topic)
+        return 0
+    except:
+        logger.exception(f"Exception pushing IASIO {ias_identifier} with value {args.iasiovalue}")
+        return 1    
 
 if __name__ == '__main__':
     try:

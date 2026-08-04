@@ -94,12 +94,6 @@ class KafkaValueConsumer(Thread):
         # The kafka consumer
         self._consumer = Consumer(conf, logger=self._logger)
 
-        # Signal if the thread is getting events from the topic 
-        # This is not the same of starting the thread because
-        ## if the topic does not exist, the thread wait until
-        # it is created but is not yet getting events
-        self.isGettingEvents = False
-
           # Signal the thread to terminate
         self.terminateThread: Event = Event()
 
@@ -149,6 +143,14 @@ class KafkaValueConsumer(Thread):
         """
         return len(self._consumer.assignment())>0
 
+    def isGettingValues(self):
+            """
+            Returns:
+                True if the consumer is getting events from the kafka topic partitions,
+                False otherwise
+            """
+            return self.is_alive() and self.isSubscribed()
+
     def run(self):
         self._logger.info('Thread to poll for Kafka logs started')
         # Create the topic before subscribing
@@ -160,7 +162,6 @@ class KafkaValueConsumer(Thread):
         self._consumer.subscribe([self.topic], on_assign=self.onAssign, on_revoke=self.onLost)
         self._logger.debug("Subscribing to topic %s", self.topic)
 
-        self.isGettingEvents = True
         while not self.terminateThread.is_set():
             msg = self._consumer.poll(timeout=1.0)
             # Reset the watch dog
@@ -174,10 +175,13 @@ class KafkaValueConsumer(Thread):
                 # after the subscription
                 self.ready_event.set()
                 self.ready_event_to_set_flag = False
+                self._logger.debug("Lister notified of subscription")
             
             if msg is None: # No message received within the timeout
                 self._logger.debug(f"Polling thread is {"" if self.isSubscribed() else "NOT "}subscribed")
                 continue
+            else:
+                self._logger.debug("A log has been received from the BSDB")
 
             if msg.error() is not None:
                 if msg.error().code() == KafkaError._PARTITION_EOF:
@@ -203,7 +207,6 @@ class KafkaValueConsumer(Thread):
                     self._logger.exception("Exception caught from the log listener [%s]", json, e)
         # Close the consumer to commit final offsets.
         self._consumer.close()
-        self.isGettingEvents = False
         self._logger.info('Thread terminated')
 
     def start(self, ready_event: Event = None):

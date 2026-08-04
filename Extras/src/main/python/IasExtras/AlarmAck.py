@@ -1,6 +1,3 @@
-import uuid
-from confluent_kafka import Producer
-
 import logging
 
 from IasCmdReply.IasCommandSender import IasCommandSender
@@ -68,7 +65,7 @@ class AlarmAck:
         :type supervisor_id: str
         :param comment: A comment to include with the acknowledgment
         :type comment: str
-        :param timeout: The timeout to wait for the reply if 0, returns immediately 
+        :param timeout: The timeout to wait for the reply if 0, returns immediately (default 0)
         :type timeout float
         :rtype: bool
         """

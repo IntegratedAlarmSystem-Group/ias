@@ -9,6 +9,7 @@ import uuid
 import subprocess
 import logging
 from threading import Event
+import time
 
 from IasLogging.log import Log
 from IasKafkaUtils.KafkaValueConsumer import KafkaValueConsumer, IasValueListener
@@ -79,12 +80,14 @@ class TestPushIasioScript():
     def test_push_iasio(self):
         TestPushIasioScript.LOGGER.info(f"Testing the pushing of an IASIO with iasPushIasio, isSubscribed={TestPushIasioScript.iasio_consumer.isSubscribed()}")
         TestPushIasioScript.iasio_listener.clear()
+        assert TestPushIasioScript.iasio_consumer.isGettingValues(), "KafkaValueConsumer not subscribed"
         cmd = [
             "iasPushIasio",
             "-i", TestPushIasioScript.alarm_frid,
             "-t", "ALARM",
             "-v", "SET_ACK:HIGH"]
         TestPushIasioScript.LOGGER.info(f"Running command: {' '.join(cmd)}")
+        # time.sleep(2)
         proc = subprocess.Popen(cmd, 
                                   shell=False,
                                   stdout=subprocess.PIPE,

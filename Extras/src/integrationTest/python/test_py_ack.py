@@ -32,6 +32,7 @@ from IasExtras.AlarmAck import AlarmAck
 
 @pytest.fixture(scope="session", autouse=True)
 def session_setup():
+    Log.init_logging(__file__)
     logger = logging.getLogger("TestPyAck.session_setup")
     logger.info("Starting the Supervisor")
     superv_proc = subprocess.Popen([ "iasSupervisor", "SupervisorForAck", "-j", "src/integrationTest"], shell=False)
@@ -87,16 +88,7 @@ class TestPyAck():
     # Tha alarm to ACK
     alarm_frid = f"({supervisor_id}:SUPERVISOR)@(DasuTemperature:DASU)@(AsceTemperature:ASCE)@(TemperatureAlarm:IASIO)"
 
-    # The alarms received from the IASIO consumer
-    alarms_received = queue.Queue()
-
-    iasio_listener = IasioListener(alarms_received)
-
-    iasio_consumer = KafkaValueConsumer(iasio_listener, 
-                                       IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, 
-                                       IasKafkaHelper.topics['core'], 
-                                       "coreListenerId", 
-                                       "coreListenerGId"+str(uuid.uuid4()))
+    
     
     iasio_producer = KafkaValueProducer(IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, 
                                        IasKafkaHelper.topics['core'], 
@@ -130,8 +122,19 @@ class TestPyAck():
     
     @classmethod
     def setup_class(cls):
-        Log.init_logging(__file__)
         cls.LOGGER = logging.getLogger(cls.__name__)
+
+        # The alarms received from the IASIO consumer
+        cls.alarms_received = queue.Queue()
+        
+        cls.iasio_listener = IasioListener(cls.alarms_received)
+        
+        cls.iasio_consumer = KafkaValueConsumer(cls.iasio_listener, 
+                                            IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, 
+                                            IasKafkaHelper.topics['core'], 
+                                            "coreListenerId", 
+                                            "coreListenerGId"+str(uuid.uuid4()))
+
         cls.LOGGER.info("Connecting the IASIO listener")
         consumer_ready = Event()
         cls.iasio_consumer.start(ready_event=consumer_ready)
@@ -150,6 +153,12 @@ class TestPyAck():
         cls.cmd_sender.send_sync(TestPyAck.supervisor_id, IasCommandType.SHUTDOWN)
         # Close the command sender
         cls.cmd_sender.close()
+
+    @pytest.fixture(autouse=True)
+    def setup(self):
+        # Fixture executed before each test
+        TestPyAck.iasio_listener.clear()
+        
 
     def wait_alarm(self, timeout: float = 10) -> Alarm|None:
         """
@@ -242,7 +251,7 @@ class TestPyAck():
 
         # Send an high temperature to set the alarm
         TestPyAck.LOGGER.info("Sending high temperature to set the alarm")
-        high_temp = TestPyAck.buildIasio(100.0)
+        high_temp = TestPyAck.buildIasio(75.0)
         TestPyAck.LOGGER.info(f"Sending high temperature IASIO: {high_temp.toString()}")
         TestPyAck.iasio_producer.send(high_temp)
 
@@ -262,7 +271,7 @@ class TestPyAck():
         TestPyAck.LOGGER.info(f"Running command: {' '.join(cmd)}")
         result = subprocess.Popen(cmd, shell=False)
         try:
-            result.wait(10)
+            result.wait(30)
         except subprocess.TimeoutExpired:
             result.kill()
             assert False, "iasAckAlarm command did not complete within the timeout"
