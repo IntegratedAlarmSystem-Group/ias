@@ -1,6 +1,7 @@
 from queue import Queue
 import time
 import uuid
+import logging
 
 from IasLogging.log import Log
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
@@ -35,7 +36,7 @@ class TestCommandSender():
 
     @classmethod
     def setup_class(cls):
-        Log.init_logging(__file__)
+        Log.init_logging(__file__, file_level_name='info', console_level_name='debug')
         cls.received_cmds = Queue()
         cls.listener = CmdListener(cls.received_cmds)
         cls.cmd_consumer = IasLogConsumer(
@@ -44,7 +45,7 @@ class TestCommandSender():
             topic=IasKafkaHelper.topics['cmd'],
             clientid="TestCommandSender.cli"+str(uuid.uuid4()),
             groupid="TestCommandSender.grp"+str(uuid.uuid4()))
-        cls.cmd_consumer.start(waitAssigmentTimeout=30)
+        cls.cmd_consumer.start(waitAssigmentTimeout=60)
         assert cls.cmd_consumer.isGettingLogs()
         print("Consumer subscribed")
     
@@ -57,7 +58,7 @@ class TestCommandSender():
         
         sender_frId = "FullRuningIdeSender"
         cmd_sender = IasCommandSender(sender_frId, "sender_id_test", IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
-        print("Iitializing the IasCommandSender")
+        print("Initializing the IasCommandSender")
         cmd_sender.set_up()
         print("IasCommandSender initialized")
         print("Sending command",cmd)
