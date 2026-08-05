@@ -56,11 +56,18 @@ class KafkaValueConsumer(Thread):
                  kafkabrokers: str,
                  topic: str,
                  clientid,
-                 groupid):
+                 groupid,
+                 poll_timeout = 0.5):
         '''
         Constructor
         
-        @param listener the listener to send IasValues to
+        Params:
+            listener the listener to send IasValues to
+            kafkabrokers: Kafka brokers
+            topic: the kafka topic to get IasValues from
+            clientid: Kafka client ID
+            groupid: Kafka group ID
+            poll_timeout: the timeout (>0) for the Consumer.poll() function (seconds)
         '''
         Thread.__init__(self)
         self._logger = logging.getLogger(self.__class__.__name__)
@@ -82,6 +89,10 @@ class KafkaValueConsumer(Thread):
         self.kafkaBrokers: str = kafkabrokers
         if not self.kafkaBrokers:
             raise ValueError("The kafka brokers can't be None or empty")
+
+        if poll_timeout <= 0:
+            raise ValueError("Invalid poll timeout")
+        self._poll_timeout = poll_timeout
 
         conf = {'bootstrap.servers': kafkabrokers,
                 'client.id': clientid,
@@ -163,7 +174,7 @@ class KafkaValueConsumer(Thread):
         self._logger.debug("Subscribing to topic %s", self.topic)
 
         while not self.terminateThread.is_set():
-            msg = self._consumer.poll(timeout=1.0)
+            msg = self._consumer.poll(timeout=self._poll_timeout)
             # Reset the watch dog
             with self.watchDogLock:
                 self.watchDog = True
