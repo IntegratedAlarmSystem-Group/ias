@@ -58,7 +58,7 @@ tasks.register("install") {
 }
 
 subprojects {
-    // Adds the pytest task to run pythin tests
+    // Adds the pytest task to run python tests
     // only if module has Python tests: src/test/python exists and contains at least one *.py file
     val pythonDir = file("src/test/python")
 
