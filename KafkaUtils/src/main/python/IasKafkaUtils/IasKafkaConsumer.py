@@ -46,7 +46,8 @@ class IasLogConsumer(Thread):
                  kafkabrokers: str,
                  topic: str,
                  clientid: str,
-                 groupid: str):
+                 groupid: str,
+                 poll_timeout = 0.5):
         '''
         Constructor
         
@@ -56,6 +57,7 @@ class IasLogConsumer(Thread):
             topic: the kafka topic to get logs from
             clientid: Kafka client ID
             groupid: Kafka group ID
+            poll_timeout: the timeout (>0) for the Consumer.poll() function (seconds)
         '''
         Thread.__init__(self)
         # The logger
@@ -84,6 +86,10 @@ class IasLogConsumer(Thread):
         if not groupid:
             raise ValueError("Invalid kafka group ID")
         self._groupid = groupid
+
+        if poll_timeout <= 0:
+            raise ValueError("Invalid poll timeout")
+        self._poll_timeout = poll_timeout
 
         self.name = f"{IasLogConsumer.__name__}-{self._clientid}-{self._groupid}"
 
@@ -117,18 +123,26 @@ class IasLogConsumer(Thread):
         # The lock for the consumer
         self._consumer_lock: Lock = Lock()
 
+        # A flag to know if the first poll has been executed.
+        # It is neded because some kafka internal stuff is updated only after the first poll is executed
+        self._first_poll_executed: bool = False
 
-    def onAssign(self, consumer, partition):
-        self._logger.info("Kafka consumer with client id %s and group id %s assigned to partition %s",
-                          self._clientid,
-                          self._groupid, 
-                          partition)
+
+    def onAssign(self, consumer, partitions):
+        for p in partitions:
+            self._logger.info("Kafka consumer with client id %s and group id %s assigned to partition %d of topic %s at offset %d",
+                            self._clientid,
+                            self._groupid, 
+                            p.partition,
+                            repr(p.topic),
+                            p.offset)
 
     def onLost(self, consumer, partition):
-        self._logger.warning("Kafka consumer with client id %s and group id %s lost partition %s", 
+        self._logger.warning("Kafka consumer with client id %s and group id %s lost partition %d of topic %s", 
                           self._clientid,
                           self._groupid,
-                          partition)
+                          partition.partition,
+                          repr(partition.topic))
 
     def onError(self, kafka_error):
         self._logger.error("Kafka consumer with client id %s and group id %s got an error: %s", 
@@ -137,10 +151,12 @@ class IasLogConsumer(Thread):
                            kafka_error.str())
 
     def onRevoke(self, consumer, partitions):
-        self._logger.warning("Kafka consumer with client id %s and group id %s revoked partitions %s", 
+        for p in partitions:
+            self._logger.warning("Kafka consumer with client id %s and group id %s revoked partition %d of topic %s", 
                                   self._clientid,
                                   self._groupid,
-                                  " ".join(partitions))
+                                  p.partition,
+                                  repr(p.topic))
 
     def isSubscribed(self) -> bool:
         """
@@ -164,7 +180,8 @@ class IasLogConsumer(Thread):
         try:
             while not self._terminate_thread.is_set():
                 with self._consumer_lock:
-                    msg = self._consumer.poll(timeout=1.0)
+                    msg = self._consumer.poll(timeout=self._poll_timeout)
+                self._first_poll_executed = True
                 # Reset the watch dog
                 with self._watchdog_lock:
                     self._watchdog = True
@@ -219,26 +236,49 @@ class IasLogConsumer(Thread):
         Returns:
             True if the consumer is assigned to the topic, False otherwise
         """
-         # For some reason the python client does not create the topic and this
+        # If, for some reason the python client does not create the topic, this
         # function hangs forever waiting to subscribe
         # So we force a topic creation before subscribing
         if IasKafkaHelper.createTopic(self._topic, self._kafka_brokers):
-            self._logger.debug("Topic %s created", self._topic)
+            self._logger.debug("Topic %s created or already exists", self._topic)
         else:
-            self._logger.debug("Topic %s exists", self._topic)
+            self._logger.debug("Cannot create topic %s exists", self._topic)
         with self._consumer_lock:
-            self._consumer.subscribe([self._topic], on_assign=self.onAssign, on_lost=self.onLost)
+            self._consumer.subscribe([self._topic], 
+                                     on_assign=self.onAssign, 
+                                     on_lost=self.onLost, 
+                                     on_revoke=self.onRevoke)
         self._logger.info('Starting thread to poll events from topic %s', self._topic)
         Thread.start(self)
 
+        # Wait for the assignment to the topic if requested
         if waitAssigmentTimeout>=1:
+            self._logger.debug("Waiting up to %f seconds for client %s with group %s being assigned to topic %s", 
+                               waitAssigmentTimeout, self._clientid, self._groupid, self._topic)
             # Wait for assignment
-            poll_time = 0.250
+            poll_time = 0.5
             start_time = time.time()
-            while not self.isSubscribed() and time.time()<start_time+waitAssigmentTimeout:
+            end_time = start_time + waitAssigmentTimeout
+            while time.time()<end_time:
                 time.sleep(poll_time)
-            
-        return self.isSubscribed()
+                if self.isSubscribed():
+                    break
+            if not self.isSubscribed():
+                self._logger.warning("Client %s with group %s NOT assigned to topic %s after %f seconds", 
+                               self._clientid, self._groupid, self._topic, waitAssigmentTimeout)
+                return False
+            else:
+                self._logger.debug("Client %s with group %s assigned to topic %s", 
+                                               self._clientid, self._groupid, self._topic)
+        
+        if waitAssigmentTimeout>=1:
+            start_time = time.time()
+            end_time = start_time + waitAssigmentTimeout
+            self._first_poll_executed = False
+            while not self._first_poll_executed and time.time()<end_time:
+                time.sleep(0.25)
+
+        return self.isGettingLogs()
 
     def close(self):
         '''
