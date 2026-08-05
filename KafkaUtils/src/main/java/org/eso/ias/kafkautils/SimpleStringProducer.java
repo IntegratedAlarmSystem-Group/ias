@@ -118,6 +118,7 @@ public class SimpleStringProducer {
 		Properties props = new Properties();
 		props.put("bootstrap.servers", bootstrapServers);
 		props.put("acks", "all");
+		props.put("enable.idempotence", true);
 		props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 		props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 		props.put("client.id",clientID);
