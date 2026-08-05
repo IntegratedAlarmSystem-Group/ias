@@ -80,7 +80,7 @@ pipeline {
                       ls "$IAS_ROOT/bin"
                       . "$IAS_ROOT/bin/ias-bash-profile"
                       ./gradlew --stop
-                      ./gradlew integrationTest
+                      ./gradlew integrationTest --continue
                   '''
                 }
             }
