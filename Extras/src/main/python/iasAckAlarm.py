@@ -112,7 +112,10 @@ def main()-> int:
 
     full_running_id="(iasAlarmAck:CLIENT)"
 
-    cmd_sender = IasCommandSender(sender_full_running_id=full_running_id, bsdb_sender_id=bsdb_url, brokers=bsdb_url)
+    cmd_sender = IasCommandSender(
+        sender_full_running_id=full_running_id, 
+        bsdb_sender_id=args.bsdbid, 
+        brokers=bsdb_url)
     logger.debug("Setting up the command sender")
     cmd_sender.set_up()
     logger.info("Command sender set up")
