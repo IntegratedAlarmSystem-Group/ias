@@ -236,18 +236,22 @@ class IasLogConsumer(Thread):
         Returns:
             True if the consumer is assigned to the topic, False otherwise
         """
-        # If, for some reason the python client does not create the topic, this
+        # Auto creation of tpopics should be enabled in the kafka server properties
+        # Howver, if, for some reason the python client does not create the topic, this
         # function hangs forever waiting to subscribe
         # So we force a topic creation before subscribing
         if IasKafkaHelper.createTopic(self._topic, self._kafka_brokers):
             self._logger.debug("Topic %s created or already exists", self._topic)
         else:
-            self._logger.debug("Cannot create topic %s exists", self._topic)
+            self._logger.error("Cannot create topic %s", self._topic)
+            return False
         with self._consumer_lock:
+            self._logger.debug("Subscribing to topic %s", self._topic)
             self._consumer.subscribe([self._topic], 
                                      on_assign=self.onAssign, 
                                      on_lost=self.onLost, 
                                      on_revoke=self.onRevoke)
+            
         self._logger.info('Starting thread to poll events from topic %s', self._topic)
         Thread.start(self)
 
