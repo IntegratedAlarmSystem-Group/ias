@@ -2,10 +2,12 @@
 A collection of methods to help dealing with kafka
 """
 
+from concurrent.futures import Future
 import os
 import time
 import logging
 from pathlib import Path
+from typing import Dict
 
 from confluent_kafka.admin import (AdminClient, NewTopic)
 
@@ -14,7 +16,7 @@ from IasCdb.CdbReader import CdbReader
 class IasKafkaHelper():
 
     # The logger
-    logger = logging.getLogger(__name__)
+    _logger = logging.getLogger(__name__)
 
     # Associates human readable topic names with their names in kafka
     topics = {
@@ -46,8 +48,8 @@ class IasKafkaHelper():
     def createTopic(cls, 
         topicName: str, 
         kafkaBrokers: str, 
-        partitions: int=8, 
-        timeout=30) -> bool:
+        partitions: int=-1, 
+        timeout=60) -> bool:
         """
         Create a topic
 
@@ -61,20 +63,30 @@ class IasKafkaHelper():
         Return:
           True if the topic was created or already exists; False otherwise
         """
+        if not topicName:
+            raise ValueError(f"Invalid topic name")
         if IasKafkaHelper.topicExists(topicName, kafkaBrokers):
+            cls._logger.debug("Topic %s already exists", topicName)
             return True
+        cls._logger.debug("Creating topic %s", topicName)
         admin = AdminClient({'bootstrap.servers': kafkaBrokers})
         new_topic = NewTopic(topic=topicName, num_partitions=partitions) 
-        result_dict = admin.create_topics([new_topic])
+        result_dict: Dict[str, Future] = {}
+        try:
+            result_dict = admin.create_topics([new_topic])
+        except Exception as e:
+            cls._logger.error("Error creating topic %s: %s", topicName, str(e))
+            return False
 
-        # Wait for operation to finish by getting the existing topics
-        now = int(time.time() * 1000)
-        end_time = now + int(timeout * 1000)
-        while now <= end_time:
-            now = int(time.time() * 1000)
-            if IasKafkaHelper.topicExists(topicName, kafkaBrokers):
-                return True
-            time.sleep(0.25)
+        for topic, future in result_dict.items():
+            cls._logger.debug(f"Waiting for topic {topic} creation to complete...")
+            try:
+                future.result(timeout=timeout) # blocks until operation completes
+                cls._logger.debug(f"Topic {topic} created")
+                if topic == topicName:
+                    return True
+            except Exception as e:
+                cls._logger.error(f"Failed to create topic {topic}: {e}")
         return False
     
     @classmethod
@@ -139,7 +151,7 @@ class IasKafkaHelper():
         :raises: ValueError if the CDB parent folder is is not readable or
                             does not exist
         """
-        cls.logger.debug("Getting BSDB URL from IAS CDB %s", cdb_parent_folder)
+        cls._logger.debug("Getting BSDB URL from IAS CDB %s", cdb_parent_folder)
         # Check if the cdbfolder exists and contains CDB
         cdb_path = Path(cdb_parent_folder) / "CDB"
         if not cdb_path.is_dir():
@@ -163,23 +175,23 @@ class IasKafkaHelper():
         :rtype: str
         """
         if kafka_brokers is not None:
-            cls.logger.debug("Using kafka brokers from command line")
+            cls._logger.debug("Using kafka brokers from command line")
             return kafka_brokers
         
         if jCdb is not None:
-            cls.logger.debug("Using kafka brokers from IAS CDB passed in command line")
+            cls._logger.debug("Using kafka brokers from IAS CDB passed in command line")
             try:
                 return cls.get_bsdb_from_cdb(jCdb)
             except Exception as e:
-                cls.logger.error("Invalid CDB folder from command line %s", jCdb)
+                cls._logger.error("Invalid CDB folder from command line %s", jCdb)
         
         if os.getenv("IAS_CDB") is not None:
-            cls.logger.debug("Using kafka brokers from IAS_CDB environment variable")
+            cls._logger.debug("Using kafka brokers from IAS_CDB environment variable")
             # get the kafka brokers from the IAS_CDB env var, if defined
             try:
                 return cls.get_bsdb_from_cdb(os.environ["IAS_CDB"])
             except Exception as e:
-                cls.logger.error("Invalid CDB folder from environment %s", jCdb)
+                cls._logger.error("Invalid CDB folder from environment %s", jCdb)
 
-        cls.logger.info("BSDB URL not found: using default %s", cls.DEFAULT_BOOTSTRAP_BROKERS)
+        cls._logger.info("BSDB URL not found: using default %s", cls.DEFAULT_BOOTSTRAP_BROKERS)
         return cls.DEFAULT_BOOTSTRAP_BROKERS
