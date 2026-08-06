@@ -109,6 +109,7 @@ subprojects {
                 "pytest",
                 "src/test/python",
                 "-rP",
+                "--timeout=300",
                 "--junitxml=${layout.buildDirectory.dir("test-results/pytest").get().asFile}/TEST-${project.name}-pytest.xml"
             )
         }

@@ -1,5 +1,6 @@
 confluent-kafka
 pytest
+pytest-timeout
 python-dateutil
 PySide6
 PyYAML
