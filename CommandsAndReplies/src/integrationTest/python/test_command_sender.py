@@ -39,12 +39,14 @@ class TestCommandSender():
         Log.init_logging(__file__, file_level_name='info', console_level_name='debug')
         cls.received_cmds = Queue()
         cls.listener = CmdListener(cls.received_cmds)
+
+        uid = str(uuid.uuid4())
         cls.cmd_consumer = IasLogConsumer(
             listener=cls.listener,
             kafkabrokers=IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
             topic=IasKafkaHelper.topics['cmd'],
-            clientid="TestCommandSender.cli"+str(uuid.uuid4()),
-            groupid="TestCommandSender.grp"+str(uuid.uuid4()))
+            clientid="TestCommandSender.cli"+uid,
+            groupid="TestCommandSender.grp"+uid)
         cls.cmd_consumer.start(waitAssigmentTimeout=60)
         assert cls.cmd_consumer.isGettingLogs()
         print("Consumer subscribed")
@@ -57,7 +59,8 @@ class TestCommandSender():
         props = { "p1":1, "p2":122}
         
         sender_frId = "FullRuningIdeSender"
-        cmd_sender = IasCommandSender(sender_frId, "sender_id_test", IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
+        uid = str(uuid.uuid4())
+        cmd_sender = IasCommandSender(sender_frId, "sender_id_test-"+uid, IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS)
         print("Initializing the IasCommandSender")
         cmd_sender.set_up()
         print("IasCommandSender initialized")
