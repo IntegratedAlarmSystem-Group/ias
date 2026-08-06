@@ -19,6 +19,7 @@ BuildRequires:	%{py3_dist confluent-kafka}
 BuildRequires:	%{py3_dist python-dateutil}
 BuildRequires:	%{py3_dist pyyaml}
 BuildRequires:	%{py3_dist pytest}
+BuildRequires:	%{py3_dist pytest-timeout}
 BuildRequires:	%{py3_dist sqlalchemy}
 BuildRequires:	%{py3_dist oracledb}
 BuildRequires:	%{py3_dist pyside6}
