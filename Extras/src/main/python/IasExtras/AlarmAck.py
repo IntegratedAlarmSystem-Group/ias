@@ -35,7 +35,7 @@ class AlarmAck:
         if not isinstance(command_sender, IasCommandSender):
             raise ValueError("Invalid command sender: expected an instance of IasCommandSender")
 
-        self.logger = logging.getLogger(__name__)
+        self._logger = logging.getLogger(__name__)
 
         self.command_sender = command_sender
 
@@ -45,13 +45,14 @@ class AlarmAck:
         """
         Start the AlarmAck object (starts the internal command sender)
         """
-        self.command_sender.set_up()
+        self._logger.debug('Started')
 
     def close(self) -> None:
         """
         Close the AlarmAck object
         """
         self._closed = True
+        self._logger.debug('Closed')
 
     def ack(self, 
             alarm_id: str, 
@@ -72,7 +73,7 @@ class AlarmAck:
         :rtype: bool
         """
         if self._closed:
-            self.logger.error("Cannot acknowledge alarm: AlarmAck is closed")
+            self._logger.error("Cannot acknowledge alarm: AlarmAck is closed")
             return False
         if not supervisor_id:
             raise ValueError("Invalid null/empty supervisor ID")
@@ -81,7 +82,7 @@ class AlarmAck:
         if timeout<0:
             raise ValueError(f"Timeout must be >=0 but {timeout} was given")
         
-        self.logger.debug(f"Acknowledging alarm with ID {alarm_id} and comment'{comment}'")
+        self._logger.debug(f"Acknowledging alarm with ID {alarm_id} and comment'{comment}'")
 
         if timeout>0:
             reply = self.command_sender.send_sync(
@@ -91,10 +92,10 @@ class AlarmAck:
                 timeout=timeout)
             
             if reply is None:
-                self.logger.error(f"No reply received from supervisor {supervisor_id} for ACK command for alarm {alarm_id}")
+                self._logger.error(f"No reply received from supervisor {supervisor_id} for ACK command for alarm {alarm_id}")
                 return False
             if reply.exitStatus != IasCmdExitStatus.OK:
-                self.logger.error(f"Failed to acknowledge alarm {alarm_id} using supervisor {supervisor_id}. Exit status: {reply.exitStatus}")
+                self._logger.error(f"Failed to acknowledge alarm {alarm_id} using supervisor {supervisor_id}. Exit status: {reply.exitStatus}")
                 return False
             else:
                 return True
