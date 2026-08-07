@@ -89,6 +89,7 @@ class TestHbKafkaProducer():
 
         producer.send(hb=hb, hb_status=hb_status, props=props,tstamp=tstamp)
 
+        self._log_container.clear()
         hb_msg = self._log_container.get(timeout=4)
         self.logger.info("HB received %s", hb_msg.toJSON())
         producer.close()
