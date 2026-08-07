@@ -38,6 +38,8 @@ class AlarmAck:
         self.logger = logging.getLogger(__name__)
 
         self.command_sender = command_sender
+
+        self._closed = False
         
     def start(self) -> None:
         """
@@ -47,9 +49,9 @@ class AlarmAck:
 
     def close(self) -> None:
         """
-        Close the AlarmAck object (closes the internal command sender)
+        Close the AlarmAck object
         """
-        self.command_sender.close()
+        self._closed = True
 
     def ack(self, 
             alarm_id: str, 
@@ -69,6 +71,9 @@ class AlarmAck:
         :type timeout float
         :rtype: bool
         """
+        if self._closed:
+            self.logger.error("Cannot acknowledge alarm: AlarmAck is closed")
+            return False
         if not supervisor_id:
             raise ValueError("Invalid null/empty supervisor ID")
         if not alarm_id:
