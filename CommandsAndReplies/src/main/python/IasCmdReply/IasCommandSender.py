@@ -31,10 +31,11 @@ class IasCommandSender(IasLogListener):
 
         Params:
             senderFullRuningId The full runing id of the sender
-            stringProducer The string producer to publish commands
-                           (if None builds a new producer)
-            senderId The id of the sender (i.e. the BSDB client.id of the Producer and the Consumer)
+            bsdb_sender_id The BSDB id of the sender (i.e. the BSDB client.id of the Producer and the Consumer)
             brokers URL of kafka brokers
+            stringProducer The string producer to publish commands
+                           (if None a new produce will be created
+            
         """
         if not sender_full_running_id:
             raise ValueError("Invalid null/empty full running ID of the sender")
@@ -50,8 +51,10 @@ class IasCommandSender(IasLogListener):
             "enable.idempotence": True,}
         if string_producer is None:
             self.cmd_producer = Producer(conf)
+            self._detsroy_prod_on_close = True
         else:
             self.cmd_producer = string_producer
+            self._detsroy_prod_on_close = False
 
         # The consumer of replies
         self.reply_consumer = IasLogConsumer(
@@ -82,9 +85,11 @@ class IasCommandSender(IasLogListener):
 
     def close(self):
         if not self._closed:
+            self._closed = True
             self.logger.debug("Closing...")
             self.reply_consumer.close()
-            self._closed = True
+            if self._detsroy_prod_on_close:
+                self.cmd_producer.close()
             self.logger.info("Closed")
         else:
             self.logger.warning("Already closed!")
