@@ -128,12 +128,13 @@ class TestPyAck():
         cls.alarms_received = queue.Queue()
         
         cls.iasio_listener = IasioListener(cls.alarms_received)
-        
+
+        uid = str(uuid.uuid4())
         cls.iasio_consumer = KafkaValueConsumer(cls.iasio_listener, 
                                             IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, 
                                             IasKafkaHelper.topics['core'], 
-                                            "coreListenerId", 
-                                            "coreListenerGId"+str(uuid.uuid4()))
+                                            "coreListenerId-"+uid, 
+                                            "coreListenerGId-"+uid)
 
         cls.LOGGER.info("Connecting the IASIO listener")
         consumer_ready = Event()
@@ -222,7 +223,10 @@ class TestPyAck():
         TestPyAck.LOGGER.info("Alarm ACKed")
 
         # Wait for the Supervisor to ACK the alarm
+        TestPyAck.LOGGER.info("Waiting for the Supervisor to ACK the alarm")
+        TestPyAck.iasio_listener.clear()
         tries = 0
+        alarm = self.wait_alarm()
         while not alarm.is_acked() and tries<3:
             alarm = self.wait_alarm()
             assert alarm is not None, "No alarm received"
@@ -281,7 +285,10 @@ class TestPyAck():
 
         # Wait for the Supervisor to ACK the alarm
         # This ensures that the alarm ID is correct
+        TestPyAck.LOGGER.info("Waiting for the Supervisor to ACK the alarm")
+        TestPyAck.iasio_listener.clear()
         tries = 0
+        alarm = self.wait_alarm()
         while not alarm.is_acked() and tries<3:
             alarm = self.wait_alarm()
             assert alarm is not None, "No alarm received"
