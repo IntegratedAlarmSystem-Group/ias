@@ -65,26 +65,26 @@ class IasCommandSender(IasLogListener):
         self.request_reply_in_progress = False
         self.id_to_wait = None
         self.replies_queue = Queue()
-        self.closed = False
-        self.initialized=False
+        self._closed = False
+        self._initialized=False
 
     def set_up(self):
-        if self.closed:
+        if self._closed:
             raise RuntimeError("Cannot initialized a closed object")
-        if not self.initialized:
+        if not self._initialized:
             if not self.reply_consumer.start(60):
                 raise RuntimeError("Failed to subscribe to reply kafka topic")
-            self.initialized = True
+            self._initialized = True
             self.logger.info("Reply consumer initialized")
         else:
             self.logger.warning("Already initialized")
         
 
     def close(self):
-        if not self.closed:
+        if not self._closed:
             self.logger.debug("Closing...")
             self.reply_consumer.close()
-            self.closed = True
+            self._closed = True
             self.logger.info("Closed")
         else:
             self.logger.warning("Already closed!")
@@ -106,10 +106,12 @@ class IasCommandSender(IasLogListener):
             params The optional parameters of the command
             properties The optional properties of the command
         """
-        if self.closed:
+        if self._closed:
             self.logger.error("Cannot send commands from a closed sender: command discarded")
-        if not self.initialized:
+            return False
+        if not self._initialized:
             self.logger.error("Cannot send commands from an uninitialized sender: command discarded")
+            return False
 
         ias_command = IasCommand(
             dest=dest_id,
@@ -170,10 +172,12 @@ class IasCommandSender(IasLogListener):
             None if the waiting time elapsed before getting the reply
         """
 
-        if self.closed:
-            self.logger.error("Cannot send commands from a closed sender: command discarded")
-        if not self.initialized:
-            self.logger.error("Cannot send commands from an uninitialized sender: command discarded")
+        if self._closed:
+            self.logger.error(f"Cannot send commands from a closed sender: command {command} discarded")
+            raise RuntimeError("Cannot send commands from a closed sender")
+        if not self._initialized:
+            self.logger.error(f"Cannot send commands from an uninitialized sender: command {command} discarded")
+            raise RuntimeError("Cannot send commands from an uninitialized sender")
 
         if dest_id == "BROADCAST":
             raise ValueError("BROADCAST cannot be used for send-reply: use send_async")
@@ -222,10 +226,12 @@ class IasCommandSender(IasLogListener):
             params The optional parameters of the command
             properties The optional properties of the command
         """
-        if self.closed:
-            self.logger.error("Cannot send commands from a closed sender: command discarded")
-        if not self.initialized:
-            self.logger.error("Cannot send commands from an uninitialized sender: command discarded")
+        if self._closed:
+            self.logger.error(f"Cannot send commands from a closed sender: command {command} discarded")
+            raise RuntimeError("Cannot send commands from a closed sender")
+        if not self._initialized:
+            self.logger.error(f"Cannot send commands from an uninitialized sender: command {command} discarded")
+            raise RuntimeError("Cannot send commands from an uninitialized sender")
 
         if self.request_reply_in_progress:
             raise RuntimeError("Cannot process two commands at the same time")
