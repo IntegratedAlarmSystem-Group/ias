@@ -137,12 +137,15 @@ class IasLogConsumer(Thread):
                             repr(p.topic),
                             p.offset)
 
-    def onLost(self, consumer, partition):
-        self._logger.warning("Kafka consumer with client id %s and group id %s lost partition %d of topic %s", 
-                          self._clientid,
-                          self._groupid,
-                          partition.partition,
-                          repr(partition.topic))
+    def onLost(self, consumer, partitions):
+        if self._closed:
+            return
+        for p in partitions:
+            self._logger.warning("Kafka consumer with client id %s and group id %s lost partition %d of topic %s", 
+                            self._clientid,
+                            self._groupid,
+                            p.partition,
+                            repr(p.topic))
 
     def onError(self, kafka_error):
         self._logger.error("Kafka consumer with client id %s and group id %s got an error: %s", 
@@ -151,6 +154,8 @@ class IasLogConsumer(Thread):
                            kafka_error.str())
 
     def onRevoke(self, consumer, partitions):
+        if self._closed:
+            return
         for p in partitions:
             self._logger.warning("Kafka consumer with client id %s and group id %s revoked partition %d of topic %s", 
                                   self._clientid,
@@ -291,6 +296,7 @@ class IasLogConsumer(Thread):
         if self._closed:
             self._logger.warning("Already closed")
             return
+        self._closed = True
         
         if self.is_alive():
             self._terminate_thread.set()

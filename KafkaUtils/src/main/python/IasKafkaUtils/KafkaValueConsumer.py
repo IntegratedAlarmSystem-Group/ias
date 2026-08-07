@@ -124,6 +124,8 @@ class KafkaValueConsumer(Thread):
         # It will not be assigned in onAssign but after the next successfull poll
         self.ready_event: Event|None = None
 
+        self._closed = False
+
         self._logger.info('Kafka consumer %s will connect to %s and topic %s', clientid, kafkabrokers, topic)
 
     # Note that this callback is executed when a new partition is assigned but the consumer
@@ -138,6 +140,8 @@ class KafkaValueConsumer(Thread):
             self.ready_event_to_set_flag = True
 
     def onLost(self, consumer, partitions):
+        if self._closed:
+            return
         self._logger.warning("Kafka consumer lost partitions %s", partitions)
         if self.ready_event is not None:
             self.ready_event.clear()
@@ -213,7 +217,8 @@ class KafkaValueConsumer(Thread):
                     self._logger.exception("Exception parsing a log [%s]", json, e)
                     continue
                 try:
-                    self.listener.iasValueReceived(iasValue)
+                    if not self._closed:
+                        self.listener.iasValueReceived(iasValue)
                 except Exception as e:
                     self._logger.exception("Exception caught from the log listener [%s]", json, e)
         # Close the consumer to commit final offsets.
@@ -235,6 +240,10 @@ class KafkaValueConsumer(Thread):
         '''
         Shuts down the thread
         '''
+        if self._closed:
+            self._logger.warning("Already closed")
+            return
+        self._closed = True
         self._logger.debug("Closing...")
         self.terminateThread.set()
         self.join(5)  # Ensure the thread exited before closing the consumer
