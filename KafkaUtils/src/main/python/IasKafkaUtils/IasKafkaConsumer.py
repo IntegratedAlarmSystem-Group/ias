@@ -169,6 +169,8 @@ class IasLogConsumer(Thread):
             True if the consumer is subscribed to at least one partition, 
             False otherwise
         """
+        if self._closed:
+            return False
         with self._consumer_lock:
             return len(self._consumer.assignment())>0
 
@@ -178,7 +180,10 @@ class IasLogConsumer(Thread):
             True if the consumer is getting events from the kafka topic partitions,
             False otherwise
         """
-        return self.is_alive() and self.isSubscribed()
+        if self._closed:
+            return False
+        else:
+            return self.is_alive() and self.isSubscribed()
 
     def run(self):
         self._logger.info('Thread to poll logs started')
@@ -222,9 +227,10 @@ class IasLogConsumer(Thread):
                         continue
         except Exception:
             traceback.print_exc()
+
         # Close down consumer to commit final offsets.
-        with self._consumer_lock:
-            self._consumer.close()
+        # Better not to run with the lockbacause it could last too long and block the thread termination
+        self._consumer.close()
         self._logger.info('Thread terminated')
 
     def start(self, waitAssigmentTimeout: float = 0) -> bool:
