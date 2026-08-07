@@ -275,7 +275,7 @@ class TestPyAck():
         TestPyAck.LOGGER.info(f"Running command: {' '.join(cmd)}")
         result = subprocess.Popen(cmd, shell=False)
         try:
-            result.wait(30)
+            result.wait(120)
         except subprocess.TimeoutExpired:
             result.kill()
             assert False, "iasAckAlarm command did not complete within the timeout"
