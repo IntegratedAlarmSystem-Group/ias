@@ -4,7 +4,7 @@ published in a topic.
 '''
 import time
 import logging
-from threading import Thread, Lock, Event
+from threading import Thread, Lock, RLock, Event
 from confluent_kafka import Consumer, KafkaError
 import traceback
 
@@ -121,7 +121,7 @@ class IasLogConsumer(Thread):
         self._closed: bool =  False
 
         # The lock for the consumer
-        self._consumer_lock: Lock = Lock()
+        self._consumer_lock: RLock = RLock()
 
         # A flag to know if the first poll has been executed.
         # It is neded because some kafka internal stuff is updated only after the first poll is executed
