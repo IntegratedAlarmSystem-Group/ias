@@ -271,7 +271,9 @@ class TestPyAck():
             "iasAckAlarm", 
             "-j", "src/integrationTest",
             "-a", TestPyAck.alarm_frid, 
-            "-c", '"Acknowledged by command line tool"']
+            "-c", '"Acknowledged by command line tool"',
+            "-lc", "debug",
+            "-lf", "debug",]
         TestPyAck.LOGGER.info(f"Running command: {' '.join(cmd)}")
         result = subprocess.Popen(cmd, shell=False)
         try:
