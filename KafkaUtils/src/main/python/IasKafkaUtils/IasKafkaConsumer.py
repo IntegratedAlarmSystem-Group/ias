@@ -59,7 +59,7 @@ class IasLogConsumer(Thread):
             groupid: Kafka group ID
             poll_timeout: the timeout (>0) for the Consumer.poll() function (seconds)
         '''
-        Thread.__init__(self)
+        super().__init__()
         # The logger
         self._logger = logging.getLogger(IasLogConsumer.__name__)
         if not listener:

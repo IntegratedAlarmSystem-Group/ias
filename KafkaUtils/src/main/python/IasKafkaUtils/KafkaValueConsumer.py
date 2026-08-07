@@ -69,7 +69,7 @@ class KafkaValueConsumer(Thread):
             groupid: Kafka group ID
             poll_timeout: the timeout (>0) for the Consumer.poll() function (seconds)
         '''
-        Thread.__init__(self)
+        super().__init__()
         self._logger = logging.getLogger(self.__class__.__name__)
 
         if listener is None:
@@ -108,7 +108,7 @@ class KafkaValueConsumer(Thread):
           # Signal the thread to terminate
         self.terminateThread: Event = Event()
 
-        Thread.daemon = True
+        self.daemon = True
 
         # the watch dog 
         self.watchDog = False

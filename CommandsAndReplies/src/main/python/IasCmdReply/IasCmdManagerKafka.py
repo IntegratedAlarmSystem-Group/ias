@@ -96,11 +96,11 @@ class IasCmdManagerKafka(Thread):
             kclient_id The ID of the Kafka client
             kgroup_id The id of the Kafka group
         """
+        super().__init__()
         if not full_run_id:
             raise ValueError("The full running ID cannot be None")
         if not listener:
             raise ValueError("The listerner of comamnds cannot be None")
-        super().__init__()
         self.logger = logging.getLogger(self.__class__.__name__)
         self.fullRunningId = full_run_id
         self.cmd_listener = listener
