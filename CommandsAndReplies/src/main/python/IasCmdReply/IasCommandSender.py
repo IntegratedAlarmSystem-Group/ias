@@ -73,7 +73,7 @@ class IasCommandSender(IasLogListener):
 
     def set_up(self):
         if self._closed:
-            raise RuntimeError("Cannot initialized a closed object")
+            raise RuntimeError("Cannot initialize a closed object")
         if not self._initialized:
             if not self.reply_consumer.start(60):
                 raise RuntimeError("Failed to subscribe to reply kafka topic")
@@ -117,6 +117,7 @@ class IasCommandSender(IasLogListener):
         if not self._initialized:
             self.logger.error("Cannot send commands from an uninitialized sender: command discarded")
             return False
+        self.logger.debug("Publishing command %s with id %d to %s", command, id, dest_id)
 
         ias_command = IasCommand(
             dest=dest_id,
@@ -135,7 +136,7 @@ class IasCommandSender(IasLogListener):
             value=ias_cmd_str,
             key=str(id), callback=self._delivery_report)
         self.cmd_producer.flush()
-        self.logger.debug("Cmd with ID %d published in the kafka topic", id)
+        self.logger.info("Cmd with ID %d sent to the BSDB", id)
 
     def _delivery_report(self, err, msg):
         """
