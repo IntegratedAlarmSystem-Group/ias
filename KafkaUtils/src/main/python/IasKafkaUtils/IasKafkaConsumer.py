@@ -4,7 +4,7 @@ published in a topic.
 '''
 import time
 import logging
-from threading import Thread, Lock, RLock, Event
+from threading import Thread, Lock, RLock, Event, current_thread
 from confluent_kafka import Consumer, KafkaError
 import traceback
 
@@ -123,11 +123,6 @@ class IasLogConsumer(Thread):
         # The lock for the consumer
         self._consumer_lock: RLock = RLock()
 
-        # A flag to know if the first poll has been executed.
-        # It is neded because some kafka internal stuff is updated only after the first poll is executed
-        self._first_poll_executed: bool = False
-
-
     def onAssign(self, consumer, partitions):
         for p in partitions:
             self._logger.info("Kafka consumer with client id %s and group id %s assigned to partition %d of topic %s at offset %d",
@@ -191,7 +186,6 @@ class IasLogConsumer(Thread):
             while not self._terminate_thread.is_set():
                 with self._consumer_lock:
                     msg = self._consumer.poll(timeout=self._poll_timeout)
-                self._first_poll_executed = True
                 # Reset the watch dog
                 with self._watchdog_lock:
                     self._watchdog = True
@@ -228,10 +222,8 @@ class IasLogConsumer(Thread):
         except Exception:
             traceback.print_exc()
 
-        # Close down consumer to commit final offsets.
-        # Better not to run with the lockbacause it could last too long and block the thread termination
-        self._consumer.close()
-        self._logger.info('Thread terminated')
+        self._logger.info('Consumer thread for topic %s terminated for client id %s and group id %s', 
+                          self._topic, self._clientid, self._groupid)
 
     def start(self, waitAssigmentTimeout: float = 0) -> bool:
         """
@@ -267,7 +259,7 @@ class IasLogConsumer(Thread):
         Thread.start(self)
 
         # Wait for the assignment to the topic if requested
-        if waitAssigmentTimeout>=1:
+        if waitAssigmentTimeout>0:
             self._logger.debug("Waiting up to %f seconds for client %s with group %s being assigned to topic %s", 
                                waitAssigmentTimeout, self._clientid, self._groupid, self._topic)
             # Wait for assignment
@@ -280,19 +272,16 @@ class IasLogConsumer(Thread):
                     break
             if not self.isSubscribed():
                 self._logger.warning("Client %s with group %s NOT assigned to topic %s after %f seconds", 
-                               self._clientid, self._groupid, self._topic, waitAssigmentTimeout)
+                                     self._clientid, self._groupid, self._topic, waitAssigmentTimeout)
                 return False
             else:
                 self._logger.debug("Client %s with group %s assigned to topic %s", 
-                                               self._clientid, self._groupid, self._topic)
+                                   self._clientid, self._groupid, self._topic)
         
-        if waitAssigmentTimeout>=1:
-            start_time = time.time()
-            end_time = start_time + waitAssigmentTimeout
-            self._first_poll_executed = False
-            while not self._first_poll_executed and time.time()<end_time:
-                time.sleep(0.25)
+            # Give time to execute a poll
+            time.sleep(self._poll_timeout+0.1)
 
+        self._logger.info('Consumer for client ID %s and group ID %s started', self._clientid, self._groupid)
         return self.isGettingLogs()
 
     def close(self):
@@ -304,11 +293,17 @@ class IasLogConsumer(Thread):
             return
         self._closed = True
         
-        if self.is_alive():
+        if self.is_alive() and current_thread() is not self:
             self._terminate_thread.set()
             self.join(5)  # Ensure the thread exited before closing the consumer
             if self.is_alive():
                 self._logger.warning("The thread did not terminate in time")
+        else:
+            self._terminate_thread.set()
+
+        # Close down consumer to commit final offsets.
+        with self._consumer_lock:
+            self._consumer.close()
 
         if not self.is_alive():
             # The thread never started
