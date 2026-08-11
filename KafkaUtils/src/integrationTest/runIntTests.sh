@@ -1,4 +1,6 @@
 #!/usr/bin/bash
+set -euo pipefail
+
 iasRun -r org.junit.platform.console.ConsoleLauncher execute \
 	--select-class org.eso.ias.kafkautils.test.ConsumerProducerTest \
 	--select-class org.eso.ias.kafkautils.test.KafkaIasiosConsumerTest \

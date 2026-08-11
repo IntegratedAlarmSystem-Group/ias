@@ -85,8 +85,8 @@ class IasKafkaHelper():
                 cls._logger.debug(f"Topic {topic} created")
                 if topic == topicName:
                     return True
-            except Exception as e:
-                cls._logger.error(f"Failed to create topic {topic}: {e}")
+            except:
+                cls._logger.exception(f"Failed to create topic {topic}")
         return False
     
     @classmethod

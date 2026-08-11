@@ -43,8 +43,10 @@ class AlarmAck:
         
     def start(self) -> None:
         """
-        Start the AlarmAck object (starts the internal command sender)
+        Start the AlarmAck object (nothing to do: the internal sender must be already started)
         """
+        if not self.command_sender.is_initialized():
+            raise RuntimeError("Cannot start AlarmAck: command sender is not initialized")
         self._logger.debug('Started')
 
     def close(self) -> None:

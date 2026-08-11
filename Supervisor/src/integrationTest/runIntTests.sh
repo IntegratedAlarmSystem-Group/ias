@@ -1,4 +1,6 @@
 #!/usr/bin/bash
+set -euo pipefail
+
 iasRun -r org.scalatest.tools.Runner \
     -s org.eso.ias.supervisor.test.SupervisorWithKafkaTest \
     -s org.eso.ias.supervisor.test.TestSupervisorTfChanged \

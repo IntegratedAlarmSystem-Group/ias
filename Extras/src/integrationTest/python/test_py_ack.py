@@ -227,7 +227,7 @@ class TestPyAck():
         TestPyAck.iasio_listener.clear()
         tries = 0
         alarm = self.wait_alarm()
-        while not alarm.is_acked() and tries<3:
+        while not alarm or not alarm.is_acked() and tries<3:
             alarm = self.wait_alarm()
             assert alarm is not None, "No alarm received"
             tries += 1
