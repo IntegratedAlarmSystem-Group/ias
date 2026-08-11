@@ -81,7 +81,9 @@ class IasCommandSender(IasLogListener):
             self.logger.info("Reply consumer initialized")
         else:
             self.logger.warning("Already initialized")
-        
+
+    def is_initialized(self) -> bool:
+        return self._initialized
 
     def close(self):
         if not self._closed:
@@ -193,7 +195,7 @@ class IasCommandSender(IasLogListener):
         self.request_reply_in_progress = True
 
         if not timeout or timeout<=0:
-            raise ValueError(f"Invalid timeout {timeout}: must be >=0")
+            raise ValueError(f"Invalid timeout {timeout}: must be >0")
 
         try:
             self.logger.debug(f"Sending sync command {command} to {dest_id}")
