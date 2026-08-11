@@ -48,12 +48,6 @@ class HbKafkaConsumer(IasLogListener):
         # The flag to signal that the object has been closed
         self._closed: Event = Event()
 
-    def __del__(self):
-        """
-        Destructor
-        """
-        self.close()
-
     def start(self, assgnemntTimeout = 0) -> bool:
         """
         Start getting HBs

@@ -4,9 +4,8 @@ published in a topic.
 '''
 import time
 import logging
-from threading import Thread, Lock
+from threading import Thread, Lock, RLock, Event, current_thread
 from confluent_kafka import Consumer, KafkaError
-from confluent_kafka import TopicPartition
 import traceback
 
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
@@ -42,30 +41,13 @@ class IasLogConsumer(Thread):
 
     '''
 
-    # The listener to send logs to
-    listener: IasLogListener = None
-
-    # The kafka consumer
-    consumer: Consumer = None
-
-    # The name of the topic
-    topic: str = None
-
-    # Signal the thread to terminate
-    terminateThread: bool = False
-
-    # Signal if the thread is getting events from the topic 
-    # This is not the same of starting the thread because
-    # if the topic does not exist, the thread wait until
-    # it is created but is not yet getting events
-    isGettingEvents = False
-
     def __init__(self,
                  listener: IasLogListener,
                  kafkabrokers: str,
                  topic: str,
                  clientid: str,
-                 groupid: str):
+                 groupid: str,
+                 poll_timeout = 0.5):
         '''
         Constructor
         
@@ -75,22 +57,41 @@ class IasLogConsumer(Thread):
             topic: the kafka topic to get logs from
             clientid: Kafka client ID
             groupid: Kafka group ID
+            poll_timeout: the timeout (>0) for the Consumer.poll() function (seconds)
         '''
-        Thread.__init__(self)
+        super().__init__()
         # The logger
-        self.logger = logging.getLogger(IasLogConsumer.__name__)
-        if listener is None:
+        self._logger = logging.getLogger(IasLogConsumer.__name__)
+        if not listener:
             raise ValueError("The listener can't be None")
 
         if not isinstance(listener, IasLogListener):
             raise ValueError("The listener must be a subclass of IasLogListener")
-        self.listener = listener
 
-        if topic is None:
+        # The listener of logs
+        self._listener: IasLogListener = listener
+
+        if not topic:
             raise ValueError("The topic can't be None")
-        self.topic = topic
+        self._topic = topic
 
-        self.kafkaBrokers = kafkabrokers
+        if not kafkabrokers:
+            raise ValueError("Invalid kafka brokers")
+        self._kafka_brokers = kafkabrokers
+
+        if not clientid:
+            raise ValueError("Invalid kafka client ID")
+        self._clientid = clientid
+
+        if not groupid:
+            raise ValueError("Invalid kafka group ID")
+        self._groupid = groupid
+
+        if poll_timeout <= 0:
+            raise ValueError("Invalid poll timeout")
+        self._poll_timeout = poll_timeout
+
+        self.name = f"{IasLogConsumer.__name__}-{self._clientid}-{self._groupid}"
 
         conf = {'bootstrap.servers': kafkabrokers,
                 'client.id': clientid,
@@ -100,79 +101,129 @@ class IasLogConsumer(Thread):
                 'auto.offset.reset': 'latest',
                 'error_cb': self.onError}
 
-        self.consumer = Consumer(conf, logger=self.logger)
+        # The kafka consumer
+        self._consumer: Consumer = Consumer(conf, logger=self._logger)
 
         self.daemon = True
 
         # the watch dog 
-        self.watchDog = False
+        self._watchdog: bool = False
 
         # The lock for the watch dog
-        self.watchDogLock = Lock()
+        self._watchdog_lock: Lock = Lock()
 
-        # Confluent consumer does not create a topic even if the auto.create.topic=true
-        # subscribed is set by onAssign and unlock the polling thread
-        self.subscribed = False
+        self._logger.info('Kafka consumer %s will connect to %s and topic %s', clientid, kafkabrokers, topic)
 
-        self.logger.info('Kafka consumer %s will connect to %s and topic %s', clientid, kafkabrokers, topic)
+        # Signal the thread to terminate
+        self._terminate_thread: Event = Event()
 
-    def onAssign(self, consumer, partition):
-        self.logger.info("Kafka consumer assigned to partition %s", partition)
-        self.subscribed = True
+        # Flags to not close consumer more than once
+        self._closed: bool =  False
 
-    def onLost(self, consumer, partition):
-        self.logger.info("Partition lost %s", partition)
-        self.subscribed = False
+        # The lock for the consumer
+        self._consumer_lock: RLock = RLock()
+
+    def onAssign(self, consumer, partitions):
+        for p in partitions:
+            self._logger.info("Kafka consumer with client id %s and group id %s assigned to partition %d of topic %s at offset %d",
+                            self._clientid,
+                            self._groupid, 
+                            p.partition,
+                            repr(p.topic),
+                            p.offset)
+
+    def onLost(self, consumer, partitions):
+        if self._closed:
+            return
+        for p in partitions:
+            self._logger.warning("Kafka consumer with client id %s and group id %s lost partition %d of topic %s", 
+                            self._clientid,
+                            self._groupid,
+                            p.partition,
+                            repr(p.topic))
 
     def onError(self, kafka_error):
-        self.logger.error("Kafka error: %s", kafka_error.str())
+        self._logger.error("Kafka consumer with client id %s and group id %s got an error: %s", 
+                           self._clientid,
+                           self._groupid,
+                           kafka_error.str())
+
+    def onRevoke(self, consumer, partitions):
+        if self._closed:
+            return
+        for p in partitions:
+            self._logger.warning("Kafka consumer with client id %s and group id %s revoked partition %d of topic %s", 
+                                  self._clientid,
+                                  self._groupid,
+                                  p.partition,
+                                  repr(p.topic))
 
     def isSubscribed(self) -> bool:
         """
         Returns:
-            True if the consumer is subscribed to a partition, 
+            True if the consumer is subscribed to at least one partition, 
             False otherwise
         """
-        return self.subscribed
+        if self._closed:
+            return False
+        with self._consumer_lock:
+            return len(self._consumer.assignment())>0
+
+    def isGettingLogs(self):
+        """
+        Returns:
+            True if the consumer is getting events from the kafka topic partitions,
+            False otherwise
+        """
+        if self._closed:
+            return False
+        else:
+            return self.is_alive() and self.isSubscribed()
 
     def run(self):
-        self.logger.info('Thread to poll logs started')
+        self._logger.info('Thread to poll logs started')
         try:
-            self.isGettingEvents = True
-            while not self.terminateThread:
-                msg = self.consumer.poll(timeout=1.0)
+            while not self._terminate_thread.is_set():
+                with self._consumer_lock:
+                    msg = self._consumer.poll(timeout=self._poll_timeout)
                 # Reset the watch dog
-                with self.watchDogLock:
-                    self.watchDog = True
-                if msg is None or not self.subscribed:
-                    self.logger.debug(f"Polling thread is {'' if self.subscribed else 'NOT '}subscribed to topic {self.topic}")
+                with self._watchdog_lock:
+                    self._watchdog = True
+                if not msg:
+                    # Timeout: no message received
+                    continue
+                if not self.isSubscribed():
+                    self._logger.debug("Polling thread for client id %s and group id %s is NOT subscribed to topic %s",
+                                       self._clientid,
+                                       self._groupid,
+                                       self._topic)
                     continue
 
                 if msg.error() is not None:
                     if msg.error().code() == KafkaError._PARTITION_EOF:
                         # End of partition event
-                        self.logger.error('topic %s [partition %d] reached end at offset %d', msg.topic(), msg.partition(),
+                        self._logger.error('Topic %s [partition %d] reached end at offset %d', msg.topic(), msg.partition(),
                                      msg.offset())
                     else:
-                        self.logger.error('Error polling event %s', msg.error().str())
+                        self._logger.error('Error polling event %s', msg.error().name())
                     continue
                 else:
                     try:
                         log = msg.value().decode("utf-8")
                     except Exception as e:
-                        self.logger.exception("Error decoding log %s", str(msg.value()), e)
+                        self._logger.exception("Error decoding log %s", str(msg.value()))
                         continue
                     try:
-                        self.listener.iasLogReceived(log)
+                        if not self._terminate_thread.is_set():
+                            self._listener.iasLogReceived(log)
                     except Exception as e:
-                        self.logger.exception("Exception caught from the listener of logs", e)
+                        self._logger.exception("Exception caught from the listener of logs")
                         continue
         except Exception:
             traceback.print_exc()
-        # Close down consumer to commit final offsets.
-        self.consumer.close()
-        self.isGettingEvents = False
-        self.logger.info('Thread terminated')
+
+        self._logger.info('Consumer thread for topic %s terminated for client id %s and group id %s', 
+                          self._topic, self._clientid, self._groupid)
 
     def start(self, waitAssigmentTimeout: float = 0) -> bool:
         """
@@ -188,44 +239,75 @@ class IasLogConsumer(Thread):
         Returns:
             True if the consumer is assigned to the topic, False otherwise
         """
-         # For some reason the python client does not create the topic and this
+        # Auto creation of tpopics should be enabled in the kafka server properties
+        # Howver, if, for some reason the python client does not create the topic, this
         # function hangs forever waiting to subscribe
         # So we force a topic creation before subscribing
-        if IasKafkaHelper.createTopic(self.topic, self.kafkaBrokers):
-            self.logger.debug("Topic %s created", self.topic)
+        if IasKafkaHelper.createTopic(self._topic, self._kafka_brokers):
+            self._logger.debug("Topic %s created or already exists", self._topic)
         else:
-            self.logger.debug("Topic %s exists", self.topic)
-        self.consumer.subscribe([self.topic], on_assign=self.onAssign)
-        self.logger.info('Starting thread to poll events from topic %s', self.topic)
-        self.terminateThread = False
+            self._logger.error("Cannot create topic %s", self._topic)
+            return False
+        with self._consumer_lock:
+            self._logger.debug("Subscribing to topic %s", self._topic)
+            self._consumer.subscribe([self._topic], 
+                                     on_assign=self.onAssign, 
+                                     on_lost=self.onLost, 
+                                     on_revoke=self.onRevoke)
+            
+        self._logger.info('Starting thread to poll events from topic %s', self._topic)
         Thread.start(self)
 
-        if waitAssigmentTimeout>=1:
+        # Wait for the assignment to the topic if requested
+        if waitAssigmentTimeout>0:
+            self._logger.debug("Waiting up to %f seconds for client %s with group %s being assigned to topic %s", 
+                               waitAssigmentTimeout, self._clientid, self._groupid, self._topic)
             # Wait for assignment
-            poll_time = 0.250
+            poll_time = 0.5
             start_time = time.time()
-            while not self.isSubscribed() and time.time()<start_time+waitAssigmentTimeout:
+            end_time = start_time + waitAssigmentTimeout
+            while time.time()<end_time:
                 time.sleep(poll_time)
-            
-        return self.isSubscribed()
+                if self.isSubscribed():
+                    break
+            if not self.isSubscribed():
+                self._logger.warning("Client %s with group %s NOT assigned to topic %s after %f seconds", 
+                                     self._clientid, self._groupid, self._topic, waitAssigmentTimeout)
+                return False
+            else:
+                self._logger.debug("Client %s with group %s assigned to topic %s", 
+                                   self._clientid, self._groupid, self._topic)
+        
+            # Give time to execute a poll
+            time.sleep(self._poll_timeout+0.1)
+
+        self._logger.info('Consumer for client ID %s and group ID %s started', self._clientid, self._groupid)
+        return self.isGettingLogs()
 
     def close(self):
         '''
-        Shuts down the thread
+        Shuts down the thread and close the consumer
         '''
-        if not self.terminateThread:
-            self.terminateThread = True
+        if self._closed:
+            self._logger.warning("Already closed")
+            return
+        self._closed = True
+        
+        if self.is_alive() and current_thread() is not self:
+            self._terminate_thread.set()
+            self.join(5)  # Ensure the thread exited before closing the consumer
             if self.is_alive():
-                # The thread closes the consumer: here just check the thread termination
-                self.join(5)  # Ensure the thread exited before closing the consumer
-                if self.is_alive():
-                    self.logger.warning("The thread did not terminate in time")
-            else:
-                # The thread never started
-                self.consumer.close()
-                self.logger.info("Consumer closed")
+                self._logger.warning("The thread did not terminate in time")
         else:
-            self.logger.warning("Consumer already terminated")
+            self._terminate_thread.set()
+
+        # Close down consumer to commit final offsets.
+        with self._consumer_lock:
+            self._consumer.close()
+
+        if not self.is_alive():
+            # The thread never started
+            self._logger.info("Consumer closed")
 
     def getWatchdog(self):
         """
@@ -234,7 +316,7 @@ class IasLogConsumer(Thread):
         Returns:
         bool: True if the watchdog has been set, False otherwise
         """
-        with self.watchDogLock:
-            ret = self.watchDog
-            self.watchDog = False
+        with self._watchdog_lock:
+            ret = self._watchdog
+            self._watchdog = False
         return ret

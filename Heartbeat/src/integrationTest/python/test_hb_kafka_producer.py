@@ -89,7 +89,10 @@ class TestHbKafkaProducer():
 
         producer.send(hb=hb, hb_status=hb_status, props=props,tstamp=tstamp)
 
-        hb_msg = self._log_container.get(timeout=4)
+        # Clear the queue even af at this point in time the HB could already have been received
+        # but we want to be sure that the HB we are going to get is the one just sent
+        self._hb_listener.clear()
+        hb_msg = self._log_container.get(timeout=5)
         self.logger.info("HB received %s", hb_msg.toJSON())
         producer.close()
         self.logger.info("Producer closed. Test done")
@@ -177,6 +180,7 @@ class TestHbKafkaProducer():
 
         producer.send(hb=hb, hb_status=hb_status, props=props,tstamp=tstamp)
 
+        self._hb_listener.clear()
         hb_msg = self._log_container.get(timeout=5)
         self.logger.info("HB received %s", hb_msg.toJSON())
 

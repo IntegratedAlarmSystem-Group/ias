@@ -56,7 +56,11 @@ class TestHbConsumer():
     def setup_class(self, request):
         Log.init_logging(__file__)
         request.cls.logger = logging.getLogger(TestHbConsumer.__name__)
-        conf = { 'bootstrap.servers': IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, 'client.id': "HbConsumerTest-Prod"}
+        conf = { 
+            'bootstrap.servers': IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, 
+            'client.id': "HbConsumerTest-Prod",
+            'acks': 'all',
+            "enable.idempotence": True,}
         request.cls.hbProducer = Producer(conf)
 
         request.cls.hb_listener = HbListner()

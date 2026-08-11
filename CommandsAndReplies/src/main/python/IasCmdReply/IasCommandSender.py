@@ -31,10 +31,11 @@ class IasCommandSender(IasLogListener):
 
         Params:
             senderFullRuningId The full runing id of the sender
-            stringProducer The string producer to publish commands
-                           (if None builds a new producer)
-            senderId The id of the sender (i.e. the BSDB client.id of the Producer and the Consumer)
+            bsdb_sender_id The BSDB id of the sender (i.e. the BSDB client.id of the Producer and the Consumer)
             brokers URL of kafka brokers
+            stringProducer The string producer to publish commands
+                           (if None a new produce will be created
+            
         """
         if not sender_full_running_id:
             raise ValueError("Invalid null/empty full running ID of the sender")
@@ -43,11 +44,17 @@ class IasCommandSender(IasLogListener):
         self.bsdb_sender_id = bsdb_sender_id
 
         # Kafka producer of comands
-        conf = { 'bootstrap.servers': brokers, 'client.id': bsdb_sender_id}
+        conf = { 
+            'bootstrap.servers': brokers, 
+            'client.id': bsdb_sender_id, 
+            'acks': 'all', 
+            "enable.idempotence": True,}
         if string_producer is None:
             self.cmd_producer = Producer(conf)
+            self._detsroy_prod_on_close = True
         else:
             self.cmd_producer = string_producer
+            self._detsroy_prod_on_close = False
 
         # The consumer of replies
         self.reply_consumer = IasLogConsumer(
@@ -61,32 +68,30 @@ class IasCommandSender(IasLogListener):
         self.request_reply_in_progress = False
         self.id_to_wait = None
         self.replies_queue = Queue()
-        self.closed = False
-        self.initialized=False
+        self._closed = False
+        self._initialized=False
 
     def set_up(self):
-        if self.closed:
-            raise RuntimeError("Cannot initialized a closed object")
-        if not self.initialized:
-            self.reply_consumer.start()
-            # Wait until the consumer is subscribed
-            timeout = 60 # seconds
-            iteration = 0
-            while not self.reply_consumer.isSubscribed() and iteration<2*timeout:
-                time.sleep(0.50)
-                iteration = iteration+1
-            if not self.reply_consumer.isSubscribed():
+        if self._closed:
+            raise RuntimeError("Cannot initialize a closed object")
+        if not self._initialized:
+            if not self.reply_consumer.start(60):
                 raise RuntimeError("Failed to subscribe to reply kafka topic")
-            self.initialized = True
+            self._initialized = True
+            self.logger.info("Reply consumer initialized")
         else:
             self.logger.warning("Already initialized")
-        
+
+    def is_initialized(self) -> bool:
+        return self._initialized
 
     def close(self):
-        if not self.closed:
+        if not self._closed:
+            self._closed = True
             self.logger.debug("Closing...")
             self.reply_consumer.close()
-            self.closed = True
+            if self._detsroy_prod_on_close:
+                self.cmd_producer.close()
             self.logger.info("Closed")
         else:
             self.logger.warning("Already closed!")
@@ -97,7 +102,7 @@ class IasCommandSender(IasLogListener):
             dest_id: str, 
             command: IasCommandType, 
             params: List[str]|None,
-            properties: Dict[str, str]|None,):
+            properties: Dict[str, str]|None,) -> None:
         """
         Publish a command in the kafka command topic
 
@@ -108,6 +113,14 @@ class IasCommandSender(IasLogListener):
             params The optional parameters of the command
             properties The optional properties of the command
         """
+        if self._closed:
+            self.logger.error("Cannot send commands from a closed sender: command discarded")
+            return False
+        if not self._initialized:
+            self.logger.error("Cannot send commands from an uninitialized sender: command discarded")
+            return False
+        self.logger.debug("Publishing command %s with id %d to %s", command, id, dest_id)
+
         ias_command = IasCommand(
             dest=dest_id,
             sender=self.sender_full_running_id,
@@ -123,8 +136,22 @@ class IasCommandSender(IasLogListener):
         self.cmd_producer.produce(
             IasKafkaHelper.topics['cmd'],
             value=ias_cmd_str,
-            key=str(id))
-        self.logger.debug("Cmd with ID %d published in the kafka topic", id)
+            key=str(id), callback=self._delivery_report)
+        self.cmd_producer.flush()
+        self.logger.info("Cmd with ID %d sent to the BSDB", id)
+
+    def _delivery_report(self, err, msg):
+        """
+        Callback for the delivery report of a command sent to kafka
+        
+        @param err: the error if any
+        @param msg: the message sent
+        """
+        if err is not None:
+            self.logger.error('Command delivery failed: %s', err)
+        else:
+            self.logger.debug('Command delivered to %s [%d] at offset %d',
+                        msg.topic(), msg.partition(), msg.offset())
 
     def send_sync(
             self,
@@ -132,7 +159,7 @@ class IasCommandSender(IasLogListener):
             command: IasCommandType, 
             params: List[str]|None=None,
             properties: Dict[str, str]|None=None,
-            timeout: float=0) -> IasReply|None:
+            timeout: float=5) -> IasReply|None:
         """
         Send a command synchronously,
 
@@ -147,51 +174,45 @@ class IasCommandSender(IasLogListener):
             command The command to send
             params The optional parameters of the command
             properties The optional properties of the command
-            timeout the time interval (>=0) for the timeout getting the reply
-                    (if 0 does not wait for the reply) 
+            timeout the time interval (>0) for the timeout getting the reply
         Return:
             the reply received by the destinator of the command or 
             None if the waiting time elapsed before getting the reply
         """
 
-        if self.closed:
-            self.logger.error("Cannot send commands from a closed sender: command discarded")
-        if not self.initialized:
-            self.logger.error("Cannot send commands from an uninitialized sender: command discarded")
+        if self._closed:
+            self.logger.error(f"Cannot send commands from a closed sender: command {command} discarded")
+            raise RuntimeError("Cannot send commands from a closed sender")
+        if not self._initialized:
+            self.logger.error(f"Cannot send commands from an uninitialized sender: command {command} discarded")
+            raise RuntimeError("Cannot send commands from an uninitialized sender")
 
         if dest_id == "BROADCAST":
-            raise ValueError("BROADCAST cannot be used for send-reply")
+            raise ValueError("BROADCAST cannot be used for send-reply: use send_async")
         
         if self.request_reply_in_progress:
-            raise RuntimeError("Cannt process two commands at the same time")
+            raise RuntimeError("Can't process two commands at the same time")
         self.request_reply_in_progress = True
+
+        if not timeout or timeout<=0:
+            raise ValueError(f"Invalid timeout {timeout}: must be >0")
 
         try:
             self.logger.debug(f"Sending sync command {command} to {dest_id}")
 
-            if timeout<0:
-                raise ValueError(f"Invalid timeout {timeout}: must be >0")
-
             self.cmd_id += 1
             self.id_to_wait = self.cmd_id
             self._publish_cmd(self.cmd_id, dest_id,command, params, properties)
-            self.cmd_producer.flush() # sync
+            self.cmd_producer.flush()
 
-            if timeout>0:
-                self.logger.debug(f"Waiting for reply with id {self.id_to_wait} from {dest_id}")
-                try:
-                    reply = self.replies_queue.get(True, timeout)
-                    self.replies_queue.task_done()
-                    return reply
-                except Empty as to:
-                    # Timeout!
-                    return None
-            else:
-                self.logger.debug(f"Will not wait for the reply from {dest_id}")
-                # TODO:
-                # Check if the reply is accepted anyhow as in this case it must be removed from the queue
-                # or better must not be put in the queue
-
+            self.logger.debug(f"Waiting up to {timeout} seconds to get the reply with id {self.id_to_wait} from {dest_id}")
+            try:
+                reply = self.replies_queue.get(True, timeout)
+                self.replies_queue.task_done()
+                return reply
+            except Empty:
+                # Timeout!
+                self.logger.warning(f"Reply with id={self.id_to_wait} not received before timeout")
                 return None
         finally:
             self.request_reply_in_progress = False
@@ -213,10 +234,12 @@ class IasCommandSender(IasLogListener):
             params The optional parameters of the command
             properties The optional properties of the command
         """
-        if self.closed:
-            self.logger.error("Cannot send commands from a closed sender: command discarded")
-        if not self.initialized:
-            self.logger.error("Cannot send commands from an uninitialized sender: command discarded")
+        if self._closed:
+            self.logger.error(f"Cannot send commands from a closed sender: command {command} discarded")
+            raise RuntimeError("Cannot send commands from a closed sender")
+        if not self._initialized:
+            self.logger.error(f"Cannot send commands from an uninitialized sender: command {command} discarded")
+            raise RuntimeError("Cannot send commands from an uninitialized sender")
 
         if self.request_reply_in_progress:
             raise RuntimeError("Cannot process two commands at the same time")
@@ -252,4 +275,6 @@ class IasCommandSender(IasLogListener):
             except Exception as ex:
                 self.logger.error(f"Malformed JSON string representing a reply: [{log}]")
                 traceback.print_exception(ex)
+        else:
+            self.logger.error("Got a null/empty reply")
 

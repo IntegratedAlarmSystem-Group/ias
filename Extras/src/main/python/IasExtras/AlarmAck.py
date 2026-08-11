@@ -1,6 +1,3 @@
-import uuid
-from confluent_kafka import Producer
-
 import logging
 
 from IasCmdReply.IasCommandSender import IasCommandSender
@@ -38,21 +35,26 @@ class AlarmAck:
         if not isinstance(command_sender, IasCommandSender):
             raise ValueError("Invalid command sender: expected an instance of IasCommandSender")
 
-        self.logger = logging.getLogger(__name__)
+        self._logger = logging.getLogger(__name__)
 
         self.command_sender = command_sender
+
+        self._closed = False
         
     def start(self) -> None:
         """
-        Start the AlarmAck object (starts the internal command sender)
+        Start the AlarmAck object (nothing to do: the internal sender must be already started)
         """
-        self.command_sender.set_up()
+        if not self.command_sender.is_initialized():
+            raise RuntimeError("Cannot start AlarmAck: command sender is not initialized")
+        self._logger.debug('Started')
 
     def close(self) -> None:
         """
-        Close the AlarmAck object (closes the internal command sender)
+        Close the AlarmAck object
         """
-        self.command_sender.close()
+        self._closed = True
+        self._logger.debug('Closed')
 
     def ack(self, 
             alarm_id: str, 
@@ -68,16 +70,21 @@ class AlarmAck:
         :type supervisor_id: str
         :param comment: A comment to include with the acknowledgment
         :type comment: str
-        :param timeout: The timeout to wait for the reply if 0, returns immediately 
+        :param timeout: The timeout to wait for the reply if 0, returns immediately (default 0)
         :type timeout float
         :rtype: bool
         """
+        if self._closed:
+            self._logger.error("Cannot acknowledge alarm: AlarmAck is closed")
+            return False
         if not supervisor_id:
             raise ValueError("Invalid null/empty supervisor ID")
         if not alarm_id:
             raise ValueError("Invalid null/empty alarm ID")
+        if timeout<0:
+            raise ValueError(f"Timeout must be >=0 but {timeout} was given")
         
-        self.logger.debug(f"Acknowledging alarm with ID {alarm_id} and comment'{comment}'")
+        self._logger.debug(f"Acknowledging alarm with ID {alarm_id} and comment'{comment}'")
 
         if timeout>0:
             reply = self.command_sender.send_sync(
@@ -87,10 +94,10 @@ class AlarmAck:
                 timeout=timeout)
             
             if reply is None:
-                self.logger.error(f"No reply received from supervisor {supervisor_id} for ACK command for alarm {alarm_id}")
+                self._logger.error(f"No reply received from supervisor {supervisor_id} for ACK command for alarm {alarm_id}")
                 return False
             if reply.exitStatus != IasCmdExitStatus.OK:
-                self.logger.error(f"Failed to acknowledge alarm {alarm_id} using supervisor {supervisor_id}. Exit status: {reply.exitStatus}")
+                self._logger.error(f"Failed to acknowledge alarm {alarm_id} using supervisor {supervisor_id}. Exit status: {reply.exitStatus}")
                 return False
             else:
                 return True

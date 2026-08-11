@@ -141,8 +141,11 @@ class TestHbEngine():
 
         msg = self.hb_listener.clear()
         msg = self.hb_listener.get(timeout=5)
+        tries = 0
+        while not msg.props and tries < 5:
+            msg = self.hb_listener.get(timeout=5)
+            tries += 1
 
-        assert msg.props
         assert len(msg.props) == 2
         assert msg.props["Key1"] == 10
         assert msg.props["Key2"] == 100

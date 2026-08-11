@@ -96,11 +96,11 @@ class IasCmdManagerKafka(Thread):
             kclient_id The ID of the Kafka client
             kgroup_id The id of the Kafka group
         """
+        super().__init__()
         if not full_run_id:
             raise ValueError("The full running ID cannot be None")
         if not listener:
             raise ValueError("The listerner of comamnds cannot be None")
-        super().__init__()
         self.logger = logging.getLogger(self.__class__.__name__)
         self.fullRunningId = full_run_id
         self.cmd_listener = listener
@@ -115,7 +115,10 @@ class IasCmdManagerKafka(Thread):
             groupid=kgroup_id)
         
         # Kafka producer of replies
-        conf = { 'bootstrap.servers': kbrokers, 'client.id': self.fullRunningId}
+        conf = { 'bootstrap.servers': kbrokers, 
+                'client.id': self.fullRunningId, 
+                'acks': 'all',
+                "enable.idempotence": True,}
         if replyProducer is None:
             self.reply_producer = Producer(conf)
         else:
@@ -139,8 +142,8 @@ class IasCmdManagerKafka(Thread):
         The method executed by the tread that sends commands to the lsitener
         and pushes replies in the topic
         """
+        self.logger.debug("Thread to get comamnds started")
         while not self.terminate:
-            self.logger.debug("Thread to get comamnds started")
             try:
                 (recv_tstamp_str, cmd) = self.cmd_queue.get(block=True, timeout=0.5)
             except Empty: # Timeout

@@ -311,31 +311,31 @@ public class Converter implements AutoCloseable {
 
         List<String> remaingArgs = cmdLine.getArgList();
 
-        Optional<String> supervId;
+        Optional<String> converterId;
         if (remaingArgs.isEmpty()) {
-            supervId = Optional.empty();
+            converterId = Optional.empty();
         } else {
-            supervId = Optional.of(remaingArgs.get(0));
+            converterId = Optional.of(remaingArgs.get(0));
         }
 
         if (help) {
             printUsage(options);
             System.exit(0);
         }
-		if (!supervId.isPresent()) {
+		if (!converterId.isPresent()) {
 			System.err.println("Missing Converter ID");
 			printUsage(options);
 			System.exit(-1);
 		}
 
-        params.put("ID",supervId);
+        params.put("ID",converterId);
 		params.put("jcdb",jcdb);
 		params.put("log",logLvl);
 
 		Converter.logger.info("Params from command line: jcdb={}, logLevel={} converter ID={}",
 				jcdb.orElse("Undefined"),
 				logLvl.map( l -> l.name()).orElse("Undefined"),
-				supervId.orElse("Undefined"));
+				converterId.orElse("Undefined"));
 	}
 
 	/**
@@ -349,11 +349,11 @@ public class Converter implements AutoCloseable {
 	    Map<String,Optional<?>> params = new HashMap<>();
 	    parseCommandLine(args,params);
 
-	    Optional<?> supervIdOpt = params.get("ID");
-	    if (!supervIdOpt.isPresent()) {
+	    Optional<?> converterIdOpt = params.get("ID");
+	    if (!converterIdOpt.isPresent()) {
 	        throw new IllegalArgumentException("Missing converter ID");
         }
-        String id= (String)supervIdOpt.get();
+        String id= (String)converterIdOpt.get();
 
 		CdbReader cdbReader = null;
 		try {
