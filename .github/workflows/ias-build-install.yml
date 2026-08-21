@@ -28,7 +28,7 @@ jobs:
           pip install --upgrade pip
           pip install PySide6 jep python-dateutil pytest pytest-timeout confluent-kafka PyYAML
       - name: Check JEP installation
-        run:
+        run: |
           pip show jep
           find /opt/hostedtoolcache/Python -name "libjep.so" 2>/dev/null
       - run: java -version
