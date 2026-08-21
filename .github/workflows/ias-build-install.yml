@@ -30,6 +30,8 @@ jobs:
       - name: Configure LD_LIBRARY_PATH for JEP
         run: |
           echo "LD_LIBRARY_PATH=$JAVA_HOME/lib/server:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          LIBJEP=$(find /opt/hostedtoolcache/Python -name libjep.so | head -1)
+          ldd "$LIBJEP"
       - name: Check JEP installation
         run: |
           pip show jep
