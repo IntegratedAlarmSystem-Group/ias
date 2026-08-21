@@ -36,7 +36,7 @@ jobs:
           echo JAVA_HOME is $JAVA_HOME
           echo Finding libjvm.so:
           find "$JAVA_HOME" -name libjvm.so
-          ls -R "$JAVA_HOME/lib" | head -100
+          ls -R "$JAVA_HOME/lib/server" | head -100
       - name: Configure LD_LIBRARY_PATH
         run: |
           echo "LD_LIBRARY_PATH=$JAVA_HOME/lib/server:$LD_LIBRARY_PATH" >> $GITHUB_ENV
