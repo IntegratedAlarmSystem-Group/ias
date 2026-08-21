@@ -27,6 +27,11 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install PySide6 jep python-dateutil pytest pytest-timeout confluent-kafka PyYAML
+      - name: Check JEP installation
+        run:
+          python -c "import jep; print(jep.__file__)"
+          python -c "import jep, os; print(os.path.dirname(jep.__file__))"
+          find $(python -c "import site; print(site.getsitepackages()[0])") -name "libjep.so"
       - run: java -version
       - run: mkdir -p $IAS_ROOT
       - name: Checkout IAS code
