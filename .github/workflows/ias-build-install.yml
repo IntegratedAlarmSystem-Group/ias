@@ -26,7 +26,7 @@ jobs:
       - name: Install python tools
         run: |
           pip install --upgrade pip
-          pip install PySide6 jep python-dateutil pytest confluent-kafka PyYAML
+          pip install PySide6 jep python-dateutil pytest pytest-timeout confluent-kafka PyYAML
       - run: java -version
       - run: mkdir -p $IAS_ROOT
       - name: Checkout IAS code
