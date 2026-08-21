@@ -27,6 +27,9 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install PySide6 jep python-dateutil pytest pytest-timeout confluent-kafka PyYAML
+      - name: Configure LD_LIBRARY_PATH for JEP
+        run: |
+          echo "LD_LIBRARY_PATH=$JAVA_HOME/lib/server:$LD_LIBRARY_PATH" >> $GITHUB_ENV
       - name: Check JEP installation
         run: |
           pip show jep
@@ -37,9 +40,6 @@ jobs:
           echo Finding libjvm.so:
           find "$JAVA_HOME" -name libjvm.so
           ls -R "$JAVA_HOME/lib/server"
-      - name: Configure LD_LIBRARY_PATH
-        run: |
-          echo "LD_LIBRARY_PATH=$JAVA_HOME/lib/server:$LD_LIBRARY_PATH" >> $GITHUB_ENV
       - run: java -version
       - run: mkdir -p $IAS_ROOT
       - name: Checkout IAS code
