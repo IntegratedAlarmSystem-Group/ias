@@ -33,7 +33,10 @@ jobs:
           find /opt/hostedtoolcache/Python -name "libjep.so" 2>/dev/null
           ldd /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/jep/libjep.so
           echo $JAVA_HOME
+          echo Finding libjvm.so:
           find "$JAVA_HOME" -name libjvm.so
+          ls -R "$JAVA_HOME/lib" | head -100
+          find "$JAVA_HOME" | grep jvm
       - run: java -version
       - run: mkdir -p $IAS_ROOT
       - name: Checkout IAS code
