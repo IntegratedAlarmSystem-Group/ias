@@ -38,6 +38,9 @@ jobs:
           find "$JAVA_HOME" -name libjvm.so
           ls -R "$JAVA_HOME/lib" | head -100
           find "$JAVA_HOME" | grep jvm
+      - name: Configure LD_LIBRARY_PATH
+        run: |
+          echo "LD_LIBRARY_PATH=$JAVA_HOME/lib/server:$LD_LIBRARY_PATH" >> $GITHUB_ENV
       - run: java -version
       - run: mkdir -p $IAS_ROOT
       - name: Checkout IAS code
