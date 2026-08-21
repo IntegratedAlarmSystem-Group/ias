@@ -19,7 +19,7 @@ slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j-api" }
 scala-logging = { module = "com.typesafe.scala-logging:scala-logging_3", version.ref = "scala-logging" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback-classic" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson-databind" }
-jep = { module = "black.ninia:jep", version.ref = "jep" }
+jep = { module = "org.ninia:jep", version.ref = "jep" }
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit-bom" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 junit-platform-console = { module = "org.junit.platform:junit-platform-console"}
