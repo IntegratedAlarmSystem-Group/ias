@@ -32,6 +32,8 @@ jobs:
           pip show jep
           find /opt/hostedtoolcache/Python -name "libjep.so" 2>/dev/null
           ldd /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/jep/libjep.so
+          echo $JAVA_HOME
+          find "$JAVA_HOME" -name libjvm.so
       - run: java -version
       - run: mkdir -p $IAS_ROOT
       - name: Checkout IAS code
