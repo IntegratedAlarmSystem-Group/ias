@@ -33,7 +33,7 @@ public class TestJep {
             py.eval("import sys, locale");
             py.eval("print('Python:', sys.version)");
             py.eval("print('filesystem encoding:', sys.getfilesystemencoding())");
-            py.close()
+            py.close();
         } catch (Throwable t) {
             System.err.println("MESSAGE=" + t.getMessage());
             Throwable c = t;
