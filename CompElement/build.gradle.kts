@@ -80,8 +80,9 @@ tasks.test {
 
     // Optional: print the effective PYTHONPATH for debugging
     doFirst {
-        println(">>> PYTHONPATH for tests: $pythonPath")
-        println(">>> java.library.path: ${systemProperties["java.library.path"]}")
-        println(">>> Python version: $pythonVersion")
+        println(">>> PYTHONPATH=$pythonPath")
+        println(">>> JAVA_HOME=${System.getenv("JAVA_HOME")}")
+        println(">>> LD_LIBRARY_PATH=${System.getenv("LD_LIBRARY_PATH")}")
+        println(">>> java.library.path=${System.getProperty("java.library.path")}")
     }
 }
