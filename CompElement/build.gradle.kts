@@ -46,6 +46,12 @@ tasks.test {
     val extension = gradle as ExtensionAware
     val pythonVersion = extension.extra["PythonVersion"] as String
 
+    val pythonRoot = System.getenv("Python_ROOT_DIR")
+    val existingLibPath = System.getenv("LD_LIBRARY_PATH") ?: ""
+    systemProperty("java.library.path",
+        "$pythonRoot/lib/$pythonVersion/site-packages/jep:$existingLibPath")
+    //jvmArgs("-Djava.library.path=$pythonRoot/lib/$pythonVersion/site-packages/jep")
+
     // Sets the PYTHONPATH for the python code to run with jep
 
     // Always use absolute paths; Gradle may execute tests from the root project dir
@@ -80,6 +86,7 @@ tasks.test {
 
     // Optional: print the effective PYTHONPATH for debugging
     doFirst {
+        println(">>> Python_ROOT_DIR=$pythonRoot")
         println(">>> PYTHONPATH=$pythonPath")
         println(">>> JAVA_HOME=${System.getenv("JAVA_HOME")}")
         println(">>> LD_LIBRARY_PATH=${System.getenv("LD_LIBRARY_PATH")}")
