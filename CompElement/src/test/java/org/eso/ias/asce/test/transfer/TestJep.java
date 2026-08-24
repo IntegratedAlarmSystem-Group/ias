@@ -28,12 +28,23 @@ public class TestJep {
 
     @Test
     void canInitSharedInterpreter() {
-        try (SharedInterpreter py = new SharedInterpreter()) {
+        try {
+            SharedInterpreter py = new SharedInterpreter();
             py.eval("import sys, locale");
             py.eval("print('Python:', sys.version)");
             py.eval("print('filesystem encoding:', sys.getfilesystemencoding())");
+            py.close()
+        } catch (Throwable t) {
+            System.err.println("MESSAGE=" + t.getMessage());
+            Throwable c = t;
+            while (c != null) {
+                System.err.println(
+                    c.getClass().getName() +
+                    ": " +
+                    c.getMessage());
+                c = c.getCause();
+            }
+
+            throw t;
         }
-    }
-
-
 }
