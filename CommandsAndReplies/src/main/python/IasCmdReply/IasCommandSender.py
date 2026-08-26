@@ -71,11 +71,15 @@ class IasCommandSender(IasLogListener):
         self._closed = False
         self._initialized=False
 
-    def set_up(self):
+    def set_up(self) -> None:
+        """
+        Setup the command sender
+        """
         if self._closed:
             raise RuntimeError("Cannot initialize a closed object")
         if not self._initialized:
             if not self.reply_consumer.start(60):
+                self.logger.error("Failed to subscribe to reply kafka topic")
                 raise RuntimeError("Failed to subscribe to reply kafka topic")
             self._initialized = True
             self.logger.info("Reply consumer initialized")

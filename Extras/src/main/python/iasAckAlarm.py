@@ -14,6 +14,7 @@ Created on Jun 12, 2024
 import argparse
 import uuid
 import logging
+import sys
 
 from IasLogging.log import Log
 from IasBasicTypes.Identifier import Identifier
@@ -117,8 +118,13 @@ def main()-> int:
         bsdb_sender_id=args.bsdbid, 
         brokers=bsdb_url)
     logger.debug("Setting up the command sender")
-    cmd_sender.set_up()
-    logger.info("Command sender set up")
+    try:
+        cmd_sender.set_up()
+        logger.info("Command sender set up")
+    except:
+        logger.exception("Failed to initialize the command sender")
+        sys.exit(1)
+
 
     acker = AlarmAck(full_running_id=full_running_id, command_sender=cmd_sender)
     logger.debug("Setting up the alarm acker")
