@@ -78,6 +78,7 @@ class IasCommandSender(IasLogListener):
         if self._closed:
             raise RuntimeError("Cannot initialize a closed object")
         if not self._initialized:
+            self.logger.debug("Initializing the reply consumer")
             if not self.reply_consumer.start(60):
                 self.logger.error("Failed to subscribe to reply kafka topic")
                 raise RuntimeError("Failed to subscribe to reply kafka topic")
