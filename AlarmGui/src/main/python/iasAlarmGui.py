@@ -275,6 +275,8 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
             sender_full_running_id=full_running_id, 
             bsdb_sender_id=f"CommandSender-{self.group_id}",
             brokers=bsdb_brokers)
+        # Initialize the command sender
+        self.command_sender.set_up()
         # Connect the Alarm ACK
         self.logger.info("Building the AlarmAck")
         self.alarm_ack = AlarmAck(full_running_id=full_running_id, command_sender=self.command_sender)
