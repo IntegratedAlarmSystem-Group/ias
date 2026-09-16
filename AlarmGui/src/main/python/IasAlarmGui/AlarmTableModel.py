@@ -44,7 +44,7 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
         # The alarms to display in the table
         # one alarm in one row
         #
-        # the widget gets the value of teh cells from this variable
+        # The widget gets the value of the cells from this variable
         # in self.data
         self.alarms: list[IasValue] = []
 
@@ -140,7 +140,7 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
 
     def iasValueReceived(self, iasValue):
         """
-        Gets alarms from Kafka and add them the model
+        Gets alarms from Kafka and add them to the model
         """
         # Discard non alarms IasValues
         if not iasValue or iasValue.valueType!=IASType.ALARM:
@@ -230,7 +230,7 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
                         self.setData(self.createIndex(pos, 1),alarm)
                         self.setData(self.createIndex(pos, 2),alarm)
             self.received_alarms.clear()
-        self._logger.info("Alarms flushed in the table")
+        self._logger.debug("Alarms flushed in the table")
 
     def pause(self, enable: bool) -> None:
         """
@@ -296,11 +296,13 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
         with self.lock:
             return self.alarms[index]
 
-
-
-
-
-
-
-
-
+    def get_active_alarms(self):
+        """
+        Return the number of active (set) alarms i.e. the number of the alarms
+               that are SET_ACK ad SET_UNACK                
+        """
+        with self.lock:
+            return sum(
+                self.get_state(alarm).is_set()
+                for alarm in self.alarms
+            )
