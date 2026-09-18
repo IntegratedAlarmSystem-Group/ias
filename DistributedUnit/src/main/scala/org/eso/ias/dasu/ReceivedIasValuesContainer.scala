@@ -31,7 +31,7 @@ class ReceivedIasValuesContainer(
     *
     * This map must be taken synchronized because it is accessed by several threads
     */
-    val notYetProcessedInputs: MutableMap[String,IASValue[?]] = new HashMap[String,IASValue[?]]()
+    private val notYetProcessedInputs: MutableMap[String,IASValue[?]] = new HashMap[String,IASValue[?]]()
 
     def clear(): Unit = synchronized {
         notYetProcessedInputs.clear()
