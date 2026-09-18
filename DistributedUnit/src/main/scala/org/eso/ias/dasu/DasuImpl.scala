@@ -2,7 +2,8 @@ package org.eso.ias.dasu
 
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicLong, AtomicReference}
 import java.util.concurrent.{ScheduledFuture, TimeUnit}
-import java.util.{HashMap, Objects, Properties}
+import java.util.{Objects, Properties}
+import scala.collection.mutable.{HashMap, Map=>MutableMap}
 import org.eso.ias.asce.{AsceStates, ComputingElement}
 import org.eso.ias.cdb.pojos.{AsceDao, DasuDao}
 import org.eso.ias.cdb.topology.DasuTopology
@@ -12,7 +13,7 @@ import org.eso.ias.dasu.subscriber.InputSubscriber
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.*
 
-import scala.jdk.javaapi.CollectionConverters
+import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -55,7 +56,7 @@ class DasuImpl (
   /**
    * The configuration of the ASCEs that run in the DASU
    */
-  val asceDaos: List[AsceDao] = CollectionConverters.asScala(dasuDao.getAsces).toList
+  val asceDaos: List[AsceDao] = dasuDao.getAsces.asScala.toList
 
   // Are there ASCEs assigned to this DASU?
   require(dasuDao.getAsces.size()>0,"No ASCE found for DASU "+id)
@@ -105,17 +106,15 @@ class DasuImpl (
   /**
     * Values that have been received in input from plugins or other DASUs (BSDB)
     * and not yet processed by the ASCEs
-    *
-    * This map must be taken synchronized because it is accessed by several threads
     */
-  val notYetProcessedInputs: java.util.Map[String,IASValue[?]] = new HashMap[String,IASValue[?]]()
+  val notYetProcessedInputs: ReceivedIasValuesContainer = new ReceivedIasValuesContainer(id, getInputIds())
 
   /**
     * The fullRuning Ids of the received inputs
     *
     * This map must be taken synchronized because it is accessed by several threads
     */
-  val fullRunningIdsOfInputs: java.util.Map[String,String] = new HashMap[String,String]()
+  val fullRunningIdsOfInputs: MutableMap[String,String] = new HashMap[String,String]()
 
   /**
    *  The last calculated output by ASCEs
@@ -353,36 +352,13 @@ class DasuImpl (
     assert(iasios.nonEmpty)
     DasuImpl.logger.debug(s"DASU [$id] received ${iasios.size} inputs.")
 
-    def acceptIasValue(value: IASValue[?]): Boolean = {
-      assert(Option(value).isDefined)
-      assert(value.productionTStamp.isPresent,"Undefined production timestamp for "+value.toString)
+    notYetProcessedInputs.storeInputs(iasios)
 
-      // Accept the value if
-      //  * its ID is the ID of an input
-      //  * its timetsamp is newer that that already in the map of inputs to process
-      getInputIds().contains(value.id)
-
-      val valueFromMap: Option[IASValue[?]] = Option(notYetProcessedInputs.get(value.id))
-      valueFromMap.map (v => {
-
-        val valueTstamp = value.productionTStamp.get
-        assert(v.productionTStamp.isPresent, "Missing production timestamp for value from map: "+value.toString)
-        val tstampOfValueInMap = v.productionTStamp.get()
-
-        valueTstamp>=tstampOfValueInMap
-      }).getOrElse(true) // Not in map: accept the value
-
-
-    }
-
-    // Merge the inputs with the buffered ones to keep only the last updated values
-    // The scheduled task clears the buffered inputs (in updateAndPublishOutput)
-    notYetProcessedInputs.synchronized {
-      iasios.filter( acceptIasValue(_)).foreach(iasio => {
-        fullRunningIdsOfInputs.synchronized { fullRunningIdsOfInputs.put(iasio.id, iasio.fullRunningId) }
-
-        notYetProcessedInputs.put(iasio.id,iasio)
-      })
+    // Merge the full running IDs of the received inputs with those already in the map
+    // beacuse they can change at runb time for example if a plugin is relocated
+    // or a DASU deplyed in another Supervisor
+    fullRunningIdsOfInputs.synchronized {
+      fullRunningIdsOfInputs ++= notYetProcessedInputs.getFullRunningIds
     }
     scheduleNextOutputCalculation() // Schedule the next output calculation
   }
@@ -447,7 +423,7 @@ class DasuImpl (
       lastSentTime.set(System.currentTimeMillis())
       val iasioToSend = currentOutput.updateSentToBsdbTStamp(lastSentTime.get)
       val iasValueToSendWithDepIds = fullRunningIdsOfInputs.synchronized {
-        iasioToSend.toIASValue().updateFullIdsOfDependents(fullRunningIdsOfInputs.values)
+        iasioToSend.toIASValue().updateFullIdsOfDependents(fullRunningIdsOfInputs.values.asJavaCollection)
       }
       val iasValueToSend = iasValueToSendWithDepIds.updateValidity(actualValidity)
 
@@ -498,11 +474,7 @@ class DasuImpl (
 
     val startTime = System.currentTimeMillis()
     // Converts the inputs from the synchronized java map into a immutable scala Set
-    val inputsFromMap: Set[IASValue[?]] = notYetProcessedInputs.synchronized {
-      val temp = CollectionConverters.asScala(notYetProcessedInputs.values).toSet
-      notYetProcessedInputs.clear()
-      temp
-    }
+    val inputsFromMap: Set[IASValue[?]] = notYetProcessedInputs.getValuesAndClear()
 
     lastCalculatedOutput.set(propagateIasios(inputsFromMap))
     DasuImpl.logger.debug(s"DASU [$id] calculated output")
@@ -544,9 +516,7 @@ class DasuImpl (
     * Check if there are inputs to process 
     */
   def hasInputsToProcess: Boolean = {
-    notYetProcessedInputs.synchronized {
-      notYetProcessedInputs.size() > 0
-    }
+    notYetProcessedInputs.nonEmpty
   }
 
   /**
