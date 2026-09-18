@@ -148,12 +148,12 @@ class DasuImpl (
   val started = new AtomicBoolean(false)
 
   /**
-   * The task to delay the generation the output
-   * when new inputs must be processed
+   * The flag set when a calculation of the output has been scheduled
    * 
-   * It is defined only when a task is running or scheduled to run in a near future.
+   * The flag is true when a new calculation of the output is scheduled 
+   * and false when the calculation has been completed.
    */
-  val throttlingTask = new AtomicReference[Option[ScheduledFuture[?]]](None)
+  val calcOfOutputScheduled = new AtomicBoolean(false)
 
   /**
     * The point in time when the DASU started calculating the output for the last time
@@ -188,9 +188,10 @@ class DasuImpl (
           case _ =>
         }
         calcEndTime.set(System.currentTimeMillis())
-        throttlingTask.set(None) // Reset the throttling task
+        calcOfOutputScheduled.set(false) // Reset the throttling task
 
         // Comments inputsReceived explains why this call is needed at this point
+        DasuImpl.logger.debug("DASU [{}] finished the throttling task to calc the output, checking if new inputs arrived in the meantime",id)
         scheduleNextOutputCalculation()
       }
   }
@@ -396,15 +397,36 @@ class DasuImpl (
     */
   def scheduleNextOutputCalculation(): Unit = synchronized {
     // If the calculation of the output is already scheduled or running or there are no new inputs, do not schedule it again
-    if (throttlingTask.get().isEmpty && hasInputsToProcess) { 
+    if (!calcOfOutputScheduled.get() && hasInputsToProcess) { 
       val now = System.currentTimeMillis()
       // Schedule the output calculation
+      calcOfOutputScheduled.set(true)
       val delay = if (now >= calcEndTime.get() + throttling) 0 else calcEndTime.get() + throttling - now
-      val schedFeature = scheduledExecutor.schedule(delayedUpdateTask, delay, TimeUnit.MILLISECONDS)
-      throttlingTask.set(Some(schedFeature))
-      DasuImpl.logger.debug(s"DASU [$id] scheduled the next output calculation in ${delay} msecs.")
+      val taskSheduled = Try {
+        if (delay==0) {
+          scheduledExecutor.execute(delayedUpdateTask)
+        } else {
+          scheduledExecutor.schedule(delayedUpdateTask, delay, TimeUnit.MILLISECONDS)
+        }
+      } 
+      taskSheduled match {
+        case Failure(exception) => {
+          calcOfOutputScheduled.set(false)
+          DasuImpl.logger.error("DASU [{}] failed to schedule the next output calculation in {} msecs (executor: pool size {}, queue size {}, active count {})",
+            id,
+            delay,
+            scheduledExecutor.getPoolSize(),
+            scheduledExecutor.getQueue.size(),
+            scheduledExecutor.getActiveCount(),
+            exception)
+        }
+        case _ => DasuImpl.logger.debug(s"DASU [$id] scheduled the next output calculation in ${delay} msecs.")
+      }
     } else {
-      DasuImpl.logger.debug(s"DASU [$id] does not schedule the next output calculation: throttling task already running or no inputs to process")
+      val msg_throttling = if (!calcOfOutputScheduled.get()) "" else "throttling task already scheduled"
+      val msg_noInputs = if (hasInputsToProcess) "" else "no inputs to process"
+      val sep = if (msg_throttling.nonEmpty && msg_noInputs.nonEmpty) " and " else ""
+      DasuImpl.logger.debug(s"DASU [$id] does not schedule the next output calculation: $msg_throttling$sep$msg_noInputs")
     }
     
   }
@@ -533,7 +555,7 @@ class DasuImpl (
    * @return true if a task for processing inputs has been scheduled
    */
   def hasScheduledTask: Boolean = {
-    throttlingTask.get().isDefined
+    calcOfOutputScheduled.get()
   }
 
   /**
