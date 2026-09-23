@@ -124,6 +124,15 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         # the dialog to connect to the IAS
         self.connectDlg = None
 
+        # Adds the label with the active alarms
+        self.active_alarms_lbl = QLabel(text="Active: 0")
+        self.ui.statusbar.addPermanentWidget(self.active_alarms_lbl)
+
+        # Adds the label with the active alarms
+        self.shelved_alarms_lbl = QLabel(text="Shelved: 0")
+        self.ui.statusbar.addPermanentWidget(self.shelved_alarms_lbl)
+
+
         # Adds the icon with the beating heart in the status bar
         self.status_icon_lbl = QLabel()
         self.heart_ok = QPixmap(":/icons/heart.png").scaled(16, 16)  
@@ -137,9 +146,10 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         self.ack_action = self.ack_popup_menu.addAction("Acknowledge")
 
         
-        # The timer to change icon every second
+        # The timer to change icon and the content of the status bar
+        # every second
         self.timer = QTimer(self)
-        self.timer.timeout.connect(self.update_icon)
+        self.timer.timeout.connect(self.update_statusbar_content)
         self.timer.start(1000)
 
         # Signals to update the UI from other threads
@@ -179,10 +189,13 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         self.ui.action_Connect.setEnabled(not connected)
         self.ui.action_Disconnect.setEnabled(connected)
 
-    def update_icon(self):
+    def update_statusbar_content(self):
         """
-        Update the icon in the status bar according to the
-        status of the kafka consumer
+        Update the content of the status bar:
+        - the icon in the status bar according to the
+          status of the kafka consumer
+        - the number of active alarms
+        - the number of shelved alarms
         """
         vc = self.value_consumer   
         if vc is not None and vc.isSubscribed():
@@ -199,6 +212,9 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
             self.status_icon_lbl.setPixmap( self.heart_nop)
             self.status_icon_lbl.setToolTip("Not connected to BSDB")
             self.showing_ok_icon = False
+
+        self.active_alarms_lbl.setText(f"Active: {self.tableModel.get_active_alarms()}")
+        self.shelved_alarms_lbl.setText(f"Shelved: 0")
 
     @Slot()
     def on_action_Disconnect_triggered(self):
