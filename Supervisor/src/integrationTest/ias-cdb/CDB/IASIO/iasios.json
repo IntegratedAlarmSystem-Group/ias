@@ -1,0 +1,11 @@
+[
+    { "id": "/test/alarm8any",    "iasType": "ALARM",   "shortDesc": ""  },
+    { "id": "/test/alarm8all",    "iasType": "ALARM",   "shortDesc": ""  },
+    { "id": "/test/alarm8b",      "iasType": "ALARM",   "shortDesc": ""  },
+    { "id": "/vals/hival8any",    "iasType": "BOOLEAN", "shortDesc": ""  },
+    { "id": "/vals/hival8all",    "iasType": "BOOLEAN", "shortDesc": ""  },
+    { "id": "/vals/hival8a",      "iasType": "BOOLEAN", "shortDesc": ""  },
+    { "id": "/vals/hival8b",      "iasType": "BOOLEAN", "shortDesc": ""  },
+    { "id": "/device_c/sensor8a", "iasType": "DOUBLE" },
+    { "id": "/device_c/sensor8b", "iasType": "DOUBLE" }
+]

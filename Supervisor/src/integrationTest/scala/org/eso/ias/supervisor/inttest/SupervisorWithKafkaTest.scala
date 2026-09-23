@@ -1,4 +1,4 @@
-package org.eso.ias.supervisor.test
+package org.eso.ias.supervisor.inttest
 
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.pojos.DasuDao
@@ -112,7 +112,7 @@ class SupervisorWithKafkaTest extends AnyFlatSpec with BeforeAndAfterAll with Be
   iasiosConsumer.setUp()
   logger.info("Testing consumer started")
 
-  /** The kafka consumer gets AISValues from the BSDB */
+  /** The kafka consumer gets IASValues from the BSDB */
   val inputConsumer: InputSubscriber = KafkaSubscriber(supervisorId.id, None, None, new Properties())
   
   /** The test uses real DASU i.e. the factory instantiates a DasuImpl */

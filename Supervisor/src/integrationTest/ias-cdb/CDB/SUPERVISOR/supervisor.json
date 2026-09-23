@@ -1,0 +1,14 @@
+{
+    "logLevel": "INFO",
+    "id": "supervisor",
+    "hostName": "localhost",
+    "dasusToDeploy": [
+        { "dasuId": "_test_alarm8any_dasu", "templateId": null, "instance": null },
+        { "dasuId": "_test_alarm8all_dasu", "templateId": null, "instance": null },
+        { "dasuId": "_test_alarm8b_dasu",   "templateId": null, "instance": null },
+        { "dasuId": "_vals_hival8any_dasu", "templateId": null, "instance": null },
+        { "dasuId": "_vals_hival8all_dasu", "templateId": null, "instance": null },
+        { "dasuId": "_vals_hival8a_dasu",   "templateId": null, "instance": null },
+        { "dasuId": "_vals_hival8b_dasu",   "templateId": null, "instance": null }
+    ]
+}

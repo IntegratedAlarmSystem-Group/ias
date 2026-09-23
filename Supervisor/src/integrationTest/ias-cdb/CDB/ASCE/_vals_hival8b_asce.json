@@ -1,0 +1,16 @@
+{
+    "id": "_vals_hival8b_asce",
+    "dasuID": "_vals_hival8b_dasu",
+    "outputID": "/vals/hival8b",
+    "inputIDs": [
+        "/device_c/sensor8b"
+    ],
+    "templatedInputs": [],
+    "transferFunctionID": "org.eso.ias.transfer.MinMaxBool",
+    "props": [
+        {
+            "name": "org.eso.ias.tf.minmaxbool.highOn",
+            "value": 100
+        }
+    ]
+}
