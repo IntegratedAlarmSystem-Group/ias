@@ -42,7 +42,10 @@ object ScheduledExecutor {
   /**
    * The default size of the pool
    */
-  lazy val CorePoolSizeDefaultValue = Runtime.getRuntime().availableProcessors()/2
+  lazy val CorePoolSizeDefaultValue = {
+      val defaultByProcNum = Runtime.getRuntime().availableProcessors()/2
+      if (defaultByProcNum > 0) defaultByProcNum else 1
+    }
 
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
