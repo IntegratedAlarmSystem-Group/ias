@@ -21,17 +21,11 @@ import org.slf4j.{ILoggerFactory, LoggerFactory}
 object IASLogger {
   
   /**
-   * The global logger.
-   */
-  private val globalLogger = Logger("IAS-Global-Logger")
-  
-  //printLoggerStatus()
-  /**
    * @return A logger with the given name
    */
   def getLogger(name: String) = Logger(name)
   
-  def getLogger(c: java.lang.Class[?]) = Logger(c)
+  def getLogger(c: java.lang.Class[?]) = Logger(c.getName)
   
   /**
    * Print the status of the logger in the stdout
@@ -58,7 +52,11 @@ object IASLogger {
     *
     * @param level the log level to set
     */
-  def setRootLogLevel(level: Level): Unit = setLogLevel("org.eso.ias", level)
+  def setRootLogLevel(level: Level): Unit = {
+    val context = LoggerFactory.getILoggerFactory.asInstanceOf[LoggerContext]
+    val rootLogger = context.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME)
+    rootLogger.setLevel(Level.DEBUG)
+  }
 
   /**
     * Set the log level of the package to the passed level/
