@@ -5,6 +5,8 @@ import java.lang.Runtime
 import scala.util.control.NonFatal
 import scala.util.Try
 
+import org.eso.ias.logging.IASLogger
+
 /** The scheduled executor for the transfer functions of the DASU. 
  *  
  *  @constructor Builds the scheduled executor
@@ -13,6 +15,13 @@ import scala.util.Try
  *  */
 class ScheduledExecutor(dasuId: String, coreSize: Int) 
 extends ScheduledThreadPoolExecutor(coreSize, new DasuThreadFactory(dasuId)) {
+
+  ScheduledExecutor.logger.debug("Executor for DASU [{}]:  core size={}, pool size={}, queue size={}, active count={})",
+            dasuId,
+            getCorePoolSize(),
+            getPoolSize(),
+            getQueue.size(),
+            getActiveCount())
   
   
   /**
@@ -33,7 +42,13 @@ object ScheduledExecutor {
   /**
    * The default size of the pool
    */
-  lazy val CorePoolSizeDefaultValue = Runtime.getRuntime().availableProcessors()/2
+  lazy val CorePoolSizeDefaultValue = {
+      val defaultByProcNum = Runtime.getRuntime().availableProcessors()/2
+      if (defaultByProcNum > 0) defaultByProcNum else 1
+    }
+
+  /** The logger */
+  private val logger = IASLogger.getLogger(this.getClass)
   
   /**
    * Get the size of the core from the java property or from
