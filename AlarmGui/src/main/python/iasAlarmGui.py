@@ -1,21 +1,17 @@
 #! /usr/bin/env python3
-
 import sys, string, random, threading, typing, logging
 from threading import Lock
 
 from PySide6.QtCore import Slot, QCommandLineOption, QCommandLineParser, QTimer, Signal, Qt
-from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QTableView, QMenu
+from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QTableView, QMenu, QDialog
+from PySide6.QtCore import QEvent
 from PySide6.QtGui import QPixmap, QCursor
-# Important:
-# You need to run the following command to generate the ui_form.py file
-#     pyside6-uic form.ui -o ui_form.py, or
-#     pyside2-uic form.ui -o ui_form.py
 from IasAlarmGui.ui_alarm_gui import Ui_AlarmGui
 from IasAlarmGui.AlarmTableModel import AlarmTableModel
 from IasAlarmGui.connect_to_ias_dlg import ConnectToIasDlg
 from IasAlarmGui.about_dlg import AboutDlg
 
-from IasKafkaUtils.KafkaValueConsumer import KafkaValueConsumer
+from IasKafkaUtils.KafkaValueConsumer import KafkaValueConsumer, IasValueListener
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 
 from IasCmdReply.IasCommandSender import IasCommandSender
@@ -24,12 +20,16 @@ from IasBasicTypes.IasValue import IasValue
 from IasBasicTypes.Identifier import Identifier
 from IasBasicTypes.IdentifierType import IdentifierType
 from IasBasicTypes.Alarm import Alarm
+from IasBasicTypes.IasType import IASType
+
 from IasExtras.AlarmAck import AlarmAck
 from IasTools.DefaultPaths import DefaultPaths
 from IasLogging.log import Log
 
 from IasAlarmGui.AlarmDetailsHelper import AlarmDetailsHelper
+from IasAlarmGui.AlarmShelfManager import AlarmShelfManager
 from IasAlarmGui.alarm_ack_dlg import AckAlarmDlg
+from IasAlarmGui.alarm_shelve_dlg import AlarmShelveDlg
 
 class AlarmGuiTableView(QTableView):
     """"
@@ -64,7 +64,7 @@ class AlarmGuiTableView(QTableView):
 
         super().mousePressEvent(event)
 
-class MainWindow(QMainWindow, Ui_AlarmGui):
+class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
     # Signal to update the UI from other threads
     signal_update_connected_ui = Signal(bool)
 
@@ -132,7 +132,6 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         self.shelved_alarms_lbl = QLabel(text="Shelved: 0")
         self.ui.statusbar.addPermanentWidget(self.shelved_alarms_lbl)
 
-
         # Adds the icon with the beating heart in the status bar
         self.status_icon_lbl = QLabel()
         self.heart_ok = QPixmap(":/icons/heart.png").scaled(16, 16)  
@@ -142,9 +141,15 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         self.ui.statusbar.addPermanentWidget(self.status_icon_lbl)
 
         # Create the popup menu to ACK
-        self.ack_popup_menu = QMenu(self)
-        self.ack_action = self.ack_popup_menu.addAction("Acknowledge")
+        self.popup_menu = QMenu(self)
+        self.ack_action = self.popup_menu.addAction("Acknowledge")
+        self.shelve_action = self.popup_menu.addAction("Shelve")
 
+        self.alarm_shelve_manager = AlarmShelfManager()
+
+        # The dialog to shelve an alarm
+        self.shelve_dlg: AlarmShelveDlg = AlarmShelveDlg(parent=self)
+        self.shelve_dlg.finished.connect(self.shelveAlarmActionFinished)
         
         # The timer to change icon and the content of the status bar
         # every second
@@ -165,16 +170,36 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         ias_value = self.tableModel.get_row_content(index.row())
         alarm_name = ias_value.id
         alarm = Alarm.fromString(ias_value.value)
-        if not alarm.is_acked():
-            # Show the menu at the global cursor position
-            action = self.ack_popup_menu .exec(QCursor.pos())
-            if action == self.ack_action:
-                self.logger.info("Showing dialog to ACK %s", alarm_name)
-                al_ack_dlg = AckAlarmDlg(
-                    ias_value=ias_value, 
-                    alarm_ack=self.alarm_ack,
-                    parent=self)
-                al_ack_dlg.open()
+
+        self.ack_action.setEnabled(not alarm.is_acked() and self.alarm_ack is not None)
+        self.shelve_action.setEnabled(True)
+        # Show the menu at the global cursor position
+        action = self.popup_menu.exec(QCursor.pos())
+        if action == self.ack_action:
+            self.logger.info("Showing dialog to ACK %s", alarm_name)
+            al_ack_dlg = AckAlarmDlg(
+                ias_value=ias_value, 
+                alarm_ack=self.alarm_ack,
+                parent=self)
+            al_ack_dlg.open()
+        elif action == self.shelve_action:
+            self.logger.info("Showing dialog to shelve %s", alarm_name)
+            self.shelve_dlg.setAlarmId(alarm_id=ias_value.id)
+            self.shelve_dlg.open()
+
+    def shelveAlarmActionFinished(self, result):
+        if result == QDialog.DialogCode.Accepted:
+            time_to_shelve = self.shelve_dlg.getShelveTime()
+            seconds_to_shelve = (time_to_shelve.hour() * 3600 + time_to_shelve.minute() * 60 + time_to_shelve.second()
+)
+            if seconds_to_shelve <= 0:
+                self.logger.info("Shelve time is zero, ignoring")
+                return
+            alarm_id = self.shelve_dlg.getAlarmId()
+            self.logger.info(f"Shelving {alarm_id} for {time_to_shelve} ({seconds_to_shelve} secs)")
+            self.alarm_shelve_manager.shelve(alarm_id=alarm_id, seconds=seconds_to_shelve)
+        else:
+            self.logger.info("Shelve rejected by user")
 
     def onLeftClick(self, index: int):
         """
@@ -214,7 +239,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
             self.showing_ok_icon = False
 
         self.active_alarms_lbl.setText(f"Active: {self.tableModel.get_active_alarms()}")
-        self.shelved_alarms_lbl.setText(f"Shelved: 0")
+        self.shelved_alarms_lbl.setText(f"Shelved: {self.alarm_shelve_manager.get_shelved_count()}")
 
     @Slot()
     def on_action_Disconnect_triggered(self):
@@ -259,14 +284,14 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
 
     def connectToIas(self, bsdb_brokers: str, full_running_id: str) -> None:
         """
-        Connect to the IAS passing the table model as listener
+        Connect to the IAS passing this as listener
 
         This function runs in a thread
         """
         try:
             self.logger.info("Building the value consumer with client id=%s and group_id=%s", self.client_id, self.group_id)
             self.value_consumer = KafkaValueConsumer(
-                self.tableModel,
+                self,
                 bsdb_brokers,
                 IasKafkaHelper.topics['core'],
                 self.client_id,
@@ -298,6 +323,12 @@ class MainWindow(QMainWindow, Ui_AlarmGui):
         self.alarm_ack = AlarmAck(full_running_id=full_running_id, command_sender=self.command_sender)
         self.alarm_ack.start()
         self.logger.info("Successfully connected to IAS")
+
+    def iasValueReceived(self, iasValue):
+        # Discard non alarms IasValues
+        if not iasValue or iasValue.valueType!=IASType.ALARM:
+            return
+        self.tableModel.iasValueFromBsdb(iasValue)
 
     def disconnectFromIas(self) -> None:
         """

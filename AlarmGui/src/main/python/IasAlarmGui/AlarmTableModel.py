@@ -138,9 +138,9 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
         if role == Qt.ItemDataRole.DisplayRole and orientation==Qt.Orientation.Horizontal:
             return self.header[section]
 
-    def iasValueReceived(self, iasValue):
+    def iasValueFromBsdb(self, iasValue):
         """
-        Gets alarms from Kafka and add them to the model
+        Gets alarms from the BSDB and add them to the model
         """
         # Discard non alarms IasValues
         if not iasValue or iasValue.valueType!=IASType.ALARM:
