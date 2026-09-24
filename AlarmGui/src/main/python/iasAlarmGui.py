@@ -110,6 +110,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         self.ui.shelvedTable.horizontalHeader().setStretchLastSection(True)
 
         self.alarm_shelve_manager.alarm_shelved.connect(self.active_table_model.shelve)
+        self.alarm_shelve_manager.alarm_unshelved.connect(self.shelve_table_model.unshelve)
 
         self.ui.splitter.setSizes([250,100])
         self.ui.alarmDetailsTE.setText("Alarm details")

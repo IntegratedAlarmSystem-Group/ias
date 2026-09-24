@@ -203,6 +203,15 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
         self._logger.info("Shelving %s", alarm_id)
         self.remove_alarm_by_id(alarm_id=alarm_id)
 
+    def unshelve(self, alarm_id: str):
+        """
+        Slot executed when the user or the time unshelve an alarm
+
+        Remove the alarm from the table
+        """
+        self._logger.info("Unshelving %s", alarm_id)
+        self.remove_alarm_by_id(alarm_id=alarm_id)
+
     def setData(self,index, value, role=Qt.EditRole):
         if role==Qt.EditRole:
             if index.isValid() and 0 <= index.row() < len(self.alarms):
