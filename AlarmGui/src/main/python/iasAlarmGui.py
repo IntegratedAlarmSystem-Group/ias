@@ -6,10 +6,6 @@ from PySide6.QtCore import Slot, QCommandLineOption, QCommandLineParser, QTimer,
 from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QTableView, QMenu, QDialog
 from PySide6.QtCore import QEvent
 from PySide6.QtGui import QPixmap, QCursor
-from IasAlarmGui.ui_alarm_gui import Ui_AlarmGui
-from IasAlarmGui.AlarmTableModel import AlarmTableModel
-from IasAlarmGui.connect_to_ias_dlg import ConnectToIasDlg
-from IasAlarmGui.about_dlg import AboutDlg
 
 from IasKafkaUtils.KafkaValueConsumer import KafkaValueConsumer, IasValueListener
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
@@ -26,6 +22,10 @@ from IasExtras.AlarmAck import AlarmAck
 from IasTools.DefaultPaths import DefaultPaths
 from IasLogging.log import Log
 
+from IasAlarmGui.ui_alarm_gui import Ui_AlarmGui
+from IasAlarmGui.AlarmTableModel import AlarmTableModel, TableMode
+from IasAlarmGui.connect_to_ias_dlg import ConnectToIasDlg
+from IasAlarmGui.about_dlg import AboutDlg
 from IasAlarmGui.AlarmDetailsHelper import AlarmDetailsHelper
 from IasAlarmGui.AlarmShelfManager import AlarmShelfManager
 from IasAlarmGui.alarm_ack_dlg import AckAlarmDlg
@@ -101,11 +101,15 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
 
         self.alarm_details = AlarmDetailsHelper(self.ui.alarmDetailsTE)
 
-        self.tableModel = AlarmTableModel(self.ui.alarmTable, self.alarm_shelve_manager)
-        self.ui.alarmTable.setModel(self.tableModel)
+        self.active_table_model = AlarmTableModel(self.ui.alarmTable, self.alarm_shelve_manager, TableMode.ACTIVE)
+        self.ui.alarmTable.setModel(self.active_table_model)
         self.ui.alarmTable.horizontalHeader().setStretchLastSection(True)
 
-        self.alarm_shelve_manager.alarm_shelved.connect(self.tableModel.shelve)
+        self.shelve_table_model = AlarmTableModel(self.ui.alarmTable, self.alarm_shelve_manager, TableMode.SHELVED)
+        self.ui.shelvedTable.setModel(self.shelve_table_model)
+        self.ui.shelvedTable.horizontalHeader().setStretchLastSection(True)
+
+        self.alarm_shelve_manager.alarm_shelved.connect(self.active_table_model.shelve)
 
         self.ui.splitter.setSizes([250,100])
         self.ui.alarmDetailsTE.setText("Alarm details")
@@ -169,7 +173,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         If the alarm can be acknowledged, shows a popup menu
         """
         # get the alarm for the model and check if it can acknowledged
-        ias_value = self.tableModel.get_row_content(index.row())
+        ias_value = self.active_table_model.get_row_content(index.row())
         alarm_name = ias_value.id
         alarm = Alarm.fromString(ias_value.value)
 
@@ -240,7 +244,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
             self.status_icon_lbl.setToolTip("Not connected to BSDB")
             self.showing_ok_icon = False
 
-        self.active_alarms_lbl.setText(f"Active: {self.tableModel.get_active_alarms()}")
+        self.active_alarms_lbl.setText(f"Active: {self.active_table_model.get_active_alarms()}")
         self.shelved_alarms_lbl.setText(f"Shelved: {self.alarm_shelve_manager.get_shelved_count()}")
 
     @Slot()
@@ -277,12 +281,12 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
     @Slot()
     def on_action_Pause_toggled(self):
         print(f"Pause/Resume check status {self.ui.action_Pause.isChecked()}")
-        self.tableModel.pause(self.ui.action_Pause.isChecked())
+        self.active_table_model.pause(self.ui.action_Pause.isChecked())
 
     @Slot()
     def on_action_Remove_cleared_toggled(self):
         print(f"Auto remove cleared {self.ui.action_Remove_cleared.isChecked()}")
-        self.tableModel.remove_cleared(self.ui.action_Remove_cleared.isChecked())
+        self.active_table_model.remove_cleared(self.ui.action_Remove_cleared.isChecked())
 
     def connectToIas(self, bsdb_brokers: str, full_running_id: str) -> None:
         """
@@ -330,7 +334,8 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         # Discard non alarms IasValues
         if not iasValue or iasValue.valueType!=IASType.ALARM:
             return
-        self.tableModel.iasValueFromBsdb(iasValue)
+        self.active_table_model.iasValueFromBsdb(iasValue)
+        self.shelve_table_model.iasValueFromBsdb(iasValue)
 
     def disconnectFromIas(self) -> None:
         """
@@ -354,7 +359,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         details in the right side of the GUI
         """
         for index in self.ui.alarmTable.selectionModel().selectedRows():
-            ias_value = self.tableModel.get_row_content(index.row())
+            ias_value = self.active_table_model.get_row_content(index.row())
             self.fill_details(ias_value)
 
     def fill_details(self, ias_value: IasValue)-> None:

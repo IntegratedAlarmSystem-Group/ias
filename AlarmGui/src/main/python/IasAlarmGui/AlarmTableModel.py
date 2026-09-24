@@ -1,6 +1,7 @@
 # This Python file uses the following encoding: utf-8
 
 import threading, logging
+from enum import Enum
 
 from PySide6.QtCore import QAbstractTableModel, QTimer
 from PySide6.QtCore import Qt, QModelIndex
@@ -16,15 +17,19 @@ from IasBasicTypes.Alarm import Alarm
 
 from IasAlarmGui.AlarmShelfManager import AlarmShelfManager
 
+class TableMode(Enum):
+    ACTIVE = "active"
+    SHELVED = "shelved"
+
 class AlarmTableModel(QAbstractTableModel, IasValueListener):
     """
-    The table model of alarms
+    The table model of active and shelved alarms
 
     Alarms are collected for 1 second then they are flushed in table
     to avoid refreshing too often.
     Flushing of alarms is done in flush_alarms that is run by a QTimer.
     """
-    def __init__(self, view: QTableView, shelf_manager: AlarmShelfManager):
+    def __init__(self, view: QTableView, shelf_manager: AlarmShelfManager, mode: TableMode):
         """
         Constructor
         """
@@ -37,6 +42,9 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
 
         # The shelf manager
         self.shelf_manager = shelf_manager
+
+        # The mode of the table model
+        self.table_mode = mode
 
         # The mutex to protect critical section
         self.lock = threading.RLock()
@@ -55,6 +63,8 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
 
         # the header of the col in the table
         self.header = [ "State", "Priority", "Identifier" ]
+        if self.table_mode == TableMode.SHELVED:
+            self.header.append("Remaining")
 
         # Set to True when the GUI is paused i.e. the table must not be update
         # and the alarms saved in a temporary buffer until resumed
@@ -101,8 +111,10 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
                 return str(self.get_state(ias_value_in_row))
             elif index.column()==1:
                 return str(self.get_priority(ias_value_in_row))
-            else:
+            elif index.column()==2:
                 return ias_value_in_row.id
+            else: # Remaining time for shelved mode
+                    return self.shelf_manager.get_remaining_seconds(alarm_id=ias_value_in_row.id)
         elif role == Qt.BackgroundRole:
             ias_value_in_row = self.alarms[index.row()]
             alarmState = self.get_state(ias_value_in_row)
@@ -150,8 +162,10 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
         # Discard non alarms IasValues
         if not iasValue or iasValue.valueType!=IASType.ALARM:
             return
-        if self.shelf_manager.is_shelved(iasValue.id):
-            return
+        alarm_shelved = self.shelf_manager.is_shelved(iasValue.id)
+        if (alarm_shelved and self.table_mode == TableMode.ACTIVE) or \
+           (not alarm_shelved and self.table_mode == TableMode.SHELVED):
+           return
         # Add the alarm to the model
         with self.lock:
             if self.paused:
@@ -245,7 +259,17 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
                         self.setData(self.createIndex(pos, 0),alarm)
                         self.setData(self.createIndex(pos, 1),alarm)
                         self.setData(self.createIndex(pos, 2),alarm)
+                        if self.table_mode == TableMode.SHELVED:
+                            self.setData(self.createIndex(pos, 3), alarm)
+
             self.received_alarms.clear()
+            if self.table_mode == TableMode.SHELVED and self.alarms:
+                # This emits dataChanged for all rows' column 3 every second 
+                # (since flush_alarms runs every second), causing the view to re-call data() for the "Remaining"
+                # column and display the decremented counter.
+                top = self.createIndex(0, 3)
+                bottom = self.createIndex(len(self.alarms) - 1, 3)
+                self.dataChanged.emit(top, bottom)
         self._logger.debug("Alarms flushed in the table")
 
     def pause(self, enable: bool) -> None:
