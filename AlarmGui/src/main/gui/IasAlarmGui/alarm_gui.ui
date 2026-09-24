@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>503</height>
+    <width>1075</width>
+    <height>674</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -26,28 +26,41 @@
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <widget class="QSplitter" name="splitter">
-      <property name="orientation">
-       <enum>Qt::Orientation::Horizontal</enum>
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>1</number>
       </property>
-      <widget class="QTableView" name="alarmTable">
-       <property name="alternatingRowColors">
-        <bool>true</bool>
-       </property>
-       <property name="selectionBehavior">
-        <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
-       </property>
-       <attribute name="verticalHeaderVisible">
-        <bool>false</bool>
+      <widget class="QWidget" name="active_tab">
+       <attribute name="title">
+        <string>Active</string>
        </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <widget class="QSplitter" name="splitter">
+          <property name="orientation">
+           <enum>Qt::Orientation::Horizontal</enum>
+          </property>
+          <widget class="QTableView" name="alarmTable"/>
+          <widget class="QTextEdit" name="alarmDetailsTE"/>
+         </widget>
+        </item>
+       </layout>
       </widget>
-      <widget class="QTextEdit" name="alarmDetailsTE">
-       <property name="toolTip">
-        <string>Alarm details</string>
-       </property>
-       <property name="readOnly">
-        <bool>true</bool>
-       </property>
+      <widget class="QWidget" name="shelved_tab">
+       <attribute name="title">
+        <string>Shelved</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QSplitter" name="splitter_2">
+          <property name="orientation">
+           <enum>Qt::Orientation::Horizontal</enum>
+          </property>
+          <widget class="QTableView" name="shelvedTable"/>
+          <widget class="QTextEdit" name="shelvedTE"/>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </widget>
     </item>
@@ -58,7 +71,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>800</width>
+     <width>1075</width>
      <height>22</height>
     </rect>
    </property>
