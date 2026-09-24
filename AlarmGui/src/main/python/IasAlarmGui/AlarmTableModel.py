@@ -14,6 +14,8 @@ from IasBasicTypes.Priority import Priority
 from IasBasicTypes.AlarmState import AlarmState
 from IasBasicTypes.Alarm import Alarm
 
+from IasAlarmGui.AlarmShelfManager import AlarmShelfManager
+
 class AlarmTableModel(QAbstractTableModel, IasValueListener):
     """
     The table model of alarms
@@ -22,7 +24,7 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
     to avoid refreshing too often.
     Flushing of alarms is done in flush_alarms that is run by a QTimer.
     """
-    def __init__(self, view: QTableView):
+    def __init__(self, view: QTableView, shelf_manager: AlarmShelfManager):
         """
         Constructor
         """
@@ -32,6 +34,9 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
 
         # The table view widget that display the alarms
         self.view = view
+
+        # The shelf manager
+        self.shelf_manager = shelf_manager
 
         # The mutex to protect critical section
         self.lock = threading.RLock()
@@ -138,12 +143,14 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
         if role == Qt.ItemDataRole.DisplayRole and orientation==Qt.Orientation.Horizontal:
             return self.header[section]
 
-    def iasValueFromBsdb(self, iasValue):
+    def iasValueFromBsdb(self, iasValue: IasValue):
         """
         Gets alarms from the BSDB and add them to the model
         """
         # Discard non alarms IasValues
         if not iasValue or iasValue.valueType!=IASType.ALARM:
+            return
+        if self.shelf_manager.is_shelved(iasValue.id):
             return
         # Add the alarm to the model
         with self.lock:
@@ -172,6 +179,15 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
                     alarm_list[index]=alarm
                     return
             alarm_list.append(alarm)
+
+    def shelve(self, alarm_id: str):
+        """
+        Slot executed when the user shelves an alarm
+
+        Remove the alarm from the table
+        """
+        self._logger.info("Shelving %s", alarm_id)
+        self.remove_alarm_by_id(alarm_id=alarm_id)
 
     def setData(self,index, value, role=Qt.EditRole):
         if role==Qt.EditRole:
@@ -223,7 +239,7 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
                     # or removed if autoremove has been selected in the toolbar
                     # and the alarm is acked and clear
                     if self.autoremove_cleared and self.cleared_and_acked(alarm):
-                        self.removeRows([pos])
+                        self.remove_rows([pos])
                     else:
                         self.alarms[pos]=alarm
                         self.setData(self.createIndex(pos, 0),alarm)
@@ -275,9 +291,9 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
                 for index, ias_value in enumerate(self.alarms):
                     if self.cleared_and_acked(ias_value):
                         rowsToRemove.insert(0,index)
-                self.removeRows(rowsToRemove)
+                self.remove_rows(rowsToRemove)
 
-    def removeRows(self, rows: list[int])->None:
+    def remove_rows(self, rows: list[int])->None:
         """
         Removes the rows from the table
         Args:
@@ -291,6 +307,19 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
             self.beginRemoveRows(index, row, row)
             del self.alarms[row]
             self.endRemoveRows()
+
+    def remove_alarm_by_id(self, alarm_id: str) -> None:
+        """
+        Remove an alarm from the table by its ID.
+        Does nothing if the alarm is not found.
+        """
+        with self.lock:
+            for i, ias_value in enumerate(self.alarms):
+                if ias_value.id == alarm_id:
+                    self.beginRemoveRows(QModelIndex(), i, i)
+                    del self.alarms[i]
+                    self.endRemoveRows()
+                    return
 
     def get_row_content(self, index: int)->IasValue:
         with self.lock:

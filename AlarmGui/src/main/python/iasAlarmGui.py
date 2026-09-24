@@ -97,11 +97,15 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         old_table.setParent(None)
         old_table.deleteLater()
 
+        self.alarm_shelve_manager = AlarmShelfManager()
+
         self.alarm_details = AlarmDetailsHelper(self.ui.alarmDetailsTE)
 
-        self.tableModel = AlarmTableModel(self.ui.alarmTable)
+        self.tableModel = AlarmTableModel(self.ui.alarmTable, self.alarm_shelve_manager)
         self.ui.alarmTable.setModel(self.tableModel)
         self.ui.alarmTable.horizontalHeader().setStretchLastSection(True)
+
+        self.alarm_shelve_manager.alarm_shelved.connect(self.tableModel.shelve)
 
         self.ui.splitter.setSizes([250,100])
         self.ui.alarmDetailsTE.setText("Alarm details")
@@ -144,8 +148,6 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         self.popup_menu = QMenu(self)
         self.ack_action = self.popup_menu.addAction("Acknowledge")
         self.shelve_action = self.popup_menu.addAction("Shelve")
-
-        self.alarm_shelve_manager = AlarmShelfManager()
 
         # The dialog to shelve an alarm
         self.shelve_dlg: AlarmShelveDlg = AlarmShelveDlg(parent=self)
