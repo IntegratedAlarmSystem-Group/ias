@@ -3,8 +3,7 @@ import sys, string, random, threading, typing, logging
 from threading import Lock
 
 from PySide6.QtCore import Slot, QCommandLineOption, QCommandLineParser, QTimer, Signal, Qt
-from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QTableView, QMenu, QDialog
-from PySide6.QtCore import QEvent
+from PySide6.QtWidgets import QApplication, QMainWindow, QLabel,  QMenu, QDialog
 from PySide6.QtGui import QPixmap, QCursor
 
 from IasKafkaUtils.KafkaValueConsumer import KafkaValueConsumer, IasValueListener
@@ -30,39 +29,7 @@ from IasAlarmGui.AlarmDetailsHelper import AlarmDetailsHelper
 from IasAlarmGui.AlarmShelfManager import AlarmShelfManager
 from IasAlarmGui.alarm_ack_dlg import AckAlarmDlg
 from IasAlarmGui.alarm_shelve_dlg import AlarmShelveDlg
-
-class AlarmGuiTableView(QTableView):
-    """"
-    The QTableView subclass to handle the right and left click on the table rows
-    """
-
-    def __init__(self, parent, events_listener):
-        super().__init__(parent)
-        self.events_listener = events_listener
-        if not self.events_listener:
-            raise ValueError("The events_listener must not be None")
-        
-        self.setSelectionBehavior(QTableView.SelectRows)
-        self.setSelectionMode(QTableView.SingleSelection)
-    
-    def setModel(self, model):
-        super().setModel(model)
-        # reconnect selectionChanged every time model changes
-        if self.selectionModel():
-            self.selectionModel().selectionChanged.connect(
-                self.events_listener.onTableSelectionChanged)
-
-    def mousePressEvent(self, event):
-        index = self.indexAt(event.position().toPoint())
-
-        if index.isValid():
-            if event.button() == Qt.LeftButton:
-                self.events_listener.onLeftClick(index)
-
-            elif event.button() == Qt.RightButton:
-                self.events_listener.onRightClick(index)
-
-        super().mousePressEvent(event)
+from IasAlarmGui.alarm_table_view import AlarmGuiTableView
 
 class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
     # Signal to update the UI from other threads
@@ -88,32 +55,46 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         self._lock = Lock()
 
         # Replace the default alarm table with the AlarmGuiTableView to handle the clicks
-        splitter = self.ui.splitter # The splitter contans the alarmTable in the left side
-        old_table = self.ui.alarmTable
-        new_table = AlarmGuiTableView(splitter, self)
-        i = splitter.indexOf(old_table)
-        splitter.insertWidget(i, new_table)
-        self.ui.alarmTable = new_table
-        old_table.setParent(None)
-        old_table.deleteLater()
+        splitter = self.ui.active_splitter # The splitter contans the alarmTable in the left side
+        old_active_table_view = self.ui.alarmTable
+        active_table_view = AlarmGuiTableView(splitter, self, TableMode.ACTIVE)
+        i = splitter.indexOf(old_active_table_view)
+        splitter.insertWidget(i, active_table_view)
+        self.ui.alarmTable = active_table_view
+        old_active_table_view.setParent(None)
+        old_active_table_view.deleteLater()
 
         self.alarm_shelve_manager = AlarmShelfManager()
 
-        self.alarm_details = AlarmDetailsHelper(self.ui.alarmDetailsTE)
+        self.active_alarm_details = AlarmDetailsHelper(self.ui.alarmDetailsTE)
+        self.shelved_alarm_details = AlarmDetailsHelper(self.ui.shelvedDetailsTE)
 
         self.active_table_model = AlarmTableModel(self.ui.alarmTable, self.alarm_shelve_manager, TableMode.ACTIVE)
         self.ui.alarmTable.setModel(self.active_table_model)
         self.ui.alarmTable.horizontalHeader().setStretchLastSection(True)
 
-        self.shelve_table_model = AlarmTableModel(self.ui.alarmTable, self.alarm_shelve_manager, TableMode.SHELVED)
-        self.ui.shelvedTable.setModel(self.shelve_table_model)
+        # Replace the default alarm table with the AlarmGuiTableView to handle the clicks
+        splitter = self.ui.shelved_splitter # The splitter contans the alarmTable in the left side
+        old_shelved_table_view = self.ui.shelvedTable
+        shelved_table_view = AlarmGuiTableView(splitter, self, TableMode.SHELVED)
+        i = splitter.indexOf(old_shelved_table_view)
+        splitter.insertWidget(i, shelved_table_view)
+        self.ui.shelvedTable = shelved_table_view
+        old_shelved_table_view.setParent(None)
+        old_shelved_table_view.deleteLater()
+
+        self.shelved_table_model = AlarmTableModel(self.ui.alarmTable, self.alarm_shelve_manager, TableMode.SHELVED)
+        self.ui.shelvedTable.setModel(self.shelved_table_model)
         self.ui.shelvedTable.horizontalHeader().setStretchLastSection(True)
 
         self.alarm_shelve_manager.alarm_shelved.connect(self.active_table_model.shelve)
-        self.alarm_shelve_manager.alarm_unshelved.connect(self.shelve_table_model.unshelve)
+        self.alarm_shelve_manager.alarm_unshelved.connect(self.shelved_table_model.unshelve)
 
-        self.ui.splitter.setSizes([250,100])
+        self.ui.active_splitter.setSizes([250,100])
         self.ui.alarmDetailsTE.setText("Alarm details")
+
+        self.ui.shelved_splitter.setSizes([250,100])
+        self.ui.shelvedDetailsTE.setText("Alarm details")
 
         # The consumer of alarms. The listener is the table model
         self.value_consumer: KafkaValueConsumer = None
@@ -149,10 +130,14 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         self.showing_ok_icon = False # To blink the icon
         self.ui.statusbar.addPermanentWidget(self.status_icon_lbl)
 
-        # Create the popup menu to ACK
-        self.popup_menu = QMenu(self)
-        self.ack_action = self.popup_menu.addAction("Acknowledge")
-        self.shelve_action = self.popup_menu.addAction("Shelve")
+        # Create the popup menu for the active alarms table
+        self.active_popup_menu = QMenu(self)
+        self.ack_action = self.active_popup_menu.addAction("Acknowledge")
+        self.shelve_action = self.active_popup_menu.addAction("Shelve")
+
+        # Create the popup menu for the shelved alarms table
+        self.shelved_popup_menu = QMenu(self)
+        self.unshelve_action = self.shelved_popup_menu.addAction("Unshelve")
 
         # The dialog to shelve an alarm
         self.shelve_dlg: AlarmShelveDlg = AlarmShelveDlg(parent=self)
@@ -167,32 +152,48 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         # Signals to update the UI from other threads
         self.signal_update_connected_ui.connect(self._set_connected_ui)
 
-    def onRightClick(self, index):
+    def onRightClick(self, index, mode: TableMode):
         """
-        The user preseed the right mouse button over a row of an alarm
+        The user preseed the right mouse button over a row of an alarm of
+        the active or shelved table
 
-        If the alarm can be acknowledged, shows a popup menu
+        Shjows the popup menu for the active or shelved table
         """
         # get the alarm for the model and check if it can acknowledged
-        ias_value = self.active_table_model.get_row_content(index.row())
-        alarm_name = ias_value.id
-        alarm = Alarm.fromString(ias_value.value)
+        if mode==TableMode.ACTIVE:
+            ias_value = self.active_table_model.get_row_content(index.row())
+            alarm_id = ias_value.id
+            alarm = Alarm.fromString(ias_value.value)
 
-        self.ack_action.setEnabled(not alarm.is_acked() and self.alarm_ack is not None)
-        self.shelve_action.setEnabled(True)
-        # Show the menu at the global cursor position
-        action = self.popup_menu.exec(QCursor.pos())
-        if action == self.ack_action:
-            self.logger.info("Showing dialog to ACK %s", alarm_name)
-            al_ack_dlg = AckAlarmDlg(
-                ias_value=ias_value, 
-                alarm_ack=self.alarm_ack,
-                parent=self)
-            al_ack_dlg.open()
-        elif action == self.shelve_action:
-            self.logger.info("Showing dialog to shelve %s", alarm_name)
-            self.shelve_dlg.setAlarmId(alarm_id=ias_value.id)
-            self.shelve_dlg.open()
+            self.ack_action.setEnabled(not alarm.is_acked() and self.alarm_ack is not None)
+            self.shelve_action.setEnabled(True)
+            # Show the menu at the global cursor position
+            action = self.active_popup_menu.exec(QCursor.pos())
+            if action == self.ack_action:
+                self.logger.info("Showing dialog to ACK %s", alarm_id)
+                al_ack_dlg = AckAlarmDlg(
+                    ias_value=ias_value, 
+                    alarm_ack=self.alarm_ack,
+                    parent=self)
+                al_ack_dlg.open()
+            elif action == self.shelve_action:
+                self.logger.info("Showing dialog to shelve/ACK %s", alarm_id)
+                self.shelve_dlg.setAlarmId(alarm_id=ias_value.id)
+                self.shelve_dlg.open()
+            else:
+                self.logger.error("Unknown action", action)
+        else:
+            ias_value = self.shelved_table_model.get_row_content(index.row())
+            alarm_id = ias_value.id
+
+            self.unshelve_action.setEnabled(True)
+            # Show the menu at the global cursor position
+            action = self.shelved_popup_menu.exec(QCursor.pos())
+            if action == self.unshelve_action:
+                self.logger.info(f"Unhelving {alarm_id}")
+                self.alarm_shelve_manager.unshelve(alarm_id=alarm_id)
+            else:
+                self.logger.error("Unknown action", action)
 
     def shelveAlarmActionFinished(self, result):
         if result == QDialog.DialogCode.Accepted:
@@ -208,11 +209,15 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         else:
             self.logger.info("Shelve rejected by user")
 
-    def onLeftClick(self, index: int):
+    def onLeftClick(self, index: int, mode: TableMode):
         """
         Triggered when the user presses the mouse button over a row
         """
-        pass
+        if mode==TableMode.ACTIVE:
+            ias_value = self.active_table_model.get_row_content(index.row())
+        else:
+            ias_value = self.shelved_table_model.get_row_content(index.row())
+        self.fill_details(ias_value, mode)
 
     def _set_connected_ui(self, connected: bool) -> None:
         """
@@ -281,12 +286,10 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
 
     @Slot()
     def on_action_Pause_toggled(self):
-        print(f"Pause/Resume check status {self.ui.action_Pause.isChecked()}")
         self.active_table_model.pause(self.ui.action_Pause.isChecked())
 
     @Slot()
     def on_action_Remove_cleared_toggled(self):
-        print(f"Auto remove cleared {self.ui.action_Remove_cleared.isChecked()}")
         self.active_table_model.remove_cleared(self.ui.action_Remove_cleared.isChecked())
 
     def connectToIas(self, bsdb_brokers: str, full_running_id: str) -> None:
@@ -336,7 +339,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         if not iasValue or iasValue.valueType!=IASType.ALARM:
             return
         self.active_table_model.iasValueFromBsdb(iasValue)
-        self.shelve_table_model.iasValueFromBsdb(iasValue)
+        self.shelved_table_model.iasValueFromBsdb(iasValue)
 
     def disconnectFromIas(self) -> None:
         """
@@ -354,16 +357,19 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
             self.command_sender = None
         self.logger.info("Disconnected from IAS")
 
-    def onTableSelectionChanged(self, selected, deselected):
+    def onTableSelectionChanged(self, selected, deselected, mode: TableMode):
         """
         The user selected one row of the table: fills the
         details in the right side of the GUI
         """
         for index in self.ui.alarmTable.selectionModel().selectedRows():
-            ias_value = self.active_table_model.get_row_content(index.row())
-            self.fill_details(ias_value)
+            if mode==TableMode.ACTIVE:
+                ias_value = self.active_table_model.get_row_content(index.row())
+            else:
+                ias_value = self.shelved_table_model.get_row_content(index.row())
+            self.fill_details(ias_value, mode=mode)
 
-    def fill_details(self, ias_value: IasValue)-> None:
+    def fill_details(self, ias_value: IasValue, mode: TableMode)-> None:
         """
         Fills the details in the right side of the GUI
         with the details of the IasValue
@@ -371,7 +377,10 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         Args:
             ias_value: the IasValue whose fields will be shown in the details
         """
-        self.alarm_details.update(ias_value)
+        if mode==TableMode.ACTIVE:
+            self.active_alarm_details.update(ias_value)
+        else:
+            self.shelved_alarm_details.update(ias_value)
 
 def parse(app) -> dict[str, typing.Any]:
     """
