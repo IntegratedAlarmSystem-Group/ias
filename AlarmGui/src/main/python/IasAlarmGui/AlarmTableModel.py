@@ -317,7 +317,6 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
         """
         with self.lock:
             self.autoremove_cleared=enable
-            print("Alarms in table",len(self.alarms),len(self.received_alarms))
             # index of the rows o remove
             rowsToRemove=[]
             if enable:
@@ -335,7 +334,6 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
         # Ensure the rows is a list ordered from highest index to lowest index
         rows.sort(reverse=True)
         for row in rows:
-            print("Removing row",row)
             index = QModelIndex()
             self.beginRemoveRows(index, row, row)
             del self.alarms[row]
