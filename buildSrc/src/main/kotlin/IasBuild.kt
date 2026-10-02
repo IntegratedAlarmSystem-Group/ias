@@ -323,6 +323,10 @@ open class IasBuild : Plugin<Project> {
         }
 
         project.tasks.withType<ScalaCompile>().configureEach {
+            doFirst {
+                scalaCompileOptions.additionalParameters =
+                    listOf("-java-output-version", "21")
+            }
             scalaCompileOptions.forkOptions.apply {
                 memoryMaximumSize = "1g"
             }
