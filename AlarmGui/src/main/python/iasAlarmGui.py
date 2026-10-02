@@ -2,9 +2,9 @@
 import sys, string, random, threading, typing, logging
 from threading import Lock
 
-from PySide6.QtCore import Slot, QCommandLineOption, QCommandLineParser, QTimer, Signal, Qt
+from PySide6.QtCore import Slot, QCommandLineOption, QCommandLineParser, QTimer, Signal
 from PySide6.QtWidgets import QApplication, QMainWindow, QLabel,  QMenu, QDialog
-from PySide6.QtGui import QPixmap, QCursor
+from PySide6.QtGui import QPixmap, QCursor, QCloseEvent
 
 from IasKafkaUtils.KafkaValueConsumer import KafkaValueConsumer, IasValueListener
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
@@ -195,6 +195,17 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
             else:
                 self.logger.error("Unknown action", action)
 
+    def closeEvent(self, event: QCloseEvent) -> None:
+        """
+        Event invloked when the main window is closed
+
+        NOTE: disconnectFromIas() runs in the Qt event loop so the window becomes
+              unresponsive until this function terminates, the event is accepted 
+              and the window finally closes
+        """
+        self.disconnectFromIas()
+        event.accept()
+
     def shelveAlarmActionFinished(self, result):
         if result == QDialog.DialogCode.Accepted:
             time_to_shelve = self.shelve_dlg.getShelveTime()
@@ -256,7 +267,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
     @Slot()
     def on_action_Disconnect_triggered(self):
         # Start the thread to connect
-        disconnect_thread = threading.Thread(target=self.disconnectFromIas)
+        disconnect_thread = threading.Thread(target=self.disconnectFromIas, daemon=True)
         disconnect_thread.start()
 
     @Slot()
@@ -347,14 +358,27 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         """
         if self.value_consumer is not None:
             self.logger.info("Disconnecting from the BSDB...")
-            self.value_consumer.close()
+            try:
+                self.value_consumer.close()
+            except Exception as e:
+                self.logger.exception("Error closing the kafka consumer")
             self.value_consumer = None
         self.signal_update_connected_ui.emit(False)
 
         if self.alarm_ack is not None:
-            self.alarm_ack.close()
+            self.logger.info("Closing the AlarmAck'er")
+            try:
+                self.alarm_ack.close()
+            except Exception as e:
+                self.logger.exception("Error closing the AlarmAck'er")
             self.alarm_ack = None
-            self.command_sender = None
+            if self.command_sender is not None:
+                self.logger.info("Closing the CommandSender")
+                try:
+                    self.command_sender.close()
+                except Exception as e:
+                    self.logger.exception("Error closing the CommandSender")
+                self.command_sender = None
         self.logger.info("Disconnected from IAS")
 
     def onTableSelectionChanged(self, selected, deselected, mode: TableMode):
@@ -477,6 +501,9 @@ if __name__ == "__main__":
     widget.show()
     if connect_to_bsdb and bsdb is not None:
         # Start the thread to connect
-        connect_thread = threading.Thread(target=widget.connectToIas, args=(bsdb,widget.frid,))
+        connect_thread = threading.Thread(
+            target=widget.connectToIas,
+            args=(bsdb,widget.frid,),
+            daemon=True)
         connect_thread.start()
     sys.exit(app.exec())
