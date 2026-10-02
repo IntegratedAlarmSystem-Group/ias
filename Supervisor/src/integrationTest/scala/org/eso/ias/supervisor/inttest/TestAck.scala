@@ -1,4 +1,4 @@
-package org.eso.ias.supervisor.test
+package org.eso.ias.supervisor.inttest
 
 import ch.qos.logback.classic.Level
 import org.eso.ias.command.{CommandExitStatus, CommandSender, CommandType}
