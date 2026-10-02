@@ -36,7 +36,7 @@
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
-         <widget class="QSplitter" name="splitter">
+         <widget class="QSplitter" name="active_splitter">
           <property name="orientation">
            <enum>Qt::Orientation::Horizontal</enum>
           </property>
@@ -52,12 +52,12 @@
        </attribute>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
-         <widget class="QSplitter" name="splitter_2">
+         <widget class="QSplitter" name="shelved_splitter">
           <property name="orientation">
            <enum>Qt::Orientation::Horizontal</enum>
           </property>
           <widget class="QTableView" name="shelvedTable"/>
-          <widget class="QTextEdit" name="shelvedTE"/>
+          <widget class="QTextEdit" name="shelvedDetailsTE"/>
          </widget>
         </item>
        </layout>
