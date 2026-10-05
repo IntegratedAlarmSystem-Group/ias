@@ -6,7 +6,8 @@ import java.util.concurrent.{CountDownLatch, TimeUnit}
 import java.util.concurrent.atomic.AtomicReference
 
 import scala.jdk.CollectionConverters._
-import scala.collection.mutable.{ListBuffer, Map=>MutableMap, HashMap}
+import scala.collection.mutable.{ListBuffer, HashMap}
+import scala.collection.concurrent.TrieMap
 import scala.util.Random
 
 import ch.qos.logback.classic.Level
@@ -82,7 +83,7 @@ class SupervisorWithBooleanTFs
   val receivedIasValues = new ListBuffer[IASValue[?]]()
 
   /** The map of the values read from the BSDB, indexd by IASValue.id */
-  val receivedIasValuesMap: MutableMap[String, IASValue[?]] = new HashMap[String, IASValue[?]]()
+  val receivedIasValuesMap: TrieMap[String, IASValue[?]] = new HashMap[String, IASValue[?]]()
 
   /**
    * The kafka consumer gets all the IASIOs written in the IASIO kafka topic
