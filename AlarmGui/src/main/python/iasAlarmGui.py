@@ -386,7 +386,8 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         The user selected one row of the table: fills the
         details in the right side of the GUI
         """
-        for index in self.ui.alarmTable.selectionModel().selectedRows():
+        view = self.ui.alarmTable if mode == TableMode.ACTIVE else self.ui.shelvedTable
+        for index in view.selectionModel().selectedRows():
             if mode==TableMode.ACTIVE:
                 ias_value = self.active_table_model.get_row_content(index.row())
             else:

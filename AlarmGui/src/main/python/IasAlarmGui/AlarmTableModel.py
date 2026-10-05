@@ -345,6 +345,8 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
         Does nothing if the alarm is not found.
         """
         with self.lock:
+            self.paused_buffer = [alarm for alarm in self.paused_buffer if alarm.id != alarm_id]
+            self.received_alarms = [alarm for alarm in self.received_alarms if alarm.id != alarm_id]
             for i, ias_value in enumerate(self.alarms):
                 if ias_value.id == alarm_id:
                     self.beginRemoveRows(QModelIndex(), i, i)
