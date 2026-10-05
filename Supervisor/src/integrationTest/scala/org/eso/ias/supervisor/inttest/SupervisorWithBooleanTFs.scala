@@ -83,7 +83,7 @@ class SupervisorWithBooleanTFs
   val receivedIasValues = new ListBuffer[IASValue[?]]()
 
   /** The map of the values read from the BSDB, indexd by IASValue.id */
-  val receivedIasValuesMap: TrieMap[String, IASValue[?]] = new HashMap[String, IASValue[?]]()
+  val receivedIasValuesMap: TrieMap[String, IASValue[?]] = new TrieMap[String, IASValue[?]]()
 
   /**
    * The kafka consumer gets all the IASIOs written in the IASIO kafka topic
