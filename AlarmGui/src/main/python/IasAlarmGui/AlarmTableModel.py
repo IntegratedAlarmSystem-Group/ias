@@ -114,7 +114,11 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
             elif index.column()==2:
                 return ias_value_in_row.id
             else: # Remaining time for shelved mode
-                    return self.shelf_manager.get_remaining_seconds(alarm_id=ias_value_in_row.id)
+                    tot_seconds = self.shelf_manager.get_remaining_seconds(alarm_id=ias_value_in_row.id)
+                    hours = tot_seconds // 3600
+                    minutes = (tot_seconds % 3600) // 60
+                    seconds = tot_seconds % 60
+                    return f"{hours:02d}:{minutes:02d}:{seconds:02d}" 
         elif role == Qt.BackgroundRole:
             ias_value_in_row = self.alarms[index.row()]
             alarmState = self.get_state(ias_value_in_row)
