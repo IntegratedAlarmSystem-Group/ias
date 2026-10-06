@@ -9,19 +9,18 @@ Created on Apr 11, 2024
 import argparse
 import sys
 import signal
+import uuid
 from IasLogging.log import Log
 from IasKafkaUtils.IasKafkaConsumer import IasLogListener, IasLogConsumer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
-from threading import Lock
+from threading import Lock, Event
+
 
 # The consumer
 consumer = None
 
-# Signal that the user pressed CTRL+C
-terminated = False
-
 # The lock for the termination
-termination_lock = Lock()
+termination_lock = Event()
 
 class DumperListener(IasLogListener):
 
@@ -46,32 +45,23 @@ class DumperListener(IasLogListener):
         """
         Process the log
         """
-        self.__mutex.acquire()
-        if self.__max_messages>0 and self.__logs_processed>=self.__max_messages:
-            if termination_lock.locked():
-                termination_lock.release()
-        else:
+        with self.__mutex:
             self.__logs_processed = self.__logs_processed + 1
             if not self.__quiet:
                 print(log)
-        self.__mutex.release()
+            if self.__max_messages>0 and self.__logs_processed>=self.__max_messages:
+                termination_lock.set()
 
     def get_processed_logs(self):
         '''
         Returns: the numberof logs procesed so far
         '''
-        self.__mutex.acquire()
-        ret = self.__logs_processed
-        self.__mutex.release()
+        with self.__mutex:
+            ret = self.__logs_processed
         return ret
 
-def interrupt_handler(signum, frame):
-    '''
-    The handler of CTRL-C
-    '''
-    termination_lock.release()
-
 if __name__ == '__main__':
+    uid = uuid.uuid4().hex
     parser = argparse.ArgumentParser(description='Dumps kafla logs published in the BSDB or a custom topic. Unless -m or -o is set, the tool must be terminated with CTRL-C')
     parser.add_argument(
                         '-k',
@@ -98,14 +88,14 @@ if __name__ == '__main__':
                         '--clientid',
                         help='Kafka client ID (default iasLogDumper)',
                         action='store',
-                        default="iasLogDumper-client",
+                        default=f"iasLogDumper-client-{uid}",
                         required=False)
     parser.add_argument(
                         '-g',
                         '--groupid',
                         help='Kafka group ID',
                         action='store',
-                        default="iaslogDumper-group",
+                        default=f"iaslogDumper-group-{uid}",
                         required=False)
     parser.add_argument(
                         '-m',
@@ -117,10 +107,10 @@ if __name__ == '__main__':
     parser.add_argument(
                         '-o',
                         '--timeout-ms',
-                        help = 'The timeout (msec>0) while getting messages from the topic',
+                        help = 'The timeout (float sec>0) while getting messages from the topic',
                         action = 'store',
                         type = int,
-                        default=-1000,
+                        default=None,
                         required = False)
     parser.add_argument(
                         '-q',
@@ -158,14 +148,21 @@ if __name__ == '__main__':
         topic, 
         args.clientid, 
         args.groupid)
+
+    def interrupt_handler(signum, frame):
+        '''
+        The handler of CTRL-C
+        '''
+        if not args.quiet:
+            print("\nTerminating...")
+        termination_lock.set()
     
-    termination_lock.acquire()
     signal.signal(signal.SIGINT, interrupt_handler)
 
     consumer.start()
 
-    termination_lock.acquire(timeout=args.timeout_ms/1000)
+    timeout = termination_lock.wait(timeout=args.timeout_ms)
     consumer.close()
-    consumer.join()
 
-    print(listener.get_processed_logs(), "logs processed")
+    if not args.quiet:
+        print(listener.get_processed_logs(), "logs processed")
