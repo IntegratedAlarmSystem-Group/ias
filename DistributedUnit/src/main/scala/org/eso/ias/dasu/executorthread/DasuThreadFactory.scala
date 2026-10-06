@@ -8,7 +8,7 @@ class DasuThreadFactory(private val dasuId: String) extends ThreadFactory {
   require(Option(dasuId).isDefined && !dasuId.isEmpty(),"Invalid ID of the DASU")
   
   /** The thread group */
-  val threadGroup= new ThreadGroup("DausThreadGroup")
+  val threadGroup= new ThreadGroup("DasuThreadGroup")
   
   /** Generate a new thread for the DASU */
   override def newThread(r: Runnable): Thread = {

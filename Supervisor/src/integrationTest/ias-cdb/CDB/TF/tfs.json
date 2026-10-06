@@ -1,0 +1,11 @@
+[
+    { "className": "org.eso.ias.transfer.MinMaxBool",   "implLang": "SCALA" },
+    { "className": "org.eso.ias.transfer.AndBool",      "implLang": "SCALA" },
+    { "className": "org.eso.ias.transfer.OrBool",       "implLang": "SCALA" },
+    { "className": "org.eso.ias.asce.transfer.impls.MinMaxThresholdTF", "implLang": "SCALA" },
+    { "className": "org.eso.ias.asce.transfer.impls.MultiplicityTF",    "implLang": "SCALA" },
+    { "className": "org.eso.ias.tranfer.BoolToAlarm",   "implLang": "SCALA" },
+    { "className": "org.eso.ias.tranfer.RegExpToAlarm", "implLang": "SCALA" },
+    { "className": "elt.ias.common.tfs.NoopTF",         "implLang": "JAVA"  },
+    { "className": "elt.ias.common.tfs.RandomTF",       "implLang": "JAVA"  }
+]

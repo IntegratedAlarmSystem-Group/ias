@@ -22,6 +22,7 @@ dependencies {
     implementation(project(":KafkaUtils"))
 
     testImplementation(project(":CompElement"))
+    testImplementation(project(":TransferFunctions"))
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.scalatest)
