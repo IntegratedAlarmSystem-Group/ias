@@ -250,8 +250,6 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
         """
         self._logger.debug("Flushing alarms in table")
         with self.lock:
-            if len(self.received_alarms)==0:
-                return
             for alarm in self.received_alarms:
                 pos = self.get_index_of_alarm(alarm)
                 if pos==-1:
@@ -274,11 +272,11 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
                         self.setData(self.createIndex(pos, 2),alarm)
                         if self.table_mode == TableMode.SHELVED:
                             self.setData(self.createIndex(pos, 3), alarm)
-
             self.received_alarms.clear()
             if self.table_mode == TableMode.SHELVED and self.alarms:
                 # This emits dataChanged for all rows' column 3 every second 
-                # (since flush_alarms runs every second), causing the view to re-call data() for the "Remaining"
+                # (since flush_alarms runs every second), causing the view 
+                # to re-call data() for the "Remaining"
                 # column and display the decremented counter.
                 top = self.createIndex(0, 3)
                 bottom = self.createIndex(len(self.alarms) - 1, 3)
