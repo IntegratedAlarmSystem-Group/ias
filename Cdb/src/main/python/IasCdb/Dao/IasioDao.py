@@ -18,6 +18,9 @@ class IasioDao:
     # By default an alarm can't be shelved
     canSheveDefault = False
 
+    # By default an alarm is not automatically acknowledged
+    autoAckDefault = False
+
     @staticmethod
     def str_to_bool(value: str) -> bool:
         return str(value).lower() in ("true", "1", "yes")
@@ -25,7 +28,7 @@ class IasioDao:
     @classmethod
     def from_dict(cls, data): # -> IasioDao:
         """
-        Factory method taht builds and return a IasioDao from the 
+        Factory method taht builds and returns a IasioDao from the 
         passed dictionary
 
         Args:
@@ -39,6 +42,11 @@ class IasioDao:
         templateId = data.get('templateId', None)
         docUrl = data.get('docUrl', None)
 
+        if data.get('autoAck') is not None:
+            autoAck: bool = cls.str_to_bool(data.get('autoAck'))
+        else:
+            autoAck: bool = IasioDao.autoAckDefault
+
         if data.get('canShelve') is not None:
             canShelve: bool = cls.str_to_bool(data.get('canShelve'))
         else:
@@ -47,7 +55,7 @@ class IasioDao:
         sound: SoundTypeDao = SoundTypeDao.from_string(data.get('sound', 'NONE'))
         emails = data.get('emails', None)
         
-        return IasioDao(id, iasType, shortDesc, docUrl, templateId, canShelve, sound, emails)
+        return IasioDao(id, iasType, shortDesc, docUrl, templateId, canShelve, autoAck, sound, emails)
 
     def __init__(self, 
                  id: str, 
@@ -56,6 +64,7 @@ class IasioDao:
                  docUrl: str|None,
                  templateId: str|None,
                  canShelve: bool,
+                 autoAck: bool,
                  sound: SoundTypeDao,
                  emails: str|None):
         """
@@ -82,6 +91,10 @@ class IasioDao:
 	    # The (optional) attribute saying if a IASIO can be shelved,
 	    # initialized with the default value {@link #canSheveDefault}
         self.canShelve: bool = canShelve
+
+        # The (optional) attribute saying if a IASIO is auto acknowledged,
+	    # initialized with the default value {@link #autoAckDefault}
+        self.autoAck: bool = autoAck
 	
 	    # The (optional) sound to play when a given alarm becomes SET
         # This attribute is ignored for non alarm IASIOs
@@ -98,14 +111,15 @@ class IasioDao:
         """
         ret = f"IASIO=[id={self.id}, iasType={self.iasType.to_string()}]"
         if self.shortDesc:
-            ret += f", shortDesc={self.shortDesc}"
+            ret += f", shortDesc = {self.shortDesc}"
         if self.docUrl:
-            ret += f", docUrl={self.docUrl}"
+            ret += f", docUrl = {self.docUrl}"
         if self.templateId:
-            ret += f", templateId={self.templateId}"
-        ret += f", canShelve={self.canShelve}"
+            ret += f", templateId = {self.templateId}"
+        ret += f", canShelve = {self.canShelve}"
+        ret += f", autoAck = {self.autoAck}"
         if self.sound!=SoundTypeDao.NONE:
-            ret += f", sound={self.sound.to_string()}"
+            ret += f", sound = {self.sound.to_string()}"
         if self.emails:
-            ret += f", emails={self.emails}"
+            ret += f", emails = {self.emails}"
         return ret

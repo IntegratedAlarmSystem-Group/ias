@@ -1,24 +1,48 @@
 package org.eso.ias.cdb.test;
 
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.eso.ias.cdb.CdbReader;
 import org.eso.ias.cdb.CdbWriter;
-import org.eso.ias.cdb.structuredtext.TextFileType;
-import org.eso.ias.cdb.pojos.*;
+import org.eso.ias.cdb.pojos.AsceDao;
+import org.eso.ias.cdb.pojos.ClientConfigDao;
+import org.eso.ias.cdb.pojos.DasuDao;
+import org.eso.ias.cdb.pojos.DasuToDeployDao;
+import org.eso.ias.cdb.pojos.IasDao;
+import org.eso.ias.cdb.pojos.IasTypeDao;
+import org.eso.ias.cdb.pojos.IasioDao;
+import org.eso.ias.cdb.pojos.LogLevelDao;
+import org.eso.ias.cdb.pojos.PluginConfigDao;
+import org.eso.ias.cdb.pojos.PropertyDao;
+import org.eso.ias.cdb.pojos.SoundTypeDao;
+import org.eso.ias.cdb.pojos.SupervisorDao;
+import org.eso.ias.cdb.pojos.TFLanguageDao;
+import org.eso.ias.cdb.pojos.TemplateDao;
+import org.eso.ias.cdb.pojos.TemplateInstanceIasioDao;
+import org.eso.ias.cdb.pojos.TransferFunctionDao;
+import org.eso.ias.cdb.pojos.ValueDao;
 import org.eso.ias.cdb.structuredtext.CdbFiles;
 import org.eso.ias.cdb.structuredtext.CdbFolders;
 import org.eso.ias.cdb.structuredtext.CdbTxtFiles;
-import org.eso.ias.cdb.structuredtext.StructuredTextWriter;
 import org.eso.ias.cdb.structuredtext.StructuredTextReader;
+import org.eso.ias.cdb.structuredtext.StructuredTextWriter;
+import org.eso.ias.cdb.structuredtext.TextFileType;
 import org.junit.jupiter.api.AfterEach;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test reading and writing of JSON CDB.
@@ -862,6 +886,13 @@ public class TestJsonCdb {
 		assertTrue(iDao.isPresent());
 		assertEquals(iDao.get().getSound(),SoundTypeDao.TYPE2);
 		assertTrue(iDao.get().isCanShelve());
+		assertTrue(iDao.get().isAutoAck());
+
+		iDao=cdbReader.getIasio("TempInput");
+		assertTrue(iDao.isPresent());
+		assertEquals(iDao.get().getSound(),SoundTypeDao.NONE);
+		assertFalse(iDao.get().isCanShelve());
+		assertFalse(iDao.get().isAutoAck());
 	}
 
 	/**

@@ -77,4 +77,5 @@
   iasType: "ALARM"
   sound: "TYPE2"
   canShelve: "true"
+  autoAck: "true"
   emails: "stencccr@yujiehanjiao.cc"
