@@ -177,14 +177,14 @@ abstract class ComputingElement[T](
   /** It is true when the execution tie of the TF is too slow */
   val isTooSlow = new AtomicBoolean(false)
 
-  /** 
-   * True if the output (of type alarm) must be ACKed after the execution of the TF
-   * Defaults to false and it is overridded using the anonymous class override approach
-   * of scala (avoids to add a param in the constructor as this field is useful only for
-   * alarm types and only when autoAck is set in the CDB; s@see #199)
-   * autoAck is overridden in the apply function
-   */
-  val autoAck: Boolean = false
+   /** 
+    * True if the output (of type alarm) must be ACKed after the execution of the TF
+    * Defaults to false and it is overriden using the anonymous class override approach
+    * of scala (avoids to add a param in the constructor as this field is useful only for
+    * alarm types and only when autoAck is set in the CDB; see #199)
+    * autoAck is overridden in the apply function
+    */
+  def autoAck: Boolean = false
 
   /**
     * The point in time when the TF begins to be slow calculating the output.
@@ -579,9 +579,9 @@ object ComputingElement {
     val outputId = new Identifier(asceDao.getOutput.getId,IdentifierType.IASIO,Option(asceId))
     val out: InOut[T] = InOut.asOutput(outputId, IASTypes.fromIasioDaoType(asceDao.getOutput.getIasType))
 
-    // autoAck is true if the output is an ALARM and has AutoAck set in the CDB:
+    // _autoAck is true if the output is an ALARM and has AutoAck set in the CDB:
     // if true the ack must be called in the alarm returned by transfer function
-    val autoAck: Boolean = out.iasType==IASTypes.ALARM && asceDao.getOutput.isAutoAck()
+    val _autoAck: Boolean = out.iasType==IASTypes.ALARM && asceDao.getOutput.isAutoAck()
 
     logger.info("ComputingElement {} produces output {}",asceDao.getId,outputId.id)
         
@@ -608,7 +608,7 @@ object ComputingElement {
         tfSettings, 
         validityThresholdInSecs,
         properties) with JavaTransfer[T] {
-          override val autoAck: Boolean = autoAck
+          override def autoAck: Boolean = _autoAck
         }
     else new ComputingElement[T](
         asceId,out, 
@@ -616,7 +616,7 @@ object ComputingElement {
         tfSettings, 
         validityThresholdInSecs,
         properties) with ScalaTransfer[T] {
-          override val autoAck: Boolean = autoAck
+          override def autoAck: Boolean = _autoAck
         }
   }
 
