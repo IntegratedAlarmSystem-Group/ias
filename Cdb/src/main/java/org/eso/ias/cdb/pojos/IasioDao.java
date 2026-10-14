@@ -242,6 +242,7 @@ public class IasioDao {
 				Objects.equals(this.getShortDesc(),other.getShortDesc()) &&
 				Objects.equals(this.getDocUrl(),other.getDocUrl()) &&
 				this.isCanShelve()==other.isCanShelve() &&
+				this.isAutoAck()==other.isAutoAck() &&
 				Objects.equals(this.getTemplateId(),other.getTemplateId()) &&
 				Objects.equals(this.getEmails(),other.getEmails()) &&
 				Objects.equals(this.getSound(),other.getSound());
@@ -249,7 +250,7 @@ public class IasioDao {
 	
 	@Override
 	public int hashCode() {
-		return Objects.hash(id,iasType,shortDesc,docUrl,canShelve,templateId,sound,emails);
+		return Objects.hash(id,iasType,shortDesc,docUrl,canShelve,autoAck,templateId,sound,emails);
 	}
 
 	public String getDocUrl() {
