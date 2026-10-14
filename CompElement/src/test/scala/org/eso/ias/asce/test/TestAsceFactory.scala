@@ -9,7 +9,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 
 import java.util.Properties
 
-class TestAceFactory extends AnyFlatSpec {
+class TestAsceFactory extends AnyFlatSpec {
 
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
