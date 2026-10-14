@@ -10,7 +10,7 @@ jobs:
       ias_root_path: ${{ steps.set-env.outputs.IAS_ROOT }}
     steps:
       - name: Setup Java JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '21'
           distribution: 'temurin'
