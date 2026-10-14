@@ -75,6 +75,7 @@ class TestCdbReader():
         assert iasio.emails is None
         assert iasio.sound == SoundTypeDao.NONE
         assert iasio.canShelve == False
+        assert iasio.autoAck == False
         assert iasio.templateId is None
         iasio = reader.get_iasio("SoundInput")
         assert iasio is not None
@@ -84,6 +85,7 @@ class TestCdbReader():
         assert iasio.iasType == IasTypeDao.ALARM
         assert iasio.sound == SoundTypeDao.TYPE2
         assert iasio.canShelve == True
+        assert iasio.autoAck == True
         assert iasio.emails == "stencccr@yujiehanjiao.cc"
         assert iasio.docUrl is None
 
@@ -99,6 +101,7 @@ class TestCdbReader():
         assert iasio.emails is None
         assert iasio.sound == SoundTypeDao.NONE
         assert iasio.canShelve == False
+        assert iasio.autoAck == False
         assert iasio.templateId is None
         iasio = reader.get_iasio("SoundInput")
         assert iasio is not None
@@ -108,5 +111,6 @@ class TestCdbReader():
         assert iasio.iasType == IasTypeDao.ALARM
         assert iasio.sound == SoundTypeDao.TYPE2
         assert iasio.canShelve == True
+        assert iasio.autoAck == True
         assert iasio.emails == "stencccr@yujiehanjiao.cc"
         assert iasio.docUrl is None

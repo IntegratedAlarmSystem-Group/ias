@@ -20,7 +20,8 @@
 		"shortDesc":"Templated input with sound example",
 		"iasType":"ALARM", 
 		"sound":"TYPE2", 
-		"canShelve":"true", 
+		"canShelve":"true",
+		"autoAck": "true",
 		"emails": "stencccr@yujiehanjiao.cc"
 	}
 	
