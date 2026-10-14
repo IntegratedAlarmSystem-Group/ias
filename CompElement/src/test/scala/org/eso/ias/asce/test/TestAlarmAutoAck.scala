@@ -70,6 +70,9 @@ class TestAlarmAutoAck extends AnyFlatSpec {
       override val autoAck: Boolean = true
     }
 
+    // Verify autoAck is enabled via anonymous class override
+    assert(comp.autoAck, "autoAck should be true after anonymous class override")
+
     comp.initialize()
     assert(comp.getState() == AsceStates.InputsUndefined)
 
@@ -126,6 +129,9 @@ class TestAlarmAutoAck extends AnyFlatSpec {
       override val autoAck: Boolean = true
     }
 
+    // Verify autoAck is enabled via anonymous class override
+    assert(comp.autoAck, "autoAck should be true after anonymous class override")
+
     comp.initialize()
 
     // Trigger alarm SET
@@ -163,6 +169,9 @@ class TestAlarmAutoAck extends AnyFlatSpec {
       tfSetting,
       validityThresholdInSecs,
       props) with ScalaTransfer[Alarm]
+
+    // Verify autoAck is disabled by default
+    assert(!comp.autoAck, "autoAck should be false by default")
 
     comp.initialize()
 
