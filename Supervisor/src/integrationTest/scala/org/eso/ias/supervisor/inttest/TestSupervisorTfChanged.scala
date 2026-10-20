@@ -1,4 +1,4 @@
-package org.eso.ias.supervisor.test
+package org.eso.ias.supervisor.inttest
 
 import org.eso.ias.command.{CommandMessage, CommandSender, CommandType, ReplyMessage}
 import org.eso.ias.kafkautils.KafkaStringsConsumer.StreamPosition

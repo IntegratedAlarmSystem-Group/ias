@@ -338,7 +338,7 @@ case class InOut[A](
     require(Option(iasValue.value).isDefined,"Cannot update when the IASValue has no value")
     require(Option(iasValue.dependentsFullRuningIds).isDefined,"Cannot update when the IASValue has no dependent ids")
     assert(iasValue.id==this.id.id,"Identifier mismatch: received "+iasValue.id+", expected "+this.id.id)
-    assert(iasValue.valueType==this.iasType)
+    assert(iasValue.valueType==this.iasType, s"Wrong type of IASIO: got ${iasValue.valueType} instead of ${this.iasType}")
     assert(InOut.checkType(iasValue.value,iasType))
     val validity = Some(Validity(iasValue.iasValidity))
     

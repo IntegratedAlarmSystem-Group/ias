@@ -1,0 +1,12 @@
+{
+    "id": "_vals_hival8any_asce",
+    "dasuID": "_vals_hival8any_dasu",
+    "outputID": "/vals/hival8any",
+    "inputIDs": [
+        "/vals/hival8a",
+        "/vals/hival8b"
+    ],
+    "templatedInputs": [],
+    "transferFunctionID": "org.eso.ias.transfer.OrBool",
+    "props": []
+}

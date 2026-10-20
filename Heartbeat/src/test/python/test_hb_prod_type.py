@@ -3,10 +3,10 @@ Test the HB Status
 """
 import pytest
 
-from IasHeartbeat.IasHeartbeatProducerType import IasHeartbeatProducerType
+from IasHeartbeat.HeartbeatProducerType import HeartbeatProducerType
 
 class TestHbStatus():
     def test_from_string(self):
-        assert IasHeartbeatProducerType.fromString("CLIENT") == IasHeartbeatProducerType.CLIENT
+        assert HeartbeatProducerType.fromString("CLIENT") == HeartbeatProducerType.CLIENT
         with pytest.raises(NotImplementedError) as nie:
-            IasHeartbeatProducerType.fromString("UnknownHbStatus")
+            HeartbeatProducerType.fromString("UnknownHbStatus")

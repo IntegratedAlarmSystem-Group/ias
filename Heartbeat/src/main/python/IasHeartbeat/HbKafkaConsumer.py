@@ -1,4 +1,5 @@
 import logging
+from threading import Event
 from IasKafkaUtils.IasKafkaConsumer import IasLogListener, IasLogConsumer
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 from IasHeartbeat.HearbeatMessage import HeartbeatMessage
@@ -44,12 +45,8 @@ class HbKafkaConsumer(IasLogListener):
                                            IasKafkaHelper.topics['hb'],
                                            clientid,
                                            groupid)
-
-    def __del__(self):
-        """
-        Destructor
-        """
-        self.close()
+        # The flag to signal that the object has been closed
+        self._closed: Event = Event()
 
     def start(self, assgnemntTimeout = 0) -> bool:
         """
@@ -63,6 +60,7 @@ class HbKafkaConsumer(IasLogListener):
         return self.log_consumer.start(assgnemntTimeout)
 
     def close(self):
+        self._closed.set()
         self.log_consumer.close()
         self.logger.debug("Closed")
 
@@ -81,7 +79,8 @@ class HbKafkaConsumer(IasLogListener):
         except Exception as e:
             self.logger.exception("Exception caught while parsing the JSON HB %s", log, e)
             return
-        try:
-            self.listener.iasHbReceived(hbm)
-        except Exception as e:
-            self.logger.exception("Error caught from the user defined callaback: %s", e)
+        if not self._closed.is_set():
+            try:
+                self.listener.iasHbReceived(hbm)
+            except Exception as e:
+                self.logger.exception("Error caught from the user defined callaback: %s", e)

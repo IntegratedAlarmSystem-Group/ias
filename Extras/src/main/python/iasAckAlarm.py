@@ -14,6 +14,7 @@ Created on Jun 12, 2024
 import argparse
 import uuid
 import logging
+import sys
 
 from IasLogging.log import Log
 from IasBasicTypes.Identifier import Identifier
@@ -108,22 +109,37 @@ def main()-> int:
     if not supervisor_id:
         raise ValueError(f"Cannot extract the Supervisor ID from the alarm ID {args.alarmid}")
     
-    logger.info(f"Supervisor ID: {supervisor_id}")
+    logger.info(f"Destination Supervisor ID: {supervisor_id}")
 
     full_running_id="(iasAlarmAck:CLIENT)"
 
-    cmd_sender = IasCommandSender(sender_full_running_id=full_running_id, bsdb_sender_id=bsdb_url, brokers=bsdb_url)
-    cmd_sender.set_up()
+    cmd_sender = IasCommandSender(
+        sender_full_running_id=full_running_id, 
+        bsdb_sender_id=args.bsdbid, 
+        brokers=bsdb_url)
+    logger.debug("Setting up the command sender")
+    try:
+        cmd_sender.set_up()
+        logger.info("Command sender set up")
+    except:
+        logger.exception("Failed to initialize the command sender")
+        sys.exit(1)
 
 
     acker = AlarmAck(full_running_id=full_running_id, command_sender=cmd_sender)
+    logger.debug("Setting up the alarm acker")
     acker.start()
+    logger.info("Alarm acker set up")
 
     try:
         acked = acker.ack(alarm_id=args.alarmid, 
                         supervisor_id=supervisor_id,
                         comment=args.comment,
                         timeout=args.timeout)
+        if acked:
+            logger.info(f"ACK command to Supervisor {supervisor_id} for alarm {args.alarmid} sent successfully")
+        else:
+            logger.error(f"ACK command to Supervisor {supervisor_id} for alarm {args.alarmid} failed")
     except:
         logger.exception("Error while acknowledging the alarm")
         acked = False

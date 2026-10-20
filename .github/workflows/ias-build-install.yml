@@ -10,7 +10,7 @@ jobs:
       ias_root_path: ${{ steps.set-env.outputs.IAS_ROOT }}
     steps:
       - name: Setup Java JDK
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: '21'
           distribution: 'temurin'
@@ -26,7 +26,22 @@ jobs:
       - name: Install python tools
         run: |
           pip install --upgrade pip
-          pip install PySide6 jep python-dateutil pytest confluent-kafka PyYAML
+          pip install PySide6 jep python-dateutil pytest pytest-timeout confluent-kafka PyYAML
+      - name: Configure LD_LIBRARY_PATH for JEP
+        run: |
+          echo "LD_LIBRARY_PATH=$JAVA_HOME/lib/server:$LD_LIBRARY_PATH" >> $GITHUB_ENV
+          LIBJEP=$(find /opt/hostedtoolcache/Python -name libjep.so | head -1)
+          ldd "$LIBJEP"
+      - name: Check JEP installation
+        run: |
+          pip show jep
+          find /opt/hostedtoolcache/Python -name "libjep.so" 2>/dev/null
+          echo LDD:
+          ldd /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/jep/libjep.so
+          echo JAVA_HOME is $JAVA_HOME
+          echo Finding libjvm.so:
+          find "$JAVA_HOME" -name libjvm.so
+          ls -R "$JAVA_HOME/lib/server"
       - run: java -version
       - run: mkdir -p $IAS_ROOT
       - name: Checkout IAS code

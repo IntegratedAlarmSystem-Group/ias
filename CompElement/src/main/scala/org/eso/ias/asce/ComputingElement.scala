@@ -177,6 +177,15 @@ abstract class ComputingElement[T](
   /** It is true when the execution tie of the TF is too slow */
   val isTooSlow = new AtomicBoolean(false)
 
+   /** 
+    * True if the output (of type alarm) must be ACKed after the execution of the TF
+    * Defaults to false and it is overriden using the anonymous class override approach
+    * of scala (avoids to add a param in the constructor as this field is useful only for
+    * alarm types and only when autoAck is set in the CDB; see #199)
+    * autoAck is overridden in the apply function
+    */
+  def autoAck: Boolean = false
+
   /**
     * The point in time when the TF begins to be slow calculating the output.
     */
@@ -487,6 +496,8 @@ abstract class ComputingElement[T](
           state=ComputingElementState.transition(state, Broken())
         case Success(validitity) => 
           _output=newOut.updateFromInputsValidity(validitity).updateProdTStamp(System.currentTimeMillis())
+          if autoAck then ack()
+          _output
       }
       ComputingElement.logger.debug("Output of [{}]]: id={} value {}, validity from inputs={} mode={}",
         asceIdentifier,
@@ -503,7 +514,7 @@ abstract class ComputingElement[T](
   /**
    * ACK the alarm produced by the TF of the ASCE.
    *
-   * This function should be executed only if the type of the output is an alarm so in that case
+   * This function should be executed only if the type of the output is an alarm otherwise
    * an error message is logged but the TF is not marked as broken.
    * The ratio behind this choice is that the ACK is a command coming from outside: ACKing a
    * value that is not an alarm is an error produced somewhere else that should be reported but
@@ -567,6 +578,11 @@ object ComputingElement {
     // Build the output
     val outputId = new Identifier(asceDao.getOutput.getId,IdentifierType.IASIO,Option(asceId))
     val out: InOut[T] = InOut.asOutput(outputId, IASTypes.fromIasioDaoType(asceDao.getOutput.getIasType))
+
+    // _autoAck is true if the output is an ALARM and has AutoAck set in the CDB:
+    // if true the ack must be called in the alarm returned by transfer function
+    val _autoAck: Boolean = out.iasType==IASTypes.ALARM && asceDao.getOutput.isAutoAck()
+
     logger.info("ComputingElement {} produces output {}",asceDao.getId,outputId.id)
         
     val inputsIasioDaos: Set[IasioDao] = CollectionConverters.asScala(asceDao.getInputs).toSet
@@ -591,13 +607,17 @@ object ComputingElement {
         initialIasios, 
         tfSettings, 
         validityThresholdInSecs,
-        properties) with JavaTransfer[T]
+        properties) with JavaTransfer[T] {
+          override def autoAck: Boolean = _autoAck
+        }
     else new ComputingElement[T](
         asceId,out, 
         initialIasios, 
         tfSettings, 
         validityThresholdInSecs,
-        properties) with ScalaTransfer[T]
+        properties) with ScalaTransfer[T] {
+          override def autoAck: Boolean = _autoAck
+        }
   }
 
 }

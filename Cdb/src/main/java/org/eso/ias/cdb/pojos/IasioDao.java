@@ -1,9 +1,16 @@
 package org.eso.ias.cdb.pojos;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
-import javax.persistence.*;
 import java.util.Objects;
+
+import javax.persistence.Basic;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * The pojo for the IASIO
@@ -52,6 +59,12 @@ public class IasioDao {
 	 * alarms can be shelved
 	 */
 	public static final boolean canSheveDefault = false;
+
+	/**
+	 * The default value for autoAck: by default no
+	 * alarms can be automatically acknowledged
+	 */
+	public static final boolean autoAckDefault = false;
 	
 	/**
 	 * The attribute saying if a IASIO can be shelved,
@@ -59,6 +72,13 @@ public class IasioDao {
 	 */
 	@Basic(optional=true)
 	private boolean canShelve=canSheveDefault;
+
+	/**
+	 * The attribute saying if a IASIO can be auto acknowledged,
+	 * initialized with the default value {@link #autoAckDefault}
+	 */
+	@Basic(optional=true)
+	private boolean autoAck=autoAckDefault;
 	
 	/**
 	 * The sound to play when a given alarm becomes SET
@@ -222,6 +242,7 @@ public class IasioDao {
 				Objects.equals(this.getShortDesc(),other.getShortDesc()) &&
 				Objects.equals(this.getDocUrl(),other.getDocUrl()) &&
 				this.isCanShelve()==other.isCanShelve() &&
+				this.isAutoAck()==other.isAutoAck() &&
 				Objects.equals(this.getTemplateId(),other.getTemplateId()) &&
 				Objects.equals(this.getEmails(),other.getEmails()) &&
 				Objects.equals(this.getSound(),other.getSound());
@@ -229,7 +250,7 @@ public class IasioDao {
 	
 	@Override
 	public int hashCode() {
-		return Objects.hash(id,iasType,shortDesc,docUrl,canShelve,templateId,sound,emails);
+		return Objects.hash(id,iasType,shortDesc,docUrl,canShelve,autoAck,templateId,sound,emails);
 	}
 
 	public String getDocUrl() {
@@ -244,8 +265,16 @@ public class IasioDao {
 		return canShelve;
 	}
 
+	public boolean isAutoAck() {
+		return autoAck;
+	}
+
 	public void setCanShelve(boolean canShelve) {
 		this.canShelve = canShelve;
+	}
+
+	public void setAutoAck(boolean autoAck) {
+		this.autoAck = autoAck;
 	}
 
 	public String getTemplateId() {

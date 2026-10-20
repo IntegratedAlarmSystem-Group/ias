@@ -348,7 +348,7 @@ class DasuImpl (
    * @param iasios the inputs received
    * @see InputsListener
    */
-  override def inputsReceived(iasios: Iterable[IASValue[?]]): Unit = synchronized {
+  override def inputsReceived(iasios: Iterable[IASValue[?]]): Unit = {
     assert(iasios.nonEmpty)
     DasuImpl.logger.debug(s"DASU [$id] received ${iasios.size} inputs.")
 

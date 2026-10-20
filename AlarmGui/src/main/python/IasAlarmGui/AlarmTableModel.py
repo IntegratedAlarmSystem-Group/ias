@@ -1,6 +1,7 @@
 # This Python file uses the following encoding: utf-8
 
 import threading, logging
+from enum import Enum
 
 from PySide6.QtCore import QAbstractTableModel, QTimer
 from PySide6.QtCore import Qt, QModelIndex
@@ -14,15 +15,21 @@ from IasBasicTypes.Priority import Priority
 from IasBasicTypes.AlarmState import AlarmState
 from IasBasicTypes.Alarm import Alarm
 
+from IasAlarmGui.AlarmShelfManager import AlarmShelfManager
+
+class TableMode(Enum):
+    ACTIVE = "active"
+    SHELVED = "shelved"
+
 class AlarmTableModel(QAbstractTableModel, IasValueListener):
     """
-    The table model of alarms
+    The table model of active and shelved alarms
 
     Alarms are collected for 1 second then they are flushed in table
     to avoid refreshing too often.
     Flushing of alarms is done in flush_alarms that is run by a QTimer.
     """
-    def __init__(self, view: QTableView):
+    def __init__(self, view: QTableView, shelf_manager: AlarmShelfManager, mode: TableMode):
         """
         Constructor
         """
@@ -32,6 +39,12 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
 
         # The table view widget that display the alarms
         self.view = view
+
+        # The shelf manager
+        self.shelf_manager = shelf_manager
+
+        # The mode of the table model
+        self.table_mode = mode
 
         # The mutex to protect critical section
         self.lock = threading.RLock()
@@ -44,12 +57,14 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
         # The alarms to display in the table
         # one alarm in one row
         #
-        # the widget gets the value of teh cells from this variable
+        # The widget gets the value of the cells from this variable
         # in self.data
         self.alarms: list[IasValue] = []
 
         # the header of the col in the table
         self.header = [ "State", "Priority", "Identifier" ]
+        if self.table_mode == TableMode.SHELVED:
+            self.header.append("Remaining")
 
         # Set to True when the GUI is paused i.e. the table must not be update
         # and the alarms saved in a temporary buffer until resumed
@@ -96,8 +111,14 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
                 return str(self.get_state(ias_value_in_row))
             elif index.column()==1:
                 return str(self.get_priority(ias_value_in_row))
-            else:
+            elif index.column()==2:
                 return ias_value_in_row.id
+            else: # Remaining time for shelved mode
+                    tot_seconds = self.shelf_manager.get_remaining_seconds(alarm_id=ias_value_in_row.id)
+                    hours = tot_seconds // 3600
+                    minutes = (tot_seconds % 3600) // 60
+                    seconds = tot_seconds % 60
+                    return f"{hours:02d}:{minutes:02d}:{seconds:02d}" 
         elif role == Qt.BackgroundRole:
             ias_value_in_row = self.alarms[index.row()]
             alarmState = self.get_state(ias_value_in_row)
@@ -138,13 +159,17 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
         if role == Qt.ItemDataRole.DisplayRole and orientation==Qt.Orientation.Horizontal:
             return self.header[section]
 
-    def iasValueReceived(self, iasValue):
+    def iasValueFromBsdb(self, iasValue: IasValue):
         """
-        Gets alarms from Kafka and add them the model
+        Gets alarms from the BSDB and add them to the model
         """
         # Discard non alarms IasValues
         if not iasValue or iasValue.valueType!=IASType.ALARM:
             return
+        alarm_shelved = self.shelf_manager.is_shelved(iasValue.id)
+        if (alarm_shelved and self.table_mode == TableMode.ACTIVE) or \
+           (not alarm_shelved and self.table_mode == TableMode.SHELVED):
+           return
         # Add the alarm to the model
         with self.lock:
             if self.paused:
@@ -172,6 +197,24 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
                     alarm_list[index]=alarm
                     return
             alarm_list.append(alarm)
+
+    def shelve(self, alarm_id: str):
+        """
+        Slot executed when the user shelves an alarm
+
+        Remove the alarm from the table
+        """
+        self._logger.info("Shelving %s", alarm_id)
+        self.remove_alarm_by_id(alarm_id=alarm_id)
+
+    def unshelve(self, alarm_id: str):
+        """
+        Slot executed when the user or the time unshelve an alarm
+
+        Remove the alarm from the table
+        """
+        self._logger.info("Unshelving %s", alarm_id)
+        self.remove_alarm_by_id(alarm_id=alarm_id)
 
     def setData(self,index, value, role=Qt.EditRole):
         if role==Qt.EditRole:
@@ -207,8 +250,6 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
         """
         self._logger.debug("Flushing alarms in table")
         with self.lock:
-            if len(self.received_alarms)==0:
-                return
             for alarm in self.received_alarms:
                 pos = self.get_index_of_alarm(alarm)
                 if pos==-1:
@@ -223,14 +264,24 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
                     # or removed if autoremove has been selected in the toolbar
                     # and the alarm is acked and clear
                     if self.autoremove_cleared and self.cleared_and_acked(alarm):
-                        self.removeRows([pos])
+                        self.remove_rows([pos])
                     else:
                         self.alarms[pos]=alarm
                         self.setData(self.createIndex(pos, 0),alarm)
                         self.setData(self.createIndex(pos, 1),alarm)
                         self.setData(self.createIndex(pos, 2),alarm)
+                        if self.table_mode == TableMode.SHELVED:
+                            self.setData(self.createIndex(pos, 3), alarm)
             self.received_alarms.clear()
-        self._logger.info("Alarms flushed in the table")
+            if self.table_mode == TableMode.SHELVED and self.alarms:
+                # This emits dataChanged for all rows' column 3 every second 
+                # (since flush_alarms runs every second), causing the view 
+                # to re-call data() for the "Remaining"
+                # column and display the decremented counter.
+                top = self.createIndex(0, 3)
+                bottom = self.createIndex(len(self.alarms) - 1, 3)
+                self.dataChanged.emit(top, bottom)
+        self._logger.debug("Alarms flushed in the table")
 
     def pause(self, enable: bool) -> None:
         """
@@ -268,16 +319,15 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
         """
         with self.lock:
             self.autoremove_cleared=enable
-            print("Alarms in table",len(self.alarms),len(self.received_alarms))
             # index of the rows o remove
             rowsToRemove=[]
             if enable:
                 for index, ias_value in enumerate(self.alarms):
                     if self.cleared_and_acked(ias_value):
                         rowsToRemove.insert(0,index)
-                self.removeRows(rowsToRemove)
+                self.remove_rows(rowsToRemove)
 
-    def removeRows(self, rows: list[int])->None:
+    def remove_rows(self, rows: list[int])->None:
         """
         Removes the rows from the table
         Args:
@@ -286,21 +336,37 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
         # Ensure the rows is a list ordered from highest index to lowest index
         rows.sort(reverse=True)
         for row in rows:
-            print("Removing row",row)
             index = QModelIndex()
             self.beginRemoveRows(index, row, row)
             del self.alarms[row]
             self.endRemoveRows()
 
+    def remove_alarm_by_id(self, alarm_id: str) -> None:
+        """
+        Remove an alarm from the table by its ID.
+        Does nothing if the alarm is not found.
+        """
+        with self.lock:
+            self.paused_buffer = [alarm for alarm in self.paused_buffer if alarm.id != alarm_id]
+            self.received_alarms = [alarm for alarm in self.received_alarms if alarm.id != alarm_id]
+            for i, ias_value in enumerate(self.alarms):
+                if ias_value.id == alarm_id:
+                    self.beginRemoveRows(QModelIndex(), i, i)
+                    del self.alarms[i]
+                    self.endRemoveRows()
+                    return
+
     def get_row_content(self, index: int)->IasValue:
         with self.lock:
             return self.alarms[index]
 
-
-
-
-
-
-
-
-
+    def get_active_alarms(self):
+        """
+        Return the number of active (set) alarms i.e. the number of the alarms
+               that are SET_ACK ad SET_UNACK                
+        """
+        with self.lock:
+            return sum(
+                self.get_state(alarm).is_set()
+                for alarm in self.alarms
+            )

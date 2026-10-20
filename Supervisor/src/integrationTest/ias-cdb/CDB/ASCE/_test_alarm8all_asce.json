@@ -1,0 +1,11 @@
+{
+    "id": "_test_alarm8all_asce",
+    "dasuID": "_test_alarm8all_dasu",
+    "outputID": "/test/alarm8all",
+    "inputIDs": [
+        "/vals/hival8all"
+    ],
+    "templatedInputs": [],
+    "transferFunctionID": "org.eso.ias.tranfer.BoolToAlarm",
+    "props": []
+}
