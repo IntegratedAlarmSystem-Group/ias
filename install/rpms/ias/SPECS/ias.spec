@@ -1,5 +1,5 @@
 Name:           ias
-Version:        13.2.1
+Version:        13.2.2
 Release:        1%{?dist}
 Summary:        Install the Integrated Alarm System
 BuildArch:      noarch
@@ -191,6 +191,8 @@ chmod 777 %{buildroot}%{_prefix}/tmp
 %{syspython3_sitelib}/%{name}.pth
 
 %changelog
+* Tue Oct 20 2026 acaproni IAS 13.2.2
+* Thu Jun 25 2026 acaproni IAS 13.2.1
 * Tue Mar 31 2026 acaproni IAS 13.2.0
 * Wed Oct 15 2025 acaproni IAS v13.1.5; kafka only suggested
 * Wed Jun 11 2025 acaproni Reviewd and prepared for v13.1.4.2
