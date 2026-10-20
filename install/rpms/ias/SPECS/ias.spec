@@ -67,7 +67,6 @@ The production version of the core of the Integrated Alarm System
 %build
 mkdir -p %{buildroot}%{_prefix}
 # Build runs the unit tests too
-export JAVA_HOME=%{java_home}
 export IAS_ROOT=%{buildroot}%{_prefix}
 mkdir -p %{buildroot}%{_prefix}
 . ./Tools/src/main/ias-bash-profile.sh
@@ -124,6 +123,7 @@ chmod 777 %{buildroot}%{_prefix}/tmp
 %{_bindir}/iasLogDumper
 %{_bindir}/iasLTDBConnector
 %{_bindir}/iasMailSender
+%{_bindir}/iasMergeProps
 %{_bindir}/iasMonitor
 %{_bindir}/iasPushIasio
 %{_bindir}/iasRun
@@ -157,7 +157,6 @@ chmod 777 %{buildroot}%{_prefix}/tmp
 %{python3_sitelib}/IasExtras/
 %{python3_sitelib}/IasHeartbeat/
 %{python3_sitelib}/IasKafkaUtils/
-%{python3_sitelib}/IasPlugin2/
 %{python3_sitelib}/IasPlugin3/
 %{python3_sitelib}/IasTransferFunction/
  
@@ -178,6 +177,7 @@ chmod 777 %{buildroot}%{_prefix}/tmp
 %{sysbindir}/iasLogDumper
 %{sysbindir}/iasLTDBConnector
 %{sysbindir}/iasMailSender
+%{sysbindir}/iasMergeProps
 %{sysbindir}/iasMonitor
 %{sysbindir}/iasPushIasio
 %{sysbindir}/iasRun
