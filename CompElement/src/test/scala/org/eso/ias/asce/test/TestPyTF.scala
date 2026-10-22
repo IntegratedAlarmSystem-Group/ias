@@ -111,13 +111,6 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
   // The threshold to assess the validity from the arrival time of the input
   val validityThresholdInSecs = 2
 
-  // Instantiate on ASCE with a java TF implementation
-  val pythonTFSetting =new TransferFunctionSetting(
-    "TestTF.TestTransferFunction",
-    TransferFunctionLanguage.python,
-    None,
-    threadFactory)
-
   override def beforeAll(): Unit = {
     // IASLogger.setRootLogLevel(Level.DEBUG)
   }
@@ -129,6 +122,11 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     val inputsMPs: MutableMap[String, InOut[?]] = MutableMap[String, InOut[?]]()
     inputsMPs+=(mpIdAlarm.id -> mpAlarm)
 
+    val pythonTFSetting =new TransferFunctionSetting(
+      "TestTF.TestTransferFunction",
+      TransferFunctionLanguage.python,
+      None,
+      threadFactory)
     val javaComp: ComputingElement[Alarm] = new ComputingElement[Alarm](
       compID,
       outputAlarm,
@@ -139,6 +137,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
+    javaComp.shutdown()
     logger.info("Initialize tested")
   }
 
@@ -146,6 +145,11 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     logger.info("Testing python eval(...)")
     val inputsMPs: Map[String, InOut[?]] = Map(mpIdAlarm.id -> mpAlarm)
 
+    val pythonTFSetting =new TransferFunctionSetting(
+      "TestTF.TestTransferFunction",
+      TransferFunctionLanguage.python,
+      None,
+      threadFactory)
     val javaComp: ComputingElement[Alarm] = new ComputingElement[Alarm](
       compID,
       outputAlarm,
@@ -170,6 +174,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
 
     assert (out.id.id==outId.id,"Unexpected output ID")
     assert(out.id.fullRunningID==outId.fullRunningID,"Unexpected output full running ID")
+    javaComp.shutdown()
     logger.info("TF execution tested")
   }
 
@@ -183,6 +188,11 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     val additionalPros = Map("key1" -> "Value1","key2" -> "Value2","key3" -> "Value3")
     val inputsMPs: Map[String, InOut[?]] = Map(mpIdAlarm.id -> mpAlarm.updateProps(additionalPros))
 
+    val pythonTFSetting =new TransferFunctionSetting(
+      "TestTF.TestTransferFunction",
+      TransferFunctionLanguage.python,
+      None,
+      threadFactory)
     val javaComp: ComputingElement[Alarm] = new ComputingElement[Alarm](
       compID,
       outputAlarm,
@@ -208,12 +218,18 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
       assert(valueOpt.isDefined,"Value of "+key+" not found")
       assert(valueOpt.get=="Value"+i)
     }
+    javaComp.shutdown()
   }
 
   it must "support input of type LONG" in {
     logger.info("Testing support of input type LONG")
     val inputsMPs: Map[String, InOut[?]] = Map(mpIdLong.id -> mpLong.updateValue(Some(25L)))
 
+    val pythonTFSetting =new TransferFunctionSetting(
+      "TestTF.TestTransferFunction",
+      TransferFunctionLanguage.python,
+      None,
+      threadFactory)
     val javaComp: ComputingElement[java.lang.Long] = new ComputingElement[java.lang.Long](
       compID,
       outputLong,
@@ -234,6 +250,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     assert(out.value.isDefined)
     assert(out.value.get==25L)
 
+    javaComp.shutdown()
     logger.info("Input type LONG tested")
   }
 
@@ -241,6 +258,11 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     logger.info("Testing support of input type INT")
     val inputsMPs: Map[String, InOut[?]] = Map(mpIdInt.id -> mpInt.updateValue(Some(25)))
 
+    val pythonTFSetting =new TransferFunctionSetting(
+      "TestTF.TestTransferFunction",
+      TransferFunctionLanguage.python,
+      None,
+      threadFactory)
     val javaComp: ComputingElement[java.lang.Integer] = new ComputingElement[java.lang.Integer](
       compID,
       outputInt,
@@ -261,12 +283,19 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     assert(out.value.isDefined)
     assert(out.value.get==25)
 
+    javaComp.shutdown()
+
     logger.info("Input type INT tested")
   }
   it must "support input of type SHORT" in {
     logger.info("Testing support of input type SHORT")
     val inputsMPs: Map[String, InOut[?]] = Map(mpIdShort.id -> mpShort.updateValue(Some(5: Short)))
 
+    val pythonTFSetting =new TransferFunctionSetting(
+      "TestTF.TestTransferFunction",
+      TransferFunctionLanguage.python,
+      None,
+      threadFactory)
     val javaComp: ComputingElement[java.lang.Short] = new ComputingElement[java.lang.Short](
       compID,
       outputShort,
@@ -287,6 +316,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     assert(out.value.isDefined)
     assert(out.value.get==5)
 
+    javaComp.shutdown()
     logger.info("Input type SHORT tested")
   }
 
@@ -294,6 +324,11 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     logger.info("Testing support of input type BYTE")
     val inputsMPs: Map[String, InOut[?]] = Map(mpIdByte.id -> mpByte.updateValue(Some(8: Byte)))
 
+    val pythonTFSetting =new TransferFunctionSetting(
+      "TestTF.TestTransferFunction",
+      TransferFunctionLanguage.python,
+      None,
+      threadFactory)
     val javaComp: ComputingElement[java.lang.Byte] = new ComputingElement[java.lang.Byte](
       compID,
       outputByte,
@@ -314,6 +349,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     assert(out.value.isDefined)
     assert(out.value.get==8)
 
+    javaComp.shutdown()
     logger.info("Input type BYTE tested")
   }
 
@@ -321,6 +357,11 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     logger.info("Testing support of input type DOUBLE")
     val inputsMPs: Map[String, InOut[?]] = Map(mpIdDouble.id -> mpDouble.updateValue(Some(5.5D)))
 
+    val pythonTFSetting =new TransferFunctionSetting(
+      "TestTF.TestTransferFunction",
+      TransferFunctionLanguage.python,
+      None,
+      threadFactory)
     val javaComp: ComputingElement[java.lang.Double] = new ComputingElement[java.lang.Double](
       compID,
       outputDouble,
@@ -341,6 +382,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     assert(out.value.isDefined)
     assert(out.value.get==5.5D)
 
+    javaComp.shutdown()
     logger.info("Input type DOUBLE tested")
   }
 
@@ -348,6 +390,11 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     logger.info("Testing support of input type FLOAT")
     val inputsMPs: Map[String, InOut[?]] = Map(mpIdFloat.id -> mpFloat.updateValue(Some(3.3f)))
 
+    val pythonTFSetting =new TransferFunctionSetting(
+      "TestTF.TestTransferFunction",
+      TransferFunctionLanguage.python,
+      None,
+      threadFactory)
     val javaComp: ComputingElement[java.lang.Float] = new ComputingElement[java.lang.Float](
       compID,
       outputFloat,
@@ -368,6 +415,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     assert(out.value.isDefined)
     assert(out.value.get==3.3f)
 
+    javaComp.shutdown()
     logger.info("Input type FLOAT tested")
   }
 
@@ -375,6 +423,11 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     logger.info("Testing support of input type BOOLEAN")
     val inputsMPs: Map[String, InOut[?]] = Map(mpIdBool.id -> mpBool.updateValue(Some(true)))
 
+    val pythonTFSetting =new TransferFunctionSetting(
+      "TestTF.TestTransferFunction",
+      TransferFunctionLanguage.python,
+      None,
+      threadFactory)
     val javaComp: ComputingElement[java.lang.Boolean] = new ComputingElement[java.lang.Boolean](
       compID,
       outputBool,
@@ -395,6 +448,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     assert(out.value.isDefined)
     assert(out.value.get==true)
 
+    javaComp.shutdown()
     logger.info("Input type BOOLEAN tested")
   }
 
@@ -402,6 +456,11 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     logger.info("Testing support of input type CHAR")
     val inputsMPs: Map[String, InOut[?]] = Map(mpIdChar.id -> mpChar.updateValue(Some('T')))
 
+    val pythonTFSetting =new TransferFunctionSetting(
+      "TestTF.TestTransferFunction",
+      TransferFunctionLanguage.python,
+      None,
+      threadFactory)
     val javaComp: ComputingElement[java.lang.Character] = new ComputingElement[java.lang.Character](
       compID,
       outputChar,
@@ -422,6 +481,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     assert(out.value.isDefined)
     assert(out.value.get=='T')
 
+    javaComp.shutdown()
     logger.info("Input type CHAR tested")
   }
 
@@ -429,6 +489,11 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     logger.info("Testing support of input type STRING")
     val inputsMPs: Map[String, InOut[?]] = Map(mpIdString.id -> mpString.updateValue(Some("Test")))
 
+    val pythonTFSetting =new TransferFunctionSetting(
+      "TestTF.TestTransferFunction",
+      TransferFunctionLanguage.python,
+      None,
+      threadFactory)
     val javaComp: ComputingElement[java.lang.String] = new ComputingElement[java.lang.String](
       compID,
       outputString,
@@ -449,6 +514,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     assert(out.value.isDefined)
     assert(out.value.get=="Test")
 
+    javaComp.shutdown()
     logger.info("Input type STRING tested")
   }
 
@@ -456,6 +522,11 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     logger.info("Testing support of input type TIMESTAMP")
     val inputsMPs: Map[String, InOut[?]] = Map(mpIdTStamp.id -> mpTStamp.updateValue(Some(1234567890L)))
 
+    val pythonTFSetting =new TransferFunctionSetting(
+      "TestTF.TestTransferFunction",
+      TransferFunctionLanguage.python,
+      None,
+      threadFactory)
     val javaComp: ComputingElement[java.lang.Long] = new ComputingElement[java.lang.Long](
       compID,
       outputTStamp,
@@ -476,6 +547,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     assert(out.value.isDefined)
     assert(out.value.get==1234567890L)
 
+    javaComp.shutdown()
     logger.info("Input type TIMESTAMP tested")
   }
 
@@ -484,6 +556,11 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     val inputArray: NumericArray = new NumericArray(List(1.2D,2.3D,3.4D),NumericArray.NumericArrayType.DOUBLE)
     val inputsMPs: Map[String, InOut[?]] = Map(mpIdArrayDoubles.id -> mpArrayDoubles.updateValue(Some(inputArray)))
 
+    val pythonTFSetting =new TransferFunctionSetting(
+      "TestTF.TestTransferFunction",
+      TransferFunctionLanguage.python,
+      None,
+      threadFactory)
     val javaComp: ComputingElement[NumericArray] = new ComputingElement[NumericArray](
       compID,
       outputArrayDoubles,
@@ -504,6 +581,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     assert(out.value.isDefined)
     assert(out.value.get==inputArray)
 
+    javaComp.shutdown()
     logger.info("Input type ARRAYOFDOUBLES tested")
   }
 
@@ -512,6 +590,11 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     val inputArray: NumericArray = new NumericArray(List(1L,2L,3L),NumericArray.NumericArrayType.LONG)
     val inputsMPs: Map[String, InOut[?]] = Map(mpIdArrayLongs.id -> mpArrayLongs.updateValue(Some(inputArray)))
 
+    val pythonTFSetting =new TransferFunctionSetting(
+      "TestTF.TestTransferFunction",
+      TransferFunctionLanguage.python,
+      None,
+      threadFactory)
     val javaComp: ComputingElement[NumericArray] = new ComputingElement[NumericArray](
       compID,
       outputArrayLongs,
@@ -532,6 +615,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     assert(out.value.isDefined)
     assert(out.value.get==inputArray)
 
+    javaComp.shutdown()
     logger.info("Input type ARRAYOFLONGS tested")
   }
 
@@ -539,6 +623,11 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     logger.info("Testing support of input type ALARM")
     val inputsMPs: Map[String, InOut[?]] = Map(mpIdAlarm.id -> mpAlarm.updateValue(Some(Alarm.getInitialAlarmState(Priority.HIGH).set())))
 
+    val pythonTFSetting =new TransferFunctionSetting(
+      "TestTF.TestTransferFunction",
+      TransferFunctionLanguage.python,
+      None,
+      threadFactory)
     val javaComp: ComputingElement[Alarm] = new ComputingElement[Alarm](
       compID,
       outputAlarm,
@@ -559,6 +648,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     assert(out.value.isDefined)
     assert(out.value.get.asInstanceOf[Alarm].isSet)
 
+    javaComp.shutdown()
     logger.info("Input type ALARM tested")
   }
 
@@ -566,6 +656,11 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     logger.info("Performing a stress test with an input type LONG")
     val inputsMPs: Map[String, InOut[?]] = Map(mpIdLong.id -> mpLong.updateValue(Some(25L)))
 
+    val pythonTFSetting =new TransferFunctionSetting(
+      "TestTF.TestTransferFunction",
+      TransferFunctionLanguage.python,
+      None,
+      threadFactory)
     val javaComp: ComputingElement[java.lang.Long] = new ComputingElement[java.lang.Long](
       compID,
       outputLong,
@@ -589,6 +684,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
       assert(output.value.get==l)
     }
 
+    javaComp.shutdown()
     logger.info("Stress test done")
   }
 
