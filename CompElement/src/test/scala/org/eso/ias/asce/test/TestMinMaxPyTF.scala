@@ -50,7 +50,6 @@ class TestMinMaxPyTF extends AnyFlatSpec with BeforeAndAfterAll {
   // The threshold to assess the validity from the arrival time of the input
   val validityThresholdInSecs = 2
 
-  // Instantiate on ASCE with a java TF implementation
   val pythonTFSetting =new TransferFunctionSetting(
       "IasTransferFunction.Impls.MinMaxThreshold",
       TransferFunctionLanguage.python,
@@ -74,6 +73,10 @@ class TestMinMaxPyTF extends AnyFlatSpec with BeforeAndAfterAll {
 
   override def beforeAll(): Unit = {
     IASLogger.setRootLogLevel(Level.DEBUG)
+  }
+
+  override def afterAll(): Unit = {
+    javaComp.shutdown()
   }
 
   behavior of "The python MinMaxThreshold TF"

@@ -10,7 +10,6 @@ import org.eso.ias.logging.IASLogger
 import org.eso.ias.types._
 import org.eso.ias.utils.ISO8601Helper
 
-import scala.collection.JavaConverters
 import scala.collection.mutable.{Map => MutableMap}
 import scala.jdk.javaapi.CollectionConverters
 import scala.util.{Failure, Success, Try}
@@ -69,7 +68,7 @@ import scala.util.{Failure, Success, Try}
   *
   * The ASCE monitors when the execution time of the TF is too slow for a given amount of time.
   * The slowness and the duration are specified in the TransferFunctionSetting class.
-  * The ASCE logs a messasge if the execution of the TF is slower than the max allowed time;
+  * The ASCE logs a message if the execution of the TF is slower than the max allowed time;
   * if the slowness persists over the duration then the TF is marked as broken and will
   * not be executed anymore.
   *
@@ -267,7 +266,7 @@ abstract class ComputingElement[T](
               case (true, true) =>
                 // The TF has been too slow producing the output for a time interval
                 // longer than the max allowed: teh TF is marked as broken
-                ComputingElement.logger.error("TF of ASCE [{}] too slow for too long: marked ar broken!",id)
+                ComputingElement.logger.error("TF of ASCE [{}] too slow for too long: marked as broken!",id)
                 ComputingElementState.transition(actualState, Broken())
             }
           } else {
@@ -499,7 +498,7 @@ abstract class ComputingElement[T](
           if autoAck then ack()
           _output
       }
-      ComputingElement.logger.debug("Output of [{}]]: id={} value {}, validity from inputs={} mode={}",
+      ComputingElement.logger.debug("Output of [{}]: id={} value {}, validity from inputs={} mode={}",
         asceIdentifier,
         output.id.id,
         if (output.value.isDefined) output.value.get.toString else "Undefined",
@@ -589,7 +588,11 @@ object ComputingElement {
     val reqInputs: Set[String] = inputsIasioDaos.map(_.getId)
     logger.info("ComputingElement {} inputs are [{}]",asceDao.getId,reqInputs.mkString(", "))
     
-    val tfLanguage = if (asceDao.getTransferFunction.getImplLang==TFLanguageDao.JAVA) TransferFunctionLanguage.java else TransferFunctionLanguage.scala
+    val tfLanguage = asceDao.getTransferFunction.getImplLang match {
+      case TFLanguageDao.JAVA   => TransferFunctionLanguage.java
+      case TFLanguageDao.SCALA  => TransferFunctionLanguage.scala
+      case TFLanguageDao.PYTHON => TransferFunctionLanguage.python 
+      }
     val tfSettings = new TransferFunctionSetting(
         asceDao.getTransferFunction.getClassName,
         tfLanguage, 
@@ -601,16 +604,10 @@ object ComputingElement {
       InOut.asInput(
           new Identifier(iDao.getId,IdentifierType.IASIO,None),
           IASTypes.fromIasioDaoType(iDao.getIasType)))
-    
-    if (tfLanguage==TransferFunctionLanguage.java) new ComputingElement[T](
-        asceId,out, 
-        initialIasios, 
-        tfSettings, 
-        validityThresholdInSecs,
-        properties) with JavaTransfer[T] {
-          override def autoAck: Boolean = _autoAck
-        }
-    else new ComputingElement[T](
+
+    tfLanguage match {
+      case TransferFunctionLanguage.scala =>
+        new ComputingElement[T](
         asceId,out, 
         initialIasios, 
         tfSettings, 
@@ -618,6 +615,25 @@ object ComputingElement {
         properties) with ScalaTransfer[T] {
           override def autoAck: Boolean = _autoAck
         }
+      case TransferFunctionLanguage.java =>
+        new ComputingElement[T](
+        asceId,out, 
+        initialIasios, 
+        tfSettings, 
+        validityThresholdInSecs,
+        properties) with JavaTransfer[T] {
+          override def autoAck: Boolean = _autoAck
+        }
+      case TransferFunctionLanguage.python =>
+        new ComputingElement[T](
+        asceId,out, 
+        initialIasios, 
+        tfSettings, 
+        validityThresholdInSecs,
+        properties) with JavaTransfer[T] {
+          override def autoAck: Boolean = _autoAck
+        }
+    }
   }
-
+   
 }

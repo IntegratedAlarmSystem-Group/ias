@@ -152,6 +152,7 @@ class TransferFunctionSetting(
       TransferFunctionSetting.logger.error("Error instantiating the TF {}",nameOfClassToLoad)
     }
 
+    initialized = true
     transferExecutor.isDefined
 
   }

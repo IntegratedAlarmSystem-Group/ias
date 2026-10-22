@@ -88,6 +88,6 @@ class InMemoryCacheImpl(val maxSize: Integer=0, maxMemSize: Integer=0) extends I
   def size: Int = cache.size
 
   /** Empty the cache */
-  override def clear(): Unit = cache.clear
+  override def clear(): Unit = cache.clear()
 
 }
