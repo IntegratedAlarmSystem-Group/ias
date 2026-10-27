@@ -23,7 +23,7 @@ import java.util.concurrent.*;
  * this class is always loaded by the ASCE.
  * Objects of this class then build the python object to which all the calls from ASCE are ultimately delegated.
  */
-public class PythonExecutorTF<T> extends JavaTransferExecutor<T> {
+public class PythonExecutorTF<T> extends PythonTransferExecutor<T> {
 
     /**
      * The logger

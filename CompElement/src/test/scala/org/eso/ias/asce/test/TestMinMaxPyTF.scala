@@ -3,7 +3,7 @@ package org.eso.ias.asce.test
 import ch.qos.logback.classic.Level
 
 import java.util.Properties
-import org.eso.ias.asce.transfer.{JavaTransfer, TransferFunctionLanguage, TransferFunctionSetting}
+import org.eso.ias.asce.transfer.{PythonTransfer, TransferFunctionLanguage, TransferFunctionSetting}
 import org.eso.ias.asce.{AsceStates, CompEleThreadFactory, ComputingElement}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.*
@@ -69,7 +69,7 @@ class TestMinMaxPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     inputsMPs.values.toSet,
     pythonTFSetting,
     validityThresholdInSecs,
-    props) with JavaTransfer[Alarm]
+    props) with PythonTransfer[Alarm]
 
   override def beforeAll(): Unit = {
     IASLogger.setRootLogLevel(Level.DEBUG)
