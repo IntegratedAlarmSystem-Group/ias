@@ -8,8 +8,7 @@ import java.util.Objects
 /**
  * The PythonTransferExecutor provides the interface
  * for the execution of transfer functions in Python.
- * It uses Java data structures (IasIOJ) because the Python
- * executor runs via JEP which requires Java types.
+ * It uses Java data structures (IasIOJ) for interop compatibility.
  *
  * @param cEleId: The id of the ASCE
  * @param cEleRunningId: the running ID of the ASCE

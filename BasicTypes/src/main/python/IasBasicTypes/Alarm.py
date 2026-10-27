@@ -39,8 +39,8 @@ class Alarm():
         self.priority = priority
 
         # String representation of the Alarm returned by to_string()
-        # It is useful to have it available as a property for translating python alrms in java alarm
-        # by jep (see PythonExecutorTF.java)
+        # It is useful to have it available as a property for translating python alarms in java alarm
+        # (see PythonExecutorTF.java / GrpcPythonExecutorTF)
         self.string_repr = f"{self.alarmState.to_string()}:{self.priority.to_string()}"
 
     def __eq__(self, other):

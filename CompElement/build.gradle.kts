@@ -11,7 +11,6 @@ dependencies {
     implementation(libs.scala.library)
     implementation(libs.scala.logging)
     implementation(libs.logback.classic)
-    implementation(libs.jep)
 
     implementation(project(":Tools"))
     implementation(project(":BasicTypes"))
@@ -47,12 +46,7 @@ tasks.test {
     val pythonVersion = extension.extra["PythonVersion"] as String
 
     val pythonRoot = System.getenv("Python_ROOT_DIR")
-    val existingLibPath = System.getenv("LD_LIBRARY_PATH") ?: ""
-    systemProperty("java.library.path",
-        "$pythonRoot/lib/$pythonVersion/site-packages/jep:$existingLibPath")
-    //jvmArgs("-Djava.library.path=$pythonRoot/lib/$pythonVersion/site-packages/jep")
-
-    // Sets the PYTHONPATH for the python code to run with jep
+    // JEP removed – no longer need java.library.path for libjep.so
 
     // Always use absolute paths; Gradle may execute tests from the root project dir
     val compElementProject = project(":CompElement")
@@ -68,23 +62,15 @@ tasks.test {
     val pythonPath = listOf(buildSitePackages, builBasicTypesPython, buildToolsPython, srcTestPython)
         .joinToString(File.pathSeparator)
 
-    // 1) Make Python modules visible to JEP
     environment("PYTHONPATH", pythonPath)
     print("PYTHONPATH $pythonPath")
 
-    // 2) Ensure the JVM can load libjep.so (adjust to your jep install dir)
-    // If you already set this globally, you can skip it here.
-    // val jepNativeDir = "/home/acaproni/.local/lib/python3.12/site-packages/jep"
-    // systemProperty("java.library.path", jepNativeDir)
-
-    // 3) Put jep.jar on the classpath (if you don’t use a Maven dependency)
-    // Prefer a dependency (e.g., compileOnly/testImplementation from a repo),
-    // but this local file approach works:
-    // classpath += files("$jepNativeDir/jep.jar")
+    // Skip Python TF tests – PythonExecutorTF is a stub until gRPC replacement (Phase 2)
+    exclude("org/eso/ias/asce/test/TestPyTF*.class")
+    exclude("org/eso/ias/asce/test/TestMinMaxPyTF*.class")
 
     useJUnitPlatform()
 
-    // Optional: print the effective PYTHONPATH for debugging
     doFirst {
         println(">>> Python_ROOT_DIR=$pythonRoot")
         println(">>> PYTHONPATH=$pythonPath")

@@ -26,22 +26,9 @@ jobs:
       - name: Install python tools
         run: |
           pip install --upgrade pip
-          pip install PySide6 jep python-dateutil pytest pytest-timeout confluent-kafka PyYAML
-      - name: Configure LD_LIBRARY_PATH for JEP
-        run: |
-          echo "LD_LIBRARY_PATH=$JAVA_HOME/lib/server:$LD_LIBRARY_PATH" >> $GITHUB_ENV
-          LIBJEP=$(find /opt/hostedtoolcache/Python -name libjep.so | head -1)
-          ldd "$LIBJEP"
-      - name: Check JEP installation
-        run: |
-          pip show jep
-          find /opt/hostedtoolcache/Python -name "libjep.so" 2>/dev/null
-          echo LDD:
-          ldd /opt/hostedtoolcache/Python/3.11.16/x64/lib/python3.11/site-packages/jep/libjep.so
-          echo JAVA_HOME is $JAVA_HOME
-          echo Finding libjvm.so:
-          find "$JAVA_HOME" -name libjvm.so
-          ls -R "$JAVA_HOME/lib/server"
+          pip install PySide6 python-dateutil pytest pytest-timeout confluent-kafka PyYAML
+       - name: Check JEP installation
+        run: echo "JEP removed (Phase 1)"
       - run: java -version
       - run: mkdir -p $IAS_ROOT
       - name: Checkout IAS code
@@ -53,8 +40,6 @@ jobs:
         working-directory: GIT
         run: ./gradlew clean
       - name: Build the IAS and run unit tests with gradlew
-        env:
-          JEP_JVM: ${{ env.JAVA_HOME }}/lib/server/libjvm.so          
         working-directory: GIT
         run: ./gradlew build
       - name: Install IAS in IAS_ROOT

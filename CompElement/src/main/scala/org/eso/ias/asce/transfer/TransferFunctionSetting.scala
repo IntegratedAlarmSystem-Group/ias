@@ -31,10 +31,8 @@ object TransferFunctionLanguage extends Enumeration {
  * developers for which we need to convert scala data structure to/from
  * java. Scala implementations of the TF are therefore more performant (in principle).
  *
- * For python TFs, we use jep (https://github.com/ninia/jep) that provides
- * interoperability between java and python.
- * For the python TFs, a java class is always loaded, PythonExecutorTF, that delegates
- * to the python class whose name is in the className property
+ * For python TFs, a java class is always loaded (PythonExecutorTF / GrpcPythonExecutorTF)
+ * that delegates to the python class whose name is in the className property.
  * 
  * @param className: The name of the java/scala/python class to run
  * @param language: the programming language used to implement the TF

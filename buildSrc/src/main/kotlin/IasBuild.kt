@@ -254,7 +254,7 @@ open class IasBuild : Plugin<Project> {
 
         // If a test task exists (for java and scala only modules) then
         // jvm tests must depends on the availability of the python modules
-        // to run python code with jep
+        // to run python code
         try {
             val testTask = project.tasks.getByPath(":${project.name}:test")
             testTask.dependsOn(pyModules)
