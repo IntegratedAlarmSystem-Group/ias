@@ -5,7 +5,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.persistence.Basic;
 import javax.persistence.CascadeType;
@@ -39,6 +38,13 @@ public class SupervisorDao {
 	 */
 	@Basic(optional=false)
 	private String hostName;
+
+	/**
+	 * The address of the host where the python server to execute pythton TFs run
+	 * The address is in the form host:port
+	 */
+	@Basic(optional=true)
+	private String pyTfServerAddr = "";
 	
 	/**
 	 * The log level
@@ -65,10 +71,10 @@ public class SupervisorDao {
 	}
 
 	public void setId(String id) {
-		Objects.requireNonNull(id,"The DASU ID can't be null");
+		Objects.requireNonNull(id,"The Supervisor ID can't be null");
 		String iden = id.trim();
 		if (iden.isEmpty()) {
-			throw new IllegalArgumentException("The DASU ID can't be an empty string");
+			throw new IllegalArgumentException("The Supervisor ID can't be an empty string");
 		}
 		this.id = iden;
 	}
@@ -81,9 +87,53 @@ public class SupervisorDao {
 		Objects.requireNonNull(host,"The host name can't be null");
 		String temp = host.trim();
 		if (temp.isEmpty()) {
-			throw new IllegalArgumentException("The DASU host name can't be an empty string");
+			throw new IllegalArgumentException("The Supervisor host name can't be an empty");
 		}
 		this.hostName = temp;
+	}
+
+	public String getPyTfServerAddr() {
+		return pyTfServerAddr;
+	}
+
+	public void setPyTfServerAddr(String hostAddr) {
+		if (hostAddr==null) {
+			pyTfServerAddr = "";
+			return;
+		}
+		String temp = hostAddr.trim();
+		if (!SupervisorDao.isValidPyTfAddress(temp)) {
+			throw new IllegalArgumentException("Wrong format of the host address of the python server (expected name:port)");
+		}
+		this.pyTfServerAddr = temp;
+	}
+
+	/**
+	 * Check if the passed address is valid address for the python TF server.
+	 * 
+	 * The expected fromad is name:port
+	 * 
+	 * @param hostAddr 
+	 * 
+	 */
+	public static boolean isValidPyTfAddress(String hostAddr) {
+		if (hostAddr==null || hostAddr.isEmpty()) {
+			// It is optional
+			return true;
+		}
+		if (!hostAddr.contains(":")) {
+			return false;
+		}
+		String[] parts = hostAddr.split(":");
+		if (parts.length!=2) {
+			return false;
+		}
+		try {
+			Integer.valueOf(parts[1]);
+		} catch (NumberFormatException e) {
+			return false;
+		}
+		return true;
 	}
 
 	public LogLevelDao getLogLevel() {
@@ -165,6 +215,12 @@ public class SupervisorDao {
 		Optional.ofNullable(logLevel).ifPresent(x -> ret.append(x.toString()));
 		ret.append(", hostName=");
 		ret.append(getHostName());
+		if (pyTfServerAddr!=null && !pyTfServerAddr.isEmpty()) {
+			ret.append(", python TF server adress=");
+			ret.append(getPyTfServerAddr());
+		} else {
+			ret.append(", no python TF server adress");
+		}
 		ret.append(", DASUs to deploy={");
 		dasusToDeploy.forEach(x -> { ret.append(' '); ret.append(x.getDasu().getId()); });
 		ret.append("}]");
@@ -190,7 +246,8 @@ public class SupervisorDao {
 				this.id.equals(superv.getId()) &&
 				Objects.equals(this.hostName, superv.getHostName()) &&
 				Objects.equals(this.logLevel, superv.getLogLevel()) &&
-				Objects.equals(this.getDasusIDs(),superv.getDasusIDs());
+				Objects.equals(this.getDasusIDs(),superv.getDasusIDs()) &&
+				Objects.equals(this.pyTfServerAddr, superv.getPyTfServerAddr());
 	}
 
 	/**

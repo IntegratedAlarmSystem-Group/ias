@@ -43,6 +43,12 @@ public class JsonSupervisorDao {
 	private LogLevelDao logLevel;
 	
 	/**
+	 * The address of the host where the python server to execute python TFs run
+	 */
+	@Basic(optional=true)
+	private String pyTfServerAddr;
+	
+	/**
 	 * The DASUs are replaced by their IDs
 	 */
 	private Set<JsonDasuToDeployDao>dasusToDeploy;
@@ -69,7 +75,16 @@ public class JsonSupervisorDao {
 		id = supervisorDao.getId();
 		hostName = supervisorDao.getHostName();
 		logLevel = supervisorDao.getLogLevel();
+		pyTfServerAddr = supervisorDao.getPyTfServerAddr();
 		this.dasusToDeploy=supervisorDao.getDasusToDeploy().stream().map(i -> new JsonDasuToDeployDao(i)).collect(Collectors.toSet());
+	}
+
+	public String getPyTfServerAddr() {
+		return pyTfServerAddr;
+	}
+
+	public void setPyTfServerAddr(String pyTfServerAddr) {
+		this.pyTfServerAddr = pyTfServerAddr;
 	}
 
 	public String toString() {
