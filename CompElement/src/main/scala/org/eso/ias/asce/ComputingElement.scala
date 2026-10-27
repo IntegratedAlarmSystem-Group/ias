@@ -626,11 +626,11 @@ object ComputingElement {
         }
       case TransferFunctionLanguage.python =>
         new ComputingElement[T](
-        asceId,out, 
-        initialIasios, 
-        tfSettings, 
+        asceId,out,
+        initialIasios,
+        tfSettings,
         validityThresholdInSecs,
-        properties) with JavaTransfer[T] {
+        properties) with PythonTransfer[T] {
           override def autoAck: Boolean = _autoAck
         }
     }

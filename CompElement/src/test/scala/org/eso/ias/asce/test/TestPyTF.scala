@@ -1,7 +1,7 @@
 package org.eso.ias.asce.test
 
 import ch.qos.logback.classic.Level
-import org.eso.ias.asce.transfer.{JavaTransfer, TransferFunctionLanguage, TransferFunctionSetting}
+import org.eso.ias.asce.transfer.{PythonTransfer, TransferFunctionLanguage, TransferFunctionSetting}
 import org.eso.ias.asce.{AsceStates, CompEleThreadFactory, ComputingElement}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.*
@@ -133,7 +133,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      new Properties()) with JavaTransfer[Alarm]
+      new Properties()) with PythonTransfer[Alarm]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -156,7 +156,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      new Properties()) with JavaTransfer[Alarm]
+      new Properties()) with PythonTransfer[Alarm]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -199,7 +199,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      new Properties()) with JavaTransfer[Alarm]
+      new Properties()) with PythonTransfer[Alarm]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -236,7 +236,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      new Properties()) with JavaTransfer[java.lang.Long]
+      new Properties()) with PythonTransfer[java.lang.Long]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -269,7 +269,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      new Properties()) with JavaTransfer[java.lang.Integer]
+      new Properties()) with PythonTransfer[java.lang.Integer]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -302,7 +302,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      new Properties()) with JavaTransfer[java.lang.Short]
+      new Properties()) with PythonTransfer[java.lang.Short]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -335,7 +335,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      new Properties()) with JavaTransfer[java.lang.Byte]
+      new Properties()) with PythonTransfer[java.lang.Byte]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -368,7 +368,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      new Properties()) with JavaTransfer[java.lang.Double]
+      new Properties()) with PythonTransfer[java.lang.Double]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -401,7 +401,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      new Properties()) with JavaTransfer[java.lang.Float]
+      new Properties()) with PythonTransfer[java.lang.Float]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -434,7 +434,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      new Properties()) with JavaTransfer[java.lang.Boolean]
+      new Properties()) with PythonTransfer[java.lang.Boolean]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -467,7 +467,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      new Properties()) with JavaTransfer[java.lang.Character]
+      new Properties()) with PythonTransfer[java.lang.Character]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -500,7 +500,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      new Properties()) with JavaTransfer[java.lang.String]
+      new Properties()) with PythonTransfer[java.lang.String]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -533,7 +533,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      new Properties()) with JavaTransfer[java.lang.Long]
+      new Properties()) with PythonTransfer[java.lang.Long]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -567,7 +567,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      new Properties()) with JavaTransfer[NumericArray]
+      new Properties()) with PythonTransfer[NumericArray]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -601,7 +601,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      new Properties()) with JavaTransfer[NumericArray]
+      new Properties()) with PythonTransfer[NumericArray]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -634,7 +634,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      new Properties()) with JavaTransfer[Alarm]
+      new Properties()) with PythonTransfer[Alarm]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -667,7 +667,7 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      new Properties()) with JavaTransfer[java.lang.Long]
+      new Properties()) with PythonTransfer[java.lang.Long]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
