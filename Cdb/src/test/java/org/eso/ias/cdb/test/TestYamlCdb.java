@@ -189,6 +189,7 @@ public class TestYamlCdb {
 		superv.setId("Supervisor-ID");
 		superv.setHostName("almadev2.alma.cl");
 		superv.setLogLevel(LogLevelDao.INFO);
+		superv.setPyTfServerAddr("127.0.0.1:10001");
 
 		// Adds the DASUs
 		DasuDao dasu1 = new DasuDao();
@@ -221,6 +222,7 @@ public class TestYamlCdb {
 
 		Optional<SupervisorDao> optSuperv = cdbReader.getSupervisor(superv.getId());
 		assertTrue( optSuperv.isPresent(),"Got an empty Supervisor!");
+		assertEquals("127.0.0.1:10001", optSuperv.get().getPyTfServerAddr());
 		assertEquals(superv, optSuperv.get(),"The Supervisors differ!");
 
 	}
@@ -771,6 +773,28 @@ public class TestYamlCdb {
         Set<String> ids = idsOpt.get();
         assertEquals(4,ids.size());
         for (int i=1; i<=ids.size(); i++) assertTrue(ids.contains("Supervisor-ID"+i));
+    }
+
+    /**
+     * Test the getter of a Supervisor by ID, checking all fields
+     * @throws Exception
+     */
+    @Test
+    public void testGetSupervisor() throws Exception {
+        Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
+        cdbFiles = new CdbTxtFiles(path, TextFileType.YAML);
+        cdbReader = new StructuredTextReader(cdbFiles);
+        cdbReader.init();
+
+        Optional<SupervisorDao> supervOpt = cdbReader.getSupervisor("Supervisor-ID1");
+        assertTrue(supervOpt.isPresent());
+        SupervisorDao superv = supervOpt.get();
+        assertEquals("Supervisor-ID1", superv.getId());
+        assertEquals("almaias.eso.org", superv.getHostName());
+        assertEquals(LogLevelDao.INFO, superv.getLogLevel());
+        assertEquals("127.0.0.1:10001", superv.getPyTfServerAddr());
+        assertEquals(1, superv.getDasusToDeploy().size());
+        assertTrue(superv.containsDasu("DasuID1"));
     }
 
 
