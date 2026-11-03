@@ -535,17 +535,19 @@ The Python `TransferFunction` base class, `IASIO`, and `IasioInfo` require **no 
 
 | File | Description |
 |---|---|
-| `CompElement/src/main/proto/ias/transfer/types.proto` | Shared data type definitions |
-| `CompElement/src/main/proto/ias/transfer/pytf_service.proto` | gRPC service definition |
-| `CompElement/src/main/java/org/eso/ias/asce/transfer/GrpcPythonExecutorTF.java` | Java gRPC client replacing PythonExecutorTF |
-| `CompElement/src/main/java/org/eso/ias/asce/transfer/GrpcChannelManager.java` | Shared channel management with ref counting |
-| `CompElement/src/main/java/org/eso/ias/asce/transfer/ProtoUtil.java` | IasIOJ ↔ proto serialization utilities |
-| `PyTfServer/` | New module (entire directory) |
-| `PyTfServer/build.gradle.kts` | Module build config |
-| `PyTfServer/src/main/python/IasPyTfServer/__init__.py` | Package init |
-| `PyTfServer/src/main/python/IasPyTfServer/server.py` | Server entry point |
+| `CompElement/src/main/proto/pytf_service.proto` | gRPC service definition (Initialize/Eval/Shutdown RPCs) |
+| `CompElement/src/main/scala/org/eso/ias/asce/transfer/GrpcChannelManager.scala` | Shared channel management with ref counting |
 | `PyTfServer/src/main/python/IasPyTfServer/service.py` | gRPC servicer implementation |
 | `PyTfServer/src/main/python/IasPyTfServer/tf_manager.py` | Per-ASCE TF lifecycle management |
+
+### New Files (Step 1c — BasicTypes proto, done)
+
+| File | Description |
+|---|---|
+| `BasicTypes/src/main/proto/types.proto` | 5 shared IAS type enums (IASType, Validity, OperationalMode, AlarmState, Priority) |
+| `BasicTypes/src/main/python/IasProtobufTypes/__init__.py` | Package init for generated stubs |
+| `BasicTypes/src/test/scala/org/eso/ias/basictypes/test/TestProtoTypes.scala` | 6 Scala unit tests for enum round-trip conversion |
+| `BasicTypes/src/test/python/test_proto_types.py` | 6 Python unit tests for enum round-trip conversion |
 
 ### Modified Files (Step 0 — done)
 
@@ -556,6 +558,12 @@ The Python `TransferFunction` base class, `IASIO`, and `IasioInfo` require **no 
 | `CompElement/src/test/scala/org/eso/ias/asce/test/TestPyTF.scala` | Uses `PythonTransfer` |
 | `CompElement/src/test/scala/org/eso/ias/asce/test/TestMinMaxPyTF.scala` | Uses `PythonTransfer` |
 
+### Modified Files (Step 1c — done)
+
+| File | Changes |
+|---|---|
+| `BasicTypes/build.gradle.kts` | Added protobuf plugin, gRPC deps, `generatePythonProto`, `CopyPyProtoMods`, source set adjustment |
+
 ### Modified Files (future steps)
 
 | File | Changes |
@@ -563,10 +571,8 @@ The Python `TransferFunction` base class, `IASIO`, and `IasioInfo` require **no 
 | `Supervisor/src/main/scala/org/eso/ias/supervisor/Supervisor.scala` | Read pyTfServerAddr, pass to DASU factory, update factory signature |
 | `DistributedUnit/src/main/scala/org/eso/ias/dasu/DasuImpl.scala` | Accept pyTfServerAddr, merge into ASCE properties |
 | `CompElement/src/main/scala/org/eso/ias/asce/transfer/TransferFunctionSetting.scala` | Pass server address to Python executor (6-arg constructor) |
-| `CompElement/build.gradle.kts` | Remove JEP, add gRPC/protobuf plugin and dependencies |
-| `gradle/libs.versions.toml` | Remove JEP, add gRPC/protobuf versions |
-| `settings.gradle.kts` | Add `PyTfServer` module |
-| `AGENTS.md` | Remove JEP from pip deps, add grpcio |
+| `CompElement/build.gradle.kts` | Replace Ping proto with full IAS-type proto; add `GrpcChannelManager` |
+| `AGENTS.md` | Add grpcio to pip deps |
 
 ### Deleted Files (Step 5)
 
@@ -583,7 +589,7 @@ Full IAS-type proto deferred. Minimal proto with a single `Ping(string) → bool
 
 ### What's being done
 
-**Proto file:** `CompElement/src/main/proto/pytf_service.proto` — package `pytf`, `java_package = "org.eso.ias.generated.protobuf"`. (Package restructuring done in Step 1b.)
+**Proto file:** `CompElement/src/main/proto/pytf_service.proto` — package `pytf`, `java_package = "org.eso.ias.generated.protobuf.tfservice"`. (Package restructuring done in Step 1b.)
 
 **CompElement/build.gradle.kts** — added `com.google.protobuf` plugin (0.9.4), gRPC deps (`grpc-netty-shaded`, `grpc-protobuf`, `grpc-stub`, `protobuf-java`, `javax.annotation-api`), protobuf block for Java stub generation. Java source set limited to generated proto dirs (main Java files still compiled by Scala compiler). Explicit `dependsOn(tasks.generateProto)` on both `compileJava` and `ScalaCompile` to ensure proto stubs are generated before any compilation (fixes clean build failure where `compileScala` couldn't resolve `ias.pytf.*` imports).
 
@@ -624,6 +630,7 @@ Full IAS-type proto deferred. Minimal proto with a single `Ping(string) → bool
 ### Remaining
 
 - `pip install grpcio` in CI (AGENTS.md, workflow) — not yet updated
+- Step 2: expand proto with `types.proto` in BasicTypes for IAS enums, then `Alarm`, `NumericArray`, `IasioInfo`, `IasIO` messages
 - End-to-end test: start Python server, run a Python TF, verify Ping roundtrip
 
 ### Build Fix
@@ -640,7 +647,7 @@ Moved generated proto output into proper packages rather than flat files. This f
 
 **Reason:** The initial gRPC PoC generated Java classes into `ias.pytf` and Python stubs as flat files with no package. These are both unidiomatic for an IAS project. Generated sources belong in proper packages so they integrate cleanly with the rest of the codebase and install correctly alongside other modules.
 
-**Java package:** `ias.pytf` → `org.eso.ias.generated.protobuf`. Updated `java_package` in `pytf_service.proto`. Generated files now land in `build/generated/source/proto/main/java/org/eso/ias/generated/protobuf/` and `build/generated/source/proto/main/grpc/org/eso/ias/generated/protobuf/`.
+**Java package:** `ias.pytf` → `org.eso.ias.generated.protobuf.tfservice`. Updated `java_package` in `pytf_service.proto`. Generated files now land in `build/generated/source/proto/main/java/org/eso/ias/generated/protobuf/tfservice/` and `build/generated/source/proto/main/grpc/org/eso/ias/generated/protobuf/tfservice/`.
 
 **Python package:** flat files → `IasProtobufTfserver`. New `generatePythonProto` task in `CompElement/build.gradle.kts` outputs to `build/generated/python/IasProtobufTfserver/`. A `CopyPyProtoMods` task copies the stubs (plus a hand-written `__init__.py`) into `build/lib/python3.12/site-packages/IasProtobufTfserver/`, where the IAS `InstallLib` task picks them up for installation to `$IAS_ROOT`.
 
@@ -666,13 +673,76 @@ CompElement/src/main/proto/pytf_service.proto
 
 | File | Change |
 |---|---|
-| `CompElement/src/main/proto/pytf_service.proto` | `java_package` → `org.eso.ias.generated.protobuf` |
+| `CompElement/src/main/proto/pytf_service.proto` | `java_package` → `org.eso.ias.generated.protobuf.tfservice` |
 | `CompElement/build.gradle.kts` | `generatePythonProto` outputs to `IasProtobufTfserver`; new `CopyPyProtoMods` task; removed duplicate dependency blocks |
 | `CompElement/src/main/python/IasProtobufTfserver/__init__.py` | **NEW** — package init for generated stubs |
-| `CompElement/src/main/scala/org/eso/ias/asce/transfer/GrpcPythonExecutor.scala` | imports → `org.eso.ias.generated.protobuf` |
+| `CompElement/src/main/scala/org/eso/ias/asce/transfer/GrpcPythonExecutor.scala` | imports → `org.eso.ias.generated.protobuf.tfservice` |
 | `PyTfServer/src/main/python/server.py` | imports → `IasProtobufTfserver.pytf_service_pb2` |
 | `PyTfServer/src/main/python/IasPyTfServer/pytf_service_pb2.py` | **DELETED** (now generated by CompElement) |
 | `PyTfServer/src/main/python/IasPyTfServer/pytf_service_pb2_grpc.py` | **DELETED** (now generated by CompElement) |
+
+---
+
+## Step 1c — BasicTypes Proto Foundation (DONE)
+
+Moved the shared IAS type proto definitions into BasicTypes, where the types they represent already live. BasicTypes now generates protobuf stubs for both Java and Python, following the same build/install pattern established in CompElement (Step 1b).
+
+### Why
+
+The types `IASType`, `Validity`, `OperationalMode`, `AlarmState`, and `Priority` are defined in BasicTypes (`IasBasicTypes/*` Python, `org.eso.ias.types.*` Java/Scala). The proto definitions for these enums logically belong there too — not in CompElement. This way any module that depends on BasicTypes gets access to the proto types, not just CompElement and PyTfServer.
+
+### What was done
+
+**Proto file:** `BasicTypes/src/main/proto/types.proto` — flat file (not in subdirectories) to ensure `grpc_tools.protoc` generates Python stubs directly in the `IasProtobufTypes` package, matching the CompElement convention. Package `ias.types`, `java_package = "org.eso.ias.generated.protobuf.iastypes"`, `java_outer_classname = "IasTypes"`.
+
+Defines 5 protobuf enums:
+- `IASType` (13 values: `IASTYPE_LONG` through `IASTYPE_ALARM`)
+- `Validity` (2 values: `VALIDITY_RELIABLE`, `VALIDITY_UNRELIABLE`)
+- `OperationalMode` (9 values: `OPERATIONALMODE_CLOSING` through `OPERATIONALMODE_MALFUNCTIONING`)
+- `AlarmState` (4 values: `ALARMSTATE_CLEAR_ACK` through `ALARMSTATE_SET_ACK`)
+- `Priority` (4 values: `PRIORITY_LOW` through `PRIORITY_CRITICAL`)
+
+**BasicTypes/build.gradle.kts** — added `com.google.protobuf` plugin (0.9.4), gRPC dependencies (`grpc-netty-shaded`, `grpc-protobuf`, `grpc-stub`, `protobuf-java`, `javax.annotation`), protobuf block for Java stub generation. Java srcDirs limited to generated proto dirs (main Java files compiled by Scala compiler). Explicit `dependsOn(tasks.generateProto)` on `compileJava` and `ScalaCompile`. New `generatePythonProto` task (uses `grpc_tools.protoc` with recursive proto file discovery via `walk()`). New `CopyPyProtoMods` task copies generated stubs + `__init__.py` to site-packages.
+
+**Python package:** `IasProtobufTypes` (`src/main/python/IasProtobufTypes/__init__.py` — empty). Generated stubs land flat in the package: `types_pb2.py`, `types_pb2_grpc.py`. Import: `from IasProtobufTypes import types_pb2`.
+
+**Unit tests:**
+- Scala: `TestProtoTypes.scala` — 6 tests, exhaustive round-trip conversion for all 5 enums (`IASTypeFrom`/`IASTypeTo` etc.), handles protobuf `UNRECOGNIZED` sentinel
+- Python: `test_proto_types.py` — 6 tests, verifies bijective mapping between IAS enum values and proto enum values (does NOT assert numeric equality, since IAS enum values have semantic meaning while proto values are wire identifiers)
+
+### Why the proto enum values don't match IAS enum values
+
+The existing IAS Python enums have semantic numeric values (e.g. `IASType.LONG = 1`, `OperationalMode.CLOSING = 0`). Protobuf proto3 requires the first enum value to be 0. The proto enums use 0-based sequential values (`IASTYPE_LONG = 0`, `IASTYPE_INT = 1`, ...). This is fine — the proto values are only wire identifiers. The conversion logic (`IASTypeFrom`/`IASTypeTo`) maps between them explicitly. The tests verify the mapping is bijective (no collisions, no missing values), not that the numeric values match.
+
+### Flow
+
+```
+BasicTypes/src/main/proto/types.proto
+  → generateProto (Gradle protobuf plugin)
+    → Java: build/generated/source/proto/.../org/eso/ias/generated/protobuf/iastypes/IasTypes.java
+  → generatePythonProto (grpc_tools.protoc)
+    → Python: build/generated/python/IasProtobufTypes/types_pb2.py
+  → CopyPyProtoMods
+    → site-packages: build/lib/python3.12/site-packages/IasProtobufTypes/
+  → InstallLib
+    → $IAS_ROOT/lib/python3.12/site-packages/IasProtobufTypes/
+```
+
+### Files changed (Step 1c — done)
+
+| File | Change |
+|---|---|
+| `BasicTypes/src/main/proto/types.proto` | **NEW** — 5 shared IAS type enums |
+| `BasicTypes/build.gradle.kts` | Added protobuf plugin, gRPC deps, `generatePythonProto`, `CopyPyProtoMods`, source set adjustment |
+| `BasicTypes/src/main/python/IasProtobufTypes/__init__.py` | **NEW** — package init for generated stubs |
+| `BasicTypes/src/test/scala/org/eso/ias/basictypes/test/TestProtoTypes.scala` | **NEW** — 6 Scala unit tests |
+| `BasicTypes/src/test/python/test_proto_types.py` | **NEW** — 6 Python unit tests |
+
+### Verification
+
+- `./gradlew :BasicTypes:test` — SUCCESS (all Scala tests pass)
+- `./gradlew :BasicTypes:pytest` — SUCCESS (28 Python tests pass, including 6 new proto tests)
+- `./gradlew build` — SUCCESS (full project, 203 tasks)
 
 ---
 
@@ -681,8 +751,9 @@ CompElement/src/main/proto/pytf_service.proto
 1. ~~Phase 1: Remove JEP (DONE)~~ — zero JEP dependency, stub `PythonExecutorTF`, tests excluded
 2. ~~Step 0: Separate Scala / Java / Python execution paths (DONE)~~
 3. ~~**Step 1 (simplified): Minimal gRPC PoC (DONE)**~~ — flat proto, Ping RPC, PyTfServer module, GrpcPythonExecutor (Scala), Python path free of Java types, unit tests
-4. ~~**Step 1b: Proto package restructuring (DONE)**~~ — Java `org.eso.ias.generated.protobuf`, Python `IasProtobufTfserver`, checked-in stubs removed
-5. **Step 2: Full proto with IAS types** — expand to types.proto, serialization, full server
-6. **Step 3: Configuration threading** — wire `pyTfServerAddr` from Supervisor → DASU → ASCE → executor
-7. **Step 4: Re-enable Python TF tests** — with running PyTfServer
-8. **Step 5: Integration tests** — full end-to-end with real Python TFs over gRPC
+4. ~~**Step 1b: Proto package restructuring (DONE)**~~ — Java `org.eso.ias.generated.protobuf.{iastypes,tfservice}`, Python `IasProtobufTfserver`, checked-in stubs removed
+5. ~~**Step 1c: BasicTypes proto foundation (DONE)**~~ — `types.proto` with 5 shared IAS enums, Java + Python generation, unit tests
+6. **Step 2: Full proto with IAS types** — add `Alarm`, `NumericArray`, `IasioInfo`, `IasIO` messages on top of BasicTypes enums
+7. **Step 3: Configuration threading** — wire `pyTfServerAddr` from Supervisor → DASU → ASCE → executor
+8. **Step 4: Re-enable Python TF tests** — with running PyTfServer
+9. **Step 5: Integration tests** — full end-to-end with real Python TFs over gRPC
