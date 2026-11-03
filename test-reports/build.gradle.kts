@@ -3,6 +3,11 @@ plugins {
     id("test-report-aggregation")
 }
 
+// Exclude grpc transitive guava that conflicts with test-report-aggregation
+configurations.all {
+    exclude(group = "com.google.guava", module = "guava")
+}
+
 
 dependencies {
     // Gets the dependencis (i.e. the modules of the project) from aggregatedModules
