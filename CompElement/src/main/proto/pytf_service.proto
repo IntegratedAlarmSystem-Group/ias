@@ -1,7 +1,7 @@
 syntax = "proto3";
 package pytf;
 
-option java_package = "org.eso.ias.generated.protobuf";
+option java_package = "org.eso.ias.generated.protobuf.tfservice";
 option java_outer_classname = "PytfService";
 
 service PyTfService {
