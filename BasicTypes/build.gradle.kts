@@ -116,5 +116,6 @@ tasks.test {
 }
 
 tasks.named("pytest").configure {
+    dependsOn("CopyPyProtoMods")
     dependsOn(project(":Tools").tasks.named("build"))
 }
