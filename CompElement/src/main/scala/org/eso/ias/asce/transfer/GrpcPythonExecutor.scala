@@ -1,7 +1,7 @@
 package org.eso.ias.asce.transfer
 
-import org.eso.ias.generated.protobuf.PyTfServiceGrpc
-import org.eso.ias.generated.protobuf.PytfService
+import org.eso.ias.generated.protobuf.tfservice.PyTfServiceGrpc
+import org.eso.ias.generated.protobuf.tfservice.PytfService
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import org.slf4j.LoggerFactory
