@@ -31,8 +31,8 @@ object TransferFunctionLanguage extends Enumeration {
  * developers for which we need to convert scala data structure to/from
  * java. Scala implementations of the TF are therefore more performant (in principle).
  *
- * For python TFs, a java class is always loaded (PythonExecutorTF / GrpcPythonExecutorTF)
- * that delegates to the python class whose name is in the className property.
+  * For python TFs, a Scala class is always loaded (GrpcPythonExecutor)
+  * that delegates to the python class whose name is in the className property.
  * 
  * @param className: The name of the java/scala/python class to run
  * @param language: the programming language used to implement the TF
@@ -56,9 +56,9 @@ class TransferFunctionSetting(
    * This is needed because the name of the java class for running python TF is not passed in the constructor
    * but is needed at least for meaningful log messages
    */
-  val nameOfClassToLoad =
-    if (language==TransferFunctionLanguage.python) classOf[PythonExecutorTF[?]].getName
-    else className
+    val nameOfClassToLoad =
+     if (language==TransferFunctionLanguage.python) classOf[GrpcPythonExecutor[?]].getName
+     else className
 
   /**
    * Initialized is true when the object to run the TF has been
@@ -128,12 +128,9 @@ class TransferFunctionSetting(
 
     // Load the class
     val tfExecutorClass: Try[Class[?]] =
-      if (language==TransferFunctionLanguage.python) {
-        TransferFunctionSetting.logger.debug("Loading the java class to run python TF {}",nameOfClassToLoad)
-        // In case of python the java class implementing the TF is known
-        // so we do not load the class with a forName because in this way
-        // the compiler wil actually ensure that this class exists
-        Try(classOf[PythonExecutorTF[?]])
+       if (language==TransferFunctionLanguage.python) {
+         TransferFunctionSetting.logger.debug("Loading the Scala class to run python TF {}",nameOfClassToLoad)
+         Try(classOf[GrpcPythonExecutor[?]])
       } else {
         TransferFunctionSetting.logger.debug("Loading java class {}",nameOfClassToLoad)
         Try(this.getClass.getClassLoader.loadClass(className))

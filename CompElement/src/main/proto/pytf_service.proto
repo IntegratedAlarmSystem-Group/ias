@@ -1,0 +1,17 @@
+syntax = "proto3";
+package pytf;
+
+option java_package = "org.eso.ias.generated.protobuf";
+option java_outer_classname = "PytfService";
+
+service PyTfService {
+  rpc Ping(PingRequest) returns (PingResponse);
+}
+
+message PingRequest {
+  string message = 1;
+}
+
+message PingResponse {
+  bool success = 1;
+}

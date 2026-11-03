@@ -26,6 +26,7 @@ val subprojectsList = listOf(
     "PythonPluginFeeder",
     "Converter",
     "CompElement",
+    "PyTfServer",
     "DistributedUnit",
     "Supervisor",
     "WebServerSender",
