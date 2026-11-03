@@ -10,32 +10,32 @@ class OperationalMode(Enum):
     The operational mode of a monitor point or alarm 
     as defined in org.eso.ias.types.OperationalMode
     '''
-    # Starting up
-    STARTUP = 1 
-    
+    # Shutting down
+    CLOSING = 0
+
+    # Only partially operational
+    DEGRADED = 1
+
     # Initialization on going
     INITIALIZATION = 2
-    
-    # Shutting down
-    CLOSING = 3
-    
-    # Shutted down
-    SHUTTEDDOWN = 4 
-    
-    # Maintenance
-    MAINTENANCE = 5 
-    
-    # Fully operational
-    OPERATIONAL = 6
-    
-    # Only partially operational
-    DEGRADED = 7
-    
-    # Unknown state
-    UNKNOWN = 8
 
-    # Malfunctionimg
-    MALFUNCTIONING = 9
+    # Maintenance
+    MAINTENANCE = 3
+
+    # Fully operational
+    OPERATIONAL = 4
+
+    # Shutted down
+    SHUTTEDDOWN = 5
+
+    # Starting up
+    STARTUP = 6
+
+    # Unknown state
+    UNKNOWN = 7
+
+    # Malfunctioning
+    MALFUNCTIONING = 8
     
     @staticmethod
     def fromString(alarmString):

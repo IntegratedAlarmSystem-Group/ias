@@ -11,8 +11,8 @@ class Validity(Enum):
     '''
 
     RELIABLE = 1
-    
-    UNRELIABLE = 0 
+
+    UNRELIABLE = 0
     
     @staticmethod
     def fromString(validityString):
