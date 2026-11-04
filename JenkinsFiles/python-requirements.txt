@@ -4,3 +4,5 @@ pytest-timeout
 python-dateutil
 PySide6
 PyYAML
+grpcio
+grpcio-tools

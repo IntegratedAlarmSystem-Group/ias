@@ -26,7 +26,7 @@ jobs:
       - name: Install python tools
         run: |
           pip install --upgrade pip
-          pip install PySide6 python-dateutil pytest pytest-timeout confluent-kafka PyYAML
+          pip install PySide6 python-dateutil pytest pytest-timeout confluent-kafka PyYAML grpcio grpcio-tools
        - name: Check JEP installation
         run: echo "JEP removed (Phase 1)"
       - run: java -version
