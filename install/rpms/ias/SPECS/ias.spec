@@ -20,6 +20,8 @@ BuildRequires:	%{py3_dist pytest-timeout}
 BuildRequires:	%{py3_dist sqlalchemy}
 BuildRequires:	%{py3_dist oracledb}
 BuildRequires:	%{py3_dist pyside6}
+BuildRequires:	%{py3_dist grpcio}
+BuildRequires:	%{py3_dist grpcio-tools}
 BuildRequires:	pyside6-tools
 
 Requires:  python3 >= 3.11
