@@ -1,29 +1,24 @@
 package org.eso.ias.basictypes.test
 
 import org.scalatest.flatspec.AnyFlatSpec
-import org.eso.ias.types.{IASTypes, IasValidity, OperationalMode, AlarmState, Priority}
-import com.google.protobuf.Descriptors.DescriptorValidationException
-import org.eso.ias.generated.protobuf.iastypes.IasTypes.{IASType => ProtoIASType}
+import org.scalatest.matchers.should.Matchers
+import org.eso.ias.types.*
+import org.eso.ias.types.ProtoUtil
+import org.eso.ias.generated.protobuf.iastypes.IasTypes
 
-import org.eso.ias.generated.protobuf.iastypes.IasTypes.{Validity => ProtoValidity}
+class TestProtoTypes extends AnyFlatSpec with Matchers {
 
-import org.eso.ias.generated.protobuf.iastypes.IasTypes.{OperationalMode => ProtoOperationalMode}
-
-import org.eso.ias.generated.protobuf.iastypes.IasTypes.{AlarmState => ProtoAlarmState}
-
-import org.eso.ias.generated.protobuf.iastypes.IasTypes.{Priority => ProtoPriority}
-
-class TestProtoTypes extends AnyFlatSpec {
+  // ---- Enum round-trip tests (delegate to ProtoUtil) ----
 
   behavior of "Proto IASType"
 
   it must "round trip all 13 IASTypes values to proto and back" in {
     val allTypes = IASTypes.values.toList
-    assert(allTypes.size == 13)
+    allTypes.size shouldBe 13
     allTypes.foreach { iasType =>
-      val proto = IASTypeFrom(iasType)
-      val back = IASTypeTo(proto)
-      assert(back == iasType, s"$iasType -> $proto -> $back")
+      val proto = ProtoUtil.IASTypeFrom(iasType)
+      val back = ProtoUtil.IASTypeTo(proto)
+      back shouldBe iasType
     }
   }
 
@@ -31,11 +26,11 @@ class TestProtoTypes extends AnyFlatSpec {
 
   it must "round trip all 2 Validity values to proto and back" in {
     val allValues = IasValidity.values.toList
-    assert(allValues.size == 2)
-    allValues.foreach { validity =>
-      val proto = ValidityFrom(validity)
-      val back = ValidityTo(proto)
-      assert(back == validity, s"$validity -> $proto -> $back")
+    allValues.size shouldBe 2
+    allValues.foreach { v =>
+      val proto = ProtoUtil.ValidityFrom(v)
+      val back = ProtoUtil.ValidityTo(proto)
+      back shouldBe v
     }
   }
 
@@ -43,11 +38,11 @@ class TestProtoTypes extends AnyFlatSpec {
 
   it must "round trip all 9 OperationalMode values to proto and back" in {
     val allModes = OperationalMode.values().toList
-    assert(allModes.size == 9)
-    allModes.foreach { mode =>
-      val proto = OperationalModeFrom(mode)
-      val back = OperationalModeTo(proto)
-      assert(back == mode, s"$mode -> $proto -> $back")
+    allModes.size shouldBe 9
+    allModes.foreach { m =>
+      val proto = ProtoUtil.OperationalModeFrom(m)
+      val back = ProtoUtil.OperationalModeTo(proto)
+      back shouldBe m
     }
   }
 
@@ -55,11 +50,11 @@ class TestProtoTypes extends AnyFlatSpec {
 
   it must "round trip all 4 AlarmState values to proto and back" in {
     val allStates = AlarmState.values().toList
-    assert(allStates.size == 4)
-    allStates.foreach { state =>
-      val proto = AlarmStateFrom(state)
-      val back = AlarmStateTo(proto)
-      assert(back == state, s"$state -> $proto -> $back")
+    allStates.size shouldBe 4
+    allStates.foreach { s =>
+      val proto = ProtoUtil.AlarmStateFrom(s)
+      val back = ProtoUtil.AlarmStateTo(proto)
+      back shouldBe s
     }
   }
 
@@ -67,115 +62,168 @@ class TestProtoTypes extends AnyFlatSpec {
 
   it must "round trip all 4 Priority values to proto and back" in {
     val allPrios = Priority.values().toList
-    assert(allPrios.size == 4)
-    allPrios.foreach { prio =>
-      val proto = PriorityFrom(prio)
-      val back = PriorityTo(proto)
-      assert(back == prio, s"$prio -> $proto -> $back")
+    allPrios.size shouldBe 4
+    allPrios.foreach { p =>
+      val proto = ProtoUtil.PriorityFrom(p)
+      val back = ProtoUtil.PriorityTo(proto)
+      back shouldBe p
     }
   }
 
-  // IASType conversion
-  private def IASTypeFrom(t: IASTypes): ProtoIASType = t match {
-    case IASTypes.LONG => ProtoIASType.IASTYPE_LONG
-    case IASTypes.INT => ProtoIASType.IASTYPE_INT
-    case IASTypes.SHORT => ProtoIASType.IASTYPE_SHORT
-    case IASTypes.BYTE => ProtoIASType.IASTYPE_BYTE
-    case IASTypes.DOUBLE => ProtoIASType.IASTYPE_DOUBLE
-    case IASTypes.FLOAT => ProtoIASType.IASTYPE_FLOAT
-    case IASTypes.BOOLEAN => ProtoIASType.IASTYPE_BOOLEAN
-    case IASTypes.CHAR => ProtoIASType.IASTYPE_CHAR
-    case IASTypes.STRING => ProtoIASType.IASTYPE_STRING
-    case IASTypes.TIMESTAMP => ProtoIASType.IASTYPE_TIMESTAMP
-    case IASTypes.ARRAYOFDOUBLES => ProtoIASType.IASTYPE_ARRAYOFDOUBLES
-    case IASTypes.ARRAYOFLONGS => ProtoIASType.IASTYPE_ARRAYOFLONGS
-    case IASTypes.ALARM => ProtoIASType.IASTYPE_ALARM
+  // ---- Alarm round-trip ----
+
+  behavior of "Proto Alarm"
+
+  it must "round trip Alarm values through proto" in {
+    val alarms = List(
+      Alarm.getInitialAlarmState(),
+      Alarm.getInitialAlarmState(Priority.CRITICAL),
+      Alarm.getInitialAlarmState().set(),
+      Alarm.getInitialAlarmState().set().increasePriority(),
+      Alarm.getInitialAlarmState().set().clear()
+    )
+    alarms.foreach { alarm =>
+      val proto = ProtoUtil.alarmFrom(alarm)
+      val back = ProtoUtil.alarmTo(proto)
+      back shouldBe alarm
+    }
   }
 
-  private def IASTypeTo(p: ProtoIASType): IASTypes = p match {
-    case ProtoIASType.IASTYPE_LONG => IASTypes.LONG
-    case ProtoIASType.IASTYPE_INT => IASTypes.INT
-    case ProtoIASType.IASTYPE_SHORT => IASTypes.SHORT
-    case ProtoIASType.IASTYPE_BYTE => IASTypes.BYTE
-    case ProtoIASType.IASTYPE_DOUBLE => IASTypes.DOUBLE
-    case ProtoIASType.IASTYPE_FLOAT => IASTypes.FLOAT
-    case ProtoIASType.IASTYPE_BOOLEAN => IASTypes.BOOLEAN
-    case ProtoIASType.IASTYPE_CHAR => IASTypes.CHAR
-    case ProtoIASType.IASTYPE_STRING => IASTypes.STRING
-    case ProtoIASType.IASTYPE_TIMESTAMP => IASTypes.TIMESTAMP
-    case ProtoIASType.IASTYPE_ARRAYOFDOUBLES => IASTypes.ARRAYOFDOUBLES
-    case ProtoIASType.IASTYPE_ARRAYOFLONGS => IASTypes.ARRAYOFLONGS
-    case ProtoIASType.IASTYPE_ALARM => IASTypes.ALARM
-    case _ => throw new IllegalStateException(s"Unrecognized proto IASType: $p")
+  // ---- Value round-trip (all 13 IAS types) ----
+
+  behavior of "Proto Value"
+
+  private def roundTripValue(value: Any, iasType: IASTypes): Unit = {
+    val proto = ProtoUtil.valueFrom(value, iasType)
+    val back = ProtoUtil.valueTo(proto, iasType)
+
+    iasType match {
+      case IASTypes.LONG =>
+        back.asInstanceOf[Long] shouldBe value.asInstanceOf[Long]
+      case IASTypes.INT =>
+        back.asInstanceOf[Int] shouldBe value.asInstanceOf[Int]
+      case IASTypes.SHORT =>
+        back.asInstanceOf[Short] shouldBe value.asInstanceOf[Short]
+      case IASTypes.BYTE =>
+        back.asInstanceOf[Byte] shouldBe value.asInstanceOf[Byte]
+      case IASTypes.DOUBLE =>
+        back.asInstanceOf[Double] shouldBe value.asInstanceOf[Double]
+      case IASTypes.FLOAT =>
+        back.asInstanceOf[Float] shouldBe value.asInstanceOf[Float]
+      case IASTypes.BOOLEAN =>
+        back.asInstanceOf[Boolean] shouldBe value.asInstanceOf[Boolean]
+      case IASTypes.CHAR =>
+        back.asInstanceOf[Char] shouldBe value.asInstanceOf[Char]
+      case IASTypes.STRING =>
+        back.asInstanceOf[String] shouldBe value.asInstanceOf[String]
+      case IASTypes.TIMESTAMP =>
+        back.asInstanceOf[java.lang.Long] shouldBe value.asInstanceOf[java.lang.Long]
+      case IASTypes.ARRAYOFDOUBLES =>
+        val orig = value.asInstanceOf[NumericArray]
+        val res = back.asInstanceOf[NumericArray]
+        res.numericArrayType shouldBe NumericArray.NumericArrayType.DOUBLE
+        res.size() shouldBe orig.size()
+        for (i <- 0 until orig.size())
+          res.get(i).doubleValue() shouldBe orig.get(i).doubleValue()
+      case IASTypes.ARRAYOFLONGS =>
+        val orig = value.asInstanceOf[NumericArray]
+        val res = back.asInstanceOf[NumericArray]
+        res.numericArrayType shouldBe NumericArray.NumericArrayType.LONG
+        res.size() shouldBe orig.size()
+        for (i <- 0 until orig.size())
+          res.get(i).longValue() shouldBe orig.get(i).longValue()
+      case IASTypes.ALARM =>
+        back.asInstanceOf[Alarm] shouldBe value.asInstanceOf[Alarm]
+    }
   }
 
-  // Validity conversion
-  private def ValidityFrom(v: IasValidity): ProtoValidity = v match {
-    case IasValidity.RELIABLE => ProtoValidity.VALIDITY_RELIABLE
-    case IasValidity.UNRELIABLE => ProtoValidity.VALIDITY_UNRELIABLE
+  it must "round trip LONG" in {
+    roundTripValue(42L, IASTypes.LONG)
+    roundTripValue(0L, IASTypes.LONG)
+    roundTripValue(-100L, IASTypes.LONG)
   }
 
-  private def ValidityTo(p: ProtoValidity): IasValidity = p match {
-    case ProtoValidity.VALIDITY_RELIABLE => IasValidity.RELIABLE
-    case ProtoValidity.VALIDITY_UNRELIABLE => IasValidity.UNRELIABLE
-    case _ => throw new IllegalStateException(s"Unrecognized proto Validity: $p")
+  it must "round trip INT with narrowing from int64" in {
+    roundTripValue(Integer.valueOf(42), IASTypes.INT)
+    roundTripValue(Integer.valueOf(0), IASTypes.INT)
+    roundTripValue(Integer.valueOf(-100), IASTypes.INT)
   }
 
-  // OperationalMode conversion
-  private def OperationalModeFrom(m: OperationalMode): ProtoOperationalMode = m match {
-    case OperationalMode.CLOSING => ProtoOperationalMode.OPERATIONALMODE_CLOSING
-    case OperationalMode.DEGRADED => ProtoOperationalMode.OPERATIONALMODE_DEGRADED
-    case OperationalMode.INITIALIZATION => ProtoOperationalMode.OPERATIONALMODE_INITIALIZATION
-    case OperationalMode.MAINTENANCE => ProtoOperationalMode.OPERATIONALMODE_MAINTENANCE
-    case OperationalMode.OPERATIONAL => ProtoOperationalMode.OPERATIONALMODE_OPERATIONAL
-    case OperationalMode.SHUTTEDDOWN => ProtoOperationalMode.OPERATIONALMODE_SHUTTEDDOWN
-    case OperationalMode.STARTUP => ProtoOperationalMode.OPERATIONALMODE_STARTUP
-    case OperationalMode.UNKNOWN => ProtoOperationalMode.OPERATIONALMODE_UNKNOWN
-    case OperationalMode.MALFUNCTIONING => ProtoOperationalMode.OPERATIONALMODE_MALFUNCTIONING
+  it must "round trip SHORT with narrowing from int64" in {
+    roundTripValue(Int.box(42).shortValue, IASTypes.SHORT)
+    roundTripValue(Int.box(0).shortValue, IASTypes.SHORT)
+    roundTripValue(Int.box(-100).shortValue, IASTypes.SHORT)
   }
 
-  private def OperationalModeTo(p: ProtoOperationalMode): OperationalMode = p match {
-    case ProtoOperationalMode.OPERATIONALMODE_CLOSING => OperationalMode.CLOSING
-    case ProtoOperationalMode.OPERATIONALMODE_DEGRADED => OperationalMode.DEGRADED
-    case ProtoOperationalMode.OPERATIONALMODE_INITIALIZATION => OperationalMode.INITIALIZATION
-    case ProtoOperationalMode.OPERATIONALMODE_MAINTENANCE => OperationalMode.MAINTENANCE
-    case ProtoOperationalMode.OPERATIONALMODE_OPERATIONAL => OperationalMode.OPERATIONAL
-    case ProtoOperationalMode.OPERATIONALMODE_SHUTTEDDOWN => OperationalMode.SHUTTEDDOWN
-    case ProtoOperationalMode.OPERATIONALMODE_STARTUP => OperationalMode.STARTUP
-    case ProtoOperationalMode.OPERATIONALMODE_UNKNOWN => OperationalMode.UNKNOWN
-    case ProtoOperationalMode.OPERATIONALMODE_MALFUNCTIONING => OperationalMode.MALFUNCTIONING
-    case _ => throw new IllegalStateException(s"Unrecognized proto OperationalMode: $p")
+  it must "round trip BYTE with narrowing from int64" in {
+    roundTripValue(Int.box(42).byteValue, IASTypes.BYTE)
+    roundTripValue(Int.box(0).byteValue, IASTypes.BYTE)
+    roundTripValue(Int.box(-100).byteValue, IASTypes.BYTE)
   }
 
-  // AlarmState conversion
-  private def AlarmStateFrom(s: AlarmState): ProtoAlarmState = s match {
-    case AlarmState.CLEAR_ACK => ProtoAlarmState.ALARMSTATE_CLEAR_ACK
-    case AlarmState.CLEAR_UNACK => ProtoAlarmState.ALARMSTATE_CLEAR_UNACK
-    case AlarmState.SET_UNACK => ProtoAlarmState.ALARMSTATE_SET_UNACK
-    case AlarmState.SET_ACK => ProtoAlarmState.ALARMSTATE_SET_ACK
+  it must "round trip DOUBLE" in {
+    roundTripValue(3.14, IASTypes.DOUBLE)
+    roundTripValue(0.0, IASTypes.DOUBLE)
+    roundTripValue(-1.5, IASTypes.DOUBLE)
   }
 
-  private def AlarmStateTo(p: ProtoAlarmState): AlarmState = p match {
-    case ProtoAlarmState.ALARMSTATE_CLEAR_ACK => AlarmState.CLEAR_ACK
-    case ProtoAlarmState.ALARMSTATE_CLEAR_UNACK => AlarmState.CLEAR_UNACK
-    case ProtoAlarmState.ALARMSTATE_SET_UNACK => AlarmState.SET_UNACK
-    case ProtoAlarmState.ALARMSTATE_SET_ACK => AlarmState.SET_ACK
-    case _ => throw new IllegalStateException(s"Unrecognized proto AlarmState: $p")
+  it must "round trip FLOAT with narrowing from double" in {
+    roundTripValue(3.14f, IASTypes.FLOAT)
+    roundTripValue(0f, IASTypes.FLOAT)
+    roundTripValue(-1.5f, IASTypes.FLOAT)
   }
 
-  // Priority conversion
-  private def PriorityFrom(p: Priority): ProtoPriority = p match {
-    case Priority.LOW => ProtoPriority.PRIORITY_LOW
-    case Priority.MEDIUM => ProtoPriority.PRIORITY_MEDIUM
-    case Priority.HIGH => ProtoPriority.PRIORITY_HIGH
-    case Priority.CRITICAL => ProtoPriority.PRIORITY_CRITICAL
+  it must "round trip BOOLEAN" in {
+    roundTripValue(true, IASTypes.BOOLEAN)
+    roundTripValue(false, IASTypes.BOOLEAN)
   }
 
-  private def PriorityTo(p: ProtoPriority): Priority = p match {
-    case ProtoPriority.PRIORITY_LOW => Priority.LOW
-    case ProtoPriority.PRIORITY_MEDIUM => Priority.MEDIUM
-    case ProtoPriority.PRIORITY_HIGH => Priority.HIGH
-    case ProtoPriority.PRIORITY_CRITICAL => Priority.CRITICAL
-    case _ => throw new IllegalStateException(s"Unrecognized proto Priority: $p")
+  it must "round trip CHAR as string" in {
+    roundTripValue('A', IASTypes.CHAR)
+    roundTripValue('z', IASTypes.CHAR)
+    roundTripValue('\u0000', IASTypes.CHAR)
+  }
+
+  it must "round trip STRING" in {
+    roundTripValue("hello", IASTypes.STRING)
+    roundTripValue("", IASTypes.STRING)
+    roundTripValue("with spaces and special chars @#$", IASTypes.STRING)
+  }
+
+  it must "round trip TIMESTAMP as int64" in {
+    val ts = System.currentTimeMillis()
+    roundTripValue(ts, IASTypes.TIMESTAMP)
+    roundTripValue(0L, IASTypes.TIMESTAMP)
+  }
+
+  it must "round trip ARRAYOFDOUBLES" in {
+    val empty = new NumericArray(NumericArray.NumericArrayType.DOUBLE)
+    roundTripValue(empty, IASTypes.ARRAYOFDOUBLES)
+
+    val arr = NumericArray.valueOf(NumericArray.NumericArrayType.DOUBLE, "1.1, 2.2, 3.3")
+    roundTripValue(arr, IASTypes.ARRAYOFDOUBLES)
+  }
+
+  it must "round trip ARRAYOFLONGS" in {
+    val empty = new NumericArray(NumericArray.NumericArrayType.LONG)
+    roundTripValue(empty, IASTypes.ARRAYOFLONGS)
+
+    val arr = NumericArray.valueOf(NumericArray.NumericArrayType.LONG, "1, 2, 3, 100")
+    roundTripValue(arr, IASTypes.ARRAYOFLONGS)
+  }
+
+  it must "round trip ALARM" in {
+    val alarm = Alarm.getInitialAlarmState().set().increasePriority()
+    roundTripValue(alarm, IASTypes.ALARM)
+
+    val clearAlarm = Alarm.getInitialAlarmState(Priority.LOW)
+    roundTripValue(clearAlarm, IASTypes.ALARM)
+  }
+
+   it must "throw when value case is not set" in {
+    val emptyValue = IasTypes.Value.newBuilder().build()
+    assertThrows[IllegalStateException] {
+      ProtoUtil.valueTo(emptyValue, IASTypes.LONG)
+    }
   }
 }
