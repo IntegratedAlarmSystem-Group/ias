@@ -83,19 +83,29 @@ protobuf {
     }
 }
 
+// Add BasicTypes proto sources as an include dir so that CompElement protos
+// can import "types.proto"
+tasks.named("generateProto").configure {
+    val task = this as com.google.protobuf.gradle.GenerateProtoTask
+    task.addIncludeDir(project.files(project(":BasicTypes").file("src/main/proto")))
+}
+
 // Generate Python proto stubs into IasProtobufTfserver package
 tasks.register<Exec>("generatePythonProto") {
     dependsOn(tasks.generateProto)
     val pythonProtoOut = file("build/generated/python/IasProtobufTfserver")
     val extractedProtos = file("build/extracted-protos/main")
     val protoSource = file("src/main/proto")
+    val basicTypesProtoSource = project(":BasicTypes").file("src/main/proto")
     val protoFiles = protoSource.listFiles { f -> f.extension == "proto" }?.toList() ?: emptyList()
     inputs.dir(protoSource)
+    inputs.dir(basicTypesProtoSource)
     outputs.dir(pythonProtoOut)
     executable = "python3"
     args = listOf(
         "-m", "grpc_tools.protoc",
         "--proto_path=${protoSource.absolutePath}",
+        "--proto_path=${basicTypesProtoSource.absolutePath}",
         "--proto_path=${extractedProtos.absolutePath}",
         "--python_out=${pythonProtoOut.absolutePath}",
         "--grpc_python_out=${pythonProtoOut.absolutePath}"

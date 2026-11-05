@@ -64,176 +64,19 @@ All 16 existing tests pass.
 
 ## Step 1 — Protobuf Definitions
 
-**Location:** `CompElement/src/main/proto/ias/transfer/`
+Completed across Steps 1c and 1d. See those sections.
 
-### `types.proto` — Shared Data Types
+**`gradle/libs.versions.toml`** — `protobuf = "4.28.2"`, `grpc = "1.68.0"`, gRPC library entries added.
 
-```protobuf
-syntax = "proto3";
-package ias.transfer;
-
-enum OperationalMode {
-  STARTUP = 1;
-  INITIALIZATION = 2;
-  CLOSING = 3;
-  SHUTTEDDOWN = 4;
-  MAINTENANCE = 5;
-  OPERATIONAL = 6;
-  DEGRADED = 7;
-  UNKNOWN = 8;
-  MALFUNCTIONING = 9;
-}
-
-enum IASType {
-  LONG = 1;
-  INT = 2;
-  SHORT = 3;
-  BYTE = 4;
-  DOUBLE = 5;
-  FLOAT = 6;
-  BOOLEAN = 7;
-  CHAR = 8;
-  STRING = 9;
-  TIMESTAMP = 10;
-  ARRAYOFDOUBLES = 11;
-  ARRAYOFLONGS = 12;
-  ALARM = 13;
-}
-
-enum AlarmState {
-  CLEAR_UNACK = 1;
-  CLEAR_ACK = 2;
-  SET_UNACK = 3;
-  SET_ACK = 4;
-}
-
-enum Priority {
-  LOW = 1;
-  MEDIUM = 2;
-  HIGH = 3;
-  CRITICAL = 4;
-}
-
-enum Validity {
-  RELIABLE = 1;
-  UNRELIABLE = 2;
-}
-
-message Value {
-  oneof value {
-    int64 int64Value = 1;
-    double doubleValue = 2;
-    bool boolValue = 3;
-    string stringValue = 4;
-    DoubleArray doubleArrayValue = 5;
-    Int64Array int64ArrayValue = 6;
-    Alarm alarmValue = 7;
-  }
-}
-
-message DoubleArray {
-  repeated double values = 1;
-}
-
-message Int64Array {
-  repeated int64 values = 1;
-}
-
-message Alarm {
-  AlarmState state = 1;
-  Priority priority = 2;
-}
-
-message IasIO {
-  string id = 1;
-  string runningId = 2;
-  OperationalMode mode = 3;
-  IASType iasType = 4;
-  Validity validity = 5;
-  Value value = 6;
-  int64 productionTStamp = 7;
-  map<string, string> props = 8;
-}
-
-message IasioInfo {
-  string id = 1;
-  IASType iasType = 2;
-}
-```
-
-### `pytf_service.proto` — gRPC Service
-
-```protobuf
-syntax = "proto3";
-package ias.transfer;
-
-import "ias/transfer/types.proto";
-
-service PyTfService {
-  rpc Initialize(InitRequest) returns (InitResponse);
-  rpc Eval(EvalRequest) returns (EvalResponse);
-  rpc Shutdown(ShutdownRequest) returns (ShutdownResponse);
-}
-
-message InitRequest {
-  string asceId = 1;
-  string asceRunningId = 2;
-  string pythonClassName = 3;
-  int64 validityTimeFrame = 4;
-  map<string, string> props = 5;
-  int32 templateInstance = 6;
-  repeated IasioInfo inputsInfo = 7;
-  IasioInfo outputInfo = 8;
-}
-
-message InitResponse {
-  bool success = 1;
-  string error = 2;
-}
-
-message EvalRequest {
-  string asceId = 1;
-  map<string, IasIO> compInputs = 2;
-  IasIO actualOutput = 3;
-}
-
-message EvalResponse {
-  bool success = 1;
-  string error = 2;
-  IasIO result = 3;
-}
-
-message ShutdownRequest {
-  string asceId = 1;
-}
-
-message ShutdownResponse {
-  bool success = 1;
-  string error = 2;
-}
-```
-
-### Build Changes
-
-**`gradle/libs.versions.toml`** — add:
-```toml
-[versions]
-protobuf = "4.x"
-grpc = "1.x"
-
-[libraries]
-protobuf-java = { module = "com.google.protobuf:protobuf-java", version.ref = "protobuf" }
-grpc-netty = { module = "io.grpc:grpc-netty-shaded", version.ref = "grpc" }
-grpc-protobuf = { module = "io.grpc:grpc-protobuf", version.ref = "grpc" }
-grpc-stub = { module = "io.grpc:grpc-stub", version.ref = "grpc" }
-grpc-services = { module = "io.grpc:grpc-services", version.ref = "grpc" }
-```
-
-**`CompElement/build.gradle.kts`** — add protobuf/gRPC plugin, generate both Java and Python stubs.
+**`CompElement/build.gradle.kts`** — protobuf/gRPC plugin, generate Java and Python stubs.
 
 ---
 
-## Step 2 — New `PyTfServer` Module
+## Step 2 — gRPC Service RPCs
+
+Add Initialize/Eval/Shutdown RPCs to `pytf_service.proto`. The proto already has `IasIO` and `IasioInfoProto` messages (Step 1d). Need to define the RPC messages and update the service.
+
+## Step 3 — New `PyTfServer` Module (Python gRPC Server)
 
 ### Structure
 
@@ -291,9 +134,9 @@ class TfManager:
 
 ---
 
-## Step 3 — Java gRPC Client
+## Step 4 — GrpcPythonExecutor Real RPCs
 
-### New `GrpcPythonExecutorTF.java`
+### `GrpcPythonExecutor.scala`
 
 Replaces `PythonExecutorTF.java`. Extends `PythonTransferExecutor[T]` (not `JavaTransferExecutor`).
 
@@ -374,7 +217,7 @@ Bidirectional conversion:
 
 ---
 
-## Step 4 — Thread Configuration Through the Chain
+## Step 5 — Thread Configuration Through the Chain
 
 The existing `SupervisorDao.pyTfServerAddr` field (already defined, validated, but **unused**) needs to flow down to each `GrpcPythonExecutorTF`.
 
@@ -564,6 +407,23 @@ The Python `TransferFunction` base class, `IASIO`, and `IasioInfo` require **no 
 |---|---|
 | `BasicTypes/build.gradle.kts` | Added protobuf plugin, gRPC deps, `generatePythonProto`, `CopyPyProtoMods`, source set adjustment |
 
+### New Files (Step 1d — IasIO proto + conversions, done)
+
+| File | Description |
+|---|---|
+| `CompElement/src/main/scala/org/eso/ias/asce/transfer/ProtoUtil.scala` | IasIO/IasioInfo protobuf conversions with Scaladoc |
+| `CompElement/src/test/scala/org/eso/ias/asce/test/TestProtobufIasIO.scala` | 10 round-trip tests for IasIO and IasioInfo |
+
+### Modified Files (Step 1d — done)
+
+| File | Changes |
+|---|---|
+| `BasicTypes/src/main/proto/types.proto` | Added `DoubleArray`, `Int64Array`, `Alarm`, `Value` messages |
+| `BasicTypes/src/main/scala/org/eso/ias/types/ProtoUtil.scala` | Added `alarmFrom`/`To`, `valueFrom`/`To`; Scaladoc on all methods |
+| `BasicTypes/src/test/scala/org/eso/ias/basictypes/test/TestProtoTypes.scala` | Expanded to 18 tests (all 13 Value types, Alarm, errors) |
+| `CompElement/src/main/proto/pytf_service.proto` | Added `import "types.proto"`, `IasioInfoProto`, `IasIO` messages |
+| `CompElement/build.gradle.kts` | Added `addIncludeDir` for BasicTypes proto; updated Python proto gen |
+
 ### Modified Files (future steps)
 
 | File | Changes |
@@ -580,6 +440,80 @@ The Python `TransferFunction` base class, `IASIO`, and `IasioInfo` require **no 
 |---|
 | `CompElement/src/main/java/org/eso/ias/asce/transfer/PythonExecutorTF.java` |
 | `CompElement/src/test/java/org/eso/ias/asce/test/transfer/TestJep.java` |
+
+---
+
+## Step 1d — Value/Alarm Proto + IasIO in CompElement (DONE)
+
+Extended the protobuf protocol with actual IAS data types beyond the PoC Ping RPC. Moved `Value` and `Alarm` messages into BasicTypes (where they logically belong alongside the enums), and `IasIO`/`IasioInfo` into CompElement (where the ASCE-specific serialization lives). Created bidirectional Scala conversion utilities with full test coverage.
+
+### Why
+
+The original plan (Step 1 in the doc) defined all messages in a single proto within CompElement. With Step 1c we moved the 5 enums to BasicTypes, but `IasIO` and `Value` still lived only in the plan. This step realizes them in the actual proto files, properly split across BasicTypes (fundamental types) and CompElement (ASCE-specific types).
+
+### What was done
+
+**BasicTypes `types.proto`** — added 4 messages on top of the 5 existing enums:
+- `DoubleArray` — `repeated double values`
+- `Int64Array` — `repeated int64 values`
+- `Alarm` — `AlarmState state + Priority priority`
+- `Value` — `oneof` with all 7 variants (`int64Value`, `doubleValue`, `boolValue`, `stringValue`, `doubleArrayValue`, `int64ArrayValue`, `alarmValue`). Comments document which IASTypes map to which variant.
+
+**BasicTypes `ProtoUtil.scala`** — expanded from 5 enum conversions to full basic-type serialization:
+- Added `alarmFrom`/`alarmTo` (uses `Alarm.valueOf` for deserialization)
+- Added `valueFrom`/`valueTo` covering all 13 IAS types with proper narrowing (INT/SHORT/BYTE stored as `int64Value`, FLOAT as `doubleValue`, CHAR as `stringValue`)
+- Added Scaladoc to all public methods
+- ASCE-specific types remain in CompElement's ProtoUtil
+
+**CompElement `pytf_service.proto`** — added `import "types.proto"`, then `IasioInfoProto` and full `IasIO` message. IasIO references `ias.types.OperationalMode`, `ias.types.IASType`, `ias.types.Validity`, and `ias.types.Value` from BasicTypes. Enum values in the proto use short names (e.g. `RELIABLE` not `VALIDITY_RELIABLE`, `LONG` not `IASTYPE_LONG`) since they're disambiguated by their parent enum type. Includes all 7 transport timestamps.
+
+**CompElement `build.gradle.kts`** — added `addIncludeDir` pointing to BasicTypes proto sources, enabling the `import "types.proto"`. Updated `generatePythonProto` to also pass BasicTypes' proto path.
+
+**CompElement `ProtoUtil.scala`** (new) — ASCE-level conversion utilities:
+- `iasIOFrom`/`iasIOTo` — convert `InOut[?]` + `IASTypes` to/from proto `IasIO` (zero timestamps treated as absent)
+- `iasioInfoFrom`/`iasioInfoTo` — convert `IasioInfo` to/from `IasioInfoProto`
+- Delegates basic type conversions to `org.eso.ias.types.ProtoUtil`
+- Full Scaladoc on all public methods
+
+**Tests:**
+- BasicTypes `TestProtoTypes.scala` — expanded from 6 enum tests to 18 tests covering all 13 IAS Value types (with narrowing), Alarm round-trip, and error handling for unset value case
+- CompElement `TestProtobufIasIO.scala` (new) — 8 IasIO tests (all fields, no value, Alarm, zero timestamps, arrays, all timestamps, INT/SHORT/BYTE narrowing) + 2 IasioInfo tests
+
+### Architecture Rationale
+
+The split follows a clear ownership boundary:
+
+| Layer | Module | Proto | ProtoUtil |
+|---|---|---|---|
+| **Basic types** | BasicTypes | `types.proto` (enums + `Value`, `Alarm`, arrays) | `org.eso.ias.types.ProtoUtil` (primitives) |
+| **ASCE types** | CompElement | `pytf_service.proto` (`IasIO`, `IasioInfoProto`) | `org.eso.ias.asce.transfer.ProtoUtil` (ASCE wrappers) |
+
+CompElement proto imports BasicTypes proto via `import "types.proto"` (enabled by Gradle `addIncludeDir`). CompElement's Scala ProtoUtil delegates to BasicTypes' ProtoUtil for basic conversions.
+
+### Files changed (Step 1d — done)
+
+| File | Change |
+|---|---|
+| `BasicTypes/src/main/proto/types.proto` | Added `DoubleArray`, `Int64Array`, `Alarm`, `Value` messages |
+| `BasicTypes/src/main/scala/org/eso/ias/types/ProtoUtil.scala` | Added `alarmFrom`/`To`, `valueFrom`/`To`; Scaladoc on all methods |
+| `BasicTypes/src/test/scala/org/eso/ias/basictypes/test/TestProtoTypes.scala` | Expanded to 18 tests (all 13 Value types, Alarm, errors) |
+| `CompElement/src/main/proto/pytf_service.proto` | Added `import "types.proto"`, `IasioInfoProto`, `IasIO` messages |
+| `CompElement/build.gradle.kts` | Added `addIncludeDir` for BasicTypes proto; updated Python proto gen |
+| `CompElement/src/main/scala/org/eso/ias/asce/transfer/ProtoUtil.scala` | **NEW** — IasIO/IasioInfo conversions with Scaladoc |
+| `CompElement/src/test/scala/org/eso/ias/asce/test/TestProtobufIasIO.scala` | **NEW** — 10 round-trip tests |
+
+### Verification
+
+- `./gradlew :BasicTypes:test` — SUCCESS (all 18 Scala tests pass)
+- `./gradlew :BasicTypes:pytest` — SUCCESS (all Python tests pass)
+- `./gradlew :CompElement:test` — SUCCESS (all Scala tests pass)
+- `./gradlew build` — SUCCESS (full project)
+
+### Remaining
+
+- Add Initialize/Eval/Shutdown RPCs to `pytf_service.proto` (replacing or alongside Ping)
+- Update `GrpcPythonExecutor` to call real IasIO-based RPCs
+- Implement Python gRPC server (`PyTfServer`) with real TF execution
 
 ---
 
@@ -629,9 +563,10 @@ Full IAS-type proto deferred. Minimal proto with a single `Ping(string) → bool
 
 ### Remaining
 
-- `pip install grpcio` in CI (AGENTS.md, workflow) — not yet updated
-- Step 2: expand proto with `types.proto` in BasicTypes for IAS enums, then `Alarm`, `NumericArray`, `IasioInfo`, `IasIO` messages
-- End-to-end test: start Python server, run a Python TF, verify Ping roundtrip
+- Add Initialize/Eval/Shutdown RPCs to `pytf_service.proto` (Step 2)
+- Update `GrpcPythonExecutor` with real IasIO-based RPCs (Step 4)
+- Implement Python gRPC server with real TF execution (Step 3/PyTfServer)
+- End-to-end test: start Python server, run a Python TF, verify full roundtrip
 
 ### Build Fix
 
@@ -695,12 +630,12 @@ The types `IASType`, `Validity`, `OperationalMode`, `AlarmState`, and `Priority`
 
 **Proto file:** `BasicTypes/src/main/proto/types.proto` — flat file (not in subdirectories) to ensure `grpc_tools.protoc` generates Python stubs directly in the `IasProtobufTypes` package, matching the CompElement convention. Package `ias.types`, `java_package = "org.eso.ias.generated.protobuf.iastypes"`, `java_outer_classname = "IasTypes"`.
 
-Defines 5 protobuf enums:
-- `IASType` (13 values: `IASTYPE_LONG` through `IASTYPE_ALARM`)
-- `Validity` (2 values: `VALIDITY_RELIABLE`, `VALIDITY_UNRELIABLE`)
-- `OperationalMode` (9 values: `OPERATIONALMODE_CLOSING` through `OPERATIONALMODE_MALFUNCTIONING`)
-- `AlarmState` (4 values: `ALARMSTATE_CLEAR_ACK` through `ALARMSTATE_SET_ACK`)
-- `Priority` (4 values: `PRIORITY_LOW` through `PRIORITY_CRITICAL`)
+Defines 5 protobuf enums (enum values named without type prefix, since they're disambiguated by their parent enum in the generated stubs):
+- `IASType` (13 values: `LONG` through `ALARM`)
+- `Validity` (2 values: `RELIABLE`, `UNRELIABLE`)
+- `OperationalMode` (9 values: `CLOSING` through `MALFUNCTIONING`)
+- `AlarmState` (4 values: `CLEAR_ACK` through `SET_ACK`)
+- `Priority` (4 values: `LOW` through `CRITICAL`)
 
 **BasicTypes/build.gradle.kts** — added `com.google.protobuf` plugin (0.9.4), gRPC dependencies (`grpc-netty-shaded`, `grpc-protobuf`, `grpc-stub`, `protobuf-java`, `javax.annotation`), protobuf block for Java stub generation. Java srcDirs limited to generated proto dirs (main Java files compiled by Scala compiler). Explicit `dependsOn(tasks.generateProto)` on `compileJava` and `ScalaCompile`. New `generatePythonProto` task (uses `grpc_tools.protoc` with recursive proto file discovery via `walk()`). New `CopyPyProtoMods` task copies generated stubs + `__init__.py` to site-packages.
 
@@ -712,7 +647,7 @@ Defines 5 protobuf enums:
 
 ### Why the proto enum values don't match IAS enum values
 
-The existing IAS Python enums have semantic numeric values (e.g. `IASType.LONG = 1`, `OperationalMode.CLOSING = 0`). Protobuf proto3 requires the first enum value to be 0. The proto enums use 0-based sequential values (`IASTYPE_LONG = 0`, `IASTYPE_INT = 1`, ...). This is fine — the proto values are only wire identifiers. The conversion logic (`IASTypeFrom`/`IASTypeTo`) maps between them explicitly. The tests verify the mapping is bijective (no collisions, no missing values), not that the numeric values match.
+The existing IAS Python enums have semantic numeric values (e.g. `IASType.LONG = 1`, `OperationalMode.CLOSING = 0`). Protobuf proto3 requires the first enum value to be 0. The proto enums use 0-based sequential values (`LONG = 0`, `INT = 1`, ...). This is fine — the proto values are only wire identifiers. The conversion logic (`IASTypeFrom`/`IASTypeTo`) maps between them explicitly. The tests verify the mapping is bijective (no collisions, no missing values), not that the numeric values match.
 
 ### Flow
 
@@ -748,12 +683,16 @@ BasicTypes/src/main/proto/types.proto
 
 ## Implementation Order
 
-1. ~~Phase 1: Remove JEP (DONE)~~ — zero JEP dependency, stub `PythonExecutorTF`, tests excluded
+1. ~~Phase 1: Remove JEP (DONE)~~ — zero JEP dependency, stub `PythonExecutorTF`, tests removed
 2. ~~Step 0: Separate Scala / Java / Python execution paths (DONE)~~
 3. ~~**Step 1 (simplified): Minimal gRPC PoC (DONE)**~~ — flat proto, Ping RPC, PyTfServer module, GrpcPythonExecutor (Scala), Python path free of Java types, unit tests
 4. ~~**Step 1b: Proto package restructuring (DONE)**~~ — Java `org.eso.ias.generated.protobuf.{iastypes,tfservice}`, Python `IasProtobufTfserver`, checked-in stubs removed
 5. ~~**Step 1c: BasicTypes proto foundation (DONE)**~~ — `types.proto` with 5 shared IAS enums, Java + Python generation, unit tests
-6. **Step 2: Full proto with IAS types** — add `Alarm`, `NumericArray`, `IasioInfo`, `IasIO` messages on top of BasicTypes enums
-7. **Step 3: Configuration threading** — wire `pyTfServerAddr` from Supervisor → DASU → ASCE → executor
-8. **Step 4: Re-enable Python TF tests** — with running PyTfServer
-9. **Step 5: Integration tests** — full end-to-end with real Python TFs over gRPC
+6. ~~**Step 1d: Value/Alarm proto + IasIO in CompElement (DONE)**~~ — `Value`, `Alarm` in BasicTypes; full `IasIO`/`IasioInfo` in CompElement; bidirectional Scala conversions with tests; Scaladoc
+7. **Step 2: gRPC service RPCs** — add Initialize/Eval/Shutdown RPCs to `pytf_service.proto`
+8. **Step 3: GrpcPythonExecutor real RPCs** — replace Ping with Initialize/Eval/Shutdown calls using CompElement ProtoUtil
+9. **Step 4: GrpcChannelManager** — shared gRPC channel with ref counting
+10. **Step 5: PyTfServer implementation** — Python gRPC server with real TF execution (TfManager + service)
+11. **Step 6: Configuration threading** — wire `pyTfServerAddr` from Supervisor → DASU → ASCE → executor
+12. **Step 7: Re-enable Python TF tests** — with running PyTfServer
+13. **Step 8: Integration tests** — full end-to-end with real Python TFs over gRPC

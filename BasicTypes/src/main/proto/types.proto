@@ -6,48 +6,77 @@ option java_package = "org.eso.ias.generated.protobuf.iastypes";
 option java_outer_classname = "IasTypes";
 
 enum IASType {
-  IASTYPE_LONG = 0;
-  IASTYPE_INT = 1;
-  IASTYPE_SHORT = 2;
-  IASTYPE_BYTE = 3;
-  IASTYPE_DOUBLE = 4;
-  IASTYPE_FLOAT = 5;
-  IASTYPE_BOOLEAN = 6;
-  IASTYPE_CHAR = 7;
-  IASTYPE_STRING = 8;
-  IASTYPE_TIMESTAMP = 9;
-  IASTYPE_ARRAYOFDOUBLES = 10;
-  IASTYPE_ARRAYOFLONGS = 11;
-  IASTYPE_ALARM = 12;
+  LONG = 0;
+  INT = 1;
+  SHORT = 2;
+  BYTE = 3;
+  DOUBLE = 4;
+  FLOAT = 5;
+  BOOLEAN = 6;
+  CHAR = 7;
+  STRING = 8;
+  TIMESTAMP = 9;
+  ARRAYOFDOUBLES = 10;
+  ARRAYOFLONGS = 11;
+  ALARM = 12;
 }
 
 enum Validity {
-  VALIDITY_RELIABLE = 0;
-  VALIDITY_UNRELIABLE = 1;
+  RELIABLE = 0;
+  UNRELIABLE = 1;
 }
 
 enum OperationalMode {
-  OPERATIONALMODE_CLOSING = 0;
-  OPERATIONALMODE_DEGRADED = 1;
-  OPERATIONALMODE_INITIALIZATION = 2;
-  OPERATIONALMODE_MAINTENANCE = 3;
-  OPERATIONALMODE_OPERATIONAL = 4;
-  OPERATIONALMODE_SHUTTEDDOWN = 5;
-  OPERATIONALMODE_STARTUP = 6;
-  OPERATIONALMODE_UNKNOWN = 7;
-  OPERATIONALMODE_MALFUNCTIONING = 8;
+  CLOSING = 0;
+  DEGRADED = 1;
+  INITIALIZATION = 2;
+  MAINTENANCE = 3;
+  OPERATIONAL = 4;
+  SHUTTEDDOWN = 5;
+  STARTUP = 6;
+  UNKNOWN = 7;
+  MALFUNCTIONING = 8;
 }
 
 enum AlarmState {
-  ALARMSTATE_CLEAR_ACK = 0;
-  ALARMSTATE_CLEAR_UNACK = 1;
-  ALARMSTATE_SET_UNACK = 2;
-  ALARMSTATE_SET_ACK = 3;
+  CLEAR_ACK = 0;
+  CLEAR_UNACK = 1;
+  SET_UNACK = 2;
+  SET_ACK = 3;
 }
 
 enum Priority {
-  PRIORITY_LOW = 0;
-  PRIORITY_MEDIUM = 1;
-  PRIORITY_HIGH = 2;
-  PRIORITY_CRITICAL = 3;
+  LOW = 0;
+  MEDIUM = 1;
+  HIGH = 2;
+  CRITICAL = 3;
 }
+
+// ---- Messages ----
+
+message DoubleArray {
+  repeated double values = 1;
+}
+
+message Int64Array {
+  repeated int64 values = 1;
+}
+
+message Alarm {
+  AlarmState state = 1;
+  Priority priority = 2;
+}
+
+message Value {
+  oneof value {
+    int64 int64Value = 1;              // LONG, INT, SHORT, BYTE, TIMESTAMP
+    double doubleValue = 2;            // DOUBLE, FLOAT
+    bool boolValue = 3;                // BOOLEAN
+    string stringValue = 4;            // STRING, CHAR
+    DoubleArray doubleArrayValue = 5;  // ARRAYOFDOUBLES
+    Int64Array int64ArrayValue = 6;    // ARRAYOFLONGS
+    Alarm alarmValue = 7;              // ALARM
+  }
+}
+
+

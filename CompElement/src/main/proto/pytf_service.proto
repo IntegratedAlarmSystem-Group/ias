@@ -4,6 +4,8 @@ package pytf;
 option java_package = "org.eso.ias.generated.protobuf.tfservice";
 option java_outer_classname = "PytfService";
 
+import "types.proto";
+
 service PyTfService {
   rpc Ping(PingRequest) returns (PingResponse);
 }
@@ -14,4 +16,26 @@ message PingRequest {
 
 message PingResponse {
   bool success = 1;
+}
+
+message IasioInfoProto {
+  string id = 1;
+  ias.types.IASType iasType = 2;
+}
+
+message IasIO {
+  string iasId = 1;
+  string runningId = 2;
+  ias.types.OperationalMode mode = 3;
+  ias.types.IASType iasType = 4;
+  ias.types.Validity validity = 5;
+  ias.types.Value value = 6;
+  int64 productionTStamp = 7;
+  map<string, string> props = 8;
+  int64 readFromMonSysTStamp = 9;
+  int64 sentToConverterTStamp = 10;
+  int64 receivedFromPluginTStamp = 11;
+  int64 convertedProductionTStamp = 12;
+  int64 sentToBsdbTStamp = 13;
+  int64 readFromBsdbTStamp = 14;
 }
