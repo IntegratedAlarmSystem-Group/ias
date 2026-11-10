@@ -689,10 +689,16 @@ BasicTypes/src/main/proto/types.proto
 4. ~~**Step 1b: Proto package restructuring (DONE)**~~ — Java `org.eso.ias.generated.protobuf.{iastypes,tfservice}`, Python `IasProtobufTfserver`, checked-in stubs removed
 5. ~~**Step 1c: BasicTypes proto foundation (DONE)**~~ — `types.proto` with 5 shared IAS enums, Java + Python generation, unit tests
 6. ~~**Step 1d: Value/Alarm proto + IasIO in CompElement (DONE)**~~ — `Value`, `Alarm` in BasicTypes; full `IasIO`/`IasioInfo` in CompElement; bidirectional Scala conversions with tests; Scaladoc
-7. **Step 2: gRPC service RPCs** — add Initialize/Eval/Shutdown RPCs to `pytf_service.proto`
-8. **Step 3: GrpcPythonExecutor real RPCs** — replace Ping with Initialize/Eval/Shutdown calls using CompElement ProtoUtil
+7. ~~**Step 2: gRPC service RPCs (DONE)**~~ — Initialize/Eval/Shutdown RPCs in `pytf_service.proto`
+8. ~~**Step 3: GrpcPythonExecutor real RPCs (DONE)**~~ — Initialize/Eval/Shutdown calls using ProtoUtil
 9. **Step 4: GrpcChannelManager** — shared gRPC channel with ref counting
-10. **Step 5: PyTfServer implementation** — Python gRPC server with real TF execution (TfManager + service)
+10. ~~**Step 5: PyTfServer implementation (DONE)**~~ — Python gRPC server with real TF execution (TfManager + tf_service)
 11. **Step 6: Configuration threading** — wire `pyTfServerAddr` from Supervisor → DASU → ASCE → executor
 12. **Step 7: Re-enable Python TF tests** — with running PyTfServer
 13. **Step 8: Integration tests** — full end-to-end with real Python TFs over gRPC
+
+---
+
+## Note
+
+Further development (Step 4 onward) continues in [JepReplacement2.md](./JepReplacement2.md).
