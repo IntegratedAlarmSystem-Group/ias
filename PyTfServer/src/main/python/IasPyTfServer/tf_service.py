@@ -22,7 +22,7 @@ from IasTransferFunction.IASIO import IASIO
 from IasTransferFunction.IasioInfo import IasioInfo
 
 from IasProtobufTfserver.pytf_service_pb2 import (
-    InitializeResponse, EvalResponse, ShutdownResponse
+    PingResponse, InitializeResponse, EvalResponse, ShutdownResponse
 )
 from IasProtobufTfserver.pytf_service_pb2_grpc import PyTfServiceServicer
 from IasProtobufTypes import types_pb2
@@ -266,6 +266,24 @@ class PyTfService(PyTfServiceServicer):
     def __init__(self):
         """Initialize the service with a fresh TfManager."""
         self.tf_manager = TfManager()
+
+    def Ping(self, request, context):
+        """Handle the Ping RPC: health check for the server.
+
+        Returns ``success=True`` with the number of active ASCE instances
+        in the manager.  Useful to verify the server is running before
+        invoking Initialize/Eval/Shutdown.
+
+        Args:
+            request: Proto PingRequest (message field unused).
+            context: The gRPC service context.
+
+        Returns:
+            A ``PingResponse`` with ``success=True``.
+        """
+        active = len(self.tf_manager.tf_instances)
+        logger.debug(f"[PyTfServer] Ping received, active ASCEs: {active}")
+        return PingResponse(success=True)
 
     def Initialize(self, request, context):
         """Handle the Initialize RPC: load and register a TF for an ASCE.
