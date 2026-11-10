@@ -112,12 +112,44 @@ tasks.register<Exec>("generatePythonProto") {
     ) + protoFiles.map { it.name }
 }
 
+// Fix flat imports in generated Python proto stubs.
+// grpc_tools.protoc generates "import xxx_pb2" instead of "from package import xxx_pb2".
+// Two invocations are needed because _pb2.py imports from a dependency package while
+// _pb2_grpc.py imports from the same package.
+val fixGrpcImportsScript = project.file("src/main/python/fix_grpc_imports")
+
+tasks.register<Exec>("fixPythonGrpcImportsPb2") {
+    description = "Fix cross-module flat imports in *_pb2.py (types_pb2 → IasProtobufTypes)"
+    dependsOn("generatePythonProto")
+    val pythonProtoOut = file("build/generated/python/IasProtobufTfserver")
+    executable = "python3"
+    args = listOf(
+        fixGrpcImportsScript.absolutePath,
+        pythonProtoOut.absolutePath,
+        "IasProtobufTypes",
+        "-g", "*_pb2.py"
+    )
+}
+
+tasks.register<Exec>("fixPythonGrpcImportsGrpc") {
+    description = "Fix own-module flat imports in *_pb2_grpc.py (pytf_service_pb2 → IasProtobufTfserver)"
+    dependsOn("fixPythonGrpcImportsPb2")
+    val pythonProtoOut = file("build/generated/python/IasProtobufTfserver")
+    executable = "python3"
+    args = listOf(
+        fixGrpcImportsScript.absolutePath,
+        pythonProtoOut.absolutePath,
+        "IasProtobufTfserver",
+        "-g", "*_pb2_grpc.py"
+    )
+}
+
 // Copy generated Python proto stubs to site-packages so InstallLib picks them up
 val pyExtension = gradle as ExtensionAware
 val pyVersion = pyExtension.extra["PythonVersion"] as String
 
 tasks.register<Copy>("CopyPyProtoMods") {
-    dependsOn("generatePythonProto")
+    dependsOn("fixPythonGrpcImportsGrpc")
     from(project.layout.projectDirectory.dir("build/generated/python/IasProtobufTfserver")) {
         include("*.py")
     }

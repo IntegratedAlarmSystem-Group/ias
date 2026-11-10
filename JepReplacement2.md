@@ -8,33 +8,36 @@ Complete the remaining steps to make the gRPC-based Python TF executor fully ope
 
 ### What's committed (git HEAD)
 
-The committed code has the **Ping-only** PoC plumbing from Step 1. Files reflect this state:
+The committed code includes the full proto, Python server, tests, and build fix. Files reflect this state:
 
 | File | State |
 |---|---|
-| `pytf_service.proto` | `Ping` RPC only; `IasIO`/`IasioInfoProto` messages present |
-| `GrpcPythonExecutor.scala` | Calls `Ping` from `initialize`, `eval`, `shutdown`; `eval` returns `actualOutput` unchanged |
-| `iasPyTfServer.py` (renamed from `server.py`) | Inline `Ping` handler only |
+| `pytf_service.proto` | `Ping`, `Initialize`, `Eval`, `Shutdown` RPCs; all request/response messages; `IasIO`/`IasioInfoProto` present |
+| `GrpcPythonExecutor.scala` | Calls `Ping` from `initialize`, `eval`, `shutdown`; `eval` returns `actualOutput` unchanged — **needs update (Step A.2)** |
+| `iasPyTfServer.py` (renamed from `server.py`) | Inline `Ping` handler only — **needs update (Step A.3)** |
 | `ProtoUtil.scala` (CompElement) | Full `iasIOFrom`/`iasIOTo`/`iasioInfoFrom`/`iasioInfoTo` — unused by Ping |
-
-### What's developed but uncommitted
-
-The following untracked files implement Step 2/3/5 (Initialize/Eval/Shutdown) but are **not yet reflected in the committed proto or GrpcPythonExecutor**:
-
-| File | State |
-|---|---|
 | `PyTfServer/src/main/python/IasPyTfServer/tf_manager.py` | Full TfManager with Initialize/Eval/Shutdown, dynamic TF import |
-| `PyTfServer/src/main/python/IasPyTfServer/tf_service.py` | Full PyTfService servicer with proto ↔ Python conversion; added `Ping` health check |
+| `PyTfServer/src/main/python/IasPyTfServer/tf_service.py` | Full PyTfService servicer with proto ↔ Python conversion; `Ping` health check |
 | `PyTfServer/src/test/python/test_tf_manager.py` | 10 TfManager unit tests |
 | `PyTfServer/src/test/python/test_service.py` | 18 proto conversion tests |
 | `PyTfServer/src/test/python/test_tf_module.py` | Mock TF implementations |
-| `PyTfServer/src/test/python/test_server.py` | 2 in-process server unit tests (Ping health check only) |
+| `PyTfServer/src/test/python/test_server.py` | 2 in-process unit tests (Ping) + 2 network-level tests (Ping over TCP) |
+| `CompElement/src/main/python/fix_grpc_imports` | Patches flat protobuf imports to package-relative form |
 
-**The proto and GrpcPythonExecutor still need to be updated to match these.**
+**All Python unit tests pass (32 tests). The proto is aligned. GrpcPythonExecutor.scala and iasPyTfServer.py still need updating.**
 
-### Proto fix
+### Proto fix (DONE)
 
-Renamed `server.py` → `iasPyTfServer.py`. The `grpc_tools.protoc`-generated `_pb2_grpc.py` files use flat imports (`import pytf_service_pb2`) that don't work from the installed package. A `fixPythonGrpcImports` build task and `fix_grpc_imports.py` script are needed to patch this after generation (both CompElement and BasicTypes).
+`grpc_tools.protoc`-generated stubs use flat imports (`import xxx_pb2`) that don't work from the installed package. A `fixPythonGrpcImports` build task and `fix_grpc_imports` script patch this after generation (both CompElement and BasicTypes).
+
+The script must be run **twice per package** because two different file types import from different packages:
+
+```
+fix_grpc_imports <dir> <dep_package>  -g '*_pb2.py'       # cross-module (e.g. types_pb2 → IasProtobufTypes)
+fix_grpc_imports <dir> <own_package>  -g '*_pb2_grpc.py'  # own-module  (e.g. pytf_service_pb2 → IasProtobufTfserver)
+```
+
+Running both is necessary — `_pb2.py` may import protos from a dependency package, while `_pb2_grpc.py` imports the sibling `_pb2.py` from the same package.
 
 ---
 
@@ -60,31 +63,33 @@ One `TfManager` per server process, shared across all ASCEs. Each ASCE identifie
 
 Added `Ping` as a health check RPC to `tf_service.PyTfService`, preserving it when Step A replaces the committed Ping-only server with the real Initialize/Eval/Shutdown implementation. `Ping` returns `PingResponse(success=True)` and logs the number of active ASCE instances in the `TfManager`.
 
-Corresponding unit test `test_server.py` starts the server in-process with a random localhost port and uses a Python gRPC client to verify two Ping calls succeed. The test **cannot run yet** — `tf_service.py` imports `InitializeResponse`/`EvalResponse`/`ShutdownResponse` which don't exist in the committed Ping-only proto stubs. It will pass once Step A updates the proto.
+Corresponding unit tests in `test_server.py` start the server in-process with a random localhost port and use a Python gRPC client to verify two Ping calls succeed. Network tests spawn the server as a child process, connect over TCP on localhost, and verify Ping with clean teardown via `start_new_session=True` + `SIGINT` to `os.killpg`. All 32 unit tests pass.
 
 **Files changed:**
 
 | File | Change |
 |---|---|
 | `PyTfServer/src/main/python/IasPyTfServer/tf_service.py` | Added `PingResponse` import; added `Ping(self, request, context)` method to `PyTfService` |
-| `PyTfServer/src/test/python/test_server.py` | **NEW** — 2 unit tests: `test_ping_returns_success`, `test_ping_multiple_times` |
+| `PyTfServer/src/test/python/test_server.py` | **NEW** — 2 in-process unit tests + 2 network-level tests (all passing) |
 
 ### Step A — Align proto + GrpcPythonExecutor with developed code
 
-The developed `tf_service.py` / `tf_manager.py` implement Initialize/Eval/Shutdown. The committed proto and `GrpcPythonExecutor` are still at Ping.
+The developed `tf_service.py` / `tf_manager.py` implement Initialize/Eval/Shutdown. The committed proto is now aligned, but `GrpcPythonExecutor` and `iasPyTfServer.py` still need updating.
 
-1. **`pytf_service.proto`** — Keep existing `Ping` RPC (health check) and add `Initialize`, `Eval`, `Shutdown` RPCs with their request/response messages (as described in JepReplacement.md Step 2).
+1. **`pytf_service.proto` (DONE)** — Added `Initialize`, `Eval`, `Shutdown` RPCs with their request/response messages. `InitializeRequest` uses `optional string templateInstance` for proto3 field presence. `EvalRequest` uses `map<string, IasIO>` for inputs, `ShutdownRequest` carries `asceRunningId`. All 32 Python unit tests validate the proto alignment.
 2. **`GrpcPythonExecutor.scala`** — Replace Ping calls with real Initialize/Eval/Shutdown calls using `ProtoUtil.iasIOFrom`/`iasIOTo`. `eval` should serialize inputs, send `EvalRequest`, deserialize response.
 3. **`iasPyTfServer.py`** — Replace inline Ping handler with the `PyTfService` from `tf_service.py`.
-4. **`build.gradle.kts` (both CompElement and BasicTypes)** — Add `fixPythonGrpcImports` task using `fix_grpc_imports.py` to patch flat imports in generated `_pb2_grpc.py` files.
+4. **`build.gradle.kts` (both CompElement and BasicTypes) (DONE)** — `fixPythonGrpcImports` tasks wired using `fix_grpc_imports` script. `PyTfServer/pytest` depends on `:CompElement:CopyPyProtoMods` to ensure fresh stubs.
 
-### Step B — Build fix: flat import in generated gRPC stubs
+### Step B — Build fix: flat import in generated gRPC stubs (DONE) – merged into Step A.1
 
 `grpc_tools.protoc` generates `import pytf_service_pb2` instead of `from IasProtobufTfserver import pytf_service_pb2`. This breaks when the stubs are installed as a package.
 
-- **New file**: `CompElement/src/main/python/fix_grpc_imports.py` — patches `_pb2_grpc.py` imports to use package-relative form.
-- **CompElement/build.gradle.kts**: New `fixPythonGrpcImports` task between `generatePythonProto` and `CopyPyProtoMods`.
-- **BasicTypes/build.gradle.kts**: Same fix task (referencing the same script file from CompElement), for future proofing.
+- **New file**: `CompElement/src/main/python/fix_grpc_imports` — patches flat imports to package-relative form. Accepts `-g` flag to target either `*_pb2.py` (cross-module) or `*_pb2_grpc.py` (own-module). Must be run **twice**: once for each pattern with the appropriate target package.
+- **CompElement/build.gradle.kts**: `fixPythonGrpcImportsPb2` (cross-module, target `IasProtobufTypes`) → `fixPythonGrpcImportsGrpc` (own-module, target `IasProtobufTfserver`) → `CopyPyProtoMods` (depends on the second fix). Chain: `generatePythonProto` → fix → copy.
+- **BasicTypes/build.gradle.kts**: `fixPythonGrpcImports` (own-module, target `IasProtobufTypes`) → `CopyPyProtoMods`. References the same script from CompElement.
+
+**Verified**: After `CopyPyProtoMods`, the copied stubs in `build/lib/.../site-packages/IasProtobufTfserver/` have correct imports. Network tests pass with build-generated stubs.
 
 ### Step C — Step 4: GrpcChannelManager
 

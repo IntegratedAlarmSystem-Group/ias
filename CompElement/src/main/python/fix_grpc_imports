@@ -1,0 +1,62 @@
+"""Fix flat imports in generated protobuf stub files.
+
+grpc_tools.protoc generates "import xxx_pb2 as xxx_pb2" instead of
+"from package import xxx_pb2 as xxx_pb2". This script patches them.
+
+For a package that imports protos from another package (e.g.
+IasProtobufTfserver imports types_pb2 from IasProtobufTypes), two
+invocations are needed:
+
+  fix_grpc_imports <dir> <dep_package>       # fixes *_pb2.py   (cross-module)
+  fix_grpc_imports <dir> <own_package>       # fixes *_pb2_grpc.py (own-module)
+
+The order matters: fix cross-module (_pb2.py) first, then own-module
+(_pb2_grpc.py).  Running twice is necessary because the two file types
+import modules from different packages.
+"""
+import argparse
+import pathlib
+import sys
+
+
+def fix_file(file: pathlib.Path, package: str):
+    """Rewrite flat 'import xxx_pb2 as ...' lines in a single file."""
+    text = file.read_text()
+    lines = text.split("\n")
+    changed = False
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if (stripped.startswith("import ")
+                and "_pb2" in stripped
+                and "grpc" not in stripped
+                and "protobuf" not in stripped):
+            parts = stripped.split()
+            if len(parts) >= 4 and parts[2] == "as":
+                mod = parts[1]
+                alias = parts[3]
+                old = f"import {mod} as {alias}"
+                new = f"from {package} import {mod} as {alias}"
+                lines[i] = line.replace(old, new)
+                print(f"  [fix] {file.name}: {old!r} -> {new!r}")
+                changed = True
+    if changed:
+        file.write_text("\n".join(lines))
+
+
+def fix(dir_path: str, package: str, pattern: str):
+    """Patch flat imports in files matching *pattern* under *dir_path*."""
+    for f in pathlib.Path(dir_path).glob(pattern):
+        fix_file(f, package)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Fix flat imports in generated protobuf stubs.")
+    parser.add_argument("target_dir", help="Directory containing *_pb2*.py files")
+    parser.add_argument("package", help="Python package to use in 'from ... import'")
+    parser.add_argument(
+        "-g", "--glob",
+        default="*_pb2_grpc.py",
+        help='Glob pattern for files to fix (default: *_pb2_grpc.py)')
+    args = parser.parse_args()
+    fix(args.target_dir, args.package, args.glob)
