@@ -1,7 +1,11 @@
 #! /usr/bin/env python3
 
-import sys
 import os
+import signal
+import socket
+import subprocess
+import sys
+import time
 
 python_version = f"python{sys.version_info.major}.{sys.version_info.minor}"
 ias_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
@@ -24,7 +28,6 @@ from concurrent import futures
 
 from IasProtobufTfserver.pytf_service_pb2 import PingRequest
 from IasProtobufTfserver.pytf_service_pb2_grpc import add_PyTfServiceServicer_to_server
-from IasPyTfServer.tf_service import PyTfService
 
 
 class TestPyTfServer:
@@ -36,6 +39,7 @@ class TestPyTfServer:
     """
 
     def setup_method(self):
+        from IasPyTfServer.tf_service import PyTfService
         self.server = grpc.server(futures.ThreadPoolExecutor(max_workers=1))
         add_PyTfServiceServicer_to_server(PyTfService(), self.server)
         self.port = self.server.add_insecure_port("localhost:0")
@@ -47,15 +51,81 @@ class TestPyTfServer:
         self.server.stop(0)
 
     def test_ping_returns_success(self):
-        stub = self.channel
-        from IasProtobufTfserver.pytf_service_pb2_grpc import PyTfServiceStub as PyTfServiceBlockingStub
-        blocking_stub = PyTfServiceBlockingStub(self.channel)
+        """Verify a single Ping RPC returns success = True."""
+        from IasProtobufTfserver.pytf_service_pb2_grpc import PyTfServiceStub
+        blocking_stub = PyTfServiceStub(self.channel)
         response = blocking_stub.Ping(PingRequest(message="hello"))
         assert response.success is True
 
     def test_ping_multiple_times(self):
-        from IasProtobufTfserver.pytf_service_pb2_grpc import PyTfServiceStub as PyTfServiceBlockingStub
-        stub = PyTfServiceBlockingStub(self.channel)
+        """Verify multiple consecutive Ping RPCs all succeed."""
+        from IasProtobufTfserver.pytf_service_pb2_grpc import PyTfServiceStub
+        stub = PyTfServiceStub(self.channel)
         for i in range(5):
             response = stub.Ping(PingRequest(message=f"ping-{i}"))
+            assert response.success is True
+
+
+class TestPyTfServerNetwork:
+    """Network-level test for the PyTfServer gRPC server.
+
+    Starts the server in a separate OS process bound to a real TCP port on
+    localhost, then connects via a Python gRPC client over the network stack.
+    Ensures the child process is terminated when the test finishes.
+    """
+
+    @staticmethod
+    def _find_free_port():
+        """Return a free TCP port on localhost."""
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(("localhost", 0))
+            return s.getsockname()[1]
+
+    def setup_method(self):
+        """Start the server as a child process on a random port and open a gRPC channel."""
+        self.port = self._find_free_port()
+        python_exe = sys.executable
+        server_script = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+            "main", "python", "iasPyTfServer.py",
+        )
+        env = os.environ.copy()
+        env["PYTHONPATH"] = os.pathsep.join(sys.path)
+        self.server_proc = subprocess.Popen(
+            [python_exe, server_script, "-p", str(self.port)],
+            env=env,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            start_new_session=True,
+        )
+        time.sleep(1)
+        assert self.server_proc.poll() is None, "Server process exited unexpectedly"
+        self.channel = grpc.insecure_channel(f"localhost:{self.port}")
+
+    def teardown_method(self):
+        """Send SIGINT to the server process group, wait for clean exit, falling back to SIGKILL."""
+        self.channel.close()
+        try:
+            os.killpg(os.getpgid(self.server_proc.pid), signal.SIGINT)
+            self.server_proc.wait(timeout=5)
+        except (subprocess.TimeoutExpired, ProcessLookupError):
+            try:
+                os.killpg(os.getpgid(self.server_proc.pid), signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            self.server_proc.wait()
+
+    def test_ping_returns_success(self):
+        """Verify a single Ping RPC over the network returns success = True."""
+        from IasProtobufTfserver.pytf_service_pb2_grpc import PyTfServiceStub
+        stub = PyTfServiceStub(self.channel)
+        response = stub.Ping(PingRequest(message="network-hello"))
+        assert response.success is True
+
+    def test_ping_multiple_times(self):
+        """Verify multiple consecutive Ping RPCs over the network all succeed."""
+        from IasProtobufTfserver.pytf_service_pb2_grpc import PyTfServiceStub
+        stub = PyTfServiceStub(self.channel)
+        for i in range(5):
+            response = stub.Ping(PingRequest(message=f"net-ping-{i}"))
             assert response.success is True

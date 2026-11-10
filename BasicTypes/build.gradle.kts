@@ -93,11 +93,29 @@ tasks.register<Exec>("generatePythonProto") {
     ) + protoFiles.map { f -> f.relativeTo(protoSource).toString() }
 }
 
+// Fix flat imports in generated Python proto stubs.
+// BasicTypes has no cross-module imports currently, but the fix is wired for future proofing.
+val fixGrpcImportsScript = project(":CompElement").file("src/main/python/fix_grpc_imports")
+
+tasks.register<Exec>("fixPythonGrpcImports") {
+    description = "Fix flat imports in BasicTypes generated proto stubs"
+    dependsOn("generatePythonProto")
+    mustRunAfter("generatePythonProto")
+    val pythonProtoOut = file("build/generated/python/IasProtobufTypes")
+    executable = "python3"
+    args = listOf(
+        fixGrpcImportsScript.absolutePath,
+        pythonProtoOut.absolutePath,
+        "IasProtobufTypes",
+        "-g", "*_pb2_grpc.py"
+    )
+}
+
 val pyExtension = gradle as ExtensionAware
 val pyVersion = pyExtension.extra["PythonVersion"] as String
 
 tasks.register<Copy>("CopyPyProtoMods") {
-    dependsOn("generatePythonProto")
+    dependsOn("fixPythonGrpcImports")
     from(project.layout.projectDirectory.dir("build/generated/python/IasProtobufTypes")) {
         include("*.py")
     }

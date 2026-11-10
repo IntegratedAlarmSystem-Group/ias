@@ -8,6 +8,9 @@ import "types.proto";
 
 service PyTfService {
   rpc Ping(PingRequest) returns (PingResponse);
+  rpc Initialize(InitializeRequest) returns (InitializeResponse);
+  rpc Eval(EvalRequest) returns (EvalResponse);
+  rpc Shutdown(ShutdownRequest) returns (ShutdownResponse);
 }
 
 message PingRequest {
@@ -38,4 +41,41 @@ message IasIO {
   int64 convertedProductionTStamp = 12;
   int64 sentToBsdbTStamp = 13;
   int64 readFromBsdbTStamp = 14;
+}
+
+message InitializeRequest {
+  string asceRunningId = 1;
+  string asceId = 2;
+  string pythonClassName = 3;
+  int64 validityTimeFrame = 4;
+  map<string, string> props = 5;
+  optional string templateInstance = 6;
+  repeated IasioInfoProto inputsInfo = 7;
+  IasioInfoProto outputInfo = 8;
+}
+
+message InitializeResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+message EvalRequest {
+  string asceRunningId = 1;
+  map<string, IasIO> compInputs = 2;
+  IasIO actualOutput = 3;
+}
+
+message EvalResponse {
+  bool success = 1;
+  string error = 2;
+  IasIO result = 3;
+}
+
+message ShutdownRequest {
+  string asceRunningId = 1;
+}
+
+message ShutdownResponse {
+  bool success = 1;
+  string error = 2;
 }
