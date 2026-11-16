@@ -4,29 +4,32 @@
 
 Complete the remaining steps to make the gRPC-based Python TF executor fully operational end-to-end.
 
-## Actual Code State (as of Nov 16 2026)
+## Current State (as of Nov 16 2026, end of session)
 
-### What's committed (git HEAD)
+### Summary
 
-The committed code includes the full proto, Python server, executor, tests, and build fix:
+The gRPC-based Python TF executor is **fully operational end-to-end**: ASCEs can run Python transfer functions through an external PyTfServer process over gRPC. All integration tests pass:
 
-| File | State |
-|---|---|
-| `pytf_service.proto` | `Ping`, `Initialize`, `Eval`, `Shutdown` RPCs; all request/response messages; `IasIO`/`IasioInfoProto` present |
-| `GrpcPythonExecutor.scala` | `initialize()`, `eval()`, `shutdown()` all call real gRPC RPCs using `ProtoUtil` (fully operational) |
-| `iasPyTfServer.py` | Uses full `tf_service.PyTfService` (Initialize/Eval/Shutdown) |
-| `ProtoUtil.scala` (CompElement) | Full `iasIOFrom`/`iasIOTo`/`iasioInfoFrom`/`iasioInfoTo` — used by Initialize |
-| `PyTfServer/src/main/python/IasPyTfServer/tf_manager.py` | Full TfManager with Initialize/Eval/Shutdown, dynamic TF import |
-| `PyTfServer/src/main/python/IasPyTfServer/tf_service.py` | Full PyTfService servicer with proto ↔ Python conversion; `HasField('templateInstance')` fix |
-| `PyTfServer/src/test/python/test_tf_manager.py` | 10 TfManager unit tests |
-| `PyTfServer/src/test/python/test_service.py` | 18 proto conversion tests |
-| `PyTfServer/src/test/python/test_tf_module.py` | Mock TF implementations |
-| `PyTfServer/src/test/python/test_server.py` | 2 Ping in-process + 2 Ping network tests + 11 lifecycle tests (Init/Eval/Shutdown) |
-| `PyTfServer/src/test/scala/.../TestGrpcPythonExecutorIntegration.scala` | 6 Scala tests (Init/Eval/Shutdown, needs moving to integration test, see Step G) |
-| `PyTfServer/src/test/python/_test_paths.py` | Shared `sys.path` setup (adds generated proto dirs only; Gradle provides the rest) |
-| `CompElement/src/main/python/fix_grpc_imports` | Patches flat protobuf imports to package-relative form |
+- **TestGrpcPythonExecutorIntegration** — 6 tests (executor-level Init/Eval/Shutdown over gRPC)
+- **TestPyTF** — 17 tests (full ASCE lifecycle for every IAS type: LONG, INT, SHORT, BYTE, DOUBLE, FLOAT, BOOLEAN, CHAR, STRING, TIMESTAMP, ARRAYOFDOUBLES, ARRAYOFLONGS, ALARM + stress test of 15,000 calls)
+- **TestMinMaxPyTF** — 4 tests (full ASCE lifecycle with the real `MinMaxThreshold` Python TF: initialize, eval, mode passthrough, threshold activation)
 
-**All tests pass: 42 PyTfServer pytest + 6 Scala integration tests + CompElement Scala/Java tests.**
+Total: **27 integration tests**, all passing, all self-managing the PyTfServer subprocess via `PyTfServerBase`.
+
+### What's done beyond git HEAD
+
+| Area | What was done | Why |
+|---|---|---|
+| **Python TF base files** | Copied `TransferFunction.py`, `IASIO.py`, `IasioInfo.py` from CompElement to `PyTfServer/src/main/python/IasTransferFunction/` | Make PyTfServer's `IasTransferFunction` package self-contained, avoiding PYTHONPATH ordering conflicts when both CompElement and PyTfServer packages are installed |
+| **`MinMaxThreshold` default types** | Changed defaults from `int(sys.maxsize)` to `float(sys.maxsize)` in `MinMaxThreshold.py` | Match test expectations and avoid int/float comparison issues |
+| **`IasTransferFunction/__init__.py`** | Added `from IasTransferFunction.MinMaxThreshold import MinMaxThreshold` | Ensure `MinMaxThreshold` is importable as `IasTransferFunction.MinMaxThreshold` |
+| **Scala integration test relocation** | Moved `TestPyTF`, `TestMinMaxPyTF`, `TestGrpcPythonExecutorIntegration` from `src/test/scala` to `PyTfServer/src/integrationTest/scala/org/eso/ias/pytfserver/test/` | These tests require a running PyTfServer and cross-module communication — they are integration tests, not unit tests |
+| **`runIntTests.sh`** | Updated to reference `org.eso.ias.pytfserver.test.*` package | Reflects relocated test classes |
+| **`PyTfServer/build.gradle.kts`** | Added `java-library-distribution` and `scala` plugins; CompElement/BasicTypes/Tools dependencies; `integrationTest` Scala source set | Integration tests are Scala and depend on CompElement (for `GrpcPythonExecutor`, `ComputingElement`, types) — the `scala` plugin and dependencies are needed for compilation |
+| **`implementation(libs.scala.library)`** | Added explicit dependency on Scala 3.9.0 library | Resolves Zinc compiler version conflict: `scalatest` brings transitive `scala3-library_3:3.1.3`, but Zinc must pick `3.9.0` to compile with `-java-output-version 21` (3.1.x compiler only accepts colon-separated version format) |
+| **`CopyCompElementPyBase` Gradle task** | Created task to sync base `IasTransferFunction` files into build output | Ensures the self-contained files are in `build/lib/.../site-packages/` alongside the installed package |
+| **`GrpcPythonExecutor.shutdown()`** | Added `channel.shutdown()` + `awaitTermination(5s)` + log line | Fixes gRPC `ManagedChannel` leak — channels were only cleaned up by JVM GC, producing `ManagedChannelOrphanWrapper` warnings |
+| **`AGENTS.md`** | Updated integration test instructions for PyTfServer | Documents how to run integration tests (self-managed server via PyTfServerBase, no pre-running server needed) |
 
 ### Proto fix (DONE)
 
@@ -40,6 +43,20 @@ fix_grpc_imports <dir> <own_package>  -g '*_pb2_grpc.py'  # own-module  (e.g. py
 ```
 
 Running both is necessary — `_pb2.py` may import protos from a dependency package, while `_pb2_grpc.py` imports the sibling `_pb2.py` from the same package.
+
+### Key design decisions
+
+- **`PyTfServerBase` trait for server management** — Rather than having each test class manage its own PyTfServer subprocess, a shared trait (`PyTfServerBase`) encapsulates start/stop, port allocation, and PYTHONPATH extension. Tests just call `startServer()` in `beforeAll()` and `stopServer()` in `afterAll()`. This eliminates code duplication across 3 test classes and ensures consistent behavior.
+
+- **Dynamic port allocation per test suite** — Each test class gets its own randomly-assigned port. This means all three test classes can run in parallel (when invoked via `iasRun` from `runIntTests.sh`) without port conflicts.
+
+- **`iasPyTfServer` via PATH, not `python3 .../iasPyTfServer.py`** — The server script is invoked as `iasPyTfServer` (from `$IAS_ROOT/bin/`, on PATH via `ias-bash-profile`). This inherits the full PYTHONPATH and classpath that `iasRun` already sets up. No manual path construction needed — only the test Python modules directory (`src/test/python`) is prepended to PYTHONPATH so that `test_tf_module` is importable by the server.
+
+- **`javaComp` created in `beforeAll()` for TestMinMaxPyTF** — The ComputingElement must be created *after* the server starts so it can read the server port. Creating it as a class field (eager initialization) meant port 0. The fix: declare as a nullable var and instantiate in `beforeAll()` after `startServer()`.
+
+- **`serverProps()` helper** — `PyTfServerBase` provides `serverProps()` returning a Properties map with `pyTfServerAddr` set to the dynamic port. Test classes use this instead of `new Properties()`, ensuring the executor connects to the correct server.
+
+- **`IasTransferFunction` self-contained in PyTfServer** — Rather than relying on CompElement's `IasTransferFunction` package at runtime, PyTfServer includes the base files (`TransferFunction.py`, `IASIO.py`, `IasioInfo.py`) in its own source tree. This avoids PYTHONPATH ordering issues where two installed packages could shadow each other. The `CopyCompElementPyBase` Gradle task syncs these files into the build output.
 
 ---
 
@@ -125,8 +142,6 @@ Extended `TestGrpcPythonExecutorIntegration.scala` with 6 integration tests (3 o
 | `eval doubling tf doubles input value` | GrpcPythonExecutor.eval() with DoublingTF verifies computation |
 | `eval fails when not initialized` | GrpcPythonExecutor.eval() throws exception when initialize() was not called |
 
-Tests hardcode `python3.12` and construct `PYTHONPATH` from the build tree. Server stdout/stderr captured for diagnostics.
-
 **Files changed (Steps A.2–A.5):**
 
 | File | Change |
@@ -135,31 +150,63 @@ Tests hardcode `python3.12` and construct `PYTHONPATH` from the build tree. Serv
 | `PyTfServer/src/main/python/iasPyTfServer.py` | Replaced inline Ping handler with `from IasPyTfServer.tf_service import PyTfService` |
 | `PyTfServer/src/main/python/IasPyTfServer/tf_service.py` | Fixed `hasTemplateInstance` → `HasField('templateInstance')` for protobuf 4.x |
 | `PyTfServer/src/test/python/test_server.py` | Added `TestPyTfServerLifecycle` class (6 tests) |
-| `PyTfServer/src/test/scala/.../TestGrpcPythonExecutorIntegration.scala` | 3 Scala tests (currently under PyTfServer test, to move to integration — see Step G) |
+| `PyTfServer/src/test/scala/.../TestGrpcPythonExecutorIntegration.scala` | Extended with 3 Eval tests (6 total) |
 
-### Verification
+### Step A.7 — Move integration tests to `src/integrationTest` (DONE)
+
+All three Scala integration tests were relocated from `src/test/scala` to `PyTfServer/src/integrationTest/scala/org/eso/ias/pytfserver/test/`:
+
+- **`TestGrpcPythonExecutorIntegration`** — 6 tests (executor-level gRPC communication)
+- **`TestPyTF`** — 17 tests (full ASCE lifecycle, every IAS type, stress test)
+- **`TestMinMaxPyTF`** — 4 tests (MinMaxThreshold threshold activation with real Python TF)
+
+**`PyTfServerBase`** (NEW) — shared trait that starts/stops the PyTfServer subprocess per test suite. Invokes `iasPyTfServer` from PATH (set by `ias-bash-profile`), allocates a random port, prepends `src/test/python` to PYTHONPATH, and provides `serverProps()` with the correct `pyTfServerAddr`.
+
+**`runIntTests.sh`** — invokes all three test classes via `iasRun`. No pre-running server needed — each test class manages its own server through `PyTfServerBase`.
+
+**`PyTfServer/build.gradle.kts`** — retains `scala` plugin, CompElement/BasicTypes/Tools dependencies (needed by integration tests), and `integrationTest` Scala source set. (Step G's plan to revert to `base` plugin only is abandoned — the integration tests are Scala and require CompElement.)
+
+**`GrpcPythonExecutor.shutdown()`** — fixed gRPC channel leak: `channel.shutdown()` + `awaitTermination(5s)` now called on executor shutdown. No more `ManagedChannelOrphanWrapper` warnings.
+
+**`AGENTS.md`** — updated integration test instructions to document PyTfServer's self-managed server lifecycle.
+
+### Verification (updated)
 
 - `./gradlew :CompElement:test` — all Scala/Java tests pass
-- `./gradlew :PyTfServer:pytest` — 42 passed (32 existing + 10 new lifecycle tests)
-- `./gradlew :PyTfServer:test` — 6 Scala integration tests pass
+- `./gradlew :PyTfServer:pytest` — 60 passed (pytest unit tests)
+- `./gradlew :PyTfServer:compileIntegrationTestScala` — compiles 3 integration test classes (PyTfServerBase, TestGrpcPythonExecutorIntegration, TestPyTF, TestMinMaxPyTF)
+- Integration tests (after `install`, via `runIntTests.sh`): **27 tests pass** (6 + 17 + 4)
 
 ### Step A.6 — Refactor shared test paths (DONE)
 
 Eliminated duplicated `sys.path` setup across three Python test files. Created `PyTfServer/src/test/python/_test_paths.py` that adds only the generated protobuf directories to `sys.path` at import time (Gradle already provides all subprojects' site-packages and `src/test/python` via the PYTHONPATH environment variable). Each test file now does a single `import _test_paths`.
 
-**Files changed (Steps A.2–A.6):**
+**Files changed (Steps A.2–A.7, full list):**
 
 | File | Change |
 |---|---|
-| `CompElement/src/main/scala/.../GrpcPythonExecutor.scala` | `initialize()`, `eval()`, `shutdown()` all call real gRPC RPCs using `ProtoUtil` (fully operational) |
+| `CompElement/src/main/scala/.../GrpcPythonExecutor.scala` | Full gRPC RPCs; `shutdown()` now also shuts down the `ManagedChannel` with log |
+| `PyTfServer/src/main/python/IasTransferFunction/__init__.py` | Exports `MinMaxThreshold` |
+| `PyTfServer/src/main/python/IasTransferFunction/MinMaxThreshold.py` | Default thresholds use `float(sys.maxsize)` instead of `int` |
+| `PyTfServer/src/main/python/IasTransferFunction/TransferFunction.py` | Copied from CompElement (self-contained base) |
+| `PyTfServer/src/main/python/IasTransferFunction/IASIO.py` | Copied from CompElement (self-contained base) |
+| `PyTfServer/src/main/python/IasTransferFunction/IasioInfo.py` | Copied from CompElement (self-contained base) |
 | `PyTfServer/src/main/python/iasPyTfServer.py` | Replaced inline Ping handler with `from IasPyTfServer.tf_service import PyTfService` |
 | `PyTfServer/src/main/python/IasPyTfServer/tf_service.py` | Fixed `hasTemplateInstance` → `HasField('templateInstance')` for protobuf 4.x |
-| `PyTfServer/src/test/python/test_server.py` | Added 5 Eval tests to `TestPyTfServerLifecycle`; consolidated path setup via `_test_paths` |
-| `PyTfServer/src/test/python/test_service.py` | Consolidated path setup via `_test_paths` |
-| `PyTfServer/src/test/python/test_tf_manager.py` | Consolidated path setup via `_test_paths` |
+| `PyTfServer/src/test/python/test_server.py` | Added Eval tests to `TestPyTfServerLifecycle`; path setup via `_test_paths` |
+| `PyTfServer/src/test/python/test_service.py` | Path setup via `_test_paths` |
+| `PyTfServer/src/test/python/test_tf_manager.py` | Path setup via `_test_paths` |
 | `PyTfServer/src/test/python/_test_paths.py` | **NEW** — shared `sys.path` setup (adds generated proto dirs only) |
-| `PyTfServer/src/test/scala/.../TestGrpcPythonExecutorIntegration.scala` | Extended with 3 Eval tests (6 total) |
-| `PyTfServer/src/main/python/IasPyTfServer/__init__.py` | Removed unnecessary docstring (file does nothing) |
+| `PyTfServer/src/test/python/test_tf_module.py` | Mock TF implementations (PassThroughTF, DoublingTF) |
+| `PyTfServer/src/test/python/TestTF.py` | TestTransferFunction (pass-through TF for type coverage tests) |
+| `PyTfServer/src/integrationTest/scala/.../PyTfServerBase.scala` | **NEW** — shared trait for PyTfServer subprocess lifecycle |
+| `PyTfServer/src/integrationTest/scala/.../TestGrpcPythonExecutorIntegration.scala` | 6 tests, uses `PyTfServerBase` (moved from `src/test/scala`) |
+| `PyTfServer/src/integrationTest/scala/.../TestPyTF.scala` | 17 tests, uses `PyTfServerBase` (moved from CompElement) |
+| `PyTfServer/src/integrationTest/scala/.../TestMinMaxPyTF.scala` | 4 tests, uses `PyTfServerBase` (moved from CompElement) |
+| `PyTfServer/src/integrationTest/runIntTests.sh` | Updated class references to `org.eso.ias.pytfserver.test.*` |
+| `PyTfServer/build.gradle.kts` | `scala` plugin, CompElement/BasicTypes/Tools deps, `integrationTest` Scala source set |
+| `CompElement/src/main/python/fix_grpc_imports` | Patches flat protobuf imports to package-relative form |
+| `AGENTS.md` | Updated integration test instructions for PyTfServer |
 
 ### Step C — Step 4: GrpcChannelManager
 
@@ -180,22 +227,15 @@ This provides a clear diagnostic at startup time rather than a silent failure la
 
 Wire `pyTfServerAddr` from `SupervisorDao` (already defined, validated, unused) down to each `GrpcPythonExecutor` via Supervisor → DasuImpl → ASCE properties.
 
-### Step E — Step 7: Re-enable Python TF tests
+### Step E — Re-enable Python TF tests (DONE — tests moved to PyTfServer integration tests)
 
-Remove `TestPyTF` and `TestMinMaxPyTF` excludes from `CompElement/build.gradle.kts`. A running PyTfServer on `localhost:50051` is required.
+`TestPyTF` and `TestMinMaxPyTF` were moved from CompElement to `PyTfServer/src/integrationTest/` (Step A.7). They no longer require a pre-running server on `localhost:50051` — each test class manages its own PyTfServer subprocess through `PyTfServerBase`. Both test suites pass (17 + 4 = 21 tests).
 
-### Step G — Move TestGrpcPythonExecutorIntegration to integration tests
+### Step G — Move integration tests to `src/integrationTest` (DONE — superseded by Step A.7)
 
-The `TestGrpcPythonExecutorIntegration` test currently lives as a unit test under `PyTfServer/src/test/scala`.  Unit tests should only exercise sources of their own module, but this test exercises both `GrpcPythonExecutor` (CompElement) and `iasPyTfServer` (PyTfServer) over gRPC — it is an integration test between two modules.
+All integration tests are now under `PyTfServer/src/integrationTest/scala/org/eso/ias/pytfserver/test/`, managed by `PyTfServerBase`, and run via `runIntTests.sh` through `iasRun`. See Step A.7 for details.
 
-**Plan:**
-
-1. Move `TestGrpcPythonExecutorIntegration.scala` to `PyTfServer/src/integrationTest/` — following the IAS convention used by all other integration tests.
-2. Create `PyTfServer/src/integrationTest/runIntTests.sh` — starts a PyTfServer from `$IAS_ROOT/bin/iasPyTfServer` (note: after install the script has **no** `.py` extension, it's simply `iasPyTfServer` in `$IAS_ROOT/bin/`), runs the test via the Gradle test harness against the installed artifacts, then tears down the server.  The `$IAS_ROOT/bin/ias-bash-profile` is sourced beforehand so `$PYTHONPATH` and classpath are already set.
-3. The test will run via `./gradlew :PyTfServer:integrationTest --continue` after a prior `./gradlew install` (same pattern as other IAS integration tests).
-4. **Cleanup `PyTfServer/build.gradle.kts`** — revert to the original `base` plugin only. Remove the `scala` plugin, all `implementation`/`testImplementation` dependencies (CompElement, BasicTypes, Tools, gRPC libs), and the `tasks.test` / `sourceSets` blocks that were added only to support the misplaced test. The file should return to its minimal form (3 plugins lines + pytest dependency).
-
-**Result:** PyTfServer is back to a pure Python module (`base` plugin only). The cross-module integration test lives where it belongs and runs via the standard `integrationTest` task against installed code in `$IAS_ROOT`.
+**Deviation from original plan:** The `PyTfServer/build.gradle.kts` was NOT reverted to `base` plugin only. The integration tests are Scala and depend on CompElement classes (`GrpcPythonExecutor`, `ComputingElement`, types). The `scala` plugin, CompElement/BasicTypes/Tools dependencies, and `integrationTest` Scala source set are required and will remain.
 
 ### Step F — Step 8: Full integration tests (later)
 

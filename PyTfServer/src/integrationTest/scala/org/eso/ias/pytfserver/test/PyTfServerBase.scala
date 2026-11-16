@@ -31,7 +31,7 @@ trait PyTfServerBase {
 
   /** Path to the Python test modules directory. */
   protected def testPythonDir(): String = {
-    s"src/test/python"
+    "src/test/python"
   }
 
   /** Spawn the PyTfServer subprocess on a random free port. */
