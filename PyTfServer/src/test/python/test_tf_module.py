@@ -37,3 +37,17 @@ class DoublingTF(TransferFunction):
         if val is not None:
             return actualOutput.updateValue(val.value * 2)
         return actualOutput
+
+
+class TriplingTF(TransferFunction):
+    """TF that triples the ``in1`` value.
+
+    Used by tests to verify that the server correctly routes Eval
+    requests to the proper TF instance when multiple ASCEs are
+    active simultaneously (output value == 3 * input value).
+    """
+    def eval(self, compInputs, actualOutput):
+        val = compInputs.get("in1")
+        if val is not None:
+            return actualOutput.updateValue(val.value * 3)
+        return actualOutput
