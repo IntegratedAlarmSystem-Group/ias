@@ -26,52 +26,52 @@ object ProtoUtil {
   // ---- IASType ----
 
   /** Converts a domain [[IASTypes]] enum constant to its protobuf counterpart. */
-   def IASTypeFrom(t: IASTypes): ProtoIASType = t match {
-     case IASTypes.LONG => IasTypes.IASType.LONG
-     case IASTypes.INT => IasTypes.IASType.INT
-     case IASTypes.SHORT => IasTypes.IASType.SHORT
-     case IASTypes.BYTE => IasTypes.IASType.BYTE
-     case IASTypes.DOUBLE => IasTypes.IASType.DOUBLE
-     case IASTypes.FLOAT => IasTypes.IASType.FLOAT
-     case IASTypes.BOOLEAN => IasTypes.IASType.BOOLEAN
-     case IASTypes.CHAR => IasTypes.IASType.CHAR
-     case IASTypes.STRING => IasTypes.IASType.STRING
-     case IASTypes.TIMESTAMP => IasTypes.IASType.TIMESTAMP
-     case IASTypes.ARRAYOFDOUBLES => IasTypes.IASType.ARRAYOFDOUBLES
-     case IASTypes.ARRAYOFLONGS => IasTypes.IASType.ARRAYOFLONGS
-     case IASTypes.ALARM => IasTypes.IASType.ALARM
-   }
+  def IASTypeFrom(t: IASTypes): ProtoIASType = t match {
+    case IASTypes.LONG => IasTypes.IASType.LONG
+    case IASTypes.INT => IasTypes.IASType.INT
+    case IASTypes.SHORT => IasTypes.IASType.SHORT
+    case IASTypes.BYTE => IasTypes.IASType.BYTE
+    case IASTypes.DOUBLE => IasTypes.IASType.DOUBLE
+    case IASTypes.FLOAT => IasTypes.IASType.FLOAT
+    case IASTypes.BOOLEAN => IasTypes.IASType.BOOLEAN
+    case IASTypes.CHAR => IasTypes.IASType.CHAR
+    case IASTypes.STRING => IasTypes.IASType.STRING
+    case IASTypes.TIMESTAMP => IasTypes.IASType.TIMESTAMP
+    case IASTypes.ARRAYOFDOUBLES => IasTypes.IASType.ARRAYOFDOUBLES
+    case IASTypes.ARRAYOFLONGS => IasTypes.IASType.ARRAYOFLONGS
+    case IASTypes.ALARM => IasTypes.IASType.ALARM
+  }
 
-   /** Converts a protobuf IASType back to the domain [[IASTypes]] enum. */
-   def IASTypeTo(p: ProtoIASType): IASTypes = p match {
-     case IasTypes.IASType.LONG => IASTypes.LONG
-     case IasTypes.IASType.INT => IASTypes.INT
-     case IasTypes.IASType.SHORT => IASTypes.SHORT
-     case IasTypes.IASType.BYTE => IASTypes.BYTE
-     case IasTypes.IASType.DOUBLE => IASTypes.DOUBLE
-     case IasTypes.IASType.FLOAT => IASTypes.FLOAT
-     case IasTypes.IASType.BOOLEAN => IASTypes.BOOLEAN
-     case IasTypes.IASType.CHAR => IASTypes.CHAR
-     case IasTypes.IASType.STRING => IASTypes.STRING
-     case IasTypes.IASType.TIMESTAMP => IASTypes.TIMESTAMP
-     case IasTypes.IASType.ARRAYOFDOUBLES => IASTypes.ARRAYOFDOUBLES
-     case IasTypes.IASType.ARRAYOFLONGS => IASTypes.ARRAYOFLONGS
-     case IasTypes.IASType.ALARM => IASTypes.ALARM
-     case _ => throw new IllegalStateException(s"Unrecognized proto IASType: $p")
-   }
+  /** Converts a protobuf IASType back to the domain [[IASTypes]] enum. */
+  def IASTypeTo(p: ProtoIASType): IASTypes = p match {
+    case IasTypes.IASType.LONG => IASTypes.LONG
+    case IasTypes.IASType.INT => IASTypes.INT
+    case IasTypes.IASType.SHORT => IASTypes.SHORT
+    case IasTypes.IASType.BYTE => IASTypes.BYTE
+    case IasTypes.IASType.DOUBLE => IASTypes.DOUBLE
+    case IasTypes.IASType.FLOAT => IASTypes.FLOAT
+    case IasTypes.IASType.BOOLEAN => IASTypes.BOOLEAN
+    case IasTypes.IASType.CHAR => IASTypes.CHAR
+    case IasTypes.IASType.STRING => IASTypes.STRING
+    case IasTypes.IASType.TIMESTAMP => IASTypes.TIMESTAMP
+    case IasTypes.IASType.ARRAYOFDOUBLES => IASTypes.ARRAYOFDOUBLES
+    case IasTypes.IASType.ARRAYOFLONGS => IASTypes.ARRAYOFLONGS
+    case IasTypes.IASType.ALARM => IASTypes.ALARM
+    case _ => throw new IllegalStateException(s"Unrecognized proto IASType: $p")
+  }
 
   // ---- Validity ----
 
   /** Converts a domain [[IasValidity]] to its protobuf counterpart. */
   def ValidityFrom(v: IasValidity): ProtoValidity = v match {
     case IasValidity.RELIABLE => IasTypes.Validity.RELIABLE
-     case IasValidity.UNRELIABLE => IasTypes.Validity.UNRELIABLE
-   }
+    case IasValidity.UNRELIABLE => IasTypes.Validity.UNRELIABLE
+  }
 
-   /** Converts a protobuf Validity back to the domain [[IasValidity]]. */
-   def ValidityTo(p: ProtoValidity): IasValidity = p match {
-     case IasTypes.Validity.RELIABLE => IasValidity.RELIABLE
-     case IasTypes.Validity.UNRELIABLE => IasValidity.UNRELIABLE
+  /** Converts a protobuf Validity back to the domain [[IasValidity]]. */
+  def ValidityTo(p: ProtoValidity): IasValidity = p match {
+    case IasTypes.Validity.RELIABLE => IasValidity.RELIABLE
+    case IasTypes.Validity.UNRELIABLE => IasValidity.UNRELIABLE
     case _ => throw new IllegalStateException(s"Unrecognized proto Validity: $p")
   }
 
@@ -80,27 +80,27 @@ object ProtoUtil {
   /** Converts a domain [[OperationalMode]] to its protobuf counterpart. */
   def OperationalModeFrom(m: OperationalMode): ProtoOperationalMode = m match {
     case OperationalMode.CLOSING => IasTypes.OperationalMode.CLOSING
-     case OperationalMode.DEGRADED => IasTypes.OperationalMode.DEGRADED
-     case OperationalMode.INITIALIZATION => IasTypes.OperationalMode.INITIALIZATION
-     case OperationalMode.MAINTENANCE => IasTypes.OperationalMode.MAINTENANCE
-     case OperationalMode.OPERATIONAL => IasTypes.OperationalMode.OPERATIONAL
-     case OperationalMode.SHUTTEDDOWN => IasTypes.OperationalMode.SHUTTEDDOWN
-     case OperationalMode.STARTUP => IasTypes.OperationalMode.STARTUP
-     case OperationalMode.UNKNOWN => IasTypes.OperationalMode.UNKNOWN
-     case OperationalMode.MALFUNCTIONING => IasTypes.OperationalMode.MALFUNCTIONING
-   }
+    case OperationalMode.DEGRADED => IasTypes.OperationalMode.DEGRADED
+    case OperationalMode.INITIALIZATION => IasTypes.OperationalMode.INITIALIZATION
+    case OperationalMode.MAINTENANCE => IasTypes.OperationalMode.MAINTENANCE
+    case OperationalMode.OPERATIONAL => IasTypes.OperationalMode.OPERATIONAL
+    case OperationalMode.SHUTTEDDOWN => IasTypes.OperationalMode.SHUTTEDDOWN
+    case OperationalMode.STARTUP => IasTypes.OperationalMode.STARTUP
+    case OperationalMode.UNKNOWN => IasTypes.OperationalMode.UNKNOWN
+    case OperationalMode.MALFUNCTIONING => IasTypes.OperationalMode.MALFUNCTIONING
+  }
 
-   /** Converts a protobuf OperationalMode back to the domain enum. */
-   def OperationalModeTo(p: ProtoOperationalMode): OperationalMode = p match {
-     case IasTypes.OperationalMode.CLOSING => OperationalMode.CLOSING
-     case IasTypes.OperationalMode.DEGRADED => OperationalMode.DEGRADED
-     case IasTypes.OperationalMode.INITIALIZATION => OperationalMode.INITIALIZATION
-     case IasTypes.OperationalMode.MAINTENANCE => OperationalMode.MAINTENANCE
-     case IasTypes.OperationalMode.OPERATIONAL => OperationalMode.OPERATIONAL
-     case IasTypes.OperationalMode.SHUTTEDDOWN => OperationalMode.SHUTTEDDOWN
-     case IasTypes.OperationalMode.STARTUP => OperationalMode.STARTUP
-     case IasTypes.OperationalMode.UNKNOWN => OperationalMode.UNKNOWN
-     case IasTypes.OperationalMode.MALFUNCTIONING => OperationalMode.MALFUNCTIONING
+  /** Converts a protobuf OperationalMode back to the domain enum. */
+  def OperationalModeTo(p: ProtoOperationalMode): OperationalMode = p match {
+    case IasTypes.OperationalMode.CLOSING => OperationalMode.CLOSING
+    case IasTypes.OperationalMode.DEGRADED => OperationalMode.DEGRADED
+    case IasTypes.OperationalMode.INITIALIZATION => OperationalMode.INITIALIZATION
+    case IasTypes.OperationalMode.MAINTENANCE => OperationalMode.MAINTENANCE
+    case IasTypes.OperationalMode.OPERATIONAL => OperationalMode.OPERATIONAL
+    case IasTypes.OperationalMode.SHUTTEDDOWN => OperationalMode.SHUTTEDDOWN
+    case IasTypes.OperationalMode.STARTUP => OperationalMode.STARTUP
+    case IasTypes.OperationalMode.UNKNOWN => OperationalMode.UNKNOWN
+    case IasTypes.OperationalMode.MALFUNCTIONING => OperationalMode.MALFUNCTIONING
     case _ => throw new IllegalStateException(s"Unrecognized proto OperationalMode: $p")
   }
 
@@ -109,17 +109,17 @@ object ProtoUtil {
   /** Converts a domain [[AlarmState]] to its protobuf counterpart. */
   def AlarmStateFrom(s: AlarmState): ProtoAlarmState = s match {
     case AlarmState.CLEAR_ACK => IasTypes.AlarmState.CLEAR_ACK
-     case AlarmState.CLEAR_UNACK => IasTypes.AlarmState.CLEAR_UNACK
-     case AlarmState.SET_UNACK => IasTypes.AlarmState.SET_UNACK
-     case AlarmState.SET_ACK => IasTypes.AlarmState.SET_ACK
-   }
+    case AlarmState.CLEAR_UNACK => IasTypes.AlarmState.CLEAR_UNACK
+    case AlarmState.SET_UNACK => IasTypes.AlarmState.SET_UNACK
+    case AlarmState.SET_ACK => IasTypes.AlarmState.SET_ACK
+  }
 
-   /** Converts a protobuf AlarmState back to the domain enum. */
-   def AlarmStateTo(p: ProtoAlarmState): AlarmState = p match {
-     case IasTypes.AlarmState.CLEAR_ACK => AlarmState.CLEAR_ACK
-     case IasTypes.AlarmState.CLEAR_UNACK => AlarmState.CLEAR_UNACK
-     case IasTypes.AlarmState.SET_UNACK => AlarmState.SET_UNACK
-     case IasTypes.AlarmState.SET_ACK => AlarmState.SET_ACK
+  /** Converts a protobuf AlarmState back to the domain enum. */
+  def AlarmStateTo(p: ProtoAlarmState): AlarmState = p match {
+    case IasTypes.AlarmState.CLEAR_ACK => AlarmState.CLEAR_ACK
+    case IasTypes.AlarmState.CLEAR_UNACK => AlarmState.CLEAR_UNACK
+    case IasTypes.AlarmState.SET_UNACK => AlarmState.SET_UNACK
+    case IasTypes.AlarmState.SET_ACK => AlarmState.SET_ACK
     case _ => throw new IllegalStateException(s"Unrecognized proto AlarmState: $p")
   }
 
@@ -128,17 +128,17 @@ object ProtoUtil {
   /** Converts a domain [[Priority]] to its protobuf counterpart. */
   def PriorityFrom(p: Priority): ProtoPriority = p match {
     case Priority.LOW => IasTypes.Priority.LOW
-     case Priority.MEDIUM => IasTypes.Priority.MEDIUM
-     case Priority.HIGH => IasTypes.Priority.HIGH
-     case Priority.CRITICAL => IasTypes.Priority.CRITICAL
-   }
+    case Priority.MEDIUM => IasTypes.Priority.MEDIUM
+    case Priority.HIGH => IasTypes.Priority.HIGH
+    case Priority.CRITICAL => IasTypes.Priority.CRITICAL
+  }
 
-   /** Converts a protobuf Priority back to the domain enum. */
-   def PriorityTo(p: ProtoPriority): Priority = p match {
-     case IasTypes.Priority.LOW => Priority.LOW
-     case IasTypes.Priority.MEDIUM => Priority.MEDIUM
-     case IasTypes.Priority.HIGH => Priority.HIGH
-     case IasTypes.Priority.CRITICAL => Priority.CRITICAL
+  /** Converts a protobuf Priority back to the domain enum. */
+  def PriorityTo(p: ProtoPriority): Priority = p match {
+    case IasTypes.Priority.LOW => Priority.LOW
+    case IasTypes.Priority.MEDIUM => Priority.MEDIUM
+    case IasTypes.Priority.HIGH => Priority.HIGH
+    case IasTypes.Priority.CRITICAL => Priority.CRITICAL
     case _ => throw new IllegalStateException(s"Unrecognized proto Priority: $p")
   }
 
