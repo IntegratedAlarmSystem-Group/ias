@@ -240,3 +240,26 @@ All integration tests are now under `PyTfServer/src/integrationTest/scala/org/es
 ### Step F — Step 8: Full integration tests (later)
 
 Full end-to-end: Supervisor starts, connects to external PyTfServer, evaluates real Python TFs.
+
+---
+
+## Remaining Work to Complete the Task
+
+The gRPC-based Python TF executor is fully operational at the ASCE level: 27 integration tests confirm that ComputingElements with Python transfer functions initialize, evaluate, and shut down correctly over gRPC, covering every IAS data type and including a 15,000-call stress test.
+
+However, for the system to work in a **production deployment** — where a Supervisor manages multiple DASUs and ASCEs that reference Python TFs — four remaining pieces are needed:
+
+**Step D — Configuration threading** is the most critical gap. The `pyTfServerAddr` property is already defined and validated in the Supervisor configuration, but it never reaches the individual `GrpcPythonExecutor` instances. Without wiring it through Supervisor → DasuImpl → ASCE properties, every executor defaults to `localhost:50051`, which only works when the operator manually starts a PyTfServer on that exact port. Production needs the Supervisor to tell each ASCE where its PyTfServer lives.
+
+**Step H — Fail-fast ping** improves operational robustness. If the PyTfServer is down or unreachable, the current code only detects the problem when `eval()` is called — potentially deep into execution, producing a confusing error. A `Ping` RPC at startup time (in the executor constructor or `initialize()`) would surface the problem immediately with a clear message.
+
+**Step C — Shared gRPC channel** is a performance optimization. Currently each `GrpcPythonExecutor` (one per ASCE) creates its own gRPC `ManagedChannel`. A shared channel with reference counting would mean all ASCEs under a Supervisor share a single OS connection to the PyTfServer, reducing resource usage.
+
+**Step F — Full end-to-end integration** is the final validation: a running Supervisor, connected PyTfServer, DASUs with Python TFs, and live data flowing through the system. This is planned for later, after Steps D and H are in place.
+
+| Step | Description | Priority |
+|---|---|---|
+| **D** | Wire `pyTfServerAddr` from SupervisorDao through to GrpcPythonExecutor | Required for production |
+| **H** | Fail-fast Ping RPC on executor startup | Operational robustness |
+| **C** | Shared gRPC channel with ref counting | Performance optimization |
+| **F** | Full end-to-end Supervisor → PyTfServer integration | Final validation (later) |
