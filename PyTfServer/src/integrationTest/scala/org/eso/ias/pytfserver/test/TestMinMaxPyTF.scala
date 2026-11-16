@@ -1,4 +1,4 @@
-package org.eso.ias.asce.test
+package org.eso.ias.pytfserver.test
 
 import ch.qos.logback.classic.Level
 
@@ -14,10 +14,15 @@ import scala.collection.mutable.Map as MutableMap
 import scala.util.Try
 
 /**
- * Test the python transfer class: build a PythonExecutorTF that, in turn,
- * delegates method execution to python code
- */
-class TestMinMaxPyTF extends AnyFlatSpec with BeforeAndAfterAll {
+  * Test the python MinMaxThreshold TF: build a ComputingElement with a
+  * MinMaxThreshold Python TF executed via GrpcPythonExecutor over gRPC.
+  *
+  * The test uses the Python TF moved from CompElement to PyTfServer to verify
+  * that the full ASCE lifecycle works when the TF runs in the external
+  * PyTfServer process rather than in-process.  Uses [[PyTfServerBase]]
+  * to manage the PyTfServer subprocess.
+  */
+class TestMinMaxPyTF extends AnyFlatSpec with BeforeAndAfterAll with PyTfServerBase {
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
 
@@ -51,12 +56,12 @@ class TestMinMaxPyTF extends AnyFlatSpec with BeforeAndAfterAll {
   val validityThresholdInSecs = 2
 
   val pythonTFSetting =new TransferFunctionSetting(
-      "IasTransferFunction.Impls.MinMaxThreshold",
+      "IasTransferFunction.MinMaxThreshold",
       TransferFunctionLanguage.python,
       None,
       threadFactory)
 
-  val props = new Properties();
+  val props = serverProps();
   props.setProperty("HighOn","50")
   props.setProperty("HighOff","40")
   props.setProperty("LowOn","-20")
@@ -72,11 +77,15 @@ class TestMinMaxPyTF extends AnyFlatSpec with BeforeAndAfterAll {
     props) with PythonTransfer[Alarm]
 
   override def beforeAll(): Unit = {
+    super.beforeAll()
+    startServer()
     IASLogger.setRootLogLevel(Level.DEBUG)
   }
 
   override def afterAll(): Unit = {
     javaComp.shutdown()
+    stopServer()
+    super.afterAll()
   }
 
   behavior of "The python MinMaxThreshold TF"

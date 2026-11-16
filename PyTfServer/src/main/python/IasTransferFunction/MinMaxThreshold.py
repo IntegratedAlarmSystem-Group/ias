@@ -56,22 +56,22 @@ class MinMaxThreshold(TransferFunction):
         if highOnFromProps is not None:
             self.highOn = float(highOnFromProps)
         else:
-            self.highOn=sys.maxsize
+            self.highOn=float(sys.maxsize)
 
         if highOffFromProps is not None:
             self.highOff = float(highOffFromProps)
         else:
-            self.highOff=sys.maxsize
+            self.highOff=float(sys.maxsize)
 
         if lowOnFromProps is not None:
             self.lowOn = float(lowOnFromProps)
         else:
-            self.lowOn=-sys.maxsize
+            self.lowOn=-float(sys.maxsize)
 
         if lowOffFromProps  is not None:
             self.lowOff = float(lowOffFromProps)
         else:
-            self.lowOff=-sys.maxsize
+            self.lowOff=-float(sys.maxsize)
 
         priorityStr = props.get(self.priorityPropName)
         if priorityStr is not None:
