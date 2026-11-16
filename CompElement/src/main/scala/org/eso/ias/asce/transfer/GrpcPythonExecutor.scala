@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory
 import scala.jdk.CollectionConverters._
 
 import java.util.Properties
+import scala.util.Try
 
 class GrpcPythonExecutor[T](
     cEleId: String,
@@ -114,6 +115,10 @@ class GrpcPythonExecutor[T](
     if (!resp.getSuccess) {
       logger.warn("gRPC Shutdown returned error for ASCE {}: {}", compElementRunningId, resp.getError)
     }
+
+    channel.shutdown()
+    Try(channel.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS))
+    logger.info("gRPC channel shut down for ASCE {}", compElementRunningId)
 
     logger.info("GrpcPythonExecutor shut down for ASCE {} (success={})",
       compElementRunningId, resp.getSuccess)

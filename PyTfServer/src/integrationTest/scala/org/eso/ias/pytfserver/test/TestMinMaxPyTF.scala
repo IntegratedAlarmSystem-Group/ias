@@ -2,7 +2,6 @@ package org.eso.ias.pytfserver.test
 
 import ch.qos.logback.classic.Level
 
-import java.util.Properties
 import org.eso.ias.asce.transfer.{PythonTransfer, TransferFunctionLanguage, TransferFunctionSetting}
 import org.eso.ias.asce.{AsceStates, CompEleThreadFactory, ComputingElement}
 import org.eso.ias.logging.IASLogger
@@ -55,35 +54,39 @@ class TestMinMaxPyTF extends AnyFlatSpec with BeforeAndAfterAll with PyTfServerB
   // The threshold to assess the validity from the arrival time of the input
   val validityThresholdInSecs = 2
 
-  val pythonTFSetting =new TransferFunctionSetting(
-      "IasTransferFunction.MinMaxThreshold",
-      TransferFunctionLanguage.python,
-      None,
-      threadFactory)
-
-  val props = serverProps();
-  props.setProperty("HighOn","50")
-  props.setProperty("HighOff","40")
-  props.setProperty("LowOn","-20")
-  props.setProperty("LowOff","-10")
-  props.setProperty("Priority", Priority.CRITICAL.toString)
-
-  val javaComp: ComputingElement[Alarm] = new ComputingElement[Alarm](
-    compID,
-    output,
-    inputsMPs.values.toSet,
-    pythonTFSetting,
-    validityThresholdInSecs,
-    props) with PythonTransfer[Alarm]
+  // Created lazily in beforeAll after the server is up
+  private var javaComp: ComputingElement[Alarm] | Null = null
 
   override def beforeAll(): Unit = {
     super.beforeAll()
     startServer()
     IASLogger.setRootLogLevel(Level.DEBUG)
+
+    val pythonTFSetting = new TransferFunctionSetting(
+      "IasTransferFunction.MinMaxThreshold",
+      TransferFunctionLanguage.python,
+      None,
+      threadFactory)
+    val props = serverProps()
+    props.setProperty("HighOn", "50")
+    props.setProperty("HighOff", "40")
+    props.setProperty("LowOn", "-20")
+    props.setProperty("LowOff", "-10")
+    props.setProperty("Priority", Priority.CRITICAL.toString)
+
+    javaComp = new ComputingElement[Alarm](
+      compID,
+      output,
+      inputsMPs.values.toSet,
+      pythonTFSetting,
+      validityThresholdInSecs,
+      props) with PythonTransfer[Alarm]
   }
 
   override def afterAll(): Unit = {
-    javaComp.shutdown()
+    if (javaComp != null) {
+      javaComp.shutdown()
+    }
     stopServer()
     super.afterAll()
   }
