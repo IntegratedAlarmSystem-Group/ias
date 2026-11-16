@@ -44,21 +44,7 @@ import subprocess
 import sys
 import time
 
-python_version = f"python{sys.version_info.major}.{sys.version_info.minor}"
-ias_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
-
-comp_element_build = os.path.join(ias_root, 'CompElement', 'build', 'lib', python_version, 'site-packages')
-basictypes_build = os.path.join(ias_root, 'BasicTypes', 'build', 'lib', python_version, 'site-packages')
-tools_build = os.path.join(ias_root, 'Tools', 'build', 'lib', python_version, 'site-packages')
-pytfserver_build = os.path.join(ias_root, 'PyTfServer', 'build', 'lib', python_version, 'site-packages')
-pytfserver_src = os.path.join(ias_root, 'PyTfServer', 'src', 'main', 'python')
-basictypes_gen_proto = os.path.join(ias_root, 'BasicTypes', 'build', 'generated', 'python', 'IasProtobufTypes')
-compelement_gen_proto = os.path.join(ias_root, 'CompElement', 'build', 'generated', 'python', 'IasProtobufTfserver')
-
-for path in [comp_element_build, basictypes_build, tools_build, pytfserver_build, pytfserver_src,
-             basictypes_gen_proto, compelement_gen_proto]:
-    if path not in sys.path:
-        sys.path.insert(0, path)
+import _test_paths  # noqa: F401 adds generated proto dirs to sys.path
 
 import grpc
 from concurrent import futures
@@ -280,6 +266,202 @@ class TestPyTfServerLifecycle:
 
         stub.Shutdown(ShutdownRequest(asceRunningId="remove:run1"))
         assert "remove:run1" not in self.servicer.tf_manager.tf_instances
+
+    def test_eval_passthrough_returns_input_value(self):
+        """Verify Eval RPC passes input value through PassThroughTF unchanged."""
+        from IasProtobufTfserver.pytf_service_pb2 import (
+            EvalRequest, IasIO as ProtoIasIO,
+        )
+        from IasProtobufTfserver.pytf_service_pb2_grpc import PyTfServiceStub
+        from IasProtobufTypes.types_pb2 import (
+            IASType as ProtoIASType,
+            OperationalMode as ProtoOM,
+            Validity as ProtoValidity,
+        )
+        stub = PyTfServiceStub(self.channel)
+
+        stub.Initialize(InitializeRequest(
+            asceRunningId="eval:run1",
+            asceId="eval",
+            pythonClassName="test_tf_module.PassThroughTF",
+            validityTimeFrame=1000,
+            props={},
+            inputsInfo=[IasioInfoProto(id="in1", iasType=ProtoIASType.LONG)],
+            outputInfo=IasioInfoProto(id="out", iasType=ProtoIASType.LONG),
+        ))
+
+        input_io = ProtoIasIO(
+            iasId="in1",
+            runningId="eval:run1:in1",
+            mode=ProtoOM.OPERATIONAL,
+            iasType=ProtoIASType.LONG,
+            validity=ProtoValidity.RELIABLE,
+            productionTStamp=1000,
+        )
+        input_io.value.int64Value = 42
+
+        actual_out = ProtoIasIO(
+            iasId="out",
+            runningId="eval:run1:out",
+            mode=ProtoOM.OPERATIONAL,
+            iasType=ProtoIASType.LONG,
+            validity=ProtoValidity.RELIABLE,
+            productionTStamp=1000,
+        )
+        actual_out.value.int64Value = 0
+
+        eval_req = EvalRequest(
+            asceRunningId="eval:run1",
+            compInputs={"in1": input_io},
+            actualOutput=actual_out,
+        )
+        resp = stub.Eval(eval_req)
+        assert resp.success is True
+        assert resp.result.value.int64Value == 42
+
+        stub.Shutdown(ShutdownRequest(asceRunningId="eval:run1"))
+
+    def test_eval_doubling_doubles_input_value(self):
+        """Verify Eval RPC doubles the input value via DoublingTF."""
+        from IasProtobufTfserver.pytf_service_pb2 import (
+            EvalRequest, IasIO as ProtoIasIO,
+        )
+        from IasProtobufTfserver.pytf_service_pb2_grpc import PyTfServiceStub
+        from IasProtobufTypes.types_pb2 import (
+            IASType as ProtoIASType,
+            OperationalMode as ProtoOM,
+            Validity as ProtoValidity,
+        )
+        stub = PyTfServiceStub(self.channel)
+
+        stub.Initialize(InitializeRequest(
+            asceRunningId="eval:run2",
+            asceId="eval",
+            pythonClassName="test_tf_module.DoublingTF",
+            validityTimeFrame=1000,
+            props={},
+            inputsInfo=[IasioInfoProto(id="in1", iasType=ProtoIASType.LONG)],
+            outputInfo=IasioInfoProto(id="out", iasType=ProtoIASType.LONG),
+        ))
+
+        input_io = ProtoIasIO(
+            iasId="in1",
+            runningId="eval:run2:in1",
+            mode=ProtoOM.OPERATIONAL,
+            iasType=ProtoIASType.LONG,
+            validity=ProtoValidity.RELIABLE,
+            productionTStamp=1000,
+        )
+        input_io.value.int64Value = 21
+
+        actual_out = ProtoIasIO(
+            iasId="out",
+            runningId="eval:run2:out",
+            mode=ProtoOM.OPERATIONAL,
+            iasType=ProtoIASType.LONG,
+            validity=ProtoValidity.RELIABLE,
+            productionTStamp=1000,
+        )
+        actual_out.value.int64Value = 0
+
+        eval_req = EvalRequest(
+            asceRunningId="eval:run2",
+            compInputs={"in1": input_io},
+            actualOutput=actual_out,
+        )
+        resp = stub.Eval(eval_req)
+        assert resp.success is True
+        assert resp.result.value.int64Value == 42
+
+        stub.Shutdown(ShutdownRequest(asceRunningId="eval:run2"))
+
+    def test_eval_uninitialized_fails(self):
+        """Verify Eval for a non-existent asceRunningId returns an error."""
+        from IasProtobufTfserver.pytf_service_pb2 import (
+            EvalRequest, IasIO as ProtoIasIO,
+        )
+        from IasProtobufTfserver.pytf_service_pb2_grpc import PyTfServiceStub
+        from IasProtobufTypes.types_pb2 import (
+            IASType as ProtoIASType,
+            OperationalMode as ProtoOM,
+            Validity as ProtoValidity,
+        )
+        stub = PyTfServiceStub(self.channel)
+
+        actual_out = ProtoIasIO(
+            iasId="out",
+            runningId="noasce:run:out",
+            mode=ProtoOM.OPERATIONAL,
+            iasType=ProtoIASType.LONG,
+            validity=ProtoValidity.RELIABLE,
+            productionTStamp=1000,
+        )
+        actual_out.value.int64Value = 0
+
+        eval_req = EvalRequest(
+            asceRunningId="noasce:run",
+            compInputs={},
+            actualOutput=actual_out,
+        )
+        resp = stub.Eval(eval_req)
+        assert resp.success is False
+        assert "not initialized" in resp.error
+
+    def test_eval_double_roundtrip(self):
+        """Verify multiple consecutive Eval calls work correctly on the same TF."""
+        from IasProtobufTfserver.pytf_service_pb2 import (
+            EvalRequest, IasIO as ProtoIasIO,
+        )
+        from IasProtobufTfserver.pytf_service_pb2_grpc import PyTfServiceStub
+        from IasProtobufTypes.types_pb2 import (
+            IASType as ProtoIASType,
+            OperationalMode as ProtoOM,
+            Validity as ProtoValidity,
+        )
+        stub = PyTfServiceStub(self.channel)
+
+        stub.Initialize(InitializeRequest(
+            asceRunningId="eval:run3",
+            asceId="eval",
+            pythonClassName="test_tf_module.DoublingTF",
+            validityTimeFrame=1000,
+            props={},
+            inputsInfo=[IasioInfoProto(id="in1", iasType=ProtoIASType.LONG)],
+            outputInfo=IasioInfoProto(id="out", iasType=ProtoIASType.LONG),
+        ))
+
+        actual_out = ProtoIasIO(
+            iasId="out",
+            runningId="eval:run3:out",
+            mode=ProtoOM.OPERATIONAL,
+            iasType=ProtoIASType.LONG,
+            validity=ProtoValidity.RELIABLE,
+            productionTStamp=1000,
+        )
+
+        for input_val in [5, 10, 15]:
+            input_io = ProtoIasIO(
+                iasId="in1",
+                runningId="eval:run3:in1",
+                mode=ProtoOM.OPERATIONAL,
+                iasType=ProtoIASType.LONG,
+                validity=ProtoValidity.RELIABLE,
+                productionTStamp=1000,
+            )
+            input_io.value.int64Value = input_val
+
+            actual_out.value.int64Value = 0
+
+            eval_req = EvalRequest(
+                asceRunningId="eval:run3",
+                compInputs={"in1": input_io},
+                actualOutput=actual_out,
+            )
+            resp = stub.Eval(eval_req)
+            assert resp.success is True
+            assert resp.result.value.int64Value == input_val * 2
+
+        stub.Shutdown(ShutdownRequest(asceRunningId="eval:run3"))
 
 
 class TestPyTfServerNetwork:

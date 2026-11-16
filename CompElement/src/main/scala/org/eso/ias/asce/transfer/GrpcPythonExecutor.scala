@@ -2,6 +2,7 @@ package org.eso.ias.asce.transfer
 
 import org.eso.ias.generated.protobuf.tfservice.PyTfServiceGrpc
 import org.eso.ias.generated.protobuf.tfservice.PytfService
+import org.eso.ias.types.InOut
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import org.slf4j.LoggerFactory
@@ -41,17 +42,29 @@ class GrpcPythonExecutor[T](
       compInputs: Map[String, IasIO[?]],
       actualOutput: IasIO[T]
   ): IasIO[T] = {
-    val message = compElementRunningId + " eval"
-    val resp = stub.ping(PytfService.PingRequest.newBuilder().setMessage(message).build())
+    val compInputsProto = compInputs.map { case (k, v) =>
+      (k, ProtoUtil.iasIOFrom(v.inOut, v.iasType))
+    }.asJava
+
+    val actualOutputProto = ProtoUtil.iasIOFrom(actualOutput.inOut, actualOutput.iasType)
+
+    val request = PytfService.EvalRequest.newBuilder()
+      .setAsceRunningId(compElementRunningId)
+      .putAllCompInputs(compInputsProto)
+      .setActualOutput(actualOutputProto)
+      .build()
+
+    val resp = stub.eval(request)
 
     if (!resp.getSuccess) {
-      throw new Exception(s"gRPC Ping failed during eval for ASCE $compElementRunningId")
+      throw new Exception(s"gRPC Eval failed for ASCE $compElementRunningId: ${resp.getError}")
     }
 
-    logger.debug("GrpcPythonExecutor eval for ASCE {} pinged, success={}",
+    logger.debug("GrpcPythonExecutor eval for ASCE {} completed, success={}",
       compElementRunningId, resp.getSuccess)
 
-    actualOutput
+    val resultInOut = ProtoUtil.iasIOTo(resp.getResult)
+    new IasIO[T](resultInOut.asInstanceOf[InOut[T]])
   }
 
   override def initialize(
