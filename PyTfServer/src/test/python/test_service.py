@@ -18,24 +18,7 @@ Run with::
     pytest PyTfServer/src/test/python/test_service.py
 """
 
-import sys
-import os
-
-python_version = f"python{sys.version_info.major}.{sys.version_info.minor}"
-ias_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
-
-comp_element_build = os.path.join(ias_root, 'CompElement', 'build', 'lib', python_version, 'site-packages')
-basictypes_build = os.path.join(ias_root, 'BasicTypes', 'build', 'lib', python_version, 'site-packages')
-tools_build = os.path.join(ias_root, 'Tools', 'build', 'lib', python_version, 'site-packages')
-pytfserver_build = os.path.join(ias_root, 'PyTfServer', 'build', 'lib', python_version, 'site-packages')
-pytfserver_src = os.path.join(ias_root, 'PyTfServer', 'src', 'main', 'python')
-basictypes_gen_proto = os.path.join(ias_root, 'BasicTypes', 'build', 'generated', 'python', 'IasProtobufTypes')
-compelement_gen_proto = os.path.join(ias_root, 'CompElement', 'build', 'generated', 'python', 'IasProtobufTfserver')
-
-for path in [comp_element_build, basictypes_build, tools_build, pytfserver_build, pytfserver_src,
-             basictypes_gen_proto, compelement_gen_proto]:
-    if path not in sys.path:
-        sys.path.insert(0, path)
+import _test_paths  # noqa: F401 adds generated proto dirs to sys.path
 
 from IasBasicTypes.OperationalMode import OperationalMode
 from IasBasicTypes.Validity import Validity
