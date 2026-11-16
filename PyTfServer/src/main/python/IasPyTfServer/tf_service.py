@@ -1,13 +1,17 @@
 """gRPC service implementation for the PyTfServer.
 
-This module converts between protobuf messages (wire format) and the Python
-IAS types that TransferFunctions operate on, and implements the three RPCs
-defined by the ``PyTfService`` proto: *Initialize*, *Eval*, and *Shutdown*.
+Converts between protobuf messages (wire format) and the Python IAS types
+that TransferFunctions operate on, and implements the four RPCs defined by
+the ``PyTfService`` proto: *Ping*, *Initialize*, *Eval*, and *Shutdown*.
 
 Key design decision: proto enum wire values do not match the semantic integer
 values of the IAS enums. All conversions go through **name** lookup
 (e.g. ``ProtoIASType.Name(wire_val)`` → ``IASType`` by ``.name``) to
 preserve correctness across the boundary.
+
+The module-level conversion functions (``proto_iastype_to_iastype``,
+``proto_value_to_python``, etc.) are also used by ``test_service.py`` for
+isolated unit testing without starting a gRPC server.
 """
 
 import logging
@@ -253,10 +257,17 @@ def python_iasio_to_proto(ias_io: IASIO):
 
 
 class PyTfService(PyTfServiceServicer):
-    """Implements the three PyTfService RPCs.
+    """gRPC servicer that implements the PyTfService proto RPCs.
 
-    Delegates TF lifecycle management to ``TfManager`` and handles
-    proto-to-Python conversion in each RPC handler.
+    Sits between the generated protobuf stubs and the Python-side
+    ``TfManager``.  Each RPC handler converts incoming proto messages to
+    native Python IAS types, delegates to the ``TfManager``, and converts
+    results back to proto responses.
+
+    The servicer is registered in ``iasPyTfServer.py`` (``serve()``) via
+    ``add_PyTfServiceServicer_to_server``.  For testing without a network
+    connection, it can be instantiated directly in-process alongside a
+    lightweight ``grpc.server`` — see ``test_server.py``.
 
     Attributes:
         tf_manager: The :class:`TfManager` instance that tracks per-ASCE
@@ -301,7 +312,7 @@ class PyTfService(PyTfServiceServicer):
         """
         inputs_info = [proto_iasioinfo_to_python(info) for info in request.inputsInfo]
         output_info = proto_iasioinfo_to_python(request.outputInfo)
-        template_instance = request.templateInstance if request.hasTemplateInstance else None
+        template_instance = int(request.templateInstance) if request.HasField('templateInstance') else None
 
         success, error = self.tf_manager.initialize(
             asceRunningId=request.asceRunningId,

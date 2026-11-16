@@ -1,7 +1,12 @@
 """Transfer Function (TF) lifecycle manager for the PyTfServer.
 
-This module holds per-ASCE TransferFunction instances and routes
-Initialize, Eval, and Shutdown operations based on asceRunningId.
+Holds one ``TransferFunction`` instance per ASCE, keyed by the unique
+``asceRunningId``.  The single ``TfManager`` instance lives inside the
+``PyTfService`` servicer and is shared across all incoming gRPC calls.
+
+This module does **not** depend on gRPC or protobuf.  It operates purely on
+Python IAS types (``IasioInfo``, ``IASIO``) and can be tested in complete
+isolation from the network stack.  See ``test_tf_manager.py``.
 """
 
 import logging
@@ -15,8 +20,15 @@ logger = logging.getLogger(__name__)
 class TfManager:
     """Manages per-ASCE Python TransferFunction instances.
 
-    Each TF instance is keyed by a unique asceRunningId, allowing the
-    server to serve multiple ASCEs concurrently within a single process.
+    Maintains a ``dict[asceRunningId, TransferFunction]`` that is keyed by
+    each ASCE's unique ``asceRunningId``.  Handles dynamic class loading
+    from a fully qualified Python class name, instantiation with the
+    standard five-argument constructor, and delegation to the TF's own
+    ``initialize``, ``eval``, and ``shutdown`` methods.
+
+    Thread-safety: this class is **not** thread-safe at the dictionary
+    level; callers (``PyTfService``) must ensure serialized access if
+    concurrent Initialize/Shutdown is possible.
 
     Attributes:
         tf_instances: Mapping from asceRunningId to the active
