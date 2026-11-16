@@ -1,4 +1,21 @@
 #! /usr/bin/env python3
+"""Unit tests for TfManager — tested in complete isolation.
+
+**No gRPC server is started.**  No network communication occurs.  These
+tests import ``TfManager`` directly, call its public methods, and assert
+on return values and internal state.  The mock TF classes from
+``test_tf_module.py`` are loaded dynamically via ``importlib`` exactly as
+the real gRPC server would load them.
+
+The PYTHONPATH is configured to include the build tree of CompElement,
+BasicTypes, Tools, and the PyTfServer source directory so that the mock
+TF classes and IAS base types (``TransferFunction``, ``IASIO``, etc.) are
+importable.
+
+Run with::
+
+    pytest PyTfServer/src/test/python/test_tf_manager.py
+"""
 
 import sys
 import os
@@ -20,6 +37,13 @@ from IasPyTfServer.tf_manager import TfManager
 
 
 class TestTfManager:
+    """Test TfManager in isolation — no gRPC, no network.
+
+    Each test creates a fresh TfManager via ``setup_method``.  The mock TFs
+    (``test_tf_module.PassThroughTF``, ``DoublingTF``) are loaded via their
+    fully qualified Python class names, exactly as the production
+    ``initialize`` RPC path does.
+    """
 
     def setup_method(self):
         self.manager = TfManager()

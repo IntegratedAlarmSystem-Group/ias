@@ -1,4 +1,39 @@
 #! /usr/bin/env -S python3 -u
+"""CLI entry point for the PyTfServer gRPC server.
+
+Binds an insecure gRPC server to ``localhost:<port>`` with a thread pool
+of 10 workers and registers the ``PyTfService`` servicer.  Handles SIGINT
+for graceful shutdown.
+
+This process is intended to be managed externally (systemd, supervisor, or
+a process manager).  The IAS Supervisor connects to it via the
+``GrpcPythonExecutor`` gRPC client.  Only one instance is needed per
+Supervisor.
+
+**CLI usage**
+
+    iasPyTfServer.py [-p PORT] [--log-level LEVEL] [--log-config FILE]
+
+The ``-p`` / ``--port`` option defaults to 50051.  Logging flags are handled
+by ``IasLogging.Log``.
+
+**Starting**
+
+- On the command line::
+
+    python3 -u iasPyTfServer.py -p 50051
+
+- From tests: the ``iasPyTfServer.py`` script is spawned as a subprocess
+  with a ``PYTHONPATH`` that includes the build tree of BasicTypes,
+  CompElement, Tools, and the PyTfServer source and generated proto
+  directories.  See ``test_server.py`` for the exact layout.
+
+**Termination**
+
+- SIGINT (Ctrl-C) triggers ``interrupt_handler`` which exits cleanly.
+- The gRPC server calls ``server.stop(0)`` for graceful drain.
+"""
+
 import argparse
 import logging
 import signal
@@ -6,21 +41,23 @@ import sys
 from concurrent import futures
 import grpc
 
-from IasProtobufTfserver.pytf_service_pb2 import PingResponse
-from IasProtobufTfserver.pytf_service_pb2_grpc import PyTfServiceServicer, add_PyTfServiceServicer_to_server
+from IasProtobufTfserver.pytf_service_pb2_grpc import add_PyTfServiceServicer_to_server
+from IasPyTfServer.tf_service import PyTfService
 
 from IasLogging.log import Log
 
 logger = logging.getLogger(__name__)
 
-class PyTfService(PyTfServiceServicer):
-
-    def Ping(self, request, context):
-        logger.info(f"[PyTfServer] received Ping: message='{request.message}'")
-        return PingResponse(success=True)
-
 
 def serve(port: int = 50051):
+    """Start the gRPC server on ``localhost:<port>``.
+
+    Registers the ``PyTfService`` servicer with a thread-pool executor
+    (10 workers) and blocks until the process is interrupted.
+
+    Args:
+        port: TCP port to bind to. Defaults to 50051.
+    """
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     add_PyTfServiceServicer_to_server(PyTfService(), server)
     server.add_insecure_port(f"localhost:{port}")

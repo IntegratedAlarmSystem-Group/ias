@@ -5,6 +5,7 @@ import org.eso.ias.generated.protobuf.tfservice.PytfService
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import org.slf4j.LoggerFactory
+import scala.jdk.CollectionConverters._
 
 import java.util.Properties
 
@@ -57,21 +58,51 @@ class GrpcPythonExecutor[T](
       inputsInfo: Set[IasioInfo],
       outputInfo: IasioInfo
   ): Unit = {
-    val message = compElementRunningId + " initialize"
-    val resp = stub.ping(PytfService.PingRequest.newBuilder().setMessage(message).build())
+    val inputsInfoList = inputsInfo.toSeq.map(ProtoUtil.iasioInfoFrom).asJava
+    val outputInfoProto = ProtoUtil.iasioInfoFrom(outputInfo)
+    val propsMap = props.entrySet().asScala.map { e => (e.getKey.toString, e.getValue.toString) }.toMap.asJava
 
-    if (!resp.getSuccess) {
-      throw new Exception(s"gRPC Ping failed during initialize for ASCE $compElementRunningId")
+    val templateInstanceStr = if (getTemplateInstance.isPresent) {
+      Some(getTemplateInstance.get.toString)
+    } else {
+      None
     }
 
-    logger.info("GrpcPythonExecutor initialized for ASCE {} (ping success={})",
+    val requestBuilder = PytfService.InitializeRequest.newBuilder()
+      .setAsceRunningId(compElementRunningId)
+      .setAsceId(compElementId)
+      .setPythonClassName(pythonClassName)
+      .setValidityTimeFrame(validityTimeFrame)
+      .putAllProps(propsMap)
+      .addAllInputsInfo(inputsInfoList)
+      .setOutputInfo(outputInfoProto)
+
+    templateInstanceStr.foreach(templateInstanceStr =>
+      requestBuilder.setTemplateInstance(templateInstanceStr)
+    )
+
+    val resp = stub.initialize(requestBuilder.build())
+
+    if (!resp.getSuccess) {
+      throw new Exception(s"gRPC Initialize failed for ASCE $compElementRunningId: ${resp.getError}")
+    }
+
+    logger.info("GrpcPythonExecutor initialized for ASCE {} (success={})",
       compElementRunningId, resp.getSuccess)
   }
 
   override def shutdown(): Unit = {
-    val message = compElementRunningId + " shutdown"
-    val resp = stub.ping(PytfService.PingRequest.newBuilder().setMessage(message).build())
-    logger.info("GrpcPythonExecutor shut down for ASCE {} (ping success={})",
+    val resp = stub.shutdown(
+      PytfService.ShutdownRequest.newBuilder()
+        .setAsceRunningId(compElementRunningId)
+        .build()
+    )
+
+    if (!resp.getSuccess) {
+      logger.warn("gRPC Shutdown returned error for ASCE {}: {}", compElementRunningId, resp.getError)
+    }
+
+    logger.info("GrpcPythonExecutor shut down for ASCE {} (success={})",
       compElementRunningId, resp.getSuccess)
   }
 }
