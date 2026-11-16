@@ -1,4 +1,22 @@
 #! /usr/bin/env python3
+"""Unit tests for proto conversion functions in tf_service.py — tested in isolation.
+
+**No gRPC server is started.**  No network communication occurs.  These
+tests exercise the module-level conversion functions directly, verifying
+the round-trip correctness of every conversion between protobuf wire
+messages and the Python IAS types (``IASType``, ``OperationalMode``,
+``Validity``, ``Value``, ``IASIO``, ``IasioInfo``).
+
+The generated protobuf stubs must be present and importable (from the
+CompElement and BasicTypes build trees), but no gRPC channel is opened.
+
+The PYTHONPATH is configured to include the build trees of all four
+dependency modules plus the generated proto output directories.
+
+Run with::
+
+    pytest PyTfServer/src/test/python/test_service.py
+"""
 
 import sys
 import os
@@ -40,6 +58,12 @@ from IasPyTfServer.tf_service import (
 
 
 class TestProtoEnumConversion:
+    """Round-trip tests for scalar enum conversions (no gRPC, no network).
+
+    For each enum type, iterates all IAS values, finds the matching proto
+    constant by name, and verifies that the conversion function returns the
+    original IAS enum member.
+    """
 
     def test_iastype_roundtrip(self):
         from IasProtobufTypes.types_pb2 import IASType as ProtoIASType
@@ -67,6 +91,11 @@ class TestProtoEnumConversion:
 
 
 class TestProtoValueConversion:
+    """Round-trip tests for the Value oneof conversion (no gRPC, no network).
+
+    Covers all seven Value cases (int64, double, bool, string,
+    doubleArray, int64Array, Alarm) plus the unset case.
+    """
 
     def _make_proto_iastype(self, ias_type):
         from IasProtobufTypes.types_pb2 import IASType as ProtoIASType
@@ -146,6 +175,7 @@ class TestProtoValueConversion:
 
 
 class TestProtoIasioInfoConversion:
+    """Round-trip tests for IasioInfo proto conversion (no gRPC, no network)."""
 
     def _make_proto_iastype(self, ias_type):
         from IasProtobufTypes.types_pb2 import IASType as ProtoIASType
@@ -160,6 +190,12 @@ class TestProtoIasioInfoConversion:
 
 
 class TestProtoIasIOConversion:
+    """Round-trip tests for the full IASIO proto conversion (no gRPC, no network).
+
+    Verifies that every field (id, runningId, mode, iasType, validity,
+    value, productionTStamp, props) survives the Python → proto → Python
+    round trip for all major value types.
+    """
 
     def _make_proto_iastype(self, ias_type):
         from IasProtobufTypes.types_pb2 import IASType as ProtoIASType
