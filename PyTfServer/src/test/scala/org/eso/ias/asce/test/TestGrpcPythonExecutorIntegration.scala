@@ -1,9 +1,9 @@
 package org.eso.ias.asce.test
 
-import org.eso.ias.asce.transfer.{GrpcPythonExecutor, IasioInfo, ProtoUtil}
+import org.eso.ias.asce.transfer.{GrpcPythonExecutor, IasIO, IasioInfo, ProtoUtil}
 import org.eso.ias.generated.protobuf.tfservice.PyTfServiceGrpc
 import org.eso.ias.generated.protobuf.tfservice.PytfService
-import org.eso.ias.types.IASTypes
+import org.eso.ias.types.{IASTypes, Identifier, IdentifierType, InOut}
 import org.eso.ias.logging.IASLogger
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.BeforeAndAfterAll
@@ -193,6 +193,110 @@ class TestGrpcPythonExecutorIntegration extends AnyFlatSpec with BeforeAndAfterA
         .build()
     )
     assert(shutdownResp.getSuccess, s"Shutdown failed: ${shutdownResp.getError}")
+  }
+
+  it must "eval pass through returns input value" in {
+    val props = new Properties()
+    props.setProperty("pyTfServerAddr", s"localhost:$serverPort")
+
+    val executor = new GrpcPythonExecutor[java.lang.Long](
+      "testInt",
+      s"testInt:eval:$serverPort",
+      1000L,
+      props,
+      "test_tf_module.PassThroughTF"
+    )
+
+    val inputsInfo = Set(IasioInfo("in1", IASTypes.LONG))
+    val outputInfo = IasioInfo("out", IASTypes.LONG)
+    executor.initialize(inputsInfo, outputInfo)
+
+    val inputId = new Identifier("in1", IdentifierType.IASIO, None)
+    val inputInOut: InOut[java.lang.Long] = InOut.asInput[java.lang.Long](inputId, IASTypes.LONG)
+      .asInstanceOf[InOut[java.lang.Long]]
+      .updateValue(Some(42L))
+      .updateProdTStamp(System.currentTimeMillis())
+    val inputIasIO = new IasIO[java.lang.Long](inputInOut)
+
+    val outputId = new Identifier("out", IdentifierType.IASIO, None)
+    val outputInOut = InOut.asOutput[java.lang.Long](outputId, IASTypes.LONG)
+    val outputIasIO = new IasIO[java.lang.Long](outputInOut)
+
+    val compInputs = Map("in1" -> inputIasIO)
+    val result = executor.eval(compInputs, outputIasIO)
+
+    assert(result.value.contains(42L: java.lang.Long), s"Expected 42 but got ${result.value}")
+
+    executor.shutdown()
+  }
+
+  it must "eval doubling tf doubles input value" in {
+    val props = new Properties()
+    props.setProperty("pyTfServerAddr", s"localhost:$serverPort")
+
+    val executor = new GrpcPythonExecutor[java.lang.Long](
+      "testDbl",
+      s"testDbl:eval:$serverPort",
+      1000L,
+      props,
+      "test_tf_module.DoublingTF"
+    )
+
+    val inputsInfo = Set(IasioInfo("in1", IASTypes.LONG))
+    val outputInfo = IasioInfo("out", IASTypes.LONG)
+    executor.initialize(inputsInfo, outputInfo)
+
+    val inputId = new Identifier("in1", IdentifierType.IASIO, None)
+    val inputInOut: InOut[java.lang.Long] = InOut.asInput[java.lang.Long](inputId, IASTypes.LONG)
+      .asInstanceOf[InOut[java.lang.Long]]
+      .updateValue(Some(21L))
+      .updateProdTStamp(System.currentTimeMillis())
+    val inputIasIO = new IasIO[java.lang.Long](inputInOut)
+
+    val outputId = new Identifier("out", IdentifierType.IASIO, None)
+    val outputInOut = InOut.asOutput[java.lang.Long](outputId, IASTypes.LONG)
+    val outputIasIO = new IasIO[java.lang.Long](outputInOut)
+
+    val compInputs = Map("in1" -> inputIasIO)
+    val result = executor.eval(compInputs, outputIasIO)
+
+    assert(result.value.contains(42L: java.lang.Long), s"Expected 42 but got ${result.value}")
+
+    executor.shutdown()
+  }
+
+  it must "eval fails when not initialized" in {
+    val props = new Properties()
+    props.setProperty("pyTfServerAddr", s"localhost:$serverPort")
+
+    val executor = new GrpcPythonExecutor[java.lang.Long](
+      "testFail",
+      s"testFail:notinit:$serverPort",
+      1000L,
+      props,
+      "test_tf_module.PassThroughTF"
+    )
+
+    val inputId = new Identifier("in1", IdentifierType.IASIO, None)
+    val inputInOut: InOut[java.lang.Long] = InOut.asInput[java.lang.Long](inputId, IASTypes.LONG)
+      .asInstanceOf[InOut[java.lang.Long]]
+      .updateValue(Some(1L))
+      .updateProdTStamp(System.currentTimeMillis())
+    val inputIasIO = new IasIO[java.lang.Long](inputInOut)
+
+    val outputId = new Identifier("out", IdentifierType.IASIO, None)
+    val outputInOut = InOut.asOutput[java.lang.Long](outputId, IASTypes.LONG)
+    val outputIasIO = new IasIO[java.lang.Long](outputInOut)
+
+    val compInputs = Map("in1" -> inputIasIO)
+
+    var failed = false
+    try {
+      executor.eval(compInputs, outputIasIO)
+    } catch {
+      case _: Exception => failed = true
+    }
+    assert(failed, "Expected exception when eval called without initialize")
   }
 
 }
