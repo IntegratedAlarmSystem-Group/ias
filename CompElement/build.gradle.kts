@@ -181,19 +181,7 @@ tasks.test {
     val pythonPath = listOf(buildSitePackages, builBasicTypesPython, buildToolsPython, srcTestPython)
         .joinToString(File.pathSeparator)
 
-    environment("PYTHONPATH", pythonPath)
-    print("PYTHONPATH $pythonPath")
-
-    exclude("org/eso/ias/asce/test/TestPyTF*.class")
-    exclude("org/eso/ias/asce/test/TestMinMaxPyTF*.class")
 
     useJUnitPlatform()
 
-    doFirst {
-        println(">>> Python_ROOT_DIR=$pythonRoot")
-        println(">>> PYTHONPATH=$pythonPath")
-        println(">>> JAVA_HOME=${System.getenv("JAVA_HOME")}")
-        println(">>> LD_LIBRARY_PATH=${System.getenv("LD_LIBRARY_PATH")}")
-        println(">>> java.library.path=${System.getProperty("java.library.path")}")
-    }
 }

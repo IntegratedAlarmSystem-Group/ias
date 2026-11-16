@@ -1,109 +1,46 @@
-package org.eso.ias.asce.test
+package org.eso.ias.pytfserver.test
 
 import org.eso.ias.asce.transfer.{GrpcPythonExecutor, IasIO, IasioInfo, ProtoUtil}
 import org.eso.ias.generated.protobuf.tfservice.PyTfServiceGrpc
 import org.eso.ias.generated.protobuf.tfservice.PytfService
 import org.eso.ias.types.{IASTypes, Identifier, IdentifierType, InOut}
 import org.eso.ias.logging.IASLogger
-import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.BeforeAndAfterAll
+import org.scalatest.flatspec.AnyFlatSpec
 
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 
 import java.util.Properties
 import scala.jdk.CollectionConverters._
-import scala.util.Try
 
 /** Integration tests for GrpcPythonExecutor with a real PyTfServer subprocess.
   *
-  * These tests manage their own PyTfServer lifecycle: `iasPyTfServer.py` is
-  * spawned on a random localhost TCP port in `beforeAll` and destroyed in
-  * `afterAll`.  No external PyTfServer needs to be running beforehand.  A
+  * Uses [[PyTfServerBase]] for server lifecycle management.  A
   * gRPC channel is opened from the Scala side to verify end-to-end
   * communication between `GrpcPythonExecutor` and the Python TF server.
-  *
-  * '''Start:''' beforeAll spawns the server via `ProcessBuilder` with a
-  * `PYTHONPATH` covering the build trees of CompElement, BasicTypes, Tools,
-  * and the PyTfServer source and generated proto paths.  A 2-second sleep
-  * follows, then a liveness check — if the process has already exited, an
-  * `IllegalStateException` is thrown with the captured stdout/stderr.
-  *
-  * '''Terminate:''' afterAll calls `channel.shutdownNow()` and
-  * `serverProcess.destroy()` with a 5-second wait.
   */
-class TestGrpcPythonExecutorIntegration extends AnyFlatSpec with BeforeAndAfterAll {
+class TestGrpcPythonExecutorIntegration extends AnyFlatSpec with BeforeAndAfterAll with PyTfServerBase {
 
   private val logger = IASLogger.getLogger(this.getClass)
 
-  var serverProcess: Process = null
-  var serverPort: Int = 0
-  var channel: ManagedChannel = null
+  private var channel: ManagedChannel | Null = null
 
-  /** Spawn the PyTfServer subprocess and open a gRPC channel. */
   override def beforeAll(): Unit = {
-    serverPort = findFreePort()
-
-    val iasRoot = System.getProperty("ias.root.build",
-      new java.io.File(".").getCanonicalFile.getParentFile.getCanonicalPath)
-
-    val pythonVersion = "python3.12"
-
-    val compElementLib = s"$iasRoot/CompElement/build/lib/$pythonVersion/site-packages"
-    val basicTypesLib = s"$iasRoot/BasicTypes/build/lib/$pythonVersion/site-packages"
-    val toolsLib = s"$iasRoot/Tools/build/lib/$pythonVersion/site-packages"
-    val pyTfServerSrc = s"$iasRoot/PyTfServer/src/main/python"
-    val pyTfServerTest = s"$iasRoot/PyTfServer/src/test/python"
-    val compElementGenProto = s"$iasRoot/CompElement/build/generated/python/IasProtobufTfserver"
-    val basicTypesGenProto = s"$iasRoot/BasicTypes/build/generated/python/IasProtobufTypes"
-
-    val pythonPath = List(
-      compElementLib, basicTypesLib, toolsLib, pyTfServerSrc, pyTfServerTest,
-      compElementGenProto, basicTypesGenProto
-    ).mkString(":")
-
-    val serverScript = s"$iasRoot/PyTfServer/src/main/python/iasPyTfServer.py"
-
-    val env = System.getenv().asScala.toMap + ("PYTHONPATH" -> pythonPath)
-
-    val cmd = List("python3", "-u", serverScript, "-p", serverPort.toString)
-    logger.info(s"Starting PyTfServer on port $serverPort with PYTHONPATH=$pythonPath")
-
-    val pb = new ProcessBuilder(cmd*)
-    env.foreach { case (k, v) => pb.environment().put(k, v) }
-    serverProcess = pb.start()
-
-    Thread.sleep(2000)
-    val isAlive = Try(serverProcess.exitValue()).isFailure
-    if (!isAlive) {
-      val err = scala.io.Source.fromInputStream(serverProcess.getInputStream).mkString
-      val out = scala.io.Source.fromInputStream(serverProcess.getErrorStream).mkString
-      throw new IllegalStateException(s"PyTfServer failed to start. stdout: $err stderr: $out")
-    }
-    logger.info(s"PyTfServer started successfully on port $serverPort")
-
+    super.beforeAll()
+    startServer()
     channel = ManagedChannelBuilder.forAddress("localhost", serverPort)
       .usePlaintext()
       .build()
+    logger.info(s"gRPC channel created on port $serverPort")
   }
 
-  /** Shut down the gRPC channel and destroy the server subprocess. */
   override def afterAll(): Unit = {
     if (channel != null) {
       channel.shutdownNow()
     }
-    if (serverProcess != null) {
-      serverProcess.destroy()
-      Try(serverProcess.waitFor(5, java.util.concurrent.TimeUnit.SECONDS))
-    }
-  }
-
-  /** Return a free TCP port on localhost using a zero-bound ServerSocket. */
-  def findFreePort(): Int = {
-    val serverSocket = new java.net.ServerSocket(0)
-    val port = serverSocket.getLocalPort
-    serverSocket.close()
-    port
+    stopServer()
+    super.afterAll()
   }
 
   behavior of "GrpcPythonExecutor with running PyTfServer"
