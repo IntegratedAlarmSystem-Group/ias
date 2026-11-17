@@ -72,10 +72,21 @@ subprojects {
             description = "Run pytest for ${project.name}"
             group = "verification"
 
-            // If CopyPyMods exists (likely as the test probably test the modules delivered by the subproject),
-            // the test depends on it
+            // Depend on this project's CopyPyMods if it exists, and on all other
+            // subprojects' CopyPyMods and CopyPyProtoMods to ensure their site-packages
+            // dirs are populated (including generated protobuf stubs)
             if (tasks.names.contains("CopyPyMods")) {
                 dependsOn(tasks.named("CopyPyMods"))
+            }
+            rootProject.subprojects.forEach { sub ->
+                if (sub.name != project.name) {
+                    if (sub.tasks.names.contains("CopyPyMods")) {
+                        dependsOn(":${sub.name}:CopyPyMods")
+                    }
+                    if (sub.tasks.names.contains("CopyPyProtoMods")) {
+                        dependsOn(":${sub.name}:CopyPyProtoMods")
+                    }
+                }
             }
 
             doFirst {
