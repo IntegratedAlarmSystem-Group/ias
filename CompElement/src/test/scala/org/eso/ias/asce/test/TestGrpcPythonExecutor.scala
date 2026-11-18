@@ -25,27 +25,28 @@ class TestGrpcPythonExecutor extends AnyFlatSpec {
 
   behavior of "GrpcPythonExecutor constructor"
 
-  it must "succeed with valid parameters and default server address" in {
+  it must "succeed with valid parameters and explicit server address" in {
     val props = new Properties()
     val exec = new GrpcPythonExecutor[java.lang.Long](
       "ASCE1",
       "ASCE1:runningId",
       1000L,
       props,
-      "TestTF.TestTransferFunction"
+      "TestTF.TestTransferFunction",
+      "localhost:50051"
     )
     assert(exec.serverAddr == "localhost:50051")
   }
 
-  it must "use custom server address from pyTfServerAddr property" in {
+  it must "use custom server address as explicit parameter" in {
     val props = new Properties()
-    props.setProperty("pyTfServerAddr", "myhost:9999")
     val exec = new GrpcPythonExecutor[java.lang.Long](
       "ASCE2",
       "ASCE2:runningId",
       1000L,
       props,
-      "TestTF.TestTransferFunction"
+      "TestTF.TestTransferFunction",
+      "myhost:9999"
     )
     assert(exec.serverAddr == "myhost:9999")
   }
@@ -59,7 +60,8 @@ class TestGrpcPythonExecutor extends AnyFlatSpec {
         "ASCE3:runningId",
         1000L,
         props,
-        null
+        null,
+        "localhost:50051"
       )
     } catch {
       case _: IllegalArgumentException => thrown = true
@@ -76,7 +78,8 @@ class TestGrpcPythonExecutor extends AnyFlatSpec {
         "ASCE4:runningId",
         1000L,
         props,
-        ""
+        "",
+        "localhost:50051"
       )
     } catch {
       case _: IllegalArgumentException => thrown = true
@@ -98,9 +101,8 @@ class TestGrpcPythonExecutor extends AnyFlatSpec {
 
     val output: InOut[Alarm] = InOut.asOutput(outId, IASTypes.ALARM)
 
+    val addr = "localhost:59999"
     val props = new Properties()
-    // Use a port that is definitely not listening
-    props.setProperty("pyTfServerAddr", "localhost:59999")
 
     val pythonTFSetting = new TransferFunctionSetting(
       "TestTF.TestTransferFunction",
@@ -115,7 +117,8 @@ class TestGrpcPythonExecutor extends AnyFlatSpec {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      props
+      props,
+      Some(addr)
     ) with PythonTransfer[Alarm]
 
     val state = comp.initialize()
@@ -141,8 +144,8 @@ class TestGrpcPythonExecutor extends AnyFlatSpec {
 
     val output: InOut[java.lang.Long] = InOut.asOutput(outId, IASTypes.LONG)
 
+    val addr = "localhost:59998"
     val props = new Properties()
-    props.setProperty("pyTfServerAddr", "localhost:59998")
 
     val pythonTFSetting = new TransferFunctionSetting(
       "TestTF.TestTransferFunction",
@@ -157,7 +160,8 @@ class TestGrpcPythonExecutor extends AnyFlatSpec {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      props
+      props,
+      Some(addr)
     ) with PythonTransfer[java.lang.Long]
 
     val state = comp.initialize()
@@ -179,16 +183,16 @@ class TestGrpcPythonExecutor extends AnyFlatSpec {
     logger.info("TransferFunctionSetting GrpcPythonExecutor creation tested")
   }
 
-  it must "pass server address property through to GrpcPythonExecutor" in {
+  it must "pass server address to GrpcPythonExecutor" in {
     val props = new Properties()
-    props.setProperty("pyTfServerAddr", "custom-server:12345")
 
     val executor = new GrpcPythonExecutor[java.lang.Integer](
       "ASCE5",
       "ASCE5:run",
       5000L,
       props,
-      "MyTF"
+      "MyTF",
+      "custom-server:12345"
     )
 
     assert(executor.serverAddr == "custom-server:12345")

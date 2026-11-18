@@ -11,22 +11,33 @@ import scala.jdk.CollectionConverters._
 import java.util.Properties
 import scala.util.Try
 
+/**
+  * gRPC-based executor for Python transfer functions.
+  *
+  * Delegates TF initialization, evaluation, and shutdown to an external
+  * PyTfServer process via gRPC.  The server address is provided explicitly
+  * at construction time.
+  *
+  * @param cEleId: the ID of the ASCE
+  * @param cEleRunningId: the running ID of the ASCE
+  * @param validityTimeFrame: the time frame (msec) to invalidate monitor points
+  * @param props: the properties for the executor
+  * @param pythonClassName: the fully qualified name of the Python TF class
+  * @param serverAddr: the address of the PyTfServer (host:port) — required
+  */
 class GrpcPythonExecutor[T](
     cEleId: String,
     cEleRunningId: String,
     validityTimeFrame: Long,
     props: Properties,
-    pythonClassName: String
+    pythonClassName: String,
+    val serverAddr: String
 ) extends PythonTransferExecutor[T](cEleId, cEleRunningId, validityTimeFrame, props) {
 
   private val logger = LoggerFactory.getLogger(classOf[GrpcPythonExecutor[T]])
 
-  private val SERVER_ADDRESS_PROPERTY = "pyTfServerAddr"
-  private val DEFAULT_SERVER_ADDRESS = "localhost:50051"
-
   require(pythonClassName != null && pythonClassName.nonEmpty, "Missing python class name")
-
-  val serverAddr: String = props.getProperty(SERVER_ADDRESS_PROPERTY, DEFAULT_SERVER_ADDRESS)
+  require(serverAddr != null && serverAddr.nonEmpty, "Missing PyTfServer address")
 
   private val channel: ManagedChannel = ManagedChannelBuilder.forTarget(serverAddr)
     .usePlaintext()
@@ -155,8 +166,9 @@ object GrpcPythonExecutor {
       cEleRunningId: String,
       validityTimeFrame: Long,
       props: Properties,
-      pythonClassName: String
+      pythonClassName: String,
+      serverAddr: String
   ): GrpcPythonExecutor[T] = {
-    new GrpcPythonExecutor[T](cEleId, cEleRunningId, validityTimeFrame, props, pythonClassName)
+    new GrpcPythonExecutor[T](cEleId, cEleRunningId, validityTimeFrame, props, pythonClassName, serverAddr)
   }
 }

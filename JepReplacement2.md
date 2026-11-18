@@ -74,6 +74,10 @@ iasPyTfServer process (1 per Supervisor)
 
 One `TfManager` per server process, shared across all ASCEs. Each ASCE identified by its unique `asceRunningId`. `tf_service.py` handles proto ↔ Python conversion and delegates to `TfManager`. `iasPyTfServer.py` is the CLI entry point.
 
+### Deployment model
+
+PyTfServer has **no entry in the CDB**. It is started independently by the operator (or systemd/supervisor) before the Supervisor, taking the port from the command line (`--port`). The Supervisor learns the PyTfServer address from `supervDao.getPyTfServerAddr()` (already defined in the `SUPERVISOR` CDB entry as `pyTfServerAddr: "host:port"`) and wires it down through DasuImpl → ASCE → GrpcPythonExecutor. One PyTfServer process per Supervisor, typically co-located on the same host.
+
 ---
 
 ## Plan
@@ -223,9 +227,53 @@ When the Supervisor (or an ASCE / DASU that needs Python TF execution) starts, i
 
 This provides a clear diagnostic at startup time rather than a silent failure later when `eval` is called on an unreachable server.
 
-### Step D — Step 6: Configuration threading
+### Step D.1 — `JsonSupervisorDao.equals()/hashCode()` bug fix (DONE)
 
-Wire `pyTfServerAddr` from `SupervisorDao` (already defined, validated, unused) down to each `GrpcPythonExecutor` via Supervisor → DasuImpl → ASCE properties.
+`pyTfServerAddr` was missing from `JsonSupervisorDao.hashCode()` and `equals()`, meaning two instances with the same id, hostName, logLevel, and dasusToDeploy but different `pyTfServerAddr` values compared as equal. Fixed by adding `pyTfServerAddr` to both methods.
+
+### Step D.2 — Fail-fast ping in Supervisor constructor (DONE)
+
+When `pyTfServerAddr` is defined in the CDB, the Supervisor constructor sends a gRPC `Ping` RPC to the PyTfServer at `host:port`. If the ping fails, the Supervisor refuses to start with a clear error. When `pyTfServerAddr` is empty (default, most CDBs), the check is skipped entirely — existing Supervisors are unaffected.
+
+**Refactored:** The `Ping` logic lives in `GrpcPythonExecutor.checkServerRunning(serverAddr)` (CompElement companion object) rather than in `Supervisor.scala`. This keeps gRPC dependencies confined to CompElement — the Supervisor only calls the static method via `implementation(project(":CompElement"))` with no direct gRPC imports. The initial implementation had inline gRPC code in Supervisor and explicit gRPC dependencies in its `build.gradle.kts` (needed because the Scala 3 compiler failed to resolve protobuf inner classes like `GeneratedMessage$Builder` from transitive deps alone), but this was reverted after the refactoring proved unnecessary.
+
+### Step D.3 — DasuImpl constructor + apply overload (DONE)
+
+Added `pyTfServerAddr: Option[String] = None` as a 7th parameter to `DasuImpl` constructor and a 7-arg overload of `apply`. The 6-arg `apply` delegates to the 7-arg version with `None`. All existing 6-arg callers (DistributedUnit tests, Supervisor unit tests, integration tests) compile and run unchanged via the default parameter.
+
+### Step D.4 — Supervisor main reads address from CDB (DONE)
+
+In `Supervisor.main`, before creating the DASU factory, the Supervisor reads `pyTfServerAddr` from the CDB `SupervisorDao` and passes it through the factory lambda to the 7-arg `DasuImpl.apply`. The factory type signature `(DasuDao, Identifier, OutputPublisher, InputSubscriber) => Dasu` remains unchanged — the address is captured from the `main` scope.
+
+### Step D.5 — Explicit pyTfServerAddr on ComputingElement and GrpcPythonExecutor (DONE)
+
+The `pyTfServerAddr` is no longer hidden inside `Properties`. It is now an explicit constructor parameter at every level:
+
+- **`ComputingElement`**: added `pyTfServerAddr: Option[String] = None` as 7th constructor parameter (defaulted, so 30+ existing test call sites compile unchanged). The `apply` factory accepts it as a 5th parameter. For Scala/Java TFs it is `None`; for Python TFs it carries the address.
+- **`ComputingElement.initialize()`**: passes `pyTfServerAddr` to `tfSetting.initialize()`.
+- **`TransferFunctionSetting.initialize()`**: accepts `pyTfServerAddr: Option[String] = None` and threads it to `instantiateExecutor()`. The `instantiateExecutor()` now looks for a 6-arg constructor for Python (was 5) and passes `pyTfServerAddr.getOrElse("localhost:50051")` as the 6th argument via reflection.
+- **`GrpcPythonExecutor`**: constructor now takes `val serverAddr: String` as an explicit 6th parameter instead of reading it from `props`. The `apply` factory updated to match.
+- **`DasuImpl`**: no longer sets `pyTfServerAddr` in properties; passes it directly to `ComputingElement.apply` as the 7th parameter.
+
+**This completes the wiring chain:** `SupervisorDao.getPyTfServerAddr()` → `Supervisor.main` → `DasuImpl.apply` (7-arg) → `ComputingElement.apply` (7-arg) → `ComputingElement.initialize()` → `TransferFunctionSetting.initialize()` → `instantiateExecutor()` → `GrpcPythonExecutor` constructor (explicit 6th param).
+
+### Step D — Step 6: Configuration threading (DONE)
+
+The full chain is now operational with explicit parameters at every layer. See sub-steps D.1 through D.5.
+
+**Files changed (Steps D.1–D.5):**
+
+| File | Change |
+|---|---|
+| `Cdb/.../JsonSupervisorDao.java` | Added `pyTfServerAddr` to `hashCode()` and `equals()` |
+| `CompElement/.../ComputingElement.scala` | Added `pyTfServerAddr: Option[String] = None` constructor param + factory param; threads address to `PythonTF` branch and `tfSetting.initialize()` |
+| `CompElement/.../TransferFunctionSetting.scala` | `initialize()` and `instantiateExecutor()` accept `pyTfServerAddr`; 6-arg constructor for Python via reflection |
+| `CompElement/.../GrpcPythonExecutor.scala` | `serverAddr` is explicit 6th constructor param (no longer read from props); `apply` factory updated |
+| `DistributedUnit/.../DasuImpl.scala` | Passes `pyTfServerAddr` directly to `ComputingElement.apply` (no longer via properties) |
+| `Supervisor/.../Supervisor.scala` | Main reads `pyTfServerAddr` from CDB and passes to `DasuImpl.apply`; ping delegates to `GrpcPythonExecutor.checkServerRunning` |
+| `Supervisor/build.gradle.kts` | Added `implementation(project(":CompElement"))` (no direct gRPC deps) |
+| `CompElement/.../TestGrpcPythonExecutor.scala` | Constructor args updated; 2 unit tests for `checkServerRunning` |
+| `PyTfServer/.../TestGrpcPythonExecutorIntegration.scala` | All 5 `GrpcPythonExecutor` instantiations pass explicit `serverAddr` |
 
 ### Step E — Re-enable Python TF tests (DONE — tests moved to PyTfServer integration tests)
 
@@ -237,9 +285,17 @@ All integration tests are now under `PyTfServer/src/integrationTest/scala/org/es
 
 **Deviation from original plan:** The `PyTfServer/build.gradle.kts` was NOT reverted to `base` plugin only. The integration tests are Scala and depend on CompElement classes (`GrpcPythonExecutor`, `ComputingElement`, types). The `scala` plugin, CompElement/BasicTypes/Tools dependencies, and `integrationTest` Scala source set are required and will remain.
 
-### Step F — Step 8: Full integration tests (later)
+### Step I — PyTfServer sends IAS heartbeats
 
-Full end-to-end: Supervisor starts, connects to external PyTfServer, evaluates real Python TFs.
+The `PyTfServer` process should emit IAS heartbeats to the Kafka heartbeat topic, using the same Python heartbeat infrastructure from the `Heartbeat` module that `AlarmGui` and other IAS components use. This ensures the central monitoring system can detect when a PyTfServer process goes down, just as it does for any other IAS component.
+
+### Step F — Full integration tests (later)
+
+The code path is wired through. The next step is a Supervisor-level integration test that:
+1. Starts a PyTfServer subprocess on a known port.
+2. Creates a CDB JSON with `pyTfServerAddr` pointing to that port.
+3. Launches a Supervisor with a DASU containing a Python TF.
+4. Pushes input via Kafka and verifies the output.
 
 ---
 
@@ -247,19 +303,23 @@ Full end-to-end: Supervisor starts, connects to external PyTfServer, evaluates r
 
 The gRPC-based Python TF executor is fully operational at the ASCE level: 27 integration tests confirm that ComputingElements with Python transfer functions initialize, evaluate, and shut down correctly over gRPC, covering every IAS data type and including a 15,000-call stress test.
 
-However, for the system to work in a **production deployment** — where a Supervisor manages multiple DASUs and ASCEs that reference Python TFs — four remaining pieces are needed:
+The full wiring chain from the CDB `SupervisorDao` through `DasuImpl` to `GrpcPythonExecutor` is in place with explicit `pyTfServerAddr` parameters at every layer. If a Python TF is configured without an address, `TransferFunctionSetting.instantiateExecutor` throws an `IllegalStateException` and the ASCE is marked broken.
 
-**Step D — Configuration threading** is the most critical gap. The `pyTfServerAddr` property is already defined and validated in the Supervisor configuration, but it never reaches the individual `GrpcPythonExecutor` instances. Without wiring it through Supervisor → DasuImpl → ASCE properties, every executor defaults to `localhost:50051`, which only works when the operator manually starts a PyTfServer on that exact port. Production needs the Supervisor to tell each ASCE where its PyTfServer lives.
-
-**Step H — Fail-fast ping** improves operational robustness. If the PyTfServer is down or unreachable, the current code only detects the problem when `eval()` is called — potentially deep into execution, producing a confusing error. A `Ping` RPC at startup time (in the executor constructor or `initialize()`) would surface the problem immediately with a clear message.
+The full code path is now ready for a Supervisor-level integration test: start a PyTfServer subprocess, configure a CDB with `pyTfServerAddr`, launch a Supervisor with a DASU containing a Python TF, and verify live data flow end-to-end.
 
 **Step C — Shared gRPC channel** is a performance optimization. Currently each `GrpcPythonExecutor` (one per ASCE) creates its own gRPC `ManagedChannel`. A shared channel with reference counting would mean all ASCEs under a Supervisor share a single OS connection to the PyTfServer, reducing resource usage.
 
-**Step F — Full end-to-end integration** is the final validation: a running Supervisor, connected PyTfServer, DASUs with Python TFs, and live data flowing through the system. This is planned for later, after Steps D and H are in place.
+**Step F — Full end-to-end integration** is the final validation: a running Supervisor, connected PyTfServer, DASUs with Python TFs, and live data flowing through the system. This is planned for later.
 
 | Step | Description | Priority |
 |---|---|---|
-| **D** | Wire `pyTfServerAddr` from SupervisorDao through to GrpcPythonExecutor | Required for production |
-| **H** | Fail-fast Ping RPC on executor startup | Operational robustness |
+| **D.1** | `JsonSupervisorDao.equals()/hashCode()` bug fix | DONE |
+| **D.2** | Fail-fast Ping in Supervisor constructor | DONE |
+| **D.3** | DasuImpl constructor + apply overload with pyTfServerAddr | DONE |
+| **D.4** | Supervisor main reads address from CDB and passes to DasuImpl | DONE |
+| **D.5** | Explicit pyTfServerAddr on ComputingElement + GrpcPythonExecutor (no more property hiding) | DONE |
+| **D** | Wire `pyTfServerAddr` from SupervisorDao through to GrpcPythonExecutor | DONE |
+| **H** | Fail-fast Ping RPC on executor startup | Operational robustness (deferred) |
 | **C** | Shared gRPC channel with ref counting | Performance optimization |
-| **F** | Full end-to-end Supervisor → PyTfServer integration | Final validation (later) |
+| **I** | PyTfServer sends IAS heartbeats to Kafka | Monitoring |
+| **F** | Full end-to-end Supervisor to PyTfServer integration | Final validation (later) |

@@ -54,7 +54,8 @@ class TestGrpcPythonExecutorIntegration extends AnyFlatSpec with BeforeAndAfterA
       s"testInt:run$serverPort",
       1000L,
       props,
-      "test_tf_module.PassThroughTF"
+      "test_tf_module.PassThroughTF",
+      s"localhost:$serverPort"
     )
 
     val inputsInfo = Set(IasioInfo("in1", IASTypes.LONG))
@@ -74,7 +75,8 @@ class TestGrpcPythonExecutorIntegration extends AnyFlatSpec with BeforeAndAfterA
       s"testInt:double:$serverPort",
       1000L,
       props,
-      "test_tf_module.PassThroughTF"
+      "test_tf_module.PassThroughTF",
+      s"localhost:$serverPort"
     )
 
     val inputsInfo = Set(IasioInfo("in1", IASTypes.LONG))
@@ -141,7 +143,8 @@ class TestGrpcPythonExecutorIntegration extends AnyFlatSpec with BeforeAndAfterA
       s"testInt:eval:$serverPort",
       1000L,
       props,
-      "test_tf_module.PassThroughTF"
+      "test_tf_module.PassThroughTF",
+      s"localhost:$serverPort"
     )
 
     val inputsInfo = Set(IasioInfo("in1", IASTypes.LONG))
@@ -176,7 +179,8 @@ class TestGrpcPythonExecutorIntegration extends AnyFlatSpec with BeforeAndAfterA
       s"testDbl:eval:$serverPort",
       1000L,
       props,
-      "test_tf_module.DoublingTF"
+      "test_tf_module.DoublingTF",
+      s"localhost:$serverPort"
     )
 
     val inputsInfo = Set(IasioInfo("in1", IASTypes.LONG))
@@ -211,7 +215,8 @@ class TestGrpcPythonExecutorIntegration extends AnyFlatSpec with BeforeAndAfterA
       s"testFail:notinit:$serverPort",
       1000L,
       props,
-      "test_tf_module.PassThroughTF"
+      "test_tf_module.PassThroughTF",
+      s"localhost:$serverPort"
     )
 
     val inputId = new Identifier("in1", IdentifierType.IASIO, None)

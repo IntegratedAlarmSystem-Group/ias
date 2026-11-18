@@ -12,6 +12,7 @@ import org.eso.ias.command.kafka.CommandManagerKafkaImpl
 import org.eso.ias.dasu.publisher.{KafkaPublisher, OutputPublisher}
 import org.eso.ias.dasu.subscriber.{InputSubscriber, InputsListener, KafkaSubscriber}
 import org.eso.ias.dasu.{Dasu, DasuImpl}
+import org.eso.ias.asce.transfer.GrpcPythonExecutor
 import org.eso.ias.heartbeat.publisher.HbKafkaProducer
 import org.eso.ias.heartbeat.serializer.HbJsonSerializer
 import org.eso.ias.heartbeat.{HbEngine, HbProducer, HeartbeatProducerType, HeartbeatStatus}
@@ -150,6 +151,17 @@ class Supervisor private (
       id,
     dasusToDeploy.size.toString,
     dasusToDeploy.map(d => d.getDasu.getId).mkString(", "))
+
+  // Get the address of the server to run python TF
+  val pyTfServerAddr: Option[String] = {
+    val addr = supervDao.getPyTfServerAddr().trim()
+    if (addr.isBlank()) None else Some(addr)
+  }
+  pyTfServerAddr.foreach(addr =>
+    Supervisor.logger.info("Supervisor [{}], {} will connect to python TF server at: {}",
+      id, addr)
+      require(GrpcPythonExecutor.checkServerRunning(addr), s"Python TF server at $addr does not reply to ping.")
+    )
   
   // Build the kafka producer of IASIOs
   val outputPublisher: OutputPublisher =
@@ -278,6 +290,7 @@ class Supervisor private (
       logLevelFromCommandLine
     )
   }
+
 
 
   /**
@@ -598,11 +611,19 @@ object Supervisor {
 
     val inputsProvider: InputSubscriber = KafkaSubscriber(supervisorId,None,kafkaBrokers,System.getProperties)
 
-    // The identifier of the supervisor
-    val identifier = new Identifier(supervisorId, IdentifierType.SUPERVISOR, None)
+     // The identifier of the supervisor
+     val identifier = new Identifier(supervisorId, IdentifierType.SUPERVISOR, None)
 
-    val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) =>
-      DasuImpl(dd,i,op,id,refreshRate,validityThreshold)
+     val pyTfServerAddr: Option[String] = {
+       val sOpt = reader.getSupervisor(supervisorId)
+       if (sOpt.isPresent) {
+         val addr = sOpt.get.getPyTfServerAddr().trim()
+         if (addr.isBlank()) None else Some(addr)
+       } else None
+     }
+
+     val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) =>
+       DasuImpl(dd,i,op,id,refreshRate,validityThreshold,pyTfServerAddr)
 
     // Build the supervisor
     val supervisor = new Supervisor(
