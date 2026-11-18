@@ -1,0 +1,32 @@
+{
+    "id": "pytf_minmax_a",
+    "dasuID": "pytf_minmax_d",
+    "outputID": "alarm_min_max",
+    "inputIDs": [
+        "min_max_input_val"
+    ],
+    "templatedInputs": [],
+    "transferFunctionID": "IasTransferFunction.MinMaxThreshold",
+    "props": [
+        {
+            "name": "HighOn",
+            "value": "40"
+        },
+        {
+            "name": "HighOff",
+            "value": "35"
+        },
+        {
+            "name": "LowOn",
+            "value": "-20"
+        },
+        {
+            "name": "LowOff",
+            "value": "-10"
+        },
+        {
+            "name": "Priority",
+            "value": "HIGH"
+        }
+    ]
+}

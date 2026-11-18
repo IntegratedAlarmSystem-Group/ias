@@ -1,0 +1,10 @@
+[
+    { "id": "alarm_bool",         "iasType": "ALARM",   "shortDesc": ""  },
+    { "id": "alarm_min_max",      "iasType": "ALARM",   "shortDesc": ""  },
+    { "id": "alarm_multi",        "iasType": "ALARM",   "shortDesc": ""  },
+    { "id": "bool_input_val",     "iasType": "BOOLEAN", "shortDesc": ""  },
+    { "id": "min_max_input_val",  "iasType": "DOUBLE", "shortDesc": ""  },
+    { "id": "al1_multi_input",    "iasType": "ALARM",   "shortDesc": ""  },
+    { "id": "al2_multi_input",    "iasType": "ALARM",   "shortDesc": ""  },
+    { "id": "al3_multi_input",    "iasType": "ALARM",   "shortDesc": ""  }
+]

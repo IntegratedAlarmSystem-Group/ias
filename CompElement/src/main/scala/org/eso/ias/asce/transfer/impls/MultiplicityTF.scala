@@ -198,7 +198,7 @@ object MultiplicityTF {
   private val logger: Logger = IASLogger.getLogger(MultiplicityTF.getClass)
   
   /** The name of the property with the integer value of the threshold */
-  val ThresholdPropName: String ="org.eso.ias.tf.mutliplicity.threshold"
+  val ThresholdPropName: String ="org.eso.ias.tf.multiplicity.threshold"
   
   /** The name of the property to set the priority of the alarm */
   val alarmPriorityPropName: String = "org.eso.ias.tf.alarm.priority"

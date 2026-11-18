@@ -1,0 +1,18 @@
+{
+    "id": "pytf_multi_a",
+    "dasuID": "pytf_multi_d",
+    "outputID": "alarm_multi",
+    "inputIDs": [
+        "al1_multi_input",
+        "al2_multi_input",
+        "al3_multi_input"
+    ],
+    "templatedInputs": [],
+    "transferFunctionID": "IasTransferFunction.MultiplicityThreshold",
+    "props": [
+        {
+            "name": "org.eso.ias.tf.multiplicity.threshold",
+            "value": "2"
+        }
+    ]
+}
