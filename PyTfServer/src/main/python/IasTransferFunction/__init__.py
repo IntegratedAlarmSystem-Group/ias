@@ -1,1 +1,2 @@
 from IasTransferFunction.MinMaxThreshold import MinMaxThreshold
+from IasTransferFunction.MultiplicityThreshold import MultiplicityThreshold
