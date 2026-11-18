@@ -1,10 +1,12 @@
 package org.eso.ias.asce.transfer.impls
 
+import com.typesafe.scalalogging.Logger
 import org.eso.ias.asce.transfer.{IasIO, IasioInfo, ScalaTransferExecutor}
 
 import java.util.Properties
 import org.eso.ias.asce.exceptions.PropsMisconfiguredException
 import org.eso.ias.asce.exceptions.UnexpectedNumberOfInputsException
+import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.IASTypes.*
 import org.eso.ias.asce.exceptions.TypeMismatchException
 import MinMaxThresholdTF.*
@@ -47,6 +49,8 @@ import org.eso.ias.types.{Alarm, Priority}
  */
 class MinMaxThresholdTF(cEleId: String, cEleRunningId: String, validityTimeFrame:Long, props: Properties) 
 extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame, props) {
+
+  private val logger: Logger = IASLogger.getLogger(classOf[MinMaxThresholdTF])
   
   /**
    * The (high) alarm is activated when the value of the IASIO 
@@ -117,6 +121,7 @@ extends ScalaTransferExecutor[Alarm](cEleId,cEleRunningId,validityTimeFrame, pro
     if (lowOff>highOff) {
       throw new PropsMisconfiguredException(Map(lowOffPropName->lowOff.toString(),highOffPropName->highOff.toString()))
     }
+    logger.debug("Thresholds: highOn={}, highOff={}, lowOn={}, lowOff={}", highOn, highOff, lowOn, lowOff)
   }
   
   /**
