@@ -80,7 +80,8 @@ class TestMinMaxPyTF extends AnyFlatSpec with BeforeAndAfterAll with PyTfServerB
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      props) with PythonTransfer[Alarm]
+      props,
+      serverAddr()) with PythonTransfer[Alarm]
   }
 
   override def afterAll(): Unit = {
