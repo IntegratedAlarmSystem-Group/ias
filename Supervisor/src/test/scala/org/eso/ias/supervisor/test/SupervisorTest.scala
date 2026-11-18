@@ -2,8 +2,10 @@ package org.eso.ias.supervisor.test
 
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.structuredtext.StructuredTextReader
+import org.eso.ias.cdb.pojos.DasuDao
+import org.eso.ias.dasu.Dasu
 import org.eso.ias.dasu.publisher.{ListenerOutputPublisherImpl, OutputListener, OutputPublisher}
-import org.eso.ias.dasu.subscriber.DirectInputSubscriber
+import org.eso.ias.dasu.subscriber.{DirectInputSubscriber, InputSubscriber}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.supervisor.Supervisor
 import org.eso.ias.types.*
@@ -65,6 +67,19 @@ class SupervisorTest extends AnyFlatSpec {
 
     val supervIdentifier = new Identifier("SupervisorID", IdentifierType.SUPERVISOR, None)
 
+    // Get the pyTfServerAddr from CDB so it can be passed to each DASU via the factory
+    val supervDaoOpt = cdbReader.getSupervisor("SupervisorID")
+    val pyTfServerAddr: Option[String] = {
+      if (supervDaoOpt.isPresent) {
+        val addr = supervDaoOpt.get.getPyTfServerAddr().trim
+        if (addr.isBlank()) None else Some(addr)
+      } else None
+    }
+
+    val dasuFactory: (DasuDao, Identifier, OutputPublisher, InputSubscriber) => Dasu =
+      (dasuDao: DasuDao, supervId: Identifier, outPub: OutputPublisher, inSub: InputSubscriber) =>
+        DasuMock(dasuDao, supervId, outPub, inSub, pyTfServerAddr)
+
     /** The supervisor to test */
     val supervisor = new Supervisor(
       supervIdentifier,
@@ -73,7 +88,7 @@ class SupervisorTest extends AnyFlatSpec {
       new HbLogProducer(new HbJsonSerializer),
       new CommandManagerMock(supervIdentifier),
       cdbReader,
-      DasuMock.apply,None)
+      dasuFactory, None)
 
     cdbReader.shutdown()
   }
@@ -271,5 +286,14 @@ class SupervisorTest extends AnyFlatSpec {
     assert(outputEventsreceived.size==2)
     assert(stringEventsreceived.size==2)
     assert(stringEventsreceived.forall(s => s.contains("Dasu1")||s.contains("Dasu3")))
+  }
+
+  it must "propagate pyTfServerAddr to all DASUs" in new Fixture {
+    val dasus = supervisor.dasus.values
+    dasus.foreach { d =>
+      assert(d.asInstanceOf[DasuMock].pyTfServerAddr == supervisor.pyTfServerAddr,
+        s"pyTfServerAddr mismatch for DASU ${d.asInstanceOf[DasuMock].id}: " +
+        s"expected ${supervisor.pyTfServerAddr}, got ${d.asInstanceOf[DasuMock].pyTfServerAddr}")
+    }
   }
 }
