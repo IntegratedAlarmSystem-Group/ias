@@ -82,4 +82,10 @@ trait PyTfServerBase {
     p.setProperty("pyTfServerAddr", s"localhost:$serverPort")
     p
   }
+
+  /** Returns the PyTfServer address as Option[String] for the 7th ComputingElement param. */
+  protected def serverAddr(): Option[String] = {
+    if (serverPort > 0) Some(s"localhost:$serverPort")
+    else None
+  }
 }

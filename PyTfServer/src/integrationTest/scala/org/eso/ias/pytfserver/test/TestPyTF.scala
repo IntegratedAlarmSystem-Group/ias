@@ -141,7 +141,8 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll with PyTfServerBase {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      serverProps()) with PythonTransfer[Alarm]
+      serverProps(),
+      serverAddr()) with PythonTransfer[Alarm]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -164,7 +165,8 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll with PyTfServerBase {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      serverProps()) with PythonTransfer[Alarm]
+      serverProps(),
+      serverAddr()) with PythonTransfer[Alarm]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -207,7 +209,8 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll with PyTfServerBase {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      serverProps()) with PythonTransfer[Alarm]
+      serverProps(),
+      serverAddr()) with PythonTransfer[Alarm]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -244,13 +247,13 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll with PyTfServerBase {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      serverProps()) with PythonTransfer[java.lang.Long]
+      serverProps(),
+      serverAddr()) with PythonTransfer[java.lang.Long]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
 
     val newOut: Try[InOut[java.lang.Long]] = javaComp.transfer(inputsMPs,compID,outputLong)
-
     assert(newOut.isSuccess,"Exception got from the TF")
 
     val out: InOut[java.lang.Long] = newOut.get
@@ -277,7 +280,8 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll with PyTfServerBase {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      serverProps()) with PythonTransfer[java.lang.Integer]
+      serverProps(),
+      serverAddr()) with PythonTransfer[java.lang.Integer]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -310,7 +314,8 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll with PyTfServerBase {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      serverProps()) with PythonTransfer[java.lang.Short]
+      serverProps(),
+      serverAddr()) with PythonTransfer[java.lang.Short]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -343,7 +348,8 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll with PyTfServerBase {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      serverProps()) with PythonTransfer[java.lang.Byte]
+      serverProps(),
+      serverAddr()) with PythonTransfer[java.lang.Byte]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -376,7 +382,8 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll with PyTfServerBase {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      serverProps()) with PythonTransfer[java.lang.Double]
+      serverProps(),
+      serverAddr()) with PythonTransfer[java.lang.Double]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -409,7 +416,8 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll with PyTfServerBase {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      serverProps()) with PythonTransfer[java.lang.Float]
+      serverProps(),
+      serverAddr()) with PythonTransfer[java.lang.Float]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -442,7 +450,8 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll with PyTfServerBase {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      serverProps()) with PythonTransfer[java.lang.Boolean]
+      serverProps(),
+      serverAddr()) with PythonTransfer[java.lang.Boolean]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -475,7 +484,8 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll with PyTfServerBase {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      serverProps()) with PythonTransfer[java.lang.Character]
+      serverProps(),
+      serverAddr()) with PythonTransfer[java.lang.Character]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -508,7 +518,8 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll with PyTfServerBase {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      serverProps()) with PythonTransfer[java.lang.String]
+      serverProps(),
+      serverAddr()) with PythonTransfer[java.lang.String]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -541,7 +552,8 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll with PyTfServerBase {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      serverProps()) with PythonTransfer[java.lang.Long]
+      serverProps(),
+      serverAddr()) with PythonTransfer[java.lang.Long]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -575,7 +587,8 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll with PyTfServerBase {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      serverProps()) with PythonTransfer[NumericArray]
+      serverProps(),
+      serverAddr()) with PythonTransfer[NumericArray]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -609,7 +622,8 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll with PyTfServerBase {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      serverProps()) with PythonTransfer[NumericArray]
+      serverProps(),
+      serverAddr()) with PythonTransfer[NumericArray]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -642,7 +656,8 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll with PyTfServerBase {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      serverProps()) with PythonTransfer[Alarm]
+      serverProps(),
+      serverAddr()) with PythonTransfer[Alarm]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
@@ -675,7 +690,8 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll with PyTfServerBase {
       inputsMPs.values.toSet,
       pythonTFSetting,
       validityThresholdInSecs,
-      serverProps()) with PythonTransfer[java.lang.Long]
+      serverProps(),
+      serverAddr()) with PythonTransfer[java.lang.Long]
 
     val ret = javaComp.initialize()
     assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
