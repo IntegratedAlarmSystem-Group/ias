@@ -126,6 +126,30 @@ class GrpcPythonExecutor[T](
 }
 
 object GrpcPythonExecutor {
+  /**
+    * Ping the PyTfServer at the given address to check if it is reachable.
+    *
+    * @param serverAddr the server address in host:port format
+    * @return true if the server replies with success, false otherwise
+    */
+  def checkServerRunning(serverAddr: String): Boolean = {
+    val parts = serverAddr.split(":")
+    val host = parts(0)
+    val port = parts(1).toInt
+    val channel = ManagedChannelBuilder.forAddress(host, port)
+      .usePlaintext()
+      .build()
+    try {
+      val stub = PyTfServiceGrpc.newBlockingStub(channel)
+      val resp = stub.ping(PytfService.PingRequest.getDefaultInstance)
+      resp.getSuccess
+    } catch {
+      case _: Exception => false
+    } finally {
+      channel.shutdownNow()
+    }
+  }
+
   def apply[T](
       cEleId: String,
       cEleRunningId: String,
