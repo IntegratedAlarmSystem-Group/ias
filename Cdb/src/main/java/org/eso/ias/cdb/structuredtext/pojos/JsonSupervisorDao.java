@@ -163,6 +163,7 @@ public class JsonSupervisorDao {
 		result = prime * result + ((hostName == null) ? 0 : hostName.hashCode());
 		result = prime * result + ((id == null) ? 0 : id.hashCode());
 		result = prime * result + ((logLevel == null) ? 0 : logLevel.hashCode());
+		result = prime * result + ((pyTfServerAddr == null) ? 0 : pyTfServerAddr.hashCode());
 		return result;
 	}
 
@@ -191,6 +192,11 @@ public class JsonSupervisorDao {
 		} else if (!id.equals(other.id))
 			return false;
 		if (logLevel != other.logLevel)
+			return false;
+		if (pyTfServerAddr == null) {
+			if (other.pyTfServerAddr != null)
+				return false;
+		} else if (!pyTfServerAddr.equals(other.pyTfServerAddr))
 			return false;
 		return true;
 	}
