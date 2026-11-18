@@ -82,17 +82,19 @@ import scala.util.{Failure, Success, Try}
   *                              to set the validity of the output
   *                              taking into account when the timestamps of the inputs
   *                              and the constraint possibly set in the TF
-  * @param props: the java properties to pass to this component and the TF
-  *
-  * @author acaproni
- */
+   * @param props: the java properties to pass to this component and the TF
+   * @param pyTfServerAddr: optional address of the PyTfServer (host:port) for Python TF execution
+   *
+   * @author acaproni
+  */
 abstract class ComputingElement[T](
     val asceIdentifier: Identifier,
     private var _output: InOut[T],
     initialInputs: Set[InOut[?]],
     val tfSetting: TransferFunctionSetting,
     validityThresholdSecs: Int,
-    val props: Properties) {
+    val props: Properties,
+    val pyTfServerAddr: Option[String] = None) {
   require(Option(asceIdentifier).isDefined,"Invalid empty identifier")
   require(asceIdentifier.idType==IdentifierType.ASCE)
   require(Option(initialInputs).isDefined && initialInputs.nonEmpty,"Invalid (empty or null) set of required inputs to the component")
@@ -360,7 +362,7 @@ abstract class ComputingElement[T](
     val inputsInfo = acceptedInputIds.map(inId => new IasioInfo(inId,inputs(inId).iasType))
     val outputInfo = new IasioInfo(output.id.id,output.iasType)
 
-    val initializedTFSettings = tfSetting.initialize(id, asceIdentifier.runningID, validityThreshold, props)
+    val initializedTFSettings = tfSetting.initialize(id, asceIdentifier.runningID, validityThreshold, props, pyTfServerAddr)
     state = if (initializedTFSettings) {
       val initTF = initTransferFunction(inputsInfo,outputInfo,templateInstance)
       initTF match {
@@ -549,19 +551,21 @@ object ComputingElement {
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
   
-  /**
-   * build a ComputingElement from the AsceDao red from the CDB
-   * 
-   * @param asceDao the configuration of the ASCE red from the CDB
-   * @param dasuId the identifier of the DASU where the ASCE runs
-   * @param validityThresholdInSecs the validity threshold (secs) to check the validity
-   * @param properties a optional set of properties
-   */
-  def apply[T](
-      asceDao: AsceDao, 
-      dasuId: Identifier,
-      validityThresholdInSecs: Int,
-      properties: Properties): ComputingElement[T] = {
+   /**
+    * build a ComputingElement from the AsceDao red from the CDB
+    *
+    * @param asceDao the configuration of the ASCE red from the CDB
+    * @param dasuId the identifier of the DASU where the ASCE runs
+    * @param validityThresholdInSecs the validity threshold (secs) to check the validity
+    * @param properties a optional set of properties
+    * @param pyTfServerAddr optional address of the PyTfServer (host:port) for Python TF execution
+    */
+   def apply[T](
+       asceDao: AsceDao,
+       dasuId: Identifier,
+       validityThresholdInSecs: Int,
+       properties: Properties,
+       pyTfServerAddr: Option[String] = None): ComputingElement[T] = {
     require(Option(dasuId).isDefined,"Invalid null DASU identifier")
     require(dasuId.idType==IdentifierType.DASU,"The ASCE runs into a DASU: wrong owner identifer passed "+dasuId.id)
     require(Option(asceDao).isDefined,"Invalid ASCE configuration")
@@ -606,22 +610,24 @@ object ComputingElement {
           IASTypes.fromIasioDaoType(iDao.getIasType)))
 
     tfLanguage match {
-      case TransferFunctionLanguage.scala =>
+       case TransferFunctionLanguage.scala =>
         new ComputingElement[T](
-        asceId,out, 
-        initialIasios, 
-        tfSettings, 
+        asceId,out,
+        initialIasios,
+        tfSettings,
         validityThresholdInSecs,
-        properties) with ScalaTransfer[T] {
+        properties,
+        None) with ScalaTransfer[T] {
           override def autoAck: Boolean = _autoAck
         }
       case TransferFunctionLanguage.java =>
         new ComputingElement[T](
-        asceId,out, 
-        initialIasios, 
-        tfSettings, 
+        asceId,out,
+        initialIasios,
+        tfSettings,
         validityThresholdInSecs,
-        properties) with JavaTransfer[T] {
+        properties,
+        None) with JavaTransfer[T] {
           override def autoAck: Boolean = _autoAck
         }
       case TransferFunctionLanguage.python =>
@@ -630,7 +636,8 @@ object ComputingElement {
         initialIasios,
         tfSettings,
         validityThresholdInSecs,
-        properties) with PythonTransfer[T] {
+        properties,
+        pyTfServerAddr) with PythonTransfer[T] {
           override def autoAck: Boolean = _autoAck
         }
     }

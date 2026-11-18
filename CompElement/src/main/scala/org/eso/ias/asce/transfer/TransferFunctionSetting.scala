@@ -102,23 +102,29 @@ class TransferFunctionSetting(
   }
 
   /**
-   * Load and build the executor of the  transfer function.
-   *
-   * This can be slow and access remote resources
-   *  so it must be run in a worker thread
-   *
-   * @param asceId: the ID of the ASCE
-   * @param asceRunningId: the runningID of the ASCE
-   * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
-   * @param props: the user defined properties
-   * @return true if the initialization went fine
-   *         false otherwise
-   */
-  def initialize(
-      asceId: String,
-      asceRunningId: String,
-      validityTimeFrame: Long,
-      props: Properties): Boolean = {
+    * Load and build the executor of the  transfer function.
+    *
+    * This can be slow and access remote resources
+    *  so it must be run in a worker thread
+    *
+    * For Python TFs, `pyTfServerAddr` must be defined or the executor
+    * will fail to initialize (the ASCE will be marked as broken).
+    *
+    * @param asceId: the ID of the ASCE
+    * @param asceRunningId: the runningID of the ASCE
+    * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
+    * @param props: the user defined properties
+    * @param pyTfServerAddr: address of the PyTfServer for Python TF execution;
+    *                        required for Python TFs or initialization fails
+    * @return true if the initialization went fine
+    *         false otherwise
+    */
+   def initialize(
+       asceId: String,
+       asceRunningId: String,
+       validityTimeFrame: Long,
+       props: Properties,
+       pyTfServerAddr: Option[String] = None): Boolean = {
     require(Option(asceId).isDefined,"Invalid ASCE id")
     require(Option(asceRunningId).isDefined,"Invalid ASCE running id")
     require(Option(props).isDefined)
@@ -139,7 +145,7 @@ class TransferFunctionSetting(
       case Failure(e) => TransferFunctionSetting.logger.error("Error loading {}", nameOfClassToLoad,e); None
       case Success(tec) => this.synchronized {
         TransferFunctionSetting.logger.info("Class {} loaded", nameOfClassToLoad)
-        instantiateExecutor(tec, asceId, asceRunningId, validityTimeFrame, props)
+        instantiateExecutor(tec, asceId, asceRunningId, validityTimeFrame, props, pyTfServerAddr)
       }
     }
 
@@ -168,35 +174,41 @@ class TransferFunctionSetting(
   }
 
   /**
-   * Instantiate the executor of the passed class.
-   *
-   * This method needs to distinguish between python and th eother languages
-   * because the java class that delegates to python has one String parameter more to tell
-   * which python class to load
-   *
-   * @param executorClass: the class of the executor to instantiate
-   * @param asceId: the ID of the ASCE
-   * @param asceRunningId: the runningID of the ASCE
-   * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
-   * @param props: the user defined properties
-   * @return The instantiated executor
-   *
-   */
-  private def instantiateExecutor(
-    executorClass: Class[?],
-    asceId: String,
-    asceRunningId: String,
-    validityTimeFrame: Long,
-    props: Properties): Option[TransferExecutor] = {
+    * Instantiate the executor of the passed class.
+    *
+    * This method needs to distinguish between python and the other languages
+    * because the java class that delegates to python has additional parameters:
+    * the python class name and the PyTfServer address.
+    *
+    * For Python TFs, if `pyTfServerAddr` is not defined, an `IllegalStateException`
+    * is thrown and the executor fails to initialize, which marks the ASCE as broken.
+    *
+    * @param executorClass: the class of the executor to instantiate
+    * @param asceId: the ID of the ASCE
+    * @param asceRunningId: the runningID of the ASCE
+    * @param validityTimeFrame: The time frame (msec) to invalidate monitor points
+    * @param props: the user defined properties
+    * @param pyTfServerAddr: required address of the PyTfServer for Python TF execution;
+    *                        must be defined for Python TFs or initialization fails
+    * @return The instantiated executor
+    *
+    */
+   private def instantiateExecutor(
+     executorClass: Class[?],
+     asceId: String,
+     asceRunningId: String,
+     validityTimeFrame: Long,
+     props: Properties,
+     pyTfServerAddr: Option[String]): Option[TransferExecutor] = {
     assert(Option(executorClass).isDefined)
     require(Option(asceId).isDefined && asceId.nonEmpty)
     require(Option(asceRunningId).isDefined && asceRunningId.nonEmpty)
     require(validityTimeFrame>0)
     require(Option(props).isDefined)
 
-    // Get the constructor with 3 parameters
+    // Get the constructor with the right number of parameters
     val ctors =
-      if (language==TransferFunctionLanguage.python) executorClass.getConstructors.filter(c => c.getParameterTypes.length == 5)
+      if (language==TransferFunctionLanguage.python) executorClass.getConstructors.filter(c => c.getParameterTypes.length == 6)
       else executorClass.getConstructors.filter(c => c.getParameterTypes.length == 4)
     TransferFunctionSetting.logger.debug("Found {} constructors with proper number of args for class {}",ctors.length.toString,nameOfClassToLoad)
 
@@ -208,7 +220,8 @@ class TransferFunctionSetting(
           c.getParameterTypes()(1) == asceRunningId.getClass &&
           c.getParameterTypes()(2) == validityTimeFrame.getClass &&
           c.getParameterTypes()(3) == props.getClass &&
-          c.getParameterTypes()(4)==classOf[String])
+          c.getParameterTypes()(4)==classOf[String] &&
+          c.getParameterTypes()(5)==classOf[String])
     } else {
       ctors.find(c =>
         c.getParameterTypes()(0) == asceId.getClass &&
@@ -224,9 +237,14 @@ class TransferFunctionSetting(
         TransferFunctionSetting.logger.debug("Constructor found for {}",nameOfClassToLoad)
         // The arguments to pass to the constructor
         val args: Array[Any] =
-          if (language==TransferFunctionLanguage.python)
-            Array(asceId, asceRunningId, validityTimeFrame.toLong, props, className)
-          else Array(asceId, asceRunningId, validityTimeFrame, props)
+          if (language==TransferFunctionLanguage.python) {
+            val addr = pyTfServerAddr.getOrElse {
+              throw new IllegalStateException(
+                s"Missing pyTfServerAddr for Python TF of ASCE [$asceId]: " +
+                s"a PyTfServer address is required but was not provided")
+            }
+            Array(asceId, asceRunningId, validityTimeFrame.toLong, props, className, addr)
+          } else Array(asceId, asceRunningId, validityTimeFrame, props)
         // Invoke the constructor to build the TransferExecutor
         c.newInstance(args*).asInstanceOf[TransferExecutor]
       }))

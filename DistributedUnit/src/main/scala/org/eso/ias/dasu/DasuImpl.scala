@@ -31,18 +31,20 @@ import scala.util.{Failure, Success, Try}
  * 
  * @param dasuIdentifier       the identifier of the DASU
  * @param dasuDao              The CDB configuration of the DASU
- * @param outputPublisher      the publisher to send the output
- * @param inputSubscriber      the subscriber getting events to be processed
- * @param autoSendTimeInterval the time (seconds) to automatically resend the last calculated
- * @param validityThreshold    the max delay (secs) before declaring an input unreliable
- */
+  * @param outputPublisher      the publisher to send the output
+  * @param inputSubscriber      the subscriber getting events to be processed
+  * @param autoSendTimeInterval the time (seconds) to automatically resend the last calculated
+  * @param validityThreshold    the max delay (secs) before declaring an input unreliable
+  * @param pyTfServerAddr       optional address of the PyTfServer (host:port) for Python TF execution
+  */
 class DasuImpl (
     dasuIdentifier: Identifier,
     dasuDao: DasuDao,
     private val outputPublisher: OutputPublisher,
     private val inputSubscriber: InputSubscriber,
     autoSendTimeInterval: Integer,
-    validityThreshold: Integer)
+    validityThreshold: Integer,
+    pyTfServerAddr: Option[String] = None)
     extends Dasu(dasuIdentifier,autoSendTimeInterval,validityThreshold) {
   require(Option(dasuIdentifier).isDefined,"Invalid Identifier")
   require(Option(dasuDao).isDefined,"Invalid DASU CDB configuration")
@@ -54,8 +56,8 @@ class DasuImpl (
   DasuImpl.logger.info("Building DASU [{}] with running id {}",id,dasuIdentifier.fullRunningID)
 
   /**
-   * The configuration of the ASCEs that run in the DASU
-   */
+    * The configuration of the ASCEs that run in the DASU
+    */
   val asceDaos: List[AsceDao] = dasuDao.getAsces.asScala.toList
 
   // Are there ASCEs assigned to this DASU?
@@ -79,7 +81,10 @@ class DasuImpl (
     val addToMapFunc = (m: Map[String, ComputingElement[?]], asce: AsceDao) => {
       val propsForAsce = new Properties()
       asce.getProps.forEach(p => propsForAsce.setProperty(p.getName, p.getValue))
-      m + (asce.getId -> ComputingElement(asce,dasuIdentifier,validityThreshold,propsForAsce))
+      pyTfServerAddr.foreach(addr => {
+        DasuImpl.logger.info("DASU [{}] ASCE [{}]: pyTfServerAddr={}", id, asce.getId, addr)
+      })
+      m + (asce.getId -> ComputingElement(asce,dasuIdentifier,validityThreshold,propsForAsce,pyTfServerAddr))
     }
     asceDaos.foldLeft(Map[String,ComputingElement[?]]())(addToMapFunc)
   }
@@ -703,45 +708,69 @@ class DasuImpl (
 }
 
 object DasuImpl {
-  
+
   /**
-   * Factory method to build a DasuImpl
-   * 
-   * @param dasuDao: the configuration of the DASU from the CDB
-   * @param supervidentifier: the identifier of the supervisor that runs the dasu
-   * @param outputPublisher: the producer to send outputs of DASUs to the BSDB
-   * @param inputSubscriber: the consumer to get values from the BSDB
-   * @param autoSendTimeInterval refresh rate (msec) to automatically send the output
-   *                             when no new inputs have been received
-   * @param validityThreshold the max delay (secs) before declaring an input unreliable
-   */
+    * Factory method to build a DasuImpl
+    *
+    * @param dasuDao: the configuration of the DASU from the CDB
+    * @param supervidentifier: the identifier of the supervisor that runs the dasu
+    * @param outputPublisher: the producer to send outputs of DASUs to the BSDB
+    * @param inputSubscriber: the consumer to get values from the BSDB
+    * @param autoSendTimeInterval refresh rate (msec) to automatically send the output
+    *                             when no new inputs have been received
+    * @param validityThreshold the max delay (secs) before declaring an input unreliable
+    */
   def apply(
-    dasuDao: DasuDao, 
-    supervidentifier: Identifier,
-    outputPublisher: OutputPublisher,
-    inputSubscriber: InputSubscriber,
-    autoSendTimeInterval: Integer,
-    validityThreshold: Integer): DasuImpl = {
-    
-    
-    require(Option(dasuDao).isDefined)
-    require(Option(supervidentifier).isDefined)
-    require(Option(outputPublisher).isDefined)
-    require(Option(inputSubscriber).isDefined)
-    require(Option(autoSendTimeInterval).isDefined)
-    require(Option(validityThreshold).isDefined)
-    
-    val dasuId = dasuDao.getId
-    
-    val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervidentifier)
-    
-    new DasuImpl(
-        dasuIdentifier,
-        dasuDao,
-        outputPublisher,
-        inputSubscriber,
-        autoSendTimeInterval,
-        validityThreshold)
+     dasuDao: DasuDao,
+     supervidentifier: Identifier,
+     outputPublisher: OutputPublisher,
+     inputSubscriber: InputSubscriber,
+     autoSendTimeInterval: Integer,
+     validityThreshold: Integer): DasuImpl = {
+    apply(dasuDao, supervidentifier, outputPublisher, inputSubscriber, autoSendTimeInterval, validityThreshold, None)
+  }
+
+  /**
+    * Factory method to build a DasuImpl with PyTfServer address configuration
+    *
+    * @param dasuDao: the configuration of the DASU from the CDB
+    * @param supervidentifier: the identifier of the supervisor that runs the dasu
+    * @param outputPublisher: the producer to send outputs of DASUs to the BSDB
+    * @param inputSubscriber: the consumer to get values from the BSDB
+    * @param autoSendTimeInterval refresh rate (msec) to automatically send the output
+    *                             when no new inputs have been received
+    * @param validityThreshold the max delay (secs) before declaring an input unreliable
+    * @param pyTfServerAddr optional address of the PyTfServer (host:port) forwarded to ASCE properties
+    */
+  def apply(
+     dasuDao: DasuDao,
+     supervidentifier: Identifier,
+     outputPublisher: OutputPublisher,
+     inputSubscriber: InputSubscriber,
+     autoSendTimeInterval: Integer,
+     validityThreshold: Integer,
+     pyTfServerAddr: Option[String] = None): DasuImpl = {
+
+
+     require(Option(dasuDao).isDefined)
+     require(Option(supervidentifier).isDefined)
+     require(Option(outputPublisher).isDefined)
+     require(Option(inputSubscriber).isDefined)
+     require(Option(autoSendTimeInterval).isDefined)
+     require(Option(validityThreshold).isDefined)
+
+     val dasuId = dasuDao.getId
+
+     val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervidentifier)
+
+     new DasuImpl(
+         dasuIdentifier,
+         dasuDao,
+         outputPublisher,
+         inputSubscriber,
+         autoSendTimeInterval,
+         validityThreshold,
+         pyTfServerAddr)
   }
 
   /** The logger */

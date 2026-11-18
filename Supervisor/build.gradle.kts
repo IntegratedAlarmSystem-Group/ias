@@ -20,8 +20,7 @@ dependencies {
     implementation(project(":Heartbeat"))
     implementation(project(":CdbChecker"))
     implementation(project(":KafkaUtils"))
-
-    testImplementation(project(":CompElement"))
+    implementation(project(":CompElement"))
     testImplementation(project(":TransferFunctions"))
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.junit.jupiter)
