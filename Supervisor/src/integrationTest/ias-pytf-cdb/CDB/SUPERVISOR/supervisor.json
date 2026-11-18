@@ -1,0 +1,12 @@
+{
+    "logLevel": "INFO",
+    "id": "supervisor",
+    "hostName": "localhost",
+    "pyTfServerAddr": "localhost:50051",
+    "dasusToDeploy": [
+        { "dasuId": "bool_alarm_d", "templateId": null, "instance": null },
+        { "dasuId": "pytf_minmax_d", "templateId": null, "instance": null },
+        { "dasuId": "pytf_multi_d",   "templateId": null, "instance": null }
+
+    ]
+}

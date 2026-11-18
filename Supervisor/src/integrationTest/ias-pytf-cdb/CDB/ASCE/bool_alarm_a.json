@@ -1,0 +1,9 @@
+{
+    "id": "bool_alarm_a",
+    "dasuID": "bool_alarm_d",
+    "outputID": "alarm_bool",
+    "inputIDs": [ "bool_input_val" ],
+    "templatedInputs": [],
+    "transferFunctionID": "org.eso.ias.tranfer.BoolToAlarm",
+    "props": []
+}

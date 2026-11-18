@@ -1,0 +1,5 @@
+[
+    { "className": "IasTransferFunction.MultiplicityThreshold",   "implLang": "PYTHON" },
+    { "className": "IasTransferFunction.MinMaxThreshold",   "implLang": "PYTHON" },
+    { "className": "org.eso.ias.tranfer.BoolToAlarm",   "implLang": "SCALA" }
+]

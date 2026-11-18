@@ -22,7 +22,7 @@ from IasBasicTypes.OperationalMode import OperationalMode
 from IasBasicTypes.Validity import Validity
 
 
-THRESHOLD_PROP = "org.eso.ias.tf.mutliplicity.threshold"
+THRESHOLD_PROP = "org.eso.ias.tf.multiplicity.threshold"
 PRIORITY_PROP = "org.eso.ias.tf.alarm.priority"
 INPUT_ALARMS_SET_PROP = "IdsOfAlarmsSet"
 

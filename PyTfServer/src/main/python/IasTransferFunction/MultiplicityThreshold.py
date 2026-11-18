@@ -27,7 +27,7 @@ class MultiplicityThreshold(TransferFunction):
     - if the same property is present in more inputs, their values will be merged in the output
     '''
 
-    threshold_prop_name = "org.eso.ias.tf.mutliplicity.threshold"
+    threshold_prop_name = "org.eso.ias.tf.multiplicity.threshold"
     alarm_priority_prop_name = "org.eso.ias.tf.alarm.priority"
     input_alarms_set_prop_name = "IdsOfAlarmsSet"
 
