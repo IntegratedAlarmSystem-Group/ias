@@ -160,7 +160,11 @@ class Supervisor private (
   pyTfServerAddr.foreach(addr =>
     Supervisor.logger.info("Supervisor [{}], {} will connect to python TF server at: {}",
       id, addr)
-      require(GrpcPythonExecutor.checkServerRunning(addr), s"Python TF server at $addr does not reply to ping.")
+    if (!GrpcPythonExecutor.checkServerRunning(addr)) {
+      val msg = s"Python TF server at $addr does not reply to ping."
+      Supervisor.logger.error(msg)
+      sys.exit(1)
+    }
     )
   
   // Build the kafka producer of IASIOs
@@ -621,8 +625,8 @@ object Supervisor {
        } else None
      }
 
-     val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) =>
-       DasuImpl(dd,i,op,id,refreshRate,validityThreshold,pyTfServerAddr)
+      val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) =>
+        DasuImpl(dd,i,op,id,refreshRate,validityThreshold,pyTfServerAddr)
 
     // Build the supervisor
     val supervisor = new Supervisor(
