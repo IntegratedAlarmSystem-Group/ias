@@ -79,6 +79,9 @@ class MinMaxThreshold(TransferFunction):
         else:
             self.alarmSet = Priority.get_default_priority()
 
+        self.logger.debug("Thresholds: highOn=%s, highOff=%s, lowOn=%s, lowOff=%s",
+                          self.highOn, self.highOff, self.lowOn, self.lowOff)
+
     def initialize(self, inputsInfo, outputInfo):
         '''
         Initializiation
