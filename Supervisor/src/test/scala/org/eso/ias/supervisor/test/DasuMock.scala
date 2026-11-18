@@ -25,7 +25,8 @@ class DasuMock(
   dasuIdentifier: Identifier,
   dasuDao: DasuDao,
   private val outputPublisher: OutputPublisher,
-  private val inputSubscriber: InputSubscriber)
+  private val inputSubscriber: InputSubscriber,
+  val pyTfServerAddr: Option[String] = None)
 extends Dasu(dasuIdentifier,5,6) {
   
   /** The logger */
@@ -178,24 +179,25 @@ object DasuMock {
   /** The logger */
   private val logger = IASLogger.getLogger(this.getClass)
   
-  /** 
-   *  Factory method used by the Supervisor to build the DASU
+  /**
+   * Factory method used by the Supervisor to build the DASU
    */
   def apply(
-      dasuDao: DasuDao, 
-      supervidentifier: Identifier, 
+      dasuDao: DasuDao,
+      supervidentifier: Identifier,
       outputPublisher: OutputPublisher,
-      inputSubscriber: InputSubscriber): DasuMock = {
-    
+      inputSubscriber: InputSubscriber,
+      pyTfServerAddr: Option[String] = None): DasuMock = {
+
     require(Option(dasuDao).isDefined)
     require(Option(supervidentifier).isDefined)
     require(Option(outputPublisher).isDefined)
     require(Option(inputSubscriber).isDefined)
-   
+
     val dasuId = dasuDao.getId
-    
+
     val dasuIdentifier = new Identifier(dasuId,IdentifierType.DASU,supervidentifier)
-    
-    new DasuMock(dasuIdentifier,dasuDao,outputPublisher,inputSubscriber)
-  }  
+
+    new DasuMock(dasuIdentifier,dasuDao,outputPublisher,inputSubscriber,pyTfServerAddr)
+  }
 }
