@@ -194,4 +194,18 @@ class TestGrpcPythonExecutor extends AnyFlatSpec {
     assert(executor.serverAddr == "custom-server:12345")
   }
 
+  behavior of "GrpcPythonExecutor.checkServerRunning"
+
+  it must "return false when no server is running at the given address" in {
+    // Port 59997 is not listening, so the ping must fail
+    val result = GrpcPythonExecutor.checkServerRunning("localhost:59997")
+    assert(!result, "Expected false when no server is running")
+  }
+
+  it must "return false for an invalid address" in {
+    // Non-resolvable hostname
+    val result = GrpcPythonExecutor.checkServerRunning("nonexistent-host.invalid:59996")
+    assert(!result, "Expected false for unreachable host")
+  }
+
 }
