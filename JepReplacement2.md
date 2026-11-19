@@ -428,7 +428,7 @@ The full code path is validated by a Supervisor-level integration test: `Supervi
 | **D.5** | Explicit pyTfServerAddr on ComputingElement + GrpcPythonExecutor (no more property hiding) | DONE |
 | **D.6** | Integration tests pass explicit serverAddr via 7th param | FIXED |
 | **D** | Wire `pyTfServerAddr` from SupervisorDao through to GrpcPythonExecutor | DONE |
-| **H** | Fail-fast Ping RPC on executor startup | Operational robustness (deferred) |
+| **H** | Fail-fast Ping RPC on executor startup | CANCELLED (redundant — Step D.2 ping in Supervisor.main covers this) |
 | **C** | Shared gRPC channel with ref counting | Performance optimization |
 | **D.6** | Integration tests pass explicit pyTfServerAddr as 7th ComputingElement param | FIXED |
 | **I** | PyTfServer sends IAS heartbeats to Kafka | Monitoring |
@@ -436,6 +436,7 @@ The full code path is validated by a Supervisor-level integration test: `Supervi
 | **K** | CdbChecker validates pyTfServerAddr consistency | DONE |
 | **F** | Full end-to-end Supervisor to PyTfServer integration (SupervisorPyTfTest) | DONE (2 tests pass, in-process Supervisor) |
 | **L** | Graceful ASCE shutdown on Supervisor stop + orphan cleanup on PyTfServer | DONE |
+| **M** | gRPC call deadline (org.eso.ias.rpc.timeout), shutdown try/catch, DEADLINE_EXCEEDED logging | DONE |
 
 ### ⚠️ Backward Incompatible Change — Property Rename
 
