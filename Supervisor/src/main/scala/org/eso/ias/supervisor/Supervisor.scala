@@ -158,14 +158,7 @@ class Supervisor private (
     if (addr.isBlank()) None else Some(addr)
   }
   pyTfServerAddr.foreach(addr =>
-    Supervisor.logger.info("Supervisor [{}], {} will connect to python TF server at: {}",
-      id, addr)
-    if (!GrpcPythonExecutor.checkServerRunning(addr)) {
-      val msg = s"Python TF server at $addr does not reply to ping."
-      Supervisor.logger.error(msg)
-      sys.exit(1)
-    }
-    )
+    Supervisor.logger.info("Supervisor [{}] will connect to python TF server at: {}",id,addr))
   
   // Build the kafka producer of IASIOs
   val outputPublisher: OutputPublisher =
@@ -617,15 +610,23 @@ object Supervisor {
      // The identifier of the supervisor
      val identifier = new Identifier(supervisorId, IdentifierType.SUPERVISOR, None)
 
-     val pyTfServerAddr: Option[String] = {
-       val sOpt = reader.getSupervisor(supervisorId)
-       if (sOpt.isPresent) {
-         val addr = sOpt.get.getPyTfServerAddr().trim()
-         if (addr.isBlank()) None else Some(addr)
-       } else None
-     }
+      val pyTfServerAddr: Option[String] = {
+        val sOpt = reader.getSupervisor(supervisorId)
+        if (sOpt.isPresent) {
+          val addr = sOpt.get.getPyTfServerAddr().trim()
+          if (addr.isBlank()) None else Some(addr)
+        } else None
+      }
 
-      val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) =>
+      // Check PyTfServer availability before constructing the Supervisor
+      pyTfServerAddr.foreach(addr =>
+        if (!GrpcPythonExecutor.checkServerRunning(addr)) {
+          reader.shutdown()
+          System.err.println(s"Python TF server at $addr does not reply to ping. Start the server before the Supervisor.")
+          System.exit(1)
+        })
+
+       val factory = (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) =>
         DasuImpl(dd,i,op,id,refreshRate,validityThreshold,pyTfServerAddr)
 
     // Build the supervisor
@@ -644,7 +645,9 @@ object Supervisor {
 
     started match {
       case Success(_) => val latch = new CountDownLatch(1); latch.await();
-      case Failure(ex) => System.err.println("Error starting the supervisor: "+ex.getMessage)
+      case Failure(ex) =>
+        supervisor.close()
+        System.err.println("Error starting the supervisor: "+ex.getMessage)
     }
   }
 

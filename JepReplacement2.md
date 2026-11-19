@@ -241,7 +241,7 @@ When `pyTfServerAddr` is defined in the CDB, the Supervisor constructor sends a 
 
 **Refactored:** The `Ping` logic lives in `GrpcPythonExecutor.checkServerRunning(serverAddr)` (CompElement companion object) rather than in `Supervisor.scala`. This keeps gRPC dependencies confined to CompElement — the Supervisor only calls the static method via `implementation(project(":CompElement"))` with no direct gRPC imports. The initial implementation had inline gRPC code in Supervisor and explicit gRPC dependencies in its `build.gradle.kts` (needed because the Scala 3 compiler failed to resolve protobuf inner classes like `GeneratedMessage$Builder` from transitive deps alone), but this was reverted after the refactoring proved unnecessary.
 
-**TODO (Step D.2 cleanup):** The ping failure currently uses `sys.exit(1)` (`Supervisor.scala:163-167`), which is not clean — it bypasses `AutoCloseable.close()` and can leak resources already allocated (e.g. `CdbReader`, `KafkaSubscriber`, `SimpleStringProducer`). Fix: throw an exception from the constructor so `main` can catch it in a `try/catch`, release resources with `reader.shutdown()` + `supervisor.close()` (if constructed), and exit gracefully.
+**Step D.2 cleanup (DONE):** The ping check was moved out of the Supervisor constructor into `main`, before `new Supervisor(...)`. If the ping fails, `reader.shutdown()` is called and the process exits cleanly — no Supervisor resources (DASUs, producers, etc.) are allocated at all. See JepReplacement3.md for details.
 
 ### Step D.3 — DasuImpl constructor + apply overload (DONE)
 
