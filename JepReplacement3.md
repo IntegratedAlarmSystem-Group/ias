@@ -35,7 +35,7 @@ GrpcPythonExecutor (Scala, one per ASCE with Python TF)
 
 | Step | Description | Priority |
 |---|---|---|
-| **D.2 cleanup** | Ping failure in `Supervisor.scala:163-167` uses `sys.exit(1)` bypassing `AutoCloseable.close()` — throw exception instead for graceful shutdown | Clean shutdown |
+| **D.2 cleanup** | Ping failure in `Supervisor.scala` uses exception-based graceful shutdown (was `sys.exit(1)`) | DONE |
 | **H** | Fail-fast Ping RPC on executor startup (deferred) | Operational robustness |
 | **C** | Shared gRPC channel with ref counting | Performance optimization |
 | **I** | PyTfServer sends IAS heartbeats via Kafka using the Heartbeat module Python classes | Monitoring |
@@ -103,14 +103,14 @@ The property name `org.eso.ias.tf.mutliplicity.threshold` was misspelled (typo: 
 | **L.2** | TfManager.initialize() auto-cleans orphaned TFs (unclean stop) | JepReplacement2.md |
 | **`serve()` fix** | SyntaxError: swapped `serve()` parameters | JepReplacement3.md |
 | **`-i`/`--id`** | CLI argument for PyTfServer identification | JepReplacement3.md |
+| **D.2 cleanup** | Exception-based graceful shutdown on ping failure (replaces `sys.exit(1)`) | JepReplacement3.md |
 
 ### Remaining
 
 | Step | Description | Priority |
 |---|---|---|
-| **D.2 cleanup** | Replace `sys.exit(1)` in Supervisor ping failure with exception-based graceful shutdown | Clean shutdown |
 | **H** | Fail-fast Ping RPC on executor startup | Operational robustness |
 | **C** | Shared gRPC channel with ref counting | Performance optimization |
 | **I** | PyTfServer sends IAS heartbeats via Kafka using the Heartbeat module Python classes | Monitoring |
 
-**Total: 26 steps completed, 4 remaining.**
+**Total: 27 steps completed, 3 remaining.**
