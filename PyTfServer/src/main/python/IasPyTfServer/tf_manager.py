@@ -65,8 +65,10 @@ class TfManager:
             and *error* is an empty string. On failure *success* is ``False``
             and *error* contains a human-readable message.
         """
+        logger.debug(f"Initializing TF {pythonClassName} for ASCE {asceRunningId}...")
         try:
             if asceRunningId in self.tf_instances:
+                logger.warning(f"TF {pythonClassName} for ASCE {asceRunningId} already initialized: skipping")
                 return False, f"ASCE {asceRunningId} already initialized"
 
             module_part, class_name = pythonClassName.rsplit('.', 1)
@@ -98,11 +100,14 @@ class TfManager:
             A ``(success, error, result)`` tuple. On success *result* is the
             IASIO returned by the TF. On failure *result* is ``None``.
         """
+        logger.debug(f"Executing the eval of the TF of the {asceRunningId} ASCE")
         try:
             tf = self.tf_instances.get(asceRunningId)
             if tf is None:
+                logger.error(f"TF of the {asceRunningId} ASCE not initialized: cannto execute eval")
                 return (False, f"ASCE {asceRunningId} not initialized", None)
             result = tf.eval(compInputs, actualOutput)
+            logger.info(f"TF of {asceRunningId} ASCE executed")
             return (True, "", result)
         except Exception as e:
             logger.error(f"Eval failed for ASCE {asceRunningId}: {e}")
@@ -120,12 +125,13 @@ class TfManager:
             A ``(success, error)`` tuple. On failure *success`` is ``False``
             if the ASCE was not found.
         """
+        logger.debug(f"Shutting down the TF of the {asceRunningId} ASCE")
         try:
             tf = self.tf_instances.pop(asceRunningId, None)
             if tf is None:
                 return False, f"ASCE {asceRunningId} not found"
             tf.shutdown()
-            logger.info(f"Shutdown TF for ASCE {asceRunningId}")
+            logger.info(f"TF for ASCE {asceRunningId} has been shutdown")
             return True, ""
         except Exception as e:
             logger.error(f"Shutdown failed for ASCE {asceRunningId}: {e}")
