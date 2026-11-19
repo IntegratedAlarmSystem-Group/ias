@@ -4,7 +4,7 @@
 
 Complete the remaining steps to make the gRPC-based Python TF executor fully operational end-to-end.
 
-## Current State (as of Nov 19 2026, end of session)
+## Current State (as of Nov 20 2026, end of session)
 
 ### Summary
 
@@ -30,6 +30,7 @@ Total: **29 integration tests**, all passing. PyTfServer tests manage the PyTfSe
 | **`implementation(libs.scala.library)`** | Added explicit dependency on Scala 3.9.0 library | Resolves Zinc compiler version conflict: `scalatest` brings transitive `scala3-library_3:3.1.3`, but Zinc must pick `3.9.0` to compile with `-java-output-version 21` (3.1.x compiler only accepts colon-separated version format) |
 | **`CopyCompElementPyBase` Gradle task** | Created task to sync base `IasTransferFunction` files into build output | Ensures the self-contained files are in `build/lib/.../site-packages/` alongside the installed package |
 | **`GrpcPythonExecutor.shutdown()`** | Added `channel.shutdown()` + `awaitTermination(5s)` + log line | Fixes gRPC `ManagedChannel` leak — channels were only cleaned up by JVM GC, producing `ManagedChannelOrphanWrapper` warnings |
+| **`DasuImpl.cleanUp()`** | Added `asces.foreach(_.shutdown())` before releasing publisher | Fixes missing ASCE shutdown on Supervisor Ctrl-C/crash — orphans TFs in PyTfServer, causing "already initialized" error on Supervisor restart |
 | **`AGENTS.md`** | Updated integration test instructions for PyTfServer | Documents how to run integration tests (self-managed server via PyTfServerBase, no pre-running server needed) |
 | **SupervisorPyTfTest** | Supervisor instantiated in-process via `new Supervisor(...)` (not via ProcessBuilder) with a factory passing `pyTfServerAddr` to `DasuImpl.apply` | Follows `SupervisorWithKafkaTest` pattern; cleaner lifecycle management via `supervisor.close()`. PyTfServer still starts as a subprocess. Alarm map keys by `iasio.id` instead of `fullRunningId`. `waitAlarms` accepts a list of expected alarm IDs. Consumer type filter removed to capture all IASIOs. |
 
@@ -249,6 +250,29 @@ Added `pyTfServerAddr: Option[String] = None` as a 7th parameter to `DasuImpl` c
 
 In `Supervisor.main`, before creating the DASU factory, the Supervisor reads `pyTfServerAddr` from the CDB `SupervisorDao` and passes it through the factory lambda to the 7-arg `DasuImpl.apply`. The factory type signature `(DasuDao, Identifier, OutputPublisher, InputSubscriber) => Dasu` remains unchanged — the address is captured from the `main` scope.
 
+### Step L — DasuImpl.cleanUp() gracefully shuts down ASCEs (DONE)
+
+`DasuImpl.cleanUp()` was missing the critical step of shutting down its ASCEs. When the Supervisor was terminated (Ctrl-C or crash), `Supervisor.close()` called `dasus.foreach(_.cleanUp())`, but `DasuImpl.cleanUp()` only cleaned up the statistics collector, subscriber, and publisher — it never called `shutdown()` on any of its ASCEs.
+
+**Consequence:** `ComputingElement.shutdown()` was never invoked during Supervisor shutdown. This meant:
+
+- `GrpcPythonExecutor.shutdown()` was never called
+- No gRPC `Shutdown` RPC was sent to PyTfServer
+- `TfManager.shutdown()` never ran on the Python side
+- TF instances remained orphaned in PyTfServer's `tf_instances` dictionary
+
+When the Supervisor restarted, it recreated ASCEs with the same `asceRunningId` and sent a new `initialize` gRPC call. PyTfServer rejected it with `"ASCE already initialized"` because the old TF was still registered. The new ASCE transitioned to `TFBroken`.
+
+**Fix:** `DasuImpl.cleanUp()` now iterates over all ASCEs and calls `shutdown()` on each before cleaning up the publisher. Each call is wrapped in `Try` so a failure on one ASCE does not prevent the others from shutting down.
+
+The state machine already prevents TF evaluation after shutdown — `ShuttingDown` and `Closed` are both in `AsceStates.inhibitorStates`, so `canRunTF()` returns `false`. No additional guard in `PythonTransfer.transfer()` or `ScalaTransfer.transfer()` is needed.
+
+**Files changed:**
+
+| File | Change |
+|---|---|
+| `DistributedUnit/src/main/scala/org/eso/ias/dasu/DasuImpl.scala` | `cleanUp()` now iterates `asces` and calls `shutdown()` on each, wrapped in `Try` with logging |
+
 ### Step D.5 — Explicit pyTfServerAddr on ComputingElement and GrpcPythonExecutor (DONE)
 
 The `pyTfServerAddr` is no longer hidden inside `Properties`. It is now an explicit constructor parameter at every level:
@@ -321,11 +345,51 @@ The Supervisor uses the same pattern as `SupervisorWithKafkaTest`: an in-process
 
 ---
 
+### Step K — CdbChecker pyTfServerAddr validation (DONE)
+
+The `CdbChecker` now validates that a Supervisor's `pyTfServerAddr` is consistent with the TFs deployed in its ASCEs:
+- If a Supervisor deploys at least one ASCE with a Python TF, `pyTfServerAddr` **must** be defined.
+- If a Supervisor has `pyTfServerAddr` defined, at least one of its ASCEs must use a Python TF.
+- The `pyTfServerAddr` format (`host:port`) must be valid (delegates to `SupervisorDao.isValidPyTfAddress`).
+
+**Implementation:**
+- New `checkSupervisor(supervisorDao, dasusOfSuperv)` method in `CdbChecker.scala` (line 649) navigates Supervisor → DASUs → ASCEs → TFs to check `implLang == PYTHON`.
+- The `check()` method (line 224) iterates all supervisors from `mapOfSupervisors`, calls `checkSupervisor`, and propagates errors via `errorsFound = errorsFound || checkSupervisor(...)`.
+
+**Test CDB data** (covers all 4 combinations via the existing `check()` loop over all supervisors):
+
+| Supervisor | pyTfServerAddr | Python TF | Expected |
+|---|---|---|---|
+| `SupervisorID` | no | no | valid |
+| `SupervisoWithPySrvAddrWrong` | yes | no | error |
+| `SupervisorWithPyTF_NoAddr` | no | yes | error |
+| `SupervisorWithPyTF_WithAddr` | yes | yes | valid |
+
+**Files changed:**
+
+| File | Change |
+|---|---|
+| `CdbChecker/.../CdbChecker.scala` | Added `checkSupervisor` method; updated `check()` to call it for each supervisor |
+| `CdbChecker/.../TF/tfs.json` | Added Python TF entry: `PyTestTF` with `implLang = PYTHON` |
+| `CdbChecker/.../IASIO/iasios.json` | Added `PyAsceIn`, `DasuWithPyTF-OutID` IASIOs |
+| `CdbChecker/.../ASCE/PyAsceOnDasuWithPyTF-ID1.json` | **NEW** — Python ASCE definition |
+| `CdbChecker/.../DASU/DasuWithPyTF.json` | **NEW** — DASU with Python ASCE |
+| `CdbChecker/.../SUPERVISOR/SupervisorWithPyTF_NoAddr.json` | **NEW** — Python TFs, no address (should error) |
+| `CdbChecker/.../SUPERVISOR/SupervisorWithPyTF_WithAddr.json` | **NEW** — Python TFs, with address (valid) |
+
+**Bugs fixed:**
+- `checkSupervisor` return value was discarded in `check()` — now propagated via `errorsFound = errorsFound || ...`
+- `checkSupervisor` `else` branch always reported an error when `pyTfServerAddr` was empty — fixed with `if (hasPyTf)` guard
+
+---
+
 ## Remaining Work to Complete the Task
 
 The gRPC-based Python TF executor is fully operational at the ASCE level: 27 PyTfServer integration tests confirm that ComputingElements with Python transfer functions initialize, evaluate, and shut down correctly over gRPC, covering every IAS data type and including a 15,000-call stress test. Plus 2 Supervisor-level integration tests for full end-to-end validation: **29 integration tests total**, all passing.
 
 The full wiring chain from the CDB `SupervisorDao` through `DasuImpl` to `GrpcPythonExecutor` is in place with explicit `pyTfServerAddr` parameters at every layer. If a Python TF is configured without an address, `TransferFunctionSetting.instantiateExecutor` throws an `IllegalStateException` and the ASCE is marked broken.
+
+The lifecycle is also correctly closed: when the Supervisor shuts down, `DasuImpl.cleanUp()` now calls `shutdown()` on each ASCE, which sends a gRPC `Shutdown` RPC to PyTfServer to remove the TF from its registry (Step L). This ensures that after a Supervisor restart, ASCEs can re-initialize cleanly on PyTfServer.
 
 The full code path is validated by a Supervisor-level integration test: `SupervisorPyTfTest` uses an **in-process Supervisor** (`new Supervisor(...)`) with a factory that passes `pyTfServerAddr` to `DasuImpl.apply` (7-arg overload). The PyTfServer starts as a subprocess. 3 DASUs run simultaneously: 2 Python TFs (MinMaxThreshold, MultiplicityThreshold) + 1 Scala TF (BoolToAlarm). Alarm map keys by `iasio.id`; `waitAlarms` accepts a list of expected alarm IDs. **2 tests pass** (produce outputs, clear alarms).
 
@@ -347,7 +411,9 @@ The full code path is validated by a Supervisor-level integration test: `Supervi
 | **D.6** | Integration tests pass explicit pyTfServerAddr as 7th ComputingElement param | FIXED |
 | **I** | PyTfServer sends IAS heartbeats to Kafka | Monitoring |
 | **J** | MultiplicityThreshold Python TF | DONE |
+| **K** | CdbChecker validates pyTfServerAddr consistency | DONE |
 | **F** | Full end-to-end Supervisor to PyTfServer integration (SupervisorPyTfTest) | DONE (2 tests pass, in-process Supervisor) |
+| **L** | DasuImpl.cleanUp() gracefully shuts down ASCEs | DONE |
 
 ### ⚠️ Backward Incompatible Change — Property Rename
 

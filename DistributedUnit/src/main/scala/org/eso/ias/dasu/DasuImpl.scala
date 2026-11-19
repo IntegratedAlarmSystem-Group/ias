@@ -611,9 +611,16 @@ class DasuImpl (
       Try(enableAutoRefreshOfOutput(false))
       DasuImpl.logger.debug("DASU [{}]: releasing the subscriber", id)
       Try(inputSubscriber.cleanUpSubscriber())
-      DasuImpl.logger.debug("DASU [{}]: releasing the publisher", id)
-      Try(outputPublisher.cleanUpPublisher())
-      DasuImpl.logger.info("DASU [{}]: cleaned up",id)
+       DasuImpl.logger.debug("DASU [{}]: releasing the publisher", id)
+       Try(outputPublisher.cleanUpPublisher())
+       DasuImpl.logger.debug("DASU [{}]: shutting down ASCEs", id)
+       asces.foreach { (asceId, asce) =>
+         Try(asce.shutdown()) match {
+           case Success(_) => DasuImpl.logger.info("DASU [{}] ASCE [{}]: shut down", id, asceId)
+           case Failure(e) => DasuImpl.logger.error("DASU [{}] ASCE [{}]: shutdown failed: {}", id, asceId, e.getMessage)
+         }
+       }
+       DasuImpl.logger.info("DASU [{}]: cleaned up",id)
     }
   }
 
