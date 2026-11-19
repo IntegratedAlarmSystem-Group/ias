@@ -12,10 +12,11 @@ Supervisor.
 
 **CLI usage**
 
-    iasPyTfServer.py [-p PORT] [--log-level LEVEL] [--log-config FILE]
+    iasPyTfServer.py [-p PORT] [-i ID] [--log-level LEVEL] [--log-config FILE]
 
-The ``-p`` / ``--port`` option defaults to 50051.  Logging flags are handled
-by ``IasLogging.Log``.
+    The ``-p`` / ``--port`` option defaults to 50051.  The ``-i`` / ``--id``
+    option defaults to ``PyTfServer-<hostname>-<port>``.  Logging flags are
+    handled by ``IasLogging.Log``.
 
 **Starting**
 
@@ -37,6 +38,7 @@ by ``IasLogging.Log``.
 import argparse
 import logging
 import signal
+import socket
 import sys
 from concurrent import futures
 import grpc
@@ -49,7 +51,7 @@ from IasLogging.log import Log
 logger = logging.getLogger(__name__)
 
 
-def serve(port: int = 50051):
+def serve(port: int = 50051, server_id: str = ""):
     """Start the gRPC server on ``localhost:<port>``.
 
     Registers the ``PyTfService`` servicer with a thread-pool executor
@@ -57,12 +59,13 @@ def serve(port: int = 50051):
 
     Args:
         port: TCP port to bind to. Defaults to 50051.
+        server_id: Identifier for this server instance. Logged on startup.
     """
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     add_PyTfServiceServicer_to_server(PyTfService(), server)
     server.add_insecure_port(f"localhost:{port}")
     server.start()
-    logger.info(f"[PyTfServer] started on localhost:{port}")
+    logger.info(f"[PyTfServer] started on localhost:{port} (id={server_id})")
     try:
         server.wait_for_termination()
     except KeyboardInterrupt:
@@ -80,14 +83,25 @@ if __name__ == "__main__":
         type=int,
         default=50051,
         required=False)
+    parser.add_argument(
+        '-i',
+        '--id',
+        help='Identify this server instance in logs. Defaults to PyTfServer-<hostname>-<port>',
+        action='store',
+        type=str,
+        default='',
+        required=False)
     Log.add_log_arguments_to_parser(parser)
 
     args = parser.parse_args()
     Log.init_log_from_cmdline_args(args, "PyTfServer")
+
+    if not args.id:
+        args.id = f"PyTfServer-{socket.gethostname()}-{args.port}"
 
     def interrupt_handler(signum, frame):
         logger.info("[PyTfServer] received interrupt signal")
         sys.exit(0)
 
     signal.signal(signal.SIGINT, interrupt_handler)
-    serve(args.port)
+    serve(args.port, args.id)
