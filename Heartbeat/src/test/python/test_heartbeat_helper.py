@@ -4,7 +4,7 @@ Test the HeartbeatHelp module for resolving HB frequency.
 
 import os
 
-from IasHeartbeat.HeartbeatHelp import (
+from IasHeartbeat.HeartbeatHelper import (
     get_hb_frequency,
     get_hb_frequency_from_cdb,
     HB_FREQUENCY_DEFAULT,
