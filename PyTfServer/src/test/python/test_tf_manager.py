@@ -54,7 +54,8 @@ class TestTfManager:
         assert error == ""
         assert "test:run1" not in self.manager.tf_instances
 
-    def test_double_initialize_fails(self):
+    def test_double_initialize_shuts_down_orphan(self):
+        """Second initialize for same asceRunningId cleans up orphaned TF and succeeds."""
         success, error = self.manager.initialize(
             asceRunningId="test:run1",
             asceId="test",
@@ -77,8 +78,7 @@ class TestTfManager:
             inputsInfo=[],
             outputInfo=None
         )
-        assert success is False
-        assert "already initialized" in error
+        assert success is True
 
         self.manager.shutdown("test:run1")
 

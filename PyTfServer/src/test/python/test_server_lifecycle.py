@@ -158,8 +158,8 @@ class TestPyTfServerLifecycle:
         shutdown_resp = stub.Shutdown(ShutdownRequest(asceRunningId="template:run1"))
         assert shutdown_resp.success is True
 
-    def test_double_initialize_fails(self):
-        """Verify a second Initialize for the same asceRunningId fails."""
+    def test_double_initialize_shuts_down_orphan(self):
+        """Verify a second Initialize for the same asceRunningId cleans up the orphan and succeeds."""
         stub = PyTfServiceStub(self.channel)
 
         init_req = InitializeRequest(
@@ -175,8 +175,7 @@ class TestPyTfServerLifecycle:
         assert resp.success is True
 
         resp2 = stub.Initialize(init_req)
-        assert resp2.success is False
-        assert "already initialized" in resp2.error
+        assert resp2.success is True
 
         stub.Shutdown(ShutdownRequest(asceRunningId="dup:run1"))
 

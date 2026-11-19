@@ -66,7 +66,7 @@ class TestGrpcPythonExecutorIntegration extends AnyFlatSpec with BeforeAndAfterA
     executor.shutdown()
   }
 
-  it must "fail on double initialize" in {
+  it must "succeed on double initialize after cleaning orphaned TF" in {
     val props = new Properties()
     props.setProperty("pyTfServerAddr", s"localhost:$serverPort")
 
@@ -84,13 +84,13 @@ class TestGrpcPythonExecutorIntegration extends AnyFlatSpec with BeforeAndAfterA
 
     executor.initialize(inputsInfo, outputInfo)
 
-    var failed = false
-    try {
-      executor.initialize(inputsInfo, outputInfo)
-    } catch {
-      case _: Exception => failed = true
-    }
-    assert(failed, "Expected exception on double initialize")
+    // Second initialize succeeds: when the Supervisor restarts after an unclean
+    // termination (crash, SIGKILL), the TF from the previous Supervisor instance
+    // is still registered in PyTfServer because the gRPC shutdown RPC was never
+    // sent.  PyTfServer handles this by detecting the collision in initialise(),
+    // shutting down the orphaned TF, and re-attempting the initialization.
+    // See TfManager.initialize() in tf_manager.py for full rationale.
+    executor.initialize(inputsInfo, outputInfo)
 
     executor.shutdown()
   }

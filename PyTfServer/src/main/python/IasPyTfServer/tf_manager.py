@@ -48,9 +48,20 @@ class TfManager:
         provided ASCE parameters, registers it under *asceRunningId*, and
         calls its ``initialize`` method with the I/O metadata.
 
+        If a TF is already registered for *asceRunningId*, it is assumed to
+        be orphaned from a Supervisor that terminated without a clean shutdown
+        (e.g. SIGKILL, JVM crash).  In that case the existing TF is shut down
+        and the initialization is retried, so that a restarted Supervisor can
+        re-initialize its ASCEs without error.  A second collision after the
+        shutdown is unexpected and is rejected — this guards against a
+        genuinely misbehaving caller.  Such a second initialize is not
+        expected in normal operation because the Scala side already prevents
+        double initialization via a state-machine guard and a boolean flag.
+
         Args:
             asceRunningId: Unique identifier for this ASCE instance on the
-                server. Must not already be present.
+                server.  If the ASCE was previously registered, its TF will
+                be shut down and re-initialised.
             asceId: Logical name of the ASCE (passed to the TF constructor).
             pythonClassName: Fully qualified Python class name, e.g.
                 ``'my_pkg.MyTransferFunction'``.
@@ -68,8 +79,19 @@ class TfManager:
         logger.debug(f"Initializing TF {pythonClassName} for ASCE {asceRunningId}...")
         try:
             if asceRunningId in self.tf_instances:
-                logger.warning(f"TF {pythonClassName} for ASCE {asceRunningId} already initialized: skipping")
-                return False, f"ASCE {asceRunningId} already initialized"
+                logger.warning(
+                    f"TF for ASCE {asceRunningId} already initialized — "
+                    f"likely orphaned from a crashed Supervisor, shutting down and retrying"
+                )
+                self.shutdown(asceRunningId)
+
+                # Re-attempt initialization after cleaning the orphaned TF
+                if asceRunningId in self.tf_instances:
+                    logger.error(
+                        f"TF for ASCE {asceRunningId} still present after shutdown — "
+                        f"misbehaving ASCE, refusing initialize"
+                    )
+                    return False, f"ASCE {asceRunningId} already initialized"
 
             module_part, class_name = pythonClassName.rsplit('.', 1)
             module = importlib.import_module(module_part)
