@@ -11,23 +11,28 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfterEach}
 
 import org.eso.ias.cdb.CdbReader
+import org.eso.ias.cdb.pojos.DasuDao
 import org.eso.ias.cdb.structuredtext.StructuredTextReader
+import org.eso.ias.dasu.DasuImpl
+import org.eso.ias.dasu.publisher.OutputPublisher
+import org.eso.ias.dasu.subscriber.{InputSubscriber, KafkaSubscriber}
 import org.eso.ias.kafkautils.KafkaStringsConsumer.StreamPosition
 import org.eso.ias.kafkautils.SimpleKafkaIasiosConsumer.IasioListener
 import org.eso.ias.kafkautils.{KafkaHelper, KafkaIasiosConsumer, KafkaIasiosProducer, SimpleStringProducer}
 import org.eso.ias.logging.IASLogger
+import org.eso.ias.supervisor.Supervisor
 import org.eso.ias.types.*
 
 /**
-  * Integration test that starts a Supervisor with three DASUs
+  * Integration test that runs a Supervisor with three DASUs
   * (two Python TFs via gRPC, one Scala TF) and verifies that
   * all three produce output on the Kafka BSDB.
   *
-  * The PyTfServer address is read from the CDB and the test starts
-  * the PyTfServer subprocess on that port before each test.
-  *
-  * The Supervisor is started as an external process via `iasSupervisor`
-  * using the CDB from `src/integrationTest/ias-pytf-cdb/`.
+  * The PyTfServer is started as a subprocess before the Supervisor
+  * is instantiated in-process. The Supervisor reads the PyTfServer
+  * address from the CDB and connects to it via gRPC.
+  * 
+  * This integration tests verifies that Supervor runs scala and python TF at the same time
   */
 class SupervisorPyTfTest
   extends AnyFlatSpec
@@ -52,6 +57,9 @@ class SupervisorPyTfTest
   /** CDB path. */
   private val cdbPath = "src/integrationTest/ias-pytf-cdb"
 
+  /** Supervisor identifier. */
+  private val supervisorId = new Identifier("supervisor", IdentifierType.SUPERVISOR, None)
+
   /** PyTfServer address read from the CDB. */
   private var pyTfServerAddr: String = _
 
@@ -66,10 +74,10 @@ class SupervisorPyTfTest
     new java.util.HashMap[String, IASValue[Alarm]]())
 
   /** PyTfServer process handle. */
-  private var pyTfServerProc: Process = null
+  private var pyTfServerProc: Process = _
 
-  /** Supervisor process handle. */
-  private var supervisorProc: Process = null
+  /** The in-process Supervisor instance. */
+  private var supervisor: Supervisor = _
 
   override def beforeAll(): Unit = {
     logger.info("Reading pyTfServerAddr from CDB")
@@ -102,9 +110,9 @@ class SupervisorPyTfTest
     iasiosConsumer = new KafkaIasiosConsumer(
       KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
       KafkaHelper.IASIOs_TOPIC_NAME,
-      "SupervisorPyTfTest-Consumer",
+      "SupervisorPyTfTest-Consumer"+System.currentTimeMillis(),
       null,
-      typeFilter)
+      null)
     iasiosConsumer.setUp()
     iasiosConsumer.startGettingEvents(StreamPosition.END, this)
 
@@ -121,23 +129,42 @@ class SupervisorPyTfTest
     assert(pyAlive || pyTfServerProc.isAlive(), "PyTfServer failed to start")
     logger.info(s"PyTfServer started on $pyTfServerAddr")
 
-    logger.info(s"Starting Supervisor with CDB at $cdbPath")
-    val spb = new ProcessBuilder("iasSupervisor", "supervisor", "-j", cdbPath, "-x", "WARN")
-    supervisorProc = spb.start()
-    logger.info("Giving the Supervisor time to start")
-    Thread.sleep(20000)
-    assert(supervisorProc.isAlive(), "Supervisor failed to start")
+    logger.info("Instantiating Supervisor in-process")
+    val cdbReader: CdbReader = new StructuredTextReader(
+      FileSystems.getDefault.getPath(cdbPath).toFile)
+    cdbReader.init()
+
+    val inputConsumer: InputSubscriber = KafkaSubscriber(supervisorId.id, None, None, new java.util.Properties())
+
+    val pyTfAddrOpt: Option[String] = if (pyTfServerAddr != null && !pyTfServerAddr.isBlank()) Some(pyTfServerAddr) else None
+
+    val factory: (DasuDao, Identifier, OutputPublisher, InputSubscriber) => DasuImpl =
+      (dd: DasuDao, i: Identifier, op: OutputPublisher, id: InputSubscriber) =>
+        DasuImpl(dd, i, op, id, 1, 1, pyTfAddrOpt)
+
+    supervisor = new Supervisor(
+      supervisorId,
+      KafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
+      inputConsumer,
+      cdbReader,
+      factory,
+      None)
+
+    cdbReader.shutdown()
+
+    assert(supervisor.start().isSuccess, "Supervisor failed to start")
+    supervisor.enableAutoRefreshOfOutput(false)
     logger.info("Supervisor started successfully")
 
     alarmsReceived.clear()
+    supervisor.enableAutoRefreshOfOutput(true)
   }
 
   override def afterEach(): Unit = {
     logger.info("Stopping Supervisor")
-    if (supervisorProc != null) {
-      supervisorProc.destroy()
-      Try(supervisorProc.waitFor(10, TimeUnit.SECONDS))
-      supervisorProc = null
+    if (supervisor != null) {
+      supervisor.close()
+      supervisor = null
       logger.info("Supervisor stopped")
     }
 
@@ -165,11 +192,14 @@ class SupervisorPyTfTest
 
   /** Process alarm IASIOs received from Kafka. */
   override def iasiosReceived(events: Collection[IASValue[?]]): Unit = {
+
     val iasios = events.asScala
     iasios.foreach { iasio =>
       if (iasio.valueType == IASTypes.ALARM) {
-        alarmsReceived.put(iasio.fullRunningId, iasio.asInstanceOf[IASValue[Alarm]])
-        logger.debug(s"Alarm ${iasio.id} stored ({} total)", alarmsReceived.size())
+        alarmsReceived.put(iasio.id, iasio.asInstanceOf[IASValue[Alarm]])
+        logger.debug(s"Alarm ${iasio.id} added to the map (${alarmsReceived.size()} total)")
+      } else {
+        logger.debug(s"${iasio.id} not added to the map not being an alarm")
       }
     }
   }
@@ -214,14 +244,19 @@ class SupervisorPyTfTest
       t0, t0 + 1, t0 + 5, t0 + 10, t0 + 15, t0 + 20, null, null, null)
   }
 
-  /** Wait until at least `expected` alarms are received or timeout elapses. */
-  private def waitAlarms(expected: Int, timeoutSec: Int = 30): Boolean = {
+  /** Wait until all the `expected_alarm_ids` alarms are received or timeout elapses. */
+  private def waitAlarms(expected_alarm_ids: List[String], timeoutSec: Int = 30): Boolean = {
+    alarmsReceived.clear()
+    logger.info(s"Waiting for ${expected_alarm_ids.length} alarms produced by all the DASUs: ${expected_alarm_ids.mkString(",")}...")
     val endTime = System.currentTimeMillis() + timeoutSec * 1000L
+
     while (System.currentTimeMillis() < endTime) {
-      if (alarmsReceived.size() >= expected) return true
-      Thread.sleep(500)
+      val recv_ids = alarmsReceived.keySet().asScala
+      if (expected_alarm_ids.forall(recv_ids.contains)) return true
+      logger.info(s"${recv_ids.size} alarms in buffer: ${recv_ids.mkString(",")}")
+      Thread.sleep(250)
     }
-    logger.warn(s"Only ${alarmsReceived.size()} alarms received, expected $expected")
+    logger.warn(s"Only ${alarmsReceived.size()} alarms received, expected ${expected_alarm_ids.mkString(",")}")
     false
   }
 
@@ -236,8 +271,7 @@ class SupervisorPyTfTest
     iasiosProducer.push(buildAlarmIasio(al2MultiInputId, AlarmState.SET_UNACK))
     iasiosProducer.push(buildAlarmIasio(al3MultiInputId, AlarmState.SET_UNACK))
 
-    logger.info("Waiting for alarm outputs from all DASUs...")
-    assert(waitAlarms(3, 30),
+    assert(waitAlarms(List("alarm_bool", "alarm_min_max", "alarm_multi")),
       s"Expected 3 alarms but received ${alarmsReceived.size()}: ${alarmsReceived.keySet()}")
 
     val minMaxOpt = alarmsReceived.keySet().asScala
@@ -268,9 +302,10 @@ class SupervisorPyTfTest
     iasiosProducer.push(buildDoubleIasio(minMaxInputId, 50))
     iasiosProducer.push(buildBooleanIasio(boolInputId, true))
     iasiosProducer.push(buildAlarmIasio(al1MultiInputId, AlarmState.SET_UNACK))
-    Thread.sleep(10000)
+    iasiosProducer.push(buildAlarmIasio(al2MultiInputId, AlarmState.SET_UNACK))
+    iasiosProducer.push(buildAlarmIasio(al3MultiInputId, AlarmState.SET_UNACK))
 
-    assert(waitAlarms(3), "Alarms should be SET initially")
+    assert(waitAlarms(List("alarm_bool", "alarm_min_max", "alarm_multi")), "Alarms should be SET initially")
 
     iasiosProducer.push(buildDoubleIasio(minMaxInputId, 1))
     iasiosProducer.push(buildBooleanIasio(boolInputId, false))
@@ -279,7 +314,7 @@ class SupervisorPyTfTest
     iasiosProducer.push(buildAlarmIasio(al3MultiInputId, AlarmState.CLEAR_UNACK))
 
     logger.info("Waiting for cleared alarms...")
-    Thread.sleep(10000)
+    assert(waitAlarms(List("alarm_bool", "alarm_min_max", "alarm_multi")), "Alarms should be SET initially")
 
     val minMaxOpt = alarmsReceived.keySet().asScala
       .find(_.toLowerCase.contains("alarm_min_max"))

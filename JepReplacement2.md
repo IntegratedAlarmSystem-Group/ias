@@ -4,7 +4,7 @@
 
 Complete the remaining steps to make the gRPC-based Python TF executor fully operational end-to-end.
 
-## Current State (as of Nov 16 2026, end of session)
+## Current State (as of Nov 19 2026, end of session)
 
 ### Summary
 
@@ -13,8 +13,9 @@ The gRPC-based Python TF executor is **fully operational end-to-end**: ASCEs can
 - **TestGrpcPythonExecutorIntegration** — 6 tests (executor-level Init/Eval/Shutdown over gRPC)
 - **TestPyTF** — 17 tests (full ASCE lifecycle for every IAS type: LONG, INT, SHORT, BYTE, DOUBLE, FLOAT, BOOLEAN, CHAR, STRING, TIMESTAMP, ARRAYOFDOUBLES, ARRAYOFLONGS, ALARM + stress test of 15,000 calls)
 - **TestMinMaxPyTF** — 4 tests (full ASCE lifecycle with the real `MinMaxThreshold` Python TF: initialize, eval, mode passthrough, threshold activation)
+- **SupervisorPyTfTest** — 2 tests (full Supervisor-level end-to-end: in-process Supervisor + external PyTfServer subprocess + 3 DASUs (2 Python TFs + 1 Scala TF) + live Kafka data flow)
 
-Total: **27 integration tests**, all passing, all self-managing the PyTfServer subprocess via `PyTfServerBase`.
+Total: **29 integration tests**, all passing. PyTfServer tests manage the PyTfServer subprocess via `PyTfServerBase`. The Supervisor-level test uses an **in-process Supervisor** (instantiated via `new Supervisor(...)`) with an external PyTfServer subprocess.
 
 ### What's done beyond git HEAD
 
@@ -30,6 +31,7 @@ Total: **27 integration tests**, all passing, all self-managing the PyTfServer s
 | **`CopyCompElementPyBase` Gradle task** | Created task to sync base `IasTransferFunction` files into build output | Ensures the self-contained files are in `build/lib/.../site-packages/` alongside the installed package |
 | **`GrpcPythonExecutor.shutdown()`** | Added `channel.shutdown()` + `awaitTermination(5s)` + log line | Fixes gRPC `ManagedChannel` leak — channels were only cleaned up by JVM GC, producing `ManagedChannelOrphanWrapper` warnings |
 | **`AGENTS.md`** | Updated integration test instructions for PyTfServer | Documents how to run integration tests (self-managed server via PyTfServerBase, no pre-running server needed) |
+| **SupervisorPyTfTest** | Supervisor instantiated in-process via `new Supervisor(...)` (not via ProcessBuilder) with a factory passing `pyTfServerAddr` to `DasuImpl.apply` | Follows `SupervisorWithKafkaTest` pattern; cleaner lifecycle management via `supervisor.close()`. PyTfServer still starts as a subprocess. Alarm map keys by `iasio.id` instead of `fullRunningId`. `waitAlarms` accepts a list of expected alarm IDs. Consumer type filter removed to capture all IASIOs. |
 
 ### Proto fix (DONE)
 
@@ -177,7 +179,7 @@ All three Scala integration tests were relocated from `src/test/scala` to `PyTfS
 ### Verification (updated)
 
 - `./gradlew :CompElement:test` — all Scala/Java tests pass
-- `./gradlew :PyTfServer:pytest` — 60 passed (pytest unit tests)
+- `./gradlew :PyTfServer:pytest` — 91 passed (pytest unit tests, including 31 for MultiplicityThreshold)
 - `./gradlew :PyTfServer:compileIntegrationTestScala` — compiles 3 integration test classes (PyTfServerBase, TestGrpcPythonExecutorIntegration, TestPyTF, TestMinMaxPyTF)
 - Integration tests (after `install`, via `runIntTests.sh`): **27 tests pass** (6 + 17 + 4)
 
@@ -231,11 +233,13 @@ This provides a clear diagnostic at startup time rather than a silent failure la
 
 `pyTfServerAddr` was missing from `JsonSupervisorDao.hashCode()` and `equals()`, meaning two instances with the same id, hostName, logLevel, and dasusToDeploy but different `pyTfServerAddr` values compared as equal. Fixed by adding `pyTfServerAddr` to both methods.
 
-### Step D.2 — Fail-fast ping in Supervisor constructor (DONE)
+### Step D.2 — Fail-fast ping in Supervisor constructor (DONE, needs cleanup)
 
 When `pyTfServerAddr` is defined in the CDB, the Supervisor constructor sends a gRPC `Ping` RPC to the PyTfServer at `host:port`. If the ping fails, the Supervisor refuses to start with a clear error. When `pyTfServerAddr` is empty (default, most CDBs), the check is skipped entirely — existing Supervisors are unaffected.
 
 **Refactored:** The `Ping` logic lives in `GrpcPythonExecutor.checkServerRunning(serverAddr)` (CompElement companion object) rather than in `Supervisor.scala`. This keeps gRPC dependencies confined to CompElement — the Supervisor only calls the static method via `implementation(project(":CompElement"))` with no direct gRPC imports. The initial implementation had inline gRPC code in Supervisor and explicit gRPC dependencies in its `build.gradle.kts` (needed because the Scala 3 compiler failed to resolve protobuf inner classes like `GeneratedMessage$Builder` from transitive deps alone), but this was reverted after the refactoring proved unnecessary.
+
+**TODO (Step D.2 cleanup):** The ping failure currently uses `sys.exit(1)` (`Supervisor.scala:163-167`), which is not clean — it bypasses `AutoCloseable.close()` and can leak resources already allocated (e.g. `CdbReader`, `KafkaSubscriber`, `SimpleStringProducer`). Fix: throw an exception from the constructor so `main` can catch it in a `try/catch`, release resources with `reader.shutdown()` + `supervisor.close()` (if constructed), and exit gracefully.
 
 ### Step D.3 — DasuImpl constructor + apply overload (DONE)
 
@@ -285,31 +289,49 @@ All integration tests are now under `PyTfServer/src/integrationTest/scala/org/es
 
 **Deviation from original plan:** The `PyTfServer/build.gradle.kts` was NOT reverted to `base` plugin only. The integration tests are Scala and depend on CompElement classes (`GrpcPythonExecutor`, `ComputingElement`, types). The `scala` plugin, CompElement/BasicTypes/Tools dependencies, and `integrationTest` Scala source set are required and will remain.
 
+### Step J — MultiplicityThreshold Python TF (DONE)
+
+Added `MultiplicityThreshold` Python TF to `PyTfServer/src/main/python/IasTransferFunction/` as the Python equivalent of the Scala `MultiplicityTF`.
+
+**Behavior:** Takes alarm inputs, activates the output alarm when the number of SET alarms >= threshold from CDB properties. The output priority comes from the `org.eso.ias.tf.alarm.priority` property (defaults to MEDIUM). Properties from SET inputs are propagated and merged (comma-separated) on the output. The `IdsOfAlarmsSet` property lists the IDs of active alarms. Validity constraints are computed based on reliable inputs.
+
+**Files changed:**
+
+| File | Change |
+|---|---|
+| `PyTfServer/src/main/python/IasTransferFunction/MultiplicityThreshold.py` | **NEW** — Python port of Scala MultiplicityTF |
+| `PyTfServer/src/main/python/IasTransferFunction/__init__.py` | Added `MultiplicityThreshold` export |
+| `PyTfServer/src/test/python/test_multiplicity_threshold.py` | **NEW** — 31 unit tests covering init validation, threshold activation, property propagation/merge, mode propagation, and validity constraints |
+
 ### Step I — PyTfServer sends IAS heartbeats
 
 The `PyTfServer` process should emit IAS heartbeats to the Kafka heartbeat topic, using the same Python heartbeat infrastructure from the `Heartbeat` module that `AlarmGui` and other IAS components use. This ensures the central monitoring system can detect when a PyTfServer process goes down, just as it does for any other IAS component.
 
-### Step F — Full integration tests (later)
+### Step F — Full integration tests (DONE)
 
-The code path is wired through. The next step is a Supervisor-level integration test that:
-1. Starts a PyTfServer subprocess on a known port.
-2. Creates a CDB JSON with `pyTfServerAddr` pointing to that port.
-3. Launches a Supervisor with a DASU containing a Python TF.
-4. Pushes input via Kafka and verifies the output.
+`SupervisorPyTfTest` validates the full chain end-to-end:
+1. Starts a PyTfServer subprocess on the port from the CDB (`pyTfServerAddr`).
+2. Instantiates a Supervisor **in-process** (not via ProcessBuilder) with the CDB that has `pyTfServerAddr` configured.
+3. The Supervisor runs 3 DASUs: 2 Python TFs (MinMaxThreshold, MultiplicityThreshold) + 1 Scala TF (BoolToAlarm).
+4. Pushes inputs via Kafka and verifies all 3 outputs on the BSDB.
+5. Verifies alarms SET when inputs exceed threshold, and CLEAR when inputs drop below.
+6. **2 tests pass** (produce outputs from all DASUs, clear alarms when inputs go below threshold).
+
+The Supervisor uses the same pattern as `SupervisorWithKafkaTest`: an in-process `new Supervisor(...)` with a factory that passes `pyTfServerAddr` to `DasuImpl.apply` via the 7-arg overload. The `KafkaSubscriber` handles input consumption. The `iasiosConsumer` type filter was removed to capture all IASIOs. The alarm map now keys by `iasio.id` instead of `fullRunningId`. The `waitAlarms` method now accepts a list of expected alarm IDs and clears the map before waiting.
 
 ---
 
 ## Remaining Work to Complete the Task
 
-The gRPC-based Python TF executor is fully operational at the ASCE level: 27 integration tests confirm that ComputingElements with Python transfer functions initialize, evaluate, and shut down correctly over gRPC, covering every IAS data type and including a 15,000-call stress test.
+The gRPC-based Python TF executor is fully operational at the ASCE level: 27 PyTfServer integration tests confirm that ComputingElements with Python transfer functions initialize, evaluate, and shut down correctly over gRPC, covering every IAS data type and including a 15,000-call stress test. Plus 2 Supervisor-level integration tests for full end-to-end validation: **29 integration tests total**, all passing.
 
 The full wiring chain from the CDB `SupervisorDao` through `DasuImpl` to `GrpcPythonExecutor` is in place with explicit `pyTfServerAddr` parameters at every layer. If a Python TF is configured without an address, `TransferFunctionSetting.instantiateExecutor` throws an `IllegalStateException` and the ASCE is marked broken.
 
-The full code path is now ready for a Supervisor-level integration test: start a PyTfServer subprocess, configure a CDB with `pyTfServerAddr`, launch a Supervisor with a DASU containing a Python TF, and verify live data flow end-to-end.
+The full code path is validated by a Supervisor-level integration test: `SupervisorPyTfTest` uses an **in-process Supervisor** (`new Supervisor(...)`) with a factory that passes `pyTfServerAddr` to `DasuImpl.apply` (7-arg overload). The PyTfServer starts as a subprocess. 3 DASUs run simultaneously: 2 Python TFs (MinMaxThreshold, MultiplicityThreshold) + 1 Scala TF (BoolToAlarm). Alarm map keys by `iasio.id`; `waitAlarms` accepts a list of expected alarm IDs. **2 tests pass** (produce outputs, clear alarms).
 
 **Step C — Shared gRPC channel** is a performance optimization. Currently each `GrpcPythonExecutor` (one per ASCE) creates its own gRPC `ManagedChannel`. A shared channel with reference counting would mean all ASCEs under a Supervisor share a single OS connection to the PyTfServer, reducing resource usage.
 
-**Step F — Full end-to-end integration** is the final validation: a running Supervisor, connected PyTfServer, DASUs with Python TFs, and live data flowing through the system. This is planned for later.
+**Step F — Full end-to-end integration** is DONE. See above.
 
 | Step | Description | Priority |
 |---|---|---|
@@ -318,8 +340,23 @@ The full code path is now ready for a Supervisor-level integration test: start a
 | **D.3** | DasuImpl constructor + apply overload with pyTfServerAddr | DONE |
 | **D.4** | Supervisor main reads address from CDB and passes to DasuImpl | DONE |
 | **D.5** | Explicit pyTfServerAddr on ComputingElement + GrpcPythonExecutor (no more property hiding) | DONE |
+| **D.6** | Integration tests pass explicit serverAddr via 7th param | FIXED |
 | **D** | Wire `pyTfServerAddr` from SupervisorDao through to GrpcPythonExecutor | DONE |
 | **H** | Fail-fast Ping RPC on executor startup | Operational robustness (deferred) |
 | **C** | Shared gRPC channel with ref counting | Performance optimization |
+| **D.6** | Integration tests pass explicit pyTfServerAddr as 7th ComputingElement param | FIXED |
 | **I** | PyTfServer sends IAS heartbeats to Kafka | Monitoring |
-| **F** | Full end-to-end Supervisor to PyTfServer integration | Final validation (later) |
+| **J** | MultiplicityThreshold Python TF | DONE |
+| **F** | Full end-to-end Supervisor to PyTfServer integration (SupervisorPyTfTest) | DONE (2 tests pass, in-process Supervisor) |
+
+### ⚠️ Backward Incompatible Change — Property Rename
+
+The property name `org.eso.ias.tf.mutliplicity.threshold` was misspelled (typo: `mutliplicity` → `multiplicity`) across both the Scala `MultiplicityTF` and the Python `MultiplicityThreshold`. It has been corrected to `org.eso.ias.tf.multiplicity.threshold` in all 5 locations:
+
+1. `CompElement/.../MultiplicityTF.scala` — Scala TF
+2. `PyTfServer/.../MultiplicityThreshold.py` — Python TF
+3. `PyTfServer/.../test_multiplicity_threshold.py` — Python unit tests
+4. `DistributedUnit/.../ASCE-AlarmsThreshold.json` — test CDB
+5. `DistributedUnit/.../ACKASCE3.json` — test CDB
+
+**This release must be marked as backward incompatible.** Any production CDB that references `org.eso.ias.tf.mutliplicity.threshold` will need to be updated to `org.eso.ias.tf.multiplicity.threshold` before upgrading.

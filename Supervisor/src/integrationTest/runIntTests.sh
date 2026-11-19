@@ -6,6 +6,7 @@ iasRun -o -r org.scalatest.tools.Runner \
     -s org.eso.ias.supervisor.inttest.SupervisorWithKafkaTest \
     -s org.eso.ias.supervisor.inttest.TestSupervisorTfChanged \
     -s org.eso.ias.supervisor.inttest.TestAck \
-        -u "build/integration-test-results/scalatest"
+    -s org.eso.ias.supervisor.inttest.SupervisorPyTfTest \
+    -u "build/integration-test-results/scalatest"
 
 pytest src/integrationTest/python -rP --timeout=600 --junitxml="build/integration-test-results/pytest/TEST-Supervisor-pytest.xml"
