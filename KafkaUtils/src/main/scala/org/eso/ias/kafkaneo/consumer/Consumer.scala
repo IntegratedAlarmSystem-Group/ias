@@ -322,10 +322,10 @@ class Consumer[K, V](
             if (!isClosed.get) { // Ignore the exception when closing
               Consumer.logger.warn("Consumer [{}]: no values read from the topics in the past {} seconds", id, POLLING_TIMEOUT.getSeconds)
             }
-            break
+            break()
           case t: Throwable =>
             Consumer.logger.error("Consumer [{}] got an exception while getting kafka events", id, t)
-            break
+            break()
         }
       }
     }
