@@ -313,6 +313,9 @@ class SupervisorPyTfTest
     iasiosProducer.push(buildAlarmIasio(al2MultiInputId, AlarmState.CLEAR_UNACK))
     iasiosProducer.push(buildAlarmIasio(al3MultiInputId, AlarmState.CLEAR_UNACK))
 
+    // Wait few seconds: the ASCEs produce a new output as soon as they got the new inputs
+    // but there is always a chance to wait for alarms too early
+    Thread.sleep(3000)
     logger.info("Waiting for cleared alarms...")
     assert(waitAlarms(List("alarm_bool", "alarm_min_max", "alarm_multi")), "Alarms should be SET initially")
 
