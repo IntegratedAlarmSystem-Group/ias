@@ -51,7 +51,7 @@ from IasLogging.log import Log
 logger = logging.getLogger(__name__)
 
 
-def serve(port: int = 50051, server_id: str = ""):
+def serve(port: int = 50051, server_id: str):
     """Start the gRPC server on ``localhost:<port>``.
 
     Registers the ``PyTfService`` servicer with a thread-pool executor
@@ -59,7 +59,7 @@ def serve(port: int = 50051, server_id: str = ""):
 
     Args:
         port: TCP port to bind to. Defaults to 50051.
-        server_id: Identifier for this server instance. Logged on startup.
+        server_id: Identifier for this server instance.
     """
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     add_PyTfServiceServicer_to_server(PyTfService(), server)
@@ -86,7 +86,7 @@ if __name__ == "__main__":
     parser.add_argument(
         '-i',
         '--id',
-        help='Identify this server instance in logs. Defaults to PyTfServer-<hostname>-<port>',
+        help='Identifier of this server instance. Defaults to PyTfServer-<hostname>-<port>',
         action='store',
         type=str,
         default='',
