@@ -105,6 +105,8 @@ The property name `org.eso.ias.tf.mutliplicity.threshold` was misspelled (typo: 
 | **`-i`/`--id`** | CLI argument for PyTfServer identification | JepReplacement3.md |
 | **D.2 cleanup** | Exception-based graceful shutdown on ping failure (replaces `sys.exit(1)`) | JepReplacement3.md |
 | **M** | gRPC call deadline + `shutdown()` error handling + detailed log messages | JepReplacement3.md |
+| **I.1** | PyTfServer CLI: fullRunningId, HB infrastructure, CDB integration | JepReplacement3.md |
+| **I** | PyTfServer sends IAS heartbeats via Kafka (integration test) | JepReplacement3.md |
 
 ### Step M — Details (DONE)
 
@@ -130,11 +132,119 @@ The following must be clearly stated in the **release notes** and in the **user 
 2. **Shutting down or restarting PyTfServer requires restarting the Supervisor.** If PyTfServer is killed while the Supervisor is running, the next gRPC call from any Python ASCE will fail. The affected ASCE transitions to `TFBroken` and **cannot recover** — the ASCE is permanently broken for the lifetime of the Supervisor process. Only restarting the Supervisor (after PyTfServer is back up) will re-initialize the ASCEs. The DASU continues running, but downstream ASCEs that depend on the broken ASCE's output will operate on stale data.
 3. **`shutdown()` is resilient.** If PyTfServer is already dead when the Supervisor terminates (e.g., Ctrl-C), the shutdown RPC failure is logged at error level and the gRPC channel is still cleaned up locally. It does not affect cleanup of other ASCEs.
 
+### Step C — CANCELLED
+
+**Step C** (Shared gRPC channel with ref counting) is cancelled. The current per-ASCE channel design provides isolation: a failure in one Python TF cannot affect other TFs on the same Supervisor. A shared channel would introduce a shared failure point where a channel-level error (server crash, network issue) breaks all Python TFs. The small resource saving (fewer TCP connections to localhost) does not justify the added risk and complexity. Python TFs are primarily for testing and prototyping, and a typical Supervisor won't have many Python ASCEs. If this becomes a real concern in production, it can be revisited then.
+
+### Step I.1 — PyTfServer CLI: fullRunningId, HB infrastructure, CDB integration (DONE)
+
+Infrastructure plumbing for Step I (PyTfServer heartbeats). The following was implemented across three modules:
+
+**`iasPyTfServer.py`** — New CLI arguments and heartbeat lifecycle:
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `-c` / `--jcdb` | str | `None` | Parent folder of the IAS CDB (resolves Kafka brokers + HB frequency) |
+| `-b` / `--bsdburl` | str | `None` | Kafka BSDB URL directly. Overrides `--jcdb` |
+| `-f` / `--hbfrequency` | int | `None` | HB frequency in seconds (0 disables). Defaults to CDB value, then 5s |
+
+A `parse()` function follows the AlarmGui pattern, returning a dictionary of CLI parameters. The `serve()` function is refactored to manage the global HB engine: transitions the state to `RUNNING` before `server.start()`, and closes the engine in the `finally` block on shutdown. SIGINT is handled by Python's default `KeyboardInterrupt` mechanism — no custom signal handler needed.
+
+The `hb_engine` is stored as a single-element list (`[None]`) at module scope to work around Python's restriction on reassigning type-annotated global variables (PEP 526 `global` error).
+
+**`HeartbeatHelper.py`** (new file in Heartbeat module):
+
+- `get_hb_frequency(frequency_from_cmdline, jCdb)` — resolves HB frequency with fallback chain: CLI → CDB via `--jcdb` → CDB via `IAS_CDB` env var → default (5s)
+- `get_hb_frequency_from_cdb(cdb_parent_folder)` — reads `hbFrequency` from the CDB `ias.json`
+- `HB_FREQUENCY_DEFAULT = 5`
+
+**`test_heartbeat_helper.py`** (new test, 10 tests):
+
+- Tests all code paths: CLI override, CDB read, env var, fallback to default, invalid CDB path, and direct `get_hb_frequency_from_cdb` calls. Uses a `src/test/CDB/ias.json` fixture with `hbFrequency: 7`.
+
+**BSDB resolution** delegates to `IasKafkaHelper.get_bsdb_url()` (existing), with the same fallback chain as AlarmGui: `--bsdburl` → `--jcdb` → `IAS_CDB` env → `DEFAULT_BOOTSTRAP_BROKERS` (`localhost:9092`).
+
+| File | Change |
+|---|---|
+| `PyTfServer/src/main/python/iasPyTfServer.py` | Added `parse()`, HB engine lifecycle in `serve()`, CLI args `-c`, `-b`, `-f` |
+| `Heartbeat/src/main/python/IasHeartbeat/HeartbeatHelper.py` | New module: `get_hb_frequency()`, `get_hb_frequency_from_cdb()`, `HB_FREQUENCY_DEFAULT` |
+| `Heartbeat/src/test/CDB/ias.json` | Test CDB fixture |
+| `Heartbeat/src/test/python/test_heartbeat_helper.py` | 10 unit tests for HeartbeatHelper |
+
+### Step I — PyTfServer sends IAS heartbeats via Kafka (DONE)
+
+Building on I.1, the HB engine lifecycle is fully wired into `serve()`:
+
+- **STATE transitions**: `STARTING_UP` (on `hb_engine.start()`) → `RUNNING` (before `server.start()`) → `EXITING` (on `KeyboardInterrupt`) → close
+- **Shutdown**: Python's default `KeyboardInterrupt` on SIGINT triggers EXITING state, then `finally` closes HB engine and calls `server.stop(0)`
+- **Global HB engine** stored as single-element list (`[None]`) to work around Python's PEP 526 restriction on `global` with type-annotated variables
+- **Integration test** (`test_pytfserver_heartbeat.py`) spawns PyTfServer as a subprocess with HB enabled, uses `iasPyTfServer` from `$IAS_ROOT/bin`, and collects heartbeats from the Kafka topic via `HbKafkaConsumer`. A single test (`test_heartbeats_received`) waits for up to 5 heartbeats to confirm the engine is alive.
+
+| File | Change |
+|---|---|
+| `PyTfServer/src/integrationTest/python/test_pytfserver_heartbeat.py` | Integration test: verifies HBs are published to Kafka |
+| `PyTfServer/src/integrationTest/runIntTests.sh` | Added Python pytest run |
+
 ### Remaining
 
-| Step | Description | Priority |
-|---|---|---|
-| **C** | Shared gRPC channel with ref counting | Performance optimization |
-| **I** | PyTfServer sends IAS heartbeats via Kafka using the Heartbeat module Python classes | Monitoring |
+**All steps complete.**
 
-**Total: 28 steps completed, 2 remaining.**
+| Step | Description | Status |
+|---|---|---|
+| **I** | PyTfServer sends IAS heartbeats via Kafka using the Heartbeat module Python classes | DONE |
+
+**Total: 31 steps completed (30 done + 1 cancelled), 0 remaining.**
+
+---
+
+## TODO — Ticket Needed: HbEngine.close() unconditionally closes the producer
+
+`HbEngine.close()` always calls `self._producer.close()` (line 76 of `HbEngine.py`), regardless of whether the engine created the producer or received it as a constructor argument. This means the engine takes ownership of an externally-provided producer and closes it, which can cause issues if the producer is shared. The `__init__` should track whether it owns the producer (e.g. via an `own_producer` flag) and only close it in `close()` when it does. Open a GitHub issue if one does not already exist.
+
+---
+
+## Appendix — PyTfServer Mid-Flight Failure: Investigation & Mitigation Options
+
+When PyTfServer is killed while the Supervisor is running, the next gRPC call from a Python ASCE fails and the ASCE transitions to `TFBroken`. The ASCE cannot recover without restarting the Supervisor. This section documents the investigation of possible mitigations.
+
+### Current behavior (after Step M)
+
+With the 5-second gRPC deadline in place, a dead PyTfServer no longer blocks the DASU thread for up to 2 minutes. After the deadline, the ASCE transitions to `TFBroken` and the DASU continues running. Other ASCEs are unaffected, but downstream ASCEs depending on the broken ASCE's output operate on stale data. The operator must restart the Supervisor after PyTfServer is back up.
+
+### Option 1 — Return last output as UNRELIABLE on eval timeout
+
+`GrpcPythonExecutor.eval()` receives `actualOutput` (the last known output). On `DEADLINE_EXCEEDED`, instead of throwing, it could return `actualOutput` with validity forced to `UNRELIABLE`, allowing the DASU to keep producing degraded output rather than freezing.
+
+**Problem:** after the timeout, the TF instance no longer exists on PyTfServer (if the server was killed/restarted). The next `eval()` call would arrive at a fresh server with an empty `tf_instances` dict, and the server would return an error ("ASCE not initialized"). The ASCE would then fail and transition to `TFBroken` anyway. This option alone is insufficient.
+
+### Option 2 — Auto re-initialize on eval failure
+
+After a `DEADLINE_EXCEEDED` or "not initialized" error in `eval()`, the executor could automatically call `initialize()` again before retrying `eval()`. Step L.2 already handles orphan cleanup on the server side, so re-initialization after a fresh PyTfServer start would succeed.
+
+**Problems:**
+- `eval()` would now have a side effect (calling initialize), making the code harder to reason about.
+- There is a race condition if multiple inputs arrive between the failed eval and the re-init.
+- The executor would need stateful failure tracking (e.g., a counter of consecutive failures) to avoid infinite re-init loops if PyTfServer remains unreachable.
+- `initialize()` itself is a blocking gRPC call — if the server is still dead, the DASU thread blocks again (though the deadline limits this to 5s).
+
+### Option 3 — Hybrid: stale output with bounded retries + auto re-init
+
+Combine options 1 and 2:
+1. On `DEADLINE_EXCEEDED` in `eval()`, cache the consecutive failure count.
+2. If failures < N: try `initialize()`, then retry `eval()`. If both succeed, reset counter and return normally. If either fails, return `actualOutput` with UNRELIABLE validity.
+3. If failures >= N: give up and throw → ASCE goes to `TFBroken`.
+
+**Problems:**
+- Adds significant complexity to `GrpcPythonExecutor.eval()` (stateful counter, re-init logic, retry semantics).
+- N would need to be configurable, adding another system property.
+- The interaction between re-init, DASU throttling, and input buffering is subtle and needs careful testing.
+
+### Decision — Defer
+
+**None of these options are implemented at this stage.** The rationale:
+
+- Python TFs are primarily intended for **testing and prototyping** before being ported to Scala. In production, the supervisor and PyTfServer will have stable, co-managed lifecycles (systemd units with proper ordering, or eventually Step I's Kafka heartbeats for liveness monitoring).
+- The current behavior — clear error log, fast failure after the deadline, ASCE marked as `TFBroken` — is sufficient for the expected use. The operator action (restart Supervisor) is documented.
+- If the need arises (e.g., Python TFs used in production with an independent PyTfServer lifecycle), Option 3 can be implemented then with full test coverage.
+
+**The problem is known.** The mitigation path is documented here. No new step is added to the plan.
