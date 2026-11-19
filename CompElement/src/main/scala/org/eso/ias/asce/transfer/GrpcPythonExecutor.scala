@@ -3,12 +3,14 @@ package org.eso.ias.asce.transfer
 import org.eso.ias.generated.protobuf.tfservice.PyTfServiceGrpc
 import org.eso.ias.generated.protobuf.tfservice.PytfService
 import org.eso.ias.types.InOut
+import io.grpc.Deadline
 import io.grpc.ManagedChannel
 import io.grpc.ManagedChannelBuilder
 import org.slf4j.LoggerFactory
 import scala.jdk.CollectionConverters._
 
 import java.util.Properties
+import java.util.concurrent.TimeUnit
 import scala.util.Try
 
 /**
@@ -66,7 +68,8 @@ class GrpcPythonExecutor[T](
       .setActualOutput(actualOutputProto)
       .build()
 
-    val resp = stub.eval(request)
+    val deadline = Deadline.after(GrpcPythonExecutor.rpcTimeoutSeconds, TimeUnit.SECONDS)
+    val resp = stub.withDeadline(deadline).eval(request)
 
     if (!resp.getSuccess) {
       throw new Exception(s"gRPC Eval failed for ASCE $compElementRunningId: ${resp.getError}")
@@ -106,7 +109,8 @@ class GrpcPythonExecutor[T](
       requestBuilder.setTemplateInstance(templateInstanceStr)
     )
 
-    val resp = stub.initialize(requestBuilder.build())
+    val deadline = Deadline.after(GrpcPythonExecutor.rpcTimeoutSeconds, TimeUnit.SECONDS)
+    val resp = stub.withDeadline(deadline).initialize(requestBuilder.build())
 
     if (!resp.getSuccess) {
       throw new Exception(s"gRPC Initialize failed for ASCE $compElementRunningId: ${resp.getError}")
@@ -117,26 +121,40 @@ class GrpcPythonExecutor[T](
   }
 
   override def shutdown(): Unit = {
-    val resp = stub.shutdown(
-      PytfService.ShutdownRequest.newBuilder()
-        .setAsceRunningId(compElementRunningId)
-        .build()
-    )
+    try {
+      val deadline = Deadline.after(GrpcPythonExecutor.rpcTimeoutSeconds, TimeUnit.SECONDS)
+      val resp = stub.withDeadline(deadline).shutdown(
+        PytfService.ShutdownRequest.newBuilder()
+          .setAsceRunningId(compElementRunningId)
+          .build()
+      )
 
-    if (!resp.getSuccess) {
-      logger.warn("gRPC Shutdown returned error for ASCE {}: {}", compElementRunningId, resp.getError)
+      if (!resp.getSuccess) {
+        logger.warn("gRPC Shutdown returned error for ASCE {}: {}", compElementRunningId, resp.getError)
+      }
+    } catch {
+      case e: Exception =>
+        logger.error("Failed to send Shutdown RPC to PyTfServer for ASCE {}: {}", compElementRunningId, e.getMessage)
     }
 
     channel.shutdown()
-    Try(channel.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS))
+    if (!channel.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS)) {
+      logger.error("gRPC channel did not terminate within 5s for ASCE {}", compElementRunningId)
+    }
     logger.info("gRPC channel shut down for ASCE {}", compElementRunningId)
-
-    logger.info("GrpcPythonExecutor shut down for ASCE {} (success={})",
-      compElementRunningId, resp.getSuccess)
   }
 }
 
 object GrpcPythonExecutor {
+  val RpcTimeoutProperty = "org.eso.ias.rpc.timeout"
+  /**
+    * Default timeout in seconds for gRPC calls to PyTfServer.
+    * Customizable via the Java system property `org.eso.ias.rpc.timeout`.
+    */
+  def rpcTimeoutSeconds: Long = {
+    Try(System.getProperty(RpcTimeoutProperty).toLong).getOrElse(5)
+  }
+
   /**
     * Ping the PyTfServer at the given address to check if it is reachable.
     *
@@ -152,7 +170,8 @@ object GrpcPythonExecutor {
       .build()
     try {
       val stub = PyTfServiceGrpc.newBlockingStub(channel)
-      val resp = stub.ping(PytfService.PingRequest.getDefaultInstance)
+      val deadline = Deadline.after(rpcTimeoutSeconds, TimeUnit.SECONDS)
+      val resp = stub.withDeadline(deadline).ping(PytfService.PingRequest.getDefaultInstance)
       resp.getSuccess
     } catch {
       case _: Exception => false
