@@ -251,6 +251,10 @@
 	{ "id":"TemplatedId", "shortDesc":"Templated", "iasType":"LONG", "templateId":"temp-ID2" },
 	{ "id":"NonTemplatedId", "shortDesc":"NON Templated", "iasType":"LONG" },
 	{ "id":"TemplatedOutId", "shortDesc":"Templated output", "iasType":"LONG", "templateId":"temp-ID2" },
-	{ "id":"TemplatedInput", "shortDesc":"Templated input", "iasType":"ALARM", "templateId":"TemplateIDForTemplatedInputs" }
-	
+	{ "id":"TemplatedInput", "shortDesc":"Templated input", "iasType":"ALARM", "templateId":"TemplateIDForTemplatedInputs" },
+
+	{ "id":"PyAsceIn", "shortDesc":"Python ASCE input", "iasType":"DOUBLE" },
+	{ "id":"PyAsceOut", "shortDesc":"Python ASCE output", "iasType":"ALARM" },
+	{ "id":"DasuWithPyTF-OutID", "shortDesc":"DASU with Python TF output", "iasType":"ALARM" }
+
 ]

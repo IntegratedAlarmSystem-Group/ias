@@ -1,0 +1,8 @@
+{
+	"logLevel":"INFO",
+	"id":"SupervisorWithPyTF_NoAddr",
+	"hostName":"almaias.eso.org",
+	"dasusToDeploy":[
+		{"dasuId":"DasuWithPyTF","templateId":null,"instance":null}
+	]
+}
