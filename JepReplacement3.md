@@ -104,13 +104,37 @@ The property name `org.eso.ias.tf.mutliplicity.threshold` was misspelled (typo: 
 | **`serve()` fix** | SyntaxError: swapped `serve()` parameters | JepReplacement3.md |
 | **`-i`/`--id`** | CLI argument for PyTfServer identification | JepReplacement3.md |
 | **D.2 cleanup** | Exception-based graceful shutdown on ping failure (replaces `sys.exit(1)`) | JepReplacement3.md |
+| **M** | gRPC call deadline + `shutdown()` error handling + detailed log messages | JepReplacement3.md |
+
+### Step M — Details (DONE)
+
+**Problem:** Without a deadline, gRPC calls to PyTfServer could block for up to ~2 minutes (internal retry backoff) if the server is unreachable. Since the DASU runs TFs sequentially on a single thread, a blocked `eval()` would freeze the entire DASU.
+
+**Solution:** All four gRPC calls (`eval`, `initialize`, `shutdown`, `checkServerRunning` ping) now use `stub.withDeadline(Deadline.after(...))` with a configurable timeout (default 5s). The timeout is read from the Java system property `org.eso.ias.rpc.timeout` (in seconds), accessible via `GrpcPythonExecutor.rpcTimeoutSeconds`.
+
+**`shutdown()` resilience:** The gRPC `shutdown()` RPC call is wrapped in try/catch so that a dead PyTfServer during Supervisor termination does not prevent channel cleanup. The `channel.shutdown()` + `awaitTermination(5s)` always runs regardless, with an error log if the channel fails to terminate in time.
+
+**`eval()` and `initialize()` logging:** Both methods catch `DEADLINE_EXCEEDED` specifically and log a clear `logger.error` message stating: which ASCE failed, the PyTfServer address, the timeout value, and the consequence (ASCE transitions to TFBroken). Other exceptions are logged with full stack trace. The exception is re-thrown so the existing `Try` wrapper in `PythonTransfer.transfer()` handles the `TFBroken` state transition.
+
+**Files changed:**
+
+| File | Change |
+|---|---|
+| `CompElement/.../GrpcPythonExecutor.scala` | Added `RpcTimeoutProperty` + `rpcTimeoutSeconds` to companion object; `withDeadline` on all 4 RPC calls; `shutdown()` wrapped in try/catch; `eval()` and `initialize()` catch `DEADLINE_EXCEEDED` with detailed `logger.error`; `awaitTermination` failure logged with `logger.error` |
+
+### ⚠️ Documentation Required (before release)
+
+The following must be clearly stated in the **release notes** and in the **user documentation**:
+
+1. **`org.eso.ias.rpc.timeout`** — Java system property (in seconds, default 5) controlling the deadline for all gRPC calls between the Supervisor and PyTfServer (Initialize, Eval, Shutdown, Ping). If the server does not reply within this time, the call fails with `DEADLINE_EXCEEDED` and the ASCE transitions to `TFBroken`. Operators can override it via `-Dorg.eso.ias.rpc.timeout=<seconds>` when launching the Supervisor.
+2. **Shutting down or restarting PyTfServer requires restarting the Supervisor.** If PyTfServer is killed while the Supervisor is running, the next gRPC call from any Python ASCE will fail. The affected ASCE transitions to `TFBroken` and **cannot recover** — the ASCE is permanently broken for the lifetime of the Supervisor process. Only restarting the Supervisor (after PyTfServer is back up) will re-initialize the ASCEs. The DASU continues running, but downstream ASCEs that depend on the broken ASCE's output will operate on stale data.
+3. **`shutdown()` is resilient.** If PyTfServer is already dead when the Supervisor terminates (e.g., Ctrl-C), the shutdown RPC failure is logged at error level and the gRPC channel is still cleaned up locally. It does not affect cleanup of other ASCEs.
 
 ### Remaining
 
 | Step | Description | Priority |
 |---|---|---|
-| **H** | Fail-fast Ping RPC on executor startup | Operational robustness |
 | **C** | Shared gRPC channel with ref counting | Performance optimization |
 | **I** | PyTfServer sends IAS heartbeats via Kafka using the Heartbeat module Python classes | Monitoring |
 
-**Total: 27 steps completed, 3 remaining.**
+**Total: 28 steps completed, 2 remaining.**
