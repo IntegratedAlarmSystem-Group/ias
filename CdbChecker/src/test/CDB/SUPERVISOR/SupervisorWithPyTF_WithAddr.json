@@ -1,0 +1,9 @@
+{
+	"logLevel":"INFO",
+	"id":"SupervisorWithPyTF_WithAddr",
+	"hostName":"almaias.eso.org",
+	"pyTfServerAddr": "localhost:50052",
+	"dasusToDeploy":[
+		{"dasuId":"DasuWithPyTF","templateId":null,"instance":null}
+	]
+}

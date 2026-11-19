@@ -1,0 +1,8 @@
+{
+	"dasuID":"DasuWithPyTF",
+	"outputID":"DasuWithPyTF-OutID",
+	"props":[],
+	"id":"PyAsceOnDasuWithPyTF-ID1",
+	"transferFunctionID":"org.eso.ias.pytfserver.test.tf.PyTestTF",
+	"inputIDs":["PyAsceIn"]
+}

@@ -1,0 +1,11 @@
+{
+	"logLevel":"INFO",
+	"id":"SupervisoWithPySrvAddrWrong",
+	"hostName":"almaias.eso.org",
+    "pyTfServerAddr": "localhost:50051",
+	"dasusToDeploy":[
+		{"dasuId":"Dasu1","templateId":null,"instance":null},
+		{"dasuId":"Dasu2","templateId":null,"instance":null},
+		{"dasuId":"Dasu3","templateId":null,"instance":null}
+	]
+}

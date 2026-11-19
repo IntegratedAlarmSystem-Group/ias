@@ -9,8 +9,7 @@ import org.eso.ias.cdb.pojos._
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.Identifier
 
-import scala.collection.JavaConverters
-import scala.jdk.javaapi.CollectionConverters
+import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -30,8 +29,6 @@ class CdbChecker(args: Array[String]) {
 
   /** The reader of the JSON of RDB CDB */
   val reader: CdbReader = CdbReaderFactory.getCdbReader(args)
-
-  
 
   /**
     * Check for errors
@@ -57,7 +54,7 @@ class CdbChecker(args: Array[String]) {
     val mapOfTfs: Map[String, TransferFunctionDao] = {
       val tfsOptional = reader.getTransferFunctions
       val tfs: Set[TransferFunctionDao] = if (!tfsOptional.isPresent) Set.empty else {
-        CollectionConverters.asScala(tfsOptional.get()).toSet
+        tfsOptional.get().asScala.toSet
       }
       tfs.foldLeft(Map.empty[String,TransferFunctionDao])( (z, tf) => z+(tf.getClassName -> tf))
     }
@@ -67,7 +64,7 @@ class CdbChecker(args: Array[String]) {
     val mapOfTemplates: Map[String, TemplateDao] = {
       val templatesOptional = reader.getTemplates
       val templates: Set[TemplateDao] = if (!templatesOptional.isPresent) Set.empty else {
-        CollectionConverters.asScala(templatesOptional.get()).toSet
+        templatesOptional.get().asScala.toSet
       }
       templates.foldLeft(Map.empty[String,TemplateDao])( (z, t) => z+(t.getId -> t))
     }
@@ -81,7 +78,7 @@ class CdbChecker(args: Array[String]) {
     val mapOfIasios: Map[String, IasioDao] = {
       val iasiosOptional = reader.getIasios
       val iasios: Set[IasioDao] = if (!iasiosOptional.isPresent) Set.empty else {
-        CollectionConverters.asScala(iasiosOptional.get()).toSet
+        iasiosOptional.get().asScala.toSet
       }
       iasios.foldLeft(Map.empty[String,IasioDao])( (z, i) => z+(i.getId -> i))
     }
@@ -98,7 +95,7 @@ class CdbChecker(args: Array[String]) {
           errorsFound = true
           Set.empty
         case Success(idsOptional) =>
-          if (idsOptional.isPresent) CollectionConverters.asScala(idsOptional.get()).toSet else Set.empty
+          if (idsOptional.isPresent) idsOptional.get().asScala.toSet else Set.empty
       }
     }
 
@@ -194,7 +191,7 @@ class CdbChecker(args: Array[String]) {
         val tryToGetDasus = Try(reader.getDasusToDeployInSupervisor(id))
         tryToGetDasus match {
           case Success(set) =>
-            val setOfDtd: Set[DasuToDeployDao] = CollectionConverters.asScala(set).toSet
+            val setOfDtd: Set[DasuToDeployDao] = set.asScala.toSet
             CdbChecker.logger.info("{} DASUs to deploy on Supervisor [{}]: {}",
               setOfDtd.size.toString,
               id,
@@ -222,14 +219,12 @@ class CdbChecker(args: Array[String]) {
           supervisorDao.getDasusToDeploy.size(),
           supervisorDao.getId)
       }
+    })
 
-      // Validate pyTfServerAddr format if defined
-      val pyTfServerAddr = Option(supervisorDao.getPyTfServerAddr).getOrElse("")
-      if (pyTfServerAddr.nonEmpty && !SupervisorDao.isValidPyTfAddress(pyTfServerAddr)) {
-        CdbChecker.logger.error("Supervisor [{}] has invalid pyTfServerAddr format [{}] (expected host:port)",
-          supervisorDao.getId, pyTfServerAddr)
-        errorsFound = true
-      }
+    // Check the usage (or not usage) of the python TF server in all the Supervisors
+    mapOfSupervisors.values.foreach( supervisorDao => {
+      val dasusOfSuperv: Set[DasuDao]  = mapOfDasusToDeploy(supervisorDao.getId).map(_.getDasu)
+      errorsFound = errorsFound || checkSupervisor(supervisorDao = supervisorDao, dasusOfSuperv = dasusOfSuperv)
     })
 
     // Check all the DASUs to deploy
@@ -324,13 +319,13 @@ class CdbChecker(args: Array[String]) {
     // Check for duplicated IDs of tools
     val idsOfPlugins: List[String] = {
       val idsOptional = reader.getPluginIds
-      if (idsOptional.isPresent) CollectionConverters.asScala(idsOptional.get()).toList
+      if (idsOptional.isPresent) idsOptional.get().asScala.toList
       else List.empty[String]
     }
     CdbChecker.logger.debug("Ids of plugins: {}",idsOfPlugins.mkString(","))
     val idsOfClients: List[String] = {
       val idsOptional = reader.getClientIds
-      if (idsOptional.isPresent) CollectionConverters.asScala(idsOptional.get()).toList
+      if (idsOptional.isPresent) idsOptional.get().asScala.toList
       else List.empty[String]
     }
     CdbChecker.logger.debug("Ids of clients: {}",idsOfClients.mkString(","))
@@ -382,7 +377,7 @@ class CdbChecker(args: Array[String]) {
     dasuIds.foldLeft(Map.empty[String, Set[String]])((z, idOfDasu) => {
       dasusMap.get(idOfDasu) match {
         case Some(d) =>
-          val asceIds = CollectionConverters.asScala(d.getAscesIDs).toSet
+          val asceIds = d.getAscesIDs.asScala.toSet
           z + (idOfDasu -> asceIds)
         case None =>
           CdbChecker.logger.error("Error getting DASU [{}]:", idOfDasu)
@@ -442,8 +437,8 @@ class CdbChecker(args: Array[String]) {
     }
 
     // Are all the inputs defined?
-    val inputs = CollectionConverters.asScala(asceDao.getIasiosIDs).toSet
-    val templatedInputs = CollectionConverters.asScala(asceDao.getTemplatedInstanceInputs).toSet
+    val inputs = asceDao.getIasiosIDs.asScala.toSet
+    val templatedInputs = asceDao.getTemplatedInstanceInputs.asScala.toSet
     if (inputs.isEmpty && templatedInputs.isEmpty) {
       CdbChecker.logger.error("No inputs neither templated inputs defined for ASCE [{}]",id.getOrElse("?"))
       errorsFound = true
@@ -645,6 +640,52 @@ class CdbChecker(args: Array[String]) {
   }
 
   /**
+    * Check the correctness of the SupervisorDao
+    *
+    * @param supervisorDao The DAO of the Supervisor to check
+    * @param ascesOfSuperv The ASCEs deployed in the Supervisor
+    * @return true in case of errors; false otherwise
+    */
+  def checkSupervisor(
+    supervisorDao: SupervisorDao, dasusOfSuperv: Set[DasuDao]): Boolean = {
+    require(Option(supervisorDao).isDefined)
+    var errorsFound = false
+
+    val ascesOfSuperv: Set[AsceDao] = dasusOfSuperv.flatMap(_.getAsces().asScala.toSet)
+    val tfsOfAsces: Set[TransferFunctionDao] = ascesOfSuperv.map(_.getTransferFunction())
+
+    // At least on TF runs a python TF
+    val hasPyTf = tfsOfAsces.exists(_.getImplLang()==TFLanguageDao.PYTHON)
+
+    // Validate pyTfServerAddr format if defined
+    val pyTfServerAddr = Option(supervisorDao.getPyTfServerAddr).getOrElse("")
+    if (pyTfServerAddr.nonEmpty && !SupervisorDao.isValidPyTfAddress(pyTfServerAddr)) {
+      // Is the Python TF server address well formed?
+      CdbChecker.logger.error("Supervisor [{}] has invalid pyTfServerAddr format [{}] (expected host:port)",
+        supervisorDao.getId, pyTfServerAddr)
+      errorsFound = true
+    }
+
+    if (pyTfServerAddr.nonEmpty) {
+      // If there is a PyTfServerAddr then at least one of its ASCE must have a PYTHON TF
+      if (!hasPyTf) {
+        CdbChecker.logger.error("Supervisor [{}] runs no python TF but has pyTfServerAddr defined as [{}]",
+        supervisorDao.getId, pyTfServerAddr)
+        errorsFound = true
+      }
+    } else {
+      // If there is no PyTfServerAddr then none of its ASCE can run a PYTHON TF
+      if (hasPyTf) {
+        CdbChecker.logger.error("Supervisor [{}] runs a python TF but has NO pyTfServerAddr defined",
+          supervisorDao.getId)
+        errorsFound = true
+      }
+    }
+
+    errorsFound
+  }
+
+  /**
     * Check if there are errors in the DASU
     *
     * @param dasuDao The DasuDao to check for error
@@ -677,7 +718,7 @@ class CdbChecker(args: Array[String]) {
       }
     }
 
-    val asces: Set[AsceDao] = CollectionConverters.asScala(dasuDao.getAsces).toSet
+    val asces: Set[AsceDao] = dasuDao.getAsces.asScala.toSet
     if (asces.isEmpty) {
       CdbChecker.logger.error("No ASCEs for DASU [{}] not defined in CDB", id.getOrElse("?"))
       errorsFound = true
