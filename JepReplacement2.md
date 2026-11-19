@@ -30,7 +30,8 @@ Total: **29 integration tests**, all passing. PyTfServer tests manage the PyTfSe
 | **`implementation(libs.scala.library)`** | Added explicit dependency on Scala 3.9.0 library | Resolves Zinc compiler version conflict: `scalatest` brings transitive `scala3-library_3:3.1.3`, but Zinc must pick `3.9.0` to compile with `-java-output-version 21` (3.1.x compiler only accepts colon-separated version format) |
 | **`CopyCompElementPyBase` Gradle task** | Created task to sync base `IasTransferFunction` files into build output | Ensures the self-contained files are in `build/lib/.../site-packages/` alongside the installed package |
 | **`GrpcPythonExecutor.shutdown()`** | Added `channel.shutdown()` + `awaitTermination(5s)` + log line | Fixes gRPC `ManagedChannel` leak — channels were only cleaned up by JVM GC, producing `ManagedChannelOrphanWrapper` warnings |
-| **`DasuImpl.cleanUp()`** | Added `asces.foreach(_.shutdown())` before releasing publisher | Fixes missing ASCE shutdown on Supervisor Ctrl-C/crash — orphans TFs in PyTfServer, causing "already initialized" error on Supervisor restart |
+| **`DasuImpl.cleanUp()`** | Added `asces.foreach(_.shutdown())` before releasing publisher | Graceful ASCE shutdown on Supervisor Ctrl-C — sends gRPC Shutdown RPC to PyTfServer to remove TFs from registry |
+| **`TfManager.initialize()`** | Auto-shutdowns orphaned TF on duplicate `asceRunningId`, then re-attempts init | Handles unclean Supervisor crash/KILL — old TF is cleaned before new Supervisor re-initializes |
 | **`AGENTS.md`** | Updated integration test instructions for PyTfServer | Documents how to run integration tests (self-managed server via PyTfServerBase, no pre-running server needed) |
 | **SupervisorPyTfTest** | Supervisor instantiated in-process via `new Supervisor(...)` (not via ProcessBuilder) with a factory passing `pyTfServerAddr` to `DasuImpl.apply` | Follows `SupervisorWithKafkaTest` pattern; cleaner lifecycle management via `supervisor.close()`. PyTfServer still starts as a subprocess. Alarm map keys by `iasio.id` instead of `fullRunningId`. `waitAlarms` accepts a list of expected alarm IDs. Consumer type filter removed to capture all IASIOs. |
 
@@ -250,28 +251,49 @@ Added `pyTfServerAddr: Option[String] = None` as a 7th parameter to `DasuImpl` c
 
 In `Supervisor.main`, before creating the DASU factory, the Supervisor reads `pyTfServerAddr` from the CDB `SupervisorDao` and passes it through the factory lambda to the 7-arg `DasuImpl.apply`. The factory type signature `(DasuDao, Identifier, OutputPublisher, InputSubscriber) => Dasu` remains unchanged — the address is captured from the `main` scope.
 
-### Step L — DasuImpl.cleanUp() gracefully shuts down ASCEs (DONE)
+### Step L — Graceful shutdown of ASCEs on Supervisor stop (DONE)
 
-`DasuImpl.cleanUp()` was missing the critical step of shutting down its ASCEs. When the Supervisor was terminated (Ctrl-C or crash), `Supervisor.close()` called `dasus.foreach(_.cleanUp())`, but `DasuImpl.cleanUp()` only cleaned up the statistics collector, subscriber, and publisher — it never called `shutdown()` on any of its ASCEs.
+Two changes to handle TF orphaning when the Supervisor stops or crashes:
 
-**Consequence:** `ComputingElement.shutdown()` was never invoked during Supervisor shutdown. This meant:
+**Step L.1 — DasuImpl.cleanUp() calls ASCE shutdown (clean stop, e.g. Ctrl-C)**
 
-- `GrpcPythonExecutor.shutdown()` was never called
-- No gRPC `Shutdown` RPC was sent to PyTfServer
-- `TfManager.shutdown()` never ran on the Python side
-- TF instances remained orphaned in PyTfServer's `tf_instances` dictionary
+`DasuImpl.cleanUp()` was missing the critical step of shutting down its ASCEs. When the Supervisor was terminated via Ctrl-C, `Supervisor.close()` called `dasus.foreach(_.cleanUp())`, but `DasuImpl.cleanUp()` only cleaned up the statistics collector, subscriber, and publisher — it never called `shutdown()` on any of its ASCEs.
 
-When the Supervisor restarted, it recreated ASCEs with the same `asceRunningId` and sent a new `initialize` gRPC call. PyTfServer rejected it with `"ASCE already initialized"` because the old TF was still registered. The new ASCE transitioned to `TFBroken`.
+**Consequence (clean stop):** `ComputingElement.shutdown()` is now called, which triggers `GrpcPythonExecutor.shutdown()` → gRPC `Shutdown` RPC → `TfManager.shutdown()` on PyTfServer, removing the TF from `tf_instances`.
 
-**Fix:** `DasuImpl.cleanUp()` now iterates over all ASCEs and calls `shutdown()` on each before cleaning up the publisher. Each call is wrapped in `Try` so a failure on one ASCE does not prevent the others from shutting down.
+**Step L.2 — TfManager.initialize() auto-cleans orphaned TFs (unclean stop, e.g. crash/KILL)**
+
+For an unclean Supervisor termination (SIGKILL, crash, power loss), Step L.1's shutdown chain is never reached. The `asceRunningId` is purely static (derived from CDB names: `SupervisorId@DasuId@AsceId`), so after restart the new Supervisor sends `initialize` with the same ID and PyTfServer would reject it.
+
+**Fix:** `TfManager.initialize()` now detects an already-present TF, shuts it down via `self.shutdown(asceRunningId)`, and re-attempts the initialization. A second collision (impossible after shutdown) is still rejected to protect against genuine errors. This is safe because the Scala side already guards against double initialize (`assert(!initialized)` in `TransferFunctionSetting`, state machine assertion in `ComputingElement`).
+
+The Scala side (`GrpcPythonExecutor.initialize()`) does not need changes — the cleanup is handled on PyTfServer.
+
+**Step L.1 — Fix:** `DasuImpl.cleanUp()` now iterates over all ASCEs and calls `shutdown()` on each before cleaning up the publisher. Each call is wrapped in `Try` so a failure on one ASCE does not prevent the others from shutting down.
 
 The state machine already prevents TF evaluation after shutdown — `ShuttingDown` and `Closed` are both in `AsceStates.inhibitorStates`, so `canRunTF()` returns `false`. No additional guard in `PythonTransfer.transfer()` or `ScalaTransfer.transfer()` is needed.
+
+**Alternatives considered and discarded:**
+
+1. **Idempotent shutdown in GrpcPythonExecutor.initialize()** — send a `shutdown` RPC before `initialize` on the Scala side. Simple one-line change, but shifts the cleanup logic away from the server where the orphaned state lives. Rejected in favor of handling it on PyTfServer.
+
+2. **Generation counter in runningId** — add a runtime-specific component (PID, timestamp, UUID) to the `asceRunningId` so each Supervisor instance gets a fresh ID. This requires modifying the fundamental `Identifier` class in BasicTypes — `runningId` is used everywhere (Kafka topics, ASCE state, logs, commands, heartbeats). A system-wide, backward-incompatible change for a single PyTfServer problem. Rejected as too invasive.
+
+3. **Supervisor registers with PyTfServer via Ping** — the Supervisor sends its `fullRunningId` in the `Ping` RPC periodically, and PyTfServer tracks liveness, removing TFs for dead Supervisors after a timeout. Requires a ping timer in the Supervisor, a registration/cleanup mechanism in PyTfServer, and proto changes. This is essentially Step I (PyTfServer heartbeats) but over gRPC instead of Kafka. Deferred — scope matches Step I.
+
+4. **PyTfServer listens to Kafka heartbeats** — PyTfServer becomes a Kafka consumer for the heartbeat topic and removes TFs whose Supervisors stop sending heartbeats. Adds Kafka dependency to PyTfServer. Deferred to Step I.
+
+The chosen approach (Steps L.1 + L.2) is the least invasive: two small changes confined to `DasuImpl.cleanUp()` and `TfManager.initialize()`, no proto changes, no system-wide identifier changes, and it handles both clean and unclean Supervisor termination. The longer-term heartbeats approach (Step I) will provide broader monitoring and detection of other failure scenarios.
 
 **Files changed:**
 
 | File | Change |
 |---|---|
 | `DistributedUnit/src/main/scala/org/eso/ias/dasu/DasuImpl.scala` | `cleanUp()` now iterates `asces` and calls `shutdown()` on each, wrapped in `Try` with logging |
+| `PyTfServer/src/main/python/IasPyTfServer/tf_manager.py` | `initialize()` auto-shutdowns orphaned TF on collision, then re-attempts init |
+| `PyTfServer/src/test/python/test_tf_manager.py` | `test_double_initialize_fails` renamed to `test_double_initialize_shuts_down_orphan` (succeeds after cleanup) |
+| `PyTfServer/src/test/python/test_server_lifecycle.py` | Same test renamed and updated for new behavior |
+| `PyTfServer/src/integrationTest/scala/.../TestGrpcPythonExecutorIntegration.scala` | `fail on double initialize` renamed to `succeed on double initialize after cleaning orphaned TF` |
 
 ### Step D.5 — Explicit pyTfServerAddr on ComputingElement and GrpcPythonExecutor (DONE)
 
@@ -413,16 +435,12 @@ The full code path is validated by a Supervisor-level integration test: `Supervi
 | **J** | MultiplicityThreshold Python TF | DONE |
 | **K** | CdbChecker validates pyTfServerAddr consistency | DONE |
 | **F** | Full end-to-end Supervisor to PyTfServer integration (SupervisorPyTfTest) | DONE (2 tests pass, in-process Supervisor) |
-| **L** | DasuImpl.cleanUp() gracefully shuts down ASCEs | DONE |
+| **L** | Graceful ASCE shutdown on Supervisor stop + orphan cleanup on PyTfServer | DONE |
 
 ### ⚠️ Backward Incompatible Change — Property Rename
 
-The property name `org.eso.ias.tf.mutliplicity.threshold` was misspelled (typo: `mutliplicity` → `multiplicity`) across both the Scala `MultiplicityTF` and the Python `MultiplicityThreshold`. It has been corrected to `org.eso.ias.tf.multiplicity.threshold` in all 5 locations:
+The property name `org.eso.ias.tf.mutliplicity.threshold` was misspelled (typo: `mutliplicity` → `multiplicity`) across both the Scala `MultiplicityTF` and the Python `MultiplicityThreshold`. It has been corrected to `org.eso.ias.tf.multiplicity.threshold` in all 5 locations. **This release must be marked as backward incompatible.** Any production CDB referencing `org.eso.ias.tf.mutliplicity.threshold` must be updated before upgrading.
 
-1. `CompElement/.../MultiplicityTF.scala` — Scala TF
-2. `PyTfServer/.../MultiplicityThreshold.py` — Python TF
-3. `PyTfServer/.../test_multiplicity_threshold.py` — Python unit tests
-4. `DistributedUnit/.../ASCE-AlarmsThreshold.json` — test CDB
-5. `DistributedUnit/.../ACKASCE3.json` — test CDB
+## Note
 
-**This release must be marked as backward incompatible.** Any production CDB that references `org.eso.ias.tf.mutliplicity.threshold` will need to be updated to `org.eso.ias.tf.multiplicity.threshold` before upgrading.
+Further development continues in [JepReplacement3.md](./JepReplacement3.md).
