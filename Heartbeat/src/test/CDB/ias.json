@@ -1,0 +1,7 @@
+{
+	"logLevel": "INFO",
+	"refreshRate": "5",
+	"validityThreshold": "10",
+	"hbFrequency": "7",
+	"bsdbUrl": "127.0.0.1:9092"
+}
