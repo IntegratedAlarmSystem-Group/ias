@@ -69,7 +69,19 @@ class GrpcPythonExecutor[T](
       .build()
 
     val deadline = Deadline.after(GrpcPythonExecutor.rpcTimeoutSeconds, TimeUnit.SECONDS)
-    val resp = stub.withDeadline(deadline).eval(request)
+    val resp = try {
+      stub.withDeadline(deadline).eval(request)
+    } catch {
+      case e: io.grpc.StatusRuntimeException if e.getStatus.getCode == io.grpc.Status.Code.DEADLINE_EXCEEDED =>
+        logger.error(
+          "gRPC Eval timed out for ASCE {}: PyTfServer at {} did not reply within {}s. " +
+          "The ASCE will be marked as TFBroken. Restart the Supervisor after PyTfServer is back.",
+          compElementRunningId, serverAddr, GrpcPythonExecutor.rpcTimeoutSeconds, e)
+        throw e
+      case e: Exception =>
+        logger.error("gRPC Eval failed for ASCE {}: {}", compElementRunningId, e.getMessage, e)
+        throw e
+    }
 
     if (!resp.getSuccess) {
       throw new Exception(s"gRPC Eval failed for ASCE $compElementRunningId: ${resp.getError}")
@@ -110,7 +122,19 @@ class GrpcPythonExecutor[T](
     )
 
     val deadline = Deadline.after(GrpcPythonExecutor.rpcTimeoutSeconds, TimeUnit.SECONDS)
-    val resp = stub.withDeadline(deadline).initialize(requestBuilder.build())
+    val resp = try {
+      stub.withDeadline(deadline).initialize(requestBuilder.build())
+    } catch {
+      case e: io.grpc.StatusRuntimeException if e.getStatus.getCode == io.grpc.Status.Code.DEADLINE_EXCEEDED =>
+        logger.error(
+          "gRPC Initialize timed out for ASCE {}: PyTfServer at {} did not reply within {}s. " +
+          "The ASCE will be marked as TFBroken. Restart the Supervisor after PyTfServer is back.",
+          compElementRunningId, serverAddr, GrpcPythonExecutor.rpcTimeoutSeconds, e)
+        throw e
+      case e: Exception =>
+        logger.error("gRPC Initialize failed for ASCE {}: {}", compElementRunningId, e.getMessage, e)
+        throw e
+    }
 
     if (!resp.getSuccess) {
       throw new Exception(s"gRPC Initialize failed for ASCE $compElementRunningId: ${resp.getError}")
