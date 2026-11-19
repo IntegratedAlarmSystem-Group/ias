@@ -222,6 +222,14 @@ class CdbChecker(args: Array[String]) {
           supervisorDao.getDasusToDeploy.size(),
           supervisorDao.getId)
       }
+
+      // Validate pyTfServerAddr format if defined
+      val pyTfServerAddr = Option(supervisorDao.getPyTfServerAddr).getOrElse("")
+      if (pyTfServerAddr.nonEmpty && !SupervisorDao.isValidPyTfAddress(pyTfServerAddr)) {
+        CdbChecker.logger.error("Supervisor [{}] has invalid pyTfServerAddr format [{}] (expected host:port)",
+          supervisorDao.getId, pyTfServerAddr)
+        errorsFound = true
+      }
     })
 
     // Check all the DASUs to deploy
