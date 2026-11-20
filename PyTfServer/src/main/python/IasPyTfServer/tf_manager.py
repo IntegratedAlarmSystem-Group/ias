@@ -101,7 +101,7 @@ class TfManager:
             tf_instance.initialize(inputsInfo, outputInfo)
             self.tf_instances[asceRunningId] = tf_instance
 
-            logger.info(f"Initialized TF {pythonClassName} for ASCE {asceRunningId}")
+            logger.debug(f"Initialized TF {pythonClassName} for ASCE {asceRunningId}")
             return True, ""
         except Exception as e:
             logger.error(f"Failed to initialize TF for ASCE {asceRunningId}: {e}")
@@ -129,7 +129,7 @@ class TfManager:
                 logger.error(f"TF of the {asceRunningId} ASCE not initialized: cannto execute eval")
                 return (False, f"ASCE {asceRunningId} not initialized", None)
             result = tf.eval(compInputs, actualOutput)
-            logger.info(f"TF of {asceRunningId} ASCE executed")
+            logger.debug(f"TF of {asceRunningId} ASCE executed")
             return (True, "", result)
         except Exception as e:
             logger.error(f"Eval failed for ASCE {asceRunningId}: {e}")
@@ -153,7 +153,7 @@ class TfManager:
             if tf is None:
                 return False, f"ASCE {asceRunningId} not found"
             tf.shutdown()
-            logger.info(f"TF for ASCE {asceRunningId} has been shutdown")
+            logger.debug(f"TF for ASCE {asceRunningId} has been shutdown")
             return True, ""
         except Exception as e:
             logger.error(f"Shutdown failed for ASCE {asceRunningId}: {e}")
