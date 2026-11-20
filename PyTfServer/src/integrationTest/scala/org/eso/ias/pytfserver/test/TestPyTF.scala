@@ -1,7 +1,7 @@
 package org.eso.ias.pytfserver.test
 
 import ch.qos.logback.classic.Level
-import org.eso.ias.asce.transfer.{PythonTransfer, TransferFunctionLanguage, TransferFunctionSetting}
+import org.eso.ias.asce.transfer.{GrpcPythonExecutor, PythonTransfer, TransferFunctionLanguage, TransferFunctionSetting}
 import org.eso.ias.asce.{AsceStates, CompEleThreadFactory, ComputingElement}
 import org.eso.ias.logging.IASLogger
 import org.eso.ias.types.*
@@ -11,6 +11,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import java.util.Properties
 import scala.collection.mutable.Map as MutableMap
 import scala.util.Try
+
 
 /**
   * Test the python transfer function with TestTransferFunction from PyTfServer.
@@ -677,38 +678,43 @@ class TestPyTF extends AnyFlatSpec with BeforeAndAfterAll with PyTfServerBase {
 
   it can "run many times the TF (Stress test)" in {
     logger.info("Performing a stress test with an input type LONG")
-    val inputsMPs: Map[String, InOut[?]] = Map(mpIdLong.id -> mpLong.updateValue(Some(25L)))
+    val original = System.getProperty(GrpcPythonExecutor.RpcTimeoutProperty)
+    System.setProperty(GrpcPythonExecutor.RpcTimeoutProperty, "60")
+    try {
+      val javaComp: ComputingElement[java.lang.Long] = new ComputingElement[java.lang.Long](
+        compID,
+        outputLong,
+        Set(mpLong),
+        new TransferFunctionSetting(
+          "TestTF.TestTransferFunction",
+          TransferFunctionLanguage.python,
+          None,
+          threadFactory),
+        validityThresholdInSecs,
+        serverProps(),
+        serverAddr()) with PythonTransfer[java.lang.Long]
 
-    val pythonTFSetting =new TransferFunctionSetting(
-      "TestTF.TestTransferFunction",
-      TransferFunctionLanguage.python,
-      None,
-      threadFactory)
-    val javaComp: ComputingElement[java.lang.Long] = new ComputingElement[java.lang.Long](
-      compID,
-      outputLong,
-      inputsMPs.values.toSet,
-      pythonTFSetting,
-      validityThresholdInSecs,
-      serverProps(),
-      serverAddr()) with PythonTransfer[java.lang.Long]
+      val ret = javaComp.initialize()
+      assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
 
-    val ret = javaComp.initialize()
-    assert(ret!=AsceStates.TFBroken, "Error initializing the TF")
+      var output: InOut[java.lang.Long] = InOut.asOutput(outId, IASTypes.LONG)
+      for (l <- 0L until 15000) {
+        val inputsMPs: Map[String, InOut[?]] = Map(mpIdLong.id -> mpLong.updateValue(Some(l)))
+        val newOut: Try[InOut[java.lang.Long]] = javaComp.transfer(inputsMPs,compID,output)
+        assert(newOut.isSuccess,"Exception got from the TF")
+        output = newOut.get
+        assert(output.iasType==IASTypes.LONG, "The TF produced a value of the wrong type " + output.iasType)
+        assert(output.value.isDefined)
+        assert(output.value.get==l)
+      }
 
-    // Run many times the TF
-    var output: InOut[java.lang.Long] = InOut.asOutput(outId, IASTypes.LONG)
-    for (l <- 0L until 15000) {
-      val inputsMPs: Map[String, InOut[?]] = Map(mpIdLong.id -> mpLong.updateValue(Some(l)))
-      val newOut: Try[InOut[java.lang.Long]] = javaComp.transfer(inputsMPs,compID,output)
-      assert(newOut.isSuccess,"Exception got from the TF")
-      output= newOut.get
-      assert (output.iasType==IASTypes.LONG,"The TF produced a value of the worng type "+output.iasType )
-      assert(output.value.isDefined)
-      assert(output.value.get==l)
+      javaComp.shutdown()
+    } finally {
+      if (original != null)
+        System.setProperty(GrpcPythonExecutor.RpcTimeoutProperty, original)
+      else
+        System.clearProperty(GrpcPythonExecutor.RpcTimeoutProperty)
     }
-
-    javaComp.shutdown()
     logger.info("Stress test done")
   }
 

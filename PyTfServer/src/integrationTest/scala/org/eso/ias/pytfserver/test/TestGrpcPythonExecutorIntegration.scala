@@ -218,27 +218,30 @@ class TestGrpcPythonExecutorIntegration extends AnyFlatSpec with BeforeAndAfterA
       "test_tf_module.PassThroughTF",
       s"localhost:$serverPort"
     )
-
-    val inputId = new Identifier("in1", IdentifierType.IASIO, None)
-    val inputInOut: InOut[java.lang.Long] = InOut.asInput[java.lang.Long](inputId, IASTypes.LONG)
-      .asInstanceOf[InOut[java.lang.Long]]
-      .updateValue(Some(1L))
-      .updateProdTStamp(System.currentTimeMillis())
-    val inputIasIO = new IasIO[java.lang.Long](inputInOut)
-
-    val outputId = new Identifier("out", IdentifierType.IASIO, None)
-    val outputInOut = InOut.asOutput[java.lang.Long](outputId, IASTypes.LONG)
-    val outputIasIO = new IasIO[java.lang.Long](outputInOut)
-
-    val compInputs = Map("in1" -> inputIasIO)
-
-    var failed = false
     try {
-      executor.eval(compInputs, outputIasIO)
-    } catch {
-      case _: Exception => failed = true
+      val inputId = new Identifier("in1", IdentifierType.IASIO, None)
+      val inputInOut: InOut[java.lang.Long] = InOut.asInput[java.lang.Long](inputId, IASTypes.LONG)
+        .asInstanceOf[InOut[java.lang.Long]]
+        .updateValue(Some(1L))
+        .updateProdTStamp(System.currentTimeMillis())
+      val inputIasIO = new IasIO[java.lang.Long](inputInOut)
+
+      val outputId = new Identifier("out", IdentifierType.IASIO, None)
+      val outputInOut = InOut.asOutput[java.lang.Long](outputId, IASTypes.LONG)
+      val outputIasIO = new IasIO[java.lang.Long](outputInOut)
+
+      val compInputs = Map("in1" -> inputIasIO)
+
+      var failed = false
+      try {
+        executor.eval(compInputs, outputIasIO)
+      } catch {
+        case _: Exception => failed = true
+      }
+      assert(failed, "Expected exception when eval called without initialize")
+    } finally {
+      executor.shutdown()
     }
-    assert(failed, "Expected exception when eval called without initialize")
   }
 
 }

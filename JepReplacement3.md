@@ -197,6 +197,28 @@ Building on I.1, the HB engine lifecycle is fully wired into `serve()`:
 
 ---
 
+## Integration Test Fixes (Post-Step M)
+
+Two issues found during integration test runs after Step M's deadline/timeout changes:
+
+### 1. Orphaned gRPC channel in `TestGrpcPythonExecutorIntegration`
+
+The `"eval fails when not initialized"` test created a `GrpcPythonExecutor` (which opens a gRPC channel in the constructor) but never called `executor.shutdown()`, so the channel was cleaned up only by GC — triggering a gRPC `SEVERE` orphaned channel warning on the next test class.
+
+**Fix:** `TestGrpcPythonExecutorIntegration.scala` — wrapped the test body in `try-finally` that calls `executor.shutdown()` in the `finally` block.
+
+### 2. Stress test timeout in `TestPyTF`
+
+The stress test (15,000 sequential evals over gRPC) intermittently hit the 5-second per-RPC deadline. Although calls are sequential (not concurrent), the cumulative volume of INFO-level logging in `TfManager.eval()` — one log line per eval — caused Python-side I/O contention and GC pressure, pushing individual calls over the 5-second threshold at high iteration counts.
+
+**Root cause:** `TfManager.eval()` and `TfManager.shutdown()` logged at `INFO` level on every call, producing 15,000+ log writes during the stress test.
+
+**Fixes:**
+- `PyTfServer/src/main/python/IasPyTfServer/tf_manager.py` — reduced `eval()` and `shutdown()` log level from `INFO` to `DEBUG` (these are called in tight loops; `initialize()` remains `INFO` as a lifecycle event).
+- `TestPyTF.scala` — the stress test now sets `org.eso.ias.rpc.timeout=60` for its duration (via `System.setProperty`), then restores the original value in a `finally` block.
+
+---
+
 ## TODO — Ticket Needed: HbEngine.close() unconditionally closes the producer
 
 `HbEngine.close()` always calls `self._producer.close()` (line 76 of `HbEngine.py`), regardless of whether the engine created the producer or received it as a constructor argument. This means the engine takes ownership of an externally-provided producer and closes it, which can cause issues if the producer is shared. The `__init__` should track whether it owns the producer (e.g. via an `own_producer` flag) and only close it in `close()` when it does. Open a GitHub issue if one does not already exist.
