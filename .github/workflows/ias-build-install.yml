@@ -27,9 +27,6 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install PySide6 python-dateutil pytest pytest-timeout confluent-kafka PyYAML grpcio grpcio-tools
-       - name: Check JEP installation
-        run: echo "JEP removed (Phase 1)"
-      - run: java -version
       - run: mkdir -p $IAS_ROOT
       - name: Checkout IAS code
         uses: actions/checkout@v4
