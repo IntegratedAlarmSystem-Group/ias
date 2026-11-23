@@ -126,7 +126,7 @@ class TfManager:
         try:
             tf = self.tf_instances.get(asceRunningId)
             if tf is None:
-                logger.error(f"TF of the {asceRunningId} ASCE not initialized: cannto execute eval")
+                logger.error(f"TF of the {asceRunningId} ASCE not initialized: can't execute eval")
                 return (False, f"ASCE {asceRunningId} not initialized", None)
             result = tf.eval(compInputs, actualOutput)
             logger.debug(f"TF of {asceRunningId} ASCE executed")
