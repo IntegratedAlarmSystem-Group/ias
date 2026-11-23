@@ -303,7 +303,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
             assert brokers is not None, "The dialog should not return an empty broker user presses Ok"
             self.logger.info("Connecting to the BSDB %s",self.connectDlg.getBrokers())
             # Start the thread to connect
-            connect_thread = threading.Thread(target=self.connectToIas, args=(brokers, self.frid,))
+            connect_thread = threading.Thread(target=self.connectToIas, args=(brokers, self.frid,), daemon=True)
             connect_thread.start()
         self.connectDlg = None
 
