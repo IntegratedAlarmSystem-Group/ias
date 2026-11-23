@@ -18,6 +18,7 @@ pipeline {
         //JAVA_HOME = '/path/to/java'
         PATH = "${env.PATH}:/var/lib/jenkins/.local/bin"
         IAS_ROOT = "${env.WORKSPACE}/IasRoot"
+        QT_QPA_PLATFORM = "offscreen"
     }
 
     stages {
