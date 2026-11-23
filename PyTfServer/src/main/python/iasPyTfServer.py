@@ -55,7 +55,7 @@ from IasHeartbeat.HbKafkaProducer import HbKafkaProducer
 from IasHeartbeat.Heartbeat import Heartbeat
 from IasHeartbeat.HeartbeatProducerType import HeartbeatProducerType
 from IasHeartbeat.HeartbeatStatus import HeartbeatStatus
-from IasHeartbeat.HeartbeatHelper import get_hb_frequency
+from IasHeartbeat.HeartbeatHelper import get_hb_frequency, HB_FREQUENCY_DEFAULT
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 
 logger = logging.getLogger(__name__)
@@ -111,7 +111,7 @@ def parse() -> dict[str, typing.Any]:
     parser.add_argument(
         '-f',
         '--hbfrequency',
-        help='Heartbeat frequency in seconds (0 to disable, default from CDB or 5)',
+        help=f'Heartbeat frequency in seconds (0 to disable, default from CDB or {HB_FREQUENCY_DEFAULT})',
         action='store',
         type=int,
         default=None,
