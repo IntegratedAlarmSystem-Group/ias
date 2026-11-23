@@ -1,5 +1,5 @@
 #! /usr/bin/env python3
-import sys, string, random, threading, typing, logging
+import sys, string, random, threading, typing, logging, socket
 from threading import Lock
 
 from PySide6.QtCore import Slot, QCommandLineOption, QCommandLineParser, QTimer, Signal
@@ -20,6 +20,12 @@ from IasBasicTypes.IasType import IASType
 from IasExtras.AlarmAck import AlarmAck
 from IasTools.DefaultPaths import DefaultPaths
 from IasLogging.log import Log
+from IasHeartbeat.HbEngine import HbEngine
+from IasHeartbeat.HbKafkaProducer import HbKafkaProducer
+from IasHeartbeat.Heartbeat import Heartbeat
+from IasHeartbeat.HeartbeatProducerType import HeartbeatProducerType
+from IasHeartbeat.HeartbeatStatus import HeartbeatStatus
+from IasHeartbeat.HeartbeatHelper import get_hb_frequency, HB_FREQUENCY_DEFAULT
 
 from IasAlarmGui.ui_alarm_gui import Ui_AlarmGui
 from IasAlarmGui.AlarmTableModel import AlarmTableModel, TableMode
@@ -35,18 +41,24 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
     # Signal to update the UI from other threads
     signal_update_connected_ui = Signal(bool)
 
-    def __init__(self, bsdb_url: str|None, parent=None):
+    def __init__(self, bsdb_url: str|None, hb_frequency: int, jCdb: str|None, parent=None):
         """
         Constructor
 
         Params:
             bsdb_url: The URL of the kafka brokers in format server:port, server:port...
                       or None if not available
+            hb_frequency: Heartbeat frequency in seconds (>0 to enable heartbeat, 0 to disable)
+            jCdb: Parent folder of the IAS CDB (or None)
         """
         super().__init__(parent)
         self.ui = Ui_AlarmGui()
         self.ui.setupUi(self)
         self.bsdb_url = bsdb_url
+        self.hb_frequency = hb_frequency
+        self.jCdb = jCdb
+        self.hb_engine: HbEngine | None = None
+        self.hb_producer: HbKafkaProducer | None = None
 
         # The logger
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -309,6 +321,17 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
 
         This function runs in a thread
         """
+        # Start the heartbeat engine
+        if self.hb_frequency > 0:
+            self.logger.info("Starting heartbeat engine")
+            self.hb_producer = HbKafkaProducer(
+                bsdb_brokers, f"AlarmGui-{socket.gethostname()}")
+            hb = Heartbeat(HeartbeatProducerType.CLIENT, "AlarmGui", socket.gethostname())
+            self.hb_engine = HbEngine(hb, self.hb_frequency, self.hb_producer)
+            self.hb_engine.start()
+            self.logger.info(
+                f"AlarmGui Heartbeats enabled, frequency={self.hb_frequency}s, brokers={bsdb_brokers}")
+
         try:
             self.logger.info("Building the value consumer with client id=%s and group_id=%s", self.client_id, self.group_id)
             self.value_consumer = KafkaValueConsumer(
@@ -330,11 +353,11 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
                     self.logger.error("Error closing the Alarm ACK", str(ack_excp))
                 self.alarm_ack = None
             return
-        
+
         # Build the command sender
         self.logger.info("Building the CommandSender")
         self.command_sender = IasCommandSender(
-            sender_full_running_id=full_running_id, 
+            sender_full_running_id=full_running_id,
             bsdb_sender_id=f"CommandSender-{self.group_id}",
             brokers=bsdb_brokers)
         # Initialize the command sender
@@ -343,6 +366,9 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         self.logger.info("Building the AlarmAck")
         self.alarm_ack = AlarmAck(full_running_id=full_running_id, command_sender=self.command_sender)
         self.alarm_ack.start()
+
+        if self.hb_engine is not None:
+            self.hb_engine.update_hb_state(HeartbeatStatus.RUNNING)
         self.logger.info("Successfully connected to IAS")
 
     def iasValueReceived(self, iasValue):
@@ -356,6 +382,14 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         """
         Disconnect from the IAS
         """
+        # Stop the heartbeat engine
+        if self.hb_engine is not None:
+            self.logger.info("Stopping heartbeat engine")
+            self.hb_engine.update_hb_state(HeartbeatStatus.EXITING)
+            self.hb_engine.close()
+            self.hb_engine = None
+            self.hb_producer = None
+
         if self.value_consumer is not None:
             self.logger.info("Disconnecting from the BSDB...")
             try:
@@ -414,7 +448,8 @@ def parse(app) -> dict[str, typing.Any]:
     Returns:
         A dictionary with the params set in the command line:
             - 'ias_cdb': str if the parent folder of the IAS CDB if set in the command line
-             - 'bsdb_url': str  BSDB (Kafka) URL
+            - 'bsdb_url': str  BSDB (Kafka) URL
+            - 'hbfrequency': int  heartbeat frequency in seconds (or None)
             - 'connect_to_bsdb': bool  True unless --donotconnect is set
     """
     parser = QCommandLineParser()
@@ -435,6 +470,13 @@ def parse(app) -> dict[str, typing.Any]:
         )
     parser.addOption(bsdb_option)
 
+    hb_frequency_option = QCommandLineOption(
+        ["f", "hbfrequency"],
+        f"Heartbeat frequency in seconds (0 to disable, default from CDB or {HB_FREQUENCY_DEFAULT})",
+        "hbfrequency"
+    )
+    parser.addOption(hb_frequency_option)
+
     do_not_autoconnect = QCommandLineOption(
         [ "n", "donotconnect"],
         "Do not connect automatically to the BSDB at startup"
@@ -451,17 +493,19 @@ def parse(app) -> dict[str, typing.Any]:
 
     parser.process(app)
 
-    ret = {}
+    ret: dict[str, typing.Any] = {}
     if parser.isSet(cdb_option):
         ret["ias_cdb"] = parser.value(cdb_option)
     if parser.isSet(bsdb_option):
         ret["bsdb_url"] = parser.value(bsdb_option)
+    if parser.isSet(hb_frequency_option):
+        ret["hbfrequency"] = parser.value(hb_frequency_option)
     if parser.isSet(do_not_autoconnect):
         ret["connect_to_bsdb"] = False
     else:
         ret["connect_to_bsdb"] = True
     ret["log_level"] = parser.value(log_level)
-    
+
     return ret
 
 if __name__ == "__main__":
@@ -495,10 +539,16 @@ if __name__ == "__main__":
     bsdb = IasKafkaHelper.get_bsdb_url(
         kafka_brokers=bsdb_url_from_cdmline,
         jCdb=cdb_parent_folder)
-    
+
+    hbfrequency = cmd_line_args.get("hbfrequency", None)
+    if hbfrequency is not None:
+        hbfrequency = int(hbfrequency)
+
+    hb_frequency = get_hb_frequency(hbfrequency, cdb_parent_folder)
+
     connect_to_bsdb = cmd_line_args.get("connect_to_bsdb")
-    
-    widget = MainWindow(bsdb_url=bsdb)
+
+    widget = MainWindow(bsdb_url=bsdb, hb_frequency=hb_frequency, jCdb=cdb_parent_folder)
     widget.show()
     if connect_to_bsdb and bsdb is not None:
         # Start the thread to connect
