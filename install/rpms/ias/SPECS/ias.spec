@@ -32,7 +32,6 @@ Requires:  %{py3_dist pyyaml}
 Requires:  %{py3_dist sqlalchemy}
 Requires:  %{py3_dist oracledb}
 Requires:  %{py3_dist pyside6}
-Requires:  xvfb
 
 # Apache kafka does not provide an RPM (we have prepared the SPEC
 # to build kafka that is in the install folder of the IAS sources)
