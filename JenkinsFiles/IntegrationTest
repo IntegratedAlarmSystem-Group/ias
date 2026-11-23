@@ -9,6 +9,7 @@ pipeline {
     environment {
         // Define your environment variables here
         IAS_ROOT = "${env.WORKSPACE}/IasRoot"
+        QT_QPA_PLATFORM = "offscreen"
     }
 
     parameters {
