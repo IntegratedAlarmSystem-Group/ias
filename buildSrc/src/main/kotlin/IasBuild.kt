@@ -280,10 +280,11 @@ open class IasBuild : Plugin<Project> {
             enabled = shouldRun
 
             if (shouldRun) {
-                 // Only add dependency when the task exists (Java/Scala modules only)
-                 try {
-                     dependsOn(project.tasks.getByPath(":$project.name:buildIntegrationTest"))
-                 } catch (e: Exception) {}
+                // Only add dependency when the task exists (Java/Scala modules only).
+                // Python-only modules (e.g. AlarmGui) have no buildIntegrationTest task.
+                if (project.tasks.names.contains("buildIntegrationTest")) {
+                    dependsOn("buildIntegrationTest")
+                }
 
 
                 // Working directory so relative paths inside the script work
