@@ -143,6 +143,10 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         self.showing_ok_icon = False # To blink the icon
         self.ui.statusbar.addPermanentWidget(self.status_icon_lbl)
 
+        # Cached subscription state, updated by signal rather than calling
+        # isSubscribed() from the Qt timer (which blocks on the consumer lock).
+        self._consumer_subscribed = False
+
         # Create the popup menu for the active alarms table
         self.active_popup_menu = QMenu(self)
         self.ack_action = self.active_popup_menu.addAction("Acknowledge")
@@ -284,6 +288,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         """
         Set the UI according to the connection status
         """
+        self._consumer_subscribed = connected
         self.ui.action_Connect.setEnabled(not connected)
         self.ui.action_Disconnect.setEnabled(connected)
 
@@ -295,8 +300,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         - the number of active alarms
         - the number of shelved alarms
         """
-        vc = self.value_consumer   
-        if vc is not None and vc.isSubscribed():
+        if self._consumer_subscribed:
             # Getting events
             if self.showing_ok_icon:
                 self.status_icon_lbl.setPixmap( self.heart_nop)
@@ -333,6 +337,8 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
 
     # @Slot()
     def on_ConnectDialog_finished(self):
+        if self.connectDlg is None:
+            return
         dlg_ret_code = self.connectDlg.result()
         if dlg_ret_code==1:
             # The user pressed the Ok button ==> Connect!
@@ -343,6 +349,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
             # Start the thread to connect
             connect_thread = threading.Thread(target=self.connectToIas, args=(brokers, self.frid,), daemon=True)
             connect_thread.start()
+        self.connectDlg.finished.disconnect(self.on_ConnectDialog_finished)
         self.connectDlg = None
 
     @Slot()

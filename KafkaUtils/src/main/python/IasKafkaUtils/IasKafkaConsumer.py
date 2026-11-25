@@ -127,7 +127,16 @@ class IasLogConsumer(Thread):
         # be restarted — the caller must instantiate a new object.
         self._failed: bool = False
 
+        # Cached subscription state, updated by onAssign/onLost callbacks.
+        # Allows lock-free reads of subscription status.
+        self._assigned: bool = False
+
+        # Lock only for the _assigned flag (separate from _consumer_lock).
+        self._assigned_lock: Lock = Lock()
+
     def onAssign(self, consumer, partitions):
+        with self._assigned_lock:
+            self._assigned = len(consumer.assignment()) > 0
         for p in partitions:
             self._logger.info("Kafka consumer with client id %s and group id %s assigned to partition %d of topic %s",
                             self._clientid,
@@ -138,6 +147,8 @@ class IasLogConsumer(Thread):
             self._start_ready_event.set()
 
     def onLost(self, consumer, partitions):
+        with self._assigned_lock:
+            self._assigned = len(consumer.assignment()) > 0
         if self._closed:
             return
         for p in partitions:
@@ -154,14 +165,16 @@ class IasLogConsumer(Thread):
                            kafka_error.str())
 
     def onRevoke(self, consumer, partitions):
+        with self._assigned_lock:
+            self._assigned = len(consumer.assignment()) > 0
         if self._closed:
             return
         for p in partitions:
             self._logger.warning("Kafka consumer with client id %s and group id %s revoked partition %d of topic %s", 
-                                  self._clientid,
-                                  self._groupid,
-                                  p.partition,
-                                  repr(p.topic))
+                                   self._clientid,
+                                   self._groupid,
+                                   p.partition,
+                                   repr(p.topic))
 
     def _poll_for_assignment(self, timeout: float) -> bool:
         """
@@ -217,12 +230,15 @@ class IasLogConsumer(Thread):
         """
         Returns:
             True if the consumer is subscribed to at least one partition,
-            False otherwise (including when the consumer has failed or is closed)
+            False otherwise (including when the consumer has failed or is closed).
+
+        Uses a cached flag updated by onAssign/onLost/onRevoke callbacks,
+        avoiding the need to hold _consumer_lock.
         """
         if self._closed or self._failed:
             return False
-        with self._consumer_lock:
-            return len(self._consumer.assignment())>0
+        with self._assigned_lock:
+            return self._assigned
 
     def isGettingLogs(self):
         """
@@ -371,6 +387,8 @@ class IasLogConsumer(Thread):
             self._logger.warning("Already closed")
             return
         self._closed = True
+        with self._assigned_lock:
+            self._assigned = False
 
         if self._failed:
             # The thread was never started; just close the underlying consumer
