@@ -1,6 +1,5 @@
 from queue import Queue, Empty
-from threading import Thread
-import time
+from threading import Thread, Event
 import logging
 
 from confluent_kafka import Producer
@@ -176,14 +175,9 @@ class IasCmdManagerKafka(Thread):
         self.daemon = True
         self.name = __name__+"-thread"
         super().start()
-        self.cmd_consumer.start()
-        # Wait until the consumer is subscribed
-        timeout = 60 # seconds
-        iteration = 0
-        while not self.cmd_consumer.isSubscribed() and iteration<2*timeout:
-            time.sleep(0.50)
-            iteration = iteration+1
-        if not self.cmd_consumer.isSubscribed():
+        consumer_ready = Event()
+        self.cmd_consumer.start(ready_event=consumer_ready)
+        if not consumer_ready.wait(timeout=60):
             raise RuntimeError("Failed to subscribe to kafka topic")
 
         self.logger.debug("Started")
