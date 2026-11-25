@@ -2,8 +2,8 @@
 import sys, string, random, threading, typing, logging, socket
 from threading import Lock
 
-from PySide6.QtCore import Slot, QCommandLineOption, QCommandLineParser, QTimer, Signal
-from PySide6.QtWidgets import QApplication, QMainWindow, QLabel,  QMenu, QDialog
+from PySide6.QtCore import Slot, QCommandLineOption, QCommandLineParser, QTimer, Signal, Qt
+from PySide6.QtWidgets import QApplication, QMainWindow, QLabel,  QMenu, QDialog, QProgressDialog
 from PySide6.QtGui import QPixmap, QCursor, QCloseEvent
 
 from IasKafkaUtils.KafkaValueConsumer import KafkaValueConsumer, IasValueListener
@@ -40,6 +40,7 @@ from IasAlarmGui.alarm_table_view import AlarmGuiTableView
 class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
     # Signal to update the UI from other threads
     signal_update_connected_ui = Signal(bool)
+    signal_disconnected = Signal()
 
     def __init__(self, bsdb_url: str|None, hb_frequency: int, jCdb: str|None, parent=None):
         """
@@ -163,6 +164,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
 
         # Signals to update the UI from other threads
         self.signal_update_connected_ui.connect(self._set_connected_ui)
+        self.signal_disconnected.connect(self._on_disconnected, Qt.QueuedConnection)
 
     def onRightClick(self, index, mode: TableMode):
         """
@@ -209,14 +211,50 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
 
     def closeEvent(self, event: QCloseEvent) -> None:
         """
-        Event invloked when the main window is closed
+        Event invoked when the main window is closed
 
-        NOTE: disconnectFromIas() runs in the Qt event loop so the window becomes
-              unresponsive until this function terminates, the event is accepted 
-              and the window finally closes
+        Hides the main window, shows a progress dialog while disconnectFromIas()
+        runs in a background thread. The dialog closes when the thread terminates,
+        then the main window is destroyed.
+        """
+        self.logger.info("Closing on user request...")
+        event.ignore()
+        self.hide()
+
+        self._closing_dialog = QProgressDialog("Disconnecting from IAS...", None, 0, 0)
+        self._closing_dialog.setWindowTitle("Closing")
+        self._closing_dialog.setWindowFlags(self._closing_dialog.windowFlags() & ~Qt.WindowCloseButtonHint)
+        self._closing_dialog.setWindowModality(Qt.ApplicationModal)
+
+        self.logger.debug("Starting the thread to disconnect from IAS")
+        disconnect_thread = threading.Thread(target=self._disconnect_and_close, daemon=True)
+        disconnect_thread.start()
+
+        self._closing_dialog.exec()
+
+        self.deleteLater()
+        self.logger.info("Deleting Main Window and calling QApplication.quit")
+        QApplication.quit()
+
+    def _disconnect_and_close(self) -> None:
+        """
+        Runs in a background thread: disconnects from IAS and then
+        emits signal_disconnected to close the progress dialog via queued connection.
         """
         self.disconnectFromIas()
-        event.accept()
+        self.logger.debug("Emitting disconnected signal")
+        self.signal_disconnected.emit()
+        self.logger.info("Disconnected signal emitted")
+
+    def _on_disconnected(self) -> None:
+        """
+        Slot called in the Qt thread when disconnect completes.
+        Closes the progress dialog so exec() returns.
+        """
+        self.logger.info("Inside _on_disconnected, closing dialog")
+        self._closing_dialog.close()
+
+
 
     def shelveAlarmActionFinished(self, result):
         if result == QDialog.DialogCode.Accepted:
@@ -319,7 +357,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         """
         Connect to the IAS passing this as listener
 
-        This function runs in a thread
+        This function must run in a thread, outside of the Qt thread
         """
         # Start the heartbeat engine
         if self.hb_frequency > 0:
@@ -381,26 +419,30 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
     def disconnectFromIas(self) -> None:
         """
         Disconnect from the IAS
+
+        Tis function must not be run it the QT thread
         """
         # Stop the heartbeat engine
         if self.hb_engine is not None:
-            self.logger.info("Stopping heartbeat engine")
+            self.logger.debug("Stopping heartbeat engine")
             self.hb_engine.update_hb_state(HeartbeatStatus.EXITING)
             self.hb_engine.close()
             self.hb_engine = None
             self.hb_producer = None
+        self.logger.info("HB engine closed")
 
         if self.value_consumer is not None:
-            self.logger.info("Disconnecting from the BSDB...")
+            self.logger.debug("Disconnecting from the BSDB...")
             try:
                 self.value_consumer.close()
             except Exception as e:
                 self.logger.exception("Error closing the kafka consumer")
             self.value_consumer = None
+            self.logger.info("Alarm consumer closed")
         self.signal_update_connected_ui.emit(False)
 
         if self.alarm_ack is not None:
-            self.logger.info("Closing the AlarmAck'er")
+            self.logger.debug("Closing the AlarmAck'er")
             try:
                 self.alarm_ack.close()
             except Exception as e:
@@ -413,6 +455,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
                 except Exception as e:
                     self.logger.exception("Error closing the CommandSender")
                 self.command_sender = None
+            self.logger.info("AlarmAck'er closed")
         self.logger.info("Disconnected from IAS")
 
     def onTableSelectionChanged(self, selected, deselected, mode: TableMode):
