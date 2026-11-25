@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 import sys, string, random, threading, typing, logging, socket
-from threading import Lock
+from threading import Lock, Event
 
 from PySide6.QtCore import Slot, QCommandLineOption, QCommandLineParser, QTimer, Signal, Qt
 from PySide6.QtWidgets import QApplication, QMainWindow, QLabel,  QMenu, QDialog, QProgressDialog
@@ -378,7 +378,13 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
                 self.client_id,
                 self.group_id)
             self.logger.info("Starting to get alarms from the BSDB...")
-            self.value_consumer.start()
+            consumer_ready = Event()
+            self.value_consumer.start(ready_event=consumer_ready)
+            if not consumer_ready.wait(timeout=30):
+                self.logger.error("Consumer did not become ready within 30 s")
+                self.signal_update_connected_ui.emit(False)
+                return
+            self.logger.info("Connected to the BSDB")
             self.signal_update_connected_ui.emit(True)
         except Exception as e:
             self.logger.error("Error connecting to the BSDB: %s",str(e))
