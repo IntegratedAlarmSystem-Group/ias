@@ -123,6 +123,10 @@ class IasLogConsumer(Thread):
         # The lock for the consumer
         self._consumer_lock: RLock = RLock()
 
+        # Flag set when start() with timeout fails. A failed consumer cannot
+        # be restarted — the caller must instantiate a new object.
+        self._failed: bool = False
+
     def onAssign(self, consumer, partitions):
         for p in partitions:
             self._logger.info("Kafka consumer with client id %s and group id %s assigned to partition %d of topic %s",
@@ -159,13 +163,63 @@ class IasLogConsumer(Thread):
                                   p.partition,
                                   repr(p.topic))
 
+    def _poll_for_assignment(self, timeout: float) -> bool:
+        """
+        Poll the consumer on the calling thread until it is assigned to at
+        least one partition or the timeout expires.
+
+        This method subscribes the consumer to its topic, then repeatedly
+        calls ``poll()`` triggering the underlying librdkafka callbacks (e.g.
+        ``on_assign``).  If assignment occurs within the timeout it returns
+        ``True`` and the caller is free to start the background thread.
+        If the timeout elapses the consumer is marked as **failed** — it can
+        no longer be used and the caller must create a fresh instance.
+
+        Args:
+            timeout: maximum time to wait for partition assignment (seconds,
+                must be > 0)
+
+        Returns:
+            ``True`` if the consumer was assigned to at least one partition,
+            ``False`` on timeout (the consumer is marked as failed).
+        """
+        self._start_ready_event = Event()
+        with self._consumer_lock:
+            self._logger.debug("Subscribing to topic %s", self._topic)
+            self._consumer.subscribe([self._topic],
+                                     on_assign=self.onAssign,
+                                     on_lost=self.onLost,
+                                     on_revoke=self.onRevoke)
+
+        end_time = time.time() + timeout
+        with self._consumer_lock:
+            while time.time() < end_time:
+                remaining = end_time - time.time()
+                if remaining <= 0:
+                    break
+                self._consumer.poll(timeout=min(remaining, 0.5))
+                if len(self._consumer.assignment()) > 0:
+                    self._logger.info(
+                        "Client %s with group %s assigned to topic %s on calling thread",
+                        self._clientid, self._groupid, self._topic)
+                    return True
+
+        # Timeout expired — mark the consumer as permanently failed.
+        self._failed = True
+        self._logger.error(
+            "Client %s with group %s FAILED to connect to topic %s after %.*f seconds. "
+            "This consumer instance is now INVALID and cannot be used. "
+            "Instantiate a new IasLogConsumer to retry.",
+            self._clientid, self._groupid, self._topic, 1, timeout)
+        return False
+
     def isSubscribed(self) -> bool:
         """
         Returns:
-            True if the consumer is subscribed to at least one partition, 
-            False otherwise
+            True if the consumer is subscribed to at least one partition,
+            False otherwise (including when the consumer has failed or is closed)
         """
-        if self._closed:
+        if self._closed or self._failed:
             return False
         with self._consumer_lock:
             return len(self._consumer.assignment())>0
@@ -174,9 +228,9 @@ class IasLogConsumer(Thread):
         """
         Returns:
             True if the consumer is getting events from the kafka topic partitions,
-            False otherwise
+            False otherwise (including when the consumer has failed or is closed)
         """
-        if self._closed:
+        if self._closed or self._failed:
             return False
         return self.is_alive() and self.isSubscribed()
 
@@ -231,19 +285,64 @@ class IasLogConsumer(Thread):
 
         This function starts the consumer thread to get logs from the kafka topic.
 
-        If waitAssigmentTimeout is greater than 0, the function starts the thread
-        and waits on an internal event until the consumer is assigned to a partition
-        (or the timeout expires).
+        **Behaviour with timeout** (``waitAssigmentTimeout > 0``):
+        The method first polls on the **calling thread** until the consumer is
+        assigned to a partition or the timeout expires.  If the connection
+        succeeds, the background poll thread is spawned and ``True`` is
+        returned.  If the timeout elapses the consumer is marked as **failed**
+        (the underlying Kafka consumer is closed) and ``False`` is returned.
+        A failed consumer **cannot** be restarted — the caller must create a
+        new ``IasLogConsumer`` instance and try again.
 
-        If ready_event is provided, the caller gets a reference to the same event
-        used internally, so it can also wait asynchronously on the assignment.
+        **Behaviour without timeout** (``waitAssigmentTimeout == 0``, the
+        default): the background poll thread is started immediately.  The
+        ``ready_event`` (if provided) is set when the consumer is assigned on
+        the background thread.
+
+        If ``ready_event`` is provided it is set when the consumer is
+        subscribed to a partition, so the caller can wait asynchronously on
+        it.
 
         Args:
-            waitAssigmentTimeout: the time to wait for the assignment (seconds, 0 = no wait)
-            ready_event: optional event also set when the consumer is assigned to a partition
+            waitAssigmentTimeout: the time to wait for the assignment before
+                starting the background thread (seconds, 0 = no wait, start
+                asynchronously).
+            ready_event: optional event also set when the consumer is
+                assigned to a partition.
+
         Returns:
-            True if the consumer is assigned to the topic, False otherwise
+            ``True`` if the consumer is started and assigned to the topic,
+            ``False`` otherwise.  When ``False`` is returned with a timeout,
+            the consumer has been marked as failed and must be discarded.
         """
+        if self._failed:
+            self._logger.error(
+                "Cannot start failed consumer %s (group %s). "
+                "Instantiate a new IasLogConsumer to retry.",
+                self._clientid, self._groupid)
+            return False
+
+        if waitAssigmentTimeout > 0:
+            # Block on the calling thread until the connection succeeds or the
+            # timeout expires.  _poll_for_assignment marks self._failed on
+            # timeout and logs a clear error message.
+            if not self._poll_for_assignment(waitAssigmentTimeout):
+                return False
+
+            # Assignment succeeded — start background thread.
+            self._logger.info(
+                'Starting thread to poll events from topic %s', self._topic)
+            Thread.start(self)
+
+            if ready_event is not None:
+                ready_event.set()
+
+            self._logger.info(
+                'Consumer for client ID %s and group ID %s started (blocking)',
+                self._clientid, self._groupid)
+            return True
+
+        # No timeout — start the thread and let assignment happen asynchronously.
         self._start_ready_event = ready_event if ready_event is not None else Event()
         with self._consumer_lock:
             self._logger.debug("Subscribing to topic %s", self._topic)
@@ -255,28 +354,34 @@ class IasLogConsumer(Thread):
         self._logger.info('Starting thread to poll events from topic %s', self._topic)
         Thread.start(self)
 
-        if waitAssigmentTimeout > 0:
-            self._logger.debug("Waiting up to %f seconds for client %s with group %s being assigned to topic %s",
-                               waitAssigmentTimeout, self._clientid, self._groupid, self._topic)
-            if not self._start_ready_event.wait(timeout=waitAssigmentTimeout):
-                self._logger.warning("Client %s with group %s NOT assigned to topic %s after %f seconds",
-                                     self._clientid, self._groupid, self._topic, waitAssigmentTimeout)
-                return False
-            self._logger.debug("Client %s with group %s assigned to topic %s",
-                               self._clientid, self._groupid, self._topic)
-
-        self._logger.info('Consumer for client ID %s and group ID %s started', self._clientid, self._groupid)
-        return self.isGettingLogs()
+        self._logger.info('Consumer for client ID %s and group ID %s started (async)',
+                          self._clientid, self._groupid)
+        return True
 
     def close(self):
         '''
-        Shuts down the thread and close the consumer
+        Shuts down the thread and close the consumer.
+
+        When the consumer has failed (``failed`` property is ``True``), the
+        background thread was never started — this method simply closes the
+        underlying Kafka consumer and logs that the failed consumer was cleaned
+        up.
         '''
         if self._closed:
             self._logger.warning("Already closed")
             return
         self._closed = True
-        
+
+        if self._failed:
+            # The thread was never started; just close the underlying consumer
+            # to release the network resources.
+            self._logger.info(
+                "Closing failed consumer for client %s (group %s) — no background thread to join",
+                self._clientid, self._groupid)
+            with self._consumer_lock:
+                self._consumer.close()
+            return
+
         if self.is_alive() and current_thread() is not self:
             self._terminate_thread.set()
             self.join(5)  # Ensure the thread exited before closing the consumer
@@ -304,3 +409,12 @@ class IasLogConsumer(Thread):
             ret = self._watchdog
             self._watchdog = False
         return ret
+
+    @property
+    def failed(self) -> bool:
+        """
+        Returns:
+            True if the consumer connection has failed.  A failed consumer
+            cannot be restarted — the caller must create a new instance.
+        """
+        return self._failed
