@@ -127,16 +127,14 @@ class IasLogConsumer(Thread):
         # be restarted — the caller must instantiate a new object.
         self._failed: bool = False
 
-        # Cached subscription state, updated by onAssign/onLost callbacks.
-        # Allows lock-free reads of subscription status.
-        self._assigned: bool = False
+        # Cached subscription state, updated by the poll loop after each poll() call.
+        # Allows lock-free reads of subscription status from any thread.
+        self._is_assigned: bool = False
 
-        # Lock only for the _assigned flag (separate from _consumer_lock).
+        # Lock only for the _is_assigned flag (separate from _consumer_lock).
         self._assigned_lock: Lock = Lock()
 
     def onAssign(self, consumer, partitions):
-        with self._assigned_lock:
-            self._assigned = len(consumer.assignment()) > 0
         for p in partitions:
             self._logger.info("Kafka consumer with client id %s and group id %s assigned to partition %d of topic %s",
                             self._clientid,
@@ -147,8 +145,6 @@ class IasLogConsumer(Thread):
             self._start_ready_event.set()
 
     def onLost(self, consumer, partitions):
-        with self._assigned_lock:
-            self._assigned = len(consumer.assignment()) > 0
         if self._closed:
             return
         for p in partitions:
@@ -165,8 +161,6 @@ class IasLogConsumer(Thread):
                            kafka_error.str())
 
     def onRevoke(self, consumer, partitions):
-        with self._assigned_lock:
-            self._assigned = len(consumer.assignment()) > 0
         if self._closed:
             return
         for p in partitions:
@@ -212,6 +206,8 @@ class IasLogConsumer(Thread):
                     break
                 self._consumer.poll(timeout=min(remaining, 0.5))
                 if len(self._consumer.assignment()) > 0:
+                    with self._assigned_lock:
+                        self._is_assigned = True
                     self._logger.info(
                         "Client %s with group %s assigned to topic %s on calling thread",
                         self._clientid, self._groupid, self._topic)
@@ -232,13 +228,13 @@ class IasLogConsumer(Thread):
             True if the consumer is subscribed to at least one partition,
             False otherwise (including when the consumer has failed or is closed).
 
-        Uses a cached flag updated by onAssign/onLost/onRevoke callbacks,
-        avoiding the need to hold _consumer_lock.
+        Uses a cached boolean updated by the poll loop after each poll() call,
+        avoiding _consumer_lock contention with the background poll thread.
         """
         if self._closed or self._failed:
             return False
         with self._assigned_lock:
-            return self._assigned
+            return self._is_assigned
 
     def isGettingLogs(self):
         """
@@ -256,17 +252,14 @@ class IasLogConsumer(Thread):
             while not self._terminate_thread.is_set():
                 with self._consumer_lock:
                     msg = self._consumer.poll(timeout=self._poll_timeout)
+                    assigned = len(self._consumer.assignment()) > 0
+                with self._assigned_lock:
+                    self._is_assigned = assigned
                 # Reset the watch dog
                 with self._watchdog_lock:
                     self._watchdog = True
                 if not msg:
                     # Timeout: no message received
-                    continue
-                if not len(self._consumer.assignment()):
-                    self._logger.debug("Consumer for client id %s and group id %s NOT subscribed yet to topic %s",
-                                       self._clientid,
-                                       self._groupid,
-                                       self._topic)
                     continue
 
                 if msg.error() is not None:
@@ -388,7 +381,7 @@ class IasLogConsumer(Thread):
             return
         self._closed = True
         with self._assigned_lock:
-            self._assigned = False
+            self._is_assigned = False
 
         if self._failed:
             # The thread was never started; just close the underlying consumer
