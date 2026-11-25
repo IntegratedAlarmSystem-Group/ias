@@ -375,7 +375,6 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
             self.value_consumer = KafkaValueConsumer(
                 self,
                 bsdb_brokers,
-                IasKafkaHelper.topics['core'],
                 self.client_id,
                 self.group_id)
             self.logger.info("Starting to get alarms from the BSDB...")

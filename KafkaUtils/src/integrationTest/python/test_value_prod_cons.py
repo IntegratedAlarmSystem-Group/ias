@@ -1,39 +1,47 @@
-'''
+"""
+Test the kafka publisher and subscriber.
 
-Test the kafka publisher and subscriber
+Uses IasLogConsumer directly since the test publishes to an arbitrary topic
+rather than the core topic.
 
 Created on Jun 14, 2018
 
 @author: acaproni
-'''
+"""
 import time
 import logging
 import pytest
 
 from IasLogging.log import Log
 from IasBasicTypes.IasValue import IasValue
+from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
 from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
-from IasKafkaUtils.KafkaValueConsumer import IasValueListener, KafkaValueConsumer
+from IasKafkaUtils.IasKafkaConsumer import IasLogConsumer, IasLogListener
 from IasKafkaUtils.KafkaValueProducer import KafkaValueProducer
 
-class ValueListener(IasValueListener):
-    '''
-    The listener of IasValues received from the KafkaValueConsumer. 
-    It stores the received values in a list for later checks.
-    '''
+
+class ValueLogListener(IasLogListener):
+    """
+    Listener that decodes JSON logs into IasValue objects and stores them
+    for later verification.
+    """
 
     def __init__(self):
-        super().__init__()
         self._logger = logging.getLogger("TestValueProdCons.TestListener")
         self.receivedValues = []
-    
-    def iasValueReceived(self,iasValue):
-        """
-        Print the IasValue in the stdout
-        """
-        # Store the received value in a list for later checks
-        self.receivedValues.append(iasValue)
-        self._logger.info("Value received %s",str(iasValue.value))
+
+    def iasLogReceived(self, log: str) -> None:
+        try:
+            iasValue = IasValue.fromJSon(log)
+            from datetime import datetime, timezone
+            iasValue.readFromBsdbTStamp = datetime.now(timezone.utc)
+            iasValue.readFromBsdbTStampStr = Iso8601TStamp.datetimeToIsoTimestamp(
+                iasValue.readFromBsdbTStamp
+            )
+            self.receivedValues.append(iasValue)
+            self._logger.info("Value received %s", str(iasValue.value))
+        except Exception:
+            self._logger.exception("Exception parsing IasValue from log [%s]", log)
 
 
 class TestValueProdCons():
@@ -56,8 +64,7 @@ class TestValueProdCons():
 
     @pytest.fixture(autouse=True)
     def setup_every_test(self):
-        # Clear the received values list before each test
-        self.listener = ValueListener()
+        self.listener = ValueLogListener()
 
     @classmethod
     def setup_class(cls):
@@ -103,12 +110,12 @@ class TestValueProdCons():
         producer = KafkaValueProducer(self.kafkabrokers, self.topic, 'PyProducerTest-ID')
         
         TestValueProdCons.LOGGER.info('Building the consumer')
-        consumer = KafkaValueConsumer(
+        consumer = IasLogConsumer(
             self.listener,
             self.kafkabrokers,
             self.topic,
-            'PyConsumerTest', # Client ID
-            'PyConsumerTestGroup') # Group ID
+            'PyConsumerTest',
+            'PyConsumerTestGroup')
         TestValueProdCons.LOGGER.info('Starting the consumer')
         consumer.start()
 

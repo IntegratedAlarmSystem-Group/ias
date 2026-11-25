@@ -130,11 +130,10 @@ class TestPyAck():
         cls.iasio_listener = IasioListener(cls.alarms_received)
 
         uid = str(uuid.uuid4())
-        cls.iasio_consumer = KafkaValueConsumer(cls.iasio_listener, 
-                                            IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, 
-                                            IasKafkaHelper.topics['core'], 
-                                            "coreListenerId-"+uid, 
-                                            "coreListenerGId-"+uid)
+        cls.iasio_consumer = KafkaValueConsumer(cls.iasio_listener,
+                                             IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
+                                             "coreListenerId-"+uid,
+                                             "coreListenerGId-"+uid)
 
         cls.LOGGER.info("Connecting the IASIO listener")
         consumer_ready = Event()

@@ -59,11 +59,10 @@ class TestPushIasioScript():
         cls.iasio_listener = IasioListener(cls.iasios_received)
 
         id = "coreListenerGId"+str(uuid.uuid4())
-        cls.iasio_consumer = KafkaValueConsumer(cls.iasio_listener, 
-                                       IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, 
-                                       IasKafkaHelper.topics['core'], 
-                                       id, 
-                                       id)
+        cls.iasio_consumer = KafkaValueConsumer(cls.iasio_listener,
+                                        IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
+                                        id,
+                                        id)
         cls.LOGGER.info("Connecting the IASIO listener")
         consumer_ready = Event()
         cls.iasio_consumer.start(ready_event=consumer_ready)
