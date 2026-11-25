@@ -114,6 +114,9 @@ class IasLogConsumer(Thread):
         # Signal the thread to terminate
         self._terminate_thread: Event = Event()
 
+        # Event used only by start() to signal when the consumer is assigned to a partition
+        self._start_ready_event: Event | None = None
+
         # Flags to not close consumer more than once
         self._closed: bool =  False
 
@@ -127,12 +130,14 @@ class IasLogConsumer(Thread):
                             self._groupid,
                             p.partition,
                             repr(p.topic))
+        if self._start_ready_event is not None:
+            self._start_ready_event.set()
 
     def onLost(self, consumer, partitions):
         if self._closed:
             return
         for p in partitions:
-            self._logger.warning("Kafka consumer with client id %s and group id %s lost partition %d of topic %s", 
+            self._logger.warning("Kafka consumer with client id %s and group id %s lost partition %d of topic %s",
                             self._clientid,
                             self._groupid,
                             p.partition,
@@ -220,43 +225,45 @@ class IasLogConsumer(Thread):
         self._logger.info('Consumer thread for topic %s terminated for client id %s and group id %s', 
                           self._topic, self._clientid, self._groupid)
 
-    def start(self, waitAssigmentTimeout: float = 0) -> bool:
+    def start(self, waitAssigmentTimeout: float = 0, ready_event: Event = None) -> bool:
         """
         Start the consumer
 
-        This function starts the cosumer thread to get logs from the kafka topic.
+        This function starts the consumer thread to get logs from the kafka topic.
 
-        If a timeout greater than 1 is provided, the functions waits for the assignemt to the topic
-        before returning.
+        If waitAssigmentTimeout is greater than 0, the function starts the thread
+        and waits on an internal event until the consumer is assigned to a partition
+        (or the timeout expires).
 
-        Args: 
-            waitAssignemnttimeout: the time to wait for the assignment (seconds)
+        If ready_event is provided, the caller gets a reference to the same event
+        used internally, so it can also wait asynchronously on the assignment.
+
+        Args:
+            waitAssigmentTimeout: the time to wait for the assignment (seconds, 0 = no wait)
+            ready_event: optional event also set when the consumer is assigned to a partition
         Returns:
             True if the consumer is assigned to the topic, False otherwise
         """
+        self._start_ready_event = ready_event if ready_event is not None else Event()
         with self._consumer_lock:
             self._logger.debug("Subscribing to topic %s", self._topic)
-            self._consumer.subscribe([self._topic], 
-                                     on_assign=self.onAssign, 
-                                     on_lost=self.onLost, 
+            self._consumer.subscribe([self._topic],
+                                     on_assign=self.onAssign,
+                                     on_lost=self.onLost,
                                      on_revoke=self.onRevoke)
 
+        self._logger.info('Starting thread to poll events from topic %s', self._topic)
+        Thread.start(self)
+
         if waitAssigmentTimeout > 0:
-            self._logger.debug("Polling for assignment of client %s with group %s to topic %s (timeout %fs)",
-                               self._clientid, self._groupid, self._topic, waitAssigmentTimeout)
-            assignment_start = time.time()
-            while not self._consumer.assignment() and (time.time() - assignment_start) < waitAssigmentTimeout:
-                with self._consumer_lock:
-                    self._consumer.poll(timeout=1.0)
-            if not self._consumer.assignment():
+            self._logger.debug("Waiting up to %f seconds for client %s with group %s being assigned to topic %s",
+                               waitAssigmentTimeout, self._clientid, self._groupid, self._topic)
+            if not self._start_ready_event.wait(timeout=waitAssigmentTimeout):
                 self._logger.warning("Client %s with group %s NOT assigned to topic %s after %f seconds",
                                      self._clientid, self._groupid, self._topic, waitAssigmentTimeout)
                 return False
             self._logger.debug("Client %s with group %s assigned to topic %s",
                                self._clientid, self._groupid, self._topic)
-
-        self._logger.info('Starting thread to poll events from topic %s', self._topic)
-        Thread.start(self)
 
         self._logger.info('Consumer for client ID %s and group ID %s started', self._clientid, self._groupid)
         return self.isGettingLogs()
