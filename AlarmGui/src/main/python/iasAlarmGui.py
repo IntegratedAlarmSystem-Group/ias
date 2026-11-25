@@ -245,6 +245,8 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         Runs in a background thread: disconnects from IAS and then
         emits signal_disconnected to close the progress dialog via queued connection.
         """
+        if self.hb_engine is not None:
+            self.hb_engine.update_hb_state(HeartbeatStatus.EXITING)
         self.disconnectFromIas()
         self.logger.debug("Emitting disconnected signal")
         self.signal_disconnected.emit()
@@ -360,24 +362,68 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
     def on_action_Remove_cleared_toggled(self):
         self.active_table_model.remove_cleared(self.ui.action_Remove_cleared.isChecked())
 
+    def _abort_connect(self, exclude_hb: bool = False) -> None:
+        """
+        Clean up resources created during a connection attempt.
+
+        Args:
+            exclude_hb: if True, leaves the heartbeat engine running so the
+                IAS still knows this client is alive. Used by disconnectFromIas.
+        """
+        if self.alarm_ack is not None:
+            try:
+                self.alarm_ack.close()
+            except Exception:
+                self.logger.exception("Error closing alarm ack")
+            self.alarm_ack = None
+        if self.command_sender is not None:
+            try:
+                self.command_sender.close()
+            except Exception:
+                self.logger.exception("Error closing command sender")
+            self.command_sender = None
+        if self.value_consumer is not None:
+            try:
+                self.value_consumer.close()
+            except Exception:
+                self.logger.exception("Error closing value consumer")
+            self.value_consumer = None
+        if not exclude_hb:
+            if self.hb_engine is not None:
+                try:
+                    self.hb_engine.close()
+                except Exception:
+                    self.logger.exception("Error closing heartbeat engine")
+                self.hb_engine = None
+            if self.hb_producer is not None:
+                try:
+                    self.hb_producer.close()
+                except Exception:
+                    self.logger.exception("Error closing heartbeat producer")
+                self.hb_producer = None
+
     def connectToIas(self, bsdb_brokers: str, full_running_id: str) -> None:
         """
         Connect to the IAS passing this as listener
 
-        This function must run in a thread, outside of the Qt thread
+        This function must run in a thread, outside of the Qt thread.
+        Everything is all-or-nothing: on any failure all resources created
+        during this attempt are closed and cleared.
         """
-        # Start the heartbeat engine
-        if self.hb_frequency > 0:
-            self.logger.info("Starting heartbeat engine")
-            self.hb_producer = HbKafkaProducer(
-                bsdb_brokers, f"AlarmGui-{socket.gethostname()}")
-            hb = Heartbeat(HeartbeatProducerType.CLIENT, "AlarmGui", socket.gethostname())
-            self.hb_engine = HbEngine(hb, self.hb_frequency, self.hb_producer)
-            self.hb_engine.start()
-            self.logger.info(
-                f"AlarmGui Heartbeats enabled, frequency={self.hb_frequency}s, brokers={bsdb_brokers}")
-
+        hb_created_by_this_attempt = False
         try:
+            # Start the heartbeat engine (only if not already running)
+            if self.hb_frequency > 0 and self.hb_engine is None:
+                hb_created_by_this_attempt = True
+                self.logger.info("Starting heartbeat engine")
+                self.hb_producer = HbKafkaProducer(
+                    bsdb_brokers, f"AlarmGui-{socket.gethostname()}")
+                hb = Heartbeat(HeartbeatProducerType.CLIENT, "AlarmGui", socket.gethostname())
+                self.hb_engine = HbEngine(hb, self.hb_frequency, self.hb_producer)
+                self.hb_engine.start()
+                self.logger.info(
+                    f"AlarmGui Heartbeats enabled, frequency={self.hb_frequency}s, brokers={bsdb_brokers}")
+
             self.logger.info("Building the value consumer with client id=%s and group_id=%s", self.client_id, self.group_id)
             self.value_consumer = KafkaValueConsumer(
                 self,
@@ -388,38 +434,31 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
             consumer_ready = Event()
             self.value_consumer.start(ready_event=consumer_ready)
             if not consumer_ready.wait(timeout=30):
-                self.logger.error("Consumer did not become ready within 30 s")
-                self.signal_update_connected_ui.emit(False)
-                return
+                raise RuntimeError("Consumer did not become ready within 30 s")
             self.logger.info("Connected to the BSDB")
+
+            # Build the command sender
+            self.logger.info("Building the CommandSender")
+            self.command_sender = IasCommandSender(
+                sender_full_running_id=full_running_id,
+                bsdb_sender_id=f"CommandSender-{self.group_id}",
+                brokers=bsdb_brokers)
+            # Initialize the command sender
+            self.command_sender.set_up()
+            # Connect the Alarm ACK
+            self.logger.info("Building the AlarmAck")
+            self.alarm_ack = AlarmAck(full_running_id=full_running_id, command_sender=self.command_sender)
+            self.alarm_ack.start()
+
+            if self.hb_engine is not None:
+                self.hb_engine.update_hb_state(HeartbeatStatus.RUNNING)
+            self.logger.info("Successfully connected to IAS")
             self.signal_update_connected_ui.emit(True)
+
         except Exception as e:
-            self.logger.error("Error connecting to the BSDB: %s",str(e))
+            self.logger.error("Error connecting to IAS: %s", str(e))
             self.signal_update_connected_ui.emit(False)
-            if self.alarm_ack is not None:
-                try:
-                    self.alarm_ack.close()
-                except Exception as ack_excp:
-                    self.logger.error("Error closing the Alarm ACK", str(ack_excp))
-                self.alarm_ack = None
-            return
-
-        # Build the command sender
-        self.logger.info("Building the CommandSender")
-        self.command_sender = IasCommandSender(
-            sender_full_running_id=full_running_id,
-            bsdb_sender_id=f"CommandSender-{self.group_id}",
-            brokers=bsdb_brokers)
-        # Initialize the command sender
-        self.command_sender.set_up()
-        # Connect the Alarm ACK
-        self.logger.info("Building the AlarmAck")
-        self.alarm_ack = AlarmAck(full_running_id=full_running_id, command_sender=self.command_sender)
-        self.alarm_ack.start()
-
-        if self.hb_engine is not None:
-            self.hb_engine.update_hb_state(HeartbeatStatus.RUNNING)
-        self.logger.info("Successfully connected to IAS")
+            self._abort_connect(exclude_hb=not hb_created_by_this_attempt)
 
     def iasValueReceived(self, iasValue):
         # Discard non alarms IasValues
@@ -430,45 +469,14 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
 
     def disconnectFromIas(self) -> None:
         """
-        Disconnect from the IAS
+        Disconnect from the IAS but keep the heartbeat engine running
+        so the IAS still knows this client is alive.
 
-        Tis function must not be run it the QT thread
+        This function must not be run in the QT thread.
         """
-        # Stop the heartbeat engine
-        if self.hb_engine is not None:
-            self.logger.debug("Stopping heartbeat engine")
-            self.hb_engine.update_hb_state(HeartbeatStatus.EXITING)
-            self.hb_engine.close()
-            self.hb_engine = None
-            self.hb_producer = None
-        self.logger.info("HB engine closed")
-
-        if self.value_consumer is not None:
-            self.logger.debug("Disconnecting from the BSDB...")
-            try:
-                self.value_consumer.close()
-            except Exception as e:
-                self.logger.exception("Error closing the kafka consumer")
-            self.value_consumer = None
-            self.logger.info("Alarm consumer closed")
-        self.signal_update_connected_ui.emit(False)
-
-        if self.alarm_ack is not None:
-            self.logger.debug("Closing the AlarmAck'er")
-            try:
-                self.alarm_ack.close()
-            except Exception as e:
-                self.logger.exception("Error closing the AlarmAck'er")
-            self.alarm_ack = None
-            if self.command_sender is not None:
-                self.logger.info("Closing the CommandSender")
-                try:
-                    self.command_sender.close()
-                except Exception as e:
-                    self.logger.exception("Error closing the CommandSender")
-                self.command_sender = None
-            self.logger.info("AlarmAck'er closed")
         self.logger.info("Disconnected from IAS")
+        self.signal_update_connected_ui.emit(False)
+        self._abort_connect(exclude_hb=True)
 
     def onTableSelectionChanged(self, selected, deselected, mode: TableMode):
         """
