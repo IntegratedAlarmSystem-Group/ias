@@ -101,11 +101,10 @@ class TestPyAck():
 
     iasioListener = IasioListener()
 
-    iasioConsumer = KafkaValueConsumer(iasioListener, 
-                                       IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, 
-                                       IasKafkaHelper.topics['core'], 
-                                       "coreListenerId", 
-                                       "coreListenerGId"+str(uuid.uuid4()))
+    iasioConsumer = KafkaValueConsumer(iasioListener,
+                                        IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS,
+                                        "coreListenerId",
+                                        "coreListenerGId"+str(uuid.uuid4()))
     
     iasioProducer = KafkaValueProducer(IasKafkaHelper.DEFAULT_BOOTSTRAP_BROKERS, 
                                        IasKafkaHelper.topics['core'], 

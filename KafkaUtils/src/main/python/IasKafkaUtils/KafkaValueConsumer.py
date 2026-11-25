@@ -1,263 +1,154 @@
-'''
-Created on Jun 12, 2018
+"""
+Kafka consumer of IasValues from the core topic.
 
-@author: acaproni
-'''
-from datetime import datetime
-from datetime import timezone
-from threading import Thread, Lock, Event
-import traceback
+Each received IasValue is sent to the listener (an IasValueListener subclass).
+
+Delegates all Kafka consumption to an internal IasLogConsumer, wrapping the
+raw log callback to decode JSON into IasValue objects.
+"""
+from datetime import datetime, timezone
+from threading import Event
 import logging
-from confluent_kafka import Consumer, KafkaError
 
 from IasBasicTypes.IasValue import IasValue
 from IasBasicTypes.Iso8601TStamp import Iso8601TStamp
-from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
+from IasKafkaUtils.IasKafkaConsumer import IasLogConsumer, IasLogListener
 
-class IasValueListener(object):
+
+class IasValueListener:
     """
-    The class to get IasValue
-    
-    The listener passed to KafkaValueConsumer
-    must be a subclass of IasValueListener
+    Listener that receives IasValue objects from KafkaValueConsumer.
+
+    Subclass this and override iasValueReceived to handle incoming values.
     """
 
-    def iasValueReceived(self, iasValue):
+    def iasValueReceived(self, iasValue: IasValue) -> None:
         """
-        The callback to notify new IasValues
-        received from the BSDB
-        
-        The implementation must override this method
+        Called when a new IasValue is received from the BSDB topic.
+
+        Must be overridden by subclasses.
         """
         raise NotImplementedError("Must override this method to get events")
 
 
-class KafkaValueConsumer(Thread):
+class _ValueLogListener(IasLogListener):
+    """
+    Internal adapter that converts raw log strings into IasValue objects
+    and forwards them to the user's IasValueListener.
+    """
+
+    def __init__(self, value_listener: IasValueListener, logger: logging.Logger):
+        self._value_listener = value_listener
+        self._logger = logger
+
+    def iasLogReceived(self, log: str) -> None:
+        try:
+            iasValue = IasValue.fromJSon(log)
+            iasValue.readFromBsdbTStamp = datetime.now(timezone.utc)
+            iasValue.readFromBsdbTStampStr = Iso8601TStamp.datetimeToIsoTimestamp(
+                iasValue.readFromBsdbTStamp
+            )
+            self._value_listener.iasValueReceived(iasValue)
+        except Exception:
+            self._logger.exception("Exception parsing IasValue from log [%s]", log)
+
+
+class KafkaValueConsumer:
     '''
     Kafka consumer of IasValues.
-    
+
     Each received IasValue is sent to the listener.
-    
+
     The listener must inherit from IasValueListener.
-    
+
     KafkaValueConsumer does not create a topic that must be created by the producer.
     If the topic does not exist, the thread waits until the producer creates it.
 
-    KafkaValueConsumer implements a boolean watchdog that is set to True
-    at every iteration of the thread (i.e. when data arrives or the timeout elapses)
-
-    The KafkaValueConsumer sets an Event, passed in the start() function,
-    to signal when the thread is subscribed to a partition and is getting events.
-    The same information can be get by calling isSubscribed().
+    KafkaValueConsumer wraps an IasLogConsumer that handles the actual Kafka polling.
+    A boolean watchdog is set to True at every poll iteration.
+    An Event passed to start() signals when the consumer is assigned to a partition.
     '''
 
     def __init__(self,
-                 listener,
+                 listener: IasValueListener,
                  kafkabrokers: str,
-                 topic: str,
-                 clientid,
-                 groupid,
-                 poll_timeout = 0.5):
+                 clientid: str,
+                 groupid: str,
+                 poll_timeout: float = 0.5):
         '''
         Constructor
-        
+
         Params:
             listener the listener to send IasValues to
             kafkabrokers: Kafka brokers
-            topic: the kafka topic to get IasValues from
             clientid: Kafka client ID
             groupid: Kafka group ID
             poll_timeout: the timeout (>0) for the Consumer.poll() function (seconds)
         '''
-        super().__init__()
-        self._logger = logging.getLogger(self.__class__.__name__)
-
         if listener is None:
             raise ValueError("The listener can't be None")
 
         if not isinstance(listener, IasValueListener):
             raise ValueError("The listener must be a subclass of IasValueListener")
-        
-        # The listener to send IasValues to
-        self.listener = listener
 
-        if topic is None:
-            raise ValueError("The topic can't be None")
-        # The kafka topic
-        self.topic: str = topic
-
-        self.kafkaBrokers: str = kafkabrokers
-        if not self.kafkaBrokers:
+        if not kafkabrokers:
             raise ValueError("The kafka brokers can't be None or empty")
 
-        if poll_timeout <= 0:
-            raise ValueError("Invalid poll timeout")
-        self._poll_timeout = poll_timeout
+        self._logger = logging.getLogger(self.__class__.__name__)
+        self._listener = listener
 
-        conf = {'bootstrap.servers': kafkabrokers,
-                'client.id': clientid,
-                'group.id': groupid,
-                'enable.auto.commit': 'true',
-                'allow.auto.create.topics': 'true',
-                'auto.offset.reset': 'latest',
-                'error_cb': self.onError}
+        from IasKafkaUtils.IaskafkaHelper import IasKafkaHelper
 
-        # The kafka consumer
-        self._consumer = Consumer(conf, logger=self._logger)
-
-          # Signal the thread to terminate
-        self.terminateThread: Event = Event()
-
-        self.daemon = True
-
-        # the watch dog 
-        self.watchDog = False
-
-        # The lock for the watch dog
-        self.watchDogLock = Lock()
-
-        # Singnal that the self.ready_event Event must be set, if not None
-        self.ready_event_to_set_flag = False
-
-        # The event passed in start() to signal when the thread is subscribed and getting events
-        #
-        # It will not be assigned in onAssign but after the next successfull poll
-        self.ready_event: Event|None = None
-
-        self._closed = False
-
-        self._logger.info('Kafka consumer %s will connect to %s and topic %s', clientid, kafkabrokers, topic)
-
-    # Note that this callback is executed when a new partition is assigned but the consumer
-    # is not yet subscribed to the topic (it will be after the next successfull poll)
-    # It means that items pushed immediately after onAssign is executed before the subscription 
-    # takes place may not be received until the next poll 
-    # (this is also true because the consumer property auto.offset.reset is set to latest,
-    # using earliest would change this behaviour)
-    def onAssign(self, consumer, partition):
-        self._logger.info("Kafka consumer assigned to partition %s", partition)
-        if self.ready_event is not None:
-            self.ready_event_to_set_flag = True
-
-    def onLost(self, consumer, partitions):
-        if self._closed:
-            return
-        self._logger.warning("Kafka consumer lost partitions %s", partitions)
-        if self.ready_event is not None:
-            self.ready_event.clear()
-        self.ready_event_to_set_flag = False
-
-    def onError(self, kafka_error):
-        self._logger.error("Kafka error: %s", kafka_error.str())
+        log_listener = _ValueLogListener(listener, self._logger)
+        self._consumer = IasLogConsumer(
+            log_listener,
+            kafkabrokers,
+            IasKafkaHelper.topics['core'],
+            clientid,
+            groupid,
+            poll_timeout,
+        )
 
     def isSubscribed(self) -> bool:
         """
         Returns:
-            True if the consumer is subscribed to a partition, 
+            True if the consumer is subscribed to a partition,
             False otherwise
         """
-        return len(self._consumer.assignment())>0
+        return self._consumer.isSubscribed()
 
-    def isGettingValues(self):
-            """
-            Returns:
-                True if the consumer is getting events from the kafka topic partitions,
-                False otherwise
-            """
-            return self.is_alive() and self.isSubscribed()
-
-    def run(self):
-        self._logger.info('Thread to poll for Kafka logs started')
-        # Create the topic before subscribing
-        if IasKafkaHelper.createTopic(self.topic, self.kafkaBrokers):
-            self._logger.debug("Topic %s created", self.topic)
-        else:
-            self._logger.debug("Topic already %s exists", self.topic)
-
-        self._consumer.subscribe([self.topic], on_assign=self.onAssign, on_revoke=self.onLost)
-        self._logger.debug("Subscribing to topic %s", self.topic)
-
-        while not self.terminateThread.is_set():
-            msg = self._consumer.poll(timeout=self._poll_timeout)
-            # Reset the watch dog
-            with self.watchDogLock:
-                self.watchDog = True
-
-            if not self.isSubscribed():
-                continue
-            elif self.ready_event_to_set_flag and self.ready_event is not None:
-                # Set the event that the consumer is ready after the first successful poll
-                # after the subscription
-                self.ready_event.set()
-                self.ready_event_to_set_flag = False
-                self._logger.debug("Lister notified of subscription")
-            
-            if msg is None: # No message received within the timeout
-                self._logger.debug(f"Polling thread is {"" if self.isSubscribed() else "NOT "}subscribed")
-                continue
-            else:
-                self._logger.debug("A log has been received from the BSDB")
-
-            if msg.error() is not None:
-                if msg.error().code() == KafkaError._PARTITION_EOF:
-                    # End of partition event
-                    self._logger.error('topic %s [partition %d] reached end at offset %d', msg.topic(), msg.partition(),
-                                    msg.offset())
-                else:
-                    self._logger.error('Error polling event %s', msg.error().str())
-                continue
-            else:
-                json = ""
-                try:
-                    json = msg.value().decode("utf-8")
-                    iasValue = IasValue.fromJSon(json)
-                    iasValue.readFromBsdbTStamp = datetime.now(timezone.utc)
-                    iasValue.readFromBsdbTStampStr = Iso8601TStamp.datetimeToIsoTimestamp(iasValue.readFromBsdbTStamp)
-                except Exception as e:
-                    self._logger.exception("Exception parsing a log [%s]", json, e)
-                    continue
-                try:
-                    if not self._closed:
-                        self.listener.iasValueReceived(iasValue)
-                except Exception as e:
-                    self._logger.exception("Exception caught from the log listener [%s]", json, e)
-        # Close the consumer to commit final offsets.
-        self._consumer.close()
-        self._logger.info('Thread terminated')
+    def isGettingValues(self) -> bool:
+        """
+        Returns:
+            True if the consumer is getting events from the kafka topic partitions,
+            False otherwise
+        """
+        return self._consumer.isGettingLogs()
 
     def start(self, ready_event: Event = None):
         """
-        Start polling events from the core topic.
-        
-        :param ready_event: If not None, the event is set when the thread is subscribed to a partition and is getting events.
-        :type ready_event: Event
+        Start polling events from the Kafka topic.
+
+        Args:
+            ready_event: If not None, the event is set when the consumer is
+                subscribed to a partition and is getting events.
         """
         self._logger.info('Starting thread to poll for IasValues')
-        self.ready_event = ready_event
-        Thread.start(self)
+        self._consumer.start(ready_event=ready_event)
 
     def close(self):
-        '''
-        Shuts down the thread
-        '''
-        if self._closed:
-            self._logger.warning("Already closed")
-            return
-        self._closed = True
+        """
+        Shuts down the consumer thread and closes the underlying Kafka consumer.
+        """
         self._logger.debug("Closing...")
-        self.terminateThread.set()
-        self.join(5)  # Ensure the thread exited before closing the consumer
         self._consumer.close()
         self._logger.info("Closed")
 
-    def getWatchdog(self):
+    def getWatchdog(self) -> bool:
         """
         Return and reset the watch dog.
 
         Returns:
-        bool: True if the watchdog has been set, False otherwise
+            True if the watchdog has been set, False otherwise
         """
-        with self.watchDogLock:
-            ret = self.watchDog
-            self.watchDog = False
-        return ret
+        return self._consumer.getWatchdog()
