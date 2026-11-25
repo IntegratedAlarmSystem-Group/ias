@@ -61,7 +61,7 @@ class DumperListener(IasLogListener):
         return ret
 
 if __name__ == '__main__':
-    uid = uuid.uuid4().hex
+    uid = uuid.uuid4().hex[:8]
     parser = argparse.ArgumentParser(description='Dumps kafla logs published in the BSDB or a custom topic. Unless -m or -o is set, the tool must be terminated with CTRL-C')
     parser.add_argument(
                         '-k',
