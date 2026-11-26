@@ -117,14 +117,6 @@ class KafkaValueConsumer:
         """
         return self._consumer.isSubscribed()
 
-    def isGettingValues(self) -> bool:
-        """
-        Returns:
-            True if the consumer is getting events from the kafka topic partitions,
-            False otherwise
-        """
-        return self._consumer.isGettingLogs()
-
     def start(self, ready_event: Event = None):
         """
         Start polling events from the Kafka topic.
