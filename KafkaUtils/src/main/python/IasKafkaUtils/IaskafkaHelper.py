@@ -25,10 +25,28 @@ class IasKafkaHelper():
         'plugin': "PluginsKTopic",
         'cmd': "CmdTopic",
         'reply': "ReplyTopic"}
-    
+
     # Default list of servers
     DEFAULT_BOOTSTRAP_BROKERS="localhost:9092"
-    
+
+    # Cache of AdminClient instances keyed by broker URL
+    _ADMIN_CLIENTS: Dict[str, AdminClient] = {}
+
+    @classmethod
+    def _get_admin_client(cls, kafkaBrokers: str) -> AdminClient:
+        """
+        Get or create a cached AdminClient for the given broker URL.
+
+        Args:
+            kafkaBrokers: the kafka bootstrap servers
+
+        Returns:
+            An AdminClient instance, reusing a cached one if available.
+        """
+        if kafkaBrokers not in cls._ADMIN_CLIENTS:
+            cls._ADMIN_CLIENTS[kafkaBrokers] = AdminClient({'bootstrap.servers': kafkaBrokers})
+        return cls._ADMIN_CLIENTS[kafkaBrokers]
+
     @classmethod
     def topicExists(cls, topicName: str, kafkaBrokers: str) -> bool:
         """
@@ -40,7 +58,7 @@ class IasKafkaHelper():
         Return:
           True if the topic exists; False otherwise
         """
-        admin = AdminClient({'bootstrap.servers': kafkaBrokers})
+        admin = cls._get_admin_client(kafkaBrokers)
         metadata = admin.list_topics()
         return topicName in metadata.topics
 
@@ -69,7 +87,7 @@ class IasKafkaHelper():
             cls._logger.debug("Topic %s already exists", topicName)
             return True
         cls._logger.debug("Creating topic %s", topicName)
-        admin = AdminClient({'bootstrap.servers': kafkaBrokers})
+        admin = cls._get_admin_client(kafkaBrokers)
         new_topic = NewTopic(topic=topicName, num_partitions=partitions) 
         result_dict: Dict[str, Future] = {}
         try:
@@ -111,7 +129,7 @@ class IasKafkaHelper():
         """
         if not IasKafkaHelper.topicExists(topicName, kafkaBrokers):
             return True
-        admin = AdminClient({'bootstrap.servers': kafkaBrokers})
+        admin = cls._get_admin_client(kafkaBrokers)
         # admin.delete_topics(..) returns immediately, 
         # the operation_timeout applies to the broker
         fs = admin.delete_topics([topicName], operation_timeout=timeout)
@@ -132,7 +150,7 @@ class IasKafkaHelper():
         Returns:
           The list of the topic names
         """
-        admin = AdminClient({'bootstrap.servers': kafkaBrokers})
+        admin = cls._get_admin_client(kafkaBrokers)
         metadata = admin.list_topics()
         ret = []
         for t in iter(metadata.topics.values()):
