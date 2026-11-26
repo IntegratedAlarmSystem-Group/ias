@@ -144,6 +144,7 @@ class Iasio(Base):
     TEMPLATE_ID = Column(String(64),ForeignKey("TEMPLATE_DEF.TEMPLATE_ID"),nullable=True)
     EMAILS = Column(String(128), nullable=True)
     SOUND = Column(String(16))
+    TAG = Column(String(128), nullable=True)
 
     template = relationship('Template_def')
 
@@ -160,8 +161,8 @@ class Iasio(Base):
         return iasType
 
     def __repr__(self):
-        return "<IASIO(id='%s', type='%s', canShelve=%d,  template_id='%s', doc='%s', desc='%s', emails='%s', sound=-'%s')>" % (
-            self.IO_ID, self.IASTYPE, self.CANSHELVE, self.TEMPLATE_ID, self.DOCURL, self.SHORTDESC, self.EMAILS, self.SOUND
+        return "<IASIO(id='%s', type='%s', canShelve=%d,  template_id='%s', doc='%s', desc='%s', emails='%s', sound='%s', tag='%s')>" % (
+            self.IO_ID, self.IASTYPE, self.CANSHELVE, self.TEMPLATE_ID, self.DOCURL, self.SHORTDESC, self.EMAILS, self.SOUND, self.TAG
         )
 
     def __eq__(self, other):
@@ -173,10 +174,11 @@ class Iasio(Base):
             self.CANSHELVE == other.CANSHELVE and \
             self.TEMPLATE_ID == other.TEMPLATE_ID and \
             self.EMAILS == other.EMAILS and \
-            self.SOUND == other.SOUND
+            self.SOUND == other.SOUND and \
+            self.TAG == other.TAG
 
     def __hash__(self):
-        return hash((self.IO_ID,self.IASTYPE,self.SHORTDESC,self.DOCURL,self.CANSHELVE,self.TEMPLATE_ID,self.EMAILS,self.SOUND))
+        return hash((self.IO_ID,self.IASTYPE,self.SHORTDESC,self.DOCURL,self.CANSHELVE,self.TEMPLATE_ID,self.EMAILS,self.SOUND,self.TAG))
 
 class Dasu(Base):
     __tablename__ = 'DASU'

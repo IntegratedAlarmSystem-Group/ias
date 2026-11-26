@@ -434,6 +434,30 @@ public class TestYamlCdb {
 		assertEquals(iasioDefaultShelve, optIasioDefShelve.get(),"The IASIOs differ!");
 		assertEquals(IasioDao.canSheveDefault,optIasioDefShelve.get().isCanShelve());
 
+		// Test tag round-trip - IASIO without tag
+		IasioDao iasioNoTag = new IasioDao(
+				"ioNoTag",
+				"IASIO without tag",
+				IasTypeDao.ALARM,
+				"http://wiki.alma.cl/ioNoTag");
+		cdbWriter.writeIasio(iasioNoTag, false);
+		Optional<IasioDao> optIasioNoTag = cdbReader.getIasio(iasioNoTag.getId());
+		assertTrue(optIasioNoTag.isPresent(),"Got an empty IASIO!");
+		assertEquals(null, optIasioNoTag.get().getTag(), "Tag should be null");
+		assertEquals(iasioNoTag, optIasioNoTag.get(), "The IASIOs differ!");
+
+		// Test tag round-trip - IASIO with tag
+		IasioDao iasioWithTag = new IasioDao(
+				"ioWithTag",
+				"IASIO with tag",
+				IasTypeDao.ALARM,
+				"http://wiki.alma.cl/ioWithTag");
+		iasioWithTag.setTag("YAML-Unique-Tag");
+		cdbWriter.writeIasio(iasioWithTag, false);
+		Optional<IasioDao> optIasioWithTag = cdbReader.getIasio(iasioWithTag.getId());
+		assertTrue(optIasioWithTag.isPresent(),"Got an empty IASIO!");
+		assertEquals("YAML-Unique-Tag", optIasioWithTag.get().getTag(), "Tag mismatch");
+
 		IasioDao iasio = new IasioDao(
 				"ioID",
 				"IASIO description",
@@ -540,6 +564,23 @@ public class TestYamlCdb {
 		// Check if all IASIOs match with the ones in the sets
 		set.stream().forEach(x -> assertTrue(optSet3.get().contains(x)));
 		set2.stream().forEach(x -> assertTrue(optSet3.get().contains(x)));
+
+		// Test tag round-trip with batch write
+		Set<IasioDao> tagSet = new HashSet<>();
+		IasioDao taggedIasio = new IasioDao("TaggedBatchIO", "Batch IASIO with tag", IasTypeDao.ALARM, "http://www.eso.org");
+		taggedIasio.setTag("YAML-Batch-Tag");
+		tagSet.add(taggedIasio);
+		IasioDao untaggedIasio = new IasioDao("UntaggedBatchIO", "Batch IASIO without tag", IasTypeDao.ALARM, "http://www.eso.org");
+		tagSet.add(untaggedIasio);
+		cdbWriter.writeIasios(tagSet, false);
+		Optional<Set<IasioDao>> optTagSet = cdbReader.getIasios();
+		assertTrue(optTagSet.isPresent());
+		Optional<IasioDao> readTaggedIasio = cdbReader.getIasio("TaggedBatchIO");
+		assertTrue(readTaggedIasio.isPresent());
+		assertEquals("YAML-Batch-Tag", readTaggedIasio.get().getTag());
+		Optional<IasioDao> readUntaggedIasio = cdbReader.getIasio("UntaggedBatchIO");
+		assertTrue(readUntaggedIasio.isPresent());
+		assertEquals(null, readUntaggedIasio.get().getTag());
 
 		// Finally check if saving without appending really remove the right IASIOs
 		// by writing again the IASIOs in set
@@ -893,10 +934,10 @@ public class TestYamlCdb {
 	}
 
 	/**
-     * Test the getting of an IASIO form file
-     *
-     * @throws Exception
-     */
+      * Test the getting of an IASIO form file
+      *
+      * @throws Exception
+      */
 	@Test
 	public void testGetIasio() throws Exception {
 		Path path = FileSystems.getDefault().getPath("./src/test/testYamlCdb");
@@ -915,6 +956,21 @@ public class TestYamlCdb {
 		assertEquals(iDao.get().getSound(),SoundTypeDao.NONE);
 		assertFalse(iDao.get().isCanShelve());
 		assertFalse(iDao.get().isAutoAck());
+
+		// Test tag field presence
+		iDao = cdbReader.getIasio("iasioID-7");
+		assertTrue(iDao.isPresent());
+		assertEquals("Alarm-Seven", iDao.get().getTag());
+
+		// Test tag field on OUTPUT-ID
+		iDao = cdbReader.getIasio("OUTPUT-ID");
+		assertTrue(iDao.isPresent());
+		assertEquals("Output-Alarm", iDao.get().getTag());
+
+		// Test tag field absence
+		iDao = cdbReader.getIasio("TempInput");
+		assertTrue(iDao.isPresent());
+		assertEquals(null, iDao.get().getTag());
 	}
 
 	/**

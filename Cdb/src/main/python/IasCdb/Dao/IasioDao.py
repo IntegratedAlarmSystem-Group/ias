@@ -54,19 +54,21 @@ class IasioDao:
 
         sound: SoundTypeDao = SoundTypeDao.from_string(data.get('sound', 'NONE'))
         emails = data.get('emails', None)
-        
-        return IasioDao(id, iasType, shortDesc, docUrl, templateId, canShelve, autoAck, sound, emails)
+        tag = data.get('tag', None)
 
-    def __init__(self, 
-                 id: str, 
-                 iasType: IasTypeDao,
-                 shortDesc: str|None,
-                 docUrl: str|None,
-                 templateId: str|None,
-                 canShelve: bool,
-                 autoAck: bool,
-                 sound: SoundTypeDao,
-                 emails: str|None):
+        return IasioDao(id, iasType, shortDesc, docUrl, templateId, canShelve, autoAck, sound, emails, tag)
+
+    def __init__(self,
+                  id: str,
+                  iasType: IasTypeDao,
+                  shortDesc: str|None,
+                  docUrl: str|None,
+                  templateId: str|None,
+                  canShelve: bool,
+                  autoAck: bool,
+                  sound: SoundTypeDao,
+                  emails: str|None,
+                  tag: str|None = None):
         """
         Constructor.
 
@@ -103,7 +105,13 @@ class IasioDao:
 	    # The (optional)  email addresses to send emails when an alarm changes
 	    # it state SET/CLEAR
 	    # This attribute is ignored for non alarm IASIOs
-        self.emails : str|None = emails
+        self.emails: str | None = emails
+
+	    # User-readable tag for alarm IASIOs.
+	    # Used in the GUI in place of the id.
+	    # Optional — defaults to None.
+	    # Only meaningful for ALARM-type IASIOs.
+        self.tag: str | None = tag
     
     def __str__(self):
         """
@@ -122,4 +130,6 @@ class IasioDao:
             ret += f", sound = {self.sound.to_string()}"
         if self.emails:
             ret += f", emails = {self.emails}"
+        if self.tag:
+            ret += f", tag = {self.tag}"
         return ret

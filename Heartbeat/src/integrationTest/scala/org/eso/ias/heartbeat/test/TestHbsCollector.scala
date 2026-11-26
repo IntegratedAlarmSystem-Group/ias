@@ -195,7 +195,7 @@ class TestHbsCollector extends AnyFlatSpec with BeforeAndAfterEach with BeforeAn
     assert(hb.hb.hbType==HeartbeatProducerType.SUPERVISOR)
   }
 
-  it must "collect HBs for the poassed interval" in {
+  it must "collect HBs for the passed interval" in {
     logger.info("Check getting HBs along a time interval")
     hbsCollector.pauseTtlCheck()
 
