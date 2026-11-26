@@ -1,7 +1,7 @@
 [
-    { "id": "/test/alarm8any",    "iasType": "ALARM",   "shortDesc": ""  },
-    { "id": "/test/alarm8all",    "iasType": "ALARM",   "shortDesc": ""  },
-    { "id": "/test/alarm8b",      "iasType": "ALARM",   "shortDesc": ""  },
+    { "id": "/test/alarm8any",    "iasType": "ALARM",   "shortDesc": "", "tag": "alarm8any"  },
+    { "id": "/test/alarm8all",    "iasType": "ALARM",   "shortDesc": "", "tag": "alarm8all"  },
+    { "id": "/test/alarm8b",      "iasType": "ALARM",   "shortDesc": "", "tag": "alarm8b"  },
     { "id": "/vals/hival8any",    "iasType": "BOOLEAN", "shortDesc": ""  },
     { "id": "/vals/hival8all",    "iasType": "BOOLEAN", "shortDesc": ""  },
     { "id": "/vals/hival8a",      "iasType": "BOOLEAN", "shortDesc": ""  },
