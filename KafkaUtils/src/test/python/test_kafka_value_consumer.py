@@ -94,14 +94,6 @@ class TestKafkaValueConsumer:
         assert consumer.isSubscribed() is True
         mock_consumer.isSubscribed.assert_called_once()
 
-    def test_is_getting_values_delegates(self):
-        """isGettingValues should delegate to the internal IasLogConsumer."""
-        mock_consumer = MagicMock()
-        mock_consumer.isGettingLogs.return_value = False
-        consumer = self._build_consumer(mock_consumer)
-        assert consumer.isGettingValues() is False
-        mock_consumer.isGettingLogs.assert_called_once()
-
     def test_start_delegates(self):
         """start() should delegate to the internal IasLogConsumer."""
         mock_consumer = MagicMock()

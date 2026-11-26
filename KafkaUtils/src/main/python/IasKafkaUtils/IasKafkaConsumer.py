@@ -141,6 +141,9 @@ class IasLogConsumer(Thread):
                             self._groupid,
                             p.partition,
                             repr(p.topic))
+        if partitions:
+            with self._assigned_lock:
+                self._is_assigned = True
         if self._start_ready_event is not None:
             self._start_ready_event.set()
 
@@ -283,6 +286,9 @@ class IasLogConsumer(Thread):
                         self._logger.exception("Exception caught from the listener of logs")
                         continue
         except Exception:
+            self._logger.exception(
+                "Unexpected exception in consumer thread for client %s and topic %s — thread exiting",
+                self._clientid, self._topic)
             traceback.print_exc()
 
         self._logger.info('Consumer thread for topic %s terminated for client id %s and group id %s', 

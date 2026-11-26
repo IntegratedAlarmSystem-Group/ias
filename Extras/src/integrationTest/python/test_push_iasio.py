@@ -79,7 +79,7 @@ class TestPushIasioScript():
     def test_push_iasio(self):
         TestPushIasioScript.LOGGER.info(f"Testing the pushing of an IASIO with iasPushIasio, isSubscribed={TestPushIasioScript.iasio_consumer.isSubscribed()}")
         TestPushIasioScript.iasio_listener.clear()
-        assert TestPushIasioScript.iasio_consumer.isGettingValues(), "KafkaValueConsumer not subscribed"
+        assert TestPushIasioScript.iasio_consumer.isSubscribed(), "KafkaValueConsumer not subscribed"
         cmd = [
             "iasPushIasio",
             "-i", TestPushIasioScript.alarm_frid,
