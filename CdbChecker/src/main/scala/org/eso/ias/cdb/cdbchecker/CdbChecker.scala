@@ -115,7 +115,7 @@ class CdbChecker(args: Array[String]) {
     def convertIdsFromReader(idsFromCdb: Try[Optional[java.util.Set[String]]]): Set[String] = {
       idsFromCdb match {
         case Failure(e) =>
-          CdbChecker.logger.error("Error getting IDs",e)
+          CdbChecker.logger.error("Error getting IDs: {}", Option(e.getMessage).getOrElse("unknown error"))
           errorsFound = true
           Set.empty
         case Success(idsOptional) =>
@@ -144,7 +144,7 @@ class CdbChecker(args: Array[String]) {
               z
             }
           case Failure(f) =>
-            CdbChecker.logger.error("Error getting Supervisor [{}] from CDB:",id,f)
+            CdbChecker.logger.error("Error getting Supervisor [{}] from CDB: {}", id, Option(f.getMessage).getOrElse("unknown error"))
             errorsFound = true
             z
         }
@@ -172,7 +172,7 @@ class CdbChecker(args: Array[String]) {
               z
             }
           case Failure(f) =>
-            CdbChecker.logger.error("Error getting DASU [{}] from CDB:",id,f)
+            CdbChecker.logger.error("Error getting DASU [{}] from CDB: {}", id, Option(f.getMessage).getOrElse("unknown error"))
             errorsFound = true
             z
         }
@@ -199,7 +199,7 @@ class CdbChecker(args: Array[String]) {
               z
             }
           case Failure(f) =>
-            CdbChecker.logger.error("Error getting ASCE [{}] from CDB:",id,f)
+            CdbChecker.logger.error("Error getting ASCE [{}] from CDB: {}", id, Option(f.getMessage).getOrElse("unknown error"))
             errorsFound = true
             z
         }
@@ -225,7 +225,7 @@ class CdbChecker(args: Array[String]) {
             // templates into concrete values
             z+(id -> setOfDtd)
           case Failure(f) =>
-            CdbChecker.logger.error("Error getting DASUs of Supervisor [{}]:",id,f)
+            CdbChecker.logger.error("Error getting DASUs of Supervisor [{}]: {}", id, Option(f.getMessage).getOrElse("unknown error"))
             errorsFound = true
             z
         }
@@ -335,7 +335,7 @@ class CdbChecker(args: Array[String]) {
           CdbChecker.logger.info("NO cycles found in the DASUs")
         }
       case Failure(exception) =>
-        CdbChecker.logger.error("Error getting the DASUs with cycles (fix to check for cycles):",exception)
+        CdbChecker.logger.error("Error getting the DASUs with cycles (fix to check for cycles): {}", Option(exception.getMessage).getOrElse("unknown error"))
         errorsFound = true
     }
 
@@ -427,7 +427,7 @@ class CdbChecker(args: Array[String]) {
           val asceIds = d.getAscesIDs.asScala.toSet
           z + (idOfDasu -> asceIds)
         case None =>
-          CdbChecker.logger.error("Error getting DASU [{}]:", idOfDasu)
+          CdbChecker.logger.error("DASU [{}] not found in CDB", idOfDasu)
           z
       }
     })
