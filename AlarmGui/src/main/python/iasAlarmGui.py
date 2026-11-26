@@ -302,7 +302,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         - the number of active alarms
         - the number of shelved alarms
         """
-        if self._consumer_subscribed:
+        if self.value_consumer is not None and self.value_consumer.isSubscribed():
             # Getting events
             if self.showing_ok_icon:
                 self.status_icon_lbl.setPixmap( self.heart_nop)
