@@ -1,5 +1,5 @@
 [
-    { "id": "/test/alarm8any",    "iasType": "ALARM",   "shortDesc": "", "tag": "alarm8any"  },
+    { "id": "/test/alarm8any",    "iasType": "ALARM",   "shortDesc": "", "tag": "alarm8any", "emails": "email.addr@host.url", "docUrl": "http://url.to.doc"  },
     { "id": "/test/alarm8all",    "iasType": "ALARM",   "shortDesc": "", "tag": "alarm8all"  },
     { "id": "/test/alarm8b",      "iasType": "ALARM",   "shortDesc": "", "tag": "alarm8b"  },
     { "id": "/vals/hival8any",    "iasType": "BOOLEAN", "shortDesc": ""  },

@@ -82,10 +82,10 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
 
         self.alarm_shelve_manager = AlarmShelfManager()
 
-        self.active_alarm_details = AlarmDetailsHelper(self.ui.alarmDetailsTE)
-        self.shelved_alarm_details = AlarmDetailsHelper(self.ui.shelvedDetailsTE)
-
         self.iasios = self._build_iasio_lookup()
+
+        self.active_alarm_details = AlarmDetailsHelper(self.ui.alarmDetailsTE, self.iasios)
+        self.shelved_alarm_details = AlarmDetailsHelper(self.ui.shelvedDetailsTE, self.iasios)
 
         self.active_table_model = AlarmTableModel(self.ui.alarmTable, self.alarm_shelve_manager, TableMode.ACTIVE, self.iasios)
         self.ui.alarmTable.setModel(self.active_table_model)
