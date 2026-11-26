@@ -93,6 +93,14 @@ class TestCdbReader():
         iasio = reader.get_iasio("iasioID-7")
         assert iasio.tag == "Alarm-Seven"
 
+        # Test get_tag_to_display
+        iasio = reader.get_iasio("OUTPUT-ID")
+        assert iasio.get_tag_to_display() == "Output-Alarm"
+        iasio = reader.get_iasio("iasioID-7")
+        assert iasio.get_tag_to_display() == "Alarm-Seven"
+        iasio = reader.get_iasio("SoundInput")
+        assert iasio.get_tag_to_display() == "SoundInput"
+
     def test_getIasio_yaml(self):
         reader = CdbReader(self.yaml_cdb)
         assert reader.get_iasio("UNKNOWN-ID") is None
@@ -107,9 +115,17 @@ class TestCdbReader():
         assert iasio.canShelve == False
         assert iasio.autoAck == False
         assert iasio.templateId is None
-        assert iasio.tag is None
+        assert iasio.tag == "Output-Alarm"
         iasio = reader.get_iasio("iasioID-7")
         assert iasio.tag == "Alarm-Seven"
+
+        # Test get_tag_to_display
+        iasio = reader.get_iasio("OUTPUT-ID")
+        assert iasio.get_tag_to_display() == "Output-Alarm"
+        iasio = reader.get_iasio("iasioID-7")
+        assert iasio.get_tag_to_display() == "Alarm-Seven"
+        iasio = reader.get_iasio("SoundInput")
+        assert iasio.get_tag_to_display() == "SoundInput"
         iasio = reader.get_iasio("SoundInput")
         assert iasio is not None
         assert iasio.id == "SoundInput"

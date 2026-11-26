@@ -356,4 +356,21 @@ public class IasioDao {
 	public void setTag(String tag) {
 		this.tag = tag;
 	}
+
+	/**
+	 * Return the tag to display that is given by tag, if exists, or the ID.
+	 * 
+	 * This function is meant to give a human readable id to show to the users
+	 * for example in the GUIs. If a tag is not given then it falls back 
+	 * in the id
+	 * 
+	 * @return The TAG to display
+	 */
+	public String getTagToDisplay() {
+		if (tag!=null && !tag.isEmpty()) {
+			return tag;
+		} else {
+			return id;
+		}
+	}
 }
