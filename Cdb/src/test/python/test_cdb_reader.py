@@ -77,6 +77,7 @@ class TestCdbReader():
         assert iasio.canShelve == False
         assert iasio.autoAck == False
         assert iasio.templateId is None
+        assert iasio.tag == "Output-Alarm"
         iasio = reader.get_iasio("SoundInput")
         assert iasio is not None
         assert iasio.id == "SoundInput"
@@ -88,6 +89,9 @@ class TestCdbReader():
         assert iasio.autoAck == True
         assert iasio.emails == "stencccr@yujiehanjiao.cc"
         assert iasio.docUrl is None
+        assert iasio.tag is None
+        iasio = reader.get_iasio("iasioID-7")
+        assert iasio.tag == "Alarm-Seven"
 
     def test_getIasio_yaml(self):
         reader = CdbReader(self.yaml_cdb)
@@ -103,6 +107,9 @@ class TestCdbReader():
         assert iasio.canShelve == False
         assert iasio.autoAck == False
         assert iasio.templateId is None
+        assert iasio.tag is None
+        iasio = reader.get_iasio("iasioID-7")
+        assert iasio.tag == "Alarm-Seven"
         iasio = reader.get_iasio("SoundInput")
         assert iasio is not None
         assert iasio.id == "SoundInput"
@@ -114,3 +121,4 @@ class TestCdbReader():
         assert iasio.autoAck == True
         assert iasio.emails == "stencccr@yujiehanjiao.cc"
         assert iasio.docUrl is None
+        assert iasio.tag is None

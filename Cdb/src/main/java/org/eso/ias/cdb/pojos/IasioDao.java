@@ -103,6 +103,17 @@ public class IasioDao {
 	private String emails;
 
 	/**
+	 * User-readable tag for alarm IASIOs.
+	 * Used in the GUI in place of the id.
+	 * Optional — defaults to null.
+	 * Only meaningful for ALARM-type IASIOs.
+	 */
+	@Basic(optional=true)
+	@Column(name = "tag")
+	@JsonInclude(JsonInclude.Include.NON_NULL)
+	private String tag;
+
+	/**
 	 * Empty constructor
 	 */
 	public IasioDao() {}
@@ -138,11 +149,38 @@ public class IasioDao {
 	 * @param emails the emails to notify when an alarm is SET or CLEARED
 	 */
 	public IasioDao(
-			String id, 
-			String descr, 
-			IasTypeDao type, 
-			String docUrl, 
-			boolean canShelve, 
+			String id,
+			String descr,
+			IasTypeDao type,
+			String docUrl,
+			boolean canShelve,
+			String templateId,
+			SoundTypeDao sound,
+			String emails,
+			String tag) {
+		this(id,descr,type,docUrl,canShelve,templateId,sound,emails);
+		this.tag = tag;
+	}
+
+	/**
+	 * Constructor without tag (backward compatible)
+	 *
+	 * @param id The identifier
+	 * @param descr The description
+	 * @param type The IAS type
+	 * @param docUrl the URL of the documentation
+	 * @param canShelve <code>true</code> if this IASIO can be shelved,
+	 *                  <code>false</code> otherwise
+	 * @param templateId the Id of the template for replication
+	 * @param sound the sound to play when an alarm is set
+	 * @param emails the emails to notify when an alarm is SET or CLEARED
+	 */
+	public IasioDao(
+			String id,
+			String descr,
+			IasTypeDao type,
+			String docUrl,
+			boolean canShelve,
 			String templateId,
 			SoundTypeDao sound,
 			String emails) {
@@ -222,6 +260,11 @@ public class IasioDao {
 			ret.append(emails);
 			ret.append('"');
 		}
+		if (tag!=null && !tag.isEmpty()) {
+			ret.append(", tag=\"");
+			ret.append(tag);
+			ret.append('"');
+		}
 		ret.append("]");
 		return ret.toString();
 	}
@@ -238,19 +281,20 @@ public class IasioDao {
 		IasioDao other = (IasioDao) obj;
 
 		return 	this.getId().equals(other.getId()) &&
-				this.getIasType().equals(other.getIasType()) && 
+				this.getIasType().equals(other.getIasType()) &&
 				Objects.equals(this.getShortDesc(),other.getShortDesc()) &&
 				Objects.equals(this.getDocUrl(),other.getDocUrl()) &&
 				this.isCanShelve()==other.isCanShelve() &&
 				this.isAutoAck()==other.isAutoAck() &&
 				Objects.equals(this.getTemplateId(),other.getTemplateId()) &&
 				Objects.equals(this.getEmails(),other.getEmails()) &&
-				Objects.equals(this.getSound(),other.getSound());
+				Objects.equals(this.getSound(),other.getSound()) &&
+				Objects.equals(this.getTag(),other.getTag());
 	}
 	
 	@Override
 	public int hashCode() {
-		return Objects.hash(id,iasType,shortDesc,docUrl,canShelve,autoAck,templateId,sound,emails);
+		return Objects.hash(id,iasType,shortDesc,docUrl,canShelve,autoAck,templateId,sound,emails,tag);
 	}
 
 	public String getDocUrl() {
@@ -303,5 +347,13 @@ public class IasioDao {
 
 	public void setEmails(String emails) {
 		this.emails = emails;
+	}
+
+	public String getTag() {
+		return tag;
+	}
+
+	public void setTag(String tag) {
+		this.tag = tag;
 	}
 }
