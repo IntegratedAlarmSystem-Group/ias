@@ -70,22 +70,46 @@ class CdbChecker(args: Array[String]) {
     }
     CdbChecker.logger.info("Read {} templates",mapOfTemplates.size)
 
-    /**
-       * The map of IASIOs where the key is the ID of the IASIOs
-       *
-       * These IASIOs do not take templates into account
-       */
-    val mapOfIasios: Map[String, IasioDao] = {
-      val iasiosOptional = reader.getIasios
-      val iasios: Set[IasioDao] = if (!iasiosOptional.isPresent) Set.empty else {
-        iasiosOptional.get().asScala.toSet
-      }
-      iasios.foldLeft(Map.empty[String,IasioDao])( (z, i) => z+(i.getId -> i))
-    }
-    CdbChecker.logger.info("Read {} IASIOs",mapOfIasios.size)
+     /**
+        * The list of all IASIOs read from the CDB (before deduplication by ID).
+        * Used to detect duplicated IDs.
+        */
+     val allIasios: List[IasioDao] = {
+       val iasiosOptional = reader.getIasios
+       if (iasiosOptional.isPresent) iasiosOptional.get().asScala.toList else List.empty[IasioDao]
+     }
+     CdbChecker.logger.info("Read {} IASIOs", allIasios.size)
 
-    /** The IDs of the IASIOs read from the CDB */
-    val idsOfIasios: Set[String] = mapOfIasios.values.map(_.getId).toSet
+     // Check for duplicated IASIO IDs
+     CdbChecker.logger.debug("Checking for duplicated IASIO IDs...")
+     val duplicatedIds: Option[List[String]] = {
+       val ids: List[String] = allIasios.map(_.getId)
+       ids.groupBy(x => ids.count(_ == x) > 1).get(true)
+     }
+     duplicatedIds match {
+       case None =>
+         CdbChecker.logger.info("No duplicated IASIO IDs")
+       case Some(dupIds) =>
+         dupIds.toSet.foreach(duplicatedId => {
+           CdbChecker.logger.error(
+             "Duplicated IASIO ID [{}]",
+             duplicatedId
+           )
+           errorsFound = true
+         })
+     }
+
+     /**
+        * The map of IASIOs where the key is the ID of the IASIOs
+        *
+        * These IASIOs do not take templates into account
+        */
+     val mapOfIasios: Map[String, IasioDao] = {
+       allIasios.foldLeft(Map.empty[String,IasioDao])( (z, i) => z+(i.getId -> i))
+     }
+
+     /** The IDs of the IASIOs read from the CDB */
+     val idsOfIasios: Set[String] = mapOfIasios.values.map(_.getId).toSet
 
     /** Method to convert IDs of Supervisors, DASUs and ASCEs to String  */
     def convertIdsFromReader(idsFromCdb: Try[Optional[java.util.Set[String]]]): Set[String] = {
@@ -358,6 +382,29 @@ class CdbChecker(args: Array[String]) {
 
     }
 
+    // Check for duplicated display tags among all IASIOs
+    CdbChecker.logger.debug("Checking for duplicated IASIO display tags...")
+    val displayTags: List[String] = mapOfIasios.values.map(_.getTagToDisplay).toList
+    val duplicatedDisplayTags: Option[List[String]] = {
+      displayTags.groupBy(x => displayTags.count(_ == x) > 1).get(true)
+    }
+    duplicatedDisplayTags match {
+      case None =>
+        CdbChecker.logger.info("No duplicated IASIO display tags")
+      case Some(dupTags) =>
+        dupTags.toSet.foreach(duplicatedTag => {
+          val iasiosWithDupTag: List[String] = mapOfIasios.values
+            .filter(_.getTagToDisplay == duplicatedTag)
+            .map(_.getId)
+            .toList
+          CdbChecker.logger.error(
+            "Duplicated IASIO display tag [{}] found on IASIOs: [{}]",
+            duplicatedTag,
+            iasiosWithDupTag.mkString(",")
+          )
+          errorsFound = true
+        })
+    }
 
     CdbChecker.logger.debug("Shutting down the CDB reader")
     reader.shutdown()

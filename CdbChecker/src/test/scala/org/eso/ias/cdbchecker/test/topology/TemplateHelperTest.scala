@@ -1,4 +1,4 @@
-package org.eso.ias.cdb.test.topology
+package org.eso.ias.cdbchecker.test.topology
 
 import org.eso.ias.cdb.CdbReader
 import org.eso.ias.cdb.pojos.{DasuToDeployDao, IasioDao}

@@ -253,8 +253,12 @@
 	{ "id":"TemplatedOutId", "shortDesc":"Templated output", "iasType":"LONG", "templateId":"temp-ID2" },
 	{ "id":"TemplatedInput", "shortDesc":"Templated input", "iasType":"ALARM", "templateId":"TemplateIDForTemplatedInputs" },
 
-	{ "id":"PyAsceIn", "shortDesc":"Python ASCE input", "iasType":"DOUBLE" },
-	{ "id":"PyAsceOut", "shortDesc":"Python ASCE output", "iasType":"ALARM" },
-	{ "id":"DasuWithPyTF-OutID", "shortDesc":"DASU with Python TF output", "iasType":"ALARM" }
+ 	{ "id":"PyAsceIn", "shortDesc":"Python ASCE input", "iasType":"DOUBLE" },
+ 	{ "id":"PyAsceOut", "shortDesc":"Python ASCE output", "iasType":"ALARM" },
+ 	{ "id":"DasuWithPyTF-OutID", "shortDesc":"DASU with Python TF output", "iasType":"ALARM" },
+ 	{ "id":"DupTagTest1", "shortDesc":"Dup tag test 1", "iasType":"ALARM", "tag":"DupTag-Collision" },
+ 	{ "id":"DupTagTest2", "shortDesc":"Dup tag test 2", "iasType":"ALARM", "tag":"DupTag-Collision" },
+ 	{ "id":"DupIdTest", "shortDesc":"Dup ID test 1", "iasType":"ALARM" },
+ 	{ "id":"DupIdTest", "shortDesc":"Dup ID test 2", "iasType":"ALARM" }
 
 ]
