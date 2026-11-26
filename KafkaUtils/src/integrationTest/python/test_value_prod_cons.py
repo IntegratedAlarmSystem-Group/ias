@@ -10,6 +10,7 @@ Created on Jun 14, 2018
 """
 import time
 import logging
+import uuid
 from threading import Event
 import pytest
 
@@ -71,6 +72,7 @@ class TestValueProdCons():
     def setup_class(cls):
         Log.init_logging(__file__)
         cls.LOGGER = logging.getLogger(cls.__name__)
+        cls.group_id = f"PyConsumerTestGroup-{uuid.uuid4()}"
     
     def buildLONGValue(self,ident, value):
         '''
@@ -97,12 +99,12 @@ class TestValueProdCons():
             self.kafkabrokers,
             self.topic,
             'PyConsumerTest',
-            'PyConsumerTestGroup')
+            TestValueProdCons.group_id)
         TestValueProdCons.LOGGER.info('Starting the consumer')
         consumer_ready = Event()
-        consumer.start(ready_event=consumer_ready)
-        assert consumer_ready.wait(timeout=30), "Consumer failed to subscribe within 30s"
-
+        consumer.start(waitAssigmentTimeout=30, ready_event=consumer_ready)
+        assert consumer_ready.wait(timeout=1), "Consumer failed to subscribe within 30s"
+        time.sleep(1)
         n=100
         
         TestValueProdCons.LOGGER.info('Publishing %d IasValues',n)
