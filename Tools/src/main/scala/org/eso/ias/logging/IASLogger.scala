@@ -55,7 +55,7 @@ object IASLogger {
   def setRootLogLevel(level: Level): Unit = {
     val context = LoggerFactory.getILoggerFactory.asInstanceOf[LoggerContext]
     val rootLogger = context.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME)
-    rootLogger.setLevel(Level.DEBUG)
+    rootLogger.setLevel(level)
   }
 
   /**
