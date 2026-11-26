@@ -10,6 +10,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -366,6 +367,7 @@ public class IasioDao {
 	 * 
 	 * @return The TAG to display
 	 */
+	@JsonIgnore
 	public String getTagToDisplay() {
 		if (tag!=null && !tag.isEmpty()) {
 			return tag;
