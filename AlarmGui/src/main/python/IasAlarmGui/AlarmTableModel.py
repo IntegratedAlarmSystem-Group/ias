@@ -15,6 +15,8 @@ from IasBasicTypes.Priority import Priority
 from IasBasicTypes.AlarmState import AlarmState
 from IasBasicTypes.Alarm import Alarm
 
+from IasCdb.Dao.IasioDao import IasioDao
+
 from IasAlarmGui.AlarmShelfManager import AlarmShelfManager
 
 class TableMode(Enum):
@@ -29,9 +31,17 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
     to avoid refreshing too often.
     Flushing of alarms is done in flush_alarms that is run by a QTimer.
     """
-    def __init__(self, view: QTableView, shelf_manager: AlarmShelfManager, mode: TableMode):
+    def __init__(self, view: QTableView, shelf_manager: AlarmShelfManager, mode: TableMode, iasios: dict[str, IasioDao] | None = None):
         """
         Constructor
+
+        Args:
+            view: The table view widget that displays the alarms
+            shelf_manager: The shelf manager
+            mode: The mode of the table model
+            iasios: Optional mapping of IASIO id to IasioDao from the CDB.
+                    When present the Identifier column uses the tag (or falls
+                    back to the id) instead of the raw
         """
         super().__init__()
 
@@ -45,6 +55,9 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
 
         # The mode of the table model
         self.table_mode = mode
+
+        # Mapping of IASIO id to IasioDao for looking up display tags
+        self.iasios: dict[str, IasioDao] | None = iasios
 
         # The mutex to protect critical section
         self.lock = threading.RLock()
@@ -112,6 +125,9 @@ class AlarmTableModel(QAbstractTableModel, IasValueListener):
             elif index.column()==1:
                 return str(self.get_priority(ias_value_in_row))
             elif index.column()==2:
+                iasio = self.iasios.get(ias_value_in_row.id) if self.iasios else None
+                if iasio is not None:
+                    return iasio.get_tag_to_display()
                 return ias_value_in_row.id
             else: # Remaining time for shelved mode
                     tot_seconds = self.shelf_manager.get_remaining_seconds(alarm_id=ias_value_in_row.id)

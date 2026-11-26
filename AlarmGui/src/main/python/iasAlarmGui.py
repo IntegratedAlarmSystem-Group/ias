@@ -37,6 +37,9 @@ from IasAlarmGui.alarm_ack_dlg import AckAlarmDlg
 from IasAlarmGui.alarm_shelve_dlg import AlarmShelveDlg
 from IasAlarmGui.alarm_table_view import AlarmGuiTableView
 
+from IasCdb.CdbReader import CdbReader
+from IasCdb.Dao.IasioDao import IasioDao
+
 class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
     # Signal to update the UI from other threads
     signal_update_connected_ui = Signal(bool)
@@ -82,7 +85,9 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         self.active_alarm_details = AlarmDetailsHelper(self.ui.alarmDetailsTE)
         self.shelved_alarm_details = AlarmDetailsHelper(self.ui.shelvedDetailsTE)
 
-        self.active_table_model = AlarmTableModel(self.ui.alarmTable, self.alarm_shelve_manager, TableMode.ACTIVE)
+        self.iasios = self._build_iasio_lookup()
+
+        self.active_table_model = AlarmTableModel(self.ui.alarmTable, self.alarm_shelve_manager, TableMode.ACTIVE, self.iasios)
         self.ui.alarmTable.setModel(self.active_table_model)
         self.ui.alarmTable.horizontalHeader().setStretchLastSection(True)
 
@@ -96,7 +101,7 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         old_shelved_table_view.setParent(None)
         old_shelved_table_view.deleteLater()
 
-        self.shelved_table_model = AlarmTableModel(self.ui.alarmTable, self.alarm_shelve_manager, TableMode.SHELVED)
+        self.shelved_table_model = AlarmTableModel(self.ui.alarmTable, self.alarm_shelve_manager, TableMode.SHELVED, self.iasios)
         self.ui.shelvedTable.setModel(self.shelved_table_model)
         self.ui.shelvedTable.horizontalHeader().setStretchLastSection(True)
 
@@ -169,6 +174,28 @@ class MainWindow(QMainWindow, Ui_AlarmGui, IasValueListener):
         # Signals to update the UI from other threads
         self.signal_update_connected_ui.connect(self._set_connected_ui)
         self.signal_disconnected.connect(self._on_disconnected, Qt.QueuedConnection)
+
+    def _build_iasio_lookup(self) -> dict[str, IasioDao]:
+        """
+        Build a lookup dictionary from IASIO id to IasioDao from the CDB.
+
+        Returns:
+            A dictionary mapping IASIO id to IasioDao, or an empty dict if the
+            CDB is unavailable
+        """
+        if self.jCdb is None:
+            self.logger.info("No CDB path provided, alarm tags will not be available")
+            return {}
+        try:
+            reader = CdbReader(self.jCdb)
+            result: dict[str, IasioDao] = {}
+            for iasio in reader.get_iasios():
+                result[iasio.id] = iasio
+            self.logger.info("Loaded %s IASIOs from CDB", len(result))
+            return result
+        except Exception as e:
+            self.logger.warning("Could not read IASIOs from CDB: %s", e)
+            return {}
 
     def onRightClick(self, index, mode: TableMode):
         """
