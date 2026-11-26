@@ -971,6 +971,20 @@ public class TestYamlCdb {
 		iDao = cdbReader.getIasio("TempInput");
 		assertTrue(iDao.isPresent());
 		assertEquals(null, iDao.get().getTag());
+
+		// Test getTagToDisplay returns tag when present
+		iDao = cdbReader.getIasio("iasioID-7");
+		assertTrue(iDao.isPresent());
+		assertEquals("Alarm-Seven", iDao.get().getTagToDisplay());
+
+		iDao = cdbReader.getIasio("OUTPUT-ID");
+		assertTrue(iDao.isPresent());
+		assertEquals("Output-Alarm", iDao.get().getTagToDisplay());
+
+		// Test getTagToDisplay falls back to id when tag is absent
+		iDao = cdbReader.getIasio("TempInput");
+		assertTrue(iDao.isPresent());
+		assertEquals("TempInput", iDao.get().getTagToDisplay());
 	}
 
 	/**

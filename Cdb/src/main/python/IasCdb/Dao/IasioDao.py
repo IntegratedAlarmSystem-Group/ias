@@ -133,3 +133,18 @@ class IasioDao:
         if self.tag:
             ret += f", tag = {self.tag}"
         return ret
+
+    def get_tag_to_display(self) -> str:
+        """
+        Return the tag to display, which is the tag if it exists, or the ID.
+
+        This function is meant to give a human readable id to show to the users
+	    for example in the GUIs. If a tag is not given then it falls back 
+	    in the id
+
+        Returns:
+            The tag if present and non-empty, otherwise the id.
+        """
+        if self.tag:
+            return self.tag
+        return self.id
