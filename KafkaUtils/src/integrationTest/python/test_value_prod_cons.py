@@ -10,6 +10,7 @@ Created on Jun 14, 2018
 """
 import time
 import logging
+from threading import Event
 import pytest
 
 from IasLogging.log import Log
@@ -85,25 +86,6 @@ class TestValueProdCons():
         iasValue.value = str(value)
         return iasValue
     
-    def waitUntilSubscribed(self, consumer, timeout) -> bool:
-        """
-        Wait until the consumer is subscribed to a partition or
-        the timeout elapses
-        Params:
-            consumer: the consumer to check for subscription
-            timeout: the max time to wait for the consumer to subscribe (seconds)
-        Returns:
-            True if the consumer is subscribed to a partition; flase if the
-            timeout elapses befor the consumer subscribes to a partition
-
-        """ 
-        elapsed_secs=0
-        while not consumer.isSubscribed() or elapsed_secs>timeout:
-            time.sleep(1)
-            elapsed_secs = elapsed_secs + 1
-        return consumer.isSubscribed()
-
-
     def test_name(self):
 
         TestValueProdCons.LOGGER.info('Building the producer')
@@ -117,14 +99,11 @@ class TestValueProdCons():
             'PyConsumerTest',
             'PyConsumerTestGroup')
         TestValueProdCons.LOGGER.info('Starting the consumer')
-        consumer.start()
+        consumer_ready = Event()
+        consumer.start(ready_event=consumer_ready)
+        assert consumer_ready.wait(timeout=30), "Consumer failed to subscribe within 30s"
 
         n=100
-
-        # Wait until the consumer is subscribed to a partition
-        TestValueProdCons.LOGGER.info("Wait until the consumer subscribes to a partition")
-        isSubscribed = self.waitUntilSubscribed(consumer, 30)
-        assert isSubscribed
         
         TestValueProdCons.LOGGER.info('Publishing %d IasValues',n)
         baseId='Test-ID#'
@@ -139,16 +118,16 @@ class TestValueProdCons():
         producer.close()
         TestValueProdCons.LOGGER.info('Producer closed')
 
-        # Wait some time if not all the items have been received
-        timeout = 10.0 # seconds max waiting time
+        # Wait until all items have been received or timeout expires
+        timeout = 30.0 # seconds max waiting time
         slept = 0
         sleep_time = 0.25
         while (n != len(self.listener.receivedValues)) and (slept < timeout):
             time.sleep(sleep_time)
             slept = slept + sleep_time
-        
+
         TestValueProdCons.LOGGER.info('Closing the consumer')
         consumer.close()
         TestValueProdCons.LOGGER.info('Consumer closed')
-        
-        assert n == len(self.listener.receivedValues), 'Messages mismatch'
+
+        assert n == len(self.listener.receivedValues), f'Only received {len(self.listener.receivedValues)} out of {n}'

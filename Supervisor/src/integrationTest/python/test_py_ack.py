@@ -25,6 +25,7 @@ import subprocess
 import time
 import uuid
 import logging
+from threading import Event
 
 from IasLogging.log import Log
 from IasCmdReply.IasCommandSender import IasCommandSender
@@ -142,7 +143,9 @@ class TestPyAck():
         cls.hbConsumer.start(30)
         
         cls.logger.info("Connecting the IASIO listener")
-        cls.iasioConsumer.start()
+        iasioReady = Event()
+        cls.iasioConsumer.start(ready_event=iasioReady)
+        assert iasioReady.wait(timeout=30), "IASIO consumer failed to subscribe within 30s"
         
         cls.logger.info("Starting the Supervisor %s", TestPyAck.supervisorId)
         cmd = ["iasSupervisor", TestPyAck.supervisorId, "-j", "src/test", "-x", "WARN"]
